@@ -1,14 +1,12 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
-import gov.cms.ab2d.common.model.CoverageSearch;
-import gov.cms.ab2d.common.repository.CoverageSearchRepository;
 import org.springframework.integration.jdbc.lock.DefaultLockRepository;
 import org.springframework.integration.jdbc.lock.JdbcLockRegistry;
 import org.springframework.integration.jdbc.lock.LockRepository;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
-import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
 @Component
@@ -25,16 +23,14 @@ import java.util.concurrent.locks.Lock;
 public class CoverageLockWrapper {
 
     private static final String COVERAGE_LOCK_NAME = "COVERAGE_LOCK";
-    private static final int LOCK_TIME = 60_000; // 60 seconds
+    private static final int TEN_MINUTES = 600_000; // 6 minutes in milliseconds
 
     private final DataSource dataSource;
-    private final CoverageSearchRepository coverageSearchRepository;
 
     private JdbcLockRegistry lockRegistry;
 
-    public CoverageLockWrapper(DataSource dataSource, CoverageSearchRepository coverageSearchRepository) {
+    public CoverageLockWrapper(DataSource dataSource) {
         this.dataSource = dataSource;
-        this.coverageSearchRepository = coverageSearchRepository;
     }
 
     public JdbcLockRegistry contractLockRegistry(LockRepository lockRepository) {
@@ -43,7 +39,13 @@ public class CoverageLockWrapper {
 
     public LockRepository contractLockRepository() {
         final DefaultLockRepository defaultLockRepository = new DefaultLockRepository(dataSource);
-        defaultLockRepository.setTimeToLive(LOCK_TIME);
+
+        // A lock is automatically killed, regardless of whether it is in use
+        // if it has not been renewed TTL seconds after it was created.
+        // What this means is that if you are locking longer than this TTL, then
+        // you need to renew the lock otherwise you will lose it and get undefined
+        // behavior when you attempt to unlock your lock.
+        defaultLockRepository.setTimeToLive(10 * TEN_MINUTES);
         defaultLockRepository.afterPropertiesSet();
         return defaultLockRepository;
     }
@@ -54,35 +56,5 @@ public class CoverageLockWrapper {
         }
 
         return lockRegistry.obtain(COVERAGE_LOCK_NAME);
-    }
-
-    /**
-     * This is the most important part of the class. It retrieves the next search in the table
-     * assuming that another thread or application is not currently pulling anything from the table.
-     * If there are no jobs to pull or the table is locked, it returns null
-     *
-     * @return the next search or else null if there are none or if the table is locked
-     */
-    public Optional<CoverageSearch> getNextSearch() {
-        Lock lock = getCoverageLock();
-        if (lock.tryLock()) {
-            try {
-                // manipulate protected state
-                Optional<CoverageSearch> searchOpt = coverageSearchRepository.findFirstByOrderByCreatedAsc();
-                if (searchOpt.isEmpty()) {
-                    return searchOpt;
-                }
-                CoverageSearch search = searchOpt.get();
-                coverageSearchRepository.delete(search);
-                coverageSearchRepository.flush();
-                search.setId(null);
-                return Optional.of(search);
-            } finally {
-                lock.unlock();
-            }
-        } else {
-            // perform alternative actions
-            return Optional.empty();
-        }
     }
 }

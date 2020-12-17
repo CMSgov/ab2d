@@ -1,21 +1,22 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.CoveragePeriod;
-import gov.cms.ab2d.common.model.CoverageSearch;
 import gov.cms.ab2d.common.repository.CoverageSearchRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.integration.jdbc.lock.DefaultLockRepository;
+import org.springframework.integration.jdbc.lock.JdbcLockRegistry;
+import org.springframework.integration.jdbc.lock.LockRepository;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.time.OffsetDateTime;
-import java.util.Optional;
+import javax.sql.DataSource;
 import java.util.concurrent.*;
+import java.util.concurrent.locks.Lock;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -35,27 +36,34 @@ class CoverageLockWrapperTest {
     @Autowired
     private DataSetup dataSetup;
 
-    /**
-     * Verify that null is returned if there are no searches, a search there is one and verify that it
-     * was deleted after it was searched.
-     */
+    @Autowired
+    private DataSource dataSource;
+
+    // Demonstrates how JdbcLockRegistry
+    @Disabled
     @Test
-    void getNextSearch() {
-        assertTrue(coverageLockWrapper.getNextSearch().isEmpty());
+    void showTTLEffects() {
 
-        Contract contract1 = dataSetup.setupContract("c123");
-        CoveragePeriod period1 = dataSetup.createCoveragePeriod(contract1, 10, 2020);
-        CoverageSearch search1 = new CoverageSearch(null, period1, OffsetDateTime.now(), 0);
-        CoverageSearch savedSearch1 = coverageSearchRepository.save(search1);
-        Optional<CoverageSearch> returnedSearch = coverageLockWrapper.getNextSearch();
-        assertEquals(savedSearch1.getPeriod().getMonth(), returnedSearch.get().getPeriod().getMonth());
-        assertEquals(savedSearch1.getPeriod().getYear(), returnedSearch.get().getPeriod().getYear());
-        assertTrue(coverageLockWrapper.getNextSearch().isEmpty());
+        ExecutorService service = Executors.newFixedThreadPool(2);
 
-        dataSetup.deleteCoveragePeriod(period1);
-        dataSetup.deleteContract(contract1);
+        service.submit(() -> {
+
+            Lock lock = null;
+
+            try {
+                DefaultLockRepository repository = (DefaultLockRepository) coverageLockWrapper.contractLockRepository();
+                repository.setTimeToLive(10000);
+
+                JdbcLockRegistry registry = coverageLockWrapper.contractLockRegistry(repository);
+            } finally {
+                if (lock != null) {
+                    lock.unlock();;
+                }
+            }
+
+
+        });
     }
-
     /**
      * The only way to trigger a lock error is if different threads are trying to use the lock at
      * the same time. This holds a lock for a period of time while another thread tries and fails

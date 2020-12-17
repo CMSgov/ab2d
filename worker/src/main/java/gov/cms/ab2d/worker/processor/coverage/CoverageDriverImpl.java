@@ -65,7 +65,8 @@ public class CoverageDriverImpl implements CoverageDriver {
 
             log.info("queueing all stale coverage periods");
 
-            locked = lock.tryLock(SIXTY_SECONDS, TimeUnit.SECONDS);
+            // Job runs once a day so we need to grab this lock
+            locked = lock.tryLock(10 * SIXTY_SECONDS, TimeUnit.SECONDS);
 
             if (locked) {
                 for (CoveragePeriod period : outOfDateInfo) {
@@ -121,7 +122,8 @@ public class CoverageDriverImpl implements CoverageDriver {
 
         try {
 
-            locked = lock.tryLock(SIXTY_SECONDS, TimeUnit.SECONDS);
+            // We run this job once a day so we really need to grab this lock
+            locked = lock.tryLock(10 * SIXTY_SECONDS, TimeUnit.SECONDS);
 
             if (locked) {
                 log.info("discovering all coverage periods that should exist");
@@ -228,7 +230,7 @@ public class CoverageDriverImpl implements CoverageDriver {
             return;
         }
 
-        Optional<CoverageSearch> search = coverageLockWrapper.getNextSearch();
+        Optional<CoverageSearch> search = getNextSearch();
         if (search.isEmpty()) {
             return;
         }
@@ -253,42 +255,42 @@ public class CoverageDriverImpl implements CoverageDriver {
     /**
      * This is the most important part of the class. It retrieves the next search in the table
      * assuming that another thread or application is not currently pulling anything from the table.
-     * If there are no jobs to pull or the table is locked, it returns null
+     * If there are no jobs to pull or the table is locked, it returns an empty optional.
      *
      * @return the next search or else null if there are none or if the table is locked
      */
     public Optional<CoverageSearch> getNextSearch() {
         Lock lock = coverageLockWrapper.getCoverageLock();
-        if (lock.tryLock()) {
-            try {
 
-                // First find if a submitted eob job is waiting on a current search
-                // and pick those searches first
-                Optional<CoverageSearch> searchOpt = coverageSearchRepository.findHighestPrioritySearch();
-
-                // If no high priority search has been found
-                // instead pick the first submitted search
-                if (searchOpt.isEmpty()) {
-                    searchOpt = coverageSearchRepository.findFirstByOrderByCreatedAsc();
-                }
-
-                // If no search found just return empty
-                if (searchOpt.isEmpty()) {
-                    return searchOpt;
-                }
-
-                CoverageSearch search = searchOpt.get();
-                coverageSearchRepository.delete(search);
-                coverageSearchRepository.flush();
-
-                search.setId(null);
-                return Optional.of(search);
-            } finally {
-                lock.unlock();
-            }
-        } else {
-            // perform alternative actions
+        if (!lock.tryLock()) {
             return Optional.empty();
+        }
+
+        try {
+
+            // First find if a submitted eob job is waiting on a current search
+            // and pick those searches first
+            Optional<CoverageSearch> searchOpt = coverageSearchRepository.findHighestPrioritySearch();
+
+            // If no high priority search has been found
+            // instead pick the first submitted search
+            if (searchOpt.isEmpty()) {
+                searchOpt = coverageSearchRepository.findFirstByOrderByCreatedAsc();
+            }
+
+            // If no search found just return empty
+            if (searchOpt.isEmpty()) {
+                return searchOpt;
+            }
+
+            CoverageSearch search = searchOpt.get();
+            coverageSearchRepository.delete(search);
+            coverageSearchRepository.flush();
+
+            search.setId(null);
+            return Optional.of(search);
+        } finally {
+            lock.unlock();
         }
     }
 
