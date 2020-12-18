@@ -643,7 +643,7 @@ cd "terraform/environments/${TARGET_CMS_ENV}"
   echo 'ecs_task_definition_memory_worker = "'"${WORKER_MEMORY}"'"'
   echo 'linux_user = "'"${SSH_USERNAME}"'"'
   echo 'deployer_ip_address = "'"${DEPLOYER_IP_ADDRESS}"'"'
-} >> "${TARGET_CMS_ENV}.auto.tfvars"
+} > "${TARGET_CMS_ENV}.auto.tfvars"
 
 ######################################
 # Deploy target environment components
