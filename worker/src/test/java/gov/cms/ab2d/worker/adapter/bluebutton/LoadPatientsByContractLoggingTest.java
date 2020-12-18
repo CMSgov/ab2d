@@ -10,7 +10,7 @@ import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.worker.SpringBootApp;
-import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
+import gov.cms.ab2d.worker.processor.eob.ProgressTracker;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,7 +26,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import static gov.cms.ab2d.worker.processor.BundleUtils.createBundleEntry;
+import static gov.cms.ab2d.worker.processor.eob.BundleUtils.createBundleEntry;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;

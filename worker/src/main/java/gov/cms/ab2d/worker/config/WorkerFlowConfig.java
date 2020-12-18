@@ -24,11 +24,11 @@ public class WorkerFlowConfig {
 
     private final DataSource dataSource;
 
-    private final JobHandler handler;
+    private final EobJobStartupHandler handler;
 
     private final Executor mainJobPool;
 
-    public WorkerFlowConfig(DataSource dataSource, JobHandler handler, @Qualifier("mainJobPool") Executor mainJobPool) {
+    public WorkerFlowConfig(DataSource dataSource, EobJobStartupHandler handler, @Qualifier("mainJobPool") Executor mainJobPool) {
         this.dataSource = dataSource;
         this.handler = handler;
         this.mainJobPool = mainJobPool;

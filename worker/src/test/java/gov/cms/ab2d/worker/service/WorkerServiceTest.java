@@ -6,7 +6,7 @@ import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
-import gov.cms.ab2d.worker.config.JobHandler;
+import gov.cms.ab2d.worker.config.EobJobStartupHandler;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -44,7 +44,7 @@ class WorkerServiceTest {
     @Autowired private PropertiesService propertiesService;
 
     @Autowired private WorkerServiceImpl workerServiceImpl;
-    @Autowired private JobHandler jobHandler;
+    @Autowired private EobJobStartupHandler eobJobStartupHandler;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
@@ -60,12 +60,12 @@ class WorkerServiceTest {
 
         workerServiceStub = new WorkerServiceStub(jobService, propertiesService);
 
-        ReflectionTestUtils.setField(jobHandler, "workerService", workerServiceStub);
+        ReflectionTestUtils.setField(eobJobStartupHandler, "workerService", workerServiceStub);
     }
 
     @AfterEach
     public void after() {
-        ReflectionTestUtils.setField(jobHandler, "workerService", workerServiceImpl);
+        ReflectionTestUtils.setField(eobJobStartupHandler, "workerService", workerServiceImpl);
     }
 
     @Test

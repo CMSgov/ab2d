@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.adapter.bluebutton;
 
-import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
+import gov.cms.ab2d.worker.processor.eob.ProgressTracker;
 
 import java.util.concurrent.ExecutionException;
 

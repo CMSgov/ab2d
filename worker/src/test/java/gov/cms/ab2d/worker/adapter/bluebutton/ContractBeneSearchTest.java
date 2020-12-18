@@ -4,8 +4,8 @@ import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.common.util.FilterOutByDate;
-import gov.cms.ab2d.worker.processor.BundleUtils;
-import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
+import gov.cms.ab2d.worker.processor.eob.BundleUtils;
+import gov.cms.ab2d.worker.processor.eob.ProgressTracker;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent;
@@ -18,13 +18,12 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-import java.time.Instant;
 import java.time.Month;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import static gov.cms.ab2d.worker.processor.BundleUtils.createBundleEntry;
+import static gov.cms.ab2d.worker.processor.eob.BundleUtils.createBundleEntry;
 import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;

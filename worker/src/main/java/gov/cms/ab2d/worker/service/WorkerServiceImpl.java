@@ -1,10 +1,11 @@
 package gov.cms.ab2d.worker.service;
 
+import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.common.util.Constants;
-import gov.cms.ab2d.worker.processor.JobPreProcessor;
-import gov.cms.ab2d.worker.processor.JobProcessor;
+import gov.cms.ab2d.worker.processor.eob.JobPreProcessor;
+import gov.cms.ab2d.worker.processor.eob.JobProcessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,18 +31,18 @@ public class WorkerServiceImpl implements WorkerService {
     private final List<String> activeJobs = Collections.synchronizedList(new ArrayList<>());
 
     @Override
-    public void process(String jobUuid) {
+    public void process(Job job) {
 
-        activeJobs.add(jobUuid);
+        activeJobs.add(job.getJobUuid());
         try {
-            jobPreprocessor.preprocess(jobUuid);
+            jobPreprocessor.preprocess(job);
             log.info("Job was put in progress");
 
-            jobProcessor.process(jobUuid);
+            jobProcessor.process(job);
             log.info("Job was processed");
 
         } finally {
-            activeJobs.remove(jobUuid);
+            activeJobs.remove(job.getJobUuid());
         }
     }
 

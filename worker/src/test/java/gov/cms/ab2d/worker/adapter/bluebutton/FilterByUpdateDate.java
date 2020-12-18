@@ -18,7 +18,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
+import static gov.cms.ab2d.worker.processor.eob.BundleUtils.createIdentifierWithoutMbi;
 import static org.junit.jupiter.api.Assertions.*;
 
 // Because it has an outside dependency, ignore it but wanted to actually test that it works

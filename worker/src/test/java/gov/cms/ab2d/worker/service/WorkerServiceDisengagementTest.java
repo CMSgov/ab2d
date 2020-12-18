@@ -9,7 +9,7 @@ import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.common.util.DataSetup;
-import gov.cms.ab2d.worker.config.JobHandler;
+import gov.cms.ab2d.worker.config.EobJobStartupHandler;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -48,7 +48,7 @@ class WorkerServiceDisengagementTest {
     @Autowired private JobService jobService;
 
     @Autowired private WorkerServiceImpl workerServiceImpl;
-    @Autowired private JobHandler jobHandler;
+    @Autowired private EobJobStartupHandler eobJobStartupHandler;
 
     private WorkerServiceStub workerServiceStub;
 
@@ -64,12 +64,12 @@ class WorkerServiceDisengagementTest {
         contractRepository.deleteAll();
 
         workerServiceStub = new WorkerServiceStub(jobService, propertiesService);
-        ReflectionTestUtils.setField(jobHandler, "workerService", workerServiceStub);
+        ReflectionTestUtils.setField(eobJobStartupHandler, "workerService", workerServiceStub);
     }
 
     @AfterEach
     public void cleanup() {
-        ReflectionTestUtils.setField(jobHandler, "workerService", workerServiceImpl);
+        ReflectionTestUtils.setField(eobJobStartupHandler, "workerService", workerServiceImpl);
         setEngagement(FeatureEngagement.IN_GEAR);
     }
 
