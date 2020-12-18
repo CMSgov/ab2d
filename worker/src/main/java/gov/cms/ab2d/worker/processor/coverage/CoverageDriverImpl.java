@@ -28,7 +28,7 @@ public class CoverageDriverImpl implements CoverageDriver {
 
     private static final long SIXTY_SECONDS_IN_MILLIS = 60000;
     private static final long MINUTE = 1;
-    private static final long TEN_MINUTES = 1;
+    private static final long TEN_MINUTES = 10;
 
     private final CoverageSearchRepository coverageSearchRepository;
     private final ContractService contractService;
