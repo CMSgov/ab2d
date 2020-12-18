@@ -257,7 +257,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      * assuming that another thread or application is not currently pulling anything from the table.
      * If there are no jobs to pull or the table is locked, it returns an empty optional.
      *
-     * @return the next search or else null if there are none or if the table is locked
+     * @return the next search or else an empty Optional if there are none or if the table is locked
      */
     public Optional<CoverageSearch> getNextSearch() {
         Lock lock = coverageLockWrapper.getCoverageLock();
