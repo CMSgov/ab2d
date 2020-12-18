@@ -36,6 +36,13 @@ public interface CoverageService {
     CoveragePeriod getCreateIfAbsentCoveragePeriod(Contract contract, int month, int year);
 
     /**
+     * Retrieve list of coverage periods associated with a contract
+     * @param contract contract to retrieve coverage periods for
+     * @return list of coverage periods associated with a contract
+     */
+    List<CoveragePeriod> findAssociatedCoveragePeriods(Contract contract);
+
+    /**
      * Check current status of a {@link CoveragePeriod}
      * @param periodId {@link CoveragePeriod#getId()} of the relevant search
      * @return true if search {@link CoveragePeriod#getStatus()} is {@link JobStatus#IN_PROGRESS}
