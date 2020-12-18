@@ -27,7 +27,8 @@ import static java.util.stream.Collectors.toList;
 public class CoverageDriverImpl implements CoverageDriver {
 
     private static final long SIXTY_SECONDS_IN_MILLIS = 60000;
-    private static final long SIXTY_SECONDS = 60;
+    private static final long MINUTE = 1;
+    private static final long TEN_MINUTES = 1;
 
     private final CoverageSearchRepository coverageSearchRepository;
     private final ContractService contractService;
@@ -67,7 +68,7 @@ public class CoverageDriverImpl implements CoverageDriver {
             log.info("queueing all stale coverage periods");
 
             // Job runs once a day so we need to grab this lock
-            locked = lock.tryLock(10 * SIXTY_SECONDS, TimeUnit.SECONDS);
+            locked = lock.tryLock(TEN_MINUTES, TimeUnit.MINUTES);
 
             if (locked) {
                 for (CoveragePeriod period : outOfDateInfo) {
@@ -124,7 +125,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         try {
 
             // We run this job once a day so we really need to grab this lock
-            locked = lock.tryLock(10 * SIXTY_SECONDS, TimeUnit.SECONDS);
+            locked = lock.tryLock(TEN_MINUTES, TimeUnit.MINUTES);
 
             if (locked) {
                 log.info("discovering all coverage periods that should exist");
@@ -304,11 +305,11 @@ public class CoverageDriverImpl implements CoverageDriver {
         boolean locked = false;
 
         try {
-            locked = coverageLock.tryLock(SIXTY_SECONDS, TimeUnit.SECONDS);
+            locked = coverageLock.tryLock(MINUTE, TimeUnit.MINUTES);
 
             if (!locked) {
-                log.warn("Could not retrieve lock after timeout of {} seconds." +
-                        " Cannot confirm coverage metadata is available", SIXTY_SECONDS);
+                log.warn("Could not retrieve lock after timeout of {} minute(s)." +
+                        " Cannot confirm coverage metadata is available", MINUTE);
                 return false;
             }
 
