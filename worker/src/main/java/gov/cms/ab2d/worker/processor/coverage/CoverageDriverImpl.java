@@ -26,7 +26,8 @@ import static java.util.stream.Collectors.toList;
 @Service
 public class CoverageDriverImpl implements CoverageDriver {
 
-    private static final long SIXTY_SECONDS = 60000;
+    private static final long SIXTY_SECONDS_IN_MILLIS = 60000;
+    private static final long SIXTY_SECONDS = 60;
 
     private final CoverageSearchRepository coverageSearchRepository;
     private final ContractService contractService;
@@ -217,7 +218,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      * Queues coverage mapping jobs to run on this machine. Coverage mapping jobs are split
      * between workers
      */
-    @Scheduled(fixedDelay = SIXTY_SECONDS, initialDelayString = "${coverage.update.initial.delay}")
+    @Scheduled(fixedDelay = SIXTY_SECONDS_IN_MILLIS, initialDelayString = "${coverage.update.initial.delay}")
     public void loadMappingJob() {
 
         if (propertiesService.isInMaintenanceMode()) {
