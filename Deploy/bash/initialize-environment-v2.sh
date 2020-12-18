@@ -18,7 +18,6 @@ echo "Check vars are not empty before proceeding..."
 
 if [ -z "${CLOUD_TAMER_PARAM}" ] \
     || [ -z "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER_PARAM}" ] \
-    || [ -z "${CMS_ECR_REPO_ENV_PARAM}" ] \
     || [ -z "${DATABASE_SECRET_DATETIME_PARAM}" ] \
     || [ -z "${DEBUG_LEVEL_PARAM}" ] \
     || [ -z "${TARGET_AWS_ACCOUNT_NUMBER_PARAM}" ] \
