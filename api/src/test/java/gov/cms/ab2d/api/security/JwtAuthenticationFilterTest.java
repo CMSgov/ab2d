@@ -64,6 +64,9 @@ class JwtAuthenticationFilterTest {
     @Autowired
     private ContractRepository contractRepository;
 
+    @Autowired
+    private JobRepository jobRepository;
+
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
@@ -75,6 +78,7 @@ class JwtAuthenticationFilterTest {
     @BeforeEach
     @AfterEach
     public void cleanup() {
+        jobRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
         contractRepository.deleteAll();
