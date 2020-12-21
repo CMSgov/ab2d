@@ -1493,34 +1493,35 @@ else
   LAUNCH_CONFIGURATION_EXPECTED_COUNT=2
   LAUNCH_CONFIGURATION_ACTUAL_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-launch-configurations \
     --query "LaunchConfigurations[*].[LaunchConfigurationName,CreatedTime]" \
-    | jq '. | length')
+    --output text \
+    | sort -k2 \
+    | grep -v "\-test\-" \
+    | grep -cv "\-validation\-")
 
-  IGNORE_LAUNCH_CONFIGURATION_COUNT=0
   while [ "$LAUNCH_CONFIGURATION_ACTUAL_COUNT" -gt "$LAUNCH_CONFIGURATION_EXPECTED_COUNT" ]; do
-  
+
+    # Note that "*-test-*" and "*-validation-*" launch configurations will be excluded
     OLD_LAUNCH_CONFIGURATION=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-launch-configurations \
       --query "LaunchConfigurations[*].[LaunchConfigurationName,CreatedTime]" \
       --output text \
       | sort -k2 \
+      | grep -v "\-test\-" \
+      | grep -v "\-validation\-" \
       | head -n1 \
       | awk '{print $1}')
 
-    if [[ "${OLD_LAUNCH_CONFIGURATION}" == *"-test-"* ]]; then
-      IGNORE_LAUNCH_CONFIGURATION_COUNT=$((IGNORE_LAUNCH_CONFIGURATION_COUNT+1))
-    elif [[ "${OLD_LAUNCH_CONFIGURATION}" == *"-validation-"* ]]; then
-      IGNORE_LAUNCH_CONFIGURATION_COUNT=$((IGNORE_LAUNCH_CONFIGURATION_COUNT+1))
-    else
-      aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-launch-configuration \
-        --launch-configuration-name "${OLD_LAUNCH_CONFIGURATION}"
-      sleep 5
-    fi
-    
+    aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-launch-configuration \
+      --launch-configuration-name "${OLD_LAUNCH_CONFIGURATION}"
+    sleep 5
+
+    # Note that "*-test-*" and "*-validation-*" launch configurations will be excluded
     LAUNCH_CONFIGURATION_ACTUAL_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-launch-configurations \
       --query "LaunchConfigurations[*].[LaunchConfigurationName,CreatedTime]" \
-      | jq '. | length')
+      --output text \
+      | sort -k2 \
+      | grep -v "\-test\-" \
+      | grep -cv "\-validation\-")
 
-    LAUNCH_CONFIGURATION_ACTUAL_COUNT=$((LAUNCH_CONFIGURATION_ACTUAL_COUNT-IGNORE_LAUNCH_CONFIGURATION_COUNT))
-  
   done
   
 fi
