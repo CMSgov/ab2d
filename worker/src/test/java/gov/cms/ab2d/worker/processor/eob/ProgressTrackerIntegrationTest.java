@@ -6,6 +6,7 @@ import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
+import gov.cms.ab2d.worker.processor.coverage.CoverageDriverStub;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,13 +26,15 @@ import java.time.OffsetDateTime;
 import java.util.concurrent.ExecutionException;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
+import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @Testcontainers
 @Transactional
-public class ProgressTrackerIntegrationTest {
+class ProgressTrackerIntegrationTest {
 
     private JobProcessorImpl cut;
     @Autowired
@@ -44,9 +47,6 @@ public class ProgressTrackerIntegrationTest {
     private ContractProcessor contractProcessor;
 
     @Autowired
-    private CoverageDriver coverageDriver;
-
-    @Autowired
     private JobOutputRepository jobOutputRepository;
 
     @Value("${patient.contract.year}")
@@ -57,6 +57,8 @@ public class ProgressTrackerIntegrationTest {
 
     @Mock
     BFDClient bfdClient;
+
+    private CoverageDriver coverageDriver;
 
     ProgressTracker progressTracker;
 
@@ -74,6 +76,9 @@ public class ProgressTrackerIntegrationTest {
         patientContractThreadPool.setMaxPoolSize(12);
         patientContractThreadPool.setThreadNamePrefix("contractp-");
         patientContractThreadPool.initialize();
+
+        coverageDriver = spy(new CoverageDriverStub(10, 20));
+
         cut = new JobProcessorImpl(fileService, jobRepository, jobOutputRepository,
                 contractProcessor, coverageDriver, eventLogger);
     }
@@ -84,6 +89,7 @@ public class ProgressTrackerIntegrationTest {
         String contractId = "C0001";
         Contract contract = new Contract();
         contract.setContractNumber(contractId);
+        contract.setAttestedOn(AB2D_EPOCH.toOffsetDateTime());
 
         Job job = createJob(null);
         job.setContract(contract);
@@ -106,7 +112,7 @@ public class ProgressTrackerIntegrationTest {
         when(bfdClient.requestPartDEnrolleesFromServer(contractId, 1)).thenReturn(bundleA);
         when(bfdClient.requestPartDEnrolleesFromServer(contractId, 2)).thenReturn(bundleB);
 
-        cut.processContractBenes(job, month, progressTracker);
+        cut.processContractBenes(job, progressTracker);
 
         Job loadedVal = jobRepository.findById(job.getId()).get();
         assertEquals(30, loadedVal.getProgress());

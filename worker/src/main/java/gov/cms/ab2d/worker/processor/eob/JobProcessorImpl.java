@@ -5,6 +5,7 @@ import com.newrelic.api.agent.Segment;
 import com.newrelic.api.agent.Trace;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.model.CoveragePagingResult;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
@@ -13,6 +14,7 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
+import gov.cms.ab2d.worker.processor.coverage.CoverageDriverException;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -114,12 +116,8 @@ public class JobProcessorImpl implements JobProcessor {
         assert contract != null;
         log.info("Job [{}] - contract [{}] ", job.getJobUuid(), contract.getContractNumber());
         // Retrieve the contract beneficiaries
-        try {
-            processContractBenes(job, month, progressTracker);
-        } catch (ExecutionException | InterruptedException ex) {
-            log.error("Having issue retrieving patients for contract " + contract.getContractNumber());
-            throw ex;
-        }
+
+        processContractBenes(job, progressTracker);
 
         // Create a holder for the contract, writer, progress tracker and attested date
         ContractData contractData = new ContractData(contract, progressTracker, job.getSince(),
@@ -136,34 +134,32 @@ public class JobProcessorImpl implements JobProcessor {
         eventLogger.log(new ContractBeneSearchEvent(job.getUser() == null ? null : job.getUser().getUsername(),
                 job.getJobUuid(),
                 contract.getContractNumber(),
-                progressTracker.getContractCount(contract.getContractNumber()),
+                1,
                 progressTracker.getProcessedCount(),
                 progressTracker.getFailureCount()));
     }
 
-    void processContractBenes(Job job, int month, ProgressTracker progressTracker)
+    void processContractBenes(Job job, ProgressTracker progressTracker)
             throws ExecutionException, InterruptedException {
         Contract contract = job.getContract();
         assert contract != null;
-//        try {
+        try {
+            CoveragePagingResult result = coverageDriver.pageCoverage(job);
+            progressTracker.addPatients(result.getCoverageSummaries());
 
-//            ContractBeneficiaries beneficiaries = new ContractBeneficiaries();
-//            beneficiaries.setContractNumber(contract.getContractNumber());
-//
-//            Map<String, ContractBeneficiaries.PatientDTO> patients = new HashMap<>();
-//
-//            CoveragePagingResult result = coverageDriver.pageCoverage(job);
-//            result.getCoverageSummaries()
+            while (result.getNextRequest().isPresent()) {
+                result = coverageDriver.pageCoverage(result.getNextRequest().get());
+                progressTracker.addPatients(result.getCoverageSummaries());
+            }
 
-//            progressTracker.addPatientsByContract(contractBeneSearch.getPatients(contract.getContractNumber(), month, progressTracker));
-//            int progress = progressTracker.getPercentageCompleted();
-//            job.setProgress(progress);
-//            job.setStatusMessage(progress + "% complete");
-//            jobRepository.save(job);
-//        } catch (ExecutionException | InterruptedException ex) {
-//            log.error("Having issue retrieving patients for contract " + contract.getContractNumber());
-//            throw ex;
-//        }
+            int progress = progressTracker.getPercentageCompleted();
+            job.setProgress(progress);
+            job.setStatusMessage(progress + "% complete");
+            jobRepository.save(job);
+        } catch (CoverageDriverException ex) {
+            log.error("Having issue retrieving patients for contract " + contract.getContractNumber());
+            throw ex;
+        }
     }
 
     /**

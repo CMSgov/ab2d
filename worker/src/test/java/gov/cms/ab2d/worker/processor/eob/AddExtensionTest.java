@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.processor.eob;
 
 import ca.uhn.fhir.context.FhirContext;
+import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
 import org.hl7.fhir.dstu3.model.*;
@@ -63,11 +64,10 @@ public class AddExtensionTest {
         FilterOutByDate.DateRange dateRange = FilterOutByDate.getDateRange(1, 1900, 12,
                 Calendar.getInstance().get(Calendar.YEAR));
 
-        ContractBeneficiaries.PatientDTO patientDTO = new ContractBeneficiaries.PatientDTO(
-                createIdentifier(beneId, mbi), List.of(dateRange));
+        CoverageSummary summary = new CoverageSummary(createIdentifier(beneId, mbi), null, List.of(dateRange));
 
-        Map<String, ContractBeneficiaries.PatientDTO> patients = new HashMap<>();
-        patients.put(beneId, patientDTO);
+        Map<String, CoverageSummary> patients = new HashMap<>();
+        patients.put(beneId, summary);
 
         cut.addMbiIdsToEobs(eobs, patients);
 
@@ -100,11 +100,10 @@ public class AddExtensionTest {
         FilterOutByDate.DateRange dateRange = FilterOutByDate.getDateRange(1, 1900, 12,
                 Calendar.getInstance().get(Calendar.YEAR));
 
-        ContractBeneficiaries.PatientDTO patientDTO = new ContractBeneficiaries.PatientDTO(
-                createIdentifier(beneId, mbi1, mbi2), List.of(dateRange));
+        CoverageSummary summary = new CoverageSummary(createIdentifier(beneId, mbi1, mbi2), null, List.of(dateRange));
 
-        Map<String, ContractBeneficiaries.PatientDTO> patients = new HashMap<>();
-        patients.put(beneId, patientDTO);
+        Map<String, CoverageSummary> patients = new HashMap<>();
+        patients.put(beneId, summary);
 
         cut.addMbiIdsToEobs(eobs, patients);
 

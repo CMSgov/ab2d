@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityNotFoundException;
 import java.time.*;
 import java.util.*;
 
@@ -62,7 +63,10 @@ public class CoverageServiceImpl implements CoverageService {
     @Override
     public CoveragePeriod getCoveragePeriod(Contract contract, int month, int year) {
         checkMonthAndYear(month, year);
-        return coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), month, year);
+
+        Optional<CoveragePeriod> period = coveragePeriodRepo.findByContractIdAndMonthAndYear(contract.getId(), month, year);
+        return period.orElseThrow(() ->
+                new EntityNotFoundException("could not find coverage period matching contract, month, and year"));
     }
 
     @Override
@@ -141,8 +145,6 @@ public class CoverageServiceImpl implements CoverageService {
         coverageServiceRepo.deletePreviousSearch(period, 1);
     }
 
-    // todo: add in appropriate location either the completeCoverageSearch method or within the EOB Search on conclusion
-    //      of the current search. This needs to run after the completion of every search
     @Override
     public CoveragePagingResult pageCoverage(CoveragePagingRequest pagingRequest) {
 

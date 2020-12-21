@@ -1,18 +1,11 @@
 package gov.cms.ab2d.worker.processor.eob;
 
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.User;
+import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.worker.TestUtil;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.PatientDTO;
-import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
+import gov.cms.ab2d.worker.processor.coverage.CoverageDriverStub;
 import gov.cms.ab2d.worker.service.FileService;
-import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,24 +22,14 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.ParseException;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
-import static gov.cms.ab2d.worker.processor.eob.BundleUtils.createIdentifierWithoutMbi;
 import static java.lang.Boolean.TRUE;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class JobProcessorUnitTest {
@@ -62,16 +45,17 @@ class JobProcessorUnitTest {
     @Mock private FileService fileService;
     @Mock private JobRepository jobRepository;
     @Mock private JobOutputRepository jobOutputRepository;
-    @Mock private CoverageDriver coverageDriver;
     @Mock private ContractProcessor contractProcessor;
     @Mock private LogManager eventLogger;
 
+    private CoverageDriverStub coverageDriver;
     private Job job;
-    private ContractBeneficiaries patientsByContract;
 
     @BeforeEach
     void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
+
+        coverageDriver = spy(new CoverageDriverStub(10, 20));
         cut = new JobProcessorImpl(
                 fileService,
                 jobRepository,
@@ -89,12 +73,9 @@ class JobProcessorUnitTest {
         var contract = createContract();
         job.setContract(contract);
 
-        patientsByContract = createPatientsByContractResponse(contract);
-//        Mockito.when(contractBeneSearch.getPatients(anyString(), anyInt(), any())).thenReturn(patientsByContract);
-
         final Path outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
         final Path outputDir = Files.createDirectories(outputDirPath);
-        Mockito.lenient().when(fileService.createDirectory(any(Path.class))).thenReturn(outputDir);
+        lenient().when(fileService.createDirectory(any(Path.class))).thenReturn(outputDir);
     }
 
     @Test
@@ -103,9 +84,9 @@ class JobProcessorUnitTest {
 
         var processedJob = cut.process(job);
 
-        assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
-        assertThat(processedJob.getStatusMessage(), is("100%"));
-        assertThat(processedJob.getExpiresAt(), notNullValue());
+        assertEquals(JobStatus.SUCCESSFUL, processedJob.getStatus());
+        assertEquals("100%", processedJob.getStatusMessage());
+        assertNotNull(processedJob.getExpiresAt());
         doVerify();
     }
 
@@ -116,15 +97,16 @@ class JobProcessorUnitTest {
 
         var processedJob = cut.process(job);
 
-        assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
-        assertThat(processedJob.getStatusMessage(), is("100%"));
-        assertThat(processedJob.getExpiresAt(), notNullValue());
+        assertEquals(JobStatus.SUCCESSFUL, processedJob.getStatus());
+        assertEquals("100%", processedJob.getStatusMessage());
+        assertNotNull(processedJob.getExpiresAt());
         doVerify();
     }
 
     private void doVerify() throws ExecutionException, InterruptedException {
         verify(fileService).createDirectory(any());
-//        verify(contractBeneSearch).getPatients(anyString(), anyInt(), any());
+        verify(coverageDriver).pageCoverage(any(Job.class));
+        verify(coverageDriver).pageCoverage(any(CoveragePagingRequest.class));
     }
 
     @Test
@@ -150,12 +132,13 @@ class JobProcessorUnitTest {
 
         var processedJob = cut.process(job);
 
-        assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
-        assertThat(processedJob.getStatusMessage(), is("100%"));
-        assertThat(processedJob.getExpiresAt(), notNullValue());
+        assertEquals(JobStatus.SUCCESSFUL, processedJob.getStatus());
+        assertEquals("100%", processedJob.getStatusMessage());
+        assertNotNull(processedJob.getExpiresAt());
 
         verify(fileService, times(2)).createDirectory(any());
-//        verify(contractBeneSearch).getPatients(anyString(), anyInt(), any());
+        verify(coverageDriver).pageCoverage(any(Job.class));
+        verify(coverageDriver).pageCoverage(any(CoveragePagingRequest.class));
     }
 
     @Test
@@ -173,16 +156,14 @@ class JobProcessorUnitTest {
         var uncheckedIOE = new UncheckedIOException(errMsg, new IOException(errMsg));
 
         Mockito.when(fileService.createDirectory(any())).thenThrow(uncheckedIOE);
-//        Mockito.lenient().when(contractBeneSearch.getPatients(anyString(), anyInt(), any())).thenReturn(patientsByContract);
-
         var processedJob = cut.process(job);
 
-        assertThat(processedJob.getStatus(), is(JobStatus.FAILED));
-        assertThat(processedJob.getStatusMessage(), CoreMatchers.startsWith("Could not delete"));
-        assertThat(processedJob.getExpiresAt(), nullValue());
+        assertEquals(JobStatus.FAILED, processedJob.getStatus());
+        assertTrue(processedJob.getStatusMessage().startsWith("Could not delete"));
+        assertNull(processedJob.getExpiresAt());
 
         verify(fileService).createDirectory(any());
-//        verify(contractBeneSearch, never()).getPatients(anyString(), anyInt(), any());
+        verify(coverageDriver, never()).pageCoverage(any(Job.class));
     }
 
     @Test
@@ -193,16 +174,15 @@ class JobProcessorUnitTest {
         var uncheckedIOE = new UncheckedIOException(errMsg, new IOException(errMsg));
 
         Mockito.when(fileService.createDirectory(any())).thenThrow(uncheckedIOE);
-//        Mockito.lenient().when(contractBeneSearch.getPatients(anyString(), anyInt(), any())).thenReturn(patientsByContract);
 
         var processedJob = cut.process(job);
 
-        assertThat(processedJob.getStatus(), is(JobStatus.FAILED));
-        assertThat(processedJob.getStatusMessage(), CoreMatchers.startsWith("Could not create output directory"));
-        assertThat(processedJob.getExpiresAt(), nullValue());
+        assertEquals(JobStatus.FAILED, processedJob.getStatus());
+        assertTrue(processedJob.getStatusMessage().startsWith("Could not create output directory"));
+        assertNull(processedJob.getExpiresAt());
 
         verify(fileService).createDirectory(any());
-//        verify(contractBeneSearch, never()).getPatients(anyString(), anyInt(), any());
+        verify(coverageDriver, never()).pageCoverage(any(Job.class));
     }
 
     private User createUser() {
@@ -232,27 +212,5 @@ class JobProcessorUnitTest {
         job.setStatus(JobStatus.IN_PROGRESS);
         job.setUser(user);
         return job;
-    }
-
-    private ContractBeneficiaries createPatientsByContractResponse(Contract contract) throws ParseException {
-        PatientDTO p1 = toPatientDTO();
-        PatientDTO p2 = toPatientDTO();
-        PatientDTO p3 = toPatientDTO();
-
-        return ContractBeneficiaries.builder()
-                .contractNumber(contract.getContractNumber())
-                .patient(p1.getBeneficiaryId(), p1)
-                .patient(p2.getBeneficiaryId(), p2)
-                .patient(p3.getBeneficiaryId(), p3)
-                .build();
-    }
-
-    private PatientDTO toPatientDTO() {
-        int anInt = random.nextInt(11);
-        var dateRange =  TestUtil.getOpenRange();
-        return PatientDTO.builder()
-                .identifiers(createIdentifierWithoutMbi("patient_" + anInt))
-                .dateRangesUnderContract(Arrays.asList(dateRange))
-                .build();
     }
 }

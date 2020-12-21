@@ -14,6 +14,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import javax.persistence.EntityNotFoundException;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -113,9 +114,16 @@ class CoverageServiceImplTest {
         CoveragePeriod period = coverageService.getCoveragePeriod(contract1, JANUARY, YEAR);
         assertEquals(period1Jan, period);
 
-        assertThrows(IllegalArgumentException.class, () -> coverageService.getCoveragePeriod(contract1, JANUARY, 2000));
+    }
 
-        assertThrows(IllegalArgumentException.class, () -> coverageService.getCoveragePeriod(contract1, JANUARY, 2100));
+    @DisplayName("Get a coverage period fails on EntityNotFoundException")
+    @Test
+    void getCoveragePeriodFailsOnEntityException() {
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> coverageService.getCoveragePeriod(contract1, 12, 2020));
+
+        assertEquals("could not find coverage period matching contract, month, and year", exception.getMessage());
     }
 
     @DisplayName("Get or create does not insert duplicate period")

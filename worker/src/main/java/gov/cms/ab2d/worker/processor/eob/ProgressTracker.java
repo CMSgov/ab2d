@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.processor.eob;
 
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
+import gov.cms.ab2d.common.model.CoverageSummary;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,10 +8,9 @@ import lombok.Singular;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
-import java.util.IntSummaryStatistics;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Collections;
 
 @Getter
 @Builder
@@ -23,15 +22,15 @@ public class ProgressTracker {
     // Related to determining whether the beneficiary search is complete
 
     // The ratio between the beneficiary EOF search time in the job vs looking up contract beneficiaries
-    @Getter
-    private static final double EST_BEN_SEARCH_JOB_PERCENTAGE = 0.7;
+    public static final double EST_BEN_SEARCH_JOB_PERCENTAGE = 0.7;
+
     // The number of contracts searched for this job
     private final int numContracts;
     // The number of contract beneficiary searches completed
     private int totalContractBeneficiariesSearchFinished;
 
     @Singular
-    private final List<ContractBeneficiaries> patientsByContracts = new ArrayList<>();
+    private final Map<String, CoverageSummary> patients = new HashMap<>();
 
     private int totalCount;
     private int processedCount;
@@ -62,22 +61,14 @@ public class ProgressTracker {
         ++failureCount;
     }
 
-    public void addPatientsByContract(ContractBeneficiaries bene) {
-        this.patientsByContracts.add(bene);
+    public void addPatients(List<CoverageSummary> coverage) {
+        coverage.forEach(summary -> {
+            patients.put(summary.getIdentifiers().getBeneficiaryId(), summary);
+        });
     }
 
     public void incrementTotalContractBeneficiariesSearchFinished() {
         ++totalContractBeneficiariesSearchFinished;
-    }
-
-    public int getContractCount(String contractNumber) {
-        ContractBeneficiaries response = patientsByContracts.stream()
-                .filter(c -> contractNumber.equalsIgnoreCase(c.getContractNumber()))
-                .findFirst().orElse(null);
-        if (response == null || response.getPatients() == null) {
-            return 0;
-        }
-        return response.getPatients().size();
     }
 
     /**
@@ -86,28 +77,7 @@ public class ProgressTracker {
      * @return number of patients
      */
     public int getTotalCount() {
-        if (totalCount == 0) {
-            totalCount = patientsByContracts.stream()
-                    .mapToInt(patientsByContract -> patientsByContract.getPatients().size())
-                    .sum();
-        }
-
-        return totalCount;
-    }
-
-    public int getTotalPossibleCount() {
-        int remainingToBeDefined = numContracts - patientsByContracts.size();
-        return getTotalCount() + (remainingToBeDefined * getTotalAverageNumber());
-    }
-
-    public int getTotalAverageNumber() {
-        // If we don't have any contract mappings, assume that it's max value so the denominator will underestimate amount done
-        if (getTotalCount() == 0) {
-            return Integer.MAX_VALUE;
-        }
-        // return the average number of patients in known contracts
-        IntSummaryStatistics stats = patientsByContracts.stream().mapToInt(c -> c.getPatients().size()).summaryStatistics();
-        return (int) Math.round(stats.getAverage());
+        return patients.size();
     }
 
     /**
@@ -139,7 +109,7 @@ public class ProgressTracker {
      */
     public int getPercentageCompleted() {
         double percentBenesDone = 0;
-        int totalPossibleCount = getTotalPossibleCount();
+        int totalPossibleCount = patients.size();
         if (totalPossibleCount != 0) {
             double percentBenesDonePart = (double) processedCount / totalPossibleCount;
             if (percentBenesDonePart > 1.0) {
@@ -153,6 +123,7 @@ public class ProgressTracker {
             log.error("Percent of contract beneficiaries done is more than 100%");
             percentContractBeneSearchDonePart = 1.0;
         }
+
         double percentContractBeneSearchDone = percentContractBeneSearchDonePart * (1 - EST_BEN_SEARCH_JOB_PERCENTAGE);
         double amountCompleted = percentBenesDone + percentContractBeneSearchDone;
 
@@ -180,7 +151,7 @@ public class ProgressTracker {
         }
 
         // If the number of contracts complete (the values aren't added to patientsByContract until they are), it's all done
-        if (this.numContracts == this.patientsByContracts.size()) {
+        if (this.numContracts == this.patients.size()) {
             return 1.0;
         }
 
@@ -189,14 +160,5 @@ public class ProgressTracker {
 
         // This is the total completed threads done over the amount that needs to be done
         return ((double) this.totalContractBeneficiariesSearchFinished) / totalToSearch;
-    }
-
-    public Map<String, ContractBeneficiaries.PatientDTO> getPatientsByContract(String contractNumber) {
-        return getPatientsByContracts()
-                .stream()
-                .filter(byContract -> byContract.getContractNumber().equals(contractNumber))
-                .findFirst()
-                .map(ContractBeneficiaries::getPatients)
-                .orElse(Collections.emptyMap());
     }
 }

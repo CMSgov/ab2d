@@ -6,8 +6,6 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.worker.TestUtil;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.PatientDTO;
 import gov.cms.ab2d.worker.processor.stub.PatientClaimsProcessorStub;
 import gov.cms.ab2d.worker.service.FileService;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,7 +21,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.ParseException;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -37,6 +34,9 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ContractProcessorUnitTest {
+
+    private static final String jobUuid = "6d08bf08-f926-4e19-8d89-ad67ef89f17e";
+
     // class under test
     private ContractProcessor cut;
 
@@ -47,14 +47,14 @@ class ContractProcessorUnitTest {
     @Mock private LogManager eventLogger;
     private PatientClaimsProcessor patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
 
-    private ContractBeneficiaries patientsByContract;
     private Path outputDir;
-    private ContractData contractData;
+    private Contract contract;
+    private Job job;
+    private User user;
 
     @BeforeEach
     void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        String jobUuid = "6d08bf08-f926-4e19-8d89-ad67ef89f17e";
         FhirContext fhirContext = ca.uhn.fhir.context.FhirContext.forDstu3();
         cut = new ContractProcessorImpl(
                 fileService,
@@ -68,28 +68,32 @@ class ContractProcessorUnitTest {
         ReflectionTestUtils.setField(cut, "reportProgressLogFrequency", 3);
         ReflectionTestUtils.setField(cut, "tryLockTimeout", 30);
 
-        var user = createUser();
-        var job = createJob(user);
-        var contract = createContract();
+        user = createUser();
+        job = createJob(user);
+        contract = createContract();
 
-        patientsByContract = createPatientsByContractResponse(contract);
 
         var outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
         outputDir = Files.createDirectories(outputDirPath);
+
+
+    }
+
+    @Test
+    @DisplayName("When a job is cancelled while it is being processed, then attempt to stop the job gracefully without completing it")
+    void whenJobIsCancelledWhileItIsBeingProcessed_ThenAttemptToStopTheJob() {
+
+        List<CoverageSummary> patientsByContract = createPatientsByContractResponse(contract, 3);
 
         ProgressTracker progressTracker = ProgressTracker.builder()
                 .jobUuid(jobUuid)
                 .numContracts(1)
                 .failureThreshold(10)
                 .build();
-        progressTracker.addPatientsByContract(patientsByContract);
-        contractData = new ContractData(contract, progressTracker, job.getSince(),
+        progressTracker.addPatients(patientsByContract);
+        ContractData contractData = new ContractData(contract, progressTracker, job.getSince(),
                 job.getUser() != null ? job.getUser().getUsername() : null);
-    }
 
-    @Test
-    @DisplayName("When a job is cancelled while it is being processed, then attempt to stop the job gracefully without completing it")
-    void whenJobIsCancelledWhileItIsBeingProcessed_ThenAttemptToStopTheJob() {
         when(jobRepository.findJobStatus(anyString())).thenReturn(JobStatus.CANCELLED);
 
         var exceptionThrown = assertThrows(JobCancelledException.class,
@@ -103,7 +107,17 @@ class ContractProcessorUnitTest {
     @Test
     @DisplayName("When many patientId are present, 'PercentageCompleted' should be updated many times")
     void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() throws Exception {
-        patientsByContract.setPatients(createPatients(18));
+        List<CoverageSummary> patientsByContract = createPatientsByContractResponse(contract, 18);
+
+        ProgressTracker progressTracker = ProgressTracker.builder()
+                .jobUuid(jobUuid)
+                .numContracts(1)
+                .failureThreshold(10)
+                .build();
+        progressTracker.addPatients(patientsByContract);
+        ContractData contractData = new ContractData(contract, progressTracker, job.getSince(),
+                job.getUser() != null ? job.getUser().getUsername() : null);
+
         var jobOutputs = cut.process(outputDir, contractData);
 
         assertFalse(jobOutputs.isEmpty());
@@ -140,23 +154,18 @@ class ContractProcessorUnitTest {
         return job;
     }
 
-    private ContractBeneficiaries createPatientsByContractResponse(Contract contract) throws ParseException {
-        Map<String, PatientDTO> patientMap = createPatients(3);
-        return ContractBeneficiaries.builder()
-                .contractNumber(contract.getContractNumber())
-                .patients(patientMap)
-                .build();
-    }
+    private List<CoverageSummary> createPatientsByContractResponse(Contract contract, int num) {
+        List<CoverageSummary> summaries = new ArrayList<>();
 
-    private Map<String, PatientDTO> createPatients(int num) throws ParseException {
         FilterOutByDate.DateRange dateRange = TestUtil.getOpenRange();
-        Map<String, PatientDTO> patients = new HashMap<>();
         for (int i = 0; i < num; i++) {
-            PatientDTO p = PatientDTO.builder()
-                    .dateRangesUnderContract(Collections.singletonList(dateRange))
-                    .identifiers(createIdentifierWithoutMbi("patient_" + i)).build();
-            patients.put(p.getBeneficiaryId(), p);
+            CoverageSummary summary = new CoverageSummary(
+                    createIdentifierWithoutMbi("patient_" + i),
+                    contract,
+                    List.of(dateRange)
+            );
+            summaries.add(summary);
         }
-        return patients;
+        return summaries;
     }
 }

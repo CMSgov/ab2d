@@ -1,10 +1,10 @@
 package gov.cms.ab2d.worker.processor.eob;
 
 import ca.uhn.fhir.context.FhirContext;
+import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hl7.fhir.dstu3.model.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +16,7 @@ import java.util.*;
 
 import static gov.cms.ab2d.worker.processor.eob.ContractProcessorImpl.ID_EXT;
 import static gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable.*;
+import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ContractProcessorImplTest {
@@ -41,8 +42,6 @@ class ContractProcessorImplTest {
     public void before() {
         processor = new ContractProcessorImpl(fileService, jobRepository, patientClaimsProcessor,
                 eventLogger, fhirContext);
-
-
     }
 
     @Test
@@ -57,14 +56,11 @@ class ContractProcessorImplTest {
         ExplanationOfBenefit eob = new ExplanationOfBenefit();
         eob.setPatient(new Reference().setReference("Patient/bene-id"));
 
-        Map<String, ContractBeneficiaries.PatientDTO> patientDTOs = new HashMap<>();
+        Map<String, CoverageSummary> coverageSummaries = new HashMap<>() {{
+                put(identifiers.getBeneficiaryId(), new CoverageSummary(identifiers, null, null));
+        }};
 
-        ContractBeneficiaries.PatientDTO dto = new ContractBeneficiaries.PatientDTO();
-        dto.setIdentifiers(identifiers);
-
-        patientDTOs.put("bene-id", dto);
-
-        processor.addMbiIdsToEobs(Collections.singletonList(eob), patientDTOs);
+        processor.addMbiIdsToEobs(singletonList(eob), coverageSummaries);
 
         assertFalse(eob.getExtension().isEmpty());
         assertEquals(3, eob.getExtension().size());

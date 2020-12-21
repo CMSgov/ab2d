@@ -370,18 +370,23 @@ public class CoverageDriverImpl implements CoverageDriver {
 
     @Override
     public CoveragePagingResult pageCoverage(Job job) {
-        // Assume current time zone is EST since all deployments are in EST
-        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime now = getEndDateTime();
+
         Contract contract = job.getContract();
-        ZonedDateTime startDate = getStartDateForMetadata(job);
+
+        if (contract == null) {
+            throw new CoverageDriverException("cannot retrieve metadata for job missing contract");
+        }
+
+        ZonedDateTime startDateTime = getStartDateTime(job);
 
         try {
             List<CoveragePeriod> periodsToReport = new ArrayList<>();
-            while (startDate.isBefore(now)) {
+            while (startDateTime.isBefore(now)) {
                 CoveragePeriod periodToReport =
-                        coverageService.getCoveragePeriod(contract, startDate.getMonthValue(), startDate.getYear());
+                        coverageService.getCoveragePeriod(contract, startDateTime.getMonthValue(), startDateTime.getYear());
                 periodsToReport.add(periodToReport);
-                startDate = startDate.plusMonths(1);
+                startDateTime = startDateTime.plusMonths(1);
             }
 
             // Make initial request which returns a result and a request starting at the next cursor
@@ -396,25 +401,42 @@ public class CoverageDriverImpl implements CoverageDriver {
         }
     }
 
-    private ZonedDateTime getStartDateForMetadata(Job job) {
+    private static ZonedDateTime getEndDateTime() {
+        // Assume current time zone is EST since all deployments are in EST
+        ZonedDateTime now = ZonedDateTime.now(AB2D_ZONE);
+        now = now.plusMonths(1);
+        now = ZonedDateTime.of(now.getYear(), now.getMonthValue(),
+                1, 0, 0, 0, 0,  AB2D_ZONE);
+        return now;
+    }
+
+    private ZonedDateTime getStartDateTime(Job job) {
         Contract contract = job.getContract();
 
         // Attestation time should never be null for a job making it to this point
-        ZonedDateTime startMetadata = contract.getESTAttestationTime();
+        ZonedDateTime startDateTime = contract.getESTAttestationTime();
 
         // Apply since
         if (job.getSince() != null) {
             ZonedDateTime since = job.getSince().atZoneSameInstant(AB2D_ZONE);
             log.debug("paging request for eob job with since date so checking if since date can be applied");
-            if (since.isAfter(startMetadata)) {
-                startMetadata = since;
+            if (since.isAfter(startDateTime)) {
+                startDateTime = since;
                 log.info("applying since date for paging request");
             } else {
                 log.warn("since date before attestation time which may indicate a problem");
             }
         }
 
-        return startMetadata;
+        ZonedDateTime now = ZonedDateTime.now(AB2D_ZONE);
+
+        if (startDateTime.isAfter(now)) {
+            throw new CoverageDriverException("contract attestation time or since date on job is after current time," +
+                    " cannot find metadata for coverage periods in the future");
+        }
+
+        return ZonedDateTime.of(startDateTime.getYear(), startDateTime.getMonthValue(),
+                1, 0, 0, 0, 0, AB2D_ZONE);
     }
 
     @Override

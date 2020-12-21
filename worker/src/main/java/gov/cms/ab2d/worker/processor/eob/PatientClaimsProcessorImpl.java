@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.processor.eob;
 import com.newrelic.api.agent.Token;
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.BeneficiarySearchEvent;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
@@ -76,7 +77,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     }
 
     private List<ExplanationOfBenefit> getEobBundleResources(PatientClaimsRequest request) {
-        ContractBeneficiaries.PatientDTO patient = request.getPatientDTO();
+        CoverageSummary patient = request.getCoverageSummary();
+        String beneficiaryId = patient.getIdentifiers().getBeneficiaryId();
         OffsetDateTime attTime = request.getAttTime();
 
         OffsetDateTime start = OffsetDateTime.now();
@@ -91,18 +93,18 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 sinceTime = request.getSinceTime();
             }
             BFDClient.BFD_BULK_JOB_ID.set(request.getJob());
-            eobBundle = bfdClient.requestEOBFromServer(patient.getBeneficiaryId(), sinceTime);
+            eobBundle = bfdClient.requestEOBFromServer(patient.getIdentifiers().getBeneficiaryId(), sinceTime);
             logManager.log(LogManager.LogType.KINESIS,
                     new BeneficiarySearchEvent(request.getUser(), request.getJob(), request.getContractNum(),
                             start, OffsetDateTime.now(),
-                            request.getPatientDTO() != null ? request.getPatientDTO().getBeneficiaryId() : null,
+                            beneficiaryId,
                             "SUCCESS"));
 
         } catch (Exception ex) {
             logManager.log(LogManager.LogType.KINESIS,
                     new BeneficiarySearchEvent(request.getUser(), request.getJob(), request.getContractNum(),
                             start, OffsetDateTime.now(),
-                            request.getPatientDTO() != null ? request.getPatientDTO().getBeneficiaryId() : null,
+                            beneficiaryId,
                             "ERROR: " + ex.getMessage()));
             throw ex;
         } finally {
@@ -110,12 +112,12 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         }
 
         final List<BundleEntryComponent> entries = eobBundle.getEntry();
-        final List<ExplanationOfBenefit> resources = extractResources(request.getContractNum(), entries, patient.getDateRangesUnderContract(), attTime);
+        final List<ExplanationOfBenefit> resources = extractResources(request.getContractNum(), entries, patient.getDateRanges(), attTime);
 
         while (eobBundle.getLink(Bundle.LINK_NEXT) != null) {
             eobBundle = bfdClient.requestNextBundleFromServer(eobBundle);
             final List<BundleEntryComponent> nextEntries = eobBundle.getEntry();
-            resources.addAll(extractResources(request.getContractNum(), nextEntries, patient.getDateRangesUnderContract(), attTime));
+            resources.addAll(extractResources(request.getContractNum(), nextEntries, patient.getDateRanges(), attTime));
         }
 
         log.debug("Bundle - Total: {} - Entries: {} ", eobBundle.getTotal(), entries.size());

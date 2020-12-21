@@ -4,10 +4,7 @@ import ca.uhn.fhir.context.FhirContext;
 import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Token;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import gov.cms.ab2d.common.model.Identifiers;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobOutput;
-import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.common.util.FHIRUtil;
@@ -90,7 +87,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contractNumber));
 
         ProgressTracker progressTracker = contractData.getProgressTracker();
-        Map<String, PatientDTO> patients = progressTracker.getPatientsByContract(contractNumber);
+        Map<String, CoverageSummary> patients = progressTracker.getPatients();
         int patientCount = patients.size();
         log.info("Contract [{}] has [{}] Patients", contractNumber, patientCount);
 
@@ -103,7 +100,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         try (StreamHelper helper = new TextStreamHelperImpl(outputDirPath, contractNumber, getRollOverThreshold(), tryLockTimeout,
                 eventLogger, job)) {
             var futureHandles = new ArrayList<Future<EobSearchResult>>();
-            for (Map.Entry<String, PatientDTO> patient : patients.entrySet()) {
+            for (Map.Entry<String, CoverageSummary> patient : patients.entrySet()) {
                 ++recordsProcessedCount;
                 futureHandles.add(processPatient(patient.getValue(), contractData));
                 // Periodically check if cancelled
@@ -147,7 +144,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @param contractData - the contract data information
      * @return a Future<EobSearchResult>
      */
-    private Future<EobSearchResult> processPatient(PatientDTO patient, ContractData contractData) {
+    private Future<EobSearchResult> processPatient(CoverageSummary patient, ContractData contractData) {
         final Token token = NewRelic.getAgent().getTransaction().getToken();
 
         // Using a ThreadLocal to communicate contract number to RoundRobinBlockingQueue
@@ -212,7 +209,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @param progressTracker - the tracker with updated tracker information
      */
     private int processHandles(List<Future<EobSearchResult>> futureHandles, ProgressTracker progressTracker,
-                               Map<String, PatientDTO> patients, StreamHelper helper) {
+                               Map<String, CoverageSummary> patients, StreamHelper helper) {
         int numberOfEobs = 0;
         var iterator = futureHandles.iterator();
         while (iterator.hasNext()) {
@@ -234,7 +231,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         return numberOfEobs;
     }
 
-    void addMbiIdsToEobs(List<ExplanationOfBenefit> eobs, Map<String, PatientDTO> patients) {
+    void addMbiIdsToEobs(List<ExplanationOfBenefit> eobs, Map<String, CoverageSummary> patients) {
         if (eobs == null || eobs.isEmpty()) {
             return;
         }
@@ -317,7 +314,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @param future          - a specific future
      */
     private EobSearchResult processFuture(List<Future<EobSearchResult>> futureHandles, ProgressTracker progressTracker,
-                                          Future<EobSearchResult> future, Map<String, PatientDTO> patients) {
+                                          Future<EobSearchResult> future, Map<String, CoverageSummary> patients) {
         progressTracker.incrementProcessedCount();
         try {
             EobSearchResult result = future.get();
@@ -355,7 +352,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @param patients - the patient map containing the patient id & patient object
      * @return true if this patient is a member of the correct contract
      */
-    boolean validPatientInContract(ExplanationOfBenefit benefit, Map<String, ContractBeneficiaries.PatientDTO> patients) {
+    boolean validPatientInContract(ExplanationOfBenefit benefit, Map<String, CoverageSummary> patients) {
         if (benefit == null || patients == null) {
             log.debug("Passed an invalid benefit or an invalid list of patients");
             return false;

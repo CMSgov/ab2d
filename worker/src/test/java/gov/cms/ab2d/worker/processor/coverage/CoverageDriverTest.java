@@ -21,6 +21,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import javax.persistence.EntityNotFoundException;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
