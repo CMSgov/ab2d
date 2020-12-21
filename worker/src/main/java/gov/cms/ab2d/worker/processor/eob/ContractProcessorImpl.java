@@ -18,6 +18,7 @@ import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.PatientDTO;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.processor.StreamHelper;
 import gov.cms.ab2d.worker.processor.TextStreamHelperImpl;
+import gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -265,13 +266,13 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @return mbi extension
      */
     Extension createExtension(String mbi, boolean current) {
-        Identifier identifier = new Identifier().setSystem(PatientContractCallable.MBI_ID).setValue(mbi);
+        Identifier identifier = new Identifier().setSystem(CoverageMappingCallable.MBI_ID).setValue(mbi);
 
         Coding coding = new Coding()
-                .setCode(current ? PatientContractCallable.CURRENT_MBI : PatientContractCallable.HISTORIC_MBI);
+                .setCode(current ? CoverageMappingCallable.CURRENT_MBI : CoverageMappingCallable.HISTORIC_MBI);
 
         Extension currencyExtension = new Extension()
-                .setUrl(PatientContractCallable.CURRENCY_IDENTIFIER)
+                .setUrl(CoverageMappingCallable.CURRENCY_IDENTIFIER)
                 .setValue(coding);
         identifier.setExtension(List.of(currencyExtension));
 

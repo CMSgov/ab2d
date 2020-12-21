@@ -336,6 +336,7 @@ public class CoverageServiceImpl implements CoverageService {
             throw new IllegalArgumentException(errMsg);
         }
 
+        // todo: change to EST offset since all deployments are in EST
         OffsetDateTime time = OffsetDateTime.now(ZoneOffset.UTC);
         int currentYear = time.getYear();
 

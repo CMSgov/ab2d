@@ -4,6 +4,8 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
+import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
+import gov.cms.ab2d.worker.processor.coverage.CoverageDriverException;
 import gov.cms.ab2d.worker.service.WorkerService;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -37,11 +39,14 @@ public class EobJobStartupHandler implements MessageHandler {
     private final LockRegistry lockRegistry;
     private final WorkerService workerService;
     private final JobService jobService;
+    private final CoverageDriver coverageDriver;
 
-    public EobJobStartupHandler(LockRegistry lockRegistry, WorkerService workerService, JobService jobService) {
+    public EobJobStartupHandler(LockRegistry lockRegistry, WorkerService workerService,
+                                JobService jobService, CoverageDriver coverageDriver) {
         this.lockRegistry = lockRegistry;
         this.workerService = workerService;
         this.jobService = jobService;
+        this.coverageDriver = coverageDriver;
     }
 
     @Override
@@ -65,11 +70,20 @@ public class EobJobStartupHandler implements MessageHandler {
             try {
                 Job job = jobService.getJobByJobUuid(jobId);
 
-                log.info("coverage metadata is up to date so job will be started");
-                workerService.process(job);
+                if (coverageDriver.isCoverageAvailable(job)) {
+                    log.info("coverage metadata is up to date so job will be started");
+                    workerService.process(job);
+                } else {
+                    log.info("coverage metadata is not up to date so job will not be started");
+                }
 
             } catch (ResourceNotFoundException rnfe) {
                 throw new MessagingException("could not find job in database for "  + jobId + " job uuid", rnfe);
+            } catch (CoverageDriverException coverageDriver) {
+                throw new MessagingException("could not check coverage due to unexpected exception", coverageDriver);
+            } catch (InterruptedException interruptedException) {
+                throw new MessagingException("could not determine whether coverage metadata was up to date",
+                        interruptedException);
             } finally {
                 lock.unlock();
             }

@@ -7,7 +7,7 @@ import org.hl7.fhir.dstu3.model.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static gov.cms.ab2d.worker.processor.eob.PatientContractCallable.*;
+import static gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable.*;
 
 public class BundleUtils {
 

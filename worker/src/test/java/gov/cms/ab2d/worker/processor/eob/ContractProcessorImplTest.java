@@ -5,8 +5,6 @@ import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
-import gov.cms.ab2d.worker.processor.eob.ContractProcessorImpl;
-import gov.cms.ab2d.worker.processor.eob.PatientClaimsProcessor;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hl7.fhir.dstu3.model.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,8 +15,7 @@ import org.mockito.Mock;
 import java.util.*;
 
 import static gov.cms.ab2d.worker.processor.eob.ContractProcessorImpl.ID_EXT;
-import static gov.cms.ab2d.worker.processor.eob.PatientContractCallable.*;
-import static gov.cms.ab2d.worker.processor.eob.PatientContractCallable.MBI_ID;
+import static gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ContractProcessorImplTest {

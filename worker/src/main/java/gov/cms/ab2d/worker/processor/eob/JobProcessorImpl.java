@@ -12,7 +12,7 @@ import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneSearch;
+import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,8 +56,8 @@ public class JobProcessorImpl implements JobProcessor {
     private final FileService fileService;
     private final JobRepository jobRepository;
     private final JobOutputRepository jobOutputRepository;
-    private final ContractBeneSearch contractBeneSearch;
     private final ContractProcessor contractProcessor;
+    private final CoverageDriver coverageDriver;
     private final LogManager eventLogger;
 
     /**
@@ -145,16 +145,25 @@ public class JobProcessorImpl implements JobProcessor {
             throws ExecutionException, InterruptedException {
         Contract contract = job.getContract();
         assert contract != null;
-        try {
-            progressTracker.addPatientsByContract(contractBeneSearch.getPatients(contract.getContractNumber(), month, progressTracker));
-            int progress = progressTracker.getPercentageCompleted();
-            job.setProgress(progress);
-            job.setStatusMessage(progress + "% complete");
-            jobRepository.save(job);
-        } catch (ExecutionException | InterruptedException ex) {
-            log.error("Having issue retrieving patients for contract " + contract.getContractNumber());
-            throw ex;
-        }
+//        try {
+
+//            ContractBeneficiaries beneficiaries = new ContractBeneficiaries();
+//            beneficiaries.setContractNumber(contract.getContractNumber());
+//
+//            Map<String, ContractBeneficiaries.PatientDTO> patients = new HashMap<>();
+//
+//            CoveragePagingResult result = coverageDriver.pageCoverage(job);
+//            result.getCoverageSummaries()
+
+//            progressTracker.addPatientsByContract(contractBeneSearch.getPatients(contract.getContractNumber(), month, progressTracker));
+//            int progress = progressTracker.getPercentageCompleted();
+//            job.setProgress(progress);
+//            job.setStatusMessage(progress + "% complete");
+//            jobRepository.save(job);
+//        } catch (ExecutionException | InterruptedException ex) {
+//            log.error("Having issue retrieving patients for contract " + contract.getContractNumber());
+//            throw ex;
+//        }
     }
 
     /**

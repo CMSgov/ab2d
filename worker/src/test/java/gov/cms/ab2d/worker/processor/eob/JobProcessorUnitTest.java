@@ -8,9 +8,9 @@ import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.TestUtil;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneSearch;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
 import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.PatientDTO;
+import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.BeforeEach;
@@ -62,7 +62,7 @@ class JobProcessorUnitTest {
     @Mock private FileService fileService;
     @Mock private JobRepository jobRepository;
     @Mock private JobOutputRepository jobOutputRepository;
-    @Mock private ContractBeneSearch contractBeneSearch;
+    @Mock private CoverageDriver coverageDriver;
     @Mock private ContractProcessor contractProcessor;
     @Mock private LogManager eventLogger;
 
@@ -76,8 +76,8 @@ class JobProcessorUnitTest {
                 fileService,
                 jobRepository,
                 jobOutputRepository,
-                contractBeneSearch,
                 contractProcessor,
+                coverageDriver,
                 eventLogger
         );
 
@@ -90,7 +90,7 @@ class JobProcessorUnitTest {
         job.setContract(contract);
 
         patientsByContract = createPatientsByContractResponse(contract);
-        Mockito.when(contractBeneSearch.getPatients(anyString(), anyInt(), any())).thenReturn(patientsByContract);
+//        Mockito.when(contractBeneSearch.getPatients(anyString(), anyInt(), any())).thenReturn(patientsByContract);
 
         final Path outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
         final Path outputDir = Files.createDirectories(outputDirPath);
@@ -124,7 +124,7 @@ class JobProcessorUnitTest {
 
     private void doVerify() throws ExecutionException, InterruptedException {
         verify(fileService).createDirectory(any());
-        verify(contractBeneSearch).getPatients(anyString(), anyInt(), any());
+//        verify(contractBeneSearch).getPatients(anyString(), anyInt(), any());
     }
 
     @Test
@@ -155,7 +155,7 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getExpiresAt(), notNullValue());
 
         verify(fileService, times(2)).createDirectory(any());
-        verify(contractBeneSearch).getPatients(anyString(), anyInt(), any());
+//        verify(contractBeneSearch).getPatients(anyString(), anyInt(), any());
     }
 
     @Test
@@ -173,7 +173,7 @@ class JobProcessorUnitTest {
         var uncheckedIOE = new UncheckedIOException(errMsg, new IOException(errMsg));
 
         Mockito.when(fileService.createDirectory(any())).thenThrow(uncheckedIOE);
-        Mockito.lenient().when(contractBeneSearch.getPatients(anyString(), anyInt(), any())).thenReturn(patientsByContract);
+//        Mockito.lenient().when(contractBeneSearch.getPatients(anyString(), anyInt(), any())).thenReturn(patientsByContract);
 
         var processedJob = cut.process(job);
 
@@ -182,7 +182,7 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getExpiresAt(), nullValue());
 
         verify(fileService).createDirectory(any());
-        verify(contractBeneSearch, never()).getPatients(anyString(), anyInt(), any());
+//        verify(contractBeneSearch, never()).getPatients(anyString(), anyInt(), any());
     }
 
     @Test
@@ -193,7 +193,7 @@ class JobProcessorUnitTest {
         var uncheckedIOE = new UncheckedIOException(errMsg, new IOException(errMsg));
 
         Mockito.when(fileService.createDirectory(any())).thenThrow(uncheckedIOE);
-        Mockito.lenient().when(contractBeneSearch.getPatients(anyString(), anyInt(), any())).thenReturn(patientsByContract);
+//        Mockito.lenient().when(contractBeneSearch.getPatients(anyString(), anyInt(), any())).thenReturn(patientsByContract);
 
         var processedJob = cut.process(job);
 
@@ -202,7 +202,7 @@ class JobProcessorUnitTest {
         assertThat(processedJob.getExpiresAt(), nullValue());
 
         verify(fileService).createDirectory(any());
-        verify(contractBeneSearch, never()).getPatients(anyString(), anyInt(), any());
+//        verify(contractBeneSearch, never()).getPatients(anyString(), anyInt(), any());
     }
 
     private User createUser() {

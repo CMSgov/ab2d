@@ -1,5 +1,7 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
+import gov.cms.ab2d.common.model.CoveragePagingRequest;
+import gov.cms.ab2d.common.model.CoveragePagingResult;
 import gov.cms.ab2d.common.model.Job;
 
 public interface CoverageDriver {
@@ -34,4 +36,8 @@ public interface CoverageDriver {
      * @throws InterruptedException if thread is interrupted trying to obtain lock
      */
     boolean isCoverageAvailable(Job job) throws InterruptedException;
+
+    CoveragePagingResult pageCoverage(Job job);
+
+    CoveragePagingResult pageCoverage(CoveragePagingRequest request);
 }

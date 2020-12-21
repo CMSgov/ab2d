@@ -19,8 +19,8 @@ import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneSearch;
 import gov.cms.ab2d.worker.processor.EobTestDataUtil;
+import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.util.HealthCheck;
 import org.hl7.fhir.dstu3.model.Bundle;
@@ -78,8 +78,7 @@ class JobProcessorIntegrationTest {
     @Autowired
     private JobOutputRepository jobOutputRepository;
     @Autowired
-    @Qualifier("contractAdapterStub")
-    private ContractBeneSearch contractBeneSearchStub;
+    private CoverageDriver coverageDriver;
     @Autowired
     private SqlEventLogger sqlEventLogger;
     @Autowired
@@ -142,8 +141,8 @@ class JobProcessorIntegrationTest {
                 fileService,
                 jobRepository,
                 jobOutputRepository,
-                contractBeneSearchStub,
                 contractProcessor,
+                coverageDriver,
                 logManager
         );
 

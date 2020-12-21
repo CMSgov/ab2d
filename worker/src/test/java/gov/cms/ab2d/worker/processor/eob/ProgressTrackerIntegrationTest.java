@@ -5,8 +5,7 @@ import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneSearch;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneSearchImpl;
+import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,10 +44,10 @@ public class ProgressTrackerIntegrationTest {
     private ContractProcessor contractProcessor;
 
     @Autowired
-    private JobOutputRepository jobOutputRepository;
+    private CoverageDriver coverageDriver;
 
     @Autowired
-    private ContractBeneSearch contractBeneSearch;
+    private JobOutputRepository jobOutputRepository;
 
     @Value("${patient.contract.year}")
     private int year;
@@ -75,8 +74,8 @@ public class ProgressTrackerIntegrationTest {
         patientContractThreadPool.setMaxPoolSize(12);
         patientContractThreadPool.setThreadNamePrefix("contractp-");
         patientContractThreadPool.initialize();
-        contractBeneSearch = new ContractBeneSearchImpl(bfdClient, eventLogger, patientContractThreadPool, false);
-        cut = new JobProcessorImpl(fileService, jobRepository, jobOutputRepository, contractBeneSearch, contractProcessor, eventLogger);
+        cut = new JobProcessorImpl(fileService, jobRepository, jobOutputRepository,
+                contractProcessor, coverageDriver, eventLogger);
     }
 
     @Test

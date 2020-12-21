@@ -30,6 +30,9 @@ public class CoverageDriverImpl implements CoverageDriver {
     private static final long MINUTE = 1;
     private static final long TEN_MINUTES = 10;
 
+    // Number of metadata records to pull from database in one go
+    private static final int PAGING_SIZE = 10000;
+
     private final CoverageSearchRepository coverageSearchRepository;
     private final ContractService contractService;
     private final CoverageService coverageService;
@@ -363,6 +366,60 @@ public class CoverageDriverImpl implements CoverageDriver {
         now = ZonedDateTime.of(now.getYear(), now.getMonthValue(),
                 1, 0, 0, 0, 0,  AB2D_ZONE);
         return now;
+    }
+
+    @Override
+    public CoveragePagingResult pageCoverage(Job job) {
+        // Assume current time zone is EST since all deployments are in EST
+        ZonedDateTime now = ZonedDateTime.now();
+        Contract contract = job.getContract();
+        ZonedDateTime startDate = getStartDateForMetadata(job);
+
+        try {
+            List<CoveragePeriod> periodsToReport = new ArrayList<>();
+            while (startDate.isBefore(now)) {
+                CoveragePeriod periodToReport =
+                        coverageService.getCoveragePeriod(contract, startDate.getMonthValue(), startDate.getYear());
+                periodsToReport.add(periodToReport);
+                startDate = startDate.plusMonths(1);
+            }
+
+            // Make initial request which returns a result and a request starting at the next cursor
+            List<Integer> periodIds = periodsToReport.stream().map(CoveragePeriod::getId).collect(toList());
+            CoveragePagingRequest request = new CoveragePagingRequest(PAGING_SIZE, null, periodIds);
+
+            // Make request for coverage metadata
+            return coverageService.pageCoverage(request);
+        } catch (Exception exception) {
+            log.error("coverage period missing or year,month query incorrect, driver should have resolved earlier");
+            throw new CoverageDriverException("coverage driver failing preconditions", exception);
+        }
+    }
+
+    private ZonedDateTime getStartDateForMetadata(Job job) {
+        Contract contract = job.getContract();
+
+        // Attestation time should never be null for a job making it to this point
+        ZonedDateTime startMetadata = contract.getESTAttestationTime();
+
+        // Apply since
+        if (job.getSince() != null) {
+            ZonedDateTime since = job.getSince().atZoneSameInstant(AB2D_ZONE);
+            log.debug("paging request for eob job with since date so checking if since date can be applied");
+            if (since.isAfter(startMetadata)) {
+                startMetadata = since;
+                log.info("applying since date for paging request");
+            } else {
+                log.warn("since date before attestation time which may indicate a problem");
+            }
+        }
+
+        return startMetadata;
+    }
+
+    @Override
+    public CoveragePagingResult pageCoverage(CoveragePagingRequest request) {
+        return coverageService.pageCoverage(request);
     }
 
     private List<CoveragePeriod> filterBySince(Job job, List<CoveragePeriod> periods) {
