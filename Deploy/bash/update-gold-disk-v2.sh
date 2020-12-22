@@ -41,6 +41,14 @@ else
   CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
 fi
 
+# Set Parent AWS environment
+
+if [ "${TARGET_CMS_ENV_PARAM}" == "ab2d-east-prod-test" ]; then
+  PARENT_ENV="ab2d-east-prod"
+else
+  PARENT_ENV="${TARGET_CMS_ENV_PARAM}"
+fi
+
 #
 # Set remaining variables
 #
@@ -87,9 +95,9 @@ source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_aws_sts_assu
 #
 
 if [ "${CLOUD_TAMER}" == "true" ]; then
-  fn_get_temporary_aws_credentials_via_cloudtamer_api "${TARGET_AWS_ACCOUNT_NUMBER}" "${TARGET_CMS_ENV}"
+  fn_get_temporary_aws_credentials_via_cloudtamer_api "${TARGET_AWS_ACCOUNT_NUMBER}" "${PARENT_ENV}"
 else
-  fn_get_temporary_aws_credentials_via_aws_sts_assume_role "${TARGET_AWS_ACCOUNT_NUMBER}" "${TARGET_CMS_ENV}"
+  fn_get_temporary_aws_credentials_via_aws_sts_assume_role "${TARGET_AWS_ACCOUNT_NUMBER}" "${PARENT_ENV}"
 fi
 
 #
@@ -101,7 +109,7 @@ fi
 echo "Getting first public subnet id..."
 
 SUBNET_PUBLIC_1_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-subnets \
-  --filters "Name=tag:Name,Values=${TARGET_CMS_ENV}-public-a" \
+  --filters "Name=tag:Name,Values=${PARENT_ENV}-public-a" \
   --query "Subnets[*].SubnetId" \
   --output text)
 
