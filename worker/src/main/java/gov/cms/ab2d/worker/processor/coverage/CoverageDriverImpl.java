@@ -5,7 +5,6 @@ import gov.cms.ab2d.common.repository.CoverageSearchRepository;
 import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.CoverageService;
 import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.worker.config.CoverageUpdateConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -200,7 +199,7 @@ public class CoverageDriverImpl implements CoverageDriver {
 
         Set<CoveragePeriod> stalePeriods = new LinkedHashSet<>();
         long monthsInPast = 0;
-        OffsetDateTime dateTime = OffsetDateTime.now(DateUtil.AB2D_ZONE);
+        OffsetDateTime dateTime = OffsetDateTime.now(AB2D_ZONE);
 
         do {
             // Get past month and year
