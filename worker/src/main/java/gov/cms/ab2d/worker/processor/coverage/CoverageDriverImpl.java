@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
+import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static java.util.stream.Collectors.toList;
 
 @Slf4j
@@ -134,7 +135,9 @@ public class CoverageDriverImpl implements CoverageDriver {
                 // coverage periods for each contract
                 List<Contract> attestedContracts = contractService.getAllAttestedContracts();
                 for (Contract contract : attestedContracts) {
-                    discoverCoveragePeriods(contract);
+                    if (contract.getUpdateMode() != Contract.UpdateMode.TEST) {
+                        discoverCoveragePeriods(contract);
+                    }
                 }
 
                 log.info("discovered all coverage periods now exiting");
@@ -153,7 +156,8 @@ public class CoverageDriverImpl implements CoverageDriver {
     }
 
     private void discoverCoveragePeriods(Contract contract) {
-        ZonedDateTime now = ZonedDateTime.now();
+        // Assume current time is EST since all AWS deployments are in EST
+        ZonedDateTime now = getEndDateTime();
         ZonedDateTime attestationTime = contract.getESTAttestationTime();
 
         // Force first coverage period to be after
@@ -351,6 +355,15 @@ public class CoverageDriverImpl implements CoverageDriver {
                 coverageLock.unlock();
             }
         }
+    }
+
+    private static ZonedDateTime getEndDateTime() {
+        // Assume current time zone is EST since all deployments are in EST
+        ZonedDateTime now = ZonedDateTime.now(AB2D_ZONE);
+        now = now.plusMonths(1);
+        now = ZonedDateTime.of(now.getYear(), now.getMonthValue(),
+                1, 0, 0, 0, 0,  AB2D_ZONE);
+        return now;
     }
 
     private List<CoveragePeriod> filterBySince(Job job, List<CoveragePeriod> periods) {
