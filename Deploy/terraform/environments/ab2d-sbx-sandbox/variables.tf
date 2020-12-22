@@ -102,7 +102,7 @@ variable "ec2_minimum_instance_count_api" {
 
 variable "ec2_maximum_instance_count_api" {
   type    = number
-  default = 4
+  default = 2
 }
 
 variable "ec2_desired_instance_count_worker" {
@@ -117,7 +117,7 @@ variable "ec2_minimum_instance_count_worker" {
 
 variable "ec2_maximum_instance_count_worker" {
   type    = number
-  default = 4
+  default = 2
 }
 
 variable "gold_image_name" {
