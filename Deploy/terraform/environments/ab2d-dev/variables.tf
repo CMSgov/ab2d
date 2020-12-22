@@ -92,27 +92,32 @@ variable "ec2_iam_profile" {
 
 variable "ec2_desired_instance_count_api" {
   type    = number
-  default = 2
+  default = 1
 }
 
 variable "ec2_minimum_instance_count_api" {
-  default = ""
+  type    = number
+  default = 1
 }
 
 variable "ec2_maximum_instance_count_api" {
-  default = ""
+  type    = number
+  default = 1
 }
 
 variable "ec2_desired_instance_count_worker" {
-  default = ""
+  type    = number
+  default = 1
 }
 
 variable "ec2_minimum_instance_count_worker" {
-  default = ""
+  type    = number
+  default = 1
 }
 
 variable "ec2_maximum_instance_count_worker" {
-  default = ""
+  type    = number
+  default = 1
 }
 
 variable "gold_image_name" {
