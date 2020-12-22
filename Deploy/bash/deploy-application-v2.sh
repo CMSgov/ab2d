@@ -628,7 +628,6 @@ cd "terraform/environments/${TARGET_CMS_ENV}"
   echo 'private_subnet_ids = ["'"${SUBNET_PRIVATE_1_ID}"'","'"${SUBNET_PRIVATE_2_ID}"'"]'
   echo 'deployment_controller_subnet_ids = ["'"${SUBNET_PUBLIC_1_ID}"'","'"${SUBNET_PUBLIC_2_ID}"'"]'
   echo 'ec2_instance_type_api = "'"${EC2_INSTANCE_TYPE_API}"'"'
-  echo 'ec2_desired_instance_count_api = "'"${EC2_DESIRED_INSTANCE_COUNT_API}"'"'
   echo 'ec2_minimum_instance_count_api = "'"${EC2_MINIMUM_INSTANCE_COUNT_API}"'"'
   echo 'ec2_maximum_instance_count_api = "'"${EC2_MAXIMUM_INSTANCE_COUNT_API}"'"'
   echo 'ecs_container_definition_new_memory_api = "'"${API_MEMORY}"'"'
@@ -644,6 +643,8 @@ cd "terraform/environments/${TARGET_CMS_ENV}"
   echo 'linux_user = "'"${SSH_USERNAME}"'"'
   echo 'deployer_ip_address = "'"${DEPLOYER_IP_ADDRESS}"'"'
 } > "${TARGET_CMS_ENV}.auto.tfvars"
+
+#   echo 'ec2_desired_instance_count_api = "'"${EC2_DESIRED_INSTANCE_COUNT_API}"'"'
 
 ######################################
 # Deploy target environment components
@@ -1240,6 +1241,7 @@ terraform apply \
   --var "ab2d_hpms_auth_key_secret=${AB2D_HPMS_AUTH_KEY_SECRET}" \
   --var "stunnel_latest_version=${STUNNEL_LATEST_VERSION}" \
   --var "gold_image_name=${GOLD_IMAGE_NAME}" \
+  --var "ec2_desired_instance_count_api=${EC2_DESIRED_INSTANCE_COUNT_API}" \
   --target module.api \
   --auto-approve
 
