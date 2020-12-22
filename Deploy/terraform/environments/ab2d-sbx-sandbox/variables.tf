@@ -91,7 +91,8 @@ variable "ec2_iam_profile" {
 }
 
 variable "ec2_desired_instance_count_api" {
-  default = ""
+  type    = number
+  default = 2
 }
 
 variable "ec2_minimum_instance_count_api" {
