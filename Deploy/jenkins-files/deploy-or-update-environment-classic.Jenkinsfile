@@ -9,11 +9,28 @@ pipeline {
   }
   stages {
     stage('Initialize or verify base environment') {
+      when {
+        expression { params.UPDATE_BASE_ENVIRONMENT == 'true' }
+      }
       steps {
         script {
 	      dir ('Deploy/bash') {
 	        sh '''
 	          ./initialize-environment-v2.sh
+	        sh '''
+	      }
+	    }
+      }
+    }
+    stage('Deploy or update gold disk') {
+      when {
+        expression { params.UPDATE_GOLD_DISK == 'true' }
+      }
+      steps {
+        script {
+	      dir ('Deploy/bash') {
+	        sh '''
+	          ./update-gold-disk-v2.sh
 	        sh '''
 	      }
 	    }
