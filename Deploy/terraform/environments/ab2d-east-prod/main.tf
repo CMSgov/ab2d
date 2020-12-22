@@ -301,8 +301,9 @@ module "kinesis_firehose" {
 # Management Target
 
 module "management_target" {
-  source                  = "../../modules/management_target"
-  env                     = var.env
-  mgmt_aws_account_number = var.mgmt_aws_account_number
-  aws_account_number      = var.aws_account_number
+  source                        = "../../modules/management_target"
+  env                           = var.env
+  mgmt_aws_account_number       = var.mgmt_aws_account_number
+  aws_account_number            = var.aws_account_number
+  federated_login_role_policies = var.federated_login_role_policies
 }

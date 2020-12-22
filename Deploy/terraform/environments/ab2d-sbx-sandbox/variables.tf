@@ -531,3 +531,9 @@ variable "ab2d_bfd_kms_arn" {
   default     = ""
   description = "Please pass this on command line and not as a value here"
 }
+
+variable "federated_login_role_policies" {
+  type    = list(string)
+  default = []
+  description = "Please pass this on command line and not as a value here"
+}

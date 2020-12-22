@@ -76,3 +76,9 @@ variable "ec2_instance_tag" {
   default     = ""
   description = "This is meant to be a different value on every new deployment"
 }
+
+variable "federated_login_role_policies" {
+  type    = list(string)
+  default = []
+  description = "Please pass this on command line and not as a value here"
+}
