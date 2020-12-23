@@ -131,7 +131,7 @@ variable "db_allocated_storage_size" {
 }
 
 variable "postgres_engine_version" {
-  default = "11.5"
+  default = "11.8"
 }
 
 variable "db_instance_class" {
