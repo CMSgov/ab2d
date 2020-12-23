@@ -70,11 +70,11 @@ fi
 
 # Import the "get temporary AWS credentials via CloudTamer API" function
 
-source "${START_DIR}/bash/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh"
+source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh"
 
 # Import the "get temporary AWS credentials via AWS STS assume role" function
 
-source "${START_DIR}/bash/functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh"
+source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh"
 
 #
 # Set AWS target environment
@@ -112,7 +112,7 @@ echo "***************************************************************"
 echo "Initialize and validate terraform for the target environment..."
 echo "***************************************************************"
 
-cd "${START_DIR}"
+cd "${START_DIR}/.."
 cd "terraform/environments/${TARGET_CMS_ENV}"
 
 rm -f ./*.tfvars
@@ -133,7 +133,7 @@ echo "Create or update database instance..."
 
 # Change to the "python3" directory
 
-cd "${START_DIR}"
+cd "${START_DIR}/.."
 cd python3
 
 # Get database secrets
@@ -160,7 +160,7 @@ VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE=$(./get-database-secret.py "${TARGET_CMS_ENV}"
 
 # Change to the target directory
 
-cd "${START_DIR}"
+cd "${START_DIR}/.."
 cd "terraform/environments/${TARGET_CMS_ENV}"
 
 #
@@ -310,13 +310,13 @@ DB_ENDPOINT=$(aws --region "${AWS_DEFAULT_REGION}" rds describe-db-instances \
   --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" \
   --output=text)
 
-cd "${START_DIR}"
+cd "${START_DIR}/.."
 cd "terraform/environments/${TARGET_CMS_ENV}"
 rm -f generated/.pgpass
 
 # Generate ".pgpass" file
 
-cd "${START_DIR}"
+cd "${START_DIR}/.."
 cd "terraform/environments/${TARGET_CMS_ENV}"
 mkdir -p generated
 
@@ -334,7 +334,7 @@ export PGPASSFILE="${PWD}/.pgpass"
 # Deploy controller
 #
 
-cd "${START_DIR}"
+cd "${START_DIR}/.."
 cd "terraform/environments/${TARGET_CMS_ENV}"
 
 echo "Create or update controller..."
@@ -457,7 +457,7 @@ fi
 
 # Change to the "python3" directory
 
-cd "${START_DIR}"
+cd "${START_DIR}/.."
 cd python3
 
 # Get AB2D_BFD_INSIGHTS_S3_BUCKET secret
@@ -494,7 +494,7 @@ fi
 
 # Create Kinesis Firehose for lower environments only
 
-cd "${START_DIR}"
+cd "${START_DIR}/.."
 cd "terraform/environments/${TARGET_CMS_ENV}"
 
 if [ "${TARGET_CMS_ENV}" != "ab2d-east-prod" ]; then
