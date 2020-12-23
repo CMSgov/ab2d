@@ -12721,15 +12721,19 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html
 
    *Example for Prod or Sbx:*
 
-   - multi-az
+   - **Multi-AZ deployment:** Create a standby instance
+
+   - **Avaliability Zone:** No preference
 
    *Example for Dev or Impl:*
 
-   - single az
+   - **Multi-AZ deployment:** Do not create a standby instance
+
+   - **Avaliability Zone:** No preference
 
 1. Configure the "Database authentication" section as follows
 
-   - Password authentication
+   - **Database authentication options:** Password authentication
 
 1. Note that the "Encryption" section was configued when the snapshot was created
 
@@ -12749,12 +12753,106 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html
 
 1. Select **Restore DB Instance**
 
+1. Wait for the **Status** column for "ab2d-new" to display "Available"
+
+   *Note the following:
+
+   - you may need to select the refresh icon to see the column update
+
+   - this may take a while
+
 ### Configure deployment to use new DB instance
 
-- rename old instance to ab2d-old
+1. Log on to the target AWS environment
 
-- rename new instance to ab2d
+1. Select **RDS**
 
-- do I need to do anything with database host in secrets manager?
+1. Rename the old "ab2d" instance to ab2d-old"
 
-- do I need to do anything with terraform state?
+   1. Select **Databases** from the leftmost panel
+
+   1. Select the radio button beside "ab2d"
+
+   1. Select **Modify**
+
+   1. Change only the following under the "Settings" section
+
+      - **DB instance identifier:** ab2d-old
+
+   1. Select **Continue**
+
+   1. Select the **Apply immediately** radio button under the "Scheduling of modifications" section
+
+   1. Select **Modify DB Instance**
+
+   1. Note that it may take a minute before it initiates the naming process
+
+1. Rename the old "ab2d-new" instance to ab2d"
+
+   1. Select **Databases** from the leftmost panel
+
+   1. Select the radio button beside "ab2d"
+
+   1. Select **Modify**
+
+   1. Change only the following under the "Settings" section
+
+      - **DB instance identifier:** ab2d
+
+   1. Change only the following under the "Delete protection" section
+
+      - **Enable deletion protection:** checked
+
+   1. Select **Continue**
+
+   1. Select the **Apply immediately** radio button under the "Scheduling of modifications" section
+
+   1. Select **Modify DB Instance**
+
+   1. Note that it may take a minute before it initiates the naming process
+
+   1. Wait for the instance to change to "ab2d" with a status of "Available"
+
+1. Note that you may want to SSH tunnel into the new database instance to verify that everything looks OK before deleting the "ab2d-old" instance
+
+1. Log on to the target AWS environment
+
+1. Select **RDS**
+
+1. If everything looks OK with the the new "ab2d" instance, delete the "ab2d-old" instance
+
+   1. Select **Databases** from the leftmost panel
+
+   1. Select the radio button beside "ab2d-old"
+
+   1. Select **Modify**
+
+   1. Change only the following under the "Delete protection" section
+
+      - **Enable deletion protection:** unchecked
+
+   1. Select **Continue**
+
+   1. Select the **Apply immediately** radio button under the "Scheduling of modifications" section
+
+   1. Select **Modify DB instance**
+
+   1. Select the radio button beside "ab2d-old" again
+
+   1. Select the **Actions** dropdown
+
+   1. Select **Delete**
+
+   1. Uncheck **Create final snapshot**
+
+   1. Check **Retain automated backups**
+
+   1. Type the following in the "To confirm deletion, type delete me into the field" text box
+
+      ```
+      delete me
+      ```
+
+   1. Select **Delete**
+
+   1. Wait for the deletion to complete
