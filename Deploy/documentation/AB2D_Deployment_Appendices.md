@@ -147,6 +147,10 @@
 1. [Appendix XXX: Fix CloudTamer scripts broken by ITOPS role change](#appendix-xxx-fix-cloudtamer-scripts-broken-by-itops-role-change)
 1. [Appendix YYY: Add IAM components under the new ITOPS restrictions](#appendix-yyy-add-iam-components-under-the-new-itops-restrictions)
 1. [Appendix ZZZ: Revert your branch to a previous commit and force push to GitHub](#appendix-zzz-revert-your-branch-to-a-previous-commit-and-force-push-to-github)
+1. [Appendix AAAA: Change encryption key of AWS RDS Instance](#appendix-aaaa-change-encryption-key-of-aws-rds-instance)
+   * [Create manual snapshot of RDS DB instance](#create-manual-snapshot-of-rds-db-instance)
+   * [Copy manual snapshot using desired KMS key](#restore-manual-snapshot-using-desired-kms-key
+   * [Create new RDS DB instance from the snapshot copy](#create-new-rds-db-instance-from-the-snapshot-copy)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -12568,3 +12572,189 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html
    ```ShellSession
    $ git push --force
    ```
+
+## Appendix AAAA: Change encryption key of AWS RDS Instance
+
+### Create manual snapshot of RDS DB instance
+
+1. Log on to the target AWS environment
+
+1. Select **RDS**
+
+1. Select **Databases** from the leftmost panel
+
+1. Select the radio button beside the desired DB instance
+
+1. Select the **Actions** dropdown
+
+1. Select **Take snapshot**
+
+1. Type the following in the **Snapshot name** text box
+
+   *Example:*
+   
+   ```
+   ab2d-db-snapshot-2020-12-22-1730
+   ```
+
+1. Select **Take snapshot**
+
+1. Scroll to the right in the "Manual snapshots" table and note the **Progress** column
+
+1. Wait for **Progress** to display "Completed" for the snapshot
+
+   *Note that you will need to select the refresh icon to get an update on the status.*
+
+### Copy manual snapshot using desired KMS key
+
+1. Log on to the target AWS environment
+
+1. Select **RDS**
+
+1. Select **Snapshots** from the leftmost panel
+
+1. Select the **Manual** tab
+
+1. Select the checkbox beside the desired snapshot
+
+   *Example:*
+   
+   ```
+   ab2d-db-snapshot-2020-12-22-1730
+   ```
+
+1. Select the **Actions** dropdown
+
+1. Select **Copy snapshot**
+
+1. Configure the "Settings" section as follows
+
+   *Example:*
+   
+   - **Destination Region:** US East (N. Virginia)
+
+   - **New DB Snapshot Identifier:** ab2d-db-snapshot-with-ab2d-kms-2020-12-22-1730
+
+   - **Copy Tags:** checked
+
+1. Configure the "Encryption" section as follows
+
+   - **Master key:** ab2d-kms
+
+1. Select **Copy snapshot**
+
+1. Scroll to the right in the "Manual snapshots" table and note the **Progress** column
+
+1. Wait for **Progress** to display "Completed" for the snapshot
+
+   *Note the following:*
+
+   - select the refresh icon to get an update on the status
+
+   - depending on the amount of data, this process may take hours
+
+### Create new RDS DB instance from the snapshot copy
+
+1. Log on to the target AWS environment
+
+1. Select **RDS**
+
+1. Select **Snapshots** from the leftmost panel
+
+1. Select the **Manual** tab
+
+1. Select the checkbox beside the desired snapshot
+
+   *Example:*
+   
+   ```
+   ab2d-db-snapshot-with-ab2d-kms-2020-12-22-1730
+   ```
+
+1. Select the **Actions** dropdown
+
+1. Select **Restore snapshot**
+
+1. Configure the "DB specifications" section as follows
+   
+   - **Engine:** PostgreSQL
+
+1. Configure the "Settings" section as follows
+
+   *Example:*
+   
+   - **DB Snapshot ID:** ab2d-db-snapshot-with-ab2d-kms-2020-12-22-1730
+
+   - **DB Instance identifier:** ab2d-new
+
+1. Configure the "Connectivity" section as follows
+
+   - **Virtual private cloud (VPC):** ab2d-dev
+
+   - **Subnet group:** ab2d-rds-subnet-group
+
+   - **Public access:** No
+
+   - **VPC security group:** Choose existing
+
+   - **Existing VPC security groups:** ab2d-database-sg (make sure to delete "default")
+
+   - **Additional configuration - Database port:** 5432
+
+1. Configure the "DB instance size" section as follows
+
+   - **DB instance class radio button:** Standard classes (includes m classes)
+
+   - **DB instance class:** db.m4.2xlarge (note that 'Include previous generation classes' must be selected first in order to choose this instance class)
+
+   - **Include previous generation classes:** selected
+
+1. Configure the "Storage" section as follows
+
+   - **Storage type:** Provisioned IOPS (SSD)
+
+   - **Allocated storage:** 500
+
+   - **Provisioned IOPS:** 5000
+
+1. Configure the "Availability & durability" section as follows
+
+   *Example for Prod or Sbx:*
+
+   - multi-az
+
+   *Example for Dev or Impl:*
+
+   - single az
+
+1. Configure the "Database authentication" section as follows
+
+   - Password authentication
+
+1. Note that the "Encryption" section was configued when the snapshot was created
+
+1. Configure the "Additional configuration" section as follows
+
+   **DB parameter group:** ab2d-rds-parameter-group
+   
+   **Option group:** default:postgres-11
+
+   **Copy tags to snapshots:** checked
+
+   **Postgresql log:** checked
+
+   **Upgrade log:** checked
+
+   **Enable auto minor version upgrade:** checked
+
+1. Select **Restore DB Instance**
+
+### Configure deployment to use new DB instance
+
+- rename old instance to ab2d-old
+
+- rename new instance to ab2d
+
+- do I need to do anything with database host in secrets manager?
+
+- do I need to do anything with terraform state?
