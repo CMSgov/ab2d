@@ -36,6 +36,20 @@ pipeline {
 	    }
       }
     }
+    stage('Deploy or update gold disk') {
+      when {
+        expression { params.UPDATE_CORE_INFRASTRUCTURE == 'true' }
+      }
+      steps {
+        script {
+	      dir ('Deploy/bash') {
+	        sh '''
+	          ./deploy-infrastructure-v2.sh
+	        sh '''
+	      }
+	    }
+      }
+    }
     stage('Deploy or update application') {
       steps {
         script {
