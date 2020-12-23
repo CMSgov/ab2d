@@ -36,7 +36,7 @@ pipeline {
 	    }
       }
     }
-    stage('Deploy or update gold disk') {
+    stage('Deploy or update core infrastructure') {
       when {
         expression { params.UPDATE_CORE_INFRASTRUCTURE == 'true' }
       }
