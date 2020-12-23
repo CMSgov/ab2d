@@ -3,7 +3,6 @@ package gov.cms.ab2d.worker.processor.eob;
 import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.util.FilterOutByDate;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
 import org.hl7.fhir.dstu3.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;

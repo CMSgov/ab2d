@@ -1,11 +1,9 @@
 package gov.cms.ab2d.worker.processor.eob;
 
 import gov.cms.ab2d.common.model.Identifiers;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
 import org.hl7.fhir.dstu3.model.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable.*;
 
@@ -28,10 +26,6 @@ public class BundleUtils {
             entries.add(e);
         }
         return bundle;
-    }
-
-    public static List<ContractBeneficiaries.PatientDTO> getPatient(String id, Collection<ContractBeneficiaries.PatientDTO> patients) {
-        return patients.stream().filter(c -> c.getBeneficiaryId().equalsIgnoreCase(id)).collect(Collectors.toList());
     }
 
     public static Bundle.BundleEntryComponent createBundleEntry(String patientId, String mbi, int year) {

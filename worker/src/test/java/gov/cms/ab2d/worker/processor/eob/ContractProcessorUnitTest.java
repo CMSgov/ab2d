@@ -45,7 +45,7 @@ class ContractProcessorUnitTest {
     @Mock private FileService fileService;
     @Mock private JobRepository jobRepository;
     @Mock private LogManager eventLogger;
-    private PatientClaimsProcessor patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
+    private PatientClaimsProcessor patientClaimsProcessor;
 
     private Path outputDir;
     private Contract contract;
@@ -56,6 +56,9 @@ class ContractProcessorUnitTest {
     void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         FhirContext fhirContext = ca.uhn.fhir.context.FhirContext.forDstu3();
+
+        patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
+
         cut = new ContractProcessorImpl(
                 fileService,
                 jobRepository,
@@ -87,9 +90,10 @@ class ContractProcessorUnitTest {
 
         ProgressTracker progressTracker = ProgressTracker.builder()
                 .jobUuid(jobUuid)
-                .numContracts(1)
+                .expectedBeneficiaries(3)
                 .failureThreshold(10)
                 .build();
+
         progressTracker.addPatients(patientsByContract);
         ContractData contractData = new ContractData(contract, progressTracker, job.getSince(),
                 job.getUser() != null ? job.getUser().getUsername() : null);
@@ -111,7 +115,7 @@ class ContractProcessorUnitTest {
 
         ProgressTracker progressTracker = ProgressTracker.builder()
                 .jobUuid(jobUuid)
-                .numContracts(1)
+                .expectedBeneficiaries(18)
                 .failureThreshold(10)
                 .build();
         progressTracker.addPatients(patientsByContract);
@@ -154,7 +158,7 @@ class ContractProcessorUnitTest {
         return job;
     }
 
-    private List<CoverageSummary> createPatientsByContractResponse(Contract contract, int num) {
+    private static List<CoverageSummary> createPatientsByContractResponse(Contract contract, int num) {
         List<CoverageSummary> summaries = new ArrayList<>();
 
         FilterOutByDate.DateRange dateRange = TestUtil.getOpenRange();

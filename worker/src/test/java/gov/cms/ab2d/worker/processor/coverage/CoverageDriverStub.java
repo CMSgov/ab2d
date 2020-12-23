@@ -43,6 +43,12 @@ public class CoverageDriverStub implements CoverageDriver {
     public boolean isCoverageAvailable(Job job) {
         return false;
     }
+
+    @Override
+    public int numberOfBeneficiariesToProcess(Job job) {
+        return totalRecords;
+    }
+
     @Override
     public CoveragePagingResult pageCoverage(Job job) {
 

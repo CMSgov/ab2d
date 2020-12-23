@@ -37,7 +37,25 @@ public interface CoverageDriver {
      */
     boolean isCoverageAvailable(Job job) throws InterruptedException;
 
+    /**
+     * Calculate the number of beneficiaries to process for a given job
+     * @param job an already submitted eob job
+     * @return the total number of beneficiaries to search for the job which equals the number of eob searches necessary
+     */
+    int numberOfBeneficiariesToProcess(Job job);
+
+    /**
+     * Get first page worth of beneficiaries to run EOB searches on
+     * @param job eob job to find first page for
+     * @return result containing first page of beneficiaries and request to get next page if more beneficiaries are present
+     */
     CoveragePagingResult pageCoverage(Job job);
 
+    /**
+     * Get a page of beneficiaries based on the provided request. If a cursor is provided use the cursor, otherwise
+     * start with first page of beneficiaries.
+     * @param request cursor pointing to starting point of next set of beneficiaries
+     * @return result containing page of beneficiaries and request to get next page if more beneficiaries are present
+     */
     CoveragePagingResult pageCoverage(CoveragePagingRequest request);
 }

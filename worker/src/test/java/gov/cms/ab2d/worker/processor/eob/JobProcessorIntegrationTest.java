@@ -2,11 +2,7 @@ package gov.cms.ab2d.worker.processor.eob;
 
 import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobOutput;
-import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.User;
+import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
@@ -31,7 +27,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.integration.test.context.SpringIntegrationTest;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -43,13 +38,18 @@ import javax.transaction.Transactional;
 import java.io.File;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.eventlogger.events.ErrorEvent.ErrorType.TOO_MANY_SEARCH_ERRORS;
+import static gov.cms.ab2d.worker.TestUtil.getOpenRange;
+import static gov.cms.ab2d.worker.processor.eob.BundleUtils.createIdentifierWithoutMbi;
 import static java.lang.Boolean.TRUE;
+import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
@@ -67,24 +67,34 @@ class JobProcessorIntegrationTest {
 
     @Autowired
     private FileService fileService;
+
     @Autowired
     private DoAll doAll;
+
     @Autowired
     private JobRepository jobRepository;
+
     @Autowired
     private UserRepository userRepository;
+
     @Autowired
     private ContractRepository contractRepository;
+
     @Autowired
     private JobOutputRepository jobOutputRepository;
-    @Autowired
-    private CoverageDriver coverageDriver;
+
     @Autowired
     private SqlEventLogger sqlEventLogger;
+
     @Autowired
     private HealthCheck healthCheck;
+
+    @Mock
+    private CoverageDriver coverageDriver;
+
     @Mock
     private KinesisEventLogger kinesisEventLogger;
+
     @Mock
     private BFDClient mockBfdClient;
 
@@ -136,6 +146,11 @@ class JobProcessorIntegrationTest {
         );
 
         ReflectionTestUtils.setField(contractProcessor, "cancellationCheckFrequency", 10);
+
+        coverageDriver = mock(CoverageDriver.class);
+
+        when(coverageDriver.pageCoverage(any(Job.class))).thenReturn(
+                new CoveragePagingResult(loadFauxMetadata(contract, 99), null));
 
         cut = new JobProcessorImpl(
                 fileService,
@@ -198,8 +213,7 @@ class JobProcessorIntegrationTest {
                 .thenReturn(bundle1, bundles)
                 .thenReturn(bundle1, bundles)
                 .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1)
-                .thenThrow(fail, fail, fail, fail, fail)
-                ;
+                .thenThrow(fail, fail, fail, fail, fail);
 
         var processedJob = cut.process(job);
 
@@ -302,5 +316,18 @@ class JobProcessorIntegrationTest {
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setCreatedAt(OffsetDateTime.now());
         return jobRepository.save(job);
+    }
+
+    private static List<CoverageSummary> loadFauxMetadata(Contract contract, int rowsToRetrieve) {
+
+        List<String> patientIdRows = IntStream.range(0, rowsToRetrieve).mapToObj(i -> "-" + i).collect(toList());
+
+        // Add the one id that actually has an eob mapped to it
+        patientIdRows.add("-199900000022040");
+
+        return patientIdRows.stream().map(patientId -> new CoverageSummary(
+                createIdentifierWithoutMbi(patientId),
+                contract, List.of(getOpenRange())
+        )).collect(toList());
     }
 }

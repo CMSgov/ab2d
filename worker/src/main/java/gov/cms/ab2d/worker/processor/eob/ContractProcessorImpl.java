@@ -10,8 +10,6 @@ import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.common.util.FHIRUtil;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.PatientDTO;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.processor.StreamHelper;
 import gov.cms.ab2d.worker.processor.TextStreamHelperImpl;
@@ -315,7 +313,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      */
     private EobSearchResult processFuture(List<Future<EobSearchResult>> futureHandles, ProgressTracker progressTracker,
                                           Future<EobSearchResult> future, Map<String, CoverageSummary> patients) {
-        progressTracker.incrementProcessedCount();
+        progressTracker.incrementEobProcessedCount();
         try {
             EobSearchResult result = future.get();
             if (result != null) {
@@ -410,7 +408,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             }
         }
 
-        var processedCount = progressTracker.getProcessedCount();
+        var processedCount = progressTracker.getEobProcessedCount();
         if (progressTracker.isTimeToLog(reportProgressLogFrequency)) {
             progressTracker.setLastLogUpdateCount(processedCount);
 

@@ -37,8 +37,11 @@ public class CoverageServiceRepository {
             "(bene_coverage_period_id, bene_coverage_search_event_id, beneficiary_id, current_mbi, historic_mbis) " +
             "VALUES(?,?,?,?,?)";
 
-    private static final String SELECT_COUNT = "SELECT COUNT(*) FROM coverage " +
+    private static final String SELECT_COVERAGE_BY_SEARCH_COUNT = "SELECT COUNT(*) FROM coverage " +
             " WHERE bene_coverage_search_event_id = ?";
+
+    private static final String SELECT_DISTINCT_COVERAGE_BY_PERIOD_COUNT = "SELECT COUNT(DISTINCT beneficiary_id) FROM coverage" +
+            " WHERE bene_coverage_period_id IN(:ids)";
 
     private static final String SELECT_INTERSECTION = "SELECT COUNT(*) FROM (" +
             " SELECT DISTINCT beneficiary_id FROM coverage WHERE bene_coverage_search_event_id = ? " +
@@ -79,7 +82,7 @@ public class CoverageServiceRepository {
 
     public int countBySearchEvent(CoverageSearchEvent searchEvent) {
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement(SELECT_COUNT)) {
+             PreparedStatement statement = connection.prepareStatement(SELECT_COVERAGE_BY_SEARCH_COUNT)) {
             statement.setLong(1, searchEvent.getId());
             try (ResultSet rs = statement.executeQuery()) {
                 rs.next();
@@ -103,6 +106,18 @@ public class CoverageServiceRepository {
         } catch (SQLException sqlException) {
             throw new RuntimeException("failed to count intersection between searches", sqlException);
         }
+    }
+
+    public int countBeneficiariesByPeriods(List<Integer> coveragePeriodIds) {
+
+        SqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("ids", coveragePeriodIds);
+
+        NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
+
+        return template.queryForList(SELECT_DISTINCT_COVERAGE_BY_PERIOD_COUNT, parameters, Integer.class)
+                .stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for any" +
+                                "of the coverage periods provided"));
     }
 
     /**

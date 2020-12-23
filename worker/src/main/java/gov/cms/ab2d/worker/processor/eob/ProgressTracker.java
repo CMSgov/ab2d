@@ -7,7 +7,6 @@ import lombok.Setter;
 import lombok.Singular;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,22 +23,17 @@ public class ProgressTracker {
     // The ratio between the beneficiary EOF search time in the job vs looking up contract beneficiaries
     public static final double EST_BEN_SEARCH_JOB_PERCENTAGE = 0.7;
 
-    // The number of contracts searched for this job
-    private final int numContracts;
-    // The number of contract beneficiary searches completed
-    private int totalContractBeneficiariesSearchFinished;
-
     @Singular
     private final Map<String, CoverageSummary> patients = new HashMap<>();
 
-    private int totalCount;
-    private int processedCount;
+    private int metadataProcessedCount;
+    private int eobProcessedCount;
+
+    @Setter
+    private int expectedBeneficiaries;
 
     private final int failureThreshold;
     private int failureCount;
-
-    @Setter
-    private int currentMonth;
 
     @Setter
     private int lastDbUpdateCount;
@@ -50,11 +44,8 @@ public class ProgressTracker {
     @Setter
     private int lastUpdatedPercentage;
 
-    /**
-     * Increment the number of patients processed
-     */
-    public void incrementProcessedCount() {
-        ++processedCount;
+    public void incrementEobProcessedCount() {
+        ++eobProcessedCount;
     }
 
     public void incrementFailureCount() {
@@ -62,13 +53,8 @@ public class ProgressTracker {
     }
 
     public void addPatients(List<CoverageSummary> coverage) {
-        coverage.forEach(summary -> {
-            patients.put(summary.getIdentifiers().getBeneficiaryId(), summary);
-        });
-    }
-
-    public void incrementTotalContractBeneficiariesSearchFinished() {
-        ++totalContractBeneficiariesSearchFinished;
+        coverage.forEach(summary -> patients.put(summary.getIdentifiers().getBeneficiaryId(), summary));
+        metadataProcessedCount += coverage.size();
     }
 
     /**
@@ -87,7 +73,7 @@ public class ProgressTracker {
      * @return true if it's been long enough
      */
     public boolean isTimeToUpdateDatabase(int reportProgressFrequency) {
-        return processedCount - lastDbUpdateCount >= reportProgressFrequency;
+        return eobProcessedCount - lastDbUpdateCount >= reportProgressFrequency;
     }
 
     /**
@@ -97,7 +83,7 @@ public class ProgressTracker {
      * @return true if it's  been long enough
      */
     public boolean isTimeToLog(int reportProgressLogFrequency) {
-        return processedCount - lastLogUpdateCount >= reportProgressLogFrequency;
+        return eobProcessedCount - lastLogUpdateCount >= reportProgressLogFrequency;
     }
 
     /**
@@ -108,31 +94,39 @@ public class ProgressTracker {
      * @return the percent complete
      */
     public int getPercentageCompleted() {
-        double percentBenesDone = 0;
-        int totalPossibleCount = patients.size();
-        if (totalPossibleCount != 0) {
-            double percentBenesDonePart = (double) processedCount / totalPossibleCount;
-            if (percentBenesDonePart > 1.0) {
-                log.error("Percent of beneficiaries done is more than 100%");
-                percentBenesDonePart = 1.0;
-            }
-            percentBenesDone =  percentBenesDonePart * EST_BEN_SEARCH_JOB_PERCENTAGE;
-        }
-        double percentContractBeneSearchDonePart = getPercentContractBeneSearchCompleted();
-        if (percentContractBeneSearchDonePart > 1.0) {
+
+        double percentMetadataDone = getPercentMetadataCompleted();
+        if (percentMetadataDone > 1.0) {
             log.error("Percent of contract beneficiaries done is more than 100%");
-            percentContractBeneSearchDonePart = 1.0;
+            percentMetadataDone = 1.0;
         }
 
-        double percentContractBeneSearchDone = percentContractBeneSearchDonePart * (1 - EST_BEN_SEARCH_JOB_PERCENTAGE);
+        double percentBenesDone = getPercentEobsCompleted();
+
+        double percentContractBeneSearchDone = percentMetadataDone * (1 - EST_BEN_SEARCH_JOB_PERCENTAGE);
         double amountCompleted = percentBenesDone + percentContractBeneSearchDone;
 
         final int percentCompleted = (int) Math.round(amountCompleted * 100);
-        lastDbUpdateCount = processedCount;
+        lastDbUpdateCount = eobProcessedCount;
         if (percentCompleted > 100) {
             return 99;
         }
         return percentCompleted;
+    }
+
+    private double getPercentEobsCompleted() {
+
+        if (expectedBeneficiaries == 0) {
+            return 0;
+        }
+
+        double percentBenesDonePart = (double) eobProcessedCount / expectedBeneficiaries;
+        if (percentBenesDonePart > 1.0) {
+            log.error("Percent of beneficiaries done is more than 100%");
+            percentBenesDonePart = 1.0;
+        }
+
+        return  percentBenesDonePart * EST_BEN_SEARCH_JOB_PERCENTAGE;
     }
 
     public boolean isErrorCountBelowThreshold() {
@@ -144,21 +138,12 @@ public class ProgressTracker {
      *
      * @return the percentage (values 0 to 1)
      */
-    public double getPercentContractBeneSearchCompleted() {
-        // If we haven't finished one thread of one search, we haven't started
-        if (this.totalContractBeneficiariesSearchFinished == 0) {
-            return 0.0;
+    public double getPercentMetadataCompleted() {
+
+        if (expectedBeneficiaries == 0) {
+            return 0;
         }
-
-        // If the number of contracts complete (the values aren't added to patientsByContract until they are), it's all done
-        if (this.numContracts == this.patients.size()) {
-            return 1.0;
-        }
-
-        // This is the total number of searches threads than need to be done across all contracts
-        int totalToSearch = this.numContracts * currentMonth;
-
         // This is the total completed threads done over the amount that needs to be done
-        return ((double) this.totalContractBeneficiariesSearchFinished) / totalToSearch;
+        return ((double) this.metadataProcessedCount) / this.expectedBeneficiaries;
     }
 }

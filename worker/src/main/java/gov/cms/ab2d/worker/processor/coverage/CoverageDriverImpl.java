@@ -369,6 +369,33 @@ public class CoverageDriverImpl implements CoverageDriver {
     }
 
     @Override
+    public int numberOfBeneficiariesToProcess(Job job) {
+
+        ZonedDateTime now = getEndDateTime();
+
+        Contract contract = job.getContract();
+
+        if (contract == null) {
+            throw new CoverageDriverException("cannot retrieve metadata for job missing contract");
+        }
+
+        ZonedDateTime startDateTime = getStartDateTime(job);
+
+        List<CoveragePeriod> periodsToReport = new ArrayList<>();
+        while (startDateTime.isBefore(now)) {
+            CoveragePeriod periodToReport =
+                    coverageService.getCoveragePeriod(contract, startDateTime.getMonthValue(), startDateTime.getYear());
+            periodsToReport.add(periodToReport);
+            startDateTime = startDateTime.plusMonths(1);
+        }
+
+        log.debug("counting number of beneficiaries for {} coverage periods for job {}",
+                periodsToReport.size(), job.getJobUuid());
+
+        return coverageService.countBeneficiariesByCoveragePeriod(periodsToReport);
+    }
+
+    @Override
     public CoveragePagingResult pageCoverage(Job job) {
         ZonedDateTime now = getEndDateTime();
 
@@ -377,6 +404,8 @@ public class CoverageDriverImpl implements CoverageDriver {
         if (contract == null) {
             throw new CoverageDriverException("cannot retrieve metadata for job missing contract");
         }
+
+        log.info("attempting to build first page of results for job {}", job.getJobUuid());
 
         ZonedDateTime startDateTime = getStartDateTime(job);
 

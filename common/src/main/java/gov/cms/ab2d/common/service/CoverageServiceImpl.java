@@ -100,6 +100,12 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
+    public int countBeneficiariesByCoveragePeriod(List<CoveragePeriod> coveragePeriods) {
+        List<Integer> ids = coveragePeriods.stream().map(CoveragePeriod::getId).collect(toList());
+        return coverageServiceRepo.countBeneficiariesByPeriods(ids);
+    }
+
+    @Override
     public boolean canEOBSearchBeStarted(int periodId) {
         return !isCoveragePeriodInProgress(periodId);
     }

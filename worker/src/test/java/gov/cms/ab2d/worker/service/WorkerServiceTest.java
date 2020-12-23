@@ -7,6 +7,7 @@ import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.worker.config.EobJobStartupHandler;
+import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -26,6 +27,9 @@ import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.common.util.Constants.EOB;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 
 /**
@@ -42,6 +46,7 @@ class WorkerServiceTest {
     @Autowired private ContractRepository contractRepository;
     @Autowired private JobService jobService;
     @Autowired private PropertiesService propertiesService;
+    @Autowired private CoverageDriver coverageDriver;
 
     @Autowired private WorkerServiceImpl workerServiceImpl;
     @Autowired private EobJobStartupHandler eobJobStartupHandler;
@@ -49,17 +54,21 @@ class WorkerServiceTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
+    private CoverageDriver coverageDriverStub;
     private WorkerServiceStub workerServiceStub;
 
     @BeforeEach
-    public void init() {
+    public void init() throws InterruptedException {
         jobRepository.deleteAll();
         userRepository.deleteAll();
         dataSetup.deleteCoverage();
         contractRepository.deleteAll();
 
+        coverageDriverStub = mock(CoverageDriver.class);
+        when(coverageDriverStub.isCoverageAvailable(any(Job.class))).thenReturn(true);
         workerServiceStub = new WorkerServiceStub(jobService, propertiesService);
 
+        ReflectionTestUtils.setField(eobJobStartupHandler, "coverageDriver", coverageDriverStub);
         ReflectionTestUtils.setField(eobJobStartupHandler, "workerService", workerServiceStub);
     }
 

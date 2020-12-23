@@ -134,8 +134,8 @@ public class JobProcessorImpl implements JobProcessor {
         eventLogger.log(new ContractBeneSearchEvent(job.getUser() == null ? null : job.getUser().getUsername(),
                 job.getJobUuid(),
                 contract.getContractNumber(),
-                1,
-                progressTracker.getProcessedCount(),
+                progressTracker.getEobProcessedCount(),
+                progressTracker.getEobProcessedCount(),
                 progressTracker.getFailureCount()));
     }
 
@@ -144,6 +144,8 @@ public class JobProcessorImpl implements JobProcessor {
         Contract contract = job.getContract();
         assert contract != null;
         try {
+            progressTracker.setExpectedBeneficiaries(coverageDriver.numberOfBeneficiariesToProcess(job));
+
             CoveragePagingResult result = coverageDriver.pageCoverage(job);
             progressTracker.addPatients(result.getCoverageSummaries());
 
@@ -177,9 +179,7 @@ public class JobProcessorImpl implements JobProcessor {
         // Retrieve the patients for each contract and start a progress tracker
         ProgressTracker progressTracker = ProgressTracker.builder()
                 .jobUuid(job.getJobUuid())
-                .numContracts(1)
                 .failureThreshold(failureThreshold)
-                .currentMonth(month)
                 .build();
 
         try {

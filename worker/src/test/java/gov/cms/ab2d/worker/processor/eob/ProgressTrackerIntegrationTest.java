@@ -62,20 +62,11 @@ class ProgressTrackerIntegrationTest {
 
     ProgressTracker progressTracker;
 
-    @Autowired
-    @Qualifier("patientContractThreadPool")
-    private ThreadPoolTaskExecutor patientContractThreadPool;
-
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @BeforeEach
     void init() {
-        patientContractThreadPool = new ThreadPoolTaskExecutor();
-        patientContractThreadPool.setCorePoolSize(6);
-        patientContractThreadPool.setMaxPoolSize(12);
-        patientContractThreadPool.setThreadNamePrefix("contractp-");
-        patientContractThreadPool.initialize();
 
         coverageDriver = spy(new CoverageDriverStub(10, 20));
 
@@ -97,8 +88,7 @@ class ProgressTrackerIntegrationTest {
         progressTracker = ProgressTracker.builder()
                 .failureThreshold(2)
                 .jobUuid(job.getJobUuid())
-                .numContracts(1)
-                .currentMonth(2)
+                .expectedBeneficiaries(4)
                 .build();
 
         Bundle.BundleEntryComponent entry1 = BundleUtils.createBundleEntry("P1", "mbi1", year);

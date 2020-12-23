@@ -2,7 +2,6 @@ package gov.cms.ab2d.worker.processor.eob;
 
 import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.common.model.CoverageSummary;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.PatientDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

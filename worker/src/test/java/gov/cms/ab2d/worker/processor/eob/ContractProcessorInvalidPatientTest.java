@@ -10,7 +10,6 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.worker.TestUtil;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
 import gov.cms.ab2d.worker.processor.StreamHelper;
 import gov.cms.ab2d.worker.processor.TextStreamHelperImpl;
 import gov.cms.ab2d.worker.service.FileService;
@@ -70,9 +69,7 @@ class ContractProcessorInvalidPatientTest {
         patientClaimsProcessor = new PatientClaimsProcessorImpl(bfdClient, eventLogger);
         cut = new ContractProcessorImpl(fileService, jobRepository, patientClaimsProcessor, eventLogger, fhirContext);
         tracker = ProgressTracker.builder()
-                .currentMonth(9)
                 .jobUuid(jobId)
-                .numContracts(1)
                 .failureThreshold(100)
                 .build();
 
@@ -80,8 +77,6 @@ class ContractProcessorInvalidPatientTest {
         contract.setContractNumber(contractId);
         contract.setAttestedOn(OffsetDateTime.now().minusYears(50));
         contractData = new ContractData(contract, tracker, OffsetDateTime.MIN, "User");
-        ContractBeneficiaries cb = new ContractBeneficiaries();
-        cb.setContractNumber(contractId);
 
         List<FilterOutByDate.DateRange> dates = singletonList(TestUtil.getOpenRange());
         List<CoverageSummary> summaries = List.of(
