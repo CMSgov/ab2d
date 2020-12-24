@@ -219,8 +219,8 @@ fi
 # Set 1 hour of polling at 1 minute intervals
 # - this was necessary to prevent a timeout error
 
-AWS_MAX_ATTEMPTS=60
-AWS_POLL_DELAY_SECONDS=60
+export AWS_MAX_ATTEMPTS=60
+export AWS_POLL_DELAY_SECONDS=60
 
 # Build the AMI
 
