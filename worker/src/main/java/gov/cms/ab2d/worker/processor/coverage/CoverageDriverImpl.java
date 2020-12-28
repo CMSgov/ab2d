@@ -358,15 +358,6 @@ public class CoverageDriverImpl implements CoverageDriver {
         }
     }
 
-    private static ZonedDateTime getEndDateTime() {
-        // Assume current time zone is EST since all deployments are in EST
-        ZonedDateTime now = ZonedDateTime.now(AB2D_ZONE);
-        now = now.plusMonths(1);
-        now = ZonedDateTime.of(now.getYear(), now.getMonthValue(),
-                1, 0, 0, 0, 0,  AB2D_ZONE);
-        return now;
-    }
-
     @Override
     public int numberOfBeneficiariesToProcess(Job job) {
 
