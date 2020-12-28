@@ -9,7 +9,7 @@ import gov.cms.ab2d.worker.TestUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-import static gov.cms.ab2d.worker.processor.eob.BundleUtils.createIdentifier;
+import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifier;
 
 public class CoverageDriverStub implements CoverageDriver {
 

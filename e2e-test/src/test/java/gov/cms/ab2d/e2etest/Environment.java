@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 public enum Environment {
 
 
-    LOCAL("local-config.yml", List.of("docker-compose.yml")),
+    LOCAL("local-config.yml", List.of()),
     CI("local-config.yml", List.of("docker-compose.yml", "docker-compose.jenkins.yml")),
     DEV("dev-config.yml", Collections.emptyList()),
     SBX("sbx-config.yml", Collections.emptyList()),

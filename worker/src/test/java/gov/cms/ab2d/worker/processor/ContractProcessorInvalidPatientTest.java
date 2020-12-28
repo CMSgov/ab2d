@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker.processor.eob;
+package gov.cms.ab2d.worker.processor;
 
 import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.bfd.client.BFDClient;
@@ -10,8 +10,6 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.worker.TestUtil;
-import gov.cms.ab2d.worker.processor.StreamHelper;
-import gov.cms.ab2d.worker.processor.TextStreamHelperImpl;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
@@ -33,7 +31,7 @@ import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.*;
 
-import static gov.cms.ab2d.worker.processor.eob.BundleUtils.createIdentifierWithoutMbi;
+import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;

@@ -1,9 +1,11 @@
-package gov.cms.ab2d.worker.processor.eob;
+package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.worker.processor.JobPreProcessor;
+import gov.cms.ab2d.worker.processor.JobPreProcessorImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

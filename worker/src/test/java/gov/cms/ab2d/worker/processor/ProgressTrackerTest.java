@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker.processor.eob;
+package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoverageSummary;
@@ -10,8 +10,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.*;
 
-import static gov.cms.ab2d.worker.processor.eob.BundleUtils.createIdentifierWithoutMbi;
-import static gov.cms.ab2d.worker.processor.eob.ProgressTracker.EST_BEN_SEARCH_JOB_PERCENTAGE;
+import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
+import static gov.cms.ab2d.worker.processor.ProgressTracker.EST_BEN_SEARCH_JOB_PERCENTAGE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ProgressTrackerTest {

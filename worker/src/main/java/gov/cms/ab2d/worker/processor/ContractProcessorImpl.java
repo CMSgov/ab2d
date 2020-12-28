@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker.processor.eob;
+package gov.cms.ab2d.worker.processor;
 
 import ca.uhn.fhir.context.FhirContext;
 import com.newrelic.api.agent.NewRelic;
@@ -11,8 +11,6 @@ import gov.cms.ab2d.common.util.FHIRUtil;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
-import gov.cms.ab2d.worker.processor.StreamHelper;
-import gov.cms.ab2d.worker.processor.TextStreamHelperImpl;
 import gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;

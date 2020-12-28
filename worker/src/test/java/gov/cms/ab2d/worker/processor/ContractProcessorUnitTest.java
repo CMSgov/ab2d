@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker.processor.eob;
+package gov.cms.ab2d.worker.processor;
 
 import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.common.model.*;
@@ -24,7 +24,7 @@ import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.*;
 
-import static gov.cms.ab2d.worker.processor.eob.BundleUtils.createIdentifierWithoutMbi;
+import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
 import static java.lang.Boolean.TRUE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;

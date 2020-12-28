@@ -1,8 +1,8 @@
 package gov.cms.ab2d.worker.processor.stub;
 
-import gov.cms.ab2d.worker.processor.eob.PatientClaimsProcessor;
-import gov.cms.ab2d.worker.processor.eob.EobSearchResult;
-import gov.cms.ab2d.worker.processor.eob.PatientClaimsRequest;
+import gov.cms.ab2d.worker.processor.PatientClaimsProcessor;
+import gov.cms.ab2d.worker.processor.EobSearchResult;
+import gov.cms.ab2d.worker.processor.PatientClaimsRequest;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.dstu3.model.Period;
 import org.hl7.fhir.dstu3.model.Reference;

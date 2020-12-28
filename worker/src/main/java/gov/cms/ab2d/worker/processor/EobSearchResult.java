@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker.processor.eob;
+package gov.cms.ab2d.worker.processor;
 
 import lombok.Data;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;

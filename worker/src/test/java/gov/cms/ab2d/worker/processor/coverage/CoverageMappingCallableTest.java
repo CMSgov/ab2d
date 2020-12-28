@@ -12,8 +12,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Collections;
 
-import static gov.cms.ab2d.worker.processor.eob.BundleUtils.createPatient;
-import static gov.cms.ab2d.worker.processor.eob.BundleUtils.createPatientWithMultipleMbis;
+import static gov.cms.ab2d.worker.processor.BundleUtils.createPatient;
+import static gov.cms.ab2d.worker.processor.BundleUtils.createPatientWithMultipleMbis;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.*;

@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker.processor.eob;
+package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.Identifiers;
 import org.hl7.fhir.dstu3.model.*;

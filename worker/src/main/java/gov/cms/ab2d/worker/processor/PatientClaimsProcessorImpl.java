@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker.processor.eob;
+package gov.cms.ab2d.worker.processor;
 
 import com.newrelic.api.agent.Token;
 import com.newrelic.api.agent.Trace;

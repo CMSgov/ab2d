@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker.processor.eob;
+package gov.cms.ab2d.worker.processor;
 
 import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.common.model.CoverageSummary;
@@ -17,8 +17,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.*;
 
-import static gov.cms.ab2d.worker.processor.eob.BundleUtils.createIdentifier;
-import static gov.cms.ab2d.worker.processor.eob.ContractProcessorImpl.ID_EXT;
+import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifier;
+import static gov.cms.ab2d.worker.processor.ContractProcessorImpl.ID_EXT;
 import static gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable.MBI_ID;
 import static org.junit.jupiter.api.Assertions.*;
 
