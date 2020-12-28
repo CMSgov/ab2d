@@ -2,6 +2,7 @@ package gov.cms.ab2d.hpms.service;
 
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.hpms.hmsapi.*;  // NOPMD
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
@@ -20,11 +21,15 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
 
     private final ContractRepository contractRepository;
 
+    private final SlackLogger slackLogger;
+
     @Autowired
     public AttestationUpdaterServiceImpl(ContractRepository contractRepository,
-                                         HPMSFetcher hpmsFetcher) {
+                                         HPMSFetcher hpmsFetcher,
+                                         SlackLogger slackLogger) {
         this.contractRepository = contractRepository;
         this.hpmsFetcher = hpmsFetcher;
+        this.slackLogger = slackLogger;
     }
 
     @Override
@@ -105,6 +110,13 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
         if (newContracts.isEmpty()) {
             return new ArrayList<>();
         }
+        newContracts.forEach(c -> {
+                String msg = "*New Attester*\n\nId: " + c.getContractId() + "\n"
+                        + "Name: " + c.getContractName() + "\n"
+                        + "Org: " + c.getOrgMarketingName() + "\n";
+                slackLogger.logHpmsMsg(msg);
+            }
+        );
         return newContracts.stream().map(this::sponsorAdd).collect(Collectors.toList());
     }
 

@@ -13,7 +13,7 @@
     <description>Responsible for logging important events</description>
 
     <properties>
-            <project.root>${basedir}/..</project.root>
+        <project.root>${basedir}/..</project.root>
     </properties>
 
     <artifactId>eventlogger</artifactId>
@@ -99,6 +99,16 @@
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.slack.api</groupId>
+            <artifactId>slack-api-client</artifactId>
+            <version>1.5.0-M1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>4.9.0</version>
         </dependency>
     </dependencies>
 

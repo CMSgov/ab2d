@@ -107,4 +107,8 @@ public final class UtilMethods {
         }
         return ipAddress;
     }
+
+    public static String camelCaseToUnderscore(String val) {
+        return val.replaceAll("(.)(\\p{Upper})", "$1_$2").toLowerCase();
+    }
 }
