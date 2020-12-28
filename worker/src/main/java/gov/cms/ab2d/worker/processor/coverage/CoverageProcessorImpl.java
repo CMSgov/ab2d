@@ -27,6 +27,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     private final BFDClient bfdClient;
     private final ThreadPoolTaskExecutor executor;
     private final int maxAttempts;
+    private final boolean skipBillablePeriodCheck;
 
     private final List<CoverageMappingCallable> inProgressMappings = new ArrayList<>();
 
@@ -37,11 +38,13 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
     public CoverageProcessorImpl(CoverageService coverageService, BFDClient bfdClient,
                                  @Qualifier("patientCoverageThreadPool") ThreadPoolTaskExecutor executor,
-                                 @Value("${coverage.update.max.attempts}") int maxAttempts) {
+                                 @Value("${coverage.update.max.attempts}") int maxAttempts,
+                                 @Value("${claims.skipBillablePeriodCheck}") boolean skipBillablePeriodCheck) {
         this.coverageService = coverageService;
         this.bfdClient = bfdClient;
         this.executor = executor;
         this.maxAttempts = maxAttempts;
+        this.skipBillablePeriodCheck = skipBillablePeriodCheck;
     }
 
     @Override
@@ -82,7 +85,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
             log.debug("starting search for {} during {}-{}", mapping.getContract().getContractNumber(),
                     mapping.getPeriod().getMonth(), mapping.getPeriod().getYear());
 
-            CoverageMappingCallable callable = new CoverageMappingCallable(mapping, bfdClient, false);
+            CoverageMappingCallable callable = new CoverageMappingCallable(mapping, bfdClient, skipBillablePeriodCheck);
             executor.submit(callable);
             inProgressMappings.add(callable);
 
@@ -110,7 +113,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     /**
      * Only monitors jobs running in the current application, not jobs running on other machines
      */
-    @Scheduled(fixedDelay = SIXTY_SECONDS, initialDelayString = "${coverage.update.initial.delay}")
+    @Scheduled(cron = "${coverage.update.monitoring.interval}")
     public void monitorMappingJobs() {
 
         synchronized (inProgressMappings) {

@@ -456,6 +456,12 @@ public class CoverageDriverImpl implements CoverageDriver {
             }
         }
 
+        // Do not allow in any case for someone to pull data before the AB2D API officially supports.
+        // Do not remove this without extreme consideration
+        if (startDateTime.isBefore(AB2D_EPOCH)) {
+            startDateTime = AB2D_EPOCH;
+        }
+
         ZonedDateTime now = ZonedDateTime.now(AB2D_ZONE);
 
         if (startDateTime.isAfter(now)) {

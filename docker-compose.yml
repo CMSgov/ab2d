@@ -102,6 +102,7 @@ services:
       - AB2D_KEY_ALIAS=${AB2D_KEY_ALIAS}
       # Update coverage frequently so that tests aren't slowed down too much
       - "COVERAGE_UPDATE_LOAD_SCHEDULE=0/1 * * * * ?"
+      - "COVERAGE_UPDATE_MONITORING_INTERVAL=0/1 * * * * ?"
     depends_on:
       db:
         condition: service_healthy
