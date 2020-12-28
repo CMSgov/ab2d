@@ -103,7 +103,6 @@
    * [Import an existing IAM role](#import-an-existing-iam-role)
    * [Import an existing IAM Instance Profile](#import-an-existing-iam-instance-profile)
    * [Import an existing KMS key](#import-an-existing-kms-key)
-1. [Appendix WW: Use an SSH tunnel to query production database from local machine](#appendix-ww-use-an-ssh-tunnel-to-query-production-database-from-local-machine)
 1. [Appendix XX: Create a self-signed certificate for an EC2 load balancer](#appendix-xx-create-a-self-signed-certificate-for-an-ec2-load-balancer)
 1. [Appendix YY: Review VictorOps documentation](#appendix-yy-review-victorops-documentation)
    * [VictorOps Sources](#victorops-sources)
@@ -8679,89 +8678,6 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html
    ```
 
 1. Verify that the import was successful
-
-## Appendix WW: Use an SSH tunnel to query production database from local machine
-
-1. Ensure that you are connected to VPN
-
-1. Download "AB2D Prod - EC2 Instances - Private Key" from 1Password
-
-   ```
-   ab2d-east-prod.pem
-   ```
-   
-1. Save the key to the "~/.ssh" directory
-
-1. Change the permissions on the key
-
-   ```ShellSession
-   $ chmod 600 ~/.ssh/ab2d-east-prod.pem
-   ```
-
-1. Change to your "ab2d" repo directory
-
-   *Example:*
-
-   ```ShellSession
-   $ cd ~/code/ab2d
-   ```
-
-1. Set the production environment
-
-   ```ShellSession
-   $ source ./Deploy/bash/set-env.sh
-   ```
-
-1. Choose a local port that you want to use for the SSH tunnel and set an environment variable
-
-   *Example:*
-
-   ```ShellSession
-   $ LOCAL_DB_PORT=1234
-   ```
-
-1. Set controller private IP address
-
-   ```ShellSession
-   $ CONTROLLER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
-     --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
-     --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
-     --output text)
-   ```
-
-1. Get database host
-
-   ```ShellSession
-   $ DATABASE_SECRET_DATETIME="2020-01-02-09-15-01" \
-     && DATABASE_HOST=$(./Deploy/python3/get-database-secret.py $CMS_ENV database_host $DATABASE_SECRET_DATETIME)
-   ```
-
-1. Start the SSH tunnel to the production database
-
-   ```ShellSession
-   $ ssh -N -L \
-     "${LOCAL_DB_PORT}:${DATABASE_HOST}:5432" \
-     ec2-user@"${CONTROLLER_PRIVATE_IP}" \
-     -i "~/.ssh/${SSH_PRIVATE_KEY}"
-   ```
-
-1. Note that the terminal tab will not return to the prompt while the tunnel is running, so don't close the terminal tab while using the tunnel
-
-1. Connect to the production database using your desired method (I tested it with pgAdmin)
-
-   - **host:** 127.0.0.1
-   
-   - **port:** 1234
-   
-   - **username:** {database username}
-   
-   - **password:** {database password}
-   
-1. Note the following:
-
-   - if you don't maintain your connection to the database, the EC2 instance that you are tunneling through will auto-logout (this is due to the inactivity timeout set on the gold disks)
-
-   - if your tunnel closes, you will need to rerun the SSH tunnel command
 
 ## Appendix XX: Create a self-signed certificate for an EC2 load balancer
 
