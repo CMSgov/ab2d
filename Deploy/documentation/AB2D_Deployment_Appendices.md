@@ -103,7 +103,6 @@
    * [Import an existing IAM role](#import-an-existing-iam-role)
    * [Import an existing IAM Instance Profile](#import-an-existing-iam-instance-profile)
    * [Import an existing KMS key](#import-an-existing-kms-key)
-1. [Appendix WW: Use an SSH tunnel to query production database from local machine](#appendix-ww-use-an-ssh-tunnel-to-query-production-database-from-local-machine)
 1. [Appendix XX: Create a self-signed certificate for an EC2 load balancer](#appendix-xx-create-a-self-signed-certificate-for-an-ec2-load-balancer)
 1. [Appendix YY: Review VictorOps documentation](#appendix-yy-review-victorops-documentation)
    * [VictorOps Sources](#victorops-sources)
@@ -146,6 +145,11 @@
 1. [Appendix WWW: Whitelist IP addresses in Akamai for Prod](#whitelist-ip-addresses-in-akamai-for-prod)
 1. [Appendix XXX: Fix CloudTamer scripts broken by ITOPS role change](#appendix-xxx-fix-cloudtamer-scripts-broken-by-itops-role-change)
 1. [Appendix YYY: Add IAM components under the new ITOPS restrictions](#appendix-yyy-add-iam-components-under-the-new-itops-restrictions)
+1. [Appendix ZZZ: Revert your branch to a previous commit and force push to GitHub](#appendix-zzz-revert-your-branch-to-a-previous-commit-and-force-push-to-github)
+1. [Appendix AAAA: Change encryption key of AWS RDS Instance](#appendix-aaaa-change-encryption-key-of-aws-rds-instance)
+   * [Create manual snapshot of RDS DB instance](#create-manual-snapshot-of-rds-db-instance)
+   * [Copy manual snapshot using desired KMS key](#restore-manual-snapshot-using-desired-kms-key
+   * [Create new RDS DB instance from the snapshot copy](#create-new-rds-db-instance-from-the-snapshot-copy)
 
 ## Appendix A: Access the CMS AWS console
 
@@ -7662,10 +7666,20 @@
 1. Create an export job
 
    *Example for "Dev" environment:*
+
+   *Temporarily using "--insecure" parameter until onboarded for DNS routing:*
    
    ```ShellSession
    $ curl "https://internal-ab2d-dev-820359992.us-east-1.elb.amazonaws.com/api/v1/fhir/Patient/\$export?_outputFormat=application%2Ffhir%2Bndjson&_type=ExplanationOfBenefit" \
      -sD - \
+     --insecure \
+     -H "Accept: application/json" \
+     -H "Prefer: respond-async" \
+     -H "Authorization: Bearer ${BEARER_TOKEN}"
+
+   $ curl "https://dev.ab2d.cms.gov/api/v1/fhir/Patient/\$export?_outputFormat=application%2Ffhir%2Bndjson&_type=ExplanationOfBenefit" \
+     -sD - \
+     --insecure \
      -H "Accept: application/json" \
      -H "Prefer: respond-async" \
      -H "Authorization: Bearer ${BEARER_TOKEN}"
@@ -7843,8 +7857,6 @@
 
       ```ShellSession
       $ curl "https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/file/${FILE}" \
-        -H "accept: application/json" \
-        -H "Accept: application/fhir+json" \
         -H "Authorization: Bearer ${BEARER_TOKEN}" \
         > ${FILE}
       ```
@@ -7859,8 +7871,8 @@
 
    ```ShellSession
    $ curl "https://sandbox.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/file/${FILE}" \
-     -H "accept: application/json" \
-     -H "Accept: application/fhir+json" \
+     -sD - \
+     -H "Accept: application/fhir+ndjson" \
      -H "Authorization: Bearer ${BEARER_TOKEN}"
    ```
 
@@ -8054,8 +8066,7 @@
 
       ```ShellSession
       $ curl "https://api.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/file/${FILE}" \
-        -H "accept: application/json" \
-        -H "Accept: application/fhir+json" \
+        -H "Accept: application/fhir+ndjson" \
         -H "Authorization: Bearer ${BEARER_TOKEN}" \
         > ${FILE}
       ```
@@ -8070,8 +8081,7 @@
 
    ```ShellSession
    $ curl "https://api.ab2d.cms.gov/api/v1/fhir/Job/${JOB}/file/${FILE}" \
-     -H "accept: application/json" \
-     -H "Accept: application/fhir+json" \
+     -H "Accept: application/fhir+ndjson" \
      -H "Authorization: Bearer ${BEARER_TOKEN}"
    ```
 
@@ -8668,83 +8678,6 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html
    ```
 
 1. Verify that the import was successful
-
-## Appendix WW: Use an SSH tunnel to query production database from local machine
-
-1. Ensure that you are connected to VPN
-
-1. Download "AB2D Prod - EC2 Instances - Private Key" from 1Password
-
-   ```
-   ab2d-east-prod.pem
-   ```
-   
-1. Save the key to the "~/.ssh" directory
-
-1. Change the permissions on the key
-
-   ```ShellSession
-   $ chmod 600 ~/.ssh/ab2d-east-prod.pem
-   ```
-
-1. Change to your "ab2d" repo directory
-
-1. Set the production environment
-
-   ```ShellSession
-   $ source ./Deploy/bash/set-env.sh
-   ```
-
-1. Choose a local port that you want to use for the SSH tunnel and set an environment variable
-
-   *Example:*
-
-   ```ShellSession
-   $ LOCAL_DB_PORT=1234
-   ```
-
-1. Set controller private IP address
-
-   ```ShellSession
-   $ CONTROLLER_PRIVATE_IP=$(aws --region us-east-1 ec2 describe-instances \
-     --filters "Name=tag:Name,Values=ab2d-deployment-controller" \
-     --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
-     --output text)
-   ```
-
-1. Get database host
-
-   ```ShellSession
-   $ DATABASE_SECRET_DATETIME="2020-01-02-09-15-01" \
-     && DATABASE_HOST=$(./Deploy/python3/get-database-secret.py $CMS_ENV database_host $DATABASE_SECRET_DATETIME)
-   ```
-
-1. Start the SSH tunnel to the production database
-
-   ```ShellSession
-   $ ssh -N -L \
-     "${LOCAL_DB_PORT}:${DATABASE_HOST}:5432" \
-     ec2-user@"${CONTROLLER_PRIVATE_IP}" \
-     -i "~/.ssh/${SSH_PRIVATE_KEY}"
-   ```
-
-1. Note that the terminal tab will not return to the prompt while the tunnel is running, so don't close the terminal tab while using the tunnel
-
-1. Connect to the production database using your desired method (I tested it with pgAdmin)
-
-   - **host:** 127.0.0.1
-   
-   - **port:** 1234
-   
-   - **username:** {database username}
-   
-   - **password:** {database password}
-   
-1. Note the following:
-
-   - if you don't maintain your connection to the database, the EC2 instance that you are tunneling through will auto-logout (this is due to the inactivity timeout set on the gold disks)
-
-   - if your tunnel closes, you will need to rerun the SSH tunnel command
 
 ## Appendix XX: Create a self-signed certificate for an EC2 load balancer
 
@@ -12537,3 +12470,305 @@ $ sed -i "" 's%cms-ab2d[\/]prod%cms-ab2d/dev%g' _includes/head.html
      --query 'Policies[?PolicyName==`Ab2dTestPolicy`].{ARN:Arn}' \
      --output text)
    ```
+
+## Appendix ZZZ: Revert your branch to a previous commit and force push to GitHub
+
+1. Ensure you stash or commit any changes in your branch
+
+1. Do a hard reset to the desired commit number
+
+   *Format:*
+
+   ```ShellSession
+   $ git reset --hard {desired commit number}
+   ```
+
+1. Do a force push to GitHub
+
+   ```ShellSession
+   $ git push --force
+   ```
+
+## Appendix AAAA: Change encryption key of AWS RDS Instance
+
+### Create manual snapshot of RDS DB instance
+
+1. Log on to the target AWS environment
+
+1. Select **RDS**
+
+1. Select **Databases** from the leftmost panel
+
+1. Select the radio button beside the desired DB instance
+
+1. Select the **Actions** dropdown
+
+1. Select **Take snapshot**
+
+1. Type the following in the **Snapshot name** text box
+
+   *Example:*
+   
+   ```
+   ab2d-db-snapshot-2020-12-22-1730
+   ```
+
+1. Select **Take snapshot**
+
+1. Scroll to the right in the "Manual snapshots" table and note the **Progress** column
+
+1. Wait for **Progress** to display "Completed" for the snapshot
+
+   *Note that you will need to select the refresh icon to get an update on the status.*
+
+### Copy manual snapshot using desired KMS key
+
+1. Log on to the target AWS environment
+
+1. Select **RDS**
+
+1. Select **Snapshots** from the leftmost panel
+
+1. Select the **Manual** tab
+
+1. Select the checkbox beside the desired snapshot
+
+   *Example:*
+   
+   ```
+   ab2d-db-snapshot-2020-12-22-1730
+   ```
+
+1. Select the **Actions** dropdown
+
+1. Select **Copy snapshot**
+
+1. Configure the "Settings" section as follows
+
+   *Example:*
+   
+   - **Destination Region:** US East (N. Virginia)
+
+   - **New DB Snapshot Identifier:** ab2d-db-snapshot-with-ab2d-kms-2020-12-22-1730
+
+   - **Copy Tags:** checked
+
+1. Configure the "Encryption" section as follows
+
+   - **Master key:** ab2d-kms
+
+1. Select **Copy snapshot**
+
+1. Scroll to the right in the "Manual snapshots" table and note the **Progress** column
+
+1. Wait for **Progress** to display "Completed" for the snapshot
+
+   *Note the following:*
+
+   - select the refresh icon to get an update on the status
+
+   - depending on the amount of data, this process may take hours
+
+### Create new RDS DB instance from the snapshot copy
+
+1. Log on to the target AWS environment
+
+1. Select **RDS**
+
+1. Select **Snapshots** from the leftmost panel
+
+1. Select the **Manual** tab
+
+1. Select the checkbox beside the desired snapshot
+
+   *Example:*
+   
+   ```
+   ab2d-db-snapshot-with-ab2d-kms-2020-12-22-1730
+   ```
+
+1. Select the **Actions** dropdown
+
+1. Select **Restore snapshot**
+
+1. Configure the "DB specifications" section as follows
+   
+   - **Engine:** PostgreSQL
+
+1. Configure the "Settings" section as follows
+
+   *Example:*
+   
+   - **DB Snapshot ID:** ab2d-db-snapshot-with-ab2d-kms-2020-12-22-1730
+
+   - **DB Instance identifier:** ab2d-new
+
+1. Configure the "Connectivity" section as follows
+
+   - **Virtual private cloud (VPC):** ab2d-dev
+
+   - **Subnet group:** ab2d-rds-subnet-group
+
+   - **Public access:** No
+
+   - **VPC security group:** Choose existing
+
+   - **Existing VPC security groups:** ab2d-database-sg (make sure to delete "default")
+
+   - **Additional configuration - Database port:** 5432
+
+1. Configure the "DB instance size" section as follows
+
+   - **DB instance class radio button:** Standard classes (includes m classes)
+
+   - **DB instance class:** db.m4.2xlarge (note that 'Include previous generation classes' must be selected first in order to choose this instance class)
+
+   - **Include previous generation classes:** selected
+
+1. Configure the "Storage" section as follows
+
+   - **Storage type:** Provisioned IOPS (SSD)
+
+   - **Allocated storage:** 500
+
+   - **Provisioned IOPS:** 5000
+
+1. Configure the "Availability & durability" section as follows
+
+   *Example for Prod or Sbx:*
+
+   - **Multi-AZ deployment:** Create a standby instance
+
+   - **Avaliability Zone:** No preference
+
+   *Example for Dev or Impl:*
+
+   - **Multi-AZ deployment:** Do not create a standby instance
+
+   - **Avaliability Zone:** No preference
+
+1. Configure the "Database authentication" section as follows
+
+   - **Database authentication options:** Password authentication
+
+1. Note that the "Encryption" section was configued when the snapshot was created
+
+1. Configure the "Additional configuration" section as follows
+
+   **DB parameter group:** ab2d-rds-parameter-group
+   
+   **Option group:** default:postgres-11
+
+   **Copy tags to snapshots:** checked
+
+   **Postgresql log:** checked
+
+   **Upgrade log:** checked
+
+   **Enable auto minor version upgrade:** checked
+
+1. Select **Restore DB Instance**
+
+1. Wait for the **Status** column for "ab2d-new" to display "Available"
+
+   *Note the following:
+
+   - you may need to select the refresh icon to see the column update
+
+   - this may take a while
+
+### Configure deployment to use new DB instance
+
+1. Log on to the target AWS environment
+
+1. Select **RDS**
+
+1. Rename the old "ab2d" instance to ab2d-old"
+
+   1. Select **Databases** from the leftmost panel
+
+   1. Select the radio button beside "ab2d"
+
+   1. Select **Modify**
+
+   1. Change only the following under the "Settings" section
+
+      - **DB instance identifier:** ab2d-old
+
+   1. Select **Continue**
+
+   1. Select the **Apply immediately** radio button under the "Scheduling of modifications" section
+
+   1. Select **Modify DB Instance**
+
+   1. Note that it may take a minute before it initiates the naming process
+
+1. Rename the old "ab2d-new" instance to ab2d"
+
+   1. Select **Databases** from the leftmost panel
+
+   1. Select the radio button beside "ab2d"
+
+   1. Select **Modify**
+
+   1. Change only the following under the "Settings" section
+
+      - **DB instance identifier:** ab2d
+
+   1. Change only the following under the "Delete protection" section
+
+      - **Enable deletion protection:** checked
+
+   1. Select **Continue**
+
+   1. Select the **Apply immediately** radio button under the "Scheduling of modifications" section
+
+   1. Select **Modify DB Instance**
+
+   1. Note that it may take a minute before it initiates the naming process
+
+   1. Wait for the instance to change to "ab2d" with a status of "Available"
+
+1. Note that you may want to SSH tunnel into the new database instance to verify that everything looks OK before deleting the "ab2d-old" instance
+
+1. Log on to the target AWS environment
+
+1. Select **RDS**
+
+1. If everything looks OK with the the new "ab2d" instance, delete the "ab2d-old" instance
+
+   1. Select **Databases** from the leftmost panel
+
+   1. Select the radio button beside "ab2d-old"
+
+   1. Select **Modify**
+
+   1. Change only the following under the "Delete protection" section
+
+      - **Enable deletion protection:** unchecked
+
+   1. Select **Continue**
+
+   1. Select the **Apply immediately** radio button under the "Scheduling of modifications" section
+
+   1. Select **Modify DB instance**
+
+   1. Select the radio button beside "ab2d-old" again
+
+   1. Select the **Actions** dropdown
+
+   1. Select **Delete**
+
+   1. Uncheck **Create final snapshot**
+
+   1. Check **Retain automated backups**
+
+   1. Type the following in the "To confirm deletion, type delete me into the field" text box
+
+      ```
+      delete me
+      ```
+
+   1. Select **Delete**
+
+   1. Wait for the deletion to complete
