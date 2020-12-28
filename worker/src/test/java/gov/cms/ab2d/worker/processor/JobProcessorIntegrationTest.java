@@ -148,6 +148,8 @@ class JobProcessorIntegrationTest {
 
         coverageDriver = mock(CoverageDriver.class);
 
+        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class))).thenReturn(100);
+
         when(coverageDriver.pageCoverage(any(Job.class))).thenReturn(
                 new CoveragePagingResult(loadFauxMetadata(contract, 99), null));
 

@@ -134,7 +134,7 @@ public class JobProcessorImpl implements JobProcessor {
         eventLogger.log(new ContractBeneSearchEvent(job.getUser() == null ? null : job.getUser().getUsername(),
                 job.getJobUuid(),
                 contract.getContractNumber(),
-                progressTracker.getEobProcessedCount(),
+                progressTracker.getExpectedBeneficiaries(),
                 progressTracker.getEobProcessedCount(),
                 progressTracker.getFailureCount()));
     }
