@@ -2,6 +2,8 @@ package gov.cms.ab2d.common.model;
 
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -12,7 +14,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.OffsetDateTime;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Testcontainers
@@ -24,7 +26,15 @@ class CreateUpdateTimestampTest {
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Autowired
+    private DataSetup dataSetup;
+
+    @Autowired
     private ContractRepository contractRepository;
+
+    @AfterEach
+    public void after() {
+
+    }
 
     @Test
     void testTimestamps() {
@@ -36,6 +46,8 @@ class CreateUpdateTimestampTest {
         assertNull(contract.getModified());
 
         Contract savedCSE = contractRepository.save(contract);
+        dataSetup.queueForCleanup(savedCSE);
+
         assertEquals("TEST123", savedCSE.getContractNumber());
         assertNotNull(savedCSE.getId());
         assertNotNull(savedCSE.getCreated());
@@ -49,8 +61,5 @@ class CreateUpdateTimestampTest {
 
         assertEquals(created, finaleCSE.getCreated());
         assertNotEquals(modified, finaleCSE.getModified());
-
-        // Cleanup
-        contractRepository.delete(finaleCSE);
     }
 }

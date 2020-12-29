@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class UrlAvailableTest {
     @Test
-    public void testAvailable() {
+    void testAvailable() {
         assertFalse(UrlAvailable.available("www.google.com"));
         assertTrue(UrlAvailable.available("http://www.google.com"));
         assertTrue(UrlAvailable.available("http://www.google.com:80"));
@@ -16,7 +16,7 @@ class UrlAvailableTest {
     }
 
     @Test
-    public void testAnyAvailable() {
+    void testAnyAvailable() {
         List<String> l1 = List.of("http://www.google.com", "http://www.facebook.com");
         List<String> l2 = List.of("http://www.glajlasjdflkajsdfkljaskdfjlasjdfloogle.com", "http://www.facebook.com");
         List<String> l3 = List.of("http://www.google.com", "http://www.lkjasdkfljal;kdsjf;lakjsdflkjsdafacebook.com");

@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static java.util.stream.Collectors.toList;
+
 @Component
 public class DataSetup {
 
@@ -30,13 +32,63 @@ public class DataSetup {
     private UserRepository userRepository;
 
     @Autowired
+    private JobRepository jobRepository;
+
+    @Autowired
     private RoleRepository roleRepository;
 
     @Autowired
     private CoveragePeriodRepository coveragePeriodRepo;
 
     @Autowired
+    private CoverageSearchRepository coverageSearchRepo;
+
+    @Autowired
     private CoverageSearchEventRepository coverageSearchEventRepo;
+
+    private final List<Object> domainObjects = new ArrayList<>();
+
+    public void queueForCleanup(Object object) {
+        domainObjects.add(object);
+    }
+
+    public void cleanup() {
+
+        // All of the coverage metadata tests assume that you completely
+        // wipe the tables between tests and that the tables started as empty tables.
+        // Based on these assumptions it is safe to simply delete everything associated
+        // with those tables
+        deleteCoverage();
+        coverageSearchEventRepo.deleteAll();
+        coverageSearchRepo.deleteAll();
+        coveragePeriodRepo.deleteAll();
+
+        List<Job> jobsToDelete = domainObjects.stream().filter(object -> object instanceof Job)
+                .map(object -> (Job) object).collect(toList());
+        jobsToDelete.forEach(job -> {
+            job = jobRepository.findByJobUuid(job.getJobUuid());
+            jobRepository.delete(job);
+            jobRepository.flush();
+        });
+
+        List<User> usersToDelete = domainObjects.stream().filter(object -> object instanceof User)
+                .map(object -> (User) object).collect(toList());
+        usersToDelete.forEach(user -> {
+            user = userRepository.findByUsername(user.getUsername());
+
+            if (user != null) {
+                userRepository.delete(user);
+                userRepository.flush();
+            }
+        });
+
+        List<Contract> contractsToDelete = domainObjects.stream().filter(object -> object instanceof Contract)
+                .map(object -> (Contract) object).collect(toList());
+        contractRepository.deleteAll(contractsToDelete);
+        contractRepository.flush();
+
+        domainObjects.clear();
+    }
 
     public static final String TEST_USER = "EileenCFrierson@example.com";
 
@@ -128,7 +180,9 @@ public class DataSetup {
         contract.setContractName("Test Contract " + contractNumber);
         contract.setContractNumber(contractNumber);
 
-        return contractRepository.save(contract);
+        contract =  contractRepository.save(contract);
+        queueForCleanup(contract);
+        return contract;
     }
 
     public void deleteContract(Contract contract) {
@@ -146,10 +200,21 @@ public class DataSetup {
         contractRepository.saveAndFlush(contract);
     }
 
+    public void setupContractWithNoAttestation(String username, String contractNumber, List<String> userRoles) {
+        setupNonStandardUser(username, contractNumber, userRoles);
+
+        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(contractNumber);
+        @SuppressWarnings("OptionalGetWithoutIsPresent")
+        Contract contract = contractOptional.get();
+        contract.setAttestedOn(null);
+
+        contractRepository.saveAndFlush(contract);
+    }
+
     public void setupContractSponsorForParentUserData(List<String> userRoles) {
         Contract contract = setupContract("ABC123");
 
-        saveUser(contract, userRoles);
+        saveUser(TEST_USER, contract, userRoles);
     }
 
     public void setupUserBadSponsorData(List<String> userRoles) {
@@ -157,15 +222,15 @@ public class DataSetup {
 
         Contract contract = setupContract(BAD_CONTRACT_NUMBER);
 
-        saveUser(contract, userRoles);
+        saveUser(TEST_USER, contract, userRoles);
     }
 
-    private User saveUser(Contract contract, List<String> userRoles) {
+    private User saveUser(String username, Contract contract, List<String> userRoles) {
         User user = new User();
-        user.setEmail(TEST_USER);
-        user.setFirstName("Eileen");
-        user.setLastName("Frierson");
-        user.setUsername(TEST_USER);
+        user.setEmail(username);
+        user.setFirstName(username);
+        user.setLastName(username);
+        user.setUsername(username);
         user.setContract(contract);
         user.setEnabled(true);
         user.setMaxParallelJobs(3);
@@ -176,7 +241,9 @@ public class DataSetup {
             user.addRole(role);
         }
 
-        return userRepository.save(user);
+        user =  userRepository.save(user);
+        queueForCleanup(user);
+        return user;
     }
 
     public void deleteUser(User user) {
@@ -193,6 +260,17 @@ public class DataSetup {
 
         Contract contract = setupContract(VALID_CONTRACT_NUMBER);
 
-        return saveUser(contract, userRoles);
+        return saveUser(TEST_USER, contract, userRoles);
+    }
+
+    public User setupNonStandardUser(String username, String contractNumber, List<String> userRoles) {
+        User testUser = userRepository.findByUsername(username);
+        if (testUser != null) {
+            return testUser;
+        }
+
+        Contract contract = setupContract(contractNumber);
+
+        return saveUser(username, contract, userRoles);
     }
 }
