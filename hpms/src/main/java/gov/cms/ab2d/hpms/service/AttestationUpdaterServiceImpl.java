@@ -114,7 +114,9 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
                 String msg = "*New Attester*\n\nId: " + c.getContractId() + "\n"
                         + "Name: " + c.getContractName() + "\n"
                         + "Org: " + c.getOrgMarketingName() + "\n";
-                slackLogger.logHpmsMsg(msg);
+                if (slackLogger != null) {
+                    slackLogger.logHpmsMsg(msg);
+                }
             }
         );
         return newContracts.stream().map(this::sponsorAdd).collect(Collectors.toList());
