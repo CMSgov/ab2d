@@ -3,7 +3,6 @@ package gov.cms.ab2d.worker;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.health.SlackAvailable;
 import gov.cms.ab2d.worker.util.HealthCheck;
-import org.hl7.fhir.dstu3.model.CapabilityStatement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
