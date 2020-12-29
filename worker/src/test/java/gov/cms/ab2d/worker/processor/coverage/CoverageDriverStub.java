@@ -1,5 +1,7 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
+import gov.cms.ab2d.common.model.Job;
+
 public class CoverageDriverStub implements CoverageDriver {
 
     public boolean discoveryCalled;
@@ -13,5 +15,10 @@ public class CoverageDriverStub implements CoverageDriver {
     @Override
     public void discoverCoveragePeriods() {
         discoveryCalled = true;
+    }
+
+    @Override
+    public boolean isCoverageAvailable(Job job) {
+        return false;
     }
 }
