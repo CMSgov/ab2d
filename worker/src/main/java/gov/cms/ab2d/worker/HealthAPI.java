@@ -26,7 +26,7 @@ public class HealthAPI {
     @GetMapping(HEALTH_ENDPOINT)
     public ResponseEntity<Void> getHealth() {
         if (healthCheck.healthy()) {
-            return new ResponseEntity<Void>(HttpStatus.OK);
+            return new ResponseEntity<>(HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -43,9 +43,8 @@ public class HealthAPI {
 
     @GetMapping(VALIDATE_BFD_ENDPOINT)
     public ResponseEntity<Void> isBfdUp() {
-        CapabilityStatement capabilityStatement = null;
         try {
-            capabilityStatement = bfdClient.capabilityStatement();
+            bfdClient.capabilityStatement();
             return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
