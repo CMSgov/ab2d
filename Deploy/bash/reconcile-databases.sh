@@ -289,10 +289,18 @@ psql \
   --username="${DATABASE_USER}" \
   --command="\\COPY ${DATABASE_SCHEMA_NAME}.event_bene_coverage_search_status_change FROM '${DATABASE_SCHEMA_NAME}.event_bene_coverage_search_status_change.csv' WITH (FORMAT CSV);"
 
-for csv_file in "${DATABASE_SCHEMA_NAME}".coverage_part*.csv; do
+if [ -f "${DATABASE_SCHEMA_NAME}.coverage_part01.csv" ]; then
+  for csv_file in "${DATABASE_SCHEMA_NAME}".coverage_part*.csv; do
+    psql \
+      --dbname="${DATABASE_NAME}" \
+      --host="${DATABASE_HOST}" \
+      --username="${DATABASE_USER}" \
+      --command="\\COPY ${DATABASE_SCHEMA_NAME}.coverage FROM '${csv_file}' WITH (FORMAT CSV);"
+  done
+else
   psql \
     --dbname="${DATABASE_NAME}" \
     --host="${DATABASE_HOST}" \
     --username="${DATABASE_USER}" \
-    --command="\\COPY ${DATABASE_SCHEMA_NAME}.coverage FROM '${csv_file}' WITH (FORMAT CSV);"
-done
+    --command="\\COPY ${DATABASE_SCHEMA_NAME}.coverage FROM '${DATABASE_SCHEMA_NAME}.coverage.csv' WITH (FORMAT CSV);"
+fi
