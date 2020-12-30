@@ -30,8 +30,6 @@ import java.util.UUID;
 import static gov.cms.ab2d.common.util.Constants.EOB;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 
 
 /**
@@ -49,8 +47,8 @@ class WorkerServiceDisengagementTest {
     @Autowired private PropertiesService propertiesService;
     @Autowired private JobService jobService;
 
-    @Autowired private JobHandler jobHandler;
     @Autowired private WorkerServiceImpl workerServiceImpl;
+    @Autowired private JobHandler jobHandler;
 
     private WorkerServiceStub workerServiceStub;
 
@@ -59,7 +57,7 @@ class WorkerServiceDisengagementTest {
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
     @BeforeEach
-    public void init() throws InterruptedException {
+    public void init() {
         jobRepository.deleteAll();
         userRepository.deleteAll();
         dataSetup.deleteCoverage();
