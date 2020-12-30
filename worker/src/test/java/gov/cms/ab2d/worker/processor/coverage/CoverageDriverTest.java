@@ -190,6 +190,26 @@ class CoverageDriverTest {
 
     }
 
+    @DisplayName("Ignore contracts marked test")
+    @Test
+    void discoverCoveragePeriodsIgnoresTestContracts() {
+
+        Contract testContract = dataSetup.setupContract("TST-AFTER-EPOCH");
+        testContract.setAttestedOn(AB2D_EPOCH.toOffsetDateTime().plusMonths(3));
+        testContract.setUpdateMode(Contract.UpdateMode.TEST);
+
+        contractRepo.saveAndFlush(testContract);
+        contractsToDelete.add(testContract);
+
+        try {
+            driver.discoverCoveragePeriods();
+        } catch (CoverageDriverException | InterruptedException exception) {
+            fail("could not queue periods due to driver exception", exception);
+        }
+        List<CoveragePeriod> periods = coveragePeriodRepo.findAllByContractId(testContract.getId());
+        assertTrue(periods.isEmpty());
+    }
+
     @DisplayName("Queue stale coverage find never searched")
     @Test
     void queueStaleCoverageNeverSearched() {
