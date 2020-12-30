@@ -251,25 +251,25 @@ psql \
   --dbname="${DATABASE_NAME}" \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
-  --command="\\COPY ${DATABASE_SCHEMA_NAME}.contract FROM '${DATABASE_SCHEMA_NAME}.contract.csv' WITH (FORMAT CSV);"
-
-psql \
-  --dbname="${DATABASE_NAME}" \
-  --host="${DATABASE_HOST}" \
-  --username="${DATABASE_USER}" \
-  --command="\\COPY ${DATABASE_SCHEMA_NAME}.role FROM '${DATABASE_SCHEMA_NAME}.role.csv' WITH (FORMAT CSV);"
-
-psql \
-  --dbname="${DATABASE_NAME}" \
-  --host="${DATABASE_HOST}" \
-  --username="${DATABASE_USER}" \
   --command="\\COPY ${DATABASE_SCHEMA_NAME}.sponsor FROM '${DATABASE_SCHEMA_NAME}.sponsor.csv' WITH (FORMAT CSV);"
 
 psql \
   --dbname="${DATABASE_NAME}" \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
+  --command="\\COPY ${DATABASE_SCHEMA_NAME}.contract FROM '${DATABASE_SCHEMA_NAME}.contract.csv' WITH (FORMAT CSV);"
+
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
   --command="\\COPY ${DATABASE_SCHEMA_NAME}.user_account FROM '${DATABASE_SCHEMA_NAME}.user_account.csv' WITH (FORMAT CSV);"
+
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
+  --command="\\COPY ${DATABASE_SCHEMA_NAME}.role FROM '${DATABASE_SCHEMA_NAME}.role.csv' WITH (FORMAT CSV);"
 
 psql \
   --dbname="${DATABASE_NAME}" \
