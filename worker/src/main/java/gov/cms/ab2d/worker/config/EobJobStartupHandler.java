@@ -49,35 +49,41 @@ public class EobJobStartupHandler implements MessageHandler {
             return;
         }
 
-        final String jobId = getJobId(message);
+        final List<Map<String, Object>> payload = (List<Map<String, Object>>) message.getPayload();
 
-        MDC.put(JOB_LOG, jobId);
+        for (Map<String, Object> submittedJob : payload) {
 
-        final Lock lock = lockRegistry.obtain(jobId);
+            final String jobId = getJobId(submittedJob);
 
-        // Inability to obtain a lock means other worker is already taking care of the request
-        // in which case we do nothing and return.
-        if (lock.tryLock()) {
+            MDC.put(JOB_LOG, jobId);
 
-            try {
-                workerService.process(jobId);
+            final Lock lock = lockRegistry.obtain(jobId);
 
-            } catch (ResourceNotFoundException rnfe) {
-                throw new MessagingException("could not find job in database for "  + jobId + " job uuid", rnfe);
-            } catch (CoverageDriverException coverageDriverException) {
-                throw new MessagingException("could not check coverage due to unexpected exception", coverageDriverException);
-            } finally {
-                lock.unlock();
+            // Inability to obtain a lock means other worker is already taking care of the request
+            // in which case we do nothing and return.
+            if (lock.tryLock()) {
+
+                try {
+                    if (workerService.process(jobId)) {
+                        log.info("{} job has been started", jobId);
+                        break;
+                    }
+
+                } catch (ResourceNotFoundException rnfe) {
+                    throw new MessagingException("could not find job in database for " + jobId + " job uuid", rnfe);
+                } catch (CoverageDriverException coverageDriverException) {
+                    throw new MessagingException("could not check coverage due to unexpected exception", coverageDriverException);
+                } finally {
+                    lock.unlock();
+                }
             }
-        }
 
-        MDC.remove(JOB_LOG);
+            MDC.remove(JOB_LOG);
+        }
     }
 
-    private String getJobId(Message<?> message) {
-        final List<Map<String, Object>> payload = (List<Map<String, Object>>) message.getPayload();
-        final Map<String, Object> row0 = payload.get(0);
-        return String.valueOf(row0.get("job_uuid"));
+    private String getJobId(Map<String, Object> submittedJob){
+        return String.valueOf(submittedJob.get("job_uuid"));
     }
 
 }

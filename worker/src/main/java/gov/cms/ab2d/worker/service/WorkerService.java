@@ -4,7 +4,7 @@ import gov.cms.ab2d.common.service.FeatureEngagement;
 
 public interface WorkerService {
 
-    void process(String jobId);
+    boolean process(String jobId);
 
     FeatureEngagement getEngagement();
 }

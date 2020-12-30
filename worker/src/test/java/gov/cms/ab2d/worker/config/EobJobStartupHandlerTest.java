@@ -21,8 +21,6 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class EobJobStartupHandlerTest {
 
-    private static final String JOB_UUID = "6d08bf08-f926-4e19-8d89-ad67ef89f17e";
-
     @Mock
     private WorkerService workerService;
 
@@ -48,7 +46,7 @@ class EobJobStartupHandlerTest {
         assertFalse(lock.isLocked());
 
         verify(workerService, times(1)).getEngagement();
-        verify(workerService, times(0)).process(any());
+        verify(workerService, times(0)).process(anyString());
     }
 
     @DisplayName("Job is started if worker is set to in gear")
@@ -71,7 +69,45 @@ class EobJobStartupHandlerTest {
         assertFalse(lock.isLocked());
 
         verify(workerService, times(1)).getEngagement();
-        verify(workerService, times(1)).process(any());
+        verify(workerService, times(1)).process(anyString());
+    }
+
+    @DisplayName("Handler attempts to start jobs until it finds one that it can start")
+    @Test
+    void processUntilSuccessfulForAJob() {
+
+        ReentrantLock lock = new ReentrantLock();
+        when(workerService.getEngagement()).thenReturn(FeatureEngagement.IN_GEAR);
+        when(lockRegistry.obtain(anyString())).thenReturn(lock);
+
+        when(workerService.process(anyString())).thenReturn(false, false, true, true);
+
+        EobJobStartupHandler eobJobStartupHandler = new EobJobStartupHandler(lockRegistry, workerService);
+
+        Map<String, Object> first = new HashMap<>() {{
+            put("job_uuid", "first job id");
+        }};
+
+        Map<String, Object> second = new HashMap<>() {{
+            put("job_uuid", "second job id");
+        }};
+
+        Map<String, Object> third = new HashMap<>() {{
+            put("job_uuid", "third job id");
+        }};
+
+        Map<String, Object> fourth = new HashMap<>() {{
+            put("job_uuid", "fourth job id");
+        }};
+
+        List<Map<String, Object>> payload = List.of(first, second, third, fourth);
+
+        eobJobStartupHandler.handleMessage(new GenericMessage<>(payload));
+
+        assertFalse(lock.isLocked());
+
+        verify(workerService, times(1)).getEngagement();
+        verify(workerService, times(3)).process(anyString());
     }
 }
 
