@@ -169,7 +169,7 @@ class JobProcessorIntegrationTest {
     @Test
     @DisplayName("When a job is in submitted status, it can be processed")
     void processJob() {
-        var processedJob = cut.process(job);
+        var processedJob = cut.process(job.getJobUuid());
 
         List<LoggableEvent> jobStatusChange = doAll.load(JobStatusChangeEvent.class);
         assertEquals(1, jobStatusChange.size());
@@ -189,7 +189,7 @@ class JobProcessorIntegrationTest {
     @Test
     @DisplayName("When a job is in submitted by the parent user, it process the contracts for the children")
     void whenJobSubmittedByParentUser_ProcessAllContractsForChildrenSponsors() {
-        var processedJob = cut.process(job);
+        var processedJob = cut.process(job.getJobUuid());
 
         assertEquals(JobStatus.SUCCESSFUL, processedJob.getStatus());
         assertEquals(COMPLETED_PERCENT, processedJob.getStatusMessage());
@@ -216,7 +216,7 @@ class JobProcessorIntegrationTest {
                 .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1)
                 .thenThrow(fail, fail, fail, fail, fail);
 
-        var processedJob = cut.process(job);
+        var processedJob = cut.process(job.getJobUuid());
 
         assertEquals(JobStatus.SUCCESSFUL, processedJob.getStatus());
         assertEquals(COMPLETED_PERCENT, processedJob.getStatusMessage());
@@ -249,7 +249,7 @@ class JobProcessorIntegrationTest {
                 .thenThrow(fail, fail, fail, fail, fail, fail, fail, fail, fail, fail)
                 .thenReturn(bundle1, bundles)
         ;
-        var processedJob = cut.process(job);
+        var processedJob = cut.process(job.getJobUuid());
 
         List<LoggableEvent> errorEvents = doAll.load(ErrorEvent.class);
         assertEquals(1, errorEvents.size());

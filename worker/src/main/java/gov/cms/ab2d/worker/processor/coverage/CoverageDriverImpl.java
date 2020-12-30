@@ -335,8 +335,28 @@ public class CoverageDriverImpl implements CoverageDriver {
                 return false;
             }
 
+            // If we haven't updated the current month's metadata since the job was submitted
+            // then we must update it to guarantee we aren't missing any recent metadata changes
+            ZonedDateTime now = ZonedDateTime.now(AB2D_ZONE);
+            CoveragePeriod currentPeriod = coverageService.getCoveragePeriod(job.getContract(), now.getMonthValue(), now.getYear());
+            if (currentPeriod.getLastSuccessfulJob().isBefore(job.getCreatedAt())) {
+
+                // Submit a new search if necessary
+                if (currentPeriod.getStatus() != JobStatus.SUBMITTED || currentPeriod.getStatus() != JobStatus.IN_PROGRESS) {
+                    String reason = String.format("%s-%d-%d must be updated before job %s can run",
+                            currentPeriod.getContract().getContractNumber(), currentPeriod.getYear(), currentPeriod.getMonth(),
+                            job.getJobUuid());
+                    log.info(reason);
+                    coverageService.submitSearch(currentPeriod.getId(), reason);
+                }
+
+                return false;
+            }
+
             /*
              * If coverage periods are submitted, in progress or null then ignore for the moment.
+             *
+             * There will always be at least one coverage period returned.
              */
             List<CoveragePeriod> periods = coverageService.findAssociatedCoveragePeriods(job.getContract());
             periods = filterBySince(job, periods);
@@ -469,6 +489,12 @@ public class CoverageDriverImpl implements CoverageDriver {
         return coverageService.pageCoverage(request);
     }
 
+    /**
+     * Filters coverage periods to make sure they only include membership data after the _since date
+     * @param job the job to look for a since date in
+     * @param periods the periods to filter.
+     * @return at least one coverage period
+     */
     private List<CoveragePeriod> filterBySince(Job job, List<CoveragePeriod> periods) {
         if (job.getSince() != null) {
             LocalDate sinceExactDay = job.getSince().toLocalDate();

@@ -78,6 +78,8 @@ class JobProcessorUnitTest {
 
         final Path outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
         final Path outputDir = Files.createDirectories(outputDirPath);
+
+        when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
         lenient().when(fileService.createDirectory(any(Path.class))).thenReturn(outputDir);
     }
 
@@ -85,7 +87,7 @@ class JobProcessorUnitTest {
     @DisplayName("When a job is in submitted status, it can be processed")
     void processJob_happyPath() throws ExecutionException, InterruptedException {
 
-        var processedJob = cut.process(job);
+        var processedJob = cut.process(job.getJobUuid());
 
         assertEquals(JobStatus.SUCCESSFUL, processedJob.getStatus());
         assertEquals("100%", processedJob.getStatusMessage());
@@ -98,7 +100,7 @@ class JobProcessorUnitTest {
     void whenTheUserBelongsToParent_ChildContractsAreProcessed() throws ExecutionException, InterruptedException {
         var user = job.getUser();
 
-        var processedJob = cut.process(job);
+        var processedJob = cut.process(job.getJobUuid());
 
         assertEquals(JobStatus.SUCCESSFUL, processedJob.getStatus());
         assertEquals("100%", processedJob.getStatusMessage());
@@ -133,7 +135,7 @@ class JobProcessorUnitTest {
                 .thenThrow(uncheckedIOE)
                 .thenReturn(efsMountTmpDir);
 
-        var processedJob = cut.process(job);
+        var processedJob = cut.process(job.getJobUuid());
 
         assertEquals(JobStatus.SUCCESSFUL, processedJob.getStatus());
         assertEquals("100%", processedJob.getStatusMessage());
@@ -159,7 +161,7 @@ class JobProcessorUnitTest {
         var uncheckedIOE = new UncheckedIOException(errMsg, new IOException(errMsg));
 
         Mockito.when(fileService.createDirectory(any())).thenThrow(uncheckedIOE);
-        var processedJob = cut.process(job);
+        var processedJob = cut.process(job.getJobUuid());
 
         assertEquals(JobStatus.FAILED, processedJob.getStatus());
         assertTrue(processedJob.getStatusMessage().startsWith("Could not delete"));
@@ -178,7 +180,7 @@ class JobProcessorUnitTest {
 
         Mockito.when(fileService.createDirectory(any())).thenThrow(uncheckedIOE);
 
-        var processedJob = cut.process(job);
+        var processedJob = cut.process(job.getJobUuid());
 
         assertEquals(JobStatus.FAILED, processedJob.getStatus());
         assertTrue(processedJob.getStatusMessage().startsWith("Could not create output directory"));

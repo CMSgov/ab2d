@@ -30,7 +30,6 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.concurrent.ExecutionException;
 
@@ -65,15 +64,18 @@ public class JobProcessorImpl implements JobProcessor {
     /**
      * Load the job and process it
      *
-     * @param job - the job to process
+     * @param jobUuid - the job id of the job to process
      * @return the processed job
      */
     @Override
     @Transactional(propagation = Propagation.NEVER)
     @Trace(metricName = "Job Processing", dispatcher = true)
-    public Job process(Job job) {
+    public Job process(final String jobUuid) {
 
-        String jobUuid = job.getJobUuid();
+        // Load the job
+        final Job job = jobRepository.findByJobUuid(jobUuid);
+        log.info("Found job");
+
         // Determine the output directory based on the job id
         Path outputDirPath = null;
         try {
@@ -104,13 +106,12 @@ public class JobProcessorImpl implements JobProcessor {
      * Process in individual contract
      *
      * @param job             - the job in which the contract belongs
-     * @param month           - the month to search for beneficiaries for
      * @param outputDirPath   - the location of the job output
      * @param progressTracker - the progress tracker which indicates how far the job is along
      * @throws ExecutionException   when there is an issue with searching
      * @throws InterruptedException - when the search is interrupted
      */
-    void processContract(Job job, int month, Path outputDirPath, ProgressTracker progressTracker)
+    void processContract(Job job, Path outputDirPath, ProgressTracker progressTracker)
             throws ExecutionException, InterruptedException {
         Contract contract = job.getContract();
         assert contract != null;
@@ -174,7 +175,6 @@ public class JobProcessorImpl implements JobProcessor {
     private void processJob(Job job, Path outputDirPath) throws ExecutionException, InterruptedException {
         // Create the output directory
         createOutputDirectory(outputDirPath, job);
-        int month = LocalDate.now().getMonthValue();
 
         // Retrieve the patients for each contract and start a progress tracker
         ProgressTracker progressTracker = ProgressTracker.builder()
@@ -183,7 +183,7 @@ public class JobProcessorImpl implements JobProcessor {
                 .build();
 
         try {
-            processContract(job, month, outputDirPath, progressTracker);
+            processContract(job, outputDirPath, progressTracker);
         } catch (ExecutionException | InterruptedException ex) {
             log.error("Having issue retrieving patients for contract " + job.getContract());
             throw ex;

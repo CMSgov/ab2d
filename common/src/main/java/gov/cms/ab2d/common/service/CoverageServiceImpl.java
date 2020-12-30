@@ -164,8 +164,6 @@ public class CoverageServiceImpl implements CoverageService {
         return coverageServiceRepo.pageCoverage(coveragePeriod.getContract(), pagingRequest);
     }
 
-    // todo: create diff and log on completion of every search. This information may be logged to both
-    //      kinesis and sql as part of a subsequent issue.
     @Override
     public CoverageSearchDiff searchDiff(int periodId) {
 
@@ -331,6 +329,12 @@ public class CoverageServiceImpl implements CoverageService {
             throw new InvalidJobStateTransition("cannot change from " + jobStatus
                     + " to " + JobStatus.SUCCESSFUL);
         }
+
+        // todo: log to kinesis as well
+        Contract contract = period.getContract();
+        CoverageSearchDiff diff = searchDiff(periodId);
+        log.info("{}-{}-{} difference between previous metadata and current metadata\n {}",
+                contract.getContractNumber(), period.getYear(), period.getMonth(), diff);
 
         deletePreviousSearch(periodId);
 

@@ -4,5 +4,5 @@ import gov.cms.ab2d.common.model.Job;
 
 public interface JobProcessor {
 
-    Job process(Job job);
+    Job process(String jobUuid);
 }

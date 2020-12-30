@@ -46,7 +46,6 @@ class WorkerServiceTest {
     @Autowired private ContractRepository contractRepository;
     @Autowired private JobService jobService;
     @Autowired private PropertiesService propertiesService;
-    @Autowired private CoverageDriver coverageDriver;
 
     @Autowired private WorkerServiceImpl workerServiceImpl;
     @Autowired private EobJobStartupHandler eobJobStartupHandler;
@@ -54,21 +53,17 @@ class WorkerServiceTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
-    private CoverageDriver coverageDriverStub;
     private WorkerServiceStub workerServiceStub;
 
     @BeforeEach
-    public void init() throws InterruptedException {
+    public void init() {
         jobRepository.deleteAll();
         userRepository.deleteAll();
         dataSetup.deleteCoverage();
         contractRepository.deleteAll();
 
-        coverageDriverStub = mock(CoverageDriver.class);
-        when(coverageDriverStub.isCoverageAvailable(any(Job.class))).thenReturn(true);
         workerServiceStub = new WorkerServiceStub(jobService, propertiesService);
 
-        ReflectionTestUtils.setField(eobJobStartupHandler, "coverageDriver", coverageDriverStub);
         ReflectionTestUtils.setField(eobJobStartupHandler, "workerService", workerServiceStub);
     }
 

@@ -527,10 +527,17 @@ class CoverageDriverTest {
 
         Job job = new Job();
         job.setContract(contract);
+        job.setCreatedAt(OffsetDateTime.now());
 
         try {
-
             changeStatus(contract, AB2D_EPOCH.toOffsetDateTime(), JobStatus.SUBMITTED);
+
+            // Make sure that there is a lastSuccessfulJob
+            ZonedDateTime now = ZonedDateTime.now(AB2D_ZONE);
+            CoveragePeriod currentMonth = coverageService.getCoveragePeriod(contract, now.getMonthValue(), now.getYear());
+            currentMonth.setLastSuccessfulJob(OffsetDateTime.now().plusHours(2));
+            currentMonth.setStatus(JobStatus.SUCCESSFUL);
+            coveragePeriodRepo.saveAndFlush(currentMonth);
 
             boolean submittedCoverageStatus = driver.isCoverageAvailable(job);
             assertFalse(submittedCoverageStatus, "eob searches should not run if a " +
@@ -546,10 +553,18 @@ class CoverageDriverTest {
 
         Job job = new Job();
         job.setContract(contract);
+        job.setCreatedAt(OffsetDateTime.now());
 
         try {
 
             changeStatus(contract, AB2D_EPOCH.toOffsetDateTime(), JobStatus.IN_PROGRESS);
+
+            // Make sure that there is a lastSuccessfulJob
+            ZonedDateTime now = ZonedDateTime.now(AB2D_ZONE);
+            CoveragePeriod currentMonth = coverageService.getCoveragePeriod(contract, now.getMonthValue(), now.getYear());
+            currentMonth.setLastSuccessfulJob(OffsetDateTime.now().plusHours(2));
+            currentMonth.setStatus(JobStatus.SUCCESSFUL);
+            coveragePeriodRepo.saveAndFlush(currentMonth);
 
             boolean inProgressCoverageStatus = driver.isCoverageAvailable(job);
             assertFalse(inProgressCoverageStatus, "eob searches should not run when a coverage period is in progress");
@@ -564,10 +579,18 @@ class CoverageDriverTest {
 
         Job job = new Job();
         job.setContract(contract);
+        job.setCreatedAt(OffsetDateTime.now());
 
         try {
 
             changeStatus(contract, AB2D_EPOCH.toOffsetDateTime(), JobStatus.SUCCESSFUL);
+
+            // Make sure that there is a lastSuccessfulJob
+            ZonedDateTime now = ZonedDateTime.now(AB2D_ZONE);
+            CoveragePeriod currentMonth = coverageService.getCoveragePeriod(contract, now.getMonthValue(), now.getYear());
+            currentMonth.setLastSuccessfulJob(OffsetDateTime.now().plusHours(2));
+            currentMonth.setStatus(JobStatus.SUCCESSFUL);
+            coveragePeriodRepo.saveAndFlush(currentMonth);
 
             boolean submittedCoverageStatus = driver.isCoverageAvailable(job);
             assertTrue(submittedCoverageStatus, "eob searches should not run if a " +
@@ -582,6 +605,7 @@ class CoverageDriverTest {
     void availableCoverageWhenSinceContainsOnlySuccessful() {
 
         Job job = new Job();
+        job.setCreatedAt(OffsetDateTime.now());
 
         Contract temp = contractRepo.findContractByContractNumber(contract.getContractNumber()).get();
         job.setContract(temp);
@@ -620,6 +644,7 @@ class CoverageDriverTest {
 
         Job job = new Job();
         job.setContract(contract);
+        job.setCreatedAt(OffsetDateTime.now());
 
         OffsetDateTime since = OffsetDateTime.of(LocalDate.of(2020, 3, 1),
                 LocalTime.of(0, 0, 0), AB2D_ZONE.getRules().getOffset(Instant.now()));
@@ -627,6 +652,13 @@ class CoverageDriverTest {
         try {
 
             changeStatus(contract, since, null);
+
+            // Make sure that there is a lastSuccessfulJob
+            ZonedDateTime now = ZonedDateTime.now(AB2D_ZONE);
+            CoveragePeriod currentMonth = coverageService.getCoveragePeriod(contract, now.getMonthValue(), now.getYear());
+            currentMonth.setLastSuccessfulJob(OffsetDateTime.now().plusHours(2));
+            currentMonth.setStatus(JobStatus.SUCCESSFUL);
+            coveragePeriodRepo.saveAndFlush(currentMonth);
 
             LocalDate startMonth = LocalDate.of(2020, 3, 1);
             LocalTime startDay = LocalTime.of(0,0,0);

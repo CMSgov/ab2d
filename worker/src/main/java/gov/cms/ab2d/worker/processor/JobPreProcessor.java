@@ -4,6 +4,6 @@ import gov.cms.ab2d.common.model.Job;
 
 public interface JobPreProcessor {
 
-    Job preprocess(Job job);
+    Job preprocess(String jobUuid);
 
 }

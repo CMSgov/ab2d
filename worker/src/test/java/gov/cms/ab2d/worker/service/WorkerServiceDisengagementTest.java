@@ -10,6 +10,7 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.worker.config.EobJobStartupHandler;
+import gov.cms.ab2d.worker.processor.JobPreProcessorImpl;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,13 +51,11 @@ class WorkerServiceDisengagementTest {
     @Autowired private ContractRepository contractRepository;
     @Autowired private PropertiesService propertiesService;
     @Autowired private JobService jobService;
-    @Autowired private CoverageDriver coverageDriver;
 
-    @Autowired private WorkerServiceImpl workerServiceImpl;
     @Autowired private EobJobStartupHandler eobJobStartupHandler;
+    @Autowired private WorkerServiceImpl workerServiceImpl;
 
     private WorkerServiceStub workerServiceStub;
-    private CoverageDriver coverageDriverStub;
 
     @SuppressWarnings("rawtypes")
     @Container
@@ -69,17 +68,13 @@ class WorkerServiceDisengagementTest {
         dataSetup.deleteCoverage();
         contractRepository.deleteAll();
 
-        coverageDriverStub = mock(CoverageDriver.class);
-        when(coverageDriverStub.isCoverageAvailable(any(Job.class))).thenReturn(true);
-
         workerServiceStub = new WorkerServiceStub(jobService, propertiesService);
-        ReflectionTestUtils.setField(eobJobStartupHandler, "coverageDriver", coverageDriverStub);
+
         ReflectionTestUtils.setField(eobJobStartupHandler, "workerService", workerServiceStub);
     }
 
     @AfterEach
     public void cleanup() {
-        ReflectionTestUtils.setField(eobJobStartupHandler, "coverageDriver", coverageDriver);
         ReflectionTestUtils.setField(eobJobStartupHandler, "workerService", workerServiceImpl);
         setEngagement(FeatureEngagement.IN_GEAR);
     }

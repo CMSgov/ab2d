@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.service;
 
 import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.common.util.Constants;
@@ -31,18 +32,21 @@ public class WorkerServiceImpl implements WorkerService {
     private final List<String> activeJobs = Collections.synchronizedList(new ArrayList<>());
 
     @Override
-    public void process(Job job) {
+    public void process(String jobUuid) {
 
-        activeJobs.add(job.getJobUuid());
+        activeJobs.add(jobUuid);
         try {
-            jobPreprocessor.preprocess(job);
-            log.info("Job was put in progress");
+            Job job = jobPreprocessor.preprocess(jobUuid);
 
-            jobProcessor.process(job);
-            log.info("Job was processed");
+            if (job.getStatus() == JobStatus.IN_PROGRESS) {
+                log.info("Job was put in progress");
+
+                jobProcessor.process(jobUuid);
+                log.info("Job was processed");
+            }
 
         } finally {
-            activeJobs.remove(job.getJobUuid());
+            activeJobs.remove(jobUuid);
         }
     }
 
