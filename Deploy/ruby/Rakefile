@@ -111,13 +111,13 @@ task :database_get_data do
       sh "psql --dbname=#{database_name} --host=#{database_host} --username=#{database_user} --command='\\COPY (SELECT * FROM #{database_schema_name}.\"#{table_name}\") TO '#{database_schema_name}.#{table_name}.csv' WITH (FORMAT CSV);'"
     end
 
-    # Loop through generated CSV files and split any files that are greater than 25 MB
+    # Loop through generated CSV files and split any files that are greater than 2000 MB (2 GB)
 
     Dir['./*.csv'].sort.each do |csv_file|
 
       csv_file_name = "#{csv_file}".split('/')[1]
       table_name = "#{csv_file_name}".split('.')[1]
-      file_size_test = ('%.2i' % (File.size("#{csv_file_name}").to_i / 2**20 / 25)).to_i
+      file_size_test = ('%.2i' % (File.size("#{csv_file_name}").to_i / 2**20 / 2000)).to_i
 
       if file_size_test > 0
 
