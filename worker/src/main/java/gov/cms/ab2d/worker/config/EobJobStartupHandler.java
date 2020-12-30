@@ -82,7 +82,7 @@ public class EobJobStartupHandler implements MessageHandler {
         }
     }
 
-    private String getJobId(Map<String, Object> submittedJob){
+    private String getJobId(Map<String, Object> submittedJob) {
         return String.valueOf(submittedJob.get("job_uuid"));
     }
 
