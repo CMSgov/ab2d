@@ -95,26 +95,72 @@ active-nav: understanding-the-data-nav
         background-color: #f5f5f5;
     }
 
-    .index {
+    #index {
         margin: auto;
     }
 
-    .index a {
-
+    #index a {
         color: #6c7b8d;
+    }
+
+    .sticky {
+        position: fixed;
+        top: 90px;
+        left: 5%;
+    }
+
+    #scroll-to-top {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 2;
+        background-color: #323A45;
+        padding: 16px;
+        border-radius: 50%;
+        padding: 13px 17px;
+        color: white;
+        cursor: pointer;
+        display: none;
+    }
+    
+    .show {
+        display: block !important;
     }
 </style>
 
-<section class="bg-light-grey page-section py-5" role="main">
+<script>
+    window.onscroll = function () { scrollSpy() };
+    var indexOffset = 0
+    $(document).ready(() => {
+        offset = $("#index").offset().top - 72
+    })
+
+    function scrollSpy() {
+        if (window.pageYOffset > offset) {
+            $("#index").addClass("sticky");
+            $("#scroll-to-top").addClass("show");
+        } else {
+            $("#index").removeClass("sticky");
+            $("#scroll-to-top").removeClass("show");
+        }
+
+
+    } 
+</script>
+
+<section class="bg-light-grey page-section py-5" role="main" id="Top">
     <svg class="shape-divider" preserveAspectRatio="xMidYMin slice" version="1.1" xmlns="http://www.w3.org/2000/svg"
         xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 1034.2 43.8"
         style="enable-background:new 0 0 1034.2 43.8;" xml:space="preserve" alt="divider">
         <path fill="#f5f5f5" d="M0,21.3c0,0,209.3-48,517.1,0s517.1,0,517.1,0v22.5H0V21.3z" />
     </svg>
+    <a href="#Top" id="scroll-to-top">
+        <i class="fas fa-chevron-up"></i>
+    </a>
     <div class="container-fluid bg-light-grey">
         <div class="row">
             <div class="col-lg-2">
-                <table class="index">
+                <table id="index">
                     <tr>
                         <td><a href="#Patient">Patient</a></td>
                     </tr>
