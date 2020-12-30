@@ -5,7 +5,6 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
-import gov.cms.ab2d.worker.processor.coverage.CoverageDriverException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -48,7 +47,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
                 return job;
             }
         } catch (InterruptedException ie) {
-            throw new CoverageDriverException("could not determine whether coverage metadata was up to date", ie);
+            throw new RuntimeException("could not determine whether coverage metadata was up to date", ie);
         }
 
         eventLogger.log(EventUtils.getJobChangeEvent(job, IN_PROGRESS, "Job in progress"));

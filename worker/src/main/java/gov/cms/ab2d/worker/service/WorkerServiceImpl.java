@@ -32,7 +32,7 @@ public class WorkerServiceImpl implements WorkerService {
     private final List<String> activeJobs = Collections.synchronizedList(new ArrayList<>());
 
     @Override
-    public boolean process(String jobUuid) {
+    public Job process(String jobUuid) {
 
         activeJobs.add(jobUuid);
         try {
@@ -47,7 +47,7 @@ public class WorkerServiceImpl implements WorkerService {
 
             // Check that job hasn't been cancelled by processor and that we actually changed
             // the state of the job
-            return job.getStatus() == JobStatus.IN_PROGRESS;
+            return job;
 
         } finally {
             activeJobs.remove(jobUuid);

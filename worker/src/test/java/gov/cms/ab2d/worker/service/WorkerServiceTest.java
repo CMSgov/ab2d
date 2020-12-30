@@ -6,8 +6,7 @@ import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
-import gov.cms.ab2d.worker.config.EobJobStartupHandler;
-import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
+import gov.cms.ab2d.worker.config.JobHandler;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,7 +28,6 @@ import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 
 /**
@@ -48,7 +46,7 @@ class WorkerServiceTest {
     @Autowired private PropertiesService propertiesService;
 
     @Autowired private WorkerServiceImpl workerServiceImpl;
-    @Autowired private EobJobStartupHandler eobJobStartupHandler;
+    @Autowired private JobHandler jobHandler;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
@@ -64,12 +62,12 @@ class WorkerServiceTest {
 
         workerServiceStub = new WorkerServiceStub(jobService, propertiesService);
 
-        ReflectionTestUtils.setField(eobJobStartupHandler, "workerService", workerServiceStub);
+        ReflectionTestUtils.setField(jobHandler, "workerService", workerServiceStub);
     }
 
     @AfterEach
     public void after() {
-        ReflectionTestUtils.setField(eobJobStartupHandler, "workerService", workerServiceImpl);
+        ReflectionTestUtils.setField(jobHandler, "workerService", workerServiceImpl);
     }
 
     @Test

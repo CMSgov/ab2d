@@ -5,7 +5,6 @@ import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
-import gov.cms.ab2d.worker.processor.coverage.CoverageDriverException;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -100,7 +99,7 @@ class JobPreProcessorUnitTest {
         when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
         when(coverageDriver.isCoverageAvailable(any(Job.class))).thenThrow(InterruptedException.class);
 
-        var exceptionThrown = assertThrows(CoverageDriverException.class,
+        var exceptionThrown = assertThrows(RuntimeException.class,
                 () -> cut.preprocess(job.getJobUuid()));
         assertEquals("could not determine whether coverage metadata was up to date",
                 exceptionThrown.getMessage());

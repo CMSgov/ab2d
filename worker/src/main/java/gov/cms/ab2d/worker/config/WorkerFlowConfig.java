@@ -26,14 +26,14 @@ public class WorkerFlowConfig {
 
     private final DataSource dataSource;
 
-    private final EobJobStartupHandler handler;
+    private final JobHandler handler;
 
     private final Executor mainJobPool;
 
     // How often we poll for matching jobs in the job table
     private final int pollingFrequency;
 
-    public WorkerFlowConfig(DataSource dataSource, EobJobStartupHandler handler,
+    public WorkerFlowConfig(DataSource dataSource, JobHandler handler,
                             @Qualifier("mainJobPool") Executor mainJobPool,
                             @Value("${eob.job.queueing.frequency}") int pollingFrequency) {
         this.dataSource = dataSource;

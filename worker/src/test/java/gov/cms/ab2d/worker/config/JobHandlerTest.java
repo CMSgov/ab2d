@@ -1,5 +1,7 @@
 package gov.cms.ab2d.worker.config;
 
+import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.worker.service.WorkerService;
 import org.junit.jupiter.api.*;
@@ -19,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class EobJobStartupHandlerTest {
+class JobHandlerTest {
 
     @Mock
     private WorkerService workerService;
@@ -34,14 +36,14 @@ class EobJobStartupHandlerTest {
         ReentrantLock lock = new ReentrantLock();
         when(workerService.getEngagement()).thenReturn(FeatureEngagement.NEUTRAL);
 
-        EobJobStartupHandler eobJobStartupHandler = new EobJobStartupHandler(lockRegistry, workerService);
+        JobHandler jobHandler = new JobHandler(lockRegistry, workerService);
 
         Map<String, Object> jobMap = new HashMap<>() {{
             put("job_uuid", "DoesNotMatter");
         }};
         List<Map<String, Object>> payload = List.of(jobMap);
 
-        eobJobStartupHandler.handleMessage(new GenericMessage<>(payload));
+        jobHandler.handleMessage(new GenericMessage<>(payload));
 
         assertFalse(lock.isLocked());
 
@@ -53,18 +55,22 @@ class EobJobStartupHandlerTest {
     @Test
     void processingTriggeredInGear() {
 
+        Job submittedJob = new Job();
+        submittedJob.setStatus(JobStatus.IN_PROGRESS);
+
         ReentrantLock lock = new ReentrantLock();
         when(workerService.getEngagement()).thenReturn(FeatureEngagement.IN_GEAR);
         when(lockRegistry.obtain(anyString())).thenReturn(lock);
+        when(workerService.process(anyString())).thenReturn(submittedJob);
 
-        EobJobStartupHandler eobJobStartupHandler = new EobJobStartupHandler(lockRegistry, workerService);
+        JobHandler jobHandler = new JobHandler(lockRegistry, workerService);
 
         Map<String, Object> jobMap = new HashMap<>() {{
             put("job_uuid", "DoesNotMatter");
         }};
         List<Map<String, Object>> payload = List.of(jobMap);
 
-        eobJobStartupHandler.handleMessage(new GenericMessage<>(payload));
+        jobHandler.handleMessage(new GenericMessage<>(payload));
 
         assertFalse(lock.isLocked());
 
@@ -80,9 +86,15 @@ class EobJobStartupHandlerTest {
         when(workerService.getEngagement()).thenReturn(FeatureEngagement.IN_GEAR);
         when(lockRegistry.obtain(anyString())).thenReturn(lock);
 
-        when(workerService.process(anyString())).thenReturn(false, false, true, true);
+        Job submittedJob = new Job();
+        submittedJob.setStatus(JobStatus.SUBMITTED);
+        Job startedJob = new Job();
+        startedJob.setStatus(JobStatus.IN_PROGRESS);
 
-        EobJobStartupHandler eobJobStartupHandler = new EobJobStartupHandler(lockRegistry, workerService);
+
+        when(workerService.process(anyString())).thenReturn(submittedJob, submittedJob, startedJob, startedJob);
+
+        JobHandler jobHandler = new JobHandler(lockRegistry, workerService);
 
         Map<String, Object> first = new HashMap<>() {{
             put("job_uuid", "first job id");
@@ -102,7 +114,7 @@ class EobJobStartupHandlerTest {
 
         List<Map<String, Object>> payload = List.of(first, second, third, fourth);
 
-        eobJobStartupHandler.handleMessage(new GenericMessage<>(payload));
+        jobHandler.handleMessage(new GenericMessage<>(payload));
 
         assertFalse(lock.isLocked());
 

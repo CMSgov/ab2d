@@ -19,13 +19,12 @@ public class WorkerServiceStub implements WorkerService {
     }
 
     @Override
-    public boolean process(String jobId) {
+    public Job process(String jobId) {
         processingCalls += 1;
         Job job = jobService.getJobByJobUuid(jobId);
         job.setStatus(JobStatus.IN_PROGRESS);
         job.setStatusMessage(null);
-        jobService.updateJob(job);
-        return true;
+        return jobService.updateJob(job);
     }
 
     @Override

@@ -1,8 +1,9 @@
 package gov.cms.ab2d.worker.config;
 
+import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
-import gov.cms.ab2d.worker.processor.coverage.CoverageDriverException;
 import gov.cms.ab2d.worker.service.WorkerService;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -27,7 +28,7 @@ import static gov.cms.ab2d.common.util.Constants.JOB_LOG;
  */
 @Slf4j
 @Component
-public class EobJobStartupHandler implements MessageHandler {
+public class JobHandler implements MessageHandler {
 
     /**
      * Export requests must be locked globally to avoid race conditions among workers,
@@ -36,7 +37,7 @@ public class EobJobStartupHandler implements MessageHandler {
     private final LockRegistry lockRegistry;
     private final WorkerService workerService;
 
-    public EobJobStartupHandler(LockRegistry lockRegistry, WorkerService workerService) {
+    public JobHandler(LockRegistry lockRegistry, WorkerService workerService) {
         this.lockRegistry = lockRegistry;
         this.workerService = workerService;
     }
@@ -64,15 +65,20 @@ public class EobJobStartupHandler implements MessageHandler {
             if (lock.tryLock()) {
 
                 try {
-                    if (workerService.process(jobId)) {
+
+                    // Attempt to start (mark an eob job as in progress) an eob job.
+                    // A job may not be started if the workers are busy or if coverage metadata needs an update.
+                    // However if a job is started then
+                    Job job = workerService.process(jobId);
+                    if (job.getStatus() == JobStatus.IN_PROGRESS) {
                         log.info("{} job has been started", jobId);
                         break;
                     }
 
                 } catch (ResourceNotFoundException rnfe) {
                     throw new MessagingException("could not find job in database for " + jobId + " job uuid", rnfe);
-                } catch (CoverageDriverException coverageDriverException) {
-                    throw new MessagingException("could not check coverage due to unexpected exception", coverageDriverException);
+                } catch (Exception exception) {
+                    throw new MessagingException("could not check coverage due to unexpected exception", exception);
                 } finally {
                     lock.unlock();
                 }
