@@ -33,7 +33,7 @@ class CreateUpdateTimestampTest {
 
     @AfterEach
     public void after() {
-
+        dataSetup.cleanup();
     }
 
     @Test
