@@ -122,7 +122,7 @@ active-nav: understanding-the-data-nav
         cursor: pointer;
         display: none;
     }
-    
+
     .show {
         display: block !important;
     }
@@ -418,7 +418,10 @@ active-nav: understanding-the-data-nav
                                 </td>
                                 <td>0..1</td>
                                 <td></td>
-                                <td></td>
+                                <td><a target="_blank"
+                                        href="http://hl7.org/fhir/STU3/datatypes.html#date">date </a> |
+                                    <a target="_blank" href="http://hl7.org/fhir/STU3/datatypes.html#date">Period</a>
+                                </td>
                             </tr>
                             <tr>
                                 <td>ExplanationOfBenefit.item[].servicedPeriod</td>
@@ -433,7 +436,7 @@ active-nav: understanding-the-data-nav
                                 <td>Where the service was provided.</td>
                                 <td>0..1</td>
                                 <td><a target="_blank"
-                                        href="http://hl7.org/fhir/STU3/valueset-service-place.htmlr">Example
+                                        href="http://hl7.org/fhir/STU3/valueset-service-place.html">Example
                                         Service Place Codes (Example)</a></td>
                                 <td><a target="_blank"
                                         href="http://hl7.org/fhir/STU3/datatypes.html#CodeableConcept">CodeableConcept |
