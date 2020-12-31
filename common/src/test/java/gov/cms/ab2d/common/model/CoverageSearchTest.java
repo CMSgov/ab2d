@@ -15,7 +15,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @Testcontainers
@@ -47,13 +48,7 @@ class CoverageSearchTest {
 
     @AfterEach
     void after() {
-        coverageSearchEventRepo.deleteAll();
-        coverageSearchRepository.deleteAll();
-        coveragePeriodRepo.deleteAll();
-
-        contractRepo.delete(contract1);
-        contractRepo.delete(contract2);
-        contractRepo.flush();
+        dataSetup.cleanup();
     }
 
     @Test

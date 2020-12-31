@@ -99,13 +99,7 @@ class CoverageServiceImplTest {
 
     @AfterEach
     public void cleanUp() {
-        dataSetup.deleteCoverage();
-        coverageSearchEventRepo.deleteAll();
-        coverageSearchRepo.deleteAll();
-        coveragePeriodRepo.deleteAll();
-        contractRepo.delete(contract1);
-        contractRepo.delete(contract2);
-        contractRepo.flush();
+        dataSetup.cleanup();
     }
 
     @DisplayName("Get a coverage period")
