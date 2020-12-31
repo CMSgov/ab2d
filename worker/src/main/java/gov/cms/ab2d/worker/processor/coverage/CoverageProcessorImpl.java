@@ -172,20 +172,15 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                 return;
             }
 
-            int periodId = result.getPeriodId();
-            long eventId = result.getCoverageSearchEvent().getId();
             String contractNumber = result.getContract().getContractNumber();
             int month = result.getPeriod().getMonth();
             int year = result.getPeriod().getYear();
 
             if (!inShutdown.get()) {
-
                 log.debug("inserting coverage mapping for contract {} during {}-{}",
                         contractNumber, month, year);
 
-                coverageService.insertCoverage(eventId, result.getBeneficiaryIds());
-
-                coverageService.completeSearch(periodId, "successfully inserted all data for in progress search");
+                attemptCoverageInsertion(result);
             } else {
 
                 log.debug("shutting down before inserting results for contract {} during {}-{}, will re-attempt",
@@ -197,6 +192,27 @@ public class CoverageProcessorImpl implements CoverageProcessor {
             }
         } catch (InterruptedException ie) {
             log.debug("polling for data to insert failed due to interruption", ie);
+        }
+    }
+
+    /**
+     * Attempt to insert all metadata retrieved in a search
+     * @param result all metadata retrieved by a search
+     */
+    private void attemptCoverageInsertion(CoverageMapping result) {
+
+        int periodId = result.getPeriodId();
+        long eventId = result.getCoverageSearchEvent().getId();
+        try {
+            coverageService.insertCoverage(eventId, result.getBeneficiaryIds());
+
+            coverageService.completeSearch(periodId, "successfully inserted all data for in progress search");
+        } catch (Exception exception) {
+            log.error("inserting the coverage data failed for {}-{}-{}", result.getContract().getContractNumber(),
+                    result.getPeriod().getMonth(), result.getPeriod().getYear());
+            coverageService.failSearch(result.getPeriodId(),
+                    "inserting coverage information failed with reason: " +
+                    exception.getMessage());
         }
     }
 
