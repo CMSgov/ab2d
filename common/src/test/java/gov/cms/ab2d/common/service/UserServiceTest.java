@@ -53,16 +53,6 @@ class UserServiceTest {
         dataSetup.cleanup();
     }
 
-    // This is a bad test because if other test classes run first
-    // and do set the current user it will bleed over into this test class
-    @Disabled
-    @Test
-    void testUser() {
-        User user = userService.getCurrentUser();
-
-        assertNull(user); // no authentication for now, so will be null
-    }
-
     @Test
     void testCreateUser() {
         UserDTO user = buildUserDTO("Test", SPONSOR_ROLE);
