@@ -176,6 +176,8 @@ public class CoverageProcessorImpl implements CoverageProcessor {
             int month = result.getPeriod().getMonth();
             int year = result.getPeriod().getYear();
 
+            log.info("attempting to insert coverage for {}-{}-{}", contractNumber, month, year);
+
             if (!inShutdown.get()) {
                 log.debug("inserting coverage mapping for contract {} during {}-{}",
                         contractNumber, month, year);
@@ -210,6 +212,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         } catch (Exception exception) {
             log.error("inserting the coverage data failed for {}-{}-{}", result.getContract().getContractNumber(),
                     result.getPeriod().getMonth(), result.getPeriod().getYear());
+            log.error("inserting the coverage data failed", exception);
             coverageService.failSearch(result.getPeriodId(),
                     "inserting coverage information failed with reason: " +
                     exception.getMessage());

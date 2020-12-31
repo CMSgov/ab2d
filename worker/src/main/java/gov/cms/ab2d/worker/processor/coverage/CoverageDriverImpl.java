@@ -304,6 +304,8 @@ public class CoverageDriverImpl implements CoverageDriver {
     @Override
     public boolean isCoverageAvailable(Job job) throws InterruptedException {
 
+        String contractNumber = job.getContract().getContractNumber();
+
         Lock coverageLock = coverageLockWrapper.getCoverageLock();
 
         // Track whether locked or not to prevent an illegal monitor exception
@@ -322,6 +324,7 @@ public class CoverageDriverImpl implements CoverageDriver {
             // If so then create those coverage periods.
             discoverCoveragePeriods(job.getContract());
 
+            log.info("queueing never searched coverage metadata periods for {}", contractNumber);
             /*
              * If any relevant coverage period has never been pulled from BFD successfully then automatically fail the
              * search
@@ -335,11 +338,13 @@ public class CoverageDriverImpl implements CoverageDriver {
                 return false;
             }
 
+            log.info("checking when coverage period previous month was last updated for {}", contractNumber);
+
             // If we haven't updated the current month's metadata since the job was submitted
             // then we must update it to guarantee we aren't missing any recent metadata changes
             ZonedDateTime now = ZonedDateTime.now(AB2D_ZONE);
             CoveragePeriod currentPeriod = coverageService.getCoveragePeriod(job.getContract(), now.getMonthValue(), now.getYear());
-            if (currentPeriod.getLastSuccessfulJob().isBefore(job.getCreatedAt())) {
+            if (currentPeriod.getLastSuccessfulJob() == null || currentPeriod.getLastSuccessfulJob().isBefore(job.getCreatedAt())) {
 
                 // Submit a new search if necessary
                 if (currentPeriod.getStatus() != JobStatus.SUBMITTED || currentPeriod.getStatus() != JobStatus.IN_PROGRESS) {
@@ -353,6 +358,7 @@ public class CoverageDriverImpl implements CoverageDriver {
                 return false;
             }
 
+            log.info("checking whether any coverage metadata is currently being updated for {}", contractNumber);
             /*
              * If coverage periods are submitted, in progress or null then ignore for the moment.
              *
