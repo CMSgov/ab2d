@@ -11,6 +11,7 @@ import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
+import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -27,10 +28,9 @@ import java.util.List;
 import java.util.Random;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
-import static java.lang.Boolean.TRUE;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @Testcontainers
@@ -47,6 +47,8 @@ class JobPreProcessorIntegrationTest {
     private DoAll doAll;
     @Autowired
     private SqlEventLogger sqlEventLogger;
+    @Mock
+    private CoverageDriver coverageDriver;
 
     @Mock
     private KinesisEventLogger kinesisEventLogger;
@@ -61,7 +63,7 @@ class JobPreProcessorIntegrationTest {
     void setUp() {
         LogManager manager = new LogManager(sqlEventLogger, kinesisEventLogger);
 
-        cut = new JobPreProcessorImpl(jobRepository, manager);
+        cut = new JobPreProcessorImpl(jobRepository, manager, coverageDriver);
 
         user = createUser();
         job = createJob(user);
@@ -82,9 +84,11 @@ class JobPreProcessorIntegrationTest {
 
     @Test
     @DisplayName("When a job is in submitted status, it can be put into progress upon starting processing")
-    void whenJobIsInSubmittedStatus_ThenJobShouldBePutInProgress() {
-        var processedJob = cut.preprocess("S0000");
-        assertEquals(processedJob.getStatus(), JobStatus.IN_PROGRESS);
+    void whenJobIsInSubmittedStatus_ThenJobShouldBePutInProgress() throws InterruptedException {
+        when(coverageDriver.isCoverageAvailable(any(Job.class))).thenReturn(true);
+
+        var processedJob = cut.preprocess(job.getJobUuid());
+        assertEquals(JobStatus.IN_PROGRESS, processedJob.getStatus());
 
         List<LoggableEvent> jobStatusChange = doAll.load(JobStatusChangeEvent.class);
         assertEquals(1, jobStatusChange.size());
@@ -103,25 +107,19 @@ class JobPreProcessorIntegrationTest {
     }
 
     @Test
-    @DisplayName("Throw an exception if the job does not exist")
-    void putNonExistentJobInProgress() {
-        var exceptionThrown = assertThrows(
-                IllegalArgumentException.class,
-                () -> cut.preprocess("NonExistent"));
-        assertThat(exceptionThrown.getMessage(), is("Job NonExistent was not found"));
-    }
-
-    @Test
     @DisplayName("When a job is not already in a submitted status, it cannot be put into progress")
-    void whenJobIsNotInSubmittedStatus_ThenJobShouldNotBePutInProgress() {
+    void whenJobIsNotInSubmittedStatus_ThenJobShouldNotBePutInProgress() throws InterruptedException {
+        when(coverageDriver.isCoverageAvailable(any(Job.class))).thenReturn(true);
+
         job.setStatus(JobStatus.IN_PROGRESS);
-        jobRepository.save(job);
+
+        Job inProgress = jobRepository.save(job);
 
         var exceptionThrown = assertThrows(
                 IllegalArgumentException.class,
-                () -> cut.preprocess("S0000"));
+                () -> cut.preprocess(inProgress.getJobUuid()));
 
-        assertThat(exceptionThrown.getMessage(), is("Job S0000 is not in SUBMITTED status"));
+        assertEquals("Job S0000 is not in SUBMITTED status", exceptionThrown.getMessage());
     }
 
     private User createUser() {
@@ -130,7 +128,7 @@ class JobPreProcessorIntegrationTest {
         user.setFirstName("Harry");
         user.setLastName("Potter");
         user.setEmail("harry_potter@hogwarts.edu");
-        user.setEnabled(TRUE);
+        user.setEnabled(true);
         return userRepository.save(user);
     }
 

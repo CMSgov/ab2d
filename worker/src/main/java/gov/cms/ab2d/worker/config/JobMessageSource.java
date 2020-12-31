@@ -22,7 +22,7 @@ public class JobMessageSource extends JdbcPollingChannelAdapter {
 
     public JobMessageSource(DataSource dataSource) {
         super(dataSource, QUERY_GET_NEXT_UNPROCESSED_JOB);
-        setMaxRows(1);
+        setMaxRows(10);
     }
 
 

@@ -3,15 +3,13 @@ package gov.cms.ab2d.worker.processor;
 import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.worker.TestUtil;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
-import gov.cms.ab2d.worker.processor.domainmodel.ContractData;
-import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
@@ -30,21 +28,18 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.text.ParseException;
 import java.time.OffsetDateTime;
 import java.util.*;
 
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static java.util.Collections.singletonList;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class ContractProcessorInvalidPatientTest {
+class ContractProcessorInvalidPatientTest {
     @Mock
     private FileService fileService;
     @Mock
@@ -67,14 +62,12 @@ public class ContractProcessorInvalidPatientTest {
     private String contractId = "ABC";
 
     @BeforeEach
-    void setup() throws ParseException {
+    void setup() {
 
         patientClaimsProcessor = new PatientClaimsProcessorImpl(bfdClient, eventLogger);
         cut = new ContractProcessorImpl(fileService, jobRepository, patientClaimsProcessor, eventLogger, fhirContext);
         tracker = ProgressTracker.builder()
-                .currentMonth(9)
                 .jobUuid(jobId)
-                .numContracts(1)
                 .failureThreshold(100)
                 .build();
 
@@ -82,21 +75,16 @@ public class ContractProcessorInvalidPatientTest {
         contract.setContractNumber(contractId);
         contract.setAttestedOn(OffsetDateTime.now().minusYears(50));
         contractData = new ContractData(contract, tracker, OffsetDateTime.MIN, "User");
-        ContractBeneficiaries cb = new ContractBeneficiaries();
-        cb.setContractNumber(contractId);
-        Map<String, ContractBeneficiaries.PatientDTO> map = new HashMap<>();
-        cb.setPatients(map);
-        List<FilterOutByDate.DateRange> dates = Collections.singletonList(TestUtil.getOpenRange());
-        map.put("1", ContractBeneficiaries.PatientDTO.builder()
-                .identifiers(createIdentifierWithoutMbi("1"))
-                .dateRangesUnderContract(dates).build());
-        map.put("2", ContractBeneficiaries.PatientDTO.builder()
-                .identifiers(createIdentifierWithoutMbi("2"))
-                .dateRangesUnderContract(dates).build());
-        map.put("3", ContractBeneficiaries.PatientDTO.builder()
-                .identifiers(createIdentifierWithoutMbi("3"))
-                .dateRangesUnderContract(dates).build());
-        tracker.addPatientsByContract(cb);
+
+        List<FilterOutByDate.DateRange> dates = singletonList(TestUtil.getOpenRange());
+        List<CoverageSummary> summaries = List.of(
+                new CoverageSummary(createIdentifierWithoutMbi("1"), null, dates),
+                new CoverageSummary(createIdentifierWithoutMbi("2"), null, dates),
+                new CoverageSummary(createIdentifierWithoutMbi("3"), null, dates)
+        );
+
+        tracker.addPatients(summaries);
+
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 20);
         ReflectionTestUtils.setField(patientClaimsProcessor, "startDate", "01/01/2020");
     }
