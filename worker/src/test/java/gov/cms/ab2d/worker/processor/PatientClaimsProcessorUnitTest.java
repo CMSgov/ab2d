@@ -3,10 +3,9 @@ package gov.cms.ab2d.worker.processor;
 import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.TestUtil;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
-import gov.cms.ab2d.worker.processor.domainmodel.PatientClaimsRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
@@ -33,16 +32,14 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
-import static org.junit.Assert.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
-public class PatientClaimsProcessorUnitTest {
+class PatientClaimsProcessorUnitTest {
     // class under test
     private PatientClaimsProcessorImpl cut;
 
@@ -53,13 +50,12 @@ public class PatientClaimsProcessorUnitTest {
     File tmpEfsMountDir;
 
     private ExplanationOfBenefit eob;
-    private Map<String, ContractBeneficiaries.PatientDTO> patientPTOMap;
     private final static String patientId = "1234567890";
     private final static String SAMPLE_CONTRACT_ID = "CONTRACT1";
 
     private final OffsetDateTime earlyAttDate = OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
     private final OffsetDateTime laterAttDate = OffsetDateTime.of(2020, 2, 15, 0, 0, 0, 0, ZoneOffset.UTC);
-    private ContractBeneficiaries.PatientDTO patientDTO;
+    private CoverageSummary coverageSummary;
 
     private final Token noOpToken = new Token() {
         @Override
@@ -95,22 +91,22 @@ public class PatientClaimsProcessorUnitTest {
 
         eob = EobTestDataUtil.createEOB();
         createOutputFiles();
-        patientDTO = new ContractBeneficiaries.PatientDTO();
-        patientDTO.setIdentifiers(createIdentifierWithoutMbi(patientId));
-        patientDTO.setDateRangesUnderContract(List.of(TestUtil.getOpenRange()));
 
-        patientPTOMap = new HashMap<>();
-        patientPTOMap.put(patientId, patientDTO);
-        ContractBeneficiaries.PatientDTO fileDTO = new ContractBeneficiaries.PatientDTO();
-        fileDTO.setIdentifiers(createIdentifierWithoutMbi("-199900000022040"));
-        fileDTO.setDateRangesUnderContract(Collections.singletonList(TestUtil.getOpenRange()));
-        patientPTOMap.put(fileDTO.getBeneficiaryId(), fileDTO);
+        List<CoverageSummary> coverageSummaries = new ArrayList<>();
+
+        coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(patientId),
+                null, List.of(TestUtil.getOpenRange()));
+        coverageSummaries.add(coverageSummary);
+
+        CoverageSummary fileSummary = new CoverageSummary(createIdentifierWithoutMbi("-199900000022040"),
+                null, List.of(TestUtil.getOpenRange()));
+        coverageSummaries.add(fileSummary);
 
         Contract contract = new Contract();
         StreamHelper helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(),
                 30, 120, eventLogger, null);
 
-        request = new PatientClaimsRequest(patientDTO, laterAttDate, null, "user", "job",
+        request = new PatientClaimsRequest(coverageSummary, laterAttDate, null, "user", "job",
                 "contractNum", noOpToken);
     }
 
@@ -236,11 +232,9 @@ public class PatientClaimsProcessorUnitTest {
 
     @Test
     void process_whenPatientHasSinglePageOfClaimsDataSince() throws ExecutionException, InterruptedException,
-            FileNotFoundException, ParseException {
+            FileNotFoundException {
         // Override default behavior of setup
-        patientDTO = new ContractBeneficiaries.PatientDTO();
-        patientDTO.setIdentifiers(createIdentifierWithoutMbi(patientId));
-        patientDTO.setDateRangesUnderContract(List.of(TestUtil.getOpenRange()));
+        coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(patientId), null, List.of(TestUtil.getOpenRange()));
 
         Contract contract = new Contract();
         StreamHelper helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(),
@@ -248,7 +242,7 @@ public class PatientClaimsProcessorUnitTest {
 
         OffsetDateTime sinceDate = earlyAttDate.plusDays(1);
 
-        request = new PatientClaimsRequest(patientDTO, laterAttDate, sinceDate, "user", "job",
+        request = new PatientClaimsRequest(coverageSummary, laterAttDate, sinceDate, "user", "job",
                 "contractNum", noOpToken);
 
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
@@ -262,17 +256,15 @@ public class PatientClaimsProcessorUnitTest {
 
     @Test
     void process_whenPatientHasSinglePageOfClaimsDataEarlyAttDate() throws ExecutionException, InterruptedException,
-            FileNotFoundException, ParseException {
+            FileNotFoundException {
         // Override default behavior of setup
-        patientDTO = new ContractBeneficiaries.PatientDTO();
-        patientDTO.setIdentifiers(createIdentifierWithoutMbi(patientId));
-        patientDTO.setDateRangesUnderContract(List.of(TestUtil.getOpenRange()));
+        coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(patientId), null, List.of(TestUtil.getOpenRange()));
 
         Contract contract = new Contract();
         StreamHelper helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(),
                 30, 120, eventLogger, null);
 
-        request = new PatientClaimsRequest(patientDTO, earlyAttDate, null, "user", "job",
+        request = new PatientClaimsRequest(coverageSummary, earlyAttDate, null, "user", "job",
                 "contractNum", noOpToken);
 
         Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
