@@ -199,49 +199,31 @@ psql \
   --dbname="${DATABASE_NAME}" \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
-  --command="TRUNCATE ${DATABASE_SCHEMA_NAME}.sponsor CASCADE;"
+  --command="TRUNCATE ${DATABASE_SCHEMA_NAME}.sponsor RESTART IDENTITY CASCADE;"
 
 psql \
   --dbname="${DATABASE_NAME}" \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
-  --command="TRUNCATE ${DATABASE_SCHEMA_NAME}.contract CASCADE;"
+  --command="TRUNCATE ${DATABASE_SCHEMA_NAME}.contract RESTART IDENTITY CASCADE;"
 
 psql \
   --dbname="${DATABASE_NAME}" \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
-  --command="TRUNCATE ${DATABASE_SCHEMA_NAME}.user_account CASCADE;"
+  --command="TRUNCATE ${DATABASE_SCHEMA_NAME}.user_account RESTART IDENTITY CASCADE;"
 
 psql \
   --dbname="${DATABASE_NAME}" \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
-  --command="TRUNCATE ${DATABASE_SCHEMA_NAME}.role CASCADE;"
+  --command="TRUNCATE ${DATABASE_SCHEMA_NAME}.role RESTART IDENTITY CASCADE;"
 
 psql \
   --dbname="${DATABASE_NAME}" \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
-  --command="TRUNCATE ${DATABASE_SCHEMA_NAME}.user_role CASCADE;"
-
-psql \
-  --dbname="${DATABASE_NAME}" \
-  --host="${DATABASE_HOST}" \
-  --username="${DATABASE_USER}" \
-  --command="TRUNCATE ${DATABASE_SCHEMA_NAME}.coverage CASCADE;"
-
-psql \
-  --dbname="${DATABASE_NAME}" \
-  --host="${DATABASE_HOST}" \
-  --username="${DATABASE_USER}" \
-  --command="TRUNCATE ${DATABASE_SCHEMA_NAME}.event_bene_coverage_search_status_change CASCADE;"
-
-psql \
-  --dbname="${DATABASE_NAME}" \
-  --host="${DATABASE_HOST}" \
-  --username="${DATABASE_USER}" \
-  --command="TRUNCATE ${DATABASE_SCHEMA_NAME}.bene_coverage_period CASCADE;"
+  --command="TRUNCATE ${DATABASE_SCHEMA_NAME}.user_role RESTART IDENTITY CASCADE;"
 
 # Restore data from CSVs to target tables
 
@@ -276,31 +258,3 @@ psql \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
   --command="\\COPY ${DATABASE_SCHEMA_NAME}.user_role FROM '${DATABASE_SCHEMA_NAME}.user_role.csv' WITH (FORMAT CSV);"
-
-psql \
-  --dbname="${DATABASE_NAME}" \
-  --host="${DATABASE_HOST}" \
-  --username="${DATABASE_USER}" \
-  --command="\\COPY ${DATABASE_SCHEMA_NAME}.bene_coverage_period FROM '${DATABASE_SCHEMA_NAME}.bene_coverage_period.csv' WITH (FORMAT CSV);"
-
-psql \
-  --dbname="${DATABASE_NAME}" \
-  --host="${DATABASE_HOST}" \
-  --username="${DATABASE_USER}" \
-  --command="\\COPY ${DATABASE_SCHEMA_NAME}.event_bene_coverage_search_status_change FROM '${DATABASE_SCHEMA_NAME}.event_bene_coverage_search_status_change.csv' WITH (FORMAT CSV);"
-
-if [ -f "${DATABASE_SCHEMA_NAME}.coverage_part01.csv" ]; then
-  for csv_file in "${DATABASE_SCHEMA_NAME}".coverage_part*.csv; do
-    psql \
-      --dbname="${DATABASE_NAME}" \
-      --host="${DATABASE_HOST}" \
-      --username="${DATABASE_USER}" \
-      --command="\\COPY ${DATABASE_SCHEMA_NAME}.coverage FROM '${csv_file}' WITH (FORMAT CSV);"
-  done
-else
-  psql \
-    --dbname="${DATABASE_NAME}" \
-    --host="${DATABASE_HOST}" \
-    --username="${DATABASE_USER}" \
-    --command="\\COPY ${DATABASE_SCHEMA_NAME}.coverage FROM '${DATABASE_SCHEMA_NAME}.coverage.csv' WITH (FORMAT CSV);"
-fi
