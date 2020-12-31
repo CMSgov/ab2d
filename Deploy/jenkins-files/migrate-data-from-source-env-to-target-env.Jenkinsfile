@@ -41,7 +41,7 @@ pipeline {
         dir('Deploy/bash') {
 	      // Cleanup
 	      sh '''
-            # cleanup
+            ./cleanup-database-migration.sh
 	      sh '''
         }
       }
