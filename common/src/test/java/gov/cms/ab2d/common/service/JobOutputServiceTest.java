@@ -7,7 +7,6 @@ import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
-import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,12 +26,12 @@ import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.EOB;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
-import static org.hamcrest.CoreMatchers.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @TestPropertySource(locations = "/application.common.properties")
 @Testcontainers
-public class JobOutputServiceTest {
+class JobOutputServiceTest {
 
     @Autowired
     JobService jobService;
@@ -71,19 +70,19 @@ public class JobOutputServiceTest {
 
     @AfterEach
     public void tearDown() {
-        jobRepository.deleteAll();
-        userRepository.deleteAll();
-        contractRepository.deleteAll();
+        dataSetup.cleanup();
     }
 
     @Test
-    public void testJobOutputUpdate() {
+    void testJobOutputUpdate() {
         Job job = new Job();
         job.setJobUuid("uuid");
         job.setUser(userRepository.findByUsername(TEST_USER));
         job.setStatus(JobStatus.FAILED);
         job.setCreatedAt(OffsetDateTime.now());
         Job savedJob = jobRepository.save(job);
+        dataSetup.queueForCleanup(savedJob);
+
         JobOutput jobOutput = new JobOutput();
         jobOutput.setDownloaded(false);
         jobOutput.setError(true);
@@ -98,20 +97,22 @@ public class JobOutputServiceTest {
         savedJobOutput.setFilePath("newpath.ndjson");
         savedJobOutput.setFhirResourceType("newtype");
         JobOutput updatedJobOutput = jobOutputService.updateJobOutput(savedJobOutput);
-        Assert.assertEquals(updatedJobOutput.getFilePath(), savedJobOutput.getFilePath());
-        Assert.assertEquals(updatedJobOutput.getDownloaded(), savedJobOutput.getDownloaded());
-        Assert.assertEquals(updatedJobOutput.getError(), savedJobOutput.getError());
-        Assert.assertEquals(updatedJobOutput.getFhirResourceType(), savedJobOutput.getFhirResourceType());
+        assertEquals(updatedJobOutput.getFilePath(), savedJobOutput.getFilePath());
+        assertEquals(updatedJobOutput.getDownloaded(), savedJobOutput.getDownloaded());
+        assertEquals(updatedJobOutput.getError(), savedJobOutput.getError());
+        assertEquals(updatedJobOutput.getFhirResourceType(), savedJobOutput.getFhirResourceType());
     }
 
     @Test
-    public void testJobOutputRetrieval() {
+    void testJobOutputRetrieval() {
         Job job = new Job();
         job.setJobUuid("uuid");
         job.setUser(userRepository.findByUsername(TEST_USER));
         job.setStatus(JobStatus.FAILED);
         job.setCreatedAt(OffsetDateTime.now());
         Job savedJob = jobRepository.save(job);
+        dataSetup.queueForCleanup(savedJob);
+
         JobOutput jobOutput = new JobOutput();
         jobOutput.setDownloaded(false);
         jobOutput.setError(true);
@@ -124,17 +125,19 @@ public class JobOutputServiceTest {
 
         JobOutput retrievedJobOutput = jobOutputService.findByFilePathAndJob(jobOutput.getFilePath(), job);
 
-        Assert.assertEquals(savedJobOutput, retrievedJobOutput);
+        assertEquals(savedJobOutput, retrievedJobOutput);
     }
 
     @Test
-    public void testJobOutputRetrievalNotFound() {
+    void testJobOutputRetrievalNotFound() {
         Job job = new Job();
         job.setJobUuid("uuid");
         job.setUser(userRepository.findByUsername(TEST_USER));
         job.setStatus(JobStatus.FAILED);
         job.setCreatedAt(OffsetDateTime.now());
         Job savedJob = jobRepository.save(job);
+        dataSetup.queueForCleanup(savedJob);
+
         JobOutput jobOutput = new JobOutput();
         jobOutput.setDownloaded(false);
         jobOutput.setError(true);
@@ -148,7 +151,7 @@ public class JobOutputServiceTest {
         var exception = Assertions.assertThrows(ResourceNotFoundException.class, () -> {
             jobOutputService.findByFilePathAndJob("", job);
         });
-        Assert.assertThat(exception.getMessage(), is("JobOutput with fileName  was not able to be found" +
-                " for job " + job.getJobUuid()));
+        assertEquals("JobOutput with fileName  was not able to be found" +
+                " for job " + job.getJobUuid(), exception.getMessage());
     }
 }
