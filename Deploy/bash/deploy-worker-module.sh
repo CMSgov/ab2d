@@ -691,22 +691,24 @@ if [ -z "${WORKER_CLUSTER_ARN}" ]; then
 else
 
   LAUNCH_CONFIGURATION_EXPECTED_COUNT=2
+
+  # TO DO: migrate from "*-test-*" naming to "*-validation-*" naming
+  # Count only "*-test-*" and "*-validation-*" launch configurations
   LAUNCH_CONFIGURATION_ACTUAL_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-launch-configurations \
     --query "LaunchConfigurations[*].[LaunchConfigurationName,CreatedTime]" \
     --output text \
     | sort -k2 \
-    | grep "\-test\-" \
-    | grep "\-validation\-")
+    | grep -c "\-test\-\|\-validation\-")
 
   while [ "$LAUNCH_CONFIGURATION_ACTUAL_COUNT" -gt "$LAUNCH_CONFIGURATION_EXPECTED_COUNT" ]; do
 
+    # TO DO: migrate from "*-test-*" naming to "*-validation-*" naming
     # Note that only "*-test-*" and "*-validation-*" launch configurations will be included
     OLD_LAUNCH_CONFIGURATION=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-launch-configurations \
       --query "LaunchConfigurations[*].[LaunchConfigurationName,CreatedTime]" \
       --output text \
       | sort -k2 \
-      | grep "\-test\-" \
-      | grep "\-validation\-" \
+      | grep "\-test\-\|\-validation\-" \
       | head -n1 \
       | awk '{print $1}')
 
@@ -714,13 +716,13 @@ else
       --launch-configuration-name "${OLD_LAUNCH_CONFIGURATION}"
     sleep 5
 
-    # Note that only "*-test-*" and "*-validation-*" launch configurations will be included
+    # TO DO: migrate from "*-test-*" naming to "*-validation-*" naming
+    # Note that only "*-test-*" and "*-validation-*" launch configurations will be counted
     LAUNCH_CONFIGURATION_ACTUAL_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-launch-configurations \
       --query "LaunchConfigurations[*].[LaunchConfigurationName,CreatedTime]" \
       --output text \
       | sort -k2 \
-      | grep "\-test\-" \
-      | grep "\-validation\-")
+      | grep -c "\-test\-\|\-validation\-")
 
   done
 
