@@ -600,7 +600,7 @@ RETRIES_WORKER=0
 while [ "$ACTUAL_WORKER_COUNT" -lt "$EXPECTED_WORKER_COUNT" ]; do
   ACTUAL_WORKER_COUNT=$(worker_task_count)
   echo "Running WORKER Tasks: $ACTUAL_WORKER_COUNT, Expected: $EXPECTED_WORKER_COUNT"
-  if [ "$RETRIES_WORKER" != "15" ]; then
+  if [ "$RETRIES_WORKER" != "30" ]; then
     echo "Retry in 60 seconds..."
     sleep 60
     RETRIES_WORKER=$((RETRIES_WORKER + 1))
@@ -669,7 +669,7 @@ ASG_NOT_IN_SERVICE=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-a
   --output text)
 while [ -n "${ASG_NOT_IN_SERVICE}" ]; do
   echo "Waiting for old autoscaling groups to terminate..."
-  if [ "$RETRIES_ASG" != "15" ]; then
+  if [ "$RETRIES_ASG" != "30" ]; then
     echo "Retry in 60 seconds..."
     sleep 60
     ASG_NOT_IN_SERVICE=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
