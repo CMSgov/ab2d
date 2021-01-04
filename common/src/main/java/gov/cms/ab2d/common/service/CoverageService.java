@@ -49,6 +49,8 @@ public interface CoverageService {
      */
     boolean isCoveragePeriodInProgress(int periodId);
 
+    int countBeneficiariesByCoveragePeriod(List<CoveragePeriod> coveragePeriods);
+
     /**
      * Can an EOB search be started based on whether a contract mapping is in progress
      * @return true if search {@link CoveragePeriod#getStatus()} is not {@link JobStatus#IN_PROGRESS}

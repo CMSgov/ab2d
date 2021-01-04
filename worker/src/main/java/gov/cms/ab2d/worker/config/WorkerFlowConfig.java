@@ -2,6 +2,7 @@ package gov.cms.ab2d.worker.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.*;
 import org.springframework.integration.channel.ExecutorChannel;
 import org.springframework.integration.config.EnableIntegration;
@@ -10,6 +11,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 
 import javax.sql.DataSource;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Configures Spring Integration.
@@ -28,15 +30,21 @@ public class WorkerFlowConfig {
 
     private final Executor mainJobPool;
 
-    public WorkerFlowConfig(DataSource dataSource, JobHandler handler, @Qualifier("mainJobPool") Executor mainJobPool) {
+    // How often we poll for matching jobs in the job table
+    private final int pollingFrequency;
+
+    public WorkerFlowConfig(DataSource dataSource, JobHandler handler,
+                            @Qualifier("mainJobPool") Executor mainJobPool,
+                            @Value("${eob.job.queueing.frequency}") int pollingFrequency) {
         this.dataSource = dataSource;
         this.handler = handler;
         this.mainJobPool = mainJobPool;
+        this.pollingFrequency = pollingFrequency;
     }
 
     @Bean
     public IntegrationFlow flow() {
-        return IntegrationFlows.from(new JobMessageSource(dataSource), c -> c.poller(Pollers.fixedDelay(1000)))
+        return IntegrationFlows.from(new JobMessageSource(dataSource), c -> c.poller(Pollers.fixedDelay(pollingFrequency, TimeUnit.SECONDS)))
                             .channel(new ExecutorChannel(mainJobPool))
                             .handle(handler)
                             .get();

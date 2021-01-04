@@ -115,7 +115,7 @@ class CoverageUpdateAndProcessorTest {
 
         CoverageUpdateConfig config = new CoverageUpdateConfig(PAST_MONTHS, STALE_DAYS, STUCK_HOURS);
 
-        processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS);
+        processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS, false);
         driver = new CoverageDriverImpl(coverageSearchRepo, contractService, coverageService, propertiesService, processor, config, searchLock);
     }
 
