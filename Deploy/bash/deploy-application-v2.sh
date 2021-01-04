@@ -992,23 +992,6 @@ fi
 
 echo "Ensure Old Autoscaling Groups and containers are around to service requests..."
 
-# if [ -z "${CLUSTER_ARNS}" ]; then
-#   echo "Skipping setting OLD_API_ASG, since there are no existing clusters"
-# else
-#   OLD_API_ASG=$(terraform show \
-#     | grep :autoScalingGroup: \
-#     | awk -F" = " '{print $2}' \
-#     | grep $TARGET_CMS_ENV-api \
-#     | head -1 \
-#     | tr -d '"')
-#   OLD_WORKER_ASG=$(terraform show \
-#     | grep :autoScalingGroup: \
-#     | awk -F" = " '{print $2}' \
-#     | grep $TARGET_CMS_ENV-worker \
-#     | head -1 \
-#     | tr -d '"')
-# fi
-
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping removing autoscaling group and launch configuration, since there are no existing clusters"
 else

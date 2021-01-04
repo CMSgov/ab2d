@@ -72,9 +72,6 @@ module "db" {
   jenkins_agent_sec_group_id = var.jenkins_agent_sec_group_id
 }
 
-# LSH SKIP FOR NOW BEGIN
-# enterprise-tools-sec-group-id = var.enterprise-tools-sec-group-id
-# LSH SKIP FOR NOW END
 module "controller" {
   source                            = "../../modules/controller"
   env                               = var.env
