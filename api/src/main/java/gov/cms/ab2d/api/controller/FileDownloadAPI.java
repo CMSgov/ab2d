@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -41,9 +40,6 @@ public class FileDownloadAPI {
 
     @Autowired
     private LogManager eventLogger;
-
-    @Value("${efs.mount}")
-    private String fileDownloadPath;
 
     @ApiOperation(value = "Downloads a file produced by an export job.", response = String.class,
             produces = NDJSON_FIRE_CONTENT_TYPE,
