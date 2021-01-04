@@ -1,8 +1,6 @@
 package gov.cms.ab2d.api.controller;
 
 import gov.cms.ab2d.api.config.SwaggerConfig;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.service.JobOutputMissingException;
 import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
@@ -13,7 +11,6 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -98,48 +95,6 @@ public class FileDownloadAPI {
                     "File " + filename + " was downloaded", (String) request.getAttribute(REQUEST_ID)));
 
             jobService.deleteFileForJob(downloadResource.getFile(), jobUuid);
-
-            return new ResponseEntity<>(null, null, HttpStatus.OK);
-        }
-    }
-
-    @ResponseStatus(value = HttpStatus.OK)
-    @GetMapping(value = "/Job/{jobUuid}/crosswalk", produces = { CSV_TYPE })
-    public ResponseEntity downloadCrosswalk(
-            HttpServletRequest request,
-            @ApiParam(value = "A job identifier", required = true) @PathVariable @NotBlank String jobUuid) throws IOException {
-        MDC.put(JOB_LOG, jobUuid);
-        log.info("Request submitted to download file");
-
-        Job job = jobService.getAuthorizedJobByJobUuidAndRole(jobUuid);
-
-        Path crosswalkPath = Paths.get(fileDownloadPath, job.getJobUuid(), "crosswalk.csv");
-        Resource downloadResource = new UrlResource(crosswalkPath.toUri());
-        if (!downloadResource.exists()) {
-            throw new JobOutputMissingException("crosswalk not present for job");
-        }
-
-        RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
-        HttpServletResponse response = ((ServletRequestAttributes) requestAttributes).getResponse();
-
-        log.info("Sending crosswalk.csv file to client");
-
-        String mimeType = CSV_TYPE;
-        if (downloadResource.getFilename().endsWith("zip")) {
-            mimeType = ZIPFORMAT;
-        }
-        response.setHeader(HttpHeaders.CONTENT_TYPE, mimeType);
-
-        try (OutputStream out = response.getOutputStream(); FileInputStream in = new FileInputStream(downloadResource.getFile())) {
-            IOUtils.copy(in, out);
-
-            eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), jobUuid, HttpStatus.OK, "File Download",
-                    "File crosswalk.csv was downloaded", (String) request.getAttribute(REQUEST_ID)));
-
-            boolean deleted = crosswalkPath.toFile().delete();
-            if (!deleted) {
-                log.error("Was not able to delete the file {}", crosswalkPath.toFile().getName());
-            }
 
             return new ResponseEntity<>(null, null, HttpStatus.OK);
         }
