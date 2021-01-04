@@ -6,14 +6,10 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.BeneficiarySearchEvent;
-import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
+import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmerR3;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent;
-import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
-import org.hl7.fhir.dstu3.model.ResourceType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
@@ -75,13 +71,13 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         return new AsyncResult<>(result);
     }
 
-    private List<ExplanationOfBenefit> getEobBundleResources(PatientClaimsRequest request) {
+    private List<org.hl7.fhir.dstu3.model.ExplanationOfBenefit> getEobBundleResources(PatientClaimsRequest request) {
         CoverageSummary patient = request.getCoverageSummary();
         String beneficiaryId = patient.getIdentifiers().getBeneficiaryId();
         OffsetDateTime attTime = request.getAttTime();
 
         OffsetDateTime start = OffsetDateTime.now();
-        Bundle eobBundle;
+        org.hl7.fhir.dstu3.model.Bundle eobBundle;
         try {
             OffsetDateTime sinceTime = null;
             if (request.getSinceTime() == null) {
@@ -110,12 +106,12 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             BFDClient.BFD_BULK_JOB_ID.remove();
         }
 
-        final List<BundleEntryComponent> entries = eobBundle.getEntry();
-        final List<ExplanationOfBenefit> resources = extractResources(request.getContractNum(), entries, patient.getDateRanges(), attTime);
+        final List<org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent> entries = eobBundle.getEntry();
+        final List<org.hl7.fhir.dstu3.model.ExplanationOfBenefit> resources = extractResources(request.getContractNum(), entries, patient.getDateRanges(), attTime);
 
-        while (eobBundle.getLink(Bundle.LINK_NEXT) != null) {
+        while (eobBundle.getLink(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT) != null) {
             eobBundle = bfdClient.requestNextBundleFromServer(eobBundle);
-            final List<BundleEntryComponent> nextEntries = eobBundle.getEntry();
+            final List<org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent> nextEntries = eobBundle.getEntry();
             resources.addAll(extractResources(request.getContractNum(), nextEntries, patient.getDateRanges(), attTime));
         }
 
@@ -144,7 +140,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         return this.specialContracts != null && !this.specialContracts.isEmpty() && specialContracts.contains(contract);
     }
 
-    List<ExplanationOfBenefit> extractResources(String contractNum, List<BundleEntryComponent> entries,
+    List<org.hl7.fhir.dstu3.model.ExplanationOfBenefit> extractResources(String contractNum, List<org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent> entries,
                                                 final List<FilterOutByDate.DateRange> dateRanges,
                                                 OffsetDateTime attTime) {
         if (attTime == null) {
@@ -155,13 +151,13 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         final Date earliestDate = getStartDate(contractNum);
         return entries.stream()
                 // Get the resource
-                .map(BundleEntryComponent::getResource)
+                .map(org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent::getResource)
                 // Get only the explanation of benefits
-                .filter(resource -> resource.getResourceType() == ResourceType.ExplanationOfBenefit)
+                .filter(resource -> resource.getResourceType() == org.hl7.fhir.dstu3.model.ResourceType.ExplanationOfBenefit)
                 // Filter by date
-                .filter(resource -> skipBillablePeriodCheck || FilterOutByDate.valid((ExplanationOfBenefit) resource, attDate, earliestDate, dateRanges))
+                .filter(resource -> skipBillablePeriodCheck || FilterOutByDate.valid((org.hl7.fhir.dstu3.model.ExplanationOfBenefit) resource, attDate, earliestDate, dateRanges))
                 // filter it
-                .map(resource -> ExplanationOfBenefitTrimmer.getBenefit((ExplanationOfBenefit) resource))
+                .map(resource -> ExplanationOfBenefitTrimmerR3.getBenefit((org.hl7.fhir.dstu3.model.ExplanationOfBenefit) resource))
                 // Remove any empty values
                 .filter(Objects::nonNull)
                 // Remove Plan D

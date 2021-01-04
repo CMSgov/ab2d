@@ -16,10 +16,6 @@ import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.hl7.fhir.dstu3.model.Coding;
-import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
-import org.hl7.fhir.dstu3.model.Extension;
-import org.hl7.fhir.dstu3.model.Identifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -227,12 +223,12 @@ public class ContractProcessorImpl implements ContractProcessor {
         return numberOfEobs;
     }
 
-    void addMbiIdsToEobs(List<ExplanationOfBenefit> eobs, Map<String, CoverageSummary> patients) {
+    void addMbiIdsToEobs(List<org.hl7.fhir.dstu3.model.ExplanationOfBenefit> eobs, Map<String, CoverageSummary> patients) {
         if (eobs == null || eobs.isEmpty()) {
             return;
         }
         // Get first EOB Bene ID
-        ExplanationOfBenefit eob = eobs.get(0);
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob = eobs.get(0);
 
         // Add extesions only if beneficiary id is present and known to memberships
         String benId = getPatientIdFromEOB(eob);
@@ -241,12 +237,12 @@ public class ContractProcessorImpl implements ContractProcessor {
 
             // Add each mbi to each eob
             if (patient.getCurrentMbi() != null) {
-                Extension currentMbiExtension = createExtension(patient.getCurrentMbi(), true);
+                org.hl7.fhir.dstu3.model.Extension currentMbiExtension = createExtension(patient.getCurrentMbi(), true);
                 eobs.forEach(e -> e.addExtension(currentMbiExtension));
             }
 
             for (String mbi : patient.getHistoricMbis()) {
-                Extension mbiExtension = createExtension(mbi, false);
+                org.hl7.fhir.dstu3.model.Extension mbiExtension = createExtension(mbi, false);
                 eobs.forEach(e -> e.addExtension(mbiExtension));
             }
         }
@@ -258,27 +254,27 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @param current whether the mbi is currently active (true) or historical (false)
      * @return mbi extension
      */
-    Extension createExtension(String mbi, boolean current) {
-        Identifier identifier = new Identifier().setSystem(CoverageMappingCallable.MBI_ID).setValue(mbi);
+    org.hl7.fhir.dstu3.model.Extension createExtension(String mbi, boolean current) {
+        org.hl7.fhir.dstu3.model.Identifier identifier = new org.hl7.fhir.dstu3.model.Identifier().setSystem(CoverageMappingCallable.MBI_ID).setValue(mbi);
 
-        Coding coding = new Coding()
+        org.hl7.fhir.dstu3.model.Coding coding = new org.hl7.fhir.dstu3.model.Coding()
                 .setCode(current ? CoverageMappingCallable.CURRENT_MBI : CoverageMappingCallable.HISTORIC_MBI);
 
-        Extension currencyExtension = new Extension()
+        org.hl7.fhir.dstu3.model.Extension currencyExtension = new org.hl7.fhir.dstu3.model.Extension()
                 .setUrl(CoverageMappingCallable.CURRENCY_IDENTIFIER)
                 .setValue(coding);
         identifier.setExtension(List.of(currencyExtension));
 
-        return new Extension().setUrl(ID_EXT).setValue(identifier);
+        return new org.hl7.fhir.dstu3.model.Extension().setUrl(ID_EXT).setValue(identifier);
     }
 
-    private int writeOutResource(List<ExplanationOfBenefit> eobs, StreamHelper helper) {
+    private int writeOutResource(List<org.hl7.fhir.dstu3.model.ExplanationOfBenefit> eobs, StreamHelper helper) {
         var jsonParser = fhirContext.newJsonParser();
 
         String payload = "";
         int resourceCount = 0;
         try {
-            for (ExplanationOfBenefit resource : eobs) {
+            for (org.hl7.fhir.dstu3.model.ExplanationOfBenefit resource : eobs) {
                 ++resourceCount;
                 try {
                     payload = jsonParser.encodeResourceToString(resource) + System.lineSeparator();
@@ -329,7 +325,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         return null;
     }
 
-    public String getPatientIdFromEOB(ExplanationOfBenefit eob) {
+    public String getPatientIdFromEOB(org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob) {
         if (eob == null) {
             return null;
         }
@@ -348,7 +344,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @param patients - the patient map containing the patient id & patient object
      * @return true if this patient is a member of the correct contract
      */
-    boolean validPatientInContract(ExplanationOfBenefit benefit, Map<String, CoverageSummary> patients) {
+    boolean validPatientInContract(org.hl7.fhir.dstu3.model.ExplanationOfBenefit benefit, Map<String, CoverageSummary> patients) {
         if (benefit == null || patients == null) {
             log.debug("Passed an invalid benefit or an invalid list of patients");
             return false;

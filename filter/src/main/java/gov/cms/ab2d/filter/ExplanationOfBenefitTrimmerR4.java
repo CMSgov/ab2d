@@ -1,6 +1,6 @@
 package gov.cms.ab2d.filter;
 
-import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
+import org.hl7.fhir.r4.model.ExplanationOfBenefit;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
  * Cleans out data from a copy of an ExplanationOfBenefit object that we don't want
  * to forward to Part D providers
  */
-public class ExplanationOfBenefitTrimmer {
+public class ExplanationOfBenefitTrimmerR4 {
 
     /**
      * Pass in an ExplanationOfBenefit, return the copy without the data
@@ -39,7 +39,6 @@ public class ExplanationOfBenefitTrimmer {
            Keep:
               patient
               provider
-              organization
               facility
               careTeam
               diagnosis
@@ -47,18 +46,23 @@ public class ExplanationOfBenefitTrimmer {
               billablePeriod
               item - Clear out required data
 
-           Inherited - Identifier, resourceType, type
+           Inherited - Identifier, resourceType, type (min cardinality from 0 to 1)
          */
+
         benefit.setStatus(null);
-        benefit.setExtension(null);
+        // We don't know what ends up here so needs to be removed
+        clearOutList(benefit.getExtension());
+        // This was Information and now it's SupportingInfo
+        clearOutList(benefit.getSupportingInfo());
+
         benefit.setPatientTarget(null);
         benefit.setCreated(null);
         benefit.setEnterer(null);
         benefit.setEntererTarget(null);
         benefit.setInsurer(null);
         benefit.setInsurerTarget(null);
+        benefit.setProvider(null);
         benefit.setProviderTarget(null);
-        benefit.setOrganizationTarget(null);
         benefit.setReferral(null);
         benefit.setReferralTarget(null);
         benefit.setFacilityTarget(null);
@@ -74,26 +78,43 @@ public class ExplanationOfBenefitTrimmer {
         benefit.setOriginalPrescription(null);
         benefit.setOriginalPrescriptionTarget(null);
         benefit.setPayee(null);
-        clearOutList(benefit.getInformation());
         benefit.setPrecedence(0);
-        benefit.setInsurance(null);
+        clearOutList(benefit.getInsurance());
         benefit.setAccident(null);
-        benefit.setEmploymentImpacted(null);
-        benefit.setHospitalization(null);
         if (benefit.getItem() != null) {
             benefit.setItem(benefit.getItem().stream()
-                    .map(ExplanationOfBenefitTrimmer::cleanOutItemComponent)
+                    .map(ExplanationOfBenefitTrimmerR4::cleanOutItemComponent)
                     .collect(Collectors.toList()));
         }
         clearOutList(benefit.getAddItem());
-        benefit.setTotalCost(null);
-        benefit.setUnallocDeductable(null);
-        benefit.setTotalBenefit(null);
         benefit.setPayment(null);
         benefit.setForm(null);
-        benefit.setContained(null);
+        clearOutList(benefit.getContained());
         clearOutList(benefit.getProcessNote());
         clearOutList(benefit.getBenefitBalance());
+
+        // New items for R4 - by default, remove them
+        benefit.setPriority(null);
+        clearOutList(benefit.getTotal());
+        benefit.setUse(null);
+        benefit.setFundsReserveRequested(null);
+        benefit.setFundsReserve(null);
+        clearOutList(benefit.getPreAuthRef());
+        clearOutList(benefit.getPreAuthRefPeriod());
+        benefit.setFormCode(null);
+
+        if (!benefit.getDiagnosis().isEmpty()) {
+            benefit.getDiagnosis().forEach(d -> d.setOnAdmission(null));
+        }
+        if (!benefit.getProcedure().isEmpty()) {
+            benefit.getProcedure().forEach(d -> {
+                clearOutList(d.getType());
+                clearOutList(d.getUdi());
+                clearOutList(d.getUdiTarget());
+            });
+        }
+        benefit.setBenefitPeriod(null);
+        clearOutList(benefit.getAdjudication());
     }
 
     /**
@@ -108,15 +129,15 @@ public class ExplanationOfBenefitTrimmer {
         /*
          Keep:
               sequence
-              careTeamLinkId
-              service
+              careTeamSequence
+              productOrService
               serviced
               location
               quantity
          */
-        clearOutList(component.getDiagnosisLinkId());
-        clearOutList(component.getProcedureLinkId());
-        clearOutList(component.getInformationLinkId());
+        clearOutList(component.getDiagnosisSequence());
+        clearOutList(component.getProcedureSequence());
+        clearOutList(component.getInformationSequence());
         component.setExtension(null);
         component.setRevenue(null);
         component.setCategory(null);
@@ -134,6 +155,9 @@ public class ExplanationOfBenefitTrimmer {
         clearOutList(component.getNoteNumber());
         clearOutList(component.getAdjudication());
         clearOutList(component.getDetail());
+
+        // Added in R4
+
         return component;
     }
 

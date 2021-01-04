@@ -18,8 +18,6 @@ import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.util.HealthCheck;
-import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -104,8 +102,8 @@ class JobProcessorIntegrationTest {
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
-    private Bundle bundle1;
-    private Bundle[] bundles;
+    private org.hl7.fhir.dstu3.model.Bundle bundle1;
+    private org.hl7.fhir.dstu3.model.Bundle[] bundles;
     private RuntimeException fail;
 
     @BeforeEach
@@ -125,7 +123,7 @@ class JobProcessorIntegrationTest {
         job.setStatus(JobStatus.IN_PROGRESS);
         jobRepository.saveAndFlush(job);
 
-        ExplanationOfBenefit eob = EobTestDataUtil.createEOB();
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob = EobTestDataUtil.createEOB();
         bundle1 = EobTestDataUtil.createBundle(eob.copy());
         bundles = getBundles();
         when(mockBfdClient.requestEOBFromServer(anyString())).thenReturn(bundle1);
@@ -284,8 +282,8 @@ class JobProcessorIntegrationTest {
         assertNotNull(processedJob.getCompletedAt());
     }
 
-    private Bundle[] getBundles() {
-        return new Bundle[]{bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1};
+    private org.hl7.fhir.dstu3.model.Bundle[] getBundles() {
+        return new org.hl7.fhir.dstu3.model.Bundle[]{bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1};
     }
 
     private User createUser() {

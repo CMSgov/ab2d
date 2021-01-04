@@ -8,7 +8,6 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverStub;
 import gov.cms.ab2d.worker.service.FileService;
-import org.hl7.fhir.dstu3.model.Bundle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -89,13 +88,13 @@ class ProgressTrackerIntegrationTest {
                 .expectedBeneficiaries(4)
                 .build();
 
-        Bundle.BundleEntryComponent entry1 = BundleUtils.createBundleEntry("P1", "mbi1", year);
-        Bundle.BundleEntryComponent entry2 = BundleUtils.createBundleEntry("P2", "mbi2", year);
-        Bundle.BundleEntryComponent entry3 = BundleUtils.createBundleEntry("P3", "mbi3", year);
-        Bundle.BundleEntryComponent entry4 = BundleUtils.createBundleEntry("P4", "mbi4", year);
+        org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent entry1 = BundleUtils.createBundleEntry("P1", "mbi1", year);
+        org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent entry2 = BundleUtils.createBundleEntry("P2", "mbi2", year);
+        org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent entry3 = BundleUtils.createBundleEntry("P3", "mbi3", year);
+        org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent entry4 = BundleUtils.createBundleEntry("P4", "mbi4", year);
 
-        Bundle bundleA = BundleUtils.createBundle(entry1, entry2, entry3);
-        Bundle bundleB = BundleUtils.createBundle(entry1, entry2, entry3, entry4);
+        org.hl7.fhir.dstu3.model.Bundle bundleA = BundleUtils.createBundle(entry1, entry2, entry3);
+        org.hl7.fhir.dstu3.model.Bundle bundleB = BundleUtils.createBundle(entry1, entry2, entry3, entry4);
 
         when(bfdClient.requestPartDEnrolleesFromServer(contractId, 1)).thenReturn(bundleA);
         when(bfdClient.requestPartDEnrolleesFromServer(contractId, 2)).thenReturn(bundleB);

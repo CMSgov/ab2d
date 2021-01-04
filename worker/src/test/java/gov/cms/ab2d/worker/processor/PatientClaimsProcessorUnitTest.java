@@ -7,8 +7,6 @@ import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.TestUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,7 +47,7 @@ class PatientClaimsProcessorUnitTest {
     @TempDir
     File tmpEfsMountDir;
 
-    private ExplanationOfBenefit eob;
+    private org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob;
     private final static String patientId = "1234567890";
     private final static String SAMPLE_CONTRACT_ID = "CONTRACT1";
 
@@ -119,12 +117,12 @@ class PatientClaimsProcessorUnitTest {
         ReflectionTestUtils.setField(cut, "startDateSpecialContracts", "01/01/2019");
         ReflectionTestUtils.setField(cut, "specialContracts", List.of("Z0001"));
 
-        Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
-        ExplanationOfBenefit eob = (ExplanationOfBenefit) bundle1.getEntry().get(0).getResource();
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob = (org.hl7.fhir.dstu3.model.ExplanationOfBenefit) bundle1.getEntry().get(0).getResource();
 
         eob.getBillablePeriod().setStart(d1);
         eob.getBillablePeriod().setEnd(d1);
-        List<ExplanationOfBenefit> resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
+        List<org.hl7.fhir.dstu3.model.ExplanationOfBenefit> resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
                 List.of(TestUtil.getOpenRange()), OffsetDateTime.now().minusYears(10));
         assertEquals(1, resources.size());
 
@@ -145,14 +143,14 @@ class PatientClaimsProcessorUnitTest {
     @Test
     void process_whenPDPhasAttestedBeforeBeginDate() throws ParseException {
         // Set the earliest date to Jan 1
-        Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         ReflectionTestUtils.setField(cut, "startDate", "01/01/2020");
         // Attestation time is 10 years ago, eob date is 01/02/2020
-        List<ExplanationOfBenefit> resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
+        List<org.hl7.fhir.dstu3.model.ExplanationOfBenefit> resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
                 List.of(TestUtil.getOpenRange()), OffsetDateTime.now().minusYears(10));
         assertEquals(1, resources.size());
         // Set the billable date to 1970 and attestation date to 1920, should return no results
-        ExplanationOfBenefit eob = (ExplanationOfBenefit) bundle1.getEntry().get(0).getResource();
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob = (org.hl7.fhir.dstu3.model.ExplanationOfBenefit) bundle1.getEntry().get(0).getResource();
         eob.getBillablePeriod().setStart(new Date(10));
         eob.getBillablePeriod().setEnd(new Date(10));
         resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
@@ -180,7 +178,7 @@ class PatientClaimsProcessorUnitTest {
 
     @Test
     void process_whenPatientHasSinglePageOfClaimsData() throws ExecutionException, InterruptedException {
-        Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(patientId, request.getAttTime())).thenReturn(bundle1);
 
         cut.process(request).get();
@@ -191,10 +189,10 @@ class PatientClaimsProcessorUnitTest {
 
     @Test
     void process_whenPatientHasMultiplePagesOfClaimsData() throws ExecutionException, InterruptedException {
-        Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         bundle1.addLink(EobTestDataUtil.addNextLink());
 
-        Bundle bundle2 = EobTestDataUtil.createBundle(eob.copy());
+        org.hl7.fhir.dstu3.model.Bundle bundle2 = EobTestDataUtil.createBundle(eob.copy());
 
         when(mockBfdClient.requestEOBFromServer(patientId, request.getAttTime())).thenReturn(bundle1);
         when(mockBfdClient.requestNextBundleFromServer(bundle1)).thenReturn(bundle2);
@@ -207,7 +205,7 @@ class PatientClaimsProcessorUnitTest {
 
     @Test
     void process_whenBfdClientThrowsException() {
-        Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(patientId, request.getAttTime())).thenThrow(new RuntimeException("Test Exception"));
 
         var exceptionThrown = assertThrows(ExecutionException.class,
@@ -221,7 +219,7 @@ class PatientClaimsProcessorUnitTest {
 
     @Test
     void process_whenPatientHasNoEOBClaimsData() throws ExecutionException, InterruptedException {
-        Bundle bundle1 = new Bundle();
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = new org.hl7.fhir.dstu3.model.Bundle();
         when(mockBfdClient.requestEOBFromServer(patientId, request.getAttTime())).thenReturn(bundle1);
 
         cut.process(request).get();
@@ -245,7 +243,7 @@ class PatientClaimsProcessorUnitTest {
         request = new PatientClaimsRequest(coverageSummary, laterAttDate, sinceDate, "user", "job",
                 "contractNum", noOpToken);
 
-        Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(patientId, request.getSinceTime())).thenReturn(bundle1);
 
         cut.process(request).get();
@@ -267,7 +265,7 @@ class PatientClaimsProcessorUnitTest {
         request = new PatientClaimsRequest(coverageSummary, earlyAttDate, null, "user", "job",
                 "contractNum", noOpToken);
 
-        Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(patientId, null)).thenReturn(bundle1);
 
         cut.process(request).get();

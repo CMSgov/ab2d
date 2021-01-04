@@ -3,7 +3,6 @@ package gov.cms.ab2d.worker.processor;
 import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.util.FilterOutByDate;
-import org.hl7.fhir.dstu3.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.service.FileService;
@@ -53,13 +52,12 @@ public class AddExtensionTest {
         String beneId = "1234";
         String mbi = "4567";
 
-
-        ExplanationOfBenefit b = new ExplanationOfBenefit();
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit b = new org.hl7.fhir.dstu3.model.ExplanationOfBenefit();
         String patientId = "Patient/" + beneId;
-        Reference ref = new Reference();
+        org.hl7.fhir.dstu3.model.Reference ref = new org.hl7.fhir.dstu3.model.Reference();
         ref.setReference(patientId);
         b.setPatient(ref);
-        List<ExplanationOfBenefit> eobs = List.of(b);
+        List<org.hl7.fhir.dstu3.model.ExplanationOfBenefit> eobs = List.of(b);
         FilterOutByDate.DateRange dateRange = FilterOutByDate.getDateRange(1, 1900, 12,
                 Calendar.getInstance().get(Calendar.YEAR));
 
@@ -70,14 +68,14 @@ public class AddExtensionTest {
 
         cut.addMbiIdsToEobs(eobs, patients);
 
-        List<Extension> extensions = b.getExtension();
+        List<org.hl7.fhir.dstu3.model.Extension> extensions = b.getExtension();
 
         assertNotNull(extensions);
         assertEquals(1, extensions.size());
-        Extension ext = extensions.get(0);
+        org.hl7.fhir.dstu3.model.Extension ext = extensions.get(0);
         assertEquals(ID_EXT, ext.getUrl());
 
-        Identifier id = (Identifier) ext.getValue();
+        org.hl7.fhir.dstu3.model.Identifier id = (org.hl7.fhir.dstu3.model.Identifier) ext.getValue();
         assertNotNull(id);
         assertEquals(MBI_ID, id.getSystem());
         assertEquals(mbi, id.getValue());
@@ -90,12 +88,12 @@ public class AddExtensionTest {
         String mbi1 = "456";
         String mbi2 = "789";
 
-        ExplanationOfBenefit b = new ExplanationOfBenefit();
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit b = new org.hl7.fhir.dstu3.model.ExplanationOfBenefit();
         String patientId = "Patient/" + beneId;
-        Reference ref = new Reference();
+        org.hl7.fhir.dstu3.model.Reference ref = new org.hl7.fhir.dstu3.model.Reference();
         ref.setReference(patientId);
         b.setPatient(ref);
-        List<ExplanationOfBenefit> eobs = List.of(b);
+        List<org.hl7.fhir.dstu3.model.ExplanationOfBenefit> eobs = List.of(b);
         FilterOutByDate.DateRange dateRange = FilterOutByDate.getDateRange(1, 1900, 12,
                 Calendar.getInstance().get(Calendar.YEAR));
 
@@ -106,15 +104,15 @@ public class AddExtensionTest {
 
         cut.addMbiIdsToEobs(eobs, patients);
 
-        List<Extension> extensions = b.getExtension();
+        List<org.hl7.fhir.dstu3.model.Extension> extensions = b.getExtension();
 
         assertNotNull(extensions);
         assertEquals(2, extensions.size());
 
-        for (Extension ext : extensions) {
+        for (org.hl7.fhir.dstu3.model.Extension ext : extensions) {
             assertEquals(ID_EXT, ext.getUrl());
 
-            Identifier id = (Identifier) ext.getValue();
+            org.hl7.fhir.dstu3.model.Identifier id = (org.hl7.fhir.dstu3.model.Identifier) ext.getValue();
             assertNotNull(id);
             assertFalse(id.isEmpty());
 

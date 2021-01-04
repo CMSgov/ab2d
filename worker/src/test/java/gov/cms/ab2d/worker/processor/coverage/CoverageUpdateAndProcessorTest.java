@@ -10,9 +10,6 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.worker.config.CoverageUpdateConfig;
-import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.dstu3.model.Identifier;
-import org.hl7.fhir.dstu3.model.Patient;
 import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -381,13 +378,13 @@ class CoverageUpdateAndProcessorTest {
     @Test
     void normalExecution() throws CoverageDriverException, InterruptedException {
 
-        Bundle bundle1 = buildBundle(0, 10);
-        bundle1.setLink(Collections.singletonList(new Bundle.BundleLinkComponent().setRelation(Bundle.LINK_NEXT)));
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = buildBundle(0, 10);
+        bundle1.setLink(Collections.singletonList(new org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent().setRelation(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT)));
 
-        Bundle bundle2 = buildBundle(10, 20);
+        org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20);
 
         when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(any(Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         processor.queueCoveragePeriod(january, false);
         JobStatus status = coverageService.getSearchStatus(january.getId());
@@ -432,14 +429,14 @@ class CoverageUpdateAndProcessorTest {
 
         reset(bfdClient);
 
-        Bundle bundle1 = buildBundle(0, 10);
-        bundle1.setLink(Collections.singletonList(new Bundle.BundleLinkComponent().setRelation(Bundle.LINK_NEXT)));
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = buildBundle(0, 10);
+        bundle1.setLink(Collections.singletonList(new org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent().setRelation(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT)));
 
-        Bundle bundle2 = buildBundle(10, 20);
+        org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20);
 
         Mockito.clearInvocations();
         when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(any(Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         driver.loadMappingJob();
 
@@ -479,14 +476,14 @@ class CoverageUpdateAndProcessorTest {
     @DisplayName("Only ThreadPoolTaskExecutor.getMaxPoolSize() job results allowed in insertion queue")
     @Test
     void limitRunningJobsByDBSpeed() {
-        Bundle bundle1 = buildBundle(0, 10);
-        bundle1.setLink(Collections.singletonList(new Bundle.BundleLinkComponent().setRelation(Bundle.LINK_NEXT)));
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = buildBundle(0, 10);
+        bundle1.setLink(Collections.singletonList(new org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent().setRelation(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT)));
 
-        Bundle bundle2 = buildBundle(10, 20);
+        org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20);
 
         Mockito.clearInvocations();
         when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(any(Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         ThreadPoolTaskExecutor twoThreads = new ThreadPoolTaskExecutor();
         twoThreads.setMaxPoolSize(2);
@@ -537,14 +534,14 @@ class CoverageUpdateAndProcessorTest {
         return status;
     }
 
-    private Bundle buildBundle(int startIndex, int endIndex) {
-        Bundle bundle1 = new Bundle();
+    private org.hl7.fhir.dstu3.model.Bundle buildBundle(int startIndex, int endIndex) {
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = new org.hl7.fhir.dstu3.model.Bundle();
 
         for (int i = startIndex; i < endIndex; i++) {
-            Bundle.BundleEntryComponent component = new Bundle.BundleEntryComponent();
-            Patient patient = new Patient();
+            org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent component = new org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent();
+            org.hl7.fhir.dstu3.model.Patient patient = new org.hl7.fhir.dstu3.model.Patient();
 
-            Identifier identifier = new Identifier();
+            org.hl7.fhir.dstu3.model.Identifier identifier = new org.hl7.fhir.dstu3.model.Identifier();
             identifier.setSystem(BENEFICIARY_ID);
             identifier.setValue("test-" + i);
 
