@@ -102,6 +102,13 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
 
     private void updateContractIfChanged(HPMSAttestation attest, Contract contract) {
         if (contract.updateAttestation(attest.isAttested(), attest.getAttestationDate())) {
+            String msg = "*Changed Contract*\n\nName: " + contract.getContractName() + "\n"
+                    + "Number: " + contract.getContractNumber() + "\n"
+                    + "HPMS Attested On: " + attest.getAttestationDate() + "\n"
+                    + "Contract Attested On: " + contract.getAttestedOn() + "\n";
+            if (slackLogger != null) {
+                slackLogger.logHpmsMsg(msg);
+            }
             contractRepository.save(contract);
         }
     }
@@ -113,6 +120,7 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
         newContracts.forEach(c -> {
                 String msg = "*New Attester*\n\nId: " + c.getContractId() + "\n"
                         + "Name: " + c.getContractName() + "\n"
+                        + "Id: " + c.getContractId() + "\n"
                         + "Org: " + c.getOrgMarketingName() + "\n";
                 if (slackLogger != null) {
                     slackLogger.logHpmsMsg(msg);
