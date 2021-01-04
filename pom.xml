@@ -34,7 +34,7 @@
         <hapi.version>5.2.0</hapi.version>
         <mockserver.version>5.11.2</mockserver.version>
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
-        <logback-encoder.version>6.5</logback-encoder.version>
+        <logback-encoder.version>6.6</logback-encoder.version>
         <testcontainers.version>1.15.1</testcontainers.version>
         <newrelic.version>6.2.1</newrelic.version>
 
