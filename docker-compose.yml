@@ -11,8 +11,8 @@ services:
     # Docker exposes these ports to all containers in the compose by default
     # but if you are debugging on a local machine uncomment to test connectivity or open a connection
     # to the Postgres database
-    #    ports:
-    #      - "5432:5432"
+#    ports:
+#      - "5432:5432"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 10s
@@ -100,6 +100,9 @@ services:
       - AB2D_KEYSTORE_LOCATION=${AB2D_KEYSTORE_LOCATION}
       - AB2D_KEYSTORE_PASSWORD=${AB2D_KEYSTORE_PASSWORD}
       - AB2D_KEY_ALIAS=${AB2D_KEY_ALIAS}
+      # Update coverage frequently so that tests aren't slowed down too much
+      - "COVERAGE_UPDATE_LOAD_SCHEDULE=0/1 * * * * ?"
+      - "COVERAGE_UPDATE_MONITORING_INTERVAL=0/1 * * * * ?"
     depends_on:
       db:
         condition: service_healthy

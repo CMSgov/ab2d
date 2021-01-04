@@ -18,8 +18,9 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.Future;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 // Set property.change.detection to false, otherwise the values from the database will override the values that are being hardcoded here.
 @SpringBootTest(properties = {"pcp.core.pool.size=3" , "pcp.max.pool.size=20", "pcp.scaleToMax.time=20", "property.change.detection=false"})
 @Testcontainers
@@ -46,13 +47,13 @@ public class AutoScalingServiceTest {
     @DisplayName("Auto-scaling does not kick in when the queue remains empty")
     void autoScalingDoesNotKicksIn() throws InterruptedException {
         // Verify that initially the pool is sized at the minimums
-        assertThat(patientProcessorThreadPool.getMaxPoolSize(), equalTo(3));
-        assertThat(patientProcessorThreadPool.getCorePoolSize(), equalTo(3));
+        assertEquals(3, patientProcessorThreadPool.getMaxPoolSize());
+        assertEquals(3, patientProcessorThreadPool.getCorePoolSize());
 
         // Auto-scaling should not kick in while the queue is empty
         Thread.sleep(7000);
-        assertThat(patientProcessorThreadPool.getMaxPoolSize(), equalTo(3));
-        assertThat(patientProcessorThreadPool.getCorePoolSize(), equalTo(3));
+        assertEquals(3, patientProcessorThreadPool.getMaxPoolSize());
+        assertEquals(3, patientProcessorThreadPool.getCorePoolSize());
 
     }
 
@@ -83,27 +84,27 @@ public class AutoScalingServiceTest {
         var end = Instant.now();
 
         // The pool should have grown to 20.
-        assertThat(patientProcessorThreadPool.getMaxPoolSize(), equalTo(MAX_POOL_SIZE));
+        assertEquals(MAX_POOL_SIZE, patientProcessorThreadPool.getMaxPoolSize());
 
         // How do we actually verify that pool growth was in fact gradual and not instantaneous?
         // First, check that there was the expected time gap between auto scaling start & end
-        assertThat(Duration.between(start, end).getSeconds(), greaterThanOrEqualTo(15L));
+        assertTrue(Duration.between(start, end).getSeconds() >= 15L);
 
         // Then check that there were intermediate pool increases between 3 and MAX_POOL_SIZE.
         // Last metric taken should always be MAX_POOL_SIZE
-        assertThat(new ArrayDeque<>(metrics).getLast(), equalTo(MAX_POOL_SIZE));
+        assertEquals(MAX_POOL_SIZE, new ArrayDeque<>(metrics).getLast());
 
         // There are 3 intermediate metrics and 1 final metric
-        assertThat(metrics.size(), greaterThanOrEqualTo(4));
+        assertTrue(metrics.size() >= 4);
         List<Integer> metricsList = new ArrayList<>(metrics);
         for (int i = 1; i < metricsList.size(); i++) {
-            assertThat(metricsList.get(i - 1), lessThan(metricsList.get(i)));
+            assertTrue(metricsList.get(i - 1) < metricsList.get(i));
         }
 
         // We need to make sure it does not grow beyond the max though. Let's sleep for a bit
         // and verify the size is still at the same max value.
         Thread.sleep(8000);
-        assertThat(patientProcessorThreadPool.getMaxPoolSize(), equalTo(MAX_POOL_SIZE));
+        assertEquals(patientProcessorThreadPool.getMaxPoolSize(), MAX_POOL_SIZE);
 
         // Clean up.
         futures.stream().forEach(future -> future.cancel(true));
@@ -112,8 +113,8 @@ public class AutoScalingServiceTest {
         // reverted
         // back to the original value after that.
         Thread.sleep(8000);
-        assertThat(patientProcessorThreadPool.getMaxPoolSize(), equalTo(MIN_POOL_SIZE));
-        assertThat(patientProcessorThreadPool.getThreadPoolExecutor().getActiveCount(), equalTo(0));
+        assertEquals(MIN_POOL_SIZE, patientProcessorThreadPool.getMaxPoolSize());
+        assertEquals(0, patientProcessorThreadPool.getThreadPoolExecutor().getActiveCount());
     }
 
 

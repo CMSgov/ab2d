@@ -14,6 +14,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import javax.persistence.EntityNotFoundException;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -98,13 +99,7 @@ class CoverageServiceImplTest {
 
     @AfterEach
     public void cleanUp() {
-        dataSetup.deleteCoverage();
-        coverageSearchEventRepo.deleteAll();
-        coverageSearchRepo.deleteAll();
-        coveragePeriodRepo.deleteAll();
-        contractRepo.delete(contract1);
-        contractRepo.delete(contract2);
-        contractRepo.flush();
+        dataSetup.cleanup();
     }
 
     @DisplayName("Get a coverage period")
@@ -113,9 +108,16 @@ class CoverageServiceImplTest {
         CoveragePeriod period = coverageService.getCoveragePeriod(contract1, JANUARY, YEAR);
         assertEquals(period1Jan, period);
 
-        assertThrows(IllegalArgumentException.class, () -> coverageService.getCoveragePeriod(contract1, JANUARY, 2000));
+    }
 
-        assertThrows(IllegalArgumentException.class, () -> coverageService.getCoveragePeriod(contract1, JANUARY, 2100));
+    @DisplayName("Get a coverage period fails on EntityNotFoundException")
+    @Test
+    void getCoveragePeriodFailsOnEntityException() {
+
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
+                () -> coverageService.getCoveragePeriod(contract1, 12, 2020));
+
+        assertEquals("could not find coverage period matching contract, month, and year", exception.getMessage());
     }
 
     @DisplayName("Get or create does not insert duplicate period")
@@ -155,6 +157,49 @@ class CoverageServiceImplTest {
 
         assertTrue(coverageService.canEOBSearchBeStarted(period1Jan.getId()));
         assertFalse(coverageService.isCoveragePeriodInProgress(period1Jan.getId()));
+    }
+
+    @DisplayName("Count coverage records for a group of coverage periods")
+    @Test
+    void countForCoveragePeriods() {
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        coverageService.submitSearch(period1Feb.getId(), "testing");
+        CoverageSearchEvent janProgress = startSearchAndPullEvent();
+        CoverageSearchEvent febProgress = startSearchAndPullEvent();
+
+        // Number of beneficiaries shared between months
+        // large number to attempt to trigger indexing
+        // for more realistic results
+        int sharedBeneficiaries = 10000;
+
+        // Add 500 beneficiaries to each month
+        Set<Identifiers> identifiers = new LinkedHashSet<>();
+        for (int idx = 0; idx < sharedBeneficiaries; idx++) {
+            identifiers.add(createIdentifier("" + idx));
+        }
+
+        // Save shared beneficiaries between months
+        coverageService.insertCoverage(janProgress.getId(), identifiers);
+        coverageService.insertCoverage(febProgress.getId(), identifiers);
+
+        // Add unique beneficiary to January
+        coverageService.insertCoverage(janProgress.getId(),
+                Set.of(createIdentifier("-1")));
+
+        // Add unique beneficiaries to February
+        coverageService.insertCoverage(febProgress.getId(),
+                Set.of(createIdentifier("-2"), createIdentifier("-3")));
+
+        int januaryCount = coverageService.countBeneficiariesByCoveragePeriod(List.of(period1Jan));
+        assertEquals(sharedBeneficiaries +1, januaryCount);
+
+        int februaryCount = coverageService.countBeneficiariesByCoveragePeriod(List.of(period1Feb));
+        assertEquals(sharedBeneficiaries + 2, februaryCount);
+
+        // Recognize that there are records not in January that are in February and vice versa
+        // but don't count beneficiaries shared by these coverage periods
+        int combinedCount = coverageService.countBeneficiariesByCoveragePeriod(List.of(period1Jan, period1Feb));
+        assertEquals(sharedBeneficiaries + 3, combinedCount);
     }
 
     @DisplayName("DB structure matches JPA")
@@ -897,8 +942,8 @@ class CoverageServiceImplTest {
 
         period1Jan.setStatus(JobStatus.CANCELLED);
         period2Jan.setStatus(JobStatus.FAILED);
-        coveragePeriodRepo.save(period1Jan);
-        coveragePeriodRepo.save(period2Jan);
+        coveragePeriodRepo.saveAndFlush(period1Jan);
+        coveragePeriodRepo.saveAndFlush(period2Jan);
 
         assertThrows(InvalidJobStateTransition.class, () -> coverageService.completeSearch(period1Jan.getId(), "testing"));
         assertThrows(InvalidJobStateTransition.class, () -> coverageService.completeSearch(period2Jan.getId(), "testing"));

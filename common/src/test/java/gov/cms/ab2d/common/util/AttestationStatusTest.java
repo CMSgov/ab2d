@@ -1,17 +1,18 @@
 package gov.cms.ab2d.common.util;
 
-import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 
-public class AttestationStatusTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+class AttestationStatusTest {
 
     // Add better tests in future, for now just use this to meet coverage checks, it's being covered by HPMS module
     @Test
-    public void testAttestationStatus() {
+    void testAttestationStatus() {
         AttestationStatus attestationStatus = AttestationStatus.WITHOUT_ATTESTATION;
-        Assert.assertEquals("Without Attestation", attestationStatus.getValue());
+        assertEquals("Without Attestation", attestationStatus.getValue());
 
         AttestationStatus attestationStatusAttested = AttestationStatus.ATTESTED;
-        Assert.assertEquals("Attested", attestationStatusAttested.getValue());
+        assertEquals("Attested", attestationStatusAttested.getValue());
     }
 }

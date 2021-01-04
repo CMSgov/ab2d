@@ -20,7 +20,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SuppressWarnings("OptionalGetWithoutIsPresent")
 @SpringBootTest
 @Testcontainers
 @TestPropertySource(locations = "/application.common.properties")
@@ -46,13 +45,13 @@ class ContractServiceImplTest {
         contract.setContractName("Test Contract");
         contract.setContractNumber("NATTE");
 
-        contract = contractRepo.save(contract);    }
+        contract = contractRepo.save(contract);
+        dataSetup.queueForCleanup(contract);
+    }
 
     @AfterEach
     private void after() {
-        if (contract != null) {
-            dataSetup.deleteContract(contract);
-        }
+        dataSetup.cleanup();
     }
 
     @DisplayName("Find all contracts and filter by attestation")

@@ -3,12 +3,9 @@ package gov.cms.ab2d.common.service;
 import gov.cms.ab2d.common.SpringBootApp;
 import gov.cms.ab2d.common.dto.*;
 import gov.cms.ab2d.common.model.*;
-import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
-import org.junit.Assert;
 import org.junit.jupiter.api.*;
-import gov.cms.ab2d.common.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -31,22 +28,16 @@ import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.Constants.SPONSOR_ROLE;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @TestPropertySource(locations = "/application.common.properties")
 @Testcontainers
-public class UserServiceTest {
+class UserServiceTest {
 
     @Autowired
     private UserService userService;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private ContractRepository contractRepository;
 
     @Autowired
     private RoleService roleService;
@@ -59,41 +50,39 @@ public class UserServiceTest {
 
     @AfterEach
     public void teardown() {
-        userRepository.deleteAll();
-        contractRepository.deleteAll();
+        dataSetup.cleanup();
     }
 
     @Test
-    public void testUser() {
-        User user = userService.getCurrentUser();
-
-        assertNull(user); // no authentication for now, so will be null
-    }
-
-    @Test
-    public void testCreateUser() {
+    void testCreateUser() {
         UserDTO user = buildUserDTO("Test", SPONSOR_ROLE);
 
         UserDTO createdUser = userService.createUser(user);
-        Assert.assertEquals(createdUser.getUsername(), user.getUsername());
-        Assert.assertEquals(createdUser.getEmail(), user.getEmail());
-        Assert.assertEquals(createdUser.getFirstName(), user.getFirstName());
-        Assert.assertEquals(createdUser.getLastName(), user.getLastName());
-        Assert.assertEquals(createdUser.getEnabled(), user.getEnabled());
-        Assert.assertEquals(createdUser.getContract(), user.getContract());
-        Assert.assertEquals(createdUser.getRole(), SPONSOR_ROLE);
+        dataSetup.queueForCleanup(userService.getUserByUsername("test@test.com"));
+
+        assertEquals(user.getUsername(), createdUser.getUsername());
+        assertEquals(user.getEmail(), createdUser.getEmail());
+        assertEquals(user.getFirstName(), createdUser.getFirstName());
+        assertEquals(user.getLastName(), createdUser.getLastName());
+        assertEquals(user.getEnabled(), createdUser.getEnabled());
+        assertEquals(user.getContract(), createdUser.getContract());
+        assertEquals(SPONSOR_ROLE, createdUser.getRole());
     }
 
     @Test
-    public void testCreateDuplicateUser() {
+    void testCreateDuplicateUser() {
         UserDTO user = buildUserDTO("Test", SPONSOR_ROLE);
 
         userService.createUser(user);
+        dataSetup.queueForCleanup(userService.getUserByUsername("test@test.com"));
+
         var exceptionThrown = Assertions.assertThrows(DataIntegrityViolationException.class, () -> {
             user.setEmail("anotherEmail@test.com");
             userService.createUser(user);
         });
-        assertThat(exceptionThrown.getMessage(), is("could not execute statement; SQL [n/a]; constraint [uc_user_account_username]; nested exception is org.hibernate.exception.ConstraintViolationException: could not execute statement"));
+        assertEquals("could not execute statement; SQL [n/a]; constraint [uc_user_account_username]; " +
+                "nested exception is org.hibernate.exception.ConstraintViolationException: could not execute statement",
+                exceptionThrown.getMessage());
     }
 
     private UserDTO buildUserDTO(String test, String sponsorRole) {
@@ -121,10 +110,11 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testUpdateUser() {
+    void testUpdateUser() {
         UserDTO user = buildUserDTO("Test", SPONSOR_ROLE);
 
         UserDTO createdUser = userService.createUser(user);
+        dataSetup.queueForCleanup(userService.getUserByUsername("test@test.com"));
 
         createdUser.setEmail("newTest@test.com");
         createdUser.setFirstName("New");
@@ -136,14 +126,14 @@ public class UserServiceTest {
 
         UserDTO updatedUser = userService.updateUser(createdUser);
 
-        Assert.assertEquals(updatedUser.getUsername(), createdUser.getUsername());
-        Assert.assertEquals(updatedUser.getEmail(), createdUser.getEmail());
-        Assert.assertEquals(updatedUser.getFirstName(), createdUser.getFirstName());
-        Assert.assertEquals(updatedUser.getLastName(), createdUser.getLastName());
-        Assert.assertEquals(updatedUser.getEnabled(), createdUser.getEnabled());
-        Assert.assertEquals(updatedUser.getContract().getContractName(), createdUser.getContract().getContractName());
-        Assert.assertEquals(updatedUser.getContract().getContractNumber(), createdUser.getContract().getContractNumber());
-        Assert.assertEquals(updatedUser.getRole(), createdUser.getRole());
+        assertEquals(createdUser.getUsername(), updatedUser.getUsername());
+        assertEquals(createdUser.getEmail(), updatedUser.getEmail());
+        assertEquals(createdUser.getFirstName(), updatedUser.getFirstName());
+        assertEquals(createdUser.getLastName(), updatedUser.getLastName());
+        assertEquals(createdUser.getEnabled(), updatedUser.getEnabled());
+        assertEquals(createdUser.getContract().getContractName(), updatedUser.getContract().getContractName());
+        assertEquals(createdUser.getContract().getContractNumber(), updatedUser.getContract().getContractNumber());
+        assertEquals(createdUser.getRole(), updatedUser.getRole());
     }
 
     private ContractDTO buildContractDTO(Contract contract) {
@@ -155,37 +145,39 @@ public class UserServiceTest {
     }
 
     @Test
-    public void testUpdateUserAddRole() {
+    void testUpdateUserAddRole() {
         UserDTO user = buildUserDTO("Test", null);
 
-        Assert.assertNull(user.getRole());
+        assertNull(user.getRole());
 
         UserDTO createdUser = userService.createUser(user);
+        dataSetup.queueForCleanup(userService.getUserByUsername("test@test.com"));
 
         createdUser.setRole(SPONSOR_ROLE);
 
         UserDTO updatedUser = userService.updateUser(createdUser);
 
-        Assert.assertEquals(updatedUser.getRole(), createdUser.getRole());
+        assertEquals(createdUser.getRole(), updatedUser.getRole());
     }
 
     @Test
-    public void testUpdateUserRemoveRole() {
+    void testUpdateUserRemoveRole() {
         UserDTO user = buildUserDTO("TEST", SPONSOR_ROLE);
 
-        Assert.assertEquals(user.getRole(), SPONSOR_ROLE);
+        assertEquals(SPONSOR_ROLE, user.getRole());
 
         UserDTO createdUser = userService.createUser(user);
+        dataSetup.queueForCleanup(userService.getUserByUsername("test@test.com"));
 
         createdUser.setRole(null);
 
         UserDTO updatedUser = userService.updateUser(createdUser);
 
-        Assert.assertNull(updatedUser.getRole());
+        assertNull(updatedUser.getRole());
     }
 
     @Test
-    public void testSetupUserAndRolesInSecurityContext() {
+    void testSetupUserAndRolesInSecurityContext() {
         HttpServletRequest httpServletRequest = new MockHttpServletRequest();
 
         List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(ADMIN_ROLE));
@@ -196,44 +188,47 @@ public class UserServiceTest {
 
         UserDTO user = buildUserDTO("Test", SPONSOR_ROLE);
         UserDTO createdUser = userService.createUser(user);
+        dataSetup.queueForCleanup(userService.getUserByUsername("test@test.com"));
 
         String username = createdUser.getUsername();
 
         userService.setupUserImpersonation(username, httpServletRequest);
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Assert.assertEquals(authentication.getPrincipal(), "test@test.com");
-        Assert.assertEquals(authentication.getAuthorities().size(), 1);
+        assertEquals("test@test.com", authentication.getPrincipal());
+        assertEquals(1, authentication.getAuthorities().size());
         GrantedAuthority grantedAuthority = authentication.getAuthorities().iterator().next();
-        Assert.assertEquals(grantedAuthority.getAuthority(), SPONSOR_ROLE);
+        assertEquals(SPONSOR_ROLE, grantedAuthority.getAuthority());
     }
 
     @Test
-    public void testSetupUserAndRolesInSecurityContextBadUser() {
+    void testSetupUserAndRolesInSecurityContextBadUser() {
         HttpServletRequest httpServletRequest = new MockHttpServletRequest();
         var exceptionThrown = Assertions.assertThrows(ResourceNotFoundException.class, () -> {
             userService.setupUserImpersonation("UserDoesNotExist", httpServletRequest);
         });
-        Assert.assertEquals(exceptionThrown.getMessage(), "User is not present in our database");
+        assertEquals("User is not present in our database", exceptionThrown.getMessage());
     }
 
     @Test
-    public void testEnableUser() {
+    void testEnableUser() {
         UserDTO user = buildUserDTO("Test", SPONSOR_ROLE);
         user.setEnabled(false);
 
         userService.createUser(user);
+        dataSetup.queueForCleanup(userService.getUserByUsername("test@test.com"));
 
         UserDTO updatedUser = userService.enableUser(user.getUsername());
-        Assert.assertEquals(updatedUser.getEnabled(), true);
+        assertEquals(true, updatedUser.getEnabled());
     }
 
     @Test
-    public void testDisableUser() {
+    void testDisableUser() {
         UserDTO user = buildUserDTO("Test", SPONSOR_ROLE);
         userService.createUser(user);
+        dataSetup.queueForCleanup(userService.getUserByUsername("test@test.com"));
 
         UserDTO updatedUser = userService.disableUser(user.getUsername());
-        Assert.assertEquals(updatedUser.getEnabled(), false);
+        assertEquals(false, updatedUser.getEnabled());
     }
 }
