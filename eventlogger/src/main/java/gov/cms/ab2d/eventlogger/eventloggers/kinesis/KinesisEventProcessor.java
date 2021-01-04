@@ -24,6 +24,8 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
+import static gov.cms.ab2d.eventlogger.utils.UtilMethods.camelCaseToUnderscore;
+
 @Slf4j
 public class KinesisEventProcessor implements Callable<Void> {
     private AmazonKinesisFirehose client;
@@ -104,9 +106,5 @@ public class KinesisEventProcessor implements Callable<Void> {
             log.error("Error in pushing event to Kinesis " + json + " - " + ex.getMessage());
         }
         return null;
-    }
-
-    static String camelCaseToUnderscore(String val) {
-        return val.replaceAll("(.)(\\p{Upper})", "$1_$2").toLowerCase();
     }
 }
