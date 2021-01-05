@@ -581,22 +581,16 @@ cd "terraform/environments/${TARGET_CMS_ENV}"
   echo 'private_subnet_ids = ["'"${SUBNET_PRIVATE_1_ID}"'","'"${SUBNET_PRIVATE_2_ID}"'"]'
   echo 'deployment_controller_subnet_ids = ["'"${SUBNET_PUBLIC_1_ID}"'","'"${SUBNET_PUBLIC_2_ID}"'"]'
   echo 'ec2_instance_type_api = "'"${EC2_INSTANCE_TYPE_API}"'"'
-  echo 'ec2_desired_instance_count_api = "'"${EC2_DESIRED_INSTANCE_COUNT_API}"'"'
-  echo 'ec2_minimum_instance_count_api = "'"${EC2_MINIMUM_INSTANCE_COUNT_API}"'"'
-  echo 'ec2_maximum_instance_count_api = "'"${EC2_MAXIMUM_INSTANCE_COUNT_API}"'"'
   echo 'ecs_container_definition_new_memory_api = "'"${API_MEMORY}"'"'
   echo 'ecs_task_definition_cpu_api = "'"${API_CPU}"'"'
   echo 'ecs_task_definition_memory_api = "'"${API_MEMORY}"'"'
   echo 'ec2_instance_type_worker = "'"${EC2_INSTANCE_TYPE_WORKER}"'"'
-  echo 'ec2_desired_instance_count_worker = "'"${EC2_DESIRED_INSTANCE_COUNT_WORKER}"'"'
-  echo 'ec2_minimum_instance_count_worker = "'"${EC2_MINIMUM_INSTANCE_COUNT_WORKER}"'"'
-  echo 'ec2_maximum_instance_count_worker = "'"${EC2_MAXIMUM_INSTANCE_COUNT_WORKER}"'"'
   echo 'ecs_container_definition_new_memory_worker = "'"${WORKER_MEMORY}"'"'
   echo 'ecs_task_definition_cpu_worker = "'"${WORKER_CPU}"'"'
   echo 'ecs_task_definition_memory_worker = "'"${WORKER_MEMORY}"'"'
   echo 'linux_user = "'"${SSH_USERNAME}"'"'
   echo 'deployer_ip_address = "'"${DEPLOYER_IP_ADDRESS}"'"'
-} >> "${TARGET_CMS_ENV}.auto.tfvars"
+} > "${TARGET_CMS_ENV}.auto.tfvars"
 
 ######################################
 # Deploy target environment components
@@ -1100,28 +1094,9 @@ elif [ "$TARGET_CMS_ENV" == "ab2d-east-prod" ]; then
 elif [ "$TARGET_CMS_ENV" == "ab2d-east-impl" ]; then
   ALB_LISTENER_PORT=443
   ALB_LISTENER_PROTOCOL="HTTPS"
-
-  # Set certificate ARN for "ab2d-east-impl"
-
-  #####################
-  # *** TO DO *** BEGIN
-  #####################
-
-  # TEMPORARY SOLUTION USING SELF-SIGNED CERTIFICATE (ab2dtemp.com)
-
-  ALB_LISTENER_CERTIFICATE_ARN=$(aws --region "${AWS_DEFAULT_REGION}" iam list-server-certificates \
-    --query "ServerCertificateMetadataList[?ServerCertificateName=='Ab2dTempCom'].Arn" \
+  ALB_LISTENER_CERTIFICATE_ARN=$(aws --region "${AWS_DEFAULT_REGION}" acm list-certificates \
+    --query "CertificateSummaryList[?DomainName=='impl.ab2d.cms.gov'].CertificateArn" \
     --output text)
-
-  # DESIRED SOLUTION USING COMMON CERTIFICATE (impl.ab2d.cms.gov)
-  # ALB_LISTENER_CERTIFICATE_ARN=$(aws --region "${AWS_DEFAULT_REGION}" acm list-certificates \
-  #   --query "CertificateSummaryList[?DomainName=='impl.ab2d.cms.gov'].CertificateArn" \
-  #   --output text)
-
-  #####################
-  # *** TO DO *** END
-  #####################
-
   ALB_SECURITY_GROUP_IP_RANGE="${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}"
 else
   echo "ERROR: '${TARGET_CMS_ENV}' is unknown."
@@ -1175,6 +1150,9 @@ terraform apply \
   --var "ab2d_hpms_auth_key_secret=${AB2D_HPMS_AUTH_KEY_SECRET}" \
   --var "stunnel_latest_version=${STUNNEL_LATEST_VERSION}" \
   --var "gold_image_name=${GOLD_IMAGE_NAME}" \
+  --var "ec2_desired_instance_count_api=${EC2_DESIRED_INSTANCE_COUNT_API}" \
+  --var "ec2_minimum_instance_count_api=${EC2_MINIMUM_INSTANCE_COUNT_API}" \
+  --var "ec2_maximum_instance_count_api=${EC2_MAXIMUM_INSTANCE_COUNT_API}" \
   --target module.api \
   --auto-approve
 
@@ -1206,6 +1184,9 @@ terraform apply \
   --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
   --var "stunnel_latest_version=${STUNNEL_LATEST_VERSION}" \
   --var "gold_image_name=${GOLD_IMAGE_NAME}" \
+  --var "ec2_desired_instance_count_worker=${EC2_DESIRED_INSTANCE_COUNT_WORKER}" \
+  --var "ec2_minimum_instance_count_worker=${EC2_MINIMUM_INSTANCE_COUNT_WORKER}" \
+  --var "ec2_maximum_instance_count_worker=${EC2_MAXIMUM_INSTANCE_COUNT_WORKER}" \
   --target module.worker \
   --auto-approve
 
@@ -1428,25 +1409,34 @@ else
   LAUNCH_CONFIGURATION_EXPECTED_COUNT=2
   LAUNCH_CONFIGURATION_ACTUAL_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-launch-configurations \
     --query "LaunchConfigurations[*].[LaunchConfigurationName,CreatedTime]" \
-    | jq '. | length')
+    --output text \
+    | sort -k2 \
+    | grep -v "\-test\-" \
+    | grep -cv "\-validation\-")
 
   while [ "$LAUNCH_CONFIGURATION_ACTUAL_COUNT" -gt "$LAUNCH_CONFIGURATION_EXPECTED_COUNT" ]; do
 
+    # Note that "*-test-*" and "*-validation-*" launch configurations will be excluded
     OLD_LAUNCH_CONFIGURATION=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-launch-configurations \
       --query "LaunchConfigurations[*].[LaunchConfigurationName,CreatedTime]" \
       --output text \
       | sort -k2 \
+      | grep -v "\-test\-" \
+      | grep -v "\-validation\-" \
       | head -n1 \
       | awk '{print $1}')
 
     aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-launch-configuration \
       --launch-configuration-name "${OLD_LAUNCH_CONFIGURATION}"
-
     sleep 5
 
+    # Note that "*-test-*" and "*-validation-*" launch configurations will be excluded
     LAUNCH_CONFIGURATION_ACTUAL_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-launch-configurations \
       --query "LaunchConfigurations[*].[LaunchConfigurationName,CreatedTime]" \
-      | jq '. | length')
+      --output text \
+      | sort -k2 \
+      | grep -v "\-test\-" \
+      | grep -cv "\-validation\-")
 
   done
 
