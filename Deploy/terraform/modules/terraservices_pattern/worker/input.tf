@@ -45,24 +45,3 @@ variable "vpn_private_ip_address_cidr_range" {}
 variable "worker_desired_instances" {}
 variable "worker_min_instances" {}
 variable "worker_max_instances" {}
-
-
-
-
-
-//variable "ab2d_opt_out_job_schedule" {}
-//variable "ab2d_s3_optout_bucket" {}
-//variable "app_sec_group_id" {}
-//variable "container_port" {default=8080}
-//variable "controller_sec_group_id" {}
-//variable "controller_subnet_ids" {type=list(string)}
-//variable "db_host_secret_arn" {}
-//variable "db_port_secret_arn" {}
-//variable "db_name_secret_arn" {}
-//variable "db_user_secret_arn" {}
-//variable "db_password_secret_arn" {}
-//variable "ecs_cluster_id" {}
-//variable "host_port" {default=8080}
-//variable "loadbalancer_subnet_ids" {type=list(string)}
-//variable "override_task_definition_arn" {default=""}
-//variable "percent_capacity_increase" {default="20"}
