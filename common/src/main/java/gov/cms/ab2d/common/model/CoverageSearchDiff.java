@@ -30,4 +30,15 @@ public class CoverageSearchDiff {
     public int getAdditions() {
         return currentCount - unchanged;
     }
+
+    @Override
+    public String toString() {
+        return "CoverageSearchDiff{" +
+                coveragePeriod.getContract().getContractNumber() +
+                "-" + coveragePeriod.getYear() + "-" + coveragePeriod.getMonth() +
+                ", previousCount=" + previousCount +
+                ", currentCount=" + currentCount +
+                ", unchanged=" + unchanged +
+                '}';
+    }
 }

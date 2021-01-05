@@ -1,11 +1,8 @@
 package gov.cms.ab2d.api.controller;
 
 import gov.cms.ab2d.common.dto.PropertiesDTO;
-import gov.cms.ab2d.common.dto.SponsorDTO;
-import gov.cms.ab2d.common.dto.SponsorIPDTO;
 import gov.cms.ab2d.common.dto.UserDTO;
 import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.common.service.SponsorIPService;
 import gov.cms.ab2d.common.service.UserService;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
@@ -15,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -44,9 +40,6 @@ public class AdminAPI {
 
     @Autowired
     private UserService userService;
-
-    @Autowired
-    private SponsorIPService sponsorIPService;
 
     @Autowired
     private PropertiesService propertiesService;
@@ -126,28 +119,5 @@ public class AdminAPI {
     @GetMapping("/user/{username}")
     public ResponseEntity<UserDTO> getUser(@PathVariable @NotBlank String username) {
         return new ResponseEntity<>(userService.getUser(username), null, HttpStatus.OK);
-    }
-
-    // IP Address management
-    @ResponseStatus(value = HttpStatus.CREATED)
-    @PostMapping("/ip")
-    public ResponseEntity<SponsorIPDTO> createIP(@RequestBody SponsorIPDTO sponsorIPDTO) {
-        SponsorIPDTO sponsorIPDTOReturn = sponsorIPService.addIPAddress(sponsorIPDTO);
-        log.info("{} IPs added for sponsor {}", sponsorIPDTOReturn.getIps(), sponsorIPDTOReturn.getSponsor());
-        return new ResponseEntity<>(sponsorIPDTOReturn, null, HttpStatus.CREATED);
-    }
-
-    @ResponseStatus(value = HttpStatus.OK)
-    @DeleteMapping("/ip")
-    public ResponseEntity<SponsorIPDTO> deleteIP(@RequestBody SponsorIPDTO sponsorIPDTO) {
-        SponsorIPDTO sponsorIPDTOReturn = sponsorIPService.removeIPAddresses(sponsorIPDTO);
-        log.info("{} IPs deleted for sponsor {}", sponsorIPDTO.getIps(), sponsorIPDTO.getSponsor());
-        return new ResponseEntity<>(sponsorIPDTOReturn, null, HttpStatus.ACCEPTED);
-    }
-
-    @ResponseStatus(value = HttpStatus.OK)
-    @GetMapping("/ip")
-    public ResponseEntity<SponsorIPDTO> getIPs(@RequestBody SponsorDTO sponsorDTO) {
-        return new ResponseEntity<>(sponsorIPService.getIPs(sponsorDTO), null, HttpStatus.OK);
     }
 }

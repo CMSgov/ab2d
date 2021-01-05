@@ -10,7 +10,6 @@ import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.reports.sql.DoSummary;
 import org.apache.commons.io.IOUtils;
-import org.junit.Assert;
 import org.junit.jupiter.api.*;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,17 +44,15 @@ import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESS
 import static gov.cms.ab2d.common.service.JobServiceImpl.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @TestPropertySource(locations = "/application.common.properties")
 @Testcontainers
-public class JobServiceTest {
+class JobServiceTest {
 
+    public static final String USERNAME = "douglas.adams@towels.com";
+    public static final String CONTRACT_NUMBER = "S0000";
     public static final String LOCAL_HOST = "http://localhost:8080";
 
     private JobService jobService;
@@ -65,9 +62,6 @@ public class JobServiceTest {
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private SponsorRepository sponsorRepository;
 
     @Autowired
     private ContractRepository contractRepository;
@@ -107,102 +101,102 @@ public class JobServiceTest {
     @BeforeEach
     public void setup() {
         LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
-        jobService = new JobServiceImpl(userService, jobRepository, contractRepository, jobOutputService, logManager, doSummary);
+        jobService = new JobServiceImpl(userService, jobRepository, jobOutputService, logManager, doSummary);
         ReflectionTestUtils.setField(jobService, "fileDownloadPath", tmpJobLocation);
 
-        // todo: Very bizarre behavior happens if these are moved to an @AfterEach method instead.  Doing deleteAll()
-        // in a setup method is definitely a code smell.
-        jobRepository.deleteAll();
-        contractRepository.deleteAll();
-        userRepository.deleteAll();
-        sponsorRepository.deleteAll();
-
-        dataSetup.setupUser(List.of());
+        dataSetup.setupNonStandardUser(USERNAME, CONTRACT_NUMBER, List.of());
 
         setupRegularUserSecurityContext();
     }
 
-    @Test
-    public void createJob() {
-        Job job = createJobAllContracts(ZIPFORMAT);
-        assertThat(job).isNotNull();
-        assertThat(job.getId()).isNotNull();
-        assertThat(job.getJobUuid()).isNotNull();
-        assertThat(job.getOutputFormat()).isNotNull();
-        assertEquals(job.getOutputFormat(), ZIPFORMAT);
-        assertEquals(job.getProgress(), Integer.valueOf(0));
-        assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
-        assertEquals(job.getResourceTypes(), EOB);
-        assertEquals(job.getRequestUrl(), LOCAL_HOST);
-        assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
-        assertEquals(job.getStatus(), JobStatus.SUBMITTED);
-        assertEquals(job.getJobOutputs().size(), 0);
-        assertNull(job.getLastPollTime());
-        assertNull(job.getExpiresAt());
-        assertThat(job.getJobUuid()).matches(
-                "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}");
+    @AfterEach
+    public void after() {
+        dataSetup.cleanup();
+    }
 
-        // Verify it actually got persisted in the DB
-        assertThat(jobRepository.findById(job.getId())).get().isEqualTo(job);
+    private void setupRegularUserSecurityContext() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(
+                        new org.springframework.security.core.userdetails.User(USERNAME,
+                                "test", new ArrayList<>()), "pass"));
     }
 
     @Test
-    public void createJobWithContract() {
+    void createJob() {
+        Job job = createJobAllContracts(ZIPFORMAT);
+        assertNotNull(job);
+        assertNotNull(job.getId());
+        assertNotNull(job.getJobUuid());
+        assertNotNull(job.getOutputFormat());
+        assertEquals(ZIPFORMAT, job.getOutputFormat());
+        assertEquals(Integer.valueOf(0), job.getProgress());
+        assertEquals(userRepository.findByUsername(USERNAME), job.getUser());
+        assertEquals(EOB, job.getResourceTypes());
+        assertEquals(LOCAL_HOST, job.getRequestUrl());
+        assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
+        assertEquals(JobStatus.SUBMITTED, job.getStatus());
+        assertEquals(0, job.getJobOutputs().size());
+        assertNull(job.getLastPollTime());
+        assertNull(job.getExpiresAt());
+        assertTrue(job.getJobUuid().matches("[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"));
+
+        // Verify it actually got persisted in the DB
+        assertEquals(job, jobRepository.findById(job.getId()).get());
+    }
+
+    @Test
+    void createJobWithContract() {
         Contract contract = contractRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
         Job job = jobService.createJob(EOB, LOCAL_HOST, contract.getContractNumber(), NDJSON_FIRE_CONTENT_TYPE, null);
-        assertThat(job).isNotNull();
-        assertThat(job.getId()).isNotNull();
-        assertThat(job.getJobUuid()).isNotNull();
-        assertThat(job.getOutputFormat()).isNotNull();
+        dataSetup.queueForCleanup(job);
+
+        assertNotNull(job);
+        assertNotNull(job.getId());
+        assertNotNull(job.getJobUuid());
+        assertNotNull(job.getOutputFormat());
         assertEquals(NDJSON_FIRE_CONTENT_TYPE, job.getOutputFormat());
-        assertEquals(job.getProgress(), Integer.valueOf(0));
-        assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
-        assertEquals(job.getResourceTypes(), EOB);
-        assertEquals(job.getRequestUrl(), LOCAL_HOST);
-        assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
-        assertEquals(job.getStatus(), JobStatus.SUBMITTED);
-        assertEquals(job.getJobOutputs().size(), 0);
+        assertEquals(Integer.valueOf(0), job.getProgress());
+        assertEquals(userRepository.findByUsername(USERNAME), job.getUser());
+        assertEquals(EOB, job.getResourceTypes());
+        assertEquals(LOCAL_HOST, job.getRequestUrl());
+        assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
+        assertEquals(JobStatus.SUBMITTED, job.getStatus());
+        assertEquals(0, job.getJobOutputs().size());
         assertNull(job.getLastPollTime());
         assertNull(job.getExpiresAt());
-        assertThat(job.getJobUuid()).matches(
-                "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}");
+        assertTrue(job.getJobUuid().matches("[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"));
+
         assertNotNull(job.getContract());
         assertEquals(job.getContract().getContractNumber(), contract.getContractNumber());
 
         // Verify it actually got persisted in the DB
-        assertThat(jobRepository.findById(job.getId())).get().isEqualTo(job);
+        assertEquals(job, jobRepository.findById(job.getId()).get());
     }
 
     @Test
-    public void createJobWithBadContract() {
-        Assertions.assertThrows(ContractNotFoundException.class,
-                () -> jobService.createJob(EOB, LOCAL_HOST, "BadContract", NDJSON_FIRE_CONTENT_TYPE, null));
-    }
-
-    @Test
-    public void createJobWithSpecificContractNoAttestation() {
-        dataSetup.setupContractWithNoAttestation(List.of());
-        Assertions.assertThrows(InvalidContractException.class,
+    void createJobWithSpecificContractNoAttestation() {
+        dataSetup.setupContractWithNoAttestation(USERNAME, CONTRACT_NUMBER, List.of());
+        assertThrows(InvalidContractException.class,
                 () -> jobService.createJob(EOB, LOCAL_HOST, DataSetup.VALID_CONTRACT_NUMBER, NDJSON_FIRE_CONTENT_TYPE, null));
     }
 
     @Test
-    public void createJobWithAllContractsNoAttestation() {
-        dataSetup.setupContractWithNoAttestation(List.of());
-        Assertions.assertThrows(InvalidContractException.class,
+    void createJobWithAllContractsNoAttestation() {
+        dataSetup.setupContractWithNoAttestation(USERNAME, CONTRACT_NUMBER, List.of());
+        assertThrows(InvalidContractException.class,
                 () -> jobService.createJob(EOB, LOCAL_HOST, null, NDJSON_FIRE_CONTENT_TYPE, null));
     }
 
     @Test
-    public void failedValidation() {
-        Assertions.assertThrows(TransactionSystemException.class,
+    void failedValidation() {
+        assertThrows(TransactionSystemException.class,
                 () -> jobService.createJob("Patient,ExplanationOfBenefit,Coverage", LOCAL_HOST,
                         null, NDJSON_FIRE_CONTENT_TYPE, null));
     }
 
     @Test
-    public void cancelJob() {
+    void cancelJob() {
         Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
 
         jobService.cancelJob(job.getJobUuid());
@@ -214,13 +208,13 @@ public class JobServiceTest {
     }
 
     @Test
-    public void cancelNonExistingJob() {
-        Assertions.assertThrows(ResourceNotFoundException.class,
+    void cancelNonExistingJob() {
+        assertThrows(ResourceNotFoundException.class,
                 () -> jobService.cancelJob("NonExistingJob"));
     }
 
     @Test
-    public void getJob() {
+    void getJob() {
         Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
 
         Job retrievedJob = jobService.getAuthorizedJobByJobUuidAndRole(job.getJobUuid());
@@ -229,7 +223,7 @@ public class JobServiceTest {
     }
 
     @Test
-    public void getJobAdminRole() {
+    void getJobAdminRole() {
         // Job created by regular user
         Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
 
@@ -241,7 +235,7 @@ public class JobServiceTest {
     }
 
     @Test
-    public void getJobCreatedByAdminRole() {
+    void getJobCreatedByAdminRole() {
         setupAdminUser();
 
         // Job created by admin user
@@ -249,7 +243,7 @@ public class JobServiceTest {
 
         setupRegularUserSecurityContext();
 
-        Assertions.assertThrows(InvalidJobAccessException.class,
+        assertThrows(InvalidJobAccessException.class,
                 () -> jobService.getAuthorizedJobByJobUuidAndRole(job.getJobUuid()));
     }
 
@@ -261,12 +255,11 @@ public class JobServiceTest {
         Role role = roleService.findRoleByName(ADMIN_ROLE);
         user.addRole(role);
 
-        Sponsor sponsor = buildSecondSponsor();
-        Contract contract = dataSetup.setupContract(sponsor, "Y0000");
-        sponsor.setContracts(Set.of(contract));
-        user.setSponsor(sponsor);
+        Contract contract = dataSetup.setupContract("Y0000");
+        user.setContract(contract);
 
-        userRepository.saveAndFlush(user);
+        user = userRepository.saveAndFlush(user);
+        dataSetup.queueForCleanup(user);
 
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(
@@ -274,27 +267,20 @@ public class JobServiceTest {
                                 "test", new ArrayList<>()), "pass"));
     }
 
-    private void setupRegularUserSecurityContext() {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(
-                        new org.springframework.security.core.userdetails.User(TEST_USER,
-                                "test", new ArrayList<>()), "pass"));
-    }
-
     @Test
-    public void getNonExistentJob() {
-        Assertions.assertThrows(ResourceNotFoundException.class,
+    void getNonExistentJob() {
+        assertThrows(ResourceNotFoundException.class,
                 () -> jobService.getAuthorizedJobByJobUuidAndRole("NonExistent"));
     }
 
     @Test
-    public void testJobInSuccessfulState() {
+    void testJobInSuccessfulState() {
         Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
 
         job.setStatus(JobStatus.SUCCESSFUL);
         jobRepository.saveAndFlush(job);
 
-        Assertions.assertThrows(InvalidJobStateTransition.class, () -> jobService.cancelJob(job.getJobUuid()));
+        assertThrows(InvalidJobStateTransition.class, () -> jobService.cancelJob(job.getJobUuid()));
     }
 
     @Test
@@ -304,7 +290,7 @@ public class JobServiceTest {
         job.setStatus(JobStatus.CANCELLED);
         jobRepository.saveAndFlush(job);
 
-        Assertions.assertThrows(InvalidJobStateTransition.class, () -> jobService.cancelJob(job.getJobUuid()));
+        assertThrows(InvalidJobStateTransition.class, () -> jobService.cancelJob(job.getJobUuid()));
 
     }
 
@@ -315,12 +301,12 @@ public class JobServiceTest {
         job.setStatus(JobStatus.FAILED);
         jobRepository.saveAndFlush(job);
 
-        Assertions.assertThrows(InvalidJobStateTransition.class, () -> jobService.cancelJob(job.getJobUuid()));
+        assertThrows(InvalidJobStateTransition.class, () -> jobService.cancelJob(job.getJobUuid()));
 
     }
 
     @Test
-    public void updateJob() {
+    void updateJob() {
         Job job = createJobAllContracts(ZIPFORMAT);
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime localDateTime = OffsetDateTime.now();
@@ -355,31 +341,31 @@ public class JobServiceTest {
         job.setJobOutputs(output);
 
         Job updatedJob = jobService.updateJob(job);
-        Assert.assertEquals(ZIPFORMAT, updatedJob.getOutputFormat());
-        Assert.assertEquals(Integer.valueOf(100), updatedJob.getProgress());
-        Assert.assertEquals(now, updatedJob.getLastPollTime());
-        Assert.assertEquals(JobStatus.IN_PROGRESS, updatedJob.getStatus());
-        Assert.assertEquals(localDateTime, updatedJob.getCreatedAt());
-        Assert.assertEquals(localDateTime, updatedJob.getCompletedAt());
-        Assert.assertEquals("abc", updatedJob.getJobUuid());
-        Assert.assertEquals(EOB, updatedJob.getResourceTypes());
-        Assert.assertEquals("http://localhost", updatedJob.getRequestUrl());
-        Assert.assertEquals("Pending", updatedJob.getStatusMessage());
-        Assert.assertEquals(now, updatedJob.getExpiresAt());
+        assertEquals(ZIPFORMAT, updatedJob.getOutputFormat());
+        assertEquals(Integer.valueOf(100), updatedJob.getProgress());
+        assertEquals(now, updatedJob.getLastPollTime());
+        assertEquals(JobStatus.IN_PROGRESS, updatedJob.getStatus());
+        assertEquals(localDateTime, updatedJob.getCreatedAt());
+        assertEquals(localDateTime, updatedJob.getCompletedAt());
+        assertEquals("abc", updatedJob.getJobUuid());
+        assertEquals(EOB, updatedJob.getResourceTypes());
+        assertEquals("http://localhost", updatedJob.getRequestUrl());
+        assertEquals("Pending", updatedJob.getStatusMessage());
+        assertEquals(now, updatedJob.getExpiresAt());
 
         JobOutput updatedOutput = updatedJob.getJobOutputs().get(0);
-        Assert.assertEquals(false, updatedOutput.getError());
-        Assert.assertEquals(EOB, updatedOutput.getFhirResourceType());
-        Assert.assertEquals("file.ndjson", updatedOutput.getFilePath());
+        assertEquals(false, updatedOutput.getError());
+        assertEquals(EOB, updatedOutput.getFhirResourceType());
+        assertEquals("file.ndjson", updatedOutput.getFilePath());
 
         JobOutput updatedErrorOutput = updatedJob.getJobOutputs().get(1);
-        Assert.assertEquals(true, updatedErrorOutput.getError());
-        Assert.assertEquals(OPERATION_OUTCOME, updatedErrorOutput.getFhirResourceType());
-        Assert.assertEquals("error.ndjson", updatedErrorOutput.getFilePath());
+        assertEquals(true, updatedErrorOutput.getError());
+        assertEquals(OPERATION_OUTCOME, updatedErrorOutput.getFhirResourceType());
+        assertEquals("error.ndjson", updatedErrorOutput.getFilePath());
     }
 
     @Test
-    public void getFileDownloadUrl() throws IOException {
+    void getFileDownloadUrl() throws IOException {
         String testFile = "test.ndjson";
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
@@ -392,14 +378,14 @@ public class JobServiceTest {
         createNDJSONFile(errorFile, destinationStr);
 
         Resource resource = jobService.getResourceForJob(job.getJobUuid(), testFile);
-        Assert.assertEquals(testFile, resource.getFilename());
+        assertEquals(testFile, resource.getFilename());
 
         Resource errorResource = jobService.getResourceForJob(job.getJobUuid(), errorFile);
-        Assert.assertEquals(errorFile, errorResource.getFilename());
+        assertEquals(errorFile, errorResource.getFilename());
     }
 
     @Test
-    public void getJobOutputFromDifferentUser() throws IOException {
+    void getJobOutputFromDifferentUser() throws IOException {
         String testFile = "test.ndjson";
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
@@ -416,12 +402,10 @@ public class JobServiceTest {
         user.setRoles(Set.of(role));
         user.setUsername("BadUser");
         user.setEnabled(true);
+        dataSetup.queueForCleanup(user);
 
-        Sponsor savedSponsor = buildSecondSponsor();
-
-        dataSetup.setupContract(savedSponsor, "New Contract");
-
-        user.setSponsor(savedSponsor);
+        Contract contract = dataSetup.setupContract("New Contract");
+        user.setContract(contract);
         User savedUser = userRepository.save(user);
 
         SecurityContextHolder.getContext().setAuthentication(
@@ -433,11 +417,7 @@ public class JobServiceTest {
                 InvalidJobAccessException.class,
                 () -> jobService.getResourceForJob(job.getJobUuid(), testFile));
 
-        Assert.assertEquals(exceptionThrown.getMessage(), "Unauthorized");
-    }
-
-    private Sponsor buildSecondSponsor() {
-        return dataSetup.createSponsor("Parent Corp. #2", 12345, "Test #2", 6789);
+        assertEquals(exceptionThrown.getMessage(), "Unauthorized");
     }
 
     private void createNDJSONFile(String file, String destinationStr) throws IOException {
@@ -486,27 +466,27 @@ public class JobServiceTest {
     }
 
     @Test
-    public void getFileDownloadUrlWithWrongFilename() {
+    void getFileDownloadUrlWithWrongFilename() {
         String testFile = "test.ndjson";
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
 
-        Assertions.assertThrows(ResourceNotFoundException.class,
+        assertThrows(ResourceNotFoundException.class,
                 () -> jobService.getResourceForJob(job.getJobUuid(), "filenamewrong.ndjson"));
     }
 
     @Test
-    public void getFileDownloadUrlWitMissingOutput() {
+    void getFileDownloadUrlWitMissingOutput() {
         String testFile = "outputmissing.ndjson";
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
 
-        Assertions.assertThrows(JobOutputMissingException.class,
+        assertThrows(JobOutputMissingException.class,
                 () -> jobService.getResourceForJob(job.getJobUuid(), "outputmissing.ndjson"));
     }
 
     @Test
-    public void getFileDownloadAlreadyDownloaded() {
+    void getFileDownloadAlreadyDownloaded() {
         String testFile = "test.ndjson";
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
@@ -514,15 +494,14 @@ public class JobServiceTest {
         jobOutput.setDownloaded(true);
         jobOutputRepository.save(jobOutput);
 
-
-        var exception = Assertions.assertThrows(JobOutputMissingException.class,
+        var exception = assertThrows(JobOutputMissingException.class,
                 () -> jobService.getResourceForJob(job.getJobUuid(), "test.ndjson"));
         assertEquals("The file is not present as it has already been downloaded. Please resubmit the job.",
                 exception.getMessage());
     }
 
     @Test
-    public void getFileDownloadExpired() {
+    void getFileDownloadExpired() {
         String testFile = "test.ndjson";
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
@@ -530,37 +509,37 @@ public class JobServiceTest {
         jobRepository.save(job);
 
 
-        var exception = Assertions.assertThrows(JobOutputMissingException.class,
+        var exception = assertThrows(JobOutputMissingException.class,
                 () -> jobService.getResourceForJob(job.getJobUuid(), "test.ndjson"));
         assertEquals("The file is not present as it has expired. Please resubmit the job.", exception.getMessage());
     }
 
     @Test
-    public void checkIfUserCanAddJobTest() {
+    void checkIfUserCanAddJobTest() {
         boolean result = jobService.checkIfCurrentUserCanAddJob();
-        Assert.assertTrue(result);
+        assertTrue(result);
     }
 
     @Test
-    public void checkIfUserCanAddJobTrueTest() {
+    void checkIfUserCanAddJobTrueTest() {
         createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
 
         boolean result = jobService.checkIfCurrentUserCanAddJob();
-        Assert.assertTrue(result);
+        assertTrue(result);
     }
 
     @Test
-    public void checkIfUserCanAddJobPastLimitTest() {
+    void checkIfUserCanAddJobPastLimitTest() {
         createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
         createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
         createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
 
         boolean result = jobService.checkIfCurrentUserCanAddJob();
-        Assert.assertFalse(result);
+        assertFalse(result);
     }
 
     @Test
-    public void deleteFileForJobTest() {
+    void deleteFileForJobTest() {
         String testFile = "test.ndjson";
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
@@ -568,6 +547,8 @@ public class JobServiceTest {
     }
 
     private Job createJobAllContracts(String outputFormat) {
-        return jobService.createJob(EOB, LOCAL_HOST, null, outputFormat, null);
+        Job job = jobService.createJob(EOB, LOCAL_HOST, null, outputFormat, null);
+        dataSetup.queueForCleanup(job);
+        return job;
     }
 }

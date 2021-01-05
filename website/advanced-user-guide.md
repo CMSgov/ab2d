@@ -231,7 +231,7 @@ Once the search job has been completed, the contents of the of the created file(
 GET /api/v1/fhir/Job/{jobUuid}/file/{filename}
 ```
 
-The file(s) are specified as the output of the status request. Each file will only be available for 24 hours after the 
+The file(s) are specified as the output of the status request. Each file will only be available for 72 hours after the 
 job has completed. Files are also unavailable after they have been successfully downloaded. 
 
 ### Cancellation
@@ -299,8 +299,8 @@ $status but $ means a variable value in the bash command line.
 - Your file name or job name are not correct. You can call the $status command again and verify that you have the file 
 name & job name correct.
 - You can only download the file once. If you have already done that, it no longer exists on our system
-- The time between when the job completed and you requested the file was greater than 24 hours. Files are 
-automatically deleted (or expired) after 24 hours.
+- The time between when the job completed and you requested the file was greater than 72 hours. Files are 
+automatically deleted (or expired) after 72 hours.
 - There was an error on our server. If this continues to happen, contact technical support
 
 ### Other

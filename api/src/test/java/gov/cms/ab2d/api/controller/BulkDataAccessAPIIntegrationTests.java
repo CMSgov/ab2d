@@ -18,8 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.hamcrest.core.Is;
 import org.hl7.fhir.dstu3.model.DateTimeType;
 import org.junit.Assert;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -78,9 +77,6 @@ public class BulkDataAccessAPIIntegrationTests {
     private RoleRepository roleRepository;
 
     @Autowired
-    private SponsorRepository sponsorRepository;
-
-    @Autowired
     private ContractRepository contractRepository;
 
     @Value("${efs.mount}")
@@ -107,13 +103,11 @@ public class BulkDataAccessAPIIntegrationTests {
     @BeforeEach
     public void setup() throws JwtVerificationException {
         jobRepository.deleteAll();
-        contractRepository.deleteAll();
         userRepository.deleteAll();
         roleRepository.deleteAll();
-        sponsorRepository.deleteAll();
+        contractRepository.deleteAll();
 
         doAll.delete();
-
         testUtil.turnMaintenanceModeOff();
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
     }
@@ -274,8 +268,8 @@ public class BulkDataAccessAPIIntegrationTests {
 
         List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
         User user = new User();
-        Sponsor sponsor = dataSetup.createSponsor("Parent Spons", 4441, "Child Spons", 1114);
-        user.setSponsor(sponsor);
+        Contract contract = dataSetup.setupContract("Test");
+        user.setContract(contract);
         user.setEnabled(true);
         user.setUsername("test");
         user.setEmail("test@test.com");
@@ -867,7 +861,7 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals(1, fileEvents.size());
         FileEvent fileEvent = (FileEvent) fileEvents.get(0);
         assertEquals(FileEvent.FileStatus.DELETE, fileEvent.getStatus());
-        assertEquals(destinationStr + "/" + testFile, fileEvent.getFileName());
+        assertEquals(destinationStr + File.separator + testFile, fileEvent.getFileName());
         assertNotNull(fileEvent.getFileHash());
 
         String downloadedFile = downloadFileCall.getResponse().getContentAsString();
@@ -1165,19 +1159,6 @@ public class BulkDataAccessAPIIntegrationTests {
                                 "valid")));
     }
 
-    @Test
-    public void testPatientExportWithInvalidContract() throws Exception {
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Group/" + "badContract" + "/$export")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(404))
-                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
-                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
-                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("Contract badContract was not found")));
-    }
-
     private void createMaxJobsWithContract(Contract contract) throws Exception {
         for(int i = 0; i < MAX_JOBS_PER_USER; i++) {
             this.mockMvc.perform(
@@ -1255,16 +1236,16 @@ public class BulkDataAccessAPIIntegrationTests {
                     .andExpect(status().is(202));
         }
 
-        Sponsor sponsor = dataSetup.createSponsor("Parent Spons", 4441, "Child Spons", 1114);
+        Contract contract1 = dataSetup.setupContract("Test1");
         User user = userRepository.findByUsername(TEST_USER);
-        user.setSponsor(sponsor);
+        user.setContract(contract1);
         userRepository.saveAndFlush(user);
-        Contract contractNew = dataSetup.setupContract(sponsor, "New Contract");
+        Contract contractNew = dataSetup.setupContract("New Contract");
 
         this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + "/Group/" + contractNew.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(202));
+                .andExpect(status().is(403));
     }
 
     @Test
@@ -1274,8 +1255,7 @@ public class BulkDataAccessAPIIntegrationTests {
         createMaxJobsWithContract(contract);
 
         User user = new User();
-        Sponsor sponsor = dataSetup.createSponsor("Parent Spons", 4441, "Child Spons", 1114);
-        user.setSponsor(sponsor);
+        user.setContract(contract);
         user.setEnabled(true);
         user.setUsername("test");
         user.setEmail("test@test.com");

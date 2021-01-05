@@ -22,7 +22,7 @@ public class Contract extends TimestampBase {
 
     public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd H:m:s Z");
 
-    enum UpdateMode { AUTOMATIC, TEST, MANUAL }
+    public enum UpdateMode { AUTOMATIC, TEST, MANUAL }
 
     @Id
     @GeneratedValue
@@ -48,19 +48,13 @@ public class Contract extends TimestampBase {
     private UpdateMode updateMode = UpdateMode.AUTOMATIC;
 
     public Contract(@NotNull String contractNumber, String contractName, Long hpmsParentOrgId, String hpmsParentOrg,
-                    String hpmsOrgMarketingName, @NotNull Sponsor sponsor) {
+                    String hpmsOrgMarketingName) {
         this.contractNumber = contractNumber;
         this.contractName = contractName;
         this.hpmsParentOrgId = hpmsParentOrgId;
         this.hpmsParentOrg = hpmsParentOrg;
         this.hpmsOrgMarketingName = hpmsOrgMarketingName;
-        this.sponsor = sponsor;
     }
-
-    @ManyToOne
-    @JoinColumn(name = "sponsor_id")
-    @NotNull
-    private Sponsor sponsor;
 
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime attestedOn;
@@ -124,19 +118,5 @@ public class Contract extends TimestampBase {
         String dateWithTZ = attestationDate + " " + getESTOffset();
         attestedOn = OffsetDateTime.parse(dateWithTZ, FORMATTER);
         return true;
-    }
-
-    /**
-     * Trigger removal of contract from sponsor parent relationship. If this is not triggered then deleting a contract
-     * will not work because hibernate persistence will recognize that {@link Sponsor#getContracts()} still has a
-     * relationship to this contract instance.
-     */
-    @SuppressWarnings("PMD.UnusedPrivateMethod")
-    @PreRemove
-    private void removeContractFromSponsors() {
-
-        if (sponsor != null) {
-            sponsor.getContracts().remove(this);
-        }
     }
 }

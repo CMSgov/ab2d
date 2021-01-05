@@ -14,8 +14,8 @@ public class CoverageQueueConfig {
 
     @Bean(name = "patientCoverageThreadPool")
     public ThreadPoolTaskExecutor patientContractThreadPool(
-            @Value("#{new Integer('${contract.core.pool.size}')}") int corePoolSize,
-            @Value("#{new Integer('${contract.max.pool.size}')}") int maxPoolSize) {
+            @Value("#{new Integer('${coverage.core.pool.size}')}") int corePoolSize,
+            @Value("#{new Integer('${coverage.max.pool.size}')}") int maxPoolSize) {
         final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
         taskExecutor.setCorePoolSize(corePoolSize);
         taskExecutor.setMaxPoolSize(maxPoolSize);
@@ -25,11 +25,10 @@ public class CoverageQueueConfig {
     }
 
     @Bean
-    public CoverageMappingConfig coverageMappingConfig(
+    public CoverageUpdateConfig coverageMappingConfig(
             @Value("${coverage.update.months.past}") int pastMonthsToUpdate,
             @Value("${coverage.update.stale.days}") int staleDays,
-            @Value("${coverage.update.max.attempts}") int maxAttempts,
             @Value("${coverage.update.stuck.hours}") int stuckHours) {
-        return new CoverageMappingConfig(pastMonthsToUpdate, staleDays, maxAttempts, stuckHours);
+        return new CoverageUpdateConfig(pastMonthsToUpdate, staleDays, stuckHours);
     }
 }
