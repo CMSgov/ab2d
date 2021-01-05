@@ -15,60 +15,40 @@ cd "${START_DIR}"
 #
 
 echo "Check vars are not empty before proceeding..."
-if [ -z "${CMS_ENV_PARAM}" ] \
+if [ -z "${CLOUD_TAMER_PARAM}" ] \
+    || [ -z "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER_PARAM}" ] \
     || [ -z "${CMS_ECR_REPO_ENV_PARAM}" ] \
-    || [ -z "${REGION_PARAM}" ] \
-    || [ -z "${VPC_ID_PARAM}" ] \
-    || [ -z "${SSH_USERNAME_PARAM}" ] \
-    || [ -z "${EC2_INSTANCE_TYPE_API_PARAM}" ] \
-    || [ -z "${EC2_INSTANCE_TYPE_WORKER_PARAM}" ] \
-    || [ -z "${EC2_DESIRED_INSTANCE_COUNT_API_PARAM}" ] \
-    || [ -z "${EC2_MINIMUM_INSTANCE_COUNT_API_PARAM}" ] \
-    || [ -z "${EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM}" ] \
-    || [ -z "${EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM}" ] \
-    || [ -z "${EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM}" ] \
-    || [ -z "${EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM}" ] \
     || [ -z "${DATABASE_SECRET_DATETIME_PARAM}" ] \
     || [ -z "${DEBUG_LEVEL_PARAM}" ] \
+    || [ -z "${EC2_DESIRED_INSTANCE_COUNT_API_PARAM}" ] \
+    || [ -z "${EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM}" ] \
+    || [ -z "${EC2_INSTANCE_TYPE_API_PARAM}" ] \
+    || [ -z "${EC2_INSTANCE_TYPE_WORKER_PARAM}" ] \
+    || [ -z "${EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM}" ] \
+    || [ -z "${EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM}" ] \
+    || [ -z "${EC2_MINIMUM_INSTANCE_COUNT_API_PARAM}" ] \
+    || [ -z "${EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM}" ] \
     || [ -z "${INTERNET_FACING_PARAM}" ] \
-    || [ -z "${CLOUD_TAMER_PARAM}" ]; then
+    || [ -z "${SSH_USERNAME_PARAM}" ] \
+    || [ -z "${TARGET_AWS_ACCOUNT_NUMBER_PARAM}" ] \
+    || [ -z "${TARGET_CMS_ENV_PARAM}" ] \
+    || [ -z "${VPC_ID_PARAM}" ]; then
   echo "ERROR: All parameters must be set."
   exit 1
 fi
 
 #
-# Set variables
+# Set conditional variables
 #
 
-CMS_ENV="${CMS_ENV_PARAM}"
+# Set whether CloudTamer API should be used
 
-CMS_ECR_REPO_ENV="${CMS_ECR_REPO_ENV_PARAM}"
-
-REGION="${REGION_PARAM}"
-
-VPC_ID="${VPC_ID_PARAM}"
-
-SSH_USERNAME="${SSH_USERNAME_PARAM}"
-
-EC2_INSTANCE_TYPE_API="${EC2_INSTANCE_TYPE_API_PARAM}"
-
-EC2_INSTANCE_TYPE_WORKER="${EC2_INSTANCE_TYPE_WORKER_PARAM}"
-
-EC2_DESIRED_INSTANCE_COUNT_API="${EC2_DESIRED_INSTANCE_COUNT_API_PARAM}"
-
-EC2_MINIMUM_INSTANCE_COUNT_API="${EC2_DESIRED_INSTANCE_COUNT_API_PARAM}"
-
-EC2_MAXIMUM_INSTANCE_COUNT_API="${EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM}"
-
-EC2_DESIRED_INSTANCE_COUNT_WORKER="${EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM}"
-
-EC2_MINIMUM_INSTANCE_COUNT_WORKER="${EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM}"
-
-EC2_MAXIMUM_INSTANCE_COUNT_WORKER="${EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM}"
-
-DATABASE_SECRET_DATETIME="${DATABASE_SECRET_DATETIME_PARAM}"
-
-export DEBUG_LEVEL="${DEBUG_LEVEL_PARAM}"
+if [ "${CLOUD_TAMER_PARAM}" != "false" ] && [ "${CLOUD_TAMER_PARAM}" != "true" ]; then
+  echo "ERROR: CLOUD_TAMER_PARAM parameter must be true or false"
+  exit 1
+else
+  CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
+fi
 
 # Set whether load balancer is internal based on "internet-facing" parameter
 
@@ -81,33 +61,41 @@ else
   exit 1
 fi
 
-# Set whether CloudTamer API should be used
-
-if [ "${CLOUD_TAMER_PARAM}" != "false" ] && [ "${CLOUD_TAMER_PARAM}" != "true" ]; then
-  echo "ERROR: CLOUD_TAMER_PARAM parameter must be true or false"
-  exit 1
-else
-  CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
-fi
-
 #
-# Set AWS account numbers
+# Set remaining variables
 #
 
-CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER=653916833532
+CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER="${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER_PARAM}"
 
-if [ "${CMS_ENV}" == "ab2d-dev" ]; then
-  CMS_ENV_AWS_ACCOUNT_NUMBER=349849222861
-elif [ "${CMS_ENV}" == "ab2d-sbx-sandbox" ]; then
-  CMS_ENV_AWS_ACCOUNT_NUMBER=777200079629
-elif [ "${CMS_ENV}" == "ab2d-east-impl" ]; then
-  CMS_ENV_AWS_ACCOUNT_NUMBER=330810004472
-elif [ "${CMS_ENV}" == "ab2d-east-prod" ]; then
-  CMS_ENV_AWS_ACCOUNT_NUMBER=595094747606
-else
-  echo "ERROR: 'CMS_ENV' environment is unknown."
-  exit 1  
-fi
+CMS_ECR_REPO_ENV="${CMS_ECR_REPO_ENV_PARAM}"
+
+DATABASE_SECRET_DATETIME="${DATABASE_SECRET_DATETIME_PARAM}"
+
+export DEBUG_LEVEL="${DEBUG_LEVEL_PARAM}"
+
+EC2_DESIRED_INSTANCE_COUNT_API="${EC2_DESIRED_INSTANCE_COUNT_API_PARAM}"
+
+EC2_DESIRED_INSTANCE_COUNT_WORKER="${EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM}"
+
+EC2_INSTANCE_TYPE_API="${EC2_INSTANCE_TYPE_API_PARAM}"
+
+EC2_INSTANCE_TYPE_WORKER="${EC2_INSTANCE_TYPE_WORKER_PARAM}"
+
+EC2_MAXIMUM_INSTANCE_COUNT_API="${EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM}"
+
+EC2_MAXIMUM_INSTANCE_COUNT_WORKER="${EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM}"
+
+EC2_MINIMUM_INSTANCE_COUNT_API="${EC2_MINIMUM_INSTANCE_COUNT_API_PARAM}"
+
+EC2_MINIMUM_INSTANCE_COUNT_WORKER="${EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM}"
+
+SSH_USERNAME="${SSH_USERNAME_PARAM}"
+
+TARGET_AWS_ACCOUNT_NUMBER="${TARGET_AWS_ACCOUNT_NUMBER_PARAM}"
+
+TARGET_CMS_ENV="${TARGET_CMS_ENV_PARAM}"
+
+VPC_ID="${VPC_ID_PARAM}"
 
 #
 # Define functions
@@ -126,9 +114,9 @@ source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_aws_sts_assu
 #
 
 if [ "${CLOUD_TAMER}" == "true" ]; then
-  fn_get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
+  fn_get_temporary_aws_credentials_via_cloudtamer_api "${TARGET_AWS_ACCOUNT_NUMBER}" "${TARGET_CMS_ENV}"
 else
-  fn_get_temporary_aws_credentials_via_aws_sts_assume_role "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
+  fn_get_temporary_aws_credentials_via_aws_sts_assume_role "${TARGET_AWS_ACCOUNT_NUMBER}" "${TARGET_CMS_ENV}"
 fi
 
 #
@@ -159,6 +147,12 @@ if [ -n "${KMS_KEY_ID}" ]; then
     --key-id alias/ab2d-kms \
     --query "KeyMetadata.KeyState" \
     --output text)
+  if [ "${KMS_KEY_STATE}" != "Enabled" ]; then
+    echo "*****************************************************"
+    echo "ERROR: kms key for target environment is not enabled."
+    echo "*****************************************************"
+    exit 1
+  fi
 else
   echo "***************************************************"
   echo "ERROR: kms key id for target environment not found."
@@ -176,10 +170,6 @@ echo "Setting terraform debug level to $DEBUG_LEVEL..."
 export TF_LOG=$DEBUG_LEVEL
 export TF_LOG_PATH=/var/log/terraform/tf.log
 rm -f /var/log/terraform/tf.log
-
-#
-# USE EXISTING BUILD #1 BEGIN
-#
 
 #
 # Configure docker environment
@@ -206,10 +196,6 @@ docker volume ls -qf dangling=true | xargs -I name docker volume rm name
 docker images -q | xargs -I name docker rmi --force name
 
 #
-# USE EXISTING BUILD #1 END
-#
-
-#
 # Initialize and validate terraform
 #
 
@@ -220,13 +206,13 @@ echo "Initialize and validate terraform for the target environment..."
 echo "***************************************************************"
 
 cd "${START_DIR}/.."
-cd terraform/environments/$CMS_ENV
+cd "terraform/environments/${TARGET_CMS_ENV}"
 
-rm -f *.tfvars
+rm -f ./*.tfvars
 
 terraform init \
-  -backend-config="bucket=${CMS_ENV}-automation" \
-  -backend-config="key=${CMS_ENV}/terraform/terraform.tfstate" \
+  -backend-config="bucket=${TARGET_CMS_ENV}-automation" \
+  -backend-config="key=${TARGET_CMS_ENV}/terraform/terraform.tfstate" \
   -backend-config="region=${AWS_DEFAULT_REGION}" \
   -backend-config="encrypt=true"
 
@@ -239,7 +225,7 @@ terraform validate
 echo "Enabling KMS key..."
 cd "${START_DIR}/.."
 cd python3
-./enable-kms-key.py $KMS_KEY_ID
+./enable-kms-key.py "${KMS_KEY_ID}"
 
 #
 # Get secrets
@@ -247,7 +233,7 @@ cd python3
 
 # Get database user secret
 
-DATABASE_USER=$(./get-database-secret.py $CMS_ENV database_user $DATABASE_SECRET_DATETIME)
+DATABASE_USER=$(./get-database-secret.py "${TARGET_CMS_ENV}" database_user "${DATABASE_SECRET_DATETIME}")
 
 if [ -z "${DATABASE_USER}" ]; then
   echo "**************************************"
@@ -258,7 +244,7 @@ fi
 
 # Get database password secret
 
-DATABASE_PASSWORD=$(./get-database-secret.py $CMS_ENV database_password $DATABASE_SECRET_DATETIME)
+DATABASE_PASSWORD=$(./get-database-secret.py "${TARGET_CMS_ENV}" database_password "${DATABASE_SECRET_DATETIME}")
 
 if [ -z "${DATABASE_PASSWORD}" ]; then
   echo "******************************************"
@@ -269,7 +255,7 @@ fi
 
 # Get database name secret
 
-DATABASE_NAME=$(./get-database-secret.py $CMS_ENV database_name $DATABASE_SECRET_DATETIME)
+DATABASE_NAME=$(./get-database-secret.py "${TARGET_CMS_ENV}" database_name "${DATABASE_SECRET_DATETIME}")
 
 if [ -z "${DATABASE_NAME}" ]; then
   echo "***************************************"
@@ -280,7 +266,7 @@ fi
 
 # Get bfd url secret
 
-BFD_URL=$(./get-database-secret.py $CMS_ENV bfd_url $DATABASE_SECRET_DATETIME)
+BFD_URL=$(./get-database-secret.py "${TARGET_CMS_ENV}" bfd_url "${DATABASE_SECRET_DATETIME}")
 
 if [ -z "${BFD_URL}" ]; then
   echo "********************************"
@@ -291,7 +277,7 @@ fi
 
 # Get bfd keystore location secret
 
-BFD_KEYSTORE_LOCATION=$(./get-database-secret.py $CMS_ENV bfd_keystore_location $DATABASE_SECRET_DATETIME)
+BFD_KEYSTORE_LOCATION=$(./get-database-secret.py "${TARGET_CMS_ENV}" bfd_keystore_location "${DATABASE_SECRET_DATETIME}")
 
 if [ -z "${BFD_KEYSTORE_LOCATION}" ]; then
   echo "**********************************************"
@@ -302,7 +288,7 @@ fi
 
 # Get bfd keystore password secret
 
-BFD_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV bfd_keystore_password $DATABASE_SECRET_DATETIME)
+BFD_KEYSTORE_PASSWORD=$(./get-database-secret.py "${TARGET_CMS_ENV}" bfd_keystore_password "${DATABASE_SECRET_DATETIME}")
 
 if [ -z "${BFD_KEYSTORE_PASSWORD}" ]; then
   echo "**********************************************"
@@ -313,7 +299,7 @@ fi
 
 # Get hicn hash pepper secret
 
-HICN_HASH_PEPPER=$(./get-database-secret.py $CMS_ENV hicn_hash_pepper $DATABASE_SECRET_DATETIME)
+HICN_HASH_PEPPER=$(./get-database-secret.py "${TARGET_CMS_ENV}" hicn_hash_pepper "${DATABASE_SECRET_DATETIME}")
 
 if [ -z "${HICN_HASH_PEPPER}" ]; then
   echo "*****************************************"
@@ -324,7 +310,7 @@ fi
 
 # Get hicn hash iter secret
 
-HICN_HASH_ITER=$(./get-database-secret.py $CMS_ENV hicn_hash_iter $DATABASE_SECRET_DATETIME)
+HICN_HASH_ITER=$(./get-database-secret.py "${TARGET_CMS_ENV}" hicn_hash_iter "${DATABASE_SECRET_DATETIME}")
 
 if [ -z "${HICN_HASH_ITER}" ]; then
   echo "***************************************"
@@ -335,7 +321,7 @@ fi
 
 # Get new relic app name secret
 
-NEW_RELIC_APP_NAME=$(./get-database-secret.py $CMS_ENV new_relic_app_name $DATABASE_SECRET_DATETIME)
+NEW_RELIC_APP_NAME=$(./get-database-secret.py "${TARGET_CMS_ENV}" new_relic_app_name "${DATABASE_SECRET_DATETIME}")
 
 if [ -z "${NEW_RELIC_APP_NAME}" ]; then
   echo "*******************************************"
@@ -346,7 +332,7 @@ fi
 
 # Get new relic license key secret
 
-NEW_RELIC_LICENSE_KEY=$(./get-database-secret.py $CMS_ENV new_relic_license_key $DATABASE_SECRET_DATETIME)
+NEW_RELIC_LICENSE_KEY=$(./get-database-secret.py "${TARGET_CMS_ENV}" new_relic_license_key "${DATABASE_SECRET_DATETIME}")
 
 if [ -z "${NEW_RELIC_LICENSE_KEY}" ]; then
   echo "**********************************************"
@@ -357,7 +343,7 @@ fi
 
 # Get private ip address CIDR range for VPN
 
-VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE=$(./get-database-secret.py $CMS_ENV vpn_private_ip_address_cidr_range $DATABASE_SECRET_DATETIME)
+VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE=$(./get-database-secret.py "${TARGET_CMS_ENV}" vpn_private_ip_address_cidr_range "${DATABASE_SECRET_DATETIME}")
 
 if [ -z "${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" ]; then
   echo "**********************************************************"
@@ -368,7 +354,7 @@ fi
 
 # Get AB2D keystore location
 
-AB2D_KEYSTORE_LOCATION=$(./get-database-secret.py $CMS_ENV ab2d_keystore_location $DATABASE_SECRET_DATETIME)
+AB2D_KEYSTORE_LOCATION=$(./get-database-secret.py "${TARGET_CMS_ENV}" ab2d_keystore_location "${DATABASE_SECRET_DATETIME}")
 
 if [ -z "${AB2D_KEYSTORE_LOCATION}" ]; then
   echo "***********************************************"
@@ -379,7 +365,7 @@ fi
 
 # Get AB2D keystore password
 
-AB2D_KEYSTORE_PASSWORD=$(./get-database-secret.py $CMS_ENV ab2d_keystore_password $DATABASE_SECRET_DATETIME)
+AB2D_KEYSTORE_PASSWORD=$(./get-database-secret.py "${TARGET_CMS_ENV}" ab2d_keystore_password "${DATABASE_SECRET_DATETIME}")
 
 if [ -z "${AB2D_KEYSTORE_PASSWORD}" ]; then
   echo "***********************************************"
@@ -388,7 +374,7 @@ if [ -z "${AB2D_KEYSTORE_PASSWORD}" ]; then
   exit 1
 fi
 
-AB2D_OKTA_JWT_ISSUER=$(./get-database-secret.py $CMS_ENV ab2d_okta_jwt_issuer $DATABASE_SECRET_DATETIME)
+AB2D_OKTA_JWT_ISSUER=$(./get-database-secret.py "${TARGET_CMS_ENV}" ab2d_okta_jwt_issuer "${DATABASE_SECRET_DATETIME}")
 
 if [ -z "${AB2D_OKTA_JWT_ISSUER}" ]; then
   echo "*********************************************"
@@ -399,7 +385,7 @@ fi
 
 # Get HPMS URL
 
-AB2D_HPMS_URL=$(./get-database-secret.py $CMS_ENV ab2d_hpms_url $DATABASE_SECRET_DATETIME)
+AB2D_HPMS_URL=$(./get-database-secret.py "${TARGET_CMS_ENV}" ab2d_hpms_url "${DATABASE_SECRET_DATETIME}")
 
 if [ -z "${AB2D_HPMS_URL}" ]; then
   echo "**************************************"
@@ -410,7 +396,7 @@ fi
 
 # Get HPMS API PARAMS
 
-AB2D_HPMS_API_PARAMS=$(./get-database-secret.py $CMS_ENV ab2d_hpms_api_params $DATABASE_SECRET_DATETIME)
+AB2D_HPMS_API_PARAMS=$(./get-database-secret.py "${TARGET_CMS_ENV}" ab2d_hpms_api_params "${DATABASE_SECRET_DATETIME}")
 
 if [ -z "${AB2D_HPMS_API_PARAMS}" ]; then
   echo "*******************************************"
@@ -421,7 +407,7 @@ fi
 
 # Get HPMS AUTH key id
 
-AB2D_HPMS_AUTH_KEY_ID=$(./get-database-secret.py $CMS_ENV ab2d_hpms_auth_key_id $DATABASE_SECRET_DATETIME)
+AB2D_HPMS_AUTH_KEY_ID=$(./get-database-secret.py "${TARGET_CMS_ENV}" ab2d_hpms_auth_key_id "${DATABASE_SECRET_DATETIME}")
 
 if [ -z "${AB2D_HPMS_AUTH_KEY_ID}" ]; then
   echo "**********************************************"
@@ -432,7 +418,7 @@ fi
 
 # Get HPMS AUTH key secret
 
-AB2D_HPMS_AUTH_KEY_SECRET=$(./get-database-secret.py $CMS_ENV ab2d_hpms_auth_key_secret $DATABASE_SECRET_DATETIME)
+AB2D_HPMS_AUTH_KEY_SECRET=$(./get-database-secret.py "${TARGET_CMS_ENV}" ab2d_hpms_auth_key_secret "${DATABASE_SECRET_DATETIME}")
 
 if [ -z "${AB2D_HPMS_AUTH_KEY_SECRET}" ]; then
   echo "**************************************************"
@@ -441,7 +427,7 @@ if [ -z "${AB2D_HPMS_AUTH_KEY_SECRET}" ]; then
   exit 1
 fi
 
-# If any databse secret produced an error, exit the script
+# If any database secret produced an error, exit the script
 
 if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${DATABASE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
@@ -472,7 +458,7 @@ fi
 # Get first public subnet id
 
 SUBNET_PUBLIC_1_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-subnets \
-  --filters "Name=tag:Name,Values=${CMS_ENV}-public-a" \
+  --filters "Name=tag:Name,Values=${TARGET_CMS_ENV}-public-a" \
   --query "Subnets[*].SubnetId" \
   --output text)
 
@@ -484,7 +470,7 @@ fi
 # Get second public subnet id
 
 SUBNET_PUBLIC_2_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-subnets \
-  --filters "Name=tag:Name,Values=${CMS_ENV}-public-b" \
+  --filters "Name=tag:Name,Values=${TARGET_CMS_ENV}-public-b" \
   --query "Subnets[*].SubnetId" \
   --output text)
 
@@ -496,7 +482,7 @@ fi
 # Get first private subnet id
 
 SUBNET_PRIVATE_1_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-subnets \
-  --filters "Name=tag:Name,Values=${CMS_ENV}-private-a" \
+  --filters "Name=tag:Name,Values=${TARGET_CMS_ENV}-private-a" \
   --query "Subnets[*].SubnetId" \
   --output text)
 
@@ -508,7 +494,7 @@ fi
 # Get second private subnet id
 
 SUBNET_PRIVATE_2_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-subnets \
-  --filters "Name=tag:Name,Values=${CMS_ENV}-private-b" \
+  --filters "Name=tag:Name,Values=${TARGET_CMS_ENV}-private-b" \
   --query "Subnets[*].SubnetId" \
   --output text)
 
@@ -523,7 +509,7 @@ fi
 
 AMI_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-images \
   --owners self \
-  --filters "Name=tag:Name,Values=${CMS_ENV}-ami" \
+  --filters "Name=tag:Name,Values=${TARGET_CMS_ENV}-ami" \
   --query "Images[*].[ImageId]" \
   --output text)
 
@@ -536,7 +522,7 @@ else
 
   GOLD_IMAGE_NAME=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-images \
     --owners self \
-    --filters "Name=tag:Name,Values=${CMS_ENV}-ami" \
+    --filters "Name=tag:Name,Values=${TARGET_CMS_ENV}-ami" \
     --query "Images[*].Tags[?Key=='gold_disk_name'].Value" \
     --output text)
 
@@ -555,7 +541,7 @@ DEPLOYER_IP_ADDRESS=$(curl ipinfo.io/ip)
 # Change to the target environment
 
 cd "${START_DIR}/.."
-cd terraform/environments/$CMS_ENV
+cd "terraform/environments/${TARGET_CMS_ENV}"
 
 # Determine cpu and memory for new API ECS container definition
 
@@ -563,13 +549,13 @@ API_EC2_INSTANCE_CPU_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-i
   --instance-types "${EC2_INSTANCE_TYPE_API}" --query "InstanceTypes[*].VCpuInfo.DefaultVCpus" \
   --output text)
 
-let API_CPU="($API_EC2_INSTANCE_CPU_COUNT)*1024"
+API_CPU=$((API_EC2_INSTANCE_CPU_COUNT*1024))
 
 API_EC2_INSTANCE_MEMORY=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instance-types \
   --instance-types "${EC2_INSTANCE_TYPE_API}" --query "InstanceTypes[*].MemoryInfo.SizeInMiB" \
   --output text)
 
-let API_MEMORY="$((${API_EC2_INSTANCE_MEMORY}*9/10))"
+API_MEMORY=$((API_EC2_INSTANCE_MEMORY*9/10))
 
 # Determine cpu and memory for new worker ECS container definition
 
@@ -577,57 +563,40 @@ WORKER_EC2_INSTANCE_CPU_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describ
   --instance-types "${EC2_INSTANCE_TYPE_WORKER}" --query "InstanceTypes[*].VCpuInfo.DefaultVCpus" \
   --output text)
 
-let WORKER_CPU="($WORKER_EC2_INSTANCE_CPU_COUNT)*1024"
+WORKER_CPU=$((WORKER_EC2_INSTANCE_CPU_COUNT*1024))
 
 WORKER_EC2_INSTANCE_MEMORY=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instance-types \
   --instance-types "${EC2_INSTANCE_TYPE_WORKER}" --query "InstanceTypes[*].MemoryInfo.SizeInMiB" \
   --output text)
 
-let WORKER_MEMORY="$((${WORKER_EC2_INSTANCE_MEMORY}*9/10))"
+WORKER_MEMORY=$((WORKER_EC2_INSTANCE_MEMORY*9/10))
 
 # Create ".auto.tfvars" file for the target environment
 
 cd "${START_DIR}/.."
-cd terraform/environments/$CMS_ENV
+cd "terraform/environments/${TARGET_CMS_ENV}"
 
-echo 'vpc_id = "'$VPC_ID'"' \
-  > $CMS_ENV.auto.tfvars
-echo 'private_subnet_ids = ["'$SUBNET_PRIVATE_1_ID'","'$SUBNET_PRIVATE_2_ID'"]' \
-  >> $CMS_ENV.auto.tfvars
-echo 'deployment_controller_subnet_ids = ["'$SUBNET_PUBLIC_1_ID'","'$SUBNET_PUBLIC_2_ID'"]' \
-  >> $CMS_ENV.auto.tfvars
-echo 'ec2_instance_type_api = "'$EC2_INSTANCE_TYPE_API'"' \
-  >> $CMS_ENV.auto.tfvars
-echo 'ec2_desired_instance_count_api = "'$EC2_DESIRED_INSTANCE_COUNT_API'"' \
-  >> $CMS_ENV.auto.tfvars
-echo 'ec2_minimum_instance_count_api = "'$EC2_MINIMUM_INSTANCE_COUNT_API'"' \
-  >> $CMS_ENV.auto.tfvars
-echo 'ec2_maximum_instance_count_api = "'$EC2_MAXIMUM_INSTANCE_COUNT_API'"' \
-  >> $CMS_ENV.auto.tfvars
-echo 'ecs_container_definition_new_memory_api = "'$API_MEMORY'"' \
-  >> $CMS_ENV.auto.tfvars
-echo 'ecs_task_definition_cpu_api = "'$API_CPU'"' \
-  >> $CMS_ENV.auto.tfvars
-echo 'ecs_task_definition_memory_api = "'$API_MEMORY'"' \
-  >> $CMS_ENV.auto.tfvars
-echo 'ec2_instance_type_worker = "'$EC2_INSTANCE_TYPE_WORKER'"' \
-  >> $CMS_ENV.auto.tfvars
-echo 'ec2_desired_instance_count_worker = "'$EC2_DESIRED_INSTANCE_COUNT_WORKER'"' \
-  >> $CMS_ENV.auto.tfvars
-echo 'ec2_minimum_instance_count_worker = "'$EC2_MINIMUM_INSTANCE_COUNT_WORKER'"' \
-  >> $CMS_ENV.auto.tfvars
-echo 'ec2_maximum_instance_count_worker = "'$EC2_MAXIMUM_INSTANCE_COUNT_WORKER'"' \
-  >> $CMS_ENV.auto.tfvars
-echo 'ecs_container_definition_new_memory_worker = "'$WORKER_MEMORY'"' \
-  >> $CMS_ENV.auto.tfvars
-echo 'ecs_task_definition_cpu_worker = "'$WORKER_CPU'"' \
-  >> $CMS_ENV.auto.tfvars
-echo 'ecs_task_definition_memory_worker = "'$WORKER_MEMORY'"' \
-  >> $CMS_ENV.auto.tfvars
-echo 'linux_user = "'$SSH_USERNAME'"' \
-  >> $CMS_ENV.auto.tfvars
-echo 'deployer_ip_address = "'$DEPLOYER_IP_ADDRESS'"' \
-  >> $CMS_ENV.auto.tfvars
+{
+  echo 'vpc_id = "'"${VPC_ID}"'"'
+  echo 'private_subnet_ids = ["'"${SUBNET_PRIVATE_1_ID}"'","'"${SUBNET_PRIVATE_2_ID}"'"]'
+  echo 'deployment_controller_subnet_ids = ["'"${SUBNET_PUBLIC_1_ID}"'","'"${SUBNET_PUBLIC_2_ID}"'"]'
+  echo 'ec2_instance_type_api = "'"${EC2_INSTANCE_TYPE_API}"'"'
+  echo 'ec2_desired_instance_count_api = "'"${EC2_DESIRED_INSTANCE_COUNT_API}"'"'
+  echo 'ec2_minimum_instance_count_api = "'"${EC2_MINIMUM_INSTANCE_COUNT_API}"'"'
+  echo 'ec2_maximum_instance_count_api = "'"${EC2_MAXIMUM_INSTANCE_COUNT_API}"'"'
+  echo 'ecs_container_definition_new_memory_api = "'"${API_MEMORY}"'"'
+  echo 'ecs_task_definition_cpu_api = "'"${API_CPU}"'"'
+  echo 'ecs_task_definition_memory_api = "'"${API_MEMORY}"'"'
+  echo 'ec2_instance_type_worker = "'"${EC2_INSTANCE_TYPE_WORKER}"'"'
+  echo 'ec2_desired_instance_count_worker = "'"${EC2_DESIRED_INSTANCE_COUNT_WORKER}"'"'
+  echo 'ec2_minimum_instance_count_worker = "'"${EC2_MINIMUM_INSTANCE_COUNT_WORKER}"'"'
+  echo 'ec2_maximum_instance_count_worker = "'"${EC2_MAXIMUM_INSTANCE_COUNT_WORKER}"'"'
+  echo 'ecs_container_definition_new_memory_worker = "'"${WORKER_MEMORY}"'"'
+  echo 'ecs_task_definition_cpu_worker = "'"${WORKER_CPU}"'"'
+  echo 'ecs_task_definition_memory_worker = "'"${WORKER_MEMORY}"'"'
+  echo 'linux_user = "'"${SSH_USERNAME}"'"'
+  echo 'deployer_ip_address = "'"${DEPLOYER_IP_ADDRESS}"'"'
+} >> "${TARGET_CMS_ENV}.auto.tfvars"
 
 ######################################
 # Deploy target environment components
@@ -640,7 +609,7 @@ echo 'deployer_ip_address = "'$DEPLOYER_IP_ADDRESS'"' \
 # Set AWS management environment
 
 if [ "${CLOUD_TAMER}" == "true" ]; then
-  fn_get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
+  fn_get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" "${TARGET_CMS_ENV}"
 else
   fn_get_temporary_aws_credentials_via_aws_sts_assume_role "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ECR_REPO_ENV}"
 fi
@@ -654,6 +623,12 @@ if [ -n "${MGMT_KMS_KEY_ID}" ]; then
     --key-id alias/ab2d-kms \
     --query "KeyMetadata.KeyState" \
     --output text)
+  if [ "${MGMT_KMS_KEY_STATE}" != "Enabled" ]; then
+    echo "*********************************************************"
+    echo "ERROR: kms key for management environment is not enabled."
+    echo "*********************************************************"
+    exit 1
+  fi
 else
   echo "*******************************************************"
   echo "ERROR: kms key id for management environment not found."
@@ -666,16 +641,12 @@ fi
 echo "Enabling KMS key..."
 cd "${START_DIR}/.."
 cd python3
-./enable-kms-key.py $MGMT_KMS_KEY_ID
-
-#
-# USE EXISTING BUILD #2 BEGIN
-#
+./enable-kms-key.py "${MGMT_KMS_KEY_ID}"
 
 # Set environment to the AWS account where the shared ECR repository is maintained
 
 cd "${START_DIR}/.."
-cd terraform/environments/$CMS_ECR_REPO_ENV
+cd "terraform/environments/${CMS_ECR_REPO_ENV}"
 
 # Build and push API and worker to ECR
 
@@ -694,48 +665,9 @@ cd ..
 mvn clean package -DskipTests
 sleep 5
 
-#
-# USE EXISTING BUILD #2 END
-#
-
-# # Get image version based on a master commit number
-
-# CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-# COMMIT_NUMBER_OF_CURRENT_BRANCH=$(git rev-parse "${CURRENT_BRANCH}" | cut -c1-7)
-# COMMIT_NUMBER_OF_ORIGIN_MASTER=$(git rev-parse origin/master | cut -c1-7)
-
-# if [ "${COMMIT_NUMBER_OF_CURRENT_BRANCH}" == "${COMMIT_NUMBER_OF_ORIGIN_MASTER}" ]; then
-#   echo "NOTE: The current branch is the master branch."
-#   echo "Using commit number of origin/master branch as the image version."
-#   COMMIT_NUMBER="${COMMIT_NUMBER_OF_ORIGIN_MASTER}"
-# else
-#   echo "NOTE: Assuming this is a DevOps branch that has only DevOps changes."
-#   COMPARE_BRANCH_WITH_MASTER=$(git log \
-#     --decorate \
-#     --graph \
-#     --oneline \
-#     --cherry-mark \
-#     --boundary origin/master..."${BRANCH}")
-#   if [ -z "${COMPARE_BRANCH_WITH_MASTER}" ]; then
-#     echo "NOTE: DevOps branch is the same as origin/master."
-#     echo "Using commit number of origin/master branch as the image version."
-#     COMMIT_NUMBER="${COMMIT_NUMBER_OF_ORIGIN_MASTER}"
-#   else
-#     echo "NOTE: DevOps branch is different from origin/master."
-#     echo "Using commit number of latest merge from origin/master into the current branch as the image version."
-#     COMMIT_NUMBER=$(git log --merges | head -n 2 | tail -n 1 | cut -d" " -f 3 | cut -c1-7)
-#   fi
-# fi
-
-# IMAGE_VERSION="${CMS_ENV}-latest-${COMMIT_NUMBER}"
-
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 COMMIT_NUMBER=$(git rev-parse "${CURRENT_BRANCH}" | cut -c1-7)
-IMAGE_VERSION="${CMS_ENV}-latest-${COMMIT_NUMBER}"
-
-#
-# USE EXISTING BUILD #3 BEGIN
-#
+IMAGE_VERSION="${TARGET_CMS_ENV}-latest-${COMMIT_NUMBER}"
 
 # Build API docker images
 
@@ -746,7 +678,7 @@ docker build \
   --tag "ab2d_api:${IMAGE_VERSION}" .
 docker build \
   --no-cache \
-  --tag "ab2d_api:${CMS_ENV}-latest" .
+  --tag "ab2d_api:${TARGET_CMS_ENV}-latest" .
 
 # Build worker docker image
 
@@ -757,7 +689,7 @@ docker build \
   --tag "ab2d_worker:${IMAGE_VERSION}" .
 docker build \
   --no-cache \
-  --tag "ab2d_worker:${CMS_ENV}-latest" .
+  --tag "ab2d_worker:${TARGET_CMS_ENV}-latest" .
 
 # Get or create api repo
 
@@ -772,24 +704,16 @@ if [ -z "${API_ECR_REPO_URI}" ]; then
     --output text)
 fi
 
-#
-# USE EXISTING BUILD #3 END
-#
-
 # Get ecr repo aws account
 
 ECR_REPO_AWS_ACCOUNT=$(aws --region "${AWS_DEFAULT_REGION}" sts get-caller-identity \
   --query Account \
   --output text)
 
-#
-# USE EXISTING BUILD #4 BEGIN
-#
-
 # Apply ecr repo policy to the "ab2d_api" repo
 
 cd "${START_DIR}/.."
-cd terraform/environments/$CMS_ECR_REPO_ENV
+cd "terraform/environments/${CMS_ECR_REPO_ENV}"
 aws --region "${AWS_DEFAULT_REGION}" ecr set-repository-policy \
   --repository-name ab2d_api \
   --policy-text file://ab2d-ecr-policy.json
@@ -801,8 +725,8 @@ aws --region "${AWS_DEFAULT_REGION}" ecr set-repository-policy \
 
 docker tag "ab2d_api:${IMAGE_VERSION}" "${API_ECR_REPO_URI}:${IMAGE_VERSION}"
 docker push "${API_ECR_REPO_URI}:${IMAGE_VERSION}"
-docker tag "ab2d_api:${CMS_ENV}-latest" "${API_ECR_REPO_URI}:${CMS_ENV}-latest"
-docker push "${API_ECR_REPO_URI}:${CMS_ENV}-latest"
+docker tag "ab2d_api:${TARGET_CMS_ENV}-latest" "${API_ECR_REPO_URI}:${TARGET_CMS_ENV}-latest"
+docker push "${API_ECR_REPO_URI}:${TARGET_CMS_ENV}-latest"
 
 # Get or create worker repo
 
@@ -820,7 +744,7 @@ fi
 # Apply ecr repo policy to the "ab2d_worker" repo
 
 cd "${START_DIR}/.."
-cd terraform/environments/$CMS_ECR_REPO_ENV
+cd "terraform/environments/${CMS_ECR_REPO_ENV}"
 aws --region "${AWS_DEFAULT_REGION}" ecr set-repository-policy \
   --repository-name ab2d_worker \
   --policy-text file://ab2d-ecr-policy.json
@@ -832,8 +756,8 @@ aws --region "${AWS_DEFAULT_REGION}" ecr set-repository-policy \
 
 docker tag "ab2d_worker:${IMAGE_VERSION}" "${WORKER_ECR_REPO_URI}:${IMAGE_VERSION}"
 docker push "${WORKER_ECR_REPO_URI}:${IMAGE_VERSION}"
-docker tag "ab2d_worker:${CMS_ENV}-latest" "${WORKER_ECR_REPO_URI}:${CMS_ENV}-latest"
-docker push "${WORKER_ECR_REPO_URI}:${CMS_ENV}-latest"
+docker tag "ab2d_worker:${TARGET_CMS_ENV}-latest" "${WORKER_ECR_REPO_URI}:${TARGET_CMS_ENV}-latest"
+docker push "${WORKER_ECR_REPO_URI}:${TARGET_CMS_ENV}-latest"
 
 # Get list of untagged images in the api repository
 
@@ -857,7 +781,7 @@ API_OLD_LATEST_COMMIT_TAG=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-im
   --query "imageDetails[*].{imageTag:imageTags[0],imagePushedAt:imagePushedAt}" \
   --output json \
   | jq 'sort_by(.imagePushedAt) | reverse' \
-  | jq ".[] | select(.imageTag | startswith(\"${CMS_ENV}-latest\"))" \
+  | jq ".[] | select(.imageTag | startswith(\"${TARGET_CMS_ENV}-latest\"))" \
   | jq --slurp '.' \
   | jq 'del(.[0,1])' \
   | jq '.[] | select(.imageTag)' \
@@ -866,13 +790,13 @@ API_OLD_LATEST_COMMIT_TAG=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-im
   | head -1)
 
 if [ -n "${API_OLD_LATEST_COMMIT_TAG}" ]; then
-    
+
   # Rename 'latest-commit' api tag
 
-  RENAME_API_OLD_LATEST_COMMIT_TAG=$(echo "${API_OLD_LATEST_COMMIT_TAG/-latest-/-}")
+  RENAME_API_OLD_LATEST_COMMIT_TAG=${API_OLD_LATEST_COMMIT_TAG/'-latest-'/'-'}
 
   # Get manifest of tag to rename
-  
+
   MANIFEST=$(aws --region "${AWS_DEFAULT_REGION}" ecr batch-get-image \
     --repository-name ab2d_api \
     --image-ids imageTag="${API_OLD_LATEST_COMMIT_TAG}" \
@@ -887,7 +811,7 @@ if [ -n "${API_OLD_LATEST_COMMIT_TAG}" ]; then
       --image-tag "${RENAME_API_OLD_LATEST_COMMIT_TAG}" \
       --image-manifest "${MANIFEST}"
   fi
-  
+
   # Remove old api tag
 
   aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
@@ -897,7 +821,7 @@ if [ -n "${API_OLD_LATEST_COMMIT_TAG}" ]; then
 fi
 
 # Get list of untagged images in the worker repository
-  
+
 IMAGES_TO_DELETE=$(aws --region "${AWS_DEFAULT_REGION}" ecr list-images \
   --repository-name ab2d_worker \
   --filter "tagStatus=UNTAGGED" \
@@ -918,7 +842,7 @@ WORKER_OLD_LATEST_COMMIT_TAG=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe
   --query "imageDetails[*].{imageTag:imageTags[0],imagePushedAt:imagePushedAt}" \
   --output json \
   | jq 'sort_by(.imagePushedAt) | reverse' \
-  | jq ".[] | select(.imageTag | startswith(\"${CMS_ENV}-latest\"))" \
+  | jq ".[] | select(.imageTag | startswith(\"${TARGET_CMS_ENV}-latest\"))" \
   | jq --slurp '.' \
   | jq 'del(.[0,1])' \
   | jq '.[] | select(.imageTag)' \
@@ -927,13 +851,13 @@ WORKER_OLD_LATEST_COMMIT_TAG=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe
   | head -1)
 
 if [ -n "${WORKER_OLD_LATEST_COMMIT_TAG}" ]; then
-    
+
   # Rename 'latest-commit' worker tag
 
-  RENAME_WORKER_OLD_LATEST_COMMIT_TAG=$(echo "${WORKER_OLD_LATEST_COMMIT_TAG/-latest-/-}")
+  RENAME_WORKER_OLD_LATEST_COMMIT_TAG=${WORKER_OLD_LATEST_COMMIT_TAG/'-latest-'/'-'}
 
   # Get manifest of tag to rename
-  
+
   MANIFEST=$(aws --region "${AWS_DEFAULT_REGION}" ecr batch-get-image \
     --repository-name ab2d_worker \
     --image-ids imageTag="${WORKER_OLD_LATEST_COMMIT_TAG}" \
@@ -948,7 +872,7 @@ if [ -n "${WORKER_OLD_LATEST_COMMIT_TAG}" ]; then
       --image-tag "${RENAME_WORKER_OLD_LATEST_COMMIT_TAG}" \
       --image-manifest "${MANIFEST}"
   fi
-  
+
   # Remove old worker tag
 
   aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
@@ -956,17 +880,17 @@ if [ -n "${WORKER_OLD_LATEST_COMMIT_TAG}" ]; then
     --image-ids imageTag="${WORKER_OLD_LATEST_COMMIT_TAG}"
 
 fi
-  
+
 # Verify that the image versions of API and Worker are the same
 
 IMAGE_VERSION_API=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-images \
   --repository-name ab2d_api \
-  --query "sort_by(imageDetails,& imagePushedAt)[*].imageTags[? @ == '${CMS_ENV}-latest']" \
+  --query "sort_by(imageDetails,& imagePushedAt)[*].imageTags[? @ == '${TARGET_CMS_ENV}-latest']" \
   --output text)
 
 IMAGE_VERSION_WORKER=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-images \
   --repository-name ab2d_worker \
-  --query "sort_by(imageDetails,& imagePushedAt)[*].imageTags[? @ == '${CMS_ENV}-latest']" \
+  --query "sort_by(imageDetails,& imagePushedAt)[*].imageTags[? @ == '${TARGET_CMS_ENV}-latest']" \
   --output text)
 
 if [ "${IMAGE_VERSION_API}" != "${IMAGE_VERSION_WORKER}" ]; then
@@ -979,23 +903,19 @@ fi
 echo "Using master branch commit number '${COMMIT_NUMBER}' for ab2d_api and ab2d_worker..."
 
 #
-# USE EXISTING BUILD #4 END
-#
-
-#
 # Set AWS target environment
 #
 
 if [ "${CLOUD_TAMER}" == "true" ]; then
-  fn_get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
+  fn_get_temporary_aws_credentials_via_cloudtamer_api "${TARGET_AWS_ACCOUNT_NUMBER}" "${TARGET_CMS_ENV}"
 else
-  fn_get_temporary_aws_credentials_via_aws_sts_assume_role "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
+  fn_get_temporary_aws_credentials_via_aws_sts_assume_role "${TARGET_AWS_ACCOUNT_NUMBER}" "${TARGET_CMS_ENV}"
 fi
 
 # Reset to the target environment
 
 cd "${START_DIR}/.."
-cd terraform/environments/$CMS_ENV
+cd "terraform/environments/${TARGET_CMS_ENV}"
 
 #
 # Get current known good ECS task definitions
@@ -1004,7 +924,7 @@ cd terraform/environments/$CMS_ENV
 CLUSTER_ARNS=$(aws --region "${AWS_DEFAULT_REGION}" ecs list-clusters \
   --query 'clusterArns' \
   --output text \
-  | grep "/${CMS_ENV}-api" \
+  | grep "/${TARGET_CMS_ENV}-api" \
   | xargs \
   | tr -d '\r')
 
@@ -1022,8 +942,8 @@ echo "Get ECS task counts before making any changes..."
 
 # Define task count functions
 
-api_task_count() { aws --region "${AWS_DEFAULT_REGION}" ecs list-tasks --cluster "${CMS_ENV}-api" | grep "\:task\/"|wc -l|tr -d ' '; }
-worker_task_count() { aws --region "${AWS_DEFAULT_REGION}" ecs list-tasks --cluster "${CMS_ENV}-worker" | grep "\:task\/"|wc -l|tr -d ' '; }
+api_task_count() { aws --region "${AWS_DEFAULT_REGION}" ecs list-tasks --cluster "${TARGET_CMS_ENV}-api" | grep -c "\:task\/" | tr -d ' '; }
+worker_task_count() { aws --region "${AWS_DEFAULT_REGION}" ecs list-tasks --cluster "${TARGET_CMS_ENV}-worker" | grep -c "\:task\/" | tr -d ' '; }
 
 # Get old api task count (if exists)
 
@@ -1037,11 +957,11 @@ fi
 # Set expected api and worker task counts
 
 if [ -z "${CLUSTER_ARNS}" ]; then
-  EXPECTED_API_COUNT="${EC2_DESIRED_INSTANCE_COUNT_API}"
-  EXPECTED_WORKER_COUNT="${EC2_DESIRED_INSTANCE_COUNT_WORKER}"
+  EXPECTED_API_COUNT=$((EC2_DESIRED_INSTANCE_COUNT_API))
+  EXPECTED_WORKER_COUNT=$((EC2_DESIRED_INSTANCE_COUNT_WORKER))
 else
-  let EXPECTED_API_COUNT="$OLD_API_TASK_COUNT+$EC2_DESIRED_INSTANCE_COUNT_API"
-  let EXPECTED_WORKER_COUNT="$OLD_WORKER_TASK_COUNT+$EC2_DESIRED_INSTANCE_COUNT_WORKER"
+  EXPECTED_API_COUNT=$((OLD_API_TASK_COUNT+EC2_DESIRED_INSTANCE_COUNT_API))
+  EXPECTED_WORKER_COUNT=$((OLD_WORKER_TASK_COUNT+EC2_DESIRED_INSTANCE_COUNT_WORKER))
 fi
 
 #
@@ -1050,25 +970,8 @@ fi
 
 echo "Ensure Old Autoscaling Groups and containers are around to service requests..."
 
-# if [ -z "${CLUSTER_ARNS}" ]; then
-#   echo "Skipping setting OLD_API_ASG, since there are no existing clusters"
-# else
-#   OLD_API_ASG=$(terraform show \
-#     | grep :autoScalingGroup: \
-#     | awk -F" = " '{print $2}' \
-#     | grep $CMS_ENV-api \
-#     | head -1 \
-#     | tr -d '"')
-#   OLD_WORKER_ASG=$(terraform show \
-#     | grep :autoScalingGroup: \
-#     | awk -F" = " '{print $2}' \
-#     | grep $CMS_ENV-worker \
-#     | head -1 \
-#     | tr -d '"')
-# fi
-
 if [ -z "${CLUSTER_ARNS}" ]; then
-  echo "Skipping removing autosclaing group and launch configuration, since there are no existing clusters"
+  echo "Skipping removing autoscaling group and launch configuration, since there are no existing clusters"
 else
   terraform state rm module.api.aws_autoscaling_group.asg
   terraform state rm module.api.aws_launch_configuration.launch_config
@@ -1077,26 +980,26 @@ else
 fi
 
 if [ -z "${CLUSTER_ARNS}" ]; then
-  echo "Skipping removing autosclaing group and launch configuration, since there are no existing clusters"
+  echo "Skipping removing autoscaling group and launch configuration, since there are no existing clusters"
 else
 
   OLD_API_CONTAINER_INSTANCES=$(aws --region "${AWS_DEFAULT_REGION}" ecs list-container-instances \
-    --cluster "${CMS_ENV}-api" \
+    --cluster "${TARGET_CMS_ENV}-api" \
     --output text)
 
   if [ -n "${OLD_API_CONTAINER_INSTANCES}" ]; then
     OLD_API_CONTAINER_INSTANCES=$(aws --region "${AWS_DEFAULT_REGION}" ecs list-container-instances \
-      --cluster "${CMS_ENV}-api" \
+      --cluster "${TARGET_CMS_ENV}-api" \
       | grep container-instance)
   fi
 
   OLD_WORKER_CONTAINER_INSTANCES=$(aws --region "${AWS_DEFAULT_REGION}" ecs list-container-instances \
-    --cluster "${CMS_ENV}-worker" \
+    --cluster "${TARGET_CMS_ENV}-worker" \
     --output text)
 
   if [ -n "${OLD_WORKER_CONTAINER_INSTANCES}" ]; then
     OLD_WORKER_CONTAINER_INSTANCES=$(aws --region "${AWS_DEFAULT_REGION}" ecs list-container-instances \
-      --cluster "${CMS_ENV}-worker" \
+      --cluster "${TARGET_CMS_ENV}-worker" \
       | grep container-instance)
   fi
 
@@ -1115,7 +1018,7 @@ cd python3
 
 # Get database host secret
 
-DATABASE_HOST=$(./get-database-secret.py $CMS_ENV database_host $DATABASE_SECRET_DATETIME)
+DATABASE_HOST=$(./get-database-secret.py "${TARGET_CMS_ENV}" database_host "${DATABASE_SECRET_DATETIME}")
 
 if [ -z "${DATABASE_HOST}" ]; then
   echo "***************************************************"
@@ -1126,7 +1029,7 @@ fi
 
 # Get database port secret
 
-DATABASE_PORT=$(./get-database-secret.py $CMS_ENV database_port $DATABASE_SECRET_DATETIME)
+DATABASE_PORT=$(./get-database-secret.py "${TARGET_CMS_ENV}" database_port "${DATABASE_SECRET_DATETIME}")
 
 if [ -z "${DATABASE_PORT}" ]; then
   echo "***************************************************"
@@ -1138,63 +1041,63 @@ fi
 # Get database secret manager ARNs
 
 DATABASE_HOST_SECRET_ARN=$(aws --region "${AWS_DEFAULT_REGION}" secretsmanager describe-secret \
-  --secret-id "ab2d/${CMS_ENV}/module/db/database_host/${DATABASE_SECRET_DATETIME}" \
+  --secret-id "ab2d/${TARGET_CMS_ENV}/module/db/database_host/${DATABASE_SECRET_DATETIME}" \
   --query "ARN" \
   --output text)
 
 DATABASE_PORT_SECRET_ARN=$(aws --region "${AWS_DEFAULT_REGION}" secretsmanager describe-secret \
-  --secret-id "ab2d/${CMS_ENV}/module/db/database_port/${DATABASE_SECRET_DATETIME}" \
+  --secret-id "ab2d/${TARGET_CMS_ENV}/module/db/database_port/${DATABASE_SECRET_DATETIME}" \
   --query "ARN" \
   --output text)
 
 DATABASE_USER_SECRET_ARN=$(aws --region "${AWS_DEFAULT_REGION}" secretsmanager describe-secret \
-  --secret-id "ab2d/${CMS_ENV}/module/db/database_user/${DATABASE_SECRET_DATETIME}" \
+  --secret-id "ab2d/${TARGET_CMS_ENV}/module/db/database_user/${DATABASE_SECRET_DATETIME}" \
   --query "ARN" \
   --output text)
 
 DATABASE_PASSWORD_SECRET_ARN=$(aws --region "${AWS_DEFAULT_REGION}" secretsmanager describe-secret \
-  --secret-id "ab2d/${CMS_ENV}/module/db/database_password/${DATABASE_SECRET_DATETIME}" \
+  --secret-id "ab2d/${TARGET_CMS_ENV}/module/db/database_password/${DATABASE_SECRET_DATETIME}" \
   --query "ARN" \
   --output text)
 
 DATABASE_NAME_SECRET_ARN=$(aws --region "${AWS_DEFAULT_REGION}" secretsmanager describe-secret \
-  --secret-id "ab2d/${CMS_ENV}/module/db/database_name/${DATABASE_SECRET_DATETIME}" \
+  --secret-id "ab2d/${TARGET_CMS_ENV}/module/db/database_name/${DATABASE_SECRET_DATETIME}" \
   --query "ARN" \
   --output text)
 
 # Change to the target terraform environment
 
 cd "${START_DIR}/.."
-cd terraform/environments/$CMS_ENV
+cd "terraform/environments/${TARGET_CMS_ENV}"
 
 # Get the BFD keystore file name
 
-BFD_KEYSTORE_FILE_NAME=$(echo $BFD_KEYSTORE_LOCATION | cut -d"/" -f 6)
+BFD_KEYSTORE_FILE_NAME=$(echo "${BFD_KEYSTORE_LOCATION}" | cut -d"/" -f 6)
 
 # Get load balancer listener protocol, port, and certificate
 
-if [ "$CMS_ENV" == "ab2d-sbx-sandbox" ]; then
+if [ "$TARGET_CMS_ENV" == "ab2d-sbx-sandbox" ]; then
   ALB_LISTENER_PORT=443
   ALB_LISTENER_PROTOCOL="HTTPS"
   ALB_LISTENER_CERTIFICATE_ARN=$(aws --region "${AWS_DEFAULT_REGION}" acm list-certificates \
     --query "CertificateSummaryList[?DomainName=='sandbox.ab2d.cms.gov'].CertificateArn" \
     --output text)
   ALB_SECURITY_GROUP_IP_RANGE="0.0.0.0/0"
-elif [ "$CMS_ENV" == "ab2d-dev" ]; then
+elif [ "$TARGET_CMS_ENV" == "ab2d-dev" ]; then
   ALB_LISTENER_PORT=443
   ALB_LISTENER_PROTOCOL="HTTPS"
   ALB_LISTENER_CERTIFICATE_ARN=$(aws --region "${AWS_DEFAULT_REGION}" acm list-certificates \
     --query "CertificateSummaryList[?DomainName=='dev.ab2d.cms.gov'].CertificateArn" \
     --output text)
   ALB_SECURITY_GROUP_IP_RANGE="${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}"
-elif [ "$CMS_ENV" == "ab2d-east-prod" ]; then
+elif [ "$TARGET_CMS_ENV" == "ab2d-east-prod" ]; then
   ALB_LISTENER_PORT=443
   ALB_LISTENER_PROTOCOL="HTTPS"
   ALB_LISTENER_CERTIFICATE_ARN=$(aws --region "${AWS_DEFAULT_REGION}" acm list-certificates \
     --query "CertificateSummaryList[?DomainName=='api.ab2d.cms.gov'].CertificateArn" \
     --output text)
   ALB_SECURITY_GROUP_IP_RANGE="${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}"
-elif [ "$CMS_ENV" == "ab2d-east-impl" ]; then
+elif [ "$TARGET_CMS_ENV" == "ab2d-east-impl" ]; then
   ALB_LISTENER_PORT=443
   ALB_LISTENER_PROTOCOL="HTTPS"
 
@@ -1221,23 +1124,24 @@ elif [ "$CMS_ENV" == "ab2d-east-impl" ]; then
 
   ALB_SECURITY_GROUP_IP_RANGE="${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}"
 else
-  echo "ERROR: "$CMS_ENV" is unknown."
+  echo "ERROR: '${TARGET_CMS_ENV}' is unknown."
   exit 1
 fi
 
 # Get latest stable version of stunnel
 # - note that you need the latest, since older versions become unavailable
-STUNNEL_LATEST_VERSION=$(curl -s 'https://www.stunnel.org/downloads.html' | 
-  sed 's/</\'$'\n''</g' | sed -n '/>Latest Version$/,$ p' | 
-  egrep -m1 -o 'downloads/stunnel-.+\.tar\.gz' |
+# shellcheck disable=SC1003
+STUNNEL_LATEST_VERSION=$(curl -s 'https://www.stunnel.org/downloads.html' |
+  sed 's/</\'$'\n''</g' | sed -n '/>Latest Version$/,$ p' |
+  grep -E -m1 -o 'downloads/stunnel-.+\.tar\.gz' |
   cut -d">" -f 2 |
   sed 's/\.tar\.gz//')
 
 # Run automation for API and worker
 
 terraform apply \
-  --var "env=${CMS_ENV}" \
-  --var	"aws_account_number=${CMS_ENV_AWS_ACCOUNT_NUMBER}" \
+  --var "env=${TARGET_CMS_ENV}" \
+  --var	"aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
   --var "ami_id=$AMI_ID" \
   --var "current_task_definition_arn=$API_TASK_DEFINITION" \
   --var "db_host=$DATABASE_HOST" \
@@ -1275,8 +1179,8 @@ terraform apply \
   --auto-approve
 
 terraform apply \
-  --var "env=${CMS_ENV}" \
-  --var "aws_account_number=${CMS_ENV_AWS_ACCOUNT_NUMBER}" \
+  --var "env=${TARGET_CMS_ENV}" \
+  --var "aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
   --var "ami_id=$AMI_ID" \
   --var "current_task_definition_arn=$WORKER_TASK_DEFINITION" \
   --var "db_host=$DATABASE_HOST" \
@@ -1309,8 +1213,9 @@ terraform apply \
 # Get the correct target group arn for CloudWatch
 #
 
-TARGET_GROUP_ARN_SUFFIX=$(aws --region us-east-1 elbv2 describe-target-groups \
-  --query 'TargetGroups[?length(LoadBalancerArns)>`0`].TargetGroupArn' \
+# shellcheck disable=SC2016
+TARGET_GROUP_ARN_SUFFIX=$(aws --region "${AWS_DEFAULT_REGION}" elbv2 describe-target-groups \
+  --query 'TargetGroups[?length(LoadBalancerArns)> `0`].TargetGroupArn' \
   --output text \
   | awk 'BEGIN { FS = ":" } ; {print $6}')
 
@@ -1319,13 +1224,13 @@ TARGET_GROUP_ARN_SUFFIX=$(aws --region us-east-1 elbv2 describe-target-groups \
 #
 
 cd "${START_DIR}/.."
-cd terraform/environments/$CMS_ENV
+cd "terraform/environments/${TARGET_CMS_ENV}"
 
 echo "Deploy CloudWatch..."
 
 terraform apply \
   --target module.cloudwatch \
-  --var "env=${CMS_ENV}" \
+  --var "env=${TARGET_CMS_ENV}" \
   --var "ami_id=$AMI_ID" \
   --var "ecs_task_definition_host_port=$ALB_LISTENER_PORT" \
   --var "host_port=$ALB_LISTENER_PORT" \
@@ -1342,7 +1247,7 @@ terraform apply \
 #
 
 terraform apply \
-  --var "env=${CMS_ENV}" \
+  --var "env=${TARGET_CMS_ENV}" \
   --var "alb_internal=$ALB_INTERNAL" \
   --var "alb_security_group_ip_range=$ALB_SECURITY_GROUP_IP_RANGE" \
   --target module.waf \
@@ -1357,7 +1262,7 @@ terraform apply \
 # applied instead.
 
 terraform apply \
-  --var "env=${CMS_ENV}" \
+  --var "env=${TARGET_CMS_ENV}" \
   --target module.shield \
   --auto-approve
 
@@ -1376,7 +1281,7 @@ while [ "$ACTUAL_API_COUNT" -lt "$EXPECTED_API_COUNT" ]; do
   if [ "$RETRIES_API" != "15" ]; then
     echo "Retry in 60 seconds..."
     sleep 60
-    RETRIES_API=$(expr $RETRIES_API + 1)
+    RETRIES_API=$((RETRIES_API + 1))
   else
     echo "Max retries reached. Exiting..."
     exit 1
@@ -1392,7 +1297,7 @@ while [ "$ACTUAL_WORKER_COUNT" -lt "$EXPECTED_WORKER_COUNT" ]; do
   if [ "$RETRIES_WORKER" != "15" ]; then
     echo "Retry in 60 seconds..."
     sleep 60
-    RETRIES_WORKER=$(expr $RETRIES_WORKER + 1)
+    RETRIES_WORKER=$((RETRIES_WORKER + 1))
   else
     echo "Max retries reached. Exiting..."
     exit 1
@@ -1405,30 +1310,38 @@ if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping draining old container instances, since there are no existing clusters"
 else
   if [ -n "${OLD_API_CONTAINER_INSTANCES}" ]; then
-    OLD_API_INSTANCE_LIST=$(echo $OLD_API_CONTAINER_INSTANCES \
+    OLD_API_INSTANCE_LIST=$(echo "${OLD_API_CONTAINER_INSTANCES}" \
       | tr -d ' ' \
       | tr "\n" " " \
       | tr -d "," \
       | tr '""' ' ' \
       | tr -d '"')
+
+    # shellcheck disable=SC2086
+    # $OLD_API_INSTANCE_LIST format is required here
     aws --region "${AWS_DEFAULT_REGION}" ecs update-container-instances-state \
-      --cluster "${CMS_ENV}-api" \
+      --cluster "${TARGET_CMS_ENV}-api" \
       --status DRAINING \
       --container-instances $OLD_API_INSTANCE_LIST \
       1> /dev/null
+
   fi
   if [ -n "${OLD_WORKER_CONTAINER_INSTANCES}" ]; then
-    OLD_WORKER_INSTANCE_LIST=$(echo $OLD_WORKER_CONTAINER_INSTANCES \
+    OLD_WORKER_INSTANCE_LIST=$(echo "${OLD_WORKER_CONTAINER_INSTANCES}" \
       | tr -d ' ' \
       | tr "\n" " " \
       | tr -d "," \
       | tr '""' ' ' \
       | tr -d '"')
+
+    # shellcheck disable=SC2086
+    # $OLD_WORKER_INSTANCE_LIST format is required here
     aws --region "${AWS_DEFAULT_REGION}" ecs update-container-instances-state \
-      --cluster "${CMS_ENV}-worker" \
+      --cluster "${TARGET_CMS_ENV}-worker" \
       --status DRAINING \
       --container-instances $OLD_WORKER_INSTANCE_LIST \
       1> /dev/null
+
     echo "Allowing all instances to drain for 60 seconds before proceeding..."
     sleep 60
   fi
@@ -1437,23 +1350,23 @@ fi
 # Remove any duplicative API autoscaling groups
 
 API_ASG_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
-  --query "AutoScalingGroups[*].Tags[?Value == '${CMS_ENV}-api'].ResourceId" \
+  --query "AutoScalingGroups[*].Tags[?Value == '${TARGET_CMS_ENV}-api'].ResourceId" \
   --output text \
   | sort \
   | wc -l \
   | tr -d ' ')
 
-if [ $API_ASG_COUNT -gt 1 ]; then
-  DUPLICATIVE_API_ASG_COUNT=$(expr $API_ASG_COUNT - 1)
-  for ((i=1;i<=$DUPLICATIVE_API_ASG_COUNT;i++)); do
+if [ "${API_ASG_COUNT}" -gt 1 ]; then
+  DUPLICATIVE_API_ASG_COUNT=$((API_ASG_COUNT - 1))
+  for ((i=1;i<=DUPLICATIVE_API_ASG_COUNT;i++)); do
     DUPLICATIVE_API_ASG=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
-      --query "AutoScalingGroups[*].Tags[?Value == '${CMS_ENV}-api'].ResourceId" \
+      --query "AutoScalingGroups[*].Tags[?Value == '${TARGET_CMS_ENV}-api'].ResourceId" \
       --output text \
       | sort \
-      | head -n $i \
+      | head -n "${i}" \
       | tail -n 1)
     aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-auto-scaling-group \
-      --auto-scaling-group-name $DUPLICATIVE_API_ASG \
+      --auto-scaling-group-name "${DUPLICATIVE_API_ASG}" \
       --force-delete || true
   done
 fi
@@ -1461,23 +1374,23 @@ fi
 # Remove any duplicative worker autoscaling groups
 
 WORKER_ASG_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
-  --query "AutoScalingGroups[*].Tags[?Value == '${CMS_ENV}-worker'].ResourceId" \
+  --query "AutoScalingGroups[*].Tags[?Value == '${TARGET_CMS_ENV}-worker'].ResourceId" \
   --output text \
   | sort \
   | wc -l \
   | tr -d ' ')
 
-if [ $WORKER_ASG_COUNT -gt 1 ]; then
-  DUPLICATIVE_WORKER_ASG_COUNT=$(expr $WORKER_ASG_COUNT - 1)
-  for ((i=1;i<=$DUPLICATIVE_WORKER_ASG_COUNT;i++)); do
+if [ "${WORKER_ASG_COUNT}" -gt 1 ]; then
+  DUPLICATIVE_WORKER_ASG_COUNT=$((WORKER_ASG_COUNT - 1))
+  for ((i=1;i<=DUPLICATIVE_WORKER_ASG_COUNT;i++)); do
     DUPLICATIVE_WORKER_ASG=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
-      --query "AutoScalingGroups[*].Tags[?Value == '${CMS_ENV}-worker'].ResourceId" \
+      --query "AutoScalingGroups[*].Tags[?Value == '${TARGET_CMS_ENV}-worker'].ResourceId" \
       --output text \
       | sort \
-      | head -n $i \
+      | head -n "${i}" \
       | tail -n 1)
     aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-auto-scaling-group \
-      --auto-scaling-group-name $DUPLICATIVE_WORKER_ASG \
+      --auto-scaling-group-name "${DUPLICATIVE_WORKER_ASG}" \
       --force-delete || true
   done
 fi
@@ -1497,7 +1410,7 @@ while [ -n "${ASG_NOT_IN_SERVICE}" ]; do
     ASG_NOT_IN_SERVICE=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
       --query "AutoScalingGroups[*].Instances[?LifecycleState != 'InService'].LifecycleState" \
       --output text)
-    RETRIES_ASG=$(expr $RETRIES_ASG + 1)
+    RETRIES_ASG=$((RETRIES_ASG + 1))
   else
     echo "Max retries reached. Exiting..."
     exit 1
@@ -1511,32 +1424,32 @@ sleep 60
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping removing old launch configurations, since there are no existing clusters"
 else
-    
+
   LAUNCH_CONFIGURATION_EXPECTED_COUNT=2
   LAUNCH_CONFIGURATION_ACTUAL_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-launch-configurations \
     --query "LaunchConfigurations[*].[LaunchConfigurationName,CreatedTime]" \
     | jq '. | length')
-  
+
   while [ "$LAUNCH_CONFIGURATION_ACTUAL_COUNT" -gt "$LAUNCH_CONFIGURATION_EXPECTED_COUNT" ]; do
-  
+
     OLD_LAUNCH_CONFIGURATION=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-launch-configurations \
       --query "LaunchConfigurations[*].[LaunchConfigurationName,CreatedTime]" \
       --output text \
       | sort -k2 \
       | head -n1 \
       | awk '{print $1}')
-  
+
     aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-launch-configuration \
       --launch-configuration-name "${OLD_LAUNCH_CONFIGURATION}"
-  
+
     sleep 5
-    
+
     LAUNCH_CONFIGURATION_ACTUAL_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-launch-configurations \
       --query "LaunchConfigurations[*].[LaunchConfigurationName,CreatedTime]" \
       | jq '. | length')
-  
+
   done
-  
+
 fi
 
 # Remove old target groups
@@ -1551,8 +1464,8 @@ else
     --query "TargetGroups[?LoadBalancerArns==\`[]\`].TargetGroupName" \
     | jq '. | length')
 
-  if [ $OLD_TARGET_GROUP_COUNT -gt 0 ]; then
-    for ((i=1;i<=$OLD_TARGET_GROUP_COUNT;i++)); do
+  if [ "${OLD_TARGET_GROUP_COUNT}" -gt 0 ]; then
+    for ((i=1;i<=OLD_TARGET_GROUP_COUNT;i++)); do
       OLD_TARGET_GROUP_ARN=$(aws --region "${AWS_DEFAULT_REGION}" elbv2 describe-target-groups \
         --query "TargetGroups[?LoadBalancerArns==\`[]\`].TargetGroupArn" \
         --output text \
