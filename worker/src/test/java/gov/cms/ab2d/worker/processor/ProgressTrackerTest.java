@@ -1,121 +1,141 @@
 package gov.cms.ab2d.worker.processor;
 
+import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.worker.TestUtil;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
-import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
-import java.text.ParseException;
-import java.time.LocalDate;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
+import static gov.cms.ab2d.worker.processor.ProgressTracker.EST_BEN_SEARCH_JOB_PERCENTAGE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class ProgressTrackerTest {
+class ProgressTrackerTest {
+
+
+    @DisplayName("Percentages are calculated as expected with correct arguments")
     @Test
     void testPercentDone() {
-        int month = LocalDate.now().getMonthValue();
         ProgressTracker tracker = ProgressTracker.builder()
                 .jobUuid("JOBID")
-                .numContracts(2)
                 .failureThreshold(3)
-                .currentMonth(month)
+                .expectedBeneficiaries(12)
                 .build();
+
         int percDone = tracker.getPercentageCompleted();
-        assertEquals(0, percDone);
+        int expected = 0;
+        assertEquals(expected, percDone);
 
-        tracker.incrementTotalContractBeneficiariesSearchFinished();
+        ReflectionTestUtils.setField(tracker, "metadataProcessedCount", 6);
         percDone = tracker.getPercentageCompleted();
-        double expectedPercDone = (1.0 / (2 * month)) * (1 - tracker.getEST_BEN_SEARCH_JOB_PERCENTAGE()) * 100;
-        assertEquals(percDone, (int) Math.round(expectedPercDone));
+        expected = asPercent((1.0 - EST_BEN_SEARCH_JOB_PERCENTAGE) * 0.5);
+        assertEquals(expected, percDone);
 
-        tracker.incrementTotalContractBeneficiariesSearchFinished();
-        expectedPercDone = (2.0 / (2 * month)) * (1 - tracker.getEST_BEN_SEARCH_JOB_PERCENTAGE()) * 100;
+        ReflectionTestUtils.setField(tracker, "metadataProcessedCount", 12);
         percDone = tracker.getPercentageCompleted();
-        assertEquals(percDone, (int) Math.round(expectedPercDone));
+        expected = asPercent(1.0 - EST_BEN_SEARCH_JOB_PERCENTAGE);
+        assertEquals(expected, percDone);
 
-        for (int i=0; i<((month*2)-2); i++) {
-            tracker.incrementTotalContractBeneficiariesSearchFinished();
-        }
-        expectedPercDone = 100 * (1 - tracker.getEST_BEN_SEARCH_JOB_PERCENTAGE());
+
+        ReflectionTestUtils.setField(tracker, "eobProcessedCount", 6);
         percDone = tracker.getPercentageCompleted();
-        assertEquals(percDone, (int) Math.round(expectedPercDone));
+        expected = asPercent((1 - EST_BEN_SEARCH_JOB_PERCENTAGE)
+                + (EST_BEN_SEARCH_JOB_PERCENTAGE * 0.5));
+        assertEquals(expected, percDone);
+
+        ReflectionTestUtils.setField(tracker, "eobProcessedCount", 12);
+        percDone = tracker.getPercentageCompleted();
+        assertEquals(100, percDone);
     }
 
+    @DisplayName("Don't provide percentage if expected beneficiaries is not set")
     @Test
-    void testCompleteJob() throws ParseException {
-        int month = LocalDate.now().getMonthValue();
+    void expectedBeneficiariesMissing() {
+
         ProgressTracker tracker = ProgressTracker.builder()
                 .jobUuid("JOBID")
-                .numContracts(2)
                 .failureThreshold(3)
-                .currentMonth(month)
                 .build();
+
         int percDone = tracker.getPercentageCompleted();
         assertEquals(0, percDone);
-        for (int i=0; i<(month*2); i++) {
-            tracker.incrementTotalContractBeneficiariesSearchFinished();
+
+        ReflectionTestUtils.setField(tracker, "metadataProcessedCount", 6);
+        percDone = tracker.getPercentageCompleted();
+        assertEquals(0, percDone);
+
+    }
+
+    @DisplayName("Percentages are calculated as expected when metadata searches are completed and eob searches are completed")
+    @Test
+    void testCompleteJob() {
+        ProgressTracker tracker = ProgressTracker.builder()
+                .jobUuid("JOBID")
+                .failureThreshold(3)
+                .expectedBeneficiaries(10)
+                .build();
+
+        int percDone = tracker.getPercentageCompleted();
+        assertEquals(0, percDone);
+
+        // Pretend all metadata loading is done
+        Contract contract = new Contract();
+        tracker.addPatients(createPatientsByContractResponse(contract, 10));
+
+        percDone = tracker.getPercentageCompleted();
+        assertEquals(asPercent(1.0 - EST_BEN_SEARCH_JOB_PERCENTAGE), percDone);
+
+        for (int i = 0; i < 10; i++) {
+            tracker.incrementEobProcessedCount();
         }
-        assertEquals((int) Math.round(100 * (1 - tracker.getEST_BEN_SEARCH_JOB_PERCENTAGE())), tracker.getPercentageCompleted());
-        tracker.getPatientsByContracts().add(getAContractBeneficiary("CONTRACT1", "PAT1", "PAT2", "PAT3"));
-        tracker.getPatientsByContracts().add(getAContractBeneficiary("CONTRACT2", "PAT4", "PAT5"));
-        assertEquals((int) Math.round(100 * (1 - tracker.getEST_BEN_SEARCH_JOB_PERCENTAGE())), tracker.getPercentageCompleted());
-        tracker.incrementProcessedCount();
-        double eobComplete = tracker.getEST_BEN_SEARCH_JOB_PERCENTAGE()/5;
-        double beneComplete = 1 - tracker.getEST_BEN_SEARCH_JOB_PERCENTAGE();
-        assertEquals((int) Math.round(100 * (eobComplete + beneComplete)), tracker.getPercentageCompleted());
-        tracker.incrementProcessedCount();
-        tracker.incrementProcessedCount();
-        tracker.incrementProcessedCount();
-        tracker.incrementProcessedCount();
+
         assertEquals(100, tracker.getPercentageCompleted());
     }
 
-    private ContractBeneficiaries getAContractBeneficiary(String contractId, String ... patientIds) {
-        FilterOutByDate.DateRange dr = TestUtil.getOpenRange();
-        ContractBeneficiaries beneficiaries = ContractBeneficiaries.builder()
-                .contractNumber(contractId).build();
-        Map<String, ContractBeneficiaries.PatientDTO> map = new HashMap<>();
-        for (String pId : patientIds) {
-            ContractBeneficiaries.PatientDTO patient = ContractBeneficiaries.PatientDTO.builder()
-                    .identifiers(createIdentifierWithoutMbi(pId))
-                    .dateRangesUnderContract(Collections.singletonList(dr))
-                    .build();
-            map.put(pId, patient);
-        }
-        beneficiaries.setPatients(map);
-        return beneficiaries;
-    }
-
     @Test
-    @DisplayName("When you don't have all the contract mappings, how can you estimate percent done")
-    void testPercentageDoneWithoutAllContractMappings() throws ParseException {
-        int month = LocalDate.now().getMonthValue();
+    @DisplayName("Use more interesting numbers to test rounding behavior")
+    void testPercentageDoneWithMoreInterestingNumbers() {
         ProgressTracker tracker = ProgressTracker.builder()
                 .jobUuid("JOBID")
-                .numContracts(3)
                 .failureThreshold(3)
-                .currentMonth(month)
+                .expectedBeneficiaries(12)
+                .metadataProcessedCount(12)
                 .build();
-        ContractBeneficiaries cb1 = getAContractBeneficiary("C1", "A1", "A2", "A3", "A4");
-        ContractBeneficiaries cb2 = getAContractBeneficiary("C2", "B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8");
-        tracker.addPatientsByContract(cb1);
-        tracker.addPatientsByContract(cb2);
-        assertEquals(6, tracker.getTotalAverageNumber());
-        assertEquals(18, tracker.getTotalPossibleCount());
-        assertEquals(0, tracker.getPercentageCompleted());
-        tracker.incrementProcessedCount();
-        for (int i=0; i<month; i++) {
-            tracker.incrementTotalContractBeneficiariesSearchFinished();
+
+        List<CoverageSummary> cb1 = createPatientsByContractResponse(new Contract(), 12);
+        tracker.addPatients(cb1);
+
+        assertEquals(asPercent(1 - EST_BEN_SEARCH_JOB_PERCENTAGE), tracker.getPercentageCompleted());
+
+        tracker.incrementEobProcessedCount();
+
+        double amountEobProc = (double) 1/12 * EST_BEN_SEARCH_JOB_PERCENTAGE;
+        double amountMetadataCompleted = 1 - EST_BEN_SEARCH_JOB_PERCENTAGE;
+
+        int expectedPercentage = asPercent(amountMetadataCompleted + amountEobProc);
+        assertEquals(expectedPercentage, tracker.getPercentageCompleted());
+    }
+
+    private static int asPercent(double num) {
+        return (int) Math.round(100.0 * num);
+    }
+
+    private List<CoverageSummary> createPatientsByContractResponse(Contract contract, int num) {
+        List<CoverageSummary> summaries = new ArrayList<>();
+
+        FilterOutByDate.DateRange dateRange = TestUtil.getOpenRange();
+        for (int i = 0; i < num; i++) {
+            CoverageSummary summary = new CoverageSummary(
+                    createIdentifierWithoutMbi("patient_" + i),
+                    contract,
+                    List.of(dateRange)
+            );
+            summaries.add(summary);
         }
-        tracker.incrementTotalContractBeneficiariesSearchFinished();
-        double amountEobProc = (double) 1/18 * 100 * 0.7;
-        double amountMappingProc = (double) tracker.getTotalContractBeneficiariesSearchFinished()/(3*month) * 100 * 0.3;
-        assertEquals((int) Math.round(amountEobProc + amountMappingProc), tracker.getPercentageCompleted());
+        return summaries;
     }
 }

@@ -1,13 +1,13 @@
 package gov.cms.ab2d.hpms.service;
 
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.common.repository.SponsorRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.hpms.SpringBootTestApp;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,7 +19,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 public class AttestationUpdaterServiceTest {
 
     @Autowired
-    SponsorRepository sponsorRepository;
+    private ContractRepository contractRepository;
 
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
@@ -45,12 +45,10 @@ public class AttestationUpdaterServiceTest {
     public void contractUpdated() {
         assertNotNull(aus);
         aus.pollOrganizations();
-        Optional<Sponsor> optSponsor =
-            sponsorRepository.findAll().stream()
-                    .filter(sponsor -> sponsor.getOrgName().equals("ABC Org")).findFirst();
-        assertTrue(optSponsor.isPresent());
-        Sponsor sponsor = optSponsor.get();
-        assertEquals(1, sponsor.getContracts().size());
+        List<Contract> contracts = contractRepository.findAll()
+                .stream().filter(contract -> "ABC Org".equals(contract.getHpmsParentOrg()))
+                .collect(Collectors.toList());
+        assertEquals(1, contracts.size());
     }
 
     @Test
@@ -61,9 +59,8 @@ public class AttestationUpdaterServiceTest {
 
     @TestConfiguration
     static class MockHpmsFetcherConfig {
-
-        @Autowired
-        private SponsorRepository sponsorRepository;
+        @Mock
+        private SlackLogger slackLogger;
 
         @Autowired
         private ContractRepository contractRepository;
@@ -72,9 +69,7 @@ public class AttestationUpdaterServiceTest {
         @Bean()
         public AttestationUpdaterServiceImpl getMockService()
         {
-            return new AttestationUpdaterServiceImpl(sponsorRepository, contractRepository,
-                    new MockHpmsFetcher());
+            return new AttestationUpdaterServiceImpl(contractRepository, new MockHpmsFetcher(), slackLogger);
         }
     }
-
 }

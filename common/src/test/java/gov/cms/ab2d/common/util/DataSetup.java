@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static java.util.stream.Collectors.toList;
+
 @Component
 public class DataSetup {
 
@@ -30,16 +32,63 @@ public class DataSetup {
     private UserRepository userRepository;
 
     @Autowired
-    private RoleRepository roleRepository;
+    private JobRepository jobRepository;
 
     @Autowired
-    private SponsorRepository sponsorRepository;
+    private RoleRepository roleRepository;
 
     @Autowired
     private CoveragePeriodRepository coveragePeriodRepo;
 
     @Autowired
+    private CoverageSearchRepository coverageSearchRepo;
+
+    @Autowired
     private CoverageSearchEventRepository coverageSearchEventRepo;
+
+    private final List<Object> domainObjects = new ArrayList<>();
+
+    public void queueForCleanup(Object object) {
+        domainObjects.add(object);
+    }
+
+    public void cleanup() {
+
+        // All of the coverage metadata tests assume that you completely
+        // wipe the tables between tests and that the tables started as empty tables.
+        // Based on these assumptions it is safe to simply delete everything associated
+        // with those tables
+        deleteCoverage();
+        coverageSearchEventRepo.deleteAll();
+        coverageSearchRepo.deleteAll();
+        coveragePeriodRepo.deleteAll();
+
+        List<Job> jobsToDelete = domainObjects.stream().filter(object -> object instanceof Job)
+                .map(object -> (Job) object).collect(toList());
+        jobsToDelete.forEach(job -> {
+            job = jobRepository.findByJobUuid(job.getJobUuid());
+            jobRepository.delete(job);
+            jobRepository.flush();
+        });
+
+        List<User> usersToDelete = domainObjects.stream().filter(object -> object instanceof User)
+                .map(object -> (User) object).collect(toList());
+        usersToDelete.forEach(user -> {
+            user = userRepository.findByUsername(user.getUsername());
+
+            if (user != null) {
+                userRepository.delete(user);
+                userRepository.flush();
+            }
+        });
+
+        List<Contract> contractsToDelete = domainObjects.stream().filter(object -> object instanceof Contract)
+                .map(object -> (Contract) object).collect(toList());
+        contractRepository.deleteAll(contractsToDelete);
+        contractRepository.flush();
+
+        domainObjects.clear();
+    }
 
     public static final String TEST_USER = "EileenCFrierson@example.com";
 
@@ -125,37 +174,15 @@ public class DataSetup {
         coverageSearchEventRepo.delete(event);
     }
 
-
-    public Sponsor createSponsor(String parentName, int parentHpmsId, String childName, int childHpmsId) {
-        Sponsor parent = new Sponsor();
-        parent.setOrgName(parentName);
-        parent.setHpmsId(parentHpmsId);
-        parent.setLegalName(parentName);
-
-        Sponsor sponsor = new Sponsor();
-        sponsor.setOrgName(childName);
-        sponsor.setHpmsId(childHpmsId);
-        sponsor.setLegalName(childName);
-        sponsor.setParent(parent);
-        return sponsorRepository.save(sponsor);
-    }
-
-    public void deleteSponsor(Sponsor sponsor) {
-        sponsorRepository.delete(sponsor);
-        if (sponsor.getParent() != null) {
-            deleteSponsor(sponsor.getParent());
-        }
-    }
-
-    public Contract setupContract(Sponsor sponsor, String contractNumber) {
+    public Contract setupContract(String contractNumber) {
         Contract contract = new Contract();
         contract.setAttestedOn(OffsetDateTime.now());
-        contract.setContractName("Test Contract");
+        contract.setContractName("Test Contract " + contractNumber);
         contract.setContractNumber(contractNumber);
 
-        contract.setSponsor(sponsor);
-
-        return contractRepository.save(contract);
+        contract =  contractRepository.save(contract);
+        queueForCleanup(contract);
+        return contract;
     }
 
     public void deleteContract(Contract contract) {
@@ -173,33 +200,38 @@ public class DataSetup {
         contractRepository.saveAndFlush(contract);
     }
 
+    public void setupContractWithNoAttestation(String username, String contractNumber, List<String> userRoles) {
+        setupNonStandardUser(username, contractNumber, userRoles);
+
+        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(contractNumber);
+        @SuppressWarnings("OptionalGetWithoutIsPresent")
+        Contract contract = contractOptional.get();
+        contract.setAttestedOn(null);
+
+        contractRepository.saveAndFlush(contract);
+    }
+
     public void setupContractSponsorForParentUserData(List<String> userRoles) {
-        Sponsor savedSponsor = createSponsor("Parent Corp.", 456, "Test", 123);
+        Contract contract = setupContract("ABC123");
 
-        setupContract(savedSponsor, "ABC123");
-
-        saveUser(savedSponsor.getParent(), userRoles);
+        saveUser(TEST_USER, contract, userRoles);
     }
 
     public void setupUserBadSponsorData(List<String> userRoles) {
-        Sponsor savedSponsor = createSponsor("Parent Corp.", 456, "Test", 123);
+        setupContract("ABC123");
 
-        setupContract(savedSponsor, "ABC123");
+        Contract contract = setupContract(BAD_CONTRACT_NUMBER);
 
-        Sponsor savedBadSponsor = createSponsor("Bad Parent Corp.", 789, "Bad Child", 10001);
-
-        setupContract(savedBadSponsor, BAD_CONTRACT_NUMBER);
-
-        saveUser(savedSponsor, userRoles);
+        saveUser(TEST_USER, contract, userRoles);
     }
 
-    private User saveUser(Sponsor sponsor, List<String> userRoles) {
+    private User saveUser(String username, Contract contract, List<String> userRoles) {
         User user = new User();
-        user.setEmail(TEST_USER);
-        user.setFirstName("Eileen");
-        user.setLastName("Frierson");
-        user.setUsername(TEST_USER);
-        user.setSponsor(sponsor);
+        user.setEmail(username);
+        user.setFirstName(username);
+        user.setLastName(username);
+        user.setUsername(username);
+        user.setContract(contract);
         user.setEnabled(true);
         user.setMaxParallelJobs(3);
         for(String userRole :  userRoles) {
@@ -209,7 +241,9 @@ public class DataSetup {
             user.addRole(role);
         }
 
-        return userRepository.save(user);
+        user =  userRepository.save(user);
+        queueForCleanup(user);
+        return user;
     }
 
     public void deleteUser(User user) {
@@ -224,10 +258,19 @@ public class DataSetup {
             return testUser;
         }
 
-        Sponsor savedSponsor = createSponsor("Parent Corp.", 456, "Test", 123);
+        Contract contract = setupContract(VALID_CONTRACT_NUMBER);
 
-        setupContract(savedSponsor, VALID_CONTRACT_NUMBER);
+        return saveUser(TEST_USER, contract, userRoles);
+    }
 
-        return saveUser(savedSponsor, userRoles);
+    public User setupNonStandardUser(String username, String contractNumber, List<String> userRoles) {
+        User testUser = userRepository.findByUsername(username);
+        if (testUser != null) {
+            return testUser;
+        }
+
+        Contract contract = setupContract(contractNumber);
+
+        return saveUser(username, contract, userRoles);
     }
 }

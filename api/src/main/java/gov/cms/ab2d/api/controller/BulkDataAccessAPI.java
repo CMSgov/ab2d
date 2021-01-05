@@ -213,6 +213,8 @@ public class BulkDataAccessAPI {
                     " for subsequent status requests (polling location)",
                     response = String.class), response = String.class)
     )
+
+    // todo: This endpoint no longer makes sense in the new model where one Okta credential maps to one Contract
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @GetMapping("/Group/{contractNumber}/$export")
     public ResponseEntity<Void> exportPatientsWithContract(

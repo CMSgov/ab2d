@@ -451,6 +451,8 @@ configure_greenfield_environment ()
     set_secrets "${CMS_ENV_GE}"
   fi
 
+  # TO DO BEGIN: Uncomment and fix this section
+
   # # Upload or verify private key on Jenkins agent (for non-management environments)
 
   # if [ "${AWS_ACCOUNT_NUMBER_GE}" != "${CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER}" ]; then
@@ -499,6 +501,8 @@ configure_greenfield_environment ()
   #   fi
 
   # fi
+
+  # TO DO END: Uncomment and fix this section
 
   echo ""
   echo "**********************************************************"

@@ -7,6 +7,7 @@ import com.amazonaws.services.kinesisfirehose.model.PutRecordResult;
 import com.amazonaws.services.kinesisfirehose.model.Record;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.codehaus.jettison.json.JSONObject;
 
 import java.lang.reflect.InvocationTargetException;
@@ -22,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
+
+import static gov.cms.ab2d.eventlogger.utils.UtilMethods.camelCaseToUnderscore;
 
 @Slf4j
 public class KinesisEventProcessor implements Callable<Void> {
@@ -61,6 +64,9 @@ public class KinesisEventProcessor implements Callable<Void> {
             try {
                 // Retrieve the value of the field
                 Object attValue = m.invoke(event);
+                if (m.getName().equalsIgnoreCase("getUser") && event.getUser() != null && !event.getUser().isEmpty()) {
+                    attValue = DigestUtils.sha1Hex(event.getUser()).toUpperCase();
+                }
                 // If we are an OffsetDateTime, convert to UTC, then make it a string in the correct format
                 if (attValue != null && attValue.getClass() == OffsetDateTime.class) {
                     OffsetDateTime timeValue = (OffsetDateTime) attValue;
@@ -100,9 +106,5 @@ public class KinesisEventProcessor implements Callable<Void> {
             log.error("Error in pushing event to Kinesis " + json + " - " + ex.getMessage());
         }
         return null;
-    }
-
-    static String camelCaseToUnderscore(String val) {
-        return val.replaceAll("(.)(\\p{Upper})", "$1_$2").toLowerCase();
     }
 }

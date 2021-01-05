@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.bfdhealthcheck;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.CapabilityStatement;
 import org.hl7.fhir.dstu3.model.Enumerations;
@@ -17,6 +18,9 @@ import static gov.cms.ab2d.common.util.Constants.MAINTENANCE_MODE;
 @Component
 @Slf4j
 class BFDHealthCheck {
+
+    @Autowired
+    private SlackLogger slackLogger;
 
     @Autowired
     private PropertiesService propertiesService;
@@ -73,6 +77,7 @@ class BFDHealthCheck {
         PropertiesDTO propertiesDTO = new PropertiesDTO();
         propertiesDTO.setKey(MAINTENANCE_MODE);
         propertiesDTO.setValue(statusString);
+        slackLogger.logErrorMsg("Maintenance Mode status: " + statusString);
         propertiesService.updateProperties(List.of(propertiesDTO));
         log.info("Updated the {} property to {}", MAINTENANCE_MODE, statusString);
     }

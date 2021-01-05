@@ -51,6 +51,8 @@ sudo ln -s /usr/local/bin/stunnel /bin/stunnel
 sudo mkdir /mnt/efs
 sudo cp /etc/fstab /etc/fstab.bak
 
+# Note that there are issues with using TLS with EFS on gold disk EC2 instances.
+# TO DO: Switch to TLS, when we move to fargate.
 #####
 # -----------
 # Without TLS
@@ -81,11 +83,7 @@ else
   # Change to the "/deployment" directory
   cd /deployment
 
-  # Commented out because packer installs ruby under ec2_user, while user data runs as root
-  #
-  # Get keystore from S3 and decrypt it
-  # bundle exec rake get_file_from_s3_and_decrypt["./${bfd_keystore_file_name}","${env}-automation"]
-  #
+  # Note that packer installs ruby under ec2_user, while user data runs as root
   # Get keystore from S3 and decrypt it
   export RUBY_BIN="/home/ec2-user/.rbenv/versions/2.6.5/bin"
   sudo "$RUBY_BIN/bundle" exec "$RUBY_BIN/rake" \

@@ -41,9 +41,6 @@ class PerformanceTestingCoverageOperations {
     private ContractRepository contractRepo;
 
     @Autowired
-    private SponsorRepository sponsorRepo;
-
-    @Autowired
     private CoveragePeriodRepository coveragePeriodRepo;
 
     @Autowired
@@ -66,7 +63,6 @@ class PerformanceTestingCoverageOperations {
 
     @Autowired CoverageSearchRepository coverageSearchRepository;
 
-    private Sponsor sponsor;
     private Contract contract;
     private CoveragePeriod period1;
     private CoveragePeriod period2;
@@ -99,16 +95,15 @@ class PerformanceTestingCoverageOperations {
 //        }
 
 // You will have to find the sponsor repo id manually
-        sponsor = sponsorRepo.findById(90L).get();
         contract = contractRepo.findContractByContractNumber("TST-12").get();
 //        contract = contractRepo.findContractByContractNumber("TST-34").get();
 //        contract = contractRepo.findContractByContractNumber("TST-56").get();
 //        contract = contractRepo.findContractByContractNumber("TST-78").get();
 //        contract = contractRepo.findContractByContractNumber("TST-90").get();
 
-        period1 = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), 1, 2020);
-        period2 = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), 2, 2020);
-        period3 = coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), 3, 2020);
+        period1 = coveragePeriodRepo.findByContractIdAndMonthAndYear(contract.getId(), 1, 2020).get();
+        period2 = coveragePeriodRepo.findByContractIdAndMonthAndYear(contract.getId(), 2, 2020).get();
+        period3 = coveragePeriodRepo.findByContractIdAndMonthAndYear(contract.getId(), 3, 2020).get();
 
 //        sponsor = dataSetup.createSponsor("Cal Ripken", 200, "Cal Ripken Jr.", 201);
 //        contract = dataSetup.setupContract(sponsor, "TST-12");

@@ -3,6 +3,7 @@ package gov.cms.ab2d.api.security;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.controller.TestUtil;
+import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
@@ -54,6 +55,18 @@ class JwtAuthenticationFilterTest {
     @Autowired
     private DoAll doAll;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
+    private ContractRepository contractRepository;
+
+    @Autowired
+    private JobRepository jobRepository;
+
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
@@ -65,6 +78,10 @@ class JwtAuthenticationFilterTest {
     @BeforeEach
     @AfterEach
     public void cleanup() {
+        jobRepository.deleteAll();
+        userRepository.deleteAll();
+        roleRepository.deleteAll();
+        contractRepository.deleteAll();
         doAll.delete();
     }
 
