@@ -690,7 +690,7 @@ if [ -z "${WORKER_CLUSTER_ARN}" ]; then
   echo "Skipping removing old launch configurations, since there are no existing clusters"
 else
 
-  LAUNCH_CONFIGURATION_EXPECTED_COUNT=2
+  LAUNCH_CONFIGURATION_EXPECTED_COUNT=1
 
   # TO DO: migrate from "*-test-*" naming to "*-validation-*" naming
   # Count only "*-test-*" and "*-validation-*" launch configurations
