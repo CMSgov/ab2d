@@ -5,36 +5,34 @@ import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneSearch;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneSearchImpl;
-import gov.cms.ab2d.worker.processor.domainmodel.ProgressTracker;
+import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
+import gov.cms.ab2d.worker.processor.coverage.CoverageDriverStub;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.transaction.Transactional;
-import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.concurrent.ExecutionException;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
+import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @Testcontainers
 @Transactional
-public class ProgressTrackerIntegrationTest {
+class ProgressTrackerIntegrationTest {
 
     private JobProcessorImpl cut;
     @Autowired
@@ -49,9 +47,6 @@ public class ProgressTrackerIntegrationTest {
     @Autowired
     private JobOutputRepository jobOutputRepository;
 
-    @Autowired
-    private ContractBeneSearch contractBeneSearch;
-
     @Value("${patient.contract.year}")
     private int year;
 
@@ -61,24 +56,20 @@ public class ProgressTrackerIntegrationTest {
     @Mock
     BFDClient bfdClient;
 
-    ProgressTracker progressTracker;
+    private CoverageDriver coverageDriver;
 
-    @Autowired
-    @Qualifier("patientContractThreadPool")
-    private ThreadPoolTaskExecutor patientContractThreadPool;
+    ProgressTracker progressTracker;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @BeforeEach
     void init() {
-        patientContractThreadPool = new ThreadPoolTaskExecutor();
-        patientContractThreadPool.setCorePoolSize(6);
-        patientContractThreadPool.setMaxPoolSize(12);
-        patientContractThreadPool.setThreadNamePrefix("contractp-");
-        patientContractThreadPool.initialize();
-        contractBeneSearch = new ContractBeneSearchImpl(bfdClient, eventLogger, patientContractThreadPool, false);
-        cut = new JobProcessorImpl(fileService, jobRepository, jobOutputRepository, contractBeneSearch, contractProcessor, eventLogger);
+
+        coverageDriver = spy(new CoverageDriverStub(10, 20));
+
+        cut = new JobProcessorImpl(fileService, jobRepository, jobOutputRepository,
+                contractProcessor, coverageDriver, eventLogger);
     }
 
     @Test
@@ -87,14 +78,15 @@ public class ProgressTrackerIntegrationTest {
         String contractId = "C0001";
         Contract contract = new Contract();
         contract.setContractNumber(contractId);
+        contract.setAttestedOn(AB2D_EPOCH.toOffsetDateTime());
 
         Job job = createJob(null);
+        job.setContract(contract);
 
         progressTracker = ProgressTracker.builder()
                 .failureThreshold(2)
                 .jobUuid(job.getJobUuid())
-                .numContracts(1)
-                .currentMonth(2)
+                .expectedBeneficiaries(4)
                 .build();
 
         Bundle.BundleEntryComponent entry1 = BundleUtils.createBundleEntry("P1", "mbi1", year);
@@ -108,7 +100,7 @@ public class ProgressTrackerIntegrationTest {
         when(bfdClient.requestPartDEnrolleesFromServer(contractId, 1)).thenReturn(bundleA);
         when(bfdClient.requestPartDEnrolleesFromServer(contractId, 2)).thenReturn(bundleB);
 
-        cut.processContractBenes(job, contract, month, progressTracker);
+        cut.processContractBenes(job, progressTracker);
 
         Job loadedVal = jobRepository.findById(job.getId()).get();
         assertEquals(30, loadedVal.getProgress());

@@ -13,14 +13,11 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
 
-import java.sql.*;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.Executor;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @TestPropertySource(locations = "/application.common.properties")
@@ -37,7 +34,7 @@ class DatabaseAvailableTest {
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
     @Test
-    public void testDatasource() throws SQLException {
+    void testDatasource() throws SQLException {
         assertTrue(DatabaseAvailable.isDbAvailable(dataSource));
         assertFalse(DatabaseAvailable.isDbAvailable(null));
         Mockito.when(bogusDS.getConnection()).thenReturn(null);

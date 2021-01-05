@@ -15,7 +15,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @Testcontainers
@@ -25,9 +26,6 @@ class CoverageSearchTest {
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
-
-    @Autowired
-    private SponsorRepository sponsorRepo;
 
     @Autowired
     private ContractRepository contractRepo;
@@ -44,32 +42,21 @@ class CoverageSearchTest {
     @Autowired
     private DataSetup dataSetup;
 
-    private Sponsor sponsor;
     private Contract contract1;
     private Contract contract2;
 
 
     @AfterEach
     void after() {
-        coverageSearchEventRepo.deleteAll();
-        coverageSearchRepository.deleteAll();
-        coveragePeriodRepo.deleteAll();
-
-        contractRepo.delete(contract1);
-        contractRepo.delete(contract2);
-        contractRepo.flush();
-
-        sponsorRepo.delete(sponsor);
-        sponsorRepo.flush();
+        dataSetup.cleanup();
     }
 
     @Test
     void testSearches() {
         try {
 
-            sponsor = dataSetup.createSponsor("Cal Ripken", 200, "Cal Ripken Jr.", 201);
-            contract1 = dataSetup.setupContract(sponsor, "c123");
-            contract2 = dataSetup.setupContract(sponsor, "c456");
+            contract1 = dataSetup.setupContract("c123");
+            contract2 = dataSetup.setupContract("c456");
 
             CoveragePeriod period1 = dataSetup.createCoveragePeriod(contract1, 10, 2020);
             CoveragePeriod period2 = dataSetup.createCoveragePeriod(contract2, 10, 2020);

@@ -12,14 +12,13 @@
         <module>filter</module>
         <module>audit</module>
         <module>hpms</module>
-        <module>mock-hpms</module>
         <module>e2e-test</module>
         <module>load-test</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.4.0</version>
+        <version>2.4.1</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>gov.cms.ab2d</groupId>
@@ -35,15 +34,15 @@
         <hapi.version>5.2.0</hapi.version>
         <mockserver.version>5.11.2</mockserver.version>
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
-        <logback-encoder.version>6.5</logback-encoder.version>
-        <testcontainers.version>1.15.0</testcontainers.version>
+        <logback-encoder.version>6.6</logback-encoder.version>
+        <testcontainers.version>1.15.1</testcontainers.version>
         <newrelic.version>6.2.1</newrelic.version>
 
         <!-- Maven plugin versions -->
         <jacoco.version>0.8.6</jacoco.version>
         <maven.resources.plugin.version>3.2.0</maven.resources.plugin.version>
         <maven.assembly.plugin.version>2.3</maven.assembly.plugin.version>
-        <spotbugs.version>4.1.4</spotbugs.version>
+        <spotbugs.version>4.2.0</spotbugs.version>
     </properties>
 
     <dependencies>

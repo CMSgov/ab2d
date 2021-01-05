@@ -44,6 +44,10 @@ public final class Constants {
 
     public static final String HEALTH_ENDPOINT = "/health";
 
+    public static final String VALIDATE_BFD_ENDPOINT = "/validate/bfd";
+
+    public static final String VALIDATE_SLACK_ENDPOINT = "/validate/slack";
+
     // Properties that are allowed to be modified. When adding a new one, add it to a constant, and the Set below
     public static final String PCP_CORE_POOL_SIZE = "pcp.core.pool.size";
 

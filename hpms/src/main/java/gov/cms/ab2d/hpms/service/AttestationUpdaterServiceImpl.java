@@ -1,9 +1,8 @@
 package gov.cms.ab2d.hpms.service;
 
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Sponsor;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.common.repository.SponsorRepository;
+import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.hpms.hmsapi.*;  // NOPMD
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
@@ -20,16 +19,17 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
 
     private final HPMSFetcher hpmsFetcher;
 
-    private final SponsorRepository sponsorRepository;
-
     private final ContractRepository contractRepository;
 
+    private final SlackLogger slackLogger;
+
     @Autowired
-    public AttestationUpdaterServiceImpl(SponsorRepository sponsorRepository, ContractRepository contractRepository,
-                                         HPMSFetcher hpmsFetcher) {
-        this.sponsorRepository = sponsorRepository;
+    public AttestationUpdaterServiceImpl(ContractRepository contractRepository,
+                                         HPMSFetcher hpmsFetcher,
+                                         SlackLogger slackLogger) {
         this.contractRepository = contractRepository;
         this.hpmsFetcher = hpmsFetcher;
+        this.slackLogger = slackLogger;
     }
 
     @Override
@@ -102,6 +102,13 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
 
     private void updateContractIfChanged(HPMSAttestation attest, Contract contract) {
         if (contract.updateAttestation(attest.isAttested(), attest.getAttestationDate())) {
+            String msg = "*Changed Contract*\n\nName: " + contract.getContractName() + "\n"
+                    + "Number: " + contract.getContractNumber() + "\n"
+                    + "HPMS Attested On: " + attest.getAttestationDate() + "\n"
+                    + "Contract Attested On: " + contract.getAttestedOn() + "\n";
+            if (slackLogger != null) {
+                slackLogger.logHpmsMsg(msg);
+            }
             contractRepository.save(contract);
         }
     }
@@ -110,14 +117,21 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
         if (newContracts.isEmpty()) {
             return new ArrayList<>();
         }
+        newContracts.forEach(c -> {
+                String msg = "*New Attester*\n\nId: " + c.getContractId() + "\n"
+                        + "Name: " + c.getContractName() + "\n"
+                        + "Id: " + c.getContractId() + "\n"
+                        + "Org: " + c.getOrgMarketingName() + "\n";
+                if (slackLogger != null) {
+                    slackLogger.logHpmsMsg(msg);
+                }
+            }
+        );
         return newContracts.stream().map(this::sponsorAdd).collect(Collectors.toList());
     }
 
     private Contract sponsorAdd(HPMSOrganizationInfo hpmsInfo) {
-        Sponsor savedSponsor =
-                sponsorRepository.save(new Sponsor(hpmsInfo.getParentOrgName(), hpmsInfo.getOrgMarketingName()));
-
-        return contractRepository.save(hpmsInfo.build(savedSponsor));
+        return contractRepository.save(hpmsInfo.build());
     }
 
     private void considerContract(List<Contract> contractAttestList, Contract contract,

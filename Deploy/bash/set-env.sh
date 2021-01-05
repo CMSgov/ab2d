@@ -49,7 +49,7 @@ echo "Choose desired AWS account"
 echo "--------------------------"
 echo ""
 PS3='Please enter your choice: '
-options=("Dev AWS account" "Sbx AWS account" "Impl AWS account" "Prod AWS account" "Mgmt AWS account" "Quit")
+options=("Dev AWS account" "Sbx AWS account" "Impl AWS account" "Prod AWS account" "Prod Validation AWS account" "Mgmt AWS account" "Quit")
 select opt in "${options[@]}"
 do
     case $opt in
@@ -57,24 +57,35 @@ do
 	    export AWS_ACCOUNT_NUMBER=349849222861
 	    export CMS_ENV=ab2d-dev
 	    SSH_PRIVATE_KEY=ab2d-dev.pem
+	    CONTROLLER_PRIVATE_KEY=ab2d-dev.pem
 	    break
             ;;
         "Sbx AWS account")
 	    export AWS_ACCOUNT_NUMBER=777200079629
 	    export CMS_ENV=ab2d-sbx-sandbox
 	    SSH_PRIVATE_KEY=ab2d-sbx-sandbox.pem
+	    CONTROLLER_PRIVATE_KEY=ab2d-sbx-sandbox.pem
 	    break
             ;;
         "Impl AWS account")
 	    export AWS_ACCOUNT_NUMBER=330810004472
 	    export CMS_ENV=ab2d-east-impl
 	    SSH_PRIVATE_KEY=ab2d-east-impl.pem
+	    CONTROLLER_PRIVATE_KEY=ab2d-east-impl.pem
 	    break
             ;;
         "Prod AWS account")
 	    export AWS_ACCOUNT_NUMBER=595094747606
 	    export CMS_ENV=ab2d-east-prod
 	    SSH_PRIVATE_KEY=ab2d-east-prod.pem
+	    CONTROLLER_PRIVATE_KEY=ab2d-east-prod.pem
+	    break
+            ;;
+        "Prod Validation AWS account")
+	    export AWS_ACCOUNT_NUMBER=595094747606
+	    export CMS_ENV=ab2d-east-prod-test
+	    SSH_PRIVATE_KEY=ab2d-east-prod-test.pem
+	    CONTROLLER_PRIVATE_KEY=ab2d-east-prod.pem
 	    break
             ;;
         "Mgmt AWS account")
@@ -90,7 +101,7 @@ do
     esac
 done
 
-if [ $REPLY -eq 6 ]; then
+if [ $REPLY -eq 7 ]; then
   echo ""
   return
 fi
