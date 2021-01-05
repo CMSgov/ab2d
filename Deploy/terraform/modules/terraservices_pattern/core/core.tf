@@ -260,14 +260,6 @@ resource "aws_s3_bucket" "main_log_bucket" {
   acl    = "log-delivery-write"
 }
 
-//resource "aws_s3_bucket_public_access_block" "main_log_bucket" {
-//  bucket = aws_s3_bucket.main_log_bucket.id
-//  block_public_acls   = true
-//  block_public_policy = true
-//  ignore_public_acls = true
-//  restrict_public_buckets = true
-//}
-
 data "aws_iam_policy_document" "main_bucket_policy" {
   statement {
     sid    = "RoleAccess"

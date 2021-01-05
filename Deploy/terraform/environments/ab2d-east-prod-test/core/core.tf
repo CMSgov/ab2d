@@ -17,12 +17,3 @@ terraform {
   backend "s3" {
   }
 }
-
-//data "terraform_remote_state" "data" {
-//  backend = "s3"
-//  config = {
-//    region = var.region
-//    bucket = "${var.env}-tfstate"
-//    key    = "${var.env}/terraform/data/terraform.tfstate"
-//  }
-//}

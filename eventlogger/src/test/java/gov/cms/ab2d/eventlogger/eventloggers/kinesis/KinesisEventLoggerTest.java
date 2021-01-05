@@ -27,7 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventProcessor.camelCaseToUnderscore;
+import static gov.cms.ab2d.eventlogger.utils.UtilMethods.camelCaseToUnderscore;
 import static gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventProcessor.getJsonString;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;

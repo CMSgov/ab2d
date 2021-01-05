@@ -26,9 +26,11 @@ import static java.util.stream.Collectors.toList;
 @Service
 public class CoverageDriverImpl implements CoverageDriver {
 
-    private static final long SIXTY_SECONDS_IN_MILLIS = 60000;
     private static final long MINUTE = 1;
     private static final long TEN_MINUTES = 10;
+
+    // Number of metadata records to pull from database in one go
+    private static final int PAGING_SIZE = 10000;
 
     private final CoverageSearchRepository coverageSearchRepository;
     private final ContractService contractService;
@@ -222,7 +224,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      * Queues coverage mapping jobs to run on this machine. Coverage mapping jobs are split
      * between workers
      */
-    @Scheduled(fixedDelay = SIXTY_SECONDS_IN_MILLIS, initialDelayString = "${coverage.update.initial.delay}")
+    @Scheduled(cron = "${coverage.update.load.schedule}")
     public void loadMappingJob() {
 
         if (propertiesService.isInMaintenanceMode()) {
@@ -302,6 +304,8 @@ public class CoverageDriverImpl implements CoverageDriver {
     @Override
     public boolean isCoverageAvailable(Job job) throws InterruptedException {
 
+        String contractNumber = job.getContract().getContractNumber();
+
         Lock coverageLock = coverageLockWrapper.getCoverageLock();
 
         // Track whether locked or not to prevent an illegal monitor exception
@@ -320,6 +324,7 @@ public class CoverageDriverImpl implements CoverageDriver {
             // If so then create those coverage periods.
             discoverCoveragePeriods(job.getContract());
 
+            log.info("queueing never searched coverage metadata periods for {}", contractNumber);
             /*
              * If any relevant coverage period has never been pulled from BFD successfully then automatically fail the
              * search
@@ -333,8 +338,31 @@ public class CoverageDriverImpl implements CoverageDriver {
                 return false;
             }
 
+            log.info("checking when coverage period previous month was last updated for {}", contractNumber);
+
+            // If we haven't updated the current month's metadata since the job was submitted
+            // then we must update it to guarantee we aren't missing any recent metadata changes
+            ZonedDateTime now = ZonedDateTime.now(AB2D_ZONE);
+            CoveragePeriod currentPeriod = coverageService.getCoveragePeriod(job.getContract(), now.getMonthValue(), now.getYear());
+            if (currentPeriod.getLastSuccessfulJob() == null || currentPeriod.getLastSuccessfulJob().isBefore(job.getCreatedAt())) {
+
+                // Submit a new search if necessary
+                if (currentPeriod.getStatus() != JobStatus.SUBMITTED || currentPeriod.getStatus() != JobStatus.IN_PROGRESS) {
+                    String reason = String.format("%s-%d-%d must be updated before job %s can run",
+                            currentPeriod.getContract().getContractNumber(), currentPeriod.getYear(), currentPeriod.getMonth(),
+                            job.getJobUuid());
+                    log.info(reason);
+                    coverageService.submitSearch(currentPeriod.getId(), reason);
+                }
+
+                return false;
+            }
+
+            log.info("checking whether any coverage metadata is currently being updated for {}", contractNumber);
             /*
              * If coverage periods are submitted, in progress or null then ignore for the moment.
+             *
+             * There will always be at least one coverage period returned.
              */
             List<CoveragePeriod> periods = coverageService.findAssociatedCoveragePeriods(job.getContract());
             periods = filterBySince(job, periods);
@@ -356,6 +384,68 @@ public class CoverageDriverImpl implements CoverageDriver {
         }
     }
 
+    @Override
+    public int numberOfBeneficiariesToProcess(Job job) {
+
+        ZonedDateTime now = getEndDateTime();
+
+        Contract contract = job.getContract();
+
+        if (contract == null) {
+            throw new CoverageDriverException("cannot retrieve metadata for job missing contract");
+        }
+
+        ZonedDateTime startDateTime = getStartDateTime(job);
+
+        List<CoveragePeriod> periodsToReport = new ArrayList<>();
+        while (startDateTime.isBefore(now)) {
+            CoveragePeriod periodToReport =
+                    coverageService.getCoveragePeriod(contract, startDateTime.getMonthValue(), startDateTime.getYear());
+            periodsToReport.add(periodToReport);
+            startDateTime = startDateTime.plusMonths(1);
+        }
+
+        log.debug("counting number of beneficiaries for {} coverage periods for job {}",
+                periodsToReport.size(), job.getJobUuid());
+
+        return coverageService.countBeneficiariesByCoveragePeriod(periodsToReport);
+    }
+
+    @Override
+    public CoveragePagingResult pageCoverage(Job job) {
+        ZonedDateTime now = getEndDateTime();
+
+        Contract contract = job.getContract();
+
+        if (contract == null) {
+            throw new CoverageDriverException("cannot retrieve metadata for job missing contract");
+        }
+
+        log.info("attempting to build first page of results for job {}", job.getJobUuid());
+
+        ZonedDateTime startDateTime = getStartDateTime(job);
+
+        try {
+            List<CoveragePeriod> periodsToReport = new ArrayList<>();
+            while (startDateTime.isBefore(now)) {
+                CoveragePeriod periodToReport =
+                        coverageService.getCoveragePeriod(contract, startDateTime.getMonthValue(), startDateTime.getYear());
+                periodsToReport.add(periodToReport);
+                startDateTime = startDateTime.plusMonths(1);
+            }
+
+            // Make initial request which returns a result and a request starting at the next cursor
+            List<Integer> periodIds = periodsToReport.stream().map(CoveragePeriod::getId).collect(toList());
+            CoveragePagingRequest request = new CoveragePagingRequest(PAGING_SIZE, null, periodIds);
+
+            // Make request for coverage metadata
+            return coverageService.pageCoverage(request);
+        } catch (Exception exception) {
+            log.error("coverage period missing or year,month query incorrect, driver should have resolved earlier");
+            throw new CoverageDriverException("coverage driver failing preconditions", exception);
+        }
+    }
+
     private static ZonedDateTime getEndDateTime() {
         // Assume current time zone is EST since all deployments are in EST
         ZonedDateTime now = ZonedDateTime.now(AB2D_ZONE);
@@ -365,6 +455,52 @@ public class CoverageDriverImpl implements CoverageDriver {
         return now;
     }
 
+    private ZonedDateTime getStartDateTime(Job job) {
+        Contract contract = job.getContract();
+
+        // Attestation time should never be null for a job making it to this point
+        ZonedDateTime startDateTime = contract.getESTAttestationTime();
+
+        // Apply since
+        if (job.getSince() != null) {
+            ZonedDateTime since = job.getSince().atZoneSameInstant(AB2D_ZONE);
+            log.debug("paging request for eob job with since date so checking if since date can be applied");
+            if (since.isAfter(startDateTime)) {
+                startDateTime = since;
+                log.info("applying since date for paging request");
+            } else {
+                log.warn("since date before attestation time which may indicate a problem");
+            }
+        }
+
+        // Do not allow in any case for someone to pull data before the AB2D API officially supports.
+        // Do not remove this without extreme consideration
+        if (startDateTime.isBefore(AB2D_EPOCH)) {
+            startDateTime = AB2D_EPOCH;
+        }
+
+        ZonedDateTime now = ZonedDateTime.now(AB2D_ZONE);
+
+        if (startDateTime.isAfter(now)) {
+            throw new CoverageDriverException("contract attestation time or since date on job is after current time," +
+                    " cannot find metadata for coverage periods in the future");
+        }
+
+        return ZonedDateTime.of(startDateTime.getYear(), startDateTime.getMonthValue(),
+                1, 0, 0, 0, 0, AB2D_ZONE);
+    }
+
+    @Override
+    public CoveragePagingResult pageCoverage(CoveragePagingRequest request) {
+        return coverageService.pageCoverage(request);
+    }
+
+    /**
+     * Filters coverage periods to make sure they only include membership data after the _since date
+     * @param job the job to look for a since date in
+     * @param periods the periods to filter.
+     * @return at least one coverage period
+     */
     private List<CoveragePeriod> filterBySince(Job job, List<CoveragePeriod> periods) {
         if (job.getSince() != null) {
             LocalDate sinceExactDay = job.getSince().toLocalDate();

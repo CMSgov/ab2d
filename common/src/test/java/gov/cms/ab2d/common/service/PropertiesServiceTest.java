@@ -5,7 +5,6 @@ import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.Properties;
 import gov.cms.ab2d.common.repository.PropertiesRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,17 +19,12 @@ import java.util.List;
 import java.util.Map;
 
 import static gov.cms.ab2d.common.util.Constants.*;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @TestPropertySource(locations = "/application.common.properties")
 @Testcontainers
-public class PropertiesServiceTest {
+class PropertiesServiceTest {
 
     @Autowired
     private PropertiesRepository propertiesRepository;
@@ -42,7 +36,7 @@ public class PropertiesServiceTest {
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
     @Test
-    public void testCreationAndRetrieval() {
+    void testCreationAndRetrieval() {
         Map<String, Object> propertyMap = new HashMap<>(){{
             put("abc", "val");
             put(PCP_CORE_POOL_SIZE, 10);
@@ -68,13 +62,13 @@ public class PropertiesServiceTest {
 
         List<Properties> propertiesList = propertiesService.getAllProperties();
 
-        Assert.assertEquals(propertiesList.size(), beforeCount + 1);
+        assertEquals(propertiesList.size(), beforeCount + 1);
 
         for(Properties propertiesToCheck : propertiesList) {
             Object propertyValue = propertyMap.get(propertiesToCheck.getKey());
 
-            Assert.assertNotNull(propertyValue);
-            Assert.assertEquals(propertyValue.toString(), propertiesToCheck.getValue());
+            assertNotNull(propertyValue);
+            assertEquals(propertyValue.toString(), propertiesToCheck.getValue());
         }
     }
 
@@ -87,7 +81,7 @@ public class PropertiesServiceTest {
         currentProperties.stream().filter(c -> c.getKey().equalsIgnoreCase(MAINTENANCE_MODE)).findFirst().get().setValue("true");
         propertiesService.updateProperties(currentProperties);
         assertTrue(propertiesService.isToggleOn(MAINTENANCE_MODE));
-        assertEquals(true, propertiesService.isInMaintenanceMode());
+        assertTrue(propertiesService.isInMaintenanceMode());
         List<PropertiesDTO> vals = propertiesService.getAllPropertiesDTO();
         assertEquals("true", (vals.stream()
                 .filter(c -> c.getKey().equalsIgnoreCase(MAINTENANCE_MODE)).findFirst().map(PropertiesDTO::getValue).get()));
@@ -96,7 +90,7 @@ public class PropertiesServiceTest {
     }
 
     @Test
-    public void testUpdateProperties() {
+    void testUpdateProperties() {
         List<PropertiesDTO> propertiesDTOs = new ArrayList<>();
         PropertiesDTO propertiesDTOPoolSize = new PropertiesDTO();
         propertiesDTOPoolSize.setKey(PCP_CORE_POOL_SIZE);
@@ -130,23 +124,27 @@ public class PropertiesServiceTest {
 
         List<PropertiesDTO> updatedPropertiesDTOs = propertiesService.updateProperties(propertiesDTOs);
 
-        Assert.assertEquals(6, updatedPropertiesDTOs.size());
+        assertEquals(6, updatedPropertiesDTOs.size());
 
         for(PropertiesDTO propertiesDTO : updatedPropertiesDTOs) {
-            if(propertiesDTO.getKey().equals(PCP_CORE_POOL_SIZE)) {
-                Assert.assertEquals("15", propertiesDTO.getValue());
-            } else if (propertiesDTO.getKey().equals(PCP_MAX_POOL_SIZE)) {
-                Assert.assertEquals("350", propertiesDTO.getValue());
-            } else if (propertiesDTO.getKey().equals(PCP_SCALE_TO_MAX_TIME)) {
-                Assert.assertEquals("400", propertiesDTO.getValue());
-            } else if (propertiesDTO.getKey().equals(MAINTENANCE_MODE)) {
-                Assert.assertEquals("true", propertiesDTO.getValue());
-            } else if (propertiesDTO.getKey().equals(CONTRACT_2_BENE_CACHING_ON)) {
-                Assert.assertEquals("true", propertiesDTO.getValue());
-            } else if (propertiesDTO.getKey().equals(ZIP_SUPPORT_ON)) {
-                Assert.assertEquals("true", propertiesDTO.getValue());
-            } else {
-                Assert.fail("Received unknown key");
+            switch (propertiesDTO.getKey()) {
+                case PCP_CORE_POOL_SIZE:
+                    assertEquals("15", propertiesDTO.getValue());
+                    break;
+                case PCP_MAX_POOL_SIZE:
+                    assertEquals("350", propertiesDTO.getValue());
+                    break;
+                case PCP_SCALE_TO_MAX_TIME:
+                    assertEquals("400", propertiesDTO.getValue());
+                    break;
+                case MAINTENANCE_MODE:
+                case CONTRACT_2_BENE_CACHING_ON:
+                case ZIP_SUPPORT_ON:
+                    assertEquals("true", propertiesDTO.getValue());
+                    break;
+                default:
+                    fail("Received unknown key");
+                    break;
             }
         }
 
@@ -158,7 +156,7 @@ public class PropertiesServiceTest {
     }
 
     @Test
-    public void testValidProperties() {
+    void testValidProperties() {
         PropertiesDTO p = new PropertiesDTO();
         p.setKey("Bad");
         p.setValue("Value");
@@ -193,11 +191,11 @@ public class PropertiesServiceTest {
         var exceptionThrown = assertThrows(InvalidPropertiesException.class,
                 () -> propertiesService.updateProperties(propertiesDTOs));
 
-        assertThat(exceptionThrown.getMessage(), equalTo(String.format("Incorrect value for %s of %s", key, value)));
+        assertEquals(String.format("Incorrect value for %s of %s", key, value), exceptionThrown.getMessage());
     }
 
     @Test
-    public void testUpdatePropertiesInvalidValues() {
+    void testUpdatePropertiesInvalidValues() {
         var invalidKeysValues = new HashMap<String, String>(){{
             put(PCP_CORE_POOL_SIZE, "101");
             put(PCP_CORE_POOL_SIZE, "0");
@@ -208,13 +206,11 @@ public class PropertiesServiceTest {
             put(MAINTENANCE_MODE, "BADVALUE");
         }};
 
-        invalidKeysValues.forEach((key, value) -> {
-            validateInvalidPropertyValues(key, value);
-        });
+        invalidKeysValues.forEach(this::validateInvalidPropertyValues);
     }
 
     @Test
-    public void testUpdatePropertiesInvalidKey() {
+    void testUpdatePropertiesInvalidKey() {
         List<PropertiesDTO> propertiesDTOs = new ArrayList<>();
         PropertiesDTO propertiesDTO = new PropertiesDTO();
         propertiesDTO.setKey("Bad Name");
@@ -224,14 +220,14 @@ public class PropertiesServiceTest {
         var exceptionThrown = assertThrows(InvalidPropertiesException.class,
                 () -> propertiesService.updateProperties(propertiesDTOs));
 
-        assertThat(exceptionThrown.getMessage(), equalTo("Properties must contain a valid key name, received Bad Name"));
+        assertEquals("Properties must contain a valid key name, received Bad Name", exceptionThrown.getMessage());
     }
 
     @Test
-    public void testGetPropertiesBadKey() {
+    void testGetPropertiesBadKey() {
         var exceptionThrown = assertThrows(ResourceNotFoundException.class,
                 () -> propertiesService.getPropertiesByKey("badKey"));
 
-        assertThat(exceptionThrown.getMessage(), equalTo("No entry was found for key badKey"));
+        assertEquals("No entry was found for key badKey", exceptionThrown.getMessage());
     }
 }

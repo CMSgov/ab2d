@@ -3,9 +3,11 @@ package gov.cms.ab2d.hpms.service;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.hpms.SpringBootTestApp;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -57,6 +59,8 @@ public class AttestationUpdaterServiceTest {
 
     @TestConfiguration
     static class MockHpmsFetcherConfig {
+        @Mock
+        private SlackLogger slackLogger;
 
         @Autowired
         private ContractRepository contractRepository;
@@ -65,8 +69,7 @@ public class AttestationUpdaterServiceTest {
         @Bean()
         public AttestationUpdaterServiceImpl getMockService()
         {
-            return new AttestationUpdaterServiceImpl(contractRepository, new MockHpmsFetcher());
+            return new AttestationUpdaterServiceImpl(contractRepository, new MockHpmsFetcher(), slackLogger);
         }
     }
-
 }

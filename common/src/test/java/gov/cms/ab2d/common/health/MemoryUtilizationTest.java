@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class MemoryUtilizationTest {
     @Test
-    public void testMemory() {
+    void testMemory() {
         assertFalse(MemoryUtilization.outOfMemory(2));
         assertTrue(MemoryUtilization.outOfMemory((int) (Math.pow(2, 31) - 1)));
     }
