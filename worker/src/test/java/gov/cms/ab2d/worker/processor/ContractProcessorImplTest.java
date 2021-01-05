@@ -4,6 +4,7 @@ import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.common.util.ExtensionUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.service.FileService;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,7 +60,7 @@ class ContractProcessorImplTest {
                 put(identifiers.getBeneficiaryId(), new CoverageSummary(identifiers, null, null));
         }};
 
-        processor.addMbiIdsToEobs(singletonList(eob), coverageSummaries);
+        ExtensionUtils.addMbiIdsToEobs(singletonList(eob), coverageSummaries);
 
         assertFalse(eob.getExtension().isEmpty());
         assertEquals(3, eob.getExtension().size());

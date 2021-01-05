@@ -2,10 +2,12 @@ package gov.cms.ab2d.worker.processor;
 
 import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.common.model.CoverageSummary;
+import gov.cms.ab2d.common.util.ExtensionUtils;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.service.FileService;
+import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -57,7 +59,7 @@ public class AddExtensionTest {
         org.hl7.fhir.dstu3.model.Reference ref = new org.hl7.fhir.dstu3.model.Reference();
         ref.setReference(patientId);
         b.setPatient(ref);
-        List<org.hl7.fhir.dstu3.model.ExplanationOfBenefit> eobs = List.of(b);
+        List<IBaseResource> eobs = List.of(b);
         FilterOutByDate.DateRange dateRange = FilterOutByDate.getDateRange(1, 1900, 12,
                 Calendar.getInstance().get(Calendar.YEAR));
 
@@ -66,7 +68,7 @@ public class AddExtensionTest {
         Map<String, CoverageSummary> patients = new HashMap<>();
         patients.put(beneId, summary);
 
-        cut.addMbiIdsToEobs(eobs, patients);
+        ExtensionUtils.addMbiIdsToEobs(eobs, patients);
 
         List<org.hl7.fhir.dstu3.model.Extension> extensions = b.getExtension();
 
@@ -93,7 +95,7 @@ public class AddExtensionTest {
         org.hl7.fhir.dstu3.model.Reference ref = new org.hl7.fhir.dstu3.model.Reference();
         ref.setReference(patientId);
         b.setPatient(ref);
-        List<org.hl7.fhir.dstu3.model.ExplanationOfBenefit> eobs = List.of(b);
+        List<IBaseResource> eobs = List.of(b);
         FilterOutByDate.DateRange dateRange = FilterOutByDate.getDateRange(1, 1900, 12,
                 Calendar.getInstance().get(Calendar.YEAR));
 
@@ -102,7 +104,7 @@ public class AddExtensionTest {
         Map<String, CoverageSummary> patients = new HashMap<>();
         patients.put(beneId, summary);
 
-        cut.addMbiIdsToEobs(eobs, patients);
+        ExtensionUtils.addMbiIdsToEobs(eobs, patients);
 
         List<org.hl7.fhir.dstu3.model.Extension> extensions = b.getExtension();
 
