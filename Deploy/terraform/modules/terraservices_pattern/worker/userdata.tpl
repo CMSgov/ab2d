@@ -54,7 +54,7 @@ sudo cp /etc/fstab /etc/fstab.bak
 # TO DO: This will be handled differently when we move to fargate
 #####
 # -----------
-# Note that stunnel is being used due to custom AMI
+# TO DO: Ensure stunnel is being used with the custom AMI
 # -----------
 echo '${efs_id}:/ /mnt/efs efs _netdev 0 0' | sudo tee -a /etc/fstab
 sudo mount -a
