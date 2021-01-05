@@ -172,10 +172,6 @@ export TF_LOG_PATH=/var/log/terraform/tf.log
 rm -f /var/log/terraform/tf.log
 
 #
-# USE EXISTING BUILD #1 BEGIN
-#
-
-#
 # Configure docker environment
 #
 
@@ -198,10 +194,6 @@ docker volume ls -qf dangling=true | xargs -I name docker volume rm name
 # Delete all images again (if any)
 
 docker images -q | xargs -I name docker rmi --force name
-
-#
-# USE EXISTING BUILD #1 END
-#
 
 #
 # Initialize and validate terraform
@@ -584,45 +576,6 @@ WORKER_MEMORY=$((WORKER_EC2_INSTANCE_MEMORY*9/10))
 cd "${START_DIR}/.."
 cd "terraform/environments/${TARGET_CMS_ENV}"
 
-#echo 'vpc_id = "'$VPC_ID'"' \
-#  > "${TARGET_CMS_ENV}.auto.tfvars"
-#echo 'private_subnet_ids = ["'$SUBNET_PRIVATE_1_ID'","'$SUBNET_PRIVATE_2_ID'"]' \
-#  >> "${TARGET_CMS_ENV}.auto.tfvars"
-#echo 'deployment_controller_subnet_ids = ["'$SUBNET_PUBLIC_1_ID'","'$SUBNET_PUBLIC_2_ID'"]' \
-#  >> "${TARGET_CMS_ENV}.auto.tfvars"
-#echo 'ec2_instance_type_api = "'$EC2_INSTANCE_TYPE_API'"' \
-#  >> "${TARGET_CMS_ENV}.auto.tfvars"
-#echo 'ec2_desired_instance_count_api = "'$EC2_DESIRED_INSTANCE_COUNT_API'"' \
-#  >> "${TARGET_CMS_ENV}.auto.tfvars"
-#echo 'ec2_minimum_instance_count_api = "'$EC2_MINIMUM_INSTANCE_COUNT_API'"' \
-#  >> "${TARGET_CMS_ENV}.auto.tfvars"
-#echo 'ec2_maximum_instance_count_api = "'$EC2_MAXIMUM_INSTANCE_COUNT_API'"' \
-#  >> "${TARGET_CMS_ENV}.auto.tfvars"
-#echo 'ecs_container_definition_new_memory_api = "'$API_MEMORY'"' \
-#  >> "${TARGET_CMS_ENV}.auto.tfvars"
-#echo 'ecs_task_definition_cpu_api = "'$API_CPU'"' \
-#  >> "${TARGET_CMS_ENV}.auto.tfvars"
-#echo 'ecs_task_definition_memory_api = "'$API_MEMORY'"' \
-#  >> "${TARGET_CMS_ENV}.auto.tfvars"
-#echo 'ec2_instance_type_worker = "'$EC2_INSTANCE_TYPE_WORKER'"' \
-#  >> "${TARGET_CMS_ENV}.auto.tfvars"
-#echo 'ec2_desired_instance_count_worker = "'$EC2_DESIRED_INSTANCE_COUNT_WORKER'"' \
-#  >> "${TARGET_CMS_ENV}.auto.tfvars"
-#echo 'ec2_minimum_instance_count_worker = "'$EC2_MINIMUM_INSTANCE_COUNT_WORKER'"' \
-#  >> "${TARGET_CMS_ENV}.auto.tfvars"
-#echo 'ec2_maximum_instance_count_worker = "'$EC2_MAXIMUM_INSTANCE_COUNT_WORKER'"' \
-#  >> "${TARGET_CMS_ENV}.auto.tfvars"
-#echo 'ecs_container_definition_new_memory_worker = "'$WORKER_MEMORY'"' \
-#  >> "${TARGET_CMS_ENV}.auto.tfvars"
-#echo 'ecs_task_definition_cpu_worker = "'$WORKER_CPU'"' \
-#  >> "${TARGET_CMS_ENV}.auto.tfvars"
-#echo 'ecs_task_definition_memory_worker = "'$WORKER_MEMORY'"' \
-#  >> "${TARGET_CMS_ENV}.auto.tfvars"
-#echo 'linux_user = "'$SSH_USERNAME'"' \
-#  >> "${TARGET_CMS_ENV}.auto.tfvars"
-#echo 'deployer_ip_address = "'$DEPLOYER_IP_ADDRESS'"' \
-#  >> "${TARGET_CMS_ENV}.auto.tfvars"
-
 {
   echo 'vpc_id = "'"${VPC_ID}"'"'
   echo 'private_subnet_ids = ["'"${SUBNET_PRIVATE_1_ID}"'","'"${SUBNET_PRIVATE_2_ID}"'"]'
@@ -690,10 +643,6 @@ cd "${START_DIR}/.."
 cd python3
 ./enable-kms-key.py "${MGMT_KMS_KEY_ID}"
 
-#
-# USE EXISTING BUILD #2 BEGIN
-#
-
 # Set environment to the AWS account where the shared ECR repository is maintained
 
 cd "${START_DIR}/.."
@@ -719,10 +668,6 @@ sleep 5
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 COMMIT_NUMBER=$(git rev-parse "${CURRENT_BRANCH}" | cut -c1-7)
 IMAGE_VERSION="${TARGET_CMS_ENV}-latest-${COMMIT_NUMBER}"
-
-#
-# USE EXISTING BUILD #3 BEGIN
-#
 
 # Build API docker images
 
@@ -759,19 +704,11 @@ if [ -z "${API_ECR_REPO_URI}" ]; then
     --output text)
 fi
 
-#
-# USE EXISTING BUILD #3 END
-#
-
 # Get ecr repo aws account
 
 ECR_REPO_AWS_ACCOUNT=$(aws --region "${AWS_DEFAULT_REGION}" sts get-caller-identity \
   --query Account \
   --output text)
-
-#
-# USE EXISTING BUILD #4 BEGIN
-#
 
 # Apply ecr repo policy to the "ab2d_api" repo
 
@@ -966,10 +903,6 @@ fi
 echo "Using master branch commit number '${COMMIT_NUMBER}' for ab2d_api and ab2d_worker..."
 
 #
-# USE EXISTING BUILD #4 END
-#
-
-#
 # Set AWS target environment
 #
 
@@ -1036,23 +969,6 @@ fi
 #
 
 echo "Ensure Old Autoscaling Groups and containers are around to service requests..."
-
-# if [ -z "${CLUSTER_ARNS}" ]; then
-#   echo "Skipping setting OLD_API_ASG, since there are no existing clusters"
-# else
-#   OLD_API_ASG=$(terraform show \
-#     | grep :autoScalingGroup: \
-#     | awk -F" = " '{print $2}' \
-#     | grep $TARGET_CMS_ENV-api \
-#     | head -1 \
-#     | tr -d '"')
-#   OLD_WORKER_ASG=$(terraform show \
-#     | grep :autoScalingGroup: \
-#     | awk -F" = " '{print $2}' \
-#     | grep $TARGET_CMS_ENV-worker \
-#     | head -1 \
-#     | tr -d '"')
-# fi
 
 if [ -z "${CLUSTER_ARNS}" ]; then
   echo "Skipping removing autoscaling group and launch configuration, since there are no existing clusters"
