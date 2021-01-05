@@ -78,19 +78,3 @@ module "worker" {
   worker_min_instances              = var.worker_min_instances
   worker_max_instances              = var.worker_max_instances
 }
-
-
-//  ab2d_opt_out_job_schedule         = var.ab2d_opt_out_job_schedule
-//  ab2d_s3_optout_bucket             = var.ab2d_s3_optout_bucket
-//  app_sec_group_id                  = module.api.application_security_group_id
-//  controller_sec_group_id           = "${data.aws_security_group.ab2d_deployment_controller_sg.id}"
-//  controller_subnet_ids             = var.deployment_controller_subnet_ids
-//  db_host_secret_arn                = var.db_host_secret_arn
-//  db_name_secret_arn                = var.db_name_secret_arn
-//  db_password_secret_arn            = var.db_password_secret_arn
-//  db_port_secret_arn                = var.db_port_secret_arn
-//  db_user_secret_arn                = var.db_user_secret_arn
-//  ecs_cluster_id                    = module.api.ecs_cluster_id
-//  instance_type                     = var.ec2_instance_type_worker
-//  loadbalancer_subnet_ids           = var.deployment_controller_subnet_ids
-//  override_task_definition_arn      = var.current_task_definition_arn

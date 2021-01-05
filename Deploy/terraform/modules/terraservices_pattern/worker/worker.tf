@@ -174,9 +174,6 @@ resource "aws_ecs_service" "worker" {
   scheduling_strategy = "DAEMON"
 }
 
-# LSH SKIP FOR NOW BEGIN
-# security_groups = [aws_security_group.worker.id,var.enterprise-tools-sec-group-id,var.vpn-private-sec-group-id]
-# LSH SKIP FOR NOW END
 resource "aws_launch_configuration" "launch_config" {
   name_prefix = "${lower(var.env)}-worker-"
   image_id = var.ami_id
