@@ -408,13 +408,13 @@ if [ -z "${AB2D_HPMS_URL}" ]; then
   exit 1
 fi
 
-# Get HPMS AUTH URL
+# Get HPMS API PARAMS
 
-AB2D_HPMS_AUTH_URL=$(./get-database-secret.py $CMS_ENV ab2d_hpms_auth_url $DATABASE_SECRET_DATETIME)
+AB2D_HPMS_API_PARAMS=$(./get-database-secret.py $CMS_ENV ab2d_hpms_api_params $DATABASE_SECRET_DATETIME)
 
-if [ -z "${AB2D_HPMS_AUTH_URL}" ]; then
+if [ -z "${AB2D_HPMS_API_PARAMS}" ]; then
   echo "*******************************************"
-  echo "ERROR: AB2D HPMS AUTH URL secret not found."
+  echo "ERROR: AB2D HPMS API PARAMS secret not found."
   echo "*******************************************"
   exit 1
 fi
@@ -458,7 +458,7 @@ if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is
   || [ "${AB2D_KEYSTORE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${AB2D_OKTA_JWT_ISSUER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${AB2D_HPMS_URL}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${AB2D_HPMS_AUTH_URL}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+  || [ "${AB2D_HPMS_API_PARAMS}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${AB2D_HPMS_AUTH_KEY_ID}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
   || [ "${AB2D_HPMS_AUTH_KEY_SECRET}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
     echo "ERROR: Cannot get secrets because KMS key is disabled!"
@@ -698,35 +698,38 @@ sleep 5
 # USE EXISTING BUILD #2 END
 #
 
-# Get image version based on a master commit number
+# # Get image version based on a master commit number
 
-CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-COMMIT_NUMBER_OF_CURRENT_BRANCH=$(git rev-parse "${CURRENT_BRANCH}" | cut -c1-7)
-COMMIT_NUMBER_OF_ORIGIN_MASTER=$(git rev-parse origin/master | cut -c1-7)
+# CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+# COMMIT_NUMBER_OF_CURRENT_BRANCH=$(git rev-parse "${CURRENT_BRANCH}" | cut -c1-7)
+# COMMIT_NUMBER_OF_ORIGIN_MASTER=$(git rev-parse origin/master | cut -c1-7)
 
-if [ "${COMMIT_NUMBER_OF_CURRENT_BRANCH}" == "${COMMIT_NUMBER_OF_ORIGIN_MASTER}" ]; then
-  echo "NOTE: The current branch is the master branch."
-  echo "Using commit number of origin/master branch as the image version."
-  COMMIT_NUMBER="${COMMIT_NUMBER_OF_ORIGIN_MASTER}"
-else
-  echo "NOTE: Assuming this is a DevOps branch that has only DevOps changes."
-  COMPARE_BRANCH_WITH_MASTER=$(git log \
-    --decorate \
-    --graph \
-    --oneline \
-    --cherry-mark \
-    --boundary origin/master..."${BRANCH}")
-  if [ -z "${COMPARE_BRANCH_WITH_MASTER}" ]; then
-    echo "NOTE: DevOps branch is the same as origin/master."
-    echo "Using commit number of origin/master branch as the image version."
-    COMMIT_NUMBER="${COMMIT_NUMBER_OF_ORIGIN_MASTER}"
-  else
-    echo "NOTE: DevOps branch is different from origin/master."
-    echo "Using commit number of latest merge from origin/master into the current branch as the image version."
-    COMMIT_NUMBER=$(git log --merges | head -n 2 | tail -n 1 | cut -d" " -f 3 | cut -c1-7)
-  fi
-fi
+# if [ "${COMMIT_NUMBER_OF_CURRENT_BRANCH}" == "${COMMIT_NUMBER_OF_ORIGIN_MASTER}" ]; then
+#   echo "NOTE: The current branch is the master branch."
+#   echo "Using commit number of origin/master branch as the image version."
+#   COMMIT_NUMBER="${COMMIT_NUMBER_OF_ORIGIN_MASTER}"
+# else
+#   echo "NOTE: Assuming this is a DevOps branch that has only DevOps changes."
+#   COMPARE_BRANCH_WITH_MASTER=$(git log \
+#     --decorate \
+#     --graph \
+#     --oneline \
+#     --cherry-mark \
+#     --boundary origin/master..."${BRANCH}")
+#   if [ -z "${COMPARE_BRANCH_WITH_MASTER}" ]; then
+#     echo "NOTE: DevOps branch is the same as origin/master."
+#     echo "Using commit number of origin/master branch as the image version."
+#     COMMIT_NUMBER="${COMMIT_NUMBER_OF_ORIGIN_MASTER}"
+#   else
+#     echo "NOTE: DevOps branch is different from origin/master."
+#     echo "Using commit number of latest merge from origin/master into the current branch as the image version."
+#     COMMIT_NUMBER=$(git log --merges | head -n 2 | tail -n 1 | cut -d" " -f 3 | cut -c1-7)
+#   fi
+# fi
 
+# IMAGE_VERSION="${CMS_ENV}-latest-${COMMIT_NUMBER}"
+
+COMMIT_NUMBER=$(git rev-parse "${CURRENT_BRANCH}" | cut -c1-7)
 IMAGE_VERSION="${CMS_ENV}-latest-${COMMIT_NUMBER}"
 
 #
@@ -1262,7 +1265,7 @@ terraform apply \
   --var "ab2d_keystore_password=${AB2D_KEYSTORE_PASSWORD}" \
   --var "ab2d_okta_jwt_issuer=${AB2D_OKTA_JWT_ISSUER}" \
   --var "ab2d_hpms_url=${AB2D_HPMS_URL}" \
-  --var "ab2d_hpms_auth_url=${AB2D_HPMS_AUTH_URL}" \
+  --var "ab2d_hpms_api_params=${AB2D_HPMS_API_PARAMS}" \
   --var "ab2d_hpms_auth_key_id=${AB2D_HPMS_AUTH_KEY_ID}" \
   --var "ab2d_hpms_auth_key_secret=${AB2D_HPMS_AUTH_KEY_SECRET}" \
   --var "stunnel_latest_version=${STUNNEL_LATEST_VERSION}" \
@@ -1410,7 +1413,8 @@ else
     aws --region "${AWS_DEFAULT_REGION}" ecs update-container-instances-state \
       --cluster "${CMS_ENV}-api" \
       --status DRAINING \
-      --container-instances $OLD_API_INSTANCE_LIST
+      --container-instances $OLD_API_INSTANCE_LIST \
+      1> /dev/null
   fi
   if [ -n "${OLD_WORKER_CONTAINER_INSTANCES}" ]; then
     OLD_WORKER_INSTANCE_LIST=$(echo $OLD_WORKER_CONTAINER_INSTANCES \
@@ -1422,7 +1426,8 @@ else
     aws --region "${AWS_DEFAULT_REGION}" ecs update-container-instances-state \
       --cluster "${CMS_ENV}-worker" \
       --status DRAINING \
-      --container-instances $OLD_WORKER_INSTANCE_LIST
+      --container-instances $OLD_WORKER_INSTANCE_LIST \
+      1> /dev/null
     echo "Allowing all instances to drain for 60 seconds before proceeding..."
     sleep 60
   fi

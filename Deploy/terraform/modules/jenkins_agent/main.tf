@@ -59,7 +59,7 @@ resource "aws_instance" "jenkins_agent" {
   }
   
   tags = {
-    Name = "ab2d-jenkins-agent"
+    Name = var.ec2_instance_tag
     application = "ab2d"
     stack = "shared"
     purpose = "ECS container instance"

@@ -141,19 +141,21 @@
 
 1. Ensure that you are connected to CMS Cisco VPN
 
-1. Change to the "Deploy" directory
+1. Change to your "ab2d" repo directory
+
+   *Example:*
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Create static website
 
    ```ShellSession
-   $ ./bash/create-or-update-website-cloudfront.sh
+   $ ./Deploy/bash/create-or-update-website-cloudfront.sh
    ```
 
-1. Choose desired AWS account
+1. Choose production (we are no longer using dev)
 
    *Example for "Prod" environment:*
 
@@ -172,6 +174,10 @@
    ```
    y
    ```
+
+1. View the website on production
+
+   > https://d50gfwkjomz16.cloudfront.net
 
 ## Submit an "Internet DNS Change Request Form" to product owner for the static website
 

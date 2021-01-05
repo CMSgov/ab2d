@@ -11,7 +11,7 @@
      * [Verify that Jenkins agent is online](#verify-that-jenkins-agent-is-online)
    * [Add a new GitHub user in Jenkins](#add-a-new-github-user-in-jenkins)
    * [Log on to Jenkins using GitHub OAuth authentication](#log-on-to-jenkins-using-github-oauth-authentication)
-1. [Deploy application to target environment](#deploy-application-to-target-environment)
+1. Export Jenkins projects
 
 ## Manage Jenkins
 
@@ -342,6 +342,61 @@
 
 1. Verify that the Jenkins page loads
 
-## Deploy application to target environment
+## Export Jenkins projects
 
-> *** TO DO ***
+1. Create desired directory structure
+
+   *Example:*
+   
+   ```ShellSession
+   $ mkdir -p ~/Downloads/jenkins/development
+     && mkdir -p ~/Downloads/jenkins/sandbox
+   ```
+
+1. Export the development folder
+
+   *Format:*
+
+   ```ShellSession
+   $ java -jar /opt/jenkins-cli/jenkins-cli.jar \
+     -s "http://{jenkins master public ip}:8080" \
+     -auth {github user}:{github personal access token} \
+     get-job development \
+     > ~/Downloads/jenkins/development.xml
+   ```
+
+1. Export the "deploy-to-development" project
+
+   *Format:*
+
+   ```ShellSession
+   $ java -jar /opt/jenkins-cli/jenkins-cli.jar \
+     -s "http://{jenkins master public ip}:8080" \
+     -auth {github user}:{github personal access token} \
+     get-job development/deploy-to-development \
+     > ~/Downloads/jenkins/development/deploy-to-development.xml
+   ```
+
+1. Export the sandbox folder
+
+   *Format:*
+
+   ```ShellSession
+   $ java -jar /opt/jenkins-cli/jenkins-cli.jar \
+     -s "http://{jenkins master public ip}:8080" \
+     -auth {github user}:{github personal access token} \
+     get-job sandbox \
+     > ~/Downloads/jenkins/sandbox.xml
+   ```
+
+1. Export the "deploy-to-sandbox" project
+
+   *Format:*
+
+   ```ShellSession
+   $ java -jar /opt/jenkins-cli/jenkins-cli.jar \
+     -s "http://{jenkins master public ip}:8080" \
+     -auth {github user}:{github personal access token} \
+     get-job sandbox/deploy-to-sandbox \
+     > ~/Downloads/jenkins/sandbox/deploy-to-sandbox.xml
+   ```

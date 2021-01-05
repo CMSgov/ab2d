@@ -11,19 +11,25 @@ terraform {
 }
 
 module "iam" {
-  source                  = "../../modules/iam"
-  mgmt_aws_account_number = var.mgmt_aws_account_number
-  aws_account_number      = var.aws_account_number
-  env                     = var.env
-  bfd_opt_out_kms_arn     = var.bfd_opt_out_kms_arn
-  ab2d_s3_optout_bucket   = var.ab2d_s3_optout_bucket
+  source                      = "../../modules/iam"
+  mgmt_aws_account_number     = var.mgmt_aws_account_number
+  aws_account_number          = var.aws_account_number
+  env                         = var.env
+  bfd_opt_out_kms_arn         = var.bfd_opt_out_kms_arn
+  ab2d_s3_optout_bucket       = var.ab2d_s3_optout_bucket
+  ab2d_bfd_insights_s3_bucket = var.ab2d_bfd_insights_s3_bucket
+  ab2d_bfd_kms_arn            = var.ab2d_bfd_kms_arn
+}
+
+data "aws_iam_role" "ab2d_instance_role_name" {
+  name = "Ab2dInstanceV2Role"
 }
 
 module "kms" {
   source                  = "../../modules/kms"
   aws_account_number      = var.aws_account_number
   env                     = var.env
-  ab2d_instance_role_name = module.iam.ab2d_instance_role_name
+  ab2d_instance_role_name = data.aws_iam_role.ab2d_instance_role_name.id
 }
 
 data "aws_kms_key" "ab2d_kms" {
@@ -148,7 +154,7 @@ module "api" {
   logging_bucket                    = var.logging_bucket_name
   # healthcheck_url                   = var.elb_healthcheck_url
   iam_instance_profile              = var.ec2_iam_profile
-  iam_role_arn                      = "arn:aws:iam::${var.aws_account_number}:role/Ab2dInstanceRole"
+  iam_role_arn                      = "arn:aws:iam::${var.aws_account_number}:role/delegatedadmin/developer/Ab2dInstanceV2Role"
   desired_instances                 = var.ec2_desired_instance_count_api
   min_instances                     = var.ec2_minimum_instance_count_api
   max_instances                     = var.ec2_maximum_instance_count_api
@@ -185,7 +191,7 @@ module "api" {
   ab2d_keystore_password            = var.ab2d_keystore_password
   ab2d_okta_jwt_issuer              = var.ab2d_okta_jwt_issuer
   ab2d_hpms_url                     = var.ab2d_hpms_url
-  ab2d_hpms_auth_url                = var.ab2d_hpms_auth_url
+  ab2d_hpms_api_params              = var.ab2d_hpms_api_params
   ab2d_hpms_auth_key_id             = var.ab2d_hpms_auth_key_id
   ab2d_hpms_auth_key_secret         = var.ab2d_hpms_auth_key_secret
   stunnel_latest_version            = var.stunnel_latest_version
@@ -286,7 +292,8 @@ module "kinesis_firehose" {
 # Management Target
 
 module "management_target" {
-  source                      = "../../modules/management_target"
-  mgmt_aws_account_number     = var.mgmt_aws_account_number
-  ab2d_spe_developer_policies = var.ab2d_spe_developer_policies
+  source                  = "../../modules/management_target"
+  env                     = var.env
+  mgmt_aws_account_number = var.mgmt_aws_account_number
+  aws_account_number      = var.aws_account_number
 }

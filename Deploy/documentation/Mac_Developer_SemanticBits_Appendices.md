@@ -21,6 +21,7 @@
    * [Install and verify AWS CLI 2](#install-and-verify-aws-cli-2)
 1. [Appendix I: Install MesiterTask](#appendix-h-install-mesitertask)
 1. [Appendix J: Configure semanticbitsdemo AWS account](#appendix-i-configure-semanticbitsdemo-aws-account)
+1. [Appendix K: Install PyCharm](#appendix-k-install-pycharm)
 
 ## Appendix A: PostgreSQL 11
 
@@ -610,3 +611,59 @@
    ```ShellSession
    $ cat ~/.aws/credentials
    ```
+
+## Appendix K: Install PyCharm
+
+1. Open Chrome
+
+1. Enter the following in the address bar
+
+   > https://www.jetbrains.com/pycharm/download
+
+1. Select **Download** under the "Community" section
+
+1. Wait for the download to complete
+
+1. Open the downloaded file
+
+   *Format:*
+
+   ```
+   pycharm-community-{version}.dmg
+   ```
+
+1. Drag "PyCharm CE.app" label to the "Applications" icon
+
+1. Wait for the copying to complete
+
+1. Press **Command+F3** on keyboard to switch to the desktop
+
+1. Right click on the **PyCharm CE** desktop icon
+
+1. Select **Eject "PyCharm CE"** from the context menu
+
+1. Press **Command+F3** on keyboard again to return to your original view
+
+1. Select **Launchpad**
+
+1. Open **PyCharm CE**
+
+1. Verify that the application opens
+
+1. Read and respond to any initial windows until you get to the "Welcome" page
+
+1. Select **Configure** on the the "Welcome" page
+
+1. Select **Plugins**
+
+1. Type the following in the "Type / to see options" text box
+
+   ```
+   terraform
+   ```
+
+1. Select **Install** beside "HashiCorp Terraform / HCL language support"
+
+1. Wait for the installation to complete
+
+1. Select **OK** on the "Plugins" page

@@ -397,69 +397,67 @@
 
 ### Create or update AMI with latest gold disk
 
-1. Change to the "Deploy" directory
+1. Change to your "ab2d" repo directory
+
+   *Example:*
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Set gold disk test parameters
 
    ```ShellSession
-   $ export CMS_ENV_PARAM=ab2d-dev
-   $ export DEBUG_LEVEL_PARAM=WARN
-   $ export EC2_INSTANCE_TYPE_PACKER_PARAM=m5.xlarge
-   $ export OWNER_PARAM=743302140042
-   $ export REGION_PARAM=us-east-1
-   $ export SSH_USERNAME_PARAM=ec2-user
-   $ export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3
+   $ export CMS_ENV_PARAM=ab2d-dev \
+     && export DEBUG_LEVEL_PARAM=WARN \
+     && export EC2_INSTANCE_TYPE_PACKER_PARAM=m5.xlarge \
+     && export OWNER_PARAM=743302140042 \
+     && export REGION_PARAM=us-east-1 \
+     && export SSH_USERNAME_PARAM=ec2-user \
+     && export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3 \
+     && export CLOUD_TAMER_PARAM=true
    ```
 
 1. Create or update AMI with latest gold disk
 
    ```ShellSession
-   $ ./bash/update-gold-disk.sh
+   $ ./Deploy/bash/update-gold-disk.sh
    ```
 
 ### Create or update infrastructure
 
-1. Change to the "Deploy" directory
+1. Change to your "ab2d" repo directory
+
+   *Example:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Set parameters
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ export CMS_ENV_PARAM=ab2d-dev \
+     && export DEBUG_LEVEL_PARAM=WARN \
+     && export EC2_INSTANCE_TYPE_CONTROLLER_PARAM=m5.xlarge \
+     && export REGION_PARAM=us-east-1 \
+     && export SSH_USERNAME_PARAM=ec2-user \
+     && export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01 \
+     && export CLOUD_TAMER_PARAM=true
    ```
 
 1. Deploy infrastructure
    
    ```ShellSession
-   $ ./deploy-infrastructure.sh \
-     --environment=ab2d-dev \
-     --ecr-repo-environment=ab2d-mgmt-east-dev \
-     --region=us-east-1 \
-     --vpc-id=vpc-08dbf3fa96684151c \
-     --ssh-username=ec2-user \
-     --owner=743302140042 \
-     --ec2_instance_type_api=m5.xlarge \
-     --ec2_instance_type_worker=m5.xlarge \
-     --ec2_instance_type_other=m5.xlarge \
-     --ec2_desired_instance_count_api=1 \
-     --ec2_minimum_instance_count_api=1 \
-     --ec2_maximum_instance_count_api=1 \
-     --ec2_desired_instance_count_worker=1 \
-     --ec2_minimum_instance_count_worker=1 \
-     --ec2_maximum_instance_count_worker=1 \
-     --database-secret-datetime=2020-01-02-09-15-01 \
-     --build-new-images \
-     --internet-facing=false \
-     --auto-approve
+   $ ./Deploy/deploy-infrastructure.sh
    ```
 
 ### Create or update application
 
-1. Change to the "Deploy" directory
+1. Change to your "ab2d" repo directory
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Set parameters
@@ -467,51 +465,51 @@
    *Example for standard Dev deployment of one api and one worker node:*
    
    ```ShellSession
-   $ export CMS_ENV_PARAM=ab2d-dev
-   $ export CMS_ECR_REPO_ENV_PARAM=ab2d-mgmt-east-dev
-   $ export REGION_PARAM=us-east-1
-   $ export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3
-   $ export SSH_USERNAME_PARAM=ec2-user
-   $ export EC2_INSTANCE_TYPE_API_PARAM=m5.xlarge
-   $ export EC2_INSTANCE_TYPE_WORKER_PARAM=m5.xlarge
-   $ export EC2_DESIRED_INSTANCE_COUNT_API_PARAM=1
-   $ export EC2_MINIMUM_INSTANCE_COUNT_API_PARAM=1
-   $ export EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM=1
-   $ export EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM=1
-   $ export EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM=1
-   $ export EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM=1
-   $ export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01
-   $ export DEBUG_LEVEL_PARAM=WARN
-   $ export INTERNET_FACING_PARAM=false
-   $ export CLOUD_TAMER_PARAM=true
+   $ export CMS_ENV_PARAM=ab2d-dev \
+     && export CMS_ECR_REPO_ENV_PARAM=ab2d-mgmt-east-dev \
+     && export REGION_PARAM=us-east-1 \
+     && export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3 \
+     && export SSH_USERNAME_PARAM=ec2-user \
+     && export EC2_INSTANCE_TYPE_API_PARAM=m5.xlarge \
+     && export EC2_INSTANCE_TYPE_WORKER_PARAM=m5.xlarge \
+     && export EC2_DESIRED_INSTANCE_COUNT_API_PARAM=1 \
+     && export EC2_MINIMUM_INSTANCE_COUNT_API_PARAM=1 \
+     && export EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM=1 \
+     && export EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM=1 \
+     && export EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM=1 \
+     && export EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM=1 \
+     && export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01 \
+     && export DEBUG_LEVEL_PARAM=WARN \
+     && export INTERNET_FACING_PARAM=false \
+     && export CLOUD_TAMER_PARAM=true
    ``` 
 
    *Example for temporarily upgrading Dev to two api and two worker nodes:*
    
    ```ShellSession
-   $ export CMS_ENV_PARAM=ab2d-dev
-   $ export CMS_ECR_REPO_ENV_PARAM=ab2d-mgmt-east-dev
-   $ export REGION_PARAM=us-east-1
-   $ export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3
-   $ export SSH_USERNAME_PARAM=ec2-user
-   $ export EC2_INSTANCE_TYPE_API_PARAM=m5.xlarge
-   $ export EC2_INSTANCE_TYPE_WORKER_PARAM=m5.4xlarge
-   $ export EC2_DESIRED_INSTANCE_COUNT_API_PARAM=2
-   $ export EC2_MINIMUM_INSTANCE_COUNT_API_PARAM=2
-   $ export EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM=2
-   $ export EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM=2
-   $ export EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM=2
-   $ export EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM=2
-   $ export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01
-   $ export DEBUG_LEVEL_PARAM=WARN
-   $ export INTERNET_FACING_PARAM=false
-   $ export CLOUD_TAMER_PARAM=true
+   $ export CMS_ENV_PARAM=ab2d-dev \
+     && export CMS_ECR_REPO_ENV_PARAM=ab2d-mgmt-east-dev \
+     && export REGION_PARAM=us-east-1 \
+     && export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3 \
+     && export SSH_USERNAME_PARAM=ec2-user \
+     && export EC2_INSTANCE_TYPE_API_PARAM=m5.xlarge \
+     && export EC2_INSTANCE_TYPE_WORKER_PARAM=m5.4xlarge \
+     && export EC2_DESIRED_INSTANCE_COUNT_API_PARAM=2 \
+     && export EC2_MINIMUM_INSTANCE_COUNT_API_PARAM=2 \
+     && export EC2_MAXIMUM_INSTANCE_COUNT_API_PARAM=2 \
+     && export EC2_DESIRED_INSTANCE_COUNT_WORKER_PARAM=2 \
+     && export EC2_MINIMUM_INSTANCE_COUNT_WORKER_PARAM=2 \
+     && export EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM=2 \
+     && export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01 \
+     && export DEBUG_LEVEL_PARAM=WARN \
+     && export INTERNET_FACING_PARAM=false \
+     && export CLOUD_TAMER_PARAM=true
    ``` 
 
 1. Deploy application
 
    ```ShellSession
-   $ ./bash/deploy-application.sh
+   $ ./Deploy/bash/deploy-application.sh
    ```
 
 ### Submit an "Internet DNS Change Request Form" to product owner for the development application load balancer

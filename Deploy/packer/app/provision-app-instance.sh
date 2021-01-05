@@ -72,6 +72,13 @@ sudo yum-config-manager --enable 'rhel-7-server-extras-rpms'
 sudo yum-config-manager --enable 'rhui-REGION-rhel-server-extras'
 sudo rpm --import https://www.centos.org/keys/RPM-GPG-KEY-CentOS-7
 sudo yum install -y http://mirror.centos.org/centos/7/extras/x86_64/Packages/container-selinux-2.107-3.el7.noarch.rpm
+
+# TO DO: Update this when latest gold disk resolves the issue.
+# Temporary workaround for an error caused by the following URL change
+# - before: https://download.docker.com/linux/centos/7Server/
+# - after: https://download.docker.com/linux/centos/7/
+sudo sed -i 's%\$releasever%7%g' /etc/yum.repos.d/docker-ce.repo
+
 sudo yum -y install docker-ce-19.03.8-3.el7
 sudo usermod -aG docker $SSH_USERNAME
 sudo systemctl enable docker

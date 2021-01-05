@@ -1,0 +1,11 @@
+{
+    notifempty
+    compress
+    copytruncate
+    size 10M
+    rotate 10
+    daily
+    postrotate
+        /usr/bin/killall -HUP syslogd
+    endscript
+}

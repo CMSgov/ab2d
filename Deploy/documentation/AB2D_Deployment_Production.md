@@ -6,8 +6,7 @@
 lication-load-balancer)
    * [Download the production domain certificates and get private key from CMS](#download-the-production-domain-certificates-and-get-private-key-from-cms)
    * [Import the production domain certificate into certificate manager](#import-the-production-domain-certificate-into-certificate-manager)
-1. [Peer AB2D Dev, Sandbox, Impl environments with the BFD Sbx VPC and peer AB2D Prod with BFD Prod VPC](#peer-ab2d-dev-sandbox-impl-environments-with-the-bfd-sbx-vpc-and-peer-ab2d-prod-with-bfd-prod-vpc)
-1. [Encrypt BFD keystore and put in S3](#encrypt-bfd-keystore-and-put-in-s3)
+1. [Peer AB2D Prod with BFD Prod VPC](#peer-ab2d-prod-with-bfd-prod-vpc)
 1. [Create a keystore for API nodes](#create-a-keystore-for-api-nodes)
 1. [Complete Okta production process](#complete-okta-production-process)
    * [Register for Okta production](#register-for-okta-production)
@@ -15,7 +14,8 @@ lication-load-balancer)
 1. [Deploy to production](#deploy-to-production)
    * [Initialize or verify base environment](#initialize-or-verify-base-environment)
    * [Encrypt and upload New Relic configuration file](#encrypt-and-upload-new-relic-configuration-file)
-   * [Create, encrypt, and upload BFD AB2D keystore for Prod](#create-encrypt-and-upload-bfd-ab2d-keystore-for-prod)
+   * [Create AB2D keystore for Production](#create-ab2d-keystore-for-production)
+   * [Encrypt AB2D keystore for Production and upload to S3](#encrypt-ab2d-keystore-for-production-and-upload-to-s3)
    * [Create or update AMI with latest gold disk](#create-or-update-ami-with-latest-gold-disk)
    * [Create or update infrastructure](#create-or-update-infrastructure)
    * [Create or update application](#create-or-update-application)
@@ -227,80 +227,6 @@ lication-load-balancer)
    > https://jira.cms.gov/browse/CMSAWSOPS-53861
 
    > *** TO DO ***: Determine if this step needed for BFD Prod?
-
-## Encrypt BFD keystore and put in S3
-
-1. Get the keystore from 1Password and copy it to the "/tmp" directory
-
-   ```
-   /tmp/ab2d_prod_keystore
-   ```
-
-1. Change to the "Deploy" directory
-
-   ```ShellSession
-   $ cd ~/code/ab2d/Deploy
-   ```
-
-1. Set AWS environment variables using the CloudTamer API
-
-   ```ShellSession
-   $ source ./bash/set-env.sh
-   ```
-
-1. Enter the number of the desired AWS account where the desired logs reside
-
-   ```
-   4 (Prod AWS account)
-   ```
-   
-1. Change to the ruby script directory
-
-   ```ShellSession
-   $ cd ~/code/ab2d/Deploy/ruby
-   ```
-
-1. Ensure required gems are installed
-
-   ```ShellSession
-   $ bundle install
-   ```
-   
-1. Encrypt keystore and put it in S3
-   
-   ```ShellSession
-   $ bundle exec rake encrypt_and_put_file_into_s3['/tmp/ab2d_prod_keystore','ab2d-east-prod-automation']
-   ```
-
-1. Verify that you can get the encrypted keystore from S3 and decrypt it
-   
-   1. Remove existing keyfile from the "/tmp" directory (if exists)
-
-      ```ShellSession
-      $ rm -f /tmp/ab2d_prod_keystore
-      ```
-
-   1. Get keystore from S3 and decrypt it
-
-      ```ShellSession
-      $ bundle exec rake get_file_from_s3_and_decrypt['/tmp/ab2d_prod_keystore','ab2d-east-prod-automation']
-      ```
-
-   1. Verify that both the bfd sandbox and client certificates are present
-
-      ```ShellSession
-      $ keytool -list -v -keystore /tmp/ab2d_prod_keystore
-      ```
-
-   1. Copy the "AB2D_BFD_KEYSTORE_PASSWORD in Prod" password from 1Password to the clipboard
-
-   1. Enter the keystore password at the "Enter keystore password" prompt
-
-   1. Verify that there are sections for the following two aliases in the keystore list output
-
-      - Alias name: bfd-prod-sbx-selfsigned
-
-      - Alias name: client_data_server_ab2d_prod_certificate
 
 ## Create a keystore for API nodes
 
@@ -563,7 +489,7 @@ lication-load-balancer)
    $ cat /tmp/newrelic-infra.yml
    ```
 
-### Create, encrypt, and upload BFD AB2D keystore for Prod
+### Create AB2D keystore for Production
 
 1. Note that there is a "bfd-users" slack channel for cmsgov with BFD engineers
 
@@ -609,7 +535,7 @@ lication-load-balancer)
 
    - client_data_server_ab2d_prod_certificate.pem (self-signed crtificate)
 
-1. Create a keystore that includes the self-signed SSL certificate for AB2D client to BFD sandbox
+1. Create a keystore that includes the self-signed SSL certificate for AB2D client to BFD prod
 
    ```ShellSession
    $ openssl pkcs12 -export \
@@ -706,7 +632,7 @@ lication-load-balancer)
    yes
    ```
 
-1. Verify that both the bfd sandbox and client certificates are present
+1. Verify that both the bfd prod and client certificates are present
    
    ```ShellSession
    $ keytool -list -v -keystore ab2d_prod_keystore
@@ -731,7 +657,13 @@ lication-load-balancer)
    AB2D Prod - BFD Prod - Self-signed Certificate|client_data_server_ab2d_prod_certificate.pem
    AB2D Prod - BFD Prod - Public Key             |client_data_server_ab2d_prod_certificate.pub
 
-### Create or update AMI with latest gold disk
+### Encrypt AB2D keystore for Production and upload to S3
+
+1. Get the keystore from 1Password and copy it to the "/tmp" directory
+
+   ```
+   /tmp/ab2d_prod_keystore
+   ```
 
 1. Change to the "Deploy" directory
 
@@ -739,48 +671,77 @@ lication-load-balancer)
    $ cd ~/code/ab2d/Deploy
    ```
 
-1. Set gold disk test parameters
-
-   *Example for "Dev" environment:*
+1. Set AWS environment variables using the CloudTamer API
 
    ```ShellSession
-   $ export CMS_ENV_PARAM=ab2d-dev \
-     && export DEBUG_LEVEL_PARAM=WARN \
-     && export EC2_INSTANCE_TYPE_PACKER_PARAM=m5.xlarge \
-     && export OWNER_PARAM=743302140042 \
-     && export REGION_PARAM=us-east-1 \
-     && export SSH_USERNAME_PARAM=ec2-user \
-     && export VPC_ID_PARAM=vpc-0c6413ec40c5fdac3 \
-     && export CLOUD_TAMER_PARAM=true
+   $ source ./bash/set-env.sh
    ```
 
-   *Example for "Sbx" environment:*
+1. Enter the number of the desired AWS account where the desired logs reside
+
+   ```
+   4 (Prod AWS account)
+   ```
+   
+1. Change to the ruby script directory
 
    ```ShellSession
-   $ export CMS_ENV_PARAM=ab2d-sbx-sandbox \
-     && export DEBUG_LEVEL_PARAM=WARN \
-     && export EC2_INSTANCE_TYPE_PACKER_PARAM=m5.xlarge \
-     && export OWNER_PARAM=743302140042 \
-     && export REGION_PARAM=us-east-1 \
-     && export SSH_USERNAME_PARAM=ec2-user \
-     && export VPC_ID_PARAM=vpc-08dbf3fa96684151c \
-     && export CLOUD_TAMER_PARAM=true
+   $ cd ~/code/ab2d/Deploy/ruby
    ```
 
-   *Example for "Impl" environment:*
+1. Ensure required gems are installed
 
    ```ShellSession
-   $ export CMS_ENV_PARAM=ab2d-east-impl \
-     && export DEBUG_LEVEL_PARAM=WARN \
-     && export EC2_INSTANCE_TYPE_PACKER_PARAM=m5.xlarge \
-     && export OWNER_PARAM=743302140042 \
-     && export REGION_PARAM=us-east-1 \
-     && export SSH_USERNAME_PARAM=ec2-user \
-     && export VPC_ID_PARAM=vpc-0e5d2e88de7f9cad4 \
-     && export CLOUD_TAMER_PARAM=true
+   $ bundle install
+   ```
+   
+1. Encrypt keystore and put it in S3
+   
+   ```ShellSession
+   $ bundle exec rake encrypt_and_put_file_into_s3['/tmp/ab2d_prod_keystore','ab2d-east-prod-automation']
    ```
 
-   *Example for "Prod" environment:*
+1. Verify that you can get the encrypted keystore from S3 and decrypt it
+   
+   1. Remove existing keyfile from the "/tmp" directory (if exists)
+
+      ```ShellSession
+      $ rm -f /tmp/ab2d_prod_keystore
+      ```
+
+   1. Get keystore from S3 and decrypt it
+
+      ```ShellSession
+      $ bundle exec rake get_file_from_s3_and_decrypt['/tmp/ab2d_prod_keystore','ab2d-east-prod-automation']
+      ```
+
+   1. Verify that both the bfd sandbox and client certificates are present
+
+      ```ShellSession
+      $ keytool -list -v -keystore /tmp/ab2d_prod_keystore
+      ```
+
+   1. Copy the "AB2D_BFD_KEYSTORE_PASSWORD in Prod" password from 1Password to the clipboard
+
+   1. Enter the keystore password at the "Enter keystore password" prompt
+
+   1. Verify that there are sections for the following two aliases in the keystore list output
+
+      - Alias name: bfd-prod-sbx-selfsigned
+
+      - Alias name: client_data_server_ab2d_prod_certificate
+
+### Create or update AMI with latest gold disk
+
+1. Change to your "ab2d" repo directory
+
+   *Example:*
+   
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
+1. Set gold disk parameters
 
    ```ShellSession
    $ export CMS_ENV_PARAM=ab2d-east-prod \
@@ -796,7 +757,7 @@ lication-load-balancer)
 1. Create or update AMI with latest gold disk
 
    ```ShellSession
-   $ ./bash/update-gold-disk.sh
+   $ ./Deploy/bash/update-gold-disk.sh
    ```
 
 ### Create or update infrastructure
@@ -827,10 +788,12 @@ lication-load-balancer)
 
 ### Create or update application
 
-1. Change to the "Deploy" directory
+1. Change to your "ab2d" repo directory
 
+   *Example:*
+   
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Set parameters
@@ -858,7 +821,7 @@ lication-load-balancer)
 1. Deploy application
 
    ```ShellSession
-   $ ./bash/deploy-application.sh
+   $ ./Deploy/bash/deploy-application.sh
    ```
 
 ## Upload HPMS Reports
@@ -997,11 +960,15 @@ lication-load-balancer)
 
 1. Set "AB2D Prod : OKTA Prod : AB2D - Admin : Client ID" from 1Password
 
+   *Format:*
+
    ```ShellSession
    $ OKTA_AB2D_ADMIN_CLIENT_ID={okta ab2d admin client id}
    ```
 
 1. Set "AB2D Prod : OKTA Prod : AB2D - Admin : Client Secret" from 1Password
+
+   *Format:*
 
    ```ShellSession
    $ OKTA_AB2D_ADMIN_CLIENT_SECRET={okta ab2d admin client secret}
@@ -1058,7 +1025,7 @@ lication-load-balancer)
      --form "file=@${FILE}"
    ```
 
-1. Verify that you get a "202" reponse
+1. Verify that you get a "202" response
 
 1. Change to the "Deploy" directory
 
@@ -1072,7 +1039,7 @@ lication-load-balancer)
    $ ./bash/connect-to-node.sh
    ```
 
-1. Get database secerets
+1. Get database secrets
 
    ```ShellSession
    $ export DATABASE_HOST=$(docker exec -it $(docker ps -aqf "name=ecs-worker-*" --filter "status=running") bash -c 'echo "$AB2D_DB_HOST"' | tr -d '\r') \
@@ -1118,15 +1085,29 @@ lication-load-balancer)
 
 1. Select **Claims Data Attestation**
 
-1. Select **Report** from the leftmost panel
+1. Expand the **Reports** node in the leftmost panel
 
-1. Select **Select All Contracts**
+1. Select the **Claims Data Attestation Report** node in the leftmost panel
 
-1. Scroll down to the bottom of the page
+1. Select the following from the **Select Contracts** dropdown
+
+   ```
+   Select All
+   ```
+
+1. Click into a whitespace are of the form to close the dropdown
+
+1. Note that the dropdown should now display the following
+
+   ```
+   All Selected
+   ```
 
 1. Select **Create Report**
 
-1. Select **Download to Excel** at the bottom of the page
+1. Scroll down to the bottom of the page
+
+1. Select **Download to Excel**
 
 1. Wait for the download to complete
 
@@ -1135,7 +1116,7 @@ lication-load-balancer)
    *Example:*
 
    ```
-   Attestation_Report1591039077734.xlsx
+   Attestation_Report10122020_1609.xlsx
    ```
 
 1. Close Excel
@@ -1188,11 +1169,15 @@ lication-load-balancer)
 
 1. Set "AB2D Prod : OKTA Prod : AB2D - Admin : Client ID" from 1Password
 
+   *Format:*
+
    ```ShellSession
    $ OKTA_AB2D_ADMIN_CLIENT_ID={okta ab2d admin client id}
    ```
 
 1. Set "AB2D Prod : OKTA Prod : AB2D - Admin : Client Secret" from 1Password
+
+   *Format:*
 
    ```ShellSession
    $ OKTA_AB2D_ADMIN_CLIENT_SECRET={okta ab2d admin client secret}
@@ -1238,7 +1223,7 @@ lication-load-balancer)
    $ FILE=$(ls Attestation_Report*.xlsx | tr -d '\r')
    ```
 
-1. Upload 2020 Parent Organization and Legal Entity to Contract Report data
+1. Upload the {current year} Attestation Report data
    
    ```ShellSession
    $ curl \
@@ -1249,7 +1234,7 @@ lication-load-balancer)
      --form "file=@${FILE}"
    ```
 
-1. Verify that you get a "202" reponse
+1. Verify that you get a "202" response
 
 1. Change to the "Deploy" directory
 
@@ -1263,7 +1248,7 @@ lication-load-balancer)
    $ ./bash/connect-to-node.sh
    ```
 
-1. Get database secerets
+1. Get database secrets
 
    ```ShellSession
    $ export DATABASE_HOST=$(docker exec -it $(docker ps -aqf "name=ecs-worker-*" --filter "status=running") bash -c 'echo "$AB2D_DB_HOST"' | tr -d '\r') \

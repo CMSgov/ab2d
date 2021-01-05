@@ -213,8 +213,8 @@ resource "aws_ecs_task_definition" "api" {
 	  "value" : "${var.ab2d_hpms_url}"
 	},
         {
-	  "name" : "AB2D_HPMS_AUTH_URL",
-	  "value" : "${var.ab2d_hpms_auth_url}"
+	  "name" : "AB2D_HPMS_API_PARAMS",
+	  "value" : "${var.ab2d_hpms_api_params}"
 	},
         {
 	  "name" : "HPMS_AUTH_KEY_ID",
@@ -234,7 +234,7 @@ resource "aws_ecs_task_definition" "api" {
 JSON
   requires_compatibilities = ["EC2"]
   network_mode = "bridge"
-  execution_role_arn = "arn:aws:iam::${var.aws_account_number}:role/Ab2dInstanceRole"
+  execution_role_arn = "arn:aws:iam::${var.aws_account_number}:role/delegatedadmin/developer/Ab2dInstanceV2Role"
 }
 
 resource "aws_lb" "api" {

@@ -11,13 +11,24 @@ START_DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 cd "${START_DIR}/.."
 
 #
-# Set default values
+# Check vars are not empty before proceeding
+#
+
+echo "Check vars are not empty before proceeding..."
+if [ -z "${EC2_INSTANCE_TAG_PARAM}" ] \
+    || [ -z "${EC2_INSTANCE_TYPE_PARAM}" ]; then
+  echo "ERROR: All parameters must be set."
+  exit 1
+fi
+
+#
+# Set variables
 #
 
 CMS_ENV="ab2d-mgmt-east-dev"
-CMS_SHARED_ENV="ab2d-mgmt-east-dev-shared"
 DEBUG_LEVEL="WARN"
-EC2_INSTANCE_TYPE="m5.xlarge"
+EC2_INSTANCE_TAG="${EC2_INSTANCE_TAG_PARAM}"
+EC2_INSTANCE_TYPE="${EC2_INSTANCE_TYPE_PARAM}"
 OWNER="743302140042"
 REGION="us-east-1"
 SSH_USERNAME="ec2-user"
@@ -81,7 +92,7 @@ echo "Initialize and validate terraform..."
 echo "**************************************************************"
 
 cd "${START_DIR}/.."
-cd terraform/environments/$CMS_SHARED_ENV
+cd terraform/environments/$CMS_ENV
 
 rm -f *.tfvars
 
@@ -251,31 +262,40 @@ fi
 # Change to the shared environment
 
 cd "${START_DIR}/.."
-cd terraform/environments/$CMS_SHARED_ENV
+cd terraform/environments/$CMS_ENV
 
 # Set variables in "auto.tfvars" file
 
 echo 'vpc_id = "'$VPC_ID'"' \
-  > $CMS_SHARED_ENV.auto.tfvars
+  > $CMS_ENV.auto.tfvars
 echo 'private_subnet_ids = ["'$SUBNET_PRIVATE_1_ID'","'$SUBNET_PRIVATE_2_ID'"]' \
-  >> $CMS_SHARED_ENV.auto.tfvars
+  >> $CMS_ENV.auto.tfvars
 echo 'public_subnet_ids = ["'$SUBNET_PUBLIC_1_ID'","'$SUBNET_PUBLIC_2_ID'"]' \
-  >> $CMS_SHARED_ENV.auto.tfvars
+  >> $CMS_ENV.auto.tfvars
 echo 'ec2_instance_type = "'$EC2_INSTANCE_TYPE'"' \
-  >> $CMS_SHARED_ENV.auto.tfvars
+  >> $CMS_ENV.auto.tfvars
 echo 'linux_user = "'$SSH_USERNAME'"' \
-  >> $CMS_SHARED_ENV.auto.tfvars
+  >> $CMS_ENV.auto.tfvars
 echo 'ami_id = "'$JENKINS_AGENT_AMI_ID'"' \
-  >> $CMS_SHARED_ENV.auto.tfvars
+  >> $CMS_ENV.auto.tfvars
 
 #
 # Deploy jenkins agent
 #
 
+# Change to management directory
+
 cd "${START_DIR}/.."
-cd terraform/environments/$CMS_SHARED_ENV
+cd terraform/environments/$CMS_ENV
+
+# Remove jenkins_agent module EC2 instance from terraform state so that new jenkins agent can be created
+
+terraform state rm module.jenkins_agent.aws_instance.jenkins_agent
+
+# Create Jenkins agent
 
 echo "Create or update jenkins master..."
 terraform apply \
+  --var "ec2_instance_tag=${EC2_INSTANCE_TAG}" \
   --target module.jenkins_agent \
   --auto-approve

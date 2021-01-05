@@ -16,11 +16,6 @@ variable "env" {
   description = "Please pass this on command line and not as a value here"
 }
 
-variable "ab2d_spe_developer_policies" {
-  type    = list(string)
-  default = []
-}
-
 variable "vpc_id" {
   default = ""
   description = "Please pass this on command line and not as a value here"
@@ -92,7 +87,7 @@ variable "autoscale_group_wait" {
 # }
 
 variable "ec2_iam_profile" {
-  default = "Ab2dInstanceProfile"
+  default = "Ab2dInstanceV2Profile"
 }
 
 variable "ec2_desired_instance_count_api" {
@@ -403,7 +398,8 @@ variable "vpn_private_ip_address_cidr_range" {
 #
 
 variable "kinesis_firehose_bucket" {
-  default = "bfd-insights-ab2d-577373831711"
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
 }
 
 variable "kinesis_firehose_delivery_streams" {
@@ -421,11 +417,12 @@ variable "kinesis_firehose_delivery_streams" {
 }
 
 variable "kinesis_firehose_kms_key_arn" {
-  default = "arn:aws:kms:us-east-1:577373831711:key/97973f21-cdc5-421e-83a8-8545b007999f"
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
 }
 
 variable "kinesis_firehose_role" {
-  default = "Ab2dBfdInsightsRole"
+  default = "Ab2dBfdInsightsV2Role"
 }
 
 #
@@ -510,7 +507,7 @@ variable "ab2d_hpms_url" {
   description = "Please pass this on command line and not as a value here"
 }
 
-variable "ab2d_hpms_auth_url" {
+variable "ab2d_hpms_api_params" {
   default     = ""
   description = "Please pass this on command line and not as a value here"
 }
@@ -521,6 +518,16 @@ variable "ab2d_hpms_auth_key_id" {
 }
 
 variable "ab2d_hpms_auth_key_secret" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "ab2d_bfd_insights_s3_bucket" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "ab2d_bfd_kms_arn" {
   default     = ""
   description = "Please pass this on command line and not as a value here"
 }
