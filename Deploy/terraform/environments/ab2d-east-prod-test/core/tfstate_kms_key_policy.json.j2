@@ -1,0 +1,17 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "Enable IAM User Permissions",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": [
+                    "arn:aws:iam::{{ AWS_ACCOUNT_NUMBER }}:role/ct-ado-ab2d-application-admin",
+                    "arn:aws:iam::{{ AWS_ACCOUNT_NUMBER }}:role/delegatedadmin/developer/Ab2dMgmtV2Role"
+                ]
+            },
+            "Action": "kms:*",
+            "Resource": "*"
+        }
+    ]
+}

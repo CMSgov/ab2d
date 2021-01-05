@@ -113,7 +113,14 @@ sudo sed -i.bak '/messages/ r /deployment/logrotate-var-log-messages-config-snip
 # Configure New Relic infrastructure agent
 
 cd /tmp
-aws s3 cp "s3://${ENVIRONMENT}-automation/encrypted-files/newrelic-infra.yml.encrypted" ./newrelic-infra.yml.encrypted
+
+if [ "${ENVIRONMENT}" == "ab2d-east-prod-test" ]; then
+  S3_BUCKET=ab2d-east-prod-test-main
+else
+  S3_BUCKET="${ENVIRONMENT}-automation"
+fi
+
+aws s3 cp "s3://${S3_BUCKET}/encrypted-files/newrelic-infra.yml.encrypted" ./newrelic-infra.yml.encrypted
 aws kms --region "${REGION}" decrypt \
   --ciphertext-blob fileb://newrelic-infra.yml.encrypted \
   --output text \

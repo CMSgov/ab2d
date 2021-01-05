@@ -48,32 +48,45 @@ end
 
 desc 'Encrypt and put file into S3'
 task :encrypt_and_put_file_into_s3, [:param1, :param2] do |t, args|
+
+  if "#{args.param2}" == "ab2d-east-prod-test-main"
+    kms_key_id = "alias/ab2d-east-prod-test-main-kms"
+  else
+    kms_key_id = "alias/ab2d-kms"
+  end
+
   source_path_and_file = "#{args.param1}"
   s3_bucket = "#{args.param2}"
-  kms_key_id = "alias/ab2d-kms"
   s3 = SecureS3Objects.new
   s3.encrypt_and_put_file_into_s3("#{source_path_and_file}", "#{s3_bucket}", 'encrypted-files', 'us-east-1', "#{kms_key_id}")
 end
 
 desc 'Get file from S3 and decrypt'
 task :get_file_from_s3_and_decrypt, [:param1, :param2] do |t, args|
+
+  if "#{args.param2}" == "ab2d-east-prod-test-main"
+    kms_key_id = "alias/ab2d-east-prod-test-main-kms"
+  else
+    kms_key_id = "alias/ab2d-kms"
+  end
+
   source_path_and_file = "#{args.param1}"
   s3_bucket = "#{args.param2}"
-  kms_key_id = "alias/ab2d-kms"
   s3 = SecureS3Objects.new
   s3.get_file_from_s3_and_decrypt("#{source_path_and_file}", "#{s3_bucket}", 'encrypted-files', 'us-east-1', "#{kms_key_id}", '/tmp')
 end
 
-desc 'Get public schema as a sql script and data as CSV files'
-task :database_public_get_data do
+desc 'Get schema as a sql script and data as CSV files'
+task :database_get_data do
 
   # Get environment variables
 
   home = `printf ${HOME}`
-  cms_env = `printf $CMS_ENV`
+  cms_env = `printf $SOURCE_CMS_ENV`
   database_user = `printf $DATABASE_USER`
   PGPASSWORD = `printf $PGPASSWORD`
   database_name = `printf $DATABASE_NAME`
+  database_schema_name = `printf $DATABASE_SCHEMA_NAME`
   database_host = `printf $DATABASE_HOST`
   database_port = `printf $DATABASE_PORT`
 
@@ -85,17 +98,17 @@ task :database_public_get_data do
 
     sh "rm -f *.csv*"
 
-    # Query public information schema of source database for list of tables
+    # Query information schema of source database for list of tables
 
     psql_conn = PG.connect(:dbname => "#{database_name}", :host => "#{database_host}", :port => "#{database_port}", :user => "#{database_user}")
-    public_tables = psql_conn.exec("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE' ORDER BY table_name;")
+    tables = psql_conn.exec("SELECT table_name FROM information_schema.tables WHERE table_schema = '#{database_schema_name}' AND table_type = 'BASE TABLE' ORDER BY table_name;")
     psql_conn.close()
 
     # Loop through the list of tables and run this for each table
 
-    for table in public_tables
+    for table in tables
       table_name = table['table_name']
-      sh "psql --dbname=#{database_name} --host=#{database_host} --username=#{database_user} --command='\\COPY (SELECT * FROM public.\"#{table_name}\") TO 'public.#{table_name}.csv' WITH (FORMAT CSV);'"
+      sh "psql --dbname=#{database_name} --host=#{database_host} --username=#{database_user} --command='\\COPY (SELECT * FROM #{database_schema_name}.\"#{table_name}\") TO '#{database_schema_name}.#{table_name}.csv' WITH (FORMAT CSV);'"
     end
 
     # Loop through generated CSV files and split any files that are greater than 25 MB
@@ -141,7 +154,7 @@ task :database_public_get_data do
           else
             part_num_string = "#{part_num}"
           end
-          `mv #{csv_file_part} public.#{table_name}_part#{part_num_string}.csv`
+          `mv #{csv_file_part} #{database_schema_name}.#{table_name}_part#{part_num_string}.csv`
         end
 
       end

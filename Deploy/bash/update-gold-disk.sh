@@ -18,6 +18,7 @@ echo "Check vars are not empty before proceeding..."
 if [ -z "${CMS_ENV_PARAM}" ] \
     || [ -z "${DEBUG_LEVEL_PARAM}" ] \
     || [ -z "${EC2_INSTANCE_TYPE_PACKER_PARAM}" ] \
+    || [ -z "${IAM_INSTANCE_PROFILE_PARAM}" ] \
     || [ -z "${OWNER_PARAM}" ] \
     || [ -z "${REGION_PARAM}" ] \
     || [ -z "${SSH_USERNAME_PARAM}" ] \
@@ -36,6 +37,8 @@ CMS_ENV="${CMS_ENV_PARAM}"
 export DEBUG_LEVEL="${DEBUG_LEVEL_PARAM}"
 
 EC2_INSTANCE_TYPE_PACKER="${EC2_INSTANCE_TYPE_PACKER_PARAM}"
+
+IAM_INSTANCE_PROFILE="${IAM_INSTANCE_PROFILE_PARAM}"
 
 OWNER="${OWNER_PARAM}"
 
@@ -62,12 +65,19 @@ CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER=653916833532
 
 if [ "${CMS_ENV}" == "ab2d-dev" ]; then
   CMS_ENV_AWS_ACCOUNT_NUMBER=349849222861
+  PARENT_ENV="ab2d-dev"
 elif [ "${CMS_ENV}" == "ab2d-sbx-sandbox" ]; then
   CMS_ENV_AWS_ACCOUNT_NUMBER=777200079629
+  PARENT_ENV="ab2d-sbx-sandbox"
 elif [ "${CMS_ENV}" == "ab2d-east-impl" ]; then
   CMS_ENV_AWS_ACCOUNT_NUMBER=330810004472
+  PARENT_ENV="ab2d-east-impl"
 elif [ "${CMS_ENV}" == "ab2d-east-prod" ]; then
   CMS_ENV_AWS_ACCOUNT_NUMBER=595094747606
+  PARENT_ENV="ab2d-east-prod"
+elif [ "${CMS_ENV}" == "ab2d-east-prod-test" ]; then
+  CMS_ENV_AWS_ACCOUNT_NUMBER=595094747606
+  PARENT_ENV="ab2d-east-prod"
 else
   echo "ERROR: 'CMS_ENV' environment is unknown."
   exit 1  
@@ -90,9 +100,9 @@ source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_aws_sts_assu
 #
 
 if [ "${CLOUD_TAMER}" == "true" ]; then
-  fn_get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
+  fn_get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${PARENT_ENV}"
 else
-  fn_get_temporary_aws_credentials_via_aws_sts_assume_role "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
+  fn_get_temporary_aws_credentials_via_aws_sts_assume_role "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${PARENT_ENV}"
 fi
 
 #
@@ -104,7 +114,7 @@ fi
 echo "Getting first public subnet id..."
 
 SUBNET_PUBLIC_1_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-subnets \
-  --filters "Name=tag:Name,Values=${CMS_ENV}-public-a" \
+  --filters "Name=tag:Name,Values=${PARENT_ENV}-public-a" \
   --query "Subnets[*].SubnetId" \
   --output text)
 
@@ -121,7 +131,7 @@ echo "Get AMI_ID if it already exists for the deployment..."
 
 AMI_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-images \
   --owners self \
-  --filters "Name=tag:Name,Values=ab2d-ami" \
+  --filters "Name=tag:Name,Values=${CMS_ENV}-ami" \
   --query "Images[*].[ImageId]" \
   --output text)
 
@@ -139,13 +149,13 @@ if [ -n "${AMI_ID_IN_USE}" ]; then
   echo "Rename existing ab2d ami..."
 
   BASE_GOLD_DISK=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-images \
-    --owners self --filters "Name=tag:Name,Values=ab2d-ami" \
+    --owners self --filters "Name=tag:Name,Values=${CMS_ENV}-ami" \
     --query "Images[*].Tags[?Key=='gold_ami'].Value" \
     --output text)
 
   aws --region "${AWS_DEFAULT_REGION}" ec2 create-tags \
     --resources "${AMI_ID}" \
-    --tags "Key=Name,Value=ab2d-ami-gold-disk-${BASE_GOLD_DISK}"
+    --tags "Key=Name,Value=${CMS_ENV}-ami-gold-disk-${BASE_GOLD_DISK}"
 elif [ -n "${AMI_ID}" ]; then
   echo "Deregister existing ab2d ami..."
   aws --region "${AWS_DEFAULT_REGION}" ec2 deregister-image \
@@ -229,6 +239,7 @@ packer build \
   --var environment="${CMS_ENV}" \
   --var region="${AWS_DEFAULT_REGION}" \
   --var ec2_instance_type="${EC2_INSTANCE_TYPE_PACKER}" \
+  --var iam_instance_profile="${IAM_INSTANCE_PROFILE}" \
   --var vpc_id="${VPC_ID}" \
   --var subnet_public_1_id="${SUBNET_PUBLIC_1_ID}" \
   --var my_ip_address="${IP}" \
@@ -247,4 +258,4 @@ AMI_ID=$(cat output.txt \
 
 aws --region "${AWS_DEFAULT_REGION}" ec2 create-tags \
   --resources "${AMI_ID}" \
-  --tags "Key=Name,Value=ab2d-ami"
+  --tags "Key=Name,Value=${CMS_ENV}-ami"

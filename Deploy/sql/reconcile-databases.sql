@@ -17,17 +17,17 @@ FROM temporary.sponsor a;
 -- Insert contract records
 
 INSERT INTO public.contract(
-  id, contract_number, contract_name, sponsor_id, attested_on, created, modified, hpms_parent_org_id, hpms_parent_org_name, hpms_org_marketing_name
+  id, contract_number, contract_name, sponsor_id, attested_on, created, modified, hpms_parent_org_id, hpms_parent_org_name, hpms_org_marketing_name, update_mode
 )
-SELECT a.id, a.contract_number, a.contract_name, a.sponsor_id, a.attested_on, a.created, a.modified, a.hpms_parent_org_id, a.hpms_parent_org_name, a.hpms_org_marketing_name
+SELECT a.id, a.contract_number, a.contract_name, a.sponsor_id, a.attested_on, a.created, a.modified, a.hpms_parent_org_id, a.hpms_parent_org_name, a.hpms_org_marketing_name, a.update_mode
 FROM temporary.contract a;
 
 -- Insert user account records
 
 INSERT INTO public.user_account(
-  id, username, first_name, last_name, email, sponsor_id, enabled, max_parallel_jobs, created, modified
+  id, username, first_name, last_name, email, sponsor_id, enabled, max_parallel_jobs, created, modified, contract_id
 )
-SELECT a.id, a.username, a.first_name, a.last_name, a.email, a.sponsor_id, a.enabled, a.max_parallel_jobs, a.created, a.modified
+SELECT a.id, a.username, a.first_name, a.last_name, a.email, a.sponsor_id, a.enabled, a.max_parallel_jobs, a.created, a.modified, a.contract_id
 FROM temporary.user_account a;
 
 -- Insert role records

@@ -10,11 +10,9 @@ SELECT
   f.status,
   f.progress,
   f.job_uuid
-FROM public.sponsor a
-INNER JOIN public.contract d
-ON a.id = d.sponsor_id
+FROM public.contract d
 INNER JOIN public.user_account e
-ON a.id = e.sponsor_id
+ON d.id = e.contract_id
 INNER JOIN public.job f
 ON e.id = f.user_account_id
 WHERE d.attested_on is not null
@@ -25,11 +23,9 @@ AND e.username IN (
   FROM (
     SELECT
       e.username, COUNT(e.username) AS username_count
-    FROM public.sponsor a
-    INNER JOIN public.contract d
-    ON a.id = d.sponsor_id
+    FROM public.contract d
     INNER JOIN public.user_account e
-    ON a.id = e.sponsor_id
+    ON d.id = e.contract_id
     WHERE d.attested_on is not null
     AND d.contract_number NOT LIKE 'Z%'
     AND e.enabled = true
