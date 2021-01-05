@@ -15,7 +15,7 @@ public class EobUtils {
         if (eob.getClass() == org.hl7.fhir.dstu3.model.ExplanationOfBenefit.class) {
             patientVal = ((org.hl7.fhir.dstu3.model.ExplanationOfBenefit) eob).getPatient().getReference();
         }
-        if (patientVal == null) {
+        if (patientVal != null) {
             return patientVal.replaceFirst("Patient/", "");
         }
 
