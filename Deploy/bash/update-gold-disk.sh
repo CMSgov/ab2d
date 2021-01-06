@@ -15,34 +15,55 @@ cd "${START_DIR}"
 #
 
 echo "Check vars are not empty before proceeding..."
-if [ -z "${CMS_ENV_PARAM}" ] \
+if [ -z "${CLOUD_TAMER_PARAM}" ] \
     || [ -z "${DEBUG_LEVEL_PARAM}" ] \
     || [ -z "${EC2_INSTANCE_TYPE_PACKER_PARAM}" ] \
     || [ -z "${IAM_INSTANCE_PROFILE_PARAM}" ] \
     || [ -z "${OWNER_PARAM}" ] \
-    || [ -z "${REGION_PARAM}" ] \
     || [ -z "${SSH_USERNAME_PARAM}" ] \
-    || [ -z "${VPC_ID_PARAM}" ] \
-    || [ -z "${CLOUD_TAMER_PARAM}" ]; then
+    || [ -z "${TARGET_AWS_ACCOUNT_NUMBER_PARAM}" ] \
+    || [ -z "${TARGET_CMS_ENV_PARAM}" ] \
+    || [ -z "${VPC_ID_PARAM}" ]; then
   echo "ERROR: All parameters must be set."
   exit 1
 fi
 
 #
-# Set variables
+# Set conditional variables
 #
 
-CMS_ENV="${CMS_ENV_PARAM}"
+# Set whether CloudTamer API should be used
+
+if [ "${CLOUD_TAMER_PARAM}" != "false" ] && [ "${CLOUD_TAMER_PARAM}" != "true" ]; then
+  echo "ERROR: CLOUD_TAMER_PARAM parameter must be true or false"
+  exit 1
+else
+  CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
+fi
+
+# Set Parent AWS environment
+
+if [ "${TARGET_CMS_ENV_PARAM}" == "ab2d-east-prod-test" ]; then
+  PARENT_ENV="ab2d-east-prod"
+else
+  PARENT_ENV="${TARGET_CMS_ENV_PARAM}"
+fi
+
+#
+# Set remaining variables
+#
 
 export DEBUG_LEVEL="${DEBUG_LEVEL_PARAM}"
+
+TARGET_AWS_ACCOUNT_NUMBER="${TARGET_AWS_ACCOUNT_NUMBER_PARAM}"
+
+TARGET_CMS_ENV="${TARGET_CMS_ENV_PARAM}"
 
 EC2_INSTANCE_TYPE_PACKER="${EC2_INSTANCE_TYPE_PACKER_PARAM}"
 
 IAM_INSTANCE_PROFILE="${IAM_INSTANCE_PROFILE_PARAM}"
 
 OWNER="${OWNER_PARAM}"
-
-REGION="${REGION_PARAM}"
 
 SSH_USERNAME="${SSH_USERNAME_PARAM}"
 
@@ -55,32 +76,6 @@ if [ "${CLOUD_TAMER_PARAM}" != "false" ] && [ "${CLOUD_TAMER_PARAM}" != "true" ]
   exit 1
 else
   CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
-fi
-
-#
-# Set AWS account numbers
-#
-
-CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER=653916833532
-
-if [ "${CMS_ENV}" == "ab2d-dev" ]; then
-  CMS_ENV_AWS_ACCOUNT_NUMBER=349849222861
-  PARENT_ENV="ab2d-dev"
-elif [ "${CMS_ENV}" == "ab2d-sbx-sandbox" ]; then
-  CMS_ENV_AWS_ACCOUNT_NUMBER=777200079629
-  PARENT_ENV="ab2d-sbx-sandbox"
-elif [ "${CMS_ENV}" == "ab2d-east-impl" ]; then
-  CMS_ENV_AWS_ACCOUNT_NUMBER=330810004472
-  PARENT_ENV="ab2d-east-impl"
-elif [ "${CMS_ENV}" == "ab2d-east-prod" ]; then
-  CMS_ENV_AWS_ACCOUNT_NUMBER=595094747606
-  PARENT_ENV="ab2d-east-prod"
-elif [ "${CMS_ENV}" == "ab2d-east-prod-test" ]; then
-  CMS_ENV_AWS_ACCOUNT_NUMBER=595094747606
-  PARENT_ENV="ab2d-east-prod"
-else
-  echo "ERROR: 'CMS_ENV' environment is unknown."
-  exit 1  
 fi
 
 #
@@ -100,9 +95,9 @@ source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_aws_sts_assu
 #
 
 if [ "${CLOUD_TAMER}" == "true" ]; then
-  fn_get_temporary_aws_credentials_via_cloudtamer_api "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${PARENT_ENV}"
+  fn_get_temporary_aws_credentials_via_cloudtamer_api "${TARGET_AWS_ACCOUNT_NUMBER}" "${PARENT_ENV}"
 else
-  fn_get_temporary_aws_credentials_via_aws_sts_assume_role "${CMS_ENV_AWS_ACCOUNT_NUMBER}" "${PARENT_ENV}"
+  fn_get_temporary_aws_credentials_via_aws_sts_assume_role "${TARGET_AWS_ACCOUNT_NUMBER}" "${PARENT_ENV}"
 fi
 
 #
@@ -131,7 +126,7 @@ echo "Get AMI_ID if it already exists for the deployment..."
 
 AMI_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-images \
   --owners self \
-  --filters "Name=tag:Name,Values=${CMS_ENV}-ami" \
+  --filters "Name=tag:Name,Values=${TARGET_CMS_ENV}-ami" \
   --query "Images[*].[ImageId]" \
   --output text)
 
@@ -149,13 +144,13 @@ if [ -n "${AMI_ID_IN_USE}" ]; then
   echo "Rename existing ab2d ami..."
 
   BASE_GOLD_DISK=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-images \
-    --owners self --filters "Name=tag:Name,Values=${CMS_ENV}-ami" \
+    --owners self --filters "Name=tag:Name,Values=${TARGET_CMS_ENV}-ami" \
     --query "Images[*].Tags[?Key=='gold_ami'].Value" \
     --output text)
 
   aws --region "${AWS_DEFAULT_REGION}" ec2 create-tags \
     --resources "${AMI_ID}" \
-    --tags "Key=Name,Value=${CMS_ENV}-ami-gold-disk-${BASE_GOLD_DISK}"
+    --tags "Key=Name,Value=${TARGET_CMS_ENV}-ami-gold-disk-${BASE_GOLD_DISK}"
 elif [ -n "${AMI_ID}" ]; then
   echo "Deregister existing ab2d ami..."
   aws --region "${AWS_DEFAULT_REGION}" ec2 deregister-image \
@@ -224,8 +219,8 @@ fi
 # Set 1 hour of polling at 1 minute intervals
 # - this was necessary to prevent a timeout error
 
-AWS_MAX_ATTEMPTS=60
-AWS_POLL_DELAY_SECONDS=60
+export AWS_MAX_ATTEMPTS=60
+export AWS_POLL_DELAY_SECONDS=60
 
 # Build the AMI
 
@@ -236,7 +231,7 @@ IP=$(curl ipinfo.io/ip)
 packer build \
   --var seed_ami="${SEED_AMI}" \
   --var seed_ami_name="${SEED_AMI_NAME}" \
-  --var environment="${CMS_ENV}" \
+  --var environment="${TARGET_CMS_ENV}" \
   --var region="${AWS_DEFAULT_REGION}" \
   --var ec2_instance_type="${EC2_INSTANCE_TYPE_PACKER}" \
   --var iam_instance_profile="${IAM_INSTANCE_PROFILE}" \
@@ -258,4 +253,4 @@ AMI_ID=$(cat output.txt \
 
 aws --region "${AWS_DEFAULT_REGION}" ec2 create-tags \
   --resources "${AMI_ID}" \
-  --tags "Key=Name,Value=${CMS_ENV}-ami"
+  --tags "Key=Name,Value=${TARGET_CMS_ENV}-ami"

@@ -16,7 +16,7 @@ pipeline {
         script {
 	      dir ('Deploy/bash') {
 	        sh '''
-	          ./initialize-environment-v2.sh
+	          ./initialize-environment.sh
 	        sh '''
 	      }
 	    }
@@ -30,7 +30,7 @@ pipeline {
         script {
 	      dir ('Deploy/bash') {
 	        sh '''
-	          ./update-gold-disk-v2.sh
+	          ./update-gold-disk.sh
 	        sh '''
 	      }
 	    }
@@ -44,7 +44,7 @@ pipeline {
         script {
 	      dir ('Deploy/bash') {
 	        sh '''
-	          ./deploy-infrastructure-v2.sh
+	          ./deploy-infrastructure.sh
 	        sh '''
 	      }
 	    }
@@ -55,7 +55,7 @@ pipeline {
         script {
 	      dir ('Deploy/bash') {
 	        sh '''
-	          ./deploy-application-v2.sh
+	          ./deploy-application.sh
 	        sh '''
 	      }
 	    }
