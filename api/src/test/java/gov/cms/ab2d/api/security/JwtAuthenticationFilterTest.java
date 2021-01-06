@@ -3,14 +3,12 @@ package gov.cms.ab2d.api.security;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.controller.TestUtil;
-import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -23,7 +21,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.Collections;
 import java.util.List;
 
 import static gov.cms.ab2d.api.util.Constants.ADMIN_ROLE;
@@ -59,20 +56,12 @@ class JwtAuthenticationFilterTest {
     @Autowired
     private DoAll doAll;
 
-    @Autowired
-    private ContractRepository contractRepository;
-
-    @Autowired
-    private JobRepository jobRepository;
-
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @AfterEach
     public void cleanup() {
-        jobRepository.deleteAll();
         dataSetup.cleanup();
-        contractRepository.deleteAll();
         doAll.delete();
     }
 
