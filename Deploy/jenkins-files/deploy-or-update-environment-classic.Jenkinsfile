@@ -30,7 +30,7 @@ pipeline {
         script {
 	      dir ('Deploy/bash') {
 	        sh '''
-	          ./update-gold-disk-v2.sh
+	          ./update-gold-disk.sh
 	        sh '''
 	      }
 	    }
