@@ -44,7 +44,7 @@ pipeline {
         script {
 	      dir ('Deploy/bash') {
 	        sh '''
-	          ./deploy-infrastructure-v2.sh
+	          ./deploy-infrastructure.sh
 	        sh '''
 	      }
 	    }
