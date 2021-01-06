@@ -9,7 +9,6 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -65,12 +64,6 @@ public class TLSTest {
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
-
-    @BeforeEach
-    public void setup() {
-        userRepository.deleteAll();
-        roleRepository.deleteAll();
-    }
 
     @Test
     public void testTLS() throws IOException, CertificateException, NoSuchAlgorithmException, KeyStoreException,
