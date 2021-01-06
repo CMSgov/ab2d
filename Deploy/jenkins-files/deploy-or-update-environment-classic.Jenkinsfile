@@ -16,7 +16,7 @@ pipeline {
         script {
 	      dir ('Deploy/bash') {
 	        sh '''
-	          ./initialize-environment-v2.sh
+	          ./initialize-environment.sh
 	        sh '''
 	      }
 	    }
