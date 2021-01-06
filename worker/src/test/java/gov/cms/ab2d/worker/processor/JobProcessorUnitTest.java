@@ -1,18 +1,14 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.User;
+import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.worker.TestUtil;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneSearch;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneficiaries.PatientDTO;
+import gov.cms.ab2d.worker.processor.ContractProcessor;
+import gov.cms.ab2d.worker.processor.JobProcessor;
+import gov.cms.ab2d.worker.processor.JobProcessorImpl;
+import gov.cms.ab2d.worker.processor.coverage.CoverageDriverStub;
 import gov.cms.ab2d.worker.service.FileService;
-import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,31 +25,21 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.ParseException;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
-import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
 import static java.lang.Boolean.TRUE;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class JobProcessorUnitTest {
     // class under test
     private JobProcessor cut;
 
-    private String jobUuid = "6d08bf08-f926-4e19-8d89-ad67ef89f17e";
+    private static final String jobUuid = "6d08bf08-f926-4e19-8d89-ad67ef89f17e";
 
     private Random random = new Random();
 
@@ -62,22 +48,23 @@ class JobProcessorUnitTest {
     @Mock private FileService fileService;
     @Mock private JobRepository jobRepository;
     @Mock private JobOutputRepository jobOutputRepository;
-    @Mock private ContractBeneSearch contractBeneSearch;
     @Mock private ContractProcessor contractProcessor;
     @Mock private LogManager eventLogger;
 
+    private CoverageDriverStub coverageDriver;
     private Job job;
-    private ContractBeneficiaries patientsByContract;
 
     @BeforeEach
     void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
+
+        coverageDriver = spy(new CoverageDriverStub(10, 20));
         cut = new JobProcessorImpl(
                 fileService,
                 jobRepository,
                 jobOutputRepository,
-                contractBeneSearch,
                 contractProcessor,
+                coverageDriver,
                 eventLogger
         );
 
@@ -88,25 +75,23 @@ class JobProcessorUnitTest {
 
         var contract = createContract();
         job.setContract(contract);
-        when(jobRepository.findByJobUuid(anyString())).thenReturn(job);
-
-        patientsByContract = createPatientsByContractResponse(contract);
-        Mockito.when(contractBeneSearch.getPatients(anyString(), anyInt(), any())).thenReturn(patientsByContract);
 
         final Path outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
         final Path outputDir = Files.createDirectories(outputDirPath);
-        Mockito.lenient().when(fileService.createDirectory(any(Path.class))).thenReturn(outputDir);
+
+        when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
+        lenient().when(fileService.createDirectory(any(Path.class))).thenReturn(outputDir);
     }
 
     @Test
     @DisplayName("When a job is in submitted status, it can be processed")
     void processJob_happyPath() throws ExecutionException, InterruptedException {
 
-        var processedJob = cut.process(jobUuid);
+        var processedJob = cut.process(job.getJobUuid());
 
-        assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
-        assertThat(processedJob.getStatusMessage(), is("100%"));
-        assertThat(processedJob.getExpiresAt(), notNullValue());
+        assertEquals(JobStatus.SUCCESSFUL, processedJob.getStatus());
+        assertEquals("100%", processedJob.getStatusMessage());
+        assertNotNull(processedJob.getExpiresAt());
         doVerify();
     }
 
@@ -115,17 +100,18 @@ class JobProcessorUnitTest {
     void whenTheUserBelongsToParent_ChildContractsAreProcessed() throws ExecutionException, InterruptedException {
         var user = job.getUser();
 
-        var processedJob = cut.process(jobUuid);
+        var processedJob = cut.process(job.getJobUuid());
 
-        assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
-        assertThat(processedJob.getStatusMessage(), is("100%"));
-        assertThat(processedJob.getExpiresAt(), notNullValue());
+        assertEquals(JobStatus.SUCCESSFUL, processedJob.getStatus());
+        assertEquals("100%", processedJob.getStatusMessage());
+        assertNotNull(processedJob.getExpiresAt());
         doVerify();
     }
 
     private void doVerify() throws ExecutionException, InterruptedException {
         verify(fileService).createDirectory(any());
-        verify(contractBeneSearch).getPatients(anyString(), anyInt(), any());
+        verify(coverageDriver).pageCoverage(any(Job.class));
+        verify(coverageDriver).pageCoverage(any(CoveragePagingRequest.class));
     }
 
     @Test
@@ -133,7 +119,7 @@ class JobProcessorUnitTest {
     void whenOutputDirectoryAlreadyExist_DeleteItAndCreateItAfresh() throws IOException, ExecutionException, InterruptedException {
 
         //create output dir, so it already exists
-        final Path outputDir = Paths.get(efsMountTmpDir.toString(), jobUuid);
+        final Path outputDir = Paths.get(efsMountTmpDir.toString(), "S0000");
         Files.createDirectories(outputDir);
 
         //create files inside the directory.
@@ -149,14 +135,15 @@ class JobProcessorUnitTest {
                 .thenThrow(uncheckedIOE)
                 .thenReturn(efsMountTmpDir);
 
-        var processedJob = cut.process(jobUuid);
+        var processedJob = cut.process(job.getJobUuid());
 
-        assertThat(processedJob.getStatus(), is(JobStatus.SUCCESSFUL));
-        assertThat(processedJob.getStatusMessage(), is("100%"));
-        assertThat(processedJob.getExpiresAt(), notNullValue());
+        assertEquals(JobStatus.SUCCESSFUL, processedJob.getStatus());
+        assertEquals("100%", processedJob.getStatusMessage());
+        assertNotNull(processedJob.getExpiresAt());
 
         verify(fileService, times(2)).createDirectory(any());
-        verify(contractBeneSearch).getPatients(anyString(), anyInt(), any());
+        verify(coverageDriver).pageCoverage(any(Job.class));
+        verify(coverageDriver).pageCoverage(any(CoveragePagingRequest.class));
     }
 
     @Test
@@ -164,7 +151,7 @@ class JobProcessorUnitTest {
     void whenExistingOutputDirectoryHasSubDirectory_JobFailsGracefully() throws IOException, ExecutionException, InterruptedException {
 
         //create output dir, so it already exists
-        final Path outputDir = Paths.get(efsMountTmpDir.toString(), jobUuid);
+        final Path outputDir = Paths.get(efsMountTmpDir.toString(), "S0000");
         Files.createDirectories(outputDir);
 
         //add a file in the directory which is NOT a regular file, but a directory
@@ -174,16 +161,14 @@ class JobProcessorUnitTest {
         var uncheckedIOE = new UncheckedIOException(errMsg, new IOException(errMsg));
 
         Mockito.when(fileService.createDirectory(any())).thenThrow(uncheckedIOE);
-        Mockito.lenient().when(contractBeneSearch.getPatients(anyString(), anyInt(), any())).thenReturn(patientsByContract);
+        var processedJob = cut.process(job.getJobUuid());
 
-        var processedJob = cut.process(jobUuid);
-
-        assertThat(processedJob.getStatus(), is(JobStatus.FAILED));
-        assertThat(processedJob.getStatusMessage(), CoreMatchers.startsWith("Could not delete"));
-        assertThat(processedJob.getExpiresAt(), nullValue());
+        assertEquals(JobStatus.FAILED, processedJob.getStatus());
+        assertTrue(processedJob.getStatusMessage().startsWith("Could not delete"));
+        assertNull(processedJob.getExpiresAt());
 
         verify(fileService).createDirectory(any());
-        verify(contractBeneSearch, never()).getPatients(anyString(), anyInt(), any());
+        verify(coverageDriver, never()).pageCoverage(any(Job.class));
     }
 
     @Test
@@ -194,16 +179,15 @@ class JobProcessorUnitTest {
         var uncheckedIOE = new UncheckedIOException(errMsg, new IOException(errMsg));
 
         Mockito.when(fileService.createDirectory(any())).thenThrow(uncheckedIOE);
-        Mockito.lenient().when(contractBeneSearch.getPatients(anyString(), anyInt(), any())).thenReturn(patientsByContract);
 
-        var processedJob = cut.process(jobUuid);
+        var processedJob = cut.process(job.getJobUuid());
 
-        assertThat(processedJob.getStatus(), is(JobStatus.FAILED));
-        assertThat(processedJob.getStatusMessage(), CoreMatchers.startsWith("Could not create output directory"));
-        assertThat(processedJob.getExpiresAt(), nullValue());
+        assertEquals(JobStatus.FAILED, processedJob.getStatus());
+        assertTrue(processedJob.getStatusMessage().startsWith("Could not create output directory"));
+        assertNull(processedJob.getExpiresAt());
 
         verify(fileService).createDirectory(any());
-        verify(contractBeneSearch, never()).getPatients(anyString(), anyInt(), any());
+        verify(coverageDriver, never()).pageCoverage(any(Job.class));
     }
 
     private User createUser() {
@@ -233,27 +217,5 @@ class JobProcessorUnitTest {
         job.setStatus(JobStatus.IN_PROGRESS);
         job.setUser(user);
         return job;
-    }
-
-    private ContractBeneficiaries createPatientsByContractResponse(Contract contract) throws ParseException {
-        PatientDTO p1 = toPatientDTO();
-        PatientDTO p2 = toPatientDTO();
-        PatientDTO p3 = toPatientDTO();
-
-        return ContractBeneficiaries.builder()
-                .contractNumber(contract.getContractNumber())
-                .patient(p1.getBeneficiaryId(), p1)
-                .patient(p2.getBeneficiaryId(), p2)
-                .patient(p3.getBeneficiaryId(), p3)
-                .build();
-    }
-
-    private PatientDTO toPatientDTO() {
-        int anInt = random.nextInt(11);
-        var dateRange =  TestUtil.getOpenRange();
-        return PatientDTO.builder()
-                .identifiers(createIdentifierWithoutMbi("patient_" + anInt))
-                .dateRangesUnderContract(Arrays.asList(dateRange))
-                .build();
     }
 }

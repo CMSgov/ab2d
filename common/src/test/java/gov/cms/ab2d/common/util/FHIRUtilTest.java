@@ -5,22 +5,19 @@ import org.hl7.fhir.dstu3.model.OperationOutcome;
 import org.hl7.fhir.dstu3.model.ResourceType;
 import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.Assert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @Slf4j
-public class FHIRUtilTest {
+class FHIRUtilTest {
 
     @Test
     void testGetErrorOutcome() {
         final String errText = "SOMETHING BROKE";
         final OperationOutcome oo = FHIRUtil.getErrorOutcome(errText);
         assertTrue(oo instanceof  OperationOutcome);
-        assertThat(oo.getResourceType(), is(ResourceType.OperationOutcome));
-        assertThat(oo.getIssue().size(), is(1));
-        assertThat(oo.getIssue().get(0).getDetails().getText(), is(errText));
+        assertEquals(ResourceType.OperationOutcome, oo.getResourceType());
+        assertEquals(1, oo.getIssue().size());
+        assertEquals(errText, oo.getIssue().get(0).getDetails().getText());
     }
 
     @Test
@@ -28,6 +25,6 @@ public class FHIRUtilTest {
         final String errText = "SOMETHING BROKE";
         final OperationOutcome oo = FHIRUtil.getErrorOutcome(errText);
         final String payload = FHIRUtil.outcomeToJSON(oo);
-        assertThat(payload, notNullValue());
+        assertNotNull(payload);
     }
 }

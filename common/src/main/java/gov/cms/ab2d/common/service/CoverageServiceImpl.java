@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityNotFoundException;
 import java.time.*;
 import java.util.*;
 
@@ -62,7 +63,10 @@ public class CoverageServiceImpl implements CoverageService {
     @Override
     public CoveragePeriod getCoveragePeriod(Contract contract, int month, int year) {
         checkMonthAndYear(month, year);
-        return coveragePeriodRepo.getByContractIdAndMonthAndYear(contract.getId(), month, year);
+
+        Optional<CoveragePeriod> period = coveragePeriodRepo.findByContractIdAndMonthAndYear(contract.getId(), month, year);
+        return period.orElseThrow(() ->
+                new EntityNotFoundException("could not find coverage period matching contract, month, and year"));
     }
 
     @Override
@@ -93,6 +97,12 @@ public class CoverageServiceImpl implements CoverageService {
         CoveragePeriod period = findCoveragePeriod(periodId);
         JobStatus jobStatus = period.getStatus();
         return jobStatus == JobStatus.IN_PROGRESS;
+    }
+
+    @Override
+    public int countBeneficiariesByCoveragePeriod(List<CoveragePeriod> coveragePeriods) {
+        List<Integer> ids = coveragePeriods.stream().map(CoveragePeriod::getId).collect(toList());
+        return coverageServiceRepo.countBeneficiariesByPeriods(ids);
     }
 
     @Override
@@ -141,8 +151,6 @@ public class CoverageServiceImpl implements CoverageService {
         coverageServiceRepo.deletePreviousSearch(period, 1);
     }
 
-    // todo: add in appropriate location either the completeCoverageSearch method or within the EOB Search on conclusion
-    //      of the current search. This needs to run after the completion of every search
     @Override
     public CoveragePagingResult pageCoverage(CoveragePagingRequest pagingRequest) {
 
@@ -156,8 +164,6 @@ public class CoverageServiceImpl implements CoverageService {
         return coverageServiceRepo.pageCoverage(coveragePeriod.getContract(), pagingRequest);
     }
 
-    // todo: create diff and log on completion of every search. This information may be logged to both
-    //      kinesis and sql as part of a subsequent issue.
     @Override
     public CoverageSearchDiff searchDiff(int periodId) {
 
@@ -324,6 +330,12 @@ public class CoverageServiceImpl implements CoverageService {
                     + " to " + JobStatus.SUCCESSFUL);
         }
 
+        // todo: log to kinesis as well
+        Contract contract = period.getContract();
+        CoverageSearchDiff diff = searchDiff(periodId);
+        log.info("{}-{}-{} difference between previous metadata and current metadata\n {}",
+                contract.getContractNumber(), period.getYear(), period.getMonth(), diff);
+
         deletePreviousSearch(periodId);
 
         return updateStatus(period, description, JobStatus.SUCCESSFUL);
@@ -336,6 +348,7 @@ public class CoverageServiceImpl implements CoverageService {
             throw new IllegalArgumentException(errMsg);
         }
 
+        // todo: change to EST offset since all deployments are in EST
         OffsetDateTime time = OffsetDateTime.now(ZoneOffset.UTC);
         int currentYear = time.getYear();
 
