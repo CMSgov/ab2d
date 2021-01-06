@@ -52,13 +52,7 @@ public class AdminAPIUserTests {
     private UserRepository userRepository;
 
     @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
     private JobRepository jobRepository;
-
-    @Autowired
-    private ContractRepository contractRepository;
 
     @Autowired
     private TestUtil testUtil;
@@ -77,12 +71,12 @@ public class AdminAPIUserTests {
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
-        jobRepository.deleteAll();
-        userRepository.deleteAll();
-        roleRepository.deleteAll();
-        contractRepository.deleteAll();
-
         token = testUtil.setupToken(List.of(ADMIN_ROLE, SPONSOR_ROLE, ATTESTOR_ROLE));
+    }
+
+    @AfterEach
+    public void cleanup() {
+        dataSetup.cleanup();
     }
 
     @Test
@@ -118,6 +112,9 @@ public class AdminAPIUserTests {
         Assert.assertEquals(createdUserDTO.getContract().getContractNumber(), userDTO.getContract().getContractNumber());
         Assert.assertEquals(createdUserDTO.getContract().getContractName(), userDTO.getContract().getContractName());
         Assert.assertEquals(createdUserDTO.getRole(), userDTO.getRole());
+
+        User user = userRepository.findByUsername(("test@test.com"));
+        dataSetup.queueForCleanup(user);
     }
 
     @Test
@@ -152,6 +149,9 @@ public class AdminAPIUserTests {
         Assert.assertEquals(createdUserDTO.getContract().getContractNumber(), userDTO.getContract().getContractNumber());
         Assert.assertEquals(createdUserDTO.getContract().getContractName(), userDTO.getContract().getContractName());
         Assert.assertEquals(createdUserDTO.getRole(), userDTO.getRole());
+
+        User user = userRepository.findByUsername(("test@test.com"));
+        dataSetup.queueForCleanup(user);
     }
 
     @Test
@@ -174,6 +174,8 @@ public class AdminAPIUserTests {
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(userDTO))
                         .header("Authorization", "Bearer " + token));
 
+        User user = userRepository.findByUsername(("test@test.com"));
+        dataSetup.queueForCleanup(user);
         userDTO.setEmail("anotherEmail@test.com");
 
         this.mockMvc.perform(
@@ -186,6 +188,8 @@ public class AdminAPIUserTests {
                         .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                         .andExpect(jsonPath("$.issue[0].details.text",
                             Is.is("An internal error occurred")));
+        User anotherUser = userRepository.findByUsername(("anotherEmail@test.com"));
+        dataSetup.queueForCleanup(anotherUser);
     }
 
     @Test
@@ -234,6 +238,9 @@ public class AdminAPIUserTests {
         Assert.assertEquals(updatedUserDTO.getEnabled(), createdUserDTO.getEnabled());
         Assert.assertEquals(updatedUserDTO.getContract().getContractNumber(), createdUserDTO.getContract().getContractNumber());
         Assert.assertEquals(updatedUserDTO.getRole(), createdUserDTO.getRole());
+
+        User user = userRepository.findByUsername("test@test.com");
+        dataSetup.queueForCleanup(user);
     }
 
     @Test
@@ -284,7 +291,9 @@ public class AdminAPIUserTests {
         String header = mvcResult.getResponse().getHeader("Content-Location");
 
         Job job = jobRepository.findByJobUuid(header.substring(header.indexOf("/Job/") + 5, header.indexOf("/$status")));
+        dataSetup.queueForCleanup(job);
         User jobUser = job.getUser();
+        dataSetup.queueForCleanup(jobUser);
         Assert.assertEquals(jobUser.getUsername(), userDTO.getUsername());
     }
 
@@ -311,6 +320,8 @@ public class AdminAPIUserTests {
 
         Job job = jobRepository.findByJobUuid(header.substring(header.indexOf("/Job/") + 5, header.indexOf("/$status")));
         User jobUser = job.getUser();
+        dataSetup.queueForCleanup(jobUser);
+        dataSetup.queueForCleanup(job);
         Assert.assertEquals(jobUser.getUsername(), userDTO.getUsername());
     }
 
@@ -401,6 +412,9 @@ public class AdminAPIUserTests {
         Assert.assertEquals(contractDTO.getContractNumber(), "Z0000");
         Assert.assertEquals("Test Contract Z0000", contractDTO.getContractName());
         Assert.assertNotNull(contractDTO.getAttestedOn());
+
+        User user = userRepository.findByUsername(("test@test.com"));
+        dataSetup.queueForCleanup(user);
     }
 
     @Test
@@ -424,7 +438,8 @@ public class AdminAPIUserTests {
         user.setEnabled(enabled);
         user.setContract(contract);
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        dataSetup.queueForCleanup(savedUser);
     }
 
     private ContractDTO buildContractDTO() {
