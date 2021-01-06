@@ -2,11 +2,7 @@ package gov.cms.ab2d.worker.processor;
 
 import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobOutput;
-import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.User;
+import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
@@ -19,19 +15,17 @@ import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
-import gov.cms.ab2d.worker.adapter.bluebutton.ContractBeneSearch;
+import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.util.HealthCheck;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
-import org.junit.Assert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.integration.test.context.SpringIntegrationTest;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -43,14 +37,18 @@ import javax.transaction.Transactional;
 import java.io.File;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.eventlogger.events.ErrorEvent.ErrorType.TOO_MANY_SEARCH_ERRORS;
+import static gov.cms.ab2d.worker.TestUtil.getOpenRange;
+import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
 import static java.lang.Boolean.TRUE;
-import static org.junit.Assert.assertFalse;
+import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
@@ -59,29 +57,43 @@ import static org.mockito.Mockito.when;
 @Transactional
 class JobProcessorIntegrationTest {
 
+    private static final String CONTRACT_NAME = "CONTRACT_0000";
+    private static final String CONTRACT_NUMBER = "CONTRACT_0000";
+    private static final String JOB_UUID = "S0000";
+    public static final String COMPLETED_PERCENT = "100%";
+
     private JobProcessor cut;       // class under test
 
     @Autowired
     private FileService fileService;
+
     @Autowired
     private DoAll doAll;
+
     @Autowired
     private JobRepository jobRepository;
+
     @Autowired
     private UserRepository userRepository;
+
     @Autowired
     private ContractRepository contractRepository;
+
     @Autowired
     private JobOutputRepository jobOutputRepository;
-    @Autowired
-    @Qualifier("contractAdapterStub")
-    private ContractBeneSearch contractBeneSearchStub;
+
     @Autowired
     private SqlEventLogger sqlEventLogger;
+
     @Autowired
     private HealthCheck healthCheck;
+
+    @Mock
+    private CoverageDriver coverageDriver;
+
     @Mock
     private KinesisEventLogger kinesisEventLogger;
+
     @Mock
     private BFDClient mockBfdClient;
 
@@ -134,12 +146,19 @@ class JobProcessorIntegrationTest {
 
         ReflectionTestUtils.setField(contractProcessor, "cancellationCheckFrequency", 10);
 
+        coverageDriver = mock(CoverageDriver.class);
+
+        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class))).thenReturn(100);
+
+        when(coverageDriver.pageCoverage(any(Job.class))).thenReturn(
+                new CoveragePagingResult(loadFauxMetadata(contract, 99), null));
+
         cut = new JobProcessorImpl(
                 fileService,
                 jobRepository,
                 jobOutputRepository,
-                contractBeneSearchStub,
                 contractProcessor,
+                coverageDriver,
                 logManager
         );
 
@@ -150,16 +169,16 @@ class JobProcessorIntegrationTest {
     @Test
     @DisplayName("When a job is in submitted status, it can be processed")
     void processJob() {
-        var processedJob = cut.process("S0000");
+        var processedJob = cut.process(job.getJobUuid());
 
         List<LoggableEvent> jobStatusChange = doAll.load(JobStatusChangeEvent.class);
-        Assert.assertEquals(1, jobStatusChange.size());
+        assertEquals(1, jobStatusChange.size());
         JobStatusChangeEvent jobEvent = (JobStatusChangeEvent) jobStatusChange.get(0);
-        Assert.assertEquals(JobStatus.SUCCESSFUL.name(), jobEvent.getNewStatus());
-        Assert.assertEquals(JobStatus.IN_PROGRESS.name(), jobEvent.getOldStatus());
+        assertEquals(JobStatus.SUCCESSFUL.name(), jobEvent.getNewStatus());
+        assertEquals(JobStatus.IN_PROGRESS.name(), jobEvent.getOldStatus());
 
-        assertEquals(processedJob.getStatus(), JobStatus.SUCCESSFUL);
-        assertEquals(processedJob.getStatusMessage(), "100%");
+        assertEquals(JobStatus.SUCCESSFUL, processedJob.getStatus());
+        assertEquals(COMPLETED_PERCENT, processedJob.getStatusMessage());
         assertNotNull(processedJob.getExpiresAt());
         assertNotNull(processedJob.getCompletedAt());
 
@@ -170,10 +189,10 @@ class JobProcessorIntegrationTest {
     @Test
     @DisplayName("When a job is in submitted by the parent user, it process the contracts for the children")
     void whenJobSubmittedByParentUser_ProcessAllContractsForChildrenSponsors() {
-        var processedJob = cut.process("S0000");
+        var processedJob = cut.process(job.getJobUuid());
 
-        assertEquals(processedJob.getStatus(), JobStatus.SUCCESSFUL);
-        assertEquals(processedJob.getStatusMessage(), "100%");
+        assertEquals(JobStatus.SUCCESSFUL, processedJob.getStatus());
+        assertEquals(COMPLETED_PERCENT, processedJob.getStatusMessage());
         assertNotNull(processedJob.getExpiresAt());
         assertNotNull(processedJob.getCompletedAt());
 
@@ -195,22 +214,21 @@ class JobProcessorIntegrationTest {
                 .thenReturn(bundle1, bundles)
                 .thenReturn(bundle1, bundles)
                 .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1)
-                .thenThrow(fail, fail, fail, fail, fail)
-                ;
+                .thenThrow(fail, fail, fail, fail, fail);
 
-        var processedJob = cut.process("S0000");
+        var processedJob = cut.process(job.getJobUuid());
 
-        assertEquals(processedJob.getStatus(), JobStatus.SUCCESSFUL);
-        assertEquals(processedJob.getStatusMessage(), "100%");
+        assertEquals(JobStatus.SUCCESSFUL, processedJob.getStatus());
+        assertEquals(COMPLETED_PERCENT, processedJob.getStatusMessage());
         assertNotNull(processedJob.getExpiresAt());
         assertNotNull(processedJob.getCompletedAt());
 
         List<LoggableEvent> beneSearchEvents = doAll.load(ContractBeneSearchEvent.class);
         assertEquals(1, beneSearchEvents.size());
         ContractBeneSearchEvent event = (ContractBeneSearchEvent) beneSearchEvents.get(0);
-        assertEquals("S0000", event.getJobId());
+        assertEquals(JOB_UUID, event.getJobId());
         assertEquals(100, event.getNumInContract());
-        assertEquals("CONTRACT_0000", event.getContractNumber());
+        assertEquals(CONTRACT_NAME, event.getContractNumber());
         assertEquals(100, event.getNumSearched());
 
         final List<JobOutput> jobOutputs = job.getJobOutputs();
@@ -231,7 +249,7 @@ class JobProcessorIntegrationTest {
                 .thenThrow(fail, fail, fail, fail, fail, fail, fail, fail, fail, fail)
                 .thenReturn(bundle1, bundles)
         ;
-        var processedJob = cut.process("S0000");
+        var processedJob = cut.process(job.getJobUuid());
 
         List<LoggableEvent> errorEvents = doAll.load(ErrorEvent.class);
         assertEquals(1, errorEvents.size());
@@ -260,7 +278,7 @@ class JobProcessorIntegrationTest {
                 doAll.load(ReloadEvent.class),
                 doAll.load(ContractBeneSearchEvent.class)));
 
-        assertEquals(processedJob.getStatus(), JobStatus.FAILED);
+        assertEquals(JobStatus.FAILED, processedJob.getStatus());
         assertEquals(processedJob.getStatusMessage(), "Too many patient records in the job had failures");
         assertNull(processedJob.getExpiresAt());
         assertNotNull(processedJob.getCompletedAt());
@@ -283,8 +301,8 @@ class JobProcessorIntegrationTest {
 
     private Contract createContract() {
         Contract contract = new Contract();
-        contract.setContractName("CONTRACT_0000");
-        contract.setContractNumber("CONTRACT_0000");
+        contract.setContractName(CONTRACT_NAME);
+        contract.setContractNumber(CONTRACT_NUMBER);
         contract.setAttestedOn(OffsetDateTime.now().minusDays(10));
 
         return contractRepository.save(contract);
@@ -292,12 +310,25 @@ class JobProcessorIntegrationTest {
 
     private Job createJob(User user) {
         Job job = new Job();
-        job.setJobUuid("S0000");
+        job.setJobUuid(JOB_UUID);
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage("0%");
         job.setUser(user);
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setCreatedAt(OffsetDateTime.now());
         return jobRepository.save(job);
+    }
+
+    private static List<CoverageSummary> loadFauxMetadata(Contract contract, int rowsToRetrieve) {
+
+        List<String> patientIdRows = IntStream.range(0, rowsToRetrieve).mapToObj(i -> "-" + i).collect(toList());
+
+        // Add the one id that actually has an eob mapped to it
+        patientIdRows.add("-199900000022040");
+
+        return patientIdRows.stream().map(patientId -> new CoverageSummary(
+                createIdentifierWithoutMbi(patientId),
+                contract, List.of(getOpenRange())
+        )).collect(toList());
     }
 }

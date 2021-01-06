@@ -51,17 +51,16 @@ sudo ln -s /usr/local/bin/stunnel /bin/stunnel
 sudo mkdir /mnt/efs
 sudo cp /etc/fstab /etc/fstab.bak
 
-# Note that there are issues with using TLS with EFS on gold disk EC2 instances.
-# TO DO: Switch to TLS, when we move to fargate.
+# TO DO: This will be handled differently when we move to fargate
 #####
 # -----------
-# Without TLS
+# TO DO: Ensure stunnel is being used with the custom AMI
 # -----------
 echo '${efs_id}:/ /mnt/efs efs _netdev 0 0' | sudo tee -a /etc/fstab
 sudo mount -a
 #
 # --------
-# With TLS
+# Note that the following method can't be used since it is specific to Amazon's ECS specific AMI)
 # --------
 # Mount with IAM authorization to an Amazon EC2 instance that has an instance profile
 # echo '${efs_id}:/ /mnt/efs efs _netdev,tls,iam 0 0' | sudo tee -a /etc/fstab

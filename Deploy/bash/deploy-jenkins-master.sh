@@ -15,7 +15,6 @@ cd "${START_DIR}/.."
 #
 
 CMS_ENV="ab2d-mgmt-east-dev"
-# CMS_SHARED_ENV="ab2d-mgmt-east-dev-shared"
 DEBUG_LEVEL="WARN"
 EC2_INSTANCE_TYPE="m5.xlarge"
 OWNER="743302140042"

@@ -1,6 +1,9 @@
 package gov.cms.ab2d.worker.config;
 
+import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.service.FeatureEngagement;
+import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.worker.service.WorkerService;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -40,36 +43,53 @@ public class JobHandler implements MessageHandler {
     }
 
     @Override
-    public void handleMessage(Message<?> message) throws MessagingException {
+    public void handleMessage(Message<?> message) {
 
         // Worker is not able to be engaged in processing
         if (workerService.getEngagement() == FeatureEngagement.NEUTRAL) {
             return;
         }
 
-        final String jobId = getJobId(message);
+        final List<Map<String, Object>> payload = (List<Map<String, Object>>) message.getPayload();
 
-        MDC.put(JOB_LOG, jobId);
+        for (Map<String, Object> submittedJob : payload) {
 
-        final Lock lock = lockRegistry.obtain(jobId);
+            final String jobId = getJobId(submittedJob);
 
-        // Inability to obtain a lock means other worker is already taking care of the request
-        // in which case we do nothing and return.
-        if (lock.tryLock()) {
-            try {
-                workerService.process(jobId);
-            } finally {
-                lock.unlock();
+            MDC.put(JOB_LOG, jobId);
+
+            final Lock lock = lockRegistry.obtain(jobId);
+
+            // Inability to obtain a lock means other worker is already taking care of the request
+            // in which case we do nothing and return.
+            if (lock.tryLock()) {
+
+                try {
+
+                    // Attempt to start (mark an eob job as in progress) an eob job.
+                    // A job may not be started if the workers are busy or if coverage metadata needs an update.
+                    // However if a job is started then
+                    Job job = workerService.process(jobId);
+                    if (job.getStatus() == JobStatus.IN_PROGRESS) {
+                        log.info("{} job has been started", jobId);
+                        break;
+                    }
+
+                } catch (ResourceNotFoundException rnfe) {
+                    throw new MessagingException("could not find job in database for " + jobId + " job uuid", rnfe);
+                } catch (Exception exception) {
+                    throw new MessagingException("could not check coverage due to unexpected exception", exception);
+                } finally {
+                    lock.unlock();
+                }
             }
-        }
 
-        MDC.remove(JOB_LOG);
+            MDC.remove(JOB_LOG);
+        }
     }
 
-    private String getJobId(Message<?> message) {
-        final List<Map<String, Object>> payload = (List<Map<String, Object>>) message.getPayload();
-        final Map<String, Object> row0 = payload.get(0);
-        return String.valueOf(row0.get("job_uuid"));
+    private String getJobId(Map<String, Object> submittedJob) {
+        return String.valueOf(submittedJob.get("job_uuid"));
     }
 
 }

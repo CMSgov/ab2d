@@ -64,6 +64,7 @@ class WorkerServiceDisengagementTest {
         contractRepository.deleteAll();
 
         workerServiceStub = new WorkerServiceStub(jobService, propertiesService);
+
         ReflectionTestUtils.setField(jobHandler, "workerService", workerServiceStub);
     }
 

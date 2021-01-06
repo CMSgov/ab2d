@@ -25,11 +25,6 @@ resource "aws_iam_role" "ab2d_mgmt_role" {
   permissions_boundary = "arn:aws:iam::${var.aws_account_number}:policy/cms-cloud-admin/developer-boundary-policy"
 }
 
-# resource "aws_iam_role_policy_attachment" "mgmt_role_administrator_access_policy_attach" {
-#   role       = aws_iam_role.ab2d_mgmt_role.name
-#   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
-# }
-
 resource "aws_iam_role_policy_attachment" "mgmt_role_assume_policy_attach" {
   for_each   = toset(var.federated_login_role_policies)
   role       = aws_iam_role.ab2d_mgmt_role.name
