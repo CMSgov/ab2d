@@ -40,7 +40,7 @@ fi
 source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh"
 
 #
-# Ask user of chooose an environment
+# Ask user of choose an environment
 #
 
 echo ""
@@ -56,42 +56,42 @@ do
         "Dev AWS account")
 	    export AWS_ACCOUNT_NUMBER=349849222861
 	    export CMS_ENV=ab2d-dev
-	    SSH_PRIVATE_KEY=ab2d-dev.pem
-	    CONTROLLER_PRIVATE_KEY=ab2d-dev.pem
+	    export SSH_PRIVATE_KEY=ab2d-dev.pem
+	    export CONTROLLER_PRIVATE_KEY=ab2d-dev.pem
 	    break
             ;;
         "Sbx AWS account")
 	    export AWS_ACCOUNT_NUMBER=777200079629
 	    export CMS_ENV=ab2d-sbx-sandbox
-	    SSH_PRIVATE_KEY=ab2d-sbx-sandbox.pem
-	    CONTROLLER_PRIVATE_KEY=ab2d-sbx-sandbox.pem
+	    export SSH_PRIVATE_KEY=ab2d-sbx-sandbox.pem
+	    export CONTROLLER_PRIVATE_KEY=ab2d-sbx-sandbox.pem
 	    break
             ;;
         "Impl AWS account")
 	    export AWS_ACCOUNT_NUMBER=330810004472
 	    export CMS_ENV=ab2d-east-impl
-	    SSH_PRIVATE_KEY=ab2d-east-impl.pem
-	    CONTROLLER_PRIVATE_KEY=ab2d-east-impl.pem
+	    export SSH_PRIVATE_KEY=ab2d-east-impl.pem
+	    export CONTROLLER_PRIVATE_KEY=ab2d-east-impl.pem
 	    break
             ;;
         "Prod AWS account")
 	    export AWS_ACCOUNT_NUMBER=595094747606
 	    export CMS_ENV=ab2d-east-prod
-	    SSH_PRIVATE_KEY=ab2d-east-prod.pem
-	    CONTROLLER_PRIVATE_KEY=ab2d-east-prod.pem
+	    export SSH_PRIVATE_KEY=ab2d-east-prod.pem
+	    export CONTROLLER_PRIVATE_KEY=ab2d-east-prod.pem
 	    break
             ;;
         "Prod Validation AWS account")
 	    export AWS_ACCOUNT_NUMBER=595094747606
 	    export CMS_ENV=ab2d-east-prod-test
-	    SSH_PRIVATE_KEY=ab2d-east-prod-test.pem
-	    CONTROLLER_PRIVATE_KEY=ab2d-east-prod.pem
+	    export SSH_PRIVATE_KEY=ab2d-east-prod-test.pem
+	    export CONTROLLER_PRIVATE_KEY=ab2d-east-prod.pem
 	    break
             ;;
         "Mgmt AWS account")
 	    export AWS_ACCOUNT_NUMBER=653916833532
 	    export CMS_ENV=ab2d-mgmt-east-dev
-	    SSH_PRIVATE_KEY=ab2d-mgmt-east-dev.pem
+	    export SSH_PRIVATE_KEY=ab2d-mgmt-east-dev.pem
 	    break
             ;;
         "Quit")
@@ -101,7 +101,7 @@ do
     esac
 done
 
-if [ $REPLY -eq 7 ]; then
+if [ "${REPLY}" -eq 7 ]; then
   echo ""
   return
 fi

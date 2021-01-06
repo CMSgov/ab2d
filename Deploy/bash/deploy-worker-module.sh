@@ -109,13 +109,19 @@ fi
 
 # Import the "get temporary AWS credentials via CloudTamer API" function
 
-# shellcheck source=./functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh
 source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh"
 
 # Import the "get temporary AWS credentials via AWS STS assume role" function
 
-# shellcheck source=./functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh
 source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh"
+
+# Get worker task count
+
+worker_task_count() {
+  aws --region "${AWS_DEFAULT_REGION}" ecs list-tasks --cluster "${CMS_ENV}-worker" \
+    | grep -c "\:task\/" \
+    | tr -d ' '
+}
 
 #
 # Set AWS target environment
@@ -475,14 +481,12 @@ WORKER_EC2_INSTANCE_CPU_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describ
   --instance-types "${EC2_INSTANCE_TYPE_WORKER}" --query "InstanceTypes[*].VCpuInfo.DefaultVCpus" \
   --output text)
 
-# let WORKER_CPU="($WORKER_EC2_INSTANCE_CPU_COUNT)*1024"
 WORKER_CPU=$((WORKER_EC2_INSTANCE_CPU_COUNT*1024))
 
 WORKER_EC2_INSTANCE_MEMORY=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instance-types \
   --instance-types "${EC2_INSTANCE_TYPE_WORKER}" --query "InstanceTypes[*].MemoryInfo.SizeInMiB" \
   --output text)
 
-# let WORKER_MEMORY="$((${WORKER_EC2_INSTANCE_MEMORY}*9/10))"
 WORKER_MEMORY=$((WORKER_EC2_INSTANCE_MEMORY*9/10))
 
 #
@@ -496,6 +500,54 @@ if [ "${CLOUD_TAMER}" == "true" ]; then
 else
   fn_get_temporary_aws_credentials_via_aws_sts_assume_role "${AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
 fi
+
+cd "${START_DIR}/.."
+cd "terraform/environments/${CMS_ENV}/${MODULE}"
+
+# Get worker cluster ARN (if exists)
+
+WORKER_CLUSTER_ARN=$(aws --region "${AWS_DEFAULT_REGION}" ecs list-clusters \
+  --query 'clusterArns' \
+  --output text \
+  | xargs \
+  | tr -d '\r' \
+  | tr " " "\n" \
+  | grep "${CMS_ENV}-worker")
+
+# Determine expected worker count when both old and new instances are present
+
+if [ -n "${WORKER_CLUSTER_ARN}" ]; then
+  OLD_WORKER_TASK_COUNT=$(worker_task_count)
+else
+  OLD_WORKER_TASK_COUNT=0
+fi
+
+EXPECTED_WORKER_COUNT=$((OLD_WORKER_TASK_COUNT+WORKER_DESIRED_INSTANCES))
+
+# Ensure old worker autoscaling group and containers are around to service requests
+
+if [ -z "${WORKER_CLUSTER_ARN}" ]; then
+  echo "Skipping removing autoscaling group and launch configuration, since there are no existing clusters"
+else
+  terraform state rm module.worker.aws_autoscaling_group.asg
+  terraform state rm module.worker.aws_launch_configuration.launch_config
+fi
+
+if [ -z "${WORKER_CLUSTER_ARN}" ]; then
+  echo "Skipping removing autoscaling group and launch configuration, since there are no existing clusters"
+else
+  OLD_WORKER_CONTAINER_INSTANCES=$(aws --region "${AWS_DEFAULT_REGION}" ecs list-container-instances \
+    --cluster "${CMS_ENV}-worker" \
+    --output text)
+
+  if [ -n "${OLD_WORKER_CONTAINER_INSTANCES}" ]; then
+    OLD_WORKER_CONTAINER_INSTANCES=$(aws --region "${AWS_DEFAULT_REGION}" ecs list-container-instances \
+      --cluster "${CMS_ENV}-worker" \
+      | grep container-instance)
+  fi
+fi
+
+# Deploy worker module
 
 cd "${START_DIR}/.."
 cd "terraform/environments/${CMS_ENV}/${MODULE}"
@@ -539,3 +591,139 @@ terraform apply \
   --var "worker_min_instances=${WORKER_MIN_INSTANCES}" \
   --var "worker_max_instances=${WORKER_MAX_INSTANCES}" \
   --auto-approve
+
+# Ensure new worker autoscaling group is running containers
+
+ACTUAL_WORKER_COUNT=0
+RETRIES_WORKER=0
+
+while [ "$ACTUAL_WORKER_COUNT" -lt "$EXPECTED_WORKER_COUNT" ]; do
+  ACTUAL_WORKER_COUNT=$(worker_task_count)
+  echo "Running WORKER Tasks: $ACTUAL_WORKER_COUNT, Expected: $EXPECTED_WORKER_COUNT"
+  if [ "$RETRIES_WORKER" != "30" ]; then
+    echo "Retry in 60 seconds..."
+    sleep 60
+    RETRIES_WORKER=$((RETRIES_WORKER + 1))
+  else
+    echo "Max retries reached. Exiting..."
+    exit 1
+  fi
+done
+
+# Drain old container instances
+
+if [ -z "${WORKER_CLUSTER_ARN}" ]; then
+  echo "Skipping draining old container instances, since there are no existing clusters"
+else
+  if [ -n "${OLD_WORKER_CONTAINER_INSTANCES}" ]; then
+    OLD_WORKER_INSTANCE_LIST=$(echo "${OLD_WORKER_CONTAINER_INSTANCES}" \
+      | tr -d ' ' \
+      | tr "\n" " " \
+      | tr -d "," \
+      | tr '""' ' ' \
+      | tr -d '"')
+
+    # shellcheck disable=SC2086
+    # $OLD_WORKER_INSTANCE_LIST format is required here
+    aws --region "${AWS_DEFAULT_REGION}" ecs update-container-instances-state \
+      --cluster "${CMS_ENV}-worker" \
+      --status DRAINING \
+      --container-instances $OLD_WORKER_INSTANCE_LIST \
+      1> /dev/null
+
+    echo "Allowing all instances to drain for 60 seconds before proceeding..."
+    sleep 60
+  fi
+fi
+
+# Remove any duplicative worker autoscaling groups
+
+WORKER_ASG_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
+  --query "AutoScalingGroups[*].Tags[?Value == '${CMS_ENV}-worker'].ResourceId" \
+  --output text \
+  | sort \
+  | wc -l \
+  | tr -d ' ')
+
+if [ "${WORKER_ASG_COUNT}" -gt 1 ]; then
+  DUPLICATIVE_WORKER_ASG_COUNT=$((WORKER_ASG_COUNT - 1))
+  for ((i=1;i<=DUPLICATIVE_WORKER_ASG_COUNT;i++)); do
+    DUPLICATIVE_WORKER_ASG=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
+      --query "AutoScalingGroups[*].Tags[?Value == '${CMS_ENV}-worker'].ResourceId" \
+      --output text \
+      | sort \
+      | head -n "${i}" \
+      | tail -n 1)
+    aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-auto-scaling-group \
+      --auto-scaling-group-name "${DUPLICATIVE_WORKER_ASG}" \
+      --force-delete || true
+  done
+fi
+
+# Wait for old Autoscaling groups to terminate
+
+sleep 60
+RETRIES_ASG=0
+ASG_NOT_IN_SERVICE=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
+  --query "AutoScalingGroups[*].Instances[?LifecycleState != 'InService'].LifecycleState" \
+  --output text)
+while [ -n "${ASG_NOT_IN_SERVICE}" ]; do
+  echo "Waiting for old autoscaling groups to terminate..."
+  if [ "$RETRIES_ASG" != "30" ]; then
+    echo "Retry in 60 seconds..."
+    sleep 60
+    ASG_NOT_IN_SERVICE=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-auto-scaling-groups \
+      --query "AutoScalingGroups[*].Instances[?LifecycleState != 'InService'].LifecycleState" \
+      --output text)
+    RETRIES_ASG=$((RETRIES_ASG + 1))
+  else
+    echo "Max retries reached. Exiting..."
+    exit 1
+  fi
+done
+
+sleep 60
+
+# Remove old launch configurations
+
+if [ -z "${WORKER_CLUSTER_ARN}" ]; then
+  echo "Skipping removing old launch configurations, since there are no existing clusters"
+else
+
+  LAUNCH_CONFIGURATION_EXPECTED_COUNT=1
+
+  # TO DO: migrate from "*-test-*" naming to "*-validation-*" naming
+  # Count only "*-test-*" and "*-validation-*" launch configurations
+  LAUNCH_CONFIGURATION_ACTUAL_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-launch-configurations \
+    --query "LaunchConfigurations[*].[LaunchConfigurationName,CreatedTime]" \
+    --output text \
+    | sort -k2 \
+    | grep -c "\-test\-\|\-validation\-")
+
+  while [ "$LAUNCH_CONFIGURATION_ACTUAL_COUNT" -gt "$LAUNCH_CONFIGURATION_EXPECTED_COUNT" ]; do
+
+    # TO DO: migrate from "*-test-*" naming to "*-validation-*" naming
+    # Note that only "*-test-*" and "*-validation-*" launch configurations will be included
+    OLD_LAUNCH_CONFIGURATION=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-launch-configurations \
+      --query "LaunchConfigurations[*].[LaunchConfigurationName,CreatedTime]" \
+      --output text \
+      | sort -k2 \
+      | grep "\-test\-\|\-validation\-" \
+      | head -n1 \
+      | awk '{print $1}')
+
+    aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-launch-configuration \
+      --launch-configuration-name "${OLD_LAUNCH_CONFIGURATION}"
+    sleep 5
+
+    # TO DO: migrate from "*-test-*" naming to "*-validation-*" naming
+    # Note that only "*-test-*" and "*-validation-*" launch configurations will be counted
+    LAUNCH_CONFIGURATION_ACTUAL_COUNT=$(aws --region "${AWS_DEFAULT_REGION}" autoscaling describe-launch-configurations \
+      --query "LaunchConfigurations[*].[LaunchConfigurationName,CreatedTime]" \
+      --output text \
+      | sort -k2 \
+      | grep -c "\-test\-\|\-validation\-")
+
+  done
+
+fi
