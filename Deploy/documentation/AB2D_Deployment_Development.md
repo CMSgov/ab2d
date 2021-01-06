@@ -291,10 +291,18 @@
 
 1. Open a terminal
 
+1. Change to your "ab2d" repo directory
+
+   *Example:*
+
+   ```ShellSession
+   $ cd ~/code/ab2d
+   ```
+
 1. Copy the New Relic configuration file to the "/tmp" directory
 
    ```ShellSession
-   $ cp yaml/newrelic-infra.yml /tmp
+   $ cp ./Deploy/yaml/newrelic-infra.yml /tmp
    ```
 
 1. Open the New Relic configuration file
@@ -328,7 +336,7 @@
 1. Set AWS environment variables using the CloudTamer API
 
    ```ShellSession
-   $ source ./bash/set-env.sh
+   $ source ./Deploy/bash/set-env.sh
    ```
 
 1. Enter the number of the desired AWS account where the desired logs reside

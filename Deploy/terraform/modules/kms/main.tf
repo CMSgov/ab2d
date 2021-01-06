@@ -2,34 +2,6 @@
 # Create KMS key
 #
 
-# resource "aws_kms_key" "a" {
-#   description = "ab2d-kms"
-#   tags = {
-#     Name = "ab2d-kms"
-#   }
-#   policy =<<EOF
-# {
-#     "Version": "2012-10-17",
-#     "Id": "key-default-1",
-#     "Statement": [
-#         {
-#             "Sid": "Enable IAM Permissions",
-#             "Effect": "Allow",
-#             "Principal": {
-#                 "AWS": [
-# 		    "arn:aws:iam::${var.aws_account_number}:root",
-# 		    "arn:aws:iam::${var.aws_account_number}:role/ct-ado-ab2d-application-admin",
-#                     "arn:aws:iam::${var.aws_account_number}:role/Ab2dInstanceRole"
-#                 ]
-#             },
-#             "Action": "kms:*",
-#             "Resource": "*"
-#         }
-#     ]
-# }
-# EOF
-# }
-
 resource "aws_kms_key" "a" {
   description = "ab2d-kms"
   tags = {
@@ -45,7 +17,8 @@ resource "aws_kms_key" "a" {
             "Effect": "Allow",
             "Principal": {
                 "AWS": [
-		    "arn:aws:iam::${var.aws_account_number}:role/ct-ado-ab2d-application-admin",
+                    "arn:aws:iam::${var.aws_account_number}:role/delegatedadmin/developer/Ab2dMgmtV2Role",
+                    "arn:aws:iam::${var.aws_account_number}:role/ct-ado-ab2d-application-admin",
                     "arn:aws:iam::${var.aws_account_number}:role/delegatedadmin/developer/Ab2dInstanceV2Role"
                 ]
             },

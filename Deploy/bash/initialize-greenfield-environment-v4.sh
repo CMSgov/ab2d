@@ -15,12 +15,13 @@ cd "${START_DIR}"
 #
 
 echo "Check vars are not empty before proceeding..."
-if [ -z "${DATABASE_SECRET_DATETIME_PARAM}" ] \
-    || [ -z "${CMS_DEV_ENV_AWS_ACCOUNT_NUMBER}" ] \
-    || [ -z "${CMS_SBX_ENV_AWS_ACCOUNT_NUMBER}" ] \
-    || [ -z "${CMS_IMPL_ENV_AWS_ACCOUNT_NUMBER}" ] \
-    || [ -z "${CMS_PROD_ENV_AWS_ACCOUNT_NUMBER}" ] \
-    || [ -z "${CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER}" ]; then
+if [ -z "${CMS_DEV_ENV_AWS_ACCOUNT_NUMBER_PARAM}" ] \
+    || [ -z "${CMS_IMPL_ENV_AWS_ACCOUNT_NUMBER_PARAM}" ] \
+    || [ -z "${CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER_PARAM}" ] \
+    || [ -z "${CMS_PROD_ENV_AWS_ACCOUNT_NUMBER_PARAM}" ] \
+    || [ -z "${CMS_SBX_ENV_AWS_ACCOUNT_NUMBER_PARAM}" ] \
+    || [ -z "${DATABASE_SECRET_DATETIME_PARAM}" ] \
+    || [ -z "${FEDERATED_LOGIN_ROLE_PARAM}" ]; then
   echo "ERROR: All parameters must be set."
   exit 1
 fi
@@ -29,8 +30,21 @@ fi
 # Set variables
 #
 
+CMS_DEV_ENV_AWS_ACCOUNT_NUMBER="${CMS_DEV_ENV_AWS_ACCOUNT_NUMBER_PARAM}"
+
+CMS_IMPL_ENV_AWS_ACCOUNT_NUMBER="${CMS_IMPL_ENV_AWS_ACCOUNT_NUMBER_PARAM}"
+
+CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER="${CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER_PARAM}"
+
+CMS_PROD_ENV_AWS_ACCOUNT_NUMBER="${CMS_PROD_ENV_AWS_ACCOUNT_NUMBER_PARAM}"
+
+CMS_SBX_ENV_AWS_ACCOUNT_NUMBER="${CMS_SBX_ENV_AWS_ACCOUNT_NUMBER_PARAM}"
+
 DATABASE_SECRET_DATETIME="${DATABASE_SECRET_DATETIME_PARAM}"
-DEBUG_LEVEL="WARN"
+
+DEBUG_LEVEL="TRACE"
+
+FEDERATED_LOGIN_ROLE="${FEDERATED_LOGIN_ROLE_PARAM}"
 
 #
 # Set AWS account environment variables
@@ -415,12 +429,18 @@ configure_greenfield_environment ()
   # - therefore, we are creating our own role that has the same policies but that also allows us
   #   to set trust relationships
 
+  FEDERATED_LOGIN_ROLE_POLICIES=$(aws --region "${AWS_DEFAULT_REGION}" iam list-attached-role-policies \
+    --role-name "${FEDERATED_LOGIN_ROLE}" \
+    --query "AttachedPolicies[*].PolicyArn" \
+    | tr -d '[:space:]\n')
+
   # Create or verify greenfield components
 
   terraform apply \
-    --var "env=${CMS_ENV_GE}" \
-    --var "mgmt_aws_account_number=${CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER}" \
     --var "aws_account_number=${AWS_ACCOUNT_NUMBER_GE}" \
+    --var "env=${CMS_ENV_GE}" \
+    --var "federated_login_role_policies=${FEDERATED_LOGIN_ROLE_POLICIES}" \
+    --var "mgmt_aws_account_number=${CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER}" \
     --target "module.${MODULE}" \
     --auto-approve
 

@@ -263,8 +263,6 @@ CONTROLLER_PRIVATE_IP=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instan
 
 if [ "${CLOUD_TAMER}" == "true" ]; then
 
-  echo "NOTE: This section commented out since it doesn't work from development machine."
-
   cd "${START_DIR}/.."
   cd "terraform/environments/${CMS_ENV}/${MODULE}"
 
@@ -320,7 +318,7 @@ else # Running from Jenkins agent
 
   # Set PostgreSQL password
 
-  PGPASSWORD="${DATABASE_PASSWORD}"
+  export PGPASSWORD="${DATABASE_PASSWORD}"
 
   # Determine if the database for the environment exists
 

@@ -15,8 +15,13 @@ module "iam" {
   mgmt_aws_account_number     = var.mgmt_aws_account_number
   aws_account_number          = var.aws_account_number
   env                         = var.env
-  bfd_opt_out_kms_arn         = var.bfd_opt_out_kms_arn
-  ab2d_s3_optout_bucket       = var.ab2d_s3_optout_bucket
+}
+
+module "iam_bfd_insights" {
+  source                      = "../../modules/iam_bfd_insights"
+  mgmt_aws_account_number     = var.mgmt_aws_account_number
+  aws_account_number          = var.aws_account_number
+  env                         = var.env
   ab2d_bfd_insights_s3_bucket = var.ab2d_bfd_insights_s3_bucket
   ab2d_bfd_kms_arn            = var.ab2d_bfd_kms_arn
 }
@@ -54,7 +59,7 @@ module "db" {
   backup_window              = var.db_backup_window
   copy_tags_to_snapshot      = var.db_copy_tags_to_snapshot
   iops                       = var.db_iops
-  kms_key_id                 = "${data.aws_kms_key.ab2d_kms.arn}"
+  kms_key_id                 = data.aws_kms_key.ab2d_kms.arn
   maintenance_window         = var.db_maintenance_window
   vpc_id                     = var.vpc_id
   db_instance_subnet_ids     = var.private_subnet_ids
@@ -135,7 +140,7 @@ module "efs" {
   source              = "../../modules/efs"
   env                 = var.env
   vpc_id              = var.vpc_id
-  encryption_key_arn  = "${data.aws_kms_key.ab2d_kms.arn}"
+  encryption_key_arn  = data.aws_kms_key.ab2d_kms.arn
 }
 
 module "api" {
@@ -143,8 +148,8 @@ module "api" {
   env                               = var.env
   execution_env                     = "local" # set to 'local' to turn off BFD insights
   vpc_id                            = var.vpc_id
-  db_sec_group_id                   = "${data.aws_security_group.ab2d_database_sg.id}"
-  controller_sec_group_id           = "${data.aws_security_group.ab2d_deployment_controller_sg.id}"
+  db_sec_group_id                   = data.aws_security_group.ab2d_database_sg.id
+  controller_sec_group_id           = data.aws_security_group.ab2d_deployment_controller_sg.id
   controller_subnet_ids             = var.deployment_controller_subnet_ids
   ami_id                            = var.ami_id
   instance_type                     = var.ec2_instance_type_api
@@ -157,7 +162,6 @@ module "api" {
   alpha                             = var.private_subnet_ids[0]
   beta                              = var.private_subnet_ids[1]
   logging_bucket                    = var.logging_bucket_name
-  # healthcheck_url                 = var.elb_healthcheck_url
   iam_instance_profile              = var.ec2_iam_profile
   iam_role_arn                      = "arn:aws:iam::${var.aws_account_number}:role/delegatedadmin/developer/Ab2dInstanceV2Role"
   desired_instances                 = var.ec2_desired_instance_count_api
@@ -208,7 +212,7 @@ module "worker" {
   env                               = var.env
   execution_env                     = "local" # set to 'local' to turn off BFD insights
   vpc_id                            = var.vpc_id
-  db_sec_group_id                   = "${data.aws_security_group.ab2d_database_sg.id}"
+  db_sec_group_id                   = data.aws_security_group.ab2d_database_sg.id
   controller_subnet_ids             = var.deployment_controller_subnet_ids
   ami_id                            = var.ami_id
   instance_type                     = var.ec2_instance_type_worker
@@ -223,7 +227,7 @@ module "worker" {
   gold_disk_name                    = var.gold_image_name
   override_task_definition_arn      = var.current_task_definition_arn
   app_sec_group_id                  = module.api.application_security_group_id
-  controller_sec_group_id           = "${data.aws_security_group.ab2d_deployment_controller_sg.id}"
+  controller_sec_group_id           = data.aws_security_group.ab2d_deployment_controller_sg.id
   loadbalancer_subnet_ids           = var.deployment_controller_subnet_ids
   efs_id                            = module.efs.efs_id
   efs_security_group_id             = module.efs.efs_security_group_id
@@ -268,7 +272,7 @@ module "cloudwatch" {
   # sns_arn                 = module.sns.aws_sns_topic_ab2d_alarms_arn
   sns_arn                 = "arn:aws:sns:us-east-1:${var.aws_account_number}:${var.env}-cloudwatch-alarms"
   autoscaling_name        = module.api.aws_autoscaling_group_name
-  controller_server_id    = "${data.aws_instance.ab2d_deployment_controller.instance_id}"
+  controller_server_id    = data.aws_instance.ab2d_deployment_controller.instance_id
   s3_bucket_name          = var.file_bucket_name
   db_name                 = var.db_identifier
   # target_group_arn_suffix = module.api.alb_target_group_arn_suffix
@@ -297,8 +301,9 @@ module "kinesis_firehose" {
 # Management Target
 
 module "management_target" {
-  source                  = "../../modules/management_target"
-  env                     = var.env
-  mgmt_aws_account_number = var.mgmt_aws_account_number
-  aws_account_number      = var.aws_account_number
+  source                        = "../../modules/management_target"
+  env                           = var.env
+  mgmt_aws_account_number       = var.mgmt_aws_account_number
+  aws_account_number            = var.aws_account_number
+  federated_login_role_policies = var.federated_login_role_policies
 }

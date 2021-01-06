@@ -74,7 +74,6 @@ fi
 # Create public S3 bucket for customer
 #
 
-FILE_NAME=$(basename "${CREDENTIALS_FILE}")
 FILE_NAME_WITHOUT_EXT=$(basename "${CREDENTIALS_FILE}" .txt)
 DIR_NAME=$(dirname "${CREDENTIALS_FILE}")
 UUID=$(uuidgen)

@@ -235,7 +235,8 @@ data "aws_iam_policy_document" "allow_assume_role_in_mgmt_account_policy" {
     principals {
       type        = "AWS"
       identifiers = [
-        "arn:aws:iam::${var.mgmt_aws_account_number}:role/ct-ado-ab2d-application-admin"
+        "arn:aws:iam::${var.mgmt_aws_account_number}:role/ct-ado-ab2d-application-admin",
+        "arn:aws:iam::${var.mgmt_aws_account_number}:role/delegatedadmin/developer/Ab2dInstanceV2Role"
       ]
     }
   }
@@ -246,6 +247,12 @@ resource "aws_iam_role" "ab2d_mgmt_role" {
   path               = "/delegatedadmin/developer/"
   assume_role_policy = data.aws_iam_policy_document.allow_assume_role_in_mgmt_account_policy.json
   permissions_boundary = "arn:aws:iam::${var.aws_account_number}:policy/cms-cloud-admin/developer-boundary-policy"
+}
+
+resource "aws_iam_role_policy_attachment" "mgmt_role_assume_policy_attach" {
+  for_each   = toset(var.federated_login_role_policies)
+  role       = aws_iam_role.ab2d_mgmt_role.name
+  policy_arn = each.value
 }
 
 # Create lambda role for the management account

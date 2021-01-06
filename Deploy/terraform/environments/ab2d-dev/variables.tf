@@ -91,27 +91,33 @@ variable "ec2_iam_profile" {
 }
 
 variable "ec2_desired_instance_count_api" {
-  default = ""
+  type    = number
+  default = 1
 }
 
 variable "ec2_minimum_instance_count_api" {
-  default = ""
+  type    = number
+  default = 1
 }
 
 variable "ec2_maximum_instance_count_api" {
-  default = ""
+  type    = number
+  default = 1
 }
 
 variable "ec2_desired_instance_count_worker" {
-  default = ""
+  type    = number
+  default = 1
 }
 
 variable "ec2_minimum_instance_count_worker" {
-  default = ""
+  type    = number
+  default = 1
 }
 
 variable "ec2_maximum_instance_count_worker" {
-  default = ""
+  type    = number
+  default = 1
 }
 
 variable "gold_image_name" {
@@ -125,7 +131,7 @@ variable "db_allocated_storage_size" {
 }
 
 variable "postgres_engine_version" {
-  default = "11.5"
+  default = "11.8"
 }
 
 variable "db_instance_class" {
@@ -529,5 +535,11 @@ variable "ab2d_bfd_insights_s3_bucket" {
 
 variable "ab2d_bfd_kms_arn" {
   default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "federated_login_role_policies" {
+  type    = list(string)
+  default = []
   description = "Please pass this on command line and not as a value here"
 }
