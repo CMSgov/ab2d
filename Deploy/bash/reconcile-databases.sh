@@ -52,6 +52,8 @@ EXCLUDE_PROD_CMS_ENV_AS_TARGET_OF_DATABASE_MIGRATION="${EXCLUDE_PROD_CMS_ENV_AS_
 
 EXCLUDE_SBX_CMS_ENV_AS_TARGET_OF_DATABASE_MIGRATION="${EXCLUDE_SBX_CMS_ENV_AS_TARGET_OF_DATABASE_MIGRATION_PARAM}"
 
+SOURCE_CMS_ENV="${SOURCE_CMS_ENV_PARAM}"
+
 TARGET_CMS_ENV="${TARGET_CMS_ENV_PARAM}"
 
 TARGET_AWS_ACCOUNT_NUMBER="${TARGET_AWS_ACCOUNT_NUMBER_PARAM}"
@@ -187,18 +189,72 @@ fi
 
 export PGPASSWORD="${DATABASE_PASSWORD}"
 
+#
 # Reconcile databases
+#
+
+# Truncate target tables
 
 psql \
   --dbname="${DATABASE_NAME}" \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
-  --file="../sql/reconcile-databases.sql"
-
-# Delete temporary schema
+  --command="TRUNCATE ${DATABASE_SCHEMA_NAME}.sponsor RESTART IDENTITY CASCADE;"
 
 psql \
   --dbname="${DATABASE_NAME}" \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
-  --command="DROP SCHEMA IF EXISTS temporary CASCADE;"
+  --command="TRUNCATE ${DATABASE_SCHEMA_NAME}.contract RESTART IDENTITY CASCADE;"
+
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
+  --command="TRUNCATE ${DATABASE_SCHEMA_NAME}.user_account RESTART IDENTITY CASCADE;"
+
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
+  --command="TRUNCATE ${DATABASE_SCHEMA_NAME}.role RESTART IDENTITY CASCADE;"
+
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
+  --command="TRUNCATE ${DATABASE_SCHEMA_NAME}.user_role RESTART IDENTITY CASCADE;"
+
+# Restore data from CSVs to target tables
+
+cd "${HOME}/database_backup/${SOURCE_CMS_ENV}/csv"
+
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
+  --command="\\COPY ${DATABASE_SCHEMA_NAME}.sponsor FROM '${DATABASE_SCHEMA_NAME}.sponsor.csv' WITH (FORMAT CSV);"
+
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
+  --command="\\COPY ${DATABASE_SCHEMA_NAME}.contract FROM '${DATABASE_SCHEMA_NAME}.contract.csv' WITH (FORMAT CSV);"
+
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
+  --command="\\COPY ${DATABASE_SCHEMA_NAME}.user_account FROM '${DATABASE_SCHEMA_NAME}.user_account.csv' WITH (FORMAT CSV);"
+
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
+  --command="\\COPY ${DATABASE_SCHEMA_NAME}.role FROM '${DATABASE_SCHEMA_NAME}.role.csv' WITH (FORMAT CSV);"
+
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
+  --command="\\COPY ${DATABASE_SCHEMA_NAME}.user_role FROM '${DATABASE_SCHEMA_NAME}.user_role.csv' WITH (FORMAT CSV);"

@@ -207,7 +207,25 @@ psql \
   --dbname="${DATABASE_NAME}" \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
+  --command="CREATE TABLE temporary.bene_coverage_period (LIKE ${DATABASE_SCHEMA_NAME}.bene_coverage_period);"
+
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
   --command="CREATE TABLE temporary.contract (LIKE ${DATABASE_SCHEMA_NAME}.contract);"
+
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
+  --command="CREATE TABLE temporary.coverage (LIKE ${DATABASE_SCHEMA_NAME}.coverage);"
+
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
+  --command="CREATE TABLE temporary.event_bene_coverage_search_status_change (LIKE ${DATABASE_SCHEMA_NAME}.event_bene_coverage_search_status_change);"
 
 psql \
   --dbname="${DATABASE_NAME}" \
@@ -268,3 +286,23 @@ psql \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
   --command="\\COPY temporary.user_role FROM '${DATABASE_SCHEMA_NAME}.user_role.csv' WITH (FORMAT CSV);"
+
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
+  --command="\\COPY temporary.bene_coverage_period FROM '${DATABASE_SCHEMA_NAME}.bene_coverage_period.csv' WITH (FORMAT CSV);"
+
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
+  --command="\\COPY temporary.event_bene_coverage_search_status_change FROM '${DATABASE_SCHEMA_NAME}.event_bene_coverage_search_status_change.csv' WITH (FORMAT CSV);"
+
+for csv_file in "${DATABASE_SCHEMA_NAME}".coverage_part*.csv; do
+  psql \
+    --dbname="${DATABASE_NAME}" \
+    --host="${DATABASE_HOST}" \
+    --username="${DATABASE_USER}" \
+    --command="\\COPY temporary.coverage FROM '${csv_file}' WITH (FORMAT CSV);"
+done

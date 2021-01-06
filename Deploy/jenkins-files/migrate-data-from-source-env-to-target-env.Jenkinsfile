@@ -23,17 +23,6 @@ pipeline {
 	    }
       }
     }
-    stage('Import CSV files into a temporary schema in Production Validation') {
-      steps {
-        script {
-	      dir ('Deploy/bash') {
-	        sh '''
-	          ./restore-csv-data-to-temporary-schema.sh
-	        sh '''
-	      }
-	    }
-      }
-    }
     stage('Reconcile databases') {
       steps {
         script {
@@ -52,7 +41,7 @@ pipeline {
         dir('Deploy/bash') {
 	      // Cleanup
 	      sh '''
-            # cleanup
+            ./cleanup-database-migration.sh
 	      sh '''
         }
       }
