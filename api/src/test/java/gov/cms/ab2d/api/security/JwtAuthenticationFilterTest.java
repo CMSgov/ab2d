@@ -5,6 +5,7 @@ import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.controller.TestUtil;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
@@ -53,13 +54,10 @@ class JwtAuthenticationFilterTest {
     private JwtTokenAuthenticationFilter filter;
 
     @Autowired
+    DataSetup dataSetup;
+
+    @Autowired
     private DoAll doAll;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private RoleRepository roleRepository;
 
     @Autowired
     private ContractRepository contractRepository;
@@ -70,17 +68,10 @@ class JwtAuthenticationFilterTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
-    /**
-     * Depending on the order that other test classes are run in these tests can fail because of residual
-     * events in the PostgresSQLContainer. Using a {@link BeforeEach} is unnecessary after the first test but allows
-     * Spring to autowire in dependencies which a static {@link org.junit.jupiter.api.BeforeAll} would not allow.
-     */
-    @BeforeEach
     @AfterEach
     public void cleanup() {
         jobRepository.deleteAll();
-        userRepository.deleteAll();
-        roleRepository.deleteAll();
+        dataSetup.cleanup();
         contractRepository.deleteAll();
         doAll.delete();
     }

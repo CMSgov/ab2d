@@ -82,6 +82,17 @@ public class DataSetup {
             }
         });
 
+        List<Role> rolesToDelete = domainObjects.stream().filter(object -> object instanceof Role)
+                .map(object -> (Role) object).collect(toList());
+        rolesToDelete.forEach(role -> {
+            Optional<Role> roleOptional = roleRepository.findRoleByName(role.getName());
+
+            if (roleOptional.isPresent()) {
+                roleRepository.delete(roleOptional.get());
+                roleRepository.flush();
+            }
+        });
+
         List<Contract> contractsToDelete = domainObjects.stream().filter(object -> object instanceof Contract)
                 .map(object -> (Contract) object).collect(toList());
         contractRepository.deleteAll(contractsToDelete);
@@ -239,6 +250,7 @@ public class DataSetup {
             role.setName(userRole);
             roleRepository.save(role);
             user.addRole(role);
+            queueForCleanup(role);
         }
 
         user =  userRepository.save(user);
