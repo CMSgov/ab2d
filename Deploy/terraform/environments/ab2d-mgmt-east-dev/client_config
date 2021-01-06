@@ -1,0 +1,3 @@
+IdentityFile /home/ec2-user/.ssh/id.rsa
+StrictHostKeyChecking no
+UserKnownHostsFile /dev/null

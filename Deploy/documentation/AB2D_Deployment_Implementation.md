@@ -467,10 +467,12 @@
 
 ### Create or update AMI with latest gold disk
 
-1. Change to the "Deploy" directory
+1. Change to the "ab2d" repo directory
 
+   *Example:*
+   
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Set gold disk test parameters
@@ -489,7 +491,7 @@
 1. Create or update AMI with latest gold disk
 
    ```ShellSession
-   $ ./bash/update-gold-disk.sh
+   $ ./Deploy/bash/update-gold-disk.sh
    ```
 
 ### Create or update infrastructure
@@ -520,10 +522,10 @@
 
 ### Create or update application for impl
 
-1. Change to the "Deploy" directory
+1. Change to your "ab2d" repo directory
 
    ```ShellSession
-   $ cd ~/code/ab2d/Deploy
+   $ cd ~/code/ab2d
    ```
 
 1. Set parameters
@@ -544,14 +546,14 @@
      && export EC2_MAXIMUM_INSTANCE_COUNT_WORKER_PARAM=1 \
      && export DATABASE_SECRET_DATETIME_PARAM=2020-01-02-09-15-01 \
      && export DEBUG_LEVEL_PARAM=WARN \
-     && export INTERNET_FACING_PARAM=true \
+     && export INTERNET_FACING_PARAM=false \
      && export CLOUD_TAMER_PARAM=true
    ``` 
 
 1. Deploy application
 
    ```ShellSession
-   $ ./bash/deploy-application.sh
+   $ ./Deploy/bash/deploy-application.sh
    ```
 
 ## Upload static website to an Akamai Upload Directory within Akamai NetStorage

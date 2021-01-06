@@ -17,9 +17,9 @@ resource "aws_kms_key" "a" {
             "Effect": "Allow",
             "Principal": {
                 "AWS": [
-		    "arn:aws:iam::${var.aws_account_number}:root",
-		    "arn:aws:iam::${var.aws_account_number}:role/ct-ado-ab2d-application-admin",
-                    "arn:aws:iam::${var.aws_account_number}:role/Ab2dInstanceRole"
+                    "arn:aws:iam::${var.aws_account_number}:role/delegatedadmin/developer/Ab2dMgmtV2Role",
+                    "arn:aws:iam::${var.aws_account_number}:role/ct-ado-ab2d-application-admin",
+                    "arn:aws:iam::${var.aws_account_number}:role/delegatedadmin/developer/Ab2dInstanceV2Role"
                 ]
             },
             "Action": "kms:*",
@@ -52,7 +52,8 @@ data "aws_iam_policy_document" "instance_role_kms_policy" {
 }
 
 resource "aws_iam_policy" "kms_policy" {
-  name   = "Ab2dKmsPolicy"
+  name   = "Ab2dKmsV2Policy"
+  path   = "/delegatedadmin/developer/"
   policy = "${data.aws_iam_policy_document.instance_role_kms_policy.json}"
 }
 

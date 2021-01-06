@@ -1,4 +1,4 @@
-# Create "Ab2dMgmtRole" for the management account
+# Create "Ab2dMgmtV2Role" for the management account
 
 data "aws_iam_policy_document" "allow_assume_role_in_mgmt_account_policy" {
   statement {
@@ -11,19 +11,22 @@ data "aws_iam_policy_document" "allow_assume_role_in_mgmt_account_policy" {
     principals {
       type        = "AWS"
       identifiers = [
-        "arn:aws:iam::${var.mgmt_aws_account_number}:root"
+        "arn:aws:iam::${var.mgmt_aws_account_number}:role/ct-ado-ab2d-application-admin",
+        "arn:aws:iam::${var.mgmt_aws_account_number}:role/delegatedadmin/developer/Ab2dInstanceV2Role"
       ]
     }
   }
 }
 
 resource "aws_iam_role" "ab2d_mgmt_role" {
-  name               = "Ab2dMgmtRole"
-  assume_role_policy = "${data.aws_iam_policy_document.allow_assume_role_in_mgmt_account_policy.json}"
+  name                 = "Ab2dMgmtV2Role"
+  path                 = "/delegatedadmin/developer/"
+  assume_role_policy   = data.aws_iam_policy_document.allow_assume_role_in_mgmt_account_policy.json
+  permissions_boundary = "arn:aws:iam::${var.aws_account_number}:policy/cms-cloud-admin/developer-boundary-policy"
 }
 
 resource "aws_iam_role_policy_attachment" "mgmt_role_assume_policy_attach" {
-  for_each   = toset(var.ab2d_spe_developer_policies)
-  role       = "${aws_iam_role.ab2d_mgmt_role.name}"
-  policy_arn = "${each.value}"
+  for_each   = toset(var.federated_login_role_policies)
+  role       = aws_iam_role.ab2d_mgmt_role.name
+  policy_arn = each.value
 }

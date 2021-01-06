@@ -55,6 +55,7 @@ def get_secret(environment, secret_item, date_time):
             SecretId=secret_name
         )
     except ClientError as e:
+        secret_not_found = bool(True)
         if e.response['Error']['Code'] == 'DecryptionFailureException':
             # Secrets Manager can't decrypt the protected secret text using
             #   the provided KMS key.
@@ -76,8 +77,9 @@ def get_secret(environment, secret_item, date_time):
         elif e.response['Error']['Code'] == 'ResourceNotFoundException':
             # We can't find the resource that you asked for.
             # Deal with the exception here, and/or rethrow at your discretion.
-            # raise e
-            secret_not_found = bool(True)
+            raise e
+        else:
+            raise e
     else:
         # Decrypts secret using the associated KMS CMK.
         # Depending on whether the secret is a string or binary, one of these

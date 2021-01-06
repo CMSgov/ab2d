@@ -15,7 +15,6 @@ cd "${START_DIR}/.."
 #
 
 CMS_ENV="ab2d-mgmt-east-dev"
-CMS_SHARED_ENV="ab2d-mgmt-east-dev-shared"
 DEBUG_LEVEL="WARN"
 EC2_INSTANCE_TYPE="m5.xlarge"
 OWNER="743302140042"
@@ -81,7 +80,7 @@ echo "Initialize and validate terraform..."
 echo "**************************************************************"
 
 cd "${START_DIR}/.."
-cd terraform/environments/$CMS_SHARED_ENV
+cd terraform/environments/$CMS_ENV
 
 rm -f *.tfvars
 
@@ -251,29 +250,37 @@ fi
 # Change to the shared environment
 
 cd "${START_DIR}/.."
-cd terraform/environments/$CMS_SHARED_ENV
+cd terraform/environments/$CMS_ENV
 
 # Set variables in "auto.tfvars" file
 
 echo 'vpc_id = "'$VPC_ID'"' \
-  > $CMS_SHARED_ENV.auto.tfvars
+  > $CMS_ENV.auto.tfvars
 echo 'private_subnet_ids = ["'$SUBNET_PRIVATE_1_ID'","'$SUBNET_PRIVATE_2_ID'"]' \
-  >> $CMS_SHARED_ENV.auto.tfvars
+  >> $CMS_ENV.auto.tfvars
 echo 'public_subnet_ids = ["'$SUBNET_PUBLIC_1_ID'","'$SUBNET_PUBLIC_2_ID'"]' \
-  >> $CMS_SHARED_ENV.auto.tfvars
+  >> $CMS_ENV.auto.tfvars
 echo 'ec2_instance_type = "'$EC2_INSTANCE_TYPE'"' \
-  >> $CMS_SHARED_ENV.auto.tfvars
+  >> $CMS_ENV.auto.tfvars
 echo 'linux_user = "'$SSH_USERNAME'"' \
-  >> $CMS_SHARED_ENV.auto.tfvars
+  >> $CMS_ENV.auto.tfvars
 echo 'ami_id = "'$JENKINS_MASTER_AMI_ID'"' \
-  >> $CMS_SHARED_ENV.auto.tfvars
+  >> $CMS_ENV.auto.tfvars
 
 #
 # Deploy jenkins master
 #
 
+# Change to management directory
+
 cd "${START_DIR}/.."
-cd terraform/environments/$CMS_SHARED_ENV
+cd terraform/environments/$CMS_ENV
+
+# Remove jenkins_agent module EC2 instance from terraform state so that new jenkins agent can be created
+
+terraform state rm module.jenkins_master.aws_instance.jenkins_master
+
+# Create Jenkins master
 
 echo "Create or update jenkins master..."
 terraform apply \
@@ -285,7 +292,7 @@ terraform apply \
 #
 
 cd "${START_DIR}/.."
-cd terraform/environments/$CMS_SHARED_ENV
+cd terraform/environments/$CMS_ENV
 
 echo "Push authorized_keys file to jenkins master..."
 terraform taint \

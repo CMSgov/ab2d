@@ -9,3 +9,4 @@ variable "ssh_key_name" {}
 variable "iam_instance_profile" {}
 variable "jenkins_master_sec_group_id" {}
 variable "vpn_private_sec_group_id" {}
+variable "ec2_instance_tag" {}

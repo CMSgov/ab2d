@@ -24,7 +24,7 @@
       "launch_block_device_mappings": [
         {
           "device_name": "/dev/sda1",
-          "volume_size": 1000,
+          "volume_size": 250,
           "volume_type": "gp2",
           "delete_on_termination": true
         }
@@ -39,6 +39,12 @@
   ],
   "provisioners": [
     {
+      "type": "shell","inline": [
+        "sudo mkdir -p /deployment",
+	"sudo chmod -R 777 /deployment"
+      ]
+    },
+    {
       "type": "file",
       "source": "./docker-daemon.json",
       "destination": "/tmp/docker-daemon.json"
@@ -47,6 +53,11 @@
       "type": "file",
       "source": "./provision-jenkins-master.sh",
       "destination": "/tmp/provision-jenkins-master.sh"
+    },
+    {
+      "type": "file",
+      "source": "./logrotate-var-log-messages-config-snippet",
+      "destination": "/deployment/logrotate-var-log-messages-config-snippet"
     },
     {
       "type": "shell",

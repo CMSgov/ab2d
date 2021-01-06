@@ -25,6 +25,7 @@ fi
 #
 
 DATABASE_SECRET_DATETIME="${DATABASE_SECRET_DATETIME_PARAM}"
+DEBUG_LEVEL="WARN"
 
 #
 # Set AWS account environment variables
@@ -54,6 +55,17 @@ CMS_PROD_ENV=ab2d-east-prod
 
 CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER=653916833532
 CMS_MGMT_ENV=ab2d-mgmt-east-dev
+
+#
+# Configure terraform
+#
+
+# Reset logging
+
+echo "Setting terraform debug level to $DEBUG_LEVEL..."
+export TF_LOG=$DEBUG_LEVEL
+export TF_LOG_PATH=/var/log/terraform/tf.log
+rm -f /var/log/terraform/tf.log
 
 #
 # Define functions
@@ -272,14 +284,14 @@ set_secrets ()
     AB2D_HPMS_URL=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_url $DATABASE_SECRET_DATETIME)
   fi
 
-  # Create or get HPMS AUTH URL
+  # Create or get HPMS API PARAMS
 
-  AB2D_HPMS_AUTH_URL=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_auth_url $DATABASE_SECRET_DATETIME)
-  if [ -z "${AB2D_HPMS_AUTH_URL}" ]; then
+  AB2D_HPMS_API_PARAMS=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_api_params $DATABASE_SECRET_DATETIME)
+  if [ -z "${AB2D_HPMS_API_PARAMS}" ]; then
     echo "*********************************************************"
-    ./create-database-secret.py $CMS_ENV_SS ab2d_hpms_auth_url $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    ./create-database-secret.py $CMS_ENV_SS ab2d_hpms_api_params $KMS_KEY_ID $DATABASE_SECRET_DATETIME
     echo "*********************************************************"
-    AB2D_HPMS_AUTH_URL=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_auth_url $DATABASE_SECRET_DATETIME)
+    AB2D_HPMS_API_PARAMS=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_api_params $DATABASE_SECRET_DATETIME)
   fi
 
   # Create or get HPMS AUTH key id
@@ -301,7 +313,27 @@ set_secrets ()
     echo "*********************************************************"
     AB2D_HPMS_AUTH_KEY_SECRET=$(./get-database-secret.py $CMS_ENV_SS ab2d_hpms_auth_key_secret $DATABASE_SECRET_DATETIME)
   fi
-  
+
+  # Create or get BFD insights S3 bucket secret
+
+  AB2D_BFD_INSIGHTS_S3_BUCKET=$(./get-database-secret.py $CMS_ENV_SS ab2d_bfd_insights_s3_bucket $DATABASE_SECRET_DATETIME)
+  if [ -z "${AB2D_BFD_INSIGHTS_S3_BUCKET}" ]; then
+    echo "*********************************************************"
+    ./create-database-secret.py $CMS_ENV_SS ab2d_bfd_insights_s3_bucket $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    echo "*********************************************************"
+    AB2D_BFD_INSIGHTS_S3_BUCKET=$(./get-database-secret.py $CMS_ENV_SS ab2d_bfd_insights_s3_bucket $DATABASE_SECRET_DATETIME)
+  fi
+
+  # Create or get BFD KMS ARN secret
+
+  AB2D_BFD_KMS_ARN=$(./get-database-secret.py $CMS_ENV_SS ab2d_bfd_kms_arn $DATABASE_SECRET_DATETIME)
+  if [ -z "${AB2D_BFD_KMS_ARN}" ]; then
+    echo "*********************************************************"
+    ./create-database-secret.py $CMS_ENV_SS ab2d_bfd_kms_arn $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    echo "*********************************************************"
+    AB2D_BFD_KMS_ARN=$(./get-database-secret.py $CMS_ENV_SS ab2d_bfd_kms_arn $DATABASE_SECRET_DATETIME)
+  fi
+
   # If any databse secret produced an error, exit the script
 
   if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
@@ -323,9 +355,11 @@ set_secrets ()
     || [ "${SECONDARY_USER_OKTA_CLIENT_ID}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
     || [ "${SECONDARY_USER_OKTA_CLIENT_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
     || [ "${AB2D_HPMS_URL}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${AB2D_HPMS_AUTH_URL}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+    || [ "${AB2D_HPMS_API_PARAMS}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
     || [ "${AB2D_HPMS_AUTH_KEY_ID}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${AB2D_HPMS_AUTH_KEY_SECRET}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
+    || [ "${AB2D_HPMS_AUTH_KEY_SECRET}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+    || [ "${AB2D_BFD_INSIGHTS_S3_BUCKET}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
+    || [ "${AB2D_BFD_KMS_ARN}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
       echo "ERROR: Cannot get secrets because KMS key is disabled!"
       exit 1
   fi
@@ -341,28 +375,28 @@ configure_greenfield_environment ()
   AWS_ACCOUNT_NUMBER_GE="$1"   # Options: 349849222861|777200079629|330810004472|595094747606|653916833532
   CMS_ENV_GE="$2"              # Options: ab2d-dev|ab2d-sbx-sandbox|ab2d-east-impl|ab2d-east-prod|ab2d-mgmt-east-dev
   MODULE="$3"                  # Options: management_target|management_account
-    
+
   # Get AWS credentials for target environment
-  
+
   fn_get_temporary_aws_credentials_via_cloudtamer_api "${AWS_ACCOUNT_NUMBER_GE}" "${CMS_ENV_GE}"
-  
+
   # Initialize and validate terraform for the target environment
 
   echo "******************************************************************************"
   echo "Initialize and validate terraform for the ${CMS_ENV_GE} environment..."
   echo "******************************************************************************"
-  
+
   cd "${START_DIR}/.."
   cd terraform/environments/$CMS_ENV_GE
-  
+
   rm -f *.tfvars
-  
+
   terraform init \
     -backend-config="bucket=${CMS_ENV_GE}-automation" \
     -backend-config="key=${CMS_ENV_GE}/terraform/terraform.tfstate" \
     -backend-config="region=${AWS_DEFAULT_REGION}" \
     -backend-config="encrypt=true"
-  
+
   terraform validate
 
   # Get the policies that are attached to the federated login role
@@ -370,17 +404,13 @@ configure_greenfield_environment ()
   # - any modifications to the federated login role are wiped out by ITOPS automation
   # - therefore, we are creating our own role that has the same policies but that also allows us
   #   to set trust relationships
-  
-  AB2D_SPE_DEVELOPER_POLICIES=$(aws --region "${AWS_DEFAULT_REGION}" iam list-attached-role-policies \
-    --role-name ct-ado-ab2d-application-admin \
-    --query "AttachedPolicies[*].PolicyArn" \
-    | tr -d '[:space:]\n')
 
   # Create or verify greenfield components
-  
+
   terraform apply \
+    --var "env=${CMS_ENV_GE}" \
     --var "mgmt_aws_account_number=${CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER}" \
-    --var ab2d_spe_developer_policies=$AB2D_SPE_DEVELOPER_POLICIES \
+    --var "aws_account_number=${AWS_ACCOUNT_NUMBER_GE}" \
     --target "module.${MODULE}" \
     --auto-approve
 
@@ -411,54 +441,54 @@ configure_greenfield_environment ()
     set_secrets "${CMS_ENV_GE}"
   fi
 
-  # Upload or verify private key on Jenkins agent (for non-management environments)
+  # # Upload or verify private key on Jenkins agent (for non-management environments)
 
-  if [ "${AWS_ACCOUNT_NUMBER_GE}" != "${CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER}" ]; then
+  # if [ "${AWS_ACCOUNT_NUMBER_GE}" != "${CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER}" ]; then
     
-    # Get AWS credentials for management environment
+  #   # Get AWS credentials for management environment
       
-    fn_get_temporary_aws_credentials_via_cloudtamer_api "${CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_MGMT_ENV}"
+  #   fn_get_temporary_aws_credentials_via_cloudtamer_api "${CMS_MGMT_ENV_AWS_ACCOUNT_NUMBER}" "${CMS_MGMT_ENV}"
 
-    # Get the private IP address of Jenkins agent instance
+  #   # Get the private IP address of Jenkins agent instance
     
-    JENKINS_AGENT_PRIVATE_IP=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
-      --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
-      --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
-      --output text)
+  #   JENKINS_AGENT_PRIVATE_IP=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-instances \
+  #     --filters "Name=tag:Name,Values=ab2d-jenkins-agent" \
+  #     --query="Reservations[*].Instances[?State.Name == 'running'].PrivateIpAddress" \
+  #     --output text)
 
-    # Upload or verify private key on Jenkins agent
+  #   # Upload or verify private key on Jenkins agent
 
-    PRIVATE_KEY_EXISTS=$(ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
-      sudo ls /home/jenkins/.ssh/${CMS_ENV_GE}.pem)
+  #   PRIVATE_KEY_EXISTS=$(ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
+  #     sudo ls /home/jenkins/.ssh/${CMS_ENV_GE}.pem)
 
-    # Copy the private key of the target environment to the Jenkins agent
+  #   # Copy the private key of the target environment to the Jenkins agent
 
-    if [ -z "${PRIVATE_KEY_EXISTS}" ]; then
-      scp -i ~/.ssh/${CMS_MGMT_ENV}.pem ~/.ssh/${CMS_ENV_GE}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP:~/.ssh \
-        && ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
-          sudo cp /home/ec2-user/.ssh/${CMS_ENV_GE}.pem /home/jenkins/.ssh/${CMS_ENV_GE}.pem \
-        && ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
-          sudo chown jenkins:jenkins /home/jenkins/.ssh/${CMS_ENV_GE}.pem
-    fi
+  #   if [ -z "${PRIVATE_KEY_EXISTS}" ]; then
+  #     scp -i ~/.ssh/${CMS_MGMT_ENV}.pem ~/.ssh/${CMS_ENV_GE}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP:~/.ssh \
+  #       && ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
+  #         sudo cp /home/ec2-user/.ssh/${CMS_ENV_GE}.pem /home/jenkins/.ssh/${CMS_ENV_GE}.pem \
+  #       && ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
+  #         sudo chown jenkins:jenkins /home/jenkins/.ssh/${CMS_ENV_GE}.pem
+  #   fi
 
-  else # if management account
+  # else # if management account
 
-    # Upload or verify private key on Jenkins agent
+  #   # Upload or verify private key on Jenkins agent
 
-    PRIVATE_KEY_EXISTS=$(ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
-      sudo ls /home/jenkins/.ssh/${CMS_ENV_GE}.pem)
+  #   PRIVATE_KEY_EXISTS=$(ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
+  #     sudo ls /home/jenkins/.ssh/${CMS_ENV_GE}.pem)
 
-    # Copy the Akamai private SSH key to the Jenkins agent
+  #   # Copy the Akamai private SSH key to the Jenkins agent
 
-    if [ -z "${PRIVATE_KEY_EXISTS}" ]; then
-      scp -i ~/.ssh/${CMS_MGMT_ENV}.pem ~/.ssh/ab2d-akamai ec2-user@$JENKINS_AGENT_PRIVATE_IP:~/.ssh \
-        && ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
-          sudo cp /home/ec2-user/.ssh/ab2d-akamai /home/jenkins/.ssh/ab2d-akamai \
-        && ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
-          sudo chown jenkins:jenkins /home/jenkins/.ssh/ab2d-akamai
-    fi
+  #   if [ -z "${PRIVATE_KEY_EXISTS}" ]; then
+  #     scp -i ~/.ssh/${CMS_MGMT_ENV}.pem ~/.ssh/ab2d-akamai ec2-user@$JENKINS_AGENT_PRIVATE_IP:~/.ssh \
+  #       && ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
+  #         sudo cp /home/ec2-user/.ssh/ab2d-akamai /home/jenkins/.ssh/ab2d-akamai \
+  #       && ssh -i ~/.ssh/${CMS_MGMT_ENV}.pem ec2-user@$JENKINS_AGENT_PRIVATE_IP \
+  #         sudo chown jenkins:jenkins /home/jenkins/.ssh/ab2d-akamai
+  #   fi
 
-  fi
+  # fi
 
   echo ""
   echo "**********************************************************"
