@@ -5,6 +5,7 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
@@ -50,13 +51,13 @@ public class BulkDataAccessAPIUnusualDataTests {
     private JobRepository jobRepository;
 
     @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
     private TestUtil testUtil;
 
     @Autowired
     private ContractRepository contractRepository;
+
+    @Autowired
+    private DataSetup dataSetup;
 
     @Autowired
     private DoAll doAll;
@@ -64,12 +65,10 @@ public class BulkDataAccessAPIUnusualDataTests {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
-    @BeforeEach
-    public void clearUser() {
-        jobRepository.deleteAll();
-        userRepository.deleteAll();
-        roleRepository.deleteAll();
-        contractRepository.deleteAll();
+    @AfterEach
+    public void cleanup() {
+        jobRepository.findAll().forEach(job -> dataSetup.queueForCleanup(job));  // catches implicitly generated jobs
+        dataSetup.cleanup();
         doAll.delete();
     }
 
