@@ -138,8 +138,7 @@ public class AdminAPIMaintenanceModeTests {
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(202));
 
-        // todo - a bit of a hacky way to cleanup, revisit later with a cleaner approach.
-        dataSetup.queueForCleanup(jobRepository.findAll().get(0));
+        jobRepository.findAll().forEach(job -> dataSetup.queueForCleanup(job));
     }
 
     @Test
