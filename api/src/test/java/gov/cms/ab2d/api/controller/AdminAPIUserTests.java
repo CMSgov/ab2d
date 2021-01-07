@@ -13,6 +13,7 @@ import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.service.RoleService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import org.hamcrest.core.Is;
 import org.junit.Assert;
 import org.junit.jupiter.api.*;
@@ -63,6 +64,9 @@ public class AdminAPIUserTests {
     private DataSetup dataSetup;
 
     @Autowired
+    private DoAll doAll;
+
+    @Autowired
     private RoleService roleService;
 
     private String token;
@@ -80,6 +84,7 @@ public class AdminAPIUserTests {
     public void cleanup() {
         dataSetup.queueForCleanup(userRepository.findByUsername(TEST_USER));
         dataSetup.cleanup();
+        doAll.delete();
     }
 
     @Test
