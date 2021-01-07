@@ -42,6 +42,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Testcontainers
 public class AdminAPIUserTests {
 
+    public static final String TEST_USER = "test@test.com";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -76,14 +78,15 @@ public class AdminAPIUserTests {
 
     @AfterEach
     public void cleanup() {
+        dataSetup.queueForCleanup(userRepository.findByUsername(TEST_USER));
         dataSetup.cleanup();
     }
 
     @Test
     public void testCreateUser() throws Exception {
         UserDTO userDTO = new UserDTO();
-        userDTO.setUsername("test@test.com");
-        userDTO.setEmail("test@test.com");
+        userDTO.setUsername(TEST_USER);
+        userDTO.setEmail(TEST_USER);
         userDTO.setEnabled(true);
         userDTO.setFirstName("Test");
         userDTO.setLastName("User");
@@ -112,16 +115,13 @@ public class AdminAPIUserTests {
         Assert.assertEquals(createdUserDTO.getContract().getContractNumber(), userDTO.getContract().getContractNumber());
         Assert.assertEquals(createdUserDTO.getContract().getContractName(), userDTO.getContract().getContractName());
         Assert.assertEquals(createdUserDTO.getRole(), userDTO.getRole());
-
-        User user = userRepository.findByUsername(("test@test.com"));
-        dataSetup.queueForCleanup(user);
     }
 
     @Test
     public void testCreateUserAttestor() throws Exception {
         UserDTO userDTO = new UserDTO();
-        userDTO.setUsername("test@test.com");
-        userDTO.setEmail("test@test.com");
+        userDTO.setUsername(TEST_USER);
+        userDTO.setEmail(TEST_USER);
         userDTO.setEnabled(true);
         userDTO.setFirstName("Test");
         userDTO.setLastName("User");
@@ -149,16 +149,13 @@ public class AdminAPIUserTests {
         Assert.assertEquals(createdUserDTO.getContract().getContractNumber(), userDTO.getContract().getContractNumber());
         Assert.assertEquals(createdUserDTO.getContract().getContractName(), userDTO.getContract().getContractName());
         Assert.assertEquals(createdUserDTO.getRole(), userDTO.getRole());
-
-        User user = userRepository.findByUsername(("test@test.com"));
-        dataSetup.queueForCleanup(user);
     }
 
     @Test
     public void testCreateDuplicateUser() throws Exception {
         UserDTO userDTO = new UserDTO();
-        userDTO.setUsername("test@test.com");
-        userDTO.setEmail("test@test.com");
+        userDTO.setUsername(TEST_USER);
+        userDTO.setEmail(TEST_USER);
         userDTO.setEnabled(true);
         userDTO.setFirstName("Test");
         userDTO.setLastName("User");
@@ -174,8 +171,6 @@ public class AdminAPIUserTests {
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(userDTO))
                         .header("Authorization", "Bearer " + token));
 
-        User user = userRepository.findByUsername(("test@test.com"));
-        dataSetup.queueForCleanup(user);
         userDTO.setEmail("anotherEmail@test.com");
 
         this.mockMvc.perform(
@@ -195,8 +190,8 @@ public class AdminAPIUserTests {
     @Test
     public void testUpdateUser() throws Exception {
         UserDTO userDTO = new UserDTO();
-        userDTO.setUsername("test@test.com");
-        userDTO.setEmail("test@test.com");
+        userDTO.setUsername(TEST_USER);
+        userDTO.setEmail(TEST_USER);
         userDTO.setEnabled(true);
         userDTO.setFirstName("Test");
         userDTO.setLastName("User");
@@ -238,9 +233,6 @@ public class AdminAPIUserTests {
         Assert.assertEquals(updatedUserDTO.getEnabled(), createdUserDTO.getEnabled());
         Assert.assertEquals(updatedUserDTO.getContract().getContractNumber(), createdUserDTO.getContract().getContractNumber());
         Assert.assertEquals(updatedUserDTO.getRole(), createdUserDTO.getRole());
-
-        User user = userRepository.findByUsername("test@test.com");
-        dataSetup.queueForCleanup(user);
     }
 
     @Test
@@ -258,8 +250,8 @@ public class AdminAPIUserTests {
 
     private UserDTO createUser() {
         UserDTO userDTO = new UserDTO();
-        userDTO.setUsername("test@test.com");
-        userDTO.setEmail("test@test.com");
+        userDTO.setUsername(TEST_USER);
+        userDTO.setEmail(TEST_USER);
         userDTO.setEnabled(true);
         userDTO.setFirstName("Test");
         userDTO.setLastName("User");
@@ -403,7 +395,7 @@ public class AdminAPIUserTests {
         String getResult = mvcResult.getResponse().getContentAsString();
         UserDTO userDTO = mapper.readValue(getResult, UserDTO.class);
 
-        Assert.assertEquals(userDTO.getEmail(), "test@test.com");
+        Assert.assertEquals(userDTO.getEmail(), TEST_USER);
         Assert.assertEquals(userDTO.getUsername(), ENABLE_DISABLE_USER);
         Assert.assertEquals(userDTO.getFirstName(), "test");
         Assert.assertEquals(userDTO.getLastName(), "user");
@@ -412,9 +404,6 @@ public class AdminAPIUserTests {
         Assert.assertEquals(contractDTO.getContractNumber(), "Z0000");
         Assert.assertEquals("Test Contract Z0000", contractDTO.getContractName());
         Assert.assertNotNull(contractDTO.getAttestedOn());
-
-        User user = userRepository.findByUsername(("test@test.com"));
-        dataSetup.queueForCleanup(user);
     }
 
     @Test
@@ -432,7 +421,7 @@ public class AdminAPIUserTests {
         Contract contract = dataSetup.setupContract("Z0000");
         User user = new User();
         user.setUsername(ENABLE_DISABLE_USER);
-        user.setEmail("test@test.com");
+        user.setEmail(TEST_USER);
         user.setFirstName("test");
         user.setLastName("user");
         user.setEnabled(enabled);
