@@ -12,10 +12,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static java.util.stream.Collectors.toList;
 
@@ -46,7 +43,7 @@ public class DataSetup {
     @Autowired
     private CoverageSearchEventRepository coverageSearchEventRepo;
 
-    private final List<Object> domainObjects = new ArrayList<>();
+    private final Set<Object> domainObjects = new HashSet<>();
 
     public void queueForCleanup(Object object) {
         domainObjects.add(object);
