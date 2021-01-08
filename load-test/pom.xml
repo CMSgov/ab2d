@@ -14,6 +14,9 @@
     <properties>
         <project.root>${basedir}/..</project.root>
         <jmeter.version>5.4</jmeter.version>
+
+        <!-- Do not run SonarQube on code only used for testing -->
+        <sonar.skip>true</sonar.skip>
     </properties>
 
     <dependencies>
