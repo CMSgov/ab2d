@@ -93,7 +93,7 @@ pipeline {
             steps {
                 // Automatically saves the an id for the SonarQube build
                 withSonarQubeEnv(credentialsId: 'CMS_SONARQUBE_TOKEN_WNYFF', installationName: 'CMSSonar') {
-                    sh 'mvn sonar:sonar'
+                    sh 'mvn sonar:sonar -Dsonar.branch.name=$CI_BRANCH_NAME'
                 }
             }
         }
