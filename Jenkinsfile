@@ -92,7 +92,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 // Automatically saves the an id for the SonarQube build
-                withSonarQubeEnv('CMSSonar') {
+                withSonarQubeEnv(credentialsId: 'CMS_SONARQUBE_TOKEN_WNYFF', installationName: 'CMSSonar') {
                     sh 'mvn sonar:sonar'
                 }
             }
