@@ -99,13 +99,14 @@ pipeline {
         }
 
         stage('SonarQube Quality Gates Check') {
+            options {
+                timeout(time: 10, unit: 'MINUTES')
+            }
             steps {
-                timeout(time: 10, unit: 'MINUTES') {
-                    // waitForQualityGate will use id created in previous step
-                    def qg = waitForQualityGate()
-                    if (qg.status != 'OK') {
-                      error "Pipeline aborted due to quality gate failure: ${qg.status}"
-                    }
+                // waitForQualityGate will use id created in previous step
+                def qg = waitForQualityGate()
+                if (qg.status != 'OK') {
+                  error "Pipeline aborted due to quality gate failure: ${qg.status}"
                 }
             }
         }
