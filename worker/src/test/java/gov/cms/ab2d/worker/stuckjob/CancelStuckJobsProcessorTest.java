@@ -29,8 +29,6 @@ class CancelStuckJobsProcessorTest {
     //class under test
     private CancelStuckJobsProcessor cut;
 
-    private String jobUuid = "6d08bf08-f926-4e19-8d89-ad67ef89f17e";
-
     @Mock
     JobRepository mockJobRepo;
 

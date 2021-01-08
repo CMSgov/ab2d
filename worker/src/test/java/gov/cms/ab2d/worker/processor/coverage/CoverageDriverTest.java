@@ -90,8 +90,6 @@ class CoverageDriverTest {
     private CoverageDriverImpl driver;
     private CoverageProcessorImpl processor;
 
-    private List<Contract> contractsToDelete;
-
     @BeforeEach
     void before() {
 
@@ -99,8 +97,6 @@ class CoverageDriverTest {
         dto.setKey(Constants.WORKER_ENGAGEMENT);
         dto.setValue(FeatureEngagement.NEUTRAL.getSerialValue());
         propertiesService.updateProperties(singletonList(dto));
-
-        contractsToDelete = new ArrayList<>();
 
         contract = dataSetup.setupContract("TST-123");
         contract.setAttestedOn(AB2D_EPOCH.toOffsetDateTime());
@@ -110,14 +106,11 @@ class CoverageDriverTest {
 
         contractRepo.saveAndFlush(contract);
 
-        contractsToDelete.add(contract);
-        contractsToDelete.add(contract1);
-
         january = dataSetup.createCoveragePeriod(contract, 1, 2020);
         february = dataSetup.createCoveragePeriod(contract, 2, 2020);
         march = dataSetup.createCoveragePeriod(contract, 3, 2020);
 
-        User user = userRepo.findAll().get(0);
+        User user = dataSetup.setupUser(List.of());
         job = new Job();
         job.setContract(contract);
         job.setJobUuid("unique");
@@ -125,6 +118,7 @@ class CoverageDriverTest {
         job.setStatus(JobStatus.SUBMITTED);
         job.setCreatedAt(OffsetDateTime.now());
         jobRepo.saveAndFlush(job);
+        dataSetup.queueForCleanup(job);
 
         bfdClient = mock(BFDClient.class);
 
@@ -143,25 +137,7 @@ class CoverageDriverTest {
     void after() {
         processor.shutdown();
 
-        dataSetup.deleteCoverage();
-        coverageSearchEventRepo.deleteAll();
-        coverageSearchEventRepo.flush();
-
-        coverageSearchRepo.deleteAll();
-        coverageSearchRepo.flush();
-
-        coveragePeriodRepo.deleteAll();
-        coveragePeriodRepo.flush();
-
-        if (job != null) {
-            jobRepo.delete(job);
-            jobRepo.flush();
-        }
-
-        for (Contract contract : contractsToDelete) {
-            contractRepo.delete(contract);
-            contractRepo.flush();
-        }
+        dataSetup.cleanup();
 
         PropertiesDTO dto = new PropertiesDTO();
         dto.setKey(Constants.WORKER_ENGAGEMENT);
@@ -176,12 +152,10 @@ class CoverageDriverTest {
         Contract attestedAfterEpoch = dataSetup.setupContract("TST-AFTER-EPOCH");
         attestedAfterEpoch.setAttestedOn(AB2D_EPOCH.toOffsetDateTime().plusMonths(3));
         contractRepo.saveAndFlush(attestedAfterEpoch);
-        contractsToDelete.add(attestedAfterEpoch);
 
         Contract attestedBeforeEpoch = dataSetup.setupContract("TST-BEFORE-EPOCH");
         attestedBeforeEpoch.setAttestedOn(AB2D_EPOCH.toOffsetDateTime().minusNanos(1));
         contractRepo.saveAndFlush(attestedBeforeEpoch);
-        contractsToDelete.add(attestedBeforeEpoch);
 
         long months = ChronoUnit.MONTHS.between(AB2D_EPOCH.toOffsetDateTime(), OffsetDateTime.now());
         long expectedNumPeriods = months + 1;
@@ -215,7 +189,6 @@ class CoverageDriverTest {
         testContract.setUpdateMode(Contract.UpdateMode.TEST);
 
         contractRepo.saveAndFlush(testContract);
-        contractsToDelete.add(testContract);
 
         try {
             driver.discoverCoveragePeriods();
