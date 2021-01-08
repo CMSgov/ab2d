@@ -102,12 +102,11 @@ pipeline {
             options {
                 timeout(time: 10, unit: 'MINUTES')
             }
-            steps {
-                // waitForQualityGate will use id created in previous step
-                def qg = waitForQualityGate()
-                if (qg.status != 'OK') {
-                  error "Pipeline aborted due to quality gate failure: ${qg.status}"
-                }
+
+            // waitForQualityGate will use id created in previous step
+            def qg = waitForQualityGate()
+            if (qg.status != 'OK') {
+                error "Pipeline aborted due to quality gate failure: ${qg.status}"
             }
         }
 
