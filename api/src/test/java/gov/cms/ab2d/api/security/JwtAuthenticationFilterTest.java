@@ -3,13 +3,12 @@ package gov.cms.ab2d.api.security;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.controller.TestUtil;
-import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -22,7 +21,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.Collections;
 import java.util.List;
 
 import static gov.cms.ab2d.api.util.Constants.ADMIN_ROLE;
@@ -53,35 +51,17 @@ class JwtAuthenticationFilterTest {
     private JwtTokenAuthenticationFilter filter;
 
     @Autowired
+    DataSetup dataSetup;
+
+    @Autowired
     private DoAll doAll;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
-    private ContractRepository contractRepository;
-
-    @Autowired
-    private JobRepository jobRepository;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
-    /**
-     * Depending on the order that other test classes are run in these tests can fail because of residual
-     * events in the PostgresSQLContainer. Using a {@link BeforeEach} is unnecessary after the first test but allows
-     * Spring to autowire in dependencies which a static {@link org.junit.jupiter.api.BeforeAll} would not allow.
-     */
-    @BeforeEach
     @AfterEach
     public void cleanup() {
-        jobRepository.deleteAll();
-        userRepository.deleteAll();
-        roleRepository.deleteAll();
-        contractRepository.deleteAll();
+        dataSetup.cleanup();
         doAll.delete();
     }
 

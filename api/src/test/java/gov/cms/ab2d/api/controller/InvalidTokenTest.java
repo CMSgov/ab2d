@@ -5,6 +5,8 @@ import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -17,7 +19,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
 
-import static gov.cms.ab2d.api.util.Constants.*;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -35,16 +36,16 @@ public class InvalidTokenTest {
     private TestUtil testUtil;
 
     @Autowired
+    private DataSetup dataSetup;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
-    private JobRepository jobRepository;
-
-    @Autowired
     ContractRepository contractRepository;
+
+    @Autowired
+    DoAll doAll;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
@@ -58,10 +59,8 @@ public class InvalidTokenTest {
 
     @AfterEach
     public void tearDown() {
-        jobRepository.deleteAll();
-        userRepository.deleteAll();
-        roleRepository.deleteAll();
-        contractRepository.deleteAll();
+        dataSetup.cleanup();
+        doAll.delete();
     }
 
     // Moved this test to here to avoid using @Before annotation of other Auth tests

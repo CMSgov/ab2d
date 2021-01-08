@@ -5,6 +5,7 @@ import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
@@ -43,13 +44,7 @@ public class AuthenticationTests {
     private UserRepository userRepository;
 
     @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
-    private JobRepository jobRepository;
-
-    @Autowired
-    private ContractRepository contractRepository;
+    private DataSetup dataSetup;
 
     @Autowired
     private DoAll doAll;
@@ -61,13 +56,13 @@ public class AuthenticationTests {
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
-        jobRepository.deleteAll();
-        userRepository.deleteAll();
-        roleRepository.deleteAll();
-        contractRepository.deleteAll();
-        doAll.delete();
-
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
+    }
+
+    @AfterEach
+    public void cleanup() {
+        doAll.delete();
+        dataSetup.cleanup();
     }
 
     // Negative tests, successful auth tests are essentially done in other suites

@@ -73,9 +73,6 @@ public class BulkDataAccessAPIIntegrationTests {
     private UserRepository userRepository;
 
     @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
     private ContractRepository contractRepository;
 
     @Value("${efs.mount}")
@@ -101,14 +98,15 @@ public class BulkDataAccessAPIIntegrationTests {
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
-        jobRepository.deleteAll();
-        userRepository.deleteAll();
-        roleRepository.deleteAll();
-        contractRepository.deleteAll();
-
-        doAll.delete();
         testUtil.turnMaintenanceModeOff();
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
+    }
+
+    @AfterEach
+    public void cleanup() {
+        jobRepository.findAll().forEach(job -> dataSetup.queueForCleanup(job));  // catches implicitly generated jobs
+        doAll.delete();
+        dataSetup.cleanup();
     }
 
     private void createMaxJobs() throws Exception {
@@ -273,10 +271,12 @@ public class BulkDataAccessAPIIntegrationTests {
         user.setUsername("test");
         user.setEmail("test@test.com");
         userRepository.saveAndFlush(user);
+        dataSetup.queueForCleanup(user);
 
         for(Job job : jobs) {
             job.setUser(user);
             jobRepository.saveAndFlush(job);
+            dataSetup.queueForCleanup(job);
         }
 
         this.mockMvc.perform(
@@ -947,6 +947,7 @@ public class BulkDataAccessAPIIntegrationTests {
         testUtil.addJobOutput(job, "test.ndjson");
 
         jobRepository.saveAndFlush(job);
+        dataSetup.queueForCleanup(job);
 
         MvcResult mvcResultStatusCall =
                 this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
@@ -1259,11 +1260,13 @@ public class BulkDataAccessAPIIntegrationTests {
         user.setUsername("test");
         user.setEmail("test@test.com");
         userRepository.saveAndFlush(user);
+        dataSetup.queueForCleanup(user);
 
         List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
         for(Job job : jobs) {
             job.setUser(user);
             jobRepository.saveAndFlush(job);
+            dataSetup.queueForCleanup(job);
         }
 
         this.mockMvc.perform(

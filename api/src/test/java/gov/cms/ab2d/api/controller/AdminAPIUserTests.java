@@ -13,6 +13,7 @@ import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.service.RoleService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import org.hamcrest.core.Is;
 import org.junit.Assert;
 import org.junit.jupiter.api.*;
@@ -42,6 +43,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Testcontainers
 public class AdminAPIUserTests {
 
+    public static final String TEST_USER = "test@test.com";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -52,19 +55,16 @@ public class AdminAPIUserTests {
     private UserRepository userRepository;
 
     @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
     private JobRepository jobRepository;
-
-    @Autowired
-    private ContractRepository contractRepository;
 
     @Autowired
     private TestUtil testUtil;
 
     @Autowired
     private DataSetup dataSetup;
+
+    @Autowired
+    private DoAll doAll;
 
     @Autowired
     private RoleService roleService;
@@ -77,19 +77,21 @@ public class AdminAPIUserTests {
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
-        jobRepository.deleteAll();
-        userRepository.deleteAll();
-        roleRepository.deleteAll();
-        contractRepository.deleteAll();
-
         token = testUtil.setupToken(List.of(ADMIN_ROLE, SPONSOR_ROLE, ATTESTOR_ROLE));
+    }
+
+    @AfterEach
+    public void cleanup() {
+        dataSetup.queueForCleanup(userRepository.findByUsername(TEST_USER));
+        dataSetup.cleanup();
+        doAll.delete();
     }
 
     @Test
     public void testCreateUser() throws Exception {
         UserDTO userDTO = new UserDTO();
-        userDTO.setUsername("test@test.com");
-        userDTO.setEmail("test@test.com");
+        userDTO.setUsername(TEST_USER);
+        userDTO.setEmail(TEST_USER);
         userDTO.setEnabled(true);
         userDTO.setFirstName("Test");
         userDTO.setLastName("User");
@@ -123,8 +125,8 @@ public class AdminAPIUserTests {
     @Test
     public void testCreateUserAttestor() throws Exception {
         UserDTO userDTO = new UserDTO();
-        userDTO.setUsername("test@test.com");
-        userDTO.setEmail("test@test.com");
+        userDTO.setUsername(TEST_USER);
+        userDTO.setEmail(TEST_USER);
         userDTO.setEnabled(true);
         userDTO.setFirstName("Test");
         userDTO.setLastName("User");
@@ -157,8 +159,8 @@ public class AdminAPIUserTests {
     @Test
     public void testCreateDuplicateUser() throws Exception {
         UserDTO userDTO = new UserDTO();
-        userDTO.setUsername("test@test.com");
-        userDTO.setEmail("test@test.com");
+        userDTO.setUsername(TEST_USER);
+        userDTO.setEmail(TEST_USER);
         userDTO.setEnabled(true);
         userDTO.setFirstName("Test");
         userDTO.setLastName("User");
@@ -186,13 +188,15 @@ public class AdminAPIUserTests {
                         .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                         .andExpect(jsonPath("$.issue[0].details.text",
                             Is.is("An internal error occurred")));
+        User anotherUser = userRepository.findByUsername(("anotherEmail@test.com"));
+        dataSetup.queueForCleanup(anotherUser);
     }
 
     @Test
     public void testUpdateUser() throws Exception {
         UserDTO userDTO = new UserDTO();
-        userDTO.setUsername("test@test.com");
-        userDTO.setEmail("test@test.com");
+        userDTO.setUsername(TEST_USER);
+        userDTO.setEmail(TEST_USER);
         userDTO.setEnabled(true);
         userDTO.setFirstName("Test");
         userDTO.setLastName("User");
@@ -251,8 +255,8 @@ public class AdminAPIUserTests {
 
     private UserDTO createUser() {
         UserDTO userDTO = new UserDTO();
-        userDTO.setUsername("test@test.com");
-        userDTO.setEmail("test@test.com");
+        userDTO.setUsername(TEST_USER);
+        userDTO.setEmail(TEST_USER);
         userDTO.setEnabled(true);
         userDTO.setFirstName("Test");
         userDTO.setLastName("User");
@@ -284,7 +288,9 @@ public class AdminAPIUserTests {
         String header = mvcResult.getResponse().getHeader("Content-Location");
 
         Job job = jobRepository.findByJobUuid(header.substring(header.indexOf("/Job/") + 5, header.indexOf("/$status")));
+        dataSetup.queueForCleanup(job);
         User jobUser = job.getUser();
+        dataSetup.queueForCleanup(jobUser);
         Assert.assertEquals(jobUser.getUsername(), userDTO.getUsername());
     }
 
@@ -311,6 +317,8 @@ public class AdminAPIUserTests {
 
         Job job = jobRepository.findByJobUuid(header.substring(header.indexOf("/Job/") + 5, header.indexOf("/$status")));
         User jobUser = job.getUser();
+        dataSetup.queueForCleanup(jobUser);
+        dataSetup.queueForCleanup(job);
         Assert.assertEquals(jobUser.getUsername(), userDTO.getUsername());
     }
 
@@ -392,7 +400,7 @@ public class AdminAPIUserTests {
         String getResult = mvcResult.getResponse().getContentAsString();
         UserDTO userDTO = mapper.readValue(getResult, UserDTO.class);
 
-        Assert.assertEquals(userDTO.getEmail(), "test@test.com");
+        Assert.assertEquals(userDTO.getEmail(), TEST_USER);
         Assert.assertEquals(userDTO.getUsername(), ENABLE_DISABLE_USER);
         Assert.assertEquals(userDTO.getFirstName(), "test");
         Assert.assertEquals(userDTO.getLastName(), "user");
@@ -418,13 +426,14 @@ public class AdminAPIUserTests {
         Contract contract = dataSetup.setupContract("Z0000");
         User user = new User();
         user.setUsername(ENABLE_DISABLE_USER);
-        user.setEmail("test@test.com");
+        user.setEmail(TEST_USER);
         user.setFirstName("test");
         user.setLastName("user");
         user.setEnabled(enabled);
         user.setContract(contract);
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        dataSetup.queueForCleanup(savedUser);
     }
 
     private ContractDTO buildContractDTO() {
