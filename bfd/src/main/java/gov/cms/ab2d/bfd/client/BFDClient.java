@@ -1,9 +1,5 @@
 package gov.cms.ab2d.bfd.client;
 
-
-import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.dstu3.model.CapabilityStatement;
-
 import java.time.OffsetDateTime;
 
 
@@ -12,11 +8,11 @@ public interface BFDClient {
     String BFD_CLIENT_ID = "AB2D";
     String BFD_HDR_BULK_JOBID = "BULK-JOBID";
 
-    Bundle requestEOBFromServer(String patientID);
-    Bundle requestEOBFromServer(String patientID, OffsetDateTime sinceTime);
-    Bundle requestNextBundleFromServer(Bundle bundle);
-    Bundle requestPatientByHICN(String patientId);
-    Bundle requestPatientByMBI(String patientId);
+    org.hl7.fhir.dstu3.model.Bundle requestEOBFromServer(String patientID);
+    org.hl7.fhir.dstu3.model.Bundle requestEOBFromServer(String patientID, OffsetDateTime sinceTime);
+    org.hl7.fhir.dstu3.model.Bundle requestNextBundleFromServer(org.hl7.fhir.dstu3.model.Bundle bundle);
+    org.hl7.fhir.dstu3.model.Bundle requestPatientByHICN(String patientId);
+    org.hl7.fhir.dstu3.model.Bundle requestPatientByMBI(String patientId);
 
     /**
      * Request BFD for a list of all active patients in a contract for a specific month
@@ -25,9 +21,9 @@ public interface BFDClient {
      * @param month
      * @return Bundle of Patient Resources
      */
-    Bundle requestPartDEnrolleesFromServer(String contractNumber, int month);
+    org.hl7.fhir.dstu3.model.Bundle requestPartDEnrolleesFromServer(String contractNumber, int month);
 
-    CapabilityStatement capabilityStatement();
+    org.hl7.fhir.dstu3.model.CapabilityStatement capabilityStatement();
 
     ThreadLocal<String> BFD_BULK_JOB_ID = new ThreadLocal<>();
 }
