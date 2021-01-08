@@ -9,9 +9,9 @@ sudo mv /tmp/hostname /etc/hostname
 sudo hostname "$(hostname -s).${env}"
 
 #
-# Setup EFS realted items 
+# Setup EFS realted items
 #
- 
+
 # Build amazon-efs-utils as an RPM package
 
 sudo yum -y install git
@@ -19,6 +19,8 @@ sudo yum -y install rpm-build
 cd /tmp
 git clone https://github.com/aws/efs-utils
 cd efs-utils
+# Change FIPS mode to yes
+sed -i -E "s/'fips': 'no'/'fips': 'yes'/" ./src/mount_efs/__init__.py
 sudo make rpm
 
 # Install amazon-efs-utils as an RPM package
@@ -56,15 +58,15 @@ sudo cp /etc/fstab /etc/fstab.bak
 # -----------
 # TO DO: Ensure stunnel is being used with the custom AMI
 # -----------
-echo '${efs_id}:/ /mnt/efs efs _netdev 0 0' | sudo tee -a /etc/fstab
-sudo mount -a
+# echo '${efs_id}:/ /mnt/efs efs _netdev 0 0' | sudo tee -a /etc/fstab
+# sudo mount -a
 #
 # --------
 # Note that the following method can't be used since it is specific to Amazon's ECS specific AMI)
 # --------
 # Mount with IAM authorization to an Amazon EC2 instance that has an instance profile
-# echo '${efs_id}:/ /mnt/efs efs _netdev,tls,iam 0 0' | sudo tee -a /etc/fstab
-# sudo mount -a
+echo '${efs_id}:/ /mnt/efs efs _netdev,tls,iam 0 0' | sudo tee -a /etc/fstab
+sudo mount -a
 #####
 
 # Place BFD keystore in shared EFS directory (if doesn't already exist)
@@ -87,7 +89,7 @@ else
   export RUBY_BIN="/home/ec2-user/.rbenv/versions/2.6.5/bin"
   sudo "$RUBY_BIN/bundle" exec "$RUBY_BIN/rake" \
     get_file_from_s3_and_decrypt["./${bfd_keystore_file_name}","${env}-automation"]
-  
+
   # Create a "bfd-keystore" directory under EFS (if doesn't exist)
   sudo mkdir -p "/mnt/efs/bfd-keystore/${env}"
 
@@ -97,9 +99,9 @@ else
 fi
 
 #
-# Setup ECS realted items 
+# Setup ECS realted items
 #
- 
+
 # ECS config file
 # https://github.com/aws/amazon-ecs-agent
 

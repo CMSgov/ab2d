@@ -9,7 +9,7 @@ sudo mv /tmp/hostname /etc/hostname
 sudo hostname "$(hostname -s).${env}"
 
 #
-# Setup EFS realted items 
+# Setup EFS realted items
 #
 
 # Build amazon-efs-utils as an RPM package
@@ -19,6 +19,8 @@ sudo yum -y install rpm-build
 cd /tmp
 git clone https://github.com/aws/efs-utils
 cd efs-utils
+# Change FIPS mode to yes
+sed -i -E "s/'fips': 'no'/'fips': 'yes'/" ./src/mount_efs/__init__.py
 sudo make rpm
 
 # Install amazon-efs-utils as an RPM package
@@ -55,19 +57,19 @@ sudo cp /etc/fstab /etc/fstab.bak
 # -----------
 # Without TLS
 # -----------
-echo '${efs_id}:/ /mnt/efs efs _netdev 0 0' | sudo tee -a /etc/fstab
-sudo mount -a
+# echo '${efs_id}:/ /mnt/efs efs _netdev 0 0' | sudo tee -a /etc/fstab
+# sudo mount -a
 #
 # --------
 # With TLS
 # --------
 # Mount with IAM authorization to an Amazon EC2 instance that has an instance profile
-# echo '${efs_id}:/ /mnt/efs efs _netdev,tls,iam 0 0' | sudo tee -a /etc/fstab
-# sudo mount -a
+echo '${efs_id}:/ /mnt/efs efs _netdev,tls,iam 0 0' | sudo tee -a /etc/fstab
+sudo mount -a
 #####
 
 #
-# Setup ECS realted items 
+# Setup ECS realted items
 #
 
 # ECS config file
