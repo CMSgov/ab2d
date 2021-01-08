@@ -60,7 +60,7 @@ img {
 }
 .shape-divider {
     position: absolute;
-    width: 100%;
+    width: calc(100% + 1px);
     transform: translateX(-50%);
     -ms-transform-origin: 100% 0;
     -ms-transform: translateX(-50%);
@@ -708,7 +708,7 @@ header.masthead .intro-text .intro-heading {
     }
 
     .home-patient-health-section {
-        margin-top: 90px;
+        margin-top: 40px;
     }
 }
 @media (min-width: 992px) {
