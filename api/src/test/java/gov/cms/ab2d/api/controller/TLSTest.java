@@ -2,14 +2,14 @@ package gov.cms.ab2d.api.controller;
 
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
-import gov.cms.ab2d.common.repository.RoleRepository;
-import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,18 +58,18 @@ public class TLSTest {
     private TestUtil testUtil;
 
     @Autowired
-    private UserRepository userRepository;
+    DataSetup dataSetup;
 
     @Autowired
-    private RoleRepository roleRepository;
+    private DoAll doAll;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
-    @BeforeEach
-    public void setup() {
-        userRepository.deleteAll();
-        roleRepository.deleteAll();
+    @AfterEach
+    public void cleanup() {
+        dataSetup.cleanup();
+        doAll.delete();
     }
 
     @Test

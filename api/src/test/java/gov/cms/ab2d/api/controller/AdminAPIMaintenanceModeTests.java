@@ -8,6 +8,7 @@ import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
@@ -56,16 +57,7 @@ public class AdminAPIMaintenanceModeTests {
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
     private JobRepository jobRepository;
-
-    @Autowired
-    private ContractRepository contractRepository;
 
     @Autowired
     private TestUtil testUtil;
@@ -73,19 +65,22 @@ public class AdminAPIMaintenanceModeTests {
     @Autowired
     private DoAll doAll;
 
+    @Autowired
+    private DataSetup dataSetup;
+
     private static final String PROPERTIES_URL = "/properties";
 
     private String token;
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
-        jobRepository.deleteAll();
-        userRepository.deleteAll();
-        roleRepository.deleteAll();
-        contractRepository.deleteAll();
-        doAll.delete();
-
         token = testUtil.setupToken(List.of(SPONSOR_ROLE, ADMIN_ROLE));
+    }
+
+    @AfterEach
+    public void cleanup() {
+        dataSetup.cleanup();
+        doAll.delete();
     }
 
     @Test
@@ -142,6 +137,8 @@ public class AdminAPIMaintenanceModeTests {
         this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(202));
+
+        jobRepository.findAll().forEach(job -> dataSetup.queueForCleanup(job));
     }
 
     @Test
@@ -168,6 +165,7 @@ public class AdminAPIMaintenanceModeTests {
         String testFile = "test.ndjson";
 
         Job job = testUtil.createTestJobForDownload(testFile);
+        dataSetup.queueForCleanup(job);
 
         String destinationStr = testUtil.createTestDownloadFile(tmpJobLocation, job, testFile);
 
