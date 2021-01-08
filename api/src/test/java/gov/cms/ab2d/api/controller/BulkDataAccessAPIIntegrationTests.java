@@ -16,7 +16,6 @@ import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.apache.commons.lang3.StringUtils;
 import org.hamcrest.core.Is;
-import org.hl7.fhir.dstu3.model.DateTimeType;
 import org.junit.Assert;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -593,7 +592,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(header().string("Expires",
                         DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC)))
                 .andExpect(jsonPath("$.transactionTime",
-                        Is.is(new DateTimeType(job.getCreatedAt().toString()).toHumanDisplay())))
+                        Is.is(new org.hl7.fhir.dstu3.model.DateTimeType(job.getCreatedAt().toString()).toHumanDisplay())))
                 .andExpect(jsonPath("$.request", Is.is(job.getRequestUrl())))
                 .andExpect(jsonPath("$.requiresAccessToken", Is.is(true)))
                 .andExpect(jsonPath("$.output[0].type", Is.is(EOB)))
@@ -651,7 +650,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(header().string("Expires",
                         DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC)))
                 .andExpect(jsonPath("$.transactionTime",
-                        Is.is(new DateTimeType(job.getCreatedAt().toString()).toHumanDisplay())))
+                        Is.is(new org.hl7.fhir.dstu3.model.DateTimeType(job.getCreatedAt().toString()).toHumanDisplay())))
                 .andExpect(jsonPath("$.request", Is.is(job.getRequestUrl())))
                 .andExpect(jsonPath("$.requiresAccessToken", Is.is(true)))
                 .andExpect(jsonPath("$.output[0].type", Is.is(EOB)))

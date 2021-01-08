@@ -1,7 +1,5 @@
 package gov.cms.ab2d.common.util;
 
-import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
-import org.hl7.fhir.dstu3.model.Period;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -33,7 +31,7 @@ class FilterOutByDateTest {
                     FilterOutByDate.getDateRange(10, 18, 1, 19),
                     FilterOutByDate.getDateRange(9, 15),
                     FilterOutByDate.getDateRange(10, 12, 5, 15));
-            List<ExplanationOfBenefit> list = List.of(
+            List<org.hl7.fhir.dstu3.model.ExplanationOfBenefit> list = List.of(
                     createEOB("10/01/2020", "10/02/2020"), // In
                     createEOB("08/05/2020", "08/06/2020"), // In
                     createEOB("11/07/2020", "11/07/2020"), // Out
@@ -55,7 +53,7 @@ class FilterOutByDateTest {
 
     @Test
     void testAfterAttestation() throws ParseException {
-        ExplanationOfBenefit b = createEOB("10/01/2020", "10/03/2020");
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit b = createEOB("10/01/2020", "10/03/2020");
         assertTrue(FilterOutByDate.afterDate(SDF.parse("10/01/2020"), b));
         assertTrue(FilterOutByDate.afterDate(SDF.parse("10/03/2020"), b));
         assertTrue(FilterOutByDate.afterDate(SDF.parse("10/03/2002"), b));
@@ -64,7 +62,7 @@ class FilterOutByDateTest {
 
     @Test
     void withinDateRange() throws ParseException {
-        ExplanationOfBenefit b = createEOB("10/01/2020", "11/01/2020");
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit b = createEOB("10/01/2020", "11/01/2020");
 
         // Any slice of billing period within the interval
         assertTrue(FilterOutByDate.withinDateRange(b, FilterOutByDate.getDateRange(10, 2020)));
@@ -200,9 +198,9 @@ class FilterOutByDateTest {
         assertEquals("12/31/2020", SDF.format(ranges.get(0).getEnd()));
     }
 
-    private ExplanationOfBenefit createEOB(String startDate, String endDate) throws ParseException {
-        ExplanationOfBenefit b = new ExplanationOfBenefit();
-        Period p = new Period();
+    private org.hl7.fhir.dstu3.model.ExplanationOfBenefit createEOB(String startDate, String endDate) throws ParseException {
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit b = new org.hl7.fhir.dstu3.model.ExplanationOfBenefit();
+        org.hl7.fhir.dstu3.model.Period p = new org.hl7.fhir.dstu3.model.Period();
         p.setStart(SDF.parse(startDate));
         p.setEnd(SDF.parse(endDate));
         b.setBillablePeriod(p);

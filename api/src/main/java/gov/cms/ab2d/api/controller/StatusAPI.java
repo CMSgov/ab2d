@@ -8,7 +8,6 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
-import org.hl7.fhir.dstu3.model.DateTimeType;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -159,7 +158,7 @@ public class StatusAPI {
 
         final JobCompletedResponse resp = new JobCompletedResponse();
 
-        final DateTimeType jobStartedAt = new DateTimeType(job.getCreatedAt().toString());
+        final org.hl7.fhir.dstu3.model.DateTimeType jobStartedAt = new org.hl7.fhir.dstu3.model.DateTimeType(job.getCreatedAt().toString());
         resp.setTransactionTime(jobStartedAt.toHumanDisplay());
 
         resp.setRequest(job.getRequestUrl());

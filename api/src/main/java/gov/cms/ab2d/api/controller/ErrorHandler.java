@@ -20,7 +20,6 @@ import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.hl7.fhir.dstu3.model.OperationOutcome;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -153,7 +152,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         String msg = getRootCause(e);
         HttpStatus httpStatus = getErrorResponse(e.getClass());
 
-        OperationOutcome operationOutcome = getErrorOutcome(msg);
+        org.hl7.fhir.dstu3.model.OperationOutcome operationOutcome = getErrorOutcome(msg);
         String encoded = outcomeToJSON(operationOutcome);
         eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), null,
                 ErrorHandler.getErrorResponse(e.getClass()),
