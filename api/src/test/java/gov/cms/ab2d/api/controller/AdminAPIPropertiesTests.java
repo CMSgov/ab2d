@@ -5,8 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
-import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
 import org.junit.Assert;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,16 +44,10 @@ public class AdminAPIPropertiesTests {
     private TestUtil testUtil;
 
     @Autowired
-    private UserRepository userRepository;
+    DataSetup dataSetup;
 
     @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
-    private JobRepository jobRepository;
-
-    @Autowired
-    private ContractRepository contractRepository;
+    DoAll doAll;
 
     @SuppressWarnings("rawtypes")
     @Container
@@ -64,12 +59,13 @@ public class AdminAPIPropertiesTests {
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
-        jobRepository.deleteAll();
-        userRepository.deleteAll();     // Needed in the setup because TEST_USER is disabled
-        roleRepository.deleteAll();
-        contractRepository.deleteAll();
-
         token = testUtil.setupToken(List.of(ADMIN_ROLE));
+    }
+
+    @AfterEach
+    public void cleanup() {
+        dataSetup.cleanup();
+        doAll.delete();
     }
 
     @Test
