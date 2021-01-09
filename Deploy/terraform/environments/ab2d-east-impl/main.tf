@@ -198,7 +198,6 @@ module "api" {
   ab2d_hpms_api_params              = var.ab2d_hpms_api_params
   ab2d_hpms_auth_key_id             = var.ab2d_hpms_auth_key_id
   ab2d_hpms_auth_key_secret         = var.ab2d_hpms_auth_key_secret
-  stunnel_latest_version            = var.stunnel_latest_version
   cpm_backup_api                    = var.cpm_backup_api
 }
 
@@ -256,7 +255,6 @@ module "worker" {
   claims_skip_billable_period_check = var.claims_skip_billable_period_check
   ab2d_opt_out_job_schedule         = var.ab2d_opt_out_job_schedule
   ab2d_s3_optout_bucket             = var.ab2d_s3_optout_bucket
-  stunnel_latest_version            = var.stunnel_latest_version
   cpm_backup_worker                 = var.cpm_backup_worker
 }
 

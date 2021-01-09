@@ -1103,15 +1103,6 @@ else
   exit 1
 fi
 
-# Get latest stable version of stunnel
-# - note that you need the latest, since older versions become unavailable
-# shellcheck disable=SC1003
-STUNNEL_LATEST_VERSION=$(curl -s 'https://www.stunnel.org/downloads.html' |
-  sed 's/</\'$'\n''</g' | sed -n '/>Latest Version$/,$ p' |
-  grep -E -m1 -o 'downloads/stunnel-.+\.tar\.gz' |
-  cut -d">" -f 2 |
-  sed 's/\.tar\.gz//')
-
 # Run automation for API and worker
 
 terraform apply \
@@ -1148,7 +1139,6 @@ terraform apply \
   --var "ab2d_hpms_api_params=${AB2D_HPMS_API_PARAMS}" \
   --var "ab2d_hpms_auth_key_id=${AB2D_HPMS_AUTH_KEY_ID}" \
   --var "ab2d_hpms_auth_key_secret=${AB2D_HPMS_AUTH_KEY_SECRET}" \
-  --var "stunnel_latest_version=${STUNNEL_LATEST_VERSION}" \
   --var "gold_image_name=${GOLD_IMAGE_NAME}" \
   --var "ec2_desired_instance_count_api=${EC2_DESIRED_INSTANCE_COUNT_API}" \
   --var "ec2_minimum_instance_count_api=${EC2_MINIMUM_INSTANCE_COUNT_API}" \
@@ -1182,7 +1172,6 @@ terraform apply \
   --var "new_relic_app_name=$NEW_RELIC_APP_NAME" \
   --var "new_relic_license_key=$NEW_RELIC_LICENSE_KEY" \
   --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
-  --var "stunnel_latest_version=${STUNNEL_LATEST_VERSION}" \
   --var "gold_image_name=${GOLD_IMAGE_NAME}" \
   --var "ec2_desired_instance_count_worker=${EC2_DESIRED_INSTANCE_COUNT_WORKER}" \
   --var "ec2_minimum_instance_count_worker=${EC2_MINIMUM_INSTANCE_COUNT_WORKER}" \
