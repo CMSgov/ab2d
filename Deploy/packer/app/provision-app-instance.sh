@@ -197,6 +197,60 @@ export PATH=$PATH:/usr/pgsql-10/bin
 bundle install
 
 #
+# Setup EFS related items
+#
+
+# Build amazon-efs-utils as an RPM package
+
+sudo yum -y install git
+sudo yum -y install rpm-build
+cd /tmp
+git clone https://github.com/aws/efs-utils
+cd efs-utils
+# Change FIPS mode to yes
+sed -i -E "s/'fips': 'no'/'fips': 'yes'/" ./src/mount_efs/__init__.py
+sudo make rpm
+
+# Install amazon-efs-utils as an RPM package
+# - note that '--nogpgcheck' is now required for installing locally built rpm
+
+sudo yum -y install ./build/amazon-efs-utils*rpm --nogpgcheck
+
+#
+# Upgrade stunnel for using EFS mount helper with TLS
+# - by default, it enforces certificate hostname checking
+#
+
+# Get latest stable version of stunnel
+# - note that you need the latest, since older versions become unavailable
+# shellcheck disable=SC1003
+STUNNEL_LATEST_VERSION=$(curl -s 'https://www.stunnel.org/downloads.html' |
+  sed 's/</\'$'\n''</g' | sed -n '/>Latest Version$/,$ p' |
+  grep -E -m1 -o 'downloads/stunnel-.+\.tar\.gz' |
+  cut -d">" -f 2 |
+  sed 's/\.tar\.gz//')
+
+sudo yum install gcc openssl-devel tcp_wrappers-devel -y
+cd /tmp
+curl -o "${STUNNEL_LATEST_VERSION}.tar.gz" "https://www.stunnel.org/downloads/${STUNNEL_LATEST_VERSION}.tar.gz"
+tar xvfz "${STUNNEL_LATEST_VERSION}.tar.gz"
+cd "${STUNNEL_LATEST_VERSION}"
+sudo ./configure
+sudo make
+sudo rm -f /bin/stunnel
+sudo make install
+if [[ -f /bin/stunnel ]]; then sudo mv /bin/stunnel /root; fi
+sudo ln -s /usr/local/bin/stunnel /bin/stunnel
+
+# Configure running container instances to use an Amazon EFS file system
+#
+# Mounting Your Amazon EFS File System Automatically
+# https://docs.aws.amazon.com/efs/latest/ug/mount-fs-auto-mount-onreboot.html
+
+sudo mkdir /mnt/efs
+sudo cp /etc/fstab /etc/fstab.bak
+
+#
 # Make sure ec2 userdata is enabled
 #
 
