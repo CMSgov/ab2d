@@ -75,7 +75,7 @@ class ProgressTrackerIntegrationTest {
     }
 
     @AfterEach
-    void after() {
+    void cleanup() {
         dataSetup.cleanup();
     }
 

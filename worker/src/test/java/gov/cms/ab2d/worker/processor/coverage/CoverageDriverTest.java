@@ -134,7 +134,7 @@ class CoverageDriverTest {
     }
 
     @AfterEach
-    void after() {
+    void cleanup() {
         processor.shutdown();
 
         dataSetup.cleanup();

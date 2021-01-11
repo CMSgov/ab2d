@@ -163,7 +163,7 @@ class JobProcessorIntegrationTest {
     }
 
     @AfterEach
-    void after() {
+    void cleanup() {
         doAll.delete();
         dataSetup.cleanup();
     }

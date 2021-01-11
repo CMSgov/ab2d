@@ -48,7 +48,7 @@ class CoverageProcessorIntTest {
     private CoverageProcessor processor;
 
     @AfterEach
-    void after() {
+    void cleanup() {
         dataSetup.cleanup();
     }
 

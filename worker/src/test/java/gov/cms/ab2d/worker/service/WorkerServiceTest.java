@@ -58,7 +58,7 @@ class WorkerServiceTest {
     }
 
     @AfterEach
-    public void after() {
+    public void cleanup() {
         ReflectionTestUtils.setField(jobHandler, "workerService", workerServiceImpl);
 
         dataSetup.cleanup();

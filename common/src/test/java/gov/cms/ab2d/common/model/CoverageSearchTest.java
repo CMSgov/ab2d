@@ -47,7 +47,7 @@ class CoverageSearchTest {
 
 
     @AfterEach
-    void after() {
+    void cleanup() {
         dataSetup.cleanup();
     }
 

@@ -111,7 +111,7 @@ class CoverageUpdateAndProcessorTest {
     }
 
     @AfterEach
-    void after() {
+    void cleanup() {
         processor.shutdown();
 
         dataSetup.cleanup();
