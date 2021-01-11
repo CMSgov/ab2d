@@ -13,7 +13,7 @@ import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.service.RoleService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
-import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
+import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import org.hamcrest.core.Is;
 import org.junit.Assert;
 import org.junit.jupiter.api.*;
@@ -64,7 +64,7 @@ public class AdminAPIUserTests {
     private DataSetup dataSetup;
 
     @Autowired
-    private DoAll doAll;
+    private LoggerEventRepository loggerEventRepository;
 
     @Autowired
     private RoleService roleService;
@@ -84,7 +84,7 @@ public class AdminAPIUserTests {
     public void cleanup() {
         dataSetup.queueForCleanup(userRepository.findByUsername(TEST_USER));
         dataSetup.cleanup();
-        doAll.delete();
+        loggerEventRepository.delete();
     }
 
     @Test

@@ -11,7 +11,7 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.*;
-import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
+import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.junit.Assert;
 import org.junit.jupiter.api.*;
@@ -63,7 +63,7 @@ public class AdminAPIMaintenanceModeTests {
     private TestUtil testUtil;
 
     @Autowired
-    private DoAll doAll;
+    private LoggerEventRepository loggerEventRepository;
 
     @Autowired
     private DataSetup dataSetup;
@@ -80,7 +80,7 @@ public class AdminAPIMaintenanceModeTests {
     @AfterEach
     public void cleanup() {
         dataSetup.cleanup();
-        doAll.delete();
+        loggerEventRepository.delete();
     }
 
     @Test
@@ -103,25 +103,25 @@ public class AdminAPIMaintenanceModeTests {
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(HttpStatus.SERVICE_UNAVAILABLE.value()));
 
-        List<LoggableEvent> apiReqEvents = doAll.load(ApiRequestEvent.class);
+        List<LoggableEvent> apiReqEvents = loggerEventRepository.load(ApiRequestEvent.class);
         assertEquals(2, apiReqEvents.size());
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiReqEvents.get(0);
 
-        List<LoggableEvent> apiResEvents = doAll.load(ApiResponseEvent.class);
+        List<LoggableEvent> apiResEvents = loggerEventRepository.load(ApiResponseEvent.class);
         assertEquals(1, apiResEvents.size());
         ApiResponseEvent responseEvent = (ApiResponseEvent) apiResEvents.get(0);
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE.value(), responseEvent.getResponseCode());
 
-        List<LoggableEvent> reloadEvents = doAll.load(ReloadEvent.class);
+        List<LoggableEvent> reloadEvents = loggerEventRepository.load(ReloadEvent.class);
         assertEquals(1, reloadEvents.size());
         ReloadEvent reloadEvent = (ReloadEvent) reloadEvents.get(0);
         assertEquals(ReloadEvent.FileType.PROPERTIES, reloadEvent.getFileType());
 
         assertTrue(UtilMethods.allEmpty(
-                doAll.load(ContractBeneSearchEvent.class),
-                doAll.load(ErrorEvent.class),
-                doAll.load(FileEvent.class),
-                doAll.load(JobStatusChangeEvent.class)
+                loggerEventRepository.load(ContractBeneSearchEvent.class),
+                loggerEventRepository.load(ErrorEvent.class),
+                loggerEventRepository.load(FileEvent.class),
+                loggerEventRepository.load(JobStatusChangeEvent.class)
         ));
 
         propertiesDTOs.clear();

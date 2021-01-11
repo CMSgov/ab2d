@@ -17,11 +17,11 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
-public class DoSummary {
-    private final DoAll doAll;
+public class LoggerEventSummary {
+    private final LoggerEventRepository loggerEventRepository;
 
-    public DoSummary(DoAll doAll) {
-        this.doAll = doAll;
+    public LoggerEventSummary(LoggerEventRepository loggerEventRepository) {
+        this.loggerEventRepository = loggerEventRepository;
     }
 
     public JobSummaryEvent getSummary(String jobId) {
@@ -30,13 +30,13 @@ public class DoSummary {
                 log.error("Can't do a job summary for an empty job id");
                 return new JobSummaryEvent();
             }
-            List<LoggableEvent> jobChangeEvents = doAll.load(JobStatusChangeEvent.class, jobId);
-            List<LoggableEvent> fileEvents = doAll.load(FileEvent.class, jobId);
+            List<LoggableEvent> jobChangeEvents = loggerEventRepository.load(JobStatusChangeEvent.class, jobId);
+            List<LoggableEvent> fileEvents = loggerEventRepository.load(FileEvent.class, jobId);
             List<LoggableEvent> downloadEvents =
-                    doAll.load(ApiResponseEvent.class, jobId).stream()
+                    loggerEventRepository.load(ApiResponseEvent.class, jobId).stream()
                             .filter(e -> "File Download".equalsIgnoreCase(((ApiResponseEvent) e).getResponseString()))
                             .collect(Collectors.toList());
-            List<LoggableEvent> contractSearchData = doAll.load(ContractBeneSearchEvent.class, jobId);
+            List<LoggableEvent> contractSearchData = loggerEventRepository.load(ContractBeneSearchEvent.class, jobId);
             List<LoggableEvent> allEvents = new ArrayList<>();
             allEvents.addAll(jobChangeEvents);
             allEvents.addAll(fileEvents);

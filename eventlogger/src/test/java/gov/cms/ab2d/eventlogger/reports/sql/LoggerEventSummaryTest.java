@@ -22,9 +22,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @Testcontainers
-class DoSummaryTest {
+class LoggerEventSummaryTest {
     @Autowired
-    private DoSummary doSummary;
+    private LoggerEventSummary loggerEventSummary;
 
     @Autowired
     private SqlEventLogger logger;
@@ -70,7 +70,7 @@ class DoSummaryTest {
         e10.setTimeOfEvent(firstTime.plusDays(9));
         logger.log(e10);
 
-        JobSummaryEvent summary = doSummary.getSummary(jobId);
+        JobSummaryEvent summary = loggerEventSummary.getSummary(jobId);
         assertEquals(jobId, summary.getJobId());
         assertEquals(usr, summary.getUser());
         assertEquals(firstTime.getNano(), summary.getSubmittedTime().getNano());
@@ -128,7 +128,7 @@ class DoSummaryTest {
         e10.setTimeOfEvent(firstTime.plusDays(9));
         logger.log(e10);
 
-        JobSummaryEvent summary = doSummary.getSummary(jobId);
+        JobSummaryEvent summary = loggerEventSummary.getSummary(jobId);
         assertEquals(jobId, summary.getJobId());
         assertEquals(usr, summary.getUser());
         assertEquals(firstTime.getNano(), summary.getSubmittedTime().getNano());
@@ -147,25 +147,25 @@ class DoSummaryTest {
     @Test
     void getUniqueNumFilesOfType() {
         List<LoggableEvent> fileEvents = new ArrayList<>();
-        assertEquals(0, doSummary.getUniqueNumFilesOfType(fileEvents, FileEvent.FileStatus.OPEN));
+        assertEquals(0, loggerEventSummary.getUniqueNumFilesOfType(fileEvents, FileEvent.FileStatus.OPEN));
         FileEvent event1 = createFileEvent("Job1", "file1", FileEvent.FileStatus.OPEN, "hash1");
         fileEvents.add(event1);
-        assertEquals(1, doSummary.getUniqueNumFilesOfType(fileEvents, FileEvent.FileStatus.OPEN));
+        assertEquals(1, loggerEventSummary.getUniqueNumFilesOfType(fileEvents, FileEvent.FileStatus.OPEN));
         FileEvent event2 = createFileEvent("Job1", "file1", FileEvent.FileStatus.OPEN, "hash1");
         fileEvents.add(event2);
-        assertEquals(2, doSummary.getUniqueNumFilesOfType(fileEvents, FileEvent.FileStatus.OPEN));
+        assertEquals(2, loggerEventSummary.getUniqueNumFilesOfType(fileEvents, FileEvent.FileStatus.OPEN));
         FileEvent event3 = createFileEvent("Job1", "file1", FileEvent.FileStatus.CLOSE, "hash1");
-        assertEquals(0, doSummary.getUniqueNumFilesOfType(fileEvents, FileEvent.FileStatus.CLOSE));
+        assertEquals(0, loggerEventSummary.getUniqueNumFilesOfType(fileEvents, FileEvent.FileStatus.CLOSE));
         fileEvents.add(event3);
-        assertEquals(1, doSummary.getUniqueNumFilesOfType(fileEvents, FileEvent.FileStatus.CLOSE));
+        assertEquals(1, loggerEventSummary.getUniqueNumFilesOfType(fileEvents, FileEvent.FileStatus.CLOSE));
         FileEvent event4 = createFileEvent("Job1", "file1", FileEvent.FileStatus.DELETE, "hash1");
-        assertEquals(0, doSummary.getUniqueNumFilesOfType(fileEvents, FileEvent.FileStatus.DELETE));
+        assertEquals(0, loggerEventSummary.getUniqueNumFilesOfType(fileEvents, FileEvent.FileStatus.DELETE));
         fileEvents.add(event4);
-        assertEquals(1, doSummary.getUniqueNumFilesOfType(fileEvents, FileEvent.FileStatus.DELETE));
+        assertEquals(1, loggerEventSummary.getUniqueNumFilesOfType(fileEvents, FileEvent.FileStatus.DELETE));
 
         // Finally, make sure even after additions, these still stay the same
-        assertEquals(2, doSummary.getUniqueNumFilesOfType(fileEvents, FileEvent.FileStatus.OPEN));
-        assertEquals(1, doSummary.getUniqueNumFilesOfType(fileEvents, FileEvent.FileStatus.CLOSE));
+        assertEquals(2, loggerEventSummary.getUniqueNumFilesOfType(fileEvents, FileEvent.FileStatus.OPEN));
+        assertEquals(1, loggerEventSummary.getUniqueNumFilesOfType(fileEvents, FileEvent.FileStatus.CLOSE));
     }
 
     FileEvent createFileEvent(String jobId, String fileName, FileEvent.FileStatus status, String hash) {
@@ -180,22 +180,22 @@ class DoSummaryTest {
     @Test
     void getTime() {
         OffsetDateTime now = OffsetDateTime.now();
-        assertNull(doSummary.getTime(null, "SUBMITTED"));
+        assertNull(loggerEventSummary.getTime(null, "SUBMITTED"));
         List<LoggableEvent> events = new ArrayList<>();
-        assertNull(doSummary.getTime(null, "SUBMITTED"));
+        assertNull(loggerEventSummary.getTime(null, "SUBMITTED"));
         OffsetDateTime createTime = now.minusDays(5);
         OffsetDateTime inProgressTime = now.minusDays(4);
         // OffsetDateTime cancelledTime = now.minusDays(3);
         OffsetDateTime successTime = now.minusDays(2);
         // OffsetDateTime failedTime = now.minusDays(1);
         events.add(createEvent(createTime, "SUBMITTED"));
-        assertNull(doSummary.getTime(null, "FAILED"));
+        assertNull(loggerEventSummary.getTime(null, "FAILED"));
         events.add(createEvent(now, "SUBMITTED"));
         events.add(createEvent(inProgressTime, "IN_PROGRESS"));
         events.add(createEvent(successTime, "SUCCESSFUL"));
-        assertEquals(doSummary.getTime(events, "SUBMITTED"), createTime);
-        assertEquals(doSummary.getTime(events, "IN_PROGRESS"), inProgressTime);
-        assertEquals(doSummary.getTime(events, "SUCCESSFUL"), successTime);
+        assertEquals(loggerEventSummary.getTime(events, "SUBMITTED"), createTime);
+        assertEquals(loggerEventSummary.getTime(events, "IN_PROGRESS"), inProgressTime);
+        assertEquals(loggerEventSummary.getTime(events, "SUCCESSFUL"), successTime);
     }
 
     JobStatusChangeEvent createEvent(OffsetDateTime timeOfEvent, String status) {

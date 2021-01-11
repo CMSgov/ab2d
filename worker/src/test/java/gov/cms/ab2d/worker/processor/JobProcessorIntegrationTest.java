@@ -14,7 +14,7 @@ import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.events.*;
-import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
+import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.FileService;
@@ -66,7 +66,7 @@ class JobProcessorIntegrationTest {
     private FileService fileService;
 
     @Autowired
-    private DoAll doAll;
+    private LoggerEventRepository loggerEventRepository;
 
     @Autowired
     private JobRepository jobRepository;
@@ -164,7 +164,7 @@ class JobProcessorIntegrationTest {
 
     @AfterEach
     void cleanup() {
-        doAll.delete();
+        loggerEventRepository.delete();
         dataSetup.cleanup();
     }
 
@@ -173,7 +173,7 @@ class JobProcessorIntegrationTest {
     void processJob() {
         var processedJob = cut.process(job.getJobUuid());
 
-        List<LoggableEvent> jobStatusChange = doAll.load(JobStatusChangeEvent.class);
+        List<LoggableEvent> jobStatusChange = loggerEventRepository.load(JobStatusChangeEvent.class);
         assertEquals(1, jobStatusChange.size());
         JobStatusChangeEvent jobEvent = (JobStatusChangeEvent) jobStatusChange.get(0);
         assertEquals(JobStatus.SUCCESSFUL.name(), jobEvent.getNewStatus());
@@ -225,7 +225,7 @@ class JobProcessorIntegrationTest {
         assertNotNull(processedJob.getExpiresAt());
         assertNotNull(processedJob.getCompletedAt());
 
-        List<LoggableEvent> beneSearchEvents = doAll.load(ContractBeneSearchEvent.class);
+        List<LoggableEvent> beneSearchEvents = loggerEventRepository.load(ContractBeneSearchEvent.class);
         assertEquals(1, beneSearchEvents.size());
         ContractBeneSearchEvent event = (ContractBeneSearchEvent) beneSearchEvents.get(0);
         assertEquals(JOB_UUID, event.getJobId());
@@ -253,18 +253,18 @@ class JobProcessorIntegrationTest {
         ;
         var processedJob = cut.process(job.getJobUuid());
 
-        List<LoggableEvent> errorEvents = doAll.load(ErrorEvent.class);
+        List<LoggableEvent> errorEvents = loggerEventRepository.load(ErrorEvent.class);
         assertEquals(1, errorEvents.size());
         ErrorEvent errorEvent = (ErrorEvent) errorEvents.get(0);
         assertEquals(TOO_MANY_SEARCH_ERRORS, errorEvent.getErrorType());
 
-        List<LoggableEvent> jobEvents = doAll.load(JobStatusChangeEvent.class);
+        List<LoggableEvent> jobEvents = loggerEventRepository.load(JobStatusChangeEvent.class);
         assertEquals(1, jobEvents.size());
         JobStatusChangeEvent jobEvent = (JobStatusChangeEvent) jobEvents.get(0);
         assertEquals("IN_PROGRESS", jobEvent.getOldStatus());
         assertEquals("FAILED", jobEvent.getNewStatus());
 
-        List<LoggableEvent> fileEvents = doAll.load(FileEvent.class);
+        List<LoggableEvent> fileEvents = loggerEventRepository.load(FileEvent.class);
         // Since the max size of the file is not set here (so it's 0), every second write creates a new file since
         // the file is no longer empty after the first write. This means, there were 20 files created so 40 events
         assertEquals(40, fileEvents.size());
@@ -275,10 +275,10 @@ class JobProcessorIntegrationTest {
         assertEquals(20, fileEvents.stream().filter(e -> ((FileEvent) e).getFileHash().length() > 0).count());
 
         assertTrue(UtilMethods.allEmpty(
-                doAll.load(ApiRequestEvent.class),
-                doAll.load(ApiResponseEvent.class),
-                doAll.load(ReloadEvent.class),
-                doAll.load(ContractBeneSearchEvent.class)));
+                loggerEventRepository.load(ApiRequestEvent.class),
+                loggerEventRepository.load(ApiResponseEvent.class),
+                loggerEventRepository.load(ReloadEvent.class),
+                loggerEventRepository.load(ContractBeneSearchEvent.class)));
 
         assertEquals(JobStatus.FAILED, processedJob.getStatus());
         assertEquals("Too many patient records in the job had failures", processedJob.getStatusMessage());
