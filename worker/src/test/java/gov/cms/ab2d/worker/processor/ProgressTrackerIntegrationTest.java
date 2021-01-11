@@ -21,7 +21,6 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.OffsetDateTime;
-import java.util.Random;
 import java.util.concurrent.ExecutionException;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
@@ -31,6 +30,8 @@ import static org.mockito.Mockito.when;
 @SpringBootTest
 @Testcontainers
 class ProgressTrackerIntegrationTest {
+
+    private static final String CONTRACT_NUMBER = "C0001";
 
     private JobProcessorImpl cut;
 
@@ -100,8 +101,8 @@ class ProgressTrackerIntegrationTest {
         org.hl7.fhir.dstu3.model.Bundle bundleA = BundleUtils.createBundle(entry1, entry2, entry3);
         org.hl7.fhir.dstu3.model.Bundle bundleB = BundleUtils.createBundle(entry1, entry2, entry3, entry4);
 
-        when(bfdClient.requestPartDEnrolleesFromServer("C0001", 1)).thenReturn(bundleA);
-        when(bfdClient.requestPartDEnrolleesFromServer("C0001", 2)).thenReturn(bundleB);
+        when(bfdClient.requestPartDEnrolleesFromServer(CONTRACT_NUMBER, 1)).thenReturn(bundleA);
+        when(bfdClient.requestPartDEnrolleesFromServer(CONTRACT_NUMBER, 2)).thenReturn(bundleB);
 
         cut.processContractBenes(job, progressTracker);
 
@@ -111,10 +112,8 @@ class ProgressTrackerIntegrationTest {
 
     private User createUser() {
 
-        Random random = new Random();
         User user = new User();
-        user.setId(random.nextLong());
-        user.setUsername("testuser" + random.nextLong());
+        user.setUsername("testuser" + 1000L);
         user.setEnabled(true);
         user.setContract(dataSetup.setupContract("W1234"));
 
