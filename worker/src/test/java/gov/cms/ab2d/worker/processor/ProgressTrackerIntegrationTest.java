@@ -4,10 +4,12 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverStub;
 import gov.cms.ab2d.worker.service.FileService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -18,22 +20,21 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import javax.transaction.Transactional;
 import java.time.OffsetDateTime;
 import java.util.concurrent.ExecutionException;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
-import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @Testcontainers
-@Transactional
 class ProgressTrackerIntegrationTest {
 
+    private static final String CONTRACT_NUMBER = "C0001";
+
     private JobProcessorImpl cut;
+
     @Autowired
     private FileService fileService;
 
@@ -46,6 +47,12 @@ class ProgressTrackerIntegrationTest {
     @Autowired
     private JobOutputRepository jobOutputRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private DataSetup dataSetup;
+
     @Value("${patient.contract.year}")
     private int year;
 
@@ -53,11 +60,7 @@ class ProgressTrackerIntegrationTest {
     private LogManager eventLogger;
 
     @Mock
-    BFDClient bfdClient;
-
-    private CoverageDriver coverageDriver;
-
-    ProgressTracker progressTracker;
+    private BFDClient bfdClient;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
@@ -65,24 +68,26 @@ class ProgressTrackerIntegrationTest {
     @BeforeEach
     void init() {
 
-        coverageDriver = spy(new CoverageDriverStub(10, 20));
+        CoverageDriver coverageDriver = new CoverageDriverStub(10, 20);
 
         cut = new JobProcessorImpl(fileService, jobRepository, jobOutputRepository,
                 contractProcessor, coverageDriver, eventLogger);
     }
 
+    @AfterEach
+    void cleanup() {
+        dataSetup.cleanup();
+    }
+
     @Test
     void testIt() throws ExecutionException, InterruptedException {
-        int month = 2;
-        String contractId = "C0001";
-        Contract contract = new Contract();
-        contract.setContractNumber(contractId);
-        contract.setAttestedOn(AB2D_EPOCH.toOffsetDateTime());
 
-        Job job = createJob(null);
+        Contract contract = dataSetup.setupContract("C0001");
+
+        Job job = createJob(createUser());
         job.setContract(contract);
 
-        progressTracker = ProgressTracker.builder()
+        ProgressTracker progressTracker = ProgressTracker.builder()
                 .failureThreshold(2)
                 .jobUuid(job.getJobUuid())
                 .expectedBeneficiaries(4)
@@ -96,13 +101,25 @@ class ProgressTrackerIntegrationTest {
         org.hl7.fhir.dstu3.model.Bundle bundleA = BundleUtils.createBundle(entry1, entry2, entry3);
         org.hl7.fhir.dstu3.model.Bundle bundleB = BundleUtils.createBundle(entry1, entry2, entry3, entry4);
 
-        when(bfdClient.requestPartDEnrolleesFromServer(contractId, 1)).thenReturn(bundleA);
-        when(bfdClient.requestPartDEnrolleesFromServer(contractId, 2)).thenReturn(bundleB);
+        when(bfdClient.requestPartDEnrolleesFromServer(CONTRACT_NUMBER, 1)).thenReturn(bundleA);
+        when(bfdClient.requestPartDEnrolleesFromServer(CONTRACT_NUMBER, 2)).thenReturn(bundleB);
 
         cut.processContractBenes(job, progressTracker);
 
         Job loadedVal = jobRepository.findById(job.getId()).get();
         assertEquals(30, loadedVal.getProgress());
+    }
+
+    private User createUser() {
+
+        User user = new User();
+        user.setUsername("testuser" + 1000L);
+        user.setEnabled(true);
+        user.setContract(dataSetup.setupContract("W1234"));
+
+        user = userRepository.save(user);
+        dataSetup.queueForCleanup(user);
+        return user;
     }
 
     private Job createJob(User user) {
@@ -111,8 +128,12 @@ class ProgressTrackerIntegrationTest {
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage("0%");
         job.setUser(user);
+
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setCreatedAt(OffsetDateTime.now());
-        return jobRepository.save(job);
+
+        job = jobRepository.saveAndFlush(job);
+        dataSetup.queueForCleanup(job);
+        return job;
     }
 }
