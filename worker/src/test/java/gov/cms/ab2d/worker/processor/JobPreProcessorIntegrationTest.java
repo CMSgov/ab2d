@@ -4,6 +4,7 @@ import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
@@ -35,18 +36,24 @@ import static org.mockito.Mockito.when;
 @SpringBootTest
 @Testcontainers
 class JobPreProcessorIntegrationTest {
-    private Random random = new Random();
 
     private JobPreProcessor cut;
 
     @Autowired
     private JobRepository jobRepository;
+
     @Autowired
     private UserRepository userRepository;
+
     @Autowired
     private DoAll doAll;
+
     @Autowired
     private SqlEventLogger sqlEventLogger;
+
+    @Autowired
+    private DataSetup dataSetup;
+
     @Mock
     private CoverageDriver coverageDriver;
 
@@ -73,13 +80,7 @@ class JobPreProcessorIntegrationTest {
     void clear() {
 
         doAll.delete();
-
-        jobRepository.deleteAll();
-
-        if (user != null) {
-            userRepository.delete(user);
-            userRepository.flush();
-        }
+        dataSetup.cleanup();
     }
 
     @Test
@@ -129,7 +130,10 @@ class JobPreProcessorIntegrationTest {
         user.setLastName("Potter");
         user.setEmail("harry_potter@hogwarts.edu");
         user.setEnabled(true);
-        return userRepository.save(user);
+
+        user = userRepository.save(user);
+        dataSetup.queueForCleanup(user);
+        return user;
     }
 
     private Job createJob(User user) {
@@ -140,6 +144,9 @@ class JobPreProcessorIntegrationTest {
         job.setUser(user);
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setCreatedAt(OffsetDateTime.now());
-        return jobRepository.save(job);
+
+        job = jobRepository.save(job);
+        dataSetup.queueForCleanup(job);
+        return job;
     }
 }

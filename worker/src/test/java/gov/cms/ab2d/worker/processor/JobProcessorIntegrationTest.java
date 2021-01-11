@@ -8,6 +8,7 @@ import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
@@ -18,6 +19,7 @@ import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.util.HealthCheck;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,7 +33,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import javax.transaction.Transactional;
 import java.io.File;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -52,7 +53,6 @@ import static org.mockito.Mockito.when;
 @SpringBootTest
 @Testcontainers
 @SpringIntegrationTest(noAutoStartup = {"inboundChannelAdapter", "*Source*"})
-@Transactional
 class JobProcessorIntegrationTest {
 
     private static final String CONTRACT_NAME = "CONTRACT_0000";
@@ -86,6 +86,9 @@ class JobProcessorIntegrationTest {
     @Autowired
     private HealthCheck healthCheck;
 
+    @Autowired
+    private DataSetup dataSetup;
+
     @Mock
     private CoverageDriver coverageDriver;
 
@@ -108,15 +111,10 @@ class JobProcessorIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        jobRepository.deleteAll();
-        userRepository.deleteAll();
-        doAll.delete();
-
         LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
         User user = createUser();
 
         Contract contract = createContract();
-        contract = contractRepository.saveAndFlush(contract);
 
         job = createJob(user);
         job.setContract(contract);
@@ -164,6 +162,12 @@ class JobProcessorIntegrationTest {
         ReflectionTestUtils.setField(cut, "failureThreshold", 10);
     }
 
+    @AfterEach
+    void cleanup() {
+        doAll.delete();
+        dataSetup.cleanup();
+    }
+
     @Test
     @DisplayName("When a job is in submitted status, it can be processed")
     void processJob() {
@@ -180,7 +184,7 @@ class JobProcessorIntegrationTest {
         assertNotNull(processedJob.getExpiresAt());
         assertNotNull(processedJob.getCompletedAt());
 
-        final List<JobOutput> jobOutputs = job.getJobOutputs();
+        final List<JobOutput> jobOutputs = processedJob.getJobOutputs();
         assertFalse(jobOutputs.isEmpty());
     }
 
@@ -194,7 +198,7 @@ class JobProcessorIntegrationTest {
         assertNotNull(processedJob.getExpiresAt());
         assertNotNull(processedJob.getCompletedAt());
 
-        final List<JobOutput> jobOutputs = job.getJobOutputs();
+        final List<JobOutput> jobOutputs = processedJob.getJobOutputs();
         assertFalse(jobOutputs.isEmpty());
     }
 
@@ -229,7 +233,7 @@ class JobProcessorIntegrationTest {
         assertEquals(CONTRACT_NAME, event.getContractNumber());
         assertEquals(100, event.getNumSearched());
 
-        final List<JobOutput> jobOutputs = job.getJobOutputs();
+        final List<JobOutput> jobOutputs = processedJob.getJobOutputs();
         assertFalse(jobOutputs.isEmpty());
     }
 
@@ -277,7 +281,7 @@ class JobProcessorIntegrationTest {
                 doAll.load(ContractBeneSearchEvent.class)));
 
         assertEquals(JobStatus.FAILED, processedJob.getStatus());
-        assertEquals(processedJob.getStatusMessage(), "Too many patient records in the job had failures");
+        assertEquals("Too many patient records in the job had failures", processedJob.getStatusMessage());
         assertNull(processedJob.getExpiresAt());
         assertNotNull(processedJob.getCompletedAt());
     }
@@ -294,7 +298,9 @@ class JobProcessorIntegrationTest {
         user.setEmail("harry_potter@hogwarts.com");
         user.setEnabled(TRUE);
 //        user.setContract(createContract());
-        return userRepository.save(user);
+        user =  userRepository.saveAndFlush(user);
+        dataSetup.queueForCleanup(user);
+        return user;
     }
 
     private Contract createContract() {
@@ -303,7 +309,9 @@ class JobProcessorIntegrationTest {
         contract.setContractNumber(CONTRACT_NUMBER);
         contract.setAttestedOn(OffsetDateTime.now().minusDays(10));
 
-        return contractRepository.save(contract);
+        contract = contractRepository.saveAndFlush(contract);
+        dataSetup.queueForCleanup(contract);
+        return contract;
     }
 
     private Job createJob(User user) {
@@ -314,7 +322,11 @@ class JobProcessorIntegrationTest {
         job.setUser(user);
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setCreatedAt(OffsetDateTime.now());
-        return jobRepository.save(job);
+
+
+        job = jobRepository.saveAndFlush(job);
+        dataSetup.queueForCleanup(job);
+        return job;
     }
 
     private static List<CoverageSummary> loadFauxMetadata(Contract contract, int rowsToRetrieve) {

@@ -1,22 +1,14 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
-import gov.cms.ab2d.common.repository.CoverageSearchRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import gov.cms.ab2d.common.util.DataSetup;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.integration.jdbc.lock.DefaultLockRepository;
-import org.springframework.integration.jdbc.lock.JdbcLockRegistry;
-import org.springframework.integration.jdbc.lock.LockRepository;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import javax.sql.DataSource;
 import java.util.concurrent.*;
-import java.util.concurrent.locks.Lock;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -28,42 +20,8 @@ class CoverageLockWrapperTest {
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Autowired
-    private CoverageSearchRepository coverageSearchRepository;
-
-    @Autowired
     private CoverageLockWrapper coverageLockWrapper;
 
-    @Autowired
-    private DataSetup dataSetup;
-
-    @Autowired
-    private DataSource dataSource;
-
-    // Demonstrates how JdbcLockRegistry
-    @Disabled
-    @Test
-    void showTTLEffects() {
-
-        ExecutorService service = Executors.newFixedThreadPool(2);
-
-        service.submit(() -> {
-
-            Lock lock = null;
-
-            try {
-                DefaultLockRepository repository = (DefaultLockRepository) coverageLockWrapper.contractLockRepository();
-                repository.setTimeToLive(10000);
-
-                JdbcLockRegistry registry = coverageLockWrapper.contractLockRegistry(repository);
-            } finally {
-                if (lock != null) {
-                    lock.unlock();;
-                }
-            }
-
-
-        });
-    }
     /**
      * The only way to trigger a lock error is if different threads are trying to use the lock at
      * the same time. This holds a lock for a period of time while another thread tries and fails

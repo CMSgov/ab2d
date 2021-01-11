@@ -86,18 +86,12 @@ class CoverageUpdateAndProcessorTest {
     private CoverageDriverImpl driver;
     private CoverageProcessorImpl processor;
 
-    private List<Contract> contractsToDelete;
-
     @BeforeEach
     void before() {
-
-        contractsToDelete = new ArrayList<>();
 
         contract = dataSetup.setupContract("TST-123");
         contract.setAttestedOn(AB2D_EPOCH.toOffsetDateTime());
         contractRepo.saveAndFlush(contract);
-
-        contractsToDelete.add(contract);
 
         january = dataSetup.createCoveragePeriod(contract, 1, 2020);
         february = dataSetup.createCoveragePeriod(contract, 2, 2020);
@@ -117,17 +111,10 @@ class CoverageUpdateAndProcessorTest {
     }
 
     @AfterEach
-    void after() {
+    void cleanup() {
         processor.shutdown();
 
-        dataSetup.deleteCoverage();
-        coverageSearchEventRepo.deleteAll();
-        coverageSearchRepo.deleteAll();
-        coveragePeriodRepo.deleteAll();
-        for (Contract contract : contractsToDelete) {
-            contractRepo.delete(contract);
-            contractRepo.flush();
-        }
+        dataSetup.cleanup();
     }
 
     @DisplayName("Loading coverage periods")
@@ -137,12 +124,10 @@ class CoverageUpdateAndProcessorTest {
         Contract attestedAfterEpoch = dataSetup.setupContract("TST-AFTER-EPOCH");
         attestedAfterEpoch.setAttestedOn(AB2D_EPOCH.toOffsetDateTime().plusMonths(3));
         contractRepo.saveAndFlush(attestedAfterEpoch);
-        contractsToDelete.add(attestedAfterEpoch);
 
         Contract attestedBeforeEpoch = dataSetup.setupContract("TST-BEFORE-EPOCH");
         attestedBeforeEpoch.setAttestedOn(AB2D_EPOCH.toOffsetDateTime().minusNanos(1));
         contractRepo.saveAndFlush(attestedBeforeEpoch);
-        contractsToDelete.add(attestedBeforeEpoch);
 
         long months = ChronoUnit.MONTHS.between(AB2D_EPOCH.toOffsetDateTime(), OffsetDateTime.now());
         long expectedNumPeriods = months + 1;

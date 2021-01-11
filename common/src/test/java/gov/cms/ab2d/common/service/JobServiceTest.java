@@ -110,7 +110,7 @@ class JobServiceTest {
     }
 
     @AfterEach
-    public void after() {
+    public void cleanup() {
         dataSetup.cleanup();
     }
 
