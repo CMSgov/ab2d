@@ -4,7 +4,7 @@ import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
-import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
+import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -61,7 +61,7 @@ public class TLSTest {
     DataSetup dataSetup;
 
     @Autowired
-    private DoAll doAll;
+    private LoggerEventRepository loggerEventRepository;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
@@ -69,7 +69,7 @@ public class TLSTest {
     @AfterEach
     public void cleanup() {
         dataSetup.cleanup();
-        doAll.delete();
+        loggerEventRepository.delete();
     }
 
     @Test

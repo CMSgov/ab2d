@@ -10,7 +10,7 @@ import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.events.*;
-import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
+import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import org.junit.jupiter.api.AfterEach;
@@ -26,7 +26,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Random;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static org.junit.jupiter.api.Assertions.*;
@@ -46,7 +45,7 @@ class JobPreProcessorIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
-    private DoAll doAll;
+    private LoggerEventRepository loggerEventRepository;
 
     @Autowired
     private SqlEventLogger sqlEventLogger;
@@ -79,7 +78,7 @@ class JobPreProcessorIntegrationTest {
     @AfterEach
     void clear() {
 
-        doAll.delete();
+        loggerEventRepository.delete();
         dataSetup.cleanup();
     }
 
@@ -91,20 +90,20 @@ class JobPreProcessorIntegrationTest {
         var processedJob = cut.preprocess(job.getJobUuid());
         assertEquals(JobStatus.IN_PROGRESS, processedJob.getStatus());
 
-        List<LoggableEvent> jobStatusChange = doAll.load(JobStatusChangeEvent.class);
+        List<LoggableEvent> jobStatusChange = loggerEventRepository.load(JobStatusChangeEvent.class);
         assertEquals(1, jobStatusChange.size());
         JobStatusChangeEvent event = (JobStatusChangeEvent) jobStatusChange.get(0);
         assertEquals("SUBMITTED", event.getOldStatus());
         assertEquals("IN_PROGRESS", event.getNewStatus());
 
         assertTrue(UtilMethods.allEmpty(
-                doAll.load(ApiRequestEvent.class),
-                doAll.load(ApiResponseEvent.class),
-                doAll.load(ReloadEvent.class),
-                doAll.load(ContractBeneSearchEvent.class),
-                doAll.load(ErrorEvent.class),
-                doAll.load(FileEvent.class)));
-        doAll.delete();
+                loggerEventRepository.load(ApiRequestEvent.class),
+                loggerEventRepository.load(ApiResponseEvent.class),
+                loggerEventRepository.load(ReloadEvent.class),
+                loggerEventRepository.load(ContractBeneSearchEvent.class),
+                loggerEventRepository.load(ErrorEvent.class),
+                loggerEventRepository.load(FileEvent.class)));
+        loggerEventRepository.delete();
     }
 
     @Test

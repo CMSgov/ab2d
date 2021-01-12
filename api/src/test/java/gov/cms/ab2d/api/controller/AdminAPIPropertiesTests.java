@@ -7,7 +7,7 @@ import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
-import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
+import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import org.junit.Assert;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,7 +47,7 @@ public class AdminAPIPropertiesTests {
     DataSetup dataSetup;
 
     @Autowired
-    DoAll doAll;
+    LoggerEventRepository loggerEventRepository;
 
     @SuppressWarnings("rawtypes")
     @Container
@@ -65,7 +65,7 @@ public class AdminAPIPropertiesTests {
     @AfterEach
     public void cleanup() {
         dataSetup.cleanup();
-        doAll.delete();
+        loggerEventRepository.delete();
     }
 
     @Test

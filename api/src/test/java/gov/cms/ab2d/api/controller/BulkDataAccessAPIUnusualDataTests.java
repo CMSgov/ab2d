@@ -8,7 +8,7 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.*;
-import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
+import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.junit.Assert;
 import org.junit.jupiter.api.*;
@@ -60,7 +60,7 @@ public class BulkDataAccessAPIUnusualDataTests {
     private DataSetup dataSetup;
 
     @Autowired
-    private DoAll doAll;
+    private LoggerEventRepository loggerEventRepository;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
@@ -69,7 +69,7 @@ public class BulkDataAccessAPIUnusualDataTests {
     public void cleanup() {
         jobRepository.findAll().forEach(job -> dataSetup.queueForCleanup(job));  // catches implicitly generated jobs
         dataSetup.cleanup();
-        doAll.delete();
+        loggerEventRepository.delete();
     }
 
     @Test
@@ -82,22 +82,22 @@ public class BulkDataAccessAPIUnusualDataTests {
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
-        List<LoggableEvent> apiRequestEvents = doAll.load(ApiRequestEvent.class);
+        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
 
-        List<LoggableEvent> apiResponseEvents = doAll.load(ApiResponseEvent.class);
+        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
         ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
         assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
 
-        List<LoggableEvent> errorEvents = doAll.load(ErrorEvent.class);
+        List<LoggableEvent> errorEvents = loggerEventRepository.load(ErrorEvent.class);
         ErrorEvent errorEvent = (ErrorEvent) errorEvents.get(0);
         assertEquals(errorEvent.getErrorType(), ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT);
 
         assertTrue(UtilMethods.allEmpty(
-                doAll.load(ReloadEvent.class),
-                doAll.load(ContractBeneSearchEvent.class),
-                doAll.load(JobStatusChangeEvent.class),
-                doAll.load(FileEvent.class)));
+                loggerEventRepository.load(ReloadEvent.class),
+                loggerEventRepository.load(ContractBeneSearchEvent.class),
+                loggerEventRepository.load(JobStatusChangeEvent.class),
+                loggerEventRepository.load(FileEvent.class)));
     }
 
     @Test

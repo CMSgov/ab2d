@@ -12,7 +12,7 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.*;
-import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
+import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.apache.commons.lang3.StringUtils;
 import org.hamcrest.core.Is;
@@ -88,7 +88,7 @@ public class BulkDataAccessAPIIntegrationTests {
     private DataSetup dataSetup;
 
     @Autowired
-    private DoAll doAll;
+    private LoggerEventRepository loggerEventRepository;
 
     private String token;
 
@@ -105,7 +105,7 @@ public class BulkDataAccessAPIIntegrationTests {
     @AfterEach
     public void cleanup() {
         jobRepository.findAll().forEach(job -> dataSetup.queueForCleanup(job));  // catches implicitly generated jobs
-        doAll.delete();
+        loggerEventRepository.delete();
         dataSetup.cleanup();
     }
 
@@ -124,27 +124,27 @@ public class BulkDataAccessAPIIntegrationTests {
                 get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token));
                 // .andDo(print());
-        List<LoggableEvent> apiRequestEvents = doAll.load(ApiRequestEvent.class);
+        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
         assertEquals(1, apiRequestEvents.size());
-        List<LoggableEvent> apiResponseEvents = doAll.load(ApiResponseEvent.class);
+        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
         ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
         assertEquals(1, apiResponseEvents.size());
         assertEquals(HttpStatus.ACCEPTED.value(), responseEvent.getResponseCode());
 
         assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
 
-        List<LoggableEvent> jobEvents = doAll.load(JobStatusChangeEvent.class);
+        List<LoggableEvent> jobEvents = loggerEventRepository.load(JobStatusChangeEvent.class);
         assertEquals(1, jobEvents.size());
         JobStatusChangeEvent jobEvent = (JobStatusChangeEvent) jobEvents.get(0);
         assertEquals(JobStatus.SUBMITTED.name(), jobEvent.getNewStatus());
         assertNull(jobEvent.getOldStatus());
 
         assertTrue(UtilMethods.allEmpty(
-                doAll.load(ReloadEvent.class),
-                doAll.load(ContractBeneSearchEvent.class),
-                doAll.load(ErrorEvent.class),
-                doAll.load(FileEvent.class)));
+                loggerEventRepository.load(ReloadEvent.class),
+                loggerEventRepository.load(ContractBeneSearchEvent.class),
+                loggerEventRepository.load(ErrorEvent.class),
+                loggerEventRepository.load(FileEvent.class)));
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
@@ -199,20 +199,20 @@ public class BulkDataAccessAPIIntegrationTests {
                         .andExpect(status().is(429))
                         .andExpect(header().string("Retry-After", "30"))
                         .andExpect(header().doesNotExist("X-Progress"));
-        List<LoggableEvent> apiRequestEvents = doAll.load(ApiRequestEvent.class);
+        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
         assertEquals(MAX_JOBS_PER_USER + 1, apiRequestEvents.size());
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
 
-        List<LoggableEvent> apiResponseEvents = doAll.load(ApiResponseEvent.class);
+        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
         assertEquals(MAX_JOBS_PER_USER + 1, apiResponseEvents.size());
         ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(apiResponseEvents.size() - 1);
         assertEquals(HttpStatus.TOO_MANY_REQUESTS.value(), responseEvent.getResponseCode());
 
-        List<LoggableEvent> errorEvents = doAll.load(ErrorEvent.class);
+        List<LoggableEvent> errorEvents = loggerEventRepository.load(ErrorEvent.class);
         ErrorEvent errorEvent = (ErrorEvent) errorEvents.get(0);
         assertEquals(ErrorEvent.ErrorType.TOO_MANY_STATUS_REQUESTS, errorEvent.getErrorType());
 
-        List<LoggableEvent> jobEvents = doAll.load(JobStatusChangeEvent.class);
+        List<LoggableEvent> jobEvents = loggerEventRepository.load(JobStatusChangeEvent.class);
         assertEquals(MAX_JOBS_PER_USER, jobEvents.size());
         jobEvents.forEach(e -> assertEquals(JobStatus.SUBMITTED.name(), ((JobStatusChangeEvent) e).getNewStatus()));
         JobStatusChangeEvent jobEvent = (JobStatusChangeEvent) jobEvents.get(0);
@@ -220,9 +220,9 @@ public class BulkDataAccessAPIIntegrationTests {
         assertNull(jobEvent.getOldStatus());
 
         assertTrue(UtilMethods.allEmpty(
-                doAll.load(ReloadEvent.class),
-                doAll.load(ContractBeneSearchEvent.class),
-                doAll.load(FileEvent.class)));
+                loggerEventRepository.load(ReloadEvent.class),
+                loggerEventRepository.load(ContractBeneSearchEvent.class),
+                loggerEventRepository.load(FileEvent.class)));
     }
 
     @Test
@@ -324,11 +324,11 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].details.text",
                         Is.is("_type must be ExplanationOfBenefit")));
 
-        List<LoggableEvent> apiRequestEvents = doAll.load(ApiRequestEvent.class);
+        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
         assertNull(requestEvent.getJobId());
 
-        List<LoggableEvent> apiResponseEvents = doAll.load(ApiResponseEvent.class);
+        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
         ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
         assertNull(responseEvent.getJobId());
         assertEquals(400, responseEvent.getResponseCode());
@@ -336,11 +336,11 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
 
         assertTrue(UtilMethods.allEmpty(
-                doAll.load(ReloadEvent.class),
-                doAll.load(ContractBeneSearchEvent.class),
-                doAll.load(ErrorEvent.class),
-                doAll.load(FileEvent.class),
-                doAll.load(JobStatusChangeEvent.class)));
+                loggerEventRepository.load(ReloadEvent.class),
+                loggerEventRepository.load(ContractBeneSearchEvent.class),
+                loggerEventRepository.load(ErrorEvent.class),
+                loggerEventRepository.load(FileEvent.class),
+                loggerEventRepository.load(JobStatusChangeEvent.class)));
     }
 
     @Test
@@ -356,11 +356,11 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].details.text",
                         Is.is("An _outputFormat of Invalid is not " +
                                 "valid")));
-        List<LoggableEvent> apiRequestEvents = doAll.load(ApiRequestEvent.class);
+        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
         assertNull(requestEvent.getJobId());
 
-        List<LoggableEvent> apiResponseEvents = doAll.load(ApiResponseEvent.class);
+        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
         ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
         assertNull(responseEvent.getJobId());
         assertEquals(400, responseEvent.getResponseCode());
@@ -368,11 +368,11 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
 
         assertTrue(UtilMethods.allEmpty(
-                doAll.load(ReloadEvent.class),
-                doAll.load(ContractBeneSearchEvent.class),
-                doAll.load(ErrorEvent.class),
-                doAll.load(FileEvent.class),
-                doAll.load(JobStatusChangeEvent.class)));
+                loggerEventRepository.load(ReloadEvent.class),
+                loggerEventRepository.load(ContractBeneSearchEvent.class),
+                loggerEventRepository.load(ErrorEvent.class),
+                loggerEventRepository.load(FileEvent.class),
+                loggerEventRepository.load(JobStatusChangeEvent.class)));
     }
 
     @Test
@@ -404,7 +404,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
         Job cancelledJob = jobRepository.findByJobUuid(job.getJobUuid());
 
-        List<LoggableEvent> jobStatusChange = doAll.load(JobStatusChangeEvent.class);
+        List<LoggableEvent> jobStatusChange = loggerEventRepository.load(JobStatusChangeEvent.class);
         assertEquals(2, jobStatusChange.size());
         JobStatusChangeEvent event1 = (JobStatusChangeEvent) jobStatusChange.get(0);
         assertEquals("SUBMITTED", event1.getNewStatus());
@@ -426,11 +426,11 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].details.text",
                         Is.is("No job with jobUuid NonExistentJob was " +
                                 "found")));
-        List<LoggableEvent> apiRequestEvents = doAll.load(ApiRequestEvent.class);
+        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
         assertEquals("NonExistentJob", requestEvent.getJobId());
 
-        List<LoggableEvent> apiResponseEvents = doAll.load(ApiResponseEvent.class);
+        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
         ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
         // Since the job does not exist, don't return it as the job id in the response event
         assertNull(responseEvent.getJobId());
@@ -439,11 +439,11 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
 
         assertTrue(UtilMethods.allEmpty(
-                doAll.load(ReloadEvent.class),
-                doAll.load(ContractBeneSearchEvent.class),
-                doAll.load(ErrorEvent.class),
-                doAll.load(FileEvent.class),
-                doAll.load(JobStatusChangeEvent.class)));
+                loggerEventRepository.load(ReloadEvent.class),
+                loggerEventRepository.load(ContractBeneSearchEvent.class),
+                loggerEventRepository.load(ErrorEvent.class),
+                loggerEventRepository.load(FileEvent.class),
+                loggerEventRepository.load(JobStatusChangeEvent.class)));
 
     }
 
@@ -678,7 +678,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.error[0].extension[1].valueDecimal",
                         Is.is(6000)));
 
-        List<LoggableEvent> apiRequestEvents = doAll.load(ApiRequestEvent.class);
+        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
         assertEquals(2, apiRequestEvents.size());
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
         ApiRequestEvent requestEvent2 = (ApiRequestEvent) apiRequestEvents.get(1);
@@ -693,7 +693,7 @@ public class BulkDataAccessAPIIntegrationTests {
             assertEquals(job.getJobUuid(), requestEvent2.getJobId());
         }
 
-        List<LoggableEvent> apiResponseEvents = doAll.load(ApiResponseEvent.class);
+        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
         assertEquals(2, apiResponseEvents.size());
         ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
         ApiResponseEvent responseEvent2 = (ApiResponseEvent) apiResponseEvents.get(1);
@@ -712,10 +712,10 @@ public class BulkDataAccessAPIIntegrationTests {
         // events weren't created for it.
 
         assertTrue(UtilMethods.allEmpty(
-                doAll.load(ReloadEvent.class),
-                doAll.load(ContractBeneSearchEvent.class),
-                doAll.load(ErrorEvent.class),
-                doAll.load(FileEvent.class)));
+                loggerEventRepository.load(ReloadEvent.class),
+                loggerEventRepository.load(ContractBeneSearchEvent.class),
+                loggerEventRepository.load(ErrorEvent.class),
+                loggerEventRepository.load(FileEvent.class)));
     }
 
     @Test
@@ -742,18 +742,18 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
                         Is.is("Job failed while processing")));
-        List<LoggableEvent> apiRequestEvents = doAll.load(ApiRequestEvent.class);
+        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
 
-        List<LoggableEvent> apiResponseEvents = doAll.load(ApiResponseEvent.class);
+        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
         ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
         assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
 
         assertTrue(UtilMethods.allEmpty(
-                doAll.load(ReloadEvent.class),
-                doAll.load(ContractBeneSearchEvent.class),
-                doAll.load(ErrorEvent.class),
-                doAll.load(FileEvent.class)));
+                loggerEventRepository.load(ReloadEvent.class),
+                loggerEventRepository.load(ContractBeneSearchEvent.class),
+                loggerEventRepository.load(ErrorEvent.class),
+                loggerEventRepository.load(FileEvent.class)));
     }
 
     @Test
@@ -856,7 +856,7 @@ public class BulkDataAccessAPIIntegrationTests {
                         .andExpect(content().contentType(NDJSON_FIRE_CONTENT_TYPE))
                         // .andDo(MockMvcResultHandlers.print())
                         .andReturn();
-        List<LoggableEvent> fileEvents = doAll.load(FileEvent.class);
+        List<LoggableEvent> fileEvents = loggerEventRepository.load(FileEvent.class);
         assertEquals(1, fileEvents.size());
         FileEvent fileEvent = (FileEvent) fileEvents.get(0);
         assertEquals(FileEvent.FileStatus.DELETE, fileEvent.getStatus());
@@ -909,22 +909,22 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
                         Is.is("The file is not present as there was an error. Please resubmit the job.")));
-        List<LoggableEvent> apiRequestEvents = doAll.load(ApiRequestEvent.class);
+        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(apiRequestEvents.size() - 1);
 
-        List<LoggableEvent> apiResponseEvents = doAll.load(ApiResponseEvent.class);
+        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
         ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(apiResponseEvents.size() - 1);
         assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
 
-        List<LoggableEvent> errorEvents = doAll.load(ErrorEvent.class);
+        List<LoggableEvent> errorEvents = loggerEventRepository.load(ErrorEvent.class);
         ErrorEvent errorEvent = (ErrorEvent) errorEvents.get(0);
         assertEquals(FILE_ALREADY_DELETED, errorEvent.getErrorType());
         assertEquals(errorEvent.getJobId(), requestEvent.getJobId());
 
         assertTrue(UtilMethods.allEmpty(
-                doAll.load(ReloadEvent.class),
-                doAll.load(ContractBeneSearchEvent.class),
-                doAll.load(FileEvent.class)));
+                loggerEventRepository.load(ReloadEvent.class),
+                loggerEventRepository.load(ContractBeneSearchEvent.class),
+                loggerEventRepository.load(FileEvent.class)));
     }
 
     @Test
