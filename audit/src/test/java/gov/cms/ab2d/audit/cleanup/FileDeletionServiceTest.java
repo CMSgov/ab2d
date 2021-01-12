@@ -15,7 +15,7 @@ import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
-import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
+import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -80,7 +80,7 @@ class FileDeletionServiceTest {
     private DataSetup dataSetup;
 
     @Autowired
-    private DoAll doAll;
+    private LoggerEventRepository loggerEventRepository;
 
     private static final String TEST_FILE = "testFile.ndjson";
 
@@ -165,7 +165,7 @@ class FileDeletionServiceTest {
 
     @AfterEach
     void cleanUp() throws IOException {
-        doAll.delete();
+        loggerEventRepository.delete();
 
         for (Path toDelete : pathsToDelete) {
 
@@ -195,7 +195,7 @@ class FileDeletionServiceTest {
 
         assertTrue(Files.notExists(destination));
 
-        List<LoggableEvent> fileEvents = doAll.load(FileEvent.class);
+        List<LoggableEvent> fileEvents = loggerEventRepository.load(FileEvent.class);
         FileEvent e1 = (FileEvent) fileEvents.get(0);
         assertTrue(e1.getFileName().equalsIgnoreCase(destination.toString()));
 
@@ -242,7 +242,7 @@ class FileDeletionServiceTest {
         assertTrue(Files.notExists(nestedFileDestination));
         assertTrue(Files.exists(dirPath));
 
-        List<LoggableEvent> fileEvents = doAll.load(FileEvent.class);
+        List<LoggableEvent> fileEvents = loggerEventRepository.load(FileEvent.class);
         FileEvent e1 = (FileEvent) fileEvents.get(0);
         assertTrue(e1.getFileName().equalsIgnoreCase(nestedFileDestination.toString()));
 
@@ -357,7 +357,7 @@ class FileDeletionServiceTest {
         assertTrue(Files.notExists(jobPath));
         assertTrue(Files.notExists(destinationJobConnection));
 
-        List<LoggableEvent> fileEvents = doAll.load(FileEvent.class);
+        List<LoggableEvent> fileEvents = loggerEventRepository.load(FileEvent.class);
         FileEvent e1 = (FileEvent) fileEvents.get(0);
         assertTrue(e1.getFileName().equalsIgnoreCase(destinationJobConnection.toString()));
 
@@ -385,7 +385,7 @@ class FileDeletionServiceTest {
         assertTrue(Files.notExists(jobPath));
         assertTrue(Files.notExists(destinationJobConnection));
 
-        List<LoggableEvent> fileEvents = doAll.load(FileEvent.class);
+        List<LoggableEvent> fileEvents = loggerEventRepository.load(FileEvent.class);
         FileEvent e1 = (FileEvent) fileEvents.get(0);
         assertTrue(e1.getFileName().equalsIgnoreCase(destinationJobConnection.toString()));
 
@@ -413,7 +413,7 @@ class FileDeletionServiceTest {
         assertTrue(Files.notExists(jobPath));
         assertTrue(Files.notExists(destinationJobConnection));
 
-        List<LoggableEvent> fileEvents = doAll.load(FileEvent.class);
+        List<LoggableEvent> fileEvents = loggerEventRepository.load(FileEvent.class);
         FileEvent e1 = (FileEvent) fileEvents.get(0);
         assertTrue(e1.getFileName().equalsIgnoreCase(destinationJobConnection.toString()));
 
@@ -457,12 +457,12 @@ class FileDeletionServiceTest {
 
     private void checkNoOtherEventsLogged() {
         assertTrue(UtilMethods.allEmpty(
-                doAll.load(ApiRequestEvent.class),
-                doAll.load(ApiResponseEvent.class),
-                doAll.load(ReloadEvent.class),
-                doAll.load(ContractBeneSearchEvent.class),
-                doAll.load(ErrorEvent.class),
-                doAll.load(JobStatusChangeEvent.class)));
+                loggerEventRepository.load(ApiRequestEvent.class),
+                loggerEventRepository.load(ApiResponseEvent.class),
+                loggerEventRepository.load(ReloadEvent.class),
+                loggerEventRepository.load(ContractBeneSearchEvent.class),
+                loggerEventRepository.load(ErrorEvent.class),
+                loggerEventRepository.load(JobStatusChangeEvent.class)));
     }
 
     @DisplayName("Ignore recently completed job files")

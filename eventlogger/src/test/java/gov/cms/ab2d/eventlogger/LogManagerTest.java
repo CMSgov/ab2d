@@ -3,7 +3,7 @@ package gov.cms.ab2d.eventlogger;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
-import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
+import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
@@ -34,7 +34,7 @@ class LogManagerTest {
     private SqlEventLogger sqlEventLogger;
 
     @Autowired
-    private DoAll doAll;
+    private LoggerEventRepository loggerEventRepository;
 
     @Test
     void log() {
@@ -53,13 +53,13 @@ class LogManagerTest {
         assertEquals("aws1111", event.getAwsId());
         assertTrue(event.getId() > 0);
 
-        List<LoggableEvent> events = doAll.load(ErrorEvent.class);
+        List<LoggableEvent> events = loggerEventRepository.load(ErrorEvent.class);
         assertNotNull(events);
         assertEquals(1, events.size());
         ErrorEvent savedEvent = (ErrorEvent) events.get(0);
         assertEquals("aws1111", savedEvent.getAwsId());
 
-        doAll.delete();
+        loggerEventRepository.delete();
     }
 
     @Test
@@ -71,13 +71,13 @@ class LogManagerTest {
         assertNull(event.getAwsId());
         assertTrue(event.getId() > 0);
 
-        List<LoggableEvent> events = doAll.load(ErrorEvent.class);
+        List<LoggableEvent> events = loggerEventRepository.load(ErrorEvent.class);
         assertNotNull(events);
         assertEquals(1, events.size());
         ErrorEvent savedEvent = (ErrorEvent) events.get(0);
         assertNull(savedEvent.getAwsId());
 
-        doAll.delete();
+        loggerEventRepository.delete();
     }
 
     @Test
@@ -94,7 +94,7 @@ class LogManagerTest {
         }).when(kinesisEventLogger).log(event);
         logManager.log(LogManager.LogType.KINESIS, event);
         assertEquals("aws1111", event.getAwsId());
-        List<LoggableEvent> events = doAll.load(ErrorEvent.class);
+        List<LoggableEvent> events = loggerEventRepository.load(ErrorEvent.class);
         assertNotNull(events);
         assertNull(event.getId());
         assertEquals(0, events.size());
