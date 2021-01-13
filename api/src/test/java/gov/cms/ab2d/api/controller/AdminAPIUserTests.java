@@ -15,7 +15,6 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import org.hamcrest.core.Is;
-import org.junit.Assert;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -32,6 +31,8 @@ import java.util.List;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -108,18 +109,18 @@ public class AdminAPIUserTests {
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        Assert.assertEquals(201, mvcResult.getResponse().getStatus());
+        assertEquals(201, mvcResult.getResponse().getStatus());
 
         String result = mvcResult.getResponse().getContentAsString();
         UserDTO createdUserDTO = mapper.readValue(result, UserDTO.class);
-        Assert.assertEquals(createdUserDTO.getEmail(), userDTO.getEmail());
-        Assert.assertEquals(createdUserDTO.getUsername(), userDTO.getUsername());
-        Assert.assertEquals(createdUserDTO.getFirstName(), userDTO.getFirstName());
-        Assert.assertEquals(createdUserDTO.getLastName(), userDTO.getLastName());
-        Assert.assertEquals(createdUserDTO.getEnabled(), userDTO.getEnabled());
-        Assert.assertEquals(createdUserDTO.getContract().getContractNumber(), userDTO.getContract().getContractNumber());
-        Assert.assertEquals(createdUserDTO.getContract().getContractName(), userDTO.getContract().getContractName());
-        Assert.assertEquals(createdUserDTO.getRole(), userDTO.getRole());
+        assertEquals(createdUserDTO.getEmail(), userDTO.getEmail());
+        assertEquals(createdUserDTO.getUsername(), userDTO.getUsername());
+        assertEquals(createdUserDTO.getFirstName(), userDTO.getFirstName());
+        assertEquals(createdUserDTO.getLastName(), userDTO.getLastName());
+        assertEquals(createdUserDTO.getEnabled(), userDTO.getEnabled());
+        assertEquals(createdUserDTO.getContract().getContractNumber(), userDTO.getContract().getContractNumber());
+        assertEquals(createdUserDTO.getContract().getContractName(), userDTO.getContract().getContractName());
+        assertEquals(createdUserDTO.getRole(), userDTO.getRole());
     }
 
     @Test
@@ -142,18 +143,18 @@ public class AdminAPIUserTests {
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        Assert.assertEquals(201, mvcResult.getResponse().getStatus());
+        assertEquals(201, mvcResult.getResponse().getStatus());
 
         String result = mvcResult.getResponse().getContentAsString();
         UserDTO createdUserDTO = mapper.readValue(result, UserDTO.class);
-        Assert.assertEquals(createdUserDTO.getEmail(), userDTO.getEmail());
-        Assert.assertEquals(createdUserDTO.getUsername(), userDTO.getUsername());
-        Assert.assertEquals(createdUserDTO.getFirstName(), userDTO.getFirstName());
-        Assert.assertEquals(createdUserDTO.getLastName(), userDTO.getLastName());
-        Assert.assertEquals(createdUserDTO.getEnabled(), userDTO.getEnabled());
-        Assert.assertEquals(createdUserDTO.getContract().getContractNumber(), userDTO.getContract().getContractNumber());
-        Assert.assertEquals(createdUserDTO.getContract().getContractName(), userDTO.getContract().getContractName());
-        Assert.assertEquals(createdUserDTO.getRole(), userDTO.getRole());
+        assertEquals(createdUserDTO.getEmail(), userDTO.getEmail());
+        assertEquals(createdUserDTO.getUsername(), userDTO.getUsername());
+        assertEquals(createdUserDTO.getFirstName(), userDTO.getFirstName());
+        assertEquals(createdUserDTO.getLastName(), userDTO.getLastName());
+        assertEquals(createdUserDTO.getEnabled(), userDTO.getEnabled());
+        assertEquals(createdUserDTO.getContract().getContractNumber(), userDTO.getContract().getContractNumber());
+        assertEquals(createdUserDTO.getContract().getContractName(), userDTO.getContract().getContractName());
+        assertEquals(createdUserDTO.getRole(), userDTO.getRole());
     }
 
     @Test
@@ -231,13 +232,13 @@ public class AdminAPIUserTests {
         String updateResult = updateMvcResult.getResponse().getContentAsString();
         UserDTO updatedUserDTO = mapper.readValue(updateResult, UserDTO.class);
 
-        Assert.assertEquals(updatedUserDTO.getEmail(), createdUserDTO.getEmail());
-        Assert.assertEquals(updatedUserDTO.getUsername(), createdUserDTO.getUsername());
-        Assert.assertEquals(updatedUserDTO.getFirstName(), createdUserDTO.getFirstName());
-        Assert.assertEquals(updatedUserDTO.getLastName(), createdUserDTO.getLastName());
-        Assert.assertEquals(updatedUserDTO.getEnabled(), createdUserDTO.getEnabled());
-        Assert.assertEquals(updatedUserDTO.getContract().getContractNumber(), createdUserDTO.getContract().getContractNumber());
-        Assert.assertEquals(updatedUserDTO.getRole(), createdUserDTO.getRole());
+        assertEquals(updatedUserDTO.getEmail(), createdUserDTO.getEmail());
+        assertEquals(updatedUserDTO.getUsername(), createdUserDTO.getUsername());
+        assertEquals(updatedUserDTO.getFirstName(), createdUserDTO.getFirstName());
+        assertEquals(updatedUserDTO.getLastName(), createdUserDTO.getLastName());
+        assertEquals(updatedUserDTO.getEnabled(), createdUserDTO.getEnabled());
+        assertEquals(updatedUserDTO.getContract().getContractNumber(), createdUserDTO.getContract().getContractNumber());
+        assertEquals(updatedUserDTO.getRole(), createdUserDTO.getRole());
     }
 
     @Test
@@ -283,7 +284,7 @@ public class AdminAPIUserTests {
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        Assert.assertEquals(mvcResult.getResponse().getStatus(), 202);
+        assertEquals(mvcResult.getResponse().getStatus(), 202);
 
         String header = mvcResult.getResponse().getHeader("Content-Location");
 
@@ -291,7 +292,7 @@ public class AdminAPIUserTests {
         dataSetup.queueForCleanup(job);
         User jobUser = job.getUser();
         dataSetup.queueForCleanup(jobUser);
-        Assert.assertEquals(jobUser.getUsername(), userDTO.getUsername());
+        assertEquals(jobUser.getUsername(), userDTO.getUsername());
     }
 
     @Test
@@ -311,7 +312,7 @@ public class AdminAPIUserTests {
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        Assert.assertEquals(mvcResult.getResponse().getStatus(), 202);
+        assertEquals(mvcResult.getResponse().getStatus(), 202);
 
         String header = mvcResult.getResponse().getHeader("Content-Location");
 
@@ -319,7 +320,7 @@ public class AdminAPIUserTests {
         User jobUser = job.getUser();
         dataSetup.queueForCleanup(jobUser);
         dataSetup.queueForCleanup(job);
-        Assert.assertEquals(jobUser.getUsername(), userDTO.getUsername());
+        assertEquals(jobUser.getUsername(), userDTO.getUsername());
     }
 
     @Test
@@ -333,14 +334,14 @@ public class AdminAPIUserTests {
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        Assert.assertEquals(mvcResult.getResponse().getStatus(), 200);
+        assertEquals(mvcResult.getResponse().getStatus(), 200);
 
         ObjectMapper mapper = new ObjectMapper();
 
         String updateResult = mvcResult.getResponse().getContentAsString();
         UserDTO updatedUserDTO = mapper.readValue(updateResult, UserDTO.class);
 
-        Assert.assertEquals(updatedUserDTO.getEnabled(), true);
+        assertEquals(updatedUserDTO.getEnabled(), true);
     }
 
     @Test
@@ -363,14 +364,14 @@ public class AdminAPIUserTests {
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        Assert.assertEquals(mvcResult.getResponse().getStatus(), 200);
+        assertEquals(mvcResult.getResponse().getStatus(), 200);
 
         ObjectMapper mapper = new ObjectMapper();
 
         String updateResult = mvcResult.getResponse().getContentAsString();
         UserDTO updatedUserDTO = mapper.readValue(updateResult, UserDTO.class);
 
-        Assert.assertEquals(updatedUserDTO.getEnabled(), false);
+        assertEquals(updatedUserDTO.getEnabled(), false);
     }
 
     @Test
@@ -393,22 +394,22 @@ public class AdminAPIUserTests {
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        Assert.assertEquals(mvcResult.getResponse().getStatus(), 200);
+        assertEquals(mvcResult.getResponse().getStatus(), 200);
 
         ObjectMapper mapper = new ObjectMapper();
 
         String getResult = mvcResult.getResponse().getContentAsString();
         UserDTO userDTO = mapper.readValue(getResult, UserDTO.class);
 
-        Assert.assertEquals(userDTO.getEmail(), TEST_USER);
-        Assert.assertEquals(userDTO.getUsername(), ENABLE_DISABLE_USER);
-        Assert.assertEquals(userDTO.getFirstName(), "test");
-        Assert.assertEquals(userDTO.getLastName(), "user");
-        Assert.assertEquals(userDTO.getEnabled(), true);
+        assertEquals(userDTO.getEmail(), TEST_USER);
+        assertEquals(userDTO.getUsername(), ENABLE_DISABLE_USER);
+        assertEquals(userDTO.getFirstName(), "test");
+        assertEquals(userDTO.getLastName(), "user");
+        assertEquals(userDTO.getEnabled(), true);
         ContractDTO contractDTO = userDTO.getContract();
-        Assert.assertEquals(contractDTO.getContractNumber(), "Z0000");
-        Assert.assertEquals("Test Contract Z0000", contractDTO.getContractName());
-        Assert.assertNotNull(contractDTO.getAttestedOn());
+        assertEquals(contractDTO.getContractNumber(), "Z0000");
+        assertEquals("Test Contract Z0000", contractDTO.getContractName());
+        assertNotNull(contractDTO.getAttestedOn());
     }
 
     @Test
@@ -419,7 +420,7 @@ public class AdminAPIUserTests {
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        Assert.assertEquals(mvcResult.getResponse().getStatus(), 404);
+        assertEquals(mvcResult.getResponse().getStatus(), 404);
     }
 
     private void setupUser(boolean enabled) {

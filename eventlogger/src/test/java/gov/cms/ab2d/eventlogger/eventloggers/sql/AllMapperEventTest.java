@@ -87,7 +87,7 @@ public class AllMapperEventTest {
         assertEquals(events.size(), events2.size());
 
         ApiRequestEvent event = (ApiRequestEvent) events.get(0);
-        assertEquals(event.getAwsId(), "ABC");
+        assertEquals("ABC", event.getAwsId());
 
         jsce.setId(event.getId());
         assertEquals(event, jsce);
@@ -133,7 +133,7 @@ public class AllMapperEventTest {
         assertEquals(event.getId(), jsce.getId());
         assertEquals("laila", event.getUser());
         assertEquals("job123", event.getJobId());
-        assertTrue(jsce.equals(event));
+        assertEquals(event, jsce);
         assertEquals("Description", event.getDescription());
         assertEquals("Not Found", event.getResponseString());
         assertEquals(404, event.getResponseCode());
@@ -164,7 +164,7 @@ public class AllMapperEventTest {
         ContractBeneSearchEvent event = (ContractBeneSearchEvent) events.get(0);
         assertEquals("dev", event.getEnvironment());
         assertTrue(event.getId() > 0);
-        assertTrue(cbse.equals(event));
+        assertEquals(event, cbse);
         assertEquals(event.getId(), cbse.getId());
         assertEquals("laila", event.getUser());
         assertEquals("jobIdVal", event.getJobId());
@@ -197,7 +197,7 @@ public class AllMapperEventTest {
         List<LoggableEvent> events2 = loggerEventRepository.load();
         assertEquals(events.size(), events2.size());
         ErrorEvent event = (ErrorEvent) events.get(0);
-        assertTrue(jsce.equals(event));
+        assertEquals(event, jsce);
         assertEquals("dev", event.getEnvironment());
         assertTrue(event.getId() > 0);
         assertEquals(event.getId(), jsce.getId());
@@ -234,7 +234,7 @@ public class AllMapperEventTest {
         List<LoggableEvent> events2 = loggerEventRepository.load();
         assertEquals(events.size(), events2.size());
         FileEvent event = (FileEvent) events.get(0);
-        assertTrue(jsce.equals(event));
+        assertEquals(event, jsce);
         assertEquals("dev", event.getEnvironment());
         assertTrue(event.getId() > 0);
         assertEquals(event.getId(), jsce.getId());
@@ -271,7 +271,7 @@ public class AllMapperEventTest {
         List<LoggableEvent> events2 = loggerEventRepository.load();
         assertEquals(events.size(), events2.size());
         JobStatusChangeEvent event = (JobStatusChangeEvent) events.get(0);
-        assertTrue(jsce.equals(event));
+        assertEquals(event, jsce);
         assertEquals("dev", event.getEnvironment());
         assertTrue(event.getId() > 0);
         assertEquals(event.getId(), jsce.getId());
@@ -305,7 +305,7 @@ public class AllMapperEventTest {
         assertEquals(events.size(), events2.size());
         assertEquals(1, events.size());
         ReloadEvent event = (ReloadEvent) events.get(0);
-        assertTrue(cbse.equals(event));
+        assertEquals(event, cbse);
         assertEquals("dev", event.getEnvironment());
         assertTrue(event.getId() > 0);
         assertEquals(event.getId(), cbse.getId());

@@ -6,8 +6,6 @@ import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -41,12 +39,10 @@ class LogManagerTest {
         logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
         ErrorEvent event = new ErrorEvent("user", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
                 "File Deleted");
-        doAnswer(new Answer() {
-            public Object answer(InvocationOnMock invocation) {
-                Object[] args = invocation.getArguments();
-                ((ErrorEvent)args[0]).setAwsId("aws1111");
-                return null; // void method, so return null
-            }
+        doAnswer(invocation -> {
+            Object[] args = invocation.getArguments();
+            ((ErrorEvent)args[0]).setAwsId("aws1111");
+            return null; // void method, so return null
         }).when(kinesisEventLogger).log(event, true);
 
         logManager.log(event);
@@ -85,12 +81,10 @@ class LogManagerTest {
         ErrorEvent event = new ErrorEvent("user", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
                 "File Deleted");
         logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
-        doAnswer(new Answer() {
-            public Object answer(InvocationOnMock invocation) {
-                Object[] args = invocation.getArguments();
-                ((ErrorEvent)args[0]).setAwsId("aws1111");
-                return null; // void method, so return null
-            }
+        doAnswer(invocation -> {
+            Object[] args = invocation.getArguments();
+            ((ErrorEvent)args[0]).setAwsId("aws1111");
+            return null; // void method, so return null
         }).when(kinesisEventLogger).log(event);
         logManager.log(LogManager.LogType.KINESIS, event);
         assertEquals("aws1111", event.getAwsId());
