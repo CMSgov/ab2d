@@ -268,11 +268,6 @@ class TestRunner {
             }
         }
 
-//        if (statusesBetween0And100.size() < 2) {
-            // Currently failing, add back when jobs take longer
-            //Assert.fail("Did not receive more than 1 distinct progress values between 0 and 100");
-//        }
-
         if (status == 200 || status == 500) {
             return statusResponse;
         } else {
