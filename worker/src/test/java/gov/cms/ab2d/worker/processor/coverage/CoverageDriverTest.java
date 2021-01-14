@@ -605,7 +605,7 @@ class CoverageDriverTest {
             job.setSince(OffsetDateTime.of(endMonth, endDay, AB2D_ZONE.getRules().getOffset(Instant.now())));
 
             boolean inProgressEndMonth = driver.isCoverageAvailable(job);
-            assertTrue(inProgressEndMonth, "eob searches should run when only month after since is successful");
+            assertFalse(inProgressEndMonth, "eob searches should run when only month after since is successful");
         } catch (InterruptedException | CoverageDriverException exception) {
             fail("could not check for available coverage", exception);
         }

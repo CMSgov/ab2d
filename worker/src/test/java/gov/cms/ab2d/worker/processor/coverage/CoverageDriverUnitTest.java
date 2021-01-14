@@ -58,16 +58,9 @@ class CoverageDriverUnitTest {
         CoverageDriverException startDateInFuture = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(job));
         assertEquals("contract attestation time is after current time," +
                 " cannot find metadata for coverage periods in the future", startDateInFuture.getMessage());
-
-        contract.setAttestedOn(AB2D_EPOCH.toOffsetDateTime());
-        job.setSince(OffsetDateTime.now().plusHours(1));
-
-        startDateInFuture = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(job));
-        assertEquals("contract attestation time is after current time," +
-                " cannot find metadata for coverage periods in the future", startDateInFuture.getMessage());
     }
 
-    @DisplayName("Paging coverage ignores since date in future and does ")
+    @DisplayName("Paging coverage ignores since date in future and executes search")
     @Test
     void pageRequestWhenSinceDateAfterNow() {
 
