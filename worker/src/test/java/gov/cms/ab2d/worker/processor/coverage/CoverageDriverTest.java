@@ -570,7 +570,11 @@ class CoverageDriverTest {
         }
     }
 
-    @DisplayName("Do start an eob job if periods including and after since are not being worked on")
+    /**
+     * The since date is only relevant for claims data not enrollment data. So even though the since date
+     * is set the enrollment data must all be up to date before a job can start.
+     */
+    @DisplayName("Do not start an eob job if periods before since are being worked on. Ignore since.")
     @Test
     void availableCoverageWhenSinceContainsOnlySuccessful() {
 
@@ -580,55 +584,12 @@ class CoverageDriverTest {
         Contract temp = contractRepo.findContractByContractNumber(contract.getContractNumber()).get();
         job.setContract(temp);
 
-
         OffsetDateTime since = OffsetDateTime.of(LocalDate.of(2020, 3, 1),
                 LocalTime.of(0, 0, 0), AB2D_ZONE.getRules().getOffset(Instant.now()));
 
         try {
 
             changeStatus(contract, since, JobStatus.SUCCESSFUL);
-
-            LocalDate startMonth = LocalDate.of(2020, 3, 1);
-            LocalTime startDay = LocalTime.of(0,0,0);
-
-            job.setSince(OffsetDateTime.of(startMonth, startDay, AB2D_ZONE.getRules().getOffset(Instant.now())));
-
-            boolean inProgressBeginningMonth = driver.isCoverageAvailable(job);
-            assertTrue(inProgressBeginningMonth, "eob searches should run when only month after since is successful");
-
-            LocalDate endMonth = LocalDate.of(2020, 3, 31);
-            LocalTime endDay = LocalTime.of(23,59,59);
-
-            job.setSince(OffsetDateTime.of(endMonth, endDay, AB2D_ZONE.getRules().getOffset(Instant.now())));
-
-            boolean inProgressEndMonth = driver.isCoverageAvailable(job);
-            assertTrue(inProgressEndMonth, "eob searches should run when only month after since is successful");
-        } catch (InterruptedException | CoverageDriverException exception) {
-            fail("could not check for available coverage", exception);
-        }
-    }
-
-    @DisplayName("Do not start an eob job if periods including and after since have not been searched")
-    @Test
-    void availableCoverageWhenSinceContainsNeverSearched() {
-
-        Job job = new Job();
-        job.setContract(contract);
-        job.setCreatedAt(OffsetDateTime.now());
-
-        OffsetDateTime since = OffsetDateTime.of(LocalDate.of(2020, 3, 1),
-                LocalTime.of(0, 0, 0), AB2D_ZONE.getRules().getOffset(Instant.now()));
-
-        try {
-
-            changeStatus(contract, since, null);
-
-            // Make sure that there is a lastSuccessfulJob
-            ZonedDateTime now = ZonedDateTime.now(AB2D_ZONE);
-            CoveragePeriod currentMonth = coverageService.getCoveragePeriod(contract, now.getMonthValue(), now.getYear());
-            currentMonth.setLastSuccessfulJob(OffsetDateTime.now().plusHours(2));
-            currentMonth.setStatus(JobStatus.SUCCESSFUL);
-            coveragePeriodRepo.saveAndFlush(currentMonth);
 
             LocalDate startMonth = LocalDate.of(2020, 3, 1);
             LocalTime startDay = LocalTime.of(0,0,0);
@@ -644,7 +605,7 @@ class CoverageDriverTest {
             job.setSince(OffsetDateTime.of(endMonth, endDay, AB2D_ZONE.getRules().getOffset(Instant.now())));
 
             boolean inProgressEndMonth = driver.isCoverageAvailable(job);
-            assertFalse(inProgressEndMonth, "eob searches should run when only month after since is successful");
+            assertTrue(inProgressEndMonth, "eob searches should run when only month after since is successful");
         } catch (InterruptedException | CoverageDriverException exception) {
             fail("could not check for available coverage", exception);
         }
@@ -657,9 +618,6 @@ class CoverageDriverTest {
 
         Job job = new Job();
         job.setContract(contract);
-
-        OffsetDateTime since = OffsetDateTime.of(LocalDate.of(2020, 3, 1),
-                LocalTime.of(0, 0, 0), AB2D_ZONE.getRules().getOffset(Instant.now()));
 
         long numberPeriodsBeforeCheck = coveragePeriodRepo.count();
 
@@ -719,11 +677,11 @@ class CoverageDriverTest {
         }
     }
 
-    private void changeStatus(Contract contract, OffsetDateTime sinceTime, JobStatus status) {
+    private void changeStatus(Contract contract, OffsetDateTime attestationTime, JobStatus status) {
 
         OffsetDateTime now = OffsetDateTime.now();
-        while (sinceTime.isBefore(now)) {
-            CoveragePeriod period = coverageService.getCreateIfAbsentCoveragePeriod(contract, sinceTime.getMonthValue(), sinceTime.getYear());
+        while (attestationTime.isBefore(now)) {
+            CoveragePeriod period = coverageService.getCreateIfAbsentCoveragePeriod(contract, attestationTime.getMonthValue(), attestationTime.getYear());
 
             period.setStatus(status);
             if (status == JobStatus.SUCCESSFUL) {
@@ -731,7 +689,7 @@ class CoverageDriverTest {
             }
             coveragePeriodRepo.saveAndFlush(period);
 
-            sinceTime = sinceTime.plusMonths(1);
+            attestationTime = attestationTime.plusMonths(1);
         }
     }
 }
