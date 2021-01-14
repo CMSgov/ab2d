@@ -13,7 +13,6 @@ import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
-import org.junit.Assert;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,8 +35,7 @@ import java.util.List;
 import static gov.cms.ab2d.api.controller.BulkDataAccessAPIIntegrationTests.PATIENT_EXPORT_PATH;
 import static gov.cms.ab2d.api.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -180,7 +178,7 @@ public class AdminAPIMaintenanceModeTests {
                         .header("Accept-Encoding", "gzip, deflate, br"))
                         .andExpect(status().is(200));
 
-        Assert.assertFalse(Files.exists(Paths.get(destinationStr + File.separator + testFile)));
+        assertFalse(Files.exists(Paths.get(destinationStr + File.separator + testFile)));
 
         // Cleanup
         propertiesDTOs.clear();

@@ -28,23 +28,10 @@ class CoverageSearchTest {
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Autowired
-    private ContractRepository contractRepo;
-
-    @Autowired
     private CoverageSearchRepository coverageSearchRepository;
 
     @Autowired
-    private CoverageSearchEventRepository coverageSearchEventRepo;
-
-    @Autowired
-    private CoveragePeriodRepository coveragePeriodRepo;
-
-    @Autowired
     private DataSetup dataSetup;
-
-    private Contract contract1;
-    private Contract contract2;
-
 
     @AfterEach
     void cleanup() {
@@ -55,8 +42,8 @@ class CoverageSearchTest {
     void testSearches() {
         try {
 
-            contract1 = dataSetup.setupContract("c123");
-            contract2 = dataSetup.setupContract("c456");
+            Contract contract1 = dataSetup.setupContract("c123");
+            Contract contract2 = dataSetup.setupContract("c456");
 
             CoveragePeriod period1 = dataSetup.createCoveragePeriod(contract1, 10, 2020);
             CoveragePeriod period2 = dataSetup.createCoveragePeriod(contract2, 10, 2020);
