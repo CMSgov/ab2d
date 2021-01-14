@@ -71,7 +71,6 @@ module "worker" {
   region                            = var.region
   ssh_key_name                      = var.env
   ssh_username                      = var.ssh_username
-  stunnel_latest_version            = var.stunnel_latest_version
   vpc_id                            = data.terraform_remote_state.core.outputs.vpc_id
   vpn_private_ip_address_cidr_range = var.vpn_private_ip_address_cidr_range
   worker_desired_instances          = var.worker_desired_instances
