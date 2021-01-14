@@ -1,6 +1,5 @@
 package gov.cms.ab2d.bfd.client;
 
-import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +13,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.KeyStore;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = SpringBootApp.class, properties = "bfd.keystore.location=/tmp/bb.keystore")
@@ -35,6 +36,6 @@ public class BFDClientConfigurationTest {
     // Ensure that the keystore is loaded properly when we set the property for it to be a file on the filesystem
     @Test
     public void keystoreFile() {
-        Assert.assertNotNull(keyStore);
+        assertNotNull(keyStore);
     }
 }

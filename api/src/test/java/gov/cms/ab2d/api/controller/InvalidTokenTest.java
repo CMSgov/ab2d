@@ -21,6 +21,7 @@ import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -67,6 +68,7 @@ public class InvalidTokenTest {
     @Test
     public void testInvalidToken() throws Exception {
         User user = userRepository.findByUsername(TEST_USER);
+        assertNotNull(user);
         user.setEnabled(false);
         userRepository.save(user);
 
