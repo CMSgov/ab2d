@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -331,7 +330,6 @@ public class CoverageDriverImpl implements CoverageDriver {
              */
             List<CoveragePeriod> neverSearched = coverageService.coveragePeriodNeverSearchedSuccessfully().stream()
                     .filter(period -> Objects.equals(job.getContract(), period.getContract())).collect(toList());
-            neverSearched = filterBySince(job, neverSearched);
             if (!neverSearched.isEmpty()) {
                 // Add all never searched coverage periods to the queue for processing
                 neverSearched.forEach(period -> coverageProcessor.queueCoveragePeriod(period, false));
@@ -365,7 +363,6 @@ public class CoverageDriverImpl implements CoverageDriver {
              * There will always be at least one coverage period returned.
              */
             List<CoveragePeriod> periods = coverageService.findAssociatedCoveragePeriods(job.getContract());
-            periods = filterBySince(job, periods);
 
             if (periods.isEmpty()) {
                 log.error("There are no existing coverage periods for this job so no metadata exists");
@@ -461,18 +458,6 @@ public class CoverageDriverImpl implements CoverageDriver {
         // Attestation time should never be null for a job making it to this point
         ZonedDateTime startDateTime = contract.getESTAttestationTime();
 
-        // Apply since
-        if (job.getSince() != null) {
-            ZonedDateTime since = job.getSince().atZoneSameInstant(AB2D_ZONE);
-            log.debug("paging request for eob job with since date so checking if since date can be applied");
-            if (since.isAfter(startDateTime)) {
-                startDateTime = since;
-                log.info("applying since date for paging request");
-            } else {
-                log.warn("since date before attestation time which may indicate a problem");
-            }
-        }
-
         // Do not allow in any case for someone to pull data before the AB2D API officially supports.
         // Do not remove this without extreme consideration
         if (startDateTime.isBefore(AB2D_EPOCH)) {
@@ -482,7 +467,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         ZonedDateTime now = ZonedDateTime.now(AB2D_ZONE);
 
         if (startDateTime.isAfter(now)) {
-            throw new CoverageDriverException("contract attestation time or since date on job is after current time," +
+            throw new CoverageDriverException("contract attestation time is after current time," +
                     " cannot find metadata for coverage periods in the future");
         }
 
@@ -493,24 +478,5 @@ public class CoverageDriverImpl implements CoverageDriver {
     @Override
     public CoveragePagingResult pageCoverage(CoveragePagingRequest request) {
         return coverageService.pageCoverage(request);
-    }
-
-    /**
-     * Filters coverage periods to make sure they only include membership data after the _since date
-     * @param job the job to look for a since date in
-     * @param periods the periods to filter.
-     * @return at least one coverage period
-     */
-    private List<CoveragePeriod> filterBySince(Job job, List<CoveragePeriod> periods) {
-        if (job.getSince() != null) {
-            LocalDate sinceExactDay = job.getSince().toLocalDate();
-            LocalDate sinceMonth = LocalDate.of(sinceExactDay.getYear(), sinceExactDay.getMonth(), 1);
-
-            periods = periods.stream().filter(period -> {
-                LocalDate periodMonth = LocalDate.of(period.getYear(), period.getMonth(), 1);
-                return !periodMonth.isBefore(sinceMonth);
-            }).collect(toList());
-        }
-        return periods;
     }
 }
