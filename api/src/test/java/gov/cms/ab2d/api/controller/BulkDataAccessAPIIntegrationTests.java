@@ -16,7 +16,6 @@ import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.apache.commons.lang3.StringUtils;
 import org.hamcrest.core.Is;
-import org.junit.Assert;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,10 +48,7 @@ import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
 import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
 import static gov.cms.ab2d.eventlogger.events.ErrorEvent.ErrorType.FILE_ALREADY_DELETED;
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -119,7 +115,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testBasicPatientExport() throws Exception {
+    void testBasicPatientExport() throws Exception {
         ResultActions resultActions = this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token));
@@ -156,17 +152,16 @@ public class BulkDataAccessAPIIntegrationTests {
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string("Content-Location", statusUrl));
 
-        assertEquals(job.getStatus(), JobStatus.SUBMITTED);
-        assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
-        assertEquals(job.getProgress(), Integer.valueOf(0));
-        assertEquals(job.getRequestUrl(),
-                "http://localhost" + API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH);
-        assertEquals(job.getResourceTypes(), EOB);
-        assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
+        assertEquals(JobStatus.SUBMITTED, job.getStatus());
+        assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
+        assertEquals(Integer.valueOf(0), job.getProgress());
+        assertEquals("http://localhost" + API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH, job.getRequestUrl());
+        assertEquals(EOB, job.getResourceTypes());
+        assertEquals(userRepository.findByUsername(TEST_USER), job.getUser());
     }
 
     @Test
-    public void testBasicPatientExportWithHttps() throws Exception {
+    void testBasicPatientExportWithHttps() throws Exception {
         ResultActions resultActions = this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token)
@@ -180,13 +175,12 @@ public class BulkDataAccessAPIIntegrationTests {
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string("Content-Location", statusUrl));
 
-        assertEquals(job.getStatus(), JobStatus.SUBMITTED);
-        assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
-        assertEquals(job.getProgress(), Integer.valueOf(0));
-        assertEquals(job.getRequestUrl(),
-                "https://localhost" + API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH);
-        assertEquals(job.getResourceTypes(), EOB);
-        assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
+        assertEquals(JobStatus.SUBMITTED, job.getStatus());
+        assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
+        assertEquals(Integer.valueOf(0), job.getProgress());
+        assertEquals("https://localhost" + API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH, job.getRequestUrl());
+        assertEquals(EOB, job.getResourceTypes());
+        assertEquals(userRepository.findByUsername(TEST_USER), job.getUser());
     }
 
     @Test
@@ -260,7 +254,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testPatientExportDuplicateSubmissionWithDifferentUser() throws Exception {
+    void testPatientExportDuplicateSubmissionWithDifferentUser() throws Exception {
         createMaxJobs();
 
         List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
@@ -286,7 +280,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testPatientExportWithParameters() throws Exception {
+    void testPatientExportWithParameters() throws Exception {
         final String typeParams =
                 "?_type=ExplanationOfBenefit&_outputFormat=application/fhir+ndjson&since=20191015";
         ResultActions resultActions =
@@ -302,17 +296,16 @@ public class BulkDataAccessAPIIntegrationTests {
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string("Content-Location", statusUrl));
 
-        assertEquals(job.getStatus(), JobStatus.SUBMITTED);
-        assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
-        assertEquals(job.getProgress(), Integer.valueOf(0));
-        assertEquals(job.getRequestUrl(),
-                "http://localhost" + API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + typeParams);
-        assertEquals(job.getResourceTypes(), EOB);
-        assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
+        assertEquals(JobStatus.SUBMITTED, job.getStatus());
+        assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
+        assertEquals(Integer.valueOf(0), job.getProgress());
+        assertEquals("http://localhost" + API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + typeParams, job.getRequestUrl());
+        assertEquals(EOB, job.getResourceTypes());
+        assertEquals(userRepository.findByUsername(TEST_USER), job.getUser());
     }
 
     @Test
-    public void testPatientExportWithInvalidType() throws Exception {
+    void testPatientExportWithInvalidType() throws Exception {
         final String typeParams = "?_type=PatientInvalid,ExplanationOfBenefit";
         this.mockMvc.perform(get(API_PREFIX +  FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -344,7 +337,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testPatientExportWithInvalidOutputFormat() throws Exception {
+    void testPatientExportWithInvalidOutputFormat() throws Exception {
         final String typeParams = "?_outputFormat=Invalid";
         this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -376,7 +369,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testPatientExportWithZipOutputFormat() throws Exception {
+    void testPatientExportWithZipOutputFormat() throws Exception {
         final String typeParams = "?_outputFormat=application/zip";
         this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -390,7 +383,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testDeleteJob() throws Exception {
+    void testDeleteJob() throws Exception {
         this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH)
                     .contentType(MediaType.APPLICATION_JSON)
@@ -416,7 +409,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testDeleteNonExistentJob() throws Exception {
+    void testDeleteNonExistentJob() throws Exception {
         this.mockMvc.perform(delete(API_PREFIX + FHIR_PREFIX + "/Job/NonExistentJob/$status")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(404))
@@ -444,11 +437,10 @@ public class BulkDataAccessAPIIntegrationTests {
                 loggerEventRepository.load(ErrorEvent.class),
                 loggerEventRepository.load(FileEvent.class),
                 loggerEventRepository.load(JobStatusChangeEvent.class)));
-
     }
 
     @Test
-    public void testDeleteJobsInInvalidState() throws Exception {
+    void testDeleteJobsInInvalidState() throws Exception {
         this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token)
@@ -496,12 +488,14 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testGetStatusWhileSubmitted() throws Exception {
+    void testGetStatusWhileSubmitted() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
+
         String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
+        assertNotNull(statusUrl);
 
         this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
@@ -524,7 +518,10 @@ public class BulkDataAccessAPIIntegrationTests {
                 get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andReturn();
+
         String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
+        assertNotNull(statusUrl);
+
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
         job.setProgress(30);
@@ -547,14 +544,16 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testGetStatusWhileFinishedHttps() throws Exception {
+    void testGetStatusWhileFinishedHttps() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                         .header("Authorization", "Bearer " + token)
                         .header("X-Forwarded-Proto", "https")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
+
         String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
+        assertNotNull(statusUrl);
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
         job.setStatus(JobStatus.SUCCESSFUL);
@@ -606,13 +605,15 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testGetStatusWhileFinished() throws Exception {
+    void testGetStatusWhileFinished() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
+
         String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
+        assertNotNull(statusUrl);
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
         job.setStatus(JobStatus.SUCCESSFUL);
@@ -683,12 +684,12 @@ public class BulkDataAccessAPIIntegrationTests {
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
         ApiRequestEvent requestEvent2 = (ApiRequestEvent) apiRequestEvents.get(1);
         if (requestEvent.getUrl().contains("export")) {
-            assertEquals(null, requestEvent.getJobId());
+            assertNull(requestEvent.getJobId());
         } else {
             assertEquals(job.getJobUuid(), requestEvent.getJobId());
         }
         if (requestEvent2.getUrl().contains("export")) {
-            assertEquals(null, requestEvent2.getJobId());
+            assertNull(requestEvent2.getJobId());
         } else {
             assertEquals(job.getJobUuid(), requestEvent2.getJobId());
         }
@@ -719,13 +720,15 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testGetStatusWhileFailed() throws Exception {
+    void testGetStatusWhileFailed() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
+
         String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
+        assertNotNull(statusUrl);
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
         job.setStatus(JobStatus.FAILED);
@@ -757,7 +760,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testGetStatusWithJobNotFound() throws Exception {
+    void testGetStatusWithJobNotFound() throws Exception {
         this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
@@ -782,7 +785,7 @@ public class BulkDataAccessAPIIntegrationTests {
      }
 
     @Test
-    public void testGetStatusWithSpaceUrl() throws Exception {
+    void testGetStatusWithSpaceUrl() throws Exception {
         this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
@@ -807,7 +810,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testGetStatusWithBadUrl() throws Exception {
+    void testGetStatusWithBadUrl() throws Exception {
         this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
@@ -828,13 +831,15 @@ public class BulkDataAccessAPIIntegrationTests {
 
 
     @Test
-    public void testDownloadFile() throws Exception {
+    void testDownloadFile() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
+
         String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
+        assertNotNull(statusUrl);
 
         String testFile = "test.ndjson";
 
@@ -871,17 +876,19 @@ public class BulkDataAccessAPIIntegrationTests {
         String arrValue2 = JsonPath.read(downloadedFile, "$.array[1]");
         assertEquals("val2", arrValue2);
 
-        Assert.assertTrue(!Files.exists(Paths.get(destinationStr + File.separator + testFile)));
+        assertFalse(Files.exists(Paths.get(destinationStr + File.separator + testFile)));
     }
 
     @Test
-    public void testDownloadMissingFileGenericError() throws Exception {
+    void testDownloadMissingFileGenericError() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
+
         String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
+        assertNotNull(statusUrl);
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
         job.setStatus(JobStatus.SUCCESSFUL);
@@ -928,13 +935,15 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testDownloadBadParameterFile() throws Exception {
+    void testDownloadBadParameterFile() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
+
         String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
+        assertNotNull(statusUrl);
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
         job.setStatus(JobStatus.SUCCESSFUL);
@@ -966,13 +975,15 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testDownloadFileAlreadyDownloaded() throws Exception {
+    void testDownloadFileAlreadyDownloaded() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
+
         String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
+        assertNotNull(statusUrl);
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
         job.setStatus(JobStatus.SUCCESSFUL);
@@ -1011,13 +1022,15 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testDownloadFileExpired() throws Exception {
+    void testDownloadFileExpired() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
+
         String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
+        assertNotNull(statusUrl);
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
         job.setStatus(JobStatus.SUCCESSFUL);
@@ -1048,7 +1061,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testBasicPatientExportWithContractWithHttps() throws Exception {
+    void testBasicPatientExportWithContractWithHttps() throws Exception {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         ResultActions resultActions = this.mockMvc.perform(
@@ -1060,21 +1073,21 @@ public class BulkDataAccessAPIIntegrationTests {
 
         String statusUrl =
                 "https://localhost" + API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
+        assertNotNull(statusUrl);
 
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string("Content-Location", statusUrl));
 
-        assertEquals(job.getStatus(), JobStatus.SUBMITTED);
-        assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
-        assertEquals(job.getProgress(), Integer.valueOf(0));
-        assertEquals(job.getRequestUrl(),
-                "https://localhost" + API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export");
-        assertEquals(job.getResourceTypes(), null);
-        assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
+        assertEquals(JobStatus.SUBMITTED, job.getStatus());
+        assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
+        assertEquals(Integer.valueOf(0), job.getProgress());
+        assertEquals("https://localhost" + API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export", job.getRequestUrl());
+        assertNull(job.getResourceTypes());
+        assertEquals(userRepository.findByUsername(TEST_USER), job.getUser());
     }
 
     @Test
-    public void testBasicPatientExportWithContract() throws Exception {
+    void testBasicPatientExportWithContract() throws Exception {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         ResultActions resultActions = this.mockMvc.perform(
@@ -1089,17 +1102,17 @@ public class BulkDataAccessAPIIntegrationTests {
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string("Content-Location", statusUrl));
 
-        assertEquals(job.getStatus(), JobStatus.SUBMITTED);
-        assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
-        assertEquals(job.getProgress(), Integer.valueOf(0));
-        assertEquals(job.getRequestUrl(),
-                "http://localhost" + API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export");
-        assertEquals(job.getResourceTypes(), null);
-        assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
+        assertEquals(JobStatus.SUBMITTED, job.getStatus());
+        assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
+        assertEquals(Integer.valueOf(0), job.getProgress());
+        assertEquals("http://localhost" + API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export",
+                job.getRequestUrl());
+        assertNull(job.getResourceTypes());
+        assertEquals(userRepository.findByUsername(TEST_USER), job.getUser());
     }
 
     @Test
-    public void testPatientExportWithParametersWithContract() throws Exception {
+    void testPatientExportWithParametersWithContract() throws Exception {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         final String typeParams =
@@ -1117,17 +1130,17 @@ public class BulkDataAccessAPIIntegrationTests {
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string("Content-Location", statusUrl));
 
-        assertEquals(job.getStatus(), JobStatus.SUBMITTED);
-        assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
-        assertEquals(job.getProgress(), Integer.valueOf(0));
-        assertEquals(job.getRequestUrl(),
-                "http://localhost" + API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams);
-        assertEquals(job.getResourceTypes(), EOB);
-        assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
+        assertEquals(JobStatus.SUBMITTED, job.getStatus());
+        assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
+        assertEquals(Integer.valueOf(0), job.getProgress());
+        assertEquals("http://localhost" + API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams,
+                job.getRequestUrl());
+        assertEquals(EOB, job.getResourceTypes());
+        assertEquals(userRepository.findByUsername(TEST_USER), job.getUser());
     }
 
     @Test
-    public void testPatientExportWithInvalidTypeWithContract() throws Exception {
+    void testPatientExportWithInvalidTypeWithContract() throws Exception {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         final String typeParams = "?_type=PatientInvalid,ExplanationOfBenefit";
@@ -1143,7 +1156,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testPatientExportWithInvalidOutputFormatWithContract() throws Exception {
+    void testPatientExportWithInvalidOutputFormatWithContract() throws Exception {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         final String typeParams = "?_outputFormat=Invalid";
@@ -1169,7 +1182,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testPatientExportWithContractDuplicateSubmission() throws Exception {
+    void testPatientExportWithContractDuplicateSubmission() throws Exception {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         createMaxJobsWithContract(contract);
@@ -1183,7 +1196,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testPatientExportWithContractDuplicateSubmissionInProgress() throws Exception {
+    void testPatientExportWithContractDuplicateSubmissionInProgress() throws Exception {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         createMaxJobsWithContract(contract);
@@ -1203,7 +1216,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testPatientExportWithContractDuplicateSubmissionCancelled() throws Exception {
+    void testPatientExportWithContractDuplicateSubmissionCancelled() throws Exception {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         createMaxJobsWithContract(contract);
@@ -1225,7 +1238,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testPatientExportWithContractDuplicateSubmissionDifferentContract() throws Exception {
+    void testPatientExportWithContractDuplicateSubmissionDifferentContract() throws Exception {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
 
@@ -1237,7 +1250,9 @@ public class BulkDataAccessAPIIntegrationTests {
         }
 
         Contract contract1 = dataSetup.setupContract("Test1");
+
         User user = userRepository.findByUsername(TEST_USER);
+        assertNotNull(user);
         user.setContract(contract1);
         userRepository.saveAndFlush(user);
         Contract contractNew = dataSetup.setupContract("New Contract");
@@ -1249,7 +1264,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testPatientExportWithContractDuplicateSubmissionDifferentUser() throws Exception {
+    void testPatientExportWithContractDuplicateSubmissionDifferentUser() throws Exception {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         createMaxJobsWithContract(contract);
@@ -1276,7 +1291,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testCapabilityStatement() throws Exception {
+    void testCapabilityStatement() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
                 get(API_PREFIX + FHIR_PREFIX + "/metadata").contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token)).andReturn();
@@ -1285,10 +1300,11 @@ public class BulkDataAccessAPIIntegrationTests {
 
         assertEquals(body, new JsonMapper()
                 .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
-                .writeValueAsString(new CapabilityStatement()));    }
+                .writeValueAsString(new CapabilityStatement()));
+    }
 
     @Test
-    public void tlsTest() throws Exception {
+    void tlsTest() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
                 get("https://localhost:8443/" + API_PREFIX + FHIR_PREFIX + "/metadata").contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token)).andReturn();
@@ -1297,5 +1313,6 @@ public class BulkDataAccessAPIIntegrationTests {
 
         assertEquals(body, new JsonMapper()
                 .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
-                .writeValueAsString(new CapabilityStatement()));    }
+                .writeValueAsString(new CapabilityStatement()));
+    }
 }

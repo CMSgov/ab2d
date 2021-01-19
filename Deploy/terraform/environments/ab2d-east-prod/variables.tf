@@ -487,15 +487,6 @@ variable "ab2d_okta_jwt_issuer" {
 }
 
 #
-# EFS
-#
-
-variable "stunnel_latest_version" {
-  default     = ""
-  description = "Please pass this on command line and not as a value here"
-}
-
-#
 # Target group
 #
 

@@ -40,8 +40,8 @@ class ExplanationOfBenefitTrimmerTest {
         assertNull(eobCarrier.getPatientTarget().getId());
         assertFalse(eobCarrier.getPatientTarget().getActive());
         assertNull(eobCarrier.getPatientTarget().getBirthDate());
-        assertEquals(sdf.format(eobCarrier.getBillablePeriod().getStart()), "1999-10-27");
-        assertEquals(sdf.format(eobCarrier.getBillablePeriod().getEnd()), "1999-10-27");
+        assertEquals("1999-10-27", sdf.format(eobCarrier.getBillablePeriod().getStart()));
+        assertEquals("1999-10-27", sdf.format(eobCarrier.getBillablePeriod().getEnd()));
         assertNull(eobCarrier.getCreated());
         assertTrue(StringUtils.isBlank(eobCarrier.getEnterer().getReference()));
         assertTrue(eobCarrier.getEntererTarget().getName().isEmpty());
@@ -65,7 +65,7 @@ class ExplanationOfBenefitTrimmerTest {
         assertNull(eobCarrier.getOriginalPrescriptionTarget().getId());
         assertNull(eobCarrier.getPayee().getId());
         assertTrue(isNullOrEmpty(eobCarrier.getInformation()));
-        assertEquals(eobCarrier.getPrecedence(), 0);
+        assertEquals(0, eobCarrier.getPrecedence());
         assertNull(eobCarrier.getInsurance().getId());
         assertNull(eobCarrier.getAccident().getId());
         assertNull(eobCarrier.getEmploymentImpacted().getId());

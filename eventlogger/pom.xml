@@ -103,7 +103,7 @@
         <dependency>
             <groupId>com.slack.api</groupId>
             <artifactId>slack-api-client</artifactId>
-            <version>1.5.0-M1</version>
+            <version>1.5.1</version>
         </dependency>
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>

@@ -18,8 +18,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -38,7 +37,7 @@ class CancelStuckJobsProcessorTest {
     @Captor
     private ArgumentCaptor<Job> captor;
 
-    private List<Job> jobs = new ArrayList<>();
+    private final List<Job> jobs = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
@@ -55,7 +54,7 @@ class CancelStuckJobsProcessorTest {
         cut.process();
 
         verify(mockJobRepo).save(captor.capture());
-        assertThat(captor.getValue().getStatus(), is(JobStatus.CANCELLED));
+        assertEquals(JobStatus.CANCELLED, captor.getValue().getStatus());
     }
 
     @Test
@@ -69,9 +68,9 @@ class CancelStuckJobsProcessorTest {
 
         final List<Job> capturedJobs = captor.getAllValues();
 
-        assertThat(capturedJobs.size(), is(3));
+        assertEquals(3, capturedJobs.size());
         capturedJobs.forEach( job -> {
-                assertThat(job.getStatus(), is(JobStatus.CANCELLED));
+                assertEquals(JobStatus.CANCELLED, job.getStatus());
         });
 
     }

@@ -39,7 +39,6 @@ variable "percent_capacity_increase" {}
 variable "region" {}
 variable "ssh_key_name" {}
 variable "ssh_username" {}
-variable "stunnel_latest_version" {}
 variable "vpc_id" {}
 variable "vpn_private_ip_address_cidr_range" {}
 variable "worker_desired_instances" {}

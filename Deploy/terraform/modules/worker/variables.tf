@@ -80,5 +80,4 @@ variable "claims_skip_billable_period_check" {}
 variable "ab2d_opt_out_job_schedule" {}
 variable "ab2d_s3_optout_bucket" {}
 
-variable "stunnel_latest_version" {}
 variable "cpm_backup_worker" {}

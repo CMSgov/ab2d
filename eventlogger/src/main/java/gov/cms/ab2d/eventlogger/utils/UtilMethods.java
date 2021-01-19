@@ -49,8 +49,8 @@ public final class UtilMethods {
         return Hex.encodeHexString(DigestUtils.sha256(stream));
     }
 
-    public static <T> boolean allEmpty(List<T>...events) {
-        for (List<T> e : events) {
+    public static boolean allEmpty(List<?>... events) {
+        for (List<?> e : events) {
             if (e != null && !e.isEmpty()) {
                 return false;
             }

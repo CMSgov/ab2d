@@ -40,18 +40,15 @@ import java.util.MissingResourceException;
 import java.util.concurrent.TimeUnit;
 
 import static gov.cms.ab2d.bfd.client.BFDMockServerConfigurationUtil.MOCK_SERVER_PORT;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-
+/**
+ * Credits: most of the code in this class has been adopted from https://github.com/CMSgov/dpc-app
+ */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = SpringBootApp.class)
 @ActiveProfiles("test")
 @ContextConfiguration(initializers = {BFDMockServerConfigurationUtil.PropertyOverrider.class}, classes = { BlueButtonClientTest.TestConfig.class })
-/**
- * Credits: most of the code in this class has been adopted from https://github.com/CMSgov/dpc-app
- */
 public class BlueButtonClientTest {
     // A random example patient (Jane Doe)
     private static final String TEST_PATIENT_ID = "20140000008325";
@@ -210,7 +207,7 @@ public class BlueButtonClientTest {
 
         var rootCause = ExceptionUtils.getRootCause(exception);
         assertTrue(rootCause instanceof SocketTimeoutException);
-        assertThat(rootCause.getMessage(), equalTo("Read timed out"));
+        assertEquals("Read timed out", rootCause.getMessage());
 
     }
 
@@ -287,7 +284,7 @@ public class BlueButtonClientTest {
     public void testPersonIdsHICN() {
         org.hl7.fhir.dstu3.model.Bundle response = bbc.requestPatientByHICN("11111");
         assertNotNull(response);
-        assertEquals(response.getEntry().size(), 3);
+        assertEquals(3, response.getEntry().size());
         org.hl7.fhir.dstu3.model.Patient p1 = (org.hl7.fhir.dstu3.model.Patient) response.getEntry().get(0).getResource();
         org.hl7.fhir.dstu3.model.Patient p2 = (org.hl7.fhir.dstu3.model.Patient) response.getEntry().get(0).getResource();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -301,7 +298,7 @@ public class BlueButtonClientTest {
     public void testPersonIdsMBI() {
         org.hl7.fhir.dstu3.model.Bundle response = bbc.requestPatientByMBI("11111");
         assertNotNull(response);
-        assertEquals(response.getEntry().size(), 3);
+        assertEquals(3, response.getEntry().size());
         org.hl7.fhir.dstu3.model.Patient p1 = (org.hl7.fhir.dstu3.model.Patient) response.getEntry().get(0).getResource();
         org.hl7.fhir.dstu3.model.Patient p2 = (org.hl7.fhir.dstu3.model.Patient) response.getEntry().get(0).getResource();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -342,8 +339,8 @@ public class BlueButtonClientTest {
         org.hl7.fhir.dstu3.model.CapabilityStatement capabilityStatement = bbc.capabilityStatement();
 
         assertNotNull(capabilityStatement, "There should be a non null capability statement");
-        assertEquals(capabilityStatement.getFhirVersion(), "3.0.1");
-        assertEquals(capabilityStatement.getStatus(), org.hl7.fhir.dstu3.model.Enumerations.PublicationStatus.ACTIVE);
+        assertEquals("3.0.1", capabilityStatement.getFhirVersion());
+        assertEquals(org.hl7.fhir.dstu3.model.Enumerations.PublicationStatus.ACTIVE, capabilityStatement.getStatus());
     }
 
     /**
