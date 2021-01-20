@@ -92,34 +92,34 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 // Automatically saves the an id for the SonarQube build
-                withSonarQubeEnv(credentialsId: 'CMS_SONARQUBE_TOKEN_WNYFF', installationName: 'CMSSonar') {
+                withSonarQubeEnv('CMSSonar') {
                     sh 'mvn sonar:sonar -Dsonar.branch.name=$CI_BRANCH_NAME'
                 }
             }
         }
+	//Old Way 
+        stage('SonarQube Quality Gates Check') {
+             options {
+                 timeout(time: 10, unit: 'MINUTES')
+             }
+             // waitForQualityGate will use id created in previous step
+            def qg = waitForQualityGate()
+             if (qg.status != 'OK') {
+                 error "Pipeline aborted due to quality gate failure: ${qg.status}"
+             }
+         }
 
-//         stage('SonarQube Quality Gates Check') {
-//             options {
-//                 timeout(time: 10, unit: 'MINUTES')
-//             }
-//
-//             // waitForQualityGate will use id created in previous step
-//             def qg = waitForQualityGate()
-//             if (qg.status != 'OK') {
-//                 error "Pipeline aborted due to quality gate failure: ${qg.status}"
-//             }
-//         }
-
-        stage("Quality Gate") {
-            options {
-                timeout(time: 1, unit: 'HOURS')
-            }
-            steps {
-                // Parameter indicates whether to set pipeline to UNSTABLE if Quality Gate fails
-                // true = set pipeline to UNSTABLE, false = don't
-                waitForQualityGate abortPipeline: true
-            }
-        }
+	  //New Way....not tested  
+//        stage("Quality Gate") {
+//            options {
+//                timeout(time: 1, unit: 'HOURS')
+//            }
+//            steps {
+//                // Parameter indicates whether to set pipeline to UNSTABLE if Quality Gate fails
+//                // true = set pipeline to UNSTABLE, false = don't
+//                waitForQualityGate abortPipeline: true
+//            }
+//        }
 
 //         stage('Run e2e-test') {
 //
