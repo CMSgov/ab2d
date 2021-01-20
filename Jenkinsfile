@@ -97,30 +97,31 @@ pipeline {
                 }
             }
         }
-	//Old Way
-      stage("Quality Gate"){
-   		steps {
-        		script {
-            			timeout(time: 10, unit: 'MINUTES') {
-                		def qg = waitForQualityGate()
-                		if (qg.status != 'OK') {
-                    			error "Pipeline aborted due to quality gate failure: ${qg.status}"
-            			  }
-        		      }
+//Old Way
+//      stage("Quality Gate"){
+//   		steps {
+//        		script {
+//            			timeout(time: 10, unit: 'MINUTES') {
+//                		def qg = waitForQualityGate()
+//                		if (qg.status != 'OK') {
+//                    			error "Pipeline aborted due to quality gate failure: ${qg.status}"
+//            			  }
+//        		      }
+//            }
+//	    }
+//      }
+
+	  //New Way in declarative pipeline
+        stage("Quality Gate") {
+           options {
+                timeout(time: 10, unit: 'MINUTES')
             }
-	    }
-      }
-	  //New Way....not tested
-//        stage("Quality Gate") {
-//            options {
-//                timeout(time: 1, unit: 'HOURS')
-//            }
-//            steps {
-//                // Parameter indicates whether to set pipeline to UNSTABLE if Quality Gate fails
-//                // true = set pipeline to UNSTABLE, false = don't
-//                waitForQualityGate abortPipeline: true
-//            }
-//        }
+            steps {
+                // Parameter indicates whether to set pipeline to UNSTABLE if Quality Gate fails
+                // true = set pipeline to UNSTABLE, false = don't
+                waitForQualityGate abortPipeline: true
+            }
+        }
 
 //         stage('Run e2e-test') {
 //
