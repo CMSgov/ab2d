@@ -39,14 +39,16 @@ class UserServiceTest {
     @Autowired
     private UserService userService;
 
-    @Autowired
-    private RoleService roleService;
-
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
     @Autowired
     private DataSetup dataSetup;
+
+    @BeforeEach
+    public void setup() {
+        dataSetup.createRole(SPONSOR_ROLE);
+    }
 
     @AfterEach
     public void teardown() {
@@ -101,10 +103,7 @@ class UserServiceTest {
         ContractDTO contractDTO = new ContractDTO(contract.getContractNumber(), contract.getContractName(),
                 contract.getAttestedOn().toString());
         user.setContract(contractDTO);
-        if(roleName != null) {
-            Role role = roleService.findRoleByName(roleName);
-            user.setRole(role.getName());
-        }
+        user.setRole(roleName);
 
         return user;
     }
@@ -204,9 +203,8 @@ class UserServiceTest {
     @Test
     void testSetupUserAndRolesInSecurityContextBadUser() {
         HttpServletRequest httpServletRequest = new MockHttpServletRequest();
-        var exceptionThrown = Assertions.assertThrows(ResourceNotFoundException.class, () -> {
-            userService.setupUserImpersonation("UserDoesNotExist", httpServletRequest);
-        });
+        var exceptionThrown = Assertions.assertThrows(ResourceNotFoundException.class,
+                () -> userService.setupUserImpersonation("UserDoesNotExist", httpServletRequest));
         assertEquals("User is not present in our database", exceptionThrown.getMessage());
     }
 
