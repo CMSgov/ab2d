@@ -247,7 +247,6 @@ class JobServiceTest {
     }
 
     private void setupAdminUser() {
-        dataSetup.createRole(ADMIN_ROLE);
         final String adminUsername = "ADMIN_USER";
         User user = new User();
         user.setUsername(adminUsername);
@@ -397,9 +396,8 @@ class JobServiceTest {
         createNDJSONFile(testFile, destinationStr);
         createNDJSONFile(errorFile, destinationStr);
 
-        dataSetup.createRole(SPONSOR_ROLE);
         User user = new User();
-        Role role = roleService.findRoleByName(SPONSOR_ROLE);
+        Role role = roleService.findRoleByName("SPONSOR");
         user.setRoles(Set.of(role));
         user.setUsername("BadUser");
         user.setEnabled(true);

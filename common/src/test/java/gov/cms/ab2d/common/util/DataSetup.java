@@ -282,11 +282,4 @@ public class DataSetup {
 
         return saveUser(username, contract, userRoles);
     }
-
-    public void createRole(String sponsorRole) {
-        Role role = new Role();
-        role.setName(sponsorRole);
-        roleRepository.save(role);
-        queueForCleanup(role);
-    }
 }
