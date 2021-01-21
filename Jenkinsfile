@@ -93,7 +93,9 @@ pipeline {
             steps {
                 // Automatically saves the an id for the SonarQube build
                 withSonarQubeEnv('CMSSonar') {
-                    sh 'mvn clean package sonar:sonar -pl eventlogger,common,api,worker,bfd,filter,audit,hpms'
+                    sh '''mvn clean package sonar:sonar -Dsonar.branch.name=$CI_BRANCH_NAME
+                        -pl eventlogger,common,api,worker,bfd,filter,audit,hpms
+                    '''
                 }
             }
         }
