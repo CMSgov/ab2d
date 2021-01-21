@@ -119,6 +119,7 @@ pipeline {
             steps {
                 // Parameter indicates whether to set pipeline to UNSTABLE if Quality Gate fails
                 // true = set pipeline to UNSTABLE, false = don't
+                sleep(60)
                 waitForQualityGate abortPipeline: true
             }
         }
