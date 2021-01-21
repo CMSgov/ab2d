@@ -79,15 +79,15 @@ pipeline {
             }
         }
 
-//         stage('Run unit and integration tests') {
-//
-//             steps {
-//                 sh '''
-//                     export AB2D_EFS_MOUNT="${AB2D_HOME}"
-//                     mvn clean package -pl eventlogger,common,api,worker,bfd,filter,audit,hpms
-//                 '''
-//             }
-//         }
+        stage('Run unit and integration tests') {
+
+            steps {
+                sh '''
+                    export AB2D_EFS_MOUNT="${AB2D_HOME}"
+                    mvn clean package -pl eventlogger,common,api,worker,bfd,filter,audit,hpms
+                '''
+            }
+        }
 
         stage('SonarQube Analysis') {
             steps {
@@ -97,19 +97,6 @@ pipeline {
                 }
             }
         }
-//Old Way
-//      stage("Quality Gate"){
-//   		steps {
-//        		script {
-//            			timeout(time: 10, unit: 'MINUTES') {
-//                		def qg = waitForQualityGate()
-//                		if (qg.status != 'OK') {
-//                    			error "Pipeline aborted due to quality gate failure: ${qg.status}"
-//            			  }
-//        		      }
-//            }
-//	    }
-//      }
 
 	  //New Way in declarative pipeline
         stage("Quality Gate") {
@@ -119,67 +106,38 @@ pipeline {
             steps {
                 // Parameter indicates whether to set pipeline to UNSTABLE if Quality Gate fails
                 // true = set pipeline to UNSTABLE, false = don't
-                sleep(60)
                 waitForQualityGate abortPipeline: true
             }
         }
 
-//         stage('Run e2e-test') {
-//
-//             steps {
-//
-//                 withCredentials([file(credentialsId: 'SANDBOX_BFD_KEYSTORE', variable: 'SANDBOX_BFD_KEYSTORE'),
-//                             string(credentialsId: 'SANDBOX_BFD_KEYSTORE_PASSWORD', variable: 'AB2D_BFD_KEYSTORE_PASSWORD')]) {
-//
-//                     sh '''
-//                         export AB2D_BFD_KEYSTORE_LOCATION="/opt/ab2d/ab2d_bfd_keystore"
-//
-//                         export KEYSTORE_LOCATION="$WORKSPACE/opt/ab2d/ab2d_bfd_keystore"
-//
-//                         export JENKINS_UID=$(id -u)
-//                         export JENKINS_GID=$(id -g)
-//
-//                         cp $SANDBOX_BFD_KEYSTORE $KEYSTORE_LOCATION
-//
-//                         test -f $KEYSTORE_LOCATION && echo "created keystore file"
-//
-//                         chmod 666 $KEYSTORE_LOCATION
-//
-//                         ls -la $KEYSTORE_LOCATION
-//
-//                         mvn test -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false
-//                     '''
-//                 }
-//             }
-//         }
-//
-//         stage('Run codeclimate tests') {
-//
-//             steps {
-//                 sh '''
-//                     export JACOCO_SOURCE_PATH=./api/src/main/java
-//                     ./codeclimate/cc-test-reporter format-coverage ./api/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.api.json
-//
-//                     export JACOCO_SOURCE_PATH=./audit/src/main/java
-//                     ./codeclimate/cc-test-reporter format-coverage ./audit/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.audit.json
-//
-//                     export JACOCO_SOURCE_PATH=./common/src/main/java
-//                    ./codeclimate/cc-test-reporter format-coverage ./common/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.common.json
-//
-//                     export JACOCO_SOURCE_PATH=./filter/src/main/java
-//                     ./codeclimate/cc-test-reporter format-coverage ./filter/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.filter.json
-//
-//                     export JACOCO_SOURCE_PATH=./hpms/src/main/java
-//                     ./codeclimate/cc-test-reporter format-coverage ./hpms/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.hpms.json
-//
-//                     export JACOCO_SOURCE_PATH=./bfd/src/main/java
-//                     ./codeclimate/cc-test-reporter format-coverage ./bfd/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.bfd.json
-//
-//                     export JACOCO_SOURCE_PATH=./worker/src/main/java
-//                     ./codeclimate/cc-test-reporter format-coverage ./worker/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.worker.json
-//                 '''
-//             }
-//         }
+        stage('Run e2e-test') {
+
+            steps {
+
+                withCredentials([file(credentialsId: 'SANDBOX_BFD_KEYSTORE', variable: 'SANDBOX_BFD_KEYSTORE'),
+                            string(credentialsId: 'SANDBOX_BFD_KEYSTORE_PASSWORD', variable: 'AB2D_BFD_KEYSTORE_PASSWORD')]) {
+
+                    sh '''
+                        export AB2D_BFD_KEYSTORE_LOCATION="/opt/ab2d/ab2d_bfd_keystore"
+
+                        export KEYSTORE_LOCATION="$WORKSPACE/opt/ab2d/ab2d_bfd_keystore"
+
+                        export JENKINS_UID=$(id -u)
+                        export JENKINS_GID=$(id -g)
+
+                        cp $SANDBOX_BFD_KEYSTORE $KEYSTORE_LOCATION
+
+                        test -f $KEYSTORE_LOCATION && echo "created keystore file"
+
+                        chmod 666 $KEYSTORE_LOCATION
+
+                        ls -la $KEYSTORE_LOCATION
+
+                        mvn test -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false
+                    '''
+                }
+            }
+        }
 
         stage('Cleanup - first pass of docker deletions part 1') {
             steps {
