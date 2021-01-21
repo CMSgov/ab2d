@@ -93,7 +93,7 @@ pipeline {
             steps {
                 // Automatically saves the an id for the SonarQube build
                 withSonarQubeEnv('CMSSonar') {
-                    sh '''mvn clean package sonar:sonar -Dsonar.projectKey=ab2d-project -Dsonar.branch.name=$CI_BRANCH_NAME -DskipTests'''
+                    sh '''mvn sonar:sonar -Dsonar.projectKey=ab2d-project -Dsonar.branch.name=$CI_BRANCH_NAME -DskipTests'''
                 }
             }
         }
