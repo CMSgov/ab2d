@@ -93,7 +93,7 @@ pipeline {
             steps {
                 // Automatically saves the an id for the SonarQube build
                 withSonarQubeEnv('CMSSonar') {
-                    sh 'mvn clean package sonar:sonar'
+                    sh 'mvn clean package sonar:sonar -pl eventlogger,common,api,worker,bfd,filter,audit,hpms'
                 }
             }
         }
