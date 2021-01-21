@@ -46,6 +46,18 @@
 
         <!-- SonarQube Exclusions -->
         <sonar.coverage.jacoco.xmlReportPaths>*/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+
+        <!-- Ignore domain objects with no business logic when doing SonarQube analysis -->
+        <sonar.coverage.exclusions>
+            common/src/main/java/gov/cms/ab2d/common/dto/*,
+            common/src/main/java/gov/cms/ab2d/common/model/*,
+            eventlogger/src/main/java/gov/cms/ab2d/eventlogger/events/*,
+            filter/src/main/java/gov/cms/ab2d/filter/AB2DExplanationOfBenefit.class,
+            filter/src/main/java/gov/cms/ab2d/filter/AB2DItemComponent.class,
+            hpms/src/main/java/gov/cms/ab2d/hpms/hpmsapi/*,
+            hpms/src/main/java/gov/cms/ab2d/hpms/processing/*,
+            hpms/src/main/java/gov/cms/ab2d/hpms/quartz/*
+        </sonar.coverage.exclusions>
     </properties>
 
     <dependencies>
