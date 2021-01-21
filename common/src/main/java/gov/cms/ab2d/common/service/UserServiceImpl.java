@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Transactional
 @Service
@@ -75,10 +76,20 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void setupUserImpersonation(String username, HttpServletRequest request) {
-        User user = getUserByUsername(username);
-        log.info("Admin user is impersonating user {}", username);
+    public void setupUserImpersonation(String contractNumber, HttpServletRequest request) {
+        User user = getUserByContract(contractNumber);
+        log.info("Admin user is impersonating user {}", user.getUsername());
         setupUserAndRolesInSecurityContext(user, request);
+    }
+
+    private User getUserByContract(String contractNumber) {
+        Optional<User> user = userRepository.findByContract(contractNumber);
+
+        return user.orElseThrow(() -> {
+            String userNotPresentMsg = "User is not present in our database";
+            log.error(userNotPresentMsg);
+            throw new ResourceNotFoundException(userNotPresentMsg);
+        });
     }
 
     @Override

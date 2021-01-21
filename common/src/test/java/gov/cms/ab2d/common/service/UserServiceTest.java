@@ -189,9 +189,9 @@ class UserServiceTest {
         UserDTO createdUser = userService.createUser(user);
         dataSetup.queueForCleanup(userService.getUserByUsername("test@test.com"));
 
-        String username = createdUser.getUsername();
+        String contractNumber = createdUser.getContract().getContractNumber();
 
-        userService.setupUserImpersonation(username, httpServletRequest);
+        userService.setupUserImpersonation(contractNumber, httpServletRequest);
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         assertEquals("test@test.com", authentication.getPrincipal());

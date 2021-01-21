@@ -80,25 +80,13 @@ public class AdminAPI {
         return new ResponseEntity<>(propertiesService.updateProperties(propertiesDTOs), null, HttpStatus.OK);
     }
 
-    @PostMapping("/user/{username}/job")
-    public ResponseEntity<Void> createJobOnBehalfOfUser(@PathVariable @NotBlank String username,
-        HttpServletRequest request,
-        @RequestParam(required = false, name = "_type", defaultValue = EOB) String resourceTypes,
-        @RequestParam(required = false, name = "_outputFormat") String outputFormat,
-        @RequestParam(required = false, name = "_since") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
-        userService.setupUserImpersonation(username, request);
-
-        return bulkDataAccessAPI.exportAllPatients(request, resourceTypes, outputFormat, since);
-    }
-
-    @PostMapping("/user/{username}/job/{contractNumber}")
-    public ResponseEntity<Void> createJobByContractOnBehalfOfUser(@PathVariable @NotBlank String username,
-                                                        @PathVariable @NotBlank String contractNumber,
+    @PostMapping("/job/{contractNumber}")
+    public ResponseEntity<Void> createJobByContractOnBehalfOfUser(@PathVariable @NotBlank String contractNumber,
                                                         HttpServletRequest request,
                                                         @RequestParam(required = false, name = "_type", defaultValue = EOB) String resourceTypes,
                                                         @RequestParam(required = false, name = "_outputFormat") String outputFormat,
                                                         @RequestParam(required = false, name = "_since") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
-        userService.setupUserImpersonation(username, request);
+        userService.setupUserImpersonation(contractNumber, request);
 
         return bulkDataAccessAPI.exportPatientsWithContract(request, contractNumber, resourceTypes, outputFormat, since);
     }
