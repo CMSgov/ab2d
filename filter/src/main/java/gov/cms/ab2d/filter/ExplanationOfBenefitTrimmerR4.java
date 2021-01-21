@@ -49,7 +49,6 @@ public class ExplanationOfBenefitTrimmerR4 {
            Inherited - Identifier, resourceType, type (min cardinality from 0 to 1)
          */
 
-        benefit.setStatus(null);
         // We don't know what ends up here so needs to be removed
         clearOutList(benefit.getExtension());
         // This was Information and now it's SupportingInfo
