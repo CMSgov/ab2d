@@ -4,11 +4,9 @@ import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.common.util.ExtensionUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.worker.processor.ContractProcessorImpl;
-import gov.cms.ab2d.worker.processor.PatientClaimsProcessor;
 import gov.cms.ab2d.worker.service.FileService;
-import org.hl7.fhir.dstu3.model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -55,19 +53,19 @@ class ContractProcessorImplTest {
 
         Identifiers identifiers = new Identifiers("bene-id", "current-mbi", historic);
 
-        ExplanationOfBenefit eob = new ExplanationOfBenefit();
-        eob.setPatient(new Reference().setReference("Patient/bene-id"));
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob = new org.hl7.fhir.dstu3.model.ExplanationOfBenefit();
+        eob.setPatient(new org.hl7.fhir.dstu3.model.Reference().setReference("Patient/bene-id"));
 
         Map<String, CoverageSummary> coverageSummaries = new HashMap<>() {{
                 put(identifiers.getBeneficiaryId(), new CoverageSummary(identifiers, null, null));
         }};
 
-        processor.addMbiIdsToEobs(singletonList(eob), coverageSummaries);
+        ExtensionUtils.addMbiIdsToEobs(singletonList(eob), coverageSummaries);
 
         assertFalse(eob.getExtension().isEmpty());
         assertEquals(3, eob.getExtension().size());
 
-        List<Extension> extensions = eob.getExtension();
+        List<org.hl7.fhir.dstu3.model.Extension> extensions = eob.getExtension();
 
         // Check that each extension is an id extension
         extensions.forEach(extension -> {
@@ -77,32 +75,32 @@ class ContractProcessorImplTest {
 
         checkCurrentMbi(extensions.get(0));
 
-        List<Extension> historicMbis = extensions.subList(1, extensions.size());
+        List<org.hl7.fhir.dstu3.model.Extension> historicMbis = extensions.subList(1, extensions.size());
         checkHistoricalMbi(historicMbis.get(0), "historic-mbi-1");
         checkHistoricalMbi(historicMbis.get(1), "historic-mbi-2");
 
     }
 
-    private void checkCurrentMbi(Extension currentMbi) {
+    private void checkCurrentMbi(org.hl7.fhir.dstu3.model.Extension currentMbi) {
         // Check that current mbi has correct format
-        Identifier currentId = (Identifier) currentMbi.getValue();
+        org.hl7.fhir.dstu3.model.Identifier currentId = (org.hl7.fhir.dstu3.model.Identifier) currentMbi.getValue();
         assertEquals(MBI_ID, currentId.getSystem());
         assertEquals("current-mbi", currentId.getValue());
 
         assertFalse(currentId.getExtension().isEmpty());
-        Extension currentExtension = currentId.getExtension().get(0);
+        org.hl7.fhir.dstu3.model.Extension currentExtension = currentId.getExtension().get(0);
         assertEquals(CURRENCY_IDENTIFIER, currentExtension.getUrl());
-        assertEquals(CURRENT_MBI, ((Coding) currentExtension.getValue()).getCode());
+        assertEquals(CURRENT_MBI, ((org.hl7.fhir.dstu3.model.Coding) currentExtension.getValue()).getCode());
     }
 
-    private void checkHistoricalMbi(Extension historicalExtension, String id) {
-        Identifier historicalId = (Identifier) historicalExtension.getValue();
+    private void checkHistoricalMbi(org.hl7.fhir.dstu3.model.Extension historicalExtension, String id) {
+        org.hl7.fhir.dstu3.model.Identifier historicalId = (org.hl7.fhir.dstu3.model.Identifier) historicalExtension.getValue();
         assertEquals(MBI_ID, historicalId.getSystem());
         assertEquals(id, historicalId.getValue());
 
         assertFalse(historicalId.getExtension().isEmpty());
-        Extension historicExtension = historicalId.getExtension().get(0);
+        org.hl7.fhir.dstu3.model.Extension historicExtension = historicalId.getExtension().get(0);
         assertEquals(CURRENCY_IDENTIFIER, historicExtension.getUrl());
-        assertEquals(HISTORIC_MBI, ((Coding) historicExtension.getValue()).getCode());
+        assertEquals(HISTORIC_MBI, ((org.hl7.fhir.dstu3.model.Coding) historicExtension.getValue()).getCode());
     }
 }

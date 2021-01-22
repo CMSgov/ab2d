@@ -50,7 +50,7 @@ class ContractServiceImplTest {
     }
 
     @AfterEach
-    private void after() {
+    private void cleanup() {
         dataSetup.cleanup();
     }
 

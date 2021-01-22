@@ -389,17 +389,6 @@ else
 fi
 
 #
-# Get latest stable version of stunnel
-# - note that you need the latest, since older versions become unavailable
-#
-
-STUNNEL_LATEST_VERSION=$(curl -s 'https://www.stunnel.org/downloads.html' |
-  sed 's/</\'$'\n''</g' | sed -n '/>Latest Version$/,$ p' |
-  egrep -m1 -o 'downloads/stunnel-.+\.tar\.gz' |
-  cut -d">" -f 2 |
-  sed 's/\.tar\.gz//')
-
-#
 # Build worker and push to ECR repo
 #
 
@@ -585,7 +574,6 @@ terraform apply \
   --var "region=${REGION}" \
   --var "ssh_key_name=${SSH_KEY_NAME}" \
   --var "ssh_username=${SSH_USERNAME}" \
-  --var "stunnel_latest_version=${STUNNEL_LATEST_VERSION}" \
   --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
   --var "worker_desired_instances=${WORKER_DESIRED_INSTANCES}" \
   --var "worker_min_instances=${WORKER_MIN_INSTANCES}" \

@@ -32,7 +32,7 @@ class CreateUpdateTimestampTest {
     private ContractRepository contractRepository;
 
     @AfterEach
-    public void after() {
+    public void cleanup() {
         dataSetup.cleanup();
     }
 

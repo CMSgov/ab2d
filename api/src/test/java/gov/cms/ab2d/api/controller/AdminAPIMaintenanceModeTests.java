@@ -8,11 +8,11 @@ import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.*;
-import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
+import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
-import org.junit.Assert;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,8 +35,7 @@ import java.util.List;
 import static gov.cms.ab2d.api.controller.BulkDataAccessAPIIntegrationTests.PATIENT_EXPORT_PATH;
 import static gov.cms.ab2d.api.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -56,22 +55,16 @@ public class AdminAPIMaintenanceModeTests {
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
     private JobRepository jobRepository;
-
-    @Autowired
-    private ContractRepository contractRepository;
 
     @Autowired
     private TestUtil testUtil;
 
     @Autowired
-    private DoAll doAll;
+    private LoggerEventRepository loggerEventRepository;
+
+    @Autowired
+    private DataSetup dataSetup;
 
     private static final String PROPERTIES_URL = "/properties";
 
@@ -79,13 +72,13 @@ public class AdminAPIMaintenanceModeTests {
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
-        jobRepository.deleteAll();
-        userRepository.deleteAll();
-        roleRepository.deleteAll();
-        contractRepository.deleteAll();
-        doAll.delete();
-
         token = testUtil.setupToken(List.of(SPONSOR_ROLE, ADMIN_ROLE));
+    }
+
+    @AfterEach
+    public void cleanup() {
+        dataSetup.cleanup();
+        loggerEventRepository.delete();
     }
 
     @Test
@@ -108,25 +101,25 @@ public class AdminAPIMaintenanceModeTests {
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(HttpStatus.SERVICE_UNAVAILABLE.value()));
 
-        List<LoggableEvent> apiReqEvents = doAll.load(ApiRequestEvent.class);
+        List<LoggableEvent> apiReqEvents = loggerEventRepository.load(ApiRequestEvent.class);
         assertEquals(2, apiReqEvents.size());
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiReqEvents.get(0);
 
-        List<LoggableEvent> apiResEvents = doAll.load(ApiResponseEvent.class);
+        List<LoggableEvent> apiResEvents = loggerEventRepository.load(ApiResponseEvent.class);
         assertEquals(1, apiResEvents.size());
         ApiResponseEvent responseEvent = (ApiResponseEvent) apiResEvents.get(0);
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE.value(), responseEvent.getResponseCode());
 
-        List<LoggableEvent> reloadEvents = doAll.load(ReloadEvent.class);
+        List<LoggableEvent> reloadEvents = loggerEventRepository.load(ReloadEvent.class);
         assertEquals(1, reloadEvents.size());
         ReloadEvent reloadEvent = (ReloadEvent) reloadEvents.get(0);
         assertEquals(ReloadEvent.FileType.PROPERTIES, reloadEvent.getFileType());
 
         assertTrue(UtilMethods.allEmpty(
-                doAll.load(ContractBeneSearchEvent.class),
-                doAll.load(ErrorEvent.class),
-                doAll.load(FileEvent.class),
-                doAll.load(JobStatusChangeEvent.class)
+                loggerEventRepository.load(ContractBeneSearchEvent.class),
+                loggerEventRepository.load(ErrorEvent.class),
+                loggerEventRepository.load(FileEvent.class),
+                loggerEventRepository.load(JobStatusChangeEvent.class)
         ));
 
         propertiesDTOs.clear();
@@ -142,6 +135,8 @@ public class AdminAPIMaintenanceModeTests {
         this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(202));
+
+        jobRepository.findAll().forEach(job -> dataSetup.queueForCleanup(job));
     }
 
     @Test
@@ -168,6 +163,7 @@ public class AdminAPIMaintenanceModeTests {
         String testFile = "test.ndjson";
 
         Job job = testUtil.createTestJobForDownload(testFile);
+        dataSetup.queueForCleanup(job);
 
         String destinationStr = testUtil.createTestDownloadFile(tmpJobLocation, job, testFile);
 
@@ -182,7 +178,7 @@ public class AdminAPIMaintenanceModeTests {
                         .header("Accept-Encoding", "gzip, deflate, br"))
                         .andExpect(status().is(200));
 
-        Assert.assertFalse(Files.exists(Paths.get(destinationStr + File.separator + testFile)));
+        assertFalse(Files.exists(Paths.get(destinationStr + File.separator + testFile)));
 
         // Cleanup
         propertiesDTOs.clear();

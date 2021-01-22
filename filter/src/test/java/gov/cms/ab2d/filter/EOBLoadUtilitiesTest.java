@@ -1,7 +1,6 @@
 package gov.cms.ab2d.filter;
 
 import ca.uhn.fhir.context.FhirContext;
-import org.hl7.fhir.dstu3.model.*;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -15,13 +14,13 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class EOBLoadUtilitiesTest {
-    static ExplanationOfBenefit eobCarrier = null;
-    static ExplanationOfBenefit eobSNF = null;
+    static org.hl7.fhir.dstu3.model.ExplanationOfBenefit eobCarrier = null;
+    static org.hl7.fhir.dstu3.model.ExplanationOfBenefit eobSNF = null;
     static FhirContext context = FhirContext.forDstu3();
 
     static {
-        eobCarrier = ExplanationOfBenefitTrimmer.getBenefit(EOBLoadUtilities.getEOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json", context));
-        eobSNF = ExplanationOfBenefitTrimmer.getBenefit(EOBLoadUtilities.getEOBFromFileInClassPath("eobdata/EOB-for-SNF-Claims.json", context));
+        eobCarrier = ExplanationOfBenefitTrimmerR3.getBenefit(EOBLoadUtilities.getR3EOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json", context));
+        eobSNF = ExplanationOfBenefitTrimmerR3.getBenefit(EOBLoadUtilities.getR3EOBFromFileInClassPath("eobdata/EOB-for-SNF-Claims.json", context));
     }
 
     @Test
@@ -31,18 +30,18 @@ class EOBLoadUtilitiesTest {
 
     @Test
     public void testLoadFromFilePatient() {
-        assertNull(EOBLoadUtilities.getEOBFromFileInClassPath("", context));
-        assertNull(EOBLoadUtilities.getEOBFromFileInClassPath(null, context));
-        ExplanationOfBenefit eob = EOBLoadUtilities.getEOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json", context);
+        assertNull(EOBLoadUtilities.getR3EOBFromFileInClassPath("", context));
+        assertNull(EOBLoadUtilities.getR3EOBFromFileInClassPath(null, context));
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob = EOBLoadUtilities.getR3EOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json", context);
         assertNotNull(eob);
         assertEquals(eob.getPatient().getReference(), "Patient/-199900000022040");
     }
 
     @Test
     public void testType() {
-        List<Coding> coding = eobCarrier.getType().getCoding();
+        List<org.hl7.fhir.dstu3.model.Coding> coding = eobCarrier.getType().getCoding();
         assertEquals(4, coding.size());
-        Coding cd = coding.stream().filter(c -> c.getCode().equals("professional")).findFirst().orElse(null);
+        org.hl7.fhir.dstu3.model.Coding cd = coding.stream().filter(c -> c.getCode().equals("professional")).findFirst().orElse(null);
         assertNotNull(cd);
         assertEquals(cd.getSystem(), "http://hl7.org/fhir/ex-claimtype");
         assertEquals(cd.getCode(), "professional");
@@ -51,15 +50,15 @@ class EOBLoadUtilitiesTest {
 
     @Test
     public void testResourceType() {
-        assertEquals(eobCarrier.getResourceType(), ResourceType.ExplanationOfBenefit);
+        assertEquals(eobCarrier.getResourceType(), org.hl7.fhir.dstu3.model.ResourceType.ExplanationOfBenefit);
     }
 
     @Test
     public void testDiagnosis() {
-        List<ExplanationOfBenefit.DiagnosisComponent> diagnoses = eobCarrier.getDiagnosis();
+        List<org.hl7.fhir.dstu3.model.ExplanationOfBenefit.DiagnosisComponent> diagnoses = eobCarrier.getDiagnosis();
         assertNotNull(diagnoses);
         assertEquals(5, diagnoses.size());
-        ExplanationOfBenefit.DiagnosisComponent comp = diagnoses.stream()
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit.DiagnosisComponent comp = diagnoses.stream()
                 .filter(c -> c.getSequence() == 2).findFirst().orElse(null);
         assertNotNull(comp);
         assertEquals(comp.getDiagnosisCodeableConcept().getCoding().size(), 1);
@@ -68,10 +67,10 @@ class EOBLoadUtilitiesTest {
 
     @Test
     public void testProcedure() throws ParseException {
-        List<ExplanationOfBenefit.ProcedureComponent> procedures = eobSNF.getProcedure();
+        List<org.hl7.fhir.dstu3.model.ExplanationOfBenefit.ProcedureComponent> procedures = eobSNF.getProcedure();
         assertNotNull(procedures);
         assertEquals(procedures.size(), 1);
-        ExplanationOfBenefit.ProcedureComponent comp = procedures.get(0);
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit.ProcedureComponent comp = procedures.get(0);
         assertEquals(comp.getSequence(), 1);
         assertNotNull(comp.getDate());
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
@@ -83,7 +82,7 @@ class EOBLoadUtilitiesTest {
 
     @Test
     public void testProvider() {
-        Reference ref = eobSNF.getProvider();
+        org.hl7.fhir.dstu3.model.Reference ref = eobSNF.getProvider();
         assertNotNull(ref);
         assertNotNull(ref.getIdentifier());
         assertEquals(ref.getIdentifier().getSystem(), "https://bluebutton.cms.gov/resources/variables/prvdr_num");
@@ -92,7 +91,7 @@ class EOBLoadUtilitiesTest {
 
     @Test
     public void testOrganization() {
-        Reference ref = eobSNF.getOrganization();
+        org.hl7.fhir.dstu3.model.Reference ref = eobSNF.getOrganization();
         assertNotNull(ref);
         assertNotNull(ref.getIdentifier());
         assertEquals(ref.getIdentifier().getSystem(), "http://hl7.org/fhir/sid/us-npi");
@@ -101,7 +100,7 @@ class EOBLoadUtilitiesTest {
 
     @Test
     public void testFacility() {
-        Reference ref = eobSNF.getFacility();
+        org.hl7.fhir.dstu3.model.Reference ref = eobSNF.getFacility();
         assertNotNull(ref);
         assertNotNull(ref.getIdentifier());
         assertEquals(ref.getIdentifier().getSystem(), "http://hl7.org/fhir/sid/us-npi");
@@ -110,10 +109,10 @@ class EOBLoadUtilitiesTest {
 
     @Test
     public void testIdentifier() {
-        List<Identifier> ids = eobSNF.getIdentifier();
+        List<org.hl7.fhir.dstu3.model.Identifier> ids = eobSNF.getIdentifier();
         assertNotNull(ids);
         assertEquals(ids.size(), 2);
-        Identifier id = ids.stream()
+        org.hl7.fhir.dstu3.model.Identifier id = ids.stream()
                 .filter(c -> c.getValue().equalsIgnoreCase("900"))
                 .findFirst().orElse(null);
         assertNotNull(id);
@@ -122,10 +121,10 @@ class EOBLoadUtilitiesTest {
 
     @Test
     public void testCareTeam() {
-        List<ExplanationOfBenefit.CareTeamComponent> careTeamComponents = eobSNF.getCareTeam();
+        List<org.hl7.fhir.dstu3.model.ExplanationOfBenefit.CareTeamComponent> careTeamComponents = eobSNF.getCareTeam();
         assertNotNull(careTeamComponents);
         assertEquals(careTeamComponents.size(), 4);
-        ExplanationOfBenefit.CareTeamComponent comp = careTeamComponents.stream()
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit.CareTeamComponent comp = careTeamComponents.stream()
                 .filter(c -> c.getSequence() == 2).findFirst().orElse(null);
         assertNotNull(comp);
         assertEquals(comp.getProvider().getIdentifier().getSystem(), "http://hl7.org/fhir/sid/us-npi");
@@ -137,7 +136,7 @@ class EOBLoadUtilitiesTest {
 
     @Test
     public void testItems() throws ParseException {
-        List<ExplanationOfBenefit.ItemComponent> components = eobCarrier.getItem();
+        List<org.hl7.fhir.dstu3.model.ExplanationOfBenefit.ItemComponent> components = eobCarrier.getItem();
         assertNotNull(components);
         assertEquals(components.size(), 1);
         assertEquals(components.get(0).getCareTeamLinkId().get(0).getValue(), 2);
@@ -148,17 +147,17 @@ class EOBLoadUtilitiesTest {
         assertEquals(components.get(0).getService().getCoding().get(0).getCode(), "92999");
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Date d = sdf.parse("1999-10-27");
-        Period period = (Period) components.get(0).getServiced();
+        org.hl7.fhir.dstu3.model.Period period = (org.hl7.fhir.dstu3.model.Period) components.get(0).getServiced();
         assertEquals(period.getStart().getTime(), d.getTime());
         assertEquals(period.getEnd().getTime(), d.getTime());
 
-        CodeableConcept location = (CodeableConcept) components.get(0).getLocation();
+        org.hl7.fhir.dstu3.model.CodeableConcept location = (org.hl7.fhir.dstu3.model.CodeableConcept) components.get(0).getLocation();
         assertEquals(location.getCoding().get(0).getSystem(), "https://bluebutton.cms.gov/resources/variables/line_place_of_srvc_cd");
         assertEquals(location.getCoding().get(0).getCode(), "11");
         assertEquals(location.getCoding().get(0).getDisplay(), "Office. Location, other than a hospital, skilled nursing facility (SNF), military treatment facility, community health center, State or local public health clinic, or intermediate care facility (ICF), where the health professional routinely provides health examinations, diagnosis, and treatment of illness or injury on an ambulatory basis.");
 
-        List<ExplanationOfBenefit.ItemComponent> components2 = eobSNF.getItem();
-        Address location2 = (Address) components2.get(0).getLocation();
+        List<org.hl7.fhir.dstu3.model.ExplanationOfBenefit.ItemComponent> components2 = eobSNF.getItem();
+        org.hl7.fhir.dstu3.model.Address location2 = (org.hl7.fhir.dstu3.model.Address) components2.get(0).getLocation();
         assertEquals(location2.getState(), "FL");
     }
 
@@ -167,8 +166,9 @@ class EOBLoadUtilitiesTest {
         ClassLoader classLoader = EOBLoadUtilities.class.getClassLoader();
         InputStream inputStream = classLoader.getResourceAsStream("eobdata/EOB-for-Carrier-Claims.json");
         Reader reader = new java.io.InputStreamReader(inputStream);
-        assertNull(EOBLoadUtilities.getEOBFromReader(null, context));
-        ExplanationOfBenefit benefit = EOBLoadUtilities.getEOBFromReader(reader, context);
+        assertNull(EOBLoadUtilities.getEOBFromReader((Reader) null, context));
+        // R3
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit benefit = (org.hl7.fhir.dstu3.model.ExplanationOfBenefit) EOBLoadUtilities.getEOBFromReader(reader, context);
         assertNotNull(benefit);
         assertEquals(benefit.getPatient().getReference(), "Patient/-199900000022040");
     }
@@ -176,8 +176,8 @@ class EOBLoadUtilitiesTest {
     @Test
     void testToJson() {
         var jsonParser = context.newJsonParser();
-        ExplanationOfBenefit eob = EOBLoadUtilities.getEOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json", context);
-        ExplanationOfBenefit eobNew = ExplanationOfBenefitTrimmer.getBenefit(eob);
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob = EOBLoadUtilities.getR3EOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json", context);
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eobNew = ExplanationOfBenefitTrimmerR3.getBenefit(eob);
         String payload = jsonParser.encodeResourceToString(eobNew) + System.lineSeparator();
         assertNotNull(payload);
     }

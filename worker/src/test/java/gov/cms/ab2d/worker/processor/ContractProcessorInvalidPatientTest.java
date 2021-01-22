@@ -11,10 +11,6 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.service.FileService;
-import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
-import org.hl7.fhir.dstu3.model.Period;
-import org.hl7.fhir.dstu3.model.Reference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -91,9 +87,9 @@ class ContractProcessorInvalidPatientTest {
 
     @Test
     void testInvalidBenes() throws IOException {
-        Bundle b1 = BundleUtils.createBundle(createBundleEntry("1"));
-        Bundle b2 = BundleUtils.createBundle(createBundleEntry("2"));
-        Bundle b4 = BundleUtils.createBundle(createBundleEntry("4"));
+        org.hl7.fhir.dstu3.model.Bundle b1 = BundleUtils.createBundle(createBundleEntry("1"));
+        org.hl7.fhir.dstu3.model.Bundle b2 = BundleUtils.createBundle(createBundleEntry("2"));
+        org.hl7.fhir.dstu3.model.Bundle b4 = BundleUtils.createBundle(createBundleEntry("4"));
         when(bfdClient.requestEOBFromServer(eq("1"), any())).thenReturn(b1);
         when(bfdClient.requestEOBFromServer(eq("2"), any())).thenReturn(b2);
         when(bfdClient.requestEOBFromServer(eq("3"), any())).thenReturn(b4);
@@ -136,19 +132,19 @@ class ContractProcessorInvalidPatientTest {
         assertThrows(NoSuchFileException.class, () -> Files.readString(Path.of(tmpDirFolder.getAbsolutePath() + File.separator + contractId + "_error.ndjson")));
     }
 
-    private static ExplanationOfBenefit createEOB(String patientId) {
-        ExplanationOfBenefit b = new ExplanationOfBenefit();
-        Period p = new Period();
+    private static org.hl7.fhir.dstu3.model.ExplanationOfBenefit createEOB(String patientId) {
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit b = new org.hl7.fhir.dstu3.model.ExplanationOfBenefit();
+        org.hl7.fhir.dstu3.model.Period p = new org.hl7.fhir.dstu3.model.Period();
         p.setStart(new Date(0));
         p.setEnd(new Date());
         b.setBillablePeriod(p);
-        Reference ref = new Reference("Patient/" + patientId);
+        org.hl7.fhir.dstu3.model.Reference ref = new org.hl7.fhir.dstu3.model.Reference("Patient/" + patientId);
         b.setPatient(ref);
         return b;
     }
 
-    public static Bundle.BundleEntryComponent createBundleEntry(String patientId) {
-        var component = new Bundle.BundleEntryComponent();
+    public static org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent createBundleEntry(String patientId) {
+        var component = new org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent();
         component.setResource(createEOB(patientId));
         return component;
     }

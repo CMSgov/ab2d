@@ -10,9 +10,6 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.worker.config.CoverageUpdateConfig;
-import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.dstu3.model.Identifier;
-import org.hl7.fhir.dstu3.model.Patient;
 import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,18 +86,12 @@ class CoverageUpdateAndProcessorTest {
     private CoverageDriverImpl driver;
     private CoverageProcessorImpl processor;
 
-    private List<Contract> contractsToDelete;
-
     @BeforeEach
     void before() {
-
-        contractsToDelete = new ArrayList<>();
 
         contract = dataSetup.setupContract("TST-123");
         contract.setAttestedOn(AB2D_EPOCH.toOffsetDateTime());
         contractRepo.saveAndFlush(contract);
-
-        contractsToDelete.add(contract);
 
         january = dataSetup.createCoveragePeriod(contract, 1, 2020);
         february = dataSetup.createCoveragePeriod(contract, 2, 2020);
@@ -120,17 +111,10 @@ class CoverageUpdateAndProcessorTest {
     }
 
     @AfterEach
-    void after() {
+    void cleanup() {
         processor.shutdown();
 
-        dataSetup.deleteCoverage();
-        coverageSearchEventRepo.deleteAll();
-        coverageSearchRepo.deleteAll();
-        coveragePeriodRepo.deleteAll();
-        for (Contract contract : contractsToDelete) {
-            contractRepo.delete(contract);
-            contractRepo.flush();
-        }
+        dataSetup.cleanup();
     }
 
     @DisplayName("Loading coverage periods")
@@ -140,12 +124,10 @@ class CoverageUpdateAndProcessorTest {
         Contract attestedAfterEpoch = dataSetup.setupContract("TST-AFTER-EPOCH");
         attestedAfterEpoch.setAttestedOn(AB2D_EPOCH.toOffsetDateTime().plusMonths(3));
         contractRepo.saveAndFlush(attestedAfterEpoch);
-        contractsToDelete.add(attestedAfterEpoch);
 
         Contract attestedBeforeEpoch = dataSetup.setupContract("TST-BEFORE-EPOCH");
         attestedBeforeEpoch.setAttestedOn(AB2D_EPOCH.toOffsetDateTime().minusNanos(1));
         contractRepo.saveAndFlush(attestedBeforeEpoch);
-        contractsToDelete.add(attestedBeforeEpoch);
 
         long months = ChronoUnit.MONTHS.between(AB2D_EPOCH.toOffsetDateTime(), OffsetDateTime.now());
         long expectedNumPeriods = months + 1;
@@ -381,13 +363,13 @@ class CoverageUpdateAndProcessorTest {
     @Test
     void normalExecution() throws CoverageDriverException, InterruptedException {
 
-        Bundle bundle1 = buildBundle(0, 10);
-        bundle1.setLink(Collections.singletonList(new Bundle.BundleLinkComponent().setRelation(Bundle.LINK_NEXT)));
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = buildBundle(0, 10);
+        bundle1.setLink(Collections.singletonList(new org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent().setRelation(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT)));
 
-        Bundle bundle2 = buildBundle(10, 20);
+        org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20);
 
         when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(any(Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         processor.queueCoveragePeriod(january, false);
         JobStatus status = coverageService.getSearchStatus(january.getId());
@@ -432,14 +414,14 @@ class CoverageUpdateAndProcessorTest {
 
         reset(bfdClient);
 
-        Bundle bundle1 = buildBundle(0, 10);
-        bundle1.setLink(Collections.singletonList(new Bundle.BundleLinkComponent().setRelation(Bundle.LINK_NEXT)));
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = buildBundle(0, 10);
+        bundle1.setLink(Collections.singletonList(new org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent().setRelation(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT)));
 
-        Bundle bundle2 = buildBundle(10, 20);
+        org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20);
 
         Mockito.clearInvocations();
         when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(any(Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         driver.loadMappingJob();
 
@@ -479,14 +461,14 @@ class CoverageUpdateAndProcessorTest {
     @DisplayName("Only ThreadPoolTaskExecutor.getMaxPoolSize() job results allowed in insertion queue")
     @Test
     void limitRunningJobsByDBSpeed() {
-        Bundle bundle1 = buildBundle(0, 10);
-        bundle1.setLink(Collections.singletonList(new Bundle.BundleLinkComponent().setRelation(Bundle.LINK_NEXT)));
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = buildBundle(0, 10);
+        bundle1.setLink(Collections.singletonList(new org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent().setRelation(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT)));
 
-        Bundle bundle2 = buildBundle(10, 20);
+        org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20);
 
         Mockito.clearInvocations();
         when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(any(Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         ThreadPoolTaskExecutor twoThreads = new ThreadPoolTaskExecutor();
         twoThreads.setMaxPoolSize(2);
@@ -537,14 +519,14 @@ class CoverageUpdateAndProcessorTest {
         return status;
     }
 
-    private Bundle buildBundle(int startIndex, int endIndex) {
-        Bundle bundle1 = new Bundle();
+    private org.hl7.fhir.dstu3.model.Bundle buildBundle(int startIndex, int endIndex) {
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = new org.hl7.fhir.dstu3.model.Bundle();
 
         for (int i = startIndex; i < endIndex; i++) {
-            Bundle.BundleEntryComponent component = new Bundle.BundleEntryComponent();
-            Patient patient = new Patient();
+            org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent component = new org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent();
+            org.hl7.fhir.dstu3.model.Patient patient = new org.hl7.fhir.dstu3.model.Patient();
 
-            Identifier identifier = new Identifier();
+            org.hl7.fhir.dstu3.model.Identifier identifier = new org.hl7.fhir.dstu3.model.Identifier();
             identifier.setSystem(BENEFICIARY_ID);
             identifier.setValue("test-" + i);
 

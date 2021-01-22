@@ -4,6 +4,7 @@ import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import org.hamcrest.core.Is;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +39,9 @@ public class MaintenanceModeAPITests {
     @Autowired
     private PropertiesService propertiesService;
 
+    @Autowired
+    LoggerEventRepository loggerEventRepository;
+
     @AfterEach
     void tearDown() {
         PropertiesDTO propertiesDTO = new PropertiesDTO();
@@ -45,6 +49,8 @@ public class MaintenanceModeAPITests {
         propertiesDTO.setValue("false");
 
         propertiesService.updateProperties(Collections.singletonList(propertiesDTO));
+
+        loggerEventRepository.delete();
     }
 
     @Test

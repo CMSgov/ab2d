@@ -42,7 +42,7 @@ class ContractUpdateModeTest {
     }
 
     @AfterEach
-    public void after() {
+    public void cleanup() {
         dataSetup.cleanup();
     }
 

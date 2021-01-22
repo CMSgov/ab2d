@@ -12,7 +12,7 @@ import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.common.util.JobUtil;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.reports.sql.DoSummary;
+import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventSummary;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -39,7 +39,7 @@ public class JobServiceImpl implements JobService {
     private final JobRepository jobRepository;
     private final JobOutputService jobOutputService;
     private final LogManager eventLogger;
-    private final DoSummary doSummary;
+    private final LoggerEventSummary loggerEventSummary;
 
     @Value("${efs.mount}")
     private String fileDownloadPath;
@@ -47,12 +47,12 @@ public class JobServiceImpl implements JobService {
     public static final String INITIAL_JOB_STATUS_MESSAGE = "0%";
 
     public JobServiceImpl(UserService userService, JobRepository jobRepository,
-                          JobOutputService jobOutputService, LogManager eventLogger, DoSummary doSummary) {
+                          JobOutputService jobOutputService, LogManager eventLogger, LoggerEventSummary loggerEventSummary) {
         this.userService = userService;
         this.jobRepository = jobRepository;
         this.jobOutputService = jobOutputService;
         this.eventLogger = eventLogger;
-        this.doSummary = doSummary;
+        this.loggerEventSummary = loggerEventSummary;
     }
 
     @Override
@@ -193,7 +193,7 @@ public class JobServiceImpl implements JobService {
         jobOutputService.updateJobOutput(jobOutput);
         eventLogger.log(EventUtils.getFileEvent(job, file, FileEvent.FileStatus.DELETE));
         if (JobUtil.isJobDone(job)) {
-            eventLogger.log(LogManager.LogType.KINESIS, doSummary.getSummary(job.getJobUuid()));
+            eventLogger.log(LogManager.LogType.KINESIS, loggerEventSummary.getSummary(job.getJobUuid()));
         }
         boolean deleted = file.delete();
         if (!deleted) {

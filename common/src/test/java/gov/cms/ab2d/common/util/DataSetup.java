@@ -12,10 +12,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static java.util.stream.Collectors.toList;
 
@@ -46,7 +43,7 @@ public class DataSetup {
     @Autowired
     private CoverageSearchEventRepository coverageSearchEventRepo;
 
-    private final List<Object> domainObjects = new ArrayList<>();
+    private final Set<Object> domainObjects = new HashSet<>();
 
     public void queueForCleanup(Object object) {
         domainObjects.add(object);
@@ -79,6 +76,17 @@ public class DataSetup {
             if (user != null) {
                 userRepository.delete(user);
                 userRepository.flush();
+            }
+        });
+
+        List<Role> rolesToDelete = domainObjects.stream().filter(object -> object instanceof Role)
+                .map(object -> (Role) object).collect(toList());
+        rolesToDelete.forEach(role -> {
+            Optional<Role> roleOptional = roleRepository.findRoleByName(role.getName());
+
+            if (roleOptional.isPresent()) {
+                roleRepository.delete(roleOptional.get());
+                roleRepository.flush();
             }
         });
 
@@ -239,6 +247,7 @@ public class DataSetup {
             role.setName(userRole);
             roleRepository.save(role);
             user.addRole(role);
+            queueForCleanup(role);
         }
 
         user =  userRepository.save(user);
@@ -272,5 +281,12 @@ public class DataSetup {
         Contract contract = setupContract(contractNumber);
 
         return saveUser(username, contract, userRoles);
+    }
+
+    public void createRole(String sponsorRole) {
+        Role role = new Role();
+        role.setName(sponsorRole);
+        roleRepository.save(role);
+        queueForCleanup(role);
     }
 }

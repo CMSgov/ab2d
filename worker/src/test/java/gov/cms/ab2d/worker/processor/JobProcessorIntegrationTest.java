@@ -8,18 +8,18 @@ import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.UserRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.events.*;
-import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
+import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.util.HealthCheck;
-import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,7 +33,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import javax.transaction.Transactional;
 import java.io.File;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -54,7 +53,6 @@ import static org.mockito.Mockito.when;
 @SpringBootTest
 @Testcontainers
 @SpringIntegrationTest(noAutoStartup = {"inboundChannelAdapter", "*Source*"})
-@Transactional
 class JobProcessorIntegrationTest {
 
     private static final String CONTRACT_NAME = "CONTRACT_0000";
@@ -68,7 +66,7 @@ class JobProcessorIntegrationTest {
     private FileService fileService;
 
     @Autowired
-    private DoAll doAll;
+    private LoggerEventRepository loggerEventRepository;
 
     @Autowired
     private JobRepository jobRepository;
@@ -88,6 +86,9 @@ class JobProcessorIntegrationTest {
     @Autowired
     private HealthCheck healthCheck;
 
+    @Autowired
+    private DataSetup dataSetup;
+
     @Mock
     private CoverageDriver coverageDriver;
 
@@ -104,28 +105,23 @@ class JobProcessorIntegrationTest {
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
-    private Bundle bundle1;
-    private Bundle[] bundles;
+    private org.hl7.fhir.dstu3.model.Bundle bundle1;
+    private org.hl7.fhir.dstu3.model.Bundle[] bundles;
     private RuntimeException fail;
 
     @BeforeEach
     void setUp() {
-        jobRepository.deleteAll();
-        userRepository.deleteAll();
-        doAll.delete();
-
         LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
         User user = createUser();
 
         Contract contract = createContract();
-        contract = contractRepository.saveAndFlush(contract);
 
         job = createJob(user);
         job.setContract(contract);
         job.setStatus(JobStatus.IN_PROGRESS);
         jobRepository.saveAndFlush(job);
 
-        ExplanationOfBenefit eob = EobTestDataUtil.createEOB();
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob = EobTestDataUtil.createEOB();
         bundle1 = EobTestDataUtil.createBundle(eob.copy());
         bundles = getBundles();
         when(mockBfdClient.requestEOBFromServer(anyString())).thenReturn(bundle1);
@@ -166,12 +162,18 @@ class JobProcessorIntegrationTest {
         ReflectionTestUtils.setField(cut, "failureThreshold", 10);
     }
 
+    @AfterEach
+    void cleanup() {
+        loggerEventRepository.delete();
+        dataSetup.cleanup();
+    }
+
     @Test
     @DisplayName("When a job is in submitted status, it can be processed")
     void processJob() {
         var processedJob = cut.process(job.getJobUuid());
 
-        List<LoggableEvent> jobStatusChange = doAll.load(JobStatusChangeEvent.class);
+        List<LoggableEvent> jobStatusChange = loggerEventRepository.load(JobStatusChangeEvent.class);
         assertEquals(1, jobStatusChange.size());
         JobStatusChangeEvent jobEvent = (JobStatusChangeEvent) jobStatusChange.get(0);
         assertEquals(JobStatus.SUCCESSFUL.name(), jobEvent.getNewStatus());
@@ -182,7 +184,7 @@ class JobProcessorIntegrationTest {
         assertNotNull(processedJob.getExpiresAt());
         assertNotNull(processedJob.getCompletedAt());
 
-        final List<JobOutput> jobOutputs = job.getJobOutputs();
+        final List<JobOutput> jobOutputs = processedJob.getJobOutputs();
         assertFalse(jobOutputs.isEmpty());
     }
 
@@ -196,7 +198,7 @@ class JobProcessorIntegrationTest {
         assertNotNull(processedJob.getExpiresAt());
         assertNotNull(processedJob.getCompletedAt());
 
-        final List<JobOutput> jobOutputs = job.getJobOutputs();
+        final List<JobOutput> jobOutputs = processedJob.getJobOutputs();
         assertFalse(jobOutputs.isEmpty());
     }
 
@@ -223,7 +225,7 @@ class JobProcessorIntegrationTest {
         assertNotNull(processedJob.getExpiresAt());
         assertNotNull(processedJob.getCompletedAt());
 
-        List<LoggableEvent> beneSearchEvents = doAll.load(ContractBeneSearchEvent.class);
+        List<LoggableEvent> beneSearchEvents = loggerEventRepository.load(ContractBeneSearchEvent.class);
         assertEquals(1, beneSearchEvents.size());
         ContractBeneSearchEvent event = (ContractBeneSearchEvent) beneSearchEvents.get(0);
         assertEquals(JOB_UUID, event.getJobId());
@@ -231,7 +233,7 @@ class JobProcessorIntegrationTest {
         assertEquals(CONTRACT_NAME, event.getContractNumber());
         assertEquals(100, event.getNumSearched());
 
-        final List<JobOutput> jobOutputs = job.getJobOutputs();
+        final List<JobOutput> jobOutputs = processedJob.getJobOutputs();
         assertFalse(jobOutputs.isEmpty());
     }
 
@@ -251,18 +253,18 @@ class JobProcessorIntegrationTest {
         ;
         var processedJob = cut.process(job.getJobUuid());
 
-        List<LoggableEvent> errorEvents = doAll.load(ErrorEvent.class);
+        List<LoggableEvent> errorEvents = loggerEventRepository.load(ErrorEvent.class);
         assertEquals(1, errorEvents.size());
         ErrorEvent errorEvent = (ErrorEvent) errorEvents.get(0);
         assertEquals(TOO_MANY_SEARCH_ERRORS, errorEvent.getErrorType());
 
-        List<LoggableEvent> jobEvents = doAll.load(JobStatusChangeEvent.class);
+        List<LoggableEvent> jobEvents = loggerEventRepository.load(JobStatusChangeEvent.class);
         assertEquals(1, jobEvents.size());
         JobStatusChangeEvent jobEvent = (JobStatusChangeEvent) jobEvents.get(0);
         assertEquals("IN_PROGRESS", jobEvent.getOldStatus());
         assertEquals("FAILED", jobEvent.getNewStatus());
 
-        List<LoggableEvent> fileEvents = doAll.load(FileEvent.class);
+        List<LoggableEvent> fileEvents = loggerEventRepository.load(FileEvent.class);
         // Since the max size of the file is not set here (so it's 0), every second write creates a new file since
         // the file is no longer empty after the first write. This means, there were 20 files created so 40 events
         assertEquals(40, fileEvents.size());
@@ -273,19 +275,19 @@ class JobProcessorIntegrationTest {
         assertEquals(20, fileEvents.stream().filter(e -> ((FileEvent) e).getFileHash().length() > 0).count());
 
         assertTrue(UtilMethods.allEmpty(
-                doAll.load(ApiRequestEvent.class),
-                doAll.load(ApiResponseEvent.class),
-                doAll.load(ReloadEvent.class),
-                doAll.load(ContractBeneSearchEvent.class)));
+                loggerEventRepository.load(ApiRequestEvent.class),
+                loggerEventRepository.load(ApiResponseEvent.class),
+                loggerEventRepository.load(ReloadEvent.class),
+                loggerEventRepository.load(ContractBeneSearchEvent.class)));
 
         assertEquals(JobStatus.FAILED, processedJob.getStatus());
-        assertEquals(processedJob.getStatusMessage(), "Too many patient records in the job had failures");
+        assertEquals("Too many patient records in the job had failures", processedJob.getStatusMessage());
         assertNull(processedJob.getExpiresAt());
         assertNotNull(processedJob.getCompletedAt());
     }
 
-    private Bundle[] getBundles() {
-        return new Bundle[]{bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1};
+    private org.hl7.fhir.dstu3.model.Bundle[] getBundles() {
+        return new org.hl7.fhir.dstu3.model.Bundle[]{bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1};
     }
 
     private User createUser() {
@@ -296,7 +298,9 @@ class JobProcessorIntegrationTest {
         user.setEmail("harry_potter@hogwarts.com");
         user.setEnabled(TRUE);
 //        user.setContract(createContract());
-        return userRepository.save(user);
+        user =  userRepository.saveAndFlush(user);
+        dataSetup.queueForCleanup(user);
+        return user;
     }
 
     private Contract createContract() {
@@ -305,7 +309,9 @@ class JobProcessorIntegrationTest {
         contract.setContractNumber(CONTRACT_NUMBER);
         contract.setAttestedOn(OffsetDateTime.now().minusDays(10));
 
-        return contractRepository.save(contract);
+        contract = contractRepository.saveAndFlush(contract);
+        dataSetup.queueForCleanup(contract);
+        return contract;
     }
 
     private Job createJob(User user) {
@@ -316,7 +322,11 @@ class JobProcessorIntegrationTest {
         job.setUser(user);
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setCreatedAt(OffsetDateTime.now());
-        return jobRepository.save(job);
+
+
+        job = jobRepository.saveAndFlush(job);
+        dataSetup.queueForCleanup(job);
+        return job;
     }
 
     private static List<CoverageSummary> loadFauxMetadata(Contract contract, int rowsToRetrieve) {
