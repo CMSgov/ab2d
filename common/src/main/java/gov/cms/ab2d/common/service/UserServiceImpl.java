@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Transactional
 @Service
@@ -83,13 +82,21 @@ public class UserServiceImpl implements UserService {
     }
 
     private User getUserByContract(String contractNumber) {
-        Optional<User> user = userRepository.findByContract(contractNumber);
+        // May be more than one user mapping to a contract
+        // since we removed the constraint
+        List<User> users = userRepository.findByContract(contractNumber);
 
-        return user.orElseThrow(() -> {
+        if (users.isEmpty()) {
             String userNotPresentMsg = "User is not present in our database";
             log.error(userNotPresentMsg);
             throw new ResourceNotFoundException(userNotPresentMsg);
-        });
+        }
+
+        if (users.size() > 1) {
+            log.warn("{} users map to {} contract. This should not be possible.", users.size(), contractNumber);
+        }
+
+        return users.get(0);
     }
 
     @Override
@@ -120,23 +127,23 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDTO enableUser(String username) {
-        return updateUserStatus(username, true);
+    public UserDTO enableUser(String contractNumber) {
+        return updateUserStatus(contractNumber, true);
     }
 
     @Override
-    public UserDTO disableUser(String username) {
-        return updateUserStatus(username, false);
+    public UserDTO disableUser(String contractNumber) {
+        return updateUserStatus(contractNumber, false);
     }
 
     @Override
-    public UserDTO getUser(String username) {
-        User user = getUserByUsername(username);
+    public UserDTO getUser(String contractNumber) {
+        User user = getUserByContract(contractNumber);
         return mapping.getModelMapper().map(user, UserDTO.class);
     }
 
-    private UserDTO updateUserStatus(String username, boolean enabled) {
-        User user = getUserByUsername(username);
+    private UserDTO updateUserStatus(String contractNumber, boolean enabled) {
+        User user = getUserByContract(contractNumber);
         user.setEnabled(enabled);
         User updatedUser = userRepository.saveAndFlush(user);
         return mapping.getModelMapper().map(updatedUser, UserDTO.class);

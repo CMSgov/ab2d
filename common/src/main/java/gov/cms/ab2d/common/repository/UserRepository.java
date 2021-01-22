@@ -7,7 +7,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
+import java.util.List;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
@@ -16,5 +16,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
     User findByUsername(@Nullable String username);
 
     @Query("SELECT u FROM User u WHERE u.contract.contractNumber = :contractNumber")
-    Optional<User> findByContract(@NonNull String contractNumber);
+    List<User> findByContract(@NonNull String contractNumber);
 }

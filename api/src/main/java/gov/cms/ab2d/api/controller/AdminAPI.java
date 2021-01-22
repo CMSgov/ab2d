@@ -92,20 +92,20 @@ public class AdminAPI {
     }
 
     @ResponseStatus(value = HttpStatus.OK)
-    @PutMapping("/user/{username}/enable")
-    public ResponseEntity<UserDTO> enableUser(@PathVariable @NotBlank String username) {
-        return new ResponseEntity<>(userService.enableUser(username), null, HttpStatus.OK);
+    @PutMapping("/user/{contractNumber}/enable")
+    public ResponseEntity<UserDTO> enableUser(@PathVariable @NotBlank String contractNumber) {
+        return new ResponseEntity<>(userService.enableUser(contractNumber), null, HttpStatus.OK);
     }
 
     @ResponseStatus(value = HttpStatus.OK)
-    @PutMapping("/user/{username}/disable")
-    public ResponseEntity<UserDTO> disableUser(@PathVariable @NotBlank String username) {
-        return new ResponseEntity<>(userService.disableUser(username), null, HttpStatus.OK);
+    @PutMapping("/user/{contractNumber}/disable")
+    public ResponseEntity<UserDTO> disableUser(@PathVariable @NotBlank String contractNumber) {
+        return new ResponseEntity<>(userService.disableUser(contractNumber), null, HttpStatus.OK);
     }
 
     @ResponseStatus(value = HttpStatus.OK)
-    @GetMapping("/user/{username}")
-    public ResponseEntity<UserDTO> getUser(@PathVariable @NotBlank String username) {
-        return new ResponseEntity<>(userService.getUser(username), null, HttpStatus.OK);
+    @GetMapping("/user/{contractNumber}")
+    public ResponseEntity<UserDTO> getUser(@PathVariable @NotBlank String contractNumber) {
+        return new ResponseEntity<>(userService.getUser(contractNumber), null, HttpStatus.OK);
     }
 }

@@ -216,7 +216,7 @@ class UserServiceTest {
         userService.createUser(user);
         dataSetup.queueForCleanup(userService.getUserByUsername("test@test.com"));
 
-        UserDTO updatedUser = userService.enableUser(user.getUsername());
+        UserDTO updatedUser = userService.enableUser(user.getContract().getContractNumber());
         assertEquals(true, updatedUser.getEnabled());
     }
 
@@ -226,7 +226,7 @@ class UserServiceTest {
         userService.createUser(user);
         dataSetup.queueForCleanup(userService.getUserByUsername("test@test.com"));
 
-        UserDTO updatedUser = userService.disableUser(user.getUsername());
+        UserDTO updatedUser = userService.disableUser(user.getContract().getContractNumber());
         assertEquals(false, updatedUser.getEnabled());
     }
 }

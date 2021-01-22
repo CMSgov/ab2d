@@ -23,9 +23,9 @@ public interface UserService {
 
     List<GrantedAuthority> getGrantedAuth(User user);
 
-    UserDTO enableUser(String username);
+    UserDTO enableUser(String contractNumber);
 
-    UserDTO disableUser(String username);
+    UserDTO disableUser(String contractNumber);
 
-    UserDTO getUser(String username);
+    UserDTO getUser(String contractNumber);
 }
