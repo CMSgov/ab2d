@@ -438,11 +438,11 @@ class TestRunner {
     }
 
     private boolean validFields(JSONObject jsonObject) {
-        Set<String> allowedFields = Set.of("identifier", "item", "meta", "patient", "billablePeriod", "diagnosis",
+        Set<String> allowedFields = Set.of("identifier", "status", "item", "meta", "patient", "billablePeriod", "diagnosis",
                 "provider", "id", "type", "precedence", "resourceType", "organization", "facility", "careTeam",
                 "procedure", "extension");
 
-        Set<String> disallowedFields = Set.of("status", "patientTarget", "created", "enterer",
+        Set<String> disallowedFields = Set.of("patientTarget", "created", "enterer",
             "entererTarget", "insurer", "insurerTarget", "providerTarget", "organizationTarget", "referral",
             "referralTarget", "facilityTarget", "claim", "claimTarget", "claimResponse", "claimResponseTarget",
             "outcome", "disposition", "related", "prescription", "prescriptionTarget", "originalPrescription",

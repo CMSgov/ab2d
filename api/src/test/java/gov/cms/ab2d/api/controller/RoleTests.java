@@ -65,13 +65,13 @@ public class RoleTests {
 
     // This will test the API using a role that should not be able to access sponsor URLs
     @Test
-    public void testAdminRoleAccessingSponsorApi() throws Exception {
+    public void testAdminRoleAccessingSponsorApiIsDisabled() throws Exception {
         token = testUtil.setupToken(List.of(ADMIN_ROLE));
 
         this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Patient/$export")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(202));
+                .andExpect(status().is(403));
     }
 
     // This will test the API using a role that should not be able to access sponsor URLs
