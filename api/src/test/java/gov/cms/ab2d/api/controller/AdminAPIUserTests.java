@@ -45,6 +45,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class AdminAPIUserTests {
 
     public static final String TEST_USER = "test@test.com";
+    private static final String USER_URL = "/user";
+    private static final String ENABLE_DISABLE_USER = "enableDisableUser";
+    private static final String ENABLE_DISABLE_CONTRACT = "Z0000";
 
     @Autowired
     private MockMvc mockMvc;
@@ -72,9 +75,7 @@ public class AdminAPIUserTests {
 
     private String token;
 
-    private static final String USER_URL = "/user";
 
-    private static final String ENABLE_DISABLE_USER = "enableDisableUser";
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
@@ -96,7 +97,7 @@ public class AdminAPIUserTests {
         userDTO.setEnabled(true);
         userDTO.setFirstName("Test");
         userDTO.setLastName("User");
-        userDTO.setContract(buildContractDTO());
+        userDTO.setContract(buildContractDTO(VALID_CONTRACT_NUMBER));
         userDTO.setRole(ADMIN_ROLE);
         Role role = roleService.findRoleByName(ADMIN_ROLE);
         userDTO.setRole(role.getName());
@@ -131,7 +132,7 @@ public class AdminAPIUserTests {
         userDTO.setEnabled(true);
         userDTO.setFirstName("Test");
         userDTO.setLastName("User");
-        userDTO.setContract(buildContractDTO());
+        userDTO.setContract(buildContractDTO(VALID_CONTRACT_NUMBER));
         Role role = roleService.findRoleByName(ATTESTOR_ROLE);
         userDTO.setRole(role.getName());
 
@@ -165,7 +166,7 @@ public class AdminAPIUserTests {
         userDTO.setEnabled(true);
         userDTO.setFirstName("Test");
         userDTO.setLastName("User");
-        userDTO.setContract(buildContractDTO());
+        userDTO.setContract(buildContractDTO(VALID_CONTRACT_NUMBER));
         userDTO.setRole(ADMIN_ROLE);
         Role role = roleService.findRoleByName(ADMIN_ROLE);
         userDTO.setRole(role.getName());
@@ -201,7 +202,7 @@ public class AdminAPIUserTests {
         userDTO.setEnabled(true);
         userDTO.setFirstName("Test");
         userDTO.setLastName("User");
-        userDTO.setContract(buildContractDTO());
+        userDTO.setContract(buildContractDTO(VALID_CONTRACT_NUMBER));
         userDTO.setRole(ADMIN_ROLE);
 
         ObjectMapper mapper = new ObjectMapper();
@@ -261,58 +262,23 @@ public class AdminAPIUserTests {
         userDTO.setEnabled(true);
         userDTO.setFirstName("Test");
         userDTO.setLastName("User");
-        userDTO.setContract(buildContractDTO());
+        userDTO.setContract(buildContractDTO(VALID_CONTRACT_NUMBER));
         userDTO.setRole(SPONSOR_ROLE);
 
         return userDTO;
     }
 
     @Test
-    public void testCreateUsersJobOnAdminBehalf() throws Exception {
-        UserDTO userDTO = createUser();
-
-        ObjectMapper mapper = new ObjectMapper();
-
-        this.mockMvc.perform(
-                post(API_PREFIX + ADMIN_PREFIX + USER_URL)
-                        .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(userDTO))
-                        .header("Authorization", "Bearer " + token));
-
-        MvcResult mvcResult = this.mockMvc.perform(
-                post(API_PREFIX + ADMIN_PREFIX + USER_URL + "/" + userDTO.getUsername() + "/job")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
-                .andReturn();
-
-        assertEquals(mvcResult.getResponse().getStatus(), 202);
-
-        String header = mvcResult.getResponse().getHeader("Content-Location");
-
-        Job job = jobRepository.findByJobUuid(header.substring(header.indexOf("/Job/") + 5, header.indexOf("/$status")));
-        dataSetup.queueForCleanup(job);
-        User jobUser = job.getUser();
-        dataSetup.queueForCleanup(jobUser);
-        assertEquals(jobUser.getUsername(), userDTO.getUsername());
-    }
-
-    @Test
     public void testCreateUsersJobByContractOnAdminBehalf() throws Exception {
-        UserDTO userDTO = createUser();
-
-        ObjectMapper mapper = new ObjectMapper();
-
-        this.mockMvc.perform(
-                post(API_PREFIX + ADMIN_PREFIX + USER_URL)
-                        .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(userDTO))
-                        .header("Authorization", "Bearer " + token));
+        setupUser("regularUser", true);
 
         MvcResult mvcResult = this.mockMvc.perform(
-                post(API_PREFIX + ADMIN_PREFIX + USER_URL + "/" + userDTO.getUsername() + "/job/ABC123")
+                post(API_PREFIX + ADMIN_PREFIX + "/job/Z0000")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        assertEquals(mvcResult.getResponse().getStatus(), 202);
+        assertEquals(202, mvcResult.getResponse().getStatus());
 
         String header = mvcResult.getResponse().getHeader("Content-Location");
 
@@ -320,28 +286,28 @@ public class AdminAPIUserTests {
         User jobUser = job.getUser();
         dataSetup.queueForCleanup(jobUser);
         dataSetup.queueForCleanup(job);
-        assertEquals(jobUser.getUsername(), userDTO.getUsername());
+        assertEquals("regularUser", jobUser.getUsername());
     }
 
     @Test
     public void enableUser() throws Exception {
         // Ensure user is in right state first
-        setupUser(false);
+        setupUser(ENABLE_DISABLE_USER, false);
 
         MvcResult mvcResult = this.mockMvc.perform(
-                put(API_PREFIX + ADMIN_PREFIX + USER_URL + "/" + ENABLE_DISABLE_USER + "/enable")
+                put(API_PREFIX + ADMIN_PREFIX + USER_URL + "/" + ENABLE_DISABLE_CONTRACT + "/enable")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        assertEquals(mvcResult.getResponse().getStatus(), 200);
+        assertEquals(200, mvcResult.getResponse().getStatus());
 
         ObjectMapper mapper = new ObjectMapper();
 
         String updateResult = mvcResult.getResponse().getContentAsString();
         UserDTO updatedUserDTO = mapper.readValue(updateResult, UserDTO.class);
 
-        assertEquals(updatedUserDTO.getEnabled(), true);
+        assertEquals(true, updatedUserDTO.getEnabled());
     }
 
     @Test
@@ -356,22 +322,22 @@ public class AdminAPIUserTests {
     @Test
     public void disableUser() throws Exception {
         // Ensure user is in right state first
-        setupUser(true);
+        setupUser(ENABLE_DISABLE_USER, true);
 
         MvcResult mvcResult = this.mockMvc.perform(
-                put(API_PREFIX + ADMIN_PREFIX + USER_URL + "/" + ENABLE_DISABLE_USER + "/disable")
+                put(API_PREFIX + ADMIN_PREFIX + USER_URL + "/" + ENABLE_DISABLE_CONTRACT + "/disable")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        assertEquals(mvcResult.getResponse().getStatus(), 200);
+        assertEquals(200, mvcResult.getResponse().getStatus());
 
         ObjectMapper mapper = new ObjectMapper();
 
         String updateResult = mvcResult.getResponse().getContentAsString();
         UserDTO updatedUserDTO = mapper.readValue(updateResult, UserDTO.class);
 
-        assertEquals(updatedUserDTO.getEnabled(), false);
+        assertEquals(false, updatedUserDTO.getEnabled());
     }
 
     @Test
@@ -386,28 +352,28 @@ public class AdminAPIUserTests {
     @Test
     public void getUser() throws Exception {
         // Ensure user is in right state first
-        setupUser(true);
+        setupUser(ENABLE_DISABLE_USER, true);
 
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX + ADMIN_PREFIX + USER_URL + "/" + ENABLE_DISABLE_USER)
+                get(API_PREFIX + ADMIN_PREFIX + USER_URL + "/" + ENABLE_DISABLE_CONTRACT)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        assertEquals(mvcResult.getResponse().getStatus(), 200);
+        assertEquals(200, mvcResult.getResponse().getStatus());
 
         ObjectMapper mapper = new ObjectMapper();
 
         String getResult = mvcResult.getResponse().getContentAsString();
         UserDTO userDTO = mapper.readValue(getResult, UserDTO.class);
 
-        assertEquals(userDTO.getEmail(), TEST_USER);
-        assertEquals(userDTO.getUsername(), ENABLE_DISABLE_USER);
-        assertEquals(userDTO.getFirstName(), "test");
-        assertEquals(userDTO.getLastName(), "user");
-        assertEquals(userDTO.getEnabled(), true);
+        assertEquals(TEST_USER, userDTO.getEmail());
+        assertEquals(ENABLE_DISABLE_USER, userDTO.getUsername());
+        assertEquals("test", userDTO.getFirstName());
+        assertEquals("user", userDTO.getLastName());
+        assertEquals(true, userDTO.getEnabled());
         ContractDTO contractDTO = userDTO.getContract();
-        assertEquals(contractDTO.getContractNumber(), "Z0000");
+        assertEquals(ENABLE_DISABLE_CONTRACT, contractDTO.getContractNumber());
         assertEquals("Test Contract Z0000", contractDTO.getContractName());
         assertNotNull(contractDTO.getAttestedOn());
     }
@@ -420,13 +386,13 @@ public class AdminAPIUserTests {
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        assertEquals(mvcResult.getResponse().getStatus(), 404);
+        assertEquals(404, mvcResult.getResponse().getStatus());
     }
 
-    private void setupUser(boolean enabled) {
-        Contract contract = dataSetup.setupContract("Z0000");
+    private void setupUser(String username, boolean enabled) {
+        Contract contract = dataSetup.setupContract(ENABLE_DISABLE_CONTRACT);
         User user = new User();
-        user.setUsername(ENABLE_DISABLE_USER);
+        user.setUsername(username);
         user.setEmail(TEST_USER);
         user.setFirstName("test");
         user.setLastName("user");
@@ -437,7 +403,7 @@ public class AdminAPIUserTests {
         dataSetup.queueForCleanup(savedUser);
     }
 
-    private ContractDTO buildContractDTO() {
+    private ContractDTO buildContractDTO(String contractNumber) {
 
         ContractDTO contractDTO = new ContractDTO();
         contractDTO.setContractNumber(VALID_CONTRACT_NUMBER);

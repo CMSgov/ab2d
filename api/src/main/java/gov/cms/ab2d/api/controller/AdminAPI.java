@@ -80,44 +80,32 @@ public class AdminAPI {
         return new ResponseEntity<>(propertiesService.updateProperties(propertiesDTOs), null, HttpStatus.OK);
     }
 
-    @PostMapping("/user/{username}/job")
-    public ResponseEntity<Void> createJobOnBehalfOfUser(@PathVariable @NotBlank String username,
-        HttpServletRequest request,
-        @RequestParam(required = false, name = "_type", defaultValue = EOB) String resourceTypes,
-        @RequestParam(required = false, name = "_outputFormat") String outputFormat,
-        @RequestParam(required = false, name = "_since") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
-        userService.setupUserImpersonation(username, request);
-
-        return bulkDataAccessAPI.exportAllPatients(request, resourceTypes, outputFormat, since);
-    }
-
-    @PostMapping("/user/{username}/job/{contractNumber}")
-    public ResponseEntity<Void> createJobByContractOnBehalfOfUser(@PathVariable @NotBlank String username,
-                                                        @PathVariable @NotBlank String contractNumber,
+    @PostMapping("/job/{contractNumber}")
+    public ResponseEntity<Void> createJobByContractOnBehalfOfUser(@PathVariable @NotBlank String contractNumber,
                                                         HttpServletRequest request,
                                                         @RequestParam(required = false, name = "_type", defaultValue = EOB) String resourceTypes,
                                                         @RequestParam(required = false, name = "_outputFormat") String outputFormat,
                                                         @RequestParam(required = false, name = "_since") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
-        userService.setupUserImpersonation(username, request);
+        userService.setupUserImpersonation(contractNumber, request);
 
         return bulkDataAccessAPI.exportPatientsWithContract(request, contractNumber, resourceTypes, outputFormat, since);
     }
 
     @ResponseStatus(value = HttpStatus.OK)
-    @PutMapping("/user/{username}/enable")
-    public ResponseEntity<UserDTO> enableUser(@PathVariable @NotBlank String username) {
-        return new ResponseEntity<>(userService.enableUser(username), null, HttpStatus.OK);
+    @PutMapping("/user/{contractNumber}/enable")
+    public ResponseEntity<UserDTO> enableUser(@PathVariable @NotBlank String contractNumber) {
+        return new ResponseEntity<>(userService.enableUser(contractNumber), null, HttpStatus.OK);
     }
 
     @ResponseStatus(value = HttpStatus.OK)
-    @PutMapping("/user/{username}/disable")
-    public ResponseEntity<UserDTO> disableUser(@PathVariable @NotBlank String username) {
-        return new ResponseEntity<>(userService.disableUser(username), null, HttpStatus.OK);
+    @PutMapping("/user/{contractNumber}/disable")
+    public ResponseEntity<UserDTO> disableUser(@PathVariable @NotBlank String contractNumber) {
+        return new ResponseEntity<>(userService.disableUser(contractNumber), null, HttpStatus.OK);
     }
 
     @ResponseStatus(value = HttpStatus.OK)
-    @GetMapping("/user/{username}")
-    public ResponseEntity<UserDTO> getUser(@PathVariable @NotBlank String username) {
-        return new ResponseEntity<>(userService.getUser(username), null, HttpStatus.OK);
+    @GetMapping("/user/{contractNumber}")
+    public ResponseEntity<UserDTO> getUser(@PathVariable @NotBlank String contractNumber) {
+        return new ResponseEntity<>(userService.getUser(contractNumber), null, HttpStatus.OK);
     }
 }
