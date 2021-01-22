@@ -47,7 +47,6 @@ public class ExplanationOfBenefitTrimmerR3 {
 
            Inherited - Identifier, resourceType, type
          */
-        benefit.setStatus(null);
         benefit.setExtension(null);
         benefit.setPatientTarget(null);
         benefit.setCreated(null);
