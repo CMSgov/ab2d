@@ -5,11 +5,11 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.*;
-import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
+import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
-import org.junit.Assert;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -29,8 +29,7 @@ import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.*;
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -50,31 +49,29 @@ public class BulkDataAccessAPIUnusualDataTests {
     private JobRepository jobRepository;
 
     @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
     private TestUtil testUtil;
 
     @Autowired
     private ContractRepository contractRepository;
 
     @Autowired
-    private DoAll doAll;
+    private DataSetup dataSetup;
+
+    @Autowired
+    private LoggerEventRepository loggerEventRepository;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
-    @BeforeEach
-    public void clearUser() {
-        jobRepository.deleteAll();
-        userRepository.deleteAll();
-        roleRepository.deleteAll();
-        contractRepository.deleteAll();
-        doAll.delete();
+    @AfterEach
+    public void cleanup() {
+        jobRepository.findAll().forEach(job -> dataSetup.queueForCleanup(job));  // catches implicitly generated jobs
+        dataSetup.cleanup();
+        loggerEventRepository.delete();
     }
 
     @Test
-    public void testPatientExportWithNoAttestation() throws Exception {
+    void testPatientExportWithNoAttestation() throws Exception {
         // Valid contract number for sponsor, but no attestation
         String token = testUtil.setupContractWithNoAttestation(List.of(SPONSOR_ROLE));
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
@@ -83,22 +80,22 @@ public class BulkDataAccessAPIUnusualDataTests {
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
-        List<LoggableEvent> apiRequestEvents = doAll.load(ApiRequestEvent.class);
+        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
 
-        List<LoggableEvent> apiResponseEvents = doAll.load(ApiResponseEvent.class);
+        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
         ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
         assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
 
-        List<LoggableEvent> errorEvents = doAll.load(ErrorEvent.class);
+        List<LoggableEvent> errorEvents = loggerEventRepository.load(ErrorEvent.class);
         ErrorEvent errorEvent = (ErrorEvent) errorEvents.get(0);
-        assertEquals(errorEvent.getErrorType(), ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT);
 
+        assertEquals(ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT, errorEvent.getErrorType());
         assertTrue(UtilMethods.allEmpty(
-                doAll.load(ReloadEvent.class),
-                doAll.load(ContractBeneSearchEvent.class),
-                doAll.load(JobStatusChangeEvent.class),
-                doAll.load(FileEvent.class)));
+                loggerEventRepository.load(ReloadEvent.class),
+                loggerEventRepository.load(ContractBeneSearchEvent.class),
+                loggerEventRepository.load(JobStatusChangeEvent.class),
+                loggerEventRepository.load(FileEvent.class)));
     }
 
     @Test
@@ -119,13 +116,13 @@ public class BulkDataAccessAPIUnusualDataTests {
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string("Content-Location", statusUrl));
 
-        Assert.assertEquals(job.getStatus(), SUBMITTED);
-        Assert.assertEquals(job.getStatusMessage(), INITIAL_JOB_STATUS_MESSAGE);
-        Assert.assertEquals(job.getProgress(), Integer.valueOf(0));
-        Assert.assertEquals(job.getRequestUrl(),
-                "http://localhost" + API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export");
-        Assert.assertNull(job.getResourceTypes());
-        Assert.assertEquals(job.getUser(), userRepository.findByUsername(TEST_USER));
+        assertEquals(SUBMITTED, job.getStatus());
+        assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
+        assertEquals(Integer.valueOf(0), job.getProgress());
+        assertEquals("http://localhost" + API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export",
+                job.getRequestUrl());
+        assertNull(job.getResourceTypes());
+        assertEquals(userRepository.findByUsername(TEST_USER), job.getUser());
 
     }
 }

@@ -5,10 +5,11 @@ import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
-import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
+import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -43,16 +44,10 @@ public class AuthenticationTests {
     private UserRepository userRepository;
 
     @Autowired
-    private RoleRepository roleRepository;
+    private DataSetup dataSetup;
 
     @Autowired
-    private JobRepository jobRepository;
-
-    @Autowired
-    private ContractRepository contractRepository;
-
-    @Autowired
-    private DoAll doAll;
+    private LoggerEventRepository loggerEventRepository;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
@@ -61,13 +56,13 @@ public class AuthenticationTests {
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
-        jobRepository.deleteAll();
-        userRepository.deleteAll();
-        roleRepository.deleteAll();
-        contractRepository.deleteAll();
-        doAll.delete();
-
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
+    }
+
+    @AfterEach
+    public void cleanup() {
+        loggerEventRepository.delete();
+        dataSetup.cleanup();
     }
 
     // Negative tests, successful auth tests are essentially done in other suites
@@ -76,10 +71,10 @@ public class AuthenticationTests {
         this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Patient/$export")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(401));
-        List<LoggableEvent> apiRequestEvents = doAll.load(ApiRequestEvent.class);
+        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
         assertEquals(1, apiRequestEvents.size());
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
-        List<LoggableEvent> apiResponseEvents = doAll.load(ApiResponseEvent.class);
+        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
         assertEquals(1, apiResponseEvents.size());
         ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
         assertEquals(HttpStatus.UNAUTHORIZED.value(), responseEvent.getResponseCode());
@@ -111,10 +106,10 @@ public class AuthenticationTests {
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(403));
-        List<LoggableEvent> apiRequestEvents = doAll.load(ApiRequestEvent.class);
+        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
         assertEquals(1, apiRequestEvents.size());
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
-        List<LoggableEvent> apiResponseEvents = doAll.load(ApiResponseEvent.class);
+        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
         assertEquals(1, apiResponseEvents.size());
         ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
         assertEquals(HttpStatus.FORBIDDEN.value(), responseEvent.getResponseCode());
@@ -131,10 +126,10 @@ public class AuthenticationTests {
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(403));
-        List<LoggableEvent> apiRequestEvents = doAll.load(ApiRequestEvent.class);
+        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
         assertEquals(1, apiRequestEvents.size());
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
-        List<LoggableEvent> apiResponseEvents = doAll.load(ApiResponseEvent.class);
+        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
         assertEquals(1, apiResponseEvents.size());
         ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
         assertEquals(HttpStatus.FORBIDDEN.value(), responseEvent.getResponseCode());

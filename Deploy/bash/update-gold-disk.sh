@@ -216,11 +216,11 @@ fi
 # Create AMI for controller, api, and worker nodes
 #
 
-# Set 1 hour of polling at 1 minute intervals
+# Set 75 minutes of polling at 1 minute intervals
 # - this was necessary to prevent a timeout error
 
-export AWS_MAX_ATTEMPTS=60
-export AWS_POLL_DELAY_SECONDS=60
+export AWS_MAX_ATTEMPTS=75
+export AWS_POLL_DELAY_SECONDS=75
 
 # Build the AMI
 

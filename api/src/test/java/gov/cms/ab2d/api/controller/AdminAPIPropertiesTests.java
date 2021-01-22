@@ -5,9 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
-import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import org.junit.Assert;
+import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -26,6 +26,8 @@ import java.util.Map;
 
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.Constants.ADMIN_PREFIX;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -43,16 +45,10 @@ public class AdminAPIPropertiesTests {
     private TestUtil testUtil;
 
     @Autowired
-    private UserRepository userRepository;
+    DataSetup dataSetup;
 
     @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
-    private JobRepository jobRepository;
-
-    @Autowired
-    private ContractRepository contractRepository;
+    LoggerEventRepository loggerEventRepository;
 
     @SuppressWarnings("rawtypes")
     @Container
@@ -64,12 +60,13 @@ public class AdminAPIPropertiesTests {
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
-        jobRepository.deleteAll();
-        userRepository.deleteAll();     // Needed in the setup because TEST_USER is disabled
-        roleRepository.deleteAll();
-        contractRepository.deleteAll();
-
         token = testUtil.setupToken(List.of(ADMIN_ROLE));
+    }
+
+    @AfterEach
+    public void cleanup() {
+        dataSetup.cleanup();
+        loggerEventRepository.delete();
     }
 
     @Test
@@ -94,18 +91,18 @@ public class AdminAPIPropertiesTests {
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        Assert.assertEquals(200, mvcResult.getResponse().getStatus());
+        assertEquals(200, mvcResult.getResponse().getStatus());
 
         String result = mvcResult.getResponse().getContentAsString();
         ObjectMapper mapper = new ObjectMapper();
         List<PropertiesDTO> propertiesDTOs = mapper.readValue(result, new TypeReference<>() {} );
 
-        Assert.assertEquals(10, propertiesDTOs.size());
+        assertEquals(10, propertiesDTOs.size());
         for(PropertiesDTO propertiesDTO : propertiesDTOs) {
             Object value = propertyMap.get(propertiesDTO.getKey());
 
-            Assert.assertNotNull(value);
-            Assert.assertEquals(value.toString(), propertiesDTO.getValue());
+            assertNotNull(value);
+            assertEquals(value.toString(), propertiesDTO.getValue());
         }
     }
 
@@ -148,17 +145,17 @@ public class AdminAPIPropertiesTests {
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        Assert.assertEquals(200, mvcResult.getResponse().getStatus());
+        assertEquals(200, mvcResult.getResponse().getStatus());
 
         String result = mvcResult.getResponse().getContentAsString();
         List<PropertiesDTO> propertiesDTOsRetrieved = mapper.readValue(result, new TypeReference<>() {} );
 
-        Assert.assertEquals(4, propertiesDTOsRetrieved.size());
+        assertEquals(4, propertiesDTOsRetrieved.size());
         for(PropertiesDTO propertiesDTO : propertiesDTOsRetrieved) {
             Object value = propertyMap.get(propertiesDTO.getKey());
 
-            Assert.assertNotNull(value);
-            Assert.assertEquals(value.toString(), propertiesDTO.getValue());
+            assertNotNull(value);
+            assertEquals(value.toString(), propertiesDTO.getValue());
         }
 
         // Cleanup

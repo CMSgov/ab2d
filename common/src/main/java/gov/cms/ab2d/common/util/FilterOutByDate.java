@@ -2,8 +2,6 @@ package gov.cms.ab2d.common.util;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
-import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
-import org.hl7.fhir.dstu3.model.Period;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -221,7 +219,7 @@ public final class FilterOutByDate {
      * @return - the list of objects done after the attestation date and in the date ranges
      * @throws ParseException - if there is an issue parsing the dates
      */
-    public static List<ExplanationOfBenefit> filterByDate(List<ExplanationOfBenefit> benes,
+    public static List<org.hl7.fhir.dstu3.model.ExplanationOfBenefit> filterByDate(List<org.hl7.fhir.dstu3.model.ExplanationOfBenefit> benes,
                                               Date attestationDate,
                                               Date earliestDate,
                                               List<DateRange> dateRanges) {
@@ -231,7 +229,7 @@ public final class FilterOutByDate {
         return benes.stream().filter(b -> valid(b, attestationDate, earliestDate, dateRanges)).collect(Collectors.toList());
     }
 
-    public static boolean valid(ExplanationOfBenefit bene, Date attestationDate, Date earliestDate, List<DateRange> dateRanges) {
+    public static boolean valid(org.hl7.fhir.dstu3.model.ExplanationOfBenefit bene, Date attestationDate, Date earliestDate, List<DateRange> dateRanges) {
         if (bene == null) {
             return false;
         }
@@ -260,7 +258,7 @@ public final class FilterOutByDate {
      * @return if the EOB object is after the attestation date
      * @throws ParseException - if there is an issue parsing the dates
      */
-    static boolean afterDate(Date dateVal, ExplanationOfBenefit ben) throws ParseException {
+    static boolean afterDate(Date dateVal, org.hl7.fhir.dstu3.model.ExplanationOfBenefit ben) throws ParseException {
         SimpleDateFormat fullDateFormat = new SimpleDateFormat(FULL);
         SimpleDateFormat shortDateFormat = new SimpleDateFormat(SHORT);
         if (ben == null || ben.getBillablePeriod() == null || dateVal == null) {
@@ -268,7 +266,7 @@ public final class FilterOutByDate {
         }
 
         Date attToUse = fullDateFormat.parse(shortDateFormat.format(dateVal) + " 00:00:00:000");
-        Period p = ben.getBillablePeriod();
+        org.hl7.fhir.dstu3.model.Period p = ben.getBillablePeriod();
         Date end = p.getEnd();
         return end != null && end.getTime() >= attToUse.getTime();
     }
@@ -279,11 +277,11 @@ public final class FilterOutByDate {
      * @param range - the date range
      * @return true if the EOB object's billable period is within the date range
      */
-    static boolean withinDateRange(ExplanationOfBenefit ben, DateRange range) {
+    static boolean withinDateRange(org.hl7.fhir.dstu3.model.ExplanationOfBenefit ben, DateRange range) {
         if (ben == null || ben.getBillablePeriod() == null) {
             return false;
         }
-        Period p = ben.getBillablePeriod();
+        org.hl7.fhir.dstu3.model.Period p = ben.getBillablePeriod();
         Date start = p.getStart();
         Date end = p.getEnd();
         if (start == null || end == null) {

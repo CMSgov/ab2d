@@ -75,10 +75,28 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void setupUserImpersonation(String username, HttpServletRequest request) {
-        User user = getUserByUsername(username);
-        log.info("Admin user is impersonating user {}", username);
+    public void setupUserImpersonation(String contractNumber, HttpServletRequest request) {
+        User user = getUserByContract(contractNumber);
+        log.info("Admin user is impersonating user {}", user.getUsername());
         setupUserAndRolesInSecurityContext(user, request);
+    }
+
+    private User getUserByContract(String contractNumber) {
+        // May be more than one user mapping to a contract
+        // since we removed the constraint
+        List<User> users = userRepository.findByContract(contractNumber);
+
+        if (users.isEmpty()) {
+            String userNotPresentMsg = "User is not present in our database";
+            log.error(userNotPresentMsg);
+            throw new ResourceNotFoundException(userNotPresentMsg);
+        }
+
+        if (users.size() > 1) {
+            log.warn("{} users map to {} contract. This should not be possible.", users.size(), contractNumber);
+        }
+
+        return users.get(0);
     }
 
     @Override
@@ -109,23 +127,23 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDTO enableUser(String username) {
-        return updateUserStatus(username, true);
+    public UserDTO enableUser(String contractNumber) {
+        return updateUserStatus(contractNumber, true);
     }
 
     @Override
-    public UserDTO disableUser(String username) {
-        return updateUserStatus(username, false);
+    public UserDTO disableUser(String contractNumber) {
+        return updateUserStatus(contractNumber, false);
     }
 
     @Override
-    public UserDTO getUser(String username) {
-        User user = getUserByUsername(username);
+    public UserDTO getUser(String contractNumber) {
+        User user = getUserByContract(contractNumber);
         return mapping.getModelMapper().map(user, UserDTO.class);
     }
 
-    private UserDTO updateUserStatus(String username, boolean enabled) {
-        User user = getUserByUsername(username);
+    private UserDTO updateUserStatus(String contractNumber, boolean enabled) {
+        User user = getUserByContract(contractNumber);
         user.setEnabled(enabled);
         User updatedUser = userRepository.saveAndFlush(user);
         return mapping.getModelMapper().map(updatedUser, UserDTO.class);

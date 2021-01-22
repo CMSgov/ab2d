@@ -88,3 +88,5 @@ databaseChangeLog:
       file: db/changelog/v001/add_property_coverage_search.sql
   - include:
       file: db/changelog/v001/drop-sponsor-ref-not-null.sql
+  - include:
+      file: db/changelog/test_only/truncate-fake-data.sql

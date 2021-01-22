@@ -3,7 +3,6 @@ package gov.cms.ab2d.worker.processor.coverage;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.model.Contract;
-import org.hl7.fhir.dstu3.model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,13 +34,13 @@ class CoverageMappingCallableTest {
     @Test
     void callableFunctions() {
 
-        Bundle bundle1 = buildBundle(0, 10, 2020);
-        bundle1.setLink(singletonList(new Bundle.BundleLinkComponent().setRelation(Bundle.LINK_NEXT)));
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = buildBundle(0, 10, 2020);
+        bundle1.setLink(singletonList(new org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent().setRelation(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT)));
 
-        Bundle bundle2 = buildBundle(10, 20, 2020);
+        org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20, 2020);
 
         when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(any(Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         Contract contract = new Contract();
         contract.setContractNumber("TESTING");
@@ -75,13 +74,13 @@ class CoverageMappingCallableTest {
     @Test
     void multipleMbis() {
 
-        Bundle bundle1 = buildBundle(0, 10, 3,2020);
-        bundle1.setLink(singletonList(new Bundle.BundleLinkComponent().setRelation(Bundle.LINK_NEXT)));
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = buildBundle(0, 10, 3,2020);
+        bundle1.setLink(singletonList(new org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent().setRelation(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT)));
 
-        Bundle bundle2 = buildBundle(10, 20, 3,2020);
+        org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20, 3,2020);
 
         when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(any(Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         Contract contract = new Contract();
         contract.setContractNumber("TESTING");
@@ -123,18 +122,18 @@ class CoverageMappingCallableTest {
     @Test
     void currentMibAppearsFirst() {
 
-        Bundle bundle1 = buildBundle(0, 10, 3,2020);
-        bundle1.setLink(singletonList(new Bundle.BundleLinkComponent().setRelation(Bundle.LINK_NEXT)));
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = buildBundle(0, 10, 3,2020);
+        bundle1.setLink(singletonList(new org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent().setRelation(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT)));
 
         bundle1.getEntry().forEach(bec -> {
-            Patient patient = (Patient) bec.getResource();
+            org.hl7.fhir.dstu3.model.Patient patient = (org.hl7.fhir.dstu3.model.Patient) bec.getResource();
             Collections.reverse(patient.getIdentifier());
         });
 
-        Bundle bundle2 = buildBundle(10, 20, 3,2020);
+        org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20, 3,2020);
 
         when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(any(Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         Contract contract = new Contract();
         contract.setContractNumber("TESTING");
@@ -179,13 +178,13 @@ class CoverageMappingCallableTest {
     @Test
     void filterYear() {
 
-        Bundle bundle1 = buildBundle(0, 10, 2020);
-        bundle1.setLink(singletonList(new Bundle.BundleLinkComponent().setRelation(Bundle.LINK_NEXT)));
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = buildBundle(0, 10, 2020);
+        bundle1.setLink(singletonList(new org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent().setRelation(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT)));
 
-        Bundle bundle2 = buildBundle(10, 20, 2019);
+        org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20, 2019);
 
         when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(any(Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         Contract contract = new Contract();
         contract.setContractNumber("TESTING");
@@ -225,17 +224,17 @@ class CoverageMappingCallableTest {
     @Test
     void filterMissingIdentifier() {
 
-        Bundle bundle1 = buildBundle(0, 10, 2020);
-        bundle1.setLink(singletonList(new Bundle.BundleLinkComponent().setRelation(Bundle.LINK_NEXT)));
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = buildBundle(0, 10, 2020);
+        bundle1.setLink(singletonList(new org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent().setRelation(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT)));
 
-        Bundle bundle2 = buildBundle(10, 20, 2020);
+        org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20, 2020);
         bundle2.getEntry().forEach(ec -> {
-            Patient patient = (Patient) ec.getResource();
+            org.hl7.fhir.dstu3.model.Patient patient = (org.hl7.fhir.dstu3.model.Patient) ec.getResource();
             patient.setIdentifier(emptyList());
         });
 
         when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(any(Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         Contract contract = new Contract();
         contract.setContractNumber("TESTING");
@@ -305,23 +304,23 @@ class CoverageMappingCallableTest {
         assertTrue(callable.isCompleted());
     }
 
-    private Bundle buildBundle(int startIndex, int endIndex, int year) {
-        Bundle bundle1 = new Bundle();
+    private org.hl7.fhir.dstu3.model.Bundle buildBundle(int startIndex, int endIndex, int year) {
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = new org.hl7.fhir.dstu3.model.Bundle();
         for (int i = startIndex; i < endIndex; i++) {
-            Bundle.BundleEntryComponent component = new Bundle.BundleEntryComponent();
-            Patient patient = createPatient("test-" + i, "mbi-" + i, year);
+            org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent component = new org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent();
+            org.hl7.fhir.dstu3.model.Patient patient = createPatient("test-" + i, "mbi-" + i, year);
             component.setResource(patient);
             bundle1.addEntry(component);
         }
         return bundle1;
     }
 
-    private Bundle buildBundle(int startIndex, int endIndex, int numMbis, int year) {
-        Bundle bundle1 = new Bundle();
+    private org.hl7.fhir.dstu3.model.Bundle buildBundle(int startIndex, int endIndex, int numMbis, int year) {
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = new org.hl7.fhir.dstu3.model.Bundle();
 
         for (int i = startIndex; i < endIndex; i++) {
-            Bundle.BundleEntryComponent component = new Bundle.BundleEntryComponent();
-            Patient patient = createPatientWithMultipleMbis("test-" + i, numMbis, year);
+            org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent component = new org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent();
+            org.hl7.fhir.dstu3.model.Patient patient = createPatientWithMultipleMbis("test-" + i, numMbis, year);
             component.setResource(patient);
             bundle1.addEntry(component);
         }

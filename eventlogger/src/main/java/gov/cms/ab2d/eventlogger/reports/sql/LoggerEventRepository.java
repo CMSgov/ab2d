@@ -10,11 +10,11 @@ import java.util.List;
 import java.util.Set;
 
 @Service
-public class DoAll {
+public class LoggerEventRepository {
     private final JdbcTemplate template;
     private final SqlMapperConfig configMapper;
 
-    public DoAll(JdbcTemplate template, SqlMapperConfig configMapper) {
+    public LoggerEventRepository(JdbcTemplate template, SqlMapperConfig configMapper) {
         this.template = template;
         this.configMapper = configMapper;
     }

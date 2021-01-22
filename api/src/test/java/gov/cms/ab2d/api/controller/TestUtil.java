@@ -81,14 +81,6 @@ public class TestUtil {
         return buildTokenStr();
     }
 
-    public String setupBadSponsorUserData(List<String> userRoles) throws JwtVerificationException {
-        dataSetup.setupUserBadSponsorData(userRoles);
-
-        setupMock();
-
-        return buildTokenStr();
-    }
-
     public String setupContractWithNoAttestation(List<String> userRoles) throws JwtVerificationException {
         dataSetup.setupContractWithNoAttestation(userRoles);
 
@@ -118,7 +110,7 @@ public class TestUtil {
         String destinationStr = destination.toString();
         Files.createDirectories(destination);
         InputStream testFileStream = this.getClass().getResourceAsStream("/" + testFile);
-        String testFileStr = IOUtils.toString(testFileStream, "UTF-8");
+        String testFileStr = IOUtils.toString(testFileStream, StandardCharsets.UTF_8);
         try (PrintWriter out = new PrintWriter(destinationStr + File.separator + testFile)) {
             out.println(testFileStr);
         }

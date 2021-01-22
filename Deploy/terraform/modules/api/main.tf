@@ -307,7 +307,7 @@ resource "aws_launch_configuration" "launch_config" {
   iam_instance_profile = var.iam_instance_profile
   key_name = var.ssh_key_name
   security_groups = [aws_security_group.api.id]  
-  user_data = templatefile("${path.module}/userdata.tpl",{ env = "${lower(var.env)}", cluster_name = "${lower(var.env)}-api", efs_id = var.efs_id, stunnel_latest_version = var.stunnel_latest_version })
+  user_data = templatefile("${path.module}/userdata.tpl",{ env = "${lower(var.env)}", cluster_name = "${lower(var.env)}-api", efs_id = var.efs_id })
   lifecycle { create_before_destroy = true }
 }
 

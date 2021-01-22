@@ -43,7 +43,6 @@ class WorkerServiceDisengagementTest {
     @Autowired private DataSetup dataSetup;
     @Autowired private JobRepository jobRepository;
     @Autowired private UserRepository userRepository;
-    @Autowired private ContractRepository contractRepository;
     @Autowired private PropertiesService propertiesService;
     @Autowired private JobService jobService;
 
@@ -58,11 +57,6 @@ class WorkerServiceDisengagementTest {
 
     @BeforeEach
     public void init() {
-        jobRepository.deleteAll();
-        userRepository.deleteAll();
-        dataSetup.deleteCoverage();
-        contractRepository.deleteAll();
-
         workerServiceStub = new WorkerServiceStub(jobService, propertiesService);
 
         ReflectionTestUtils.setField(jobHandler, "workerService", workerServiceStub);
@@ -72,6 +66,8 @@ class WorkerServiceDisengagementTest {
     public void cleanup() {
         ReflectionTestUtils.setField(jobHandler, "workerService", workerServiceImpl);
         setEngagement(FeatureEngagement.IN_GEAR);
+
+        dataSetup.cleanup();
     }
 
     private void setEngagement(FeatureEngagement drive) {
@@ -149,25 +145,34 @@ class WorkerServiceDisengagementTest {
         job.setUser(user);
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setContract(user.getContract());
-        return jobRepository.save(job);
+
+        job = jobRepository.save(job);
+        dataSetup.queueForCleanup(job);
+        return job;
     }
 
     private User createUser() {
-        final User user = new User();
+        User user = new User();
         user.setId((long) getIntRandom());
         user.setUsername("testuser" + getIntRandom());
         user.setEnabled(true);
         user.setContract(dataSetup.setupContract("W1234"));
-        return userRepository.save(user);
+
+        user = userRepository.save(user);
+        dataSetup.queueForCleanup(user);
+        return user;
     }
 
     private User createUser2() {
-        final User user = new User();
+        User user = new User();
         user.setId((long) getIntRandom());
         user.setUsername("testuser2" + getIntRandom());
         user.setEnabled(true);
         user.setContract(dataSetup.setupContract("W5678"));
-        return userRepository.save(user);
+
+        user =  userRepository.save(user);
+        dataSetup.queueForCleanup(user);
+        return user;
     }
 
     private int getIntRandom() {
