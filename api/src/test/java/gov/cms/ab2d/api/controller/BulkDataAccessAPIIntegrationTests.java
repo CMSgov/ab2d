@@ -52,6 +52,7 @@ import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
@@ -283,7 +284,7 @@ public class BulkDataAccessAPIIntegrationTests {
     @Test
     void testPatientExportWithParameters() throws Exception {
         final String typeParams =
-                "?_type=ExplanationOfBenefit&_outputFormat=application/fhir+ndjson&since=20191015";
+                "?_type=ExplanationOfBenefit&_outputFormat=application/fhir+ndjson&_since=2020-02-17T23:00:00.000-06:00";
         ResultActions resultActions =
                 this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
                         .header("Authorization", "Bearer " + token)
@@ -295,7 +296,8 @@ public class BulkDataAccessAPIIntegrationTests {
                 "http://localhost" + API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
 
         resultActions.andExpect(status().isAccepted())
-                .andExpect(header().string("Content-Location", statusUrl));
+                .andExpect(header().string("Content-Location", statusUrl))
+                .andExpect(header().string("Since-Time", "2020-02-17T23:00:00-06:00"));
 
         assertEquals(JobStatus.SUBMITTED, job.getStatus());
         assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
@@ -303,6 +305,84 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals("http://localhost" + API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + typeParams, job.getRequestUrl());
         assertEquals(EOB, job.getResourceTypes());
         assertEquals(userRepository.findByUsername(TEST_USER), job.getUser());
+    }
+
+    @Test
+    void testPatientExportWithSinceNotBeforeEarliestDate() throws Exception {
+        final String typeParams =
+                "?_type=ExplanationOfBenefit&_outputFormat=application/fhir+ndjson&_since=2020-02-17T05:00:00.000-06:00";
+
+        ResultActions resultActions =
+                this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON));
+
+        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+
+        resultActions.andExpect(status().is(202))
+                .andExpect(header().string("Since-Time", "2020-02-12T23:00:00-06:00"));
+
+        assertEquals(JobStatus.SUBMITTED, job.getStatus());
+    }
+
+    @Test
+    void testPatientExportWithContractWithSinceNotBeforeEarliestDate() throws Exception {
+        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+        Contract contract = contractOptional.get();
+
+        final String typeParams =
+                "?_type=ExplanationOfBenefit&_outputFormat=application/fhir+ndjson&_since=2020-02-17T05:00:00.000-06:00";
+
+        ResultActions resultActions =
+                this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON));
+
+        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+
+        resultActions.andExpect(status().is(202))
+                .andExpect(header().string("Since-Time", "2020-02-12T23:00:00-06:00"));
+
+        assertEquals(JobStatus.SUBMITTED, job.getStatus());
+    }
+
+    @Test
+    void testPatientExportWithSinceRoundToPreviousTuesdayAtMidnight() throws Exception {
+        final String typeParams =
+                "?_type=ExplanationOfBenefit&_outputFormat=application/fhir+ndjson&_since=2020-02-22T10:00:00.000-06:00";
+
+        ResultActions resultActions =
+                this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON));
+
+        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+
+        resultActions.andExpect(status().is(202))
+                .andExpect(header().string("Since-Time", "2020-02-17T23:00:00-06:00"));
+
+        assertEquals(JobStatus.SUBMITTED, job.getStatus());
+    }
+
+    @Test
+    void testPatientExportWithContractWithSinceRoundToPreviousTuesdayAtMidnight() throws Exception {
+        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+        Contract contract = contractOptional.get();
+
+        final String typeParams =
+                "?_type=ExplanationOfBenefit&_outputFormat=application/fhir+ndjson&_since=2020-02-22T10:00:00.000-06:00";
+
+        ResultActions resultActions =
+                this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON));
+
+        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+
+        resultActions.andExpect(status().is(202))
+                .andExpect(header().string("Since-Time", "2020-02-17T23:00:00-06:00"));
+
+        assertEquals(JobStatus.SUBMITTED, job.getStatus());
     }
 
     @Test
@@ -1117,7 +1197,7 @@ public class BulkDataAccessAPIIntegrationTests {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         final String typeParams =
-                "?_type=ExplanationOfBenefit&_outputFormat=application/fhir+ndjson&since=20191015";
+                "?_type=ExplanationOfBenefit&_outputFormat=application/fhir+ndjson&_since=2020-02-18T00:00:00.000-05:00";
         ResultActions resultActions =
                 this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams)
                         .header("Authorization", "Bearer " + token)

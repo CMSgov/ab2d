@@ -85,7 +85,7 @@ public class AdminAPI {
                                                         @RequestParam(required = false, name = "_since") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
         userService.setupUserImpersonation(contractNumber, request);
 
-        return bulkDataAccessAPI.exportPatientsWithContract(request, contractNumber, resourceTypes, outputFormat, since);
+        return bulkDataAccessAPI.exportAllPatients(request, resourceTypes, outputFormat, since);
     }
 
     @ResponseStatus(value = HttpStatus.OK)
