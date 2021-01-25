@@ -90,7 +90,7 @@ class TestRunner {
 
     private final Environment environment;
 
-    private static final OffsetDateTime earliest = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
+    private static final OffsetDateTime earliest = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME).withSecond(0);
 
     private final Set<String> acceptableIdStrings = Set.of("carrier", "dme", "hha", "hospice", "inpatient", "outpatient", "snf");
 
@@ -559,6 +559,14 @@ class TestRunner {
         System.out.println(earliest);
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
+
+        List<String> sinceTime = exportResponse.headers().map().get("Since-Time");
+        assertFalse(sinceTime.isEmpty());
+
+        // Check that since time applied to job matches supplied time
+        // and is not rounded to a date before since may be applied
+        OffsetDateTime sinceDateTime = OffsetDateTime.parse(sinceTime.get(0));
+        assertEquals(earliest, sinceDateTime);
 
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, testContract);
         assertNotNull(downloadDetails);
