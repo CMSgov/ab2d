@@ -12,7 +12,6 @@
 
     <properties>
         <project.root>${basedir}/..</project.root>
-        <argLine>-Dmockserver.logLevel=ERROR</argLine>
     </properties>
     <dependencies>
         <dependency>

@@ -123,6 +123,9 @@ pipeline {
                     export JACOCO_SOURCE_PATH=./api/src/main/java
                     ./codeclimate/cc-test-reporter format-coverage ./api/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.api.json
 
+                    export JACOCO_SOURCE_PATH=./fhir/src/main/java
+                    ./codeclimate/cc-test-reporter format-coverage ./fhir/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.fhir.json
+
                     export JACOCO_SOURCE_PATH=./audit/src/main/java
                     ./codeclimate/cc-test-reporter format-coverage ./audit/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.audit.json
 
