@@ -17,7 +17,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import javax.persistence.EntityNotFoundException;
 import java.time.OffsetDateTime;
 import java.util.*;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.repository.CoverageDeltaRepository.COVERAGE_ADDED;
