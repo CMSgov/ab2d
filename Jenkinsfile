@@ -82,7 +82,7 @@ pipeline {
             steps {
                 sh '''
                     export AB2D_EFS_MOUNT="${AB2D_HOME}"
-                    mvn test -pl eventlogger,common,api,worker,bfd,filter,audit,hpms
+                    mvn test -pl eventlogger,fhir,common,api,worker,bfd,filter,audit,hpms
                 '''
             }
         }
