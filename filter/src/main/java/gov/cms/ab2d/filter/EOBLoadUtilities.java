@@ -3,8 +3,10 @@ package gov.cms.ab2d.filter;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.EncodingEnum;
+import gov.cms.ab2d.fhir.EobUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.hl7.fhir.instance.model.api.IBaseResource;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -86,18 +88,7 @@ public class EOBLoadUtilities {
                 .anyMatch(code -> code.getCode().equalsIgnoreCase(EOB_TYPE_PART_D_CODE_VAL));
     }
 
-    public static boolean isPartD(org.hl7.fhir.r4.model.Resource resource) {
-        if (resource == null || resource.getResourceType() == null || resource.getResourceType() != org.hl7.fhir.r4.model.ResourceType.ExplanationOfBenefit) {
-            return false;
-        }
-        org.hl7.fhir.r4.model.ExplanationOfBenefit eob = (org.hl7.fhir.r4.model.ExplanationOfBenefit) resource;
-        org.hl7.fhir.r4.model.CodeableConcept c = eob.getType();
-        if (c == null || c.getCoding() == null) {
-            return false;
-        }
-        // See if there is a coding value for EOB-TYPE that equals PDE
-        return c.getCoding().stream()
-                .filter(code -> code.getSystem().endsWith(EOB_TYPE_CODE_SYS))
-                .anyMatch(code -> code.getCode().equalsIgnoreCase(EOB_TYPE_PART_D_CODE_VAL));
+    public static boolean isPartD(IBaseResource resource) {
+        return EobUtils.isPartD(resource);
     }
 }

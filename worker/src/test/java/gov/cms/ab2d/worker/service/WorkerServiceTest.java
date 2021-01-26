@@ -23,8 +23,8 @@ import java.util.Random;
 import java.util.UUID;
 
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
-import static gov.cms.ab2d.common.util.Constants.EOB;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
+import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 

@@ -19,6 +19,8 @@ import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.util.HealthCheck;
+import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
+import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -121,8 +123,8 @@ class JobProcessorIntegrationTest {
         job.setStatus(JobStatus.IN_PROGRESS);
         jobRepository.saveAndFlush(job);
 
-        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob = EobTestDataUtil.createEOB();
-        bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        IBaseResource eob = EobTestDataUtil.createEOB();
+        bundle1 = EobTestDataUtil.createBundle(((ExplanationOfBenefit) eob).copy());
         bundles = getBundles();
         when(mockBfdClient.requestEOBFromServer(anyString())).thenReturn(bundle1);
         when(mockBfdClient.requestEOBFromServer(anyString(), any())).thenReturn(bundle1);

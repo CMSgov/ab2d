@@ -35,9 +35,9 @@ import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-import static gov.cms.ab2d.common.util.Constants.EOB;
 import static gov.cms.ab2d.common.util.Constants.MAINTENANCE_MODE;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
+import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 

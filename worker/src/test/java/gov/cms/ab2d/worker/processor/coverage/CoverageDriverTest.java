@@ -12,6 +12,8 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.DateUtil;
+import gov.cms.ab2d.fhir.IdentifierUtils;
+import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.worker.config.CoverageUpdateConfig;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +28,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static gov.cms.ab2d.common.util.DateUtil.*;
-import static gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable.BENEFICIARY_ID;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -410,6 +411,7 @@ class CoverageDriverTest {
 
         when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.getVersion()).thenReturn(Versions.FHIR_VERSIONS.R3);
 
         processor.queueCoveragePeriod(january, false);
         JobStatus status = coverageService.getSearchStatus(january.getId());
@@ -658,7 +660,7 @@ class CoverageDriverTest {
             org.hl7.fhir.dstu3.model.Patient patient = new org.hl7.fhir.dstu3.model.Patient();
 
             org.hl7.fhir.dstu3.model.Identifier identifier = new org.hl7.fhir.dstu3.model.Identifier();
-            identifier.setSystem(BENEFICIARY_ID);
+            identifier.setSystem(IdentifierUtils.BENEFICIARY_ID);
             identifier.setValue("test-" + i);
 
             patient.setIdentifier(singletonList(identifier));

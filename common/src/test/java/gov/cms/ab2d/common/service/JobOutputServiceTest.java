@@ -24,8 +24,8 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import static gov.cms.ab2d.common.util.Constants.EOB;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
+import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest(classes = SpringBootApp.class)

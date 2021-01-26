@@ -29,8 +29,8 @@ import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.ADMIN_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.EOB;
 import static gov.cms.ab2d.common.util.Constants.USERNAME;
+import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 
 @Slf4j
 @RestController

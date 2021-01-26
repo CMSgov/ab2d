@@ -9,6 +9,7 @@ import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.DateUtil;
+import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.worker.config.CoverageUpdateConfig;
 import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
@@ -23,12 +24,11 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
-import static gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable.BENEFICIARY_ID;
+import static gov.cms.ab2d.fhir.IdentifierUtils.BENEFICIARY_ID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -370,6 +370,7 @@ class CoverageUpdateAndProcessorTest {
 
         when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.getVersion()).thenReturn(Versions.FHIR_VERSIONS.R3);
 
         processor.queueCoveragePeriod(january, false);
         JobStatus status = coverageService.getSearchStatus(january.getId());
@@ -422,6 +423,7 @@ class CoverageUpdateAndProcessorTest {
         Mockito.clearInvocations();
         when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.getVersion()).thenReturn(Versions.FHIR_VERSIONS.R3);
 
         driver.loadMappingJob();
 
@@ -442,7 +444,6 @@ class CoverageUpdateAndProcessorTest {
     void mappingFailsAfterXRetries() {
 
         when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenThrow(new RuntimeException("oops"));
-
 
         processor.queueCoveragePeriod(january, false);
         JobStatus status = coverageService.getSearchStatus(january.getId());
@@ -469,6 +470,7 @@ class CoverageUpdateAndProcessorTest {
         Mockito.clearInvocations();
         when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.getVersion()).thenReturn(Versions.FHIR_VERSIONS.R3);
 
         ThreadPoolTaskExecutor twoThreads = new ThreadPoolTaskExecutor();
         twoThreads.setMaxPoolSize(2);

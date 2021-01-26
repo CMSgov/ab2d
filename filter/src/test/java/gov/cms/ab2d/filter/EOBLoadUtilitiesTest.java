@@ -1,6 +1,9 @@
 package gov.cms.ab2d.filter;
 
 import ca.uhn.fhir.context.FhirContext;
+import gov.cms.ab2d.fhir.EobUtils;
+import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
+import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -14,18 +17,18 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class EOBLoadUtilitiesTest {
-    static org.hl7.fhir.dstu3.model.ExplanationOfBenefit eobCarrier = null;
-    static org.hl7.fhir.dstu3.model.ExplanationOfBenefit eobSNF = null;
+    static IBaseResource eobC;
+    static IBaseResource eobS;
     static FhirContext context = FhirContext.forDstu3();
 
     static {
-        eobCarrier = ExplanationOfBenefitTrimmerR3.getBenefit(EOBLoadUtilities.getR3EOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json", context));
-        eobSNF = ExplanationOfBenefitTrimmerR3.getBenefit(EOBLoadUtilities.getR3EOBFromFileInClassPath("eobdata/EOB-for-SNF-Claims.json", context));
+        eobC = ExplanationOfBenefitTrimmerR3.getBenefit(EOBLoadUtilities.getR3EOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json", context));
+        eobS = ExplanationOfBenefitTrimmerR3.getBenefit(EOBLoadUtilities.getR3EOBFromFileInClassPath("eobdata/EOB-for-SNF-Claims.json", context));
     }
 
     @Test
     public void testConvertFromFilePatient() throws IOException {
-        assertEquals(eobCarrier.getPatient().getReference(), "Patient/-199900000022040");
+        assertEquals(EobUtils.getPatientId(eobC), "-199900000022040");
     }
 
     @Test
@@ -39,6 +42,7 @@ class EOBLoadUtilitiesTest {
 
     @Test
     public void testType() {
+        ExplanationOfBenefit eobCarrier = (ExplanationOfBenefit) eobC;
         List<org.hl7.fhir.dstu3.model.Coding> coding = eobCarrier.getType().getCoding();
         assertEquals(4, coding.size());
         org.hl7.fhir.dstu3.model.Coding cd = coding.stream().filter(c -> c.getCode().equals("professional")).findFirst().orElse(null);
@@ -50,11 +54,13 @@ class EOBLoadUtilitiesTest {
 
     @Test
     public void testResourceType() {
+        ExplanationOfBenefit eobCarrier = (ExplanationOfBenefit) eobC;
         assertEquals(eobCarrier.getResourceType(), org.hl7.fhir.dstu3.model.ResourceType.ExplanationOfBenefit);
     }
 
     @Test
     public void testDiagnosis() {
+        ExplanationOfBenefit eobCarrier = (ExplanationOfBenefit) eobC;
         List<org.hl7.fhir.dstu3.model.ExplanationOfBenefit.DiagnosisComponent> diagnoses = eobCarrier.getDiagnosis();
         assertNotNull(diagnoses);
         assertEquals(5, diagnoses.size());
@@ -67,6 +73,7 @@ class EOBLoadUtilitiesTest {
 
     @Test
     public void testProcedure() throws ParseException {
+        ExplanationOfBenefit eobSNF = (ExplanationOfBenefit) eobS;
         List<org.hl7.fhir.dstu3.model.ExplanationOfBenefit.ProcedureComponent> procedures = eobSNF.getProcedure();
         assertNotNull(procedures);
         assertEquals(procedures.size(), 1);
@@ -82,6 +89,7 @@ class EOBLoadUtilitiesTest {
 
     @Test
     public void testProvider() {
+        ExplanationOfBenefit eobSNF = (ExplanationOfBenefit) eobS;
         org.hl7.fhir.dstu3.model.Reference ref = eobSNF.getProvider();
         assertNotNull(ref);
         assertNotNull(ref.getIdentifier());
@@ -91,6 +99,7 @@ class EOBLoadUtilitiesTest {
 
     @Test
     public void testOrganization() {
+        ExplanationOfBenefit eobSNF = (ExplanationOfBenefit) eobS;
         org.hl7.fhir.dstu3.model.Reference ref = eobSNF.getOrganization();
         assertNotNull(ref);
         assertNotNull(ref.getIdentifier());
@@ -100,6 +109,7 @@ class EOBLoadUtilitiesTest {
 
     @Test
     public void testFacility() {
+        ExplanationOfBenefit eobSNF = (ExplanationOfBenefit) eobS;
         org.hl7.fhir.dstu3.model.Reference ref = eobSNF.getFacility();
         assertNotNull(ref);
         assertNotNull(ref.getIdentifier());
@@ -109,6 +119,7 @@ class EOBLoadUtilitiesTest {
 
     @Test
     public void testIdentifier() {
+        ExplanationOfBenefit eobSNF = (ExplanationOfBenefit) eobS;
         List<org.hl7.fhir.dstu3.model.Identifier> ids = eobSNF.getIdentifier();
         assertNotNull(ids);
         assertEquals(ids.size(), 2);
@@ -121,6 +132,7 @@ class EOBLoadUtilitiesTest {
 
     @Test
     public void testCareTeam() {
+        ExplanationOfBenefit eobSNF = (ExplanationOfBenefit) eobS;
         List<org.hl7.fhir.dstu3.model.ExplanationOfBenefit.CareTeamComponent> careTeamComponents = eobSNF.getCareTeam();
         assertNotNull(careTeamComponents);
         assertEquals(careTeamComponents.size(), 4);
@@ -136,6 +148,7 @@ class EOBLoadUtilitiesTest {
 
     @Test
     public void testItems() throws ParseException {
+        ExplanationOfBenefit eobCarrier = (ExplanationOfBenefit) eobC;
         List<org.hl7.fhir.dstu3.model.ExplanationOfBenefit.ItemComponent> components = eobCarrier.getItem();
         assertNotNull(components);
         assertEquals(components.size(), 1);
@@ -151,6 +164,7 @@ class EOBLoadUtilitiesTest {
         assertEquals(period.getStart().getTime(), d.getTime());
         assertEquals(period.getEnd().getTime(), d.getTime());
 
+        ExplanationOfBenefit eobSNF = (ExplanationOfBenefit) eobS;
         org.hl7.fhir.dstu3.model.CodeableConcept location = (org.hl7.fhir.dstu3.model.CodeableConcept) components.get(0).getLocation();
         assertEquals(location.getCoding().get(0).getSystem(), "https://bluebutton.cms.gov/resources/variables/line_place_of_srvc_cd");
         assertEquals(location.getCoding().get(0).getCode(), "11");
@@ -177,7 +191,7 @@ class EOBLoadUtilitiesTest {
     void testToJson() {
         var jsonParser = context.newJsonParser();
         org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob = EOBLoadUtilities.getR3EOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json", context);
-        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eobNew = ExplanationOfBenefitTrimmerR3.getBenefit(eob);
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eobNew = (org.hl7.fhir.dstu3.model.ExplanationOfBenefit) ExplanationOfBenefitTrimmerR3.getBenefit((IBaseResource) eob);
         String payload = jsonParser.encodeResourceToString(eobNew) + System.lineSeparator();
         assertNotNull(payload);
     }

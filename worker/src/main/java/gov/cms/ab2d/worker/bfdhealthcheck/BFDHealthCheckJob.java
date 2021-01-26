@@ -19,5 +19,7 @@ public class BFDHealthCheckJob extends QuartzJobBean {
     @Override
     protected void executeInternal(JobExecutionContext jobExecutionContext) {
         bfdHealthCheck.checkBFDHealth();
+        // TODO
+        // second r4 health check
     }
 }

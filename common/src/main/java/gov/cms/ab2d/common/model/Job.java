@@ -1,5 +1,6 @@
 package gov.cms.ab2d.common.model;
 
+import gov.cms.ab2d.fhir.Versions;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,7 +13,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import static gov.cms.ab2d.common.util.Constants.EOB;
+import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static javax.persistence.EnumType.STRING;
 
 @Entity
@@ -58,6 +59,7 @@ public class Job {
     private String statusMessage;
     private String outputFormat;
     private Integer progress;
+    private Versions.FHIR_VERSIONS fhirVersion;
 
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime lastPollTime;

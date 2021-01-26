@@ -1,9 +1,11 @@
 package gov.cms.ab2d.bfd.client;
 
+import gov.cms.ab2d.fhir.Versions;
+import org.hl7.fhir.instance.model.api.IBaseBundle;
+
 import java.io.IOException;
 import java.time.OffsetDateTime;
 
 public interface BFDSearch {
-
-    org.hl7.fhir.dstu3.model.Bundle searchEOB(String patientId, OffsetDateTime since, int pageSize, String bulkJobId) throws IOException;
+    IBaseBundle searchEOB(String patientId, OffsetDateTime since, int pageSize, String bulkJobId, Versions.FHIR_VERSIONS version) throws IOException;
 }

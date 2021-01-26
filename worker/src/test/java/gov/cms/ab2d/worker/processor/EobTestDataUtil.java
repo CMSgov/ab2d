@@ -4,6 +4,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.EncodingEnum;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmerR3;
+import org.hl7.fhir.instance.model.api.IBaseResource;
 
 import java.io.File;
 import java.io.InputStream;
@@ -13,8 +14,8 @@ import java.time.format.DateTimeFormatter;
 
 public final class EobTestDataUtil {
 
-    public static org.hl7.fhir.dstu3.model.ExplanationOfBenefit createEOB() {
-        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob = null;
+    public static IBaseResource createEOB() {
+        IBaseResource eob = null;
 
         SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
         final String testInputFile = "test-data/EOB-for-Carrier-Claims.json";
@@ -32,7 +33,7 @@ public final class EobTestDataUtil {
             final String nowFormatted = now.format(formatter);
             billingPeriod.setEnd(sdf.parse(nowFormatted));
         } catch (Exception ex) {}
-        eob.setBillablePeriod(billingPeriod);
+        ((org.hl7.fhir.dstu3.model.ExplanationOfBenefit) eob).setBillablePeriod(billingPeriod);
 
         return eob;
     }

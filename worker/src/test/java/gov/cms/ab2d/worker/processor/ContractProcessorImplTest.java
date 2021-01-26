@@ -4,8 +4,9 @@ import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.util.ExtensionUtils;
+import gov.cms.ab2d.common.util.fhir.FhirUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.worker.service.FileService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -60,7 +61,7 @@ class ContractProcessorImplTest {
                 put(identifiers.getBeneficiaryId(), new CoverageSummary(identifiers, null, null));
         }};
 
-        ExtensionUtils.addMbiIdsToEobs(singletonList(eob), coverageSummaries);
+        FhirUtils.addMbiIdsToEobs(singletonList(eob), coverageSummaries, Versions.FHIR_VERSIONS.R3);
 
         assertFalse(eob.getExtension().isEmpty());
         assertEquals(3, eob.getExtension().size());

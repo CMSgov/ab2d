@@ -7,11 +7,12 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.Constants;
-import gov.cms.ab2d.common.util.EobUtils;
-import gov.cms.ab2d.common.util.ExtensionUtils;
-import gov.cms.ab2d.common.util.FHIRUtil;
+import gov.cms.ab2d.common.util.fhir.FhirUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
+import gov.cms.ab2d.fhir.EobUtils;
+import gov.cms.ab2d.fhir.FHIRUtil;
+import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.service.FileService;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +36,7 @@ import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
-import static gov.cms.ab2d.common.util.Constants.EOB;
+import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 @Slf4j
@@ -90,6 +91,10 @@ public class ContractProcessorImpl implements ContractProcessor {
         Job job = jobRepository.findByJobUuid(jobUuid);
         List<Path> dataFiles = new ArrayList<>();
         List<Path> errorFiles = new ArrayList<>();
+        Versions.FHIR_VERSIONS version = Versions.FHIR_VERSIONS.R3;
+        if (job != null && job.getFhirVersion() != null) {
+            version = job.getFhirVersion();
+        }
         int recordsProcessedCount = 0;
         try (StreamHelper helper = new TextStreamHelperImpl(outputDirPath, contractNumber, getRollOverThreshold(), tryLockTimeout,
                 eventLogger, job)) {
@@ -104,12 +109,12 @@ public class ContractProcessorImpl implements ContractProcessor {
                         cancelFuturesInQueue(futureHandles);
                         break;
                     }
-                    numberOfEobs += processHandles(futureHandles, progressTracker, patients, helper);
+                    numberOfEobs += processHandles(futureHandles, progressTracker, patients, helper, version);
                 }
             }
             while (!futureHandles.isEmpty()) {
                 sleep();
-                numberOfEobs += processHandles(futureHandles, progressTracker, patients, helper);
+                numberOfEobs += processHandles(futureHandles, progressTracker, patients, helper, version);
                 if (hasJobBeenCancelled(jobUuid)) {
                     cancelFuturesInQueue(futureHandles);
                     final String errMsg = "Job was cancelled while it was being processed";
@@ -203,7 +208,8 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @param progressTracker - the tracker with updated tracker information
      */
     private int processHandles(List<Future<EobSearchResult>> futureHandles, ProgressTracker progressTracker,
-                               Map<String, CoverageSummary> patients, StreamHelper helper) {
+                               Map<String, CoverageSummary> patients, StreamHelper helper,
+                               Versions.FHIR_VERSIONS version) {
         int numberOfEobs = 0;
         var iterator = futureHandles.iterator();
         while (iterator.hasNext()) {
@@ -211,10 +217,10 @@ public class ContractProcessorImpl implements ContractProcessor {
             if (future.isDone()) {
                 EobSearchResult result = processFuture(futureHandles, progressTracker, future, patients);
                 if (result != null) {
-                    ExtensionUtils.addMbiIdsToEobs(result.getEobs(), patients);
+                    FhirUtils.addMbiIdsToEobs(result.getEobs(), patients, version);
                 }
                 if (result != null) {
-                    numberOfEobs += writeOutResource(result.getEobs(), helper);
+                    numberOfEobs += writeOutResource(result.getEobs(), helper, version);
                 }
                 iterator.remove();
             }
@@ -225,7 +231,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         return numberOfEobs;
     }
 
-    private int writeOutResource(List<IBaseResource> eobs, StreamHelper helper) {
+    private int writeOutResource(List<IBaseResource> eobs, StreamHelper helper, Versions.FHIR_VERSIONS version) {
         var jsonParser = fhirContext.newJsonParser();
 
         String payload = "";
@@ -238,12 +244,12 @@ public class ContractProcessorImpl implements ContractProcessor {
                     helper.addData(payload.getBytes(StandardCharsets.UTF_8));
                 } catch (Exception e) {
                     log.warn("Encountered exception while processing job resources: {}", e.getMessage());
-                    writeExceptionToContractErrorFile(helper, payload, e);
+                    writeExceptionToContractErrorFile(helper, payload, e, version);
                 }
             }
         } catch (Exception e) {
             try {
-                writeExceptionToContractErrorFile(helper, payload, e);
+                writeExceptionToContractErrorFile(helper, payload, e, version);
             } catch (IOException e1) {
                 //should not happen - original exception will be thrown
                 log.error("error during exception handling to write error record");
@@ -324,9 +330,9 @@ public class ContractProcessorImpl implements ContractProcessor {
         }
     }
 
-    void writeExceptionToContractErrorFile(StreamHelper helper, String data, Exception e) throws IOException {
+    void writeExceptionToContractErrorFile(StreamHelper helper, String data, Exception e, Versions.FHIR_VERSIONS version) throws IOException {
         var errMsg = ExceptionUtils.getRootCauseMessage(e);
-        var operationOutcome = FHIRUtil.getErrorOutcome(errMsg);
+        IBaseResource operationOutcome = FHIRUtil.getErrorOutcome(errMsg, version);
 
         var jsonParser = fhirContext.newJsonParser();
         var payload = jsonParser.encodeResourceToString(operationOutcome) + System.lineSeparator();

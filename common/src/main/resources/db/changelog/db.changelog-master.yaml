@@ -90,3 +90,5 @@ databaseChangeLog:
       file: db/changelog/v001/drop-sponsor-ref-not-null.sql
   - include:
       file: db/changelog/test_only/truncate-fake-data.sql
+  - include:
+      file: db/changelog/v001/add_fhir_version.sql

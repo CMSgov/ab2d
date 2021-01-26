@@ -3,6 +3,8 @@ package gov.cms.ab2d.filter;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import org.apache.commons.lang3.StringUtils;
+import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
+import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.junit.jupiter.api.Test;
 
 import java.text.SimpleDateFormat;
@@ -12,11 +14,11 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ExplanationOfBenefitTrimmerTest {
-    private static org.hl7.fhir.dstu3.model.ExplanationOfBenefit eobCarrier = null;
+    private static IBaseResource eobResource = null;
     private static FhirContext context = FhirContext.forDstu3();
 
     static {
-        eobCarrier = ExplanationOfBenefitTrimmerR3.getBenefit(EOBLoadUtilities.getR3EOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json", context));
+        eobResource = ExplanationOfBenefitTrimmerR3.getBenefit(EOBLoadUtilities.getR3EOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json", context));
     }
 
     @Test
@@ -33,6 +35,7 @@ class ExplanationOfBenefitTrimmerTest {
 
     @Test
     public void validateEmpty() {
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eobCarrier = (ExplanationOfBenefit) eobResource;
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         assertNull(ExplanationOfBenefitTrimmerR3.getBenefit(null));
         // Since getting a patient target creates a new one, make sure the object is empty
@@ -82,6 +85,7 @@ class ExplanationOfBenefitTrimmerTest {
 
     @Test
     public void testItemValues() {
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eobCarrier = (ExplanationOfBenefit) eobResource;
         if (eobCarrier.getItem() != null) {
             for (var item : eobCarrier.getItem()) {
                 assertTrue(isNullOrEmpty(item.getDiagnosisLinkId()));
@@ -114,7 +118,7 @@ class ExplanationOfBenefitTrimmerTest {
     private void printItOut(String file) {
         IParser jsonParser = context.newJsonParser().setPrettyPrint(true);
 
-        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eCarrier = ExplanationOfBenefitTrimmerR3.getBenefit(
+        IBaseResource eCarrier = ExplanationOfBenefitTrimmerR3.getBenefit(
                 EOBLoadUtilities.getR3EOBFromFileInClassPath(file, context));
 
         String result = jsonParser.encodeResourceToString(eCarrier);
@@ -127,10 +131,10 @@ class ExplanationOfBenefitTrimmerTest {
 
     @Test
     void isPartD() {
-        org.hl7.fhir.dstu3.model.ExplanationOfBenefit ePartD = ExplanationOfBenefitTrimmerR3.getBenefit(
+        IBaseResource ePartD = ExplanationOfBenefitTrimmerR3.getBenefit(
                 EOBLoadUtilities.getR3EOBFromFileInClassPath("eobdata/EOB-for-Part-D-Claims.json", context));
         assertTrue(EOBLoadUtilities.isPartD(ePartD));
-        assertFalse(EOBLoadUtilities.isPartD(eobCarrier));
+        assertFalse(EOBLoadUtilities.isPartD(eobResource));
         assertFalse(EOBLoadUtilities.isPartD((org.hl7.fhir.dstu3.model.ExplanationOfBenefit) null));
     }
 }

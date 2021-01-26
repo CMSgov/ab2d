@@ -1,5 +1,8 @@
 package gov.cms.ab2d.filter;
 
+import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
+import org.hl7.fhir.instance.model.api.IBaseResource;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -12,10 +15,11 @@ public class ExplanationOfBenefitTrimmerR3 {
     /**
      * Pass in an ExplanationOfBenefit, return the copy without the data
      *
-     * @param benefit - the original ExplanationOfBenefit
+     * @param b - the original ExplanationOfBenefit
      * @return the cleaned up copy
      */
-    public static org.hl7.fhir.dstu3.model.ExplanationOfBenefit getBenefit(org.hl7.fhir.dstu3.model.ExplanationOfBenefit benefit) {
+    public static IBaseResource getBenefit(IBaseResource b) {
+        ExplanationOfBenefit benefit = (ExplanationOfBenefit) b;
         if (benefit == null) {
             return null;
         }

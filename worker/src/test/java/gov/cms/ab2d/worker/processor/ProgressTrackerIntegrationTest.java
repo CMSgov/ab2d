@@ -6,6 +6,7 @@ import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverStub;
 import gov.cms.ab2d.worker.service.FileService;
@@ -103,6 +104,7 @@ class ProgressTrackerIntegrationTest {
 
         when(bfdClient.requestPartDEnrolleesFromServer(CONTRACT_NUMBER, 1)).thenReturn(bundleA);
         when(bfdClient.requestPartDEnrolleesFromServer(CONTRACT_NUMBER, 2)).thenReturn(bundleB);
+        when(bfdClient.getVersion()).thenReturn(Versions.FHIR_VERSIONS.R3);
 
         cut.processContractBenes(job, progressTracker);
 
