@@ -10,7 +10,7 @@ import javax.sql.DataSource;
 public class CoverageDeltaRepository {
 
     private static final String INSERT_DELTAS =
-            "INSERT INTO coverage_delta (bene_coverage_period_id, beneficiary_id , type, created)" +
+            "INSERT INTO coverage_delta (bene_coverage_period_id, beneficiary_id , type, created) " +
             CoverageServiceRepository.SELECT_DELTA;
 
     private final DataSource dataSource;
@@ -28,8 +28,8 @@ public class CoverageDeltaRepository {
 
         // Switch the order of the delta to get the added events.
         SqlParameterSource addedParams = new MapSqlParameterSource()
-                .addValue("search1", searchEvent2)
-                .addValue("search2", searchEvent1)
+                .addValue("search1", searchEvent2.getId())
+                .addValue("search2", searchEvent1.getId())
                 .addValue("type", "ADDED");
 
         NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
