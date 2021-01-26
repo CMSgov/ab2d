@@ -10,10 +10,7 @@ import gov.cms.ab2d.common.model.CoverageSearchDiff;
 import gov.cms.ab2d.common.model.CoverageSearchEvent;
 import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.repository.CoveragePeriodRepository;
-import gov.cms.ab2d.common.repository.CoverageSearchRepository;
-import gov.cms.ab2d.common.repository.CoverageSearchEventRepository;
-import gov.cms.ab2d.common.repository.CoverageServiceRepository;
+import gov.cms.ab2d.common.repository.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,14 +47,18 @@ public class CoverageServiceImpl implements CoverageService {
 
     private final CoverageServiceRepository coverageServiceRepo;
 
+    private final CoverageDeltaRepository coverageDeltaRepository;
+
     public CoverageServiceImpl(CoveragePeriodRepository coveragePeriodRepo,
                                CoverageSearchEventRepository coverageSearchEventRepo,
                                CoverageSearchRepository coverageSearchRepo,
-                               CoverageServiceRepository coverageServiceRepo) {
+                               CoverageServiceRepository coverageServiceRepo,
+                               CoverageDeltaRepository coverageDeltaRepository) {
         this.coveragePeriodRepo = coveragePeriodRepo;
         this.coverageSearchEventRepo = coverageSearchEventRepo;
         this.coverageSearchRepo = coverageSearchRepo;
         this.coverageServiceRepo = coverageServiceRepo;
+        this.coverageDeltaRepository = coverageDeltaRepository;
     }
 
     @Override
@@ -175,13 +176,14 @@ public class CoverageServiceImpl implements CoverageService {
 
         Optional<CoverageSearchEvent> previousSearch = coverageSearchEventRepo.findSearchEventWithOffset(periodId, JobStatus.IN_PROGRESS.name(), 1);
         Optional<CoverageSearchEvent> currentSearch = coverageSearchEventRepo.findSearchEventWithOffset(periodId, JobStatus.IN_PROGRESS.name(), 0);
+        CoverageSearchEvent current = currentSearch.orElseThrow(() -> new RuntimeException("could not find latest in progress search event"));
 
         int previousCount = 0;
         if (previousSearch.isPresent()) {
+            coverageDeltaRepository.trackDeltas(previousSearch.get(), current);
             previousCount = coverageServiceRepo.countBySearchEvent(previousSearch.get());
         }
 
-        CoverageSearchEvent current = currentSearch.orElseThrow(() -> new RuntimeException("could not find latest in progress search event"));
         int currentCount = coverageServiceRepo.countBySearchEvent(current);
 
         int unchanged = 0;
