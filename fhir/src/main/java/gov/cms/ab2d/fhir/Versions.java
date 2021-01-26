@@ -15,16 +15,17 @@ public class Versions {
         R4
     }
 
-    public static Map<FHIR_VERSIONS, String> classLocations = new HashMap<>() {
+    private static Map<FHIR_VERSIONS, String> classLocations = new HashMap<>() {
         { put (FHIR_VERSIONS.R3, "org.hl7.fhir.dstu3.model"); }
         { put (FHIR_VERSIONS.R4, "org.hl7.fhir.r4.model"); }
     };
 
-    public static Map<FHIR_VERSIONS, FhirContext> fhirContexts = new HashMap<>() {
+    private static Map<FHIR_VERSIONS, FhirContext> fhirContexts = new HashMap<>() {
         { put (FHIR_VERSIONS.R3, FhirContext.forDstu3()); }
         { put (FHIR_VERSIONS.R4, FhirContext.forR4()); }
     };
-    public static List<String> supportedClasses = List.of(
+
+    private static List<String> supportedClasses = List.of(
             "ExplanationOfBenefit",
             "Patient",
             "Identifier",
@@ -42,12 +43,12 @@ public class Versions {
             "ResourceType"
     );
 
-    public static Map<FhirVersionEnum, FHIR_VERSIONS> supportedFhirVersion = new HashMap<>() {
+    private static Map<FhirVersionEnum, FHIR_VERSIONS> supportedFhirVersion = new HashMap<>() {
         { put (FhirVersionEnum.DSTU3, FHIR_VERSIONS.R3); }
         { put (FhirVersionEnum.R4, FHIR_VERSIONS.R4); }
     };
 
-    public static Map<String, FHIR_VERSIONS> apiVersionToFhirVersion = new HashMap<>() {
+    private static Map<String, FHIR_VERSIONS> apiVersionToFhirVersion = new HashMap<>() {
         { put ("/v1/", FHIR_VERSIONS.R3); }
         { put ("/v2/", FHIR_VERSIONS.R4); }
     };

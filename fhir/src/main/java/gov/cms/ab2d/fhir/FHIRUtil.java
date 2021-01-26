@@ -27,10 +27,10 @@ public final class FHIRUtil {
 
             Object newIssue = Versions.instantiateClass(version, "OperationOutcome", "OperationOutcomeIssueComponent");
 
-            Object severityError = Versions.instantiateEnum(version, "OperationOutcome","IssueSeverity", "ERROR");
+            Object severityError = Versions.instantiateEnum(version, "OperationOutcome", "IssueSeverity", "ERROR");
             Versions.invokeSetMethod(newIssue, "setSeverity", severityError, severityError.getClass());
 
-            Object issueTypeInvalid = Versions.instantiateEnum(version, "OperationOutcome","IssueType", "INVALID");
+            Object issueTypeInvalid = Versions.instantiateEnum(version, "OperationOutcome", "IssueType", "INVALID");
             Versions.invokeSetMethod(newIssue, "setCode", issueTypeInvalid, issueTypeInvalid.getClass());
             Object codableConcept = Versions.instantiateClass(version, "CodeableConcept");
             Versions.invokeSetMethod(codableConcept, "setText", msg, String.class);
