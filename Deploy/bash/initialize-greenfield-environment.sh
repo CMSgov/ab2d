@@ -358,32 +358,67 @@ set_secrets ()
     AB2D_BFD_KMS_ARN=$(./get-database-secret.py $CMS_ENV_SS ab2d_bfd_kms_arn $DATABASE_SECRET_DATETIME)
   fi
 
+  AB2D_SLACK_HPMS_WEBHOOK=$(./get-database-secret.py $CMS_ENV_SS ab2d_slack_hpms_webhook $DATABASE_SECRET_DATETIME)
+  if [ -z "${AB2D_SLACK_HPMS_WEBHOOK}" ]; then
+    echo "*********************************************************"
+    ./create-database-secret.py $CMS_ENV_SS ab2d_slack_hpms_webhook $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+    echo "*********************************************************"
+    AB2D_SLACK_HPMS_WEBHOOK=$(./get-database-secret.py $CMS_ENV_SS ab2d_slack_hpms_webhook $DATABASE_SECRET_DATETIME)
+  fi
+
+  # todo: remove dev from this list after successfully testing
+  if [ "${CMS_ENV_SS}" == "ab2d-sbx-sandbox" ] \
+      || [ "${CMS_ENV_SS}" == "ab2d-east-prod" ] \
+      || [ "${CMS_ENV_SS}" == "ab2d-dev" ]; then
+
+    AB2D_SLACK_ALERT_WEBHOOKS=$(./get-database-secret.py $CMS_ENV_SS ab2d_slack_alert_webhooks $DATABASE_SECRET_DATETIME)
+    if [ -z "${AB2D_SLACK_ALERT_WEBHOOKS}" ]; then
+      echo "*********************************************************"
+      ./create-database-secret.py $CMS_ENV_SS ab2d_slack_alert_webhooks $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+      echo "*********************************************************"
+      AB2D_SLACK_ALERT_WEBHOOKS=$(./get-database-secret.py $CMS_ENV_SS ab2d_slack_alert_webhooks $DATABASE_SECRET_DATETIME)
+    fi
+
+    AB2D_SLACK_TRACE_WEBHOOKS=$(./get-database-secret.py $CMS_ENV_SS ab2d_slack_trace_webhooks $DATABASE_SECRET_DATETIME)
+    if [ -z "${AB2D_SLACK_TRACE_WEBHOOKS}" ]; then
+      echo "*********************************************************"
+      ./create-database-secret.py $CMS_ENV_SS ab2d_slack_trace_webhooks $KMS_KEY_ID $DATABASE_SECRET_DATETIME
+      echo "*********************************************************"
+      AB2D_SLACK_TRACE_WEBHOOKS=$(./get-database-secret.py $CMS_ENV_SS ab2d_slack_trace_webhooks $DATABASE_SECRET_DATETIME)
+    fi
+
+  fi
+
   # If any secret produced an error, exit the script
 
-  if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${DATABASE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${DATABASE_NAME}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${BFD_URL}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${BFD_KEYSTORE_LOCATION}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${BFD_KEYSTORE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${HICN_HASH_PEPPER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${HICN_HASH_ITER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${NEW_RELIC_APP_NAME}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${NEW_RELIC_LICENSE_KEY}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${AB2D_KEYSTORE_LOCATION}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${AB2D_KEYSTORE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${AB2D_OKTA_JWT_ISSUER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${OKTA_CLIENT_ID}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${OKTA_CLIENT_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${SECONDARY_USER_OKTA_CLIENT_ID}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${SECONDARY_USER_OKTA_CLIENT_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${AB2D_HPMS_URL}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${AB2D_HPMS_API_PARAMS}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${AB2D_HPMS_AUTH_KEY_ID}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${AB2D_HPMS_AUTH_KEY_SECRET}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${AB2D_BFD_INSIGHTS_S3_BUCKET}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-    || [ "${AB2D_BFD_KMS_ARN}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
+  DATABASE_SECRET_ERROR_MESSAGE="ERROR: Cannot get database secret because KMS key is disabled!"
+
+  if [ "${DATABASE_USER}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+    || [ "${DATABASE_PASSWORD}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+    || [ "${DATABASE_NAME}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+    || [ "${BFD_URL}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+    || [ "${BFD_KEYSTORE_LOCATION}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+    || [ "${BFD_KEYSTORE_PASSWORD}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+    || [ "${HICN_HASH_PEPPER}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+    || [ "${HICN_HASH_ITER}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+    || [ "${NEW_RELIC_APP_NAME}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+    || [ "${NEW_RELIC_LICENSE_KEY}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+    || [ "${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+    || [ "${AB2D_KEYSTORE_LOCATION}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+    || [ "${AB2D_KEYSTORE_PASSWORD}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+    || [ "${AB2D_OKTA_JWT_ISSUER}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+    || [ "${OKTA_CLIENT_ID}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+    || [ "${OKTA_CLIENT_PASSWORD}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+    || [ "${SECONDARY_USER_OKTA_CLIENT_ID}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+    || [ "${SECONDARY_USER_OKTA_CLIENT_PASSWORD}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+    || [ "${AB2D_HPMS_URL}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+    || [ "${AB2D_HPMS_API_PARAMS}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+    || [ "${AB2D_HPMS_AUTH_KEY_ID}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+    || [ "${AB2D_HPMS_AUTH_KEY_SECRET}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+    || [ "${AB2D_BFD_INSIGHTS_S3_BUCKET}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+    || [ "${AB2D_BFD_KMS_ARN}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+    || [ "${AB2D_SLACK_ALERT_WEBHOOKS}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+    || [ "${AB2D_SLACK_TRACE_WEBHOOKS}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ]; then
       echo "ERROR: Cannot get secrets because KMS key is disabled!"
       exit 1
   fi

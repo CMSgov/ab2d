@@ -314,6 +314,24 @@ if [ -z "${AB2D_HICN_HASH_PEPPER}" ]; then
   AB2D_HICN_HASH_PEPPER=$(./get-database-secret.py "${CMS_ENV}" hicn_hash_pepper "${DATABASE_SECRET_DATETIME}")
 fi
 
+AB2D_SLACK_ALERT_WEBHOOKS=$(./get-database-secret.py "${TARGET_CMS_ENV}" ab2d_slack_alert_webhooks "${DATABASE_SECRET_DATETIME}")
+
+if [ -z "${AB2D_SLACK_ALERT_WEBHOOKS}" ]; then
+  echo "**************************************************"
+  echo "ERROR: AB2D SLACK ALERT WEBHOOKS secret not found."
+  echo "**************************************************"
+  exit 1
+fi
+
+AB2D_SLACK_TRACE_WEBHOOKS=$(./get-database-secret.py "${TARGET_CMS_ENV}" ab2d_slack_trace_webhooks "${DATABASE_SECRET_DATETIME}")
+
+if [ -z "${AB2D_SLACK_TRACE_WEBHOOKS}" ]; then
+  echo "**************************************************"
+  echo "ERROR: AB2D SLACK TRACE WEBHOOKS secret not found."
+  echo "**************************************************"
+  exit 1
+fi
+
 # Create or get new relic app name secret
 
 NEW_RELIC_APP_NAME=$(./get-database-secret.py "${CMS_ENV}" new_relic_app_name "${DATABASE_SECRET_DATETIME}")
@@ -572,6 +590,8 @@ terraform apply \
   --var "override_task_definition_arn=${OVERRIDE_TASK_DEFINITION_ARN}" \
   --var "percent_capacity_increase=${PERCENT_CAPACITY_INCREASE}" \
   --var "region=${REGION}" \
+  --var "slack_alert_webhooks=${AB2D_SLACK_ALERT_WEBHOOKS}" \
+  --var "slack_trace_webhooks=${AB2D_SLACK_TRACE_WEBHOOKS}" \
   --var "ssh_key_name=${SSH_KEY_NAME}" \
   --var "ssh_username=${SSH_USERNAME}" \
   --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \

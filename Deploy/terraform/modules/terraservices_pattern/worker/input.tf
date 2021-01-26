@@ -37,6 +37,8 @@ variable "node_subnet_ids" {type=list(string)}
 variable "override_task_definition_arn" {}
 variable "percent_capacity_increase" {}
 variable "region" {}
+variable "slack_alert_webhooks" {}
+variable "slack_trace_webhooks" {}
 variable "ssh_key_name" {}
 variable "ssh_username" {}
 variable "vpc_id" {}

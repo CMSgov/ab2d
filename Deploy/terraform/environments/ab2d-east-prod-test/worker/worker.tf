@@ -69,6 +69,8 @@ module "worker" {
   override_task_definition_arn      = var.override_task_definition_arn
   percent_capacity_increase         = var.percent_capacity_increase
   region                            = var.region
+  slack_alert_webhooks              = var.slack_alert_webhooks
+  slack_trace_webhooks              = var.slack_trace_webhooks
   ssh_key_name                      = var.env
   ssh_username                      = var.ssh_username
   vpc_id                            = data.terraform_remote_state.core.outputs.vpc_id
