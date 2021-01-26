@@ -3,7 +3,10 @@ package gov.cms.ab2d.fhir;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.*;
 
-import java.util.*;
+import java.util.List;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.Calendar;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -37,7 +40,7 @@ public class ExtensionUtils {
             Versions.invokeSetMethod(currencyExtension, "setUrl", CURRENCY_IDENTIFIER, String.class);
             Versions.invokeSetMethod(currencyExtension, "setValue", coding, Class.forName(Versions.getClassName(version, "Type")));
 
-            Versions.invokeSetMethod(identifier, "setExtension", List.of(currencyExtension), java.util.List.class);
+            Versions.invokeSetMethod(identifier, "setExtension", List.of(currencyExtension), List.class);
 
             Object ext = Versions.instantiateClass(version, "Extension");
             Versions.invokeSetMethod(ext, "setUrl", ID_EXT, String.class);

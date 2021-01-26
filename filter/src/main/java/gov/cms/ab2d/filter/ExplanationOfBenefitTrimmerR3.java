@@ -24,7 +24,7 @@ public class ExplanationOfBenefitTrimmerR3 {
             return null;
         }
         // Copy it so we don't destroy the original
-        org.hl7.fhir.dstu3.model.ExplanationOfBenefit newBenefit = benefit.copy();
+        ExplanationOfBenefit newBenefit = benefit.copy();
         // Remove the unauthorized data
         cleanOutUnNeededData(newBenefit);
         // Return the sanitized data
@@ -36,7 +36,7 @@ public class ExplanationOfBenefitTrimmerR3 {
      *
      * @param benefit - The ExplanationOfBenefit information (the copy)
      */
-    private static void cleanOutUnNeededData(org.hl7.fhir.dstu3.model.ExplanationOfBenefit benefit) {
+    private static void cleanOutUnNeededData(ExplanationOfBenefit benefit) {
         /*
            Keep:
               patient
@@ -105,7 +105,7 @@ public class ExplanationOfBenefitTrimmerR3 {
      * @return the cleaned up data
      */
     @SuppressWarnings("deprecation")
-    private static org.hl7.fhir.dstu3.model.ExplanationOfBenefit.ItemComponent cleanOutItemComponent(org.hl7.fhir.dstu3.model.ExplanationOfBenefit.ItemComponent component) {
+    private static ExplanationOfBenefit.ItemComponent cleanOutItemComponent(ExplanationOfBenefit.ItemComponent component) {
         /*
          Keep:
               sequence

@@ -18,7 +18,6 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IBaseConformance;
-import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.retry.annotation.Backoff;
@@ -94,7 +93,7 @@ public class BFDClientImpl implements BFDClient {
      * that contain no EoBs.
      *
      * @param patientID The requested patient's ID
-     * @return {@link org.hl7.fhir.instance.model.api.IBaseBundle} Containing a number (possibly 0) of {@link IBaseResource}
+     * @return {@link org.hl7.fhir.instance.model.api.IBaseBundle} Containing a number (possibly 0) of Resources
      * objects
      * @throws ResourceNotFoundException when the requested patient does not exist
      */
@@ -116,7 +115,7 @@ public class BFDClientImpl implements BFDClient {
      *
      * @param patientID The requested patient's ID
      * @param sinceTime The start date for the request
-     * @return {@link IBaseBundle} Containing a number (possibly 0) of {@link IBaseResource}
+     * @return {@link IBaseBundle} Containing a number (possibly 0) of Resources
      * objects
      * @throws ResourceNotFoundException when the requested patient does not exist
      */

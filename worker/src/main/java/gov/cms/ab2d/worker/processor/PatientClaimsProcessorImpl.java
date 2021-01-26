@@ -8,7 +8,6 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.BeneficiarySearchEvent;
 import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.EobUtils;
-import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import lombok.RequiredArgsConstructor;

@@ -12,7 +12,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static gov.cms.ab2d.fhir.ExtensionUtils.*;
+import static gov.cms.ab2d.fhir.ExtensionUtils.CURRENT_MBI;
+import static gov.cms.ab2d.fhir.ExtensionUtils.HISTORIC_MBI;
+import static gov.cms.ab2d.fhir.ExtensionUtils.MBI_ID;
 
 @Slf4j
 public class IdentifierUtils {
@@ -149,7 +151,7 @@ public class IdentifierUtils {
         return extensions.stream().filter(
                 extension -> {
                     try {
-                        return (Versions.invokeGetMethod(extension, "getUrl")).equals(CURRENCY_IDENTIFIER);
+                        return Versions.invokeGetMethod(extension, "getUrl").equals(CURRENCY_IDENTIFIER);
                     } catch (Exception e) {
                         log.error("Unable to get URL from extension");
                         return false;
