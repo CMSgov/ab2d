@@ -715,7 +715,8 @@ class CoverageServiceImplTest {
         Set<Identifiers> results1 = Set.of(createIdentifier("123-1"),
                 createIdentifier("456-1"), createIdentifier("789-1"));
         Set<Identifiers> results2 = Set.of(createIdentifier("123-1"),
-                createIdentifier("456-2"), createIdentifier("789-2"));
+                createIdentifier("456-2"), createIdentifier("789-2"),
+                createIdentifier("890-0"));
 
         coverageService.submitSearch(period1Jan.getId(), "testing");
         CoverageSearchEvent inProgress1 = startSearchAndPullEvent();
@@ -740,13 +741,13 @@ class CoverageServiceImplTest {
         Map<String, Long> deltaTypeCount =
                 deltas.stream().collect(Collectors.groupingBy(CoverageDelta::getType, Collectors.counting()));
 
-        assertEquals(3, searchDiff.getCurrentCount());
+        assertEquals(4, searchDiff.getCurrentCount());
         assertEquals(3, searchDiff.getPreviousCount());
         assertEquals(1, searchDiff.getUnchanged());
         assertEquals(2, searchDiff.getDeletions());
         assertEquals(2, deltaTypeCount.get(COVERAGE_DELETED));
-        assertEquals(2, searchDiff.getAdditions());
-        assertEquals(2, deltaTypeCount.get(COVERAGE_ADDED));
+        assertEquals(3, searchDiff.getAdditions());
+        assertEquals(3, deltaTypeCount.get(COVERAGE_ADDED));
     }
 
     @DisplayName("Delete previous search")
