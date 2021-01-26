@@ -36,7 +36,7 @@
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
         <logback-encoder.version>6.6</logback-encoder.version>
         <testcontainers.version>1.15.1</testcontainers.version>
-        <newrelic.version>6.2.1</newrelic.version>
+        <newrelic.version>6.3.0</newrelic.version>
 
         <!-- Maven plugin versions -->
         <jacoco.version>0.8.6</jacoco.version>
