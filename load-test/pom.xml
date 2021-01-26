@@ -13,7 +13,7 @@
 
     <properties>
         <project.root>${basedir}/..</project.root>
-        <jmeter.version>5.4</jmeter.version>
+        <jmeter.version>5.4.1</jmeter.version>
     </properties>
 
     <dependencies>
