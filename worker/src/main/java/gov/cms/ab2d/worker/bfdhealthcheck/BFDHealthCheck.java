@@ -55,7 +55,7 @@ class BFDHealthCheck {
             markFailure();
         }
         try {
-            Versions.FHIR_VERSIONS version = bfdClient.getVersion();
+            Versions.FhirVersions version = bfdClient.getVersion();
             if (!errorOccurred) {
                 if (!MetaDataUtils.metaDataValid(capabilityStatement, version)) {
                     markFailure();

@@ -14,7 +14,7 @@ import java.util.Map;
 
 @Slf4j
 public class FhirUtils {
-    public static void addMbiIdsToEobs(List<IBaseResource> eobs, Map<String, CoverageSummary> patients, Versions.FHIR_VERSIONS version) {
+    public static void addMbiIdsToEobs(List<IBaseResource> eobs, Map<String, CoverageSummary> patients, Versions.FhirVersions version) {
         if (eobs == null || eobs.isEmpty()) {
             return;
         }

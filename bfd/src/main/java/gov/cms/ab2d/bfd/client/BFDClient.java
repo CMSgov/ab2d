@@ -28,7 +28,7 @@ public interface BFDClient {
 
     IBaseConformance capabilityStatement();
 
-    Versions.FHIR_VERSIONS getVersion();
+    Versions.FhirVersions getVersion();
 
     ThreadLocal<String> BFD_BULK_JOB_ID = new ThreadLocal<>();
 }

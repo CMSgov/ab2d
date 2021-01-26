@@ -150,7 +150,7 @@ class JobServiceTest {
         Contract contract = contractRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
         Job job = jobService.createJob(EOB, LOCAL_HOST, contract.getContractNumber(), NDJSON_FIRE_CONTENT_TYPE, null,
-                Versions.FHIR_VERSIONS.R3);
+                Versions.FhirVersions.R3);
         dataSetup.queueForCleanup(job);
 
         assertNotNull(job);
@@ -165,7 +165,7 @@ class JobServiceTest {
         assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
         assertEquals(JobStatus.SUBMITTED, job.getStatus());
         assertEquals(0, job.getJobOutputs().size());
-        assertEquals(Versions.FHIR_VERSIONS.R3, job.getFhirVersion());
+        assertEquals(Versions.FhirVersions.R3, job.getFhirVersion());
         assertNull(job.getLastPollTime());
         assertNull(job.getExpiresAt());
         assertTrue(job.getJobUuid().matches("[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"));
@@ -182,7 +182,7 @@ class JobServiceTest {
         dataSetup.setupContractWithNoAttestation(USERNAME, CONTRACT_NUMBER, List.of());
         assertThrows(InvalidContractException.class,
                 () -> jobService.createJob(EOB, LOCAL_HOST, DataSetup.VALID_CONTRACT_NUMBER, NDJSON_FIRE_CONTENT_TYPE, null,
-                        Versions.FHIR_VERSIONS.R3));
+                        Versions.FhirVersions.R3));
     }
 
     @Test
@@ -190,7 +190,7 @@ class JobServiceTest {
         dataSetup.setupContractWithNoAttestation(USERNAME, CONTRACT_NUMBER, List.of());
         assertThrows(InvalidContractException.class,
                 () -> jobService.createJob(EOB, LOCAL_HOST, null, NDJSON_FIRE_CONTENT_TYPE, null,
-                        Versions.FHIR_VERSIONS.R3));
+                        Versions.FhirVersions.R3));
     }
 
     @Test
@@ -198,7 +198,7 @@ class JobServiceTest {
         assertThrows(TransactionSystemException.class,
                 () -> jobService.createJob("Patient,ExplanationOfBenefit,Coverage", LOCAL_HOST,
                         null, NDJSON_FIRE_CONTENT_TYPE, null,
-                        Versions.FHIR_VERSIONS.R3));
+                        Versions.FhirVersions.R3));
     }
 
     @Test
@@ -556,7 +556,7 @@ class JobServiceTest {
 
     private Job createJobAllContracts(String outputFormat) {
         Job job = jobService.createJob(EOB, LOCAL_HOST, null, outputFormat, null,
-                Versions.FHIR_VERSIONS.R3);
+                Versions.FhirVersions.R3);
         dataSetup.queueForCleanup(job);
         return job;
     }

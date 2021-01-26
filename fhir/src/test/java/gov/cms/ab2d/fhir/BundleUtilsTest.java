@@ -37,8 +37,8 @@ class BundleUtilsTest {
         assertEquals("next -> http://google.com", BundleUtils.getAvailableLinksPretty(bundle));
         assertNull(BundleUtils.getAvailableLinks(null));
 
-        Stream<IDomainResource> patientStream = BundleUtils.getPatientStream(bundle, Versions.FHIR_VERSIONS.R3);
-        assertNull(BundleUtils.getPatientStream(null, Versions.FHIR_VERSIONS.R3));
+        Stream<IDomainResource> patientStream = BundleUtils.getPatientStream(bundle, Versions.FhirVersions.R3);
+        assertNull(BundleUtils.getPatientStream(null, Versions.FhirVersions.R3));
         List<IDomainResource> patients = patientStream.collect(Collectors.toList());
         assertNotNull(patients);
         assertEquals(1, patients.size());

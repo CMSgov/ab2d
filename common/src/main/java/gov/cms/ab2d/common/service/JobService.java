@@ -11,7 +11,7 @@ import java.time.OffsetDateTime;
 public interface JobService {
     String ZIPFORMAT = "application/zip";
 
-    Job createJob(String resourceTypes, String url, String contractNumber, String outputFormat, OffsetDateTime since, Versions.FHIR_VERSIONS version);
+    Job createJob(String resourceTypes, String url, String contractNumber, String outputFormat, OffsetDateTime since, Versions.FhirVersions version);
 
     void cancelJob(String jobUuid);
 

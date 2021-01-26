@@ -158,12 +158,12 @@ public class BFDClientImpl implements BFDClient {
     }
 
     private IBaseBundle clientSearch(@SuppressWarnings("rawtypes") ICriterion hashEquals) {
-        Versions.FHIR_VERSIONS version = Versions.FHIR_VERSIONS.R3;
+        Versions.FhirVersions version = Versions.FhirVersions.R3;
         try {
             version = getVersion();
         } catch (Exception e) {
             log.error("Invalid version", e);
-            version = Versions.FHIR_VERSIONS.R3;
+            version = Versions.FhirVersions.R3;
         }
         return client.search()
                 .forResource(SearchUtils.getPatientClass(version))
@@ -292,7 +292,7 @@ public class BFDClientImpl implements BFDClient {
     }
 
     @Override
-    public Versions.FHIR_VERSIONS getVersion() {
+    public Versions.FhirVersions getVersion() {
         return Versions.getVersion(fhirContext);
     }
 }

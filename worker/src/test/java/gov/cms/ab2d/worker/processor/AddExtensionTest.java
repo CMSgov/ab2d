@@ -69,7 +69,7 @@ public class AddExtensionTest {
         Map<String, CoverageSummary> patients = new HashMap<>();
         patients.put(beneId, summary);
 
-        FhirUtils.addMbiIdsToEobs(eobs, patients, Versions.FHIR_VERSIONS.R3);
+        FhirUtils.addMbiIdsToEobs(eobs, patients, Versions.FhirVersions.R3);
 
         List<org.hl7.fhir.dstu3.model.Extension> extensions = b.getExtension();
 
@@ -105,7 +105,7 @@ public class AddExtensionTest {
         Map<String, CoverageSummary> patients = new HashMap<>();
         patients.put(beneId, summary);
 
-        FhirUtils.addMbiIdsToEobs(eobs, patients, Versions.FHIR_VERSIONS.R3);
+        FhirUtils.addMbiIdsToEobs(eobs, patients, Versions.FhirVersions.R3);
 
         List<org.hl7.fhir.dstu3.model.Extension> extensions = b.getExtension();
 

@@ -59,7 +59,7 @@ public class Job {
     private String statusMessage;
     private String outputFormat;
     private Integer progress;
-    private Versions.FHIR_VERSIONS fhirVersion;
+    private Versions.FhirVersions fhirVersion;
 
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime lastPollTime;

@@ -13,14 +13,14 @@ public final class FHIRUtil {
     private FHIRUtil() {
     }
 
-    public static String outcomeToJSON(IBaseResource operationOutcome, Versions.FHIR_VERSIONS version) {
+    public static String outcomeToJSON(IBaseResource operationOutcome, Versions.FhirVersions version) {
         FhirContext ctx = Versions.getContextFromVersion(version);
         IParser jsonParser = ctx.newJsonParser();
         jsonParser.setPrettyPrint(true);
         return jsonParser.encodeResourceToString(operationOutcome);
     }
 
-    public static IBaseResource getErrorOutcome(String msg, Versions.FHIR_VERSIONS version) {
+    public static IBaseResource getErrorOutcome(String msg, Versions.FhirVersions version) {
         try {
             IBaseResource operationOutcome = (IBaseResource) Versions.instantiateClass(version, "OperationOutcome");
             List issues = (List) Versions.invokeGetMethod(operationOutcome, "getIssue");

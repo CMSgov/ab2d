@@ -58,7 +58,7 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public Job createJob(String resourceTypes, String url, String contractNumber, String outputFormat,
-                         OffsetDateTime since, Versions.FHIR_VERSIONS version) {
+                         OffsetDateTime since, Versions.FhirVersions version) {
         Job job = new Job();
         job.setResourceTypes(resourceTypes);
         job.setJobUuid(UUID.randomUUID().toString());

@@ -91,7 +91,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         Job job = jobRepository.findByJobUuid(jobUuid);
         List<Path> dataFiles = new ArrayList<>();
         List<Path> errorFiles = new ArrayList<>();
-        Versions.FHIR_VERSIONS version = Versions.FHIR_VERSIONS.R3;
+        Versions.FhirVersions version = Versions.FhirVersions.R3;
         if (job != null && job.getFhirVersion() != null) {
             version = job.getFhirVersion();
         }
@@ -209,7 +209,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      */
     private int processHandles(List<Future<EobSearchResult>> futureHandles, ProgressTracker progressTracker,
                                Map<String, CoverageSummary> patients, StreamHelper helper,
-                               Versions.FHIR_VERSIONS version) {
+                               Versions.FhirVersions version) {
         int numberOfEobs = 0;
         var iterator = futureHandles.iterator();
         while (iterator.hasNext()) {
@@ -231,7 +231,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         return numberOfEobs;
     }
 
-    private int writeOutResource(List<IBaseResource> eobs, StreamHelper helper, Versions.FHIR_VERSIONS version) {
+    private int writeOutResource(List<IBaseResource> eobs, StreamHelper helper, Versions.FhirVersions version) {
         var jsonParser = fhirContext.newJsonParser();
 
         String payload = "";
@@ -330,7 +330,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         }
     }
 
-    void writeExceptionToContractErrorFile(StreamHelper helper, String data, Exception e, Versions.FHIR_VERSIONS version) throws IOException {
+    void writeExceptionToContractErrorFile(StreamHelper helper, String data, Exception e, Versions.FhirVersions version) throws IOException {
         var errMsg = ExceptionUtils.getRootCauseMessage(e);
         IBaseResource operationOutcome = FHIRUtil.getErrorOutcome(errMsg, version);
 

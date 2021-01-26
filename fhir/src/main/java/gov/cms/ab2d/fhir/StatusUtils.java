@@ -6,7 +6,7 @@ import java.time.OffsetDateTime;
 
 @Slf4j
 public class StatusUtils {
-    public static String getFhirTime(Versions.FHIR_VERSIONS version, OffsetDateTime dateTime) {
+    public static String getFhirTime(Versions.FhirVersions version, OffsetDateTime dateTime) {
         try {
             Object dt = Versions.instantiateClassWithParam(version, "DateTimeType", dateTime.toString(), String.class);
             return (String) Versions.invokeGetMethod(dt, "toHumanDisplay");

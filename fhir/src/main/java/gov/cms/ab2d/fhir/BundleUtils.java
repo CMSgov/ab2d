@@ -53,7 +53,7 @@ public class BundleUtils {
         }
     }
 
-    public static Stream<IDomainResource> getPatientStream(IBaseBundle bundle, Versions.FHIR_VERSIONS version) {
+    public static Stream<IDomainResource> getPatientStream(IBaseBundle bundle, Versions.FhirVersions version) {
         try {
             Object patientEnum = Versions.instantiateEnum(version, "ResourceType", "Patient");
             List entries = getEntries(bundle);

@@ -9,7 +9,7 @@ class FHIRUtilTest {
     @Test
     void testGetErrorOutcome() {
         final String errText = "SOMETHING BROKE";
-        final IBaseResource o = FHIRUtil.getErrorOutcome(errText, Versions.FHIR_VERSIONS.R4);
+        final IBaseResource o = FHIRUtil.getErrorOutcome(errText, Versions.FhirVersions.R4);
         org.hl7.fhir.r4.model.OperationOutcome oo = (org.hl7.fhir.r4.model.OperationOutcome) o;
         assertTrue(oo instanceof  org.hl7.fhir.r4.model.OperationOutcome);
         assertEquals(org.hl7.fhir.r4.model.ResourceType.OperationOutcome, oo.getResourceType());
@@ -20,8 +20,8 @@ class FHIRUtilTest {
     @Test
     void testOutcomeToJSON() {
         final String errText = "SOMETHING BROKE";
-        final IBaseResource oo = FHIRUtil.getErrorOutcome(errText, Versions.FHIR_VERSIONS.R3);
-        final String payload = FHIRUtil.outcomeToJSON(oo, Versions.FHIR_VERSIONS.R3);
+        final IBaseResource oo = FHIRUtil.getErrorOutcome(errText, Versions.FhirVersions.R3);
+        final String payload = FHIRUtil.outcomeToJSON(oo, Versions.FhirVersions.R3);
         assertNotNull(payload);
         System.out.println(payload);
     }

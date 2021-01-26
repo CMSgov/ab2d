@@ -16,7 +16,7 @@ public class ExtensionUtils {
     static final String ID_EXT = "http://hl7.org/fhir/StructureDefinition/elementdefinition-identifier";
     public static final String REF_YEAR_EXT = "https://bluebutton.cms.gov/resources/variables/rfrnc_yr";
 
-    public static void addExtension(IBaseResource resource, IBase extension, Versions.FHIR_VERSIONS version) {
+    public static void addExtension(IBaseResource resource, IBase extension, Versions.FhirVersions version) {
         try {
             Versions.invokeSetMethod(resource, "addExtension", extension, Class.forName(Versions.getClassName(version, "Extension")));
         } catch (Exception ex) {
@@ -24,7 +24,7 @@ public class ExtensionUtils {
         }
     }
 
-    public static IBase createExtension(IBaseResource resource, String mbi, boolean current, Versions.FHIR_VERSIONS version) {
+    public static IBase createExtension(IBaseResource resource, String mbi, boolean current, Versions.FhirVersions version) {
         try {
             Object identifier = Versions.instantiateClass(version, "Identifier");
             Versions.invokeSetMethod(identifier, "setSystem", MBI_ID, String.class);

@@ -10,19 +10,19 @@ import java.util.List;
 import java.util.Map;
 
 public class Versions {
-    public enum FHIR_VERSIONS {
+    public enum FhirVersions {
         R3,
         R4
     }
 
-    private static Map<FHIR_VERSIONS, String> classLocations = new HashMap<>() {
-        { put (FHIR_VERSIONS.R3, "org.hl7.fhir.dstu3.model"); }
-        { put (FHIR_VERSIONS.R4, "org.hl7.fhir.r4.model"); }
+    private static Map<FhirVersions, String> classLocations = new HashMap<>() {
+        { put (FhirVersions.R3, "org.hl7.fhir.dstu3.model"); }
+        { put (FhirVersions.R4, "org.hl7.fhir.r4.model"); }
     };
 
-    private static Map<FHIR_VERSIONS, FhirContext> fhirContexts = new HashMap<>() {
-        { put (FHIR_VERSIONS.R3, FhirContext.forDstu3()); }
-        { put (FHIR_VERSIONS.R4, FhirContext.forR4()); }
+    private static Map<FhirVersions, FhirContext> fhirContexts = new HashMap<>() {
+        { put (FhirVersions.R3, FhirContext.forDstu3()); }
+        { put (FhirVersions.R4, FhirContext.forR4()); }
     };
 
     private static List<String> supportedClasses = List.of(
@@ -43,18 +43,18 @@ public class Versions {
             "ResourceType"
     );
 
-    private static Map<FhirVersionEnum, FHIR_VERSIONS> supportedFhirVersion = new HashMap<>() {
-        { put (FhirVersionEnum.DSTU3, FHIR_VERSIONS.R3); }
-        { put (FhirVersionEnum.R4, FHIR_VERSIONS.R4); }
+    private static Map<FhirVersionEnum, FhirVersions> supportedFhirVersion = new HashMap<>() {
+        { put (FhirVersionEnum.DSTU3, FhirVersions.R3); }
+        { put (FhirVersionEnum.R4, FhirVersions.R4); }
     };
 
-    private static Map<String, FHIR_VERSIONS> apiVersionToFhirVersion = new HashMap<>() {
-        { put ("/v1/", FHIR_VERSIONS.R3); }
-        { put ("/v2/", FHIR_VERSIONS.R4); }
+    private static Map<String, FhirVersions> apiVersionToFhirVersion = new HashMap<>() {
+        { put ("/v1/", FhirVersions.R3); }
+        { put ("/v2/", FhirVersions.R4); }
     };
 
-    public static FHIR_VERSIONS getVersionFromUrl(String url) {
-        FHIR_VERSIONS version = FHIR_VERSIONS.R3;
+    public static FhirVersions getVersionFromUrl(String url) {
+        FhirVersions version = FhirVersions.R3;
         String versionKey = apiVersionToFhirVersion.entrySet().stream()
                 .map(c -> c.getKey())
                 .filter(c -> url.contains(c))
@@ -65,7 +65,7 @@ public class Versions {
         return apiVersionToFhirVersion.get(versionKey);
     }
 
-    public static String getClassName(FHIR_VERSIONS version, String name) throws VersionNotSupported {
+    public static String getClassName(FhirVersions version, String name) throws VersionNotSupported {
         String base = classLocations.get(version);
         if (base == null) {
             throw new VersionNotSupported(version.toString() + " is not supported for " + name);
@@ -73,7 +73,7 @@ public class Versions {
         return base + "." + name;
     }
 
-    public static Object instantiateClass(FHIR_VERSIONS version, String objName) throws VersionNotSupported, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+    public static Object instantiateClass(FhirVersions version, String objName) throws VersionNotSupported, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         if (!supportedClasses.contains(objName)) {
             throw new RuntimeException("Class " + objName + " is not supported");
         }
@@ -83,7 +83,7 @@ public class Versions {
         return obj;
     }
 
-    public static Object instantiateClassWithParam(FHIR_VERSIONS version, String objName, Object arg, Class argClass) throws VersionNotSupported, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+    public static Object instantiateClassWithParam(FhirVersions version, String objName, Object arg, Class argClass) throws VersionNotSupported, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         if (!supportedClasses.contains(objName)) {
             throw new RuntimeException("Class " + objName + " is not supported");
         }
@@ -109,14 +109,14 @@ public class Versions {
         method.invoke(resource, val);
     }
 
-    public static Object instantiateEnum(FHIR_VERSIONS version, String cName, String value) throws VersionNotSupported, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+    public static Object instantiateEnum(FhirVersions version, String cName, String value) throws VersionNotSupported, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         String topClassName = getClassName(version, cName);
         Class clazz = Class.forName(topClassName);
         Method valueOf = clazz.getMethod("valueOf", String.class);
         return valueOf.invoke(null, value);
     }
 
-    public static Object instantiateEnum(FHIR_VERSIONS version, String topLevel, String lowerLevel, String value) throws VersionNotSupported, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+    public static Object instantiateEnum(FhirVersions version, String topLevel, String lowerLevel, String value) throws VersionNotSupported, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         String topClassName = getClassName(version, topLevel);
         Class top = Class.forName(topClassName);
         Class[] classes = top.getClasses();
@@ -129,7 +129,7 @@ public class Versions {
         return null;
     }
 
-    public static Object instantiateClass(FHIR_VERSIONS version, String topLevel, String lowerLevel) throws VersionNotSupported, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+    public static Object instantiateClass(FhirVersions version, String topLevel, String lowerLevel) throws VersionNotSupported, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         String name = getClassName(version, topLevel);
         Class clazz = Class.forName(name);
         String className = topLevel + "." + lowerLevel;
@@ -145,19 +145,19 @@ public class Versions {
         return null;
     }
 
-    public static FHIR_VERSIONS getVersion(FhirContext context) throws VersionNotSupported {
+    public static FhirVersions getVersion(FhirContext context) throws VersionNotSupported {
         if (context == null || context.getVersion() == null) {
             throw new VersionNotSupported("Null context passed");
         }
         FhirVersionEnum v = context.getVersion().getVersion();
-        FHIR_VERSIONS version = supportedFhirVersion.get(v);
+        FhirVersions version = supportedFhirVersion.get(v);
         if (version == null) {
             throw new VersionNotSupported(v.getFhirVersionString() + " is not supported");
         }
         return version;
     }
 
-    public static FhirContext getContextFromVersion(FHIR_VERSIONS version) {
+    public static FhirContext getContextFromVersion(FhirVersions version) {
         if (version == null) {
             return null;
         }

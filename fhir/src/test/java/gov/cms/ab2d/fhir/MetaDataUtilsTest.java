@@ -10,18 +10,18 @@ class MetaDataUtilsTest {
     @Test
     void testValid() {
         CapabilityStatement statement = new CapabilityStatement();
-        assertFalse(MetaDataUtils.metaDataValid(statement, Versions.FHIR_VERSIONS.R4));
+        assertFalse(MetaDataUtils.metaDataValid(statement, Versions.FhirVersions.R4));
         statement.setStatus(Enumerations.PublicationStatus.ACTIVE);
-        assertTrue(MetaDataUtils.metaDataValid(statement, Versions.FHIR_VERSIONS.R4));
+        assertTrue(MetaDataUtils.metaDataValid(statement, Versions.FhirVersions.R4));
         statement.setStatus(Enumerations.PublicationStatus.UNKNOWN);
-        assertFalse(MetaDataUtils.metaDataValid(statement, Versions.FHIR_VERSIONS.R4));
-        assertFalse(MetaDataUtils.metaDataValid(null, Versions.FHIR_VERSIONS.R4));
-        assertFalse(MetaDataUtils.metaDataValid(null, Versions.FHIR_VERSIONS.R4));
+        assertFalse(MetaDataUtils.metaDataValid(statement, Versions.FhirVersions.R4));
+        assertFalse(MetaDataUtils.metaDataValid(null, Versions.FhirVersions.R4));
+        assertFalse(MetaDataUtils.metaDataValid(null, Versions.FhirVersions.R4));
         assertFalse(MetaDataUtils.metaDataValid(null, null));
     }
 
     @Test
     void testClass() {
-        assertEquals(CapabilityStatement.class, MetaDataUtils.getCapabilityClass(Versions.FHIR_VERSIONS.R4));
+        assertEquals(CapabilityStatement.class, MetaDataUtils.getCapabilityClass(Versions.FhirVersions.R4));
     }
 }
