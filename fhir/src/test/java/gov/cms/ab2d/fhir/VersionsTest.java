@@ -14,8 +14,8 @@ import static org.junit.jupiter.api.Assertions.*;
 class VersionsTest {
 
     @Test
-    void executeGetMethod() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob = new ExplanationOfBenefit();
+    void executeGetMethod() {
+        ExplanationOfBenefit eob = new ExplanationOfBenefit();
         Reference patientId = new Reference("Patient/123");
         Versions.invokeSetMethod(eob, "setPatient", patientId, Reference.class);
         Object obj = Versions.invokeGetMethod(eob, "getPatient");
@@ -23,34 +23,34 @@ class VersionsTest {
     }
 
     @Test
-    void executeInstantiate() throws NoSuchMethodException, IllegalAccessException, InstantiationException, VersionNotSupported, InvocationTargetException, ClassNotFoundException {
+    void executeInstantiate() {
         Object obj1 = Versions.instantiateClass(Versions.FhirVersions.R4, "ExplanationOfBenefit");
-        assertEquals(org.hl7.fhir.r4.model.ExplanationOfBenefit.class, obj1.getClass());
+        assertEquals(ExplanationOfBenefit.class, obj1.getClass());
         Object obj2 = Versions.instantiateClass(Versions.FhirVersions.R3, "ExplanationOfBenefit");
-        assertEquals(org.hl7.fhir.dstu3.model.ExplanationOfBenefit.class, obj2.getClass());
-        assertThrows(RuntimeException.class, () -> Versions.instantiateClass(Versions.FhirVersions.R4, "EOB"));
+        assertEquals(ExplanationOfBenefit.class, obj2.getClass());
+        assertNull(Versions.instantiateClass(Versions.FhirVersions.R4, "EOB"));
         Object obj3 = Versions.instantiateClass(Versions.FhirVersions.R3, "OperationOutcome", "OperationOutcomeIssueComponent");
-        assertEquals(org.hl7.fhir.dstu3.model.OperationOutcome.OperationOutcomeIssueComponent.class, obj3.getClass());
+        assertEquals(OperationOutcome.OperationOutcomeIssueComponent.class, obj3.getClass());
     }
 
     @Test
-    void executeInstantiateEnum() throws Exception {
+    void executeInstantiateEnum() {
         Object obj = Versions.instantiateEnum(Versions.FhirVersions.R4, "OperationOutcome", "IssueSeverity", "ERROR");
         assertEquals(OperationOutcome.IssueSeverity.ERROR, obj);
     }
 
     @Test
-    void executeSubObject() throws NoSuchMethodException, IllegalAccessException, InstantiationException, VersionNotSupported, InvocationTargetException, ClassNotFoundException {
+    void executeSubObject() {
         Object obj = Versions.instantiateClass(Versions.FhirVersions.R4, "OperationOutcome", "OperationOutcomeIssueComponent");
         assertEquals(OperationOutcome.OperationOutcomeIssueComponent.class, obj.getClass());
     }
 
     @Test
     void testInvalidVersion() {
-        assertThrows(RuntimeException.class, () -> Versions.instantiateClass(Versions.FhirVersions.R3, "Bogus"));
+        assertNull(Versions.instantiateClass(Versions.FhirVersions.R3, "Bogus"));
         assertThrows(RuntimeException.class, () -> Versions.getClassName(null, "Bogus"));
         assertThrows(RuntimeException.class, () -> Versions.instantiateClassWithParam(Versions.FhirVersions.R3, "Bogus", "dumb", String.class));
-        assertThrows(ClassNotFoundException.class, () -> Versions.instantiateEnum(Versions.FhirVersions.R3, "Bogus", "dumb", "ONE"));
+        assertNull(Versions.instantiateEnum(Versions.FhirVersions.R3, "Bogus", "dumb", "ONE"));
     }
 
     @Test

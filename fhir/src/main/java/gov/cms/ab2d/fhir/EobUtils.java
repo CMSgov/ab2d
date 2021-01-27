@@ -16,15 +16,10 @@ public class EobUtils {
         if (eob == null) {
             return null;
         }
-        try {
-            IBase ref = (IBase) Versions.invokeGetMethod(eob, "getPatient");
-            String patientVal =  (String) Versions.invokeGetMethod(ref, "getReference");
-            if (patientVal != null) {
-                return patientVal.replaceFirst("Patient/", "");
-            }
-        } catch (Exception ex) {
-            log.error("Unable to find patient ID from resource");
-            return null;
+        IBase ref = (IBase) Versions.invokeGetMethod(eob, "getPatient");
+        String patientVal =  (String) Versions.invokeGetMethod(ref, "getReference");
+        if (patientVal != null) {
+            return patientVal.replaceFirst("Patient/", "");
         }
         return null;
     }
@@ -33,24 +28,15 @@ public class EobUtils {
         if (ben == null) {
             return null;
         }
-        try {
-            return Versions.invokeGetMethod(ben, "getBillablePeriod");
-        } catch (Exception ex) {
-            log.error("Cannot call getBillablePeriod form EOB");
-            return null;
-        }
+        return Versions.invokeGetMethod(ben, "getBillablePeriod");
     }
+
     public static Date getStartDate(IBaseResource ben) {
         Object period = getPeriod(ben);
         if (period == null) {
             return null;
         }
-        try {
-            return (Date) Versions.invokeGetMethod(period, "getStart");
-        } catch (Exception ex) {
-            log.error("Cannot call getBillablePeriod form EOB");
-            return null;
-        }
+        return (Date) Versions.invokeGetMethod(period, "getStart");
     }
 
     public static Date getEndDate(IBaseResource ben) {
@@ -58,41 +44,20 @@ public class EobUtils {
         if (period == null) {
             return null;
         }
-        try {
-            return (Date) Versions.invokeGetMethod(period, "getEnd");
-        } catch (Exception ex) {
-            log.error("Cannot call getBillablePeriod form EOB");
-            return null;
-        }
+        return (Date) Versions.invokeGetMethod(period, "getEnd");
     }
 
     public static boolean isPartD(IBaseResource eob) {
-        try {
-            if (!eob.fhirType().endsWith("ExplanationOfBenefit")) {
-                return false;
-            }
-            Object c = Versions.invokeGetMethod(eob, "getType");
-            List codes = (List) Versions.invokeGetMethod(c, "getCoding");
-            return codes.stream()
-                    .filter(code -> {
-                        try {
-                            return ((String) Versions.invokeGetMethod(code, "getSystem")).endsWith(EOB_TYPE_CODE_SYS);
-                        } catch (Exception e) {
-                            log.error("Can't get coding system to determine part d");
-                            return false;
-                        }
-                    })
-                    .anyMatch(code -> {
-                        try {
-                            return ((String) Versions.invokeGetMethod(code, "getCode")).equalsIgnoreCase(EOB_TYPE_PART_D_CODE_VAL);
-                        } catch (Exception e) {
-                            log.error("Unable to get coding code value");
-                            return false;
-                        }
-                    });
-        } catch (Exception ex) {
-            log.error("Unable to get the eob type");
+        if (eob == null) {
             return false;
         }
+        if (!eob.fhirType().endsWith("ExplanationOfBenefit")) {
+            return false;
+        }
+        Object c = Versions.invokeGetMethod(eob, "getType");
+        List codes = (List) Versions.invokeGetMethod(c, "getCoding");
+        return codes.stream()
+                .filter(code -> ((String) Versions.invokeGetMethod(code, "getSystem")).endsWith(EOB_TYPE_CODE_SYS))
+                .anyMatch(code -> EOB_TYPE_PART_D_CODE_VAL.equalsIgnoreCase((String) Versions.invokeGetMethod(code, "getCode")));
     }
 }

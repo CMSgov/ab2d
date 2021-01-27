@@ -20,36 +20,36 @@ public class ExtensionUtils {
     public static final String REF_YEAR_EXT = "https://bluebutton.cms.gov/resources/variables/rfrnc_yr";
 
     public static void addExtension(IBaseResource resource, IBase extension, Versions.FhirVersions version) {
+        if (resource == null || extension == null) {
+            return;
+        }
         try {
             Versions.invokeSetMethod(resource, "addExtension", extension, Class.forName(Versions.getClassName(version, "Extension")));
-        } catch (Exception ex) {
-            log.error("Unable to add extension to resource", ex);
-        }
+        } catch (Exception ex) {}
     }
 
-    public static IBase createExtension(IBaseResource resource, String mbi, boolean current, Versions.FhirVersions version) {
+    public static IBase createExtension(String mbi, boolean current, Versions.FhirVersions version) {
+        Object identifier = Versions.instantiateClass(version, "Identifier");
+        Versions.invokeSetMethod(identifier, "setSystem", MBI_ID, String.class);
+        Versions.invokeSetMethod(identifier, "setValue", mbi, String.class);
+
+        Object coding = Versions.instantiateClass(version, "Coding");
+        Versions.invokeSetMethod(coding, "setCode", current ? CURRENT_MBI : HISTORIC_MBI, String.class);
+
+        Object currencyExtension = Versions.instantiateClass(version, "Extension");
+        Versions.invokeSetMethod(currencyExtension, "setUrl", CURRENCY_IDENTIFIER, String.class);
         try {
-            Object identifier = Versions.instantiateClass(version, "Identifier");
-            Versions.invokeSetMethod(identifier, "setSystem", MBI_ID, String.class);
-            Versions.invokeSetMethod(identifier, "setValue", mbi, String.class);
-
-            Object coding = Versions.instantiateClass(version, "Coding");
-            Versions.invokeSetMethod(coding, "setCode", current ? CURRENT_MBI : HISTORIC_MBI, String.class);
-
-            Object currencyExtension = Versions.instantiateClass(version, "Extension");
-            Versions.invokeSetMethod(currencyExtension, "setUrl", CURRENCY_IDENTIFIER, String.class);
             Versions.invokeSetMethod(currencyExtension, "setValue", coding, Class.forName(Versions.getClassName(version, "Type")));
+        } catch (Exception ex) {}
 
-            Versions.invokeSetMethod(identifier, "setExtension", List.of(currencyExtension), List.class);
+        Versions.invokeSetMethod(identifier, "setExtension", List.of(currencyExtension), List.class);
 
-            Object ext = Versions.instantiateClass(version, "Extension");
-            Versions.invokeSetMethod(ext, "setUrl", ID_EXT, String.class);
+        Object ext = Versions.instantiateClass(version, "Extension");
+        Versions.invokeSetMethod(ext, "setUrl", ID_EXT, String.class);
+        try {
             Versions.invokeSetMethod(ext, "setValue", identifier, Class.forName(Versions.getClassName(version, "Type")));
-            return (IBase) ext;
-        } catch (Exception ex) {
-            log.error("Unable to create extension for MBI " + mbi, ex);
-            return null;
-        }
+        } catch (Exception ex) {}
+        return (IBase) ext;
     }
 
     public static int getReferenceYear(IDomainResource patient) {

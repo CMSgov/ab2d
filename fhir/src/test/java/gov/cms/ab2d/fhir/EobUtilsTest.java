@@ -19,6 +19,7 @@ class EobUtilsTest {
         org.hl7.fhir.dstu3.model.Patient patient = new org.hl7.fhir.dstu3.model.Patient();
         org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob = new org.hl7.fhir.dstu3.model.ExplanationOfBenefit();
         assertTrue(BundleUtils.isExplanationOfBenefitResource(eob));
+        assertNull(EobUtils.getPatientId(eob));
         eob.setPatient(new org.hl7.fhir.dstu3.model.Reference().setReference("Patient/bene-id"));
         Date d1 = new Date();
         Date d2 = new Date();
@@ -42,5 +43,7 @@ class EobUtilsTest {
 
         assertTrue(EobUtils.isPartD(eob));
         assertFalse(EobUtils.isPartD(null));
+
+        assertFalse(EobUtils.isPartD(patient));
     }
 }

@@ -2,13 +2,14 @@ package gov.cms.ab2d.fhir;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
+import lombok.extern.slf4j.Slf4j;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 public class Versions {
     public enum FhirVersions {
         R3,
@@ -40,7 +41,8 @@ public class Versions {
             "OperationOutcome.IssueType",
             "Enumerations.PublicationStatus",
             "DateTimeType",
-            "ResourceType"
+            "ResourceType",
+            "Period"
     );
 
     private static Map<FhirVersionEnum, FhirVersions> supportedFhirVersion = new HashMap<>() {
@@ -65,7 +67,7 @@ public class Versions {
         return apiVersionToFhirVersion.get(versionKey);
     }
 
-    public static String getClassName(FhirVersions version, String name) throws VersionNotSupported {
+    public static String getClassName(FhirVersions version, String name) {
         String base = classLocations.get(version);
         if (base == null) {
             throw new VersionNotSupported(version.toString() + " is not supported for " + name);
@@ -73,79 +75,118 @@ public class Versions {
         return base + "." + name;
     }
 
-    public static Object instantiateClass(FhirVersions version, String objName) throws VersionNotSupported, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+    public static Object instantiateClass(FhirVersions version, String objName) {
+        try {
+            if (!supportedClasses.contains(objName)) {
+                throw new RuntimeException("Class " + objName + " is not supported");
+            }
+            String name = getClassName(version, objName);
+            Class clazz = Class.forName(name);
+            Object obj = clazz.getDeclaredConstructor(null).newInstance();
+            return obj;
+        } catch (Exception ex) {
+            log.error("Unable to instantiate " + objName + " class", ex);
+            return null;
+        }
+    }
+
+    static Object instantiateClassWithParam(FhirVersions version, String objName, Object arg, Class argClass) {
         if (!supportedClasses.contains(objName)) {
             throw new RuntimeException("Class " + objName + " is not supported");
         }
         String name = getClassName(version, objName);
-        Class clazz = Class.forName(name);
-        Object obj = clazz.getDeclaredConstructor(null).newInstance();
-        return obj;
-    }
+        try {
+            Class clazz = Class.forName(name);
+            Object obj = clazz.getDeclaredConstructor(argClass).newInstance(arg);
+            return obj;
+        } catch (Exception ex) {
+            log.error("Unable to instantiate " + objName + " with  " + argClass.getName() + " class", ex);
+            return null;
 
-    public static Object instantiateClassWithParam(FhirVersions version, String objName, Object arg, Class argClass) throws VersionNotSupported, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        if (!supportedClasses.contains(objName)) {
-            throw new RuntimeException("Class " + objName + " is not supported");
         }
-        String name = getClassName(version, objName);
-        Class clazz = Class.forName(name);
-        Object obj = clazz.getDeclaredConstructor(argClass).newInstance(arg);
-        return obj;
     }
 
-    public static Object invokeGetMethod(Object resource, String methodName) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        Method method = resource.getClass().getMethod(methodName);
-        return method.invoke(resource);
+    static Object invokeGetMethod(Object resource, String methodName) {
+        try {
+            Method method = resource.getClass().getMethod(methodName);
+            return method.invoke(resource);
+        } catch (Exception ex) {
+            log.error("Unable to invoke get method " + methodName + " on " + resource.getClass().getName());
+            return null;
+        }
     }
 
-    public static Object invokeGetMethodWithArg(Object resource, String methodName, Object arg, Class clazz) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        Method method = resource.getClass().getMethod(methodName, clazz);
-        Object obj = method.invoke(resource, arg);
-        return obj;
+    static Object invokeGetMethodWithArg(Object resource, String methodName, Object arg, Class clazz) {
+        try {
+            Method method = resource.getClass().getMethod(methodName, clazz);
+            return method.invoke(resource, arg);
+        } catch (Exception ex) {
+            log.error("Unable to invoke get method " + methodName + " on " + resource.getClass().getName() + " with " + clazz.getName() + " argument", ex);
+            return null;
+        }
     }
 
-    public static void invokeSetMethod(Object resource, String methodName, Object val, Class paramType) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        Method method = resource.getClass().getMethod(methodName, paramType);
-        method.invoke(resource, val);
+    static void invokeSetMethod(Object resource, String methodName, Object val, Class paramType) {
+        try {
+            Method method = resource.getClass().getMethod(methodName, paramType);
+            method.invoke(resource, val);
+        } catch (Exception ex) {
+            log.error("Unable to invoke set method " + methodName + " on " + resource.getClass().getName() + " with " + val + " argument", ex);
+        }
     }
 
-    public static Object instantiateEnum(FhirVersions version, String cName, String value) throws VersionNotSupported, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        String topClassName = getClassName(version, cName);
-        Class clazz = Class.forName(topClassName);
-        Method valueOf = clazz.getMethod("valueOf", String.class);
-        return valueOf.invoke(null, value);
+    public static Object instantiateEnum(FhirVersions version, String cName, String value) {
+        try {
+            String topClassName = getClassName(version, cName);
+            Class clazz = Class.forName(topClassName);
+            Method valueOf = clazz.getMethod("valueOf", String.class);
+            return valueOf.invoke(null, value);
+        } catch (Exception ex) {
+            log.error("Unable to instantiate enum " + cName + " with value " + value, ex);
+            return null;
+        }
     }
 
-    public static Object instantiateEnum(FhirVersions version, String topLevel, String lowerLevel, String value) throws VersionNotSupported, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        String topClassName = getClassName(version, topLevel);
-        Class top = Class.forName(topClassName);
-        Class[] classes = top.getClasses();
-        for (Class c : classes) {
-            if (c.getName().endsWith("$" + lowerLevel)) {
-                Method valueOf = c.getMethod("valueOf", String.class);
-                return valueOf.invoke(null, value);
+    public static Object instantiateEnum(FhirVersions version, String topLevel, String lowerLevel, String value) {
+        try {
+            String topClassName = getClassName(version, topLevel);
+            Class top = Class.forName(topClassName);
+            Class[] classes = top.getClasses();
+            for (Class c : classes) {
+                if (c.getName().endsWith("$" + lowerLevel)) {
+                    Method valueOf = c.getMethod("valueOf", String.class);
+                    return valueOf.invoke(null, value);
+                }
             }
+            return null;
+        } catch (Exception ex) {
+            log.error("Unable to instantiate enum " + topLevel + "." + lowerLevel + " with value " + value, ex);
+            return null;
         }
-        return null;
     }
 
-    public static Object instantiateClass(FhirVersions version, String topLevel, String lowerLevel) throws VersionNotSupported, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        String name = getClassName(version, topLevel);
-        Class clazz = Class.forName(name);
-        String className = topLevel + "." + lowerLevel;
-        if (!supportedClasses.contains(className)) {
-            throw new RuntimeException("Class " + className + " is not supported");
-        }
-        Class[] classes = clazz.getClasses();
-        for (Class c : classes) {
-            if (c.getName().endsWith("$" + lowerLevel)) {
-                return c.getDeclaredConstructor(null).newInstance();
+    public static Object instantiateClass(FhirVersions version, String topLevel, String lowerLevel) {
+        try {
+            String name = getClassName(version, topLevel);
+            Class clazz = Class.forName(name);
+            String className = topLevel + "." + lowerLevel;
+            if (!supportedClasses.contains(className)) {
+                throw new RuntimeException("Class " + className + " is not supported");
             }
+            Class[] classes = clazz.getClasses();
+            for (Class c : classes) {
+                if (c.getName().endsWith("$" + lowerLevel)) {
+                    return c.getDeclaredConstructor(null).newInstance();
+                }
+            }
+            return null;
+        } catch (Exception ex) {
+            log.error("Unable to instantiate " + topLevel + "." + lowerLevel, ex);
+            return null;
         }
-        return null;
     }
 
-    public static FhirVersions getVersion(FhirContext context) throws VersionNotSupported {
+    public static FhirVersions getVersion(FhirContext context) {
         if (context == null || context.getVersion() == null) {
             throw new VersionNotSupported("Null context passed");
         }

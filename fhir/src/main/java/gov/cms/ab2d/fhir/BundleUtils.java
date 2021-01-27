@@ -6,6 +6,7 @@ import org.hl7.fhir.instance.model.api.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -16,92 +17,67 @@ public class BundleUtils {
     public static final String EOB = "ExplanationOfBenefit";
 
     public static String getAvailableLinks(IBaseBundle bundle) {
-        try {
-            List links = (List) Versions.invokeGetMethod(bundle, "getLink");
-            List<String> listValues = new ArrayList<>();
-            for (Object o : links) {
-                listValues.add((String) Versions.invokeGetMethod((IBase) o, "getRelation"));
-            }
-            return listValues.stream().collect(Collectors.joining(" , "));
-        } catch (Exception ex) {
-            log.error("Unable to find links from the bundle");
+        if (bundle == null) {
             return null;
         }
+        List links = (List) Versions.invokeGetMethod(bundle, "getLink");
+        List<String> listValues = new ArrayList<>();
+        for (Object o : links) {
+            listValues.add((String) Versions.invokeGetMethod((IBase) o, "getRelation"));
+        }
+        return listValues.stream().collect(Collectors.joining(" , "));
     }
 
     public static String getAvailableLinksPretty(IBaseBundle bundle) {
-        try {
-            List links = (List) Versions.invokeGetMethod(bundle, "getLink");
-            List<String> listValues = new ArrayList<>();
-            for (Object o : links) {
-                listValues.add(Versions.invokeGetMethod((IBase) o, "getRelation") + " -> " +
-                        Versions.invokeGetMethod((IBase) o, "getUrl"));
-            }
-            return listValues.stream().collect(Collectors.joining(" , "));
-        } catch (Exception ex) {
-            log.error("Unable to find links from the bundle", ex);
+        if (bundle == null) {
             return null;
         }
+        List links = (List) Versions.invokeGetMethod(bundle, "getLink");
+        List<String> listValues = new ArrayList<>();
+        for (Object o : links) {
+            listValues.add(Versions.invokeGetMethod((IBase) o, "getRelation") + " -> " +
+                    Versions.invokeGetMethod((IBase) o, "getUrl"));
+        }
+        return listValues.stream().collect(Collectors.joining(" , "));
     }
 
     public static IBaseBackboneElement getNextLink(IBaseBundle bundle) {
+        if (bundle == null) {
+            return null;
+        }
         try {
             return (IBaseBackboneElement) Versions.invokeGetMethodWithArg(bundle, "getLink", LINK_NEXT, String.class);
         } catch (Exception ex) {
-            log.error("Can't get next link from bundle", ex);
             return null;
         }
     }
 
     public static Stream<IDomainResource> getPatientStream(IBaseBundle bundle, Versions.FhirVersions version) {
-        try {
-            Object patientEnum = Versions.instantiateEnum(version, "ResourceType", "Patient");
-            List entries = getEntries(bundle);
-            return entries.stream()
-                    .map(c -> {
-                        try {
-                            return Versions.invokeGetMethod(c, "getResource");
-                        } catch (Exception e) {
-                            return null;
-                        }
-                    })
-                    .filter(c -> {
-                        try {
-                            return Versions.invokeGetMethod(c, "getResourceType") == patientEnum;
-                        } catch (Exception e) {
-                            return false;
-                        }
-                    });
-        } catch (Exception ex) {
-            log.error("Can't get entries from bundle", ex);
+        if (bundle == null) {
             return null;
         }
+        Object patientEnum = Versions.instantiateEnum(version, "ResourceType", "Patient");
+        List entries = getEntries(bundle);
+        return entries.stream()
+                .map(c -> Versions.invokeGetMethod(c, "getResource"))
+                .filter(c -> Versions.invokeGetMethod(c, "getResourceType") == patientEnum);
     }
 
     public static List<IBaseBackboneElement> getEntries(IBaseBundle bundle) {
-        try {
-            return (List<IBaseBackboneElement>) Versions.invokeGetMethod(bundle, "getEntry");
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (bundle == null) {
             return null;
         }
+        return (List<IBaseBackboneElement>) Versions.invokeGetMethod(bundle, "getEntry");
     }
 
     public static List<IBaseResource> getEobResources(List<IBaseBackboneElement> bundleComponents) {
         try {
             return bundleComponents.stream()
-                    .map(c -> {
-                        try {
-                            return (IBaseResource) Versions.invokeGetMethod((IBase) c, "getResource");
-                        } catch (Exception e) {
-                            return null;
-                        }
-                    })
-                    .filter(c -> c != null)
-                    .filter(c -> isExplanationOfBenefitResource(c))
+                    .map(c -> (IBaseResource) Versions.invokeGetMethod(c, "getResource"))
+                    .filter(Objects::nonNull)
+                    .filter(BundleUtils::isExplanationOfBenefitResource)
                     .collect(Collectors.toList());
-        } catch (Exception e) {
-            log.error("Can't find bundle components in bundle");
+        } catch (Exception ex) {
             return null;
         }
     }
@@ -117,11 +93,6 @@ public class BundleUtils {
         if (bundle == null) {
             return 0;
         }
-        try {
-            return (int) Versions.invokeGetMethod(bundle, "getTotal");
-        } catch (Exception e) {
-            log.error("Unable to determine total number of values in bundle");
-            return 0;
-        }
+        return (int) Versions.invokeGetMethod(bundle, "getTotal");
     }
 }

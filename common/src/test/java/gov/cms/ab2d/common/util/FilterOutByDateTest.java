@@ -1,8 +1,9 @@
 package gov.cms.ab2d.common.util;
 
 import gov.cms.ab2d.fhir.Versions;
+import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
+import org.hl7.fhir.dstu3.model.Period;
 import org.hl7.fhir.instance.model.api.IBaseResource;
-import org.hl7.fhir.instance.model.api.ICompositeType;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -201,11 +202,11 @@ class FilterOutByDateTest {
     }
 
     private IBaseResource createEOB(String startDate, String endDate, Versions.FhirVersions version) throws Exception {
-        IBaseResource b = (IBaseResource) Versions.instantiateClass(version, "ExplanationOfBenefit");
-        ICompositeType p = (ICompositeType) Versions.instantiateClass(version, "Period");
-        Versions.invokeSetMethod(p, "startDate", SDF.parse(startDate), Date.class);
-        Versions.invokeSetMethod(p, "endDate", SDF.parse(endDate), Date.class);
-        Versions.invokeSetMethod(b, "setBillablePeriod", p, Class.forName(Versions.getClassName(version, "Period")));
+        ExplanationOfBenefit b = new ExplanationOfBenefit();
+        Period p = new Period();
+        p.setStart(SDF.parse(startDate));
+        p.setEnd(SDF.parse(endDate));
+        b.setBillablePeriod(p);
         return b;
     }
 }

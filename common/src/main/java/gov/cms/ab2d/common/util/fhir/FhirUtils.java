@@ -28,12 +28,12 @@ public class FhirUtils {
 
             // Add each mbi to each eob
             if (patient.getCurrentMbi() != null) {
-                IBase currentMbiExtension = ExtensionUtils.createExtension(eob, patient.getCurrentMbi(), true, version);
+                IBase currentMbiExtension = ExtensionUtils.createExtension(patient.getCurrentMbi(), true, version);
                 eobs.forEach(e -> ExtensionUtils.addExtension(e, currentMbiExtension, version));
             }
 
             for (String mbi : patient.getHistoricMbis()) {
-                IBase mbiExtension = ExtensionUtils.createExtension(eob, mbi, false, version);
+                IBase mbiExtension = ExtensionUtils.createExtension(mbi, false, version);
                 eobs.forEach(e -> ExtensionUtils.addExtension(e, mbiExtension, version));
             }
         }

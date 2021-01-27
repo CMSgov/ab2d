@@ -23,140 +23,79 @@ public class IdentifierUtils {
     public static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
 
     public static String getCurrentMbi(IDomainResource patient) {
-        try {
-            List identifiers = (List) Versions.invokeGetMethod(patient, "getIdentifier");
-            return (String) identifiers.stream()
-                    .filter(c -> isMatchingMbi((ICompositeType) c, CURRENT_MBI))
-                    .map(c -> {
-                        try {
-                            return Versions.invokeGetMethod(c, "getValue");
-                        } catch (Exception e) {
-                            log.error("Unable to get the current MBI value", e);
-                            return null;
-                        }
-                    })
-                    .findFirst().orElse(null);
-        } catch (Exception e) {
-            log.error("Unable to find identifiers in the patient", e);
+        if (patient == null) {
             return null;
         }
+        List identifiers = (List) Versions.invokeGetMethod(patient, "getIdentifier");
+        return (String) identifiers.stream()
+                .filter(c -> isMatchingMbi((ICompositeType) c, CURRENT_MBI))
+                .map(c -> Versions.invokeGetMethod(c, "getValue"))
+                .findFirst().orElse(null);
     }
 
     public static Set<String> getHistoricMbi(IDomainResource patient) {
-        try {
-            List identifiers = (List) Versions.invokeGetMethod(patient, "getIdentifier");
-            return (Set<String>) identifiers.stream()
-                    .filter(c -> isMatchingMbi((ICompositeType) c, HISTORIC_MBI))
-                    .map(c -> {
-                        try {
-                            return Versions.invokeGetMethod((IBase) c, "getValue");
-                        } catch (Exception e) {
-                            log.error("Unable to get the historic MBI value", e);
-                            return null;
-                        }
-                    })
-                    .collect(Collectors.toSet());
-        } catch (Exception e) {
-            log.error("Unable to find historic MBIs in the patient", e);
+        if (patient == null) {
             return null;
         }
+        List identifiers = (List) Versions.invokeGetMethod(patient, "getIdentifier");
+        return (Set<String>) identifiers.stream()
+                .filter(c -> isMatchingMbi((ICompositeType) c, HISTORIC_MBI))
+                .map(c -> Versions.invokeGetMethod((IBase) c, "getValue"))
+                .collect(Collectors.toSet());
     }
 
     public static String getBeneId(IDomainResource patient) {
-        try {
-            List identifiers = (List) Versions.invokeGetMethod(patient, "getIdentifier");
-            return (String) identifiers.stream()
-                    .filter(c -> isBeneficiaryId((ICompositeType) c))
-                    .map(c -> {
-                        try {
-                            return Versions.invokeGetMethod((IBase) c, "getValue");
-                        } catch (Exception e) {
-                            log.error("Unable to get the current MBI value", e);
-                            return null;
-                        }
-                    })
-                    .findFirst().orElse(null);
-        } catch (Exception e) {
-            log.error("Unable to find identifiers in the patient", e);
+        if (patient == null) {
             return null;
         }
+        List identifiers = (List) Versions.invokeGetMethod(patient, "getIdentifier");
+        return (String) identifiers.stream()
+                .filter(c -> isBeneficiaryId((ICompositeType) c))
+                .map(c -> Versions.invokeGetMethod((IBase) c, "getValue"))
+                .findFirst().orElse(null);
     }
 
     private static String getSystem(ICompositeType identifier) {
-        try {
-            return (String) Versions.invokeGetMethod(identifier, "getSystem");
-        } catch (Exception e) {
-            log.error("Unable to extract system from identifier", e);
-            return null;
-        }
+        return (String) Versions.invokeGetMethod(identifier, "getSystem");
     }
 
     private static String getValue(ICompositeType identifier) {
-        try {
-            return (String) Versions.invokeGetMethod(identifier, "getValue");
-        } catch (Exception e) {
-            log.error("Unable to extract value from identifier", e);
-            return null;
-        }
+        return (String) Versions.invokeGetMethod(identifier, "getValue");
     }
 
     private static boolean isBeneficiaryId(ICompositeType identifier) {
-        try {
-            String system = getSystem(identifier);
-            String value = getValue(identifier);
-            if (StringUtils.isAnyBlank(system, value)) {
-                return false;
-            }
-            return system.equalsIgnoreCase(BENEFICIARY_ID);
-       } catch (Exception e) {
-            log.error("Unable to extract Beneficiary Id", e);
+        String system = getSystem(identifier);
+        String value = getValue(identifier);
+        if (StringUtils.isAnyBlank(system, value)) {
             return false;
-       }
+        }
+        return system.equalsIgnoreCase(BENEFICIARY_ID);
     }
 
     private static boolean isMatchingMbi(ICompositeType identifier, String historic) {
-        try {
-            String system = getSystem(identifier);
-            String value = getValue(identifier);
-            if (StringUtils.isAnyBlank(system, value)) {
-                return false;
-            }
-            if (!system.equals(MBI_ID)) {
-                return false;
-            }
-            Optional<IBaseExtension> currencyExtension = getCurrencyExtension(identifier);
-            if (currencyExtension.isEmpty()) {
-                return false;
-            }
-            Object code = Versions.invokeGetMethod(currencyExtension.get(), "getValue");
-            return Versions.invokeGetMethod(code, "getCode").equals(historic);
-        } catch (Exception e) {
-            log.error("Unable to extract MBI values", e);
+        String system = getSystem(identifier);
+        String value = getValue(identifier);
+        if (StringUtils.isAnyBlank(system, value)) {
             return false;
         }
+        if (!system.equals(MBI_ID)) {
+            return false;
+        }
+        Optional<IBaseExtension> currencyExtension = getCurrencyExtension(identifier);
+        if (currencyExtension.isEmpty()) {
+            return false;
+        }
+        Object code = Versions.invokeGetMethod(currencyExtension.get(), "getValue");
+        return Versions.invokeGetMethod(code, "getCode").equals(historic);
     }
 
     private static Optional<IBaseExtension> getCurrencyExtension(ICompositeType identifier) {
-        List<IBaseExtension> extensions = null;
-        try {
-            extensions = (List<IBaseExtension>) Versions.invokeGetMethod(identifier, "getExtension");
-        } catch (Exception e) {
-            return Optional.of(null);
-        }
-
+        List<IBaseExtension> extensions = (List<IBaseExtension>) Versions.invokeGetMethod(identifier, "getExtension");
         if (extensions.isEmpty()) {
             return Optional.empty();
         }
 
-        return extensions.stream().filter(
-                extension -> {
-                    try {
-                        return Versions.invokeGetMethod(extension, "getUrl").equals(CURRENCY_IDENTIFIER);
-                    } catch (Exception e) {
-                        log.error("Unable to get URL from extension");
-                        return false;
-                    }
-                }
-        ).findFirst();
+        return extensions.stream().filter(extension -> Versions.invokeGetMethod(extension, "getUrl").equals(CURRENCY_IDENTIFIER))
+                .findFirst();
     }
 }

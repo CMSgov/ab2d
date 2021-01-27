@@ -7,12 +7,7 @@ import java.time.OffsetDateTime;
 @Slf4j
 public class StatusUtils {
     public static String getFhirTime(Versions.FhirVersions version, OffsetDateTime dateTime) {
-        try {
-            Object dt = Versions.instantiateClassWithParam(version, "DateTimeType", dateTime.toString(), String.class);
-            return (String) Versions.invokeGetMethod(dt, "toHumanDisplay");
-        } catch (Exception ex) {
-            log.error("Unable to create FHIR date time from offset date time");
-            return null;
-        }
+        Object dt = Versions.instantiateClassWithParam(version, "DateTimeType", dateTime.toString(), String.class);
+        return (String) Versions.invokeGetMethod(dt, "toHumanDisplay");
     }
 }

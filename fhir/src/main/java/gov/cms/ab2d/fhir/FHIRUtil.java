@@ -21,28 +21,23 @@ public final class FHIRUtil {
     }
 
     public static IBaseResource getErrorOutcome(String msg, Versions.FhirVersions version) {
-        try {
-            IBaseResource operationOutcome = (IBaseResource) Versions.instantiateClass(version, "OperationOutcome");
-            List issues = (List) Versions.invokeGetMethod(operationOutcome, "getIssue");
+        IBaseResource operationOutcome = (IBaseResource) Versions.instantiateClass(version, "OperationOutcome");
+        List issues = (List) Versions.invokeGetMethod(operationOutcome, "getIssue");
 
-            Object newIssue = Versions.instantiateClass(version, "OperationOutcome", "OperationOutcomeIssueComponent");
+        Object newIssue = Versions.instantiateClass(version, "OperationOutcome", "OperationOutcomeIssueComponent");
 
-            Object severityError = Versions.instantiateEnum(version, "OperationOutcome", "IssueSeverity", "ERROR");
-            Versions.invokeSetMethod(newIssue, "setSeverity", severityError, severityError.getClass());
+        Object severityError = Versions.instantiateEnum(version, "OperationOutcome", "IssueSeverity", "ERROR");
+        Versions.invokeSetMethod(newIssue, "setSeverity", severityError, severityError.getClass());
 
-            Object issueTypeInvalid = Versions.instantiateEnum(version, "OperationOutcome", "IssueType", "INVALID");
-            Versions.invokeSetMethod(newIssue, "setCode", issueTypeInvalid, issueTypeInvalid.getClass());
-            Object codableConcept = Versions.instantiateClass(version, "CodeableConcept");
-            Versions.invokeSetMethod(codableConcept, "setText", msg, String.class);
-            Versions.invokeSetMethod(newIssue, "setDetails", codableConcept, codableConcept.getClass());
+        Object issueTypeInvalid = Versions.instantiateEnum(version, "OperationOutcome", "IssueType", "INVALID");
+        Versions.invokeSetMethod(newIssue, "setCode", issueTypeInvalid, issueTypeInvalid.getClass());
+        Object codableConcept = Versions.instantiateClass(version, "CodeableConcept");
+        Versions.invokeSetMethod(codableConcept, "setText", msg, String.class);
+        Versions.invokeSetMethod(newIssue, "setDetails", codableConcept, codableConcept.getClass());
 
-            issues.add(newIssue);
-            Versions.invokeSetMethod(operationOutcome, "setIssue", issues, List.class);
+        issues.add(newIssue);
+        Versions.invokeSetMethod(operationOutcome, "setIssue", issues, List.class);
 
-            return operationOutcome;
-        } catch (Exception ex) {
-            log.error("Unable to create error outcome with message: " + msg, ex);
-            return null;
-        }
+        return operationOutcome;
     }
 }
