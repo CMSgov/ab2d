@@ -108,7 +108,6 @@ class CoverageServiceImplTest {
 
     @AfterEach
     public void cleanUp() {
-        coverageDeltaTestRepository.deleteAll();
         dataSetup.cleanup();
     }
 
