@@ -60,7 +60,7 @@ public class Job {
     private String outputFormat;
     private Integer progress;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(STRING)
     private Versions.FhirVersions fhirVersion;
 
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
