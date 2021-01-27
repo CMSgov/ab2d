@@ -94,7 +94,7 @@ class ContractProcessorInvalidPatientTest {
         when(bfdClient.requestEOBFromServer(eq("1"), any())).thenReturn(b1);
         when(bfdClient.requestEOBFromServer(eq("2"), any())).thenReturn(b2);
         when(bfdClient.requestEOBFromServer(eq("3"), any())).thenReturn(b4);
-        when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.R3);
+        // when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.R3);
         List<JobOutput> outputs = cut.process(tmpDirFolder.toPath(), contractData);
         assertNotNull(outputs);
         assertEquals(2, outputs.size());
