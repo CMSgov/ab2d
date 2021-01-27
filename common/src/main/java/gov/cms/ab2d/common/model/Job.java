@@ -59,6 +59,8 @@ public class Job {
     private String statusMessage;
     private String outputFormat;
     private Integer progress;
+
+    @Enumerated(EnumType.STRING)
     private Versions.FhirVersions fhirVersion;
 
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
