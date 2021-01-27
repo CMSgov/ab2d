@@ -25,7 +25,9 @@ public class ExtensionUtils {
         }
         try {
             Versions.invokeSetMethod(resource, "addExtension", extension, Class.forName(Versions.getClassName(version, "Extension")));
-        } catch (Exception ex) {}
+        } catch (Exception ex) {
+            log.error("Unable to add Extension");
+        }
     }
 
     public static IBase createExtension(String mbi, boolean current, Versions.FhirVersions version) {
@@ -40,7 +42,9 @@ public class ExtensionUtils {
         Versions.invokeSetMethod(currencyExtension, "setUrl", CURRENCY_IDENTIFIER, String.class);
         try {
             Versions.invokeSetMethod(currencyExtension, "setValue", coding, Class.forName(Versions.getClassName(version, "Type")));
-        } catch (Exception ex) {}
+        } catch (Exception ex) {
+            log.error("Unable to setValue");
+        }
 
         Versions.invokeSetMethod(identifier, "setExtension", List.of(currencyExtension), List.class);
 
@@ -48,7 +52,9 @@ public class ExtensionUtils {
         Versions.invokeSetMethod(ext, "setUrl", ID_EXT, String.class);
         try {
             Versions.invokeSetMethod(ext, "setValue", identifier, Class.forName(Versions.getClassName(version, "Type")));
-        } catch (Exception ex) {}
+        } catch (Exception ex) {
+            log.error("Unable to setValue");
+        }
         return (IBase) ext;
     }
 
