@@ -358,10 +358,8 @@ set_secrets ()
     AB2D_BFD_KMS_ARN=$(./get-database-secret.py $CMS_ENV_SS ab2d_bfd_kms_arn $DATABASE_SECRET_DATETIME)
   fi
 
-  # todo: remove dev and switch to sbx and prod only for this list after successfully testing
-  if [ "${CMS_ENV_SS}" == "ab2d-dev" ]; then
-#  if [ "${CMS_ENV_SS}" == "ab2d-sbx-sandbox" ] \
-#      || [ "${CMS_ENV_SS}" == "ab2d-east-prod" ]; then
+  if [ "${CMS_ENV_SS}" == "ab2d-sbx-sandbox" ] \
+      || [ "${CMS_ENV_SS}" == "ab2d-east-prod" ]; then
 
     AB2D_SLACK_ALERT_WEBHOOKS=$(./get-database-secret.py $CMS_ENV_SS ab2d_slack_alert_webhooks $DATABASE_SECRET_DATETIME)
     if [ -z "${AB2D_SLACK_ALERT_WEBHOOKS}" ]; then
