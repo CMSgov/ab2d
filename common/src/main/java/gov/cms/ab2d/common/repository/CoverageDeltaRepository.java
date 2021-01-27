@@ -36,7 +36,7 @@ public class CoverageDeltaRepository {
 
         NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
 
-        int numDeletion = template.update(INSERT_DELTAS, deletedParams);
-        int numAdded = template.update(INSERT_DELTAS, addedParams);
+        template.update(INSERT_DELTAS, deletedParams);
+        template.update(INSERT_DELTAS, addedParams);
     }
 }
