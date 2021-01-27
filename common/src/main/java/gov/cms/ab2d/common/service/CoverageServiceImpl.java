@@ -180,7 +180,6 @@ public class CoverageServiceImpl implements CoverageService {
 
         int previousCount = 0;
         if (previousSearch.isPresent()) {
-            coverageDeltaRepository.trackDeltas(previousSearch.get(), current);
             previousCount = coverageServiceRepo.countBySearchEvent(previousSearch.get());
         }
 
@@ -188,6 +187,7 @@ public class CoverageServiceImpl implements CoverageService {
 
         int unchanged = 0;
         if (previousCount > 0) {
+            coverageDeltaRepository.trackDeltas(previousSearch.get(), current);
             unchanged = coverageServiceRepo.countIntersection(previousSearch.get(), current);
         }
 
