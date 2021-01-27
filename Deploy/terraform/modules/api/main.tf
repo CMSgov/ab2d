@@ -226,7 +226,7 @@ resource "aws_ecs_task_definition" "api" {
 	},
     {
       "name": "AB2D_SLACK_ALERT_WEBHOOKS",
-      "value": "${var.ab2d_slack_alert_webhooks}",
+      "value": "${var.ab2d_slack_alert_webhooks}"
     },
     {
       "name": "AB2D_SLACK_TRACE_WEBHOOKS",
