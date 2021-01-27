@@ -255,6 +255,8 @@ module "worker" {
   claims_skip_billable_period_check = var.claims_skip_billable_period_check
   ab2d_opt_out_job_schedule         = var.ab2d_opt_out_job_schedule
   ab2d_s3_optout_bucket             = var.ab2d_s3_optout_bucket
+  ab2d_slack_alert_webhooks         = var.ab2d_slack_alert_webhooks
+  ab2d_slack_trace_webhooks         = var.ab2d_slack_trace_webhooks
   cpm_backup_worker                 = var.cpm_backup_worker
 }
 
