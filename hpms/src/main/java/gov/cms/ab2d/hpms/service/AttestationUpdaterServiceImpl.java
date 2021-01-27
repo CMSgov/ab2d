@@ -107,7 +107,7 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
                     + "HPMS Attested On: " + attest.getAttestationDate() + "\n"
                     + "Contract Attested On: " + contract.getAttestedOn() + "\n";
             if (slackLogger != null) {
-                slackLogger.logHpmsMsg(msg);
+                slackLogger.logAlert(msg);
             }
             contractRepository.save(contract);
         }
@@ -123,7 +123,7 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
                         + "Id: " + c.getContractId() + "\n"
                         + "Org: " + c.getOrgMarketingName() + "\n";
                 if (slackLogger != null) {
-                    slackLogger.logHpmsMsg(msg);
+                    slackLogger.logAlert(msg);
                 }
             }
         );

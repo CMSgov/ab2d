@@ -10,6 +10,6 @@ public class SlackAvailable {
     private SlackLogger slackLogger;
 
     public boolean slackAvailable(String message) {
-        return slackLogger.logTestMsg(message);
+        return slackLogger.logTrace(message);
     }
 }
