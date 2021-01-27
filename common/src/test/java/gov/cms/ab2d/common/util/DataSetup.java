@@ -43,6 +43,9 @@ public class DataSetup {
     @Autowired
     private CoverageSearchEventRepository coverageSearchEventRepo;
 
+    @Autowired
+    CoverageDeltaTestRepository coverageDeltaTestRepository;
+
     private final Set<Object> domainObjects = new HashSet<>();
 
     public void queueForCleanup(Object object) {
@@ -55,6 +58,7 @@ public class DataSetup {
         // wipe the tables between tests and that the tables started as empty tables.
         // Based on these assumptions it is safe to simply delete everything associated
         // with those tables
+        coverageDeltaTestRepository.deleteAll();
         deleteCoverage();
         coverageSearchEventRepo.deleteAll();
         coverageSearchRepo.deleteAll();
