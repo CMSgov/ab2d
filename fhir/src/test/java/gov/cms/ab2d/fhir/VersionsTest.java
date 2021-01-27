@@ -25,24 +25,24 @@ class VersionsTest {
     @Test
     void executeInstantiate() {
         Object obj1 = Versions.instantiateClass(Versions.FhirVersions.R4, "ExplanationOfBenefit");
-        assertEquals(ExplanationOfBenefit.class, obj1.getClass());
+        assertEquals(org.hl7.fhir.r4.model.ExplanationOfBenefit.class, obj1.getClass());
         Object obj2 = Versions.instantiateClass(Versions.FhirVersions.R3, "ExplanationOfBenefit");
         assertEquals(ExplanationOfBenefit.class, obj2.getClass());
         assertNull(Versions.instantiateClass(Versions.FhirVersions.R4, "EOB"));
         Object obj3 = Versions.instantiateClass(Versions.FhirVersions.R3, "OperationOutcome", "OperationOutcomeIssueComponent");
-        assertEquals(OperationOutcome.OperationOutcomeIssueComponent.class, obj3.getClass());
+        assertEquals(org.hl7.fhir.dstu3.model.OperationOutcome.OperationOutcomeIssueComponent.class, obj3.getClass());
     }
 
     @Test
     void executeInstantiateEnum() {
         Object obj = Versions.instantiateEnum(Versions.FhirVersions.R4, "OperationOutcome", "IssueSeverity", "ERROR");
-        assertEquals(OperationOutcome.IssueSeverity.ERROR, obj);
+        assertEquals(org.hl7.fhir.r4.model.OperationOutcome.IssueSeverity.ERROR, obj);
     }
 
     @Test
     void executeSubObject() {
         Object obj = Versions.instantiateClass(Versions.FhirVersions.R4, "OperationOutcome", "OperationOutcomeIssueComponent");
-        assertEquals(OperationOutcome.OperationOutcomeIssueComponent.class, obj.getClass());
+        assertEquals(org.hl7.fhir.r4.model.OperationOutcome.OperationOutcomeIssueComponent.class, obj.getClass());
     }
 
     @Test
