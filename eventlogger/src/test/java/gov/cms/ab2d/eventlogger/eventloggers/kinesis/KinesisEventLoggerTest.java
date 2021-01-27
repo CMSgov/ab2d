@@ -49,7 +49,7 @@ class KinesisEventLoggerTest {
 
     @BeforeEach
     void init() {
-        logger = new KinesisEventLogger(config, firehose);
+        logger = new KinesisEventLogger(config, firehose, "dev", "");
         ReflectionTestUtils.setField(logger, "appEnv", "dev");
         doReturn(generateRandomResult()).when(firehose).putRecord(any());
     }

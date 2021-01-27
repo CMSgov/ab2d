@@ -8,9 +8,12 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class JwtConfig {
 
-    @Value("${security.jwt.header:Authorization}")
-    private String header;
+    private final String header;
+    private final String prefix;
 
-    @Value("${security.jwt.prefix:Bearer }")
-    private String prefix;
+    public JwtConfig(@Value("${security.jwt.header:Authorization}") String header,
+                     @Value("${security.jwt.prefix:Bearer }")  String prefix) {
+        this.header = header;
+        this.prefix = prefix;
+    }
 }

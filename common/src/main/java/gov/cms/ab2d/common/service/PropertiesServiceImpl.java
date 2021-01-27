@@ -7,7 +7,6 @@ import gov.cms.ab2d.common.model.Properties;
 import gov.cms.ab2d.common.repository.PropertiesRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,13 +23,16 @@ import static java.lang.Boolean.FALSE;
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class PropertiesServiceImpl implements PropertiesService {
 
-    @Autowired
-    private Mapping mapping;
+    private final Mapping mapping;
 
-    @Autowired
-    private PropertiesRepository propertiesRepository;
+    private final PropertiesRepository propertiesRepository;
 
     private final Type propertiesListType = new TypeToken<List<PropertiesDTO>>() { } .getType();
+
+    public PropertiesServiceImpl(Mapping mapping, PropertiesRepository propertiesRepository) {
+        this.mapping = mapping;
+        this.propertiesRepository = propertiesRepository;
+    }
 
     @Override
     public boolean isInMaintenanceMode() {

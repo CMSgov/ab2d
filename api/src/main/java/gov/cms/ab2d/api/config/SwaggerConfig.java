@@ -3,7 +3,6 @@ package gov.cms.ab2d.api.config;
 import com.fasterxml.classmate.TypeResolver;
 import com.fasterxml.jackson.annotation.*;
 import gov.cms.ab2d.api.util.Constants;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
@@ -28,8 +27,11 @@ import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 @Configuration
 public class SwaggerConfig {
 
-    @Autowired
-    private TypeResolver typeResolver;
+    private final TypeResolver typeResolver;
+
+    public SwaggerConfig(TypeResolver typeResolver) {
+        this.typeResolver = typeResolver;
+    }
 
     @Bean
     public Docket api() {

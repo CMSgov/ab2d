@@ -8,7 +8,6 @@ import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
@@ -21,8 +20,11 @@ import javax.annotation.PostConstruct;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class LoggingConfig {
 
-    @Autowired
-    private Environment env;
+    private final Environment env;
+
+    public LoggingConfig(Environment env) {
+        this.env = env;
+    }
 
     @PostConstruct
     public void init() {

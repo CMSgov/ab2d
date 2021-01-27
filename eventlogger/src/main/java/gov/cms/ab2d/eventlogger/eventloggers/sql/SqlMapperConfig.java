@@ -22,8 +22,8 @@ import java.util.Set;
 public class SqlMapperConfig {
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
-    private Map<Class<? extends LoggableEvent>, SqlEventMapper> mapperMapping = new HashMap<>();
-    private Map<Class<? extends LoggableEvent>, String> tableMapping = new HashMap<>();
+    private final Map<Class<? extends LoggableEvent>, SqlEventMapper> mapperMapping = new HashMap<>();
+    private final Map<Class<? extends LoggableEvent>, String> tableMapping = new HashMap<>();
 
     public SqlMapperConfig(NamedParameterJdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;

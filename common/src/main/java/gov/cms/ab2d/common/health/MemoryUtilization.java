@@ -3,10 +3,10 @@ package gov.cms.ab2d.common.health;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 /**
  * Health check on memory - make sure you aren't running to low
  */
+@Slf4j
 public final class MemoryUtilization {
 
     private MemoryUtilization() { }

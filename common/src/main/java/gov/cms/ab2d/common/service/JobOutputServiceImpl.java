@@ -3,18 +3,18 @@ package gov.cms.ab2d.common.service;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@AllArgsConstructor
 @Slf4j
 @Service
 @Transactional
 public class JobOutputServiceImpl implements JobOutputService {
 
-    @Autowired
-    private JobOutputRepository jobOutputRepository;
+    private final JobOutputRepository jobOutputRepository;
 
     public JobOutput updateJobOutput(JobOutput jobOutput) {
         return jobOutputRepository.save(jobOutput);

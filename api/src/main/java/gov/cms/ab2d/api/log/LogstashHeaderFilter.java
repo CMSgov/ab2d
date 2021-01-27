@@ -24,8 +24,8 @@ import java.util.Set;
  */
 public class LogstashHeaderFilter implements HeaderFilter {
 
-    private Set<String> includes = new HashSet<>();
-    private Set<String> excludes = new HashSet<>();
+    private final Set<String> includes = new HashSet<>();
+    private final Set<String> excludes = new HashSet<>();
 
     @Override
     public boolean includeHeader(String headerName, String headerValue) {

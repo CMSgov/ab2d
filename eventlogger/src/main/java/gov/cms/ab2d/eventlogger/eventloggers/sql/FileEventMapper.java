@@ -12,7 +12,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 class FileEventMapper extends SqlEventMapper {
-    private NamedParameterJdbcTemplate template;
+    private final NamedParameterJdbcTemplate template;
 
     FileEventMapper(NamedParameterJdbcTemplate template) {
         this.template = template;

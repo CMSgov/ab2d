@@ -2,7 +2,6 @@ package gov.cms.ab2d.api.security;
 
 import com.okta.jwt.AccessTokenVerifier;
 import com.okta.jwt.JwtVerifiers;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,29 +19,29 @@ import java.time.Duration;
 import static gov.cms.ab2d.api.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
 
-
 @Configuration
 @EnableWebSecurity
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    @Autowired
-    private FilterChainExceptionHandler filterChainExceptionHandler;
+    private final FilterChainExceptionHandler filterChainExceptionHandler;
+    private final JwtTokenAuthenticationFilter jwtTokenAuthenticationFilter;
+    private final CustomUserDetailsService customUserDetailsService;
+    private final String oktaJwtIssuer;
+    private final String oktaJwtAudience;
+    private final int oktaConnectionTimeout;
 
-    @Autowired
-    private JwtTokenAuthenticationFilter jwtTokenAuthenticationFilter;
-
-    @Autowired
-    private CustomUserDetailsService customUserDetailsService;
-
-    @Value("${api.okta-jwt-issuer}")
-    private String oktaJwtIssuer;
-
-    @Value("${api.okta-jwt-audience}")
-    private String oktaJwtAudience;
-
-    @Value("${api.okta-connection-timeout}")
-    private int oktaConnectionTimeout;
+    public SecurityConfig(FilterChainExceptionHandler filterChainExceptionHandler, JwtTokenAuthenticationFilter jwtTokenAuthenticationFilter,
+                          CustomUserDetailsService customUserDetailsService, @Value("${api.okta-jwt-issuer}") String oktaJwtIssuer,
+                          @Value("${api.okta-jwt-audience}") String oktaJwtAudience,
+                          @Value("${api.okta-connection-timeout}") int oktaConnectionTimeout) {
+        this.filterChainExceptionHandler = filterChainExceptionHandler;
+        this.jwtTokenAuthenticationFilter = jwtTokenAuthenticationFilter;
+        this.customUserDetailsService = customUserDetailsService;
+        this.oktaJwtIssuer = oktaJwtIssuer;
+        this.oktaJwtAudience = oktaJwtAudience;
+        this.oktaConnectionTimeout = oktaConnectionTimeout;
+    }
 
     @Override
     public void configure(WebSecurity web) {

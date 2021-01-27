@@ -8,7 +8,6 @@ import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -35,11 +34,14 @@ import static gov.cms.ab2d.common.util.Constants.*;
 @RestController
 @RequestMapping(path = API_PREFIX + FHIR_PREFIX, produces = {"application/json", NDJSON_FIRE_CONTENT_TYPE})
 public class FileDownloadAPI {
-    @Autowired
-    private JobService jobService;
 
-    @Autowired
-    private LogManager eventLogger;
+    private final JobService jobService;
+    private final LogManager eventLogger;
+
+    public FileDownloadAPI(JobService jobService, LogManager eventLogger) {
+        this.jobService = jobService;
+        this.eventLogger = eventLogger;
+    }
 
     @ApiOperation(value = "Downloads a file produced by an export job.", response = String.class,
             produces = NDJSON_FIRE_CONTENT_TYPE,
