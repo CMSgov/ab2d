@@ -27,20 +27,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private final FilterChainExceptionHandler filterChainExceptionHandler;
     private final JwtTokenAuthenticationFilter jwtTokenAuthenticationFilter;
     private final CustomUserDetailsService customUserDetailsService;
-    private final String oktaJwtIssuer;
-    private final String oktaJwtAudience;
-    private final int oktaConnectionTimeout;
 
     public SecurityConfig(FilterChainExceptionHandler filterChainExceptionHandler, JwtTokenAuthenticationFilter jwtTokenAuthenticationFilter,
-                          CustomUserDetailsService customUserDetailsService, @Value("${api.okta-jwt-issuer}") String oktaJwtIssuer,
-                          @Value("${api.okta-jwt-audience}") String oktaJwtAudience,
-                          @Value("${api.okta-connection-timeout}") int oktaConnectionTimeout) {
+                          CustomUserDetailsService customUserDetailsService) {
         this.filterChainExceptionHandler = filterChainExceptionHandler;
         this.jwtTokenAuthenticationFilter = jwtTokenAuthenticationFilter;
         this.customUserDetailsService = customUserDetailsService;
-        this.oktaJwtIssuer = oktaJwtIssuer;
-        this.oktaJwtAudience = oktaJwtAudience;
-        this.oktaConnectionTimeout = oktaConnectionTimeout;
     }
 
     @Override
@@ -69,16 +61,5 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     public void configure(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
         authenticationManagerBuilder
                 .userDetailsService(customUserDetailsService);
-    }
-
-    @Bean
-    public AccessTokenVerifier accessTokenVerifier() {
-        AccessTokenVerifier jwtVerifier = JwtVerifiers.accessTokenVerifierBuilder()
-                .setIssuer(oktaJwtIssuer)
-                .setAudience(oktaJwtAudience)
-                .setConnectionTimeout(Duration.ofSeconds(oktaConnectionTimeout))
-                .build();
-
-        return jwtVerifier;
     }
 }
