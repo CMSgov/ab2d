@@ -198,6 +198,8 @@ module "api" {
   ab2d_hpms_api_params              = var.ab2d_hpms_api_params
   ab2d_hpms_auth_key_id             = var.ab2d_hpms_auth_key_id
   ab2d_hpms_auth_key_secret         = var.ab2d_hpms_auth_key_secret
+  ab2d_slack_alert_webhooks         = var.ab2d_slack_alert_webhooks
+  ab2d_slack_trace_webhooks         = var.ab2d_slack_trace_webhooks
   cpm_backup_api                    = var.cpm_backup_api
 }
 
