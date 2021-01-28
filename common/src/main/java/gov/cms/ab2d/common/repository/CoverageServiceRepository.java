@@ -43,6 +43,13 @@ public class CoverageServiceRepository {
     private static final String SELECT_DISTINCT_COVERAGE_BY_PERIOD_COUNT = "SELECT COUNT(DISTINCT beneficiary_id) FROM coverage" +
             " WHERE bene_coverage_period_id IN(:ids)";
 
+    static final String SELECT_DELTA =
+            "SELECT cov1.bene_coverage_period_id, cov1.beneficiary_id, :type as entryType, CURRENT_TIMESTAMP as created" +
+            " FROM coverage cov1" +
+            " WHERE cov1.bene_coverage_search_event_id = :search1 AND NOT EXISTS" +
+                " (SELECT cov2.beneficiary_id FROM coverage cov2" +
+                " WHERE cov1.beneficiary_id = cov2.beneficiary_id and bene_coverage_search_event_id = :search2 )";
+
     private static final String SELECT_INTERSECTION = "SELECT COUNT(*) FROM (" +
             " SELECT DISTINCT beneficiary_id FROM coverage WHERE bene_coverage_search_event_id = ? " +
             " INTERSECT " +
