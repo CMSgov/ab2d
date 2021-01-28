@@ -10,6 +10,9 @@ import java.util.Calendar;
 import java.util.stream.Collectors;
 
 @Slf4j
+/**
+ * Used to support manipulation of extensions to Resource objects for different FHIR versions
+ */
 public class ExtensionUtils {
     public static final String CURRENT_MBI = "current";
     public static final String HISTORIC_MBI = "historic";
@@ -19,6 +22,13 @@ public class ExtensionUtils {
     static final String ID_EXT = "http://hl7.org/fhir/StructureDefinition/elementdefinition-identifier";
     public static final String REF_YEAR_EXT = "https://bluebutton.cms.gov/resources/variables/rfrnc_yr";
 
+    /**
+     * Add an extension to a resource
+     *
+     * @param resource - the resource
+     * @param extension - the extension
+     * @param version - the FHIR version
+     */
     public static void addExtension(IBaseResource resource, IBase extension, Versions.FhirVersions version) {
         if (resource == null || extension == null) {
             return;
@@ -30,7 +40,15 @@ public class ExtensionUtils {
         }
     }
 
-    public static IBase createExtension(String mbi, boolean current, Versions.FhirVersions version) {
+    /**
+     * Create an MBI extension
+     *
+     * @param mbi - the value of the MBI
+     * @param current - if it is a current or historical MBI
+     * @param version - the FHIR version
+     * @return the extension
+     */
+    public static IBase createMbiExtension(String mbi, boolean current, Versions.FhirVersions version) {
         Object identifier = Versions.instantiateClass(version, "Identifier");
         Versions.invokeSetMethod(identifier, "setSystem", MBI_ID, String.class);
         Versions.invokeSetMethod(identifier, "setValue", mbi, String.class);
@@ -58,6 +76,12 @@ public class ExtensionUtils {
         return (IBase) ext;
     }
 
+    /**
+     * Get the reference year for the patient from the extension
+     *
+     * @param patient - the patient resource
+     * @return the year
+     */
     public static int getReferenceYear(IDomainResource patient) {
         List<? extends IBaseExtension> refYearList = patient.getExtension().stream()
                 .filter(c -> REF_YEAR_EXT.equalsIgnoreCase(c.getUrl()))

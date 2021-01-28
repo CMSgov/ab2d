@@ -10,6 +10,14 @@ import java.util.List;
 import java.util.Map;
 
 @Slf4j
+/**
+ * This class provides a lot of underlying methods for the other Util classes including:
+ *   1. Defining supported versions
+ *   2. Defining valid classes
+ *   3. Creating enumerations of versions and mapping between FHIR context objects and those versions
+ *   4. Package private methods to use reflection to instantiate classes, enums and to invoke set/get for those classes
+ *   5. The ability to determine which version is being used based on the URL passed from the HttpRequest
+ */
 public class Versions {
     public enum FhirVersions {
         R3,
@@ -26,6 +34,9 @@ public class Versions {
         { put (FhirVersions.R4, FhirContext.forR4()); }
     };
 
+    /**
+     * Currently, the classes in the model directories that we can instantiate
+     */
     private static List<String> supportedClasses = List.of(
             "ExplanationOfBenefit",
             "Patient",
@@ -55,6 +66,12 @@ public class Versions {
         { put ("/v2/", FhirVersions.R4); }
     };
 
+    /**
+     * Given a URL passed to the application, return the FHIR version used
+     *
+     * @param url - the URL
+     * @return the FHIR version
+     */
     public static FhirVersions getVersionFromUrl(String url) {
         FhirVersions version = FhirVersions.R3;
         String versionKey = apiVersionToFhirVersion.entrySet().stream()
@@ -67,6 +84,13 @@ public class Versions {
         return apiVersionToFhirVersion.get(versionKey);
     }
 
+    /**
+     * Given a FHIR version and the name of a class, return the proper class for the version
+     *
+     * @param version - the FHIR version
+     * @param name - the name of the class
+     * @return the class object
+     */
     public static String getClassName(FhirVersions version, String name) {
         String base = classLocations.get(version);
         if (base == null) {
@@ -75,6 +99,13 @@ public class Versions {
         return base + "." + name;
     }
 
+    /**
+     * Given a FHIR version and object name, instantiate the object for the correct version
+     *
+     * @param version - the FHIR version
+     * @param objName - the object name
+     * @return the instantiated class (the default constructor with no parameters)
+     */
     public static Object instantiateClass(FhirVersions version, String objName) {
         try {
             if (!supportedClasses.contains(objName)) {
@@ -90,6 +121,15 @@ public class Versions {
         }
     }
 
+    /**
+     * Given a FHIR version and object name, instantiate the object for the correct version with one argument
+     *
+     * @param version - the FHIR version
+     * @param objName - the object name
+     * @param arg - the argument
+     * @param argClass - the class type of the argument
+     * @return the instantiated object
+     */
     static Object instantiateClassWithParam(FhirVersions version, String objName, Object arg, Class argClass) {
         if (!supportedClasses.contains(objName)) {
             throw new RuntimeException("Class " + objName + " is not supported");
@@ -106,6 +146,13 @@ public class Versions {
         }
     }
 
+    /**
+     * Given a resource and the method name, return the result of calling the method
+     *
+     * @param resource - the resource object
+     * @param methodName - the method name
+     * @return the result of calling the method
+     */
     static Object invokeGetMethod(Object resource, String methodName) {
         try {
             Method method = resource.getClass().getMethod(methodName);
@@ -116,6 +163,15 @@ public class Versions {
         }
     }
 
+    /**
+     * Given a resource, the method name and an argument, return the result of calling the method with a parameter
+     *
+     * @param resource - the resource
+     * @param methodName - the method name
+     * @param arg - the argument
+     * @param clazz - the argument class
+     * @return the result of calling the method
+     */
     static Object invokeGetMethodWithArg(Object resource, String methodName, Object arg, Class clazz) {
         try {
             Method method = resource.getClass().getMethod(methodName, clazz);
@@ -126,6 +182,14 @@ public class Versions {
         }
     }
 
+    /**
+     * Given a resource, method name and an argument, set a value (or call a method with a void return type)
+     *
+     * @param resource - the resource
+     * @param methodName - the method name
+     * @param val - the value of the parameter
+     * @param paramType - the class of the parameter
+     */
     static void invokeSetMethod(Object resource, String methodName, Object val, Class paramType) {
         try {
             Method method = resource.getClass().getMethod(methodName, paramType);
@@ -135,7 +199,15 @@ public class Versions {
         }
     }
 
-    public static Object instantiateEnum(FhirVersions version, String cName, String value) {
+    /**
+     * Instantiate enum from the version, enum name and value of the enum
+     *
+     * @param version - the FHIR version
+     * @param cName - the enum name
+     * @param value - the enum value
+     * @return the enum
+     */
+    static Object instantiateEnum(FhirVersions version, String cName, String value) {
         try {
             String topClassName = getClassName(version, cName);
             Class clazz = Class.forName(topClassName);
@@ -147,7 +219,16 @@ public class Versions {
         }
     }
 
-    public static Object instantiateEnum(FhirVersions version, String topLevel, String lowerLevel, String value) {
+    /**
+     * Instantiate enum  the version, enum name (class and internal enum name) and value of the enum
+     *
+     * @param version - the FHIR version
+     * @param topLevel - the top level class
+     * @param lowerLevel - the internal enum
+     * @param value - the enum value
+     * @return the enum
+     */
+    static Object instantiateEnum(FhirVersions version, String topLevel, String lowerLevel, String value) {
         try {
             String topClassName = getClassName(version, topLevel);
             Class top = Class.forName(topClassName);
@@ -165,7 +246,15 @@ public class Versions {
         }
     }
 
-    public static Object instantiateClass(FhirVersions version, String topLevel, String lowerLevel) {
+    /**
+     * Instantiate an internal class from a version and class names
+     *
+     * @param version - the FHIR version
+     * @param topLevel - the class name
+     * @param lowerLevel - the internal class name
+     * @return the object of that type
+     */
+    static Object instantiateClass(FhirVersions version, String topLevel, String lowerLevel) {
         try {
             String name = getClassName(version, topLevel);
             Class clazz = Class.forName(name);
@@ -186,6 +275,12 @@ public class Versions {
         }
     }
 
+    /**
+     * Convert from a context to FHIR version
+     *
+     * @param context - the FhirContext
+     * @return the FHIR version
+     */
     public static FhirVersions getVersion(FhirContext context) {
         if (context == null || context.getVersion() == null) {
             throw new VersionNotSupported("Null context passed");
@@ -198,6 +293,12 @@ public class Versions {
         return version;
     }
 
+    /**
+     * Given a version, return the FhirContext
+     *
+     * @param version - the version
+     * @return the FHIRContext
+     */
     public static FhirContext getContextFromVersion(FhirVersions version) {
         if (version == null) {
             return null;

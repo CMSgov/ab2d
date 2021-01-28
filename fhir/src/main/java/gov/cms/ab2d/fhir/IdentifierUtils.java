@@ -17,11 +17,20 @@ import static gov.cms.ab2d.fhir.ExtensionUtils.HISTORIC_MBI;
 import static gov.cms.ab2d.fhir.ExtensionUtils.MBI_ID;
 
 @Slf4j
+/**
+ * Util methods to manipulate identifiers for different FHIR versions
+ */
 public class IdentifierUtils {
     public static final String CURRENCY_IDENTIFIER =
             "https://bluebutton.cms.gov/resources/codesystem/identifier-currency";
     public static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
 
+    /**
+     * Return the current MBI from the Patient resource
+     *
+     * @param patient - the patient
+     * @return the current MBI
+     */
     public static String getCurrentMbi(IDomainResource patient) {
         if (patient == null) {
             return null;
@@ -33,6 +42,12 @@ public class IdentifierUtils {
                 .findFirst().orElse(null);
     }
 
+    /**
+     * Return the historical MBIs from the Patient resource
+     *
+     * @param patient - the patient resource
+     * @return the set of historical MBIs
+     */
     public static Set<String> getHistoricMbi(IDomainResource patient) {
         if (patient == null) {
             return null;
@@ -44,6 +59,12 @@ public class IdentifierUtils {
                 .collect(Collectors.toSet());
     }
 
+    /**
+     * Return the beneficiary id for a patient
+     *
+     * @param patient - the patient resource
+     * @return the ben_id
+     */
     public static String getBeneId(IDomainResource patient) {
         if (patient == null) {
             return null;
@@ -55,10 +76,22 @@ public class IdentifierUtils {
                 .findFirst().orElse(null);
     }
 
+    /**
+     * Return the system from the identifier
+     *
+     * @param identifier - the identifier
+     * @return the value of the system
+     */
     private static String getSystem(ICompositeType identifier) {
         return (String) Versions.invokeGetMethod(identifier, "getSystem");
     }
 
+    /**
+     * Return the value from the identifier
+     *
+     * @param identifier - the identifier
+     * @return the value of the identifier
+     */
     private static String getValue(ICompositeType identifier) {
         return (String) Versions.invokeGetMethod(identifier, "getValue");
     }

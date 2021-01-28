@@ -13,9 +13,19 @@ import java.util.stream.Stream;
 import static org.hl7.fhir.instance.model.api.IBaseBundle.LINK_NEXT;
 
 @Slf4j
+/**
+ * Utilities to create and parse Bundle objects for different FHIR versions
+ */
 public class BundleUtils {
     public static final String EOB = "ExplanationOfBenefit";
+    public static final String PATIENT = "Patient";
 
+    /**
+     * Get available links from a bundle
+     *
+     * @param bundle - the Bundle object
+     * @return a comma delimited list of relations
+     */
     public static String getAvailableLinks(IBaseBundle bundle) {
         if (bundle == null) {
             return null;
@@ -28,6 +38,12 @@ public class BundleUtils {
         return listValues.stream().collect(Collectors.joining(" , "));
     }
 
+    /**
+     * Get available links from a bundle in a way that looks pretty
+     *
+     * @param bundle - the Bundle object
+     * @return a comma delimited list of links and urls
+     */
     public static String getAvailableLinksPretty(IBaseBundle bundle) {
         if (bundle == null) {
             return null;
@@ -41,6 +57,12 @@ public class BundleUtils {
         return listValues.stream().collect(Collectors.joining(" , "));
     }
 
+    /**
+     * Get the next link from a bundle if there are more results
+     *
+     * @param bundle - the Bundle object
+     * @return the next link url
+     */
     public static IBaseBackboneElement getNextLink(IBaseBundle bundle) {
         if (bundle == null) {
             return null;
@@ -52,17 +74,30 @@ public class BundleUtils {
         }
     }
 
+    /**
+     * Return a stream of the Patient Resources from a bundle
+     *
+     * @param bundle - the Bundle object
+     * @param version - the FHIR version
+     * @return a stream of Patient Resources
+     */
     public static Stream<IDomainResource> getPatientStream(IBaseBundle bundle, Versions.FhirVersions version) {
         if (bundle == null) {
             return null;
         }
-        Object patientEnum = Versions.instantiateEnum(version, "ResourceType", "Patient");
+        Object patientEnum = Versions.instantiateEnum(version, "ResourceType", PATIENT);
         List entries = getEntries(bundle);
         return entries.stream()
                 .map(c -> Versions.invokeGetMethod(c, "getResource"))
                 .filter(c -> Versions.invokeGetMethod(c, "getResourceType") == patientEnum);
     }
 
+    /**
+     * Bet the list of Bundle entries
+     *
+     * @param bundle - the bundle
+     * @return the list of entries
+     */
     public static List<IBaseBackboneElement> getEntries(IBaseBundle bundle) {
         if (bundle == null) {
             return null;
@@ -70,6 +105,12 @@ public class BundleUtils {
         return (List<IBaseBackboneElement>) Versions.invokeGetMethod(bundle, "getEntry");
     }
 
+    /**
+     * Given a bundle entries, return the EOB resources
+     *
+     * @param bundleComponents - the bundle entries
+     * @return the List of ExplanationOfBenefit objects
+     */
     public static List<IBaseResource> getEobResources(List<IBaseBackboneElement> bundleComponents) {
         try {
             return bundleComponents.stream()
@@ -82,13 +123,22 @@ public class BundleUtils {
         }
     }
 
+    /**
+     * Returns true if a Resource is an ExplanationOfBenefit object
+     *
+     * @param resource - the resource
+     * @return true if it's an ExplanationOfBenefit object
+     */
     public static boolean isExplanationOfBenefitResource(IElement resource) {
-        if (resource == null || resource.fhirType() == null || !resource.fhirType().endsWith(EOB)) {
-            return false;
-        }
-        return true;
+        return resource != null && resource.fhirType() != null && resource.fhirType().endsWith(EOB);
     }
 
+    /**
+     * Return the total number of returned values for the search
+     *
+     * @param bundle - the Bundle object
+     * @return the total returned in the search
+     */
     public static int getTotal(IBaseBundle bundle) {
         if (bundle == null) {
             return 0;

@@ -20,7 +20,7 @@ class ExtensionUtilsTest {
         String mbiIdCurrent = "MBI1";
         String mbiIdPrevious = "MBI1";
         org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob = new org.hl7.fhir.dstu3.model.ExplanationOfBenefit();
-        IBase extension = ExtensionUtils.createExtension(mbiIdCurrent, true, Versions.FhirVersions.R3);
+        IBase extension = ExtensionUtils.createMbiExtension(mbiIdCurrent, true, Versions.FhirVersions.R3);
         ExtensionUtils.addExtension(eob, extension, Versions.FhirVersions.R3);
 
         List<Extension> extensions = eob.getExtension();

@@ -30,8 +30,8 @@ class EobUtilsTest {
 
         assertEquals("bene-id", EobUtils.getPatientId(eob));
         assertNull(EobUtils.getPatientId(null));
-        assertNull(EobUtils.getPeriod(null));
-        Period obj = (Period) EobUtils.getPeriod(eob);
+        assertNull(EobUtils.getBillablePeriod(null));
+        Period obj = (Period) EobUtils.getBillablePeriod(eob);
         assertNotNull(obj);
         assertEquals(d1, period.getStart());
         assertEquals(d2, period.getEnd());

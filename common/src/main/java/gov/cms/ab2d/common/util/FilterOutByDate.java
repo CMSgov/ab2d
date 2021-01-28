@@ -263,7 +263,7 @@ public final class FilterOutByDate {
     static boolean afterDate(Date dateVal, IBaseResource ben) throws ParseException {
         SimpleDateFormat fullDateFormat = new SimpleDateFormat(FULL);
         SimpleDateFormat shortDateFormat = new SimpleDateFormat(SHORT);
-        Object period = EobUtils.getPeriod(ben);
+        Object period = EobUtils.getBillablePeriod(ben);
         if (period == null || dateVal == null) {
             return false;
         }
