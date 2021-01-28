@@ -5,11 +5,8 @@ import ca.uhn.fhir.context.FhirVersionEnum;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-@Slf4j
 /**
  * This class provides a lot of underlying methods for the other Util classes including:
  *   1. Defining supported versions
@@ -18,18 +15,19 @@ import java.util.Map;
  *   4. Package private methods to use reflection to instantiate classes, enums and to invoke set/get for those classes
  *   5. The ability to determine which version is being used based on the URL passed from the HttpRequest
  */
+@Slf4j
 public class Versions {
     public enum FhirVersions {
         R3,
         R4
     }
 
-    private static Map<FhirVersions, String> classLocations = new HashMap<>() {
+    private static final Map<FhirVersions, String> CLASS_LOCATIONS = new EnumMap<>(FhirVersions.class) {
         { put (FhirVersions.R3, "org.hl7.fhir.dstu3.model"); }
         { put (FhirVersions.R4, "org.hl7.fhir.r4.model"); }
     };
 
-    private static Map<FhirVersions, FhirContext> fhirContexts = new HashMap<>() {
+    private static final Map<FhirVersions, FhirContext> FHIR_CONTEXTS = new EnumMap<>(FhirVersions.class) {
         { put (FhirVersions.R3, FhirContext.forDstu3()); }
         { put (FhirVersions.R4, FhirContext.forR4()); }
     };
@@ -37,7 +35,7 @@ public class Versions {
     /**
      * Currently, the classes in the model directories that we can instantiate
      */
-    private static List<String> supportedClasses = List.of(
+    private static final Set<String> SUPPORTED_CLASSES = Set.of(
             "ExplanationOfBenefit",
             "Patient",
             "Identifier",
@@ -56,12 +54,12 @@ public class Versions {
             "Period"
     );
 
-    private static Map<FhirVersionEnum, FhirVersions> supportedFhirVersion = new HashMap<>() {
+    private static final Map<FhirVersionEnum, FhirVersions> SUPPORTED_FHIR_VERSION = new EnumMap<>(FhirVersionEnum.class) {
         { put (FhirVersionEnum.DSTU3, FhirVersions.R3); }
         { put (FhirVersionEnum.R4, FhirVersions.R4); }
     };
 
-    private static Map<String, FhirVersions> apiVersionToFhirVersion = new HashMap<>() {
+    private static final Map<String, FhirVersions> API_VERSION_TO_FHIR_VERSION = new HashMap<>() {
         { put ("/v1/", FhirVersions.R3); }
         { put ("/v2/", FhirVersions.R4); }
     };
@@ -74,14 +72,13 @@ public class Versions {
      */
     public static FhirVersions getVersionFromUrl(String url) {
         FhirVersions version = FhirVersions.R3;
-        String versionKey = apiVersionToFhirVersion.entrySet().stream()
-                .map(c -> c.getKey())
-                .filter(c -> url.contains(c))
+        String versionKey = API_VERSION_TO_FHIR_VERSION.keySet().stream()
+                .filter(url::contains)
                 .findFirst().orElse(null);
         if (versionKey == null) {
             return version;
         }
-        return apiVersionToFhirVersion.get(versionKey);
+        return API_VERSION_TO_FHIR_VERSION.get(versionKey);
     }
 
     /**
@@ -92,7 +89,7 @@ public class Versions {
      * @return the class object
      */
     public static String getClassName(FhirVersions version, String name) {
-        String base = classLocations.get(version);
+        String base = CLASS_LOCATIONS.get(version);
         if (base == null) {
             throw new VersionNotSupported(version.toString() + " is not supported for " + name);
         }
@@ -108,13 +105,12 @@ public class Versions {
      */
     public static Object instantiateClass(FhirVersions version, String objName) {
         try {
-            if (!supportedClasses.contains(objName)) {
+            if (!SUPPORTED_CLASSES.contains(objName)) {
                 throw new RuntimeException("Class " + objName + " is not supported");
             }
             String name = getClassName(version, objName);
-            Class clazz = Class.forName(name);
-            Object obj = clazz.getDeclaredConstructor(null).newInstance();
-            return obj;
+            Class<?> clazz = Class.forName(name);
+            return clazz.getDeclaredConstructor(null).newInstance();
         } catch (Exception ex) {
             log.error("Unable to instantiate " + objName + " class", ex);
             return null;
@@ -131,7 +127,7 @@ public class Versions {
      * @return the instantiated object
      */
     static Object instantiateClassWithParam(FhirVersions version, String objName, Object arg, Class argClass) {
-        if (!supportedClasses.contains(objName)) {
+        if (!SUPPORTED_CLASSES.contains(objName)) {
             throw new RuntimeException("Class " + objName + " is not supported");
         }
         String name = getClassName(version, objName);
@@ -257,13 +253,13 @@ public class Versions {
     static Object instantiateClass(FhirVersions version, String topLevel, String lowerLevel) {
         try {
             String name = getClassName(version, topLevel);
-            Class clazz = Class.forName(name);
+            Class<?> clazz = Class.forName(name);
             String className = topLevel + "." + lowerLevel;
-            if (!supportedClasses.contains(className)) {
+            if (!SUPPORTED_CLASSES.contains(className)) {
                 throw new RuntimeException("Class " + className + " is not supported");
             }
-            Class[] classes = clazz.getClasses();
-            for (Class c : classes) {
+            Class<?>[] classes = clazz.getClasses();
+            for (Class<?> c : classes) {
                 if (c.getName().endsWith("$" + lowerLevel)) {
                     return c.getDeclaredConstructor(null).newInstance();
                 }
@@ -286,7 +282,7 @@ public class Versions {
             throw new VersionNotSupported("Null context passed");
         }
         FhirVersionEnum v = context.getVersion().getVersion();
-        FhirVersions version = supportedFhirVersion.get(v);
+        FhirVersions version = SUPPORTED_FHIR_VERSION.get(v);
         if (version == null) {
             throw new VersionNotSupported(v.getFhirVersionString() + " is not supported");
         }
@@ -303,6 +299,6 @@ public class Versions {
         if (version == null) {
             return null;
         }
-        return fhirContexts.get(version);
+        return FHIR_CONTEXTS.get(version);
     }
 }
