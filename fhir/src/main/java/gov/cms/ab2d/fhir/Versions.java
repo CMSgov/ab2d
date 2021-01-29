@@ -75,7 +75,7 @@ public class Versions {
     /**
      * The currently supported FHIR versions
      */
-    private final static Map<FhirVersionEnum, FhirVersions> SUPPORTED_FHIR_VERSION = new EnumMap<>(FhirVersionEnum.class) {
+    private static final Map<FhirVersionEnum, FhirVersions> SUPPORTED_FHIR_VERSION = new EnumMap<>(FhirVersionEnum.class) {
         { put (FhirVersionEnum.DSTU3, FhirVersions.R3); }
         { put (FhirVersionEnum.R4, FhirVersions.R4); }
     };
@@ -83,7 +83,7 @@ public class Versions {
     /**
      * The URL for each FHIR version
      */
-    private final static Map<String, FhirVersions> API_VERSION_TO_FHIR_VERSION = new HashMap<>() {
+    private static final Map<String, FhirVersions> API_VERSION_TO_FHIR_VERSION = new HashMap<>() {
         { put ("/v1/", FhirVersions.R3); }
         { put ("/v2/", FhirVersions.R4); }
     };
