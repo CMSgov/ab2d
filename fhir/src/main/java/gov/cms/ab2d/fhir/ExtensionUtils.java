@@ -49,14 +49,14 @@ public class ExtensionUtils {
      * @return the extension
      */
     public static IBase createMbiExtension(String mbi, boolean current, Versions.FhirVersions version) {
-        Object identifier = Versions.instantiateClass(version, "Identifier");
+        Object identifier = Versions.getObject(version, "Identifier");
         Versions.invokeSetMethod(identifier, "setSystem", MBI_ID, String.class);
         Versions.invokeSetMethod(identifier, "setValue", mbi, String.class);
 
-        Object coding = Versions.instantiateClass(version, "Coding");
+        Object coding = Versions.getObject(version, "Coding");
         Versions.invokeSetMethod(coding, "setCode", current ? CURRENT_MBI : HISTORIC_MBI, String.class);
 
-        Object currencyExtension = Versions.instantiateClass(version, "Extension");
+        Object currencyExtension = Versions.getObject(version, "Extension");
         Versions.invokeSetMethod(currencyExtension, "setUrl", CURRENCY_IDENTIFIER, String.class);
         try {
             Versions.invokeSetMethod(currencyExtension, "setValue", coding, Class.forName(Versions.getClassName(version, "Type")));
@@ -66,7 +66,7 @@ public class ExtensionUtils {
 
         Versions.invokeSetMethod(identifier, "setExtension", List.of(currencyExtension), List.class);
 
-        Object ext = Versions.instantiateClass(version, "Extension");
+        Object ext = Versions.getObject(version, "Extension");
         Versions.invokeSetMethod(ext, "setUrl", ID_EXT, String.class);
         try {
             Versions.invokeSetMethod(ext, "setValue", identifier, Class.forName(Versions.getClassName(version, "Type")));

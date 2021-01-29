@@ -17,7 +17,7 @@ public class StatusUtils {
      * @return the String for the human readable time
      */
     public static String getFhirTime(Versions.FhirVersions version, OffsetDateTime dateTime) {
-        Object dt = Versions.instantiateClassWithParam(version, "DateTimeType", dateTime.toString(), String.class);
+        Object dt = Versions.getObject(version, "DateTimeType", dateTime.toString(), String.class);
         return (String) Versions.invokeGetMethod(dt, "toHumanDisplay");
     }
 }

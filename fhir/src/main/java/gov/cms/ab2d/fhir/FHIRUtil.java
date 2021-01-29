@@ -38,7 +38,7 @@ public final class FHIRUtil {
      * @return the OperationOutcome object
      */
     public static IBaseResource getErrorOutcome(String msg, Versions.FhirVersions version) {
-        IBaseResource operationOutcome = (IBaseResource) Versions.instantiateClass(version, "OperationOutcome");
+        IBaseResource operationOutcome = (IBaseResource) Versions.getObject(version, "OperationOutcome");
         List issues = (List) Versions.invokeGetMethod(operationOutcome, "getIssue");
 
         Object newIssue = Versions.instantiateClass(version, "OperationOutcome", "OperationOutcomeIssueComponent");
@@ -48,7 +48,7 @@ public final class FHIRUtil {
 
         Object issueTypeInvalid = Versions.instantiateEnum(version, "OperationOutcome", "IssueType", "INVALID");
         Versions.invokeSetMethod(newIssue, "setCode", issueTypeInvalid, issueTypeInvalid.getClass());
-        Object codableConcept = Versions.instantiateClass(version, "CodeableConcept");
+        Object codableConcept = Versions.getObject(version, "CodeableConcept");
         Versions.invokeSetMethod(codableConcept, "setText", msg, String.class);
         Versions.invokeSetMethod(newIssue, "setDetails", codableConcept, codableConcept.getClass());
 

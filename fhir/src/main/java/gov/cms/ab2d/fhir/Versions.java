@@ -24,11 +24,29 @@ public class Versions {
         R4
     }
 
+    /**
+     * So we don't have to instantiate all Method objects, hold on to them so we can just invoke them when necessary
+     * to save time
+     */
+    private static Map<String, Method> neededMethods = new HashMap<>();
+
+    /**
+     * So we don't have to use reflection to instantiate objects, keep a list of blank objects so that we can copy them
+     * when needed
+     */
+    private static Map<String, Object> neededObjects = new HashMap<>();
+
+    /**
+     * Location of packages for FHIR objects
+     */
     private static Map<FhirVersions, String> classLocations = new HashMap<>() {
         { put (FhirVersions.R3, "org.hl7.fhir.dstu3.model"); }
         { put (FhirVersions.R4, "org.hl7.fhir.r4.model"); }
     };
 
+    /**
+     * Mapping of FhirContext objects to versions
+     */
     private static Map<FhirVersions, FhirContext> fhirContexts = new HashMap<>() {
         { put (FhirVersions.R3, FhirContext.forDstu3()); }
         { put (FhirVersions.R4, FhirContext.forR4()); }
@@ -56,11 +74,17 @@ public class Versions {
             "Period"
     );
 
+    /**
+     * The currently supported FHIR versions
+     */
     private static Map<FhirVersionEnum, FhirVersions> supportedFhirVersion = new HashMap<>() {
         { put (FhirVersionEnum.DSTU3, FhirVersions.R3); }
         { put (FhirVersionEnum.R4, FhirVersions.R4); }
     };
 
+    /**
+     * The URL for each FHIR version
+     */
     private static Map<String, FhirVersions> apiVersionToFhirVersion = new HashMap<>() {
         { put ("/v1/", FhirVersions.R3); }
         { put ("/v2/", FhirVersions.R4); }
@@ -91,7 +115,7 @@ public class Versions {
      * @param name - the name of the class
      * @return the class object
      */
-    public static String getClassName(FhirVersions version, String name) {
+    static String getClassName(FhirVersions version, String name) {
         String base = classLocations.get(version);
         if (base == null) {
             throw new VersionNotSupported(version.toString() + " is not supported for " + name);
@@ -100,49 +124,59 @@ public class Versions {
     }
 
     /**
-     * Given a FHIR version and object name, instantiate the object for the correct version
+     * Get an object of a type className with an argument if desired. If the object already has been instantiated,
+     * get a copy of that object, otherwise use reflection to instantiate it and save the copy for the next caller who
+     * needs it
      *
      * @param version - the FHIR version
-     * @param objName - the object name
-     * @return the instantiated class (the default constructor with no parameters)
+     * @param className - the class name to instantiate without the package (i.e, ExplanationOfBenefit, Extension)
+     * @param arg - any argument to pass the constructor
+     * @param argClass
+     * @return
      */
-    public static Object instantiateClass(FhirVersions version, String objName) {
+    static Object getObject(FhirVersions version, String className, Object arg, Class argClass) {
+        String fullClassName = getClassName(version, className);
+        return getObject(fullClassName, argClass, arg);
+    }
+
+    static Object getObject(FhirVersions version, String className) {
+        String fullName = getClassName(version, className);
+        Object object = neededObjects.get(fullName);
         try {
-            if (!supportedClasses.contains(objName)) {
-                throw new RuntimeException("Class " + objName + " is not supported");
+            if (object == null) {
+                Class clazz = Class.forName(fullName);
+                object = clazz.getDeclaredConstructor(null).newInstance();
             }
-            String name = getClassName(version, objName);
-            Class clazz = Class.forName(name);
-            Object obj = clazz.getDeclaredConstructor(null).newInstance();
-            return obj;
+            if (object == null) {
+                return null;
+            }
+            neededObjects.put(fullName, object);
+            Method method = getMethod(object.getClass(), "copy");
+            return method.invoke(object);
         } catch (Exception ex) {
-            log.error("Unable to instantiate " + objName + " class", ex);
             return null;
         }
     }
 
     /**
-     * Given a FHIR version and object name, instantiate the object for the correct version with one argument
+     * Instantiates an object of a class name with an object as a parameter. This cannot
+     * store and save empty object instances since the parameter means it's not empty.
      *
-     * @param version - the FHIR version
-     * @param objName - the object name
-     * @param arg - the argument
-     * @param argClass - the class type of the argument
-     * @return the instantiated object
+     * @param className - the class name to instantiate without the package
+     * @param classArg - the Class value of the parameter
+     * @param arg - the value of the parameter
+     * @return the object
      */
-    static Object instantiateClassWithParam(FhirVersions version, String objName, Object arg, Class argClass) {
-        if (!supportedClasses.contains(objName)) {
-            throw new RuntimeException("Class " + objName + " is not supported");
+    static Object getObject(String className, Class classArg, Object arg) {
+        String fullName = className;
+        if (classArg != null) {
+            fullName += "#" + classArg;
         }
-        String name = getClassName(version, objName);
         try {
-            Class clazz = Class.forName(name);
-            Object obj = clazz.getDeclaredConstructor(argClass).newInstance(arg);
-            return obj;
+            Class clazz = Class.forName(className);
+            return clazz.getDeclaredConstructor(classArg).newInstance(arg);
         } catch (Exception ex) {
-            log.error("Unable to instantiate " + objName + " with  " + argClass.getName() + " class", ex);
             return null;
-
         }
     }
 
@@ -155,7 +189,7 @@ public class Versions {
      */
     static Object invokeGetMethod(Object resource, String methodName) {
         try {
-            Method method = resource.getClass().getMethod(methodName);
+            Method method = getMethod(resource.getClass(), methodName);
             return method.invoke(resource);
         } catch (Exception ex) {
             log.error("Unable to invoke get method " + methodName + " on " + resource.getClass().getName());
@@ -174,7 +208,7 @@ public class Versions {
      */
     static Object invokeGetMethodWithArg(Object resource, String methodName, Object arg, Class clazz) {
         try {
-            Method method = resource.getClass().getMethod(methodName, clazz);
+            Method method = getMethod(resource.getClass(), methodName, clazz);
             return method.invoke(resource, arg);
         } catch (Exception ex) {
             log.error("Unable to invoke get method " + methodName + " on " + resource.getClass().getName() + " with " + clazz.getName() + " argument", ex);
@@ -192,13 +226,56 @@ public class Versions {
      */
     static void invokeSetMethod(Object resource, String methodName, Object val, Class paramType) {
         try {
-            Method method = resource.getClass().getMethod(methodName, paramType);
+            Method method = getMethod(resource.getClass(), methodName, paramType);
             method.invoke(resource, val);
         } catch (Exception ex) {
             log.error("Unable to invoke set method " + methodName + " on " + resource.getClass().getName() + " with " + val + " argument", ex);
         }
     }
 
+    private static Method getMethod(Class clazz, String methodName) {
+        return getMethod(clazz, methodName, null);
+    }
+
+    private static Method getMethod(Class clazz, String methodName, Class paramType) {
+        String fullMethodName = null;
+        if (paramType != null) {
+            fullMethodName = getMethodName(clazz.getName(), methodName, paramType.getName());
+        } else {
+            fullMethodName = getMethodName(clazz.getName(), methodName);
+        }
+        Method method = neededMethods.get(fullMethodName);
+        if (method != null) {
+            return method;
+        }
+        try {
+            Method methodObj = null;
+            if (paramType != null) {
+                methodObj = clazz.getMethod(methodName, paramType);
+            } else {
+                methodObj = clazz.getMethod(methodName);
+            }
+            if (methodObj != null) {
+                neededMethods.put(fullMethodName, methodObj);
+                return methodObj;
+            }
+        } catch (Exception ex) {
+            return null;
+        }
+        return null;
+    }
+
+    private static String getMethodName(String className, String methodName) {
+        return getMethodName(className, methodName, null);
+    }
+
+    private static String getMethodName(String className, String methodName, String argClass) {
+        String value = className + "#" + methodName;
+        if (argClass != null && !argClass.isEmpty()) {
+            value += "$" + argClass;
+        }
+        return value;
+    }
     /**
      * Instantiate enum from the version, enum name and value of the enum
      *
@@ -211,7 +288,7 @@ public class Versions {
         try {
             String topClassName = getClassName(version, cName);
             Class clazz = Class.forName(topClassName);
-            Method valueOf = clazz.getMethod("valueOf", String.class);
+            Method valueOf = getMethod(clazz, "valueOf", String.class);
             return valueOf.invoke(null, value);
         } catch (Exception ex) {
             log.error("Unable to instantiate enum " + cName + " with value " + value, ex);
@@ -235,7 +312,7 @@ public class Versions {
             Class[] classes = top.getClasses();
             for (Class c : classes) {
                 if (c.getName().endsWith("$" + lowerLevel)) {
-                    Method valueOf = c.getMethod("valueOf", String.class);
+                    Method valueOf = getMethod(c, "valueOf", String.class);
                     return valueOf.invoke(null, value);
                 }
             }
