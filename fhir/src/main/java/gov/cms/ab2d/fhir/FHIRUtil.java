@@ -7,14 +7,13 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 
 import java.util.List;
 
-@Slf4j
 /**
  * Misc methods to support different versions of FHIR
  */
+@Slf4j
 public final class FHIRUtil {
 
-    private FHIRUtil() {
-    }
+    private FHIRUtil() { }
 
     /**
      * Given a resource and a FHIR version, convert the object to JSON

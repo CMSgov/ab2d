@@ -9,11 +9,11 @@ import java.util.GregorianCalendar;
 import java.util.Calendar;
 import java.util.stream.Collectors;
 
-@Slf4j
 /**
  * Used to support manipulation of extensions to Resource objects for different FHIR versions
  */
-public class ExtensionUtils {
+@Slf4j
+public final class ExtensionUtils {
     public static final String CURRENT_MBI = "current";
     public static final String HISTORIC_MBI = "historic";
     public static final String MBI_ID = "http://hl7.org/fhir/sid/us-mbi";
@@ -21,6 +21,8 @@ public class ExtensionUtils {
             "https://bluebutton.cms.gov/resources/codesystem/identifier-currency";
     static final String ID_EXT = "http://hl7.org/fhir/StructureDefinition/elementdefinition-identifier";
     public static final String REF_YEAR_EXT = "https://bluebutton.cms.gov/resources/variables/rfrnc_yr";
+
+    private ExtensionUtils() { }
 
     /**
      * Add an extension to a resource
@@ -82,11 +84,12 @@ public class ExtensionUtils {
      * @param patient - the patient resource
      * @return the year
      */
+    @SuppressWarnings("unchecked")
     public static int getReferenceYear(IDomainResource patient) {
         List<? extends IBaseExtension> refYearList = patient.getExtension().stream()
                 .filter(c -> REF_YEAR_EXT.equalsIgnoreCase(c.getUrl()))
                 .collect(Collectors.toList());
-        if (refYearList.size() == 0) {
+        if (refYearList.isEmpty()) {
             return -1;
         }
         IBaseExtension ext = refYearList.get(0);

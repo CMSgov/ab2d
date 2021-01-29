@@ -16,14 +16,16 @@ import static gov.cms.ab2d.fhir.ExtensionUtils.CURRENT_MBI;
 import static gov.cms.ab2d.fhir.ExtensionUtils.HISTORIC_MBI;
 import static gov.cms.ab2d.fhir.ExtensionUtils.MBI_ID;
 
-@Slf4j
 /**
  * Util methods to manipulate identifiers for different FHIR versions
  */
-public class IdentifierUtils {
+@Slf4j
+public final class IdentifierUtils {
     public static final String CURRENCY_IDENTIFIER =
             "https://bluebutton.cms.gov/resources/codesystem/identifier-currency";
     public static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
+
+    private IdentifierUtils() { }
 
     /**
      * Return the current MBI from the Patient resource

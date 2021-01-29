@@ -3,11 +3,14 @@ package gov.cms.ab2d.fhir;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.IBaseConformance;
 
-@Slf4j
 /**
  * Used for parsing data related to capability statements for different versions of FHIR
  */
-public class MetaDataUtils {
+@Slf4j
+public final class MetaDataUtils {
+
+    private MetaDataUtils () { }
+
     /**
      * returns if metadata.getStatus() == ACTIVE to verify that the service is active
      *
@@ -21,10 +24,7 @@ public class MetaDataUtils {
         }
         Object val = Versions.invokeGetMethod(resource, "getStatus");
         Object activeEnum = Versions.instantiateEnum(version, "Enumerations", "PublicationStatus", "ACTIVE");
-        if (val == activeEnum) {
-            return true;
-        }
-        return false;
+        return val == activeEnum;
     }
 
     /**
@@ -33,6 +33,7 @@ public class MetaDataUtils {
      * @param version - the version
      * @return the object
      */
+    @SuppressWarnings("unchecked")
     public static Class<? extends IBaseConformance> getCapabilityClass(Versions.FhirVersions version) {
         try {
             return (Class<? extends IBaseConformance>) Class.forName(Versions.getClassName(version, "CapabilityStatement"));

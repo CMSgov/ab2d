@@ -17,7 +17,10 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import javax.persistence.EntityNotFoundException;
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
+import static gov.cms.ab2d.common.repository.CoverageDeltaRepository.COVERAGE_ADDED;
+import static gov.cms.ab2d.common.repository.CoverageDeltaRepository.COVERAGE_DELETED;
 import static java.util.Collections.disjoint;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
@@ -67,6 +70,12 @@ class CoverageServiceImplTest {
 
     @Autowired
     ContractRepository contractRepo;
+
+    @Autowired
+    CoverageDeltaRepository coverageDeltaRepository;
+
+    @Autowired
+    CoverageDeltaTestRepository coverageDeltaTestRepository;
 
     @Autowired
     CoverageService coverageService;
@@ -687,6 +696,8 @@ class CoverageServiceImplTest {
         assertEquals(inProgress1, savedTo1);
 
         CoverageSearchDiff searchDiff = coverageService.searchDiff(period1Jan.getId());
+        List<CoverageDelta> deltas = coverageDeltaTestRepository.findAll();
+        assertTrue(deltas.isEmpty());
 
         assertEquals(3, searchDiff.getCurrentCount());
         assertEquals(0, searchDiff.getPreviousCount());
@@ -702,7 +713,8 @@ class CoverageServiceImplTest {
         Set<Identifiers> results1 = Set.of(createIdentifier("123-1"),
                 createIdentifier("456-1"), createIdentifier("789-1"));
         Set<Identifiers> results2 = Set.of(createIdentifier("123-1"),
-                createIdentifier("456-2"), createIdentifier("789-2"));
+                createIdentifier("456-2"), createIdentifier("789-2"),
+                createIdentifier("890-0"));
 
         coverageService.submitSearch(period1Jan.getId(), "testing");
         CoverageSearchEvent inProgress1 = startSearchAndPullEvent();
@@ -722,12 +734,18 @@ class CoverageServiceImplTest {
         assertEquals(inProgress2, savedTo2);
 
         CoverageSearchDiff searchDiff = coverageService.searchDiff(period1Jan.getId());
+        List<CoverageDelta> deltas = coverageDeltaTestRepository.findAll();
+        assertFalse(deltas.isEmpty());
+        Map<String, Long> deltaTypeCount =
+                deltas.stream().collect(Collectors.groupingBy(CoverageDelta::getType, Collectors.counting()));
 
-        assertEquals(3, searchDiff.getCurrentCount());
+        assertEquals(4, searchDiff.getCurrentCount());
         assertEquals(3, searchDiff.getPreviousCount());
         assertEquals(1, searchDiff.getUnchanged());
         assertEquals(2, searchDiff.getDeletions());
-        assertEquals(2, searchDiff.getAdditions());
+        assertEquals(2, deltaTypeCount.get(COVERAGE_DELETED));
+        assertEquals(3, searchDiff.getAdditions());
+        assertEquals(3, deltaTypeCount.get(COVERAGE_ADDED));
     }
 
     @DisplayName("Delete previous search")

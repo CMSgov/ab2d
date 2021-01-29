@@ -7,13 +7,15 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import java.util.Date;
 import java.util.List;
 
-@Slf4j
 /**
  * Used to provide util methods to handle ExplanationOfBenefit objects
  */
-public class EobUtils {
+@Slf4j
+public final class EobUtils {
     public static final String EOB_TYPE_CODE_SYS = "eob-type";
     public static final String EOB_TYPE_PART_D_CODE_VAL = "PDE";
+
+    private EobUtils() { }
 
     /**
      * Return the Patient ID from the EOB.getPatient().getReference & then strip off the "Patient/"
@@ -88,7 +90,7 @@ public class EobUtils {
             return false;
         }
         Object c = Versions.invokeGetMethod(eob, "getType");
-        List codes = (List) Versions.invokeGetMethod(c, "getCoding");
+        List<?> codes = (List<?>) Versions.invokeGetMethod(c, "getCoding");
         return codes.stream()
                 .filter(code -> ((String) Versions.invokeGetMethod(code, "getSystem")).endsWith(EOB_TYPE_CODE_SYS))
                 .anyMatch(code -> EOB_TYPE_PART_D_CODE_VAL.equalsIgnoreCase((String) Versions.invokeGetMethod(code, "getCode")));

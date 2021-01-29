@@ -4,11 +4,13 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.time.OffsetDateTime;
 
-@Slf4j
 /**
  * Time Utils for different versions of FHIR
  */
-public class StatusUtils {
+@Slf4j
+public final class StatusUtils {
+
+    private StatusUtils() { }
     /**
      * Return the DateTimeType.toHumanDisplay" value from an OffsetDateTIme
      *

@@ -91,4 +91,6 @@ databaseChangeLog:
   - include:
       file: db/changelog/test_only/truncate-fake-data.sql
   - include:
+      file: db/changelog/v2021/add_coverage_delta.sql
+  - include:
       file: db/changelog/v001/add_fhir_version.sql

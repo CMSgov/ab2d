@@ -12,13 +12,15 @@ import java.util.stream.Stream;
 
 import static org.hl7.fhir.instance.model.api.IBaseBundle.LINK_NEXT;
 
-@Slf4j
 /**
  * Utilities to create and parse Bundle objects for different FHIR versions
  */
-public class BundleUtils {
+@Slf4j
+public final class BundleUtils {
     public static final String EOB = "ExplanationOfBenefit";
     public static final String PATIENT = "Patient";
+
+    private BundleUtils() { }
 
     /**
      * Get available links from a bundle
@@ -30,12 +32,12 @@ public class BundleUtils {
         if (bundle == null) {
             return null;
         }
-        List links = (List) Versions.invokeGetMethod(bundle, "getLink");
+        List<?> links = (List<?>) Versions.invokeGetMethod(bundle, "getLink");
         List<String> listValues = new ArrayList<>();
         for (Object o : links) {
-            listValues.add((String) Versions.invokeGetMethod((IBase) o, "getRelation"));
+            listValues.add((String) Versions.invokeGetMethod(o, "getRelation"));
         }
-        return listValues.stream().collect(Collectors.joining(" , "));
+        return String.join(" , ", listValues);
     }
 
     /**
@@ -48,13 +50,13 @@ public class BundleUtils {
         if (bundle == null) {
             return null;
         }
-        List links = (List) Versions.invokeGetMethod(bundle, "getLink");
+        List<?> links = (List<?>) Versions.invokeGetMethod(bundle, "getLink");
         List<String> listValues = new ArrayList<>();
         for (Object o : links) {
-            listValues.add(Versions.invokeGetMethod((IBase) o, "getRelation") + " -> " +
-                    Versions.invokeGetMethod((IBase) o, "getUrl"));
+            listValues.add(Versions.invokeGetMethod(o, "getRelation") + " -> " +
+                    Versions.invokeGetMethod(o, "getUrl"));
         }
-        return listValues.stream().collect(Collectors.joining(" , "));
+        return String.join(" , ", listValues);
     }
 
     /**
@@ -98,6 +100,7 @@ public class BundleUtils {
      * @param bundle - the bundle
      * @return the list of entries
      */
+    @SuppressWarnings("unchecked")
     public static List<IBaseBackboneElement> getEntries(IBaseBundle bundle) {
         if (bundle == null) {
             return null;
