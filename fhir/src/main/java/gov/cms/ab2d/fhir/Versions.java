@@ -253,7 +253,7 @@ public class Versions {
         if (method != null) {
             return method;
         }
-        Method methodObj = null;
+        Method methodObj;
         try {
             if (paramType != null) {
                 methodObj = clazz.getMethod(methodName, paramType);
@@ -263,11 +263,8 @@ public class Versions {
         } catch (NoSuchMethodException | SecurityException ex) {
             return null;
         }
-        if (methodObj != null) {
-            NEEDED_METHODS.put(fullMethodName, methodObj);
-            return methodObj;
-        }
-        return null;
+        NEEDED_METHODS.put(fullMethodName, methodObj);
+        return methodObj;
     }
 
     private static String getMethodName(String className, String methodName) {
