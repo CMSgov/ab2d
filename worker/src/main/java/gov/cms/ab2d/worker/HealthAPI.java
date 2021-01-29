@@ -3,7 +3,7 @@ package gov.cms.ab2d.worker;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.health.SlackAvailable;
 import gov.cms.ab2d.worker.util.HealthCheck;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,16 +11,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import static gov.cms.ab2d.common.util.Constants.*;
 
+@RequiredArgsConstructor
 @RestController
 public class HealthAPI {
-    @Autowired
-    private HealthCheck healthCheck;
 
-    @Autowired
-    private BFDClient bfdClient;
-
-    @Autowired
-    private SlackAvailable slackAvailable;
+    private final HealthCheck healthCheck;
+    private final BFDClient bfdClient;
+    private final SlackAvailable slackAvailable;
 
     @GetMapping(HEALTH_ENDPOINT)
     public ResponseEntity<Void> getHealth() {

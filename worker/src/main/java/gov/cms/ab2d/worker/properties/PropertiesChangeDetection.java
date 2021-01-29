@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.properties;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -12,11 +11,13 @@ import java.util.Map;
 @Component()
 class PropertiesChangeDetection {
 
-    @Autowired
-    private PropertiesInit propertiesInit;
+    private final PropertiesInit propertiesInit;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
-    @Autowired
-    private ApplicationEventPublisher applicationEventPublisher;
+    PropertiesChangeDetection(PropertiesInit propertiesInit, ApplicationEventPublisher applicationEventPublisher) {
+        this.propertiesInit = propertiesInit;
+        this.applicationEventPublisher = applicationEventPublisher;
+    }
 
     // Every 20 seconds
     @Scheduled(fixedDelay = 20 * 1000)

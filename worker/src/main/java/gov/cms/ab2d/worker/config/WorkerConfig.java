@@ -2,7 +2,6 @@ package gov.cms.ab2d.worker.config;
 
 import gov.cms.ab2d.bfd.client.BFDClientConfiguration;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.*;
 import org.springframework.integration.config.EnableIntegration;
@@ -30,20 +29,20 @@ import java.util.concurrent.*;
 @DependsOn("propertiesInit")
 public class WorkerConfig {
 
-    @Autowired
-    private DataSource dataSource;
+    private final int pcpCorePoolSize;
+    private final int jobCorePoolSize;
+    private final int jobMaxPoolSize;
+    private final int jobQueueCapacity;
 
-    @Value("${pcp.core.pool.size}")
-    private int pcpCorePoolSize;
-
-    @Value("${job.core.pool.size}")
-    private int jobCorePoolSize;
-
-    @Value("${job.max.pool.size}")
-    private int jobMaxPoolSize;
-
-    @Value("${job.queue.capacity}")
-    private int jobQueueCapacity;
+    public WorkerConfig(@Value("${pcp.core.pool.size}") int pcpCorePoolSize,
+                        @Value("${job.core.pool.size}") int jobCorePoolSize,
+                        @Value("${job.max.pool.size}") int jobMaxPoolSize,
+                        @Value("${job.queue.capacity}") int jobQueueCapacity) {
+        this.pcpCorePoolSize = pcpCorePoolSize;
+        this.jobCorePoolSize = jobCorePoolSize;
+        this.jobMaxPoolSize = jobMaxPoolSize;
+        this.jobQueueCapacity = jobQueueCapacity;
+    }
 
     @Bean
     public Executor patientProcessorThreadPool() {
@@ -75,7 +74,7 @@ public class WorkerConfig {
     }
 
     @Bean
-    public LockRepository lockRepository() {
+    public LockRepository lockRepository(DataSource dataSource) {
         final DefaultLockRepository defaultLockRepository = new DefaultLockRepository(dataSource);
         defaultLockRepository.setTimeToLive(60_000);        // 60 seconds
         return defaultLockRepository;

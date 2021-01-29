@@ -4,7 +4,6 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -17,14 +16,18 @@ import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class CancelStuckJobsProcessorImpl implements CancelStuckJobsProcessor {
-
-    @Value("${stuck.job.cancel.threshold}")
-    private int cancelThreshold;
 
     private final JobRepository jobRepository;
     private final LogManager eventLogger;
+    private final int cancelThreshold;
+
+    public CancelStuckJobsProcessorImpl(JobRepository jobRepository, LogManager eventLogger,
+                                        @Value("${stuck.job.cancel.threshold}") int cancelThreshold) {
+        this.jobRepository = jobRepository;
+        this.eventLogger = eventLogger;
+        this.cancelThreshold = cancelThreshold;
+    }
 
     @Override
     @Transactional
