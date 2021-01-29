@@ -32,6 +32,9 @@
         <project.root>${basedir}</project.root>
         <java.version>13</java.version>
         <hapi.version>5.2.1</hapi.version>
+        <!-- eventlogger is imported first by all other modules, if that changes then
+         okhttp3 must be imported first anywhere the slack client is used-->
+        <okhttp3.version>4.9.0</okhttp3.version>
         <mockserver.version>5.11.2</mockserver.version>
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
         <logback-encoder.version>6.6</logback-encoder.version>
