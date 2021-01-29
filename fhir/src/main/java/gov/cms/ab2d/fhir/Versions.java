@@ -26,13 +26,13 @@ public class Versions {
      * So we don't have to instantiate all Method objects, hold on to them so we can just invoke them when necessary
      * to save time
      */
-    private static final Map<String, Method> neededMethods = new HashMap<>();
+    private static final Map<String, Method> NEEDED_METHODS = new HashMap<>();
 
     /**
      * So we don't have to use reflection to instantiate objects, keep a list of blank objects so that we can copy them
      * when needed
      */
-    private static final Map<String, Object> neededObjects = new HashMap<>();
+    private static final Map<String, Object> NEEDED_OBJECTS = new HashMap<>();
 
     /**
      * Location of packages for FHIR objects
@@ -138,7 +138,7 @@ public class Versions {
 
     static Object getObject(FhirVersions version, String className) {
         String fullName = getClassName(version, className);
-        Object object = neededObjects.get(fullName);
+        Object object = NEEDED_OBJECTS.get(fullName);
         try {
             if (object == null) {
                 Class clazz = Class.forName(fullName);
@@ -147,7 +147,7 @@ public class Versions {
             if (object == null) {
                 return null;
             }
-            neededObjects.put(fullName, object);
+            NEEDED_OBJECTS.put(fullName, object);
             Method method = getMethod(object.getClass(), "copy");
             return method.invoke(object);
         } catch (Exception ex) {
@@ -165,124 +165,6 @@ public class Versions {
      * @return the object
      */
     static Object getObject(String className, Class classArg, Object arg) {
-        String fullName = className;
-        if (classArg != null) {
-            fullName += "#" + classArg;
-        }
-        try {
-            Class clazz = Class.forName(className);
-            return clazz.getDeclaredConstructor(classArg).newInstance(arg);
-        } catch (Exception ex) {
-            return null;
-        }
-    }
-
-    /**
-     * Get an object of a type className with an argument if desired. If the object already has been instantiated,
-     * get a copy of that object, otherwise use reflection to instantiate it and save the copy for the next caller who
-     * needs it
-     *
-     * @param version - the FHIR version
-     * @param className - the class name to instantiate without the package (i.e, ExplanationOfBenefit, Extension)
-     * @param arg - any argument to pass the constructor
-     * @param argClass
-     * @return
-     */
-    static Object getObject(FhirVersions version, String className, Object arg, Class argClass) {
-        String fullClassName = getClassName(version, className);
-        return getObject(fullClassName, argClass, arg);
-    }
-
-    static Object getObject(FhirVersions version, String className) {
-        String fullName = getClassName(version, className);
-        Object object = neededObjects.get(fullName);
-        try {
-            if (object == null) {
-                Class clazz = Class.forName(fullName);
-                object = clazz.getDeclaredConstructor(null).newInstance();
-            }
-            if (object == null) {
-                return null;
-            }
-            neededObjects.put(fullName, object);
-            Method method = getMethod(object.getClass(), "copy");
-            return method.invoke(object);
-        } catch (Exception ex) {
-            return null;
-        }
-    }
-
-    /**
-     * Instantiates an object of a class name with an object as a parameter. This cannot
-     * store and save empty object instances since the parameter means it's not empty.
-     *
-     * @param className - the class name to instantiate without the package
-     * @param classArg - the Class value of the parameter
-     * @param arg - the value of the parameter
-     * @return the object
-     */
-    static Object getObject(String className, Class classArg, Object arg) {
-        String fullName = className;
-        if (classArg != null) {
-            fullName += "#" + classArg;
-        }
-        try {
-            Class clazz = Class.forName(className);
-            return clazz.getDeclaredConstructor(classArg).newInstance(arg);
-        } catch (Exception ex) {
-            return null;
-        }
-    }
-
-    /**
-     * Get an object of a type className with an argument if desired. If the object already has been instantiated,
-     * get a copy of that object, otherwise use reflection to instantiate it and save the copy for the next caller who
-     * needs it
-     *
-     * @param version - the FHIR version
-     * @param className - the class name to instantiate without the package (i.e, ExplanationOfBenefit, Extension)
-     * @param arg - any argument to pass the constructor
-     * @param argClass
-     * @return
-     */
-    static Object getObject(FhirVersions version, String className, Object arg, Class argClass) {
-        String fullClassName = getClassName(version, className);
-        return getObject(fullClassName, argClass, arg);
-    }
-
-    static Object getObject(FhirVersions version, String className) {
-        String fullName = getClassName(version, className);
-        Object object = neededObjects.get(fullName);
-        try {
-            if (object == null) {
-                Class clazz = Class.forName(fullName);
-                object = clazz.getDeclaredConstructor(null).newInstance();
-            }
-            if (object == null) {
-                return null;
-            }
-            neededObjects.put(fullName, object);
-            Method method = getMethod(object.getClass(), "copy");
-            return method.invoke(object);
-        } catch (Exception ex) {
-            return null;
-        }
-    }
-
-    /**
-     * Instantiates an object of a class name with an object as a parameter. This cannot
-     * store and save empty object instances since the parameter means it's not empty.
-     *
-     * @param className - the class name to instantiate without the package
-     * @param classArg - the Class value of the parameter
-     * @param arg - the value of the parameter
-     * @return the object
-     */
-    static Object getObject(String className, Class classArg, Object arg) {
-        String fullName = className;
-        if (classArg != null) {
-            fullName += "#" + classArg;
-        }
         try {
             Class clazz = Class.forName(className);
             return clazz.getDeclaredConstructor(classArg).newInstance(arg);
@@ -355,7 +237,7 @@ public class Versions {
         } else {
             fullMethodName = getMethodName(clazz.getName(), methodName);
         }
-        Method method = neededMethods.get(fullMethodName);
+        Method method = NEEDED_METHODS.get(fullMethodName);
         if (method != null) {
             return method;
         }
@@ -367,7 +249,7 @@ public class Versions {
                 methodObj = clazz.getMethod(methodName);
             }
             if (methodObj != null) {
-                neededMethods.put(fullMethodName, methodObj);
+                NEEDED_METHODS.put(fullMethodName, methodObj);
                 return methodObj;
             }
         } catch (Exception ex) {
