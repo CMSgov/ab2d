@@ -4,6 +4,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import lombok.extern.slf4j.Slf4j;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -139,18 +140,29 @@ public class Versions {
     static Object getObject(FhirVersions version, String className) {
         String fullName = getClassName(version, className);
         Object object = NEEDED_OBJECTS.get(fullName);
+            if (object == null) {
+                Class clazz = null;
+                try {
+                    clazz = Class.forName(fullName);
+                } catch (ClassNotFoundException e) {
+                    log.error("Unable to create class " + fullName);
+                    return null;
+                }
+                try {
+                    object = clazz.getDeclaredConstructor(null).newInstance();
+                } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                    log.error("Unable to create class " + fullName);
+                    return null;
+                }
+            }
+        if (object == null) {
+            return null;
+        }
+        NEEDED_OBJECTS.put(fullName, object);
+        Method method = getMethod(object.getClass(), "copy");
         try {
-            if (object == null) {
-                Class clazz = Class.forName(fullName);
-                object = clazz.getDeclaredConstructor(null).newInstance();
-            }
-            if (object == null) {
-                return null;
-            }
-            NEEDED_OBJECTS.put(fullName, object);
-            Method method = getMethod(object.getClass(), "copy");
             return method.invoke(object);
-        } catch (Exception ex) {
+        } catch (IllegalAccessException | InvocationTargetException e) {
             return null;
         }
     }
@@ -241,19 +253,19 @@ public class Versions {
         if (method != null) {
             return method;
         }
+        Method methodObj = null;
         try {
-            Method methodObj = null;
             if (paramType != null) {
                 methodObj = clazz.getMethod(methodName, paramType);
             } else {
                 methodObj = clazz.getMethod(methodName);
             }
-            if (methodObj != null) {
-                NEEDED_METHODS.put(fullMethodName, methodObj);
-                return methodObj;
-            }
-        } catch (Exception ex) {
+        } catch (NoSuchMethodException | SecurityException ex) {
             return null;
+        }
+        if (methodObj != null) {
+            NEEDED_METHODS.put(fullMethodName, methodObj);
+            return methodObj;
         }
         return null;
     }
