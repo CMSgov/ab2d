@@ -151,7 +151,15 @@ resource "aws_ecs_task_definition" "worker" {
         {
 	      "name" : "NEW_RELIC_LICENSE_KEY",
 	      "value" : "${var.new_relic_license_key}"
-	    }
+	    },
+        {
+          "name": "AB2D_SLACK_ALERT_WEBHOOKS",
+          "value": "${var.slack_alert_webhooks}",
+        },
+        {
+          "name": "AB2D_SLACK_TRACE_WEBHOOKS",
+          "value": "${var.slack_trace_webhooks}"
+        }
       ],
       "logConfiguration": {
         "logDriver": "syslog"

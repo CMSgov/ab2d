@@ -519,6 +519,16 @@ variable "ab2d_hpms_auth_key_secret" {
   description = "Please pass this on command line and not as a value here"
 }
 
+variable "ab2d_slack_alert_webhooks" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
+variable "ab2d_slack_trace_webhooks" {
+  default     = ""
+  description = "Please pass this on command line and not as a value here"
+}
+
 variable "ab2d_bfd_insights_s3_bucket" {
   default     = ""
   description = "Please pass this on command line and not as a value here"
