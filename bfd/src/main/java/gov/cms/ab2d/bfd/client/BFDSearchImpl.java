@@ -8,7 +8,6 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.hl7.fhir.dstu3.model.Bundle;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -38,7 +37,7 @@ public class BFDSearchImpl implements BFDSearch {
     }
 
     @Override
-    public Bundle searchEOB(String patientId, OffsetDateTime since, int pageSize, String bulkJobId) throws IOException {
+    public org.hl7.fhir.dstu3.model.Bundle searchEOB(String patientId, OffsetDateTime since, int pageSize, String bulkJobId) throws IOException {
         StringBuilder url = new StringBuilder(serverBaseUrl + "ExplanationOfBenefit?patient=" + patientId + "&excludeSAMHSA=true");
 
         if (since != null) {
@@ -64,7 +63,7 @@ public class BFDSearchImpl implements BFDSearch {
             int status = response.getStatusLine().getStatusCode();
             if (status >= HttpStatus.SC_OK && status < HttpStatus.SC_MULTIPLE_CHOICES) {
                 try (InputStream instream = response.getEntity().getContent()) {
-                    return parser.parseResource(Bundle.class, instream);
+                    return parser.parseResource(org.hl7.fhir.dstu3.model.Bundle.class, instream);
                 }
             } else if (status == HttpStatus.SC_NOT_FOUND) {
                 throw new ResourceNotFoundException("Patient " + patientId + " was not found");

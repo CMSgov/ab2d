@@ -5,8 +5,6 @@ import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import lombok.extern.slf4j.Slf4j;
-import org.hl7.fhir.dstu3.model.CapabilityStatement;
-import org.hl7.fhir.dstu3.model.Enumerations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -45,7 +43,7 @@ class BFDHealthCheck {
     void checkBFDHealth() {
 
         boolean errorOccurred = false;
-        CapabilityStatement capabilityStatement = null;
+        org.hl7.fhir.dstu3.model.CapabilityStatement capabilityStatement = null;
         try {
             capabilityStatement = bfdClient.capabilityStatement();
         } catch (Exception e) {
@@ -55,7 +53,7 @@ class BFDHealthCheck {
         }
 
         if (!errorOccurred) {
-            if (capabilityStatement == null || capabilityStatement.getStatus() != Enumerations.PublicationStatus.ACTIVE) {
+            if (capabilityStatement == null || capabilityStatement.getStatus() != org.hl7.fhir.dstu3.model.Enumerations.PublicationStatus.ACTIVE) {
                 markFailure();
             } else {
                 consecutiveSuccesses++;
@@ -77,7 +75,7 @@ class BFDHealthCheck {
         PropertiesDTO propertiesDTO = new PropertiesDTO();
         propertiesDTO.setKey(MAINTENANCE_MODE);
         propertiesDTO.setValue(statusString);
-        slackLogger.logErrorMsg("Maintenance Mode status: " + statusString);
+        slackLogger.logAlert("Maintenance Mode status: " + statusString);
         propertiesService.updateProperties(List.of(propertiesDTO));
         log.info("Updated the {} property to {}", MAINTENANCE_MODE, statusString);
     }

@@ -8,7 +8,7 @@ import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
-import gov.cms.ab2d.eventlogger.reports.sql.DoSummary;
+import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventSummary;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.*;
 import org.mockito.Mock;
@@ -43,7 +43,6 @@ import java.util.Set;
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.common.service.JobServiceImpl.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.*;
-import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = SpringBootApp.class)
@@ -91,7 +90,7 @@ class JobServiceTest {
     private KinesisEventLogger kinesisEventLogger;
 
     @Mock
-    private DoSummary doSummary;
+    private LoggerEventSummary loggerEventSummary;
 
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
@@ -101,7 +100,7 @@ class JobServiceTest {
     @BeforeEach
     public void setup() {
         LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
-        jobService = new JobServiceImpl(userService, jobRepository, jobOutputService, logManager, doSummary);
+        jobService = new JobServiceImpl(userService, jobRepository, jobOutputService, logManager, loggerEventSummary);
         ReflectionTestUtils.setField(jobService, "fileDownloadPath", tmpJobLocation);
 
         dataSetup.setupNonStandardUser(USERNAME, CONTRACT_NUMBER, List.of());
@@ -110,7 +109,7 @@ class JobServiceTest {
     }
 
     @AfterEach
-    public void after() {
+    public void cleanup() {
         dataSetup.cleanup();
     }
 
@@ -248,6 +247,7 @@ class JobServiceTest {
     }
 
     private void setupAdminUser() {
+        dataSetup.createRole(ADMIN_ROLE);
         final String adminUsername = "ADMIN_USER";
         User user = new User();
         user.setUsername(adminUsername);
@@ -397,8 +397,9 @@ class JobServiceTest {
         createNDJSONFile(testFile, destinationStr);
         createNDJSONFile(errorFile, destinationStr);
 
+        dataSetup.createRole(SPONSOR_ROLE);
         User user = new User();
-        Role role = roleService.findRoleByName("SPONSOR");
+        Role role = roleService.findRoleByName(SPONSOR_ROLE);
         user.setRoles(Set.of(role));
         user.setUsername("BadUser");
         user.setEnabled(true);

@@ -13,9 +13,6 @@ import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.worker.config.CoverageUpdateConfig;
-import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.dstu3.model.Identifier;
-import org.hl7.fhir.dstu3.model.Patient;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -93,8 +90,6 @@ class CoverageDriverTest {
     private CoverageDriverImpl driver;
     private CoverageProcessorImpl processor;
 
-    private List<Contract> contractsToDelete;
-
     @BeforeEach
     void before() {
 
@@ -102,8 +97,6 @@ class CoverageDriverTest {
         dto.setKey(Constants.WORKER_ENGAGEMENT);
         dto.setValue(FeatureEngagement.NEUTRAL.getSerialValue());
         propertiesService.updateProperties(singletonList(dto));
-
-        contractsToDelete = new ArrayList<>();
 
         contract = dataSetup.setupContract("TST-123");
         contract.setAttestedOn(AB2D_EPOCH.toOffsetDateTime());
@@ -113,14 +106,11 @@ class CoverageDriverTest {
 
         contractRepo.saveAndFlush(contract);
 
-        contractsToDelete.add(contract);
-        contractsToDelete.add(contract1);
-
         january = dataSetup.createCoveragePeriod(contract, 1, 2020);
         february = dataSetup.createCoveragePeriod(contract, 2, 2020);
         march = dataSetup.createCoveragePeriod(contract, 3, 2020);
 
-        User user = userRepo.findAll().get(0);
+        User user = dataSetup.setupUser(List.of());
         job = new Job();
         job.setContract(contract);
         job.setJobUuid("unique");
@@ -128,6 +118,7 @@ class CoverageDriverTest {
         job.setStatus(JobStatus.SUBMITTED);
         job.setCreatedAt(OffsetDateTime.now());
         jobRepo.saveAndFlush(job);
+        dataSetup.queueForCleanup(job);
 
         bfdClient = mock(BFDClient.class);
 
@@ -143,28 +134,10 @@ class CoverageDriverTest {
     }
 
     @AfterEach
-    void after() {
+    void cleanup() {
         processor.shutdown();
 
-        dataSetup.deleteCoverage();
-        coverageSearchEventRepo.deleteAll();
-        coverageSearchEventRepo.flush();
-
-        coverageSearchRepo.deleteAll();
-        coverageSearchRepo.flush();
-
-        coveragePeriodRepo.deleteAll();
-        coveragePeriodRepo.flush();
-
-        if (job != null) {
-            jobRepo.delete(job);
-            jobRepo.flush();
-        }
-
-        for (Contract contract : contractsToDelete) {
-            contractRepo.delete(contract);
-            contractRepo.flush();
-        }
+        dataSetup.cleanup();
 
         PropertiesDTO dto = new PropertiesDTO();
         dto.setKey(Constants.WORKER_ENGAGEMENT);
@@ -179,12 +152,10 @@ class CoverageDriverTest {
         Contract attestedAfterEpoch = dataSetup.setupContract("TST-AFTER-EPOCH");
         attestedAfterEpoch.setAttestedOn(AB2D_EPOCH.toOffsetDateTime().plusMonths(3));
         contractRepo.saveAndFlush(attestedAfterEpoch);
-        contractsToDelete.add(attestedAfterEpoch);
 
         Contract attestedBeforeEpoch = dataSetup.setupContract("TST-BEFORE-EPOCH");
         attestedBeforeEpoch.setAttestedOn(AB2D_EPOCH.toOffsetDateTime().minusNanos(1));
         contractRepo.saveAndFlush(attestedBeforeEpoch);
-        contractsToDelete.add(attestedBeforeEpoch);
 
         long months = ChronoUnit.MONTHS.between(AB2D_EPOCH.toOffsetDateTime(), OffsetDateTime.now());
         long expectedNumPeriods = months + 1;
@@ -218,7 +189,6 @@ class CoverageDriverTest {
         testContract.setUpdateMode(Contract.UpdateMode.TEST);
 
         contractRepo.saveAndFlush(testContract);
-        contractsToDelete.add(testContract);
 
         try {
             driver.discoverCoveragePeriods();
@@ -433,13 +403,13 @@ class CoverageDriverTest {
     @Test
     void normalExecution() {
 
-        Bundle bundle1 = buildBundle(0, 10);
-        bundle1.setLink(singletonList(new Bundle.BundleLinkComponent().setRelation(Bundle.LINK_NEXT)));
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = buildBundle(0, 10);
+        bundle1.setLink(singletonList(new org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent().setRelation(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT)));
 
-        Bundle bundle2 = buildBundle(10, 20);
+        org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20);
 
         when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(any(Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         processor.queueCoveragePeriod(january, false);
         JobStatus status = coverageService.getSearchStatus(january.getId());
@@ -600,7 +570,11 @@ class CoverageDriverTest {
         }
     }
 
-    @DisplayName("Do start an eob job if periods including and after since are not being worked on")
+    /**
+     * The since date is only relevant for claims data not enrollment data. So even though the since date
+     * is set the enrollment data must all be up to date before a job can start.
+     */
+    @DisplayName("Do not start an eob job if periods before since are being worked on. Ignore since.")
     @Test
     void availableCoverageWhenSinceContainsOnlySuccessful() {
 
@@ -610,55 +584,12 @@ class CoverageDriverTest {
         Contract temp = contractRepo.findContractByContractNumber(contract.getContractNumber()).get();
         job.setContract(temp);
 
-
         OffsetDateTime since = OffsetDateTime.of(LocalDate.of(2020, 3, 1),
                 LocalTime.of(0, 0, 0), AB2D_ZONE.getRules().getOffset(Instant.now()));
 
         try {
 
             changeStatus(contract, since, JobStatus.SUCCESSFUL);
-
-            LocalDate startMonth = LocalDate.of(2020, 3, 1);
-            LocalTime startDay = LocalTime.of(0,0,0);
-
-            job.setSince(OffsetDateTime.of(startMonth, startDay, AB2D_ZONE.getRules().getOffset(Instant.now())));
-
-            boolean inProgressBeginningMonth = driver.isCoverageAvailable(job);
-            assertTrue(inProgressBeginningMonth, "eob searches should run when only month after since is successful");
-
-            LocalDate endMonth = LocalDate.of(2020, 3, 31);
-            LocalTime endDay = LocalTime.of(23,59,59);
-
-            job.setSince(OffsetDateTime.of(endMonth, endDay, AB2D_ZONE.getRules().getOffset(Instant.now())));
-
-            boolean inProgressEndMonth = driver.isCoverageAvailable(job);
-            assertTrue(inProgressEndMonth, "eob searches should run when only month after since is successful");
-        } catch (InterruptedException | CoverageDriverException exception) {
-            fail("could not check for available coverage", exception);
-        }
-    }
-
-    @DisplayName("Do not start an eob job if periods including and after since have not been searched")
-    @Test
-    void availableCoverageWhenSinceContainsNeverSearched() {
-
-        Job job = new Job();
-        job.setContract(contract);
-        job.setCreatedAt(OffsetDateTime.now());
-
-        OffsetDateTime since = OffsetDateTime.of(LocalDate.of(2020, 3, 1),
-                LocalTime.of(0, 0, 0), AB2D_ZONE.getRules().getOffset(Instant.now()));
-
-        try {
-
-            changeStatus(contract, since, null);
-
-            // Make sure that there is a lastSuccessfulJob
-            ZonedDateTime now = ZonedDateTime.now(AB2D_ZONE);
-            CoveragePeriod currentMonth = coverageService.getCoveragePeriod(contract, now.getMonthValue(), now.getYear());
-            currentMonth.setLastSuccessfulJob(OffsetDateTime.now().plusHours(2));
-            currentMonth.setStatus(JobStatus.SUCCESSFUL);
-            coveragePeriodRepo.saveAndFlush(currentMonth);
 
             LocalDate startMonth = LocalDate.of(2020, 3, 1);
             LocalTime startDay = LocalTime.of(0,0,0);
@@ -687,9 +618,6 @@ class CoverageDriverTest {
 
         Job job = new Job();
         job.setContract(contract);
-
-        OffsetDateTime since = OffsetDateTime.of(LocalDate.of(2020, 3, 1),
-                LocalTime.of(0, 0, 0), AB2D_ZONE.getRules().getOffset(Instant.now()));
 
         long numberPeriodsBeforeCheck = coveragePeriodRepo.count();
 
@@ -722,14 +650,14 @@ class CoverageDriverTest {
         return event;
     }
 
-    private Bundle buildBundle(int startIndex, int endIndex) {
-        Bundle bundle1 = new Bundle();
+    private org.hl7.fhir.dstu3.model.Bundle buildBundle(int startIndex, int endIndex) {
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = new org.hl7.fhir.dstu3.model.Bundle();
 
         for (int i = startIndex; i < endIndex; i++) {
-            Bundle.BundleEntryComponent component = new Bundle.BundleEntryComponent();
-            Patient patient = new Patient();
+            org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent component = new org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent();
+            org.hl7.fhir.dstu3.model.Patient patient = new org.hl7.fhir.dstu3.model.Patient();
 
-            Identifier identifier = new Identifier();
+            org.hl7.fhir.dstu3.model.Identifier identifier = new org.hl7.fhir.dstu3.model.Identifier();
             identifier.setSystem(BENEFICIARY_ID);
             identifier.setValue("test-" + i);
 
@@ -749,11 +677,11 @@ class CoverageDriverTest {
         }
     }
 
-    private void changeStatus(Contract contract, OffsetDateTime sinceTime, JobStatus status) {
+    private void changeStatus(Contract contract, OffsetDateTime attestationTime, JobStatus status) {
 
         OffsetDateTime now = OffsetDateTime.now();
-        while (sinceTime.isBefore(now)) {
-            CoveragePeriod period = coverageService.getCreateIfAbsentCoveragePeriod(contract, sinceTime.getMonthValue(), sinceTime.getYear());
+        while (attestationTime.isBefore(now)) {
+            CoveragePeriod period = coverageService.getCreateIfAbsentCoveragePeriod(contract, attestationTime.getMonthValue(), attestationTime.getYear());
 
             period.setStatus(status);
             if (status == JobStatus.SUCCESSFUL) {
@@ -761,7 +689,7 @@ class CoverageDriverTest {
             }
             coveragePeriodRepo.saveAndFlush(period);
 
-            sinceTime = sinceTime.plusMonths(1);
+            attestationTime = attestationTime.plusMonths(1);
         }
     }
 }

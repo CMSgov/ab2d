@@ -79,11 +79,12 @@ variable "ab2d_keystore_password" {}
 
 variable "ab2d_okta_jwt_issuer" {}
 
-variable "stunnel_latest_version" {}
-
 variable "cpm_backup_api" {}
 
 variable "ab2d_hpms_url" {}
 variable "ab2d_hpms_api_params" {}
 variable "ab2d_hpms_auth_key_id" {}
 variable "ab2d_hpms_auth_key_secret" {}
+
+variable "ab2d_slack_alert_webhooks" {}
+variable "ab2d_slack_trace_webhooks" {}

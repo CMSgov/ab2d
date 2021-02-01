@@ -223,7 +223,15 @@ resource "aws_ecs_task_definition" "api" {
         {
 	  "name" : "HPMS_AUTH_KEY_SECRET",
 	  "value" : "${var.ab2d_hpms_auth_key_secret}"
-	}
+	},
+    {
+      "name": "AB2D_SLACK_ALERT_WEBHOOKS",
+      "value": "${var.ab2d_slack_alert_webhooks}"
+    },
+    {
+      "name": "AB2D_SLACK_TRACE_WEBHOOKS",
+      "value": "${var.ab2d_slack_trace_webhooks}"
+    }
       ],
       "logConfiguration": {
         "logDriver": "syslog"
@@ -307,7 +315,7 @@ resource "aws_launch_configuration" "launch_config" {
   iam_instance_profile = var.iam_instance_profile
   key_name = var.ssh_key_name
   security_groups = [aws_security_group.api.id]  
-  user_data = templatefile("${path.module}/userdata.tpl",{ env = "${lower(var.env)}", cluster_name = "${lower(var.env)}-api", efs_id = var.efs_id, stunnel_latest_version = var.stunnel_latest_version })
+  user_data = templatefile("${path.module}/userdata.tpl",{ env = "${lower(var.env)}", cluster_name = "${lower(var.env)}-api", efs_id = var.efs_id })
   lifecycle { create_before_destroy = true }
 }
 

@@ -48,11 +48,8 @@ class CoverageProcessorIntTest {
     private CoverageProcessor processor;
 
     @AfterEach
-    void after() {
-        dataSetup.deleteCoverage();
-        coverageSearchEventRepo.deleteAll();
-        coverageSearchRepo.deleteAll();
-        coveragePeriodRepo.deleteAll();
+    void cleanup() {
+        dataSetup.cleanup();
     }
 
     @Disabled("Performance test meant to run against the sandbox, do not run as part of CI.")

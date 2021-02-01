@@ -3,13 +3,12 @@ package gov.cms.ab2d.api.security;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.controller.TestUtil;
-import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
-import gov.cms.ab2d.eventlogger.reports.sql.DoAll;
+import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -22,7 +21,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.Collections;
 import java.util.List;
 
 import static gov.cms.ab2d.api.util.Constants.ADMIN_ROLE;
@@ -53,36 +51,18 @@ class JwtAuthenticationFilterTest {
     private JwtTokenAuthenticationFilter filter;
 
     @Autowired
-    private DoAll doAll;
+    DataSetup dataSetup;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
-    private ContractRepository contractRepository;
-
-    @Autowired
-    private JobRepository jobRepository;
+    private LoggerEventRepository loggerEventRepository;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
-    /**
-     * Depending on the order that other test classes are run in these tests can fail because of residual
-     * events in the PostgresSQLContainer. Using a {@link BeforeEach} is unnecessary after the first test but allows
-     * Spring to autowire in dependencies which a static {@link org.junit.jupiter.api.BeforeAll} would not allow.
-     */
-    @BeforeEach
     @AfterEach
     public void cleanup() {
-        jobRepository.deleteAll();
-        userRepository.deleteAll();
-        roleRepository.deleteAll();
-        contractRepository.deleteAll();
-        doAll.delete();
+        dataSetup.cleanup();
+        loggerEventRepository.delete();
     }
 
     @Test
@@ -100,7 +80,7 @@ class JwtAuthenticationFilterTest {
             fail("could not perform basic health check", exception);
         }
 
-        List<LoggableEvent> currentEvents = doAll.load(ApiRequestEvent.class);
+        List<LoggableEvent> currentEvents = loggerEventRepository.load(ApiRequestEvent.class);
 
         assertEquals(1, currentEvents.size(), "healthy should still be logged");
     }
@@ -120,7 +100,7 @@ class JwtAuthenticationFilterTest {
             fail("could not perform basic health check", exception);
         }
 
-        List<LoggableEvent> currentEvents = doAll.load(ApiRequestEvent.class);
+        List<LoggableEvent> currentEvents = loggerEventRepository.load(ApiRequestEvent.class);
         assertEquals(0, currentEvents.size(), "no events should be logged");
     }
 
@@ -137,7 +117,7 @@ class JwtAuthenticationFilterTest {
             fail("could not perform basic health check", exception);
         }
 
-        List<LoggableEvent> currentEvents = doAll.load(ApiRequestEvent.class);
+        List<LoggableEvent> currentEvents = loggerEventRepository.load(ApiRequestEvent.class);
         assertEquals(0, currentEvents.size(), "health endpoint should match regex");
     }
 
@@ -156,7 +136,7 @@ class JwtAuthenticationFilterTest {
             fail("mock mvc call to pull swagger-ui returned unexpected status code", exception);
         }
 
-        List<LoggableEvent> currentEvents = doAll.load(ApiRequestEvent.class);
+        List<LoggableEvent> currentEvents = loggerEventRepository.load(ApiRequestEvent.class);
         assertEquals(1, currentEvents.size(), "request for swagger docs not logged");
     }
 
@@ -175,7 +155,7 @@ class JwtAuthenticationFilterTest {
                             .header("Authorization", "Bearer " + token))
                     .andReturn();
 
-            List<LoggableEvent> currentEvents = doAll.load(ApiRequestEvent.class);
+            List<LoggableEvent> currentEvents = loggerEventRepository.load(ApiRequestEvent.class);
             assertEquals(1, currentEvents.size(), "request for user not logged");
         } catch (JwtVerificationException exception) {
             fail("jwt token for test could not be retrieved");
@@ -196,7 +176,7 @@ class JwtAuthenticationFilterTest {
             mockMvc.perform(get("/swagger-ui"))
                     .andExpect(status().is(404));
 
-            List<LoggableEvent> currentEvents = doAll.load(ApiRequestEvent.class);
+            List<LoggableEvent> currentEvents = loggerEventRepository.load(ApiRequestEvent.class);
             assertEquals(1, currentEvents.size(), "request for user not logged");
         } catch (JwtVerificationException exception) {
             fail("jwt token for test could not be retrieved");
@@ -218,7 +198,7 @@ class JwtAuthenticationFilterTest {
             mockMvc.perform(get("/swagger-ui"))
                     .andExpect(status().is(404));
 
-            List<LoggableEvent> currentEvents = doAll.load(ApiRequestEvent.class);
+            List<LoggableEvent> currentEvents = loggerEventRepository.load(ApiRequestEvent.class);
             assertEquals(1, currentEvents.size(), "request for user not logged");
         } catch (JwtVerificationException exception) {
             fail("jwt token for test could not be retrieved");
@@ -239,7 +219,7 @@ class JwtAuthenticationFilterTest {
             mockMvc.perform(get("/swagger-ui"))
                     .andExpect(status().is(404));
 
-            List<LoggableEvent> currentEvents = doAll.load(ApiRequestEvent.class);
+            List<LoggableEvent> currentEvents = loggerEventRepository.load(ApiRequestEvent.class);
             assertEquals(1, currentEvents.size(), "request for user not logged");
         } catch (JwtVerificationException exception) {
             fail("jwt token for test could not be retrieved");
@@ -264,7 +244,7 @@ class JwtAuthenticationFilterTest {
             mockMvc.perform(get("/swagger-ui"))
                     .andExpect(status().is(404));
 
-            List<LoggableEvent> currentEvents = doAll.load(ApiRequestEvent.class);
+            List<LoggableEvent> currentEvents = loggerEventRepository.load(ApiRequestEvent.class);
             assertEquals(1, currentEvents.size(), "health endpoint should be blocked and swagger endpoint allowed");
         } catch (JwtVerificationException exception) {
             fail("jwt token for test could not be retrieved");

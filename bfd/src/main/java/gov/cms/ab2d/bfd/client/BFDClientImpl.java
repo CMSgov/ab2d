@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.StringUtils;
-import org.hl7.fhir.dstu3.model.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.retry.annotation.Backoff;
@@ -86,7 +85,7 @@ public class BFDClientImpl implements BFDClient {
      * that contain no EoBs.
      *
      * @param patientID The requested patient's ID
-     * @return {@link Bundle} Containing a number (possibly 0) of {@link ExplanationOfBenefit}
+     * @return {@link org.hl7.fhir.dstu3.model.Bundle} Containing a number (possibly 0) of {@link org.hl7.fhir.dstu3.model.ExplanationOfBenefit}
      * objects
      * @throws ResourceNotFoundException when the requested patient does not exist
      */
@@ -96,7 +95,7 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public Bundle requestEOBFromServer(String patientID) {
+    public org.hl7.fhir.dstu3.model.Bundle requestEOBFromServer(String patientID) {
         return requestEOBFromServer(patientID, null);
     }
 
@@ -108,7 +107,7 @@ public class BFDClientImpl implements BFDClient {
      *
      * @param patientID The requested patient's ID
      * @param sinceTime The start date for the request
-     * @return {@link Bundle} Containing a number (possibly 0) of {@link ExplanationOfBenefit}
+     * @return {@link org.hl7.fhir.dstu3.model.Bundle} Containing a number (possibly 0) of {@link org.hl7.fhir.dstu3.model.ExplanationOfBenefit}
      * objects
      * @throws ResourceNotFoundException when the requested patient does not exist
      */
@@ -119,12 +118,12 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public Bundle requestEOBFromServer(String patientID, OffsetDateTime sinceTime) {
+    public org.hl7.fhir.dstu3.model.Bundle requestEOBFromServer(String patientID, OffsetDateTime sinceTime) {
         final Segment bfdSegment = NewRelic.getAgent().getTransaction().startSegment("BFD Call for patient with patient ID " + patientID +
                 " using since " + sinceTime);
         bfdSegment.setMetricName("RequestEOB");
 
-        Bundle result = bfdSearch.searchEOB(patientID, sinceTime, pageSize, getJobId());
+        org.hl7.fhir.dstu3.model.Bundle result = bfdSearch.searchEOB(patientID, sinceTime, pageSize, getJobId());
 
         bfdSegment.end();
 
@@ -143,20 +142,20 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public Bundle requestPatientByHICN(String hicn) {
+    public org.hl7.fhir.dstu3.model.Bundle requestPatientByHICN(String hicn) {
         String hicnHashVal = hashIdentifier(hicn, bfdHashPepper, bfdHashIter);
         var hicnHashEquals = generateHash(hicnHash, hicnHashVal);
         return clientSearch(hicnHashEquals);
     }
 
-    private Bundle clientSearch(@SuppressWarnings("rawtypes") ICriterion hashEquals) {
+    private org.hl7.fhir.dstu3.model.Bundle clientSearch(@SuppressWarnings("rawtypes") ICriterion hashEquals) {
         return client.search()
-                .forResource(Patient.class)
+                .forResource(org.hl7.fhir.dstu3.model.Patient.class)
                 .where(hashEquals)
                 .withAdditionalHeader(BFDClient.BFD_HDR_BULK_CLIENTID, BFDClient.BFD_CLIENT_ID)
                 .withAdditionalHeader(BFDClient.BFD_HDR_BULK_JOBID, getJobId())
                 .withAdditionalHeader("IncludeIdentifiers", "true")
-                .returnBundle(Bundle.class)
+                .returnBundle(org.hl7.fhir.dstu3.model.Bundle.class)
                 .encodedJson()
                 .execute();
     }
@@ -179,7 +178,7 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public Bundle requestPatientByMBI(String mbi) {
+    public org.hl7.fhir.dstu3.model.Bundle requestPatientByMBI(String mbi) {
         String hashVal = hashIdentifier(mbi, bfdHashPepper, bfdHashIter);
         var mbiHashEquals = generateHash(mbiHash, hashVal);
         return clientSearch(mbiHashEquals);
@@ -210,7 +209,7 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public Bundle requestNextBundleFromServer(Bundle bundle) {
+    public org.hl7.fhir.dstu3.model.Bundle requestNextBundleFromServer(org.hl7.fhir.dstu3.model.Bundle bundle) {
         return client
                 .loadPage()
                 .next(bundle)
@@ -236,20 +235,20 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class, InvalidRequestException.class }
     )
-    public Bundle requestPartDEnrolleesFromServer(String contractNumber, int month) {
+    public org.hl7.fhir.dstu3.model.Bundle requestPartDEnrolleesFromServer(String contractNumber, int month) {
         var monthParameter = createMonthParameter(month);
         var theCriterion = new TokenClientParam("_has:Coverage.extension")
                 .exactly()
                 .systemAndIdentifier(monthParameter, contractNumber);
 
         return client.search()
-                .forResource(Patient.class)
+                .forResource(org.hl7.fhir.dstu3.model.Patient.class)
                 .where(theCriterion)
                 .withAdditionalHeader(BFDClient.BFD_HDR_BULK_CLIENTID, BFDClient.BFD_CLIENT_ID)
                 .withAdditionalHeader(BFDClient.BFD_HDR_BULK_JOBID, getJobId())
                 .withAdditionalHeader("IncludeIdentifiers", "mbi")
                 .count(contractToBenePageSize)
-                .returnBundle(Bundle.class)
+                .returnBundle(org.hl7.fhir.dstu3.model.Bundle.class)
                 .encodedJson()
                 .execute();
     }
@@ -260,9 +259,9 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public CapabilityStatement capabilityStatement() {
+    public org.hl7.fhir.dstu3.model.CapabilityStatement capabilityStatement() {
         return client.capabilities()
-                .ofType(CapabilityStatement.class)
+                .ofType(org.hl7.fhir.dstu3.model.CapabilityStatement.class)
                 .execute();
     }
 

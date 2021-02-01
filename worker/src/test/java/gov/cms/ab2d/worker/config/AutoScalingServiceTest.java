@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.config;
 
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,11 @@ public class AutoScalingServiceTest {
 
     @BeforeEach
     public void init() {
+        patientProcessorThreadPool.getThreadPoolExecutor().getQueue().clear();
+    }
+
+    @AfterEach
+    public void cleanup() {
         patientProcessorThreadPool.getThreadPoolExecutor().getQueue().clear();
     }
 

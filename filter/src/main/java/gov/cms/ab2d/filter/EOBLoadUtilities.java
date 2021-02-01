@@ -5,10 +5,6 @@ import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.EncodingEnum;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.hl7.fhir.dstu3.model.CodeableConcept;
-import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
-import org.hl7.fhir.dstu3.model.Resource;
-import org.hl7.fhir.dstu3.model.ResourceType;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,13 +23,13 @@ public class EOBLoadUtilities {
      *             Explanation of Benefit data retrieved from Blue
      * @return the ExplanationOfBenefit object
      */
-    public static ExplanationOfBenefit getEOBFromFileInClassPath(String fileInClassPath, FhirContext context) {
+    public static org.hl7.fhir.dstu3.model.ExplanationOfBenefit getR3EOBFromFileInClassPath(String fileInClassPath, FhirContext context) {
         if (StringUtils.isBlank(fileInClassPath)) {
             return null;
         }
         ClassLoader classLoader = EOBLoadUtilities.class.getClassLoader();
         InputStream inputStream = classLoader.getResourceAsStream(fileInClassPath);
-        return getParser(context).parseResource(ExplanationOfBenefit.class, inputStream);
+        return getParser(context).parseResource(org.hl7.fhir.dstu3.model.ExplanationOfBenefit.class, inputStream);
     }
 
     /**
@@ -42,12 +38,19 @@ public class EOBLoadUtilities {
      * @return the Explanation of Benefit object
      * @throws IOException if the file is invalid or unreadable
      */
-    public static ExplanationOfBenefit getEOBFromReader(Reader reader, FhirContext context) throws IOException {
+    public static Object getEOBFromReader(Reader reader, FhirContext context) throws IOException {
         if (reader == null) {
             return null;
         }
         String response = IOUtils.toString(reader);
-        return getParser(context).parseResource(ExplanationOfBenefit.class, response);
+        switch (context.getVersion().getVersion()) {
+            case DSTU3:
+                return getParser(context).parseResource(org.hl7.fhir.dstu3.model.ExplanationOfBenefit.class, response);
+            case R4:
+                return getParser(context).parseResource(org.hl7.fhir.r4.model.ExplanationOfBenefit.class, response);
+            default:
+                return null;
+        }
     }
 
     /**
@@ -66,12 +69,29 @@ public class EOBLoadUtilities {
      * @param resource - resource to test
      * @return true if it's a part D explanation of benefit
      */
-    public static boolean isPartD(Resource resource) {
-        if (resource == null || resource.getResourceType() == null || resource.getResourceType() != ResourceType.ExplanationOfBenefit) {
+    public static boolean isPartD(org.hl7.fhir.dstu3.model.Resource resource) {
+
+        if (resource == null || resource.getResourceType() == null ||
+                resource.getResourceType() != org.hl7.fhir.dstu3.model.ResourceType.ExplanationOfBenefit) {
             return false;
         }
-        ExplanationOfBenefit eob = (ExplanationOfBenefit) resource;
-        CodeableConcept c = eob.getType();
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob = (org.hl7.fhir.dstu3.model.ExplanationOfBenefit) resource;
+        org.hl7.fhir.dstu3.model.CodeableConcept c = eob.getType();
+        if (c == null || c.getCoding() == null) {
+            return false;
+        }
+        // See if there is a coding value for EOB-TYPE that equals PDE
+        return c.getCoding().stream()
+                .filter(code -> code.getSystem().endsWith(EOB_TYPE_CODE_SYS))
+                .anyMatch(code -> code.getCode().equalsIgnoreCase(EOB_TYPE_PART_D_CODE_VAL));
+    }
+
+    public static boolean isPartD(org.hl7.fhir.r4.model.Resource resource) {
+        if (resource == null || resource.getResourceType() == null || resource.getResourceType() != org.hl7.fhir.r4.model.ResourceType.ExplanationOfBenefit) {
+            return false;
+        }
+        org.hl7.fhir.r4.model.ExplanationOfBenefit eob = (org.hl7.fhir.r4.model.ExplanationOfBenefit) resource;
+        org.hl7.fhir.r4.model.CodeableConcept c = eob.getType();
         if (c == null || c.getCoding() == null) {
             return false;
         }

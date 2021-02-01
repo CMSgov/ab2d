@@ -7,7 +7,7 @@ import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
-import gov.cms.ab2d.eventlogger.reports.sql.DoSummary;
+import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventSummary;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -39,17 +39,17 @@ public class FileDeletionServiceImpl implements FileDeletionService {
 
     private final JobService jobService;
     private final LogManager eventLogger;
-    private final DoSummary doSummary;
+    private final LoggerEventSummary loggerEventSummary;
 
     private static final String FILE_EXTENSION = ".ndjson";
 
     private static final Set<String> DISALLOWED_DIRECTORIES = Set.of("/bin", "/boot", "/dev", "/etc", "/home", "/lib",
             "/opt", "/root", "/sbin", "/sys", "/usr", "/Applications", "/Library", "/Network", "/System", "/Users", "/Volumes");
 
-    public FileDeletionServiceImpl(JobService jobService, LogManager eventLogger, DoSummary doSummary) {
+    public FileDeletionServiceImpl(JobService jobService, LogManager eventLogger, LoggerEventSummary loggerEventSummary) {
         this.jobService = jobService;
         this.eventLogger = eventLogger;
-        this.doSummary = doSummary;
+        this.loggerEventSummary = loggerEventSummary;
     }
 
     /**
@@ -130,7 +130,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
             }
         }
         for (String job : jobsDeleted) {
-            eventLogger.log(LogManager.LogType.KINESIS, doSummary.getSummary(job));
+            eventLogger.log(LogManager.LogType.KINESIS, loggerEventSummary.getSummary(job));
         }
     }
 

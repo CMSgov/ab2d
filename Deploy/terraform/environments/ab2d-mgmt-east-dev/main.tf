@@ -23,6 +23,7 @@ module "management_account" {
   mgmt_aws_account_number            = var.mgmt_aws_account_number
   aws_account_number                 = var.aws_account_number
   mgmt_target_aws_account_mgmt_roles = var.mgmt_target_aws_account_mgmt_roles
+  federated_login_role_policies      = var.federated_login_role_policies
 }
 
 module "jenkins_master" {
@@ -44,7 +45,7 @@ module "jenkins_agent" {
   vpc_id                       = var.vpc_id
   public_subnet_ids            = var.public_subnet_ids
   private_subnet_ids           = var.private_subnet_ids
-  jenkins_master_sec_group_id  = "${data.aws_security_group.ab2d_jenkins_master_sg.id}"
+  jenkins_master_sec_group_id  = data.aws_security_group.ab2d_jenkins_master_sg.id
   vpn_private_sec_group_id     = var.vpn_private_sec_group_id
   ami_id                       = var.ami_id
   instance_type                = var.ec2_instance_type

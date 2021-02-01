@@ -39,14 +39,16 @@ class UserServiceTest {
     @Autowired
     private UserService userService;
 
-    @Autowired
-    private RoleService roleService;
-
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
     @Autowired
     private DataSetup dataSetup;
+
+    @BeforeEach
+    public void setup() {
+        dataSetup.createRole(SPONSOR_ROLE);
+    }
 
     @AfterEach
     public void teardown() {
@@ -101,10 +103,7 @@ class UserServiceTest {
         ContractDTO contractDTO = new ContractDTO(contract.getContractNumber(), contract.getContractName(),
                 contract.getAttestedOn().toString());
         user.setContract(contractDTO);
-        if(roleName != null) {
-            Role role = roleService.findRoleByName(roleName);
-            user.setRole(role.getName());
-        }
+        user.setRole(roleName);
 
         return user;
     }
@@ -190,9 +189,9 @@ class UserServiceTest {
         UserDTO createdUser = userService.createUser(user);
         dataSetup.queueForCleanup(userService.getUserByUsername("test@test.com"));
 
-        String username = createdUser.getUsername();
+        String contractNumber = createdUser.getContract().getContractNumber();
 
-        userService.setupUserImpersonation(username, httpServletRequest);
+        userService.setupUserImpersonation(contractNumber, httpServletRequest);
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         assertEquals("test@test.com", authentication.getPrincipal());
@@ -204,9 +203,8 @@ class UserServiceTest {
     @Test
     void testSetupUserAndRolesInSecurityContextBadUser() {
         HttpServletRequest httpServletRequest = new MockHttpServletRequest();
-        var exceptionThrown = Assertions.assertThrows(ResourceNotFoundException.class, () -> {
-            userService.setupUserImpersonation("UserDoesNotExist", httpServletRequest);
-        });
+        var exceptionThrown = Assertions.assertThrows(ResourceNotFoundException.class,
+                () -> userService.setupUserImpersonation("UserDoesNotExist", httpServletRequest));
         assertEquals("User is not present in our database", exceptionThrown.getMessage());
     }
 
@@ -218,7 +216,7 @@ class UserServiceTest {
         userService.createUser(user);
         dataSetup.queueForCleanup(userService.getUserByUsername("test@test.com"));
 
-        UserDTO updatedUser = userService.enableUser(user.getUsername());
+        UserDTO updatedUser = userService.enableUser(user.getContract().getContractNumber());
         assertEquals(true, updatedUser.getEnabled());
     }
 
@@ -228,7 +226,7 @@ class UserServiceTest {
         userService.createUser(user);
         dataSetup.queueForCleanup(userService.getUserByUsername("test@test.com"));
 
-        UserDTO updatedUser = userService.disableUser(user.getUsername());
+        UserDTO updatedUser = userService.disableUser(user.getContract().getContractNumber());
         assertEquals(false, updatedUser.getEnabled());
     }
 }
