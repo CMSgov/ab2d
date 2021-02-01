@@ -12,7 +12,6 @@ import org.hl7.fhir.instance.model.api.IDomainResource;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.*;
 
