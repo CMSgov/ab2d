@@ -102,11 +102,6 @@
             <artifactId>newrelic-api</artifactId>
             <version>${newrelic.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>okhttp</artifactId>
-            <version>4.9.0</version>
-        </dependency>
     </dependencies>
     <build>
         <plugins>

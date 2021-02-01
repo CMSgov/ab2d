@@ -81,3 +81,6 @@ variable "ab2d_opt_out_job_schedule" {}
 variable "ab2d_s3_optout_bucket" {}
 
 variable "cpm_backup_worker" {}
+
+variable "ab2d_slack_alert_webhooks" {}
+variable "ab2d_slack_trace_webhooks" {}

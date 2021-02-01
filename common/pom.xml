@@ -20,6 +20,7 @@
             <artifactId>eventlogger</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
+
         <dependency>
             <groupId>javax.validation</groupId>
             <artifactId>validation-api</artifactId>
@@ -86,11 +87,6 @@
             <artifactId>mockserver-client-java</artifactId>
             <version>${mockserver.version}</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>okhttp</artifactId>
-            <version>4.9.0</version>
         </dependency>
         <dependency>
             <groupId>gov.cms.ab2d</groupId>

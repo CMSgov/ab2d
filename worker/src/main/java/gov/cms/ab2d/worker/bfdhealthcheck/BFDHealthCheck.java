@@ -84,7 +84,7 @@ class BFDHealthCheck {
         PropertiesDTO propertiesDTO = new PropertiesDTO();
         propertiesDTO.setKey(MAINTENANCE_MODE);
         propertiesDTO.setValue(statusString);
-        slackLogger.logErrorMsg("Maintenance Mode status: " + statusString);
+        slackLogger.logAlert("Maintenance Mode status: " + statusString);
         propertiesService.updateProperties(List.of(propertiesDTO));
         log.info("Updated the {} property to {}", MAINTENANCE_MODE, statusString);
     }
