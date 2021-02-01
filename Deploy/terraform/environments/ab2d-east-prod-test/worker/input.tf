@@ -28,6 +28,8 @@ variable "new_relic_license_key" {}
 variable "override_task_definition_arn" {}
 variable "percent_capacity_increase" {}
 variable "region" {}
+variable "slack_alert_webhooks" {}
+variable "slack_trace_webhooks" {}
 variable "ssh_key_name" {}
 variable "ssh_username" {}
 variable "vpn_private_ip_address_cidr_range" {}

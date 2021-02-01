@@ -427,26 +427,47 @@ if [ -z "${AB2D_HPMS_AUTH_KEY_SECRET}" ]; then
   exit 1
 fi
 
-# If any database secret produced an error, exit the script
+AB2D_SLACK_ALERT_WEBHOOKS=$(./get-database-secret.py "${TARGET_CMS_ENV}" ab2d_slack_alert_webhooks "${DATABASE_SECRET_DATETIME}")
 
-if [ "${DATABASE_USER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${DATABASE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${DATABASE_NAME}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${BFD_URL}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${BFD_KEYSTORE_LOCATION}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${BFD_KEYSTORE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${HICN_HASH_PEPPER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${HICN_HASH_ITER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${NEW_RELIC_APP_NAME}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${NEW_RELIC_LICENSE_KEY}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${AB2D_KEYSTORE_LOCATION}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${AB2D_KEYSTORE_PASSWORD}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${AB2D_OKTA_JWT_ISSUER}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${AB2D_HPMS_URL}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${AB2D_HPMS_API_PARAMS}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${AB2D_HPMS_AUTH_KEY_ID}" == "ERROR: Cannot get database secret because KMS key is disabled!" ] \
-  || [ "${AB2D_HPMS_AUTH_KEY_SECRET}" == "ERROR: Cannot get database secret because KMS key is disabled!" ]; then
+if [ -z "${AB2D_SLACK_ALERT_WEBHOOKS}" ]; then
+  echo "**************************************************"
+  echo "ERROR: AB2D SLACK ALERT WEBHOOKS secret not found."
+  echo "**************************************************"
+  exit 1
+fi
+
+AB2D_SLACK_TRACE_WEBHOOKS=$(./get-database-secret.py "${TARGET_CMS_ENV}" ab2d_slack_trace_webhooks "${DATABASE_SECRET_DATETIME}")
+
+if [ -z "${AB2D_SLACK_TRACE_WEBHOOKS}" ]; then
+  echo "**************************************************"
+  echo "ERROR: AB2D SLACK TRACE WEBHOOKS secret not found."
+  echo "**************************************************"
+  exit 1
+fi
+
+# If any database secret produced an error, exit the script
+DATABASE_SECRET_ERROR_MESSAGE="ERROR: Cannot get database secret because KMS key is disabled!"
+
+if [ "${DATABASE_USER}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+  || [ "${DATABASE_PASSWORD}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+  || [ "${DATABASE_NAME}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+  || [ "${BFD_URL}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+  || [ "${BFD_KEYSTORE_LOCATION}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+  || [ "${BFD_KEYSTORE_PASSWORD}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+  || [ "${HICN_HASH_PEPPER}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+  || [ "${HICN_HASH_ITER}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+  || [ "${NEW_RELIC_APP_NAME}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+  || [ "${NEW_RELIC_LICENSE_KEY}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+  || [ "${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+  || [ "${AB2D_KEYSTORE_LOCATION}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+  || [ "${AB2D_KEYSTORE_PASSWORD}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+  || [ "${AB2D_OKTA_JWT_ISSUER}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+  || [ "${AB2D_HPMS_URL}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+  || [ "${AB2D_HPMS_API_PARAMS}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+  || [ "${AB2D_HPMS_AUTH_KEY_ID}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+  || [ "${AB2D_HPMS_AUTH_KEY_SECRET}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+  || [ "${AB2D_SLACK_ALERT_WEBHOOKS}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ] \
+  || [ "${AB2D_SLACK_TRACE_WEBHOOKS}" == "${DATABASE_SECRET_ERROR_MESSAGE}" ]; then
     echo "ERROR: Cannot get secrets because KMS key is disabled!"
     exit 1
 fi
@@ -1139,6 +1160,8 @@ terraform apply \
   --var "ab2d_hpms_api_params=${AB2D_HPMS_API_PARAMS}" \
   --var "ab2d_hpms_auth_key_id=${AB2D_HPMS_AUTH_KEY_ID}" \
   --var "ab2d_hpms_auth_key_secret=${AB2D_HPMS_AUTH_KEY_SECRET}" \
+  --var "ab2d_slack_alert_webhooks=${AB2D_SLACK_ALERT_WEBHOOKS}" \
+  --var "ab2d_slack_trace_webhooks=${AB2D_SLACK_TRACE_WEBHOOKS}" \
   --var "gold_image_name=${GOLD_IMAGE_NAME}" \
   --var "ec2_desired_instance_count_api=${EC2_DESIRED_INSTANCE_COUNT_API}" \
   --var "ec2_minimum_instance_count_api=${EC2_MINIMUM_INSTANCE_COUNT_API}" \
@@ -1172,6 +1195,8 @@ terraform apply \
   --var "new_relic_app_name=$NEW_RELIC_APP_NAME" \
   --var "new_relic_license_key=$NEW_RELIC_LICENSE_KEY" \
   --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
+  --var "ab2d_slack_alert_webhooks=${AB2D_SLACK_ALERT_WEBHOOKS}" \
+  --var "ab2d_slack_trace_webhooks=${AB2D_SLACK_TRACE_WEBHOOKS}" \
   --var "gold_image_name=${GOLD_IMAGE_NAME}" \
   --var "ec2_desired_instance_count_worker=${EC2_DESIRED_INSTANCE_COUNT_WORKER}" \
   --var "ec2_minimum_instance_count_worker=${EC2_MINIMUM_INSTANCE_COUNT_WORKER}" \
