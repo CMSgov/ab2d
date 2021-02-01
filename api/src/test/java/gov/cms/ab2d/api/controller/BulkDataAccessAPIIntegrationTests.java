@@ -297,7 +297,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string("Content-Location", statusUrl))
-                .andExpect(header().string("Since-Time", "2020-02-17T23:00:00-06:00"));
+                .andExpect(header().string("Since-Datetime", "2020-02-17T23:00:00-06:00"));
 
         assertEquals(JobStatus.SUBMITTED, job.getStatus());
         assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
@@ -305,6 +305,17 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals("http://localhost" + API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + typeParams, job.getRequestUrl());
         assertEquals(EOB, job.getResourceTypes());
         assertEquals(userRepository.findByUsername(TEST_USER), job.getUser());
+    }
+
+    @Test
+    void testPatientExportWithoutTimeZoneParameters() throws Exception {
+        final String typeParams =
+                "?_type=ExplanationOfBenefit&_outputFormat=application/fhir+ndjson&_since=2020-02-17T23:00:00.000";
+        ResultActions resultActions =
+                this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON));
+        resultActions.andExpect(status().isBadRequest());
     }
 
     @Test
@@ -320,7 +331,7 @@ public class BulkDataAccessAPIIntegrationTests {
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
         resultActions.andExpect(status().is(202))
-                .andExpect(header().string("Since-Time", "2020-02-12T23:00:00-06:00"));
+                .andExpect(header().string("Since-Datetime", "2020-02-12T23:00:00-06:00"));
 
         assertEquals(JobStatus.SUBMITTED, job.getStatus());
     }
@@ -341,7 +352,7 @@ public class BulkDataAccessAPIIntegrationTests {
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
         resultActions.andExpect(status().is(202))
-                .andExpect(header().string("Since-Time", "2020-02-12T23:00:00-06:00"));
+                .andExpect(header().string("Since-Datetime", "2020-02-12T23:00:00-06:00"));
 
         assertEquals(JobStatus.SUBMITTED, job.getStatus());
     }
@@ -359,7 +370,7 @@ public class BulkDataAccessAPIIntegrationTests {
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
         resultActions.andExpect(status().is(202))
-                .andExpect(header().string("Since-Time", "2020-02-17T23:00:00-06:00"));
+                .andExpect(header().string("Since-Datetime", "2020-02-17T23:00:00-06:00"));
 
         assertEquals(JobStatus.SUBMITTED, job.getStatus());
     }
@@ -380,7 +391,7 @@ public class BulkDataAccessAPIIntegrationTests {
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
         resultActions.andExpect(status().is(202))
-                .andExpect(header().string("Since-Time", "2020-02-17T23:00:00-06:00"));
+                .andExpect(header().string("Since-Datetime", "2020-02-17T23:00:00-06:00"));
 
         assertEquals(JobStatus.SUBMITTED, job.getStatus());
     }
