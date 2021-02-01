@@ -20,9 +20,8 @@ class FHIRUtilTest {
     @Test
     void testOutcomeToJSON() {
         final String errText = "SOMETHING BROKE";
-        final IBaseResource oo = FHIRUtil.getErrorOutcome(errText, Versions.FhirVersions.R3);
-        final String payload = FHIRUtil.outcomeToJSON(oo, Versions.FhirVersions.R3);
+        final IBaseResource oo = FHIRUtil.getErrorOutcome(errText, Versions.FhirVersions.STU3);
+        final String payload = FHIRUtil.outcomeToJSON(oo, Versions.FhirVersions.STU3);
         assertNotNull(payload);
-        System.out.println(payload);
     }
 }

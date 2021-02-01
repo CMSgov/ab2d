@@ -91,7 +91,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         Job job = jobRepository.findByJobUuid(jobUuid);
         List<Path> dataFiles = new ArrayList<>();
         List<Path> errorFiles = new ArrayList<>();
-        Versions.FhirVersions version = Versions.FhirVersions.R3;
+        Versions.FhirVersions version = Versions.FhirVersions.STU3;
         if (job != null && job.getFhirVersion() != null) {
             version = job.getFhirVersion();
         }

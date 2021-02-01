@@ -157,12 +157,12 @@ public class BFDClientImpl implements BFDClient {
     }
 
     private IBaseBundle clientSearch(@SuppressWarnings("rawtypes") ICriterion hashEquals) {
-        Versions.FhirVersions version = Versions.FhirVersions.R3;
+        Versions.FhirVersions version = Versions.FhirVersions.STU3;
         try {
             version = getVersion();
         } catch (Exception e) {
             log.error("Invalid version", e);
-            version = Versions.FhirVersions.R3;
+            version = Versions.FhirVersions.STU3;
         }
         return client.search()
                 .forResource(SearchUtils.getPatientClass(version))

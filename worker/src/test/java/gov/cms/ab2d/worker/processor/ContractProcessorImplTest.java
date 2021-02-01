@@ -61,7 +61,7 @@ class ContractProcessorImplTest {
                 put(identifiers.getBeneficiaryId(), new CoverageSummary(identifiers, null, null));
         }};
 
-        FhirUtils.addMbiIdsToEobs(singletonList(eob), coverageSummaries, Versions.FhirVersions.R3);
+        FhirUtils.addMbiIdsToEobs(singletonList(eob), coverageSummaries, Versions.FhirVersions.STU3);
 
         assertFalse(eob.getExtension().isEmpty());
         assertEquals(3, eob.getExtension().size());

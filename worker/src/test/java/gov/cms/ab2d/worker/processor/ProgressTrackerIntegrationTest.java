@@ -104,7 +104,7 @@ class ProgressTrackerIntegrationTest {
 
         when(bfdClient.requestPartDEnrolleesFromServer(CONTRACT_NUMBER, 1)).thenReturn(bundleA);
         when(bfdClient.requestPartDEnrolleesFromServer(CONTRACT_NUMBER, 2)).thenReturn(bundleB);
-        when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.R3);
+        when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
 
         cut.processContractBenes(job, progressTracker);
 

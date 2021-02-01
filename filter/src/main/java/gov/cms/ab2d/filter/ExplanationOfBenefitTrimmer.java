@@ -9,7 +9,7 @@ public class ExplanationOfBenefitTrimmer {
             return ExplanationOfBenefitTrimmerR4.getBenefit(resource);
         }
         if (resource.getStructureFhirVersionEnum() == FhirVersionEnum.DSTU3) {
-            return ExplanationOfBenefitTrimmerR3.getBenefit(resource);
+            return ExplanationOfBenefitTrimmerSTU3.getBenefit(resource);
         }
         return null;
     }

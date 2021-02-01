@@ -7,6 +7,7 @@ import org.hl7.fhir.instance.model.api.IBaseExtension;
 import org.hl7.fhir.instance.model.api.ICompositeType;
 import org.hl7.fhir.instance.model.api.IDomainResource;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -50,15 +51,16 @@ public final class IdentifierUtils {
      * @param patient - the patient resource
      * @return the set of historical MBIs
      */
-    public static Set<String> getHistoricMbi(IDomainResource patient) {
+    public static LinkedHashSet<String> getHistoricMbi(IDomainResource patient) {
         if (patient == null) {
             return null;
         }
         List identifiers = (List) Versions.invokeGetMethod(patient, "getIdentifier");
-        return (Set<String>) identifiers.stream()
+        Set<String> set =  (Set<String>) identifiers.stream()
                 .filter(c -> isMatchingMbi((ICompositeType) c, HISTORIC_MBI))
-                .map(c -> Versions.invokeGetMethod((IBase) c, "getValue"))
+                .map(c -> Versions.invokeGetMethod(c, "getValue"))
                 .collect(Collectors.toSet());
+        return new LinkedHashSet<>(set);
     }
 
     /**

@@ -3,7 +3,7 @@ package gov.cms.ab2d.worker.processor;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.EncodingEnum;
-import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmerR3;
+import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmerSTU3;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 
 import java.io.File;
@@ -24,7 +24,7 @@ public final class EobTestDataUtil {
         final EncodingEnum respType = EncodingEnum.forContentType(EncodingEnum.JSON_PLAIN_STRING);
         final IParser parser = respType.newParser(FhirContext.forDstu3());
         final org.hl7.fhir.dstu3.model.ExplanationOfBenefit explanationOfBenefit = parser.parseResource(org.hl7.fhir.dstu3.model.ExplanationOfBenefit.class, inputStream);
-        eob = ExplanationOfBenefitTrimmerR3.getBenefit(explanationOfBenefit);
+        eob = ExplanationOfBenefitTrimmerSTU3.getBenefit(explanationOfBenefit);
         org.hl7.fhir.dstu3.model.Period billingPeriod = new org.hl7.fhir.dstu3.model.Period();
         try {
             billingPeriod.setStart(sdf.parse("01/02/2020"));

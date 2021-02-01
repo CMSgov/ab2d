@@ -183,7 +183,7 @@ class PatientClaimsProcessorUnitTest {
     void process_whenPatientHasSinglePageOfClaimsData() throws ExecutionException, InterruptedException {
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(patientId, request.getAttTime())).thenReturn(bundle1);
-        // when(mockBfdClient.getVersion()).thenReturn(Versions.FhirVersions.R3);
+        // when(mockBfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
 
         cut.process(request).get();
 
@@ -200,7 +200,7 @@ class PatientClaimsProcessorUnitTest {
 
         when(mockBfdClient.requestEOBFromServer(patientId, request.getAttTime())).thenReturn(bundle1);
         when(mockBfdClient.requestNextBundleFromServer(bundle1)).thenReturn(bundle2);
-        // when(mockBfdClient.getVersion()).thenReturn(Versions.FhirVersions.R3);
+        // when(mockBfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
 
         cut.process(request).get();
 
@@ -226,7 +226,7 @@ class PatientClaimsProcessorUnitTest {
     void process_whenPatientHasNoEOBClaimsData() throws ExecutionException, InterruptedException {
         org.hl7.fhir.dstu3.model.Bundle bundle1 = new org.hl7.fhir.dstu3.model.Bundle();
         when(mockBfdClient.requestEOBFromServer(patientId, request.getAttTime())).thenReturn(bundle1);
-        // when(mockBfdClient.getVersion()).thenReturn(Versions.FhirVersions.R3);
+        // when(mockBfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
 
         cut.process(request).get();
 
@@ -251,7 +251,7 @@ class PatientClaimsProcessorUnitTest {
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(patientId, request.getSinceTime())).thenReturn(bundle1);
-        // when(mockBfdClient.getVersion()).thenReturn(Versions.FhirVersions.R3);
+        // when(mockBfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
 
         cut.process(request).get();
 
@@ -274,7 +274,7 @@ class PatientClaimsProcessorUnitTest {
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(patientId, null)).thenReturn(bundle1);
-        // when(mockBfdClient.getVersion()).thenReturn(Versions.FhirVersions.R3);
+        // when(mockBfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
 
         cut.process(request).get();
 

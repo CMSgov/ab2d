@@ -94,7 +94,7 @@ class ContractProcessorInvalidPatientTest {
         when(bfdClient.requestEOBFromServer(eq("1"), any())).thenReturn(b1);
         when(bfdClient.requestEOBFromServer(eq("2"), any())).thenReturn(b2);
         when(bfdClient.requestEOBFromServer(eq("3"), any())).thenReturn(b4);
-        // when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.R3);
+        // when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
         List<JobOutput> outputs = cut.process(tmpDirFolder.toPath(), contractData);
         assertNotNull(outputs);
         assertEquals(2, outputs.size());
@@ -118,7 +118,7 @@ class ContractProcessorInvalidPatientTest {
         StreamHelper helper = new TextStreamHelperImpl(
                 tmpDirFolder.toPath(), contractId, 2000, 10, eventLogger, job);
         ((ContractProcessorImpl) cut).writeExceptionToContractErrorFile(
-                helper, val, new RuntimeException("Exception"), Versions.FhirVersions.R3);
+                helper, val, new RuntimeException("Exception"), Versions.FhirVersions.STU3);
         String result = Files.readString(Path.of(tmpDirFolder.getAbsolutePath() + File.separator + contractId + "_error.ndjson"));
         assertEquals(val, result);
     }
@@ -130,7 +130,7 @@ class ContractProcessorInvalidPatientTest {
         StreamHelper helper = new TextStreamHelperImpl(
                 tmpDirFolder.toPath(), contractId, 2000, 10, eventLogger, job);
         ((ContractProcessorImpl) cut).writeExceptionToContractErrorFile(
-                helper, null, new RuntimeException("Exception"), Versions.FhirVersions.R3);
+                helper, null, new RuntimeException("Exception"), Versions.FhirVersions.STU3);
         assertThrows(NoSuchFileException.class, () -> Files.readString(Path.of(tmpDirFolder.getAbsolutePath() + File.separator + contractId + "_error.ndjson")));
     }
 

@@ -25,7 +25,7 @@ public class EOBLoadUtilities {
      *             Explanation of Benefit data retrieved from Blue
      * @return the ExplanationOfBenefit object
      */
-    public static org.hl7.fhir.dstu3.model.ExplanationOfBenefit getR3EOBFromFileInClassPath(String fileInClassPath, FhirContext context) {
+    public static org.hl7.fhir.dstu3.model.ExplanationOfBenefit getSTU3EOBFromFileInClassPath(String fileInClassPath, FhirContext context) {
         if (StringUtils.isBlank(fileInClassPath)) {
             return null;
         }

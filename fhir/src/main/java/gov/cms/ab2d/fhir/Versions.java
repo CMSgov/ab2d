@@ -19,7 +19,7 @@ import java.util.*;
 @Slf4j
 public class Versions {
     public enum FhirVersions {
-        R3,
+        STU3,
         R4
     }
 
@@ -39,7 +39,7 @@ public class Versions {
      * Location of packages for FHIR objects
      */
     private static final Map<FhirVersions, String> CLASS_LOCATIONS = new HashMap<>() {
-        { put (FhirVersions.R3, "org.hl7.fhir.dstu3.model"); }
+        { put (FhirVersions.STU3, "org.hl7.fhir.dstu3.model"); }
         { put (FhirVersions.R4, "org.hl7.fhir.r4.model"); }
     };
 
@@ -47,7 +47,7 @@ public class Versions {
      * Mapping of FhirContext objects to versions
      */
     private static final Map<FhirVersions, FhirContext> FHIR_CONTEXTS = new HashMap<>() {
-        { put (FhirVersions.R3, FhirContext.forDstu3()); }
+        { put (FhirVersions.STU3, FhirContext.forDstu3()); }
         { put (FhirVersions.R4, FhirContext.forR4()); }
     };
 
@@ -77,7 +77,7 @@ public class Versions {
      * The currently supported FHIR versions
      */
     private static final Map<FhirVersionEnum, FhirVersions> SUPPORTED_FHIR_VERSION = new EnumMap<>(FhirVersionEnum.class) {
-        { put (FhirVersionEnum.DSTU3, FhirVersions.R3); }
+        { put (FhirVersionEnum.DSTU3, FhirVersions.STU3); }
         { put (FhirVersionEnum.R4, FhirVersions.R4); }
     };
 
@@ -85,7 +85,7 @@ public class Versions {
      * The URL for each FHIR version
      */
     private static final Map<String, FhirVersions> API_VERSION_TO_FHIR_VERSION = new HashMap<>() {
-        { put ("/v1/", FhirVersions.R3); }
+        { put ("/v1/", FhirVersions.STU3); }
         { put ("/v2/", FhirVersions.R4); }
     };
 
@@ -96,7 +96,7 @@ public class Versions {
      * @return the FHIR version
      */
     public static FhirVersions getVersionFromUrl(String url) {
-        FhirVersions version = FhirVersions.R3;
+        FhirVersions version = FhirVersions.STU3;
         String versionKey = API_VERSION_TO_FHIR_VERSION.keySet().stream()
                 .filter(url::contains)
                 .findFirst().orElse(null);

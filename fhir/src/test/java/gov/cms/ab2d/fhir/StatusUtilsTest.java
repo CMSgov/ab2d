@@ -12,7 +12,7 @@ class StatusUtilsTest {
         OffsetDateTime now = OffsetDateTime.now();
         final org.hl7.fhir.dstu3.model.DateTimeType jobStartedAt = new org.hl7.fhir.dstu3.model.DateTimeType(now.toString());
         String val2 = jobStartedAt.toHumanDisplay();
-        String val = StatusUtils.getFhirTime(Versions.FhirVersions.R3, now);
+        String val = StatusUtils.getFhirTime(Versions.FhirVersions.STU3, now);
         assertEquals(val, val2);
     }
 }

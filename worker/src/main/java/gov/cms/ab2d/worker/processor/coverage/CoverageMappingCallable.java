@@ -133,20 +133,11 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     }
 
     private Set<Identifiers> extractAndFilter(IBaseBundle bundle) {
-        return getPatientStream(bundle)
+        return BundleUtils.getPatientStream(bundle, bfdClient.getVersion())
                 .filter(patient -> skipBillablePeriodCheck || filterByYear(patient))
                 .map(this::extractPatientId)
                 .filter(Objects::nonNull)
                 .collect(toSet());
-    }
-
-    private Stream<IDomainResource> getPatientStream(IBaseBundle bundle) {
-        try {
-            return BundleUtils.getPatientStream(bundle, bfdClient.getVersion());
-        } catch (Exception ex) {
-            log.error("Unable to get patient stream", ex);
-            return null;
-        }
     }
 
     private boolean filterByYear(IDomainResource patient) {
@@ -185,8 +176,8 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
             missingCurrentMbi += 1;
         }
 
-        Set<String> historicMbis = IdentifierUtils.getHistoricMbi(patient);
-        if (!historicMbis.isEmpty()) {
+        LinkedHashSet<String> historicMbis = IdentifierUtils.getHistoricMbi(patient);
+        if (historicMbis == null || !historicMbis.isEmpty()) {
             hasHistoricalMbi += 1;
         }
 
