@@ -560,7 +560,7 @@ class TestRunner {
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        List<String> sinceTime = exportResponse.headers().map().get("Since-Time");
+        List<String> sinceTime = exportResponse.headers().map().get("Since-Datetime");
         assertFalse(sinceTime.isEmpty());
 
         // Check that since time applied to job matches supplied time
