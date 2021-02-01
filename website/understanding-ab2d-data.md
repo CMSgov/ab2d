@@ -68,7 +68,7 @@ active-nav: understanding-the-data-nav
                     <br /><br />
                     <ul class="gray-bullets">
                         <li>
-                            <a href="https://ab2d.cms.gov/data/data_dictionary.html" target="_blank">
+                            <a href="data_dictionary.html">
                                 View Data Dictionary
                             </a>
                         </li>    
