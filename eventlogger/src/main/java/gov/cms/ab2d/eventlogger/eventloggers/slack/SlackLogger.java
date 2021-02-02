@@ -38,6 +38,13 @@ public class SlackLogger {
         this.slackTraceWebhooks = slackTraceWebhooks.stream().filter(StringUtils::isNotBlank)
                 .map(String::trim).collect(toList());
         this.appEnv = appEnv;
+
+        filterAlerts();
+    }
+
+    private void filterAlerts() {
+        slackAlertWebhooks.removeIf(url -> url.equalsIgnoreCase("na"));
+        slackTraceWebhooks.removeIf(url -> url.equalsIgnoreCase("na"));
     }
 
     /**

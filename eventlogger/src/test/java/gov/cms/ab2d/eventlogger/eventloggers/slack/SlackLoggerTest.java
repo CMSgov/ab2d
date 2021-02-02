@@ -17,7 +17,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-public class SlackLoggerTest {
+class SlackLoggerTest {
 
     private final Slack slack = mock(Slack.class);
 
@@ -79,5 +79,20 @@ public class SlackLoggerTest {
 
         assertFalse(slackLogger.logAlert("oops"));
         assertFalse(slackLogger.logTrace("oops"));
+    }
+
+    @DisplayName("SlackLogger ignores default url 'na'")
+    @Test
+    void slackLoggerIgnoresDefaultUrl() throws IOException {
+
+        SlackLogger slackLogger = new SlackLogger(slack, List.of("NA", "Na", "nA", "\t\tNA", "   NA\n"),
+                List.of("NA", "Na", "nA", "\t\tNA", "   NA\n"), "testing");
+
+        when(slack.send(anyString(), any(Payload.class))).thenThrow(IOException.class);
+
+        assertTrue(slackLogger.logAlert("testing"));
+        assertTrue(slackLogger.logTrace("testing"));
+
+        verify(slack, times(0)).send(anyString(), any(Payload.class));
     }
 }
