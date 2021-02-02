@@ -7,6 +7,7 @@ import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.fhir.Versions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -80,6 +81,7 @@ class JobOutputServiceTest {
         job.setUser(userRepository.findByUsername(TEST_USER));
         job.setStatus(JobStatus.FAILED);
         job.setCreatedAt(OffsetDateTime.now());
+        job.setFhirVersion(Versions.FhirVersions.STU3);
         Job savedJob = jobRepository.save(job);
         dataSetup.queueForCleanup(savedJob);
 
@@ -110,6 +112,7 @@ class JobOutputServiceTest {
         job.setUser(userRepository.findByUsername(TEST_USER));
         job.setStatus(JobStatus.FAILED);
         job.setCreatedAt(OffsetDateTime.now());
+        job.setFhirVersion(Versions.FhirVersions.STU3);
         Job savedJob = jobRepository.save(job);
         dataSetup.queueForCleanup(savedJob);
 
@@ -135,6 +138,7 @@ class JobOutputServiceTest {
         job.setUser(userRepository.findByUsername(TEST_USER));
         job.setStatus(JobStatus.FAILED);
         job.setCreatedAt(OffsetDateTime.now());
+        job.setFhirVersion(Versions.FhirVersions.STU3);
         Job savedJob = jobRepository.save(job);
         dataSetup.queueForCleanup(savedJob);
 

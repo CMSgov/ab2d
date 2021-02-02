@@ -18,6 +18,9 @@ import java.util.*;
  */
 @Slf4j
 public class Versions {
+    /**
+     * Supported versions
+     */
     public enum FhirVersions {
         STU3,
         R4

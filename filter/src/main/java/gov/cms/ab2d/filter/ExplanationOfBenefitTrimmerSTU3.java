@@ -15,11 +15,11 @@ public class ExplanationOfBenefitTrimmerSTU3 {
     /**
      * Pass in an ExplanationOfBenefit, return the copy without the data
      *
-     * @param b - the original ExplanationOfBenefit
+     * @param baseBenefit - the original ExplanationOfBenefit
      * @return the cleaned up copy
      */
-    public static IBaseResource getBenefit(IBaseResource b) {
-        ExplanationOfBenefit benefit = (ExplanationOfBenefit) b;
+    public static IBaseResource getBenefit(IBaseResource baseBenefit) {
+        ExplanationOfBenefit benefit = (ExplanationOfBenefit) baseBenefit;
         if (benefit == null) {
             return null;
         }
