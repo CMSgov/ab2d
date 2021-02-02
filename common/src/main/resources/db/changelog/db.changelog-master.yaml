@@ -93,4 +93,4 @@ databaseChangeLog:
   - include:
       file: db/changelog/v2021/add_coverage_delta.sql
   - include:
-      file: db/changelog/v001/add_fhir_version.sql
+      file: db/changelog/v2021/add_fhir_version.sql
