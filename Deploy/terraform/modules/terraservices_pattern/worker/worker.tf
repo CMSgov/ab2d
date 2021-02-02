@@ -154,7 +154,7 @@ resource "aws_ecs_task_definition" "worker" {
         },
         {
           "name": "AB2D_SLACK_ALERT_WEBHOOKS",
-          "value": "${var.slack_alert_webhooks}",
+          "value": "${var.slack_alert_webhooks}"
         },
         {
           "name": "AB2D_SLACK_TRACE_WEBHOOKS",
