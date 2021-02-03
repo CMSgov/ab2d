@@ -88,6 +88,11 @@
             <version>${mockserver.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>gov.cms.ab2d</groupId>
+            <artifactId>fhir</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <build>

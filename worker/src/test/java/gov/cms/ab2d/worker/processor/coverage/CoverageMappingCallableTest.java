@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.processor.coverage;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.fhir.Versions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -41,6 +42,7 @@ class CoverageMappingCallableTest {
 
         when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
 
         Contract contract = new Contract();
         contract.setContractNumber("TESTING");
@@ -81,6 +83,7 @@ class CoverageMappingCallableTest {
 
         when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
 
         Contract contract = new Contract();
         contract.setContractNumber("TESTING");
@@ -134,6 +137,7 @@ class CoverageMappingCallableTest {
 
         when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
 
         Contract contract = new Contract();
         contract.setContractNumber("TESTING");
@@ -152,7 +156,6 @@ class CoverageMappingCallableTest {
 
         CoverageMapping mapping = new CoverageMapping(cse, search);
         CoverageMappingCallable callable = new CoverageMappingCallable(mapping, bfdClient, false);
-
 
         try {
             callable.call();
@@ -185,6 +188,7 @@ class CoverageMappingCallableTest {
 
         when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
 
         Contract contract = new Contract();
         contract.setContractNumber("TESTING");
@@ -235,6 +239,7 @@ class CoverageMappingCallableTest {
 
         when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
 
         Contract contract = new Contract();
         contract.setContractNumber("TESTING");

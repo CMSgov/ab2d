@@ -4,6 +4,7 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.fhir.Versions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -79,6 +80,7 @@ class CancelStuckJobsProcessorTest {
         Job job = new Job();
         job.setStatus(JobStatus.IN_PROGRESS);
         job.setCreatedAt(OffsetDateTime.now().minusHours(hoursAgo));
+        job.setFhirVersion(Versions.FhirVersions.STU3);
         return job;
     }
 }
