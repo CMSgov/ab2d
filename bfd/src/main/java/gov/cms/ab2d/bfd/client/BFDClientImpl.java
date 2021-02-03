@@ -1,5 +1,6 @@
 package gov.cms.ab2d.bfd.client;
 
+import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.ICriterion;
 import ca.uhn.fhir.rest.gclient.TokenClientParam;
@@ -7,11 +8,16 @@ import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Segment;
+import gov.cms.ab2d.fhir.MetaDataUtils;
+import gov.cms.ab2d.fhir.SearchUtils;
+import gov.cms.ab2d.fhir.Versions;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.StringUtils;
+import org.hl7.fhir.instance.model.api.IBaseBundle;
+import org.hl7.fhir.instance.model.api.IBaseConformance;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.retry.annotation.Backoff;
@@ -59,13 +65,15 @@ public class BFDClientImpl implements BFDClient {
     @Value("${bfd.hash.iter}")
     private int bfdHashIter;
 
+    private FhirContext fhirContext;
+
     private final BFDSearch bfdSearch;
 
-    public BFDClientImpl(IGenericClient client, BFDSearch bfdSearch) {
+    public BFDClientImpl(IGenericClient client, FhirContext fhirContext, BFDSearch bfdSearch) {
         this.client = client;
+        this.fhirContext = fhirContext;
         this.bfdSearch = bfdSearch;
     }
-
 
     /**
      * Queries Blue Button server for Explanations of Benefit associated with a given patient
@@ -85,7 +93,7 @@ public class BFDClientImpl implements BFDClient {
      * that contain no EoBs.
      *
      * @param patientID The requested patient's ID
-     * @return {@link org.hl7.fhir.dstu3.model.Bundle} Containing a number (possibly 0) of {@link org.hl7.fhir.dstu3.model.ExplanationOfBenefit}
+     * @return {@link org.hl7.fhir.instance.model.api.IBaseBundle} Containing a number (possibly 0) of Resources
      * objects
      * @throws ResourceNotFoundException when the requested patient does not exist
      */
@@ -95,7 +103,7 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public org.hl7.fhir.dstu3.model.Bundle requestEOBFromServer(String patientID) {
+    public IBaseBundle requestEOBFromServer(String patientID) {
         return requestEOBFromServer(patientID, null);
     }
 
@@ -107,7 +115,7 @@ public class BFDClientImpl implements BFDClient {
      *
      * @param patientID The requested patient's ID
      * @param sinceTime The start date for the request
-     * @return {@link org.hl7.fhir.dstu3.model.Bundle} Containing a number (possibly 0) of {@link org.hl7.fhir.dstu3.model.ExplanationOfBenefit}
+     * @return {@link IBaseBundle} Containing a number (possibly 0) of Resources
      * objects
      * @throws ResourceNotFoundException when the requested patient does not exist
      */
@@ -118,12 +126,12 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public org.hl7.fhir.dstu3.model.Bundle requestEOBFromServer(String patientID, OffsetDateTime sinceTime) {
+    public IBaseBundle requestEOBFromServer(String patientID, OffsetDateTime sinceTime) {
         final Segment bfdSegment = NewRelic.getAgent().getTransaction().startSegment("BFD Call for patient with patient ID " + patientID +
                 " using since " + sinceTime);
         bfdSegment.setMetricName("RequestEOB");
 
-        org.hl7.fhir.dstu3.model.Bundle result = bfdSearch.searchEOB(patientID, sinceTime, pageSize, getJobId());
+        IBaseBundle result = bfdSearch.searchEOB(patientID, sinceTime, pageSize, getJobId(), getVersion());
 
         bfdSegment.end();
 
@@ -142,20 +150,21 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public org.hl7.fhir.dstu3.model.Bundle requestPatientByHICN(String hicn) {
+    public IBaseBundle requestPatientByHICN(String hicn) {
         String hicnHashVal = hashIdentifier(hicn, bfdHashPepper, bfdHashIter);
         var hicnHashEquals = generateHash(hicnHash, hicnHashVal);
         return clientSearch(hicnHashEquals);
     }
 
-    private org.hl7.fhir.dstu3.model.Bundle clientSearch(@SuppressWarnings("rawtypes") ICriterion hashEquals) {
+    private IBaseBundle clientSearch(@SuppressWarnings("rawtypes") ICriterion hashEquals) {
+        Versions.FhirVersions version = getVersion();
         return client.search()
-                .forResource(org.hl7.fhir.dstu3.model.Patient.class)
+                .forResource(SearchUtils.getPatientClass(version))
                 .where(hashEquals)
                 .withAdditionalHeader(BFDClient.BFD_HDR_BULK_CLIENTID, BFDClient.BFD_CLIENT_ID)
                 .withAdditionalHeader(BFDClient.BFD_HDR_BULK_JOBID, getJobId())
                 .withAdditionalHeader("IncludeIdentifiers", "true")
-                .returnBundle(org.hl7.fhir.dstu3.model.Bundle.class)
+                .returnBundle(SearchUtils.getBundleClass(version))
                 .encodedJson()
                 .execute();
     }
@@ -178,7 +187,7 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public org.hl7.fhir.dstu3.model.Bundle requestPatientByMBI(String mbi) {
+    public IBaseBundle requestPatientByMBI(String mbi) {
         String hashVal = hashIdentifier(mbi, bfdHashPepper, bfdHashIter);
         var mbiHashEquals = generateHash(mbiHash, hashVal);
         return clientSearch(mbiHashEquals);
@@ -209,7 +218,7 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public org.hl7.fhir.dstu3.model.Bundle requestNextBundleFromServer(org.hl7.fhir.dstu3.model.Bundle bundle) {
+    public IBaseBundle requestNextBundleFromServer(IBaseBundle bundle) {
         return client
                 .loadPage()
                 .next(bundle)
@@ -235,20 +244,20 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class, InvalidRequestException.class }
     )
-    public org.hl7.fhir.dstu3.model.Bundle requestPartDEnrolleesFromServer(String contractNumber, int month) {
+    public IBaseBundle requestPartDEnrolleesFromServer(String contractNumber, int month) {
         var monthParameter = createMonthParameter(month);
         var theCriterion = new TokenClientParam("_has:Coverage.extension")
                 .exactly()
                 .systemAndIdentifier(monthParameter, contractNumber);
 
         return client.search()
-                .forResource(org.hl7.fhir.dstu3.model.Patient.class)
+                .forResource(SearchUtils.getPatientClass(getVersion()))
                 .where(theCriterion)
                 .withAdditionalHeader(BFDClient.BFD_HDR_BULK_CLIENTID, BFDClient.BFD_CLIENT_ID)
                 .withAdditionalHeader(BFDClient.BFD_HDR_BULK_JOBID, getJobId())
                 .withAdditionalHeader("IncludeIdentifiers", "mbi")
                 .count(contractToBenePageSize)
-                .returnBundle(org.hl7.fhir.dstu3.model.Bundle.class)
+                .returnBundle(SearchUtils.getBundleClass(getVersion()))
                 .encodedJson()
                 .execute();
     }
@@ -259,14 +268,29 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public org.hl7.fhir.dstu3.model.CapabilityStatement capabilityStatement() {
-        return client.capabilities()
-                .ofType(org.hl7.fhir.dstu3.model.CapabilityStatement.class)
+    public IBaseConformance capabilityStatement() {
+        try {
+            Class<? extends IBaseConformance> resource = MetaDataUtils.getCapabilityClass(getVersion());
+            return client.capabilities()
+                .ofType(resource)
                 .execute();
+        } catch (Exception ex) {
+            return null;
+        }
     }
 
     private String createMonthParameter(int month) {
         final String zeroPaddedMonth = StringUtils.leftPad("" + month, 2, '0');
         return PTDCNTRCT_URL_PREFIX + zeroPaddedMonth;
+    }
+
+    @Override
+    public Versions.FhirVersions getVersion() {
+        try {
+            return Versions.getVersion(fhirContext);
+        } catch (Exception ex) {
+            log.error("Invalid version", ex);
+            return Versions.FhirVersions.STU3;
+        }
     }
 }

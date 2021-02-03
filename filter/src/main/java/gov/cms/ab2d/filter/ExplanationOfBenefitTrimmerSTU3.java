@@ -1,5 +1,8 @@
 package gov.cms.ab2d.filter;
 
+import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
+import org.hl7.fhir.instance.model.api.IBaseResource;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -7,20 +10,21 @@ import java.util.stream.Collectors;
  * Cleans out data from a copy of an ExplanationOfBenefit object that we don't want
  * to forward to Part D providers
  */
-public class ExplanationOfBenefitTrimmerR3 {
+public class ExplanationOfBenefitTrimmerSTU3 {
 
     /**
      * Pass in an ExplanationOfBenefit, return the copy without the data
      *
-     * @param benefit - the original ExplanationOfBenefit
+     * @param baseBenefit - the original ExplanationOfBenefit
      * @return the cleaned up copy
      */
-    public static org.hl7.fhir.dstu3.model.ExplanationOfBenefit getBenefit(org.hl7.fhir.dstu3.model.ExplanationOfBenefit benefit) {
+    public static IBaseResource getBenefit(IBaseResource baseBenefit) {
+        ExplanationOfBenefit benefit = (ExplanationOfBenefit) baseBenefit;
         if (benefit == null) {
             return null;
         }
         // Copy it so we don't destroy the original
-        org.hl7.fhir.dstu3.model.ExplanationOfBenefit newBenefit = benefit.copy();
+        ExplanationOfBenefit newBenefit = benefit.copy();
         // Remove the unauthorized data
         cleanOutUnNeededData(newBenefit);
         // Return the sanitized data
@@ -32,7 +36,7 @@ public class ExplanationOfBenefitTrimmerR3 {
      *
      * @param benefit - The ExplanationOfBenefit information (the copy)
      */
-    private static void cleanOutUnNeededData(org.hl7.fhir.dstu3.model.ExplanationOfBenefit benefit) {
+    private static void cleanOutUnNeededData(ExplanationOfBenefit benefit) {
         /*
            Keep:
               patient
@@ -79,7 +83,7 @@ public class ExplanationOfBenefitTrimmerR3 {
         benefit.setHospitalization(null);
         if (benefit.getItem() != null) {
             benefit.setItem(benefit.getItem().stream()
-                    .map(ExplanationOfBenefitTrimmerR3::cleanOutItemComponent)
+                    .map(ExplanationOfBenefitTrimmerSTU3::cleanOutItemComponent)
                     .collect(Collectors.toList()));
         }
         clearOutList(benefit.getAddItem());
@@ -101,7 +105,7 @@ public class ExplanationOfBenefitTrimmerR3 {
      * @return the cleaned up data
      */
     @SuppressWarnings("deprecation")
-    private static org.hl7.fhir.dstu3.model.ExplanationOfBenefit.ItemComponent cleanOutItemComponent(org.hl7.fhir.dstu3.model.ExplanationOfBenefit.ItemComponent component) {
+    private static ExplanationOfBenefit.ItemComponent cleanOutItemComponent(ExplanationOfBenefit.ItemComponent component) {
         /*
          Keep:
               sequence

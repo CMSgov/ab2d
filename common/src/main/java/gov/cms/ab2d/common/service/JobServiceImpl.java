@@ -9,6 +9,7 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.util.EventUtils;
+import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.common.util.JobUtil;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -56,7 +57,8 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public Job createJob(String resourceTypes, String url, String contractNumber, String outputFormat, OffsetDateTime since) {
+    public Job createJob(String resourceTypes, String url, String contractNumber, String outputFormat,
+                         OffsetDateTime since, Versions.FhirVersions version) {
         Job job = new Job();
         job.setResourceTypes(resourceTypes);
         job.setJobUuid(UUID.randomUUID().toString());
@@ -66,6 +68,7 @@ public class JobServiceImpl implements JobService {
         job.setOutputFormat(outputFormat);
         job.setProgress(0);
         job.setSince(since);
+        job.setFhirVersion(version);
         job.setUser(userService.getCurrentUser());
 
         // Check to see if there is any attestation

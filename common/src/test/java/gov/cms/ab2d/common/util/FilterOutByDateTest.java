@@ -1,5 +1,8 @@
 package gov.cms.ab2d.common.util;
 
+import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
+import org.hl7.fhir.dstu3.model.Period;
+import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -22,7 +25,6 @@ class FilterOutByDateTest {
 
     @Test
     void filterByDate() {
-
         try {
             List<FilterOutByDate.DateRange> ranges = List.of(
                     FilterOutByDate.getDateRange(10, 2020),
@@ -31,7 +33,7 @@ class FilterOutByDateTest {
                     FilterOutByDate.getDateRange(10, 18, 1, 19),
                     FilterOutByDate.getDateRange(9, 15),
                     FilterOutByDate.getDateRange(10, 12, 5, 15));
-            List<org.hl7.fhir.dstu3.model.ExplanationOfBenefit> list = List.of(
+            List<IBaseResource> list = List.of(
                     createEOB("10/01/2020", "10/02/2020"), // In
                     createEOB("08/05/2020", "08/06/2020"), // In
                     createEOB("11/07/2020", "11/07/2020"), // Out
@@ -46,14 +48,14 @@ class FilterOutByDateTest {
             assertEquals(5, FilterOutByDate.filterByDate(list, SDF.parse("10/01/2018"), SDF.parse("01/01/2000"), ranges).size());
             assertEquals(0, FilterOutByDate.filterByDate(list, SDF.parse("12/01/2021"), SDF.parse("01/01/2000"), ranges).size());
             assertEquals(4, FilterOutByDate.filterByDate(list, SDF.parse("12/01/2000"), SDF.parse("12/01/2018"), ranges).size());
-        } catch (ParseException parseException) {
+        } catch (Exception parseException) {
             fail("could not create eobs", parseException);
         }
     }
 
     @Test
-    void testAfterAttestation() throws ParseException {
-        org.hl7.fhir.dstu3.model.ExplanationOfBenefit b = createEOB("10/01/2020", "10/03/2020");
+    void testAfterAttestation() throws Exception {
+        IBaseResource b = createEOB("10/01/2020", "10/03/2020");
         assertTrue(FilterOutByDate.afterDate(SDF.parse("10/01/2020"), b));
         assertTrue(FilterOutByDate.afterDate(SDF.parse("10/03/2020"), b));
         assertTrue(FilterOutByDate.afterDate(SDF.parse("10/03/2002"), b));
@@ -61,8 +63,8 @@ class FilterOutByDateTest {
     }
 
     @Test
-    void withinDateRange() throws ParseException {
-        org.hl7.fhir.dstu3.model.ExplanationOfBenefit b = createEOB("10/01/2020", "11/01/2020");
+    void withinDateRange() throws Exception {
+        IBaseResource b = createEOB("10/01/2020", "11/01/2020");
 
         // Any slice of billing period within the interval
         assertTrue(FilterOutByDate.withinDateRange(b, FilterOutByDate.getDateRange(10, 2020)));
@@ -198,9 +200,9 @@ class FilterOutByDateTest {
         assertEquals("12/31/2020", SDF.format(ranges.get(0).getEnd()));
     }
 
-    private org.hl7.fhir.dstu3.model.ExplanationOfBenefit createEOB(String startDate, String endDate) throws ParseException {
-        org.hl7.fhir.dstu3.model.ExplanationOfBenefit b = new org.hl7.fhir.dstu3.model.ExplanationOfBenefit();
-        org.hl7.fhir.dstu3.model.Period p = new org.hl7.fhir.dstu3.model.Period();
+    private IBaseResource createEOB(String startDate, String endDate) throws Exception {
+        ExplanationOfBenefit b = new ExplanationOfBenefit();
+        Period p = new Period();
         p.setStart(SDF.parse(startDate));
         p.setEnd(SDF.parse(endDate));
         b.setBillablePeriod(p);
