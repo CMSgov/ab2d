@@ -6,6 +6,7 @@ import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.worker.config.JobHandler;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -101,6 +102,7 @@ class WorkerServiceTest {
         job.setUser(user);
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setContract(user.getContract());
+        job.setFhirVersion(Versions.FhirVersions.STU3);
 
         job = jobRepository.save(job);
         dataSetup.queueForCleanup(job);

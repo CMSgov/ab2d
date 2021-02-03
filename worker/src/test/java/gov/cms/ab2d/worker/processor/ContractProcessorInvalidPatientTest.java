@@ -114,6 +114,7 @@ class ContractProcessorInvalidPatientTest {
     void testWriteErrors() throws IOException {
         Job job = new Job();
         job.setJobUuid(jobId);
+        job.setFhirVersion(Versions.FhirVersions.STU3);
         String val = "Hello World";
         StreamHelper helper = new TextStreamHelperImpl(
                 tmpDirFolder.toPath(), contractId, 2000, 10, eventLogger, job);
@@ -127,6 +128,7 @@ class ContractProcessorInvalidPatientTest {
     void testWriteNullErrors() throws IOException {
         Job job = new Job();
         job.setJobUuid(jobId);
+        job.setFhirVersion(Versions.FhirVersions.STU3);
         StreamHelper helper = new TextStreamHelperImpl(
                 tmpDirFolder.toPath(), contractId, 2000, 10, eventLogger, job);
         ((ContractProcessorImpl) cut).writeExceptionToContractErrorFile(

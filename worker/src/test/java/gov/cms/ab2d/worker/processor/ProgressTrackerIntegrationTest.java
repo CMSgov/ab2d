@@ -133,6 +133,7 @@ class ProgressTrackerIntegrationTest {
 
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setCreatedAt(OffsetDateTime.now());
+        job.setFhirVersion(Versions.FhirVersions.STU3);
 
         job = jobRepository.saveAndFlush(job);
         dataSetup.queueForCleanup(job);

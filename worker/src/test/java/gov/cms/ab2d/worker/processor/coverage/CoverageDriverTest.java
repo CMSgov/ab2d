@@ -118,6 +118,7 @@ class CoverageDriverTest {
         job.setUser(user);
         job.setStatus(JobStatus.SUBMITTED);
         job.setCreatedAt(OffsetDateTime.now());
+        job.setFhirVersion(Versions.FhirVersions.STU3);
         jobRepo.saveAndFlush(job);
         dataSetup.queueForCleanup(job);
 
