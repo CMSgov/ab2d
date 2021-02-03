@@ -5,6 +5,8 @@ import gov.cms.ab2d.common.config.Mapping;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.Properties;
 import gov.cms.ab2d.common.repository.PropertiesRepository;
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,7 @@ import java.util.List;
 import static gov.cms.ab2d.common.util.Constants.*; // NOPMD
 import static java.lang.Boolean.FALSE;
 
+@AllArgsConstructor
 @Service
 @Transactional
 @Slf4j
@@ -28,11 +31,6 @@ public class PropertiesServiceImpl implements PropertiesService {
     private final PropertiesRepository propertiesRepository;
 
     private final Type propertiesListType = new TypeToken<List<PropertiesDTO>>() { } .getType();
-
-    public PropertiesServiceImpl(Mapping mapping, PropertiesRepository propertiesRepository) {
-        this.mapping = mapping;
-        this.propertiesRepository = propertiesRepository;
-    }
 
     @Override
     public boolean isInMaintenanceMode() {
