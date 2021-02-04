@@ -11,8 +11,8 @@ services:
     # Docker exposes these ports to all containers in the compose by default
     # but if you are debugging on a local machine uncomment to test connectivity or open a connection
     # to the Postgres database
-#    ports:
-#      - "5432:5432"
+    ports:
+      - "5432:5432"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 10s
@@ -55,7 +55,7 @@ services:
     ports:
       # Set port as an environment variable
       # The e2e-test forcefully sets this itself otherwise set via command line
-      - "${API_PORT}:8443"
+      - "8443:8443"
     healthcheck:
       test: [ "CMD-SHELL", "curl -X GET http://localhost:8443/health --insecure" ]
       interval: 5s

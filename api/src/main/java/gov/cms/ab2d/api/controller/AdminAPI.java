@@ -6,6 +6,7 @@ import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.service.UserService;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -31,6 +32,7 @@ import static gov.cms.ab2d.common.util.Constants.ADMIN_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.USERNAME;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 
+@AllArgsConstructor
 @Slf4j
 @RestController
 @SuppressWarnings("PMD.TooManyStaticImports")
@@ -44,14 +46,6 @@ public class AdminAPI {
     private final LogManager eventLogger;
 
     private final BulkDataAccessAPI bulkDataAccessAPI;
-
-    public AdminAPI(UserService userService, PropertiesService propertiesService,
-                    LogManager eventLogger, BulkDataAccessAPI bulkDataAccessAPI) {
-        this.userService = userService;
-        this.propertiesService = propertiesService;
-        this.eventLogger = eventLogger;
-        this.bulkDataAccessAPI = bulkDataAccessAPI;
-    }
 
     @ResponseStatus(value = HttpStatus.CREATED)
     @PostMapping("/user")

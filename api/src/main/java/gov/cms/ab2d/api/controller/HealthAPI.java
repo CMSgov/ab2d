@@ -3,6 +3,7 @@ package gov.cms.ab2d.api.controller;
 import gov.cms.ab2d.api.util.HealthCheck;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
+import lombok.AllArgsConstructor;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,16 +15,12 @@ import javax.servlet.http.HttpServletRequest;
 
 import static gov.cms.ab2d.common.util.Constants.*;
 
+@AllArgsConstructor
 @RestController
 public class HealthAPI {
 
     private final HealthCheck healthCheck;
     private final LogManager eventLogger;
-
-    public HealthAPI(HealthCheck healthCheck, LogManager eventLogger) {
-        this.healthCheck = healthCheck;
-        this.eventLogger = eventLogger;
-    }
 
     // Add exceptions for testing and prod site
     @CrossOrigin(origins = {"http://127.0.0.1:4000", "https://ab2d.cms.gov", "http://ab2d.cms.gov"})

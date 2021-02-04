@@ -8,6 +8,7 @@ import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
@@ -18,16 +19,13 @@ import java.util.Set;
 /**
  * Maps all the different event classes to their SQL serializers
  */
+@RequiredArgsConstructor
 @Configuration
 public class SqlMapperConfig {
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
     private final Map<Class<? extends LoggableEvent>, SqlEventMapper> mapperMapping = new HashMap<>();
     private final Map<Class<? extends LoggableEvent>, String> tableMapping = new HashMap<>();
-
-    public SqlMapperConfig(NamedParameterJdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     public SqlEventMapper getMapper(Class<? extends LoggableEvent> event) {
         if (mapperMapping.isEmpty()) {

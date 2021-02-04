@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import io.swagger.annotations.*;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
@@ -28,6 +29,7 @@ import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 /**
  * The sole REST controller for AB2D's implementation of the FHIR Bulk Data API capability statement.
  */
+@AllArgsConstructor
 @Slf4j
 @SuppressWarnings("PMD.TooManyStaticImports")
 @Api(value = "FHIR capability statement", description = "Provides the standard required capability statement", tags = {"Capabilities"})
@@ -36,10 +38,6 @@ import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 public class CapabilityAPI {
 
     private final LogManager eventLogger;
-
-    public CapabilityAPI(LogManager eventLogger) {
-        this.eventLogger = eventLogger;
-    }
 
     @ApiOperation(value = "A request for the FHIR capability statement", response = String.class,
             produces = "application/json",

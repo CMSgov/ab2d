@@ -1,5 +1,6 @@
 package gov.cms.ab2d.api.security;
 
+import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -13,6 +14,7 @@ import org.springframework.security.web.authentication.logout.LogoutFilter;
 import static gov.cms.ab2d.api.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
 
+@AllArgsConstructor
 @Configuration
 @EnableWebSecurity
 @SuppressWarnings("PMD.TooManyStaticImports")
@@ -21,13 +23,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private final FilterChainExceptionHandler filterChainExceptionHandler;
     private final JwtTokenAuthenticationFilter jwtTokenAuthenticationFilter;
     private final CustomUserDetailsService customUserDetailsService;
-
-    public SecurityConfig(FilterChainExceptionHandler filterChainExceptionHandler, JwtTokenAuthenticationFilter jwtTokenAuthenticationFilter,
-                          CustomUserDetailsService customUserDetailsService) {
-        this.filterChainExceptionHandler = filterChainExceptionHandler;
-        this.jwtTokenAuthenticationFilter = jwtTokenAuthenticationFilter;
-        this.customUserDetailsService = customUserDetailsService;
-    }
 
     @Override
     public void configure(WebSecurity web) {

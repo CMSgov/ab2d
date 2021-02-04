@@ -5,6 +5,7 @@ import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import io.swagger.annotations.*;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.MDC;
@@ -28,6 +29,7 @@ import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
 import static gov.cms.ab2d.common.service.JobService.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.*;
 
+@AllArgsConstructor
 @Slf4j
 @Api(value = "Bulk Data File Download API", description = "After creating a job, the API to download the generated bulk download files",
         tags = {"Download"})
@@ -37,11 +39,6 @@ public class FileDownloadAPI {
 
     private final JobService jobService;
     private final LogManager eventLogger;
-
-    public FileDownloadAPI(JobService jobService, LogManager eventLogger) {
-        this.jobService = jobService;
-        this.eventLogger = eventLogger;
-    }
 
     @ApiOperation(value = "Downloads a file produced by an export job.", response = String.class,
             produces = NDJSON_FIRE_CONTENT_TYPE,

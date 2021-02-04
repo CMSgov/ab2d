@@ -5,6 +5,7 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import static gov.cms.ab2d.common.model.JobStatus.IN_PROGRESS;
 import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
 
+@AllArgsConstructor
 @Slf4j
 @Component
 public class JobPreProcessorImpl implements JobPreProcessor {
@@ -21,12 +23,6 @@ public class JobPreProcessorImpl implements JobPreProcessor {
     private final JobRepository jobRepository;
     private final LogManager eventLogger;
     private final CoverageDriver coverageDriver;
-
-    public JobPreProcessorImpl(JobRepository jobRepository, LogManager eventLogger, CoverageDriver coverageDriver) {
-        this.jobRepository = jobRepository;
-        this.eventLogger = eventLogger;
-        this.coverageDriver = coverageDriver;
-    }
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.SERIALIZABLE)
