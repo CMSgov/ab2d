@@ -8,7 +8,6 @@ import gov.cms.ab2d.fhir.MetaDataUtils;
 import gov.cms.ab2d.fhir.Versions;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.IBaseConformance;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -20,20 +19,11 @@ import static gov.cms.ab2d.common.util.Constants.MAINTENANCE_MODE;
 @Slf4j
 class BFDHealthCheck {
 
-    @Autowired
-    private SlackLogger slackLogger;
-
-    @Autowired
-    private PropertiesService propertiesService;
-
-    @Autowired
-    private BFDClient bfdClient;
-
-    @Value("${bfd.health.check.consecutive.successes}")
-    private int consecutiveSuccessesToBringUp;
-
-    @Value("${bfd.health.check.consecutive.failures}")
-    private int consecutiveFailuresToTakeDown;
+    private final SlackLogger slackLogger;
+    private final PropertiesService propertiesService;
+    private final BFDClient bfdClient;
+    private final int consecutiveSuccessesToBringUp;
+    private final int consecutiveFailuresToTakeDown;
 
     // Nothing else should be calling this component except for the scheduler, so keep
     // state here
@@ -42,6 +32,16 @@ class BFDHealthCheck {
     private int consecutiveFailures = 0;
 
     private Status bfdStatus = Status.UP;
+
+    BFDHealthCheck(SlackLogger slackLogger, PropertiesService propertiesService, BFDClient bfdClient,
+                          @Value("${bfd.health.check.consecutive.successes}") int consecutiveSuccessesToBringUp,
+                          @Value("${bfd.health.check.consecutive.failures}") int consecutiveFailuresToTakeDown) {
+        this.slackLogger = slackLogger;
+        this.propertiesService = propertiesService;
+        this.bfdClient = bfdClient;
+        this.consecutiveSuccessesToBringUp = consecutiveSuccessesToBringUp;
+        this.consecutiveFailuresToTakeDown = consecutiveFailuresToTakeDown;
+    }
 
     void checkBFDHealth() {
 

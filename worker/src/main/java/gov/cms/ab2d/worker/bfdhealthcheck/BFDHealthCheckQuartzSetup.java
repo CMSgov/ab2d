@@ -10,8 +10,11 @@ import org.springframework.context.annotation.Configuration;
 @ConditionalOnProperty(name = "bfd.health.check.enabled", havingValue = "true", matchIfMissing = true)
 public class BFDHealthCheckQuartzSetup {
 
-    @Value("${bfd.health.check.schedule}")
-    private String schedule;
+    private final String schedule;
+
+    public BFDHealthCheckQuartzSetup(@Value("${bfd.health.check.schedule}") String schedule) {
+        this.schedule = schedule;
+    }
 
     @Bean
     JobDetail bfdHealthCheckJobDetail() {

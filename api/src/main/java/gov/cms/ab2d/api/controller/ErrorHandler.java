@@ -23,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
@@ -49,11 +48,8 @@ import static gov.cms.ab2d.fhir.FHIRUtil.outcomeToJSON;
 @Slf4j
 public class ErrorHandler extends ResponseEntityExceptionHandler {
 
-    @Value("${api.retry-after.delay}")
-    private int retryAfterDelay;
-
-    @Autowired
-    private LogManager eventLogger;
+    private final LogManager eventLogger;
+    private final int retryAfterDelay;
 
     private static final Map<Class, HttpStatus> RESPONSE_MAP = new HashMap<>() {
         {
@@ -77,6 +73,11 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
             put(DataIntegrityViolationException.class, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     };
+
+    public ErrorHandler(LogManager eventLogger, @Value("${api.retry-after.delay}") int retryAfterDelay) {
+        this.eventLogger = eventLogger;
+        this.retryAfterDelay = retryAfterDelay;
+    }
 
     private static HttpStatus getErrorResponse(Class clazz) {
         HttpStatus res = RESPONSE_MAP.get(clazz);

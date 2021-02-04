@@ -42,7 +42,7 @@ class CancelStuckJobsProcessorTest {
 
     @BeforeEach
     void setUp() {
-        cut = new CancelStuckJobsProcessorImpl(mockJobRepo, eventLogger);
+        cut = new CancelStuckJobsProcessorImpl(mockJobRepo, eventLogger, 36);
         ReflectionTestUtils.setField(cut, "cancelThreshold", 6);
 
         jobs.add(createStuckJob(7));

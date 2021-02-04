@@ -102,7 +102,7 @@ class JobServiceTest {
     @BeforeEach
     public void setup() {
         LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
-        jobService = new JobServiceImpl(userService, jobRepository, jobOutputService, logManager, loggerEventSummary);
+        jobService = new JobServiceImpl(userService, jobRepository, jobOutputService, logManager, loggerEventSummary, tmpJobLocation);
         ReflectionTestUtils.setField(jobService, "fileDownloadPath", tmpJobLocation);
 
         dataSetup.setupNonStandardUser(USERNAME, CONTRACT_NUMBER, List.of());
