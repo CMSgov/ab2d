@@ -125,6 +125,23 @@ rsync \
 # Create or update the website directory in the target Akamai Upload Directory
 #
 
+# Run first pass update
+# - note that after a first pass update all old files should be removed from the website
+
+rsync \
+  --progress \
+  --partial \
+  --archive \
+  --verbose \
+  --delete \
+  --force \
+  --rsh="ssh -v -oStrictHostKeyChecking=no -oHostKeyAlgorithms=+ssh-dss -i ${NETSTORAGE_SSH_KEY}" \
+  _site/ \
+  "sshacs@${AKAMAI_RSYNC_DOMAIN}:/${AKAMAI_UPLOAD_DIRECTORY}/_site/"
+
+# Run second pass update
+# - note that after second pass any empty directories should be removed
+
 rsync \
   --progress \
   --partial \

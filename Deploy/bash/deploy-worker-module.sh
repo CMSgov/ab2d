@@ -326,8 +326,9 @@ if [ -z "${AB2D_HICN_HASH_PEPPER}" ]; then
   AB2D_HICN_HASH_PEPPER=$(./get-database-secret.py "${CMS_ENV}" hicn_hash_pepper "${DATABASE_SECRET_DATETIME}")
 fi
 
-AB2D_SLACK_ALERT_WEBHOOKS=""
-AB2D_SLACK_TRACE_WEBHOOKS=""
+AB2D_SLACK_ALERT_WEBHOOKS=" "
+
+AB2D_SLACK_TRACE_WEBHOOKS=" "
 
 # Create or get new relic app name secret
 
