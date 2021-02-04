@@ -28,9 +28,9 @@ import static gov.cms.ab2d.eventlogger.utils.UtilMethods.camelCaseToUnderscore;
 
 @Slf4j
 public class KinesisEventProcessor implements Callable<Void> {
-    private AmazonKinesisFirehose client;
-    private String streamId;
-    private LoggableEvent event;
+    private final AmazonKinesisFirehose client;
+    private final String streamId;
+    private final LoggableEvent event;
 
     public KinesisEventProcessor(LoggableEvent event, AmazonKinesisFirehose client, String streamPrefix) {
         this.client = client;

@@ -15,15 +15,16 @@ import org.springframework.transaction.annotation.Transactional;
 @PropertySource("classpath:application.eventlogger.properties")
 @Slf4j
 public class SqlEventLogger implements EventLogger {
-    @Value("${execution.env}")
-    private String appEnv;
 
     private final SqlMapperConfig mapperConfig;
     private final JdbcTemplate template;
+    private final String appEnv;
 
-    public SqlEventLogger(SqlMapperConfig mapperConfig, JdbcTemplate template) {
+    public SqlEventLogger(SqlMapperConfig mapperConfig, JdbcTemplate template,
+                          @Value("${execution.env}") String appEnv) {
         this.mapperConfig = mapperConfig;
         this.template = template;
+        this.appEnv = appEnv;
     }
 
     @Override

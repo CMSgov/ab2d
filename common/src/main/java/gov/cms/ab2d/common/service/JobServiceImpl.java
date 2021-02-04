@@ -41,19 +41,19 @@ public class JobServiceImpl implements JobService {
     private final JobOutputService jobOutputService;
     private final LogManager eventLogger;
     private final LoggerEventSummary loggerEventSummary;
-
-    @Value("${efs.mount}")
-    private String fileDownloadPath;
+    private final String fileDownloadPath;
 
     public static final String INITIAL_JOB_STATUS_MESSAGE = "0%";
 
-    public JobServiceImpl(UserService userService, JobRepository jobRepository,
-                          JobOutputService jobOutputService, LogManager eventLogger, LoggerEventSummary loggerEventSummary) {
+    public JobServiceImpl(UserService userService, JobRepository jobRepository, JobOutputService jobOutputService,
+                          LogManager eventLogger, LoggerEventSummary loggerEventSummary,
+                          @Value("${efs.mount}") String fileDownloadPath) {
         this.userService = userService;
         this.jobRepository = jobRepository;
         this.jobOutputService = jobOutputService;
         this.eventLogger = eventLogger;
         this.loggerEventSummary = loggerEventSummary;
+        this.fileDownloadPath = fileDownloadPath;
     }
 
     @Override

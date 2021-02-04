@@ -3,7 +3,7 @@ package gov.cms.ab2d.api.config;
 import com.fasterxml.classmate.TypeResolver;
 import com.fasterxml.jackson.annotation.*;
 import gov.cms.ab2d.api.util.Constants;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
@@ -25,11 +25,11 @@ import static gov.cms.ab2d.api.util.SwaggerConstants.MAIN;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 
+@AllArgsConstructor
 @Configuration
 public class SwaggerConfig {
 
-    @Autowired
-    private TypeResolver typeResolver;
+    private final TypeResolver typeResolver;
 
     @Bean
     public Docket api() {
