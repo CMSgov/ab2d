@@ -22,17 +22,14 @@ layout: new
         }
 
         $.ajax({
-            url: 'https://6nmneasww4.execute-api.us-east-1.amazonaws.com/status',
+            url: 'https://api.ab2d.cms.gov/health',
             crossDomain: true,
-            success: function(res) {
-                console.log("success")
+            success: function() {
                 $('#api-up-down-icon').addClass('success-api');
                 $('#api-status-text').text('Online');
                 $('.api-status').show();
             },
-            error: function(err) {
-                console.log("error")
-                console.log(JSON.stringify(err))
+            error: function() {
                 $('#api-up-down-icon').addClass('fail-api');
                 $('#api-status-text').text('Offline');
                 $('.api-status').show();
@@ -66,11 +63,11 @@ layout: new
             <h1 class="intro-heading">Helping Prescription Drug Sponsors Help Patients</h1>
             <div class="divider-small-border center"></div>
             <div class="intro-subtitle">The AB2D API provides Prescription Drug Sponsors with secure Medicare parts A and B claims data for their plan enrollees.</div>
-	    <!-- TODO: Temporarily remove API status until a solution for displaying the API status while not on VPN is implemented -->
+	    <!-- TODO: Temporarily remove API status until a solution for displaying the API status while not on VPN is implemented
             <div class="api-status d-flex align-items-center justify-content-center mt-5">
                 <span class="label mr-2">API Status:</span> <span class="value d-flex align-items-center"><i id="api-up-down-icon" class="fas fa-circle fa-xs mr-1"></i><span id="api-status-text"></span></span>
             </div>
-           
+            -->
             <div class="next-section-wrap minimal-arrow" data-custom-color="true"> <a href="#start" class="js-scroll-trigger nectar-next-section skip-hash">
                 <svg class="next-arrow" width="40px" height="68px" viewBox="0 0 40 50" xml:space="preserve" aria-label="scroll down">
                 <path stroke="#ffffff" stroke-width="2" fill="none" d="M 20 0 L 20 51"></path>
