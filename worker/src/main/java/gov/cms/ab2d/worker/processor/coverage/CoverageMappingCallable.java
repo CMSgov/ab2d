@@ -3,14 +3,15 @@ package gov.cms.ab2d.worker.processor.coverage;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.CoverageMapping;
 import gov.cms.ab2d.common.model.Identifiers;
+import gov.cms.ab2d.fhir.*;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.hl7.fhir.instance.model.api.IBaseBundle;
+import org.hl7.fhir.instance.model.api.IDomainResource;
 
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.*;
 
@@ -35,7 +36,6 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     private final AtomicBoolean completed;
     private final int year;
     private final boolean skipBillablePeriodCheck;
-
 
     private int missingBeneId;
     private int missingCurrentMbi;
@@ -72,21 +72,19 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
 
             BFDClient.BFD_BULK_JOB_ID.set(coverageMapping.getJobId());
 
-            org.hl7.fhir.dstu3.model.Bundle bundle = getBundle(contractNumber, month);
+            IBaseBundle bundle = getBundle(contractNumber, month);
             patientIds.addAll(extractAndFilter(bundle));
 
-            String availableLinks = bundle.getLink().stream()
-                    .map(org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent::getRelation)
-                    .collect(joining(" , "));
+            String availableLinks = BundleUtils.getAvailableLinks(bundle);
             log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}, available links {}",
                     contractNumber, year, month, bundleNo, availableLinks);
 
-            if (bundle.getLink(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT) == null) {
+            if (BundleUtils.getNextLink(bundle) == null) {
                 log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}, does not have a next link",
                         contractNumber, year, month, bundleNo);
             }
 
-            while (bundle.getLink(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT) != null) {
+            while (BundleUtils.getNextLink(bundle) != null) {
 
                 bundleNo += 1;
 
@@ -95,14 +93,12 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
 
                 bundle = bfdClient.requestNextBundleFromServer(bundle);
 
-                availableLinks = bundle.getLink().stream()
-                        .map(link -> link.getRelation() + " -> " + link.getUrl())
-                        .collect(joining(" , "));
+                availableLinks = BundleUtils.getAvailableLinksPretty(bundle);
 
                 log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}, available links {}",
                         contractNumber, year, month, bundleNo, availableLinks);
 
-                if (bundle.getLink(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT) == null) {
+                if (BundleUtils.getNextLink(bundle) == null) {
                     log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}, does not have a next link",
                             contractNumber, year, month, bundleNo);
                 }
@@ -135,32 +131,23 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
 
     }
 
-    private Set<Identifiers> extractAndFilter(org.hl7.fhir.dstu3.model.Bundle bundle) {
-        return getPatientStream(bundle)
+    private Set<Identifiers> extractAndFilter(IBaseBundle bundle) {
+        return BundleUtils.getPatientStream(bundle, bfdClient.getVersion())
                 .filter(patient -> skipBillablePeriodCheck || filterByYear(patient))
                 .map(this::extractPatientId)
                 .filter(Objects::nonNull)
                 .collect(toSet());
     }
 
-    private Stream<org.hl7.fhir.dstu3.model.Patient> getPatientStream(org.hl7.fhir.dstu3.model.Bundle bundle) {
-        return bundle.getEntry().stream().map(org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent::getResource)
-                .filter(resource -> resource.getResourceType() == org.hl7.fhir.dstu3.model.ResourceType.Patient)
-                .map(resource -> (org.hl7.fhir.dstu3.model.Patient) resource);
-    }
-
-    private boolean filterByYear(org.hl7.fhir.dstu3.model.Patient patient) {
-        List<org.hl7.fhir.dstu3.model.Extension> referenceYearList = patient.getExtensionsByUrl("https://bluebutton.cms.gov/resources/variables/rfrnc_yr");
-
-        if (referenceYearList.isEmpty()) {
+    private boolean filterByYear(IDomainResource patient) {
+        int year = ExtensionUtils.getReferenceYear(patient);
+        if (year < 0) {
             log.error("patient returned without reference year violating assumptions");
             filteredByYear++;
             return false;
         }
 
-        org.hl7.fhir.dstu3.model.DateType refYear = (org.hl7.fhir.dstu3.model.DateType) (referenceYearList.get(0).getValue());
-
-        if (refYear.getYear() != this.year) {
+        if (year != this.year) {
             filteredByYear++;
             return false;
         }
@@ -173,99 +160,29 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
      * @param patient - the patient id
      * @return patientId if present, null otherwise
      */
-    private Identifiers extractPatientId(org.hl7.fhir.dstu3.model.Patient patient) {
-        List<org.hl7.fhir.dstu3.model.Identifier> identifiers = patient.getIdentifier();
-
+    private Identifiers extractPatientId(IDomainResource patient) {
         // Get patient beneficiary id
         // if not found eobs cannot be looked up so do not return a meaningful list
-        Optional<String> beneId = getBeneficiaryId(identifiers);
-        if (beneId.isEmpty()) {
+        String beneId = IdentifierUtils.getBeneId(patient);
+        if (beneId == null || beneId.isEmpty()) {
             missingBeneId += 1;
             return null;
         }
 
         // Get current mbi if present or else log not present
-        String currentMbi = getCurrentMbi(identifiers);
+        String currentMbi = IdentifierUtils.getCurrentMbi(patient);
         if (currentMbi == null) {
             missingCurrentMbi += 1;
         }
 
-        LinkedHashSet<String> historicMbis = getHistoricMbis(identifiers, currentMbi);
-        if (!historicMbis.isEmpty()) {
+        LinkedHashSet<String> historicMbis = IdentifierUtils.getHistoricMbi(patient);
+        if (historicMbis == null || !historicMbis.isEmpty()) {
             hasHistoricalMbi += 1;
         }
 
-        return new Identifiers(beneId.get(), currentMbi, historicMbis);
+        return new Identifiers(beneId, currentMbi, historicMbis);
     }
 
-    private Optional<String> getBeneficiaryId(List<org.hl7.fhir.dstu3.model.Identifier> identifiers) {
-        return identifiers.stream()
-                .filter(this::isBeneficiaryId)
-                .map(org.hl7.fhir.dstu3.model.Identifier::getValue)
-                .findFirst();
-    }
-
-    private String getCurrentMbi(List<org.hl7.fhir.dstu3.model.Identifier> identifiers) {
-        return identifiers.stream()
-                .filter(this::isCurrentMbi)
-                .map(org.hl7.fhir.dstu3.model.Identifier::getValue)
-                .findFirst().orElse(null);
-    }
-
-    private LinkedHashSet<String> getHistoricMbis(List<org.hl7.fhir.dstu3.model.Identifier> identifiers, String currentMbi) {
-        return identifiers.stream()
-                .filter(this::isHistoricalMbi)
-                .map(org.hl7.fhir.dstu3.model.Identifier::getValue)
-                .filter(historicMbi -> !historicMbi.equals(currentMbi))
-                .collect(toCollection(LinkedHashSet::new));
-    }
-
-    private boolean isBeneficiaryId(org.hl7.fhir.dstu3.model.Identifier identifier) {
-        if (StringUtils.isAnyBlank(identifier.getSystem(), identifier.getValue())) {
-            return false;
-        }
-
-        return identifier.getSystem().equalsIgnoreCase(BENEFICIARY_ID);
-    }
-
-    private boolean isCurrentMbi(org.hl7.fhir.dstu3.model.Identifier identifier) {
-        return isMatchingMbi(identifier, CURRENT_MBI);
-    }
-
-    private boolean isHistoricalMbi(org.hl7.fhir.dstu3.model.Identifier identifier) {
-        return isMatchingMbi(identifier, HISTORIC_MBI);
-    }
-
-    private boolean isMatchingMbi(org.hl7.fhir.dstu3.model.Identifier identifier, String historic) {
-
-        if (StringUtils.isAnyBlank(identifier.getSystem(), identifier.getValue())) {
-            return false;
-        }
-
-        if (!identifier.getSystem().equals(MBI_ID)) {
-            return false;
-        }
-
-        Optional<org.hl7.fhir.dstu3.model.Extension> currencyExtension = getCurrencyExtension(identifier);
-
-        // Assume historical if no extension found
-        if (currencyExtension.isEmpty()) {
-            return false;
-        }
-
-        org.hl7.fhir.dstu3.model.Coding code = (org.hl7.fhir.dstu3.model.Coding) currencyExtension.get().getValue();
-        return code.getCode().equals(historic);
-    }
-
-    private Optional<org.hl7.fhir.dstu3.model.Extension> getCurrencyExtension(org.hl7.fhir.dstu3.model.Identifier identifier) {
-        if (identifier.getExtension().isEmpty()) {
-            return Optional.empty();
-        }
-
-        return identifier.getExtension().stream().filter(
-                extension -> extension.getUrl().equals(CURRENCY_IDENTIFIER)
-        ).findFirst();
-    }
     /**
      * given a contractNumber & a month, calls BFD API to find all patients active in the contract during the month
      *
@@ -273,7 +190,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
      * @param month
      * @return a FHIR bundle of resources containing active patients
      */
-    private org.hl7.fhir.dstu3.model.Bundle getBundle(String contractNumber, int month) {
+    private IBaseBundle getBundle(String contractNumber, int month) {
         try {
             return bfdClient.requestPartDEnrolleesFromServer(contractNumber, month);
         } catch (Exception e) {

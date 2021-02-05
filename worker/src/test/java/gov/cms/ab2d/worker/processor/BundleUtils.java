@@ -1,14 +1,13 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.Identifiers;
+import gov.cms.ab2d.fhir.IdentifierUtils;
 
 import java.util.*;
 
 import static gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable.*;
 
 public class BundleUtils {
-
-    public static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
 
     public static Identifiers createIdentifierWithoutMbi(String beneficiaryId) {
         return new Identifiers(beneficiaryId, null, new LinkedHashSet<>());
@@ -61,7 +60,7 @@ public class BundleUtils {
 
     public static org.hl7.fhir.dstu3.model.Identifier createBeneficiaryIdentifier(String beneficiaryId) {
         var identifier = new org.hl7.fhir.dstu3.model.Identifier();
-        identifier.setSystem(BENEFICIARY_ID);
+        identifier.setSystem(IdentifierUtils.BENEFICIARY_ID);
         identifier.setValue(beneficiaryId);
         return identifier;
     }

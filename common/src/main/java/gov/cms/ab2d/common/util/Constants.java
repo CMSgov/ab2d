@@ -30,8 +30,6 @@ public final class Constants {
 
     public static final String ATTESTOR_ROLE = "ATTESTOR";
 
-    public static final String EOB = "ExplanationOfBenefit";
-
     public static final int ONE_MEGA_BYTE = 1024 * 1024;
 
     public static final String API_PREFIX = "/api/v1";
@@ -79,5 +77,4 @@ public final class Constants {
     // wanted to include it in the swagger documentation and for the swagger annotation, the value has to be
     // constant at compile time so I put it here.
     public static final String SINCE_EARLIEST_DATE = "2020-02-13T00:00:00.000-05:00";
-
 }

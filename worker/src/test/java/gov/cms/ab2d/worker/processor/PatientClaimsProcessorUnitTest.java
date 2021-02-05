@@ -5,8 +5,10 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.worker.TestUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -88,7 +90,7 @@ class PatientClaimsProcessorUnitTest {
 
         ReflectionTestUtils.setField(cut, "startDate", "01/01/1900");
 
-        eob = EobTestDataUtil.createEOB();
+        eob = (ExplanationOfBenefit) EobTestDataUtil.createEOB();
         createOutputFiles();
 
         List<CoverageSummary> coverageSummaries = new ArrayList<>();
@@ -123,20 +125,20 @@ class PatientClaimsProcessorUnitTest {
 
         eob.getBillablePeriod().setStart(d1);
         eob.getBillablePeriod().setEnd(d1);
-        List<IBaseResource> resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
+        List<IBaseResource> resources = cut.extractResources(SAMPLE_CONTRACT_ID, gov.cms.ab2d.fhir.BundleUtils.getEntries(bundle1),
                 List.of(TestUtil.getOpenRange()), OffsetDateTime.now().minusYears(10));
         assertEquals(1, resources.size());
 
-        resources = cut.extractResources("Z0001", bundle1.getEntry(),
+        resources = cut.extractResources("Z0001", gov.cms.ab2d.fhir.BundleUtils.getEntries(bundle1),
                 List.of(TestUtil.getOpenRange()), OffsetDateTime.now().minusYears(10));
         assertEquals(1, resources.size());
 
         eob.getBillablePeriod().setStart(d2);
         eob.getBillablePeriod().setEnd(d2);
-        resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
+        resources = cut.extractResources(SAMPLE_CONTRACT_ID, gov.cms.ab2d.fhir.BundleUtils.getEntries(bundle1),
                 List.of(TestUtil.getOpenRange()), OffsetDateTime.now().minusYears(10));
         assertEquals(0, resources.size());
-        resources = cut.extractResources("Z0001", bundle1.getEntry(),
+        resources = cut.extractResources("Z0001", gov.cms.ab2d.fhir.BundleUtils.getEntries(bundle1),
                 List.of(TestUtil.getOpenRange()), OffsetDateTime.now().minusYears(10));
         assertEquals(1, resources.size());
     }
@@ -147,32 +149,32 @@ class PatientClaimsProcessorUnitTest {
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         ReflectionTestUtils.setField(cut, "startDate", "01/01/2020");
         // Attestation time is 10 years ago, eob date is 01/02/2020
-        List<IBaseResource> resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
+        List<IBaseResource> resources = cut.extractResources(SAMPLE_CONTRACT_ID, gov.cms.ab2d.fhir.BundleUtils.getEntries(bundle1),
                 List.of(TestUtil.getOpenRange()), OffsetDateTime.now().minusYears(10));
         assertEquals(1, resources.size());
         // Set the billable date to 1970 and attestation date to 1920, should return no results
         org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob = (org.hl7.fhir.dstu3.model.ExplanationOfBenefit) bundle1.getEntry().get(0).getResource();
         eob.getBillablePeriod().setStart(new Date(10));
         eob.getBillablePeriod().setEnd(new Date(10));
-        resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
+        resources = cut.extractResources(SAMPLE_CONTRACT_ID, gov.cms.ab2d.fhir.BundleUtils.getEntries(bundle1),
                 List.of(TestUtil.getOpenRange()), OffsetDateTime.now().minusYears(100));
         assertEquals(0, resources.size());
         // Set billable date to late year and attestation date to a hundred years ago, shouldn't return results
         SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
         eob.getBillablePeriod().setStart(sdf.parse("12/29/2019"));
         eob.getBillablePeriod().setEnd(sdf.parse("12/30/2019"));
-        resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
+        resources = cut.extractResources(SAMPLE_CONTRACT_ID, gov.cms.ab2d.fhir.BundleUtils.getEntries(bundle1),
                 List.of(TestUtil.getOpenRange()), OffsetDateTime.now().minusYears(100));
         assertEquals(0, resources.size());
         // Set billable period to early 2020, attestation date in 2019, should return 1
         eob.getBillablePeriod().setStart(sdf.parse("01/02/2020"));
         eob.getBillablePeriod().setEnd(sdf.parse("01/03/2020"));
-        resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
+        resources = cut.extractResources(SAMPLE_CONTRACT_ID, gov.cms.ab2d.fhir.BundleUtils.getEntries(bundle1),
                 List.of(TestUtil.getOpenRange()), OffsetDateTime.of(2019, 1, 1,
                         1, 1, 1, 1, ZoneOffset.UTC));
         assertEquals(1, resources.size());
         // billable period is early 2020, attestation date is today, should return 0
-        resources = cut.extractResources(SAMPLE_CONTRACT_ID, bundle1.getEntry(),
+        resources = cut.extractResources(SAMPLE_CONTRACT_ID, gov.cms.ab2d.fhir.BundleUtils.getEntries(bundle1),
                 List.of(TestUtil.getOpenRange()), OffsetDateTime.now());
         assertEquals(0, resources.size());
     }
@@ -181,6 +183,7 @@ class PatientClaimsProcessorUnitTest {
     void process_whenPatientHasSinglePageOfClaimsData() throws ExecutionException, InterruptedException {
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(patientId, request.getAttTime())).thenReturn(bundle1);
+        // when(mockBfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
 
         cut.process(request).get();
 
@@ -197,6 +200,7 @@ class PatientClaimsProcessorUnitTest {
 
         when(mockBfdClient.requestEOBFromServer(patientId, request.getAttTime())).thenReturn(bundle1);
         when(mockBfdClient.requestNextBundleFromServer(bundle1)).thenReturn(bundle2);
+        // when(mockBfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
 
         cut.process(request).get();
 
@@ -222,6 +226,7 @@ class PatientClaimsProcessorUnitTest {
     void process_whenPatientHasNoEOBClaimsData() throws ExecutionException, InterruptedException {
         org.hl7.fhir.dstu3.model.Bundle bundle1 = new org.hl7.fhir.dstu3.model.Bundle();
         when(mockBfdClient.requestEOBFromServer(patientId, request.getAttTime())).thenReturn(bundle1);
+        // when(mockBfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
 
         cut.process(request).get();
 
@@ -246,6 +251,7 @@ class PatientClaimsProcessorUnitTest {
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(patientId, request.getSinceTime())).thenReturn(bundle1);
+        // when(mockBfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
 
         cut.process(request).get();
 
@@ -268,6 +274,7 @@ class PatientClaimsProcessorUnitTest {
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(patientId, null)).thenReturn(bundle1);
+        // when(mockBfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
 
         cut.process(request).get();
 
@@ -292,10 +299,10 @@ class PatientClaimsProcessorUnitTest {
     void testFilterAsEob() {
         org.hl7.fhir.dstu3.model.ExplanationOfBenefit b3 = new org.hl7.fhir.dstu3.model.ExplanationOfBenefit();
         org.hl7.fhir.r4.model.ExplanationOfBenefit b4 = new org.hl7.fhir.r4.model.ExplanationOfBenefit();
-        assertFalse(PatientClaimsProcessorImpl.isExplanationOfBenefitResource(null));
-        assertTrue(PatientClaimsProcessorImpl.isExplanationOfBenefitResource(b4));
-        assertTrue(PatientClaimsProcessorImpl.isExplanationOfBenefitResource(b3));
+        assertFalse(gov.cms.ab2d.fhir.BundleUtils.isExplanationOfBenefitResource(null));
+        assertTrue(gov.cms.ab2d.fhir.BundleUtils.isExplanationOfBenefitResource(b4));
+        assertTrue(gov.cms.ab2d.fhir.BundleUtils.isExplanationOfBenefitResource(b3));
         org.hl7.fhir.r4.model.Patient patient = new org.hl7.fhir.r4.model.Patient();
-        assertFalse(PatientClaimsProcessorImpl.isExplanationOfBenefitResource(patient));
+        assertFalse(gov.cms.ab2d.fhir.BundleUtils.isExplanationOfBenefitResource(patient));
     }
 }

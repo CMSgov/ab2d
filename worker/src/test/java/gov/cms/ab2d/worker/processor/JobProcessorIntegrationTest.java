@@ -16,9 +16,12 @@ import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
+import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.util.HealthCheck;
+import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
+import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -121,8 +124,8 @@ class JobProcessorIntegrationTest {
         job.setStatus(JobStatus.IN_PROGRESS);
         jobRepository.saveAndFlush(job);
 
-        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob = EobTestDataUtil.createEOB();
-        bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        IBaseResource eob = EobTestDataUtil.createEOB();
+        bundle1 = EobTestDataUtil.createBundle(((ExplanationOfBenefit) eob).copy());
         bundles = getBundles();
         when(mockBfdClient.requestEOBFromServer(anyString())).thenReturn(bundle1);
         when(mockBfdClient.requestEOBFromServer(anyString(), any())).thenReturn(bundle1);
@@ -322,7 +325,7 @@ class JobProcessorIntegrationTest {
         job.setUser(user);
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setCreatedAt(OffsetDateTime.now());
-
+        job.setFhirVersion(Versions.FhirVersions.STU3);
 
         job = jobRepository.saveAndFlush(job);
         dataSetup.queueForCleanup(job);

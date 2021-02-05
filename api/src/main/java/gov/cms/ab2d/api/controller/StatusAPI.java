@@ -6,10 +6,10 @@ import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
+import gov.cms.ab2d.fhir.StatusUtils;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -35,6 +35,9 @@ import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_CANCEL;
 import static gov.cms.ab2d.common.util.Constants.*;
 
+/**
+ * The sole REST controller for AB2D's implementation of the FHIR Bulk Data API Status (both GET & DELETE).
+ */
 @Slf4j
 @Api(value = "Bulk Data Access API", description = "API to determine the status of the job, the files to download " +
         "once the job is complete and an endpoint to cancel a job",
@@ -42,19 +45,17 @@ import static gov.cms.ab2d.common.util.Constants.*;
 @RestController
 @RequestMapping(path = API_PREFIX + FHIR_PREFIX, produces = {"application/json"})
 @SuppressWarnings("PMD.TooManyStaticImports")
-/**
- * The sole REST controller for AB2D's implementation of the FHIR Bulk Data API Status (both GET & DELETE).
- */
 public class StatusAPI {
 
-    @Value("${api.retry-after.delay}")
-    private int retryAfterDelay;
+    private final JobService jobService;
+    private final LogManager eventLogger;
+    private final int retryAfterDelay;
 
-    @Autowired
-    private JobService jobService;
-
-    @Autowired
-    private LogManager eventLogger;
+    public StatusAPI(JobService jobService, LogManager eventLogger, @Value("${api.retry-after.delay}") int retryAfterDelay) {
+        this.jobService = jobService;
+        this.eventLogger = eventLogger;
+        this.retryAfterDelay = retryAfterDelay;
+    }
 
     private boolean shouldReplaceWithHttps() {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
@@ -158,8 +159,8 @@ public class StatusAPI {
 
         final JobCompletedResponse resp = new JobCompletedResponse();
 
-        final org.hl7.fhir.dstu3.model.DateTimeType jobStartedAt = new org.hl7.fhir.dstu3.model.DateTimeType(job.getCreatedAt().toString());
-        resp.setTransactionTime(jobStartedAt.toHumanDisplay());
+        final String jobStartedAt = StatusUtils.getFhirTime(job.getFhirVersion(), job.getCreatedAt());
+        resp.setTransactionTime(jobStartedAt);
 
         resp.setRequest(job.getRequestUrl());
 

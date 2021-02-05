@@ -48,6 +48,7 @@ import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
 import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
 import static gov.cms.ab2d.eventlogger.events.ErrorEvent.ErrorType.FILE_ALREADY_DELETED;
+import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;

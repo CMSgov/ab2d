@@ -2,7 +2,7 @@ package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,12 +11,12 @@ import java.util.Optional;
 
 import static java.util.stream.Collectors.toList;
 
+@AllArgsConstructor
 @Service
 @Transactional
 public class ContractServiceImpl implements ContractService {
 
-    @Autowired
-    private ContractRepository contractRepository;
+    private final ContractRepository contractRepository;
 
     public List<Contract> getAllAttestedContracts() {
         // There are about 100 contracts including test contracts so this call has minimal cost.

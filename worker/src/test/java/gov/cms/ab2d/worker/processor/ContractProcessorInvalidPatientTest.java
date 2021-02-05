@@ -9,6 +9,7 @@ import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.common.util.FilterOutByDate;
+import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.service.FileService;
 import org.junit.jupiter.api.BeforeEach;
@@ -93,6 +94,7 @@ class ContractProcessorInvalidPatientTest {
         when(bfdClient.requestEOBFromServer(eq("1"), any())).thenReturn(b1);
         when(bfdClient.requestEOBFromServer(eq("2"), any())).thenReturn(b2);
         when(bfdClient.requestEOBFromServer(eq("3"), any())).thenReturn(b4);
+        // when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
         List<JobOutput> outputs = cut.process(tmpDirFolder.toPath(), contractData);
         assertNotNull(outputs);
         assertEquals(2, outputs.size());
@@ -112,11 +114,12 @@ class ContractProcessorInvalidPatientTest {
     void testWriteErrors() throws IOException {
         Job job = new Job();
         job.setJobUuid(jobId);
+        job.setFhirVersion(Versions.FhirVersions.STU3);
         String val = "Hello World";
         StreamHelper helper = new TextStreamHelperImpl(
                 tmpDirFolder.toPath(), contractId, 2000, 10, eventLogger, job);
         ((ContractProcessorImpl) cut).writeExceptionToContractErrorFile(
-                helper, val, new RuntimeException("Exception"));
+                helper, val, new RuntimeException("Exception"), Versions.FhirVersions.STU3);
         String result = Files.readString(Path.of(tmpDirFolder.getAbsolutePath() + File.separator + contractId + "_error.ndjson"));
         assertEquals(val, result);
     }
@@ -125,10 +128,11 @@ class ContractProcessorInvalidPatientTest {
     void testWriteNullErrors() throws IOException {
         Job job = new Job();
         job.setJobUuid(jobId);
+        job.setFhirVersion(Versions.FhirVersions.STU3);
         StreamHelper helper = new TextStreamHelperImpl(
                 tmpDirFolder.toPath(), contractId, 2000, 10, eventLogger, job);
         ((ContractProcessorImpl) cut).writeExceptionToContractErrorFile(
-                helper, null, new RuntimeException("Exception"));
+                helper, null, new RuntimeException("Exception"), Versions.FhirVersions.STU3);
         assertThrows(NoSuchFileException.class, () -> Files.readString(Path.of(tmpDirFolder.getAbsolutePath() + File.separator + contractId + "_error.ndjson")));
     }
 
