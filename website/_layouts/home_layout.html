@@ -8,7 +8,7 @@ layout: new
         // Internet Explorer 6-11
         var isIE611 = /*@cc_on!@*/false || !!document.documentMode;
         var ab2dUpgradeBrowser = Cookies.get('ab2d-upgrade-browser');
-        if(isIE611 && ab2dUpgradeBrowser !== 'true') {
+        if (isIE611 && ab2dUpgradeBrowser !== 'true') {
             $('body').append(
                 '<div class="upgrade-browser">' +
                 '<div class="upgrade-browser-close" onclick="closeUpgradeBrowser();">' +
@@ -22,17 +22,20 @@ layout: new
         }
 
         $.ajax({
-            url: 'https://6nmneasww4.execute-api.us-east-1.amazonaws.com/status',
+            url: 'https://pk3dch6jka.execute-api.us-east-1.amazonaws.com/status/ab2dapi',
             crossDomain: true,
-            success: function(res) {
-                console.log("success")
-                $('#api-up-down-icon').addClass('success-api');
-                $('#api-status-text').text('Online');
-                $('.api-status').show();
+            success: function (res) {
+                if (res.body && res.body.includes("Up")) {
+                    $('#api-up-down-icon').addClass('success-api');
+                    $('#api-status-text').text('Online');
+                    $('.api-status').show();
+                } else {
+                    $('#api-up-down-icon').addClass('fail-api');
+                    $('#api-status-text').text('Offline');
+                    $('.api-status').show();
+                }
             },
-            error: function(err) {
-                console.log("error")
-                console.log(JSON.stringify(err))
+            error: function () {
                 $('#api-up-down-icon').addClass('fail-api');
                 $('#api-status-text').text('Offline');
                 $('.api-status').show();
@@ -47,144 +50,166 @@ layout: new
 </script>
 
 <body id="page-top">
-<!-- Navigation -->
-<nav class="navbar navbar-expand-lg navbar-dark fixed-top" id="mainNav">
-    {% include nav.html %}
-</nav>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top" id="mainNav">
+        {% include nav.html %}
+    </nav>
 
-<!-- Header -->
-<header class="masthead">
-    <section class="jarallax" data-jarallax data-speed="0.4" data-jarallax-element="250 -100" style="background-color: #333A45;">
+    <!-- Header -->
+    <header class="masthead">
+        <section class="jarallax" data-jarallax data-speed="0.4" data-jarallax-element="250 -100"
+            style="background-color: #333A45;">
+            <script type="text/javascript">
+                if (!isIE()) {
+                    document.write('<img src="assets/img/hero-banner.svg" alt="Image" class="jarallax-img" />');
+                }
+            </script>
+        </section>
+        <div class="container" style="z-index: 100; position: relative;">
+            <div class="intro-text"> <img src="assets/img/logo-stacked.svg" class="intro-logo" alt="logo" />
+                <h1 class="intro-heading">Helping Prescription Drug Sponsors Help Patients</h1>
+                <div class="divider-small-border center"></div>
+                <div class="intro-subtitle">The AB2D API provides Prescription Drug Sponsors with secure Medicare parts
+                    A and B claims data for their plan enrollees.</div>
+                <div class="api-status d-flex align-items-center justify-content-center mt-5">
+                    <span class="label mr-2">API Status:</span> <span class="value d-flex align-items-center"><i
+                            id="api-up-down-icon" class="fas fa-circle fa-xs mr-1"></i><span
+                            id="api-status-text"></span></span>
+                </div>
+
+                <div class="next-section-wrap minimal-arrow" data-custom-color="true"> <a href="#start"
+                        class="js-scroll-trigger nectar-next-section skip-hash">
+                        <svg class="next-arrow" width="40px" height="68px" viewBox="0 0 40 50" xml:space="preserve"
+                            aria-label="scroll down">
+                            <path stroke="#ffffff" stroke-width="2" fill="none" d="M 20 0 L 20 51"></path>
+                            <polyline stroke="#ffffff" stroke-width="2" fill="none" points="12, 44 20, 52 28, 44">
+                            </polyline>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+    <section class="page-section bg-gray py-5 px-3 home-patient-health-section" id="start" role="main">
         <script type="text/javascript">
-            if(!isIE()) {
-                document.write('<img src="assets/img/hero-banner.svg" alt="Image" class="jarallax-img" />');
+            if (!isIE()) {
+                document.write('<svg preserveAspectRatio = "xMidYMin slice" class = "shape-divider" version = "1.1" xmlns = "http://www.w3.org/2000/svg" ' +
+                    'xmlns:xlink = "http://www.w3.org/1999/xlink" x = "0px" y = "0px" viewBox = "0 0 1034.2 43.8" style = "enable-background:new 0 0 1034.2 43.8;" ' +
+                    'xml:space = "preserve" alt = "divider" ><path fill = "#525962" d = "M0,21.3c0,0,209.3-48,517.1,0s517.1,0,517.1,0v22.5H0V21.3z" / > < /svg>');
             }
         </script>
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <h2 class="section-heading">Prescription Drug Sponsors have the ability to <strong>elevate patient
+                            health</strong> outcomes by:</h2>
+                </div>
+            </div>
+            <div class="row text-center features mb-4">
+                <div class="col-md-4"> <img src="assets/img/patient.svg" alt="patient care" />
+                    <h3 class="service-heading">Enhancing Patient Safety</h3>
+                    <p>Improving care coordination and medication use</p>
+
+                </div>
+                <div class="col-md-4"> <img src="assets/img/analytics.svg" alt="analytics" />
+                    <h3 class="service-heading">Optimizing Therapeutic Outcomes</h3>
+                    <p>Identifying and monitoring treatment effectiveness over time</p>
+
+                </div>
+                <div class="col-md-4"> <img src="assets/img/medical-history.svg" alt="medical history" />
+                    <h3 class="service-heading">Reducing a Patient’s Burden in Providing Medical History</h3>
+                    <p>Aggregating and streamlining enrollee information</p>
+                </div>
+            </div>
+            <div style="text-align: center;">
+                <a href="overview.html" class="btn btn-link btn-arrow" style="color: white;">Learn More About AB2D<i
+                        class="fas fa-arrow-right"></i></a>
+            </div>
+        </div>
     </section>
-    <div class="container" style="z-index: 100; position: relative;">
-        <div class="intro-text"> <img src="assets/img/logo-stacked.svg" class="intro-logo" alt="logo"/>
-            <h1 class="intro-heading">Helping Prescription Drug Sponsors Help Patients</h1>
-            <div class="divider-small-border center"></div>
-            <div class="intro-subtitle">The AB2D API provides Prescription Drug Sponsors with secure Medicare parts A and B claims data for their plan enrollees.</div>
-	    <!-- TODO: Temporarily remove API status until a solution for displaying the API status while not on VPN is implemented -->
-            <div class="api-status d-flex align-items-center justify-content-center mt-5">
-                <span class="label mr-2">API Status:</span> <span class="value d-flex align-items-center"><i id="api-up-down-icon" class="fas fa-circle fa-xs mr-1"></i><span id="api-status-text"></span></span>
-            </div>
-           
-            <div class="next-section-wrap minimal-arrow" data-custom-color="true"> <a href="#start" class="js-scroll-trigger nectar-next-section skip-hash">
-                <svg class="next-arrow" width="40px" height="68px" viewBox="0 0 40 50" xml:space="preserve" aria-label="scroll down">
-                <path stroke="#ffffff" stroke-width="2" fill="none" d="M 20 0 L 20 51"></path>
-                    <polyline stroke="#ffffff" stroke-width="2" fill="none" points="12, 44 20, 52 28, 44"></polyline>
-                </svg>
-                </a>
-            </div>
-        </div>
-    </div>
-</header>
-<section class="page-section bg-gray py-5 px-3 home-patient-health-section" id="start" role="main">
-    <script type="text/javascript">
-        if (!isIE()) {
-            document.write('<svg preserveAspectRatio = "xMidYMin slice" class = "shape-divider" version = "1.1" xmlns = "http://www.w3.org/2000/svg" ' +
-                'xmlns:xlink = "http://www.w3.org/1999/xlink" x = "0px" y = "0px" viewBox = "0 0 1034.2 43.8" style = "enable-background:new 0 0 1034.2 43.8;" ' +
-                'xml:space = "preserve" alt = "divider" ><path fill = "#525962" d = "M0,21.3c0,0,209.3-48,517.1,0s517.1,0,517.1,0v22.5H0V21.3z" / > < /svg>');
-        }
-    </script>
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-12 text-center">
-                <h2 class="section-heading">Prescription Drug Sponsors have the ability to <strong>elevate patient health</strong> outcomes by:</h2>
-            </div>
-        </div>
-        <div class="row text-center features mb-4">
-            <div class="col-md-4"> <img src="assets/img/patient.svg" alt="patient care" />
-                <h3 class="service-heading">Enhancing Patient Safety</h3>
-                <p>Improving care coordination and medication use</p>
-
-            </div>
-            <div class="col-md-4"> <img src="assets/img/analytics.svg" alt="analytics"/>
-                <h3 class="service-heading">Optimizing Therapeutic Outcomes</h3>
-                <p>Identifying and monitoring treatment effectiveness over time</p>
-
-            </div>
-            <div class="col-md-4"> <img src="assets/img/medical-history.svg" alt="medical history"/>
-                <h3 class="service-heading">Reducing a Patient’s Burden in Providing Medical History</h3>
-                <p>Aggregating and streamlining enrollee information</p>
-            </div>
-        </div>
-        <div style="text-align: center;">
-            <a href="overview.html" class="btn btn-link btn-arrow" style="color: white;">Learn More About AB2D<i class="fas fa-arrow-right"></i></a>
-        </div>
-    </div>
-</section>
-<section class="bg-light-blue page-section pt-20 pb-10" role="region" aria-label="Accessing Claims Data">
-    <!--<svg class="shape-divider" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 81.91">
+    <section class="bg-light-blue page-section pt-20 pb-10" role="region" aria-label="Accessing Claims Data">
+        <!--<svg class="shape-divider" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 81.91">
       <path fill="#EAFAFF" d="M1440,83.24V69.71S1329.89,3,1134.85,23.92s-252.13,29.54-431-4.82C532.42-13.84,413.16-.47,287,31.15,210.24,50.4,125.38,72,0,41.92V83.24Z"/>
     </svg>-->
 
-    <svg preserveAspectRatio="xMidYMin slice" class="shape-divider flip" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-         viewBox="0 0 1034.2 43.8" style="enable-background:new 0 0 1034.2 43.8;" xml:space="preserve" alt="divider">
-	    <path fill="#525962" d="M0,21.3c0,0,209.3-48,517.1,0s517.1,0,517.1,0v22.5H0V21.3z"/>
-    </svg>
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-6"> <img class="mb-3" src="assets/img/accessing-claims-data.svg" alt="Accessing Claims Data"/> </div>
-            <div class="col-lg-6 px-5">
-                <h3 class="section-heading">Accessing Claims Data</h3>
-                <div class="divider-small-border left"></div>
-                <p class="section-subheading">
-                    Stand-alone Prescription Drug Plan (PDP) sponsors must complete a few simple steps in
-                    order to connect to the AB2D API and access Medicare parts A and B claims data for their enrollees.
-                </p>
-                <a href="accessing-claims-data.html" class="btn btn-link btn-arrow">Learn More<i class="fas fa-arrow-right"></i></a> </div>
+        <svg preserveAspectRatio="xMidYMin slice" class="shape-divider flip" version="1.1"
+            xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+            viewBox="0 0 1034.2 43.8" style="enable-background:new 0 0 1034.2 43.8;" xml:space="preserve" alt="divider">
+            <path fill="#525962" d="M0,21.3c0,0,209.3-48,517.1,0s517.1,0,517.1,0v22.5H0V21.3z" />
+        </svg>
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6"> <img class="mb-3" src="assets/img/accessing-claims-data.svg"
+                        alt="Accessing Claims Data" /> </div>
+                <div class="col-lg-6 px-5">
+                    <h3 class="section-heading">Accessing Claims Data</h3>
+                    <div class="divider-small-border left"></div>
+                    <p class="section-subheading">
+                        Stand-alone Prescription Drug Plan (PDP) sponsors must complete a few simple steps in
+                        order to connect to the AB2D API and access Medicare parts A and B claims data for their
+                        enrollees.
+                    </p>
+                    <a href="accessing-claims-data.html" class="btn btn-link btn-arrow">Learn More<i
+                            class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
         </div>
-    </div>
-</section>
-<section class="page-section py-20" role="region" aria-label="Understanding The Data">
-    <!--<svg class="shape-divider" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 81.91">
+    </section>
+    <section class="page-section py-20" role="region" aria-label="Understanding The Data">
+        <!--<svg class="shape-divider" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 81.91">
       <path fill="#ffffff" d="M0,89.8V0S110.11,66.68,305.15,45.79s252.13-29.54,431,4.82c171.45,32.94,290.71,19.57,416.83-12,76.8-19.25,161.66-40.84,287-10.77v62Z"/>
     </svg>-->
 
-    <svg class="shape-divider flip" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-         viewBox="0 0 1034.2 43.8" style="enable-background:new 0 0 1034.2 43.8;" xml:space="preserve" alt="divider">
-	    <path fill="#EAFAFF" d="M0,21.3c0,0,209.3-48,517.1,0s517.1,0,517.1,0v22.5H0V21.3z"/>
-    </svg>
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-6 px-5">
-                <h3 class="section-heading">Understanding AB2D Data</h3>
-                <div class="divider-small-border left"></div>
-                <p class="section-subheading">
-                    The AB2D API provides stand-alone Prescription Drug Plan (PDP) sponsors with claims data that can be used to enhance
-                    the use of medications and improve the long term health of beneficiaries. CMS has created some resources to
-                    help PDP sponsors understand and utilize this data - check out sample claim files, the AB2D data
-                    dictionary, and more.
-                </p>
-                <a href="understanding-ab2d-data.html" class="btn btn-link btn-arrow">Learn More<i class="fas fa-arrow-right"></i></a> </div>
-            <div class="col-lg-6"> <img class="mt-3" src="assets/img/understanding-the-data.svg" alt="Understanding the Data" /> </div>
+        <svg class="shape-divider flip" version="1.1" xmlns="http://www.w3.org/2000/svg"
+            xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 1034.2 43.8"
+            style="enable-background:new 0 0 1034.2 43.8;" xml:space="preserve" alt="divider">
+            <path fill="#EAFAFF" d="M0,21.3c0,0,209.3-48,517.1,0s517.1,0,517.1,0v22.5H0V21.3z" />
+        </svg>
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 px-5">
+                    <h3 class="section-heading">Understanding AB2D Data</h3>
+                    <div class="divider-small-border left"></div>
+                    <p class="section-subheading">
+                        The AB2D API provides stand-alone Prescription Drug Plan (PDP) sponsors with claims data that
+                        can be used to enhance
+                        the use of medications and improve the long term health of beneficiaries. CMS has created some
+                        resources to
+                        help PDP sponsors understand and utilize this data - check out sample claim files, the AB2D data
+                        dictionary, and more.
+                    </p>
+                    <a href="understanding-ab2d-data.html" class="btn btn-link btn-arrow">Learn More<i
+                            class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="col-lg-6"> <img class="mt-3" src="assets/img/understanding-the-data.svg"
+                        alt="Understanding the Data" /> </div>
+            </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<section class="page-section pt-20 pb-10" style="background: #f8fafc" role="region" aria-label="Support">
-    <!--<svg class="shape-divider" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 81.91">
+    <section class="page-section pt-20 pb-10" style="background: #f8fafc" role="region" aria-label="Support">
+        <!--<svg class="shape-divider" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 81.91">
       <path fill="#EAFAFF" d="M1440,83.24V69.71S1329.89,3,1134.85,23.92s-252.13,29.54-431-4.82C532.42-13.84,413.16-.47,287,31.15,210.24,50.4,125.38,72,0,41.92V83.24Z"/>
     </svg>-->
 
-    <svg class="shape-divider flip" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-         viewBox="0 0 1034.2 43.8" style="enable-background:new 0 0 1034.2 43.8;" xml:space="preserve">
-	<path fill="white" d="M0,21.3c0,0,209.3-48,517.1,0s517.1,0,517.1,0v22.5H0V21.3z"/>
-  </svg>
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-6"> <img class="mb-3" src="assets/img/support-home.svg" alt="Support"/> </div>
-            <div class="col-lg-6 px-5">
-                <h3 class="section-heading">Support</h3>
-                <div class="divider-small-border left"></div>
-                <p class="section-subheading">
-                    We are here for you!  Browse Frequently Asked Questions, access helpful resources, and utilize
-                    personalized support networks.
-                </p>
-                <a href="support.html" class="btn btn-link btn-arrow">Get Support<i class="fas fa-arrow-right"></i></a> </div>
+        <svg class="shape-divider flip" version="1.1" xmlns="http://www.w3.org/2000/svg"
+            xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 1034.2 43.8"
+            style="enable-background:new 0 0 1034.2 43.8;" xml:space="preserve">
+            <path fill="white" d="M0,21.3c0,0,209.3-48,517.1,0s517.1,0,517.1,0v22.5H0V21.3z" />
+        </svg>
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6"> <img class="mb-3" src="assets/img/support-home.svg" alt="Support" /> </div>
+                <div class="col-lg-6 px-5">
+                    <h3 class="section-heading">Support</h3>
+                    <div class="divider-small-border left"></div>
+                    <p class="section-subheading">
+                        We are here for you! Browse Frequently Asked Questions, access helpful resources, and utilize
+                        personalized support networks.
+                    </p>
+                    <a href="support.html" class="btn btn-link btn-arrow">Get Support<i
+                            class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
         </div>
-    </div>
-</section>
+    </section>
