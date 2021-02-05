@@ -1313,7 +1313,7 @@ lication-load-balancer)
      && export NETSTORAGE_SSH_KEY_PARAM="${HOME}/.ssh/ab2d-akamai" \
      && export WEBSITE_DEPLOYMENT_TYPE_PARAM="prod" \
      && export WEBSITE_DIRECTORY_PARAM="${HOME}/akamai/_site" \
-     && ./bash/create-or-update-website-akamai.sh
+     && ./bash/deploy-or-update-website-akamai.sh
    ```
 
 1. Note that the following should have been created in the Akamai Upload Directory

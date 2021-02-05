@@ -175,25 +175,21 @@ rm -f /var/log/terraform/tf.log
 # Configure docker environment
 #
 
-# Delete orphaned volumes (if any)
+# Delete all API images related to target environment (if any) - first pass
 
-docker volume ls -qf dangling=true | xargs -I name docker volume rm name
+docker images | grep _api | grep "${TARGET_CMS_ENV}-latest" | awk '{print $3}' | xargs -I name docker rmi --force name
 
-# Delete all containers (if any)
+# Delete all API images related to target environment (if any) - second pass
 
-docker ps -aq | xargs -I name docker rm --force name
+docker images | grep _api | grep "${TARGET_CMS_ENV}-latest" | awk '{print $3}' | xargs -I name docker rmi --force name
 
-# Delete all images (if any)
+# Delete all worker images related to target environment (if any) - first pass
 
-docker images -q | xargs -I name docker rmi --force name
+docker images | grep _worker | grep "${TARGET_CMS_ENV}-latest" | awk '{print $3}' | xargs -I name docker rmi --force name
 
-# Delete orphaned volumes again (if any)
+# Delete all worker images related to target environment (if any) - second pass
 
-docker volume ls -qf dangling=true | xargs -I name docker volume rm name
-
-# Delete all images again (if any)
-
-docker images -q | xargs -I name docker rmi --force name
+docker images | grep _worker | grep "${TARGET_CMS_ENV}-latest" | awk '{print $3}' | xargs -I name docker rmi --force name
 
 #
 # Initialize and validate terraform
