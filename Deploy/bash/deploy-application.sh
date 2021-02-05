@@ -423,22 +423,30 @@ if [ -z "${AB2D_HPMS_AUTH_KEY_SECRET}" ]; then
   exit 1
 fi
 
-AB2D_SLACK_ALERT_WEBHOOKS=$(./get-database-secret.py "${TARGET_CMS_ENV}" ab2d_slack_alert_webhooks "${DATABASE_SECRET_DATETIME}")
+if [ "${CMS_ENV_SS}" == "ab2d-sbx-sandbox" ] \
+    || [ "${CMS_ENV_SS}" == "ab2d-east-prod" ]; then
 
-if [ -z "${AB2D_SLACK_ALERT_WEBHOOKS}" ]; then
-  echo "**************************************************"
-  echo "ERROR: AB2D SLACK ALERT WEBHOOKS secret not found."
-  echo "**************************************************"
-  exit 1
-fi
+  AB2D_SLACK_ALERT_WEBHOOKS=$(./get-database-secret.py "${TARGET_CMS_ENV}" ab2d_slack_alert_webhooks "${DATABASE_SECRET_DATETIME}")
 
-AB2D_SLACK_TRACE_WEBHOOKS=$(./get-database-secret.py "${TARGET_CMS_ENV}" ab2d_slack_trace_webhooks "${DATABASE_SECRET_DATETIME}")
+  if [ -z "${AB2D_SLACK_ALERT_WEBHOOKS}" ]; then
+    echo "**************************************************"
+    echo "ERROR: AB2D SLACK ALERT WEBHOOKS secret not found."
+    echo "**************************************************"
+    exit 1
+  fi
 
-if [ -z "${AB2D_SLACK_TRACE_WEBHOOKS}" ]; then
-  echo "**************************************************"
-  echo "ERROR: AB2D SLACK TRACE WEBHOOKS secret not found."
-  echo "**************************************************"
-  exit 1
+  AB2D_SLACK_TRACE_WEBHOOKS=$(./get-database-secret.py "${TARGET_CMS_ENV}" ab2d_slack_trace_webhooks "${DATABASE_SECRET_DATETIME}")
+
+  if [ -z "${AB2D_SLACK_TRACE_WEBHOOKS}" ]; then
+    echo "**************************************************"
+    echo "ERROR: AB2D SLACK TRACE WEBHOOKS secret not found."
+    echo "**************************************************"
+    exit 1
+  fi
+
+else
+  AB2D_SLACK_ALERT_WEBHOOKS=""
+  AB2D_SLACK_TRACE_WEBHOOKS=""
 fi
 
 # If any database secret produced an error, exit the script
