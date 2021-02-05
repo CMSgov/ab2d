@@ -3,6 +3,8 @@ package gov.cms.ab2d.filter;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import org.apache.commons.lang3.StringUtils;
+import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
+import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.junit.jupiter.api.Test;
 
 import java.text.SimpleDateFormat;
@@ -12,29 +14,30 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ExplanationOfBenefitTrimmerTest {
-    private static org.hl7.fhir.dstu3.model.ExplanationOfBenefit eobCarrier = null;
+    private static IBaseResource eobResource = null;
     private static FhirContext context = FhirContext.forDstu3();
 
     static {
-        eobCarrier = ExplanationOfBenefitTrimmerR3.getBenefit(EOBLoadUtilities.getR3EOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json", context));
+        eobResource = ExplanationOfBenefitTrimmerSTU3.getBenefit(EOBLoadUtilities.getSTU3EOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json", context));
     }
 
     @Test
     public void testEmptyList() {
-        ExplanationOfBenefitTrimmerR3.clearOutList(null);
+        ExplanationOfBenefitTrimmerSTU3.clearOutList(null);
         List<Integer> list = new ArrayList<>();
-        ExplanationOfBenefitTrimmerR3.clearOutList(list);
+        ExplanationOfBenefitTrimmerSTU3.clearOutList(list);
         assertTrue(list.isEmpty());
         list.add(5);
         assertFalse(list.isEmpty());
-        ExplanationOfBenefitTrimmerR3.clearOutList(list);
+        ExplanationOfBenefitTrimmerSTU3.clearOutList(list);
         assertTrue(list.isEmpty());
     }
 
     @Test
     public void validateEmpty() {
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eobCarrier = (ExplanationOfBenefit) eobResource;
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        assertNull(ExplanationOfBenefitTrimmerR3.getBenefit(null));
+        assertNull(ExplanationOfBenefitTrimmerSTU3.getBenefit(null));
         // Since getting a patient target creates a new one, make sure the object is empty
         assertTrue(eobCarrier.getPatientTarget().getIdentifier().isEmpty());
         assertNull(eobCarrier.getPatientTarget().getId());
@@ -82,6 +85,7 @@ class ExplanationOfBenefitTrimmerTest {
 
     @Test
     public void testItemValues() {
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eobCarrier = (ExplanationOfBenefit) eobResource;
         if (eobCarrier.getItem() != null) {
             for (var item : eobCarrier.getItem()) {
                 assertTrue(isNullOrEmpty(item.getDiagnosisLinkId()));
@@ -114,8 +118,8 @@ class ExplanationOfBenefitTrimmerTest {
     private void printItOut(String file) {
         IParser jsonParser = context.newJsonParser().setPrettyPrint(true);
 
-        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eCarrier = ExplanationOfBenefitTrimmerR3.getBenefit(
-                EOBLoadUtilities.getR3EOBFromFileInClassPath(file, context));
+        IBaseResource eCarrier = ExplanationOfBenefitTrimmerSTU3.getBenefit(
+                EOBLoadUtilities.getSTU3EOBFromFileInClassPath(file, context));
 
         String result = jsonParser.encodeResourceToString(eCarrier);
     }
@@ -127,10 +131,10 @@ class ExplanationOfBenefitTrimmerTest {
 
     @Test
     void isPartD() {
-        org.hl7.fhir.dstu3.model.ExplanationOfBenefit ePartD = ExplanationOfBenefitTrimmerR3.getBenefit(
-                EOBLoadUtilities.getR3EOBFromFileInClassPath("eobdata/EOB-for-Part-D-Claims.json", context));
+        IBaseResource ePartD = ExplanationOfBenefitTrimmerSTU3.getBenefit(
+                EOBLoadUtilities.getSTU3EOBFromFileInClassPath("eobdata/EOB-for-Part-D-Claims.json", context));
         assertTrue(EOBLoadUtilities.isPartD(ePartD));
-        assertFalse(EOBLoadUtilities.isPartD(eobCarrier));
+        assertFalse(EOBLoadUtilities.isPartD(eobResource));
         assertFalse(EOBLoadUtilities.isPartD((org.hl7.fhir.dstu3.model.ExplanationOfBenefit) null));
     }
 }

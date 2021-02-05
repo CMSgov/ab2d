@@ -11,6 +11,7 @@ import gov.cms.ab2d.common.model.CoverageSearchEvent;
 import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.*;      // NOPMD
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +33,7 @@ import static java.util.stream.Collectors.toList;
  *
  * To prevent issues getOne is not used in this service at all.
  */
+@AllArgsConstructor
 @Slf4j
 @Service
 @Transactional
@@ -48,18 +50,6 @@ public class CoverageServiceImpl implements CoverageService {
     private final CoverageServiceRepository coverageServiceRepo;
 
     private final CoverageDeltaRepository coverageDeltaRepository;
-
-    public CoverageServiceImpl(CoveragePeriodRepository coveragePeriodRepo,
-                               CoverageSearchEventRepository coverageSearchEventRepo,
-                               CoverageSearchRepository coverageSearchRepo,
-                               CoverageServiceRepository coverageServiceRepo,
-                               CoverageDeltaRepository coverageDeltaRepository) {
-        this.coveragePeriodRepo = coveragePeriodRepo;
-        this.coverageSearchEventRepo = coverageSearchEventRepo;
-        this.coverageSearchRepo = coverageSearchRepo;
-        this.coverageServiceRepo = coverageServiceRepo;
-        this.coverageDeltaRepository = coverageDeltaRepository;
-    }
 
     @Override
     public CoveragePeriod getCoveragePeriod(Contract contract, int month, int year) {

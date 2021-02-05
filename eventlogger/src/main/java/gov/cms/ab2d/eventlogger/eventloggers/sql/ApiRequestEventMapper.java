@@ -12,7 +12,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class ApiRequestEventMapper extends SqlEventMapper {
-    private NamedParameterJdbcTemplate template;
+    private final NamedParameterJdbcTemplate template;
 
     ApiRequestEventMapper(NamedParameterJdbcTemplate template) {
         this.template = template;

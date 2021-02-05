@@ -13,7 +13,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class JobStatusChangeEventMapper extends SqlEventMapper {
-    private NamedParameterJdbcTemplate template;
+    private final NamedParameterJdbcTemplate template;
 
     JobStatusChangeEventMapper(NamedParameterJdbcTemplate template) {
         this.template = template;

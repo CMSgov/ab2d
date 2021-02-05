@@ -10,7 +10,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
-@Slf4j
 /**
  * A custom implementation of {@link BlockingQueue} made to fit the needs of AB2D. Because we have
  * a single {@link java.util.concurrent.ThreadPoolExecutor} that handles all the tasks across
@@ -20,6 +19,7 @@ import java.util.stream.Collectors;
  * {@link java.util.concurrent.Executor}
  * in round-robin fashion.
  */
+@Slf4j
 public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
 
     // The individual category queues

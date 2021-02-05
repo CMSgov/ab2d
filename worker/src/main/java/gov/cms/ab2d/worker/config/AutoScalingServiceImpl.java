@@ -35,13 +35,10 @@ public class AutoScalingServiceImpl implements AutoScalingService, ApplicationLi
 
     private final ThreadPoolTaskExecutor executor;
 
-    @Value("${pcp.core.pool.size}")
+    // Can be modified by changing values in properties table
+    // in the shared Postgres database
     private int corePoolSize;
-
-    @Value("${pcp.max.pool.size}")
     private int maxPoolSize;
-
-    @Value("${pcp.scaleToMax.time}")
     private double scaleToMaxTime;
 
     private Mode mode = RESET;
@@ -53,8 +50,14 @@ public class AutoScalingServiceImpl implements AutoScalingService, ApplicationLi
      *
      * @param patientProcessorThreadPool {@link Executor} to scale up & down.
      */
-    public AutoScalingServiceImpl(Executor patientProcessorThreadPool) {
+    public AutoScalingServiceImpl(Executor patientProcessorThreadPool,
+                                  @Value("${pcp.core.pool.size}") int corePoolSize,
+                                  @Value("${pcp.max.pool.size}") int maxPoolSize,
+                                  @Value("${pcp.scaleToMax.time}") int scaleToMaxTime) {
         this.executor = (ThreadPoolTaskExecutor) patientProcessorThreadPool;
+        this.corePoolSize = corePoolSize;
+        this.maxPoolSize = maxPoolSize;
+        this.scaleToMaxTime = scaleToMaxTime;
     }
 
     @Override
