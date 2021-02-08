@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -39,6 +40,15 @@ class KinesisEventLoggerTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
+    @Value("${execution.env}")
+    private String appEnv;
+
+    @Value("${eventlogger.kinesis.enabled}")
+    private boolean kinesisEnabled;
+
+    @Value("${eventlogger.kinesis.stream.prefix:}")
+    private String streamId;
+
     @Autowired
     private KinesisConfig config;
 
@@ -49,7 +59,7 @@ class KinesisEventLoggerTest {
 
     @BeforeEach
     void init() {
-        logger = new KinesisEventLogger(config, firehose, "dev", "");
+        logger = new KinesisEventLogger(config, firehose, appEnv, kinesisEnabled, streamId);
         ReflectionTestUtils.setField(logger, "appEnv", "dev");
         doReturn(generateRandomResult()).when(firehose).putRecord(any());
     }

@@ -129,7 +129,10 @@ resource "aws_ecs_task_definition" "worker" {
           "value" : "${lower(var.execution_env)}"
         },
         {
-          "name" : "AB2D_DB_SSL_MODE",
+          "name" : "BFD
+        },
+	    {
+	      "name" : "AB2D_DB_SSL_MODE",
           "value" : "require"
         },
         {

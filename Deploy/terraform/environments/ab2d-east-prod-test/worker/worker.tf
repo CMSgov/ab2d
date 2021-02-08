@@ -56,7 +56,7 @@ module "worker" {
   efs_id                            = data.terraform_remote_state.core.outputs.efs_id
   efs_security_group_id             = data.terraform_remote_state.core.outputs.efs_sg_id
   env                               = var.env
-  execution_env                     = "local" # set to 'local' to turn off BFD insights
+  execution_env                     = "ab2d-east-prod-test"
   gold_disk_name                    = var.gold_image_name
   hicn_hash_iter                    = var.hicn_hash_iter
   hicn_hash_pepper                  = var.hicn_hash_pepper

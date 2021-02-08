@@ -3,6 +3,7 @@ variable "ami_id" {}
 variable "autoscale_group_wait" {}
 variable "aws_account_number" {}
 variable "beta" {}
+variable "bfd_insights" { default = "false" }
 variable "bfd_keystore_file_name" {} # Used in userdata.tpl
 variable "bfd_keystore_location" {}
 variable "bfd_keystore_password" {}
@@ -24,7 +25,7 @@ variable "efs_dns_name" {}
 variable "efs_id" {}
 variable "efs_security_group_id" {}
 variable "env" {}
-variable "execution_env" {}
+variable "execution_env" { default = "false" }
 variable "gold_disk_name" {}
 variable "hicn_hash_iter" {}
 variable "hicn_hash_pepper" {}

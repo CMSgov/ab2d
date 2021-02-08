@@ -141,7 +141,7 @@ module "efs" {
 module "api" {
   source                            = "../../modules/api"
   env                               = var.env
-  execution_env                     = "local" # set to 'local' to turn off BFD insights
+  execution_env                     = "ab2d-dev"
   vpc_id                            = var.vpc_id
   db_sec_group_id                   = data.aws_security_group.ab2d_database_sg.id
   controller_sec_group_id           = data.aws_security_group.ab2d_deployment_controller_sg.id
