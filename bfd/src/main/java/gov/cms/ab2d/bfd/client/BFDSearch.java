@@ -7,5 +7,5 @@ import java.io.IOException;
 import java.time.OffsetDateTime;
 
 public interface BFDSearch {
-    IBaseBundle searchEOB(String patientId, OffsetDateTime since, int pageSize, String bulkJobId, Versions.FhirVersions version) throws IOException;
+    IBaseBundle searchEOB(String urlVariable, String patientId, OffsetDateTime since, int pageSize, String bulkJobId, Versions.FhirVersions version) throws IOException;
 }

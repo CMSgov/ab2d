@@ -134,7 +134,7 @@ public class BFDClientImpl implements BFDClient {
                 " using since " + sinceTime);
         bfdSegment.setMetricName("RequestEOB");
 
-        IBaseBundle result = bfdSearch.searchEOB(patientID, sinceTime, pageSize, getJobId(), version);
+        IBaseBundle result = bfdSearch.searchEOB(Versions.getEnvVariable(version), patientID, sinceTime, pageSize, getJobId(), version);
 
         bfdSegment.end();
 

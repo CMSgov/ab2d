@@ -11,7 +11,6 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -30,9 +29,6 @@ public class BFDSearchImpl implements BFDSearch {
 
     private final Environment environment;
 
-    @Value("${bfd.serverBaseUrl}")
-    private String serverBaseUrl;
-
     public BFDSearchImpl(HttpClient httpClient, IParser iParser, Environment environment) {
         this.httpClient = httpClient;
         this.parser = iParser;
@@ -40,8 +36,10 @@ public class BFDSearchImpl implements BFDSearch {
     }
 
     @Override
-    public IBaseBundle searchEOB(String patientId, OffsetDateTime since, int pageSize, String bulkJobId, Versions.FhirVersions version) throws IOException {
-        StringBuilder url = new StringBuilder(serverBaseUrl + "ExplanationOfBenefit?patient=" + patientId + "&excludeSAMHSA=true");
+    public IBaseBundle searchEOB(String urlVariable, String patientId, OffsetDateTime since, int pageSize, String bulkJobId, Versions.FhirVersions version) throws IOException {
+
+        String urlLocation = environment.getProperty(urlVariable);
+        StringBuilder url = new StringBuilder(urlLocation + "ExplanationOfBenefit?patient=" + patientId + "&excludeSAMHSA=true");
 
         if (since != null) {
             url.append("&_lastUpdated=ge").append(since);

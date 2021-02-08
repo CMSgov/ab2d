@@ -101,7 +101,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             var futureHandles = new ArrayList<Future<EobSearchResult>>();
             for (Map.Entry<String, CoverageSummary> patient : patients.entrySet()) {
                 ++recordsProcessedCount;
-                futureHandles.add(processPatient(job.getFhirVersion(), patient.getValue(), contractData));
+                futureHandles.add(processPatient(version, patient.getValue(), contractData));
                 // Periodically check if cancelled
                 if (recordsProcessedCount % cancellationCheckFrequency == 0) {
                     if (hasJobBeenCancelled(jobUuid)) {

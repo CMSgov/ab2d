@@ -91,10 +91,9 @@ class ContractProcessorInvalidPatientTest {
         org.hl7.fhir.dstu3.model.Bundle b1 = BundleUtils.createBundle(createBundleEntry("1"));
         org.hl7.fhir.dstu3.model.Bundle b2 = BundleUtils.createBundle(createBundleEntry("2"));
         org.hl7.fhir.dstu3.model.Bundle b4 = BundleUtils.createBundle(createBundleEntry("4"));
-        when(bfdClient.requestEOBFromServer(Versions.FhirVersions.STU3, eq("1"), any())).thenReturn(b1);
-        when(bfdClient.requestEOBFromServer(Versions.FhirVersions.STU3, eq("2"), any())).thenReturn(b2);
-        when(bfdClient.requestEOBFromServer(Versions.FhirVersions.STU3, eq("3"), any())).thenReturn(b4);
-        // when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
+        when(bfdClient.requestEOBFromServer(eq(Versions.FhirVersions.STU3), eq("1"), any())).thenReturn(b1);
+        when(bfdClient.requestEOBFromServer(eq(Versions.FhirVersions.STU3), eq("2"), any())).thenReturn(b2);
+        when(bfdClient.requestEOBFromServer(eq(Versions.FhirVersions.STU3), eq("3"), any())).thenReturn(b4);
         List<JobOutput> outputs = cut.process(tmpDirFolder.toPath(), contractData);
         assertNotNull(outputs);
         assertEquals(2, outputs.size());

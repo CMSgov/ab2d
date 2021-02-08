@@ -40,8 +40,8 @@ class CoverageMappingCallableTest {
 
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20, 2020);
 
-        when(bfdClient.requestPartDEnrolleesFromServer(Versions.FhirVersions.STU3, anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(Versions.FhirVersions.STU3, any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestPartDEnrolleesFromServer(eq(Versions.FhirVersions.STU3), anyString(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestNextBundleFromServer(eq(Versions.FhirVersions.STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         Contract contract = new Contract();
         contract.setContractNumber("TESTING");
@@ -80,8 +80,8 @@ class CoverageMappingCallableTest {
 
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20, 3,2020);
 
-        when(bfdClient.requestPartDEnrolleesFromServer(Versions.FhirVersions.STU3, anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(Versions.FhirVersions.STU3, any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestPartDEnrolleesFromServer(eq(Versions.FhirVersions.STU3), anyString(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestNextBundleFromServer(eq(Versions.FhirVersions.STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         Contract contract = new Contract();
         contract.setContractNumber("TESTING");
@@ -133,8 +133,8 @@ class CoverageMappingCallableTest {
 
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20, 3,2020);
 
-        when(bfdClient.requestPartDEnrolleesFromServer(Versions.FhirVersions.STU3, anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(Versions.FhirVersions.STU3, any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestPartDEnrolleesFromServer(eq(Versions.FhirVersions.STU3), anyString(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestNextBundleFromServer(eq(Versions.FhirVersions.STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         Contract contract = new Contract();
         contract.setContractNumber("TESTING");
@@ -183,8 +183,8 @@ class CoverageMappingCallableTest {
 
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20, 2019);
 
-        when(bfdClient.requestPartDEnrolleesFromServer(Versions.FhirVersions.STU3, anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(Versions.FhirVersions.STU3, any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestPartDEnrolleesFromServer(eq(Versions.FhirVersions.STU3), anyString(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestNextBundleFromServer(eq(Versions.FhirVersions.STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         Contract contract = new Contract();
         contract.setContractNumber("TESTING");
@@ -233,8 +233,8 @@ class CoverageMappingCallableTest {
             patient.setIdentifier(emptyList());
         });
 
-        when(bfdClient.requestPartDEnrolleesFromServer(Versions.FhirVersions.STU3, anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(Versions.FhirVersions.STU3, any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestPartDEnrolleesFromServer(eq(Versions.FhirVersions.STU3), anyString(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestNextBundleFromServer(eq(Versions.FhirVersions.STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         Contract contract = new Contract();
         contract.setContractNumber("TESTING");
@@ -274,7 +274,7 @@ class CoverageMappingCallableTest {
     @Test
     void exceptionCaught() {
 
-        when(bfdClient.requestPartDEnrolleesFromServer(Versions.FhirVersions.STU3, anyString(), anyInt())).thenThrow(new RuntimeException("exception"));
+        when(bfdClient.requestPartDEnrolleesFromServer(eq(Versions.FhirVersions.STU3), anyString(), anyInt())).thenThrow(new RuntimeException("exception"));
 
         Contract contract = new Contract();
         contract.setContractNumber("TESTING");
