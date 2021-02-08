@@ -50,7 +50,7 @@ public class BFDClientConfiguration {
     @Value("${bfd.requestTimeout}")
     private int requestTimeout;
 
-    @Value("${bfd.serverBaseUrl}")
+    @Value("${bfd.serverBaseUrlStu3}")
     private String serverBaseUrl;
 
     @Value("${bfd.http.maxConnPerRoute}")

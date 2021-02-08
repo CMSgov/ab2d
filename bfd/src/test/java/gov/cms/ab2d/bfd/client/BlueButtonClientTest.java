@@ -3,6 +3,7 @@ package gov.cms.ab2d.bfd.client;
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
+import gov.cms.ab2d.fhir.Versions;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.http.HttpStatus;
@@ -202,7 +203,7 @@ public class BlueButtonClientTest {
     @Test
     public void shouldGetTimedOutOnSlowResponse() {
         var exception = Assertions.assertThrows(SocketTimeoutException.class, () -> {
-            bbc.requestEOBFromServer(TEST_SLOW_PATIENT_ID);
+            bbc.requestEOBFromServer(Versions.FhirVersions.STU3, TEST_SLOW_PATIENT_ID);
         });
 
         var rootCause = ExceptionUtils.getRootCause(exception);
@@ -213,7 +214,7 @@ public class BlueButtonClientTest {
 
     @Test
     public void shouldGetEOBFromPatientID() {
-        org.hl7.fhir.dstu3.model.Bundle response = (org.hl7.fhir.dstu3.model.Bundle) bbc.requestEOBFromServer(TEST_PATIENT_ID);
+        org.hl7.fhir.dstu3.model.Bundle response = (org.hl7.fhir.dstu3.model.Bundle) bbc.requestEOBFromServer(Versions.FhirVersions.STU3, TEST_PATIENT_ID);
 
         assertNotNull(response, "The demo patient should have a non-null EOB bundle");
         assertEquals(32, response.getTotal(), "The demo patient should have exactly 32 EOBs");
@@ -221,7 +222,7 @@ public class BlueButtonClientTest {
 
     @Test
     public void shouldGetEOBFromPatientIDSince() {
-        org.hl7.fhir.dstu3.model.Bundle response = (org.hl7.fhir.dstu3.model.Bundle) bbc.requestEOBFromServer(TEST_PATIENT_ID, OffsetDateTime.parse(
+        org.hl7.fhir.dstu3.model.Bundle response = (org.hl7.fhir.dstu3.model.Bundle) bbc.requestEOBFromServer(Versions.FhirVersions.STU3, TEST_PATIENT_ID, OffsetDateTime.parse(
                 "2020-02-13T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME));
 
         assertNotNull(response, "The demo patient should have a non-null EOB bundle");
@@ -230,19 +231,19 @@ public class BlueButtonClientTest {
 
     @Test
     public void shouldGetEOBPatientNoRecords() {
-        org.hl7.fhir.dstu3.model.Bundle response = (org.hl7.fhir.dstu3.model.Bundle) bbc.requestEOBFromServer(TEST_NO_RECORD_PATIENT_ID);
+        org.hl7.fhir.dstu3.model.Bundle response = (org.hl7.fhir.dstu3.model.Bundle) bbc.requestEOBFromServer(Versions.FhirVersions.STU3, TEST_NO_RECORD_PATIENT_ID);
         assertFalse(response.hasEntry());
     }
 
     @Test
     public void shouldGetEOBPatientNoRecordsMBI() {
-        org.hl7.fhir.dstu3.model.Bundle response = (org.hl7.fhir.dstu3.model.Bundle) bbc.requestEOBFromServer(TEST_NO_RECORD_PATIENT_ID_MBI);
+        org.hl7.fhir.dstu3.model.Bundle response = (org.hl7.fhir.dstu3.model.Bundle) bbc.requestEOBFromServer(Versions.FhirVersions.STU3, TEST_NO_RECORD_PATIENT_ID_MBI);
         assertFalse(response.hasEntry());
     }
 
     @Test
     public void shouldNotHaveNextBundle() {
-        org.hl7.fhir.dstu3.model.Bundle response = (org.hl7.fhir.dstu3.model.Bundle) bbc.requestEOBFromServer(TEST_SINGLE_EOB_PATIENT_ID);
+        org.hl7.fhir.dstu3.model.Bundle response = (org.hl7.fhir.dstu3.model.Bundle) bbc.requestEOBFromServer(Versions.FhirVersions.STU3, TEST_SINGLE_EOB_PATIENT_ID);
 
         assertNotNull(response, "The demo patient should have a non-null EOB bundle");
         assertEquals(1, response.getTotal(), "The demo patient should have exactly 1 EOBs");
@@ -252,7 +253,7 @@ public class BlueButtonClientTest {
 
     @Test
     public void shouldHaveNextBundle() {
-        org.hl7.fhir.dstu3.model.Bundle response = (org.hl7.fhir.dstu3.model.Bundle) bbc.requestEOBFromServer(TEST_PATIENT_ID);
+        org.hl7.fhir.dstu3.model.Bundle response = (org.hl7.fhir.dstu3.model.Bundle) bbc.requestEOBFromServer(Versions.FhirVersions.STU3, TEST_PATIENT_ID);
 
         assertNotNull(response, "The demo patient should have a non-null EOB bundle");
         assertNotNull(response.getLink(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT),
@@ -264,14 +265,14 @@ public class BlueButtonClientTest {
             link.setUrl(url);
         });
 
-        org.hl7.fhir.dstu3.model.Bundle nextResponse = (org.hl7.fhir.dstu3.model.Bundle) bbc.requestNextBundleFromServer(response);
+        org.hl7.fhir.dstu3.model.Bundle nextResponse = (org.hl7.fhir.dstu3.model.Bundle) bbc.requestNextBundleFromServer(Versions.FhirVersions.STU3, response);
         assertNotNull(nextResponse, "Should have a next bundle");
         assertEquals(10, nextResponse.getEntry().size());
     }
 
     @Test
     public void shouldReturnBundleContainingOnlyEOBs() {
-        org.hl7.fhir.dstu3.model.Bundle response = (org.hl7.fhir.dstu3.model.Bundle) bbc.requestEOBFromServer(TEST_PATIENT_ID);
+        org.hl7.fhir.dstu3.model.Bundle response = (org.hl7.fhir.dstu3.model.Bundle) bbc.requestEOBFromServer(Versions.FhirVersions.STU3, TEST_PATIENT_ID);
 
         response.getEntry().forEach((entry) -> assertEquals(
                 entry.getResource().getResourceType(),
@@ -282,7 +283,7 @@ public class BlueButtonClientTest {
 
     @Test
     public void testPersonIdsHICN() {
-        org.hl7.fhir.dstu3.model.Bundle response = (org.hl7.fhir.dstu3.model.Bundle) bbc.requestPatientByHICN("11111");
+        org.hl7.fhir.dstu3.model.Bundle response = (org.hl7.fhir.dstu3.model.Bundle) bbc.requestPatientByHICN(Versions.FhirVersions.STU3, "11111");
         assertNotNull(response);
         assertEquals(3, response.getEntry().size());
         org.hl7.fhir.dstu3.model.Patient p1 = (org.hl7.fhir.dstu3.model.Patient) response.getEntry().get(0).getResource();
@@ -296,7 +297,7 @@ public class BlueButtonClientTest {
 
     @Test
     public void testPersonIdsMBI() {
-        org.hl7.fhir.dstu3.model.Bundle response = (org.hl7.fhir.dstu3.model.Bundle) bbc.requestPatientByMBI("11111");
+        org.hl7.fhir.dstu3.model.Bundle response = (org.hl7.fhir.dstu3.model.Bundle) bbc.requestPatientByMBI(Versions.FhirVersions.STU3, "11111");
         assertNotNull(response);
         assertEquals(3, response.getEntry().size());
         org.hl7.fhir.dstu3.model.Patient p1 = (org.hl7.fhir.dstu3.model.Patient) response.getEntry().get(0).getResource();
@@ -310,7 +311,7 @@ public class BlueButtonClientTest {
 
     @Test
     public void shouldHandlePatientsWithOnlyOneEOB() {
-        org.hl7.fhir.dstu3.model.Bundle response = (org.hl7.fhir.dstu3.model.Bundle) bbc.requestEOBFromServer(TEST_SINGLE_EOB_PATIENT_ID);
+        org.hl7.fhir.dstu3.model.Bundle response = (org.hl7.fhir.dstu3.model.Bundle) bbc.requestEOBFromServer(Versions.FhirVersions.STU3, TEST_SINGLE_EOB_PATIENT_ID);
         assertEquals(1, response.getTotal(), "This demo patient should have exactly 1 EOB");
     }
 
@@ -318,7 +319,7 @@ public class BlueButtonClientTest {
     public void shouldThrowExceptionWhenResourceNotFound() {
         assertThrows(
                 ResourceNotFoundException.class,
-                () -> bbc.requestEOBFromServer(TEST_NONEXISTENT_PATIENT_ID),
+                () -> bbc.requestEOBFromServer(Versions.FhirVersions.STU3, TEST_NONEXISTENT_PATIENT_ID),
                 "BlueButton client should throw exceptions when asked to retrieve EOBs for a " +
                         "non-existent patient"
         );
@@ -327,7 +328,7 @@ public class BlueButtonClientTest {
     @Test
     public void shouldGetPatientBundleFromPartDEnrolleeRequest() {
         for(int i = 1; i <= 12; i++) {
-            org.hl7.fhir.dstu3.model.Bundle response = (org.hl7.fhir.dstu3.model.Bundle) bbc.requestPartDEnrolleesFromServer(CONTRACT, i);
+            org.hl7.fhir.dstu3.model.Bundle response = (org.hl7.fhir.dstu3.model.Bundle) bbc.requestPartDEnrolleesFromServer(Versions.FhirVersions.STU3, CONTRACT, i);
 
             assertNotNull(response, "There should be a non null patient bundle");
             assertEquals(3, response.getEntry().size(), "The bundle has 2 patients");
@@ -336,7 +337,7 @@ public class BlueButtonClientTest {
 
     @Test
     public void shouldGetMetadata() {
-        org.hl7.fhir.dstu3.model.CapabilityStatement capabilityStatement = (org.hl7.fhir.dstu3.model.CapabilityStatement) bbc.capabilityStatement();
+        org.hl7.fhir.dstu3.model.CapabilityStatement capabilityStatement = (org.hl7.fhir.dstu3.model.CapabilityStatement) bbc.capabilityStatement(Versions.FhirVersions.STU3);
 
         assertNotNull(capabilityStatement, "There should be a non null capability statement");
         assertEquals("3.0.1", capabilityStatement.getFhirVersion());

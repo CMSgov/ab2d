@@ -46,6 +46,11 @@ public class Versions {
         { put (FhirVersions.R4, "org.hl7.fhir.r4.model"); }
     };
 
+    private static final Map<FhirVersions, String> SERVER_VARIABLE = new HashMap<>() {
+        { put (FhirVersions.STU3, "bfd.serverBaseUrlStu3"); }
+        { put (FhirVersions.R4, "bfd.serverBaseUrlR4"); }
+    };
+
     /**
      * Mapping of FhirContext objects to versions
      */
@@ -110,6 +115,16 @@ public class Versions {
     }
 
     /**
+     * The properties variable that contains the URL for the server for the version
+     *
+     * @param version - the FHIR version
+     * @return - the properties variable
+     */
+    public static String getEnvVariable(FhirVersions version) {
+        return SERVER_VARIABLE.get(version);
+    }
+
+    /**
      * Given a FHIR version and the name of a class, return the proper class for the version
      *
      * @param version - the FHIR version
@@ -144,7 +159,7 @@ public class Versions {
         String fullName = getClassName(version, className);
         Object object = NEEDED_OBJECTS.get(fullName);
             if (object == null) {
-                Class clazz = null;
+                Class clazz;
                 try {
                     clazz = Class.forName(fullName);
                 } catch (ClassNotFoundException e) {

@@ -368,9 +368,8 @@ class CoverageUpdateAndProcessorTest {
 
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20);
 
-        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
-        when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
+        when(bfdClient.requestPartDEnrolleesFromServer(Versions.FhirVersions.STU3, anyString(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestNextBundleFromServer(Versions.FhirVersions.STU3, any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         processor.queueCoveragePeriod(january, false);
         JobStatus status = coverageService.getSearchStatus(january.getId());
@@ -395,7 +394,7 @@ class CoverageUpdateAndProcessorTest {
     @Test
     void mappingRetried() {
 
-        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenThrow(new RuntimeException("oops"));
+        when(bfdClient.requestPartDEnrolleesFromServer(Versions.FhirVersions.STU3, anyString(), anyInt())).thenThrow(new RuntimeException("oops"));
 
         processor.queueCoveragePeriod(january, false);
         JobStatus status = coverageService.getSearchStatus(january.getId());
@@ -421,9 +420,8 @@ class CoverageUpdateAndProcessorTest {
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20);
 
         Mockito.clearInvocations();
-        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
-        when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
+        when(bfdClient.requestPartDEnrolleesFromServer(Versions.FhirVersions.STU3, anyString(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestNextBundleFromServer(Versions.FhirVersions.STU3, any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         driver.loadMappingJob();
 
@@ -443,7 +441,7 @@ class CoverageUpdateAndProcessorTest {
     @Test
     void mappingFailsAfterXRetries() {
 
-        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenThrow(new RuntimeException("oops"));
+        when(bfdClient.requestPartDEnrolleesFromServer(Versions.FhirVersions.STU3, anyString(), anyInt())).thenThrow(new RuntimeException("oops"));
 
         processor.queueCoveragePeriod(january, false);
         JobStatus status = coverageService.getSearchStatus(january.getId());
@@ -468,9 +466,8 @@ class CoverageUpdateAndProcessorTest {
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20);
 
         Mockito.clearInvocations();
-        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
-        when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
+        when(bfdClient.requestPartDEnrolleesFromServer(Versions.FhirVersions.STU3, anyString(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestNextBundleFromServer(Versions.FhirVersions.STU3, any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         ThreadPoolTaskExecutor twoThreads = new ThreadPoolTaskExecutor();
         twoThreads.setMaxPoolSize(2);

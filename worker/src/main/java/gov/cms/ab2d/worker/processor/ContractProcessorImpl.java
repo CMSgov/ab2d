@@ -101,7 +101,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             var futureHandles = new ArrayList<Future<EobSearchResult>>();
             for (Map.Entry<String, CoverageSummary> patient : patients.entrySet()) {
                 ++recordsProcessedCount;
-                futureHandles.add(processPatient(patient.getValue(), contractData));
+                futureHandles.add(processPatient(job.getFhirVersion(), patient.getValue(), contractData));
                 // Periodically check if cancelled
                 if (recordsProcessedCount % cancellationCheckFrequency == 0) {
                     if (hasJobBeenCancelled(jobUuid)) {
@@ -143,7 +143,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @param contractData - the contract data information
      * @return a Future<EobSearchResult>
      */
-    private Future<EobSearchResult> processPatient(CoverageSummary patient, ContractData contractData) {
+    private Future<EobSearchResult> processPatient(Versions.FhirVersions version, CoverageSummary patient, ContractData contractData) {
         final Token token = NewRelic.getAgent().getTransaction().getToken();
 
         // Using a ThreadLocal to communicate contract number to RoundRobinBlockingQueue
@@ -156,7 +156,8 @@ public class ContractProcessorImpl implements ContractProcessor {
                     contractData.getContract().getAttestedOn(),
                     contractData.getSinceTime(),
                     contractData.getUserId(), jobUuid,
-                    contractData.getContract() != null ? contractData.getContract().getContractNumber() : null, token);
+                    contractData.getContract() != null ? contractData.getContract().getContractNumber() : null, token,
+                    version);
             return patientClaimsProcessor.process(patientClaimsRequest);
 
         } finally {

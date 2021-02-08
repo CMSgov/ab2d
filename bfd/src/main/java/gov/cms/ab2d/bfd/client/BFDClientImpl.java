@@ -1,6 +1,5 @@
 package gov.cms.ab2d.bfd.client;
 
-import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.gclient.ICriterion;
 import ca.uhn.fhir.rest.gclient.TokenClientParam;
@@ -16,10 +15,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.client.HttpClient;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IBaseConformance;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.env.Environment;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
@@ -32,6 +33,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Credits: most of the code in this class has been copied over from https://github
@@ -50,7 +53,7 @@ public class BFDClientImpl implements BFDClient {
     @Value("${bfd.contract.to.bene.pagesize}")
     private int contractToBenePageSize;
 
-    private final IGenericClient client;
+    private Map<Versions.FhirVersions, IGenericClient> servers = new HashMap<>();
 
     @Value("${bfd.hicn.hash}")
     private String hicnHash;
@@ -65,14 +68,14 @@ public class BFDClientImpl implements BFDClient {
     @Value("${bfd.hash.iter}")
     private int bfdHashIter;
 
-    private FhirContext fhirContext;
-
     private final BFDSearch bfdSearch;
+    private final HttpClient httpClient;
+    private final Environment env;
 
-    public BFDClientImpl(IGenericClient client, FhirContext fhirContext, BFDSearch bfdSearch) {
-        this.client = client;
-        this.fhirContext = fhirContext;
+    public BFDClientImpl(BFDSearch bfdSearch, HttpClient httpClient, Environment env) {
         this.bfdSearch = bfdSearch;
+        this.httpClient = httpClient;
+        this.env = env;
     }
 
     /**
@@ -103,13 +106,13 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public IBaseBundle requestEOBFromServer(String patientID) {
-        return requestEOBFromServer(patientID, null);
+    public IBaseBundle requestEOBFromServer(Versions.FhirVersions version, String patientID) {
+        return requestEOBFromServer(version, patientID, null);
     }
 
     /**
      * Queries Blue Button server for Explanations of Benefit associated with a given patient
-     * similar to {@link #requestEOBFromServer(String)} but includes a date filter in which the
+     * similar to {@link #requestEOBFromServer(Versions.FhirVersions, String)} but includes a date filter in which the
      * _lastUpdated date must be after
      * <p>
      *
@@ -126,12 +129,12 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public IBaseBundle requestEOBFromServer(String patientID, OffsetDateTime sinceTime) {
+    public IBaseBundle requestEOBFromServer(Versions.FhirVersions version, String patientID, OffsetDateTime sinceTime) {
         final Segment bfdSegment = NewRelic.getAgent().getTransaction().startSegment("BFD Call for patient with patient ID " + patientID +
                 " using since " + sinceTime);
         bfdSegment.setMetricName("RequestEOB");
 
-        IBaseBundle result = bfdSearch.searchEOB(patientID, sinceTime, pageSize, getJobId(), getVersion());
+        IBaseBundle result = bfdSearch.searchEOB(patientID, sinceTime, pageSize, getJobId(), version);
 
         bfdSegment.end();
 
@@ -150,15 +153,14 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public IBaseBundle requestPatientByHICN(String hicn) {
+    public IBaseBundle requestPatientByHICN(Versions.FhirVersions version, String hicn) {
         String hicnHashVal = hashIdentifier(hicn, bfdHashPepper, bfdHashIter);
         var hicnHashEquals = generateHash(hicnHash, hicnHashVal);
-        return clientSearch(hicnHashEquals);
+        return clientSearch(version, hicnHashEquals);
     }
 
-    private IBaseBundle clientSearch(@SuppressWarnings("rawtypes") ICriterion hashEquals) {
-        Versions.FhirVersions version = getVersion();
-        return client.search()
+    private IBaseBundle clientSearch(Versions.FhirVersions version, @SuppressWarnings("rawtypes") ICriterion hashEquals) {
+        return getClient(version).search()
                 .forResource(SearchUtils.getPatientClass(version))
                 .where(hashEquals)
                 .withAdditionalHeader(BFDClient.BFD_HDR_BULK_CLIENTID, BFDClient.BFD_CLIENT_ID)
@@ -167,6 +169,15 @@ public class BFDClientImpl implements BFDClient {
                 .returnBundle(SearchUtils.getBundleClass(version))
                 .encodedJson()
                 .execute();
+    }
+
+    private IGenericClient getClient(Versions.FhirVersions version) {
+        IGenericClient client = servers.get(version);
+        if (client == null) {
+            client = new FhirBfdServer(version, env).bfdFhirRestClient(httpClient);
+            servers.put(version, client);
+        }
+        return client;
     }
 
     @SuppressWarnings("rawtypes")
@@ -187,10 +198,10 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public IBaseBundle requestPatientByMBI(String mbi) {
+    public IBaseBundle requestPatientByMBI(Versions.FhirVersions version, String mbi) {
         String hashVal = hashIdentifier(mbi, bfdHashPepper, bfdHashIter);
         var mbiHashEquals = generateHash(mbiHash, hashVal);
-        return clientSearch(mbiHashEquals);
+        return clientSearch(version, mbiHashEquals);
     }
 
     /**
@@ -218,8 +229,8 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public IBaseBundle requestNextBundleFromServer(IBaseBundle bundle) {
-        return client
+    public IBaseBundle requestNextBundleFromServer(Versions.FhirVersions version, IBaseBundle bundle) {
+        return getClient(version)
                 .loadPage()
                 .next(bundle)
                 .withAdditionalHeader(BFDClient.BFD_HDR_BULK_CLIENTID, BFDClient.BFD_CLIENT_ID)
@@ -244,20 +255,20 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class, InvalidRequestException.class }
     )
-    public IBaseBundle requestPartDEnrolleesFromServer(String contractNumber, int month) {
+    public IBaseBundle requestPartDEnrolleesFromServer(Versions.FhirVersions version, String contractNumber, int month) {
         var monthParameter = createMonthParameter(month);
         var theCriterion = new TokenClientParam("_has:Coverage.extension")
                 .exactly()
                 .systemAndIdentifier(monthParameter, contractNumber);
 
-        return client.search()
-                .forResource(SearchUtils.getPatientClass(getVersion()))
+        return getClient(version).search()
+                .forResource(SearchUtils.getPatientClass(version))
                 .where(theCriterion)
                 .withAdditionalHeader(BFDClient.BFD_HDR_BULK_CLIENTID, BFDClient.BFD_CLIENT_ID)
                 .withAdditionalHeader(BFDClient.BFD_HDR_BULK_JOBID, getJobId())
                 .withAdditionalHeader("IncludeIdentifiers", "mbi")
                 .count(contractToBenePageSize)
-                .returnBundle(SearchUtils.getBundleClass(getVersion()))
+                .returnBundle(SearchUtils.getBundleClass(version))
                 .encodedJson()
                 .execute();
     }
@@ -268,10 +279,10 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public IBaseConformance capabilityStatement() {
+    public IBaseConformance capabilityStatement(Versions.FhirVersions version) {
         try {
-            Class<? extends IBaseConformance> resource = MetaDataUtils.getCapabilityClass(getVersion());
-            return client.capabilities()
+            Class<? extends IBaseConformance> resource = MetaDataUtils.getCapabilityClass(version);
+            return getClient(version).capabilities()
                 .ofType(resource)
                 .execute();
         } catch (Exception ex) {
@@ -282,15 +293,5 @@ public class BFDClientImpl implements BFDClient {
     private String createMonthParameter(int month) {
         final String zeroPaddedMonth = StringUtils.leftPad("" + month, 2, '0');
         return PTDCNTRCT_URL_PREFIX + zeroPaddedMonth;
-    }
-
-    @Override
-    public Versions.FhirVersions getVersion() {
-        try {
-            return Versions.getVersion(fhirContext);
-        } catch (Exception ex) {
-            log.error("Invalid version", ex);
-            return Versions.FhirVersions.STU3;
-        }
     }
 }

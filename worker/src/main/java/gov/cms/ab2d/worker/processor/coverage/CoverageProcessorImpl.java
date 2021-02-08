@@ -4,6 +4,7 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.CoverageMapping;
 import gov.cms.ab2d.common.model.CoveragePeriod;
 import gov.cms.ab2d.common.service.CoverageService;
+import gov.cms.ab2d.fhir.Versions;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -85,7 +86,8 @@ public class CoverageProcessorImpl implements CoverageProcessor {
             log.debug("starting search for {} during {}-{}", mapping.getContract().getContractNumber(),
                     mapping.getPeriod().getMonth(), mapping.getPeriod().getYear());
 
-            CoverageMappingCallable callable = new CoverageMappingCallable(mapping, bfdClient, skipBillablePeriodCheck);
+            // Currently, we are using the STU3 version to get patient mappings
+            CoverageMappingCallable callable = new CoverageMappingCallable(Versions.FhirVersions.STU3, mapping, bfdClient, skipBillablePeriodCheck);
             executor.submit(callable);
             inProgressMappings.add(callable);
 

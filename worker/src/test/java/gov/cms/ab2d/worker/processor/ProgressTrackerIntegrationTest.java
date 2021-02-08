@@ -102,9 +102,8 @@ class ProgressTrackerIntegrationTest {
         org.hl7.fhir.dstu3.model.Bundle bundleA = BundleUtils.createBundle(entry1, entry2, entry3);
         org.hl7.fhir.dstu3.model.Bundle bundleB = BundleUtils.createBundle(entry1, entry2, entry3, entry4);
 
-        when(bfdClient.requestPartDEnrolleesFromServer(CONTRACT_NUMBER, 1)).thenReturn(bundleA);
-        when(bfdClient.requestPartDEnrolleesFromServer(CONTRACT_NUMBER, 2)).thenReturn(bundleB);
-        when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
+        when(bfdClient.requestPartDEnrolleesFromServer(Versions.FhirVersions.STU3, CONTRACT_NUMBER, 1)).thenReturn(bundleA);
+        when(bfdClient.requestPartDEnrolleesFromServer(Versions.FhirVersions.STU3, CONTRACT_NUMBER, 2)).thenReturn(bundleB);
 
         cut.processContractBenes(job, progressTracker);
 

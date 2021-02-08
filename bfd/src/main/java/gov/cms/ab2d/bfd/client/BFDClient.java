@@ -11,11 +11,11 @@ public interface BFDClient {
     String BFD_CLIENT_ID = "AB2D";
     String BFD_HDR_BULK_JOBID = "BULK-JOBID";
 
-    IBaseBundle requestEOBFromServer(String patientID);
-    IBaseBundle requestEOBFromServer(String patientID, OffsetDateTime sinceTime);
-    IBaseBundle requestNextBundleFromServer(IBaseBundle bundle);
-    IBaseBundle requestPatientByHICN(String patientId);
-    IBaseBundle requestPatientByMBI(String patientId);
+    IBaseBundle requestEOBFromServer(Versions.FhirVersions version, String patientID);
+    IBaseBundle requestEOBFromServer(Versions.FhirVersions version, String patientID, OffsetDateTime sinceTime);
+    IBaseBundle requestNextBundleFromServer(Versions.FhirVersions version, IBaseBundle bundle);
+    IBaseBundle requestPatientByHICN(Versions.FhirVersions version, String patientId);
+    IBaseBundle requestPatientByMBI(Versions.FhirVersions version, String patientId);
 
     /**
      * Request BFD for a list of all active patients in a contract for a specific month
@@ -24,11 +24,9 @@ public interface BFDClient {
      * @param month
      * @return Bundle of Patient Resources
      */
-    IBaseBundle requestPartDEnrolleesFromServer(String contractNumber, int month);
+    IBaseBundle requestPartDEnrolleesFromServer(Versions.FhirVersions version, String contractNumber, int month);
 
-    IBaseConformance capabilityStatement();
-
-    Versions.FhirVersions getVersion();
+    IBaseConformance capabilityStatement(Versions.FhirVersions version);
 
     ThreadLocal<String> BFD_BULK_JOB_ID = new ThreadLocal<>();
 }
