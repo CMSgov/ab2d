@@ -71,11 +71,13 @@ public class BFDClientImpl implements BFDClient {
     private final BFDSearch bfdSearch;
     private final HttpClient httpClient;
     private final Environment env;
+    private final UrlValueResolver urlValueResolver;
 
-    public BFDClientImpl(BFDSearch bfdSearch, HttpClient httpClient, Environment env) {
+    public BFDClientImpl(BFDSearch bfdSearch, HttpClient httpClient, Environment env, UrlValueResolver urlValueResolver) {
         this.bfdSearch = bfdSearch;
         this.httpClient = httpClient;
         this.env = env;
+        this.urlValueResolver = urlValueResolver;
     }
 
     /**
@@ -174,7 +176,9 @@ public class BFDClientImpl implements BFDClient {
     private IGenericClient getClient(Versions.FhirVersions version) {
         IGenericClient client = servers.get(version);
         if (client == null) {
-            client = new FhirBfdServer(version, env).bfdFhirRestClient(httpClient);
+            String url = Versions.getEnvVariable(version);
+            String urlLocation = urlValueResolver.readMyProperty(env.getProperty(url));
+            client = new FhirBfdServer(version).bfdFhirRestClient(httpClient, urlLocation);
             servers.put(version, client);
         }
         return client;

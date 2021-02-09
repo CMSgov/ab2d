@@ -5,21 +5,17 @@ import ca.uhn.fhir.rest.api.RequestFormatParamStyleEnum;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import gov.cms.ab2d.fhir.Versions;
 import org.apache.http.client.HttpClient;
-import org.springframework.core.env.Environment;
 
 public class FhirBfdServer {
-    private final String serverBaseUrl;
     private final FhirContext fhirContext;
 
-    public FhirBfdServer(Versions.FhirVersions version, Environment env) {
-        String propertiesName = Versions.getEnvVariable(version);
-        serverBaseUrl = env.getProperty(propertiesName);
+    public FhirBfdServer(Versions.FhirVersions version) {
         fhirContext = Versions.getContextFromVersion(version);
     }
 
-    public IGenericClient bfdFhirRestClient(HttpClient httpClient) {
+    public IGenericClient bfdFhirRestClient(HttpClient httpClient, String url) {
         fhirContext.getRestfulClientFactory().setHttpClient(httpClient);
-        IGenericClient client = fhirContext.newRestfulGenericClient(serverBaseUrl);
+        IGenericClient client = fhirContext.newRestfulGenericClient(url);
         client.setFormatParamStyle(RequestFormatParamStyleEnum.SHORT);
         return client;
     }

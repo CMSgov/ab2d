@@ -1,9 +1,5 @@
 package gov.cms.ab2d.bfd.client;
 
-import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.IParser;
-import ca.uhn.fhir.rest.api.RequestFormatParamStyleEnum;
-import ca.uhn.fhir.rest.client.api.IGenericClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
@@ -24,13 +20,12 @@ import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Credits: most of the code in this class has been copied over from https://github.com/CMSgov/dpc-app
+ */
 @Configuration
 @PropertySource("classpath:application.bfd.properties")
 @Slf4j
-/**
- * Credits: most of the code in this class has been copied over from https://github
- * .com/CMSgov/dpc-app
- */
 public class BFDClientConfiguration {
 
     public static final String JKS = "JKS";
@@ -50,9 +45,6 @@ public class BFDClientConfiguration {
     @Value("${bfd.requestTimeout}")
     private int requestTimeout;
 
-    @Value("${bfd.serverBaseUrlStu3}")
-    private String serverBaseUrl;
-
     @Value("${bfd.http.maxConnPerRoute}")
     private int maxConnPerRoute;
 
@@ -61,19 +53,6 @@ public class BFDClientConfiguration {
 
     @Value("${bfd.http.connTTL}")
     private int connectionTTL;
-
-    @Bean
-    public IGenericClient bfdFhirRestClient(FhirContext fhirContext, HttpClient httpClient) {
-        fhirContext.getRestfulClientFactory().setHttpClient(httpClient);
-        IGenericClient client = fhirContext.newRestfulGenericClient(serverBaseUrl);
-        client.setFormatParamStyle(RequestFormatParamStyleEnum.SHORT);
-        return client;
-    }
-
-    @Bean
-    public FhirContext fhirContext() {
-        return FhirContext.forDstu3();
-    }
 
     @Bean
     public KeyStore bfdKeyStore() {
@@ -98,19 +77,13 @@ public class BFDClientConfiguration {
     /**
      * Borrowed from https://github.com/CMSgov/dpc-app
      *
-     * @param keyStore
-     * @return
+     * @param keyStore - the keystore
+     * @return the HTTP client
      */
     @Bean
     public HttpClient bfdHttpClient(KeyStore keyStore) {
         return buildMutualTlsClient(keyStore, keystorePassword.toCharArray());
     }
-
-    @Bean
-    public IParser buildParser() {
-        return fhirContext().newJsonParser();
-    }
-
 
     /**
      * Helper function to build a special {@link HttpClient} capable of authenticating with the

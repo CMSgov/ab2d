@@ -84,13 +84,10 @@ public class BlueButtonClientTest {
     @Configuration
     public static class TestConfig {
 
-        @Autowired
-        private FhirContext fhirContext;
-
         @Bean
         @Primary
         public IParser testBeanDefinition() {
-            return fhirContext.newXmlParser();
+            return FhirContext.forDstu3().newXmlParser();
         }
     }
 

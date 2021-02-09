@@ -24,21 +24,19 @@ import java.time.OffsetDateTime;
 public class BFDSearchImpl implements BFDSearch {
 
     private final HttpClient httpClient;
-
-    private final IParser parser;
-
     private final Environment environment;
+    private final UrlValueResolver urlValueResolver;
 
-    public BFDSearchImpl(HttpClient httpClient, IParser iParser, Environment environment) {
+    public BFDSearchImpl(HttpClient httpClient, Environment environment, UrlValueResolver urlValueResolver) {
         this.httpClient = httpClient;
-        this.parser = iParser;
         this.environment = environment;
+        this.urlValueResolver = urlValueResolver;
     }
 
     @Override
     public IBaseBundle searchEOB(String urlVariable, String patientId, OffsetDateTime since, int pageSize, String bulkJobId, Versions.FhirVersions version) throws IOException {
 
-        String urlLocation = environment.getProperty(urlVariable);
+        String urlLocation = urlValueResolver.readMyProperty(environment.getProperty(urlVariable));
         StringBuilder url = new StringBuilder(urlLocation + "ExplanationOfBenefit?patient=" + patientId + "&excludeSAMHSA=true");
 
         if (since != null) {
@@ -64,7 +62,7 @@ public class BFDSearchImpl implements BFDSearch {
             int status = response.getStatusLine().getStatusCode();
             if (status >= HttpStatus.SC_OK && status < HttpStatus.SC_MULTIPLE_CHOICES) {
                 try (InputStream instream = response.getEntity().getContent()) {
-                    return parser.parseResource(SearchUtils.getBundleClass(version), instream);
+                    return Versions.getContextFromVersion(version).newJsonParser().parseResource(SearchUtils.getBundleClass(version), instream);
                 }
             } else if (status == HttpStatus.SC_NOT_FOUND) {
                 throw new ResourceNotFoundException("Patient " + patientId + " was not found");
