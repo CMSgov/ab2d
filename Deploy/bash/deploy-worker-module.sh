@@ -180,7 +180,7 @@ else
 
   # Disable terraform logging on Jenkins
   export TF_LOG=
-  
+
 fi
 
 #
@@ -457,7 +457,9 @@ echo "Build and push API and worker to ECR..."
 # Log on to ECR
 
 aws --region "${AWS_DEFAULT_REGION}" ecr get-login-password \
-  | docker login --username AWS --password-stdin "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}.dkr.ecr.us-east-1.amazonaws.com"
+  | docker login --username AWS --password-stdin "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}.dkr.ecr.us-east-1.amazonaws.com" \
+  1> /dev/null \
+  2> /dev/null
 
 # Build API and worker (if creating a new image)
 
@@ -482,7 +484,9 @@ WORKER_ECR_REPO_URI=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-reposito
   --output text)
 if [ -z "${WORKER_ECR_REPO_URI}" ]; then
   aws --region "${AWS_DEFAULT_REGION}" ecr create-repository \
-    --repository-name "ab2d_worker"
+    --repository-name "ab2d_worker" \
+    1> /dev/null \
+    2> /dev/null
   WORKER_ECR_REPO_URI=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-repositories \
     --query "repositories[?repositoryName == 'ab2d_worker'].repositoryUri" \
     --output text)
@@ -494,7 +498,9 @@ cd "${START_DIR}/.."
 cd "terraform/environments/${CMS_ECR_REPO_ENV}"
 aws --region "${AWS_DEFAULT_REGION}" ecr set-repository-policy \
   --repository-name ab2d_worker \
-  --policy-text file://ab2d-ecr-policy.json
+  --policy-text file://ab2d-ecr-policy.json \
+  1> /dev/null \
+  2> /dev/null
 
 # Tag and push latest version of worker docker image to ECR
 
@@ -620,7 +626,8 @@ terraform apply \
   --var "worker_min_instances=${WORKER_MIN_INSTANCES}" \
   --var "worker_max_instances=${WORKER_MAX_INSTANCES}" \
   --auto-approve \
-  1> /dev/null
+  1> /dev/null \
+  2> /dev/null
 
 # Ensure new worker autoscaling group is running containers
 
@@ -659,7 +666,8 @@ else
       --cluster "${CMS_ENV}-worker" \
       --status DRAINING \
       --container-instances $OLD_WORKER_INSTANCE_LIST \
-      1> /dev/null
+      1> /dev/null \
+      2> /dev/null
 
     echo "Allowing all instances to drain for 60 seconds before proceeding..."
     sleep 60
@@ -686,7 +694,9 @@ if [ "${WORKER_ASG_COUNT}" -gt 1 ]; then
       | tail -n 1)
     aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-auto-scaling-group \
       --auto-scaling-group-name "${DUPLICATIVE_WORKER_ASG}" \
-      --force-delete || true
+      --force-delete || true \
+      1> /dev/null \
+      2> /dev/null
   done
 fi
 
@@ -743,7 +753,10 @@ else
       | awk '{print $1}')
 
     aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-launch-configuration \
-      --launch-configuration-name "${OLD_LAUNCH_CONFIGURATION}"
+      --launch-configuration-name "${OLD_LAUNCH_CONFIGURATION}" \
+      1> /dev/null \
+      2> /dev/null
+
     sleep 5
 
     # TO DO: migrate from "*-test-*" naming to "*-validation-*" naming

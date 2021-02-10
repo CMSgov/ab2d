@@ -107,10 +107,20 @@ fi
 
 # Reset logging
 
-echo "Setting terraform debug level to $DEBUG_LEVEL..."
-export TF_LOG=$DEBUG_LEVEL
-export TF_LOG_PATH=/var/log/terraform/tf.log
-rm -f /var/log/terraform/tf.log
+if [ "${CLOUD_TAMER}" == "true" ]; then
+
+  # Enable terraform logging on development machine
+  echo "Setting terraform debug level to $DEBUG_LEVEL..."
+  export TF_LOG=$DEBUG_LEVEL
+  export TF_LOG_PATH=/var/log/terraform/tf.log
+  rm -f /var/log/terraform/tf.log
+
+else
+
+  # Disable terraform logging on Jenkins
+  export TF_LOG=
+
+fi
 
 #
 # Initialize and validate terraform
@@ -151,7 +161,8 @@ terraform apply \
   --var "parent_env=${PARENT_ENV}" \
   --var "region=${AWS_DEFAULT_REGION}" \
   --auto-approve \
-  1> /dev/null
+    1> /dev/null \
+    2> /dev/null
 
 # Create of verify key pair
 
@@ -162,16 +173,19 @@ KEY_NAME=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-key-pairs \
 
 if [ -z "${KEY_NAME}" ]; then
 
-  # Create private key
+  if [ "${CLOUD_TAMER}" == "true" ]; then
 
-  aws --region "${AWS_DEFAULT_REGION}" ec2 create-key-pair \
-    --key-name "${CMS_ENV}" \
-    --query 'KeyMaterial' \
-    --output text \
-    > "${HOME}/.ssh/${CMS_ENV}.pem"
+    # Create private key
 
-  # Set permissions on private key
+    aws --region "${AWS_DEFAULT_REGION}" ec2 create-key-pair \
+      --key-name "${CMS_ENV}" \
+      --query 'KeyMaterial' \
+      --output text \
+      > "${HOME}/.ssh/${CMS_ENV}.pem"
 
-  chmod 600 "${HOME}/.ssh/${CMS_ENV}.pem"
+    # Set permissions on private key
 
+    chmod 600 "${HOME}/.ssh/${CMS_ENV}.pem"
+
+  fi
 fi

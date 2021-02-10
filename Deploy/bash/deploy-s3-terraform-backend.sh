@@ -102,7 +102,8 @@ fn_create_or_verify_dynamodb_table_for_module ()
       --attribute-definitions AttributeName=LockID,AttributeType=S \
       --key-schema AttributeName=LockID,KeyType=HASH \
       --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
-      1> /dev/null
+      1> /dev/null \
+      2> /dev/null
   fi
 }
 
@@ -112,10 +113,20 @@ fn_create_or_verify_dynamodb_table_for_module ()
 
 # Reset logging
 
-echo "Setting terraform debug level to $DEBUG_LEVEL..."
-export TF_LOG=$DEBUG_LEVEL
-export TF_LOG_PATH=/var/log/terraform/tf.log
-rm -f /var/log/terraform/tf.log
+if [ "${CLOUD_TAMER}" == "true" ]; then
+
+  # Enable terraform logging on development machine
+  echo "Setting terraform debug level to $DEBUG_LEVEL..."
+  export TF_LOG=$DEBUG_LEVEL
+  export TF_LOG_PATH=/var/log/terraform/tf.log
+  rm -f /var/log/terraform/tf.log
+
+else
+
+  # Disable terraform logging on Jenkins
+  export TF_LOG=
+
+fi
 
 #
 # Create or verify backend components
@@ -182,6 +193,7 @@ export S3_SERVER_ACCESS_LOGS_BUCKET="${GET_S3_SERVER_ACCESS_LOGS_BUCKET}"
 set +e # Turn off exit on error
 aws --region "${AWS_DEFAULT_REGION}" s3api get-bucket-policy \
   --bucket "${S3_SERVER_ACCESS_LOGS_BUCKET}" \
+  1> /dev/null \
   2> /dev/null
 BUCKET_POLICY_STATUS=$?
 set -e # Turn on exit on error
@@ -206,7 +218,8 @@ if [ "${LOG_DELIVERY_GROUP_PERMISSION_COUNT}" -lt 2 ]; then
     --bucket "${S3_SERVER_ACCESS_LOGS_BUCKET}" \
     --grant-write URI=http://acs.amazonaws.com/groups/s3/LogDelivery \
     --grant-read-acp URI=http://acs.amazonaws.com/groups/s3/LogDelivery \
-    1> /dev/null
+    1> /dev/null \
+    2> /dev/null
 fi
 
 # Create or verify S3 tfstate bucket
@@ -231,6 +244,7 @@ export S3_TFSTATE_BUCKET="${GET_S3_TFSTATE_BUCKET}"
 set +e # Turn off exit on error
 aws --region "${AWS_DEFAULT_REGION}" s3api get-bucket-policy \
   --bucket "${S3_TFSTATE_BUCKET}" \
+  1> /dev/null \
   2> /dev/null
 BUCKET_POLICY_STATUS=$?
 set -e # Turn on exit on error
@@ -239,7 +253,8 @@ if [ "${BUCKET_POLICY_STATUS}" != "0" ]; then
   aws --region "${AWS_DEFAULT_REGION}" s3api put-public-access-block \
     --bucket "${S3_TFSTATE_BUCKET}" \
     --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true \
-    1> /dev/null
+    1> /dev/null \
+    2> /dev/null
 fi
 
 # Add logging to the S3 tfstate bucket
@@ -256,7 +271,8 @@ if [ -z "${S3_TFSTATE_BUCKET_LOGGING}" ]; then
   aws --region "${AWS_DEFAULT_REGION}" s3api put-bucket-logging \
     --bucket "${S3_TFSTATE_BUCKET}" \
     --bucket-logging-status file://generated/tfstate_bucket_logging.json \
-    1> /dev/null
+    1> /dev/null \
+    2> /dev/null
 fi
 
 # Add or verify versioning on the S3 tfstate bucket
@@ -267,7 +283,8 @@ S3_TFSTATE_BUCKET_VERSIONING=$(aws --region "${AWS_DEFAULT_REGION}" s3api get-bu
 if [ -z "${S3_TFSTATE_BUCKET_VERSIONING}" ]; then
   aws s3api put-bucket-versioning --bucket "${S3_TFSTATE_BUCKET}" \
     --versioning-configuration Status=Enabled \
-    1> /dev/null
+    1> /dev/null \
+    2> /dev/null
 fi
 
 # Add or verify bucket policy on the S3 tfstate bucket
@@ -275,6 +292,7 @@ fi
 set +e # Turn off exit on error
 aws --region "${AWS_DEFAULT_REGION}" s3api get-bucket-policy \
   --bucket "${S3_TFSTATE_BUCKET}" \
+  1> /dev/null \
   2> /dev/null
 BUCKET_POLICY_STATUS=$?
 set -e # Turn on exit on error
@@ -288,7 +306,8 @@ if [ "${BUCKET_POLICY_STATUS}" != "0" ]; then
   aws --region "${AWS_DEFAULT_REGION}" s3api put-bucket-policy \
       --bucket "${S3_TFSTATE_BUCKET}" \
       --policy file://generated/tfstate_bucket_policy.json \
-      1> /dev/null
+      1> /dev/null \
+      2> /dev/null
 fi
 
 # Add or verify server side encryption on the S3 tfstate bucket
@@ -296,6 +315,7 @@ fi
 set +e # Turn off exit on error
 aws --region "${AWS_DEFAULT_REGION}" s3api get-bucket-encryption \
   --bucket "${S3_TFSTATE_BUCKET}" \
+  1> /dev/null \
   2> /dev/null
 BUCKET_ENCRYPTION_STATUS=$?
 set -e # Turn on exit on error
@@ -309,7 +329,8 @@ if [ "${BUCKET_ENCRYPTION_STATUS}" != "0" ]; then
   aws --region "${AWS_DEFAULT_REGION}" s3api put-bucket-encryption \
     --bucket "${S3_TFSTATE_BUCKET}" \
     --server-side-encryption-configuration file://generated/tfstate_bucket_server_side_encryption.json \
-    1> /dev/null
+    1> /dev/null \
+    2> /dev/null
 fi
 
 # Create or verify dynamodb table for core module

@@ -155,10 +155,20 @@ fi
 
 # Reset logging
 
-echo "Setting terraform debug level to $DEBUG_LEVEL..."
-export TF_LOG=$DEBUG_LEVEL
-export TF_LOG_PATH=/var/log/terraform/tf.log
-rm -f /var/log/terraform/tf.log
+if [ "${CLOUD_TAMER}" == "true" ]; then
+
+  # Enable terraform logging on development machine
+  echo "Setting terraform debug level to $DEBUG_LEVEL..."
+  export TF_LOG=$DEBUG_LEVEL
+  export TF_LOG_PATH=/var/log/terraform/tf.log
+  rm -f /var/log/terraform/tf.log
+
+else
+
+  # Disable terraform logging on Jenkins
+  export TF_LOG=
+
+fi
 
 #
 # Initialize and validate terraform
@@ -258,7 +268,8 @@ terraform apply \
   --var "postgres_engine_version=${POSTGRES_ENGINE_VERSION}" \
   --var "region=${AWS_DEFAULT_REGION}" \
   --auto-approve \
-  1> /dev/null
+  1> /dev/null \
+  2> /dev/null
 
 #
 # Create or verify database
