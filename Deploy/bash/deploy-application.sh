@@ -254,7 +254,9 @@ terraform validate
 echo "Enabling KMS key..."
 cd "${START_DIR}/.."
 cd python3
-./enable-kms-key.py "${KMS_KEY_ID}"
+./enable-kms-key.py "${KMS_KEY_ID}" \
+  1> /dev/null \
+  2> /dev/null
 
 #
 # Get secrets
@@ -693,7 +695,9 @@ fi
 echo "Enabling KMS key..."
 cd "${START_DIR}/.."
 cd python3
-./enable-kms-key.py "${MGMT_KMS_KEY_ID}"
+./enable-kms-key.py "${MGMT_KMS_KEY_ID}" \
+  1> /dev/null \
+  2> /dev/null
 
 # Set environment to the AWS account where the shared ECR repository is maintained
 

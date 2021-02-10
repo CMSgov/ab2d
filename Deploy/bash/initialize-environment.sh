@@ -352,5 +352,7 @@ if [ "${VPC_ENABLE_DNS_HOSTNAMES}" == "False" ]; then
   echo "Enabling DNS hostnames on VPC..."
   aws ec2 modify-vpc-attribute \
     --vpc-id "${VPC_ID}" \
-    --enable-dns-hostnames
+    --enable-dns-hostnames \
+    1> /dev/null \
+    2> /dev/null
 fi
