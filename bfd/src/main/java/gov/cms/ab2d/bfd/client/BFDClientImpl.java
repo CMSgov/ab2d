@@ -175,12 +175,13 @@ public class BFDClientImpl implements BFDClient {
 
     private IGenericClient getClient(Versions.FhirVersions version) {
         IGenericClient client = servers.get(version);
-        if (client == null) {
-            String url = Versions.getEnvVariable(version);
-            String urlLocation = urlValueResolver.readMyProperty(env.getProperty(url));
-            client = new FhirBfdServer(version).bfdFhirRestClient(httpClient, urlLocation);
-            servers.put(version, client);
+        if (client != null) {
+            return client;
         }
+        String url = Versions.getEnvVariable(version);
+        String urlLocation = urlValueResolver.readMyProperty(env.getProperty(url));
+        client = new FhirBfdServer(version).bfdFhirRestClient(httpClient, urlLocation);
+        servers.put(version, client);
         return client;
     }
 

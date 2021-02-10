@@ -35,6 +35,9 @@ public class BFDSearchImpl implements BFDSearch {
     @Override
     public IBaseBundle searchEOB(String urlVariable, String patientId, OffsetDateTime since, int pageSize, String bulkJobId, Versions.FhirVersions version) throws IOException {
 
+        if (environment.getProperty(urlVariable) == null || urlValueResolver == null) {
+            return null;
+        }
         String urlLocation = urlValueResolver.readMyProperty(environment.getProperty(urlVariable));
         StringBuilder url = new StringBuilder(urlLocation + "ExplanationOfBenefit?patient=" + patientId + "&excludeSAMHSA=true");
 
