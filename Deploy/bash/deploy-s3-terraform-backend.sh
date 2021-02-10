@@ -1,7 +1,8 @@
 #!/bin/bash
 
 set -e # Turn on exit on error
-set -x # Turn on verbosity
+# set -x #Print commands and their arguments as they are executed.
+set +x #Don't print commands and their arguments as they are executed.
 
 #
 # Change to working directory (if not set by a parent script)
