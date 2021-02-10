@@ -15,7 +15,7 @@ public class UrlValueResolver implements EmbeddedValueResolverAware {
         this.embeddedValueResolver = resolver;
     }
 
-    public String readMyProperty(String propertyString){
+    public String readMyProperty(String propertyString) {
         return embeddedValueResolver.resolveStringValue(propertyString);
     }
 }
