@@ -168,10 +168,12 @@ fi
 
 # Reset logging
 
-echo "Setting terraform debug level to $DEBUG_LEVEL..."
-export TF_LOG=$DEBUG_LEVEL
-export TF_LOG_PATH=/var/log/terraform/tf.log
-rm -f /var/log/terraform/tf.log
+if [ "${CLOUD_TAMER}" == "true" ]; then
+  echo "Setting terraform debug level to $DEBUG_LEVEL..."
+  export TF_LOG=$DEBUG_LEVEL
+  export TF_LOG_PATH=/var/log/terraform/tf.log
+  rm -f /var/log/terraform/tf.log
+fi
 
 #
 # Configure docker environment
@@ -609,7 +611,8 @@ terraform apply \
   --var "worker_desired_instances=${WORKER_DESIRED_INSTANCES}" \
   --var "worker_min_instances=${WORKER_MIN_INSTANCES}" \
   --var "worker_max_instances=${WORKER_MAX_INSTANCES}" \
-  --auto-approve
+  --auto-approve \
+  1> /dev/null
 
 # Ensure new worker autoscaling group is running containers
 

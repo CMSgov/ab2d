@@ -150,7 +150,8 @@ terraform apply \
   --var "env_pascal_case=${ENV_PASCAL_CASE}" \
   --var "parent_env=${PARENT_ENV}" \
   --var "region=${AWS_DEFAULT_REGION}" \
-  --auto-approve
+  --auto-approve \
+  1> /dev/null
 
 # Create of verify key pair
 

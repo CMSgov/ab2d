@@ -257,7 +257,8 @@ terraform apply \
   --var "parent_env=${PARENT_ENV}" \
   --var "postgres_engine_version=${POSTGRES_ENGINE_VERSION}" \
   --var "region=${AWS_DEFAULT_REGION}" \
-  --auto-approve
+  --auto-approve \
+  1> /dev/null
 
 #
 # Create or verify database
