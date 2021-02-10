@@ -1,6 +1,6 @@
 variable "env" {}
 variable "execution_env" { default = "local" }
-variable "bfd_insights" { default = "false" }
+variable "bfd_insights" { default = "none" }
 variable "aws_account_number" {}
 variable "vpc_id" {}
 variable "db_sec_group_id" {}

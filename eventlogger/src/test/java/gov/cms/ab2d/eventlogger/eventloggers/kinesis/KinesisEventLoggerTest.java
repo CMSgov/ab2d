@@ -12,6 +12,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +45,7 @@ class KinesisEventLoggerTest {
     private String appEnv;
 
     @Value("${eventlogger.kinesis.enabled}")
-    private boolean kinesisEnabled;
+    private KinesisMode kinesisEnabled;
 
     @Value("${eventlogger.kinesis.stream.prefix:}")
     private String streamId;
@@ -74,7 +75,7 @@ class KinesisEventLoggerTest {
     }
 
     @Test
-    public void sendEvent() {
+    void sendEvent() {
         ErrorEvent e = new ErrorEvent();
         e.setDescription("Test Error 2");
         e.setErrorType(ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT);
@@ -87,7 +88,7 @@ class KinesisEventLoggerTest {
     }
 
     @Test
-    public void sendOnlyBeneSearch() throws JsonProcessingException, JSONException {
+    void sendOnlyBeneSearch() throws JsonProcessingException, JSONException {
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime now2 = OffsetDateTime.now();
         BeneficiarySearchEvent se = new BeneficiarySearchEvent("laila", "job1", "contract1",
@@ -100,8 +101,9 @@ class KinesisEventLoggerTest {
         assertEquals(now2, se.getResponseDate());
     }
 
+    @DisplayName("Kinesis parallel message sending")
     @Test
-    public void testThreadPool() throws InterruptedException {
+    void testThreadPool() throws InterruptedException {
         ErrorEvent e = new ErrorEvent();
         e.setDescription("Test Error 2");
         e.setErrorType(ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT);
@@ -118,9 +120,10 @@ class KinesisEventLoggerTest {
         assertNotNull(e.getAwsId());
     }
 
+    @DisplayName("Kinesis mode toggles logging")
     @Test
-    public void testLocal() {
-        ReflectionTestUtils.setField(logger, "appEnv", "local");
+    void testLocal() {
+        ReflectionTestUtils.setField(logger, "kinesisEnabled", KinesisMode.NONE);
         ErrorEvent e = new ErrorEvent();
         e.setDescription("Test Error");
         e.setErrorType(ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT);
@@ -134,7 +137,7 @@ class KinesisEventLoggerTest {
         String env = e.getEnvironment();
         // Since we never logged, aws id was not reset
         assertEquals("BOGUS", e.getAwsId());
-        ReflectionTestUtils.setField(logger, "appEnv", "dev");
+        ReflectionTestUtils.setField(logger, "kinesisEnabled", KinesisMode.SEND_EVENTS);
         logger.log(e, true);
         assertTrue(e.getAwsId() == null || !e.getAwsId().equalsIgnoreCase("BOGUS"));
     }

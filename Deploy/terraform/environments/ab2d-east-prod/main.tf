@@ -144,7 +144,7 @@ module "api" {
   source                            = "../../modules/api"
   env                               = var.env
   execution_env                     = "ab2d-east-prod"
-//  bfd_insights                      = "true" enable when bfd insights is implemented
+//  bfd_insights                      = "send_events" enable when bfd insights is implemented
   vpc_id                            = var.vpc_id
   db_sec_group_id                   = data.aws_security_group.ab2d_database_sg.id
   controller_sec_group_id           = data.aws_security_group.ab2d_deployment_controller_sg.id
@@ -210,7 +210,7 @@ module "worker" {
   source                            = "../../modules/worker"
   env                               = var.env
   execution_env                     = "ab2d-east-prod"
-//  bfd_insights                      = "true" enable when bfd insights is implemented
+//  bfd_insights                      = "send_events" enable when bfd insights is implemented
   vpc_id                            = var.vpc_id
   db_sec_group_id                   = data.aws_security_group.ab2d_database_sg.id
   controller_subnet_ids             = var.deployment_controller_subnet_ids

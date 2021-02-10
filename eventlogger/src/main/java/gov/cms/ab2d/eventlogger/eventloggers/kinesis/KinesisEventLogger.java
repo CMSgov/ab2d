@@ -22,12 +22,12 @@ public class KinesisEventLogger implements EventLogger {
     private final KinesisConfig config;
     private final AmazonKinesisFirehose client;
     private final String appEnv;
-    private final boolean kinesisEnabled;
+    private final KinesisMode kinesisEnabled;
     private final String streamId;
 
     public KinesisEventLogger(KinesisConfig config, AmazonKinesisFirehose client,
                               @Value("${execution.env}") String appEnv,
-                              @Value("${eventlogger.kinesis.enabled}") boolean kinesisEnabled,
+                              @Value("${eventlogger.kinesis.enabled}") KinesisMode kinesisEnabled,
                               @Value("${eventlogger.kinesis.stream.prefix:}") String streamId) {
         this.config = config;
         this.client = client;
@@ -45,12 +45,7 @@ public class KinesisEventLogger implements EventLogger {
         event.setEnvironment(appEnv);
 
         // If kinesis is disabled then return immediately
-        if (!kinesisEnabled) {
-            return;
-        }
-
-        // If the environment is a testing environment do not log
-        if (appEnv == null || appEnv.equalsIgnoreCase("local")) {
+        if (kinesisEnabled == KinesisMode.NONE) {
             return;
         }
 
