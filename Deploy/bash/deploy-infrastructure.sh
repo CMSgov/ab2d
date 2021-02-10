@@ -337,7 +337,10 @@ terraform apply \
   --var "db_username=${DATABASE_USER}" \
   --var "db_password=${DATABASE_PASSWORD}" \
   --var "db_name=${DATABASE_NAME}" \
-  --target module.db --auto-approve
+  --target module.db \
+  --auto-approve \
+  1> /dev/null \
+  2> /dev/null
 
 DB_ENDPOINT=$(aws --region "${AWS_DEFAULT_REGION}" rds describe-db-instances \
   --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" \
@@ -381,7 +384,9 @@ terraform apply \
   --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
   --var "gold_image_name=${GOLD_IMAGE_NAME}" \
   --target module.controller \
-  --auto-approve
+  --auto-approve \
+  1> /dev/null \
+  2> /dev/null
 
 #
 # Deploy EFS
@@ -394,7 +399,9 @@ echo "Create or update EFS..."
 terraform apply \
   --var "env=${TARGET_CMS_ENV}" \
   --target module.efs \
-  --auto-approve
+  --auto-approve \
+  1> /dev/null \
+  2> /dev/null
 
 #
 # Create or verify database
@@ -537,5 +544,7 @@ if [ "${TARGET_CMS_ENV}" != "ab2d-east-prod" ]; then
     --var "kinesis_firehose_bucket=${AB2D_BFD_INSIGHTS_S3_BUCKET}" \
     --var "kinesis_firehose_kms_key_arn=${AB2D_BFD_KMS_ARN}" \
     --target module.kinesis_firehose \
-    --auto-approve
+    --auto-approve \
+    1> /dev/null \
+    2> /dev/null
 fi

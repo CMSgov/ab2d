@@ -251,7 +251,9 @@ terraform apply \
   --var "mgmt_aws_account_number=${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" \
   --var "aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
   --target module.iam \
-  --auto-approve
+  --auto-approve \
+  1> /dev/null \
+  2> /dev/null
 
 #
 # Create or verify KMS components
@@ -264,7 +266,9 @@ terraform apply \
   --var "env=${TARGET_CMS_ENV}" \
   --var "aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
   --target module.kms \
-  --auto-approve
+  --auto-approve \
+  1> /dev/null \
+  2> /dev/null
 
 #
 # Get secrets
@@ -321,7 +325,9 @@ terraform apply \
   --var "ab2d_bfd_insights_s3_bucket=${AB2D_BFD_INSIGHTS_S3_BUCKET}" \
   --var "ab2d_bfd_kms_arn=${AB2D_BFD_KMS_ARN}" \
   --target module.iam_bfd_insights \
-  --auto-approve
+  --auto-approve \
+  1> /dev/null \
+  2> /dev/null
 
 #
 # Configure networking

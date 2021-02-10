@@ -1226,7 +1226,9 @@ terraform apply \
   --var "ec2_minimum_instance_count_api=${EC2_MINIMUM_INSTANCE_COUNT_API}" \
   --var "ec2_maximum_instance_count_api=${EC2_MAXIMUM_INSTANCE_COUNT_API}" \
   --target module.api \
-  --auto-approve
+  --auto-approve \
+  1> /dev/null \
+  2> /dev/null
 
 terraform apply \
   --var "env=${TARGET_CMS_ENV}" \
@@ -1261,7 +1263,9 @@ terraform apply \
   --var "ec2_minimum_instance_count_worker=${EC2_MINIMUM_INSTANCE_COUNT_WORKER}" \
   --var "ec2_maximum_instance_count_worker=${EC2_MAXIMUM_INSTANCE_COUNT_WORKER}" \
   --target module.worker \
-  --auto-approve
+  --auto-approve \
+  1> /dev/null \
+  2> /dev/null
 
 #
 # Get the correct target group arn for CloudWatch
@@ -1294,7 +1298,9 @@ terraform apply \
   --var "alb_security_group_ip_range=$ALB_SECURITY_GROUP_IP_RANGE" \
   --var "gold_image_name=${GOLD_IMAGE_NAME}" \
   --var "target_group_arn_suffix=${TARGET_GROUP_ARN_SUFFIX}" \
-  --auto-approve
+  --auto-approve \
+  1> /dev/null \
+  2> /dev/null
 
 #
 # Deploy AWS WAF
@@ -1305,7 +1311,9 @@ terraform apply \
   --var "alb_internal=$ALB_INTERNAL" \
   --var "alb_security_group_ip_range=$ALB_SECURITY_GROUP_IP_RANGE" \
   --target module.waf \
-  --auto-approve
+  --auto-approve \
+  1> /dev/null \
+  2> /dev/null
 
 #
 # Apply AWS Shield standard to the application load balancer
@@ -1318,7 +1326,9 @@ terraform apply \
 terraform apply \
   --var "env=${TARGET_CMS_ENV}" \
   --target module.shield \
-  --auto-approve
+  --auto-approve \
+  1> /dev/null \
+  2> /dev/null
 
 #
 # Ensure new autoscaling group is running containers
