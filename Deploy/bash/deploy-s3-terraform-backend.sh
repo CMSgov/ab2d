@@ -46,7 +46,7 @@ export AWS_ACCOUNT_NUMBER="${AWS_ACCOUNT_NUMBER_PARAM}"
 if [ "${CLOUD_TAMER_PARAM}" != "false" ] && [ "${CLOUD_TAMER_PARAM}" != "true" ]; then
   echo "ERROR: CLOUD_TAMER_PARAM parameter must be true or false"
   exit 1
-elif [ "${CLOUD_TAMER_PARAM}" != "false" ]; then
+elif [ "${CLOUD_TAMER_PARAM}" == "false" ]; then
 
   # Turn off verbose logging for Jenkins jobs
   set +x
@@ -56,7 +56,7 @@ elif [ "${CLOUD_TAMER_PARAM}" != "false" ]; then
   # Import the "get temporary AWS credentials via AWS STS assume role" function
   source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh"
 
-else # [ "${CLOUD_TAMER_PARAM}" != "true" ]
+else # [ "${CLOUD_TAMER_PARAM}" == "true" ]
 
   # Turn on verbose logging for development machine testing
   set -x
@@ -67,6 +67,20 @@ else # [ "${CLOUD_TAMER_PARAM}" != "true" ]
   source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh"
 
 fi
+
+#
+# Set AWS target environment
+#
+
+if [ "${CLOUD_TAMER}" == "true" ]; then
+  fn_get_temporary_aws_credentials_via_cloudtamer_api "${AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
+else
+  fn_get_temporary_aws_credentials_via_aws_sts_assume_role "${AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
+fi
+
+#
+# Define function to create or verify dynamodb table for module
+#
 
 fn_create_or_verify_dynamodb_table_for_module ()
 {
@@ -91,16 +105,6 @@ fn_create_or_verify_dynamodb_table_for_module ()
       1> /dev/null
   fi
 }
-
-#
-# Set AWS target environment
-#
-
-if [ "${CLOUD_TAMER}" == "true" ]; then
-  fn_get_temporary_aws_credentials_via_cloudtamer_api "${AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
-else
-  fn_get_temporary_aws_credentials_via_aws_sts_assume_role "${AWS_ACCOUNT_NUMBER}" "${CMS_ENV}"
-fi
 
 #
 # Configure terraform

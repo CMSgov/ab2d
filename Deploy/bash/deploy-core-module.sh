@@ -1,8 +1,12 @@
 #!/bin/bash
 
-set -e #Exit on first error
-# set -x #Print commands and their arguments as they are executed.
-set +x #Don't print commands and their arguments as they are executed.
+set -e # Turn on exit on error
+set +x # <-- Do not change this value!
+       # Logging is turned on in a later step based on CLOUD_TAMER_PARAM.
+       # CLOUD_TAMER_PARAM = false (Jenkins assumed; verbose logging turned off)
+       # CLOUD_TAMER_PARAM = true (Dev machine assumed; verbose logging turned on)
+       # NOTE: Setting the CLOUD_TAMER_PARAM to a value that does not match the
+       #       assumed host machine will cause the script to fail.
 
 #
 # Change to working directory (if not set by a parent script)
@@ -49,23 +53,27 @@ PARENT_ENV="${PARENT_ENV_PARAM}"
 if [ "${CLOUD_TAMER_PARAM}" != "false" ] && [ "${CLOUD_TAMER_PARAM}" != "true" ]; then
   echo "ERROR: CLOUD_TAMER_PARAM parameter must be true or false"
   exit 1
-else
+elif [ "${CLOUD_TAMER_PARAM}" == "false" ]; then
+
+  # Turn off verbose logging for Jenkins jobs
+  set +x
+  echo "Don't print commands and their arguments as they are executed."
   CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
+
+  # Import the "get temporary AWS credentials via AWS STS assume role" function
+  source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh"
+
+else # [ "${CLOUD_TAMER_PARAM}" == "true" ]
+
+  # Turn on verbose logging for development machine testing
+  set -x
+  echo "Print commands and their arguments as they are executed."
+  CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
+
+  # Import the "get temporary AWS credentials via CloudTamer API" function
+  source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh"
+
 fi
-
-#
-# Define functions
-#
-
-# Import the "get temporary AWS credentials via CloudTamer API" function
-
-# shellcheck source=./functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh
-source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh"
-
-# Import the "get temporary AWS credentials via AWS STS assume role" function
-
-# shellcheck source=./functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh
-source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh"
 
 #
 # Set AWS target environment
