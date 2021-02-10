@@ -169,10 +169,18 @@ fi
 # Reset logging
 
 if [ "${CLOUD_TAMER}" == "true" ]; then
+
+  # Enable terraform logging on development machine
   echo "Setting terraform debug level to $DEBUG_LEVEL..."
   export TF_LOG=$DEBUG_LEVEL
   export TF_LOG_PATH=/var/log/terraform/tf.log
   rm -f /var/log/terraform/tf.log
+
+else
+
+  # Disable terraform logging on Jenkins
+  export TF_LOG=
+  
 fi
 
 #
