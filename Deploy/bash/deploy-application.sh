@@ -1,8 +1,12 @@
 #!/bin/bash
 
-set -e #Exit on first error
-# set -x #Print commands and their arguments as they are executed.
-set +x #Don't print commands and their arguments as they are executed.
+set -e # Turn on exit on error
+set +x # <-- Do not change this value!
+       # Logging is turned on in a later step based on CLOUD_TAMER_PARAM.
+       # CLOUD_TAMER_PARAM = false (Jenkins assumed; verbose logging turned off)
+       # CLOUD_TAMER_PARAM = true (Dev machine assumed; verbose logging turned on)
+       # NOTE: Setting the CLOUD_TAMER_PARAM to a value that does not match the
+       #       assumed host machine will cause the script to fail.
 
 #
 # Change to working directory
@@ -47,8 +51,26 @@ fi
 if [ "${CLOUD_TAMER_PARAM}" != "false" ] && [ "${CLOUD_TAMER_PARAM}" != "true" ]; then
   echo "ERROR: CLOUD_TAMER_PARAM parameter must be true or false"
   exit 1
-else
+elif [ "${CLOUD_TAMER_PARAM}" == "false" ]; then
+
+  # Turn off verbose logging for Jenkins jobs
+  set +x
+  echo "Don't print commands and their arguments as they are executed."
   CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
+
+  # Import the "get temporary AWS credentials via AWS STS assume role" function
+  source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh"
+
+else # [ "${CLOUD_TAMER_PARAM}" == "true" ]
+
+  # Turn on verbose logging for development machine testing
+  set -x
+  echo "Print commands and their arguments as they are executed."
+  CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
+
+  # Import the "get temporary AWS credentials via CloudTamer API" function
+  source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh"
+
 fi
 
 # Set whether load balancer is internal based on "internet-facing" parameter
@@ -167,10 +189,20 @@ fi
 
 # Reset logging
 
-echo "Setting terraform debug level to $DEBUG_LEVEL..."
-export TF_LOG=$DEBUG_LEVEL
-export TF_LOG_PATH=/var/log/terraform/tf.log
-rm -f /var/log/terraform/tf.log
+if [ "${CLOUD_TAMER}" == "true" ]; then
+
+  # Enable terraform logging on development machine
+  echo "Setting terraform debug level to $DEBUG_LEVEL..."
+  export TF_LOG=$DEBUG_LEVEL
+  export TF_LOG_PATH=/var/log/terraform/tf.log
+  rm -f /var/log/terraform/tf.log
+
+else
+
+  # Disable terraform logging on Jenkins
+  export TF_LOG=
+
+fi
 
 #
 # Configure docker environment
@@ -675,7 +707,9 @@ echo "Build and push API and worker to ECR..."
 # Log on to ECR
 
 aws --region "${AWS_DEFAULT_REGION}" ecr get-login-password \
-  | docker login --username AWS --password-stdin "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}.dkr.ecr.us-east-1.amazonaws.com"
+  | docker login --username AWS --password-stdin "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}.dkr.ecr.us-east-1.amazonaws.com" \
+  1> /dev/null \
+  2> /dev/null
 
 # Build API and worker (if creating a new image)
 
@@ -718,7 +752,9 @@ API_ECR_REPO_URI=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-repositorie
   --output text)
 if [ -z "${API_ECR_REPO_URI}" ]; then
   aws --region "${AWS_DEFAULT_REGION}" ecr create-repository \
-    --repository-name "ab2d_api"
+    --repository-name "ab2d_api" \
+    1> /dev/null \
+    2> /dev/null
   API_ECR_REPO_URI=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-repositories \
     --query "repositories[?repositoryName == 'ab2d_api'].repositoryUri" \
     --output text)
@@ -736,7 +772,9 @@ cd "${START_DIR}/.."
 cd "terraform/environments/${CMS_ECR_REPO_ENV}"
 aws --region "${AWS_DEFAULT_REGION}" ecr set-repository-policy \
   --repository-name ab2d_api \
-  --policy-text file://ab2d-ecr-policy.json
+  --policy-text file://ab2d-ecr-policy.json \
+  1> /dev/null \
+  2> /dev/null
 
 # Tag and push two copies (image version and latest version) of API docker image to ECR
 # - image version keeps track of the master commit number (e.g. ab2d-dev-latest-3d0905b)
@@ -755,7 +793,9 @@ WORKER_ECR_REPO_URI=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-reposito
   --output text)
 if [ -z "${WORKER_ECR_REPO_URI}" ]; then
   aws --region "${AWS_DEFAULT_REGION}" ecr create-repository \
-    --repository-name "ab2d_worker"
+    --repository-name "ab2d_worker" \
+    1> /dev/null \
+    2> /dev/null
   WORKER_ECR_REPO_URI=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-repositories \
     --query "repositories[?repositoryName == 'ab2d_worker'].repositoryUri" \
     --output text)
@@ -767,7 +807,9 @@ cd "${START_DIR}/.."
 cd "terraform/environments/${CMS_ECR_REPO_ENV}"
 aws --region "${AWS_DEFAULT_REGION}" ecr set-repository-policy \
   --repository-name ab2d_worker \
-  --policy-text file://ab2d-ecr-policy.json
+  --policy-text file://ab2d-ecr-policy.json \
+  1> /dev/null \
+  2> /dev/null
 
 # Tag and push two copies (image version and latest version) of worker docker image to ECR
 # - image version keeps track of the master commit number (e.g. ab2d-dev-latest-3d0905b)
@@ -792,7 +834,9 @@ IMAGES_TO_DELETE=$(aws --region "${AWS_DEFAULT_REGION}" ecr list-images \
 aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
   --repository-name ab2d_api \
   --image-ids "$IMAGES_TO_DELETE" \
-  || true
+  || true \
+  1> /dev/null \
+  2> /dev/null
 
 # Get old 'latest-commit' api tag
 
@@ -829,14 +873,18 @@ if [ -n "${API_OLD_LATEST_COMMIT_TAG}" ]; then
     aws --region "${AWS_DEFAULT_REGION}" ecr put-image \
       --repository-name ab2d_api \
       --image-tag "${RENAME_API_OLD_LATEST_COMMIT_TAG}" \
-      --image-manifest "${MANIFEST}"
+      --image-manifest "${MANIFEST}" \
+      1> /dev/null \
+      2> /dev/null
   fi
 
   # Remove old api tag
 
   aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
     --repository-name ab2d_api \
-    --image-ids imageTag="${API_OLD_LATEST_COMMIT_TAG}"
+    --image-ids imageTag="${API_OLD_LATEST_COMMIT_TAG}" \
+    1> /dev/null \
+    2> /dev/null
 
 fi
 
@@ -853,7 +901,9 @@ IMAGES_TO_DELETE=$(aws --region "${AWS_DEFAULT_REGION}" ecr list-images \
 aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
   --repository-name ab2d_worker \
   --image-ids "$IMAGES_TO_DELETE" \
-  || true
+  || true \
+  1> /dev/null \
+  2> /dev/null
 
 # Get old 'latest-commit' worker tag
 
@@ -890,14 +940,18 @@ if [ -n "${WORKER_OLD_LATEST_COMMIT_TAG}" ]; then
     aws --region "${AWS_DEFAULT_REGION}" ecr put-image \
       --repository-name ab2d_worker \
       --image-tag "${RENAME_WORKER_OLD_LATEST_COMMIT_TAG}" \
-      --image-manifest "${MANIFEST}"
+      --image-manifest "${MANIFEST}" \
+      1> /dev/null \
+      2> /dev/null
   fi
 
   # Remove old worker tag
 
   aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
     --repository-name ab2d_worker \
-    --image-ids imageTag="${WORKER_OLD_LATEST_COMMIT_TAG}"
+    --image-ids imageTag="${WORKER_OLD_LATEST_COMMIT_TAG}" \
+    1> /dev/null \
+    2> /dev/null
 
 fi
 
@@ -1323,7 +1377,8 @@ else
       --cluster "${TARGET_CMS_ENV}-api" \
       --status DRAINING \
       --container-instances $OLD_API_INSTANCE_LIST \
-      1> /dev/null
+      1> /dev/null \
+      2> /dev/null
 
   fi
   if [ -n "${OLD_WORKER_CONTAINER_INSTANCES}" ]; then
@@ -1340,7 +1395,8 @@ else
       --cluster "${TARGET_CMS_ENV}-worker" \
       --status DRAINING \
       --container-instances $OLD_WORKER_INSTANCE_LIST \
-      1> /dev/null
+      1> /dev/null \
+      2> /dev/null
 
     echo "Allowing all instances to drain for 60 seconds before proceeding..."
     sleep 60
@@ -1367,7 +1423,9 @@ if [ "${API_ASG_COUNT}" -gt 1 ]; then
       | tail -n 1)
     aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-auto-scaling-group \
       --auto-scaling-group-name "${DUPLICATIVE_API_ASG}" \
-      --force-delete || true
+      --force-delete || true \
+      1> /dev/null \
+      2> /dev/null
   done
 fi
 
@@ -1391,7 +1449,9 @@ if [ "${WORKER_ASG_COUNT}" -gt 1 ]; then
       | tail -n 1)
     aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-auto-scaling-group \
       --auto-scaling-group-name "${DUPLICATIVE_WORKER_ASG}" \
-      --force-delete || true
+      --force-delete || true \
+      1> /dev/null \
+      2> /dev/null
   done
 fi
 
@@ -1446,7 +1506,9 @@ else
       | awk '{print $1}')
 
     aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-launch-configuration \
-      --launch-configuration-name "${OLD_LAUNCH_CONFIGURATION}"
+      --launch-configuration-name "${OLD_LAUNCH_CONFIGURATION}" \
+      1> /dev/null \
+      2> /dev/null
     sleep 5
 
     # Note that "*-test-*" and "*-validation-*" launch configurations will be excluded
@@ -1483,7 +1545,10 @@ else
         | awk '{print $1}')
 
       aws --region "${AWS_DEFAULT_REGION}" elbv2 delete-target-group \
-        --target-group-arn "${OLD_TARGET_GROUP_ARN}"
+        --target-group-arn "${OLD_TARGET_GROUP_ARN}" \
+        1> /dev/null \
+        2> /dev/null
+
     done
   fi
 fi

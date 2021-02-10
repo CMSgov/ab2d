@@ -1,8 +1,12 @@
 #!/bin/bash
 
-set -e #Exit on first error
-# set -x #Print commands and their arguments as they are executed.
-set +x #Don't print commands and their arguments as they are executed.
+set -e # Turn on exit on error
+set +x # <-- Do not change this value!
+       # Logging is turned on in a later step based on CLOUD_TAMER_PARAM.
+       # CLOUD_TAMER_PARAM = false (Jenkins assumed; verbose logging turned off)
+       # CLOUD_TAMER_PARAM = true (Dev machine assumed; verbose logging turned on)
+       # NOTE: Setting the CLOUD_TAMER_PARAM to a value that does not match the
+       #       assumed host machine will cause the script to fail.
 
 #
 # Change to working directory
@@ -36,8 +40,26 @@ fi
 if [ "${CLOUD_TAMER_PARAM}" != "false" ] && [ "${CLOUD_TAMER_PARAM}" != "true" ]; then
   echo "ERROR: CLOUD_TAMER_PARAM parameter must be true or false"
   exit 1
-else
+elif [ "${CLOUD_TAMER_PARAM}" == "false" ]; then
+
+  # Turn off verbose logging for Jenkins jobs
+  set +x
+  echo "Don't print commands and their arguments as they are executed."
   CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
+
+  # Import the "get temporary AWS credentials via AWS STS assume role" function
+  source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh"
+
+else # [ "${CLOUD_TAMER_PARAM}" == "true" ]
+
+  # Turn on verbose logging for development machine testing
+  set -x
+  echo "Print commands and their arguments as they are executed."
+  CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
+
+  # Import the "get temporary AWS credentials via CloudTamer API" function
+  source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh"
+
 fi
 
 #
@@ -98,12 +120,18 @@ S3_AUTOMATION_BUCKET_EXISTS=$(aws --region "${AWS_DEFAULT_REGION}" s3api list-bu
   --output text)
 
 if [ -z "${S3_AUTOMATION_BUCKET_EXISTS}" ]; then
+
   aws --region "${AWS_DEFAULT_REGION}" s3api create-bucket \
-    --bucket "${S3_AUTOMATION_BUCKET}"
+    --bucket "${S3_AUTOMATION_BUCKET}" \
+    1> /dev/null \
+    2> /dev/null
 
   aws --region "${AWS_DEFAULT_REGION}" s3api put-public-access-block \
     --bucket "${S3_AUTOMATION_BUCKET}" \
-    --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+    --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true \
+    1> /dev/null \
+    2> /dev/null
+
 fi
 
 # Create or verify S3 environment bucket
@@ -113,12 +141,19 @@ S3_ENVIRONMENT_BUCKET_EXISTS=$(aws --region "${AWS_DEFAULT_REGION}" s3api list-b
   --output text)
 
 if [ -z "${S3_ENVIRONMENT_BUCKET_EXISTS}" ]; then
+
   aws --region "${AWS_DEFAULT_REGION}" s3api create-bucket \
-    --bucket "${TARGET_CMS_ENV}"
+    --bucket "${TARGET_CMS_ENV}" \
+    1> /dev/null \
+    2> /dev/null
+
 
   aws --region "${AWS_DEFAULT_REGION}" s3api put-public-access-block \
     --bucket "${TARGET_CMS_ENV}" \
-    --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+    --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true \
+    1> /dev/null \
+    2> /dev/null
+
 fi
 
 #
@@ -134,20 +169,26 @@ if [ -z "${S3_CLOUDTRAIL_BUCKET_EXISTS}" ]; then
   # Create cloudtrail bucket
 
   aws --region "${AWS_DEFAULT_REGION}" s3api create-bucket \
-    --bucket "${TARGET_CMS_ENV}-cloudtrail"
+    --bucket "${TARGET_CMS_ENV}-cloudtrail" \
+    1> /dev/null \
+    2> /dev/null
 
   # Block public access
 
   aws --region "${AWS_DEFAULT_REGION}" s3api put-public-access-block \
     --bucket "${TARGET_CMS_ENV}-cloudtrail" \
-    --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+    --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true \
+    1> /dev/null \
+    2> /dev/null
 
   # Give "Write objects" and "Read bucket permissions" to the "S3 log delivery group" of the "cloudtrail" bucket
 
   aws --region "${AWS_DEFAULT_REGION}" s3api put-bucket-acl \
     --bucket "${TARGET_CMS_ENV}-cloudtrail" \
     --grant-write URI=http://acs.amazonaws.com/groups/s3/LogDelivery \
-    --grant-read-acp URI=http://acs.amazonaws.com/groups/s3/LogDelivery
+    --grant-read-acp URI=http://acs.amazonaws.com/groups/s3/LogDelivery \
+    1> /dev/null \
+    2> /dev/null
 
   # Add bucket policy to the "cloudtrail" S3 bucket
 
@@ -156,16 +197,28 @@ if [ -z "${S3_CLOUDTRAIL_BUCKET_EXISTS}" ]; then
 
   aws --region "${AWS_DEFAULT_REGION}" s3api put-bucket-policy \
     --bucket "${TARGET_CMS_ENV}-cloudtrail" \
-    --policy file://ab2d-cloudtrail-bucket-policy.json
+    --policy file://ab2d-cloudtrail-bucket-policy.json \
+    1> /dev/null \
+    2> /dev/null
 
 fi
 
 # Reset logging
 
-echo "Setting terraform debug level to $DEBUG_LEVEL..."
-export TF_LOG=$DEBUG_LEVEL
-export TF_LOG_PATH=/var/log/terraform/tf.log
-rm -f /var/log/terraform/tf.log
+if [ "${CLOUD_TAMER}" == "true" ]; then
+
+  # Enable terraform logging on development machine
+  echo "Setting terraform debug level to $DEBUG_LEVEL..."
+  export TF_LOG=$DEBUG_LEVEL
+  export TF_LOG_PATH=/var/log/terraform/tf.log
+  rm -f /var/log/terraform/tf.log
+
+else
+
+  # Disable terraform logging on Jenkins
+  export TF_LOG=
+
+fi
 
 # Initialize and validate terraform for the target environment
 
