@@ -10,7 +10,7 @@ import static org.springframework.test.context.support.TestPropertySourceUtils.a
 
 public class BFDMockServerConfigurationUtil {
 
-    public static final int MOCK_SERVER_PORT = randomMockServerPort();
+    public static final int MOCK_SERVER_PORT = 8080;
 
     public static class PropertyOverrider implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
@@ -18,14 +18,6 @@ public class BFDMockServerConfigurationUtil {
         public void initialize(ConfigurableApplicationContext applicationContext) {
             String baseUrl = "bfd.serverBaseUrl=http://localhost:" + MOCK_SERVER_PORT + "/v1/fhir/";
             addInlinedPropertiesToEnvironment(applicationContext, baseUrl);
-        }
-    }
-
-    private static int randomMockServerPort() {
-        try (ServerSocket serverSocket = new ServerSocket(0)) {
-            return serverSocket.getLocalPort();
-        } catch (IOException ioException) {
-            throw new RuntimeException("could not find open port");
         }
     }
 }

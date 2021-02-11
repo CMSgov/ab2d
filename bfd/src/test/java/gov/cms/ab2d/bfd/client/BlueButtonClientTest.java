@@ -62,7 +62,7 @@ public class BlueButtonClientTest {
     private static final String TEST_NO_RECORD_PATIENT_ID_MBI = "20010000001116";
 
     // Paths to test resources
-    private static final String METADATA_PATH = "bb-test-data/meta.xml";
+    private static final String METADATA_PATH = "bb-test-data/meta.json";
     private static final String SAMPLE_EOB_PATH_PREFIX = "bb-test-data/eob/";
     private static final String SAMPLE_COVERAGE_PATH_PREFIX = "bb-test-data/coverage/";
     private static final String SAMPLE_PATIENT_PATH_PREFIX = "bb-test-data/patient/";
@@ -95,7 +95,7 @@ public class BlueButtonClientTest {
     public static void setupBFDClient() throws IOException {
         mockServer = ClientAndServer.startClientAndServer(MOCK_SERVER_PORT);
         createMockServerExpectation("/v1/fhir/metadata", HttpStatus.SC_OK,
-                getRawXML(METADATA_PATH), List
+                getRawJson(METADATA_PATH), List
                         .of());
 
         // Ensure timeouts are working.
@@ -111,31 +111,31 @@ public class BlueButtonClientTest {
             createMockServerExpectation(
                     "/v1/fhir/Patient/" + patientId,
                     HttpStatus.SC_OK,
-                    getRawXML(SAMPLE_PATIENT_PATH_PREFIX + patientId + ".xml"),
+                    getRawJson(SAMPLE_PATIENT_PATH_PREFIX + patientId + ".json"),
                     List.of()
             );
 
             createMockServerExpectation(
                     "/v1/fhir/ExplanationOfBenefit",
                     HttpStatus.SC_OK,
-                    getRawXML(SAMPLE_EOB_PATH_PREFIX + patientId + ".xml"),
+                    getRawJson(SAMPLE_EOB_PATH_PREFIX + patientId + ".json"),
                     List.of(Parameter.param("patient", patientId),
                             Parameter.param("excludeSAMHSA", "true"))
             );
 
-            createMockServerExpectation(
-                    "/v1/fhir/Coverage",
-                    HttpStatus.SC_OK,
-                    getRawXML(SAMPLE_COVERAGE_PATH_PREFIX + patientId + ".xml"),
-                    Collections
-                            .singletonList(Parameter.param("beneficiary", "Patient/" + patientId))
-            );
+            //createMockServerExpectation(
+            //        "/v1/fhir/Coverage",
+            //        HttpStatus.SC_OK,
+            //        getRawJson(SAMPLE_COVERAGE_PATH_PREFIX + patientId + ".json"),
+            //        Collections
+            //                .singletonList(Parameter.param("beneficiary", "Patient/" + patientId))
+            //);
         }
 
         createMockServerExpectation(
                 "/v1/fhir/Patient",
                 HttpStatus.SC_OK,
-                getRawXML(SAMPLE_PATIENT_PATH_PREFIX + "/bundle/patientbundle.xml"),
+                getRawJson(SAMPLE_PATIENT_PATH_PREFIX + "/bundle/patientbundle.json"),
                 List.of()
         );
 
@@ -143,13 +143,13 @@ public class BlueButtonClientTest {
         createMockServerExpectation(
                 "/v1/fhir/Patient/" + TEST_NO_RECORD_PATIENT_ID,
                 HttpStatus.SC_OK,
-                getRawXML(SAMPLE_PATIENT_PATH_PREFIX + TEST_NO_RECORD_PATIENT_ID + ".xml"),
+                getRawJson(SAMPLE_PATIENT_PATH_PREFIX + TEST_NO_RECORD_PATIENT_ID + ".json"),
                 List.of()
         );
         createMockServerExpectation(
                 "/v1/fhir/ExplanationOfBenefit",
                 HttpStatus.SC_OK,
-                getRawXML(SAMPLE_EOB_PATH_PREFIX + TEST_NO_RECORD_PATIENT_ID + ".xml"),
+                getRawJson(SAMPLE_EOB_PATH_PREFIX + TEST_NO_RECORD_PATIENT_ID + ".json"),
                 List.of(Parameter.param("patient", TEST_NO_RECORD_PATIENT_ID),
                         Parameter.param("excludeSAMHSA", "true"))
         );
@@ -157,13 +157,13 @@ public class BlueButtonClientTest {
         createMockServerExpectation(
                 "/v1/fhir/Patient/" + TEST_NO_RECORD_PATIENT_ID_MBI,
                 HttpStatus.SC_OK,
-                getRawXML(SAMPLE_PATIENT_PATH_PREFIX + TEST_NO_RECORD_PATIENT_ID_MBI + ".xml"),
+                getRawJson(SAMPLE_PATIENT_PATH_PREFIX + TEST_NO_RECORD_PATIENT_ID_MBI + ".json"),
                 List.of()
         );
         createMockServerExpectation(
                 "/v1/fhir/ExplanationOfBenefit",
                 HttpStatus.SC_OK,
-                getRawXML(SAMPLE_EOB_PATH_PREFIX + TEST_NO_RECORD_PATIENT_ID_MBI + ".xml"),
+                getRawJson(SAMPLE_EOB_PATH_PREFIX + TEST_NO_RECORD_PATIENT_ID_MBI + ".json"),
                 List.of(Parameter.param("patient", TEST_NO_RECORD_PATIENT_ID_MBI),
                         Parameter.param("excludeSAMHSA", "true"))
         );
@@ -173,7 +173,7 @@ public class BlueButtonClientTest {
             createMockServerExpectation(
                     "/v1/fhir/ExplanationOfBenefit",
                     HttpStatus.SC_OK,
-                    getRawXML(SAMPLE_EOB_PATH_PREFIX + TEST_PATIENT_ID + "_" + startIndex + ".xml"),
+                    getRawJson(SAMPLE_EOB_PATH_PREFIX + TEST_PATIENT_ID + "_" + startIndex + ".json"),
                     List.of(Parameter.param("patient", TEST_PATIENT_ID),
                             Parameter.param("count", "10"),
                             Parameter.param("startIndex", startIndex),
@@ -185,7 +185,7 @@ public class BlueButtonClientTest {
             createMockServerExpectation(
                     "/v1/fhir/Patient",
                     HttpStatus.SC_OK,
-                    getRawXML(SAMPLE_PATIENT_PATH_PREFIX + "/bundle/patientbundle.xml"),
+                    getRawJson(SAMPLE_PATIENT_PATH_PREFIX + "/bundle/patientbundle.json"),
                     List.of(Parameter.param("_has:Coverage.extension",
                             "https://bluebutton.cms.gov/resources/variables/" + month + "|" + CONTRACT))
             );
@@ -372,7 +372,7 @@ public class BlueButtonClientTest {
                                 .withStatusCode(respCode)
                                 .withHeader(
                                         new Header("Content-Type",
-                                                "application/fhir+xml;charset=UTF-8")
+                                                "application/json;charset=UTF-8")
                                 )
                                 .withBody(payload)
                                 .withDelay(TimeUnit.MILLISECONDS, delayMs)
@@ -380,7 +380,7 @@ public class BlueButtonClientTest {
     }
 
 
-    private static String getRawXML(String path) throws IOException {
+    private static String getRawJson(String path) throws IOException {
         InputStream sampleData =
                 BlueButtonClientTest.class.getClassLoader().getResourceAsStream(path);
 
