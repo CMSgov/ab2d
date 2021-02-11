@@ -41,8 +41,7 @@ class ContractProcessorImplTest {
 
     @BeforeEach
     public void before() {
-        processor = new ContractProcessorImpl(fileService, jobRepository, patientClaimsProcessor,
-                eventLogger, fhirContext);
+        processor = new ContractProcessorImpl(fileService, jobRepository, patientClaimsProcessor, eventLogger);
     }
 
     @Test

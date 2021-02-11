@@ -64,9 +64,7 @@ class ContractProcessorUnitTest {
                 fileService,
                 jobRepository,
                 patientClaimsProcessor,
-                eventLogger,
-                fhirContext
-        );
+                eventLogger);
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 2);
         ReflectionTestUtils.setField(cut, "reportProgressDbFrequency", 2);
         ReflectionTestUtils.setField(cut, "reportProgressLogFrequency", 3);

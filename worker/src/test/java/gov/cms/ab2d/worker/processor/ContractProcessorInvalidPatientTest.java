@@ -62,7 +62,7 @@ class ContractProcessorInvalidPatientTest {
     void setup() {
 
         patientClaimsProcessor = new PatientClaimsProcessorImpl(bfdClient, eventLogger);
-        cut = new ContractProcessorImpl(fileService, jobRepository, patientClaimsProcessor, eventLogger, fhirContext);
+        cut = new ContractProcessorImpl(fileService, jobRepository, patientClaimsProcessor, eventLogger);
         tracker = ProgressTracker.builder()
                 .jobUuid(jobId)
                 .failureThreshold(100)

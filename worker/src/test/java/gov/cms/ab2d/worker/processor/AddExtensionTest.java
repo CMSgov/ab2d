@@ -38,16 +38,13 @@ public class AddExtensionTest {
     @Mock
     private LogManager eventLogger;
 
-    @Mock
-    private FhirContext fhirContext;
-
     private ContractProcessorImpl cut;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.initMocks(this);
         cut = new ContractProcessorImpl(fileService, jobRepository,
-                patientClaimsProcessor, eventLogger, fhirContext);
+                patientClaimsProcessor, eventLogger);
     }
 
     @Test

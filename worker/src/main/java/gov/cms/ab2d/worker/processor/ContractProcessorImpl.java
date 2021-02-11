@@ -66,7 +66,6 @@ public class ContractProcessorImpl implements ContractProcessor {
     private final JobRepository jobRepository;
     private final PatientClaimsProcessor patientClaimsProcessor;
     private final LogManager eventLogger;
-    private final FhirContext fhirContext;
 
     /**
      * Process the contract - retrieve all the patients for the contract and create a thread in the
@@ -233,7 +232,7 @@ public class ContractProcessorImpl implements ContractProcessor {
     }
 
     private int writeOutResource(List<IBaseResource> eobs, StreamHelper helper, Versions.FhirVersions version) {
-        var jsonParser = fhirContext.newJsonParser();
+        var jsonParser = Versions.getContextFromVersion(version).newJsonParser();
 
         String payload = "";
         int resourceCount = 0;
@@ -335,7 +334,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         var errMsg = ExceptionUtils.getRootCauseMessage(e);
         IBaseResource operationOutcome = FHIRUtil.getErrorOutcome(errMsg, version);
 
-        var jsonParser = fhirContext.newJsonParser();
+        var jsonParser = Versions.getContextFromVersion(version).newJsonParser();
         var payload = jsonParser.encodeResourceToString(operationOutcome) + System.lineSeparator();
 
         var byteArrayOutputStream = new ByteArrayOutputStream();
