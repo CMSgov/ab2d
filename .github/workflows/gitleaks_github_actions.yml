@@ -8,18 +8,17 @@ jobs:
     runs-on: ubuntu-latest
     env:
       REPO: https://github.com/CMSgov/ab2d
-      REMOTE_EXCLUDES_URL: https://raw.githubusercontent.com/semanticbits/ab2d-gitleaks-automation/master/gitleaks.toml
-      GITLEAKS_VERSION: v3.0.3
+      REMOTE_EXCLUDES_URL: https://raw.githubusercontent.com/semanticbits/ab2d-gitleaks-automation/master/ab2d/gitleaks.toml
+      GITLEAKS_VERSION: v7.2.2
     steps:
     - name: Execute Gitleaks
       run: |
-        curl -H 'Authorization: token ${{ secrets.ACCESS_TOKEN_GITLEAKS }}' ${REMOTE_EXCLUDES_URL} -o gitleaks.toml
-        #wget ${REMOTE_EXCLUDES_URL} -O gitleaks.toml
+        wget ${REMOTE_EXCLUDES_URL} -O gitleaks.toml
         wget https://github.com/zricethezav/gitleaks/releases/download/${GITLEAKS_VERSION}/gitleaks-linux-amd64 -O gitleaks
         chmod +x gitleaks
         echo ${GITHUB_SHA}
-        echo "gitleaks --repo=${REPO} -v --pretty --redact --commit=${GITHUB_SHA} --config=gitleaks.toml"
-        ./gitleaks --repo=${REPO} -v --pretty --redact --commit=${GITHUB_SHA} --config=gitleaks.toml
+        echo "gitleaks --repo-url=${REPO} -v --pretty --redact --commit=${GITHUB_SHA} --config-path=gitleaks.toml"
+        ./gitleaks --repo-url=${REPO} -v --pretty --redact --commit=${GITHUB_SHA} --config-path=gitleaks.toml
     - name: Slack notification
       if: failure()
       env:
