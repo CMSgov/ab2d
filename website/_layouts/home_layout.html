@@ -22,13 +22,19 @@ layout: new
         }
 
         $.ajax({
-            url: 'https://6nmneasww4.execute-api.us-east-1.amazonaws.com/status',
+            url: 'https://pk3dch6jka.execute-api.us-east-1.amazonaws.com/status/ab2dapi',
+            type: "GET",
             crossDomain: true,
             success: function(res) {
-                console.log("success")
-                $('#api-up-down-icon').addClass('success-api');
-                $('#api-status-text').text('Online');
-                $('.api-status').show();
+                if(res.body.includes("Up")){
+                    $('#api-up-down-icon').addClass('success-api');
+                    $('#api-status-text').text('Online');
+                    $('.api-status').show();
+                } else {
+                    $('#api-up-down-icon').addClass('fail-api');
+                    $('#api-status-text').text('Offline');
+                    $('.api-status').show(); 
+                }
             },
             error: function(err) {
                 console.log("error")
