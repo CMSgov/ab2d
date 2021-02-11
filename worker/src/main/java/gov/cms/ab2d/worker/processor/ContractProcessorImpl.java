@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.processor;
 
-import ca.uhn.fhir.context.FhirContext;
 import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Token;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;

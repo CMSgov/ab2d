@@ -54,7 +54,6 @@ class ContractProcessorInvalidPatientTest {
     private ContractProcessor cut;
     private ContractData contractData;
     private ProgressTracker tracker;
-    private FhirContext fhirContext = FhirContext.forDstu3();
     private String jobId = "1234";
     private String contractId = "ABC";
 
