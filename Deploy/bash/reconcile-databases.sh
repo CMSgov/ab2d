@@ -301,16 +301,16 @@ psql \
   --dbname="${DATABASE_NAME}" \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
-  --command="SELECT setval(‘bene_coverage_period_id_seq’, (SELECT MAX(id) FROM ${DATABASE_SCHEMA_NAME}.bene_coverage_period));"
+  --command="SELECT setval('bene_coverage_period_id_seq', (SELECT MAX(id) FROM ${DATABASE_SCHEMA_NAME}.bene_coverage_period));"
 
 psql \
   --dbname="${DATABASE_NAME}" \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
-  --command="SELECT setval(‘event_bene_coverage_search_status_change_id_seq’, (SELECT MAX(id) FROM ${DATABASE_SCHEMA_NAME}.event_bene_coverage_search_status_change));"
+  --command="SELECT setval('event_bene_coverage_search_status_change_id_seq', (SELECT MAX(id) FROM ${DATABASE_SCHEMA_NAME}.event_bene_coverage_search_status_change));"
 
 psql \
   --dbname="${DATABASE_NAME}" \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
-  --command="SELECT setval(‘coverage_id_seq’, (SELECT MAX(id) FROM ${DATABASE_SCHEMA_NAME}.coverage));"
+  --command="SELECT setval('coverage_id_seq', (SELECT MAX(id) FROM ${DATABASE_SCHEMA_NAME}.coverage));"
