@@ -22,14 +22,17 @@ public class KinesisEventLogger implements EventLogger {
     private final KinesisConfig config;
     private final AmazonKinesisFirehose client;
     private final String appEnv;
+    private final KinesisMode kinesisEnabled;
     private final String streamId;
 
     public KinesisEventLogger(KinesisConfig config, AmazonKinesisFirehose client,
                               @Value("${execution.env}") String appEnv,
+                              @Value("${eventlogger.kinesis.enabled}") KinesisMode kinesisEnabled,
                               @Value("${eventlogger.kinesis.stream.prefix:}") String streamId) {
         this.config = config;
         this.client = client;
         this.appEnv = appEnv;
+        this.kinesisEnabled = kinesisEnabled;
         this.streamId = streamId;
     }
 
@@ -40,9 +43,13 @@ public class KinesisEventLogger implements EventLogger {
 
     public void log(LoggableEvent event, boolean block) {
         event.setEnvironment(appEnv);
-        if (appEnv == null || appEnv.equalsIgnoreCase("local")) {
+
+        // If kinesis is disabled then return immediately
+        if (kinesisEnabled == KinesisMode.NONE) {
             return;
         }
+
+        // Otherwise assume logging is functional
         try {
             ThreadPoolTaskExecutor ex = config.kinesisLogProcessingPool();
             KinesisEventProcessor processor = new KinesisEventProcessor(event, client, streamId);

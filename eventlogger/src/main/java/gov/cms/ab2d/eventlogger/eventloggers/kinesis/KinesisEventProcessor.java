@@ -6,6 +6,7 @@ import com.amazonaws.services.kinesisfirehose.model.PutRecordRequest;
 import com.amazonaws.services.kinesisfirehose.model.PutRecordResult;
 import com.amazonaws.services.kinesisfirehose.model.Record;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.codehaus.jettison.json.JSONObject;
@@ -26,17 +27,12 @@ import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.eventlogger.utils.UtilMethods.camelCaseToUnderscore;
 
+@AllArgsConstructor
 @Slf4j
 public class KinesisEventProcessor implements Callable<Void> {
+    private final LoggableEvent event;
     private final AmazonKinesisFirehose client;
     private final String streamId;
-    private final LoggableEvent event;
-
-    public KinesisEventProcessor(LoggableEvent event, AmazonKinesisFirehose client, String streamPrefix) {
-        this.client = client;
-        this.streamId = streamPrefix;
-        this.event = event;
-    }
 
     /**
      * Convert an event to a JSON string doing the following:
