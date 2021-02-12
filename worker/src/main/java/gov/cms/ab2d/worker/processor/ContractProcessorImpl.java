@@ -137,6 +137,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      * On using new-relic tokens with async calls
      * See https://docs.newrelic.com/docs/agents/java-agent/async-instrumentation/java-agent-api-asynchronous-applications
      *
+     * @param version      - the FHIR version to search
      * @param patient      - process to process
      * @param contractData - the contract data information
      * @return a Future<EobSearchResult>

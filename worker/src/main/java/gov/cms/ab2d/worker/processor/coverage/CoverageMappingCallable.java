@@ -93,7 +93,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
                 log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}",
                         contractNumber, year, month, bundleNo);
 
-                bundle = bfdClient.requestNextBundleFromServer(Versions.FhirVersions.STU3, bundle);
+                bundle = bfdClient.requestNextBundleFromServer(version, bundle);
 
                 availableLinks = BundleUtils.getAvailableLinksPretty(bundle);
 

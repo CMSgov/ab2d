@@ -46,6 +46,10 @@ public class Versions {
         { put (FhirVersions.R4, "org.hl7.fhir.r4.model"); }
     };
 
+    /**
+     * The name of the variable in the properties variable that defines the location of
+     * the BFD endpoint
+     */
     private static final Map<FhirVersions, String> SERVER_VARIABLE = new HashMap<>() {
         { put (FhirVersions.STU3, "bfd.serverBaseUrlStu3"); }
         { put (FhirVersions.R4, "bfd.serverBaseUrlR4"); }

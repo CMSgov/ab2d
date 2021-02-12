@@ -3,12 +3,9 @@ package gov.cms.ab2d.bfd.client;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 
-import java.io.IOException;
-import java.net.ServerSocket;
-
 import static org.springframework.test.context.support.TestPropertySourceUtils.addInlinedPropertiesToEnvironment;
 
-public class BFDMockServerConfigurationUtil {
+public class BFDMockServerConfigurationUtilSTU3 {
 
     public static final int MOCK_SERVER_PORT = 8080;
 

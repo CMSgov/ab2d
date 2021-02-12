@@ -1,0 +1,15 @@
+{
+  "resourceType": "Bundle",
+  "id": "a6b7dcc2-d0f6-48f0-94a9-842c666446a2",
+  "meta": {
+    "lastUpdated": "2020-12-09T16:19:38.679+00:00"
+  },
+  "type": "searchset",
+  "total": 0,
+  "link": [
+    {
+      "relation": "self",
+      "url": "https://prod-sbx.bfd.cms.gov/v2/fhir/Patient?_format=json&identifier=https%3A%2F%2Fbluebutton.cms.gov%2Fresources%2Fidentifier%2Fmbi-hash%7C832dd5dcf5941dcf28cc067c39bd071beb445edcf804aa6d402d4a6715d82ecd"
+    }
+  ]
+}

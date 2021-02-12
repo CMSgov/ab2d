@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.processor;
 
-import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.common.repository.JobRepository;
@@ -33,9 +32,6 @@ class ContractProcessorImplTest {
 
     @Mock
     private JobRepository jobRepository;
-
-    @Mock
-    private FhirContext fhirContext;
 
     private ContractProcessorImpl processor;
 
