@@ -1,16 +1,18 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.CoverageService;
+import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.fhir.Versions;
-import gov.cms.ab2d.worker.config.CoverageUpdateConfig;
 import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,11 +26,14 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.fhir.IdentifierUtils.BENEFICIARY_ID;
+import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -86,8 +91,14 @@ class CoverageUpdateAndProcessorTest {
     private CoverageDriverImpl driver;
     private CoverageProcessorImpl processor;
 
+    private List<Properties> originalValues = new ArrayList<>();
+
     @BeforeEach
     void before() {
+
+        // Set values used to find jobs to update
+        addPropertiesTableValues();
+        originalValues.clear();
 
         contract = dataSetup.setupContract("TST-123");
         contract.setAttestedOn(AB2D_EPOCH.toOffsetDateTime());
@@ -104,10 +115,8 @@ class CoverageUpdateAndProcessorTest {
         taskExecutor.setCorePoolSize(3);
         taskExecutor.initialize();
 
-        CoverageUpdateConfig config = new CoverageUpdateConfig(PAST_MONTHS, STALE_DAYS, STUCK_HOURS);
-
         processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS, false);
-        driver = new CoverageDriverImpl(coverageSearchRepo, contractService, coverageService, propertiesService, processor, config, searchLock);
+        driver = new CoverageDriverImpl(coverageSearchRepo, contractService, coverageService, propertiesService, processor, searchLock);
     }
 
     @AfterEach
@@ -115,6 +124,38 @@ class CoverageUpdateAndProcessorTest {
         processor.shutdown();
 
         dataSetup.cleanup();
+
+        propertiesService.updateProperties(originalValues.stream().map(properties -> {
+            PropertiesDTO dto = new PropertiesDTO();
+            dto.setKey(properties.getKey());
+            dto.setValue(properties.getValue());
+            return dto;
+        }).collect(toList()));
+    }
+
+    private void addPropertiesTableValues() {
+        List<PropertiesDTO> propertiesDTOS = new ArrayList<>();
+
+        PropertiesDTO pastMonths = new PropertiesDTO();
+        pastMonths.setKey(Constants.COVERAGE_SEARCH_UPDATE_MONTHS);
+        pastMonths.setValue("" + PAST_MONTHS);
+        propertiesDTOS.add(pastMonths);
+
+        PropertiesDTO staleDays = new PropertiesDTO();
+        staleDays.setKey(Constants.COVERAGE_SEARCH_STALE_DAYS);
+        staleDays.setValue("" + STALE_DAYS);
+        propertiesDTOS.add(staleDays);
+
+        PropertiesDTO stuckHours = new PropertiesDTO();
+        stuckHours.setKey(Constants.COVERAGE_SEARCH_STUCK_HOURS);
+        stuckHours.setValue("" + STUCK_HOURS);
+        propertiesDTOS.add(stuckHours);
+
+        originalValues.add(propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_UPDATE_MONTHS));
+        originalValues.add(propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_STALE_DAYS));
+        originalValues.add(propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_STUCK_HOURS));
+
+        propertiesService.updateProperties(propertiesDTOS);
     }
 
     @DisplayName("Loading coverage periods")
