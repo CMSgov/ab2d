@@ -98,7 +98,19 @@ public class PropertiesServiceImpl implements PropertiesService {
             validateString(key, propertiesDTO);
             addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
             break;
-
+        // The maximums for these values are arbitrary and may need to be changed
+        case COVERAGE_SEARCH_UPDATE_MONTHS:
+            validateInt(key, propertiesDTO, 0, 12);
+            addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
+            break;
+        case COVERAGE_SEARCH_STALE_DAYS:
+            validateInt(key, propertiesDTO, 1, 31);
+            addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
+            break;
+        case COVERAGE_SEARCH_STUCK_HOURS:
+            validateInt(key, propertiesDTO, 12, 168);
+            addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
+            break;
         default:
             break;
         }
