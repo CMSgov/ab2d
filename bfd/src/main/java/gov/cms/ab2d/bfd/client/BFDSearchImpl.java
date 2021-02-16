@@ -27,16 +27,15 @@ public class BFDSearchImpl implements BFDSearch {
     private final HttpClient httpClient;
 
     private final IParser parser;
-
     private final Environment environment;
+    private final String serverBaseUrl;
 
-    @Value("${bfd.serverBaseUrl}")
-    private String serverBaseUrl;
-
-    public BFDSearchImpl(HttpClient httpClient, IParser iParser, Environment environment) {
+    public BFDSearchImpl(HttpClient httpClient, IParser iParser,
+                         Environment environment, @Value("${bfd.serverBaseUrl}") String serverBaseUrl) {
         this.httpClient = httpClient;
         this.parser = iParser;
         this.environment = environment;
+        this.serverBaseUrl = serverBaseUrl;
     }
 
     @Override

@@ -40,7 +40,7 @@ class CoverageMappingCallableTest {
 
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20, 2020);
 
-        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
         when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
 
@@ -72,6 +72,47 @@ class CoverageMappingCallableTest {
         assertEquals(20, results.getBeneficiaryIds().size());
     }
 
+    @DisplayName("Successfully completing with skip billable period marks as done and complete")
+    @Test
+    void callableFunctionsWithSkipBillablePeriod() {
+
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = buildBundle(0, 10, 2020);
+        bundle1.setLink(singletonList(new org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent().setRelation(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT)));
+
+        org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20, 2020);
+
+        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
+
+        Contract contract = new Contract();
+        contract.setContractNumber("TESTING");
+        contract.setContractName("TESTING");
+
+        CoveragePeriod period = new CoveragePeriod();
+        period.setContract(contract);
+        period.setYear(2020);
+        period.setMonth(1);
+
+        CoverageSearchEvent cse = new CoverageSearchEvent();
+        cse.setCoveragePeriod(period);
+
+        CoverageSearch search = new CoverageSearch();
+        search.setPeriod(period);
+
+        CoverageMapping mapping = new CoverageMapping(cse, search);
+        CoverageMappingCallable callable = new CoverageMappingCallable(mapping, bfdClient, true);
+
+        assertFalse(callable.isCompleted());
+
+        CoverageMapping results = callable.call();
+        assertEquals(mapping, results);
+
+        assertTrue(callable.isCompleted());
+        assertTrue(mapping.isSuccessful());
+        assertEquals(20, results.getBeneficiaryIds().size());
+    }
+
     @DisplayName("Multiple mbis captured")
     @Test
     void multipleMbis() {
@@ -81,7 +122,7 @@ class CoverageMappingCallableTest {
 
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20, 3,2020);
 
-        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
         when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
 
@@ -135,7 +176,7 @@ class CoverageMappingCallableTest {
 
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20, 3,2020);
 
-        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
         when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
 
@@ -186,7 +227,7 @@ class CoverageMappingCallableTest {
 
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20, 2019);
 
-        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
         when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
 
@@ -237,7 +278,7 @@ class CoverageMappingCallableTest {
             patient.setIdentifier(emptyList());
         });
 
-        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
         when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
 

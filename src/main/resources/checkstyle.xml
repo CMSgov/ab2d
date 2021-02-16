@@ -75,7 +75,11 @@
     <!--   <property name="fileExtensions" value="java"/> -->
     <!-- </module> -->
 
+    <module name="SuppressWarningsFilter" />
+
     <module name="TreeWalker">
+
+        <module name="SuppressWarningsHolder"/>
 
         <!-- Checks for Naming Conventions.                  -->
         <!-- See https://checkstyle.org/config_naming.html -->
@@ -147,7 +151,6 @@
         <module name="ArrayTypeStyle"/>
         <module name="TodoComment"/>
         <module name="UpperEll"/>
-
     </module>
 
 </module>

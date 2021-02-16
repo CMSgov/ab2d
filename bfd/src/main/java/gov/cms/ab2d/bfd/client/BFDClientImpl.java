@@ -2,7 +2,6 @@ package gov.cms.ab2d.bfd.client;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
-import ca.uhn.fhir.rest.gclient.ICriterion;
 import ca.uhn.fhir.rest.gclient.TokenClientParam;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
@@ -13,8 +12,6 @@ import gov.cms.ab2d.fhir.SearchUtils;
 import gov.cms.ab2d.fhir.Versions;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IBaseConformance;
@@ -24,13 +21,6 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
-import javax.validation.constraints.NotEmpty;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.KeySpec;
 import java.time.OffsetDateTime;
 
 /**
@@ -43,36 +33,22 @@ import java.time.OffsetDateTime;
 public class BFDClientImpl implements BFDClient {
 
     public static final String PTDCNTRCT_URL_PREFIX = "https://bluebutton.cms.gov/resources/variables/ptdcntrct";
-
-    @Value("${bfd.eob.pagesize}")
-    private int pageSize;
-
-    @Value("${bfd.contract.to.bene.pagesize}")
-    private int contractToBenePageSize;
+    public static final String YEAR_URL_PREFIX = "https://bluebutton.cms.gov/resources/variables/rfrnc_yr";
 
     private final IGenericClient client;
-
-    @Value("${bfd.hicn.hash}")
-    private String hicnHash;
-
-    @Value("${bfd.mbi.hash}")
-    private String mbiHash;
-
-    @NotEmpty
-    @Value("${bfd.hash.pepper}")
-    private String bfdHashPepper;
-
-    @Value("${bfd.hash.iter}")
-    private int bfdHashIter;
-
-    private FhirContext fhirContext;
-
+    private final FhirContext fhirContext;
     private final BFDSearch bfdSearch;
+    private final int pageSize;
+    private final int contractToBenePageSize;
 
-    public BFDClientImpl(IGenericClient client, FhirContext fhirContext, BFDSearch bfdSearch) {
+    public BFDClientImpl(IGenericClient client, FhirContext fhirContext, BFDSearch bfdSearch,
+                         @Value("${bfd.eob.pagesize}") int pageSize,
+                         @Value("${bfd.contract.to.bene.pagesize}") int contractToBenePageSize) {
         this.client = client;
         this.fhirContext = fhirContext;
         this.bfdSearch = bfdSearch;
+        this.pageSize = pageSize;
+        this.contractToBenePageSize = contractToBenePageSize;
     }
 
     /**
@@ -138,80 +114,6 @@ public class BFDClientImpl implements BFDClient {
         return result;
     }
 
-    /**
-     * Pull all the data (specifically IDs) from the patient
-     *
-     * @param hicn - The HICN id
-     * @return The bundle containing the patient object
-     */
-    @Override
-    @Retryable(
-            maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",
-            backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
-            exclude = { ResourceNotFoundException.class }
-    )
-    public IBaseBundle requestPatientByHICN(String hicn) {
-        String hicnHashVal = hashIdentifier(hicn, bfdHashPepper, bfdHashIter);
-        var hicnHashEquals = generateHash(hicnHash, hicnHashVal);
-        return clientSearch(hicnHashEquals);
-    }
-
-    private IBaseBundle clientSearch(@SuppressWarnings("rawtypes") ICriterion hashEquals) {
-        Versions.FhirVersions version = getVersion();
-        return client.search()
-                .forResource(SearchUtils.getPatientClass(version))
-                .where(hashEquals)
-                .withAdditionalHeader(BFDClient.BFD_HDR_BULK_CLIENTID, BFDClient.BFD_CLIENT_ID)
-                .withAdditionalHeader(BFDClient.BFD_HDR_BULK_JOBID, getJobId())
-                .withAdditionalHeader("IncludeIdentifiers", "true")
-                .returnBundle(SearchUtils.getBundleClass(version))
-                .encodedJson()
-                .execute();
-    }
-
-    @SuppressWarnings("rawtypes")
-    private ICriterion generateHash(String hash, String hashVal) {
-        return new TokenClientParam("identifier").exactly()
-                .systemAndCode(hash, hashVal);
-    }
-
-    /**
-     * Pull all the data (specifically IDs) from the patient
-     *
-     * @param mbi - The MBI id
-     * @return The bundle containing the patient object
-     */
-    @Override
-    @Retryable(
-            maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",
-            backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
-            exclude = { ResourceNotFoundException.class }
-    )
-    public IBaseBundle requestPatientByMBI(String mbi) {
-        String hashVal = hashIdentifier(mbi, bfdHashPepper, bfdHashIter);
-        var mbiHashEquals = generateHash(mbiHash, hashVal);
-        return clientSearch(mbiHashEquals);
-    }
-
-    /**
-     * Hash the identifier
-     *
-     * @param identifier - The patient identifier
-     * @param pepper - The pepper to put into the algorithm
-     * @param iterations - The number of iterations
-     * @return the hashed value
-     */
-    private static String hashIdentifier(String identifier, String pepper, int iterations) {
-        try {
-            KeySpec keySpec = new PBEKeySpec(identifier.toCharArray(), Hex.decodeHex(pepper), iterations, 256);
-            SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-            SecretKey secretKey = skf.generateSecret(keySpec);
-            return Hex.encodeHexString(secretKey.getEncoded());
-        } catch (DecoderException | NoSuchAlgorithmException | InvalidKeySpecException e) {
-            throw new ResourceNotFoundException("Could not hash identifier");
-        }
-    }
-
     @Override
     @Retryable(
             maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",
@@ -246,13 +148,13 @@ public class BFDClientImpl implements BFDClient {
     )
     public IBaseBundle requestPartDEnrolleesFromServer(String contractNumber, int month) {
         var monthParameter = createMonthParameter(month);
-        var theCriterion = new TokenClientParam("_has:Coverage.extension")
+        var monthCriterion = new TokenClientParam("_has:Coverage.extension")
                 .exactly()
                 .systemAndIdentifier(monthParameter, contractNumber);
 
         return client.search()
                 .forResource(SearchUtils.getPatientClass(getVersion()))
-                .where(theCriterion)
+                .where(monthCriterion)
                 .withAdditionalHeader(BFDClient.BFD_HDR_BULK_CLIENTID, BFDClient.BFD_CLIENT_ID)
                 .withAdditionalHeader(BFDClient.BFD_HDR_BULK_JOBID, getJobId())
                 .withAdditionalHeader("IncludeIdentifiers", "mbi")
@@ -262,6 +164,35 @@ public class BFDClientImpl implements BFDClient {
                 .execute();
     }
 
+    @Override
+    @Retryable(
+            maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",
+            backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
+            exclude = { ResourceNotFoundException.class, InvalidRequestException.class }
+    )
+    public IBaseBundle requestPartDEnrolleesFromServer(String contractNumber, int month, int year) {
+        var monthParameter = createMonthParameter(month);
+        var monthCriterion = new TokenClientParam("_has:Coverage.extension")
+                .exactly()
+                .systemAndIdentifier(monthParameter, contractNumber);
+        var yearCriterion = new TokenClientParam("_has:Coverage.rfrncyr")
+                .exactly()
+                .systemAndIdentifier(YEAR_URL_PREFIX, createYearParameter(year));
+
+
+        return client.search()
+                .forResource(SearchUtils.getPatientClass(getVersion()))
+                .where(monthCriterion)
+                .and(yearCriterion)
+                .withAdditionalHeader(BFDClient.BFD_HDR_BULK_CLIENTID, BFDClient.BFD_CLIENT_ID)
+                .withAdditionalHeader(BFDClient.BFD_HDR_BULK_JOBID, getJobId())
+                .withAdditionalHeader("IncludeIdentifiers", "mbi")
+                .count(contractToBenePageSize)
+                .returnBundle(SearchUtils.getBundleClass(getVersion()))
+                .encodedJson()
+                .prettyPrint()
+                .execute();
+    }
     @Override
     @Retryable(
             maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",
@@ -282,6 +213,11 @@ public class BFDClientImpl implements BFDClient {
     private String createMonthParameter(int month) {
         final String zeroPaddedMonth = StringUtils.leftPad("" + month, 2, '0');
         return PTDCNTRCT_URL_PREFIX + zeroPaddedMonth;
+    }
+
+    // Pad year to expected four digits
+    private String createYearParameter(int year) {
+        return StringUtils.leftPad("" + year, 4, '0');
     }
 
     @Override

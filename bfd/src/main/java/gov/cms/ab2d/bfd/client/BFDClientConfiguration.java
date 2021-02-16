@@ -24,43 +24,47 @@ import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.concurrent.TimeUnit;
 
-@Configuration
-@PropertySource("classpath:application.bfd.properties")
-@Slf4j
 /**
  * Credits: most of the code in this class has been copied over from https://github
  * .com/CMSgov/dpc-app
  */
+@Configuration
+@PropertySource("classpath:application.bfd.properties")
+@Slf4j
 public class BFDClientConfiguration {
 
     public static final String JKS = "JKS";
 
-    @Value("${bfd.keystore.location}")
-    private String keystorePath;
+    private final String keystorePath;
+    private final String keystorePassword;
+    private final int connectionTimeout;
+    private final int socketTimeout;
+    private final int requestTimeout;
+    private final String serverBaseUrl;
+    private final int maxConnPerRoute;
+    private final int maxConnTotal;
+    private final int connectionTTL;
 
-    @Value("${bfd.keystore.password}")
-    private String keystorePassword;
-
-    @Value("${bfd.connectionTimeout}")
-    private int connectionTimeout;
-
-    @Value("${bfd.socketTimeout}")
-    private int socketTimeout;
-
-    @Value("${bfd.requestTimeout}")
-    private int requestTimeout;
-
-    @Value("${bfd.serverBaseUrl}")
-    private String serverBaseUrl;
-
-    @Value("${bfd.http.maxConnPerRoute}")
-    private int maxConnPerRoute;
-
-    @Value("${bfd.http.maxConnTotal}")
-    private int maxConnTotal;
-
-    @Value("${bfd.http.connTTL}")
-    private int connectionTTL;
+    @SuppressWarnings("checkstyle:parameternumber")
+    public BFDClientConfiguration(@Value("${bfd.keystore.location}") String keystorePath,           // NO PMD
+                                  @Value("${bfd.keystore.password}") String keystorePassword,
+                                  @Value("${bfd.connectionTimeout}") int connectionTimeout,
+                                  @Value("${bfd.socketTimeout}") int socketTimeout,
+                                  @Value("${bfd.requestTimeout}") int requestTimeout,
+                                  @Value("${bfd.serverBaseUrl}") String serverBaseUrl,
+                                  @Value("${bfd.http.maxConnPerRoute}") int maxConnPerRoute,
+                                  @Value("${bfd.http.maxConnTotal}") int maxConnTotal,
+                                  @Value("${bfd.http.connTTL}") int connectionTTL) {
+        this.keystorePath = keystorePath;
+        this.keystorePassword = keystorePassword;
+        this.connectionTimeout = connectionTimeout;
+        this.socketTimeout = socketTimeout;
+        this.requestTimeout = requestTimeout;
+        this.serverBaseUrl = serverBaseUrl;
+        this.maxConnPerRoute = maxConnPerRoute;
+        this.maxConnTotal = maxConnTotal;
+        this.connectionTTL = connectionTTL;
+    }
 
     @Bean
     public IGenericClient bfdFhirRestClient(FhirContext fhirContext, HttpClient httpClient) {

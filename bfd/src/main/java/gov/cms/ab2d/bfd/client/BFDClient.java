@@ -14,17 +14,20 @@ public interface BFDClient {
     IBaseBundle requestEOBFromServer(String patientID);
     IBaseBundle requestEOBFromServer(String patientID, OffsetDateTime sinceTime);
     IBaseBundle requestNextBundleFromServer(IBaseBundle bundle);
-    IBaseBundle requestPatientByHICN(String patientId);
-    IBaseBundle requestPatientByMBI(String patientId);
 
     /**
-     * Request BFD for a list of all active patients in a contract for a specific month
+     * Request BFD for a list of all active patients in a contract for a specific month.
      *
-     * @param contractNumber
-     * @param month
+     * This month will be accurate for the current calendar year only
+     *
+     * @param contractNumber contract number (Z0000)
+     * @param month month of the year
      * @return Bundle of Patient Resources
      */
+    @Deprecated
     IBaseBundle requestPartDEnrolleesFromServer(String contractNumber, int month);
+
+    IBaseBundle requestPartDEnrolleesFromServer(String contractNumber, int month, int year);
 
     IBaseConformance capabilityStatement();
 

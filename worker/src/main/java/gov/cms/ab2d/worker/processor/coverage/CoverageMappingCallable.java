@@ -17,11 +17,11 @@ import static java.util.stream.Collectors.*;
 
 /**
  * Queries BFD for all of the members of a contract during a given month.
+ *
  */
 @Slf4j
 public class CoverageMappingCallable implements Callable<CoverageMapping> {
 
-    static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
     public static final String CURRENCY_IDENTIFIER =
             "https://bluebutton.cms.gov/resources/codesystem/identifier-currency";
     public static final String CURRENT_MBI = "current";
@@ -69,7 +69,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
 
             BFDClient.BFD_BULK_JOB_ID.set(coverageMapping.getJobId());
 
-            IBaseBundle bundle = getBundle(contractNumber, month);
+            IBaseBundle bundle = getBundle();
             patientIds.addAll(extractAndFilter(bundle));
 
             String availableLinks = BundleUtils.getAvailableLinks(bundle);
@@ -181,15 +181,27 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     }
 
     /**
-     * given a contractNumber & a month, calls BFD API to find all patients active in the contract during the month
+     * Given a contractNumber & a month, calls BFD API to find all patients active in the contract during the month.
      *
-     * @param contractNumber
-     * @param month
+     * This only pulls the first page of the results, all other pages must be pulled using requestNextBundle.
      * @return a FHIR bundle of resources containing active patients
      */
-    private IBaseBundle getBundle(String contractNumber, int month) {
+    private IBaseBundle getBundle() {
+
+        String contractNumber = coverageMapping.getContract().getContractNumber();
+        int month = coverageMapping.getPeriod().getMonth();
+
         try {
-            return bfdClient.requestPartDEnrolleesFromServer(contractNumber, month);
+
+            // If running against incomplete synthetic data
+            // use the reference year provided for all sandbox data
+            // For some reason this year is always 3
+            if (skipBillablePeriodCheck) {
+                return bfdClient.requestPartDEnrolleesFromServer(contractNumber, month, 3);
+            }
+
+            // If running with production data include the year with the query
+            return bfdClient.requestPartDEnrolleesFromServer(contractNumber, month, year);
         } catch (Exception e) {
             final Throwable rootCause = ExceptionUtils.getRootCause(e);
             log.error("Error while calling for Contract-2-Bene API : {}", e.getMessage(), rootCause);
