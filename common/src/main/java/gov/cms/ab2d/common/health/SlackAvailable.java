@@ -1,15 +1,16 @@
 package gov.cms.ab2d.common.health;
 
 import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
+@AllArgsConstructor
 @Component
 public class SlackAvailable {
-    @Autowired
-    private SlackLogger slackLogger;
+
+    private final SlackLogger slackLogger;
 
     public boolean slackAvailable(String message) {
-        return slackLogger.logTestMsg(message);
+        return slackLogger.logTrace(message);
     }
 }

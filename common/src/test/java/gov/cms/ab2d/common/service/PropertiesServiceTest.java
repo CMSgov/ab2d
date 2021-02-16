@@ -49,6 +49,9 @@ class PropertiesServiceTest {
             put(HPMS_INGESTION_ENGAGEMENT, "engaged");
             put(COVERAGE_SEARCH_DISCOVERY, "idle");
             put(COVERAGE_SEARCH_QUEUEING, "idle");
+            put(COVERAGE_SEARCH_UPDATE_MONTHS, "1");
+            put(COVERAGE_SEARCH_STALE_DAYS, "7");
+            put(COVERAGE_SEARCH_STUCK_HOURS, "24");
         }};
 
         List<Properties> propertyListBeforeInsert = propertiesService.getAllProperties();

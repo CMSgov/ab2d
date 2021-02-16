@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker.config;
+package gov.cms.ab2d.worker.processor.coverage;
 
 
 import lombok.AllArgsConstructor;

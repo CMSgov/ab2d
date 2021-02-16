@@ -83,6 +83,9 @@ public class AdminAPIPropertiesTests {
             put(HPMS_INGESTION_ENGAGEMENT, "engaged");
             put(COVERAGE_SEARCH_DISCOVERY, "idle");
             put(COVERAGE_SEARCH_QUEUEING, "idle");
+            put(COVERAGE_SEARCH_UPDATE_MONTHS, 1);
+            put(COVERAGE_SEARCH_STALE_DAYS, 7);
+            put(COVERAGE_SEARCH_STUCK_HOURS, 24);
         }};
 
         MvcResult mvcResult = this.mockMvc.perform(
@@ -97,7 +100,7 @@ public class AdminAPIPropertiesTests {
         ObjectMapper mapper = new ObjectMapper();
         List<PropertiesDTO> propertiesDTOs = mapper.readValue(result, new TypeReference<>() {} );
 
-        assertEquals(10, propertiesDTOs.size());
+        assertEquals(13, propertiesDTOs.size());
         for(PropertiesDTO propertiesDTO : propertiesDTOs) {
             Object value = propertyMap.get(propertiesDTO.getKey());
 

@@ -12,7 +12,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class ReloadEventMapper extends SqlEventMapper {
-    private NamedParameterJdbcTemplate template;
+    private final NamedParameterJdbcTemplate template;
 
     ReloadEventMapper(NamedParameterJdbcTemplate template) {
         this.template = template;

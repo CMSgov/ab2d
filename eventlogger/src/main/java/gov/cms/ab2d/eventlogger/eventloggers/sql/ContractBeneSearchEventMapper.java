@@ -11,7 +11,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import java.sql.*;
 
 public class ContractBeneSearchEventMapper extends SqlEventMapper {
-    private NamedParameterJdbcTemplate template;
+    private final NamedParameterJdbcTemplate template;
 
     ContractBeneSearchEventMapper(NamedParameterJdbcTemplate template) {
         this.template = template;

@@ -12,9 +12,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public class PropertiesInit {
 
-    private ConfigurableEnvironment configurableEnvironment;
+    private final ConfigurableEnvironment configurableEnvironment;
 
-    private PropertiesService propertiesService;
+    private final PropertiesService propertiesService;
 
     public PropertiesInit(PropertiesService propertiesService, ConfigurableEnvironment configurableEnvironment) {
         this.propertiesService = propertiesService;

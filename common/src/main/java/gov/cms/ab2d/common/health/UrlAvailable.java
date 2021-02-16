@@ -8,10 +8,10 @@ import java.net.Socket;
 import java.net.URL;
 import java.util.List;
 
-@Slf4j
 /**
  * Does health checks on URLs
  */
+@Slf4j
 public final class UrlAvailable {
 
     private UrlAvailable() { }

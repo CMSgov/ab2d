@@ -6,9 +6,9 @@ import ch.qos.logback.classic.layout.TTLLLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
@@ -16,13 +16,13 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 
+@AllArgsConstructor
 @Component
 @Slf4j
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class LoggingConfig {
 
-    @Autowired
-    private Environment env;
+    private final Environment env;
 
     @PostConstruct
     public void init() {

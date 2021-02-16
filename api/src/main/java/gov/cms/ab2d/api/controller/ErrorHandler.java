@@ -18,10 +18,11 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
+import gov.cms.ab2d.fhir.Versions;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
@@ -40,18 +41,15 @@ import java.util.Map;
 
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 import static gov.cms.ab2d.common.util.Constants.USERNAME;
-import static gov.cms.ab2d.common.util.FHIRUtil.getErrorOutcome;
-import static gov.cms.ab2d.common.util.FHIRUtil.outcomeToJSON;
+import static gov.cms.ab2d.fhir.FHIRUtil.getErrorOutcome;
+import static gov.cms.ab2d.fhir.FHIRUtil.outcomeToJSON;
 
 @ControllerAdvice
 @Slf4j
 public class ErrorHandler extends ResponseEntityExceptionHandler {
 
-    @Value("${api.retry-after.delay}")
-    private int retryAfterDelay;
-
-    @Autowired
-    private LogManager eventLogger;
+    private final LogManager eventLogger;
+    private final int retryAfterDelay;
 
     private static final Map<Class, HttpStatus> RESPONSE_MAP = new HashMap<>() {
         {
@@ -75,6 +73,11 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
             put(DataIntegrityViolationException.class, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     };
+
+    public ErrorHandler(LogManager eventLogger, @Value("${api.retry-after.delay}") int retryAfterDelay) {
+        this.eventLogger = eventLogger;
+        this.retryAfterDelay = retryAfterDelay;
+    }
 
     private static HttpStatus getErrorResponse(Class clazz) {
         HttpStatus res = RESPONSE_MAP.get(clazz);
@@ -152,8 +155,9 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         String msg = getRootCause(e);
         HttpStatus httpStatus = getErrorResponse(e.getClass());
 
-        org.hl7.fhir.dstu3.model.OperationOutcome operationOutcome = getErrorOutcome(msg);
-        String encoded = outcomeToJSON(operationOutcome);
+        Versions.FhirVersions version = Versions.getVersionFromUrl(request.getRequestURI());
+        IBaseResource operationOutcome = getErrorOutcome(msg, version);
+        String encoded = outcomeToJSON(operationOutcome, version);
         eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), null,
                 ErrorHandler.getErrorResponse(e.getClass()),
                 "FHIR Error", msg, (String) request.getAttribute(REQUEST_ID)));

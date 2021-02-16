@@ -80,78 +80,90 @@ resource "aws_ecs_task_definition" "worker" {
       "mountPoints": [
         {
           "containerPath": "/mnt/efs",
-	      "sourceVolume": "efs"
+          "sourceVolume": "efs"
         }
       ],
       "environment": [
-	    {
-	      "name" : "AB2D_BFD_KEYSTORE_LOCATION",
-	      "value" : "${var.bfd_keystore_location}"
-	    },
-	    {
-	      "name" : "AB2D_BFD_KEYSTORE_PASSWORD",
-	      "value" : "${var.bfd_keystore_password}"
-	    },
-	    {
-	      "name" : "AB2D_BFD_URL",
-	      "value" : "${var.bfd_url}"
-	    },
-	    {
-	      "name" : "AB2D_CLAIMS_SKIP_BILLABLE_PERIOD_CHECK",
-	      "value" : "${var.claims_skip_billable_period_check}"
-	    },
-	    {
-	      "name" : "AB2D_DB_DATABASE",
-	      "value" : "${var.db_name}"
-	    },
         {
-	      "name" : "AB2D_DB_HOST",
-	      "value" : "${var.db_host}"
-	    },
-	    {
-	      "name" : "AB2D_DB_PASSWORD",
-	      "value" : "${var.db_password}"
-	    },
-	    {
-	      "name" : "AB2D_DB_PORT",
-	      "value" : "${var.db_port}"
-	    },
-	    {
-	      "name" : "AB2D_DB_USER",
-	      "value" : "${var.db_username}"
-	    },
-	    {
-	      "name" : "AB2D_EFS_MOUNT",
-	      "value" : "/mnt/efs"
-	    },
-	    {
-	      "name" : "AB2D_EXECUTION_ENV",
-	      "value" : "${lower(var.execution_env)}"
-	    },
+          "name" : "AB2D_BFD_KEYSTORE_LOCATION",
+          "value" : "${var.bfd_keystore_location}"
+        },
+        {
+          "name" : "AB2D_BFD_KEYSTORE_PASSWORD",
+          "value" : "${var.bfd_keystore_password}"
+        },
+        {
+          "name" : "AB2D_BFD_URL",
+          "value" : "${var.bfd_url}"
+        },
+        {
+          "name" : "AB2D_CLAIMS_SKIP_BILLABLE_PERIOD_CHECK",
+          "value" : "${var.claims_skip_billable_period_check}"
+        },
+        {
+          "name" : "AB2D_DB_DATABASE",
+          "value" : "${var.db_name}"
+        },
+        {
+          "name" : "AB2D_DB_HOST",
+          "value" : "${var.db_host}"
+        },
+        {
+          "name" : "AB2D_DB_PASSWORD",
+          "value" : "${var.db_password}"
+        },
+        {
+          "name" : "AB2D_DB_PORT",
+          "value" : "${var.db_port}"
+        },
+        {
+          "name" : "AB2D_DB_USER",
+          "value" : "${var.db_username}"
+        },
+        {
+          "name" : "AB2D_EFS_MOUNT",
+          "value" : "/mnt/efs"
+        },
+        {
+          "name" : "AB2D_EXECUTION_ENV",
+          "value" : "${lower(var.execution_env)}"
+        },
+        {
+          "name" : "AB2D_BFD_INSIGHTS",
+          "value": "${lower(var.bfd_insights)}"
+        },
 	    {
 	      "name" : "AB2D_DB_SSL_MODE",
-	      "value" : "require"
-	    },
-	    {
-	      "name" : "AB2D_HICN_HASH_PEPPER",
-	      "value" : "${var.hicn_hash_pepper}"
-	    },
-	    {
-	      "name" : "AB2D_HICN_HASH_ITER",
-	      "value" : "${var.hicn_hash_iter}"
-	    },
+          "value" : "require"
+        },
         {
-	      "name" : "IMAGE_VERSION",
-	      "value" : "${var.image_version}"
-	    },
+          "name" : "AB2D_HICN_HASH_PEPPER",
+          "value" : "${var.hicn_hash_pepper}"
+        },
         {
-	      "name" : "NEW_RELIC_APP_NAME",
-	      "value" : "${var.new_relic_app_name}"
-	    },
+          "name" : "AB2D_HICN_HASH_ITER",
+          "value" : "${var.hicn_hash_iter}"
+        },
         {
-	      "name" : "NEW_RELIC_LICENSE_KEY",
-	      "value" : "${var.new_relic_license_key}"
-	    }
+          "name" : "IMAGE_VERSION",
+          "value" : "${var.image_version}"
+        },
+        {
+          "name" : "NEW_RELIC_APP_NAME",
+          "value" : "${var.new_relic_app_name}"
+        },
+        {
+          "name" : "NEW_RELIC_LICENSE_KEY",
+          "value" : "${var.new_relic_license_key}"
+        },
+        {
+          "name": "AB2D_SLACK_ALERT_WEBHOOKS",
+          "value": "${var.slack_alert_webhooks}"
+        },
+        {
+          "name": "AB2D_SLACK_TRACE_WEBHOOKS",
+          "value": "${var.slack_trace_webhooks}"
+        }
       ],
       "logConfiguration": {
         "logDriver": "syslog"

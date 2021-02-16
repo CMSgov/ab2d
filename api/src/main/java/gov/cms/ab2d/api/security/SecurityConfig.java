@@ -1,10 +1,6 @@
 package gov.cms.ab2d.api.security;
 
-import com.okta.jwt.AccessTokenVerifier;
-import com.okta.jwt.JwtVerifiers;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
+import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -15,34 +11,18 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 
-import java.time.Duration;
-
 import static gov.cms.ab2d.api.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
 
-
+@AllArgsConstructor
 @Configuration
 @EnableWebSecurity
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    @Autowired
-    private FilterChainExceptionHandler filterChainExceptionHandler;
-
-    @Autowired
-    private JwtTokenAuthenticationFilter jwtTokenAuthenticationFilter;
-
-    @Autowired
-    private CustomUserDetailsService customUserDetailsService;
-
-    @Value("${api.okta-jwt-issuer}")
-    private String oktaJwtIssuer;
-
-    @Value("${api.okta-jwt-audience}")
-    private String oktaJwtAudience;
-
-    @Value("${api.okta-connection-timeout}")
-    private int oktaConnectionTimeout;
+    private final FilterChainExceptionHandler filterChainExceptionHandler;
+    private final JwtTokenAuthenticationFilter jwtTokenAuthenticationFilter;
+    private final CustomUserDetailsService customUserDetailsService;
 
     @Override
     public void configure(WebSecurity web) {
@@ -70,16 +50,5 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     public void configure(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
         authenticationManagerBuilder
                 .userDetailsService(customUserDetailsService);
-    }
-
-    @Bean
-    public AccessTokenVerifier accessTokenVerifier() {
-        AccessTokenVerifier jwtVerifier = JwtVerifiers.accessTokenVerifierBuilder()
-                .setIssuer(oktaJwtIssuer)
-                .setAudience(oktaJwtAudience)
-                .setConnectionTimeout(Duration.ofSeconds(oktaConnectionTimeout))
-                .build();
-
-        return jwtVerifier;
     }
 }

@@ -207,11 +207,11 @@ CONTRACT_ID=$(
 JOB_ID=$(uuidgen)
 COMMAND_01="INSERT INTO ${DATABASE_SCHEMA_NAME}.job("
 COMMAND_02="id, job_uuid, user_account_id, created_at, expires_at, resource_types, status, status_message, "
-COMMAND_03="request_url, progress, last_poll_time, completed_at, contract_id, output_format, since) "
+COMMAND_03="request_url, progress, last_poll_time, completed_at, contract_id, output_format, since, fhir_version) "
 COMMAND_04="VALUES ((select nextval('hibernate_sequence')), '${JOB_ID}', ${USER_ACCOUNT_ID}, (select now()), "
 COMMAND_05="(select now() + INTERVAL '1 day'), 'ExplanationOfBenefit', 'SUBMITTED', '0%', "
 COMMAND_06="'${API_URL_PREFIX}/v1/fhir/Patient/\$export?_outputFormat=application%252Ffhir%252Bndjson&_type=ExplanationOfBenefit', "
-COMMAND_07="0, null, null, ${CONTRACT_ID}, null, null);"
+COMMAND_07="0, null, null, ${CONTRACT_ID}, null, null, 'STU3');"
 
 # Insert job record
 

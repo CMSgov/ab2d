@@ -6,9 +6,9 @@ import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.service.UserService;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,26 +29,23 @@ import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.ADMIN_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.EOB;
 import static gov.cms.ab2d.common.util.Constants.USERNAME;
+import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 
+@AllArgsConstructor
 @Slf4j
 @RestController
 @SuppressWarnings("PMD.TooManyStaticImports")
 @RequestMapping(path = API_PREFIX + ADMIN_PREFIX, produces = "application/json")
 public class AdminAPI {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
-    @Autowired
-    private PropertiesService propertiesService;
+    private final PropertiesService propertiesService;
 
-    @Autowired
-    private LogManager eventLogger;
+    private final LogManager eventLogger;
 
-    @Autowired
-    private BulkDataAccessAPI bulkDataAccessAPI;
+    private final BulkDataAccessAPI bulkDataAccessAPI;
 
     @ResponseStatus(value = HttpStatus.CREATED)
     @PostMapping("/user")

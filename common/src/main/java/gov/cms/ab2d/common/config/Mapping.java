@@ -6,7 +6,6 @@ import gov.cms.ab2d.common.model.*;    // NOPMD
 import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.RoleService;
 import org.modelmapper.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -15,13 +14,16 @@ import java.util.Set;
 @Component
 public class Mapping {
 
-    @Autowired
-    private ContractService contractService;
+    private final ContractService contractService;
 
-    @Autowired
-    private RoleService roleService;
+    private final RoleService roleService;
 
     private ModelMapper modelMapper;
+
+    public Mapping(ContractService contractService, RoleService roleService) {
+        this.contractService = contractService;
+        this.roleService = roleService;
+    }
 
     @PostConstruct
     public void init() {

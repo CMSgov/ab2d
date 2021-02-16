@@ -141,7 +141,7 @@ module "efs" {
 module "api" {
   source                            = "../../modules/api"
   env                               = var.env
-  execution_env                     = "local" # set to 'local' to turn off BFD insights
+  execution_env                     = "ab2d-east-impl"
   vpc_id                            = var.vpc_id
   db_sec_group_id                   = data.aws_security_group.ab2d_database_sg.id
   controller_sec_group_id           = data.aws_security_group.ab2d_deployment_controller_sg.id
@@ -198,13 +198,15 @@ module "api" {
   ab2d_hpms_api_params              = var.ab2d_hpms_api_params
   ab2d_hpms_auth_key_id             = var.ab2d_hpms_auth_key_id
   ab2d_hpms_auth_key_secret         = var.ab2d_hpms_auth_key_secret
+  ab2d_slack_alert_webhooks         = var.ab2d_slack_alert_webhooks
+  ab2d_slack_trace_webhooks         = var.ab2d_slack_trace_webhooks
   cpm_backup_api                    = var.cpm_backup_api
 }
 
 module "worker" {
   source                            = "../../modules/worker"
   env                               = var.env
-  execution_env                     = "local" # set to 'local' to turn off BFD insights
+  execution_env                     = "ab2d-east-impl"
   vpc_id                            = var.vpc_id
   db_sec_group_id                   = data.aws_security_group.ab2d_database_sg.id
   controller_subnet_ids             = var.deployment_controller_subnet_ids
@@ -255,6 +257,8 @@ module "worker" {
   claims_skip_billable_period_check = var.claims_skip_billable_period_check
   ab2d_opt_out_job_schedule         = var.ab2d_opt_out_job_schedule
   ab2d_s3_optout_bucket             = var.ab2d_s3_optout_bucket
+  ab2d_slack_alert_webhooks         = var.ab2d_slack_alert_webhooks
+  ab2d_slack_trace_webhooks         = var.ab2d_slack_trace_webhooks
   cpm_backup_worker                 = var.cpm_backup_worker
 }
 

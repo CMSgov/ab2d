@@ -1,5 +1,6 @@
 variable "env" {}
-variable "execution_env" {}
+variable "execution_env" { default = "local" }
+variable "bfd_insights" { default = "none" }
 variable "aws_account_number" {}
 variable "vpc_id" {}
 variable "db_sec_group_id" {}
@@ -85,3 +86,6 @@ variable "ab2d_hpms_url" {}
 variable "ab2d_hpms_api_params" {}
 variable "ab2d_hpms_auth_key_id" {}
 variable "ab2d_hpms_auth_key_secret" {}
+
+variable "ab2d_slack_alert_webhooks" {}
+variable "ab2d_slack_trace_webhooks" {}

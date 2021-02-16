@@ -180,10 +180,14 @@ resource "aws_ecs_task_definition" "api" {
 	  "name" : "AB2D_EFS_MOUNT",
 	  "value" : "/mnt/efs"
 	},
-        {
+    {
 	  "name" : "AB2D_EXECUTION_ENV",
 	  "value" : "${lower(var.execution_env)}"
 	},
+    {
+       "name" : "AB2D_BFD_INSIGHTS",
+       "value" : "${lower(var.bfd_insights)}"
+    },
         {
 	  "name" : "AB2D_DB_SSL_MODE",
 	  "value" : "require"
@@ -223,7 +227,15 @@ resource "aws_ecs_task_definition" "api" {
         {
 	  "name" : "HPMS_AUTH_KEY_SECRET",
 	  "value" : "${var.ab2d_hpms_auth_key_secret}"
-	}
+	},
+    {
+      "name": "AB2D_SLACK_ALERT_WEBHOOKS",
+      "value": "${var.ab2d_slack_alert_webhooks}"
+    },
+    {
+      "name": "AB2D_SLACK_TRACE_WEBHOOKS",
+      "value": "${var.ab2d_slack_trace_webhooks}"
+    }
       ],
       "logConfiguration": {
         "logDriver": "syslog"

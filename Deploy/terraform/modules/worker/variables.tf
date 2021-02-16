@@ -1,5 +1,6 @@
 variable "env" {}
-variable "execution_env" {}
+variable "execution_env" { default = "local" }
+variable "bfd_insights" { default = "none" }
 variable "aws_account_number" {}
 variable "vpc_id" {}
 variable "db_sec_group_id" {}
@@ -81,3 +82,6 @@ variable "ab2d_opt_out_job_schedule" {}
 variable "ab2d_s3_optout_bucket" {}
 
 variable "cpm_backup_worker" {}
+
+variable "ab2d_slack_alert_webhooks" {}
+variable "ab2d_slack_trace_webhooks" {}

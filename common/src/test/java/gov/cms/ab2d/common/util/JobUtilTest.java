@@ -3,6 +3,7 @@ package gov.cms.ab2d.common.util;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.fhir.Versions;
 import org.junit.jupiter.api.Test;
 
 import java.time.OffsetDateTime;
@@ -55,6 +56,7 @@ class JobUtilTest {
         job.setId(1L);
         job.setJobUuid("JOB");
         job.setStatus(status);
+        job.setFhirVersion(Versions.FhirVersions.STU3);
         OffsetDateTime expiresAt = OffsetDateTime.now();
         if (isExpired) {
             expiresAt = expiresAt.minus(1, ChronoUnit.HOURS);

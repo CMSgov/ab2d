@@ -122,10 +122,14 @@ resource "aws_ecs_task_definition" "worker" {
 	  "name" : "AB2D_EFS_MOUNT",
 	  "value" : "/mnt/efs"
 	},
-	{
+    {
 	  "name" : "AB2D_EXECUTION_ENV",
 	  "value" : "${lower(var.execution_env)}"
 	},
+    {
+       "name" : "AB2D_BFD_INSIGHTS",
+       "value" : "${lower(var.bfd_insights)}"
+    },
 	{
 	  "name" : "AB2D_DB_SSL_MODE",
 	  "value" : "require"
@@ -153,7 +157,15 @@ resource "aws_ecs_task_definition" "worker" {
         {
 	  "name" : "NEW_RELIC_LICENSE_KEY",
 	  "value" : "${var.new_relic_license_key}"
-	}
+	},
+    {
+      "name": "AB2D_SLACK_ALERT_WEBHOOKS",
+      "value": "${var.ab2d_slack_alert_webhooks}"
+    },
+    {
+      "name": "AB2D_SLACK_TRACE_WEBHOOKS",
+      "value": "${var.ab2d_slack_trace_webhooks}"
+    }
       ],
       "logConfiguration": {
         "logDriver": "syslog"

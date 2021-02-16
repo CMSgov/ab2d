@@ -12,9 +12,11 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class StuckJobQuartzSetup {
 
-    @Value("${stuck.job.cron.schedule}")
-    private String stuckJobCronSchedule;
+    private final String stuckJobCronSchedule;
 
+    public StuckJobQuartzSetup(@Value("${stuck.job.cron.schedule}") String stuckJobCronSchedule) {
+        this.stuckJobCronSchedule = stuckJobCronSchedule;
+    }
 
     @Bean
     JobDetail cancelStuckJobDetail() {

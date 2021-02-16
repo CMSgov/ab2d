@@ -9,6 +9,7 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.util.EventUtils;
+import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.common.util.JobUtil;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -40,23 +41,24 @@ public class JobServiceImpl implements JobService {
     private final JobOutputService jobOutputService;
     private final LogManager eventLogger;
     private final LoggerEventSummary loggerEventSummary;
-
-    @Value("${efs.mount}")
-    private String fileDownloadPath;
+    private final String fileDownloadPath;
 
     public static final String INITIAL_JOB_STATUS_MESSAGE = "0%";
 
-    public JobServiceImpl(UserService userService, JobRepository jobRepository,
-                          JobOutputService jobOutputService, LogManager eventLogger, LoggerEventSummary loggerEventSummary) {
+    public JobServiceImpl(UserService userService, JobRepository jobRepository, JobOutputService jobOutputService,
+                          LogManager eventLogger, LoggerEventSummary loggerEventSummary,
+                          @Value("${efs.mount}") String fileDownloadPath) {
         this.userService = userService;
         this.jobRepository = jobRepository;
         this.jobOutputService = jobOutputService;
         this.eventLogger = eventLogger;
         this.loggerEventSummary = loggerEventSummary;
+        this.fileDownloadPath = fileDownloadPath;
     }
 
     @Override
-    public Job createJob(String resourceTypes, String url, String contractNumber, String outputFormat, OffsetDateTime since) {
+    public Job createJob(String resourceTypes, String url, String contractNumber, String outputFormat,
+                         OffsetDateTime since, Versions.FhirVersions version) {
         Job job = new Job();
         job.setResourceTypes(resourceTypes);
         job.setJobUuid(UUID.randomUUID().toString());
@@ -66,6 +68,7 @@ public class JobServiceImpl implements JobService {
         job.setOutputFormat(outputFormat);
         job.setProgress(0);
         job.setSince(since);
+        job.setFhirVersion(version);
         job.setUser(userService.getCurrentUser());
 
         // Check to see if there is any attestation

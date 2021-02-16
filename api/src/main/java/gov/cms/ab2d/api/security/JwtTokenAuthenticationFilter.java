@@ -13,7 +13,6 @@ import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
@@ -37,26 +36,28 @@ import static gov.cms.ab2d.common.util.Constants.*;
 @SuppressWarnings({"PMD.TooManyStaticImports", "PMD.UnusedPrivateMethod"})
 public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private AccessTokenVerifier accessTokenVerifier;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private JwtConfig jwtConfig;
-
-    @Autowired
-    private LogManager eventLogger;
+    private final AccessTokenVerifier accessTokenVerifier;
+    private final UserService userService;
+    private final JwtConfig jwtConfig;
+    private final LogManager eventLogger;
 
     // Filters for public URIs
-    @Value("${api.requestlogging.filter:#{null}}")
-    private String uriFilters;
+    private final String uriFilters;
 
     // Predicate used for filtering public uris
     // If predicate.test("uri") -> true then URI does not match any regex filters and should be logged
     // If predicate.test("uri") -> false then URI does match at least one regex filter and should not be logged
     private Predicate<String> uriFilter;
+
+    public JwtTokenAuthenticationFilter(AccessTokenVerifier accessTokenVerifier, UserService userService,
+                                        JwtConfig jwtConfig, LogManager eventLogger,
+                                        @Value("${api.requestlogging.filter:#{null}}") String uriFilters) {
+        this.accessTokenVerifier = accessTokenVerifier;
+        this.userService = userService;
+        this.jwtConfig = jwtConfig;
+        this.eventLogger = eventLogger;
+        this.uriFilters = uriFilters;
+    }
 
     @PostConstruct
     private void constructFilters() {

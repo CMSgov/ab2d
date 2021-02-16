@@ -34,7 +34,7 @@ class CoverageDriverUnitTest {
 
     @BeforeEach
     void before() {
-        driver = new CoverageDriverImpl(null, null, coverageService, null, null, null, null);
+        driver = new CoverageDriverImpl(null, null, coverageService, null, null, null);
     }
 
     @DisplayName("Paging coverage fails when ")

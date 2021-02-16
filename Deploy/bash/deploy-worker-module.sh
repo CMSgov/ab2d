@@ -161,6 +161,18 @@ export TF_LOG_PATH=/var/log/terraform/tf.log
 rm -f /var/log/terraform/tf.log
 
 #
+# Configure docker environment
+#
+
+# Delete all worker images related to target environment (if any) - first pass
+
+docker images | grep _worker | grep "${CMS_ENV}-latest" | awk '{print $3}' | xargs -I name docker rmi --force name
+
+# Delete all worker images related to target environment (if any) - second pass
+
+docker images | grep _worker | grep "${CMS_ENV}-latest" | awk '{print $3}' | xargs -I name docker rmi --force name
+
+#
 # Initialize and validate terraform
 #
 
@@ -313,6 +325,10 @@ if [ -z "${AB2D_HICN_HASH_PEPPER}" ]; then
   echo "*********************************************************"
   AB2D_HICN_HASH_PEPPER=$(./get-database-secret.py "${CMS_ENV}" hicn_hash_pepper "${DATABASE_SECRET_DATETIME}")
 fi
+
+AB2D_SLACK_ALERT_WEBHOOKS=" "
+
+AB2D_SLACK_TRACE_WEBHOOKS=" "
 
 # Create or get new relic app name secret
 
@@ -572,6 +588,8 @@ terraform apply \
   --var "override_task_definition_arn=${OVERRIDE_TASK_DEFINITION_ARN}" \
   --var "percent_capacity_increase=${PERCENT_CAPACITY_INCREASE}" \
   --var "region=${REGION}" \
+  --var "slack_alert_webhooks=${AB2D_SLACK_ALERT_WEBHOOKS}" \
+  --var "slack_trace_webhooks=${AB2D_SLACK_TRACE_WEBHOOKS}" \
   --var "ssh_key_name=${SSH_KEY_NAME}" \
   --var "ssh_username=${SSH_USERNAME}" \
   --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \

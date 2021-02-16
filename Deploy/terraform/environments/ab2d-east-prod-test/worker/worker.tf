@@ -56,7 +56,7 @@ module "worker" {
   efs_id                            = data.terraform_remote_state.core.outputs.efs_id
   efs_security_group_id             = data.terraform_remote_state.core.outputs.efs_sg_id
   env                               = var.env
-  execution_env                     = "local" # set to 'local' to turn off BFD insights
+  execution_env                     = "ab2d-east-prod-test"
   gold_disk_name                    = var.gold_image_name
   hicn_hash_iter                    = var.hicn_hash_iter
   hicn_hash_pepper                  = var.hicn_hash_pepper
@@ -69,6 +69,8 @@ module "worker" {
   override_task_definition_arn      = var.override_task_definition_arn
   percent_capacity_increase         = var.percent_capacity_increase
   region                            = var.region
+  slack_alert_webhooks              = var.slack_alert_webhooks
+  slack_trace_webhooks              = var.slack_trace_webhooks
   ssh_key_name                      = var.env
   ssh_username                      = var.ssh_username
   vpc_id                            = data.terraform_remote_state.core.outputs.vpc_id
