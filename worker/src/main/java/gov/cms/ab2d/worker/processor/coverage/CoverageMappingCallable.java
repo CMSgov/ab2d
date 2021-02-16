@@ -17,9 +17,6 @@ import static java.util.stream.Collectors.*;
 
 /**
  * Queries BFD for all of the members of a contract during a given month.
- *
- * todo remove PatientContractCallable and replace with this class which will load the data
- *      before a job runs.
  */
 @Slf4j
 public class CoverageMappingCallable implements Callable<CoverageMapping> {
