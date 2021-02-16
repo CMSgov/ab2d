@@ -233,7 +233,7 @@ variable "db_name_secret_arn" {
 }
 
 variable "cpm_backup_api" {
-  default = "4HR Daily Weekly Monthly"
+  default = "no-backup"
 }
 
 variable "cpm_backup_controller" {
@@ -241,11 +241,11 @@ variable "cpm_backup_controller" {
 }
 
 variable "cpm_backup_db" {
-  default = "4HR Daily Weekly Monthly"
+  default = "4HR_98 Daily_98 Weekly_98 Monthly_98"
 }
 
 variable "cpm_backup_worker" {
-  default = "4HR Daily Weekly Monthly"
+  default = "no-backup"
 }
 
 ## S3 specific variables #########################################################################
