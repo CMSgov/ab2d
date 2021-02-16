@@ -64,6 +64,9 @@ public final class Constants {
     // Control when automatic metadata loading is and isn't enabled
     public static final String COVERAGE_SEARCH_DISCOVERY = "coverage.update.discovery";
     public static final String COVERAGE_SEARCH_QUEUEING = "coverage.update.queueing";
+    public static final String COVERAGE_SEARCH_UPDATE_MONTHS = "coverage.update.months.past";
+    public static final String COVERAGE_SEARCH_STALE_DAYS = "coverage.update.stale.days";
+    public static final String COVERAGE_SEARCH_STUCK_HOURS = "coverage.update.stuck.hours";
 
     public static final String CONTRACT_2_BENE_CACHING_ON = "ContractToBeneCachingOn";
 
@@ -71,7 +74,8 @@ public final class Constants {
 
     public static final Set<String> ALLOWED_PROPERTY_NAMES = Set.of(PCP_CORE_POOL_SIZE, PCP_MAX_POOL_SIZE,
             PCP_SCALE_TO_MAX_TIME, MAINTENANCE_MODE, CONTRACT_2_BENE_CACHING_ON, ZIP_SUPPORT_ON,
-            WORKER_ENGAGEMENT, HPMS_INGESTION_ENGAGEMENT, COVERAGE_SEARCH_DISCOVERY, COVERAGE_SEARCH_QUEUEING);
+            WORKER_ENGAGEMENT, HPMS_INGESTION_ENGAGEMENT, COVERAGE_SEARCH_DISCOVERY, COVERAGE_SEARCH_QUEUEING,
+            COVERAGE_SEARCH_UPDATE_MONTHS, COVERAGE_SEARCH_STALE_DAYS, COVERAGE_SEARCH_STUCK_HOURS);
 
     // This is the earliest time the _since filter is valid - probably should be in the properties file but I
     // wanted to include it in the swagger documentation and for the swagger annotation, the value has to be

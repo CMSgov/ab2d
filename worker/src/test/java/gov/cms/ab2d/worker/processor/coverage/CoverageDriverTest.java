@@ -14,7 +14,6 @@ import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.fhir.IdentifierUtils;
 import gov.cms.ab2d.fhir.Versions;
-import gov.cms.ab2d.worker.config.CoverageUpdateConfig;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -94,10 +93,8 @@ class CoverageDriverTest {
     @BeforeEach
     void before() {
 
-        PropertiesDTO dto = new PropertiesDTO();
-        dto.setKey(Constants.WORKER_ENGAGEMENT);
-        dto.setValue(FeatureEngagement.NEUTRAL.getSerialValue());
-        propertiesService.updateProperties(singletonList(dto));
+        // Set properties values in database
+        addPropertiesTableValues();
 
         contract = dataSetup.setupContract("TST-123");
         contract.setAttestedOn(AB2D_EPOCH.toOffsetDateTime());
@@ -132,7 +129,7 @@ class CoverageDriverTest {
         CoverageUpdateConfig config = new CoverageUpdateConfig(PAST_MONTHS, STALE_DAYS, STUCK_HOURS);
 
         processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS, false);
-        driver = new CoverageDriverImpl(coverageSearchRepo, contractService, coverageService, propertiesService, processor, config, searchLock);
+        driver = new CoverageDriverImpl(coverageSearchRepo, contractService, coverageService, propertiesService, processor, searchLock);
     }
 
     @AfterEach
@@ -145,6 +142,32 @@ class CoverageDriverTest {
         dto.setKey(Constants.WORKER_ENGAGEMENT);
         dto.setValue(FeatureEngagement.IN_GEAR.getSerialValue());
         propertiesService.updateProperties(singletonList(dto));
+    }
+
+    private void addPropertiesTableValues() {
+        List<PropertiesDTO> propertiesDTOS = new ArrayList<>();
+
+        PropertiesDTO workerEngagement = new PropertiesDTO();
+        workerEngagement.setKey(Constants.WORKER_ENGAGEMENT);
+        workerEngagement.setValue(FeatureEngagement.NEUTRAL.getSerialValue());
+        propertiesDTOS.add(workerEngagement);
+
+        PropertiesDTO pastMonths = new PropertiesDTO();
+        pastMonths.setKey(Constants.COVERAGE_SEARCH_UPDATE_MONTHS);
+        pastMonths.setValue("" + PAST_MONTHS);
+        propertiesDTOS.add(pastMonths);
+
+        PropertiesDTO staleDays = new PropertiesDTO();
+        staleDays.setKey(Constants.COVERAGE_SEARCH_STALE_DAYS);
+        staleDays.setValue("" + STALE_DAYS);
+        propertiesDTOS.add(staleDays);
+
+        PropertiesDTO stuckHours = new PropertiesDTO();
+        stuckHours.setKey(Constants.COVERAGE_SEARCH_STUCK_HOURS);
+        stuckHours.setValue("" + STUCK_HOURS);
+        propertiesDTOS.add(stuckHours);
+
+        propertiesService.updateProperties(propertiesDTOS);
     }
 
     @DisplayName("Loading coverage periods")
