@@ -5,7 +5,7 @@ import gov.cms.ab2d.common.repository.CoverageSearchRepository;
 import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.CoverageService;
 import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.worker.config.CoverageUpdateConfig;
+import gov.cms.ab2d.common.util.Constants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -35,21 +35,33 @@ public class CoverageDriverImpl implements CoverageDriver {
     private final ContractService contractService;
     private final CoverageService coverageService;
     private final CoverageProcessor coverageProcessor;
-    private final CoverageUpdateConfig config;
     private final CoverageLockWrapper coverageLockWrapper;
     private final PropertiesService propertiesService;
 
     public CoverageDriverImpl(CoverageSearchRepository coverageSearchRepository,
                               ContractService contractService, CoverageService coverageService,
                               PropertiesService propertiesService, CoverageProcessor coverageProcessor,
-                              CoverageUpdateConfig coverageUpdateConfig, CoverageLockWrapper coverageLockWrapper) {
+                              CoverageLockWrapper coverageLockWrapper) {
         this.coverageSearchRepository = coverageSearchRepository;
         this.contractService = contractService;
         this.coverageService = coverageService;
         this.coverageProcessor = coverageProcessor;
-        this.config = coverageUpdateConfig;
         this.coverageLockWrapper = coverageLockWrapper;
         this.propertiesService = propertiesService;
+    }
+
+
+    /**
+     * Retrieve configuration for the coverage search from the database
+     * @return the current meaningful coverage update configuration
+     */
+    private CoverageUpdateConfig retrieveConfig() {
+        String updateMonths = propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_UPDATE_MONTHS).getValue();
+        String staleDays = propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_STALE_DAYS).getValue();
+        String stuckHours = propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_STUCK_HOURS).getValue();
+
+        return new CoverageUpdateConfig(Integer.parseInt(updateMonths), Integer.parseInt(staleDays),
+                Integer.parseInt(stuckHours));
     }
 
     /**
@@ -183,6 +195,8 @@ public class CoverageDriverImpl implements CoverageDriver {
 
         log.info("attempting to find all stuck coverage searches and then cancel those stuck coverage searches");
 
+        CoverageUpdateConfig config = retrieveConfig();
+
         Set<CoveragePeriod> stuckJobs = new LinkedHashSet<>(
                 coverageService.coveragePeriodStuckJobs(OffsetDateTime.now(ZoneOffset.UTC).minusHours(config.getStuckHours())));
 
@@ -197,6 +211,8 @@ public class CoverageDriverImpl implements CoverageDriver {
     private Set<CoveragePeriod> findStaleCoverageInformation() {
 
         log.info("attempting to find all coverage information that is out of date and reduce down to coverage periods");
+
+        CoverageUpdateConfig config = retrieveConfig();
 
         Set<CoveragePeriod> stalePeriods = new LinkedHashSet<>();
         long monthsInPast = 0;

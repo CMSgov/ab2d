@@ -2,32 +2,32 @@ package gov.cms.ab2d.filter;
 
 import org.hl7.fhir.instance.model.api.IBaseResource;
 
-import static gov.cms.ab2d.common.util.Constants.EOB;
-
 public class ExplanationOfBenefitTrimmer {
+    /**
+     * Return the trimmed version of the EOB. Currently, only R4 & DSTU3 are supported
+     *
+     * @param resource - the resource
+     * @return - the trimmed resource
+     */
     public static IBaseResource getBenefit(IBaseResource resource) {
-        if (resource == null || !resource.fhirType().equalsIgnoreCase(EOB)) {
+        if (resource == null) {
             return null;
         }
-
-        if (resource.getClass() == org.hl7.fhir.r4.model.ExplanationOfBenefit.class) {
-            return ExplanationOfBenefitTrimmerR4.getBenefit(
-                    (org.hl7.fhir.r4.model.ExplanationOfBenefit) resource);
+        switch (resource.getStructureFhirVersionEnum()) {
+            case R4:
+                return ExplanationOfBenefitTrimmerR4.getBenefit(resource);
+            case DSTU2:
+                return null;
+            case DSTU2_HL7ORG:
+                return null;
+            case DSTU2_1:
+                return null;
+            case DSTU3:
+                return ExplanationOfBenefitTrimmerSTU3.getBenefit(resource);
+            case R5:
+                return null;
+            default:
+                return null;
         }
-        if (resource.getClass() == org.hl7.fhir.dstu3.model.ExplanationOfBenefit.class) {
-            return ExplanationOfBenefitTrimmerR3.getBenefit(
-                    (org.hl7.fhir.dstu3.model.ExplanationOfBenefit) resource);
-        }
-        return null;
-    }
-
-    public static boolean isPartD(IBaseResource resource) {
-        if (resource.getClass() == org.hl7.fhir.r4.model.ExplanationOfBenefit.class) {
-            return EOBLoadUtilities.isPartD((org.hl7.fhir.r4.model.ExplanationOfBenefit) resource);
-        }
-        if (resource.getClass() == org.hl7.fhir.dstu3.model.ExplanationOfBenefit.class) {
-            return EOBLoadUtilities.isPartD((org.hl7.fhir.dstu3.model.ExplanationOfBenefit) resource);
-        }
-        return false;
     }
 }

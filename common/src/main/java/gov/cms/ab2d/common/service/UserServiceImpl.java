@@ -5,8 +5,8 @@ import gov.cms.ab2d.common.dto.UserDTO;
 import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.common.repository.UserRepository;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -20,19 +20,18 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 
-@Transactional
-@Service
-@Slf4j
 /**
  * Just gets the current user from the authentication context.
  */
+@AllArgsConstructor
+@Transactional
+@Service
+@Slf4j
 public class UserServiceImpl implements UserService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private Mapping mapping;
+    private final Mapping mapping;
 
     @Override
     public User getCurrentUser() {

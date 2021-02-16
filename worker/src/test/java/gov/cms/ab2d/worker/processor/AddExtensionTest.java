@@ -2,10 +2,11 @@ package gov.cms.ab2d.worker.processor;
 
 import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.common.model.CoverageSummary;
-import gov.cms.ab2d.common.util.ExtensionUtils;
+import gov.cms.ab2d.common.util.fhir.FhirUtils;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.junit.jupiter.api.BeforeEach;
@@ -68,7 +69,7 @@ public class AddExtensionTest {
         Map<String, CoverageSummary> patients = new HashMap<>();
         patients.put(beneId, summary);
 
-        ExtensionUtils.addMbiIdsToEobs(eobs, patients);
+        FhirUtils.addMbiIdsToEobs(eobs, patients, Versions.FhirVersions.STU3);
 
         List<org.hl7.fhir.dstu3.model.Extension> extensions = b.getExtension();
 
@@ -104,7 +105,7 @@ public class AddExtensionTest {
         Map<String, CoverageSummary> patients = new HashMap<>();
         patients.put(beneId, summary);
 
-        ExtensionUtils.addMbiIdsToEobs(eobs, patients);
+        FhirUtils.addMbiIdsToEobs(eobs, patients, Versions.FhirVersions.STU3);
 
         List<org.hl7.fhir.dstu3.model.Extension> extensions = b.getExtension();
 

@@ -9,8 +9,11 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class CoveragePeriodQuartzConfig {
 
-    @Value("${coverage.update.schedule}")
-    private String schedule;
+    private final String schedule;
+
+    public CoveragePeriodQuartzConfig(@Value("${coverage.update.schedule}") String schedule) {
+        this.schedule = schedule;
+    }
 
     @Qualifier("coverage_period_update")
     @Bean

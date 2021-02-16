@@ -12,14 +12,18 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 @Configuration
 public class KinesisConfig {
-    @Value("${eventlogger.kinesis.region:US_EAST_1}")
-    private String region;
 
-    @Value("${eventlogger.core.pool.size:5}")
-    private int jobCorePoolSize;
+    private final String region;
+    private final int jobCorePoolSize;
+    private final int jobMaxPoolSize;
 
-    @Value("${eventlogger.max.pool.size:10}")
-    private int jobMaxPoolSize;
+    public KinesisConfig(@Value("${eventlogger.kinesis.region:US_EAST_1}") String region,
+                         @Value("${eventlogger.core.pool.size:5}") int jobCorePoolSize,
+                         @Value("${eventlogger.max.pool.size:10}") int jobMaxPoolSize) {
+        this.region = region;
+        this.jobCorePoolSize = jobCorePoolSize;
+        this.jobMaxPoolSize = jobMaxPoolSize;
+    }
 
     @Bean
     AmazonKinesisFirehose getProducer() {

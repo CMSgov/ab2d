@@ -5,9 +5,9 @@ import gov.cms.ab2d.common.config.Mapping;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.Properties;
 import gov.cms.ab2d.common.repository.PropertiesRepository;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,17 +18,16 @@ import java.util.List;
 import static gov.cms.ab2d.common.util.Constants.*; // NOPMD
 import static java.lang.Boolean.FALSE;
 
+@AllArgsConstructor
 @Service
 @Transactional
 @Slf4j
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class PropertiesServiceImpl implements PropertiesService {
 
-    @Autowired
-    private Mapping mapping;
+    private final Mapping mapping;
 
-    @Autowired
-    private PropertiesRepository propertiesRepository;
+    private final PropertiesRepository propertiesRepository;
 
     private final Type propertiesListType = new TypeToken<List<PropertiesDTO>>() { } .getType();
 
@@ -99,7 +98,19 @@ public class PropertiesServiceImpl implements PropertiesService {
             validateString(key, propertiesDTO);
             addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
             break;
-
+        // The maximums for these values are arbitrary and may need to be changed
+        case COVERAGE_SEARCH_UPDATE_MONTHS:
+            validateInt(key, propertiesDTO, 0, 12);
+            addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
+            break;
+        case COVERAGE_SEARCH_STALE_DAYS:
+            validateInt(key, propertiesDTO, 1, 31);
+            addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
+            break;
+        case COVERAGE_SEARCH_STUCK_HOURS:
+            validateInt(key, propertiesDTO, 12, 168);
+            addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
+            break;
         default:
             break;
         }

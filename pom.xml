@@ -4,6 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <modules>
+        <module>fhir</module>
         <module>eventlogger</module>
         <module>common</module>
         <module>api</module>
@@ -38,8 +39,8 @@
         <mockserver.version>5.11.2</mockserver.version>
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
         <logback-encoder.version>6.6</logback-encoder.version>
-        <testcontainers.version>1.15.1</testcontainers.version>
-        <newrelic.version>6.2.1</newrelic.version>
+        <testcontainers.version>1.15.2</testcontainers.version>
+        <newrelic.version>6.4.1</newrelic.version>
 
         <!-- Maven plugin versions -->
         <jacoco.version>0.8.6</jacoco.version>
@@ -86,7 +87,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.1.1</version>
+                <version>3.1.2</version>
                 <configuration>
                     <configLocation>${checkstyle.config}</configLocation>
                     <encoding>UTF-8</encoding>

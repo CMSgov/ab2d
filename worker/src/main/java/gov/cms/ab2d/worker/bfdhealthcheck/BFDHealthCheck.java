@@ -4,8 +4,10 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
+import gov.cms.ab2d.fhir.MetaDataUtils;
+import gov.cms.ab2d.fhir.Versions;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.hl7.fhir.instance.model.api.IBaseConformance;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -17,20 +19,11 @@ import static gov.cms.ab2d.common.util.Constants.MAINTENANCE_MODE;
 @Slf4j
 class BFDHealthCheck {
 
-    @Autowired
-    private SlackLogger slackLogger;
-
-    @Autowired
-    private PropertiesService propertiesService;
-
-    @Autowired
-    private BFDClient bfdClient;
-
-    @Value("${bfd.health.check.consecutive.successes}")
-    private int consecutiveSuccessesToBringUp;
-
-    @Value("${bfd.health.check.consecutive.failures}")
-    private int consecutiveFailuresToTakeDown;
+    private final SlackLogger slackLogger;
+    private final PropertiesService propertiesService;
+    private final BFDClient bfdClient;
+    private final int consecutiveSuccessesToBringUp;
+    private final int consecutiveFailuresToTakeDown;
 
     // Nothing else should be calling this component except for the scheduler, so keep
     // state here
@@ -40,10 +33,20 @@ class BFDHealthCheck {
 
     private Status bfdStatus = Status.UP;
 
+    BFDHealthCheck(SlackLogger slackLogger, PropertiesService propertiesService, BFDClient bfdClient,
+                          @Value("${bfd.health.check.consecutive.successes}") int consecutiveSuccessesToBringUp,
+                          @Value("${bfd.health.check.consecutive.failures}") int consecutiveFailuresToTakeDown) {
+        this.slackLogger = slackLogger;
+        this.propertiesService = propertiesService;
+        this.bfdClient = bfdClient;
+        this.consecutiveSuccessesToBringUp = consecutiveSuccessesToBringUp;
+        this.consecutiveFailuresToTakeDown = consecutiveFailuresToTakeDown;
+    }
+
     void checkBFDHealth() {
 
         boolean errorOccurred = false;
-        org.hl7.fhir.dstu3.model.CapabilityStatement capabilityStatement = null;
+        IBaseConformance capabilityStatement = null;
         try {
             capabilityStatement = bfdClient.capabilityStatement();
         } catch (Exception e) {
@@ -51,15 +54,21 @@ class BFDHealthCheck {
             log.error("Exception occurred while trying to retrieve capability statement", e);
             markFailure();
         }
-
-        if (!errorOccurred) {
-            if (capabilityStatement == null || capabilityStatement.getStatus() != org.hl7.fhir.dstu3.model.Enumerations.PublicationStatus.ACTIVE) {
-                markFailure();
-            } else {
-                consecutiveSuccesses++;
-                consecutiveFailures = 0;
-                log.debug("{} consecutive successes to connect to BFD", consecutiveSuccesses);
+        try {
+            Versions.FhirVersions version = bfdClient.getVersion();
+            if (!errorOccurred) {
+                if (!MetaDataUtils.metaDataValid(capabilityStatement, version)) {
+                    markFailure();
+                } else {
+                    consecutiveSuccesses++;
+                    consecutiveFailures = 0;
+                    log.debug("{} consecutive successes to connect to BFD", consecutiveSuccesses);
+                }
             }
+        } catch (Exception ex) {
+            errorOccurred = true;
+            log.error("Exception occurred while trying to retrieve capability statement - Invalid version", ex);
+            markFailure();
         }
 
         if (consecutiveSuccesses >= consecutiveSuccessesToBringUp && bfdStatus == Status.DOWN) {
