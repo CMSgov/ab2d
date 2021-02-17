@@ -166,7 +166,7 @@ public class BulkDataAccessAPI {
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
 
         since = checkSinceTime(since);
-        Job job = jobService.createJob(resourceTypes, getCurrentUrl(), contractNumber, outputFormat, since);
+        Job job = jobService.createJob(resourceTypes, getCurrentUrl(), contractNumber, outputFormat, since, Versions.FhirVersions.STU3);
 
         logSuccessfulJobCreation(job);
 
