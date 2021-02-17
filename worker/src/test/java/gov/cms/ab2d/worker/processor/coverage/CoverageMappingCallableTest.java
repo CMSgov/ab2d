@@ -81,7 +81,7 @@ class CoverageMappingCallableTest {
 
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20, 2020);
 
-        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
         when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
 
