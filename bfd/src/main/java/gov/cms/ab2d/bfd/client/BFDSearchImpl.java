@@ -24,21 +24,18 @@ public class BFDSearchImpl implements BFDSearch {
 
     private final HttpClient httpClient;
     private final Environment environment;
-    private final UrlValueResolver urlValueResolver;
+    private final BfdClientVersions bfdClientVersions;
 
-    public BFDSearchImpl(HttpClient httpClient, Environment environment, UrlValueResolver urlValueResolver) {
+    public BFDSearchImpl(HttpClient httpClient, Environment environment, BfdClientVersions bfdClientVersions) {
         this.httpClient = httpClient;
         this.environment = environment;
-        this.urlValueResolver = urlValueResolver;
+        this.bfdClientVersions = bfdClientVersions;
     }
 
     @Override
-    public IBaseBundle searchEOB(String urlVariable, String patientId, OffsetDateTime since, int pageSize, String bulkJobId, Versions.FhirVersions version) throws IOException {
+    public IBaseBundle searchEOB(String patientId, OffsetDateTime since, int pageSize, String bulkJobId, Versions.FhirVersions version) throws IOException {
 
-        if (environment.getProperty(urlVariable) == null || urlValueResolver == null) {
-            return null;
-        }
-        String urlLocation = urlValueResolver.readMyProperty(environment.getProperty(urlVariable));
+        String urlLocation = bfdClientVersions.getUrl(version);
         StringBuilder url = new StringBuilder(urlLocation + "ExplanationOfBenefit?patient=" + patientId + "&excludeSAMHSA=true");
 
         if (since != null) {

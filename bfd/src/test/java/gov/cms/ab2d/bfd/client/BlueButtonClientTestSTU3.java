@@ -26,7 +26,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
-import java.text.SimpleDateFormat;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
@@ -261,34 +260,6 @@ public class BlueButtonClientTestSTU3 {
                 org.hl7.fhir.dstu3.model.ResourceType.ExplanationOfBenefit,
                 "EOB bundles returned by the BlueButton client should only contain EOB objects"
         ));
-    }
-
-    @Test
-    public void testPersonIdsHICN() {
-        org.hl7.fhir.dstu3.model.Bundle response = (org.hl7.fhir.dstu3.model.Bundle) bbc.requestPatientByHICN(Versions.FhirVersions.STU3, "11111");
-        assertNotNull(response);
-        assertEquals(3, response.getEntry().size());
-        org.hl7.fhir.dstu3.model.Patient p1 = (org.hl7.fhir.dstu3.model.Patient) response.getEntry().get(0).getResource();
-        org.hl7.fhir.dstu3.model.Patient p2 = (org.hl7.fhir.dstu3.model.Patient) response.getEntry().get(0).getResource();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        assertTrue(sdf.format(p1.getBirthDate()).equalsIgnoreCase("2014-06-01")
-                && sdf.format(p2.getBirthDate()).equalsIgnoreCase("2014-06-01"));
-        assertTrue(p1.getName().get(0).getFamily().equalsIgnoreCase("Doe")
-                && p2.getName().get(0).getFamily().equalsIgnoreCase("Doe"));
-    }
-
-    @Test
-    public void testPersonIdsMBI() {
-        org.hl7.fhir.dstu3.model.Bundle response = (org.hl7.fhir.dstu3.model.Bundle) bbc.requestPatientByMBI(Versions.FhirVersions.STU3, "11111");
-        assertNotNull(response);
-        assertEquals(3, response.getEntry().size());
-        org.hl7.fhir.dstu3.model.Patient p1 = (org.hl7.fhir.dstu3.model.Patient) response.getEntry().get(0).getResource();
-        org.hl7.fhir.dstu3.model.Patient p2 = (org.hl7.fhir.dstu3.model.Patient) response.getEntry().get(0).getResource();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        assertTrue(sdf.format(p1.getBirthDate()).equalsIgnoreCase("2014-06-01")
-                && sdf.format(p2.getBirthDate()).equalsIgnoreCase("2014-06-01"));
-        assertTrue(p1.getName().get(0).getFamily().equalsIgnoreCase("Doe")
-                && p2.getName().get(0).getFamily().equalsIgnoreCase("Doe"));
     }
 
     @Test

@@ -2,6 +2,8 @@ package gov.cms.ab2d.fhir;
 
 import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
+import ca.uhn.fhir.parser.IParser;
+import ca.uhn.fhir.rest.api.EncodingEnum;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.InvocationTargetException;
@@ -47,21 +49,17 @@ public class Versions {
     };
 
     /**
-     * The name of the variable in the properties variable that defines the location of
-     * the BFD endpoint
-     */
-    private static final Map<FhirVersions, String> SERVER_VARIABLE = new HashMap<>() {
-        { put (FhirVersions.STU3, "bfd.serverBaseUrlStu3"); }
-        { put (FhirVersions.R4, "bfd.serverBaseUrlR4"); }
-    };
-
-    /**
      * Mapping of FhirContext objects to versions
      */
     private static final Map<FhirVersions, FhirContext> FHIR_CONTEXTS = new HashMap<>() {
         { put (FhirVersions.STU3, FhirContext.forDstu3()); }
         { put (FhirVersions.R4, FhirContext.forR4()); }
     };
+
+    /**
+     * JSON parsers for the individual FHIR versions
+     */
+    private static final Map<Versions.FhirVersions, IParser> JSON_PARSERS = new HashMap();
 
     /**
      * Currently, the classes in the model directories that we can instantiate
@@ -119,16 +117,6 @@ public class Versions {
     }
 
     /**
-     * The properties variable that contains the URL for the server for the version
-     *
-     * @param version - the FHIR version
-     * @return - the properties variable
-     */
-    public static String getEnvVariable(FhirVersions version) {
-        return SERVER_VARIABLE.get(version);
-    }
-
-    /**
      * Given a FHIR version and the name of a class, return the proper class for the version
      *
      * @param version - the FHIR version
@@ -151,14 +139,21 @@ public class Versions {
      * @param version - the FHIR version
      * @param className - the class name to instantiate without the package (i.e, ExplanationOfBenefit, Extension)
      * @param arg - any argument to pass the constructor
-     * @param argClass
-     * @return
+     * @param argClass - the class of the argument
+     * @return the object
      */
     static Object getObject(FhirVersions version, String className, Object arg, Class argClass) {
         String fullClassName = getClassName(version, className);
         return getObject(fullClassName, argClass, arg);
     }
 
+    /**
+     * Return an empty object for the correct FHIR version given the class name
+     *
+     * @param version - the FHIR version
+     * @param className - the class name to instantiate or retrieve from cache
+     * @return the object
+     */
     static Object getObject(FhirVersions version, String className) {
         String fullName = getClassName(version, className);
         Object object = NEEDED_OBJECTS.get(fullName);
@@ -318,6 +313,24 @@ public class Versions {
             log.error("Unable to instantiate enum " + cName + " with value " + value, ex);
             return null;
         }
+    }
+
+    /**
+     * Retrieve or instantiate a correct JSON parser for the FHIR version
+     *
+     * @param version - the FHIR version
+     * @return - the JSON parser
+     */
+    public static IParser getJsonParser(Versions.FhirVersions version) {
+        IParser parser = JSON_PARSERS.get(version);
+        if (parser != null) {
+            return parser;
+        }
+        EncodingEnum respType = EncodingEnum.forContentType(EncodingEnum.JSON_PLAIN_STRING);
+        parser = respType.newParser(Versions.getContextFromVersion(version));
+
+        JSON_PARSERS.put(version, parser);
+        return parser;
     }
 
     /**

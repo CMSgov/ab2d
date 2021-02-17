@@ -6,7 +6,6 @@ import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.CoverageService;
-import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Constants;

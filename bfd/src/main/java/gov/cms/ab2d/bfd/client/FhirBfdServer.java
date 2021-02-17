@@ -11,6 +11,7 @@ import org.apache.http.client.HttpClient;
  */
 public class FhirBfdServer {
     private final FhirContext fhirContext;
+    private IGenericClient iGenericClient;
 
     /**
      * Constructor that creates the correct context from the version
@@ -28,11 +29,13 @@ public class FhirBfdServer {
      * @param url - the URL of the BFD endpoint
      * @return
      */
-    public IGenericClient bfdFhirRestClient(HttpClient httpClient, String url) {
-        fhirContext.getRestfulClientFactory().setHttpClient(httpClient);
-        IGenericClient client = fhirContext.newRestfulGenericClient(url);
-        client.setFormatParamStyle(RequestFormatParamStyleEnum.SHORT);
-        return client;
+    public IGenericClient getGenericClient(HttpClient httpClient, String url) {
+        if (iGenericClient == null) {
+            fhirContext.getRestfulClientFactory().setHttpClient(httpClient);
+            iGenericClient = fhirContext.newRestfulGenericClient(url);
+            iGenericClient.setFormatParamStyle(RequestFormatParamStyleEnum.SHORT);
+        }
+        return iGenericClient;
     }
 
     /**
