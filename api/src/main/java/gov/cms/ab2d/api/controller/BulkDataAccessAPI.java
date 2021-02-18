@@ -31,9 +31,11 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotBlank;
-import java.time.OffsetDateTime;
+import java.time.*;
+import java.time.temporal.TemporalAdjusters;
 import java.util.Set;
 
+import static gov.cms.ab2d.api.util.Constants.BFD_UPDATE_SLO_DAY;
 import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_PREFER;
@@ -42,6 +44,7 @@ import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_OUTPUT_FORMAT;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_CONTRACT_EXPORT;
 import static gov.cms.ab2d.common.service.JobService.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.*;
+import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
@@ -103,7 +106,9 @@ public class BulkDataAccessAPI {
                     "+ndjson"
             )
             @RequestParam(required = false, name = "_outputFormat") String outputFormat,
-            @ApiParam(value = "Beginning time of query. Returns all records \"since\" this time. At this time, it must be after " + SINCE_EARLIEST_DATE,
+            @ApiParam(value = "Beginning time of query. Returns all records \"since\" this time. At this time, " +
+                    "it must be after " + SINCE_EARLIEST_DATE + ". At this time, the date will be rounded to the " +
+                    "previous Tuesday at Midnight EST to support data updates.",
                     example = SINCE_EARLIEST_DATE)
             @RequestParam(required = false, name = "_since") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
         log.info("Received request to export");
@@ -111,13 +116,61 @@ public class BulkDataAccessAPI {
         checkIfInMaintenanceMode();
         checkIfCurrentUserCanAddJob();
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
-        checkSinceTime(since);
+
+        since = checkSinceTime(since);
 
         Job job = jobService.createJob(resourceTypes, getCurrentUrl(), null, outputFormat, since, Versions.FhirVersions.STU3);
 
         logSuccessfulJobCreation(job);
 
-        return returnStatusForJobCreation(job, (String) request.getAttribute(REQUEST_ID));
+        return returnStatusForJobCreation(job, (String) request.getAttribute(REQUEST_ID), since);
+    }
+
+    @ApiOperation(value = BULK_CONTRACT_EXPORT,
+            authorizations = {
+                    @Authorization(value = "Authorization", scopes = {
+                            @AuthorizationScope(description = "Export Claim Data", scope = "Authorization") })
+            })
+    @ApiResponses(
+            @ApiResponse(code = 202, message = "Export request has started", responseHeaders =
+            @ResponseHeader(name = "Content-Location", description = "Absolute URL of an endpoint" +
+                    " for subsequent status requests (polling location)",
+                    response = String.class), response = String.class)
+    )
+
+    // todo: This endpoint no longer makes sense in the new model where one Okta credential maps to one Contract
+    @ResponseStatus(value = HttpStatus.ACCEPTED)
+    @GetMapping("/Group/{contractNumber}/$export")
+    public ResponseEntity<Void> exportPatientsWithContract(
+            HttpServletRequest request,
+            @ApiParam(value = "A contract number", required = true)
+            @PathVariable @NotBlank String contractNumber,
+            @ApiParam(value = BULK_EXPORT_TYPE, allowableValues = EOB, defaultValue = EOB)
+            @RequestParam(required = false, name = "_type") String resourceTypes,
+            @ApiParam(value = BULK_OUTPUT_FORMAT,
+                    allowableValues = ALLOWABLE_OUTPUT_FORMATS, defaultValue = "application/fhir" +
+                    "+ndjson"
+            )
+            @RequestParam(required = false, name = "_outputFormat") String outputFormat,
+            @RequestHeader(value = "respond-async")
+            @ApiParam(value = "Beginning time of query. Returns all records \"since\" this time. At this time, " +
+                    "it must be after " + SINCE_EARLIEST_DATE + ". At this time, the date will be rounded to the " +
+                    "previous Tuesday at Midnight EST to support data updates.",
+                    example = SINCE_EARLIEST_DATE)
+            @RequestParam(required = false, name = "_since") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
+            MDC.put(CONTRACT_LOG, contractNumber);
+        log.info("Received request to export by contractNumber");
+
+        checkIfInMaintenanceMode();
+        checkIfCurrentUserCanAddJob();
+        checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
+
+        since = checkSinceTime(since);
+        Job job = jobService.createJob(resourceTypes, getCurrentUrl(), contractNumber, outputFormat, since, Versions.FhirVersions.STU3);
+
+        logSuccessfulJobCreation(job);
+
+        return returnStatusForJobCreation(job, (String) request.getAttribute(REQUEST_ID), since);
     }
 
     private String getCurrentUrl() {
@@ -132,13 +185,16 @@ public class BulkDataAccessAPI {
         return "https".equalsIgnoreCase(request.getHeader("X-Forwarded-Proto"));
     }
 
-    private void checkSinceTime(OffsetDateTime date) {
+
+    private OffsetDateTime checkSinceTime(OffsetDateTime date) {
         if (date == null) {
-            return;
+            return null;
         }
+
         if (date.isAfter(OffsetDateTime.now())) {
             throw new InvalidUserInputException("You can not use a time after the current time for _since");
         }
+
         try {
             OffsetDateTime ed = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
             if (date.isBefore(ed)) {
@@ -148,6 +204,33 @@ public class BulkDataAccessAPI {
         } catch (Exception ex) {
             throw new InvalidUserInputException("${api.since.date.earliest} date value '" + SINCE_EARLIEST_DATE + "' is invalid");
         }
+
+        return roundSinceTime(date);
+    }
+
+    // Round since to last Tuesday
+    // https://stackoverflow.com/questions/28450720/get-date-of-first-day-of-week-based-on-localdate-now-in-java-8
+    private OffsetDateTime roundSinceTime(OffsetDateTime date) {
+        // Respect the original time zone when saving the date and providing
+        // a response to the API call
+        ZoneId zone = date.toZonedDateTime().getZone();
+
+        ZonedDateTime zonedSince = date.atZoneSameInstant(AB2D_ZONE);
+        if (zonedSince.getDayOfWeek().equals(BFD_UPDATE_SLO_DAY)) {
+            return date;
+        }
+
+        zonedSince = zonedSince.with(TemporalAdjusters.previous(DayOfWeek.TUESDAY))
+                .withHour(0).withMinute(0).withSecond(0);
+        zonedSince = zonedSince.withZoneSameInstant(zone);
+
+        // Check that we haven't moved before since date was active by chance
+        ZonedDateTime ed = ZonedDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
+        if (zonedSince.isBefore(ed)) {
+            return ed.withZoneSameInstant(zone).toOffsetDateTime();
+        }
+
+        return zonedSince.toOffsetDateTime();
     }
 
     private void checkIfInMaintenanceMode() {
@@ -188,10 +271,16 @@ public class BulkDataAccessAPI {
         log.info("Successfully created job");
     }
 
-    private ResponseEntity<Void> returnStatusForJobCreation(Job job, String requestId) {
+    private ResponseEntity<Void> returnStatusForJobCreation(Job job, String requestId, OffsetDateTime since) {
         String statusURL = getUrl(API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status");
+
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.add("Content-Location", statusURL);
+
+        if (since != null) {
+            responseHeaders.add("Since-Datetime", since.format(ISO_OFFSET_DATE_TIME));
+        }
+
         eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), job.getJobUuid(), HttpStatus.ACCEPTED, "Job Created",
                 "Job " + job.getJobUuid() + " was created", requestId));
         return new ResponseEntity<>(null, responseHeaders,
@@ -202,50 +291,5 @@ public class BulkDataAccessAPI {
         return shouldReplaceWithHttps() ?
                 ServletUriComponentsBuilder.fromCurrentRequestUri().scheme("https").replacePath(ending).toUriString() :
                 ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath(ending).toUriString().replace(":80/", "/");
-    }
-
-    @ApiOperation(value = BULK_CONTRACT_EXPORT,
-            authorizations = {
-                    @Authorization(value = "Authorization", scopes = {
-                            @AuthorizationScope(description = "Export Claim Data", scope = "Authorization") })
-            })
-    @ApiResponses(
-            @ApiResponse(code = 202, message = "Export request has started", responseHeaders =
-            @ResponseHeader(name = "Content-Location", description = "Absolute URL of an endpoint" +
-                    " for subsequent status requests (polling location)",
-                    response = String.class), response = String.class)
-    )
-
-    // todo: This endpoint no longer makes sense in the new model where one Okta credential maps to one Contract
-    @ResponseStatus(value = HttpStatus.ACCEPTED)
-    @GetMapping("/Group/{contractNumber}/$export")
-    public ResponseEntity<Void> exportPatientsWithContract(
-            HttpServletRequest request,
-            @ApiParam(value = "A contract number", required = true)
-            @PathVariable @NotBlank String contractNumber,
-            @ApiParam(value = BULK_EXPORT_TYPE, allowableValues = EOB, defaultValue = EOB)
-            @RequestParam(required = false, name = "_type") String resourceTypes,
-            @ApiParam(value = BULK_OUTPUT_FORMAT,
-                    allowableValues = ALLOWABLE_OUTPUT_FORMATS, defaultValue = "application/fhir" +
-                    "+ndjson"
-            )
-            @RequestParam(required = false, name = "_outputFormat") String outputFormat,
-            @RequestHeader(value = "respond-async")
-            @ApiParam(value = "Beginning time of query. Returns all records \"since\" this time. At this time, it must be after " + SINCE_EARLIEST_DATE,
-                      example = SINCE_EARLIEST_DATE)
-            @RequestParam(required = false, name = "_since") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
-            MDC.put(CONTRACT_LOG, contractNumber);
-        log.info("Received request to export by contractNumber");
-
-        checkIfInMaintenanceMode();
-        checkIfCurrentUserCanAddJob();
-        checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
-        checkSinceTime(since);
-
-        Job job = jobService.createJob(resourceTypes, getCurrentUrl(), contractNumber, outputFormat, since, Versions.FhirVersions.STU3);
-
-        logSuccessfulJobCreation(job);
-
-        return returnStatusForJobCreation(job, (String) request.getAttribute(REQUEST_ID));
     }
 }
