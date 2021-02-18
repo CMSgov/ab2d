@@ -8,11 +8,10 @@ import org.mockserver.model.Parameter;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import static gov.cms.ab2d.bfd.client.BFDMockServerConfigurationUtilR4.MOCK_SERVER_PORT;
 
 public class MockUtils {
     static String getRawJson(String path) throws IOException {
@@ -37,14 +36,14 @@ public class MockUtils {
      *                      response
      */
     static void createMockServerExpectation(String path, int respCode, String payload,
-                                                    List<Parameter> qStringParams) {
+                                                    List<Parameter> qStringParams, int port) {
         var delay = 100;
-        createMockServerExpectation(path, respCode, payload, qStringParams, delay);
+        createMockServerExpectation(path, respCode, payload, qStringParams, delay, port);
     }
 
     static void createMockServerExpectation(String path, int respCode, String payload,
-                                            List<Parameter> qStringParams, int delayMs) {
-        new MockServerClient("localhost", MOCK_SERVER_PORT)
+                                            List<Parameter> qStringParams, int delayMs, int port) {
+        new MockServerClient("localhost", port)
                 .when(
                         HttpRequest.request()
                                 .withMethod("GET")
@@ -62,5 +61,13 @@ public class MockUtils {
                                 .withBody(payload)
                                 .withDelay(TimeUnit.MILLISECONDS, delayMs)
                 );
+    }
+
+    static int randomMockServerPort() {
+        try (ServerSocket serverSocket = new ServerSocket(0)) {
+            return serverSocket.getLocalPort();
+        } catch (IOException ioException) {
+            throw new RuntimeException("could not find open port");
+        }
     }
 }

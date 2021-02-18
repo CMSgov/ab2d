@@ -18,7 +18,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = SpringBootApp.class, properties = "bfd.keystore.location=/tmp/bb.keystore")
-@ContextConfiguration(initializers = {BFDMockServerConfigurationUtilSTU3.PropertyOverrider.class})
 public class BFDClientConfigurationTest {
 
     @Autowired

@@ -1,16 +1,12 @@
 package gov.cms.ab2d.bfd.client;
 
-import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import gov.cms.ab2d.fhir.Versions;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.http.HttpStatus;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.apache.http.client.HttpClient;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.Parameter;
@@ -31,7 +27,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 
-import static gov.cms.ab2d.bfd.client.BFDMockServerConfigurationUtilSTU3.MOCK_SERVER_PORT;
 import static gov.cms.ab2d.bfd.client.MockUtils.getRawJson;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -41,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = SpringBootApp.class)
 @ActiveProfiles("test")
-@ContextConfiguration(initializers = {BFDMockServerConfigurationUtilSTU3.PropertyOverrider.class}, classes = { BlueButtonClientTestSTU3.TestConfig.class })
+@ContextConfiguration(classes = { BlueButtonClientTestSTU3.TestConfig.class })
 public class BlueButtonClientTestSTU3 {
     // A random example patient (Jane Doe)
     private static final String TEST_PATIENT_ID = "20140000008325";
@@ -65,6 +60,7 @@ public class BlueButtonClientTestSTU3 {
             "ptdcntrct11", "ptdcntrct12"
     };
     private static final String CONTRACT = "S00001";
+    public static final int MOCK_PORT_V1 = MockUtils.randomMockServerPort();
 
     @Autowired
     private BFDClient bbc;
@@ -76,19 +72,23 @@ public class BlueButtonClientTestSTU3 {
     @Configuration
     public static class TestConfig {
 
+        @Autowired
+        private HttpClient client;
+
         @Bean
         @Primary
-        public IParser testBeanDefinition() {
-            return FhirContext.forDstu3().newXmlParser();
+        public BfdClientVersions clientVersions() {
+            return new BfdClientVersions("http://localhost:" + MOCK_PORT_V1 + "/v1/fhir/",
+            "http://localhost:" + MOCK_PORT_V1 + "/v1/fhir/", client);
         }
     }
 
     @BeforeAll
     public static void setupBFDClient() throws IOException {
-        mockServer = ClientAndServer.startClientAndServer(MOCK_SERVER_PORT);
+        mockServer = ClientAndServer.startClientAndServer(MOCK_PORT_V1);
         MockUtils.createMockServerExpectation("/v1/fhir/metadata", HttpStatus.SC_OK,
                 getRawJson(METADATA_PATH), List
-                        .of());
+                        .of(), MOCK_PORT_V1);
 
         // Ensure timeouts are working.
         MockUtils.createMockServerExpectation(
@@ -96,7 +96,8 @@ public class BlueButtonClientTestSTU3 {
                 HttpStatus.SC_OK,
                 StringUtils.EMPTY,
                 Collections.singletonList(Parameter.param("patient", TEST_SLOW_PATIENT_ID)),
-                8000
+                8000,
+                MOCK_PORT_V1
         );
 
         for (String patientId : TEST_PATIENT_IDS) {
@@ -104,7 +105,8 @@ public class BlueButtonClientTestSTU3 {
                     "/v1/fhir/Patient/" + patientId,
                     HttpStatus.SC_OK,
                     getRawJson(SAMPLE_PATIENT_PATH_PREFIX + patientId + ".json"),
-                    List.of()
+                    List.of(),
+                    MOCK_PORT_V1
             );
 
             MockUtils.createMockServerExpectation(
@@ -112,7 +114,8 @@ public class BlueButtonClientTestSTU3 {
                     HttpStatus.SC_OK,
                     getRawJson(SAMPLE_EOB_PATH_PREFIX + patientId + ".json"),
                     List.of(Parameter.param("patient", patientId),
-                            Parameter.param("excludeSAMHSA", "true"))
+                            Parameter.param("excludeSAMHSA", "true")),
+                    MOCK_PORT_V1
             );
         }
 
@@ -120,7 +123,8 @@ public class BlueButtonClientTestSTU3 {
                 "/v1/fhir/Patient",
                 HttpStatus.SC_OK,
                 getRawJson(SAMPLE_PATIENT_PATH_PREFIX + "/bundle/patientbundle.json"),
-                List.of()
+                List.of(),
+                MOCK_PORT_V1
         );
 
         // Patient that exists, but has no records
@@ -128,28 +132,32 @@ public class BlueButtonClientTestSTU3 {
                 "/v1/fhir/Patient/" + TEST_NO_RECORD_PATIENT_ID,
                 HttpStatus.SC_OK,
                 getRawJson(SAMPLE_PATIENT_PATH_PREFIX + TEST_NO_RECORD_PATIENT_ID + ".json"),
-                List.of()
+                List.of(),
+                MOCK_PORT_V1
         );
         MockUtils.createMockServerExpectation(
                 "/v1/fhir/ExplanationOfBenefit",
                 HttpStatus.SC_OK,
                 getRawJson(SAMPLE_EOB_PATH_PREFIX + TEST_NO_RECORD_PATIENT_ID + ".json"),
                 List.of(Parameter.param("patient", TEST_NO_RECORD_PATIENT_ID),
-                        Parameter.param("excludeSAMHSA", "true"))
+                        Parameter.param("excludeSAMHSA", "true")),
+                MOCK_PORT_V1
         );
 
         MockUtils.createMockServerExpectation(
                 "/v1/fhir/Patient/" + TEST_NO_RECORD_PATIENT_ID_MBI,
                 HttpStatus.SC_OK,
                 getRawJson(SAMPLE_PATIENT_PATH_PREFIX + TEST_NO_RECORD_PATIENT_ID_MBI + ".json"),
-                List.of()
+                List.of(),
+                MOCK_PORT_V1
         );
         MockUtils.createMockServerExpectation(
                 "/v1/fhir/ExplanationOfBenefit",
                 HttpStatus.SC_OK,
                 getRawJson(SAMPLE_EOB_PATH_PREFIX + TEST_NO_RECORD_PATIENT_ID_MBI + ".json"),
                 List.of(Parameter.param("patient", TEST_NO_RECORD_PATIENT_ID_MBI),
-                        Parameter.param("excludeSAMHSA", "true"))
+                        Parameter.param("excludeSAMHSA", "true")),
+                MOCK_PORT_V1
         );
 
         // Create mocks for pages of the results
@@ -161,7 +169,8 @@ public class BlueButtonClientTestSTU3 {
                     List.of(Parameter.param("patient", TEST_PATIENT_ID),
                             Parameter.param("count", "10"),
                             Parameter.param("startIndex", startIndex),
-                            Parameter.param("excludeSAMHSA", "true"))
+                            Parameter.param("excludeSAMHSA", "true")),
+                    MOCK_PORT_V1
             );
         }
 
@@ -171,7 +180,8 @@ public class BlueButtonClientTestSTU3 {
                     HttpStatus.SC_OK,
                     getRawJson(SAMPLE_PATIENT_PATH_PREFIX + "/bundle/patientbundle.json"),
                     List.of(Parameter.param("_has:Coverage.extension",
-                            "https://bluebutton.cms.gov/resources/variables/" + month + "|" + CONTRACT))
+                            "https://bluebutton.cms.gov/resources/variables/ptdcntrct" + month + "|" + CONTRACT)),
+                    MOCK_PORT_V1
             );
         }
     }
@@ -242,7 +252,7 @@ public class BlueButtonClientTestSTU3 {
 
         // Change url to point to random mock server port instead of default port
         response.getLink().forEach(link -> {
-            String url = link.getUrl().replace("localhost:8083", "localhost:" + MOCK_SERVER_PORT);
+            String url = link.getUrl().replace("localhost:8083", "localhost:" + MOCK_PORT_V1);
             link.setUrl(url);
         });
 

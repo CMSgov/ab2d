@@ -2,6 +2,7 @@ package gov.cms.ab2d.bfd.client;
 
 import gov.cms.ab2d.fhir.Versions;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.HttpClient;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Extension;
 import org.hl7.fhir.r4.model.Identifier;
@@ -14,15 +15,17 @@ import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.Parameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 
-import static gov.cms.ab2d.bfd.client.BFDMockServerConfigurationUtilR4.MOCK_SERVER_PORT;
 import static gov.cms.ab2d.bfd.client.MockUtils.getRawJson;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -32,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = SpringBootApp.class)
 @ActiveProfiles("test")
-@ContextConfiguration(initializers = {BFDMockServerConfigurationUtilR4.PropertyOverrider.class})
+@ContextConfiguration(classes = { BlueButtonClientTestR4.TestConfig.class })
 public class BlueButtonClientTestR4 {
     // A random example patient (Jane Doe)
     private static final String TEST_PATIENT_ID = "-20140000010000";
@@ -44,34 +47,51 @@ public class BlueButtonClientTestR4 {
     private static final String SAMPLE_PATIENT_BUNDLE = "bb-test-data/r4/patient.json";
 
     private static final String CONTRACT = "Z0012";
+    public static final int MOCK_PORT_V2 = MockUtils.randomMockServerPort();
 
     @Autowired
     private BFDClient bbc;
 
     private static ClientAndServer mockServer;
 
+    @Profile("test")
+    @Configuration
+    public static class TestConfig {
+
+        @Autowired
+        private HttpClient client;
+
+        @Bean
+        @Primary
+        public BfdClientVersions clientVersions() {
+            return new BfdClientVersions("http://localhost:" + MOCK_PORT_V2 + "/v2/fhir/",
+                    "http://localhost:" + MOCK_PORT_V2 + "/v2/fhir/", client);
+        }
+    }
+
     @BeforeAll
     public static void setupBFDClient() throws IOException {
-        mockServer = ClientAndServer.startClientAndServer(MOCK_SERVER_PORT);
-        createMockServerExpectation("/v2/fhir/metadata", HttpStatus.SC_OK,
-                getRawJson(METADATA_PATH), List
-                        .of());
+        mockServer = ClientAndServer.startClientAndServer(MOCK_PORT_V2);
+        MockUtils.createMockServerExpectation("/v2/fhir/metadata", HttpStatus.SC_OK,
+                getRawJson(METADATA_PATH), List.of(), MOCK_PORT_V2);
 
         // Ensure timeouts are working.
         MockUtils.createMockServerExpectation(
                 "/v2/fhir/ExplanationOfBenefit",
                 HttpStatus.SC_OK,
                 getRawJson(SAMPLE_EOB_BUNDLE),
-                Collections.singletonList(Parameter.param("patient", TEST_PATIENT_ID)),
-                8000
+                List.of(Parameter.param("patient", TEST_PATIENT_ID),
+                        Parameter.param("excludeSAMHSA", "true")),
+                MOCK_PORT_V2
         );
 
         MockUtils.createMockServerExpectation(
-                "/v1/fhir/Patient",
+                "/v2/fhir/Patient",
                 HttpStatus.SC_OK,
                 getRawJson(SAMPLE_PATIENT_BUNDLE),
                 List.of(Parameter.param("_has:Coverage.extension",
-                        "https://bluebutton.cms.gov/resources/variables/" + 12 + "|" + CONTRACT))
+                        "https://bluebutton.cms.gov/resources/variables/ptdcntrct" + 12 + "|" + CONTRACT)),
+                MOCK_PORT_V2
         );
     }
 
@@ -134,21 +154,4 @@ public class BlueButtonClientTestR4 {
         assertEquals("4.0.0", capabilityStatement.getFhirVersion().getDisplay());
         assertEquals(org.hl7.fhir.r4.model.Enumerations.PublicationStatus.ACTIVE, capabilityStatement.getStatus());
     }
-
-    /**
-     * Helper method that configures the mock server to respond to a given GET request
-     *
-     * @param path          The path segment of the URL that would be received by BlueButton
-     * @param respCode      The desired HTTP response code
-     * @param payload       The data that the mock server should return in response to this GET
-     *                      request
-     * @param qStringParams The query string parameters that must be present to generate this
-     *                      response
-     */
-    private static void createMockServerExpectation(String path, int respCode, String payload,
-                                                    List<Parameter> qStringParams) {
-        var delay = 100;
-        MockUtils.createMockServerExpectation(path, respCode, payload, qStringParams, delay);
-    }
-
 }
