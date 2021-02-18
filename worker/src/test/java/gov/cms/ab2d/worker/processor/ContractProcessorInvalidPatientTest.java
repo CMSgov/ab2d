@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.processor;
 
-import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoverageSummary;
@@ -9,7 +8,6 @@ import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.common.util.FilterOutByDate;
-import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.service.FileService;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +26,7 @@ import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.*;
 
+import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.*;
@@ -90,9 +89,9 @@ class ContractProcessorInvalidPatientTest {
         org.hl7.fhir.dstu3.model.Bundle b1 = BundleUtils.createBundle(createBundleEntry("1"));
         org.hl7.fhir.dstu3.model.Bundle b2 = BundleUtils.createBundle(createBundleEntry("2"));
         org.hl7.fhir.dstu3.model.Bundle b4 = BundleUtils.createBundle(createBundleEntry("4"));
-        when(bfdClient.requestEOBFromServer(eq(Versions.FhirVersions.STU3), eq("1"), any())).thenReturn(b1);
-        when(bfdClient.requestEOBFromServer(eq(Versions.FhirVersions.STU3), eq("2"), any())).thenReturn(b2);
-        when(bfdClient.requestEOBFromServer(eq(Versions.FhirVersions.STU3), eq("3"), any())).thenReturn(b4);
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq("1"), any())).thenReturn(b1);
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq("2"), any())).thenReturn(b2);
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq("3"), any())).thenReturn(b4);
         List<JobOutput> outputs = cut.process(tmpDirFolder.toPath(), contractData);
         assertNotNull(outputs);
         assertEquals(2, outputs.size());
@@ -112,12 +111,12 @@ class ContractProcessorInvalidPatientTest {
     void testWriteErrors() throws IOException {
         Job job = new Job();
         job.setJobUuid(jobId);
-        job.setFhirVersion(Versions.FhirVersions.STU3);
+        job.setFhirVersion(STU3);
         String val = "Hello World";
         StreamHelper helper = new TextStreamHelperImpl(
                 tmpDirFolder.toPath(), contractId, 2000, 10, eventLogger, job);
         ((ContractProcessorImpl) cut).writeExceptionToContractErrorFile(
-                helper, val, new RuntimeException("Exception"), Versions.FhirVersions.STU3);
+                helper, val, new RuntimeException("Exception"), STU3);
         String result = Files.readString(Path.of(tmpDirFolder.getAbsolutePath() + File.separator + contractId + "_error.ndjson"));
         assertEquals(val, result);
     }
@@ -126,11 +125,11 @@ class ContractProcessorInvalidPatientTest {
     void testWriteNullErrors() throws IOException {
         Job job = new Job();
         job.setJobUuid(jobId);
-        job.setFhirVersion(Versions.FhirVersions.STU3);
+        job.setFhirVersion(STU3);
         StreamHelper helper = new TextStreamHelperImpl(
                 tmpDirFolder.toPath(), contractId, 2000, 10, eventLogger, job);
         ((ContractProcessorImpl) cut).writeExceptionToContractErrorFile(
-                helper, null, new RuntimeException("Exception"), Versions.FhirVersions.STU3);
+                helper, null, new RuntimeException("Exception"), STU3);
         assertThrows(NoSuchFileException.class, () -> Files.readString(Path.of(tmpDirFolder.getAbsolutePath() + File.separator + contractId + "_error.ndjson")));
     }
 

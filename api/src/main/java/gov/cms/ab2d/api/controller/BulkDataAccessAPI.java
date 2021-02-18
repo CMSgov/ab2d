@@ -7,7 +7,6 @@ import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
-import gov.cms.ab2d.fhir.Versions;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -43,6 +42,7 @@ import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_CONTRACT_EXPORT;
 import static gov.cms.ab2d.common.service.JobService.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
+import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
@@ -113,7 +113,7 @@ public class BulkDataAccessAPI {
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
         checkSinceTime(since);
 
-        Job job = jobService.createJob(resourceTypes, getCurrentUrl(), null, outputFormat, since, Versions.FhirVersions.STU3);
+        Job job = jobService.createJob(resourceTypes, getCurrentUrl(), null, outputFormat, since, STU3);
 
         logSuccessfulJobCreation(job);
 
@@ -242,7 +242,7 @@ public class BulkDataAccessAPI {
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
         checkSinceTime(since);
 
-        Job job = jobService.createJob(resourceTypes, getCurrentUrl(), contractNumber, outputFormat, since, Versions.FhirVersions.STU3);
+        Job job = jobService.createJob(resourceTypes, getCurrentUrl(), contractNumber, outputFormat, since, STU3);
 
         logSuccessfulJobCreation(job);
 

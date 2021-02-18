@@ -5,7 +5,6 @@ import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.User;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
-import gov.cms.ab2d.fhir.Versions;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +14,7 @@ import java.io.IOException;
 
 import static gov.cms.ab2d.common.model.JobStatus.IN_PROGRESS;
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
+import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
 import static org.junit.jupiter.api.Assertions.*;
 
 class EventUtilsTest {
@@ -31,7 +31,7 @@ class EventUtilsTest {
         job.setStatus(JobStatus.IN_PROGRESS);
         job.setJobUuid(jobId);
         job.setUser(user);
-        job.setFhirVersion(Versions.FhirVersions.STU3);
+        job.setFhirVersion(STU3);
     }
 
     @Test

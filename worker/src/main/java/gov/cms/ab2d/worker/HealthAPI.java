@@ -2,7 +2,6 @@ package gov.cms.ab2d.worker;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.health.SlackAvailable;
-import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.worker.util.HealthCheck;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +11,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import static gov.cms.ab2d.common.util.Constants.*;
+import static gov.cms.ab2d.fhir.Versions.FhirVersions.R4;
+import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
 
 @RequiredArgsConstructor
 @RestController
@@ -43,9 +44,9 @@ public class HealthAPI {
     @GetMapping(VALIDATE_BFD_ENDPOINT)
     public ResponseEntity<Void> isBfdUp() {
         try {
-            bfdClient.capabilityStatement(Versions.FhirVersions.STU3);
+            bfdClient.capabilityStatement(STU3);
             try {
-                bfdClient.capabilityStatement(Versions.FhirVersions.R4);
+                bfdClient.capabilityStatement(R4);
             } catch (Exception ex) {
                 log.error("BFD V2 interface is down");
             }

@@ -11,7 +11,6 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.DateUtil;
-import gov.cms.ab2d.fhir.Versions;
 import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +30,7 @@ import java.util.List;
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.fhir.IdentifierUtils.BENEFICIARY_ID;
-import static java.util.Collections.singletonList;
+import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -408,8 +407,8 @@ class CoverageUpdateAndProcessorTest {
 
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20);
 
-        when(bfdClient.requestPartDEnrolleesFromServer(eq(Versions.FhirVersions.STU3), anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(eq(Versions.FhirVersions.STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         processor.queueCoveragePeriod(january, false);
         JobStatus status = coverageService.getSearchStatus(january.getId());
@@ -434,7 +433,7 @@ class CoverageUpdateAndProcessorTest {
     @Test
     void mappingRetried() {
 
-        when(bfdClient.requestPartDEnrolleesFromServer(eq(Versions.FhirVersions.STU3), anyString(), anyInt())).thenThrow(new RuntimeException("oops"));
+        when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt())).thenThrow(new RuntimeException("oops"));
 
         processor.queueCoveragePeriod(january, false);
         JobStatus status = coverageService.getSearchStatus(january.getId());
@@ -460,8 +459,8 @@ class CoverageUpdateAndProcessorTest {
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20);
 
         Mockito.clearInvocations();
-        when(bfdClient.requestPartDEnrolleesFromServer(eq(Versions.FhirVersions.STU3), anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(eq(Versions.FhirVersions.STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         driver.loadMappingJob();
 
@@ -481,7 +480,7 @@ class CoverageUpdateAndProcessorTest {
     @Test
     void mappingFailsAfterXRetries() {
 
-        when(bfdClient.requestPartDEnrolleesFromServer(eq(Versions.FhirVersions.STU3), anyString(), anyInt())).thenThrow(new RuntimeException("oops"));
+        when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt())).thenThrow(new RuntimeException("oops"));
 
         processor.queueCoveragePeriod(january, false);
         JobStatus status = coverageService.getSearchStatus(january.getId());
@@ -506,8 +505,8 @@ class CoverageUpdateAndProcessorTest {
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20);
 
         Mockito.clearInvocations();
-        when(bfdClient.requestPartDEnrolleesFromServer(eq(Versions.FhirVersions.STU3), anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(eq(Versions.FhirVersions.STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         ThreadPoolTaskExecutor twoThreads = new ThreadPoolTaskExecutor();
         twoThreads.setMaxPoolSize(2);

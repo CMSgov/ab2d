@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.processor;
 
-import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.util.fhir.FhirUtils;
 import gov.cms.ab2d.common.util.FilterOutByDate;
@@ -19,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.*;
 
+import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifier;
 import static gov.cms.ab2d.worker.processor.ContractProcessorImpl.ID_EXT;
 import static gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable.MBI_ID;
@@ -66,7 +66,7 @@ public class AddExtensionTest {
         Map<String, CoverageSummary> patients = new HashMap<>();
         patients.put(beneId, summary);
 
-        FhirUtils.addMbiIdsToEobs(eobs, patients, Versions.FhirVersions.STU3);
+        FhirUtils.addMbiIdsToEobs(eobs, patients, STU3);
 
         List<org.hl7.fhir.dstu3.model.Extension> extensions = b.getExtension();
 
@@ -102,7 +102,7 @@ public class AddExtensionTest {
         Map<String, CoverageSummary> patients = new HashMap<>();
         patients.put(beneId, summary);
 
-        FhirUtils.addMbiIdsToEobs(eobs, patients, Versions.FhirVersions.STU3);
+        FhirUtils.addMbiIdsToEobs(eobs, patients, STU3);
 
         List<org.hl7.fhir.dstu3.model.Extension> extensions = b.getExtension();
 

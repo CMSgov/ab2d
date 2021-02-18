@@ -1,6 +1,5 @@
 package gov.cms.ab2d.bfd.client;
 
-import gov.cms.ab2d.fhir.Versions;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.hl7.fhir.r4.model.Bundle;
@@ -28,6 +27,7 @@ import java.util.List;
 
 import static gov.cms.ab2d.bfd.client.MockUtils.getRawJson;
 import static org.junit.jupiter.api.Assertions.*;
+import static gov.cms.ab2d.fhir.Versions.FhirVersions.R4;
 
 /**
  * Credits: most of the code in this class has been adopted from https://github.com/CMSgov/dpc-app
@@ -102,7 +102,7 @@ public class BlueButtonClientTestR4 {
 
     @Test
     public void shouldGetEOBFromPatientID() {
-        org.hl7.fhir.r4.model.Bundle response = (org.hl7.fhir.r4.model.Bundle) bbc.requestEOBFromServer(Versions.FhirVersions.R4, TEST_PATIENT_ID);
+        org.hl7.fhir.r4.model.Bundle response = (org.hl7.fhir.r4.model.Bundle) bbc.requestEOBFromServer(R4, TEST_PATIENT_ID);
 
         assertNotNull(response, "The demo patient should have a non-null EOB bundle");
         assertEquals(260, response.getTotal(), "The demo patient should have exactly 260 EOBs");
@@ -110,7 +110,7 @@ public class BlueButtonClientTestR4 {
 
     @Test
     public void shouldHaveNextBundle() {
-        org.hl7.fhir.r4.model.Bundle response = (org.hl7.fhir.r4.model.Bundle) bbc.requestEOBFromServer(Versions.FhirVersions.R4, TEST_PATIENT_ID);
+        org.hl7.fhir.r4.model.Bundle response = (org.hl7.fhir.r4.model.Bundle) bbc.requestEOBFromServer(R4, TEST_PATIENT_ID);
 
         assertNotNull(response, "The demo patient should have a non-null EOB bundle");
         assertNotNull(response.getLink(org.hl7.fhir.r4.model.Bundle.LINK_NEXT),
@@ -119,7 +119,7 @@ public class BlueButtonClientTestR4 {
 
     @Test
     public void shouldReturnBundleContainingOnlyEOBs() {
-        org.hl7.fhir.r4.model.Bundle response = (org.hl7.fhir.r4.model.Bundle) bbc.requestEOBFromServer(Versions.FhirVersions.R4, TEST_PATIENT_ID);
+        org.hl7.fhir.r4.model.Bundle response = (org.hl7.fhir.r4.model.Bundle) bbc.requestEOBFromServer(R4, TEST_PATIENT_ID);
 
         response.getEntry().forEach((entry) -> assertEquals(
                 entry.getResource().getResourceType(),
@@ -130,7 +130,7 @@ public class BlueButtonClientTestR4 {
 
     @Test
     public void getCoverageData() {
-        org.hl7.fhir.r4.model.Bundle response = (org.hl7.fhir.r4.model.Bundle) bbc.requestPartDEnrolleesFromServer(Versions.FhirVersions.R4, CONTRACT, 12);
+        org.hl7.fhir.r4.model.Bundle response = (org.hl7.fhir.r4.model.Bundle) bbc.requestPartDEnrolleesFromServer(R4, CONTRACT, 12);
         assertNotNull(response);
         List<Bundle.BundleEntryComponent> entries = response.getEntry();
         assertTrue(entries.size() > 0);
@@ -148,7 +148,7 @@ public class BlueButtonClientTestR4 {
 
     @Test
     public void shouldGetMetadata() {
-        org.hl7.fhir.r4.model.CapabilityStatement capabilityStatement = (org.hl7.fhir.r4.model.CapabilityStatement) bbc.capabilityStatement(Versions.FhirVersions.R4);
+        org.hl7.fhir.r4.model.CapabilityStatement capabilityStatement = (org.hl7.fhir.r4.model.CapabilityStatement) bbc.capabilityStatement(R4);
 
         assertNotNull(capabilityStatement, "There should be a non null capability statement");
         assertEquals("4.0.0", capabilityStatement.getFhirVersion().getDisplay());

@@ -6,7 +6,6 @@ import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverStub;
 import gov.cms.ab2d.worker.service.FileService;
@@ -25,6 +24,7 @@ import java.time.OffsetDateTime;
 import java.util.concurrent.ExecutionException;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
+import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
@@ -102,8 +102,8 @@ class ProgressTrackerIntegrationTest {
         org.hl7.fhir.dstu3.model.Bundle bundleA = BundleUtils.createBundle(entry1, entry2, entry3);
         org.hl7.fhir.dstu3.model.Bundle bundleB = BundleUtils.createBundle(entry1, entry2, entry3, entry4);
 
-        when(bfdClient.requestPartDEnrolleesFromServer(Versions.FhirVersions.STU3, CONTRACT_NUMBER, 1)).thenReturn(bundleA);
-        when(bfdClient.requestPartDEnrolleesFromServer(Versions.FhirVersions.STU3, CONTRACT_NUMBER, 2)).thenReturn(bundleB);
+        when(bfdClient.requestPartDEnrolleesFromServer(STU3, CONTRACT_NUMBER, 1)).thenReturn(bundleA);
+        when(bfdClient.requestPartDEnrolleesFromServer(STU3, CONTRACT_NUMBER, 2)).thenReturn(bundleB);
 
         cut.processContractBenes(job, progressTracker);
 
@@ -132,7 +132,7 @@ class ProgressTrackerIntegrationTest {
 
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setCreatedAt(OffsetDateTime.now());
-        job.setFhirVersion(Versions.FhirVersions.STU3);
+        job.setFhirVersion(STU3);
 
         job = jobRepository.saveAndFlush(job);
         dataSetup.queueForCleanup(job);

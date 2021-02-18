@@ -5,7 +5,6 @@ import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
-import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
@@ -45,6 +44,7 @@ import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESS
 import static gov.cms.ab2d.common.service.JobServiceImpl.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
+import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = SpringBootApp.class)
@@ -149,8 +149,7 @@ class JobServiceTest {
     void createJobWithContract() {
         Contract contract = contractRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
-        Job job = jobService.createJob(EOB, LOCAL_HOST, contract.getContractNumber(), NDJSON_FIRE_CONTENT_TYPE, null,
-                Versions.FhirVersions.STU3);
+        Job job = jobService.createJob(EOB, LOCAL_HOST, contract.getContractNumber(), NDJSON_FIRE_CONTENT_TYPE, null, STU3);
         dataSetup.queueForCleanup(job);
 
         assertNotNull(job);
@@ -165,7 +164,7 @@ class JobServiceTest {
         assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
         assertEquals(JobStatus.SUBMITTED, job.getStatus());
         assertEquals(0, job.getJobOutputs().size());
-        assertEquals(Versions.FhirVersions.STU3, job.getFhirVersion());
+        assertEquals(STU3, job.getFhirVersion());
         assertNull(job.getLastPollTime());
         assertNull(job.getExpiresAt());
         assertTrue(job.getJobUuid().matches("[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"));
@@ -182,7 +181,7 @@ class JobServiceTest {
         dataSetup.setupContractWithNoAttestation(USERNAME, CONTRACT_NUMBER, List.of());
         assertThrows(InvalidContractException.class,
                 () -> jobService.createJob(EOB, LOCAL_HOST, DataSetup.VALID_CONTRACT_NUMBER, NDJSON_FIRE_CONTENT_TYPE, null,
-                        Versions.FhirVersions.STU3));
+                        STU3));
     }
 
     @Test
@@ -190,7 +189,7 @@ class JobServiceTest {
         dataSetup.setupContractWithNoAttestation(USERNAME, CONTRACT_NUMBER, List.of());
         assertThrows(InvalidContractException.class,
                 () -> jobService.createJob(EOB, LOCAL_HOST, null, NDJSON_FIRE_CONTENT_TYPE, null,
-                        Versions.FhirVersions.STU3));
+                        STU3));
     }
 
     @Test
@@ -198,7 +197,7 @@ class JobServiceTest {
         assertThrows(TransactionSystemException.class,
                 () -> jobService.createJob("Patient,ExplanationOfBenefit,Coverage", LOCAL_HOST,
                         null, NDJSON_FIRE_CONTENT_TYPE, null,
-                        Versions.FhirVersions.STU3));
+                        STU3));
     }
 
     @Test
@@ -556,7 +555,7 @@ class JobServiceTest {
 
     private Job createJobAllContracts(String outputFormat) {
         Job job = jobService.createJob(EOB, LOCAL_HOST, null, outputFormat, null,
-                Versions.FhirVersions.STU3);
+                STU3);
         dataSetup.queueForCleanup(job);
         return job;
     }

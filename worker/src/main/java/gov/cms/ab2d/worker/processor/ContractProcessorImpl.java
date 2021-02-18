@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
+import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 @Slf4j
@@ -89,7 +90,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         Job job = jobRepository.findByJobUuid(jobUuid);
         List<Path> dataFiles = new ArrayList<>();
         List<Path> errorFiles = new ArrayList<>();
-        Versions.FhirVersions version = Versions.FhirVersions.STU3;
+        Versions.FhirVersions version = STU3;
         if (job != null && job.getFhirVersion() != null) {
             version = job.getFhirVersion();
         }

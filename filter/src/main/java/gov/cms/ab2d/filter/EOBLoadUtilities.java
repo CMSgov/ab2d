@@ -11,6 +11,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 
+import static gov.cms.ab2d.fhir.Versions.FhirVersions.R4;
+import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
+
 /**
  * Loads Explanation of Benefits object from a file or reader
  */
@@ -30,7 +33,7 @@ public class EOBLoadUtilities {
         }
         ClassLoader classLoader = EOBLoadUtilities.class.getClassLoader();
         InputStream inputStream = classLoader.getResourceAsStream(fileInClassPath);
-        return Versions.getJsonParser(Versions.FhirVersions.STU3).parseResource(org.hl7.fhir.dstu3.model.ExplanationOfBenefit.class, inputStream);
+        return Versions.getJsonParser(STU3).parseResource(org.hl7.fhir.dstu3.model.ExplanationOfBenefit.class, inputStream);
     }
 
     /**
@@ -46,9 +49,9 @@ public class EOBLoadUtilities {
         String response = IOUtils.toString(reader);
         switch (context.getVersion().getVersion()) {
             case DSTU3:
-                return Versions.getJsonParser(Versions.FhirVersions.STU3).parseResource(org.hl7.fhir.dstu3.model.ExplanationOfBenefit.class, response);
+                return Versions.getJsonParser(STU3).parseResource(org.hl7.fhir.dstu3.model.ExplanationOfBenefit.class, response);
             case R4:
-                return Versions.getJsonParser(Versions.FhirVersions.R4).parseResource(org.hl7.fhir.r4.model.ExplanationOfBenefit.class, response);
+                return Versions.getJsonParser(R4).parseResource(org.hl7.fhir.r4.model.ExplanationOfBenefit.class, response);
             default:
                 return null;
         }

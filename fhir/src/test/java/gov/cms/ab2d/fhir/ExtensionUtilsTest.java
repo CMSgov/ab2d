@@ -12,6 +12,7 @@ import java.util.Date;
 import java.util.List;
 
 import static gov.cms.ab2d.fhir.ExtensionUtils.*;
+import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ExtensionUtilsTest {
@@ -20,8 +21,8 @@ class ExtensionUtilsTest {
         String mbiIdCurrent = "MBI1";
         String mbiIdPrevious = "MBI1";
         org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob = new org.hl7.fhir.dstu3.model.ExplanationOfBenefit();
-        IBase extension = ExtensionUtils.createMbiExtension(mbiIdCurrent, true, Versions.FhirVersions.STU3);
-        ExtensionUtils.addExtension(eob, extension, Versions.FhirVersions.STU3);
+        IBase extension = ExtensionUtils.createMbiExtension(mbiIdCurrent, true, STU3);
+        ExtensionUtils.addExtension(eob, extension, STU3);
 
         List<Extension> extensions = eob.getExtension();
         assertNotNull(extensions);

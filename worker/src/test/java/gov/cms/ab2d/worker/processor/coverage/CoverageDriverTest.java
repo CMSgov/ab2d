@@ -13,7 +13,6 @@ import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.fhir.IdentifierUtils;
-import gov.cms.ab2d.fhir.Versions;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,6 +26,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static gov.cms.ab2d.common.util.DateUtil.*;
+import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -115,7 +115,7 @@ class CoverageDriverTest {
         job.setUser(user);
         job.setStatus(JobStatus.SUBMITTED);
         job.setCreatedAt(OffsetDateTime.now());
-        job.setFhirVersion(Versions.FhirVersions.STU3);
+        job.setFhirVersion(STU3);
         jobRepo.saveAndFlush(job);
         dataSetup.queueForCleanup(job);
 
@@ -433,8 +433,8 @@ class CoverageDriverTest {
 
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20);
 
-        when(bfdClient.requestPartDEnrolleesFromServer(eq(Versions.FhirVersions.STU3), anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(eq(Versions.FhirVersions.STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         processor.queueCoveragePeriod(january, false);
         JobStatus status = coverageService.getSearchStatus(january.getId());
