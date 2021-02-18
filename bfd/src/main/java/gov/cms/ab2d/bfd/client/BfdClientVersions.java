@@ -1,7 +1,7 @@
 package gov.cms.ab2d.bfd.client;
 
 import ca.uhn.fhir.rest.client.api.IGenericClient;
-import gov.cms.ab2d.fhir.Versions;
+import gov.cms.ab2d.fhir.Versions.FhirVersions;
 import org.apache.http.client.HttpClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -17,8 +17,8 @@ import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
  */
 @Component
 public class BfdClientVersions {
-    private Map<Versions.FhirVersions, String> clientUrls = new HashMap();
-    private Map<Versions.FhirVersions, IGenericClient> bfdServers = new HashMap();
+    private Map<FhirVersions, String> clientUrls = new HashMap();
+    private Map<FhirVersions, IGenericClient> bfdServers = new HashMap();
     private final HttpClient httpClient;
 
     /**
@@ -42,7 +42,7 @@ public class BfdClientVersions {
      * @param version - FHIR version
      * @return the URL
      */
-    public String getUrl(Versions.FhirVersions version) {
+    public String getUrl(FhirVersions version) {
         return clientUrls.get(version);
     }
 
@@ -52,7 +52,7 @@ public class BfdClientVersions {
      * @param version - the FHIR version
      * @return - the client
      */
-    public IGenericClient getClient(Versions.FhirVersions version) {
+    public IGenericClient getClient(FhirVersions version) {
         IGenericClient client = bfdServers.get(version);
         if (client != null) {
             return client;

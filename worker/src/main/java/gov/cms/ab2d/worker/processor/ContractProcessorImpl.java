@@ -14,6 +14,7 @@ import gov.cms.ab2d.fhir.FHIRUtil;
 import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.service.FileService;
+import gov.cms.ab2d.fhir.Versions.FhirVersions;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -90,7 +91,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         Job job = jobRepository.findByJobUuid(jobUuid);
         List<Path> dataFiles = new ArrayList<>();
         List<Path> errorFiles = new ArrayList<>();
-        Versions.FhirVersions version = STU3;
+        FhirVersions version = STU3;
         if (job != null && job.getFhirVersion() != null) {
             version = job.getFhirVersion();
         }
@@ -143,7 +144,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @param contractData - the contract data information
      * @return a Future<EobSearchResult>
      */
-    private Future<EobSearchResult> processPatient(Versions.FhirVersions version, CoverageSummary patient, ContractData contractData) {
+    private Future<EobSearchResult> processPatient(FhirVersions version, CoverageSummary patient, ContractData contractData) {
         final Token token = NewRelic.getAgent().getTransaction().getToken();
 
         // Using a ThreadLocal to communicate contract number to RoundRobinBlockingQueue
@@ -210,7 +211,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      */
     private int processHandles(List<Future<EobSearchResult>> futureHandles, ProgressTracker progressTracker,
                                Map<String, CoverageSummary> patients, StreamHelper helper,
-                               Versions.FhirVersions version) {
+                               FhirVersions version) {
         int numberOfEobs = 0;
         var iterator = futureHandles.iterator();
         while (iterator.hasNext()) {
@@ -232,7 +233,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         return numberOfEobs;
     }
 
-    private int writeOutResource(List<IBaseResource> eobs, StreamHelper helper, Versions.FhirVersions version) {
+    private int writeOutResource(List<IBaseResource> eobs, StreamHelper helper, FhirVersions version) {
         var jsonParser = Versions.getJsonParser(version);
 
         String payload = "";
@@ -331,7 +332,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         }
     }
 
-    void writeExceptionToContractErrorFile(StreamHelper helper, String data, Exception e, Versions.FhirVersions version) throws IOException {
+    void writeExceptionToContractErrorFile(StreamHelper helper, String data, Exception e, FhirVersions version) throws IOException {
         var errMsg = ExceptionUtils.getRootCauseMessage(e);
         IBaseResource operationOutcome = FHIRUtil.getErrorOutcome(errMsg, version);
 

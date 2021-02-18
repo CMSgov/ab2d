@@ -4,6 +4,7 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.CoverageMapping;
 import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.fhir.*;
+import gov.cms.ab2d.fhir.Versions.FhirVersions;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
@@ -33,14 +34,14 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     private final AtomicBoolean completed;
     private final int year;
     private final boolean skipBillablePeriodCheck;
-    private final Versions.FhirVersions version;
+    private final FhirVersions version;
 
     private int missingBeneId;
     private int missingCurrentMbi;
     private int hasHistoricalMbi;
     private int filteredByYear;
 
-    public CoverageMappingCallable(Versions.FhirVersions version, CoverageMapping coverageMapping, BFDClient bfdClient, boolean skipBillablePeriodCheck) {
+    public CoverageMappingCallable(FhirVersions version, CoverageMapping coverageMapping, BFDClient bfdClient, boolean skipBillablePeriodCheck) {
         this.coverageMapping = coverageMapping;
         this.bfdClient = bfdClient;
         this.completed = new AtomicBoolean(false);
@@ -130,7 +131,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
 
     }
 
-    private Set<Identifiers> extractAndFilter(Versions.FhirVersions version, IBaseBundle bundle) {
+    private Set<Identifiers> extractAndFilter(FhirVersions version, IBaseBundle bundle) {
         return BundleUtils.getPatientStream(bundle, version)
                 .filter(patient -> skipBillablePeriodCheck || filterByYear(patient))
                 .map(this::extractPatientId)
@@ -189,7 +190,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
      * @param month
      * @return a FHIR bundle of resources containing active patients
      */
-    private IBaseBundle getBundle(Versions.FhirVersions version, String contractNumber, int month) {
+    private IBaseBundle getBundle(FhirVersions version, String contractNumber, int month) {
         try {
             return bfdClient.requestPartDEnrolleesFromServer(version, contractNumber, month);
         } catch (Exception e) {

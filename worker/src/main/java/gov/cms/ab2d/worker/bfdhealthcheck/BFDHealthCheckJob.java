@@ -20,6 +20,6 @@ public class BFDHealthCheckJob extends QuartzJobBean {
     protected void executeInternal(JobExecutionContext jobExecutionContext) {
         bfdHealthCheck.checkBFDHealth(STU3);
         // TODO - do the check when we can be sure it's reliable
-        // bfdHealthCheck.checkBFDHealth(Versions.FhirVersions.R4);
+        // bfdHealthCheck.checkBFDHealth(FhirVersions.R4);
     }
 }

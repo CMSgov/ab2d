@@ -5,7 +5,7 @@ import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.fhir.MetaDataUtils;
-import gov.cms.ab2d.fhir.Versions;
+import gov.cms.ab2d.fhir.Versions.FhirVersions;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.IBaseConformance;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,11 +29,11 @@ class BFDHealthCheck {
 
     // Nothing else should be calling this component except for the scheduler, so keep
     // state here
-    private Map<Versions.FhirVersions, Integer> consecutiveSuccesses = new HashMap<>();
+    private Map<FhirVersions, Integer> consecutiveSuccesses = new HashMap<>();
 
-    private Map<Versions.FhirVersions, Integer> consecutiveFailures = new HashMap<>();
+    private Map<FhirVersions, Integer> consecutiveFailures = new HashMap<>();
 
-    private Map<Versions.FhirVersions, Status> bfdStatus = new HashMap<>();
+    private Map<FhirVersions, Status> bfdStatus = new HashMap<>();
 
     BFDHealthCheck(SlackLogger slackLogger, PropertiesService propertiesService, BFDClient bfdClient,
                           @Value("${bfd.health.check.consecutive.successes}") int consecutiveSuccessesToBringUp,
@@ -45,7 +45,7 @@ class BFDHealthCheck {
         this.consecutiveFailuresToTakeDown = consecutiveFailuresToTakeDown;
     }
 
-    void checkBFDHealth(Versions.FhirVersions version) {
+    void checkBFDHealth(FhirVersions version) {
 
         boolean errorOccurred = false;
         IBaseConformance capabilityStatement = null;
@@ -79,11 +79,11 @@ class BFDHealthCheck {
         }
     }
 
-    private void incrementValue(Map<Versions.FhirVersions, Integer> map, Versions.FhirVersions version) {
+    private void incrementValue(Map<FhirVersions, Integer> map, FhirVersions version) {
         map.merge(version, 1, Integer::sum);
     }
 
-    private Status getStatus(Versions.FhirVersions version) {
+    private Status getStatus(FhirVersions version) {
         Status status = this.bfdStatus.get(version);
         if (status == null) {
             status = Status.UP;
@@ -92,7 +92,7 @@ class BFDHealthCheck {
         return status;
     }
 
-    private void updateMaintenanceStatus(Status status, String statusString, Versions.FhirVersions version) {
+    private void updateMaintenanceStatus(Status status, String statusString, FhirVersions version) {
         bfdStatus.put(version, status);
         consecutiveFailures.put(version, 0);
         PropertiesDTO propertiesDTO = new PropertiesDTO();
@@ -103,7 +103,7 @@ class BFDHealthCheck {
         log.info("Updated the {} property to {}", MAINTENANCE_MODE, statusString);
     }
 
-    private int getValue(Map<Versions.FhirVersions, Integer> map, Versions.FhirVersions version) {
+    private int getValue(Map<FhirVersions, Integer> map, FhirVersions version) {
         if (map == null) {
             return 0;
         }
@@ -115,7 +115,7 @@ class BFDHealthCheck {
         return val;
     }
 
-    private void markFailure(Versions.FhirVersions version) {
+    private void markFailure(FhirVersions version) {
         Integer consFail = getValue(consecutiveFailures, version);
         consFail++;
         consecutiveFailures.put(version, consFail);

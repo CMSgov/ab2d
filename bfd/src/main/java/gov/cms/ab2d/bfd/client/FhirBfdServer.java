@@ -4,6 +4,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.RequestFormatParamStyleEnum;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import gov.cms.ab2d.fhir.Versions;
+import gov.cms.ab2d.fhir.Versions.FhirVersions;
 import org.apache.http.client.HttpClient;
 
 /**
@@ -18,7 +19,7 @@ public class FhirBfdServer {
      *
      * @param version - the FHIR version
      */
-    public FhirBfdServer(Versions.FhirVersions version) {
+    public FhirBfdServer(FhirVersions version) {
         fhirContext = Versions.getContextFromVersion(version);
     }
 

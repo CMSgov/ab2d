@@ -3,6 +3,8 @@ package gov.cms.ab2d.fhir;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.IBaseConformance;
 
+import gov.cms.ab2d.fhir.Versions.FhirVersions;
+
 /**
  * Used for parsing data related to capability statements for different versions of FHIR
  */
@@ -18,7 +20,7 @@ public final class MetaDataUtils {
      * @param version the FHIR version
      * @return true if the value is ACTIVE
      */
-    public static boolean metaDataValid(IBaseConformance resource, Versions.FhirVersions version) {
+    public static boolean metaDataValid(IBaseConformance resource, FhirVersions version) {
         if (resource == null) {
             return false;
         }
@@ -34,7 +36,7 @@ public final class MetaDataUtils {
      * @return the object
      */
     @SuppressWarnings("unchecked")
-    public static Class<? extends IBaseConformance> getCapabilityClass(Versions.FhirVersions version) {
+    public static Class<? extends IBaseConformance> getCapabilityClass(FhirVersions version) {
         try {
             return (Class<? extends IBaseConformance>) Class.forName(Versions.getClassName(version, "CapabilityStatement"));
         } catch (Exception ex) {

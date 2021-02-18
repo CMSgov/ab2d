@@ -59,7 +59,7 @@ public class Versions {
     /**
      * JSON parsers for the individual FHIR versions
      */
-    private static final Map<Versions.FhirVersions, IParser> JSON_PARSERS = new HashMap();
+    private static final Map<FhirVersions, IParser> JSON_PARSERS = new HashMap();
 
     /**
      * Currently, the classes in the model directories that we can instantiate
@@ -321,7 +321,7 @@ public class Versions {
      * @param version - the FHIR version
      * @return - the JSON parser
      */
-    public static IParser getJsonParser(Versions.FhirVersions version) {
+    public static IParser getJsonParser(FhirVersions version) {
         IParser parser = JSON_PARSERS.get(version);
         if (parser != null) {
             return parser;
