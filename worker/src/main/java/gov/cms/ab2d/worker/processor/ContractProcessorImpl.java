@@ -233,7 +233,7 @@ public class ContractProcessorImpl implements ContractProcessor {
     }
 
     private int writeOutResource(List<IBaseResource> eobs, StreamHelper helper, Versions.FhirVersions version) {
-        var jsonParser = Versions.getContextFromVersion(version).newJsonParser();
+        var jsonParser = Versions.getJsonParser(version);
 
         String payload = "";
         int resourceCount = 0;
@@ -335,7 +335,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         var errMsg = ExceptionUtils.getRootCauseMessage(e);
         IBaseResource operationOutcome = FHIRUtil.getErrorOutcome(errMsg, version);
 
-        var jsonParser = Versions.getContextFromVersion(version).newJsonParser();
+        var jsonParser = Versions.getJsonParser(version);
         var payload = jsonParser.encodeResourceToString(operationOutcome) + System.lineSeparator();
 
         var byteArrayOutputStream = new ByteArrayOutputStream();
