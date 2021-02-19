@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.OffsetDateTime;
 
+import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
 import static org.junit.jupiter.api.Assertions.*;
 
 class StatusUtilsTest {
@@ -12,7 +13,7 @@ class StatusUtilsTest {
         OffsetDateTime now = OffsetDateTime.now();
         final org.hl7.fhir.dstu3.model.DateTimeType jobStartedAt = new org.hl7.fhir.dstu3.model.DateTimeType(now.toString());
         String val2 = jobStartedAt.toHumanDisplay();
-        String val = StatusUtils.getFhirTime(Versions.FhirVersions.STU3, now);
+        String val = StatusUtils.getFhirTime(STU3, now);
         assertEquals(val, val2);
     }
 }

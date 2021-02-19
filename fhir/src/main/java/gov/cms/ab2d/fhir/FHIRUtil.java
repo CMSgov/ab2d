@@ -7,6 +7,8 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 
 import java.util.List;
 
+import gov.cms.ab2d.fhir.Versions.FhirVersions;
+
 /**
  * Misc methods to support different versions of FHIR
  */
@@ -22,7 +24,7 @@ public final class FHIRUtil {
      * @param version - the FHIR version
      * @return the JSON string
      */
-    public static String outcomeToJSON(IBaseResource operationOutcome, Versions.FhirVersions version) {
+    public static String outcomeToJSON(IBaseResource operationOutcome, FhirVersions version) {
         FhirContext ctx = Versions.getContextFromVersion(version);
         IParser jsonParser = ctx.newJsonParser();
         jsonParser.setPrettyPrint(true);
@@ -36,7 +38,7 @@ public final class FHIRUtil {
      * @param version - the FHIR version
      * @return the OperationOutcome object
      */
-    public static IBaseResource getErrorOutcome(String msg, Versions.FhirVersions version) {
+    public static IBaseResource getErrorOutcome(String msg, FhirVersions version) {
         IBaseResource operationOutcome = (IBaseResource) Versions.getObject(version, "OperationOutcome");
         List issues = (List) Versions.invokeGetMethod(operationOutcome, "getIssue");
 

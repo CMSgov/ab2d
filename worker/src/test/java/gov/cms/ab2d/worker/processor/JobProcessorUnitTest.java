@@ -4,7 +4,6 @@ import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverStub;
 import gov.cms.ab2d.worker.service.FileService;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +26,7 @@ import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
+import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
 import static java.lang.Boolean.TRUE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -214,7 +214,7 @@ class JobProcessorUnitTest {
         job.setStatusMessage("0%");
         job.setStatus(JobStatus.IN_PROGRESS);
         job.setUser(user);
-        job.setFhirVersion(Versions.FhirVersions.STU3);
+        job.setFhirVersion(STU3);
         return job;
     }
 }
