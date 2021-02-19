@@ -36,7 +36,7 @@ done
 sudo yum -y remove nagios-common
 sudo rpm -e postfix
 
-# Install depedencies
+# Install dependencies
 
 sudo yum -y update
 sudo yum -y install \
@@ -48,7 +48,8 @@ sudo yum -y install \
   nc \
   wget \
   epel-release \
-  python-pip
+  python-pip \
+  jq
 
 # Install Postgres 11
 
@@ -73,20 +74,51 @@ sudo yum-config-manager --enable 'rhui-REGION-rhel-server-extras'
 sudo rpm --import https://www.centos.org/keys/RPM-GPG-KEY-CentOS-7
 sudo yum install -y http://mirror.centos.org/centos/7/extras/x86_64/Packages/container-selinux-2.107-3.el7.noarch.rpm
 
+#
+# Install AWS CLI
+#
+
+sudo pip install awscli
+
 # TO DO: Update this when latest gold disk resolves the issue.
 # Temporary workaround for an error caused by the following URL change
 # - before: https://download.docker.com/linux/centos/7Server/
 # - after: https://download.docker.com/linux/centos/7/
-sudo sed -i 's%\$releasever%7%g' /etc/yum.repos.d/docker-ce.repo
+# sudo sed -i 's%\$releasever%7%g' /etc/yum.repos.d/docker-ce.repo
 
-sudo yum -y install docker-ce-19.03.8-3.el7
-sudo usermod -aG docker $SSH_USERNAME
+#
+# Install latest recommended AWS ECS docker version
+#
+
+# sudo yum -y install docker-ce-19.03.8-3.el7
+
+# Get latest recommended AWS ECS docker version
+
+AWS_ECS_DOCKER_CE_VERSION=$(aws --region "${AWS_DEFAULT_REGION}" ssm get-parameters \
+  --names /aws/service/ecs/optimized-ami/amazon-linux-2/recommended \
+  --query "Parameters[*].Value" \
+  --output text \
+  | jq '.ecs_runtime_version' \
+  | tr -d '"' \
+  | cut -d" " -f 3 \
+  | cut -d"-" -f 1)
+
+# Get and install latest Redhat docker CE version based on the recommended AWS ECS docker version
+
+REDHAT_DOCKER_CE_VERSION=$(curl -s 'https://download.docker.com/linux/centos/7/x86_64/stable/Packages/' \
+     | grep "docker-ce-${AWS_ECS_DOCKER_CE_VERSION}" \
+     | sort \
+     | tail -1 \
+     | cut -d'"' -f 2 \
+     | grep -E -m1 -o 'docker-.+\.el7')
+
+sudo yum -y install "${REDHAT_DOCKER_CE_VERSION}"
+
+# Configure docker
+
+sudo usermod -aG docker "${SSH_USERNAME}"
 sudo systemctl enable docker
 sudo systemctl start docker
-
-# Install awscli
-
-sudo pip install awscli
 
 # Disable trendmicro, and Amazon SSM
 # sudo systemctl disable amazon-ssm-agent
@@ -120,8 +152,8 @@ else
   S3_BUCKET="${ENVIRONMENT}-automation"
 fi
 
-aws s3 cp "s3://${S3_BUCKET}/encrypted-files/newrelic-infra.yml.encrypted" ./newrelic-infra.yml.encrypted
-aws kms --region "${REGION}" decrypt \
+aws --region "${REGION}" s3 cp "s3://${S3_BUCKET}/encrypted-files/newrelic-infra.yml.encrypted" ./newrelic-infra.yml.encrypted
+aws --region "${REGION}" kms decrypt \
   --ciphertext-blob fileb://newrelic-infra.yml.encrypted \
   --output text \
   --query Plaintext \
@@ -159,8 +191,10 @@ echo "*********************************************************"
 
 # Add rbenv initialization to "bashrc"
 
-echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
-echo 'eval "$(rbenv init -)"' >> ~/.bashrc
+# echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+# echo 'eval "$(rbenv init -)"' >> ~/.bashrc
+echo "export PATH=\"\${HOME}/.rbenv/bin:\${PATH}\"" >> ~/.bashrc
+echo "eval \"\$(rbenv init -)\"" >> ~/.bashrc
 
 # Initialize rbenv for the current session
 
