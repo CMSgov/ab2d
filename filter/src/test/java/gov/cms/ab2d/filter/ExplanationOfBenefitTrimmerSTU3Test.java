@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ExplanationOfBenefitTrimmerTest {
+class ExplanationOfBenefitTrimmerSTU3Test {
     private static IBaseResource eobResource = null;
     private static FhirContext context = FhirContext.forDstu3();
 

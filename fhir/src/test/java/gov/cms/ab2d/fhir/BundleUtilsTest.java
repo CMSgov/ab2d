@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -37,8 +38,8 @@ class BundleUtilsTest {
         assertEquals("next -> http://google.com", BundleUtils.getAvailableLinksPretty(bundle));
         assertNull(BundleUtils.getAvailableLinks(null));
 
-        Stream<IDomainResource> patientStream = BundleUtils.getPatientStream(bundle, Versions.FhirVersions.STU3);
-        assertNull(BundleUtils.getPatientStream(null, Versions.FhirVersions.STU3));
+        Stream<IDomainResource> patientStream = BundleUtils.getPatientStream(bundle, STU3);
+        assertNull(BundleUtils.getPatientStream(null, STU3));
         List<IDomainResource> patients = patientStream.collect(Collectors.toList());
         assertNotNull(patients);
         assertEquals(1, patients.size());

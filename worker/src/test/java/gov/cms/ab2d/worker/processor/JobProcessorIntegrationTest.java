@@ -16,7 +16,6 @@ import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
-import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.util.HealthCheck;
@@ -43,13 +42,13 @@ import java.util.stream.IntStream;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.eventlogger.events.ErrorEvent.ErrorType.TOO_MANY_SEARCH_ERRORS;
+import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
 import static gov.cms.ab2d.worker.TestUtil.getOpenRange;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
 import static java.lang.Boolean.TRUE;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -127,8 +126,8 @@ class JobProcessorIntegrationTest {
         IBaseResource eob = EobTestDataUtil.createEOB();
         bundle1 = EobTestDataUtil.createBundle(((ExplanationOfBenefit) eob).copy());
         bundles = getBundles();
-        when(mockBfdClient.requestEOBFromServer(anyString())).thenReturn(bundle1);
-        when(mockBfdClient.requestEOBFromServer(anyString(), any())).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyString())).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyString(), any())).thenReturn(bundle1);
 
         fail = new RuntimeException("TEST EXCEPTION");
 
@@ -139,9 +138,7 @@ class JobProcessorIntegrationTest {
                 fileService,
                 jobRepository,
                 patientClaimsProcessor,
-                logManager,
-                fhirContext
-        );
+                logManager);
 
         ReflectionTestUtils.setField(contractProcessor, "cancellationCheckFrequency", 10);
 
@@ -208,7 +205,7 @@ class JobProcessorIntegrationTest {
     @Test
     @DisplayName("When the error count is below threshold, job does not fail")
     void when_errorCount_is_below_threshold_do_not_fail_job() {
-        when(mockBfdClient.requestEOBFromServer(anyString()))
+        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyString()))
                 .thenReturn(bundle1, bundles)
                 .thenReturn(bundle1, bundles)
                 .thenReturn(bundle1, bundles)
@@ -248,7 +245,7 @@ class JobProcessorIntegrationTest {
     @Test
     @DisplayName("When the error count is greater than or equal to threshold, job should fail")
     void when_errorCount_is_not_below_threshold_fail_job() {
-        when(mockBfdClient.requestEOBFromServer(anyString(), any()))
+        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyString(), any()))
                 .thenReturn(bundle1, bundles)
                 .thenReturn(bundle1, bundles)
                 .thenThrow(fail, fail, fail, fail, fail, fail, fail, fail, fail, fail)
@@ -325,7 +322,7 @@ class JobProcessorIntegrationTest {
         job.setUser(user);
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setCreatedAt(OffsetDateTime.now());
-        job.setFhirVersion(Versions.FhirVersions.STU3);
+        job.setFhirVersion(STU3);
 
         job = jobRepository.saveAndFlush(job);
         dataSetup.queueForCleanup(job);

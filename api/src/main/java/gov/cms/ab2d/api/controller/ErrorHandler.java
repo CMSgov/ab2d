@@ -19,6 +19,7 @@ import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.fhir.Versions;
+import gov.cms.ab2d.fhir.Versions.FhirVersions;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -155,7 +156,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         String msg = getRootCause(e);
         HttpStatus httpStatus = getErrorResponse(e.getClass());
 
-        Versions.FhirVersions version = Versions.getVersionFromUrl(request.getRequestURI());
+        FhirVersions version = Versions.getVersionFromUrl(request.getRequestURI());
         IBaseResource operationOutcome = getErrorOutcome(msg, version);
         String encoded = outcomeToJSON(operationOutcome, version);
         eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), null,

@@ -23,12 +23,4 @@ public class CoverageQueueConfig {
         taskExecutor.initialize();
         return taskExecutor;
     }
-
-    @Bean
-    public CoverageUpdateConfig coverageMappingConfig(
-            @Value("${coverage.update.months.past}") int pastMonthsToUpdate,
-            @Value("${coverage.update.stale.days}") int staleDays,
-            @Value("${coverage.update.stuck.hours}") int stuckHours) {
-        return new CoverageUpdateConfig(pastMonthsToUpdate, staleDays, stuckHours);
-    }
 }

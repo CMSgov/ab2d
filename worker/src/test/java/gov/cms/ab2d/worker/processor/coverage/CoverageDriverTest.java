@@ -13,8 +13,6 @@ import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.fhir.IdentifierUtils;
-import gov.cms.ab2d.fhir.Versions;
-import gov.cms.ab2d.worker.config.CoverageUpdateConfig;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -28,6 +26,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static gov.cms.ab2d.common.util.DateUtil.*;
+import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -94,10 +93,8 @@ class CoverageDriverTest {
     @BeforeEach
     void before() {
 
-        PropertiesDTO dto = new PropertiesDTO();
-        dto.setKey(Constants.WORKER_ENGAGEMENT);
-        dto.setValue(FeatureEngagement.NEUTRAL.getSerialValue());
-        propertiesService.updateProperties(singletonList(dto));
+        // Set properties values in database
+        addPropertiesTableValues();
 
         contract = dataSetup.setupContract("TST-123");
         contract.setAttestedOn(AB2D_EPOCH.toOffsetDateTime());
@@ -118,7 +115,7 @@ class CoverageDriverTest {
         job.setUser(user);
         job.setStatus(JobStatus.SUBMITTED);
         job.setCreatedAt(OffsetDateTime.now());
-        job.setFhirVersion(Versions.FhirVersions.STU3);
+        job.setFhirVersion(STU3);
         jobRepo.saveAndFlush(job);
         dataSetup.queueForCleanup(job);
 
@@ -132,7 +129,7 @@ class CoverageDriverTest {
         CoverageUpdateConfig config = new CoverageUpdateConfig(PAST_MONTHS, STALE_DAYS, STUCK_HOURS);
 
         processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS, false);
-        driver = new CoverageDriverImpl(coverageSearchRepo, contractService, coverageService, propertiesService, processor, config, searchLock);
+        driver = new CoverageDriverImpl(coverageSearchRepo, contractService, coverageService, propertiesService, processor, searchLock);
     }
 
     @AfterEach
@@ -145,6 +142,32 @@ class CoverageDriverTest {
         dto.setKey(Constants.WORKER_ENGAGEMENT);
         dto.setValue(FeatureEngagement.IN_GEAR.getSerialValue());
         propertiesService.updateProperties(singletonList(dto));
+    }
+
+    private void addPropertiesTableValues() {
+        List<PropertiesDTO> propertiesDTOS = new ArrayList<>();
+
+        PropertiesDTO workerEngagement = new PropertiesDTO();
+        workerEngagement.setKey(Constants.WORKER_ENGAGEMENT);
+        workerEngagement.setValue(FeatureEngagement.NEUTRAL.getSerialValue());
+        propertiesDTOS.add(workerEngagement);
+
+        PropertiesDTO pastMonths = new PropertiesDTO();
+        pastMonths.setKey(Constants.COVERAGE_SEARCH_UPDATE_MONTHS);
+        pastMonths.setValue("" + PAST_MONTHS);
+        propertiesDTOS.add(pastMonths);
+
+        PropertiesDTO staleDays = new PropertiesDTO();
+        staleDays.setKey(Constants.COVERAGE_SEARCH_STALE_DAYS);
+        staleDays.setValue("" + STALE_DAYS);
+        propertiesDTOS.add(staleDays);
+
+        PropertiesDTO stuckHours = new PropertiesDTO();
+        stuckHours.setKey(Constants.COVERAGE_SEARCH_STUCK_HOURS);
+        stuckHours.setValue("" + STUCK_HOURS);
+        propertiesDTOS.add(stuckHours);
+
+        propertiesService.updateProperties(propertiesDTOS);
     }
 
     @DisplayName("Loading coverage periods")
@@ -410,9 +433,8 @@ class CoverageDriverTest {
 
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20);
 
-        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
-        when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
+        when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         processor.queueCoveragePeriod(january, false);
         JobStatus status = coverageService.getSearchStatus(january.getId());

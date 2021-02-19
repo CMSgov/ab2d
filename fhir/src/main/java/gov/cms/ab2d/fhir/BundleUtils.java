@@ -10,6 +10,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import gov.cms.ab2d.fhir.Versions.FhirVersions;
+
 import static org.hl7.fhir.instance.model.api.IBaseBundle.LINK_NEXT;
 
 /**
@@ -83,7 +85,7 @@ public final class BundleUtils {
      * @param version - the FHIR version
      * @return a stream of Patient Resources
      */
-    public static Stream<IDomainResource> getPatientStream(IBaseBundle bundle, Versions.FhirVersions version) {
+    public static Stream<IDomainResource> getPatientStream(IBaseBundle bundle, FhirVersions version) {
         if (bundle == null) {
             return null;
         }

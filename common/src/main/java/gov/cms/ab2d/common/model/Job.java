@@ -1,6 +1,6 @@
 package gov.cms.ab2d.common.model;
 
-import gov.cms.ab2d.fhir.Versions;
+import gov.cms.ab2d.fhir.Versions.FhirVersions;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -61,7 +61,7 @@ public class Job {
     private Integer progress;
 
     @Enumerated(STRING)
-    private Versions.FhirVersions fhirVersion;
+    private FhirVersions fhirVersion;
 
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime lastPollTime;

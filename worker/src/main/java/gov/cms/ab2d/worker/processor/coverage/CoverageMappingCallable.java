@@ -4,6 +4,7 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.CoverageMapping;
 import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.fhir.*;
+import gov.cms.ab2d.fhir.Versions.FhirVersions;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
@@ -17,9 +18,6 @@ import static java.util.stream.Collectors.*;
 
 /**
  * Queries BFD for all of the members of a contract during a given month.
- *
- * todo remove PatientContractCallable and replace with this class which will load the data
- *      before a job runs.
  */
 @Slf4j
 public class CoverageMappingCallable implements Callable<CoverageMapping> {
@@ -36,18 +34,20 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     private final AtomicBoolean completed;
     private final int year;
     private final boolean skipBillablePeriodCheck;
+    private final FhirVersions version;
 
     private int missingBeneId;
     private int missingCurrentMbi;
     private int hasHistoricalMbi;
     private int filteredByYear;
 
-    public CoverageMappingCallable(CoverageMapping coverageMapping, BFDClient bfdClient, boolean skipBillablePeriodCheck) {
+    public CoverageMappingCallable(FhirVersions version, CoverageMapping coverageMapping, BFDClient bfdClient, boolean skipBillablePeriodCheck) {
         this.coverageMapping = coverageMapping;
         this.bfdClient = bfdClient;
         this.completed = new AtomicBoolean(false);
         this.year = coverageMapping.getPeriod().getYear();
         this.skipBillablePeriodCheck = skipBillablePeriodCheck;
+        this.version = version;
     }
 
     public boolean isCompleted() {
@@ -72,8 +72,8 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
 
             BFDClient.BFD_BULK_JOB_ID.set(coverageMapping.getJobId());
 
-            IBaseBundle bundle = getBundle(contractNumber, month);
-            patientIds.addAll(extractAndFilter(bundle));
+            IBaseBundle bundle = getBundle(version, contractNumber, month);
+            patientIds.addAll(extractAndFilter(version, bundle));
 
             String availableLinks = BundleUtils.getAvailableLinks(bundle);
             log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}, available links {}",
@@ -91,7 +91,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
                 log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}",
                         contractNumber, year, month, bundleNo);
 
-                bundle = bfdClient.requestNextBundleFromServer(bundle);
+                bundle = bfdClient.requestNextBundleFromServer(version, bundle);
 
                 availableLinks = BundleUtils.getAvailableLinksPretty(bundle);
 
@@ -103,7 +103,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
                             contractNumber, year, month, bundleNo);
                 }
 
-                patientIds.addAll(extractAndFilter(bundle));
+                patientIds.addAll(extractAndFilter(version, bundle));
             }
 
             log.info("retrieving contract membership for Contract {}-{}-{}, #{} bundles received.",
@@ -131,8 +131,8 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
 
     }
 
-    private Set<Identifiers> extractAndFilter(IBaseBundle bundle) {
-        return BundleUtils.getPatientStream(bundle, bfdClient.getVersion())
+    private Set<Identifiers> extractAndFilter(FhirVersions version, IBaseBundle bundle) {
+        return BundleUtils.getPatientStream(bundle, version)
                 .filter(patient -> skipBillablePeriodCheck || filterByYear(patient))
                 .map(this::extractPatientId)
                 .filter(Objects::nonNull)
@@ -190,9 +190,9 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
      * @param month
      * @return a FHIR bundle of resources containing active patients
      */
-    private IBaseBundle getBundle(String contractNumber, int month) {
+    private IBaseBundle getBundle(FhirVersions version, String contractNumber, int month) {
         try {
-            return bfdClient.requestPartDEnrolleesFromServer(contractNumber, month);
+            return bfdClient.requestPartDEnrolleesFromServer(version, contractNumber, month);
         } catch (Exception e) {
             final Throwable rootCause = ExceptionUtils.getRootCause(e);
             log.error("Error while calling for Contract-2-Bene API : {}", e.getMessage(), rootCause);
