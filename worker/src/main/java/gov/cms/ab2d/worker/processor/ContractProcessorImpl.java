@@ -10,11 +10,9 @@ import gov.cms.ab2d.common.util.fhir.FhirUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.fhir.EobUtils;
-import gov.cms.ab2d.fhir.FHIRUtil;
-import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.service.FileService;
-import gov.cms.ab2d.fhir.Versions.FhirVersions;
+import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -37,7 +35,7 @@ import java.util.stream.Collectors;
 import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
-import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
+import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 @Slf4j
@@ -91,7 +89,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         Job job = jobRepository.findByJobUuid(jobUuid);
         List<Path> dataFiles = new ArrayList<>();
         List<Path> errorFiles = new ArrayList<>();
-        FhirVersions version = STU3;
+        FhirVersion version = STU3;
         if (job != null && job.getFhirVersion() != null) {
             version = job.getFhirVersion();
         }
@@ -144,7 +142,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @param contractData - the contract data information
      * @return a Future<EobSearchResult>
      */
-    private Future<EobSearchResult> processPatient(FhirVersions version, CoverageSummary patient, ContractData contractData) {
+    private Future<EobSearchResult> processPatient(FhirVersion version, CoverageSummary patient, ContractData contractData) {
         final Token token = NewRelic.getAgent().getTransaction().getToken();
 
         // Using a ThreadLocal to communicate contract number to RoundRobinBlockingQueue
@@ -211,7 +209,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      */
     private int processHandles(List<Future<EobSearchResult>> futureHandles, ProgressTracker progressTracker,
                                Map<String, CoverageSummary> patients, StreamHelper helper,
-                               FhirVersions version) {
+                               FhirVersion version) {
         int numberOfEobs = 0;
         var iterator = futureHandles.iterator();
         while (iterator.hasNext()) {
@@ -233,8 +231,8 @@ public class ContractProcessorImpl implements ContractProcessor {
         return numberOfEobs;
     }
 
-    private int writeOutResource(List<IBaseResource> eobs, StreamHelper helper, FhirVersions version) {
-        var jsonParser = Versions.getJsonParser(version);
+    private int writeOutResource(List<IBaseResource> eobs, StreamHelper helper, FhirVersion version) {
+        var jsonParser = version.getJsonParser();
 
         String payload = "";
         int resourceCount = 0;
@@ -242,7 +240,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             for (IBaseResource resource : eobs) {
                 ++resourceCount;
                 try {
-                    payload = jsonParser.encodeResourceToString(resource) + System.lineSeparator();
+                    payload = jsonParser.setPrettyPrint(false).encodeResourceToString(resource) + System.lineSeparator();
                     helper.addData(payload.getBytes(StandardCharsets.UTF_8));
                 } catch (Exception e) {
                     log.warn("Encountered exception while processing job resources: {}", e.getMessage());
@@ -332,12 +330,12 @@ public class ContractProcessorImpl implements ContractProcessor {
         }
     }
 
-    void writeExceptionToContractErrorFile(StreamHelper helper, String data, Exception e, FhirVersions version) throws IOException {
+    void writeExceptionToContractErrorFile(StreamHelper helper, String data, Exception e, FhirVersion version) throws IOException {
         var errMsg = ExceptionUtils.getRootCauseMessage(e);
-        IBaseResource operationOutcome = FHIRUtil.getErrorOutcome(errMsg, version);
+        IBaseResource operationOutcome = version.getErrorOutcome(errMsg);
 
-        var jsonParser = Versions.getJsonParser(version);
-        var payload = jsonParser.encodeResourceToString(operationOutcome) + System.lineSeparator();
+        var jsonParser = version.getJsonParser();
+        var payload = jsonParser.setPrettyPrint(false).encodeResourceToString(operationOutcome) + System.lineSeparator();
 
         var byteArrayOutputStream = new ByteArrayOutputStream();
         byteArrayOutputStream.write(payload.getBytes(StandardCharsets.UTF_8));

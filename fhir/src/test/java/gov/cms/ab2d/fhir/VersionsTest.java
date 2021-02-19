@@ -1,17 +1,18 @@
 package gov.cms.ab2d.fhir;
 
-import ca.uhn.fhir.context.FhirContext;
 import org.hl7.fhir.dstu3.model.DateTimeType;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.dstu3.model.Reference;
+import org.hl7.fhir.instance.model.api.IBaseResource;
+import org.hl7.fhir.r4.model.CapabilityStatement;
 import org.hl7.fhir.r4.model.Enumerations;
 import org.junit.jupiter.api.Test;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 
-import static gov.cms.ab2d.fhir.Versions.FhirVersions.R4;
-import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
+import static gov.cms.ab2d.fhir.FhirVersion.R4;
+import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.junit.jupiter.api.Assertions.*;
 
 class VersionsTest {
@@ -51,7 +52,6 @@ class VersionsTest {
     @Test
     void testInvalidVersion() {
         assertNull(Versions.getObject(STU3, "Bogus"));
-        assertThrows(RuntimeException.class, () -> Versions.getClassName(null, "Bogus"));
         assertNull(Versions.getObject(STU3, "Bogus", "dumb", String.class));
         assertNull(Versions.instantiateEnum(STU3, "Bogus", "dumb", "ONE"));
     }
@@ -67,9 +67,9 @@ class VersionsTest {
         String url1 = "http://localhost:8080/v1/fhir/$export";
         String url2 = "http://localhost:8080/v2/fhir/$export";
         String url3 = "http://localhost:8080/fhir/$export";
-        assertEquals(STU3, Versions.getVersionFromUrl(url1));
-        assertEquals(R4, Versions.getVersionFromUrl(url2));
-        assertEquals(STU3, Versions.getVersionFromUrl(url3));
+        assertEquals(STU3, FhirVersion.fromUrl(url1));
+        assertEquals(R4, FhirVersion.fromUrl(url2));
+        assertNull(FhirVersion.fromUrl(url3));
     }
 
     @Test
@@ -84,16 +84,6 @@ class VersionsTest {
     }
 
     @Test
-    void testGetVersion() {
-        assertEquals(STU3, Versions.getVersion(FhirContext.forDstu3()));
-        assertEquals(R4, Versions.getVersion(FhirContext.forR4()));
-        assertThrows(RuntimeException.class, () -> Versions.getVersion(FhirContext.forR5()));
-        assertThrows(RuntimeException.class, () -> Versions.getVersion(FhirContext.forDstu2()));
-        assertThrows(RuntimeException.class, () -> Versions.getVersion(null));
-        assertNull(Versions.getContextFromVersion(null));
-    }
-
-    @Test
     void testGetObjectWithParam() {
 
         OffsetDateTime d1 = OffsetDateTime.now();
@@ -103,5 +93,61 @@ class VersionsTest {
         OffsetDateTime d2 = OffsetDateTime.now().minus(10, ChronoUnit.DAYS);
         DateTimeType dt2 = (DateTimeType) Versions.getObject(STU3, "DateTimeType", d2.toString(), String.class);
         assertNotEquals(dt1.toHumanDisplay(), dt2.toHumanDisplay());
+    }
+
+    @Test
+    void testGetPatientClass() {
+        assertEquals(org.hl7.fhir.dstu3.model.Patient.class, STU3.getPatientClass());
+        assertEquals(org.hl7.fhir.r4.model.Patient.class, R4.getPatientClass());
+    }
+
+    @Test
+    void testGetBundleClass() {
+        assertEquals(org.hl7.fhir.dstu3.model.Bundle.class, STU3.getBundleClass());
+        assertEquals(org.hl7.fhir.r4.model.Bundle.class, R4.getBundleClass());
+    }
+
+    @Test
+    void testTimeUtils() {
+        OffsetDateTime now = OffsetDateTime.now();
+        final org.hl7.fhir.dstu3.model.DateTimeType jobStartedAt = new org.hl7.fhir.dstu3.model.DateTimeType(now.toString());
+        String val2 = jobStartedAt.toHumanDisplay();
+        String val = STU3.getFhirTime(now);
+        assertEquals(val, val2);
+    }
+
+    @Test
+    void testValid() {
+        CapabilityStatement statement = new CapabilityStatement();
+        assertFalse(R4.metaDataValid(statement));
+        statement.setStatus(Enumerations.PublicationStatus.ACTIVE);
+        assertTrue(R4.metaDataValid(statement));
+        statement.setStatus(Enumerations.PublicationStatus.UNKNOWN);
+        assertFalse(R4.metaDataValid(statement));
+        assertFalse(R4.metaDataValid(null));
+    }
+
+    @Test
+    void testClass() {
+        assertEquals(CapabilityStatement.class, R4.getCapabilityClass());
+    }
+
+    @Test
+    void testGetErrorOutcome() {
+        final String errText = "SOMETHING BROKE";
+        final IBaseResource o = R4.getErrorOutcome(errText);
+        org.hl7.fhir.r4.model.OperationOutcome oo = (org.hl7.fhir.r4.model.OperationOutcome) o;
+        assertTrue(oo instanceof  org.hl7.fhir.r4.model.OperationOutcome);
+        assertEquals(org.hl7.fhir.r4.model.ResourceType.OperationOutcome, oo.getResourceType());
+        assertEquals(1, oo.getIssue().size());
+        assertEquals(errText, oo.getIssue().get(0).getDetails().getText());
+    }
+
+    @Test
+    void testOutcomeToJSON() {
+        final String errText = "SOMETHING BROKE";
+        final IBaseResource oo = STU3.getErrorOutcome(errText);
+        final String payload = STU3.outcomePrettyToJSON(oo);
+        assertNotNull(payload);
     }
 }

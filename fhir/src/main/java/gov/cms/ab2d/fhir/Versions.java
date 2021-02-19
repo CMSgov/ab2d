@@ -1,9 +1,5 @@
 package gov.cms.ab2d.fhir;
 
-import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.context.FhirVersionEnum;
-import ca.uhn.fhir.parser.IParser;
-import ca.uhn.fhir.rest.api.EncodingEnum;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.InvocationTargetException;
@@ -21,14 +17,6 @@ import java.util.*;
 @Slf4j
 public class Versions {
     /**
-     * Supported versions
-     */
-    public enum FhirVersions {
-        STU3,
-        R4
-    }
-
-    /**
      * So we don't have to instantiate all Method objects, hold on to them so we can just invoke them when necessary
      * to save time
      */
@@ -39,27 +27,6 @@ public class Versions {
      * when needed
      */
     private static final Map<String, Object> NEEDED_OBJECTS = new HashMap<>();
-
-    /**
-     * Location of packages for FHIR objects
-     */
-    private static final Map<FhirVersions, String> CLASS_LOCATIONS = new HashMap<>() {
-        { put (FhirVersions.STU3, "org.hl7.fhir.dstu3.model"); }
-        { put (FhirVersions.R4, "org.hl7.fhir.r4.model"); }
-    };
-
-    /**
-     * Mapping of FhirContext objects to versions
-     */
-    private static final Map<FhirVersions, FhirContext> FHIR_CONTEXTS = new HashMap<>() {
-        { put (FhirVersions.STU3, FhirContext.forDstu3()); }
-        { put (FhirVersions.R4, FhirContext.forR4()); }
-    };
-
-    /**
-     * JSON parsers for the individual FHIR versions
-     */
-    private static final Map<FhirVersions, IParser> JSON_PARSERS = new HashMap();
 
     /**
      * Currently, the classes in the model directories that we can instantiate
@@ -84,54 +51,6 @@ public class Versions {
     );
 
     /**
-     * The currently supported FHIR versions
-     */
-    private static final Map<FhirVersionEnum, FhirVersions> SUPPORTED_FHIR_VERSION = new EnumMap<>(FhirVersionEnum.class) {
-        { put (FhirVersionEnum.DSTU3, FhirVersions.STU3); }
-        { put (FhirVersionEnum.R4, FhirVersions.R4); }
-    };
-
-    /**
-     * The URL for each FHIR version
-     */
-    private static final Map<String, FhirVersions> API_VERSION_TO_FHIR_VERSION = new HashMap<>() {
-        { put ("/v1/", FhirVersions.STU3); }
-        { put ("/v2/", FhirVersions.R4); }
-    };
-
-    /**
-     * Given a URL passed to the application, return the FHIR version used
-     *
-     * @param url - the URL
-     * @return the FHIR version
-     */
-    public static FhirVersions getVersionFromUrl(String url) {
-        FhirVersions version = FhirVersions.STU3;
-        String versionKey = API_VERSION_TO_FHIR_VERSION.keySet().stream()
-                .filter(url::contains)
-                .findFirst().orElse(null);
-        if (versionKey == null) {
-            return version;
-        }
-        return API_VERSION_TO_FHIR_VERSION.get(versionKey);
-    }
-
-    /**
-     * Given a FHIR version and the name of a class, return the proper class for the version
-     *
-     * @param version - the FHIR version
-     * @param name - the name of the class
-     * @return the class object
-     */
-    static String getClassName(FhirVersions version, String name) {
-        String base = CLASS_LOCATIONS.get(version);
-        if (base == null) {
-            throw new VersionNotSupported(version.toString() + " is not supported for " + name);
-        }
-        return base + "." + name;
-    }
-
-    /**
      * Get an object of a type className with an argument if desired. If the object already has been instantiated,
      * get a copy of that object, otherwise use reflection to instantiate it and save the copy for the next caller who
      * needs it
@@ -142,8 +61,8 @@ public class Versions {
      * @param argClass - the class of the argument
      * @return the object
      */
-    static Object getObject(FhirVersions version, String className, Object arg, Class argClass) {
-        String fullClassName = getClassName(version, className);
+    static Object getObject(FhirVersion version, String className, Object arg, Class argClass) {
+        String fullClassName = version.getClassName(className);
         return getObject(fullClassName, argClass, arg);
     }
 
@@ -154,8 +73,8 @@ public class Versions {
      * @param className - the class name to instantiate or retrieve from cache
      * @return the object
      */
-    static Object getObject(FhirVersions version, String className) {
-        String fullName = getClassName(version, className);
+    static Object getObject(FhirVersion version, String className) {
+        String fullName = version.getClassName(className);
         Object object = NEEDED_OBJECTS.get(fullName);
             if (object == null) {
                 Class clazz;
@@ -303,9 +222,9 @@ public class Versions {
      * @param value - the enum value
      * @return the enum
      */
-    static Object instantiateEnum(FhirVersions version, String cName, String value) {
+    static Object instantiateEnum(FhirVersion version, String cName, String value) {
         try {
-            String topClassName = getClassName(version, cName);
+            String topClassName = version.getClassName(cName);
             Class clazz = Class.forName(topClassName);
             Method valueOf = getMethod(clazz, "valueOf", String.class);
             return valueOf.invoke(null, value);
@@ -313,24 +232,6 @@ public class Versions {
             log.error("Unable to instantiate enum " + cName + " with value " + value, ex);
             return null;
         }
-    }
-
-    /**
-     * Retrieve or instantiate a correct JSON parser for the FHIR version
-     *
-     * @param version - the FHIR version
-     * @return - the JSON parser
-     */
-    public static IParser getJsonParser(FhirVersions version) {
-        IParser parser = JSON_PARSERS.get(version);
-        if (parser != null) {
-            return parser;
-        }
-        EncodingEnum respType = EncodingEnum.forContentType(EncodingEnum.JSON_PLAIN_STRING);
-        parser = respType.newParser(Versions.getContextFromVersion(version));
-
-        JSON_PARSERS.put(version, parser);
-        return parser;
     }
 
     /**
@@ -342,9 +243,9 @@ public class Versions {
      * @param value - the enum value
      * @return the enum
      */
-    static Object instantiateEnum(FhirVersions version, String topLevel, String lowerLevel, String value) {
+    static Object instantiateEnum(FhirVersion version, String topLevel, String lowerLevel, String value) {
         try {
-            String topClassName = getClassName(version, topLevel);
+            String topClassName = version.getClassName(topLevel);
             Class top = Class.forName(topClassName);
             Class[] classes = top.getClasses();
             for (Class c : classes) {
@@ -368,9 +269,9 @@ public class Versions {
      * @param lowerLevel - the internal class name
      * @return the object of that type
      */
-    static Object instantiateClass(FhirVersions version, String topLevel, String lowerLevel) {
+    static Object instantiateClass(FhirVersion version, String topLevel, String lowerLevel) {
         try {
-            String name = getClassName(version, topLevel);
+            String name = version.getClassName(topLevel);
             Class<?> clazz = Class.forName(name);
             String className = topLevel + "." + lowerLevel;
             if (!SUPPORTED_CLASSES.contains(className)) {
@@ -387,36 +288,5 @@ public class Versions {
             log.error("Unable to instantiate " + topLevel + "." + lowerLevel, ex);
             return null;
         }
-    }
-
-    /**
-     * Convert from a context to FHIR version
-     *
-     * @param context - the FhirContext
-     * @return the FHIR version
-     */
-    public static FhirVersions getVersion(FhirContext context) {
-        if (context == null || context.getVersion() == null) {
-            throw new VersionNotSupported("Null context passed");
-        }
-        FhirVersionEnum v = context.getVersion().getVersion();
-        FhirVersions version = SUPPORTED_FHIR_VERSION.get(v);
-        if (version == null) {
-            throw new VersionNotSupported(v.getFhirVersionString() + " is not supported");
-        }
-        return version;
-    }
-
-    /**
-     * Given a version, return the FhirContext
-     *
-     * @param version - the version
-     * @return the FHIRContext
-     */
-    public static FhirContext getContextFromVersion(FhirVersions version) {
-        if (version == null) {
-            return null;
-        }
-        return FHIR_CONTEXTS.get(version);
     }
 }
