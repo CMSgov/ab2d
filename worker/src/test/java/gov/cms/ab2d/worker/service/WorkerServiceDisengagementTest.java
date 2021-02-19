@@ -9,7 +9,6 @@ import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.common.util.DataSetup;
-import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.worker.config.JobHandler;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +29,7 @@ import java.util.UUID;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
+import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
@@ -146,7 +146,7 @@ class WorkerServiceDisengagementTest {
         job.setUser(user);
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setContract(user.getContract());
-        job.setFhirVersion(Versions.FhirVersions.STU3);
+        job.setFhirVersion(STU3);
 
         job = jobRepository.save(job);
         dataSetup.queueForCleanup(job);

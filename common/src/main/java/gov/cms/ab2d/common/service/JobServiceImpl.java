@@ -9,7 +9,7 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.util.EventUtils;
-import gov.cms.ab2d.fhir.Versions;
+import gov.cms.ab2d.fhir.Versions.FhirVersions;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.common.util.JobUtil;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -58,7 +58,7 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public Job createJob(String resourceTypes, String url, String contractNumber, String outputFormat,
-                         OffsetDateTime since, Versions.FhirVersions version) {
+                         OffsetDateTime since, FhirVersions version) {
         Job job = new Job();
         job.setResourceTypes(resourceTypes);
         job.setJobUuid(UUID.randomUUID().toString());

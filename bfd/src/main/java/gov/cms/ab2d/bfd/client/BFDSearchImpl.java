@@ -1,9 +1,9 @@
 package gov.cms.ab2d.bfd.client;
 
-import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import gov.cms.ab2d.fhir.SearchUtils;
 import gov.cms.ab2d.fhir.Versions;
+import gov.cms.ab2d.fhir.Versions.FhirVersions;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
@@ -11,7 +11,6 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -25,23 +24,20 @@ import java.time.OffsetDateTime;
 public class BFDSearchImpl implements BFDSearch {
 
     private final HttpClient httpClient;
-
-    private final IParser parser;
-
     private final Environment environment;
+    private final BfdClientVersions bfdClientVersions;
 
-    @Value("${bfd.serverBaseUrl}")
-    private String serverBaseUrl;
-
-    public BFDSearchImpl(HttpClient httpClient, IParser iParser, Environment environment) {
+    public BFDSearchImpl(HttpClient httpClient, Environment environment, BfdClientVersions bfdClientVersions) {
         this.httpClient = httpClient;
-        this.parser = iParser;
         this.environment = environment;
+        this.bfdClientVersions = bfdClientVersions;
     }
 
     @Override
-    public IBaseBundle searchEOB(String patientId, OffsetDateTime since, int pageSize, String bulkJobId, Versions.FhirVersions version) throws IOException {
-        StringBuilder url = new StringBuilder(serverBaseUrl + "ExplanationOfBenefit?patient=" + patientId + "&excludeSAMHSA=true");
+    public IBaseBundle searchEOB(String patientId, OffsetDateTime since, int pageSize, String bulkJobId, FhirVersions version) throws IOException {
+
+        String urlLocation = bfdClientVersions.getUrl(version);
+        StringBuilder url = new StringBuilder(urlLocation + "ExplanationOfBenefit?patient=" + patientId + "&excludeSAMHSA=true");
 
         if (since != null) {
             url.append("&_lastUpdated=ge").append(since);
@@ -66,7 +62,7 @@ public class BFDSearchImpl implements BFDSearch {
             int status = response.getStatusLine().getStatusCode();
             if (status >= HttpStatus.SC_OK && status < HttpStatus.SC_MULTIPLE_CHOICES) {
                 try (InputStream instream = response.getEntity().getContent()) {
-                    return parser.parseResource(SearchUtils.getBundleClass(version), instream);
+                    return Versions.getContextFromVersion(version).newJsonParser().parseResource(SearchUtils.getBundleClass(version), instream);
                 }
             } else if (status == HttpStatus.SC_NOT_FOUND) {
                 throw new ResourceNotFoundException("Patient " + patientId + " was not found");

@@ -1,9 +1,8 @@
 package gov.cms.ab2d.filter;
 
 import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.IParser;
-import ca.uhn.fhir.rest.api.EncodingEnum;
 import gov.cms.ab2d.fhir.EobUtils;
+import gov.cms.ab2d.fhir.Versions;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -11,6 +10,9 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+
+import static gov.cms.ab2d.fhir.Versions.FhirVersions.R4;
+import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
 
 /**
  * Loads Explanation of Benefits object from a file or reader
@@ -31,7 +33,7 @@ public class EOBLoadUtilities {
         }
         ClassLoader classLoader = EOBLoadUtilities.class.getClassLoader();
         InputStream inputStream = classLoader.getResourceAsStream(fileInClassPath);
-        return getParser(context).parseResource(org.hl7.fhir.dstu3.model.ExplanationOfBenefit.class, inputStream);
+        return Versions.getJsonParser(STU3).parseResource(org.hl7.fhir.dstu3.model.ExplanationOfBenefit.class, inputStream);
     }
 
     /**
@@ -47,22 +49,12 @@ public class EOBLoadUtilities {
         String response = IOUtils.toString(reader);
         switch (context.getVersion().getVersion()) {
             case DSTU3:
-                return getParser(context).parseResource(org.hl7.fhir.dstu3.model.ExplanationOfBenefit.class, response);
+                return Versions.getJsonParser(STU3).parseResource(org.hl7.fhir.dstu3.model.ExplanationOfBenefit.class, response);
             case R4:
-                return getParser(context).parseResource(org.hl7.fhir.r4.model.ExplanationOfBenefit.class, response);
+                return Versions.getJsonParser(R4).parseResource(org.hl7.fhir.r4.model.ExplanationOfBenefit.class, response);
             default:
                 return null;
         }
-    }
-
-    /**
-     * Convenience method to create the parser for any method that needs it.
-     *
-     * @return the parser
-     */
-    private static IParser getParser(FhirContext context) {
-        EncodingEnum respType = EncodingEnum.forContentType(EncodingEnum.JSON_PLAIN_STRING);
-        return respType.newParser(context);
     }
 
     /**

@@ -17,7 +17,6 @@ import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
-import gov.cms.ab2d.fhir.Versions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -55,6 +54,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -127,7 +127,7 @@ class FileDeletionServiceTest {
         job.setCompletedAt(OffsetDateTime.now().minusDays(4));
         job.setExpiresAt(OffsetDateTime.now().minusDays(1));
         job.setUser(user);
-        job.setFhirVersion(Versions.FhirVersions.STU3);
+        job.setFhirVersion(STU3);
         jobService.updateJob(job);
 
         // Connected to a job, but in progress
@@ -136,7 +136,7 @@ class FileDeletionServiceTest {
         jobInProgress.setJobUuid(UUID.randomUUID().toString());
         jobInProgress.setCreatedAt(OffsetDateTime.now().minusHours(1));
         jobInProgress.setUser(user);
-        jobInProgress.setFhirVersion(Versions.FhirVersions.STU3);
+        jobInProgress.setFhirVersion(STU3);
         jobService.updateJob(jobInProgress);
 
         // Connected to a job that is finished where the file has yet to expire
@@ -147,14 +147,14 @@ class FileDeletionServiceTest {
         jobNotExpiredYet.setCompletedAt(OffsetDateTime.now().minusHours(55));
         jobNotExpiredYet.setExpiresAt(OffsetDateTime.now().plusHours(17));
         jobNotExpiredYet.setUser(user);
-        jobNotExpiredYet.setFhirVersion(Versions.FhirVersions.STU3);
+        jobNotExpiredYet.setFhirVersion(STU3);
 
         jobCancelled = new Job();
         jobCancelled.setStatus(JobStatus.CANCELLED);
         jobCancelled.setJobUuid(UUID.randomUUID().toString());
         jobCancelled.setCreatedAt(OffsetDateTime.now().minusHours(1));
         jobCancelled.setUser(user);
-        jobCancelled.setFhirVersion(Versions.FhirVersions.STU3);
+        jobCancelled.setFhirVersion(STU3);
         jobService.updateJob(jobCancelled);
 
         jobFailed = new Job();
@@ -162,7 +162,7 @@ class FileDeletionServiceTest {
         jobFailed.setJobUuid(UUID.randomUUID().toString());
         jobFailed.setCreatedAt(OffsetDateTime.now().minusHours(1));
         jobFailed.setUser(user);
-        jobFailed.setFhirVersion(Versions.FhirVersions.STU3);
+        jobFailed.setFhirVersion(STU3);
         jobService.updateJob(jobFailed);
 
         efsMount = tmpDirFolder.toPath().toString();
