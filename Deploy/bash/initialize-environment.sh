@@ -53,11 +53,20 @@ elif [ "${CLOUD_TAMER_PARAM}" == "false" ]; then
 else # [ "${CLOUD_TAMER_PARAM}" == "true" ]
 
   # Turn on verbose logging for development machine testing
+
   set -x
   echo "Print commands and their arguments as they are executed."
   CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
 
+  # Reset logging
+
+  echo "Setting terraform debug level to $DEBUG_LEVEL..."
+  export TF_LOG=$DEBUG_LEVEL
+  export TF_LOG_PATH=/var/log/terraform/tf.log
+  rm -f /var/log/terraform/tf.log
+
   # Import the "get temporary AWS credentials via CloudTamer API" function
+
   source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh"
 
 fi
@@ -246,14 +255,23 @@ terraform validate
 cd "${START_DIR}/.."
 cd "terraform/environments/${TARGET_CMS_ENV}"
 
-terraform apply \
-  --var "env=${TARGET_CMS_ENV}" \
-  --var "mgmt_aws_account_number=${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" \
-  --var "aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
-  --target module.iam \
-  --auto-approve \
-  1> /dev/null \
-  2> /dev/null
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  terraform apply \
+    --var "env=${TARGET_CMS_ENV}" \
+    --var "mgmt_aws_account_number=${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" \
+    --var "aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
+    --target module.iam \
+    --auto-approve
+else
+  terraform apply \
+    --var "env=${TARGET_CMS_ENV}" \
+    --var "mgmt_aws_account_number=${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" \
+    --var "aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
+    --target module.iam \
+    --auto-approve \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 #
 # Create or verify KMS components
@@ -262,13 +280,21 @@ terraform apply \
 cd "${START_DIR}/.."
 cd "terraform/environments/${TARGET_CMS_ENV}"
 
-terraform apply \
-  --var "env=${TARGET_CMS_ENV}" \
-  --var "aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
-  --target module.kms \
-  --auto-approve \
-  1> /dev/null \
-  2> /dev/null
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  terraform apply \
+    --var "env=${TARGET_CMS_ENV}" \
+    --var "aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
+    --target module.kms \
+    --auto-approve
+else
+  terraform apply \
+    --var "env=${TARGET_CMS_ENV}" \
+    --var "aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
+    --target module.kms \
+    --auto-approve \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 #
 # Get secrets
@@ -318,16 +344,27 @@ fi
 cd "${START_DIR}/.."
 cd "terraform/environments/${TARGET_CMS_ENV}"
 
-terraform apply \
-  --var "env=${TARGET_CMS_ENV}" \
-  --var "mgmt_aws_account_number=${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" \
-  --var "aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
-  --var "ab2d_bfd_insights_s3_bucket=${AB2D_BFD_INSIGHTS_S3_BUCKET}" \
-  --var "ab2d_bfd_kms_arn=${AB2D_BFD_KMS_ARN}" \
-  --target module.iam_bfd_insights \
-  --auto-approve \
-  1> /dev/null \
-  2> /dev/null
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  terraform apply \
+    --var "env=${TARGET_CMS_ENV}" \
+    --var "mgmt_aws_account_number=${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" \
+    --var "aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
+    --var "ab2d_bfd_insights_s3_bucket=${AB2D_BFD_INSIGHTS_S3_BUCKET}" \
+    --var "ab2d_bfd_kms_arn=${AB2D_BFD_KMS_ARN}" \
+    --target module.iam_bfd_insights \
+    --auto-approve
+else
+  terraform apply \
+    --var "env=${TARGET_CMS_ENV}" \
+    --var "mgmt_aws_account_number=${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" \
+    --var "aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
+    --var "ab2d_bfd_insights_s3_bucket=${AB2D_BFD_INSIGHTS_S3_BUCKET}" \
+    --var "ab2d_bfd_kms_arn=${AB2D_BFD_KMS_ARN}" \
+    --target module.iam_bfd_insights \
+    --auto-approve \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 #
 # Configure networking
