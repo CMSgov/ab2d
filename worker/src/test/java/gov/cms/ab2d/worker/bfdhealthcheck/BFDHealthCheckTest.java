@@ -20,7 +20,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.io.IOException;
 
 import static gov.cms.ab2d.common.util.Constants.MAINTENANCE_MODE;
-import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
 import static gov.cms.ab2d.worker.bfdhealthcheck.BFDMockServerConfigurationUtil.MOCK_SERVER_PORT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -61,7 +60,7 @@ public class BFDHealthCheckTest {
         assertEquals("false", maintenanceProperties.getValue());
 
         for(int i = 0; i < consecutiveFailuresToTakeDown; i++) {
-            bfdHealthCheck.checkBFDHealth(STU3);
+            bfdHealthCheck.checkBFDHealth();
         }
 
         maintenanceProperties = propertiesService.getPropertiesByKey(MAINTENANCE_MODE);
@@ -71,7 +70,7 @@ public class BFDHealthCheckTest {
         MockBfdServiceUtils.reset(MOCK_SERVER_PORT);
         MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta.xml", MOCK_SERVER_PORT);
         for(int i = 0; i < consecutiveSuccessesToBringUp; i++) {
-            bfdHealthCheck.checkBFDHealth(STU3);
+            bfdHealthCheck.checkBFDHealth();
         }
     }
 
@@ -82,7 +81,7 @@ public class BFDHealthCheckTest {
         MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta-unknown-status.xml", MOCK_SERVER_PORT);
 
         for(int i = 0; i < consecutiveFailuresToTakeDown; i++) {
-            bfdHealthCheck.checkBFDHealth(STU3);
+            bfdHealthCheck.checkBFDHealth();
         }
 
         MockBfdServiceUtils.reset(MOCK_SERVER_PORT);
@@ -92,7 +91,7 @@ public class BFDHealthCheckTest {
         assertEquals("true", maintenanceProperties.getValue());
 
         for (int i = 0; i < consecutiveSuccessesToBringUp; i++) {
-            bfdHealthCheck.checkBFDHealth(STU3);
+            bfdHealthCheck.checkBFDHealth();
         }
 
         maintenanceProperties = propertiesService.getPropertiesByKey(MAINTENANCE_MODE);
@@ -105,26 +104,26 @@ public class BFDHealthCheckTest {
         MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta-unknown-status.xml", MOCK_SERVER_PORT);
 
         for(int i = 0; i < consecutiveFailuresToTakeDown - 1; i++) {
-            bfdHealthCheck.checkBFDHealth(STU3);
+            bfdHealthCheck.checkBFDHealth();
         }
 
         MockBfdServiceUtils.reset(MOCK_SERVER_PORT);
         MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta.xml", MOCK_SERVER_PORT);
 
         for(int i = 0; i < consecutiveSuccessesToBringUp - 1; i++) {
-            bfdHealthCheck.checkBFDHealth(STU3);
+            bfdHealthCheck.checkBFDHealth();
         }
 
         MockBfdServiceUtils.reset(MOCK_SERVER_PORT);
         MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta-unknown-status.xml", MOCK_SERVER_PORT);
 
-        bfdHealthCheck.checkBFDHealth(STU3);
+        bfdHealthCheck.checkBFDHealth();
 
         Properties maintenanceProperties = propertiesService.getPropertiesByKey(MAINTENANCE_MODE);
         assertEquals("false", maintenanceProperties.getValue());
 
         for(int i = 0; i < consecutiveFailuresToTakeDown - 1; i++) {
-            bfdHealthCheck.checkBFDHealth(STU3);
+            bfdHealthCheck.checkBFDHealth();
         }
 
         maintenanceProperties = propertiesService.getPropertiesByKey(MAINTENANCE_MODE);
@@ -134,7 +133,7 @@ public class BFDHealthCheckTest {
         MockBfdServiceUtils.reset(MOCK_SERVER_PORT);
         MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta.xml", MOCK_SERVER_PORT);
         for(int i = 0; i < consecutiveSuccessesToBringUp; i++) {
-            bfdHealthCheck.checkBFDHealth(STU3);
+            bfdHealthCheck.checkBFDHealth();
         }
     }
 
@@ -144,7 +143,7 @@ public class BFDHealthCheckTest {
         MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta-unknown-status.xml", MOCK_SERVER_PORT);
 
         for(int i = 0; i < consecutiveFailuresToTakeDown + 1; i++) {
-            bfdHealthCheck.checkBFDHealth(STU3);
+            bfdHealthCheck.checkBFDHealth();
         }
 
         Properties maintenanceProperties = propertiesService.getPropertiesByKey(MAINTENANCE_MODE);
@@ -154,7 +153,7 @@ public class BFDHealthCheckTest {
         MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta.xml", MOCK_SERVER_PORT);
 
         for(int i = 0; i < consecutiveSuccessesToBringUp; i++) {
-            bfdHealthCheck.checkBFDHealth(STU3);
+            bfdHealthCheck.checkBFDHealth();
         }
 
         maintenanceProperties = propertiesService.getPropertiesByKey(MAINTENANCE_MODE);

@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import static gov.cms.ab2d.common.util.Constants.*;
-import static gov.cms.ab2d.fhir.Versions.FhirVersions.R4;
-import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
+import static gov.cms.ab2d.fhir.FhirVersion.R4;
+import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 
 @RequiredArgsConstructor
 @RestController

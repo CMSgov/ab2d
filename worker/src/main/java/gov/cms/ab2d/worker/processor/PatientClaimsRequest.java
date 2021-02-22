@@ -2,7 +2,7 @@ package gov.cms.ab2d.worker.processor;
 
 import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.common.model.CoverageSummary;
-import gov.cms.ab2d.fhir.Versions.FhirVersions;
+import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -18,5 +18,5 @@ public class PatientClaimsRequest {
     private final String job;
     private final String contractNum;
     private final Token token;
-    private final FhirVersions version;
+    private final FhirVersion version;
 }

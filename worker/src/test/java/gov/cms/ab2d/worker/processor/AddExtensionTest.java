@@ -5,7 +5,6 @@ import gov.cms.ab2d.common.util.fhir.FhirUtils;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.worker.service.FileService;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,7 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.*;
 
-import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
+import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifier;
 import static gov.cms.ab2d.worker.processor.ContractProcessorImpl.ID_EXT;
 import static gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable.MBI_ID;

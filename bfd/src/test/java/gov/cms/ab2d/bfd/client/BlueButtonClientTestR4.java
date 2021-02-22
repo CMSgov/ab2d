@@ -27,7 +27,7 @@ import java.util.List;
 
 import static gov.cms.ab2d.bfd.client.MockUtils.getRawJson;
 import static org.junit.jupiter.api.Assertions.*;
-import static gov.cms.ab2d.fhir.Versions.FhirVersions.R4;
+import static gov.cms.ab2d.fhir.FhirVersion.R4;
 
 /**
  * Credits: most of the code in this class has been adopted from https://github.com/CMSgov/dpc-app
