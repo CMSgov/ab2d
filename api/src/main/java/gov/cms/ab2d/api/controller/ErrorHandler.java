@@ -18,8 +18,7 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
-import gov.cms.ab2d.fhir.Versions;
-import gov.cms.ab2d.fhir.Versions.FhirVersions;
+import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -42,8 +41,6 @@ import java.util.Map;
 
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 import static gov.cms.ab2d.common.util.Constants.USERNAME;
-import static gov.cms.ab2d.fhir.FHIRUtil.getErrorOutcome;
-import static gov.cms.ab2d.fhir.FHIRUtil.outcomeToJSON;
 
 @ControllerAdvice
 @Slf4j
@@ -156,9 +153,9 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         String msg = getRootCause(e);
         HttpStatus httpStatus = getErrorResponse(e.getClass());
 
-        FhirVersions version = Versions.getVersionFromUrl(request.getRequestURI());
-        IBaseResource operationOutcome = getErrorOutcome(msg, version);
-        String encoded = outcomeToJSON(operationOutcome, version);
+        FhirVersion version = FhirVersion.fromUrl(request.getRequestURI());
+        IBaseResource operationOutcome = version.getErrorOutcome(msg);
+        String encoded = version.outcomePrettyToJSON(operationOutcome);
         eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), null,
                 ErrorHandler.getErrorResponse(e.getClass()),
                 "FHIR Error", msg, (String) request.getAttribute(REQUEST_ID)));
