@@ -7,8 +7,6 @@ import org.quartz.DisallowConcurrentExecution;
 import org.quartz.JobExecutionContext;
 import org.springframework.scheduling.quartz.QuartzJobBean;
 
-import static gov.cms.ab2d.fhir.FhirVersion.STU3;
-
 @Slf4j
 @RequiredArgsConstructor
 @DisallowConcurrentExecution
