@@ -4,16 +4,13 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
-import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.IBaseConformance;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static gov.cms.ab2d.common.util.Constants.MAINTENANCE_MODE;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
@@ -29,14 +26,6 @@ class BFDHealthCheck {
     private final int consecutiveSuccessesToBringUp;
     private final int consecutiveFailuresToTakeDown;
     private final List<HealthCheckData> healthCheckData = new ArrayList<>();
-
-    // Nothing else should be calling this component except for the scheduler, so keep
-    // state here
-    private Map<FhirVersion, Integer> consecutiveSuccesses = new HashMap<>();
-
-    private Map<FhirVersion, Integer> consecutiveFailures = new HashMap<>();
-
-    private Map<FhirVersion, Status> bfdStatus = new HashMap<>();
 
     BFDHealthCheck(SlackLogger slackLogger, PropertiesService propertiesService, BFDClient bfdClient,
                           @Value("${bfd.health.check.consecutive.successes}") int consecutiveSuccessesToBringUp,
@@ -73,7 +62,7 @@ class BFDHealthCheck {
                 } else {
                     data.incrementSuccesses();
                     data.setConsecutiveFailures(0);
-                    log.debug("{} consecutive successes to connect to BFD for {}", consecutiveSuccesses, data.getVersion());
+                    log.debug("{} consecutive successes to connect to BFD for {}", data.getConsecutiveSuccesses(), data.getVersion());
                 }
             }
         } catch (Exception ex) {
