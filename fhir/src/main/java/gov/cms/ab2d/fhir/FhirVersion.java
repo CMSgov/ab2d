@@ -11,6 +11,7 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Slf4j
 public enum FhirVersion {
@@ -19,12 +20,12 @@ public enum FhirVersion {
     R4("org.hl7.fhir.r4.model", FhirContext.forR4(), FhirVersionEnum.R4, "/v2/",
             org.hl7.fhir.r4.model.ResourceType.Patient);
 
-    private String classLocation;
-    private FhirContext context;
+    private final String classLocation;
+    private final FhirContext context;
     private IParser jsonParser;
-    private FhirVersionEnum fhirVersionEnum;
-    private String versionString;
-    private Object patientEnum;
+    private final FhirVersionEnum fhirVersionEnum;
+    private final String versionString;
+    private final Object patientEnum;
 
     FhirVersion(String classLocation, FhirContext context, FhirVersionEnum fhirVersionEnum, String versionString,
                 Object patientEnum) {
@@ -44,13 +45,9 @@ public enum FhirVersion {
     }
 
     public static FhirVersion from(FhirVersionEnum fhirVersionEnum) {
-        FhirVersion[] versions = FhirVersion.values();
-        for (FhirVersion v : versions) {
-            if (v.fhirVersionEnum == fhirVersionEnum) {
-                return v;
-            }
-        }
-        return null;
+        return Stream.of(FhirVersion.values())
+                .filter(fhir -> fhir.fhirVersionEnum == fhirVersionEnum)
+                .findFirst().orElse(null);
     }
 
     public FhirContext getContext() {
@@ -58,13 +55,9 @@ public enum FhirVersion {
     }
 
     public static FhirVersion fromUrl(String url) {
-        FhirVersion[] versions = FhirVersion.values();
-        for (FhirVersion v : versions) {
-            if (url.contains(v.versionString)) {
-                return v;
-            }
-        }
-        return null;
+        return Stream.of(FhirVersion.values())
+                .filter(fhir -> url.contains(fhir.versionString))
+                .findFirst().orElse(null);
     }
 
     public String getClassName(String name) {
