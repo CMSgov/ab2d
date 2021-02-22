@@ -17,7 +17,9 @@ WHERE user_account_id IN (
             '832hfwef93hfkkf3hhhh', '9fhselhffhf93jhflshh', '39fhklsfzxmneu32feff',
             'bvk329df23fhjfsdjkef', 'vdbewfjzjhfew93fh3hh', 'zvhjefio239fhiew2fff',
             'vxcliwefnl239f03f2jf', 'vzdhwfehj3249fwejkfh', 'vznkweicln349fn32rjj',
-            'xi43hl32sdfl3kfkljew', 'afwjil423fweohfwejkl'
+            'xi43hl32sdfl3kfkljew', 'afwjil423fweohfwejkl', '0oa2t7wfhvB2qSqPg297',
+            '0oa2t7wdgfB2qSRTg397', '0ca27wdgfKefjefTg534', '0ca27wcvnxkjjefTg334',
+            '0ca27w535jfejefTg124', '0ca902fhewffhhhwg144', '039fuewmn44fhhhwg144'
         )
 );
 
@@ -26,5 +28,7 @@ WHERE username IN (
    '832hfwef93hfkkf3hhhh', '9fhselhffhf93jhflshh', '39fhklsfzxmneu32feff',
    'bvk329df23fhjfsdjkef', 'vdbewfjzjhfew93fh3hh', 'zvhjefio239fhiew2fff',
    'vxcliwefnl239f03f2jf', 'vzdhwfehj3249fwejkfh', 'vznkweicln349fn32rjj',
-   'xi43hl32sdfl3kfkljew', 'afwjil423fweohfwejkl'
+   'xi43hl32sdfl3kfkljew', 'afwjil423fweohfwejkl', '0oa2t7wfhvB2qSqPg297',
+   '0oa2t7wdgfB2qSRTg397', '0ca27wdgfKefjefTg534', '0ca27wcvnxkjjefTg334',
+   '0ca27w535jfejefTg124', '0ca902fhewffhhhwg144', '039fuewmn44fhhhwg144'
 );
