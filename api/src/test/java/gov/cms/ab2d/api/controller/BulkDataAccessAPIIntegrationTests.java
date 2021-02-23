@@ -45,7 +45,7 @@ import static gov.cms.ab2d.api.controller.JobCompletedResponse.CHECKSUM_STRING;
 import static gov.cms.ab2d.api.controller.JobCompletedResponse.CONTENT_LENGTH_STRING;
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.common.util.Constants.*;
-import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
+import static gov.cms.ab2d.common.util.DataSetup.TEST_PDP_CLIENT;
 import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
 import static gov.cms.ab2d.eventlogger.events.ErrorEvent.ErrorType.FILE_ALREADY_DELETED;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
@@ -67,7 +67,7 @@ public class BulkDataAccessAPIIntegrationTests {
     private JobRepository jobRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    private PdpClientRepository pdpClientRepository;
 
     @Autowired
     private ContractRepository contractRepository;
@@ -91,7 +91,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
     public static final String PATIENT_EXPORT_PATH = "/Patient/$export";
 
-    private static final int MAX_JOBS_PER_USER = 3;
+    private static final int MAX_JOBS_PER_CLIENT = 3;
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
@@ -107,7 +107,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     private void createMaxJobs() throws Exception {
-        for(int i = 0; i < MAX_JOBS_PER_USER; i++) {
+        for(int i = 0; i < MAX_JOBS_PER_CLIENT; i++) {
             this.mockMvc.perform(
                     get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                             .header("Authorization", "Bearer " + token))
@@ -158,7 +158,7 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals(Integer.valueOf(0), job.getProgress());
         assertEquals("http://localhost" + API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH, job.getRequestUrl());
         assertEquals(EOB, job.getResourceTypes());
-        assertEquals(userRepository.findByUsername(TEST_USER), job.getUser());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
     }
 
     @Test
@@ -181,7 +181,7 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals(Integer.valueOf(0), job.getProgress());
         assertEquals("https://localhost" + API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH, job.getRequestUrl());
         assertEquals(EOB, job.getResourceTypes());
-        assertEquals(userRepository.findByUsername(TEST_USER), job.getUser());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
     }
 
     @Test
@@ -195,11 +195,11 @@ public class BulkDataAccessAPIIntegrationTests {
                         .andExpect(header().string("Retry-After", "30"))
                         .andExpect(header().doesNotExist("X-Progress"));
         List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
-        assertEquals(MAX_JOBS_PER_USER + 1, apiRequestEvents.size());
+        assertEquals(MAX_JOBS_PER_CLIENT + 1, apiRequestEvents.size());
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
 
         List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
-        assertEquals(MAX_JOBS_PER_USER + 1, apiResponseEvents.size());
+        assertEquals(MAX_JOBS_PER_CLIENT + 1, apiResponseEvents.size());
         ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(apiResponseEvents.size() - 1);
         assertEquals(HttpStatus.TOO_MANY_REQUESTS.value(), responseEvent.getResponseCode());
 
@@ -208,7 +208,7 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals(ErrorEvent.ErrorType.TOO_MANY_STATUS_REQUESTS, errorEvent.getErrorType());
 
         List<LoggableEvent> jobEvents = loggerEventRepository.load(JobStatusChangeEvent.class);
-        assertEquals(MAX_JOBS_PER_USER, jobEvents.size());
+        assertEquals(MAX_JOBS_PER_CLIENT, jobEvents.size());
         jobEvents.forEach(e -> assertEquals(JobStatus.SUBMITTED.name(), ((JobStatusChangeEvent) e).getNewStatus()));
         JobStatusChangeEvent jobEvent = (JobStatusChangeEvent) jobEvents.get(0);
         assertEquals(JobStatus.SUBMITTED.name(), jobEvent.getNewStatus());
@@ -255,21 +255,21 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    void testPatientExportDuplicateSubmissionWithDifferentUser() throws Exception {
+    void testPatientExportDuplicateSubmissionWithDifferentClient() throws Exception {
         createMaxJobs();
 
         List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
-        User user = new User();
+        PdpClient pdpClient = new PdpClient();
         Contract contract = dataSetup.setupContract("Test");
-        user.setContract(contract);
-        user.setEnabled(true);
-        user.setUsername("test");
-        user.setEmail("test@test.com");
-        userRepository.saveAndFlush(user);
-        dataSetup.queueForCleanup(user);
+        pdpClient.setContract(contract);
+        pdpClient.setEnabled(true);
+        pdpClient.setClientId("test");
+        pdpClient.setEmail("test@test.com");
+        pdpClientRepository.saveAndFlush(pdpClient);
+        dataSetup.queueForCleanup(pdpClient);
 
         for(Job job : jobs) {
-            job.setUser(user);
+            job.setPdpClient(pdpClient);
             jobRepository.saveAndFlush(job);
             dataSetup.queueForCleanup(job);
         }
@@ -302,7 +302,7 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals(Integer.valueOf(0), job.getProgress());
         assertEquals("http://localhost" + API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + typeParams, job.getRequestUrl());
         assertEquals(EOB, job.getResourceTypes());
-        assertEquals(userRepository.findByUsername(TEST_USER), job.getUser());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
     }
 
     @Test
@@ -1084,7 +1084,7 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals(Integer.valueOf(0), job.getProgress());
         assertEquals("https://localhost" + API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export", job.getRequestUrl());
         assertNull(job.getResourceTypes());
-        assertEquals(userRepository.findByUsername(TEST_USER), job.getUser());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
     }
 
     @Test
@@ -1109,7 +1109,7 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals("http://localhost" + API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export",
                 job.getRequestUrl());
         assertNull(job.getResourceTypes());
-        assertEquals(userRepository.findByUsername(TEST_USER), job.getUser());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
     }
 
     @Test
@@ -1137,7 +1137,7 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals("http://localhost" + API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams,
                 job.getRequestUrl());
         assertEquals(EOB, job.getResourceTypes());
-        assertEquals(userRepository.findByUsername(TEST_USER), job.getUser());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
     }
 
     @Test
@@ -1174,7 +1174,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     private void createMaxJobsWithContract(Contract contract) throws Exception {
-        for(int i = 0; i < MAX_JOBS_PER_USER; i++) {
+        for(int i = 0; i < MAX_JOBS_PER_CLIENT; i++) {
             this.mockMvc.perform(
                     get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
                             .header("Authorization", "Bearer " + token))
@@ -1243,7 +1243,7 @@ public class BulkDataAccessAPIIntegrationTests {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
 
-        for(int i = 0; i < MAX_JOBS_PER_USER - 1; i++) {
+        for(int i = 0; i < MAX_JOBS_PER_CLIENT - 1; i++) {
             this.mockMvc.perform(
                     get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
                             .header("Authorization", "Bearer " + token))
@@ -1252,10 +1252,10 @@ public class BulkDataAccessAPIIntegrationTests {
 
         Contract contract1 = dataSetup.setupContract("Test1");
 
-        User user = userRepository.findByUsername(TEST_USER);
-        assertNotNull(user);
-        user.setContract(contract1);
-        userRepository.saveAndFlush(user);
+        PdpClient pdpClient = pdpClientRepository.findByClientId(TEST_PDP_CLIENT);
+        assertNotNull(pdpClient);
+        pdpClient.setContract(contract1);
+        pdpClientRepository.saveAndFlush(pdpClient);
         Contract contractNew = dataSetup.setupContract("New Contract");
 
         this.mockMvc.perform(
@@ -1265,22 +1265,22 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    void testPatientExportWithContractDuplicateSubmissionDifferentUser() throws Exception {
+    void testPatientExportWithContractDuplicateSubmissionDifferentClient() throws Exception {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         createMaxJobsWithContract(contract);
 
-        User user = new User();
-        user.setContract(contract);
-        user.setEnabled(true);
-        user.setUsername("test");
-        user.setEmail("test@test.com");
-        userRepository.saveAndFlush(user);
-        dataSetup.queueForCleanup(user);
+        PdpClient pdpClient = new PdpClient();
+        pdpClient.setContract(contract);
+        pdpClient.setEnabled(true);
+        pdpClient.setClientId("test");
+        pdpClient.setEmail("test@test.com");
+        pdpClientRepository.saveAndFlush(pdpClient);
+        dataSetup.queueForCleanup(pdpClient);
 
         List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
         for(Job job : jobs) {
-            job.setUser(user);
+            job.setPdpClient(pdpClient);
             jobRepository.saveAndFlush(job);
             dataSetup.queueForCleanup(job);
         }

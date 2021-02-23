@@ -2,7 +2,7 @@ package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.repository.UserRepository;
+import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -43,7 +43,7 @@ class JobPreProcessorIntegrationTest {
     private JobRepository jobRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    private PdpClientRepository pdpClientRepository;
 
     @Autowired
     private LoggerEventRepository loggerEventRepository;
@@ -60,7 +60,7 @@ class JobPreProcessorIntegrationTest {
     @Mock
     private KinesisEventLogger kinesisEventLogger;
 
-    private User user;
+    private PdpClient pdpClient;
     private Job job;
 
     @Container
@@ -72,8 +72,8 @@ class JobPreProcessorIntegrationTest {
 
         cut = new JobPreProcessorImpl(jobRepository, manager, coverageDriver);
 
-        user = createUser();
-        job = createJob(user);
+        pdpClient = createClient();
+        job = createJob(pdpClient);
     }
 
     @AfterEach
@@ -123,25 +123,25 @@ class JobPreProcessorIntegrationTest {
         assertEquals("Job S0000 is not in SUBMITTED status", exceptionThrown.getMessage());
     }
 
-    private User createUser() {
-        User user = new User();
-        user.setUsername("Harry_Potter");
-        user.setFirstName("Harry");
-        user.setLastName("Potter");
-        user.setEmail("harry_potter@hogwarts.edu");
-        user.setEnabled(true);
+    private PdpClient createClient() {
+        PdpClient pdpClient = new PdpClient();
+        pdpClient.setClientId("Harry_Potter");
+        pdpClient.setFirstName("Harry");
+        pdpClient.setLastName("Potter");
+        pdpClient.setEmail("harry_potter@hogwarts.edu");
+        pdpClient.setEnabled(true);
 
-        user = userRepository.save(user);
-        dataSetup.queueForCleanup(user);
-        return user;
+        pdpClient = pdpClientRepository.save(pdpClient);
+        dataSetup.queueForCleanup(pdpClient);
+        return pdpClient;
     }
 
-    private Job createJob(User user) {
+    private Job createJob(PdpClient pdpClient) {
         Job job = new Job();
         job.setJobUuid("S0000");
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage("0%");
-        job.setUser(user);
+        job.setPdpClient(pdpClient);
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setCreatedAt(OffsetDateTime.now());
         job.setFhirVersion(STU3);

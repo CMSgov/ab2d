@@ -39,7 +39,7 @@ class WorkerServiceTest {
 
     @Autowired private DataSetup dataSetup;
     @Autowired private JobRepository jobRepository;
-    @Autowired private UserRepository userRepository;
+    @Autowired private PdpClientRepository pdpClientRepository;
     @Autowired private JobService jobService;
     @Autowired private PropertiesService propertiesService;
 
@@ -69,8 +69,8 @@ class WorkerServiceTest {
     @DisplayName("When a job is submitted into the job table, a worker processes it")
     void whenJobSubmittedWorkerGetsTriggered() throws InterruptedException {
 
-        final User user = createUser();
-        createJob(user);
+        final PdpClient pdpClient = createClient();
+        createJob(pdpClient);
 
         Thread.sleep(6000L);
 
@@ -81,8 +81,8 @@ class WorkerServiceTest {
     @DisplayName("When multiple jobs are submitted into the job table, they are processed in parallel by the workers")
     void whenTwoJobsSubmittedWorkerGetsTriggeredProcessesBothInParallel() throws InterruptedException {
 
-        createJob(createUser());
-        createJob(createUser2());
+        createJob(createClient());
+        createJob(createClient2());
 
         // There is a 5 second sleep in the WorkerService.
         // So if the result for two jobs comes before 10 seconds, it implies they were not processed sequentially
@@ -91,7 +91,7 @@ class WorkerServiceTest {
         assertEquals(2, workerServiceStub.processingCalls);
     }
 
-    private Job createJob(final User user) {
+    private Job createJob(final PdpClient pdpClient) {
         Job job = new Job();
         job.setId((long) getIntRandom());
         job.setJobUuid(UUID.randomUUID().toString());
@@ -99,9 +99,9 @@ class WorkerServiceTest {
         job.setStatusMessage("0%");
         job.setResourceTypes(EOB);
         job.setCreatedAt(OffsetDateTime.now());
-        job.setUser(user);
+        job.setPdpClient(pdpClient);
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
-        job.setContract(user.getContract());
+        job.setContract(pdpClient.getContract());
         job.setFhirVersion(STU3);
 
         job = jobRepository.save(job);
@@ -109,28 +109,28 @@ class WorkerServiceTest {
         return job;
     }
 
-    private User createUser() {
-        User user = new User();
-        user.setId((long) getIntRandom());
-        user.setUsername("testuser" + getIntRandom());
-        user.setEnabled(true);
-        user.setContract(dataSetup.setupContract("W9876"));
+    private PdpClient createClient() {
+        PdpClient pdpClient = new PdpClient();
+        pdpClient.setId((long) getIntRandom());
+        pdpClient.setClientId("testclient" + getIntRandom());
+        pdpClient.setEnabled(true);
+        pdpClient.setContract(dataSetup.setupContract("W9876"));
 
-        user = userRepository.save(user);
-        dataSetup.queueForCleanup(user);
-        return user;
+        pdpClient = pdpClientRepository.save(pdpClient);
+        dataSetup.queueForCleanup(pdpClient);
+        return pdpClient;
     }
 
-    private User createUser2() {
-        User user = new User();
-        user.setId((long) getIntRandom());
-        user.setUsername("testuser2" + getIntRandom());
-        user.setEnabled(true);
-        user.setContract(dataSetup.setupContract("W8765"));
+    private PdpClient createClient2() {
+        PdpClient pdpClient = new PdpClient();
+        pdpClient.setId((long) getIntRandom());
+        pdpClient.setClientId("testclient2" + getIntRandom());
+        pdpClient.setEnabled(true);
+        pdpClient.setContract(dataSetup.setupContract("W8765"));
 
-        user = userRepository.save(user);
-        dataSetup.queueForCleanup(user);
-        return user;
+        pdpClient = pdpClientRepository.save(pdpClient);
+        dataSetup.queueForCleanup(pdpClient);
+        return pdpClient;
     }
 
     private int getIntRandom() {

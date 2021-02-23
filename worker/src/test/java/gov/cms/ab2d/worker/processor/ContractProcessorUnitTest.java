@@ -51,7 +51,7 @@ class ContractProcessorUnitTest {
     private Path outputDir;
     private Contract contract;
     private Job job;
-    private User user;
+    private PdpClient pdpClient;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -70,8 +70,8 @@ class ContractProcessorUnitTest {
         ReflectionTestUtils.setField(cut, "reportProgressLogFrequency", 3);
         ReflectionTestUtils.setField(cut, "tryLockTimeout", 30);
 
-        user = createUser();
-        job = createJob(user);
+        pdpClient = createClient();
+        job = createJob(pdpClient);
         contract = createContract();
 
 
@@ -95,7 +95,7 @@ class ContractProcessorUnitTest {
 
         progressTracker.addPatients(patientsByContract);
         ContractData contractData = new ContractData(contract, progressTracker, job.getSince(),
-                job.getUser() != null ? job.getUser().getUsername() : null);
+                job.getPdpClient() != null ? job.getPdpClient().getClientId() : null);
 
         when(jobRepository.findJobStatus(anyString())).thenReturn(JobStatus.CANCELLED);
 
@@ -119,7 +119,7 @@ class ContractProcessorUnitTest {
                 .build();
         progressTracker.addPatients(patientsByContract);
         ContractData contractData = new ContractData(contract, progressTracker, job.getSince(),
-                job.getUser() != null ? job.getUser().getUsername() : null);
+                job.getPdpClient() != null ? job.getPdpClient().getClientId() : null);
 
         var jobOutputs = cut.process(outputDir, contractData);
 
@@ -128,15 +128,15 @@ class ContractProcessorUnitTest {
         verify(patientClaimsProcessor, atLeast(1)).process(any());
     }
 
-    private User createUser() {
-        User user = new User();
-        user.setUsername("Harry_Potter");
-        user.setFirstName("Harry");
-        user.setLastName("Potter");
-        user.setEmail("harry_potter@hogwarts.edu");
-        user.setEnabled(TRUE);
-        user.setContract(createContract());
-        return user;
+    private PdpClient createClient() {
+        PdpClient pdpClient = new PdpClient();
+        pdpClient.setClientId("Harry_Potter");
+        pdpClient.setFirstName("Harry");
+        pdpClient.setLastName("Potter");
+        pdpClient.setEmail("harry_potter@hogwarts.edu");
+        pdpClient.setEnabled(TRUE);
+        pdpClient.setContract(createContract());
+        return pdpClient;
     }
 
     private Contract createContract() {
@@ -148,12 +148,12 @@ class ContractProcessorUnitTest {
         return contract;
     }
 
-    private Job createJob(User user) {
+    private Job createJob(PdpClient pdpClient) {
         Job job = new Job();
         job.setJobUuid("S0000");
         job.setStatusMessage("0%");
         job.setStatus(JobStatus.IN_PROGRESS);
-        job.setUser(user);
+        job.setPdpClient(pdpClient);
         job.setFhirVersion(STU3);
         return job;
     }

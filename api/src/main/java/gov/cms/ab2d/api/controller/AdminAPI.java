@@ -1,9 +1,9 @@
 package gov.cms.ab2d.api.controller;
 
+import gov.cms.ab2d.common.dto.PdpClientDTO;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
-import gov.cms.ab2d.common.dto.UserDTO;
+import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.common.service.UserService;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import lombok.AllArgsConstructor;
@@ -39,7 +39,7 @@ import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 @RequestMapping(path = API_PREFIX + ADMIN_PREFIX, produces = "application/json")
 public class AdminAPI {
 
-    private final UserService userService;
+    private final PdpClientService pdpClientService;
 
     private final PropertiesService propertiesService;
 
@@ -48,19 +48,21 @@ public class AdminAPI {
     private final BulkDataAccessAPI bulkDataAccessAPI;
 
     @ResponseStatus(value = HttpStatus.CREATED)
-    @PostMapping("/user")
-    public ResponseEntity<UserDTO> createUser(@RequestBody UserDTO userDTO) {
-        UserDTO user = userService.createUser(userDTO);
-        log.info("{} was created", user.getUsername());
-        return new ResponseEntity<>(user, null, HttpStatus.CREATED);
+    @PostMapping("/client")
+    public ResponseEntity<PdpClientDTO> createClient(@RequestBody PdpClientDTO pdpClientDTO) {
+        PdpClientDTO client = pdpClientService.createClient(pdpClientDTO);
+        // todo log alias instead
+        log.info("user created");
+        return new ResponseEntity<>(client, null, HttpStatus.CREATED);
     }
 
     @ResponseStatus(value = HttpStatus.OK)
-    @PutMapping("/user")
-    public ResponseEntity<UserDTO> updateUser(@RequestBody UserDTO userDTO) {
-        UserDTO user = userService.updateUser(userDTO);
-        log.info("{} was updated", user.getUsername());
-        return new ResponseEntity<>(user, null, HttpStatus.OK);
+    @PutMapping("/client")
+    public ResponseEntity<PdpClientDTO> udpateClient(@RequestBody PdpClientDTO pdpClientDTO) {
+        PdpClientDTO client = pdpClientService.updateClient(pdpClientDTO);
+        // todo log alias instead
+        log.info("user updated");
+        return new ResponseEntity<>(client, null, HttpStatus.OK);
     }
 
     @ResponseStatus(value = HttpStatus.OK)
@@ -78,31 +80,31 @@ public class AdminAPI {
     }
 
     @PostMapping("/job/{contractNumber}")
-    public ResponseEntity<Void> createJobByContractOnBehalfOfUser(@PathVariable @NotBlank String contractNumber,
-                                                        HttpServletRequest request,
-                                                        @RequestParam(required = false, name = "_type", defaultValue = EOB) String resourceTypes,
-                                                        @RequestParam(required = false, name = "_outputFormat") String outputFormat,
-                                                        @RequestParam(required = false, name = "_since") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
-        userService.setupUserImpersonation(contractNumber, request);
+    public ResponseEntity<Void> createJobByContractOnBehalfOfClient(@PathVariable @NotBlank String contractNumber,
+                                                                    HttpServletRequest request,
+                                                                    @RequestParam(required = false, name = "_type", defaultValue = EOB) String resourceTypes,
+                                                                    @RequestParam(required = false, name = "_outputFormat") String outputFormat,
+                                                                    @RequestParam(required = false, name = "_since") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
+        pdpClientService.setupClientImpersonation(contractNumber, request);
 
         return bulkDataAccessAPI.exportPatientsWithContract(request, contractNumber, resourceTypes, outputFormat, since);
     }
 
     @ResponseStatus(value = HttpStatus.OK)
-    @PutMapping("/user/{contractNumber}/enable")
-    public ResponseEntity<UserDTO> enableUser(@PathVariable @NotBlank String contractNumber) {
-        return new ResponseEntity<>(userService.enableUser(contractNumber), null, HttpStatus.OK);
+    @PutMapping("/client/{contractNumber}/enable")
+    public ResponseEntity<PdpClientDTO> enableClient(@PathVariable @NotBlank String contractNumber) {
+        return new ResponseEntity<>(pdpClientService.enableClient(contractNumber), null, HttpStatus.OK);
     }
 
     @ResponseStatus(value = HttpStatus.OK)
-    @PutMapping("/user/{contractNumber}/disable")
-    public ResponseEntity<UserDTO> disableUser(@PathVariable @NotBlank String contractNumber) {
-        return new ResponseEntity<>(userService.disableUser(contractNumber), null, HttpStatus.OK);
+    @PutMapping("/client/{contractNumber}/disable")
+    public ResponseEntity<PdpClientDTO> disableClient(@PathVariable @NotBlank String contractNumber) {
+        return new ResponseEntity<>(pdpClientService.disableClient(contractNumber), null, HttpStatus.OK);
     }
 
     @ResponseStatus(value = HttpStatus.OK)
-    @GetMapping("/user/{contractNumber}")
-    public ResponseEntity<UserDTO> getUser(@PathVariable @NotBlank String contractNumber) {
-        return new ResponseEntity<>(userService.getUser(contractNumber), null, HttpStatus.OK);
+    @GetMapping("/client/{contractNumber}")
+    public ResponseEntity<PdpClientDTO> getClient(@PathVariable @NotBlank String contractNumber) {
+        return new ResponseEntity<>(pdpClientService.getClient(contractNumber), null, HttpStatus.OK);
     }
 }

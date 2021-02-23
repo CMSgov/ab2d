@@ -36,7 +36,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static gov.cms.ab2d.common.util.Constants.MAINTENANCE_MODE;
-import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
+import static gov.cms.ab2d.common.util.DataSetup.TEST_PDP_CLIENT;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -63,7 +63,7 @@ public class TestUtil {
 
     private void setupMock() throws JwtVerificationException {
         // Token that expires in 2 hours that has the user we setup below
-        Map<String, Object> claims = Map.of("sub", TEST_USER);
+        Map<String, Object> claims = Map.of("sub", TEST_PDP_CLIENT);
         Jwt jwt = new DefaultJwt("tokenValue", Instant.now(), Instant.now().plus(Duration.ofHours(2)), claims);
 
         when(mockAccessTokenVerifier.decode(anyString())).thenReturn(jwt);
@@ -74,7 +74,7 @@ public class TestUtil {
     }
 
     public String setupInvalidToken(List<String> userRoles) throws JwtVerificationException {
-        dataSetup.setupUser(userRoles);
+        dataSetup.setupPdpClient(userRoles);
 
         setupInvalidMock();
 
@@ -89,8 +89,8 @@ public class TestUtil {
         return buildTokenStr();
     }
 
-    public String setupContractSponsorForParentUserData(List<String> userRoles) throws JwtVerificationException {
-        dataSetup.setupContractSponsorForParentUserData(userRoles);
+    public String setupContractSponsorForParentClientData(List<String> userRoles) throws JwtVerificationException {
+        dataSetup.setupContractSponsorForParentClientData(userRoles);
 
         setupMock();
 
@@ -98,7 +98,7 @@ public class TestUtil {
     }
 
     public String setupToken(List<String> userRoles) throws JwtVerificationException {
-        dataSetup.setupUser(userRoles);
+        dataSetup.setupPdpClient(userRoles);
 
         setupMock();
 
@@ -165,8 +165,8 @@ public class TestUtil {
                 .setAudience(oktaUrl)
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(now.plus(2L, ChronoUnit.HOURS)))
-                .setIssuer(TEST_USER)
-                .setSubject(TEST_USER)
+                .setIssuer(TEST_PDP_CLIENT)
+                .setSubject(TEST_PDP_CLIENT)
                 .setId(UUID.randomUUID().toString())
                 .signWith(sharedSecret)
                 .compact();

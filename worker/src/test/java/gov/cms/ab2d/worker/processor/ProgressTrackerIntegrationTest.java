@@ -49,7 +49,7 @@ class ProgressTrackerIntegrationTest {
     private JobOutputRepository jobOutputRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    private PdpClientRepository pdpClientRepository;
 
     @Autowired
     private DataSetup dataSetup;
@@ -85,7 +85,7 @@ class ProgressTrackerIntegrationTest {
 
         Contract contract = dataSetup.setupContract("C0001");
 
-        Job job = createJob(createUser());
+        Job job = createJob(createClient());
         job.setContract(contract);
 
         ProgressTracker progressTracker = ProgressTracker.builder()
@@ -111,24 +111,24 @@ class ProgressTrackerIntegrationTest {
         assertEquals(30, loadedVal.getProgress());
     }
 
-    private User createUser() {
+    private PdpClient createClient() {
 
-        User user = new User();
-        user.setUsername("testuser" + 1000L);
-        user.setEnabled(true);
-        user.setContract(dataSetup.setupContract("W1234"));
+        PdpClient pdpClient = new PdpClient();
+        pdpClient.setClientId("testclient" + 1000L);
+        pdpClient.setEnabled(true);
+        pdpClient.setContract(dataSetup.setupContract("W1234"));
 
-        user = userRepository.save(user);
-        dataSetup.queueForCleanup(user);
-        return user;
+        pdpClient = pdpClientRepository.save(pdpClient);
+        dataSetup.queueForCleanup(pdpClient);
+        return pdpClient;
     }
 
-    private Job createJob(User user) {
+    private Job createJob(PdpClient pdpClient) {
         Job job = new Job();
         job.setJobUuid("S0000");
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage("0%");
-        job.setUser(user);
+        job.setPdpClient(pdpClient);
 
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setCreatedAt(OffsetDateTime.now());

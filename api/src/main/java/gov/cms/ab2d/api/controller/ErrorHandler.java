@@ -7,7 +7,7 @@ import gov.cms.ab2d.api.security.BadJWTTokenException;
 import gov.cms.ab2d.api.security.InvalidAuthHeaderException;
 import gov.cms.ab2d.api.security.MissingTokenException;
 import gov.cms.ab2d.api.security.UserNotEnabledException;
-import gov.cms.ab2d.common.service.InvalidUserInputException;
+import gov.cms.ab2d.common.service.InvalidClientInputException;
 import gov.cms.ab2d.common.service.InvalidJobStateTransition;
 import gov.cms.ab2d.common.service.InvalidPropertiesException;
 import gov.cms.ab2d.common.service.InvalidContractException;
@@ -51,7 +51,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
     private static final Map<Class, HttpStatus> RESPONSE_MAP = new HashMap<>() {
         {
-            put(InvalidUserInputException.class, HttpStatus.BAD_REQUEST);
+            put(InvalidClientInputException.class, HttpStatus.BAD_REQUEST);
             put(InvalidJobStateTransition.class, HttpStatus.BAD_REQUEST);
             put(InvalidPropertiesException.class, HttpStatus.BAD_REQUEST);
             put(MissingTokenException.class, HttpStatus.UNAUTHORIZED);
@@ -92,7 +92,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         return generateFHIRError(e, request);
     }
 
-    @ExceptionHandler({InvalidUserInputException.class,
+    @ExceptionHandler({InvalidClientInputException.class,
             InvalidJobStateTransition.class,
             InvalidPropertiesException.class,
             JobProcessingException.class,

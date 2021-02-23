@@ -5,12 +5,12 @@ import lombok.Data;
 import javax.validation.constraints.NotNull;
 
 @Data
-public class UserDTO {
+public class PdpClientDTO {
 
     private Long id;
 
     @NotNull
-    private String username;
+    private String clientId;
 
     @NotNull
     private String firstName;

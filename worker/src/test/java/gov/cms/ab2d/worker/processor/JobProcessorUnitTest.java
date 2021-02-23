@@ -39,8 +39,6 @@ class JobProcessorUnitTest {
 
     private static final String jobUuid = "6d08bf08-f926-4e19-8d89-ad67ef89f17e";
 
-    private Random random = new Random();
-
     @TempDir Path efsMountTmpDir;
 
     @Mock private FileService fileService;
@@ -68,8 +66,8 @@ class JobProcessorUnitTest {
 
         ReflectionTestUtils.setField(cut, "efsMount", efsMountTmpDir.toString());
 
-        final User user = createUser();
-        job = createJob(user);
+        final PdpClient pdpClient = createClient();
+        job = createJob(pdpClient);
 
         var contract = createContract();
         job.setContract(contract);
@@ -94,9 +92,9 @@ class JobProcessorUnitTest {
     }
 
     @Test
-    @DisplayName("When user belongs to a parent sponsor, contracts for the children sponsors are processed")
-    void whenTheUserBelongsToParent_ChildContractsAreProcessed() throws ExecutionException, InterruptedException {
-        var user = job.getUser();
+    @DisplayName("When client belongs to a parent sponsor, contracts for the children sponsors are processed")
+    void whenTheClientBelongsToParent_ChildContractsAreProcessed() throws ExecutionException, InterruptedException {
+        job.getPdpClient();
 
         var processedJob = cut.process(job.getJobUuid());
 
@@ -188,15 +186,15 @@ class JobProcessorUnitTest {
         verify(coverageDriver, never()).pageCoverage(any(Job.class));
     }
 
-    private User createUser() {
-        User user = new User();
-        user.setUsername("Harry_Potter");
-        user.setFirstName("Harry");
-        user.setLastName("Potter");
-        user.setEmail("harry_potter@hogwarts.edu");
-        user.setEnabled(TRUE);
-        user.setContract(createContract());
-        return user;
+    private PdpClient createClient() {
+        PdpClient pdpClient = new PdpClient();
+        pdpClient.setClientId("Harry_Potter");
+        pdpClient.setFirstName("Harry");
+        pdpClient.setLastName("Potter");
+        pdpClient.setEmail("harry_potter@hogwarts.edu");
+        pdpClient.setEnabled(TRUE);
+        pdpClient.setContract(createContract());
+        return pdpClient;
     }
 
     private Contract createContract() {
@@ -208,12 +206,12 @@ class JobProcessorUnitTest {
         return contract;
     }
 
-    private Job createJob(User user) {
+    private Job createJob(PdpClient pdpClient) {
         Job job = new Job();
         job.setJobUuid("S0000");
         job.setStatusMessage("0%");
         job.setStatus(JobStatus.IN_PROGRESS);
-        job.setUser(user);
+        job.setPdpClient(pdpClient);
         job.setFhirVersion(STU3);
         return job;
     }

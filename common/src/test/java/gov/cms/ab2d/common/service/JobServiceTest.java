@@ -62,7 +62,7 @@ class JobServiceTest {
     private JobRepository jobRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    private PdpClientRepository pdpClientRepository;
 
     @Autowired
     private ContractRepository contractRepository;
@@ -74,7 +74,7 @@ class JobServiceTest {
     private DataSetup dataSetup;
 
     @Autowired
-    private UserService userService;
+    private PdpClientService pdpClientService;
 
     @Value("${efs.mount}")
     private String tmpJobLocation;
@@ -102,12 +102,12 @@ class JobServiceTest {
     @BeforeEach
     public void setup() {
         LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
-        jobService = new JobServiceImpl(userService, jobRepository, jobOutputService, logManager, loggerEventSummary, tmpJobLocation);
+        jobService = new JobServiceImpl(pdpClientService, jobRepository, jobOutputService, logManager, loggerEventSummary, tmpJobLocation);
         ReflectionTestUtils.setField(jobService, "fileDownloadPath", tmpJobLocation);
 
-        dataSetup.setupNonStandardUser(USERNAME, CONTRACT_NUMBER, List.of());
+        dataSetup.setupNonStandardClient(USERNAME, CONTRACT_NUMBER, List.of());
 
-        setupRegularUserSecurityContext();
+        setupRegularClientSecurityContext();
     }
 
     @AfterEach
@@ -115,7 +115,7 @@ class JobServiceTest {
         dataSetup.cleanup();
     }
 
-    private void setupRegularUserSecurityContext() {
+    private void setupRegularClientSecurityContext() {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(
                         new org.springframework.security.core.userdetails.User(USERNAME,
@@ -131,7 +131,7 @@ class JobServiceTest {
         assertNotNull(job.getOutputFormat());
         assertEquals(ZIPFORMAT, job.getOutputFormat());
         assertEquals(Integer.valueOf(0), job.getProgress());
-        assertEquals(userRepository.findByUsername(USERNAME), job.getUser());
+        assertEquals(pdpClientRepository.findByClientId(USERNAME), job.getPdpClient());
         assertEquals(EOB, job.getResourceTypes());
         assertEquals(LOCAL_HOST, job.getRequestUrl());
         assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
@@ -158,7 +158,7 @@ class JobServiceTest {
         assertNotNull(job.getOutputFormat());
         assertEquals(NDJSON_FIRE_CONTENT_TYPE, job.getOutputFormat());
         assertEquals(Integer.valueOf(0), job.getProgress());
-        assertEquals(userRepository.findByUsername(USERNAME), job.getUser());
+        assertEquals(pdpClientRepository.findByClientId(USERNAME), job.getPdpClient());
         assertEquals(EOB, job.getResourceTypes());
         assertEquals(LOCAL_HOST, job.getRequestUrl());
         assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
@@ -232,7 +232,7 @@ class JobServiceTest {
         // Job created by regular user
         Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
 
-        setupAdminUser();
+        setupAdminClient();
 
         Job retrievedJob = jobService.getAuthorizedJobByJobUuidAndRole(job.getJobUuid());
 
@@ -241,35 +241,35 @@ class JobServiceTest {
 
     @Test
     void getJobCreatedByAdminRole() {
-        setupAdminUser();
+        setupAdminClient();
 
         // Job created by admin user
         Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
 
-        setupRegularUserSecurityContext();
+        setupRegularClientSecurityContext();
 
         assertThrows(InvalidJobAccessException.class,
                 () -> jobService.getAuthorizedJobByJobUuidAndRole(job.getJobUuid()));
     }
 
-    private void setupAdminUser() {
+    private void setupAdminClient() {
         dataSetup.createRole(ADMIN_ROLE);
-        final String adminUsername = "ADMIN_USER";
-        User user = new User();
-        user.setUsername(adminUsername);
-        user.setEnabled(true);
+        final String adminClient = "ADMIN_CLIENT";
+        PdpClient pdpClient = new PdpClient();
+        pdpClient.setClientId(adminClient);
+        pdpClient.setEnabled(true);
         Role role = roleService.findRoleByName(ADMIN_ROLE);
-        user.addRole(role);
+        pdpClient.addRole(role);
 
         Contract contract = dataSetup.setupContract("Y0000");
-        user.setContract(contract);
+        pdpClient.setContract(contract);
 
-        user = userRepository.saveAndFlush(user);
-        dataSetup.queueForCleanup(user);
+        pdpClient = pdpClientRepository.saveAndFlush(pdpClient);
+        dataSetup.queueForCleanup(pdpClient);
 
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(
-                        new org.springframework.security.core.userdetails.User(adminUsername,
+                        new org.springframework.security.core.userdetails.User(adminClient,
                                 "test", new ArrayList<>()), "pass"));
     }
 
@@ -391,7 +391,7 @@ class JobServiceTest {
     }
 
     @Test
-    void getJobOutputFromDifferentUser() throws IOException {
+    void getJobOutputFromDifferentClient() throws IOException {
         String testFile = "test.ndjson";
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
@@ -404,20 +404,20 @@ class JobServiceTest {
         createNDJSONFile(errorFile, destinationStr);
 
         dataSetup.createRole(SPONSOR_ROLE);
-        User user = new User();
+        PdpClient pdpClient = new PdpClient();
         Role role = roleService.findRoleByName(SPONSOR_ROLE);
-        user.setRoles(Set.of(role));
-        user.setUsername("BadUser");
-        user.setEnabled(true);
-        dataSetup.queueForCleanup(user);
+        pdpClient.setRoles(Set.of(role));
+        pdpClient.setClientId("BadClient");
+        pdpClient.setEnabled(true);
+        dataSetup.queueForCleanup(pdpClient);
 
         Contract contract = dataSetup.setupContract("New Contract");
-        user.setContract(contract);
-        User savedUser = userRepository.save(user);
+        pdpClient.setContract(contract);
+        PdpClient savedPdpClient = pdpClientRepository.save(pdpClient);
 
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(
-                        new org.springframework.security.core.userdetails.User(savedUser.getUsername(),
+                        new org.springframework.security.core.userdetails.User(savedPdpClient.getClientId(),
                                 "test", new ArrayList<>()), "pass"));
 
         var exceptionThrown = assertThrows(
@@ -448,7 +448,7 @@ class JobServiceTest {
         job.setRequestUrl("http://localhost");
         job.setStatusMessage("Pending");
         job.setExpiresAt(now.plus(1, ChronoUnit.HOURS));
-        job.setUser(userService.getCurrentUser());
+        job.setPdpClient(pdpClientService.getCurrentClient());
 
         JobOutput jobOutput = new JobOutput();
         jobOutput.setError(false);
@@ -522,26 +522,26 @@ class JobServiceTest {
     }
 
     @Test
-    void checkIfUserCanAddJobTest() {
-        boolean result = jobService.checkIfCurrentUserCanAddJob();
+    void checkIfClientCanAddJobTest() {
+        boolean result = jobService.checkIfCurrentClientCanAddJob();
         assertTrue(result);
     }
 
     @Test
-    void checkIfUserCanAddJobTrueTest() {
+    void checkIfClientCanAddJobTrueTest() {
         createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
 
-        boolean result = jobService.checkIfCurrentUserCanAddJob();
+        boolean result = jobService.checkIfCurrentClientCanAddJob();
         assertTrue(result);
     }
 
     @Test
-    void checkIfUserCanAddJobPastLimitTest() {
+    void checkIfClientCanAddJobPastLimitTest() {
         createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
         createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
         createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
 
-        boolean result = jobService.checkIfCurrentUserCanAddJob();
+        boolean result = jobService.checkIfCurrentClientCanAddJob();
         assertFalse(result);
     }
 

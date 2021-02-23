@@ -26,7 +26,7 @@ public class DataSetup {
     private ContractRepository contractRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    private PdpClientRepository pdpClientRepository;
 
     @Autowired
     private JobRepository jobRepository;
@@ -72,14 +72,14 @@ public class DataSetup {
             jobRepository.flush();
         });
 
-        List<User> usersToDelete = domainObjects.stream().filter(object -> object instanceof User)
-                .map(object -> (User) object).collect(toList());
-        usersToDelete.forEach(user -> {
-            user = userRepository.findByUsername(user.getUsername());
+        List<PdpClient> clientsToDelete = domainObjects.stream().filter(object -> object instanceof PdpClient)
+                .map(object -> (PdpClient) object).collect(toList());
+        clientsToDelete.forEach(pdpClient -> {
+            pdpClient = pdpClientRepository.findByClientId(pdpClient.getClientId());
 
-            if (user != null) {
-                userRepository.delete(user);
-                userRepository.flush();
+            if (pdpClient != null) {
+                pdpClientRepository.delete(pdpClient);
+                pdpClientRepository.flush();
             }
         });
 
@@ -102,7 +102,7 @@ public class DataSetup {
         domainObjects.clear();
     }
 
-    public static final String TEST_USER = "EileenCFrierson@example.com";
+    public static final String TEST_PDP_CLIENT = "EileenCFrierson@example.com";
 
     public static final String BAD_CONTRACT_NUMBER = "WrongContract";
 
@@ -202,7 +202,7 @@ public class DataSetup {
     }
 
     public void setupContractWithNoAttestation(List<String> userRoles) {
-        setupUser(userRoles);
+        setupPdpClient(userRoles);
 
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         @SuppressWarnings("OptionalGetWithoutIsPresent")
@@ -212,8 +212,8 @@ public class DataSetup {
         contractRepository.saveAndFlush(contract);
     }
 
-    public void setupContractWithNoAttestation(String username, String contractNumber, List<String> userRoles) {
-        setupNonStandardUser(username, contractNumber, userRoles);
+    public void setupContractWithNoAttestation(String clientId, String contractNumber, List<String> userRoles) {
+        setupNonStandardClient(clientId, contractNumber, userRoles);
 
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(contractNumber);
         @SuppressWarnings("OptionalGetWithoutIsPresent")
@@ -223,68 +223,68 @@ public class DataSetup {
         contractRepository.saveAndFlush(contract);
     }
 
-    public void setupContractSponsorForParentUserData(List<String> userRoles) {
+    public void setupContractSponsorForParentClientData(List<String> userRoles) {
         Contract contract = setupContract("ABC123");
 
-        saveUser(TEST_USER, contract, userRoles);
+        savePdpClient(TEST_PDP_CLIENT, contract, userRoles);
     }
 
-    public void setupUserBadSponsorData(List<String> userRoles) {
+    public void setupPdpClientBadSponsorData(List<String> userRoles) {
         setupContract("ABC123");
 
         Contract contract = setupContract(BAD_CONTRACT_NUMBER);
 
-        saveUser(TEST_USER, contract, userRoles);
+        savePdpClient(TEST_PDP_CLIENT, contract, userRoles);
     }
 
-    private User saveUser(String username, Contract contract, List<String> userRoles) {
-        User user = new User();
-        user.setEmail(username);
-        user.setFirstName(username);
-        user.setLastName(username);
-        user.setUsername(username);
-        user.setContract(contract);
-        user.setEnabled(true);
-        user.setMaxParallelJobs(3);
+    private PdpClient savePdpClient(String clientId, Contract contract, List<String> userRoles) {
+        PdpClient pdpClient = new PdpClient();
+        pdpClient.setEmail(clientId);
+        pdpClient.setFirstName(clientId);
+        pdpClient.setLastName(clientId);
+        pdpClient.setClientId(clientId);
+        pdpClient.setContract(contract);
+        pdpClient.setEnabled(true);
+        pdpClient.setMaxParallelJobs(3);
         for(String userRole :  userRoles) {
             Role role = new Role();
             role.setName(userRole);
             roleRepository.save(role);
-            user.addRole(role);
+            pdpClient.addRole(role);
             queueForCleanup(role);
         }
 
-        user =  userRepository.save(user);
-        queueForCleanup(user);
-        return user;
+        pdpClient =  pdpClientRepository.save(pdpClient);
+        queueForCleanup(pdpClient);
+        return pdpClient;
     }
 
-    public void deleteUser(User user) {
-        Set<Role> roles = user.getRoles();
+    public void deletePdpClient(PdpClient pdpClient) {
+        Set<Role> roles = pdpClient.getRoles();
         roles.forEach(c -> roleRepository.delete(c));
-        userRepository.delete(user);
+        pdpClientRepository.delete(pdpClient);
     }
 
-    public User setupUser(List<String> userRoles) {
-        User testUser = userRepository.findByUsername(TEST_USER);
-        if (testUser != null) {
-            return testUser;
+    public PdpClient setupPdpClient(List<String> userRoles) {
+        PdpClient testPdpClient = pdpClientRepository.findByClientId(TEST_PDP_CLIENT);
+        if (testPdpClient != null) {
+            return testPdpClient;
         }
 
         Contract contract = setupContract(VALID_CONTRACT_NUMBER);
 
-        return saveUser(TEST_USER, contract, userRoles);
+        return savePdpClient(TEST_PDP_CLIENT, contract, userRoles);
     }
 
-    public User setupNonStandardUser(String username, String contractNumber, List<String> userRoles) {
-        User testUser = userRepository.findByUsername(username);
-        if (testUser != null) {
-            return testUser;
+    public PdpClient setupNonStandardClient(String clientdId, String contractNumber, List<String> userRoles) {
+        PdpClient testPdpClient = pdpClientRepository.findByClientId(clientdId);
+        if (testPdpClient != null) {
+            return testPdpClient;
         }
 
         Contract contract = setupContract(contractNumber);
 
-        return saveUser(username, contract, userRoles);
+        return savePdpClient(clientdId, contract, userRoles);
     }
 
     public void createRole(String sponsorRole) {
