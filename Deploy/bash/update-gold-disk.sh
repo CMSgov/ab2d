@@ -171,18 +171,29 @@ if [ -n "${AMI_ID_IN_USE}" ]; then
     --query "Images[*].Tags[?Key=='gold_ami'].Value" \
     --output text)
 
-  aws --region "${AWS_DEFAULT_REGION}" ec2 create-tags \
-    --resources "${AMI_ID}" \
-    --tags "Key=Name,Value=${TARGET_CMS_ENV}-ami-gold-disk-${BASE_GOLD_DISK}" \
-    1> /dev/null \
-    2> /dev/null
+  if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+    aws --region "${AWS_DEFAULT_REGION}" ec2 create-tags \
+      --resources "${AMI_ID}" \
+      --tags "Key=Name,Value=${TARGET_CMS_ENV}-ami-gold-disk-${BASE_GOLD_DISK}"
+  else
+    aws --region "${AWS_DEFAULT_REGION}" ec2 create-tags \
+      --resources "${AMI_ID}" \
+      --tags "Key=Name,Value=${TARGET_CMS_ENV}-ami-gold-disk-${BASE_GOLD_DISK}" \
+      1> /dev/null \
+      2> /dev/null
+  fi
 
 elif [ -n "${AMI_ID}" ]; then
   echo "Deregister existing ab2d ami..."
-  aws --region "${AWS_DEFAULT_REGION}" ec2 deregister-image \
-    --image-id "${AMI_ID}" \
-    1> /dev/null \
-    2> /dev/null
+  if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+    aws --region "${AWS_DEFAULT_REGION}" ec2 deregister-image \
+      --image-id "${AMI_ID}"
+  else
+    aws --region "${AWS_DEFAULT_REGION}" ec2 deregister-image \
+      --image-id "${AMI_ID}" \
+      1> /dev/null \
+      2> /dev/null
+  fi
 else
   echo "Note that there is no existing ab2d ami."
 fi
@@ -281,9 +292,14 @@ AMI_ID=$(echo "${OUTPUT}" \
 
 # Add name tag to AMI
 
-aws --region "${AWS_DEFAULT_REGION}" ec2 create-tags \
-  --resources "${AMI_ID}" \
-  --tags "Key=Name,Value=${TARGET_CMS_ENV}-ami" \
-  1> /dev/null \
-  2> /dev/null
-
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  aws --region "${AWS_DEFAULT_REGION}" ec2 create-tags \
+    --resources "${AMI_ID}" \
+    --tags "Key=Name,Value=${TARGET_CMS_ENV}-ami"
+else
+  aws --region "${AWS_DEFAULT_REGION}" ec2 create-tags \
+    --resources "${AMI_ID}" \
+    --tags "Key=Name,Value=${TARGET_CMS_ENV}-ami" \
+    1> /dev/null \
+    2> /dev/null
+fi
