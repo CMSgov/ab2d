@@ -332,15 +332,25 @@ fi
 
 # Create DB instance (if doesn't exist)
 
-terraform apply \
-  --var "env=${TARGET_CMS_ENV}" \
-  --var "db_username=${DATABASE_USER}" \
-  --var "db_password=${DATABASE_PASSWORD}" \
-  --var "db_name=${DATABASE_NAME}" \
-  --target module.db \
-  --auto-approve \
-  1> /dev/null \
-  2> /dev/null
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  terraform apply \
+    --var "env=${TARGET_CMS_ENV}" \
+    --var "db_username=${DATABASE_USER}" \
+    --var "db_password=${DATABASE_PASSWORD}" \
+    --var "db_name=${DATABASE_NAME}" \
+    --target module.db \
+    --auto-approve
+else
+  terraform apply \
+    --var "env=${TARGET_CMS_ENV}" \
+    --var "db_username=${DATABASE_USER}" \
+    --var "db_password=${DATABASE_PASSWORD}" \
+    --var "db_name=${DATABASE_NAME}" \
+    --target module.db \
+    --auto-approve \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 DB_ENDPOINT=$(aws --region "${AWS_DEFAULT_REGION}" rds describe-db-instances \
   --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" \
@@ -375,18 +385,31 @@ cd "terraform/environments/${TARGET_CMS_ENV}"
 
 echo "Create or update controller..."
 
-terraform apply \
-  --var "env=${TARGET_CMS_ENV}" \
-  --var "db_username=${DATABASE_USER}" \
-  --var "db_password=${DATABASE_PASSWORD}" \
-  --var "db_name=${DATABASE_NAME}" \
-  --var "deployer_ip_address=${DEPLOYER_IP_ADDRESS}" \
-  --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
-  --var "gold_image_name=${GOLD_IMAGE_NAME}" \
-  --target module.controller \
-  --auto-approve \
-  1> /dev/null \
-  2> /dev/null
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  terraform apply \
+    --var "env=${TARGET_CMS_ENV}" \
+    --var "db_username=${DATABASE_USER}" \
+    --var "db_password=${DATABASE_PASSWORD}" \
+    --var "db_name=${DATABASE_NAME}" \
+    --var "deployer_ip_address=${DEPLOYER_IP_ADDRESS}" \
+    --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
+    --var "gold_image_name=${GOLD_IMAGE_NAME}" \
+    --target module.controller \
+    --auto-approve
+else
+  terraform apply \
+    --var "env=${TARGET_CMS_ENV}" \
+    --var "db_username=${DATABASE_USER}" \
+    --var "db_password=${DATABASE_PASSWORD}" \
+    --var "db_name=${DATABASE_NAME}" \
+    --var "deployer_ip_address=${DEPLOYER_IP_ADDRESS}" \
+    --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
+    --var "gold_image_name=${GOLD_IMAGE_NAME}" \
+    --target module.controller \
+    --auto-approve \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 #
 # Deploy EFS
@@ -396,12 +419,19 @@ terraform apply \
 
 echo "Create or update EFS..."
 
-terraform apply \
-  --var "env=${TARGET_CMS_ENV}" \
-  --target module.efs \
-  --auto-approve \
-  1> /dev/null \
-  2> /dev/null
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  terraform apply \
+    --var "env=${TARGET_CMS_ENV}" \
+    --target module.efs \
+    --auto-approve
+else
+  terraform apply \
+    --var "env=${TARGET_CMS_ENV}" \
+    --target module.efs \
+    --auto-approve \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 #
 # Create or verify database
@@ -538,13 +568,23 @@ cd "${START_DIR}/.."
 cd "terraform/environments/${TARGET_CMS_ENV}"
 
 if [ "${TARGET_CMS_ENV}" != "ab2d-east-prod" ]; then
-  terraform apply \
-    --var "env=${TARGET_CMS_ENV}" \
-    --var "aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
-    --var "kinesis_firehose_bucket=${AB2D_BFD_INSIGHTS_S3_BUCKET}" \
-    --var "kinesis_firehose_kms_key_arn=${AB2D_BFD_KMS_ARN}" \
-    --target module.kinesis_firehose \
-    --auto-approve \
-    1> /dev/null \
-    2> /dev/null
+  if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+    terraform apply \
+      --var "env=${TARGET_CMS_ENV}" \
+      --var "aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
+      --var "kinesis_firehose_bucket=${AB2D_BFD_INSIGHTS_S3_BUCKET}" \
+      --var "kinesis_firehose_kms_key_arn=${AB2D_BFD_KMS_ARN}" \
+      --target module.kinesis_firehose \
+      --auto-approve
+  else
+    terraform apply \
+      --var "env=${TARGET_CMS_ENV}" \
+      --var "aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
+      --var "kinesis_firehose_bucket=${AB2D_BFD_INSIGHTS_S3_BUCKET}" \
+      --var "kinesis_firehose_kms_key_arn=${AB2D_BFD_KMS_ARN}" \
+      --target module.kinesis_firehose \
+      --auto-approve \
+      1> /dev/null \
+      2> /dev/null
+  fi
 fi
