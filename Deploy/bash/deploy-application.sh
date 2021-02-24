@@ -254,9 +254,13 @@ terraform validate
 echo "Enabling KMS key..."
 cd "${START_DIR}/.."
 cd python3
-./enable-kms-key.py "${KMS_KEY_ID}" \
-  1> /dev/null \
-  2> /dev/null
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  ./enable-kms-key.py "${KMS_KEY_ID}"
+else
+  ./enable-kms-key.py "${KMS_KEY_ID}" \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 #
 # Get secrets
@@ -695,9 +699,14 @@ fi
 echo "Enabling KMS key..."
 cd "${START_DIR}/.."
 cd python3
-./enable-kms-key.py "${MGMT_KMS_KEY_ID}" \
-  1> /dev/null \
-  2> /dev/null
+
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  ./enable-kms-key.py "${MGMT_KMS_KEY_ID}"
+else
+  ./enable-kms-key.py "${MGMT_KMS_KEY_ID}" \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 # Set environment to the AWS account where the shared ECR repository is maintained
 
@@ -710,10 +719,15 @@ echo "Build and push API and worker to ECR..."
 
 # Log on to ECR
 
-aws --region "${AWS_DEFAULT_REGION}" ecr get-login-password \
-  | docker login --username AWS --password-stdin "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}.dkr.ecr.us-east-1.amazonaws.com" \
-  1> /dev/null \
-  2> /dev/null
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  aws --region "${AWS_DEFAULT_REGION}" ecr get-login-password \
+    | docker login --username AWS --password-stdin "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}.dkr.ecr.us-east-1.amazonaws.com"
+else
+  aws --region "${AWS_DEFAULT_REGION}" ecr get-login-password \
+    | docker login --username AWS --password-stdin "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}.dkr.ecr.us-east-1.amazonaws.com" \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 # Build API and worker (if creating a new image)
 
@@ -755,10 +769,15 @@ API_ECR_REPO_URI=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-repositorie
   --query "repositories[?repositoryName == 'ab2d_api'].repositoryUri" \
   --output text)
 if [ -z "${API_ECR_REPO_URI}" ]; then
-  aws --region "${AWS_DEFAULT_REGION}" ecr create-repository \
-    --repository-name "ab2d_api" \
-    1> /dev/null \
-    2> /dev/null
+  if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+    aws --region "${AWS_DEFAULT_REGION}" ecr create-repository \
+      --repository-name "ab2d_api"
+  else
+    aws --region "${AWS_DEFAULT_REGION}" ecr create-repository \
+      --repository-name "ab2d_api" \
+      1> /dev/null \
+      2> /dev/null
+  fi
   API_ECR_REPO_URI=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-repositories \
     --query "repositories[?repositoryName == 'ab2d_api'].repositoryUri" \
     --output text)
@@ -774,11 +793,18 @@ ECR_REPO_AWS_ACCOUNT=$(aws --region "${AWS_DEFAULT_REGION}" sts get-caller-ident
 
 cd "${START_DIR}/.."
 cd "terraform/environments/${CMS_ECR_REPO_ENV}"
-aws --region "${AWS_DEFAULT_REGION}" ecr set-repository-policy \
-  --repository-name ab2d_api \
-  --policy-text file://ab2d-ecr-policy.json \
-  1> /dev/null \
-  2> /dev/null
+
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  aws --region "${AWS_DEFAULT_REGION}" ecr set-repository-policy \
+    --repository-name ab2d_api \
+    --policy-text file://ab2d-ecr-policy.json
+else
+  aws --region "${AWS_DEFAULT_REGION}" ecr set-repository-policy \
+    --repository-name ab2d_api \
+    --policy-text file://ab2d-ecr-policy.json \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 # Tag and push two copies (image version and latest version) of API docker image to ECR
 # - image version keeps track of the master commit number (e.g. ab2d-dev-latest-3d0905b)
@@ -796,10 +822,15 @@ WORKER_ECR_REPO_URI=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-reposito
   --query "repositories[?repositoryName == 'ab2d_worker'].repositoryUri" \
   --output text)
 if [ -z "${WORKER_ECR_REPO_URI}" ]; then
-  aws --region "${AWS_DEFAULT_REGION}" ecr create-repository \
-    --repository-name "ab2d_worker" \
-    1> /dev/null \
-    2> /dev/null
+  if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+    aws --region "${AWS_DEFAULT_REGION}" ecr create-repository \
+      --repository-name "ab2d_worker"
+  else
+    aws --region "${AWS_DEFAULT_REGION}" ecr create-repository \
+      --repository-name "ab2d_worker" \
+      1> /dev/null \
+      2> /dev/null
+  fi
   WORKER_ECR_REPO_URI=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-repositories \
     --query "repositories[?repositoryName == 'ab2d_worker'].repositoryUri" \
     --output text)
@@ -809,11 +840,18 @@ fi
 
 cd "${START_DIR}/.."
 cd "terraform/environments/${CMS_ECR_REPO_ENV}"
-aws --region "${AWS_DEFAULT_REGION}" ecr set-repository-policy \
-  --repository-name ab2d_worker \
-  --policy-text file://ab2d-ecr-policy.json \
-  1> /dev/null \
-  2> /dev/null
+
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  aws --region "${AWS_DEFAULT_REGION}" ecr set-repository-policy \
+    --repository-name ab2d_worker \
+    --policy-text file://ab2d-ecr-policy.json
+else
+  aws --region "${AWS_DEFAULT_REGION}" ecr set-repository-policy \
+    --repository-name ab2d_worker \
+    --policy-text file://ab2d-ecr-policy.json \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 # Tag and push two copies (image version and latest version) of worker docker image to ECR
 # - image version keeps track of the master commit number (e.g. ab2d-dev-latest-3d0905b)
@@ -835,12 +873,19 @@ IMAGES_TO_DELETE=$(aws --region "${AWS_DEFAULT_REGION}" ecr list-images \
 
 # Delete untagged images in the api repository
 
-aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
-  --repository-name ab2d_api \
-  --image-ids "$IMAGES_TO_DELETE" \
-  || true \
-  1> /dev/null \
-  2> /dev/null
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
+    --repository-name ab2d_api \
+    --image-ids "$IMAGES_TO_DELETE" \
+    || true
+else
+  aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
+    --repository-name ab2d_api \
+    --image-ids "$IMAGES_TO_DELETE" \
+    || true \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 # Get old 'latest-commit' api tag
 
@@ -874,21 +919,34 @@ if [ -n "${API_OLD_LATEST_COMMIT_TAG}" ]; then
   # Add renamed api tag
 
   if [ -n "${MANIFEST}" ]; then
-    aws --region "${AWS_DEFAULT_REGION}" ecr put-image \
-      --repository-name ab2d_api \
-      --image-tag "${RENAME_API_OLD_LATEST_COMMIT_TAG}" \
-      --image-manifest "${MANIFEST}" \
-      1> /dev/null \
-      2> /dev/null
+    if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+      aws --region "${AWS_DEFAULT_REGION}" ecr put-image \
+        --repository-name ab2d_api \
+        --image-tag "${RENAME_API_OLD_LATEST_COMMIT_TAG}" \
+        --image-manifest "${MANIFEST}" \
+    else
+      aws --region "${AWS_DEFAULT_REGION}" ecr put-image \
+        --repository-name ab2d_api \
+        --image-tag "${RENAME_API_OLD_LATEST_COMMIT_TAG}" \
+        --image-manifest "${MANIFEST}" \
+        1> /dev/null \
+        2> /dev/null
+    fi
   fi
 
   # Remove old api tag
 
-  aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
-    --repository-name ab2d_api \
-    --image-ids imageTag="${API_OLD_LATEST_COMMIT_TAG}" \
-    1> /dev/null \
-    2> /dev/null
+  if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+    aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
+      --repository-name ab2d_api \
+      --image-ids imageTag="${API_OLD_LATEST_COMMIT_TAG}"
+  else
+    aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
+      --repository-name ab2d_api \
+      --image-ids imageTag="${API_OLD_LATEST_COMMIT_TAG}" \
+      1> /dev/null \
+      2> /dev/null
+  fi
 
 fi
 
@@ -902,12 +960,19 @@ IMAGES_TO_DELETE=$(aws --region "${AWS_DEFAULT_REGION}" ecr list-images \
 
 # Delete untagged images in the worker repository
 
-aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
-  --repository-name ab2d_worker \
-  --image-ids "$IMAGES_TO_DELETE" \
-  || true \
-  1> /dev/null \
-  2> /dev/null
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
+    --repository-name ab2d_worker \
+    --image-ids "$IMAGES_TO_DELETE" \
+    || true
+else
+  aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
+    --repository-name ab2d_worker \
+    --image-ids "$IMAGES_TO_DELETE" \
+    || true \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 # Get old 'latest-commit' worker tag
 
@@ -941,12 +1006,19 @@ if [ -n "${WORKER_OLD_LATEST_COMMIT_TAG}" ]; then
   # Add renamed worker tag
 
   if [ -n "${MANIFEST}" ]; then
-    aws --region "${AWS_DEFAULT_REGION}" ecr put-image \
-      --repository-name ab2d_worker \
-      --image-tag "${RENAME_WORKER_OLD_LATEST_COMMIT_TAG}" \
-      --image-manifest "${MANIFEST}" \
-      1> /dev/null \
-      2> /dev/null
+    if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+      aws --region "${AWS_DEFAULT_REGION}" ecr put-image \
+        --repository-name ab2d_worker \
+        --image-tag "${RENAME_WORKER_OLD_LATEST_COMMIT_TAG}" \
+        --image-manifest "${MANIFEST}"
+    else
+      aws --region "${AWS_DEFAULT_REGION}" ecr put-image \
+        --repository-name ab2d_worker \
+        --image-tag "${RENAME_WORKER_OLD_LATEST_COMMIT_TAG}" \
+        --image-manifest "${MANIFEST}" \
+        1> /dev/null \
+        2> /dev/null
+    fi
   fi
 
   # Remove old worker tag
