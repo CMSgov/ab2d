@@ -72,7 +72,7 @@ public class InvalidTokenTest {
         user.setEnabled(false);
         userRepository.save(user);
 
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Patient/$export")
+        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Patient/$export")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(403));

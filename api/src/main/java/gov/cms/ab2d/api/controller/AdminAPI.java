@@ -1,5 +1,6 @@
 package gov.cms.ab2d.api.controller;
 
+import gov.cms.ab2d.api.controller.v1.BulkDataAccessAPI;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.dto.UserDTO;
 import gov.cms.ab2d.common.service.PropertiesService;
@@ -27,7 +28,8 @@ import javax.validation.constraints.NotBlank;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-import static gov.cms.ab2d.common.util.Constants.API_PREFIX;
+import static gov.cms.ab2d.api.controller.common.ApiText.JSON;
+import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
 import static gov.cms.ab2d.common.util.Constants.ADMIN_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.USERNAME;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
@@ -36,7 +38,7 @@ import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 @Slf4j
 @RestController
 @SuppressWarnings("PMD.TooManyStaticImports")
-@RequestMapping(path = API_PREFIX + ADMIN_PREFIX, produces = "application/json")
+@RequestMapping(path = API_PREFIX_V1 + ADMIN_PREFIX, produces = JSON)
 public class AdminAPI {
 
     private final UserService userService;

@@ -197,7 +197,7 @@ class TestRunner {
             baseUrl += ":" + apiPort;
         }
 
-        AB2D_API_URL = APIClient.buildAB2DAPIUrl(baseUrl);
+        AB2D_API_URL = APIClient.buildAB2DAPIUrlV1(baseUrl);
 
         String oktaClientId = System.getenv("OKTA_CLIENT_ID");
         String oktaPassword = System.getenv("OKTA_CLIENT_PASSWORD");

@@ -36,7 +36,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.List;
 
-import static gov.cms.ab2d.common.util.Constants.API_PREFIX;
+import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.SPONSOR_ROLE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -91,7 +91,7 @@ public class TLSTest {
         String token = testUtil.setupToken(List.of(SPONSOR_ROLE));
         headers.add("Authorization", "Bearer " + token);
         HttpEntity<String> entity = new HttpEntity<>("parameters", headers);
-        ResponseEntity<String> response = restTemplate.exchange("https://localhost:" + serverPort + API_PREFIX + FHIR_PREFIX + "/metadata",
+        ResponseEntity<String> response = restTemplate.exchange("https://localhost:" + serverPort + API_PREFIX_V1 + FHIR_PREFIX + "/metadata",
                 HttpMethod.GET, entity, String.class);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());

@@ -68,7 +68,7 @@ public class AuthenticationTests {
     // Negative tests, successful auth tests are essentially done in other suites
     @Test
     public void testNoAuthHeader() throws Exception {
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Patient/$export")
+        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Patient/$export")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(401));
         List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
@@ -83,7 +83,7 @@ public class AuthenticationTests {
 
     @Test
     public void testBadStartToHeader() throws Exception {
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Patient/$export")
+        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Patient/$export")
                 .header("Authorization", "NotBearer")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(401));
@@ -91,7 +91,7 @@ public class AuthenticationTests {
 
     @Test
     public void testNoTokenInHeader() throws Exception {
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Patient/$export")
+        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Patient/$export")
                 .header("Authorization", "Bearer ")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(401));
@@ -102,7 +102,7 @@ public class AuthenticationTests {
         User user = userRepository.findByUsername(TEST_USER);
         userRepository.delete(user);
 
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Patient/$export")
+        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Patient/$export")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(403));
@@ -122,7 +122,7 @@ public class AuthenticationTests {
         user.setEnabled(false);
         userRepository.save(user);
 
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Patient/$export")
+        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Patient/$export")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(403));

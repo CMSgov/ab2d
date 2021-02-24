@@ -89,7 +89,7 @@ public class AdminAPIPropertiesTests {
         }};
 
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX + ADMIN_PREFIX + PROPERTIES_URL)
+                get(API_PREFIX_V1 + ADMIN_PREFIX + PROPERTIES_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
@@ -143,7 +143,7 @@ public class AdminAPIPropertiesTests {
         ObjectMapper mapper = new ObjectMapper();
 
         MvcResult mvcResult = this.mockMvc.perform(
-                put(API_PREFIX + ADMIN_PREFIX + PROPERTIES_URL)
+                put(API_PREFIX_V1 + ADMIN_PREFIX + PROPERTIES_URL)
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(propertiesDTOs))
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
@@ -167,7 +167,7 @@ public class AdminAPIPropertiesTests {
         propertiesDTOs.add(maintenanceModeDTO);
 
         this.mockMvc.perform(
-                put(API_PREFIX + ADMIN_PREFIX + PROPERTIES_URL)
+                put(API_PREFIX_V1 + ADMIN_PREFIX + PROPERTIES_URL)
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(propertiesDTOs))
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(200));

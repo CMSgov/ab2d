@@ -92,12 +92,12 @@ public class AdminAPIMaintenanceModeTests {
         ObjectMapper mapper = new ObjectMapper();
 
         this.mockMvc.perform(
-                put(API_PREFIX + ADMIN_PREFIX + PROPERTIES_URL)
+                put(API_PREFIX_V1 + ADMIN_PREFIX + PROPERTIES_URL)
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(propertiesDTOs))
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(200));
 
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(HttpStatus.SERVICE_UNAVAILABLE.value()));
 
@@ -127,12 +127,12 @@ public class AdminAPIMaintenanceModeTests {
         propertiesDTOs.add(maintenanceModeDTO);
 
         this.mockMvc.perform(
-                put(API_PREFIX + ADMIN_PREFIX + PROPERTIES_URL)
+                put(API_PREFIX_V1 + ADMIN_PREFIX + PROPERTIES_URL)
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(propertiesDTOs))
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(200));
 
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(202));
 
@@ -141,7 +141,7 @@ public class AdminAPIMaintenanceModeTests {
 
     @Test
     public void testJobsCanStillBeDownloadedWhileInMaintenanceMode() throws Exception {
-        MvcResult mvcResult = this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+        MvcResult mvcResult = this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(202)).andReturn();
         String contentLocationUrl = mvcResult.getResponse().getHeader("Content-Location");
@@ -155,7 +155,7 @@ public class AdminAPIMaintenanceModeTests {
         ObjectMapper mapper = new ObjectMapper();
 
         this.mockMvc.perform(
-                put(API_PREFIX + ADMIN_PREFIX + PROPERTIES_URL)
+                put(API_PREFIX_V1 + ADMIN_PREFIX + PROPERTIES_URL)
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(propertiesDTOs))
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(200));
@@ -186,7 +186,7 @@ public class AdminAPIMaintenanceModeTests {
         propertiesDTOs.add(maintenanceModeDTO);
 
         this.mockMvc.perform(
-                put(API_PREFIX + ADMIN_PREFIX + PROPERTIES_URL)
+                put(API_PREFIX_V1 + ADMIN_PREFIX + PROPERTIES_URL)
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(propertiesDTOs))
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(200));

@@ -150,7 +150,7 @@ class JwtAuthenticationFilterTest {
 
             // Expect call to fail but just want to check that event was logged
             this.mockMvc.perform(
-                    get(API_PREFIX + ADMIN_PREFIX + "/user/userNotFound")
+                    get(API_PREFIX_V1 + ADMIN_PREFIX + "/user/userNotFound")
                             .contentType(MediaType.APPLICATION_JSON)
                             .header("Authorization", "Bearer " + token))
                     .andReturn();

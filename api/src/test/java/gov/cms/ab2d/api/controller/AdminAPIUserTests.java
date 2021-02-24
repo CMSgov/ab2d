@@ -105,7 +105,7 @@ public class AdminAPIUserTests {
         ObjectMapper mapper = new ObjectMapper();
 
         MvcResult mvcResult = this.mockMvc.perform(
-                post(API_PREFIX + ADMIN_PREFIX + USER_URL)
+                post(API_PREFIX_V1 + ADMIN_PREFIX + USER_URL)
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(userDTO))
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
@@ -139,7 +139,7 @@ public class AdminAPIUserTests {
         ObjectMapper mapper = new ObjectMapper();
 
         MvcResult mvcResult = this.mockMvc.perform(
-                post(API_PREFIX + ADMIN_PREFIX + USER_URL)
+                post(API_PREFIX_V1 + ADMIN_PREFIX + USER_URL)
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(userDTO))
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
@@ -174,14 +174,14 @@ public class AdminAPIUserTests {
         ObjectMapper mapper = new ObjectMapper();
 
         this.mockMvc.perform(
-                post(API_PREFIX + ADMIN_PREFIX + USER_URL)
+                post(API_PREFIX_V1 + ADMIN_PREFIX + USER_URL)
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(userDTO))
                         .header("Authorization", "Bearer " + token));
 
         userDTO.setEmail("anotherEmail@test.com");
 
         this.mockMvc.perform(
-                post(API_PREFIX + ADMIN_PREFIX + USER_URL)
+                post(API_PREFIX_V1 + ADMIN_PREFIX + USER_URL)
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(userDTO))
                         .header("Authorization", "Bearer " + token))
                         .andExpect(status().is(500))
@@ -208,7 +208,7 @@ public class AdminAPIUserTests {
         ObjectMapper mapper = new ObjectMapper();
 
         MvcResult mvcResult = this.mockMvc.perform(
-                post(API_PREFIX + ADMIN_PREFIX + USER_URL)
+                post(API_PREFIX_V1 + ADMIN_PREFIX + USER_URL)
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(userDTO))
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
@@ -225,7 +225,7 @@ public class AdminAPIUserTests {
         createdUserDTO.setRole(SPONSOR_ROLE);
 
         MvcResult updateMvcResult = this.mockMvc.perform(
-                put(API_PREFIX + ADMIN_PREFIX + USER_URL)
+                put(API_PREFIX_V1 + ADMIN_PREFIX + USER_URL)
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(createdUserDTO))
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
@@ -249,7 +249,7 @@ public class AdminAPIUserTests {
         ObjectMapper mapper = new ObjectMapper();
 
         this.mockMvc.perform(
-                put(API_PREFIX + ADMIN_PREFIX + USER_URL)
+                put(API_PREFIX_V1 + ADMIN_PREFIX + USER_URL)
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(userDTO))
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(404));
@@ -273,7 +273,7 @@ public class AdminAPIUserTests {
         setupUser("regularUser", true);
 
         MvcResult mvcResult = this.mockMvc.perform(
-                post(API_PREFIX + ADMIN_PREFIX + "/job/Z0000")
+                post(API_PREFIX_V1 + ADMIN_PREFIX + "/job/Z0000")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
@@ -295,7 +295,7 @@ public class AdminAPIUserTests {
         setupUser(ENABLE_DISABLE_USER, false);
 
         MvcResult mvcResult = this.mockMvc.perform(
-                put(API_PREFIX + ADMIN_PREFIX + USER_URL + "/" + ENABLE_DISABLE_CONTRACT + "/enable")
+                put(API_PREFIX_V1 + ADMIN_PREFIX + USER_URL + "/" + ENABLE_DISABLE_CONTRACT + "/enable")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
@@ -313,7 +313,7 @@ public class AdminAPIUserTests {
     @Test
     public void enableUserNotFound() throws Exception {
         this.mockMvc.perform(
-                put(API_PREFIX + ADMIN_PREFIX + USER_URL + "/baduser/enable")
+                put(API_PREFIX_V1 + ADMIN_PREFIX + USER_URL + "/baduser/enable")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(404));
@@ -325,7 +325,7 @@ public class AdminAPIUserTests {
         setupUser(ENABLE_DISABLE_USER, true);
 
         MvcResult mvcResult = this.mockMvc.perform(
-                put(API_PREFIX + ADMIN_PREFIX + USER_URL + "/" + ENABLE_DISABLE_CONTRACT + "/disable")
+                put(API_PREFIX_V1 + ADMIN_PREFIX + USER_URL + "/" + ENABLE_DISABLE_CONTRACT + "/disable")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
@@ -343,7 +343,7 @@ public class AdminAPIUserTests {
     @Test
     public void disableUserNotFound() throws Exception {
         this.mockMvc.perform(
-                put(API_PREFIX + ADMIN_PREFIX + USER_URL + "/baduser/disable")
+                put(API_PREFIX_V1 + ADMIN_PREFIX + USER_URL + "/baduser/disable")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(404));
@@ -355,7 +355,7 @@ public class AdminAPIUserTests {
         setupUser(ENABLE_DISABLE_USER, true);
 
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX + ADMIN_PREFIX + USER_URL + "/" + ENABLE_DISABLE_CONTRACT)
+                get(API_PREFIX_V1 + ADMIN_PREFIX + USER_URL + "/" + ENABLE_DISABLE_CONTRACT)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
@@ -381,7 +381,7 @@ public class AdminAPIUserTests {
     @Test
     public void getUserNotFound() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX + ADMIN_PREFIX + USER_URL + "/userNotFound")
+                get(API_PREFIX_V1 + ADMIN_PREFIX + USER_URL + "/userNotFound")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
