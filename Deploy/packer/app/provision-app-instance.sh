@@ -55,7 +55,9 @@ sudo yum -y install \
 
 wget https://download.postgresql.org/pub/repos/yum/RPM-GPG-KEY-PGDG-11
 sudo rpm --import RPM-GPG-KEY-PGDG-11
-sudo yum -y install https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+
+# sudo yum -y install https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+sudo yum -y install https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 
 sudo yum -y install postgresql11
 
@@ -84,7 +86,10 @@ sudo pip install awscli
 # Temporary workaround for an error caused by the following URL change
 # - before: https://download.docker.com/linux/centos/7Server/
 # - after: https://download.docker.com/linux/centos/7/
-# sudo sed -i 's%\$releasever%7%g' /etc/yum.repos.d/docker-ce.repo
+#
+# Verified that this fix is still required as of February 23, 2021
+#
+sudo sed -i 's%\$releasever%7%g' /etc/yum.repos.d/docker-ce.repo
 
 #
 # Install latest recommended AWS ECS docker version
@@ -94,7 +99,7 @@ sudo pip install awscli
 
 # Get latest recommended AWS ECS docker version
 
-AWS_ECS_DOCKER_CE_VERSION=$(aws --region "${AWS_DEFAULT_REGION}" ssm get-parameters \
+AWS_ECS_DOCKER_CE_VERSION=$(aws --region "${REGION}" ssm get-parameters \
   --names /aws/service/ecs/optimized-ami/amazon-linux-2/recommended \
   --query "Parameters[*].Value" \
   --output text \
@@ -105,12 +110,16 @@ AWS_ECS_DOCKER_CE_VERSION=$(aws --region "${AWS_DEFAULT_REGION}" ssm get-paramet
 
 # Get and install latest Redhat docker CE version based on the recommended AWS ECS docker version
 
-REDHAT_DOCKER_CE_VERSION=$(curl -s 'https://download.docker.com/linux/centos/7/x86_64/stable/Packages/' \
-     | grep "docker-ce-${AWS_ECS_DOCKER_CE_VERSION}" \
-     | sort \
-     | tail -1 \
-     | cut -d'"' -f 2 \
-     | grep -E -m1 -o 'docker-.+\.el7')
+if [ -n "${AWS_ECS_DOCKER_CE_VERSION}" ]; then
+  REDHAT_DOCKER_CE_VERSION=$(curl -s 'https://download.docker.com/linux/centos/7/x86_64/stable/Packages/' \
+    | grep "docker-ce-${AWS_ECS_DOCKER_CE_VERSION}" \
+    | sort \
+    | tail -1 \
+    | cut -d'"' -f 2 \
+    | grep -E -m1 -o 'docker-.+\.el7')
+else # ensure docker ce version is set if AWS_ECS_DOCKER_CE_VERSION determination fails
+  REDHAT_DOCKER_CE_VERSION=docker-ce-19.03.13-3.el7
+fi
 
 sudo yum -y install "${REDHAT_DOCKER_CE_VERSION}"
 
