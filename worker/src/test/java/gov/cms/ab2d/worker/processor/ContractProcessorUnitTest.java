@@ -24,7 +24,7 @@ import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.*;
 
-import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
+import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
 import static java.lang.Boolean.TRUE;
 import static org.junit.jupiter.api.Assertions.*;

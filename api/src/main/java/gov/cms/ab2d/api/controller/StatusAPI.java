@@ -6,7 +6,6 @@ import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
-import gov.cms.ab2d.fhir.StatusUtils;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -159,7 +158,7 @@ public class StatusAPI {
 
         final JobCompletedResponse resp = new JobCompletedResponse();
 
-        final String jobStartedAt = StatusUtils.getFhirTime(job.getFhirVersion(), job.getCreatedAt());
+        final String jobStartedAt = job.getFhirVersion().getFhirTime(job.getCreatedAt());
         resp.setTransactionTime(jobStartedAt);
 
         resp.setRequest(job.getRequestUrl());

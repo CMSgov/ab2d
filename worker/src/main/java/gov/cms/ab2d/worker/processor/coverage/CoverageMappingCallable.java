@@ -4,7 +4,6 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.CoverageMapping;
 import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.fhir.*;
-import gov.cms.ab2d.fhir.Versions.FhirVersions;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
@@ -22,7 +21,6 @@ import static java.util.stream.Collectors.*;
 @Slf4j
 public class CoverageMappingCallable implements Callable<CoverageMapping> {
 
-    static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
     public static final String CURRENCY_IDENTIFIER =
             "https://bluebutton.cms.gov/resources/codesystem/identifier-currency";
     public static final String CURRENT_MBI = "current";
@@ -34,14 +32,14 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     private final AtomicBoolean completed;
     private final int year;
     private final boolean skipBillablePeriodCheck;
-    private final FhirVersions version;
+    private final FhirVersion version;
 
     private int missingBeneId;
     private int missingCurrentMbi;
     private int hasHistoricalMbi;
     private int filteredByYear;
 
-    public CoverageMappingCallable(FhirVersions version, CoverageMapping coverageMapping, BFDClient bfdClient, boolean skipBillablePeriodCheck) {
+    public CoverageMappingCallable(FhirVersion version, CoverageMapping coverageMapping, BFDClient bfdClient, boolean skipBillablePeriodCheck) {
         this.coverageMapping = coverageMapping;
         this.bfdClient = bfdClient;
         this.completed = new AtomicBoolean(false);
@@ -72,8 +70,8 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
 
             BFDClient.BFD_BULK_JOB_ID.set(coverageMapping.getJobId());
 
-            IBaseBundle bundle = getBundle(version, contractNumber, month);
-            patientIds.addAll(extractAndFilter(version, bundle));
+            IBaseBundle bundle = getBundle(contractNumber, month);
+            patientIds.addAll(extractAndFilter(bundle));
 
             String availableLinks = BundleUtils.getAvailableLinks(bundle);
             log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}, available links {}",
@@ -103,7 +101,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
                             contractNumber, year, month, bundleNo);
                 }
 
-                patientIds.addAll(extractAndFilter(version, bundle));
+                patientIds.addAll(extractAndFilter(bundle));
             }
 
             log.info("retrieving contract membership for Contract {}-{}-{}, #{} bundles received.",
@@ -131,7 +129,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
 
     }
 
-    private Set<Identifiers> extractAndFilter(FhirVersions version, IBaseBundle bundle) {
+    private Set<Identifiers> extractAndFilter(IBaseBundle bundle) {
         return BundleUtils.getPatientStream(bundle, version)
                 .filter(patient -> skipBillablePeriodCheck || filterByYear(patient))
                 .map(this::extractPatientId)
@@ -186,11 +184,11 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     /**
      * given a contractNumber & a month, calls BFD API to find all patients active in the contract during the month
      *
-     * @param contractNumber
-     * @param month
+     * @param contractNumber - the PDP's contract number
+     * @param month - the month to pull data for (1-12)
      * @return a FHIR bundle of resources containing active patients
      */
-    private IBaseBundle getBundle(FhirVersions version, String contractNumber, int month) {
+    private IBaseBundle getBundle(String contractNumber, int month) {
         try {
             return bfdClient.requestPartDEnrolleesFromServer(version, contractNumber, month);
         } catch (Exception e) {

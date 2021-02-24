@@ -1,9 +1,7 @@
 package gov.cms.ab2d.bfd.client;
 
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
-import gov.cms.ab2d.fhir.SearchUtils;
-import gov.cms.ab2d.fhir.Versions;
-import gov.cms.ab2d.fhir.Versions.FhirVersions;
+import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
@@ -34,7 +32,7 @@ public class BFDSearchImpl implements BFDSearch {
     }
 
     @Override
-    public IBaseBundle searchEOB(String patientId, OffsetDateTime since, int pageSize, String bulkJobId, FhirVersions version) throws IOException {
+    public IBaseBundle searchEOB(String patientId, OffsetDateTime since, int pageSize, String bulkJobId, FhirVersion version) throws IOException {
 
         String urlLocation = bfdClientVersions.getUrl(version);
         StringBuilder url = new StringBuilder(urlLocation + "ExplanationOfBenefit?patient=" + patientId + "&excludeSAMHSA=true");
@@ -62,7 +60,7 @@ public class BFDSearchImpl implements BFDSearch {
             int status = response.getStatusLine().getStatusCode();
             if (status >= HttpStatus.SC_OK && status < HttpStatus.SC_MULTIPLE_CHOICES) {
                 try (InputStream instream = response.getEntity().getContent()) {
-                    return Versions.getContextFromVersion(version).newJsonParser().parseResource(SearchUtils.getBundleClass(version), instream);
+                    return version.getJsonParser().parseResource(version.getBundleClass(), instream);
                 }
             } else if (status == HttpStatus.SC_NOT_FOUND) {
                 throw new ResourceNotFoundException("Patient " + patientId + " was not found");

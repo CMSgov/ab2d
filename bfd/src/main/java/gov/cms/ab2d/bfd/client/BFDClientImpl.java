@@ -5,9 +5,7 @@ import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Segment;
-import gov.cms.ab2d.fhir.MetaDataUtils;
-import gov.cms.ab2d.fhir.SearchUtils;
-import gov.cms.ab2d.fhir.Versions.FhirVersions;
+import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -74,13 +72,13 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public IBaseBundle requestEOBFromServer(FhirVersions version, String patientID) {
+    public IBaseBundle requestEOBFromServer(FhirVersion version, String patientID) {
         return requestEOBFromServer(version, patientID, null);
     }
 
     /**
      * Queries Blue Button server for Explanations of Benefit associated with a given patient
-     * similar to {@link #requestEOBFromServer(FhirVersions, String)} but includes a date filter in which the
+     * similar to {@link #requestEOBFromServer(FhirVersion, String)} but includes a date filter in which the
      * _lastUpdated date must be after
      * <p>
      *
@@ -98,7 +96,7 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public IBaseBundle requestEOBFromServer(FhirVersions version, String patientID, OffsetDateTime sinceTime) {
+    public IBaseBundle requestEOBFromServer(FhirVersion version, String patientID, OffsetDateTime sinceTime) {
         final Segment bfdSegment = NewRelic.getAgent().getTransaction().startSegment("BFD Call for patient with patient ID " + patientID +
                 " using since " + sinceTime);
         bfdSegment.setMetricName("RequestEOB");
@@ -116,7 +114,7 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public IBaseBundle requestNextBundleFromServer(FhirVersions version, IBaseBundle bundle) {
+    public IBaseBundle requestNextBundleFromServer(FhirVersion version, IBaseBundle bundle) {
         return bfdClientVersions.getClient(version)
                 .loadPage()
                 .next(bundle)
@@ -142,20 +140,20 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class, InvalidRequestException.class }
     )
-    public IBaseBundle requestPartDEnrolleesFromServer(FhirVersions version, String contractNumber, int month) {
+    public IBaseBundle requestPartDEnrolleesFromServer(FhirVersion version, String contractNumber, int month) {
         var monthParameter = createMonthParameter(month);
         var theCriterion = new TokenClientParam("_has:Coverage.extension")
                 .exactly()
                 .systemAndIdentifier(monthParameter, contractNumber);
 
         return bfdClientVersions.getClient(version).search()
-                .forResource(SearchUtils.getPatientClass(version))
+                .forResource(version.getPatientClass())
                 .where(theCriterion)
                 .withAdditionalHeader(BFDClient.BFD_HDR_BULK_CLIENTID, BFDClient.BFD_CLIENT_ID)
                 .withAdditionalHeader(BFDClient.BFD_HDR_BULK_JOBID, getJobId())
                 .withAdditionalHeader("IncludeIdentifiers", "mbi")
                 .count(contractToBenePageSize)
-                .returnBundle(SearchUtils.getBundleClass(version))
+                .returnBundle(version.getBundleClass())
                 .encodedJson()
                 .execute();
     }
@@ -166,9 +164,9 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public IBaseConformance capabilityStatement(FhirVersions version) {
+    public IBaseConformance capabilityStatement(FhirVersion version) {
         try {
-            Class<? extends IBaseConformance> resource = MetaDataUtils.getCapabilityClass(version);
+            Class<? extends IBaseConformance> resource = version.getCapabilityClass();
             return bfdClientVersions.getClient(version).capabilities()
                 .ofType(resource)
                 .execute();

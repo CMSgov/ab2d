@@ -30,7 +30,7 @@ import java.util.List;
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.fhir.IdentifierUtils.BENEFICIARY_ID;
-import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
+import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;

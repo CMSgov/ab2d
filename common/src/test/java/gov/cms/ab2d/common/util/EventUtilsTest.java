@@ -14,7 +14,7 @@ import java.io.IOException;
 
 import static gov.cms.ab2d.common.model.JobStatus.IN_PROGRESS;
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
-import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
+import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.junit.jupiter.api.Assertions.*;
 
 class EventUtilsTest {

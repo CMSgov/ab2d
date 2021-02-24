@@ -1,17 +1,15 @@
 package gov.cms.ab2d.bfd.client;
 
-import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.rest.api.RequestFormatParamStyleEnum;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
-import gov.cms.ab2d.fhir.Versions;
-import gov.cms.ab2d.fhir.Versions.FhirVersions;
+import gov.cms.ab2d.fhir.FhirVersion;
 import org.apache.http.client.HttpClient;
 
 /**
  * Used to support different versions of FHIR BFD endpoints;
  */
 public class FhirBfdServer {
-    private final FhirContext fhirContext;
+    private final FhirVersion version;
     private IGenericClient iGenericClient;
 
     /**
@@ -19,8 +17,8 @@ public class FhirBfdServer {
      *
      * @param version - the FHIR version
      */
-    public FhirBfdServer(FhirVersions version) {
-        fhirContext = Versions.getContextFromVersion(version);
+    public FhirBfdServer(FhirVersion version) {
+        this.version = version;
     }
 
     /**
@@ -32,19 +30,19 @@ public class FhirBfdServer {
      */
     public IGenericClient getGenericClient(HttpClient httpClient, String url) {
         if (iGenericClient == null) {
-            fhirContext.getRestfulClientFactory().setHttpClient(httpClient);
-            iGenericClient = fhirContext.newRestfulGenericClient(url);
+            version.getContext().getRestfulClientFactory().setHttpClient(httpClient);
+            iGenericClient = version.getContext().newRestfulGenericClient(url);
             iGenericClient.setFormatParamStyle(RequestFormatParamStyleEnum.SHORT);
         }
         return iGenericClient;
     }
 
     /**
-     * Return the FHIR context
+     * Return the FHIR version
      *
-     * @return the context
+     * @return the version
      */
-    public FhirContext fhirContext() {
-        return fhirContext;
+    public FhirVersion getVersion() {
+        return version;
     }
 }

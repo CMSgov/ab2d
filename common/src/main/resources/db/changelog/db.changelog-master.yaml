@@ -96,3 +96,5 @@ databaseChangeLog:
       file: db/changelog/v2021/add_fhir_version.sql
   - include:
       file: db/changelog/v2021/add_coverage_search_props.sql
+  - include:
+      file: db/changelog/v2021/remove_extra_users.sql

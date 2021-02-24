@@ -22,8 +22,8 @@ class EOBLoadUtilitiesTest {
     static FhirContext context = FhirContext.forDstu3();
 
     static {
-        eobC = ExplanationOfBenefitTrimmerSTU3.getBenefit(EOBLoadUtilities.getSTU3EOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json", context));
-        eobS = ExplanationOfBenefitTrimmerSTU3.getBenefit(EOBLoadUtilities.getSTU3EOBFromFileInClassPath("eobdata/EOB-for-SNF-Claims.json", context));
+        eobC = ExplanationOfBenefitTrimmerSTU3.getBenefit(EOBLoadUtilities.getSTU3EOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json"));
+        eobS = ExplanationOfBenefitTrimmerSTU3.getBenefit(EOBLoadUtilities.getSTU3EOBFromFileInClassPath("eobdata/EOB-for-SNF-Claims.json"));
     }
 
     @Test
@@ -33,9 +33,9 @@ class EOBLoadUtilitiesTest {
 
     @Test
     public void testLoadFromFilePatient() {
-        assertNull(EOBLoadUtilities.getSTU3EOBFromFileInClassPath("", context));
-        assertNull(EOBLoadUtilities.getSTU3EOBFromFileInClassPath(null, context));
-        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob = EOBLoadUtilities.getSTU3EOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json", context);
+        assertNull(EOBLoadUtilities.getSTU3EOBFromFileInClassPath(""));
+        assertNull(EOBLoadUtilities.getSTU3EOBFromFileInClassPath(null));
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob = EOBLoadUtilities.getSTU3EOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json");
         assertNotNull(eob);
         assertEquals(eob.getPatient().getReference(), "Patient/-199900000022040");
     }
@@ -190,7 +190,7 @@ class EOBLoadUtilitiesTest {
     @Test
     void testToJson() {
         var jsonParser = context.newJsonParser();
-        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob = EOBLoadUtilities.getSTU3EOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json", context);
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob = EOBLoadUtilities.getSTU3EOBFromFileInClassPath("eobdata/EOB-for-Carrier-Claims.json");
         org.hl7.fhir.dstu3.model.ExplanationOfBenefit eobNew = (org.hl7.fhir.dstu3.model.ExplanationOfBenefit) ExplanationOfBenefitTrimmerSTU3.getBenefit((IBaseResource) eob);
         String payload = jsonParser.encodeResourceToString(eobNew) + System.lineSeparator();
         assertNotNull(payload);

@@ -9,8 +9,6 @@ import java.util.GregorianCalendar;
 import java.util.Calendar;
 import java.util.stream.Collectors;
 
-import gov.cms.ab2d.fhir.Versions.FhirVersions;
-
 /**
  * Used to support manipulation of extensions to Resource objects for different FHIR versions
  */
@@ -33,12 +31,12 @@ public final class ExtensionUtils {
      * @param extension - the extension
      * @param version - the FHIR version
      */
-    public static void addExtension(IBaseResource resource, IBase extension, FhirVersions version) {
+    public static void addExtension(IBaseResource resource, IBase extension, FhirVersion version) {
         if (resource == null || extension == null) {
             return;
         }
         try {
-            Versions.invokeSetMethod(resource, "addExtension", extension, Class.forName(Versions.getClassName(version, "Extension")));
+            Versions.invokeSetMethod(resource, "addExtension", extension, Class.forName(version.getClassName("Extension")));
         } catch (Exception ex) {
             log.error("Unable to add Extension");
         }
@@ -52,7 +50,7 @@ public final class ExtensionUtils {
      * @param version - the FHIR version
      * @return the extension
      */
-    public static IBase createMbiExtension(String mbi, boolean current, FhirVersions version) {
+    public static IBase createMbiExtension(String mbi, boolean current, FhirVersion version) {
         Object identifier = Versions.getObject(version, "Identifier");
         Versions.invokeSetMethod(identifier, "setSystem", MBI_ID, String.class);
         Versions.invokeSetMethod(identifier, "setValue", mbi, String.class);
@@ -63,7 +61,7 @@ public final class ExtensionUtils {
         Object currencyExtension = Versions.getObject(version, "Extension");
         Versions.invokeSetMethod(currencyExtension, "setUrl", CURRENCY_IDENTIFIER, String.class);
         try {
-            Versions.invokeSetMethod(currencyExtension, "setValue", coding, Class.forName(Versions.getClassName(version, "Type")));
+            Versions.invokeSetMethod(currencyExtension, "setValue", coding, Class.forName(version.getClassName("Type")));
         } catch (Exception ex) {
             log.error("Unable to setValue");
         }
@@ -73,7 +71,7 @@ public final class ExtensionUtils {
         Object ext = Versions.getObject(version, "Extension");
         Versions.invokeSetMethod(ext, "setUrl", ID_EXT, String.class);
         try {
-            Versions.invokeSetMethod(ext, "setValue", identifier, Class.forName(Versions.getClassName(version, "Type")));
+            Versions.invokeSetMethod(ext, "setValue", identifier, Class.forName(version.getClassName("Type")));
         } catch (Exception ex) {
             log.error("Unable to setValue");
         }

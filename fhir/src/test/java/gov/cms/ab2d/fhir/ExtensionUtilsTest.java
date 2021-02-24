@@ -12,7 +12,7 @@ import java.util.Date;
 import java.util.List;
 
 import static gov.cms.ab2d.fhir.ExtensionUtils.*;
-import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
+import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ExtensionUtilsTest {

@@ -11,7 +11,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Collections;
 
-import static gov.cms.ab2d.fhir.Versions.FhirVersions.STU3;
+import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createPatient;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createPatientWithMultipleMbis;
 import static java.util.Collections.emptyList;
