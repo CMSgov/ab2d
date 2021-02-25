@@ -156,7 +156,6 @@ if [ -z "${S3_ENVIRONMENT_BUCKET_EXISTS}" ]; then
     1> /dev/null \
     2> /dev/null
 
-
   aws --region "${AWS_DEFAULT_REGION}" s3api put-public-access-block \
     --bucket "${TARGET_CMS_ENV}" \
     --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true \
