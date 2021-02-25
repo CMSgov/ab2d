@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Just gets the current user from the authentication context.
+ * Just gets the current client from the authentication context.
  */
 @AllArgsConstructor
 @Transactional
@@ -45,8 +45,9 @@ public class PdpClientServiceImpl implements PdpClientService {
     }
 
     /**
-     * The username is actually the client id
+     * The username used for Spring's authentication is actually {@link PdpClient#getClientId()}
      * @param clientId client id authorized for the system
+     * @return {@link PdpClient}
      */
     @Override
     public PdpClient getClientById(String clientId) {
@@ -69,7 +70,7 @@ public class PdpClientServiceImpl implements PdpClientService {
 
     @Override
     public PdpClientDTO updateClient(PdpClientDTO pdpClientDTO) {
-        // When updating there needs to be verification that the user exists
+        // When updating there needs to be verification that the client exists
         PdpClient pdpClient = getClientById(pdpClientDTO.getClientId());
         pdpClientDTO.setId(pdpClient.getId());
         PdpClient mappedPdpClient = mapping.getModelMapper().map(pdpClientDTO, PdpClient.class);
@@ -79,24 +80,24 @@ public class PdpClientServiceImpl implements PdpClientService {
 
     @Override
     public void setupClientImpersonation(String contractNumber, HttpServletRequest request) {
-        PdpClient pdpClient = getUserByContract(contractNumber);
-        log.info("Admin user is impersonating user {}", pdpClient.getClientId());
+        PdpClient pdpClient = getClientByContract(contractNumber);
+        log.info("Admin client is impersonating client {}", pdpClient.getId());
         setupClientAndRolesInSecurityContext(pdpClient, request);
     }
 
-    private PdpClient getUserByContract(String contractNumber) {
-        // May be more than one user mapping to a contract
+    private PdpClient getClientByContract(String contractNumber) {
+        // May be more than one client mapping to a contract
         // since we removed the constraint
         List<PdpClient> pdpClients = pdpClientRepository.findByContract(contractNumber);
 
         if (pdpClients.isEmpty()) {
-            String userNotPresentMsg = "User is not present in our database";
-            log.error(userNotPresentMsg);
-            throw new ResourceNotFoundException(userNotPresentMsg);
+            String clientNotPresentMsg = "Client is not present in our database";
+            log.error(clientNotPresentMsg);
+            throw new ResourceNotFoundException(clientNotPresentMsg);
         }
 
         if (pdpClients.size() > 1) {
-            log.warn("{} users map to {} contract. This should not be possible.", pdpClients.size(), contractNumber);
+            log.warn("{} clients map to {} contract. This should not be possible.", pdpClients.size(), contractNumber);
         }
 
         return pdpClients.get(0);
@@ -114,9 +115,9 @@ public class PdpClientServiceImpl implements PdpClientService {
     }
 
     /**
-     * Retrieve the list of granted authorities from the user's roles
+     * Retrieve the list of granted authorities from the client's roles
      *
-     * @param pdpClient - the user
+     * @param pdpClient - the client
      * @return - the granted authorities
      */
     @Override
@@ -131,22 +132,22 @@ public class PdpClientServiceImpl implements PdpClientService {
 
     @Override
     public PdpClientDTO enableClient(String contractNumber) {
-        return updateUserStatus(contractNumber, true);
+        return updateClientStatus(contractNumber, true);
     }
 
     @Override
     public PdpClientDTO disableClient(String contractNumber) {
-        return updateUserStatus(contractNumber, false);
+        return updateClientStatus(contractNumber, false);
     }
 
     @Override
     public PdpClientDTO getClient(String contractNumber) {
-        PdpClient pdpClient = getUserByContract(contractNumber);
+        PdpClient pdpClient = getClientByContract(contractNumber);
         return mapping.getModelMapper().map(pdpClient, PdpClientDTO.class);
     }
 
-    private PdpClientDTO updateUserStatus(String contractNumber, boolean enabled) {
-        PdpClient pdpClient = getUserByContract(contractNumber);
+    private PdpClientDTO updateClientStatus(String contractNumber, boolean enabled) {
+        PdpClient pdpClient = getClientByContract(contractNumber);
         pdpClient.setEnabled(enabled);
         PdpClient updatedPdpClient = pdpClientRepository.saveAndFlush(pdpClient);
         return mapping.getModelMapper().map(updatedPdpClient, PdpClientDTO.class);

@@ -13,12 +13,7 @@ public class PdpClientDTO {
     private String clientId;
 
     @NotNull
-    private String firstName;
-
-    @NotNull
-    private String lastName;
-
-    private String email;
+    private String organization;
 
     @NotNull
     private Boolean enabled;

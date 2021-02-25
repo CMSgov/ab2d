@@ -63,9 +63,6 @@ class PdpClientServiceTest {
         dataSetup.queueForCleanup(pdpClientService.getClientById("test@test.com"));
 
         assertEquals(client.getClientId(), createdClient.getClientId());
-        assertEquals(client.getEmail(), createdClient.getEmail());
-        assertEquals(client.getFirstName(), createdClient.getFirstName());
-        assertEquals(client.getLastName(), createdClient.getLastName());
         assertEquals(client.getEnabled(), createdClient.getEnabled());
         assertEquals(client.getContract(), createdClient.getContract());
         assertEquals(SPONSOR_ROLE, createdClient.getRole());
@@ -79,7 +76,6 @@ class PdpClientServiceTest {
         dataSetup.queueForCleanup(pdpClientService.getClientById("test@test.com"));
 
         var exceptionThrown = Assertions.assertThrows(DataIntegrityViolationException.class, () -> {
-            client.setEmail("anotherEmail@test.com");
             pdpClientService.createClient(client);
         });
         assertEquals("could not execute statement; SQL [n/a]; constraint [uc_user_account_username]; " +
@@ -95,10 +91,8 @@ class PdpClientServiceTest {
 
     private PdpClientDTO createClient(Contract contract, @Nullable String roleName) {
         PdpClientDTO client = new PdpClientDTO();
-        client.setEmail("test@test.com");
         client.setClientId("test@test.com");
-        client.setFirstName("Test");
-        client.setLastName("User");
+        client.setOrganization("test");
         client.setEnabled(true);
         ContractDTO contractDTO = new ContractDTO(contract.getContractNumber(), contract.getContractName(),
                 contract.getAttestedOn().toString());
@@ -115,9 +109,6 @@ class PdpClientServiceTest {
         PdpClientDTO createdClient = pdpClientService.createClient(client);
         dataSetup.queueForCleanup(pdpClientService.getClientById("test@test.com"));
 
-        createdClient.setEmail("newTest@test.com");
-        createdClient.setFirstName("New");
-        createdClient.setLastName("User");
         createdClient.setEnabled(false);
         ContractDTO contractDTO = buildContractDTO(dataSetup.setupContract("T12345"));
         createdClient.setContract(contractDTO);
@@ -126,9 +117,6 @@ class PdpClientServiceTest {
         PdpClientDTO updatedClient = pdpClientService.updateClient(createdClient);
 
         assertEquals(createdClient.getClientId(), updatedClient.getClientId());
-        assertEquals(createdClient.getEmail(), updatedClient.getEmail());
-        assertEquals(createdClient.getFirstName(), updatedClient.getFirstName());
-        assertEquals(createdClient.getLastName(), updatedClient.getLastName());
         assertEquals(createdClient.getEnabled(), updatedClient.getEnabled());
         assertEquals(createdClient.getContract().getContractName(), updatedClient.getContract().getContractName());
         assertEquals(createdClient.getContract().getContractNumber(), updatedClient.getContract().getContractNumber());
@@ -201,15 +189,15 @@ class PdpClientServiceTest {
     }
 
     @Test
-    void testSetupClientAndRolesInSecurityContextBadUser() {
+    void testSetupClientAndRolesInSecurityContextBadClient() {
         HttpServletRequest httpServletRequest = new MockHttpServletRequest();
         var exceptionThrown = Assertions.assertThrows(ResourceNotFoundException.class,
-                () -> pdpClientService.setupClientImpersonation("UserDoesNotExist", httpServletRequest));
-        assertEquals("User is not present in our database", exceptionThrown.getMessage());
+                () -> pdpClientService.setupClientImpersonation("ClientDoesNotExist", httpServletRequest));
+        assertEquals("Client is not present in our database", exceptionThrown.getMessage());
     }
 
     @Test
-    void testEnableUser() {
+    void testEnableClient() {
         PdpClientDTO client = buildClientDTO("Test", SPONSOR_ROLE);
         client.setEnabled(false);
 
@@ -221,7 +209,7 @@ class PdpClientServiceTest {
     }
 
     @Test
-    void testDisableUser() {
+    void testDisableClient() {
         PdpClientDTO client = buildClientDTO("Test", SPONSOR_ROLE);
         pdpClientService.createClient(client);
         dataSetup.queueForCleanup(pdpClientService.getClientById("test@test.com"));

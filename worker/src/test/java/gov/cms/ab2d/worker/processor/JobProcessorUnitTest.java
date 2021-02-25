@@ -189,9 +189,6 @@ class JobProcessorUnitTest {
     private PdpClient createClient() {
         PdpClient pdpClient = new PdpClient();
         pdpClient.setClientId("Harry_Potter");
-        pdpClient.setFirstName("Harry");
-        pdpClient.setLastName("Potter");
-        pdpClient.setEmail("harry_potter@hogwarts.edu");
         pdpClient.setEnabled(TRUE);
         pdpClient.setContract(createContract());
         return pdpClient;

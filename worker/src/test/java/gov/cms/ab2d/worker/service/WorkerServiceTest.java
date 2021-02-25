@@ -111,8 +111,10 @@ class WorkerServiceTest {
 
     private PdpClient createClient() {
         PdpClient pdpClient = new PdpClient();
-        pdpClient.setId((long) getIntRandom());
-        pdpClient.setClientId("testclient" + getIntRandom());
+        int clientNum = getIntRandom();
+        pdpClient.setId((long) clientNum);
+        pdpClient.setClientId("testclient" + clientNum);
+        pdpClient.setOrganization("testclient" + clientNum);
         pdpClient.setEnabled(true);
         pdpClient.setContract(dataSetup.setupContract("W9876"));
 
@@ -123,8 +125,10 @@ class WorkerServiceTest {
 
     private PdpClient createClient2() {
         PdpClient pdpClient = new PdpClient();
-        pdpClient.setId((long) getIntRandom());
-        pdpClient.setClientId("testclient2" + getIntRandom());
+        int clientNum = getIntRandom();
+        pdpClient.setId((long) clientNum);
+        pdpClient.setClientId("testclient2" + clientNum);
+        pdpClient.setOrganization("testclient2" + clientNum);
         pdpClient.setEnabled(true);
         pdpClient.setContract(dataSetup.setupContract("W8765"));
 

@@ -62,7 +62,7 @@ public class TestUtil {
     private String jwtStr = null;
 
     private void setupMock() throws JwtVerificationException {
-        // Token that expires in 2 hours that has the user we setup below
+        // Token that expires in 2 hours that has the client we setup below
         Map<String, Object> claims = Map.of("sub", TEST_PDP_CLIENT);
         Jwt jwt = new DefaultJwt("tokenValue", Instant.now(), Instant.now().plus(Duration.ofHours(2)), claims);
 
@@ -73,32 +73,32 @@ public class TestUtil {
         when(mockAccessTokenVerifier.decode(anyString())).thenThrow(JwtVerificationException.class);
     }
 
-    public String setupInvalidToken(List<String> userRoles) throws JwtVerificationException {
-        dataSetup.setupPdpClient(userRoles);
+    public String setupInvalidToken(List<String> clientRoles) throws JwtVerificationException {
+        dataSetup.setupPdpClient(clientRoles);
 
         setupInvalidMock();
 
         return buildTokenStr();
     }
 
-    public String setupContractWithNoAttestation(List<String> userRoles) throws JwtVerificationException {
-        dataSetup.setupContractWithNoAttestation(userRoles);
+    public String setupContractWithNoAttestation(List<String> clientRoles) throws JwtVerificationException {
+        dataSetup.setupContractWithNoAttestation(clientRoles);
 
         setupMock();
 
         return buildTokenStr();
     }
 
-    public String setupContractSponsorForParentClientData(List<String> userRoles) throws JwtVerificationException {
-        dataSetup.setupContractSponsorForParentClientData(userRoles);
+    public String setupContractSponsorForParentClientData(List<String> clientRoles) throws JwtVerificationException {
+        dataSetup.setupContractSponsorForParentClientData(clientRoles);
 
         setupMock();
 
         return buildTokenStr();
     }
 
-    public String setupToken(List<String> userRoles) throws JwtVerificationException {
-        dataSetup.setupPdpClient(userRoles);
+    public String setupToken(List<String> clientRoles) throws JwtVerificationException {
+        dataSetup.setupPdpClient(clientRoles);
 
         setupMock();
 

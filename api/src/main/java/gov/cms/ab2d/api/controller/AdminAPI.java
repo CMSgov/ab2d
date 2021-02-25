@@ -29,7 +29,7 @@ import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.ADMIN_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.USERNAME;
+import static gov.cms.ab2d.common.util.Constants.CLIENT;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 
 @AllArgsConstructor
@@ -51,8 +51,7 @@ public class AdminAPI {
     @PostMapping("/client")
     public ResponseEntity<PdpClientDTO> createClient(@RequestBody PdpClientDTO pdpClientDTO) {
         PdpClientDTO client = pdpClientService.createClient(pdpClientDTO);
-        // todo log alias instead
-        log.info("user created");
+        log.info("client {} created", client.getOrganization());
         return new ResponseEntity<>(client, null, HttpStatus.CREATED);
     }
 
@@ -60,8 +59,7 @@ public class AdminAPI {
     @PutMapping("/client")
     public ResponseEntity<PdpClientDTO> udpateClient(@RequestBody PdpClientDTO pdpClientDTO) {
         PdpClientDTO client = pdpClientService.updateClient(pdpClientDTO);
-        // todo log alias instead
-        log.info("user updated");
+        log.info("client {} updated", pdpClientDTO.getOrganization());
         return new ResponseEntity<>(client, null, HttpStatus.OK);
     }
 
@@ -74,7 +72,7 @@ public class AdminAPI {
     @ResponseStatus(value = HttpStatus.OK)
     @PutMapping("/properties")
     public ResponseEntity<List<PropertiesDTO>> updateProperties(@RequestBody List<PropertiesDTO> propertiesDTOs) {
-        eventLogger.log(new ReloadEvent(MDC.get(USERNAME), ReloadEvent.FileType.PROPERTIES, null,
+        eventLogger.log(new ReloadEvent(MDC.get(CLIENT), ReloadEvent.FileType.PROPERTIES, null,
                 propertiesDTOs.size()));
         return new ResponseEntity<>(propertiesService.updateProperties(propertiesDTOs), null, HttpStatus.OK);
     }

@@ -11,7 +11,7 @@ public interface PdpClientService {
 
     PdpClient getCurrentClient();
 
-    PdpClient getClientById(String username);
+    PdpClient getClientById(String clientId);
 
     PdpClientDTO createClient(PdpClientDTO pdpClientDTO);
 

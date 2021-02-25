@@ -16,10 +16,10 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final PdpClientRepository pdpClientRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
-        PdpClient pdpClient = pdpClientRepository.findByClientId(userName);
+    public UserDetails loadUserByUsername(String clientId) throws UsernameNotFoundException {
+        PdpClient pdpClient = pdpClientRepository.findByClientId(clientId);
         if (pdpClient == null) {
-            throw new UsernameNotFoundException("User not found with username: " + userName);
+            throw new UsernameNotFoundException("Client " + pdpClient.getOrganization() + " not found with");
         }
         return pdpClient;
     }

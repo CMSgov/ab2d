@@ -103,26 +103,26 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String token = null;
-        String username = null;
+        String client = null;
         try {
             token = getToken(request);
-            username = getUserName(token);
+            client = getClientId(token);
         } catch (Exception ex) {
-            logApiRequestEvent(request, token, username, jobId);
+            logApiRequestEvent(request, token, client, jobId);
             throw ex;
         }
 
-        logApiRequestEvent(request, token, username, jobId);
+        logApiRequestEvent(request, token, client, jobId);
 
-        if (!username.isEmpty()) {
-            MDC.put(USERNAME, username);
-            PdpClient pdpClient = getUser(username);
+        if (!client.isEmpty()) {
+            MDC.put(CLIENT, client);
+            PdpClient pdpClient = getClient(client);
 
             pdpClientService.setupClientAndRolesInSecurityContext(pdpClient, request);
         } else {
-            String usernameBlankMsg = "Username was blank";
-            log.error(usernameBlankMsg);
-            throw new BadJWTTokenException(usernameBlankMsg);
+            String clientBlankMsg = "Client id was blank";
+            log.error(clientBlankMsg);
+            throw new BadJWTTokenException(clientBlankMsg);
         }
 
         // go to the next filter in the filter chain
@@ -140,36 +140,36 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
     }
 
     /**
-     * Given a user name, look up the user in the database
+     * Given a client id, look up the client in the database
      *
-     * @param username - the user name
-     * @return - the user object
+     * @param clientId - {@link PdpClient#getClientId()} of a client
+     * @return - an {@link PdpClient} object
      */
-    private PdpClient getUser(String username) {
+    private PdpClient getClient(String clientId) {
         PdpClient pdpClient;
         try {
-            pdpClient = pdpClientService.getClientById(username);
+            pdpClient = pdpClientService.getClientById(clientId);
         } catch (ResourceNotFoundException exception) {
-            throw new UsernameNotFoundException("User was not found");
+            throw new UsernameNotFoundException("Client was not found");
         }
         if (pdpClient == null) {
-            throw new UsernameNotFoundException("User was not found");
+            throw new UsernameNotFoundException("Client was not found");
         }
 
         if (!pdpClient.getEnabled()) {
-            log.error("User is not enabled");
-            throw new UserNotEnabledException("User " + username + " is not enabled");
+            log.error("Client {} is not enabled", pdpClient.getOrganization());
+            throw new ClientNotEnabledException("Client " + pdpClient.getOrganization() + " is not enabled");
         }
         return pdpClient;
     }
 
     /**
-     * Retrieve the user name from a JWT token
+     * Retrieve the client id from a JWT token
      *
      * @param token - the token
-     * @return - the user name
+     * @return - the {@link PdpClient#getClientId()}
      */
-    private String getUserName(String token) {
+    private String getClientId(String token) {
         Jwt jwt;
         try {
             jwt = accessTokenVerifier.decode(token);
@@ -180,7 +180,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
         Object subClaim = jwt.getClaims().get("sub");
         if (subClaim == null) {
-            String tokenErrorMsg = "Token did not contain username field";
+            String tokenErrorMsg = "Token did not contain client id field";
             log.error(tokenErrorMsg);
             throw new BadJWTTokenException(tokenErrorMsg);
         }

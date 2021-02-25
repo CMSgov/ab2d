@@ -293,9 +293,7 @@ class JobProcessorIntegrationTest {
     private PdpClient createClient() {
         PdpClient pdpClient = new PdpClient();
         pdpClient.setClientId("Harry_Potter");
-        pdpClient.setFirstName("Harry");
-        pdpClient.setLastName("Potter");
-        pdpClient.setEmail("harry_potter@hogwarts.com");
+        pdpClient.setOrganization("Harry_Potter");
         pdpClient.setEnabled(TRUE);
         pdpClient =  pdpClientRepository.saveAndFlush(pdpClient);
         dataSetup.queueForCleanup(pdpClient);

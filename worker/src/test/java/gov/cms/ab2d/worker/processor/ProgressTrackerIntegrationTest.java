@@ -115,6 +115,7 @@ class ProgressTrackerIntegrationTest {
 
         PdpClient pdpClient = new PdpClient();
         pdpClient.setClientId("testclient" + 1000L);
+        pdpClient.setOrganization("testclient" + 1000L);
         pdpClient.setEnabled(true);
         pdpClient.setContract(dataSetup.setupContract("W1234"));
 

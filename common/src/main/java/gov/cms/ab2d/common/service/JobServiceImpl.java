@@ -70,7 +70,7 @@ public class JobServiceImpl implements JobService {
         PdpClient pdpClient = pdpClientService.getCurrentClient();
         Contract contract = pdpClient.getContract();
         if (contractNumber != null && !contractNumber.equals(contract.getContractNumber())) {
-            String errorMsg = "Specifying contract: " + contractNumber + " not associated with user: " + pdpClient.getClientId();
+            String errorMsg = "Specifying contract: " + contractNumber + " not associated with internal id: " + pdpClient.getId();
             log.error(errorMsg);
             throw new InvalidContractException(errorMsg);
         }
@@ -104,8 +104,8 @@ public class JobServiceImpl implements JobService {
 
         PdpClient pdpClient = pdpClientService.getCurrentClient();
         if (!pdpClient.equals(job.getPdpClient())) {
-            log.error("User attempted to download a file where they had a valid UUID, but was not logged in as the " +
-                    "user that created the job");
+            log.error("Client attempted to download a file where they had a valid UUID, but was not logged in as the " +
+                    "client that created the job");
             throw new InvalidJobAccessException("Unauthorized");
         }
 

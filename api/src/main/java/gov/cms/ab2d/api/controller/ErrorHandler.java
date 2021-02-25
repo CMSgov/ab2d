@@ -6,7 +6,7 @@ import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.security.BadJWTTokenException;
 import gov.cms.ab2d.api.security.InvalidAuthHeaderException;
 import gov.cms.ab2d.api.security.MissingTokenException;
-import gov.cms.ab2d.api.security.UserNotEnabledException;
+import gov.cms.ab2d.api.security.ClientNotEnabledException;
 import gov.cms.ab2d.common.service.InvalidClientInputException;
 import gov.cms.ab2d.common.service.InvalidJobStateTransition;
 import gov.cms.ab2d.common.service.InvalidPropertiesException;
@@ -40,7 +40,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
-import static gov.cms.ab2d.common.util.Constants.USERNAME;
+import static gov.cms.ab2d.common.util.Constants.CLIENT;
 
 @ControllerAdvice
 @Slf4j
@@ -58,7 +58,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
             put(InvalidAuthHeaderException.class, HttpStatus.UNAUTHORIZED);
             put(BadJWTTokenException.class, HttpStatus.FORBIDDEN);
             put(UsernameNotFoundException.class, HttpStatus.FORBIDDEN);
-            put(UserNotEnabledException.class, HttpStatus.FORBIDDEN);
+            put(ClientNotEnabledException.class, HttpStatus.FORBIDDEN);
             put(JwtVerificationException.class, HttpStatus.FORBIDDEN);
             put(InvalidContractException.class, HttpStatus.FORBIDDEN);
             put(InvalidJobAccessException.class, HttpStatus.FORBIDDEN);
@@ -104,14 +104,14 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler({JobOutputMissingException.class})
     public ResponseEntity<JsonNode> handleJobOutputMissing(Exception e, HttpServletRequest request) throws IOException {
-        eventLogger.log(new ErrorEvent(MDC.get(USERNAME), UtilMethods.parseJobId(request.getRequestURI()),
+        eventLogger.log(new ErrorEvent(MDC.get(CLIENT), UtilMethods.parseJobId(request.getRequestURI()),
                 ErrorEvent.ErrorType.FILE_ALREADY_DELETED, getRootCause(e)));
         return generateFHIRError(e, request);
     }
 
     @ExceptionHandler({InvalidContractException.class})
     public ResponseEntity<Void> handleInvalidContractErrors(Exception e, HttpServletRequest request) {
-        eventLogger.log(new ErrorEvent(MDC.get(USERNAME), null,
+        eventLogger.log(new ErrorEvent(MDC.get(CLIENT), null,
                 ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT, getRootCause(e)));
         return generateError(e, request);
     }
@@ -120,7 +120,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
             InvalidAuthHeaderException.class,
             BadJWTTokenException.class,
             UsernameNotFoundException.class,
-            UserNotEnabledException.class,
+            ClientNotEnabledException.class,
             JwtVerificationException.class,
             InvalidJobAccessException.class,
             InMaintenanceModeException.class
@@ -133,14 +133,14 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<JsonNode> handleTooManyRequestsExceptions(final TooManyRequestsException e, HttpServletRequest request) throws IOException {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("Retry-After", Integer.toString(retryAfterDelay));
-        eventLogger.log(new ErrorEvent(MDC.get(USERNAME), UtilMethods.parseJobId(request.getRequestURI()),
+        eventLogger.log(new ErrorEvent(MDC.get(CLIENT), UtilMethods.parseJobId(request.getRequestURI()),
                 ErrorEvent.ErrorType.TOO_MANY_STATUS_REQUESTS, "Too many requests performed in too short a time"));
         return generateFHIRError(e, httpHeaders, request);
     }
 
     private ResponseEntity<Void> generateError(Exception ex, HttpServletRequest request) {
         HttpStatus status = getErrorResponse(ex.getClass());
-        eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), null, status,
+        eventLogger.log(new ApiResponseEvent(MDC.get(CLIENT), null, status,
                 "API Error", getRootCause(ex), (String) request.getAttribute(REQUEST_ID)));
         return new ResponseEntity<>(null, null, status);
     }
@@ -156,7 +156,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         FhirVersion version = FhirVersion.fromUrl(request.getRequestURI());
         IBaseResource operationOutcome = version.getErrorOutcome(msg);
         String encoded = version.outcomePrettyToJSON(operationOutcome);
-        eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), null,
+        eventLogger.log(new ApiResponseEvent(MDC.get(CLIENT), null,
                 ErrorHandler.getErrorResponse(e.getClass()),
                 "FHIR Error", msg, (String) request.getAttribute(REQUEST_ID)));
 

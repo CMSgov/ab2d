@@ -93,10 +93,8 @@ public class AdminAPIPdpClientTests {
     public void testCreateClient() throws Exception {
         PdpClientDTO pdpClientDTO = new PdpClientDTO();
         pdpClientDTO.setClientId(TEST_CLIENT);
-        pdpClientDTO.setEmail(TEST_CLIENT);
+        pdpClientDTO.setOrganization(TEST_CLIENT);
         pdpClientDTO.setEnabled(true);
-        pdpClientDTO.setFirstName("Test");
-        pdpClientDTO.setLastName("User");
         pdpClientDTO.setContract(buildContractDTO(VALID_CONTRACT_NUMBER));
         pdpClientDTO.setRole(ADMIN_ROLE);
         Role role = roleService.findRoleByName(ADMIN_ROLE);
@@ -114,10 +112,7 @@ public class AdminAPIPdpClientTests {
 
         String result = mvcResult.getResponse().getContentAsString();
         PdpClientDTO createdPdpClientDTO = mapper.readValue(result, PdpClientDTO.class);
-        assertEquals(createdPdpClientDTO.getEmail(), pdpClientDTO.getEmail());
         assertEquals(createdPdpClientDTO.getClientId(), pdpClientDTO.getClientId());
-        assertEquals(createdPdpClientDTO.getFirstName(), pdpClientDTO.getFirstName());
-        assertEquals(createdPdpClientDTO.getLastName(), pdpClientDTO.getLastName());
         assertEquals(createdPdpClientDTO.getEnabled(), pdpClientDTO.getEnabled());
         assertEquals(createdPdpClientDTO.getContract().getContractNumber(), pdpClientDTO.getContract().getContractNumber());
         assertEquals(createdPdpClientDTO.getContract().getContractName(), pdpClientDTO.getContract().getContractName());
@@ -128,10 +123,8 @@ public class AdminAPIPdpClientTests {
     public void testCreateClientAttestor() throws Exception {
         PdpClientDTO pdpClientDTO = new PdpClientDTO();
         pdpClientDTO.setClientId(TEST_CLIENT);
-        pdpClientDTO.setEmail(TEST_CLIENT);
+        pdpClientDTO.setOrganization(TEST_CLIENT);
         pdpClientDTO.setEnabled(true);
-        pdpClientDTO.setFirstName("Test");
-        pdpClientDTO.setLastName("User");
         pdpClientDTO.setContract(buildContractDTO(VALID_CONTRACT_NUMBER));
         Role role = roleService.findRoleByName(ATTESTOR_ROLE);
         pdpClientDTO.setRole(role.getName());
@@ -148,10 +141,7 @@ public class AdminAPIPdpClientTests {
 
         String result = mvcResult.getResponse().getContentAsString();
         PdpClientDTO createdPdpClientDTO = mapper.readValue(result, PdpClientDTO.class);
-        assertEquals(createdPdpClientDTO.getEmail(), pdpClientDTO.getEmail());
         assertEquals(createdPdpClientDTO.getClientId(), pdpClientDTO.getClientId());
-        assertEquals(createdPdpClientDTO.getFirstName(), pdpClientDTO.getFirstName());
-        assertEquals(createdPdpClientDTO.getLastName(), pdpClientDTO.getLastName());
         assertEquals(createdPdpClientDTO.getEnabled(), pdpClientDTO.getEnabled());
         assertEquals(createdPdpClientDTO.getContract().getContractNumber(), pdpClientDTO.getContract().getContractNumber());
         assertEquals(createdPdpClientDTO.getContract().getContractName(), pdpClientDTO.getContract().getContractName());
@@ -162,10 +152,7 @@ public class AdminAPIPdpClientTests {
     public void testCreateDuplicateClient() throws Exception {
         PdpClientDTO pdpClientDTO = new PdpClientDTO();
         pdpClientDTO.setClientId(TEST_CLIENT);
-        pdpClientDTO.setEmail(TEST_CLIENT);
         pdpClientDTO.setEnabled(true);
-        pdpClientDTO.setFirstName("Test");
-        pdpClientDTO.setLastName("User");
         pdpClientDTO.setContract(buildContractDTO(VALID_CONTRACT_NUMBER));
         pdpClientDTO.setRole(ADMIN_ROLE);
         Role role = roleService.findRoleByName(ADMIN_ROLE);
@@ -177,8 +164,6 @@ public class AdminAPIPdpClientTests {
                 post(API_PREFIX + ADMIN_PREFIX + CLIENT_URL)
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(pdpClientDTO))
                         .header("Authorization", "Bearer " + token));
-
-        pdpClientDTO.setEmail("anotherEmail@test.com");
 
         this.mockMvc.perform(
                 post(API_PREFIX + ADMIN_PREFIX + CLIENT_URL)
@@ -198,10 +183,8 @@ public class AdminAPIPdpClientTests {
     public void testUpdateClient() throws Exception {
         PdpClientDTO pdpClientDTO = new PdpClientDTO();
         pdpClientDTO.setClientId(TEST_CLIENT);
-        pdpClientDTO.setEmail(TEST_CLIENT);
+        pdpClientDTO.setOrganization(TEST_CLIENT);
         pdpClientDTO.setEnabled(true);
-        pdpClientDTO.setFirstName("Test");
-        pdpClientDTO.setLastName("User");
         pdpClientDTO.setContract(buildContractDTO(VALID_CONTRACT_NUMBER));
         pdpClientDTO.setRole(ADMIN_ROLE);
 
@@ -217,10 +200,7 @@ public class AdminAPIPdpClientTests {
         PdpClientDTO createdPdpClientDTO = mapper.readValue(result, PdpClientDTO.class);
 
         createdPdpClientDTO.setRole("SPONSOR");
-        createdPdpClientDTO.setEmail("updated@test.com");
         createdPdpClientDTO.setEnabled(false);
-        createdPdpClientDTO.setFirstName("Updated");
-        createdPdpClientDTO.setLastName("Username");
         createdPdpClientDTO.getContract().setContractNumber(pdpClientDTO.getContract().getContractNumber());
         createdPdpClientDTO.setRole(SPONSOR_ROLE);
 
@@ -233,10 +213,7 @@ public class AdminAPIPdpClientTests {
         String updateResult = updateMvcResult.getResponse().getContentAsString();
         PdpClientDTO updatedPdpClientDTO = mapper.readValue(updateResult, PdpClientDTO.class);
 
-        assertEquals(updatedPdpClientDTO.getEmail(), createdPdpClientDTO.getEmail());
         assertEquals(updatedPdpClientDTO.getClientId(), createdPdpClientDTO.getClientId());
-        assertEquals(updatedPdpClientDTO.getFirstName(), createdPdpClientDTO.getFirstName());
-        assertEquals(updatedPdpClientDTO.getLastName(), createdPdpClientDTO.getLastName());
         assertEquals(updatedPdpClientDTO.getEnabled(), createdPdpClientDTO.getEnabled());
         assertEquals(updatedPdpClientDTO.getContract().getContractNumber(), createdPdpClientDTO.getContract().getContractNumber());
         assertEquals(updatedPdpClientDTO.getRole(), createdPdpClientDTO.getRole());
@@ -258,10 +235,7 @@ public class AdminAPIPdpClientTests {
     private PdpClientDTO createClient() {
         PdpClientDTO pdpClientDTO = new PdpClientDTO();
         pdpClientDTO.setClientId(TEST_CLIENT);
-        pdpClientDTO.setEmail(TEST_CLIENT);
         pdpClientDTO.setEnabled(true);
-        pdpClientDTO.setFirstName("Test");
-        pdpClientDTO.setLastName("User");
         pdpClientDTO.setContract(buildContractDTO(VALID_CONTRACT_NUMBER));
         pdpClientDTO.setRole(SPONSOR_ROLE);
 
@@ -270,7 +244,7 @@ public class AdminAPIPdpClientTests {
 
     @Test
     public void testCreateClientsJobByContractOnAdminBehalf() throws Exception {
-        setupClient("regularUser", true);
+        setupClient("regularClient", true);
 
         MvcResult mvcResult = this.mockMvc.perform(
                 post(API_PREFIX + ADMIN_PREFIX + "/job/Z0000")
@@ -286,12 +260,12 @@ public class AdminAPIPdpClientTests {
         PdpClient jobPdpClient = job.getPdpClient();
         dataSetup.queueForCleanup(jobPdpClient);
         dataSetup.queueForCleanup(job);
-        assertEquals("regularUser", jobPdpClient.getClientId());
+        assertEquals("regularClient", jobPdpClient.getClientId());
     }
 
     @Test
     public void enableClient() throws Exception {
-        // Ensure user is in right state first
+        // Ensure client is in right state first
         setupClient(ENABLE_DISABLE_CLIENT, false);
 
         MvcResult mvcResult = this.mockMvc.perform(
@@ -313,7 +287,7 @@ public class AdminAPIPdpClientTests {
     @Test
     public void enableClientNotFound() throws Exception {
         this.mockMvc.perform(
-                put(API_PREFIX + ADMIN_PREFIX + CLIENT_URL + "/baduser/enable")
+                put(API_PREFIX + ADMIN_PREFIX + CLIENT_URL + "/badclient/enable")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(404));
@@ -321,7 +295,7 @@ public class AdminAPIPdpClientTests {
 
     @Test
     public void disableClient() throws Exception {
-        // Ensure user is in right state first
+        // Ensure client is in right state first
         setupClient(ENABLE_DISABLE_CLIENT, true);
 
         MvcResult mvcResult = this.mockMvc.perform(
@@ -343,7 +317,7 @@ public class AdminAPIPdpClientTests {
     @Test
     public void disableClientNotFound() throws Exception {
         this.mockMvc.perform(
-                put(API_PREFIX + ADMIN_PREFIX + CLIENT_URL + "/baduser/disable")
+                put(API_PREFIX + ADMIN_PREFIX + CLIENT_URL + "/badclient/disable")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(404));
@@ -351,7 +325,7 @@ public class AdminAPIPdpClientTests {
 
     @Test
     public void getClient() throws Exception {
-        // Ensure user is in right state first
+        // Ensure client is in right state first
         setupClient(ENABLE_DISABLE_CLIENT, true);
 
         MvcResult mvcResult = this.mockMvc.perform(
@@ -367,10 +341,7 @@ public class AdminAPIPdpClientTests {
         String getResult = mvcResult.getResponse().getContentAsString();
         PdpClientDTO pdpClientDTO = mapper.readValue(getResult, PdpClientDTO.class);
 
-        assertEquals(TEST_CLIENT, pdpClientDTO.getEmail());
         assertEquals(ENABLE_DISABLE_CLIENT, pdpClientDTO.getClientId());
-        assertEquals("test", pdpClientDTO.getFirstName());
-        assertEquals("user", pdpClientDTO.getLastName());
         assertEquals(true, pdpClientDTO.getEnabled());
         ContractDTO contractDTO = pdpClientDTO.getContract();
         assertEquals(ENABLE_DISABLE_CONTRACT, contractDTO.getContractNumber());
@@ -381,7 +352,7 @@ public class AdminAPIPdpClientTests {
     @Test
     public void getClientNotFound() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX + ADMIN_PREFIX + CLIENT_URL + "/userNotFound")
+                get(API_PREFIX + ADMIN_PREFIX + CLIENT_URL + "/clientNotFound")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
@@ -393,9 +364,7 @@ public class AdminAPIPdpClientTests {
         Contract contract = dataSetup.setupContract(ENABLE_DISABLE_CONTRACT);
         PdpClient pdpClient = new PdpClient();
         pdpClient.setClientId(clientId);
-        pdpClient.setEmail(TEST_CLIENT);
-        pdpClient.setFirstName("test");
-        pdpClient.setLastName("user");
+        pdpClient.setOrganization(TEST_CLIENT);
         pdpClient.setEnabled(enabled);
         pdpClient.setContract(contract);
 

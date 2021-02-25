@@ -99,6 +99,4 @@ databaseChangeLog:
   - include:
       file: db/changelog/v2021/remove_extra_users.sql
   - include:
-      file: db/changelog/v2021/add_alias_user_account.sql
-  - include:
-      file: db/changelog/v2021/rename_username_user_account.sql
+      file: db/changelog/v2021/rework_user_account_username.sql

@@ -30,11 +30,10 @@ public class PdpClient extends TimestampBase implements UserDetails {
     @Column(unique = true)
     @NotNull
     private String clientId;
-    private String firstName;
-    private String lastName;
 
     @Column(unique = true)
-    private String email;
+    @NotNull
+    private String organization;
 
     @NotNull
     private Boolean enabled;

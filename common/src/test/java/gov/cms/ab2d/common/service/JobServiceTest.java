@@ -52,7 +52,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Testcontainers
 class JobServiceTest {
 
-    public static final String USERNAME = "douglas.adams@towels.com";
+    public static final String CLIENTID = "douglas.adams@towels.com";
     public static final String CONTRACT_NUMBER = "S0000";
     public static final String LOCAL_HOST = "http://localhost:8080";
 
@@ -105,7 +105,7 @@ class JobServiceTest {
         jobService = new JobServiceImpl(pdpClientService, jobRepository, jobOutputService, logManager, loggerEventSummary, tmpJobLocation);
         ReflectionTestUtils.setField(jobService, "fileDownloadPath", tmpJobLocation);
 
-        dataSetup.setupNonStandardClient(USERNAME, CONTRACT_NUMBER, List.of());
+        dataSetup.setupNonStandardClient(CLIENTID, CONTRACT_NUMBER, List.of());
 
         setupRegularClientSecurityContext();
     }
@@ -118,7 +118,7 @@ class JobServiceTest {
     private void setupRegularClientSecurityContext() {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(
-                        new org.springframework.security.core.userdetails.User(USERNAME,
+                        new org.springframework.security.core.userdetails.User(CLIENTID,
                                 "test", new ArrayList<>()), "pass"));
     }
 
@@ -131,7 +131,7 @@ class JobServiceTest {
         assertNotNull(job.getOutputFormat());
         assertEquals(ZIPFORMAT, job.getOutputFormat());
         assertEquals(Integer.valueOf(0), job.getProgress());
-        assertEquals(pdpClientRepository.findByClientId(USERNAME), job.getPdpClient());
+        assertEquals(pdpClientRepository.findByClientId(CLIENTID), job.getPdpClient());
         assertEquals(EOB, job.getResourceTypes());
         assertEquals(LOCAL_HOST, job.getRequestUrl());
         assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
@@ -158,7 +158,7 @@ class JobServiceTest {
         assertNotNull(job.getOutputFormat());
         assertEquals(NDJSON_FIRE_CONTENT_TYPE, job.getOutputFormat());
         assertEquals(Integer.valueOf(0), job.getProgress());
-        assertEquals(pdpClientRepository.findByClientId(USERNAME), job.getPdpClient());
+        assertEquals(pdpClientRepository.findByClientId(CLIENTID), job.getPdpClient());
         assertEquals(EOB, job.getResourceTypes());
         assertEquals(LOCAL_HOST, job.getRequestUrl());
         assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
@@ -178,7 +178,7 @@ class JobServiceTest {
 
     @Test
     void createJobWithSpecificContractNoAttestation() {
-        dataSetup.setupContractWithNoAttestation(USERNAME, CONTRACT_NUMBER, List.of());
+        dataSetup.setupContractWithNoAttestation(CLIENTID, CONTRACT_NUMBER, List.of());
         assertThrows(InvalidContractException.class,
                 () -> jobService.createJob(EOB, LOCAL_HOST, DataSetup.VALID_CONTRACT_NUMBER, NDJSON_FIRE_CONTENT_TYPE, null,
                         STU3));
@@ -186,7 +186,7 @@ class JobServiceTest {
 
     @Test
     void createJobWithAllContractsNoAttestation() {
-        dataSetup.setupContractWithNoAttestation(USERNAME, CONTRACT_NUMBER, List.of());
+        dataSetup.setupContractWithNoAttestation(CLIENTID, CONTRACT_NUMBER, List.of());
         assertThrows(InvalidContractException.class,
                 () -> jobService.createJob(EOB, LOCAL_HOST, null, NDJSON_FIRE_CONTENT_TYPE, null,
                         STU3));
@@ -229,7 +229,7 @@ class JobServiceTest {
 
     @Test
     void getJobAdminRole() {
-        // Job created by regular user
+        // Job created by regular client
         Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
 
         setupAdminClient();
@@ -243,7 +243,7 @@ class JobServiceTest {
     void getJobCreatedByAdminRole() {
         setupAdminClient();
 
-        // Job created by admin user
+        // Job created by admin client
         Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
 
         setupRegularClientSecurityContext();
@@ -257,6 +257,7 @@ class JobServiceTest {
         final String adminClient = "ADMIN_CLIENT";
         PdpClient pdpClient = new PdpClient();
         pdpClient.setClientId(adminClient);
+        pdpClient.setOrganization(adminClient);
         pdpClient.setEnabled(true);
         Role role = roleService.findRoleByName(ADMIN_ROLE);
         pdpClient.addRole(role);
@@ -408,6 +409,7 @@ class JobServiceTest {
         Role role = roleService.findRoleByName(SPONSOR_ROLE);
         pdpClient.setRoles(Set.of(role));
         pdpClient.setClientId("BadClient");
+        pdpClient.setOrganization("BadClient");
         pdpClient.setEnabled(true);
         dataSetup.queueForCleanup(pdpClient);
 
