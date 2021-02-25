@@ -76,12 +76,6 @@ sudo yum-config-manager --enable 'rhui-REGION-rhel-server-extras'
 sudo rpm --import https://www.centos.org/keys/RPM-GPG-KEY-CentOS-7
 sudo yum install -y http://mirror.centos.org/centos/7/extras/x86_64/Packages/container-selinux-2.107-3.el7.noarch.rpm
 
-#
-# Install AWS CLI
-#
-
-sudo pip install awscli
-
 # TO DO: Update this when latest gold disk resolves the issue.
 # Temporary workaround for an error caused by the following URL change
 # - before: https://download.docker.com/linux/centos/7Server/
@@ -90,6 +84,32 @@ sudo pip install awscli
 # Verified that this fix is still required as of February 23, 2021
 #
 sudo sed -i 's%\$releasever%7%g' /etc/yum.repos.d/docker-ce.repo
+
+#
+# Install python3
+#
+
+sudo yum install -y gcc openssl-devel bzip2-devel libffi-devel zlib-devel
+cd /usr/src
+PYTHON3_VERSION=3.8.8
+sudo wget "https://www.python.org/ftp/python/${PYTHON3_VERSION}/Python-${PYTHON3_VERSION}.tgz"
+sudo tar xvf "Python-${PYTHON3_VERSION}.tgz"
+cd "./Python-${PYTHON3_VERSION}"
+sudo ./configure --enable-optimizations
+sudo make altinstall
+PYTHON3_MAJOR_VERSION=$(echo "${PYTHON3_VERSION}" | cut -d"." -f 1).$(echo "${PYTHON3_VERSION}" | cut -d"." -f 2)
+sudo ln -s "/usr/local/bin/python${PYTHON3_MAJOR_VERSION}" /usr/local/bin/python3
+sudo ln -s "/usr/local/bin/pip${PYTHON3_MAJOR_VERSION}" /usr/local/bin/pip3
+echo "export PATH=\"/usr/local/bin:\${PATH}\"" >> ~/.bashrc
+
+#
+# Install AWS CLI 2
+#
+
+cd /usr/src
+sudo curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+sudo unzip awscliv2.zip
+sudo ./aws/install
 
 #
 # Install latest recommended AWS ECS docker version
@@ -292,6 +312,12 @@ sudo ln -s /usr/local/bin/stunnel /bin/stunnel
 
 sudo mkdir /mnt/efs
 sudo cp /etc/fstab /etc/fstab.bak
+
+#
+# Remove GNU Compiler Collection (gcc)
+#
+
+sudo yum remove -y gcc
 
 #
 # Make sure ec2 userdata is enabled
