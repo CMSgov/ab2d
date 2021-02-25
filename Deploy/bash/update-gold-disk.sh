@@ -73,7 +73,7 @@ else
 fi
 
 #
-# Set remaining variables
+# Set required variables
 #
 
 export DEBUG_LEVEL="${DEBUG_LEVEL_PARAM}"
@@ -91,6 +91,12 @@ OWNER="${OWNER_PARAM}"
 SSH_USERNAME="${SSH_USERNAME_PARAM}"
 
 VPC_ID="${VPC_ID_PARAM}"
+
+#
+# Set optional variables
+#
+
+SEED_AMI_PINNED="${SEED_AMI_PINNED_PARAM}"
 
 # Set whether CloudTamer API should be used
 
@@ -200,14 +206,18 @@ fi
 
 # Get the latest seed AMI
 
-SEED_AMI=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-images \
-  --owners "${OWNER}" \
-  --filters "Name=name,Values=rhel7-gi-*" \
-  --query "Images[*].[ImageId,CreationDate]" \
-  --output text \
-  | sort -k2 -r \
-  | head -n1 \
-  | awk '{print $1}')
+if [ -n "${SEED_AMI_PINNED}" ]; then
+  SEED_AMI="${SEED_AMI_PINNED}"
+else
+  SEED_AMI=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-images \
+    --owners "${OWNER}" \
+    --filters "Name=name,Values=rhel7-gi-*" \
+    --query "Images[*].[ImageId,CreationDate]" \
+    --output text \
+    | sort -k2 -r \
+    | head -n1 \
+    | awk '{print $1}')
+fi
 
 if [ -z "${SEED_AMI}" ]; then
   echo "ERROR: seed AMI not found..."
