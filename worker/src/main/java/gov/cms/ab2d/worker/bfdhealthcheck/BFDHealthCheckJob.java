@@ -12,7 +12,7 @@ import org.springframework.scheduling.quartz.QuartzJobBean;
 @DisallowConcurrentExecution
 public class BFDHealthCheckJob extends QuartzJobBean {
 
-    private BFDHealthCheck bfdHealthCheck;
+    private final BFDHealthCheck bfdHealthCheck;
 
     @Override
     protected void executeInternal(JobExecutionContext jobExecutionContext) {
