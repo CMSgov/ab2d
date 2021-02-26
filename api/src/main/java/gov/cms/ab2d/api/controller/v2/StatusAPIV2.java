@@ -6,6 +6,7 @@ import gov.cms.ab2d.api.controller.common.StatusCommon;
 import io.swagger.annotations.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -41,6 +42,7 @@ import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 @Slf4j
 @Api(value = BULK_DATA_API, description = STATUS_API, tags = {"Status"})
 @RestController
+@ConditionalOnExpression("${v2.controller.enabled:false}")
 @RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {JSON})
 @AllArgsConstructor
 @SuppressWarnings("PMD.TooManyStaticImports")

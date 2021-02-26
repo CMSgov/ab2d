@@ -16,6 +16,7 @@ import io.swagger.annotations.AuthorizationScope;
 import io.swagger.annotations.ResponseHeader;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -54,6 +55,7 @@ import static gov.cms.ab2d.fhir.FhirVersion.R4;
 @Slf4j
 @Api(value = "Bulk Data Access API", description = SwaggerConstants.BULK_MAIN, tags = {"Export"})
 @RestController
+@ConditionalOnExpression("${v2.controller.enabled:false}")
 @RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {"application/json"})
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class BulkDataAccessAPIV2 {

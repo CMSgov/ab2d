@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.r4.model.CapabilityStatement;
 import org.slf4j.MDC;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,6 +42,7 @@ import static gov.cms.ab2d.fhir.FhirVersion.R4;
 @SuppressWarnings("PMD.TooManyStaticImports")
 @Api(value = CAP_STMT, description = CAP_API, tags = {"Capabilities"})
 @RestController
+@ConditionalOnExpression("${v2.controller.enabled:true}")
 @RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {JSON, NDJSON_FIRE_CONTENT_TYPE})
 public class CapabilityAPIV2 {
 

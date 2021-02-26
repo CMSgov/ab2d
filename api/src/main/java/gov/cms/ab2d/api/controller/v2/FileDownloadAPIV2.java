@@ -5,6 +5,7 @@ import gov.cms.ab2d.api.controller.common.FileDownloadCommon;
 import io.swagger.annotations.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -37,6 +38,7 @@ import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 @Slf4j
 @Api(value = BULK_DNLD, description = BULK_DNLD_DSC, tags = {"Download"})
 @RestController
+@ConditionalOnExpression("${v2.controller.enabled:false}")
 @RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {JSON, NDJSON_FIRE_CONTENT_TYPE})
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class FileDownloadAPIV2 {
