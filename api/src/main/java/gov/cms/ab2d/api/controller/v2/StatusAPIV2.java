@@ -13,22 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotBlank;
 
-import static gov.cms.ab2d.api.controller.common.ApiText.BULK_DATA_API;
-import static gov.cms.ab2d.api.controller.common.ApiText.STATUS_API;
-import static gov.cms.ab2d.api.controller.common.ApiText.JSON;
-import static gov.cms.ab2d.api.controller.common.ApiText.STATUS_DES;
-import static gov.cms.ab2d.api.controller.common.ApiText.AUTH;
-import static gov.cms.ab2d.api.controller.common.ApiText.STATUS;
-import static gov.cms.ab2d.api.controller.common.ApiText.STILL_RUNNING;
-import static gov.cms.ab2d.api.controller.common.ApiText.PROGRESS;
-import static gov.cms.ab2d.api.controller.common.ApiText.STATUS_DELAY;
-import static gov.cms.ab2d.api.controller.common.ApiText.JOB_COMPLETE;
-import static gov.cms.ab2d.api.controller.common.ApiText.FILE_EXPIRES;
-import static gov.cms.ab2d.api.controller.common.ApiText.JOB_NOT_FOUND;
-import static gov.cms.ab2d.api.controller.common.ApiText.CANCEL;
-import static gov.cms.ab2d.api.controller.common.ApiText.JOB_ID;
-import static gov.cms.ab2d.api.controller.common.ApiText.JOB_CANCELLED_MSG;
-
+import static gov.cms.ab2d.api.controller.common.ApiText.*;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_CANCEL;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
@@ -42,7 +27,7 @@ import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 @RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {JSON})
 @AllArgsConstructor
 @SuppressWarnings("PMD.TooManyStaticImports")
-public class StatusAPI {
+public class StatusAPIV2 {
 
     private final StatusCommon statusCommon;
 
@@ -51,10 +36,10 @@ public class StatusAPI {
     })
     @ApiResponses(value = {
             @ApiResponse(code = 202, message = STILL_RUNNING, responseHeaders = {
-                    @ResponseHeader(name = "X-Progress", description = PROGRESS, response = String.class),
-                    @ResponseHeader(name = "Retry-After", description = STATUS_DELAY, response = Integer.class)}),
+                    @ResponseHeader(name = X_PROG, description = PROGRESS, response = String.class),
+                    @ResponseHeader(name = RETRY, description = STATUS_DELAY, response = Integer.class)}),
             @ApiResponse(code = 200, message = JOB_COMPLETE, responseHeaders = {
-                    @ResponseHeader(name = "Expires", description = FILE_EXPIRES, response = String.class)},
+                    @ResponseHeader(name = EXPIRES, description = FILE_EXPIRES, response = String.class)},
                     response = JobCompletedResponse.class),
             @ApiResponse(code = 404, message = JOB_NOT_FOUND, response = SwaggerConfig.OperationOutcome.class)}
     )

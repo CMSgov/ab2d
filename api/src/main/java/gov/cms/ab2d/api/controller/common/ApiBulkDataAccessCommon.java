@@ -22,6 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.time.OffsetDateTime;
 import java.util.Set;
 
+import static gov.cms.ab2d.api.controller.common.ApiText.CONT_LOC;
 import static gov.cms.ab2d.common.service.JobService.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
@@ -84,7 +85,7 @@ public class ApiBulkDataAccessCommon {
                 .getRequest();
         String statusURL = Common.getUrl(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status", request);
         HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.add("Content-Location", statusURL);
+        responseHeaders.add(CONT_LOC, statusURL);
         eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), job.getJobUuid(), HttpStatus.ACCEPTED, "Job Created",
                 "Job " + job.getJobUuid() + " was created", requestId));
         return new ResponseEntity<>(null, responseHeaders,

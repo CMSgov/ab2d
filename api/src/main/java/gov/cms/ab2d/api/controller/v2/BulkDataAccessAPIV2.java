@@ -1,4 +1,4 @@
-package gov.cms.ab2d.api.controller.v1;
+package gov.cms.ab2d.api.controller.v2;
 
 import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.api.util.SwaggerConstants;
@@ -25,6 +25,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotBlank;
 import java.time.OffsetDateTime;
 
+import static gov.cms.ab2d.api.controller.common.ApiText.*;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_PREFER;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT_TYPE;
@@ -32,7 +33,7 @@ import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_OUTPUT_FORMAT;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_CONTRACT_EXPORT;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
-import static gov.cms.ab2d.fhir.FhirVersion.STU3;
+import static gov.cms.ab2d.fhir.FhirVersion.R4;
 
 /**
  * The sole REST controller for AB2D's implementation of the FHIR Bulk Data API specification.
@@ -40,64 +41,57 @@ import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 @Slf4j
 @Api(value = "Bulk Data Access API", description = SwaggerConstants.BULK_MAIN, tags = {"Export"})
 @RestController
-@RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX, produces = {"application/json"})
+@RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {"application/json"})
 @SuppressWarnings("PMD.TooManyStaticImports")
-public class BulkDataAccessAPI {
+public class BulkDataAccessAPIV2 {
     private final JobService jobService;
     private final ApiCommon apiCommon;
 
-    public BulkDataAccessAPI(JobService jobService, ApiCommon apiCommon) {
+    public BulkDataAccessAPIV2(JobService jobService, ApiCommon apiCommon) {
         this.jobService = jobService;
         this.apiCommon = apiCommon;
     }
 
     @ApiOperation(value = BULK_EXPORT,
         authorizations = {
-            @Authorization(value = "Authorization", scopes = {
-                    @AuthorizationScope(description = "Export Patient Information", scope = "Authorization") })
+            @Authorization(value = AUTH, scopes = { @AuthorizationScope(description = EXP_PATIENT_INFO, scope = AUTH) })
         })
     @ApiImplicitParams(value = {
-            @ApiImplicitParam(name = "Prefer", required = true, paramType = "header", value =
-                    BULK_PREFER, allowableValues = "respond-async", defaultValue = "respond-async", type = "string")}
+            @ApiImplicitParam(name = PREFER, required = true, paramType = "header", value =
+                    BULK_PREFER, allowableValues = ASYNC, defaultValue = ASYNC, type = "string")}
     )
     @ApiResponses(
-            @ApiResponse(code = 202, message = "Export request has started", responseHeaders =
-            @ResponseHeader(name = "Content-Location", description = "Absolute URL of an endpoint" +
-                    " for subsequent status requests (polling location)",
-                    response = String.class), response = String.class)
+            @ApiResponse(code = 202, message = EXPORT_STARTED, responseHeaders =
+            @ResponseHeader(name = CONT_LOC, description = BULK_RESPONSE, response = String.class), response = String.class)
     )
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @GetMapping("/Patient/$export")
     public ResponseEntity<Void> exportAllPatients(
             HttpServletRequest request,
-            @RequestHeader(name = "Prefer", defaultValue = "respond-async")
+            @RequestHeader(name = PREFER, defaultValue = ASYNC)
             @ApiParam(value = BULK_EXPORT_TYPE, allowableValues = EOB, defaultValue = EOB)
-            @RequestParam(required = false, name = "_type", defaultValue = EOB) String resourceTypes,
+            @RequestParam(required = false, name = TYPE, defaultValue = EOB) String resourceTypes,
             @ApiParam(value = BULK_OUTPUT_FORMAT,
-                    allowableValues = ApiCommon.ALLOWABLE_OUTPUT_FORMATS, defaultValue = "application/fhir" +
-                    "+ndjson"
+                    allowableValues = ApiCommon.ALLOWABLE_OUTPUT_FORMATS, defaultValue = NDJSON_FIRE_CONTENT_TYPE
             )
-            @RequestParam(required = false, name = "_outputFormat") String outputFormat,
-            @ApiParam(value = "Beginning time of query. Returns all records \"since\" this time. At this time, it must be after " + SINCE_EARLIEST_DATE,
-                    example = SINCE_EARLIEST_DATE)
-            @RequestParam(required = false, name = "_since") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
+            @RequestParam(required = false, name = OUT_FORMAT) String outputFormat,
+            @ApiParam(value = BULK_SINCE, example = SINCE_EARLIEST_DATE)
+            @RequestParam(required = false, name = SINCE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
 
         log.info("Received request to export");
         apiCommon.checkValidCreateJob(since, resourceTypes, outputFormat);
-        Job job = jobService.createJob(resourceTypes, apiCommon.getCurrentUrl(), null, outputFormat, since, STU3);
+        Job job = jobService.createJob(resourceTypes, apiCommon.getCurrentUrl(), null, outputFormat, since, R4);
         apiCommon.logSuccessfulJobCreation(job);
         return apiCommon.returnStatusForJobCreation(job, (String) request.getAttribute(REQUEST_ID));
     }
 
     @ApiOperation(value = BULK_CONTRACT_EXPORT,
             authorizations = {
-                    @Authorization(value = "Authorization", scopes = {
-                            @AuthorizationScope(description = "Export Claim Data", scope = "Authorization") })
+                    @Authorization(value = AUTH, scopes = { @AuthorizationScope(description = EXPORT, scope = AUTH) })
             })
     @ApiResponses(
-            @ApiResponse(code = 202, message = "Export request has started", responseHeaders =
-            @ResponseHeader(name = "Content-Location", description = "Absolute URL of an endpoint" +
-                    " for subsequent status requests (polling location)",
+            @ApiResponse(code = 202, message = EXPORT_STARTED, responseHeaders =
+            @ResponseHeader(name = CONT_LOC, description = BULK_RESPONSE_LONG,
                     response = String.class), response = String.class)
     )
     // todo: This endpoint no longer makes sense in the new model where one Okta credential maps to one Contract
@@ -105,24 +99,22 @@ public class BulkDataAccessAPI {
     @GetMapping("/Group/{contractNumber}/$export")
     public ResponseEntity<Void> exportPatientsWithContract(
             HttpServletRequest request,
-            @ApiParam(value = "A contract number", required = true)
+            @ApiParam(value = CONTRACT_NO, required = true)
             @PathVariable @NotBlank String contractNumber,
             @ApiParam(value = BULK_EXPORT_TYPE, allowableValues = EOB, defaultValue = EOB)
-            @RequestParam(required = false, name = "_type") String resourceTypes,
+            @RequestParam(required = false, name = TYPE) String resourceTypes,
             @ApiParam(value = BULK_OUTPUT_FORMAT,
-                    allowableValues = ApiCommon.ALLOWABLE_OUTPUT_FORMATS, defaultValue = "application/fhir" +
-                    "+ndjson"
+                    allowableValues = ApiCommon.ALLOWABLE_OUTPUT_FORMATS, defaultValue = NDJSON_FIRE_CONTENT_TYPE
             )
-            @RequestParam(required = false, name = "_outputFormat") String outputFormat,
-            @RequestHeader(value = "respond-async")
-            @ApiParam(value = "Beginning time of query. Returns all records \"since\" this time. At this time, it must be after " + SINCE_EARLIEST_DATE,
-                      example = SINCE_EARLIEST_DATE)
-            @RequestParam(required = false, name = "_since") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
-            MDC.put(CONTRACT_LOG, contractNumber);
+            @RequestParam(required = false, name = OUT_FORMAT) String outputFormat,
+            @RequestHeader(value = ASYNC)
+            @ApiParam(value = BULK_SINCE, example = SINCE_EARLIEST_DATE)
+            @RequestParam(required = false, name = SINCE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
 
+        MDC.put(CONTRACT_LOG, contractNumber);
         log.info("Received request to export by contractNumber");
         apiCommon.checkValidCreateJob(since, resourceTypes, outputFormat);
-        Job job = jobService.createJob(resourceTypes, apiCommon.getCurrentUrl(), contractNumber, outputFormat, since, STU3);
+        Job job = jobService.createJob(resourceTypes, apiCommon.getCurrentUrl(), contractNumber, outputFormat, since, R4);
         apiCommon.logSuccessfulJobCreation(job);
         return apiCommon.returnStatusForJobCreation(job, (String) request.getAttribute(REQUEST_ID));
     }

@@ -28,6 +28,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
 
+import static gov.cms.ab2d.api.controller.common.ApiText.CONT_LOC;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
@@ -280,7 +281,7 @@ public class AdminAPIUserTests {
 
         assertEquals(202, mvcResult.getResponse().getStatus());
 
-        String header = mvcResult.getResponse().getHeader("Content-Location");
+        String header = mvcResult.getResponse().getHeader(CONT_LOC);
 
         Job job = jobRepository.findByJobUuid(header.substring(header.indexOf("/Job/") + 5, header.indexOf("/$status")));
         User jobUser = job.getUser();

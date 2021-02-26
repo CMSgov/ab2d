@@ -23,6 +23,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.time.OffsetDateTime;
 import java.util.Set;
 
+import static gov.cms.ab2d.api.controller.common.ApiText.CONT_LOC;
 import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
 import static gov.cms.ab2d.common.service.JobService.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
@@ -109,7 +110,7 @@ public class ApiCommon {
     public ResponseEntity<Void> returnStatusForJobCreation(Job job, String requestId) {
         String statusURL = getUrl(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status");
         HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.add("Content-Location", statusURL);
+        responseHeaders.add(CONT_LOC, statusURL);
         eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), job.getJobUuid(), HttpStatus.ACCEPTED, "Job Created",
                 "Job " + job.getJobUuid() + " was created", requestId));
         return new ResponseEntity<>(null, responseHeaders,

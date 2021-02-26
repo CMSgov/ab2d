@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static gov.cms.ab2d.api.controller.common.ApiText.*;
 import static gov.cms.ab2d.common.util.Constants.JOB_LOG;
 import static gov.cms.ab2d.common.util.Constants.USERNAME;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
@@ -69,8 +70,8 @@ public class StatusCommon {
                 return getSuccessResponse(job, request, apiPrefix);
             case SUBMITTED:
             case IN_PROGRESS:
-                responseHeaders.add("X-Progress", job.getProgress() + "% complete");
-                responseHeaders.add("Retry-After", Integer.toString(retryAfterDelay));
+                responseHeaders.add(X_PROG, job.getProgress() + "% complete");
+                responseHeaders.add(RETRY, Integer.toString(retryAfterDelay));
                 eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), job.getJobUuid(), HttpStatus.ACCEPTED,
                         "Job in progress", job.getProgress() + "% complete",
                         (String) request.getAttribute(REQUEST_ID)));
@@ -131,7 +132,7 @@ public class StatusCommon {
     public ResponseEntity getSuccessResponse(Job job, HttpServletRequest request, String apiPrefix) {
         HttpHeaders responseHeaders = new HttpHeaders();
         final ZonedDateTime jobExpiresUTC = ZonedDateTime.ofInstant(job.getExpiresAt().toInstant(), ZoneId.of("UTC"));
-        responseHeaders.add("Expires", DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC));
+        responseHeaders.add(EXPIRES, DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC));
         final JobCompletedResponse resp = getJobCompletedResonse(job, request, apiPrefix);
         log.info("Job status completed successfully");
         eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), job.getJobUuid(), HttpStatus.OK,

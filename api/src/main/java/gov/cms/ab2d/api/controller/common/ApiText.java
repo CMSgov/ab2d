@@ -45,4 +45,13 @@ public class ApiText {
     public static final String CAP_RET = "FHIR Capability Statement Returned";
     public static final String CONTRACT_NO = "A contract number";
     public static final String EXPORT = "Export Claim Data";
+    public static final String CONT_LOC = "Content-Location";
+    public static final String ASYNC = "respond-async";
+    public static final String OUT_FORMAT = "_outputFormat";
+    public static final String SINCE = "_since";
+    public static final String TYPE = "_type";
+    public static final String PREFER = "Prefer";
+    public static final String EXPIRES = "Expires";
+    public static final String X_PROG = "X-Progress";
+    public static final String RETRY = "Retry-After";
 }

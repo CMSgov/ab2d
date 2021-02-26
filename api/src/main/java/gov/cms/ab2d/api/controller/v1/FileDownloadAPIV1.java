@@ -38,7 +38,7 @@ import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 @RestController
 @RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX, produces = {JSON, NDJSON_FIRE_CONTENT_TYPE})
 @SuppressWarnings("PMD.TooManyStaticImports")
-public class FileDownloadAPI {
+public class FileDownloadAPIV1 {
     private FileDownloadCommon fileDownloadCommon;
 
     @ApiOperation(value = DOWNLOAD_DESC, response = String.class, produces = NDJSON_FIRE_CONTENT_TYPE,
@@ -54,6 +54,7 @@ public class FileDownloadAPI {
     public ResponseEntity downloadFile(HttpServletRequest request,
             @ApiParam(value = JOB_ID, required = true) @PathVariable @NotBlank String jobUuid,
             @ApiParam(value = FILE_NAME, required = true) @PathVariable @NotBlank String filename) throws IOException {
+
         return fileDownloadCommon.downloadFile(jobUuid, filename, request);
     }
 }

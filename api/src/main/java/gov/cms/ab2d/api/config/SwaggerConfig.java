@@ -42,6 +42,7 @@ public class SwaggerConfig {
                 .apis(RequestHandlerSelectors.basePackage("gov.cms.ab2d.api.controller"))
                 .paths(PathSelectors.ant(API_PREFIX_V1 + FHIR_PREFIX + "/**"))
                 .build()
+                .groupName("V1 - FHIR STU3")
                 .directModelSubstitute(Resource.class, String.class)
                 .useDefaultResponseMessages(false)
                 .securitySchemes(auth)
@@ -60,6 +61,7 @@ public class SwaggerConfig {
                 .apis(RequestHandlerSelectors.basePackage("gov.cms.ab2d.api.controller"))
                 .paths(PathSelectors.ant(API_PREFIX_V2 + FHIR_PREFIX + "/**"))
                 .build()
+                .groupName("V2 - FHIR R4")
                 .directModelSubstitute(Resource.class, String.class)
                 .useDefaultResponseMessages(false)
                 .securitySchemes(auth)
@@ -94,7 +96,7 @@ public class SwaggerConfig {
 
     private ApiInfo apiInfoV1() {
         return new ApiInfo(
-               "AB2D FHIR Bulk Data Access API",
+               "AB2D FHIR STU3 Bulk Data Access API",
                 MAIN,
                "1.0",
                null,
@@ -104,7 +106,7 @@ public class SwaggerConfig {
 
     private ApiInfo apiInfoV2() {
         return new ApiInfo(
-                "AB2D FHIR Bulk Data Access API",
+                "AB2D FHIR R4 Bulk Data Access API",
                 MAIN,
                 "2.0",
                 null,

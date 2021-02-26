@@ -1,4 +1,4 @@
-package gov.cms.ab2d.api.controller.v1;
+package gov.cms.ab2d.api.controller.v2;
 
 import ca.uhn.fhir.parser.IParser;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -6,7 +6,7 @@ import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import io.swagger.annotations.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hl7.fhir.dstu3.model.CapabilityStatement;
+import org.hl7.fhir.r4.model.CapabilityStatement;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,13 +25,13 @@ import static gov.cms.ab2d.api.controller.common.ApiText.AUTH;
 import static gov.cms.ab2d.api.controller.common.ApiText.CAP_DESC;
 import static gov.cms.ab2d.api.controller.common.ApiText.CAP_RET;
 
-import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
+import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.common.util.Constants.USERNAME;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 
-import static gov.cms.ab2d.fhir.FhirVersion.STU3;
+import static gov.cms.ab2d.fhir.FhirVersion.R4;
 
 /**
  * The sole REST controller for AB2D's implementation of the FHIR Bulk Data API capability statement.
@@ -41,8 +41,8 @@ import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 @SuppressWarnings("PMD.TooManyStaticImports")
 @Api(value = CAP_STMT, description = CAP_API, tags = {"Capabilities"})
 @RestController
-@RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX, produces = {JSON, NDJSON_FIRE_CONTENT_TYPE})
-public class CapabilityAPI {
+@RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {JSON, NDJSON_FIRE_CONTENT_TYPE})
+public class CapabilityAPIV2 {
 
     private final LogManager eventLogger;
 
@@ -53,12 +53,13 @@ public class CapabilityAPI {
     @ResponseStatus(value = HttpStatus.OK)
     @GetMapping(value = "/metadata")
     public ResponseEntity<String> capabilityStatement(HttpServletRequest request) {
-        CapabilityStatement capabilityStatement = CapabilityStatementSTU3.populateCS(request.getServerName());
-        IParser parser = STU3.getJsonParser();
+
+        IParser parser = R4.getJsonParser();
 
         eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), null, HttpStatus.OK,
                 CAP_STMT, CAP_RET, (String) request.getAttribute(REQUEST_ID)));
 
+        CapabilityStatement capabilityStatement = CapabilityStatementR4.populateCS(request.getServerName());
         return new ResponseEntity<>(parser.encodeResourceToString(capabilityStatement), null, HttpStatus.OK);
     }
 }

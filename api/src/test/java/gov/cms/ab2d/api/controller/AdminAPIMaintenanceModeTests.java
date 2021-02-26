@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static gov.cms.ab2d.api.controller.BulkDataAccessAPIIntegrationTests.PATIENT_EXPORT_PATH;
+import static gov.cms.ab2d.api.controller.common.ApiText.CONT_LOC;
 import static gov.cms.ab2d.api.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -144,7 +145,7 @@ public class AdminAPIMaintenanceModeTests {
         MvcResult mvcResult = this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(202)).andReturn();
-        String contentLocationUrl = mvcResult.getResponse().getHeader("Content-Location");
+        String contentLocationUrl = mvcResult.getResponse().getHeader(CONT_LOC);
 
         List<PropertiesDTO> propertiesDTOs = new ArrayList<>();
         PropertiesDTO maintenanceModeDTO = new PropertiesDTO();
