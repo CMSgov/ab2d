@@ -11,12 +11,16 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.*;
 
+/**
+ * Represents a PDP organization which possesses a single set of credentials for
+ * accessing the system.
+ */
 @Entity
 @Table(name = "user_account")
 @Getter
 @Setter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
-public class User extends TimestampBase implements UserDetails {
+public class PdpClient extends TimestampBase implements UserDetails {
 
     @Id
     @GeneratedValue
@@ -25,12 +29,11 @@ public class User extends TimestampBase implements UserDetails {
 
     @Column(unique = true)
     @NotNull
-    private String username;
-    private String firstName;
-    private String lastName;
+    private String clientId;
 
     @Column(unique = true)
-    private String email;
+    @NotNull
+    private String organization;
 
     @NotNull
     private Boolean enabled;
@@ -69,14 +72,20 @@ public class User extends TimestampBase implements UserDetails {
         return authorities;
     }
 
+    // Username is a required field for any UserDetails class
+    // the username is the okta client id
+    @Override
+    public String getUsername() {
+        return clientId;
+    }
+
     @Override
     public String getPassword() {
         return null;
     }
 
-    @Override
-    public String getUsername() {
-        return username;
+    public String getClientId() {
+        return clientId;
     }
 
     @Override

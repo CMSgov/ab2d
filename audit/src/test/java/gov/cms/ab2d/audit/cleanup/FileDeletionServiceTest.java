@@ -4,7 +4,7 @@ import gov.cms.ab2d.audit.SpringBootApp;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.User;
+import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
@@ -117,7 +117,7 @@ class FileDeletionServiceTest {
     public void init() {
         pathsToDelete = new ArrayList<>();
 
-        User user = dataSetup.setupUser(List.of());
+        PdpClient pdpClient = dataSetup.setupPdpClient(List.of());
 
         // Connected to a job that is finished and has expired
         job = new Job();
@@ -126,7 +126,7 @@ class FileDeletionServiceTest {
         job.setCreatedAt(OffsetDateTime.now().minusDays(5));
         job.setCompletedAt(OffsetDateTime.now().minusDays(4));
         job.setExpiresAt(OffsetDateTime.now().minusDays(1));
-        job.setUser(user);
+        job.setPdpClient(pdpClient);
         job.setFhirVersion(STU3);
         jobService.updateJob(job);
 
@@ -135,7 +135,7 @@ class FileDeletionServiceTest {
         jobInProgress.setStatus(JobStatus.IN_PROGRESS);
         jobInProgress.setJobUuid(UUID.randomUUID().toString());
         jobInProgress.setCreatedAt(OffsetDateTime.now().minusHours(1));
-        jobInProgress.setUser(user);
+        jobInProgress.setPdpClient(pdpClient);
         jobInProgress.setFhirVersion(STU3);
         jobService.updateJob(jobInProgress);
 
@@ -146,14 +146,14 @@ class FileDeletionServiceTest {
         jobNotExpiredYet.setCreatedAt(OffsetDateTime.now().minusHours(60));
         jobNotExpiredYet.setCompletedAt(OffsetDateTime.now().minusHours(55));
         jobNotExpiredYet.setExpiresAt(OffsetDateTime.now().plusHours(17));
-        jobNotExpiredYet.setUser(user);
+        jobNotExpiredYet.setPdpClient(pdpClient);
         jobNotExpiredYet.setFhirVersion(STU3);
 
         jobCancelled = new Job();
         jobCancelled.setStatus(JobStatus.CANCELLED);
         jobCancelled.setJobUuid(UUID.randomUUID().toString());
         jobCancelled.setCreatedAt(OffsetDateTime.now().minusHours(1));
-        jobCancelled.setUser(user);
+        jobCancelled.setPdpClient(pdpClient);
         jobCancelled.setFhirVersion(STU3);
         jobService.updateJob(jobCancelled);
 
@@ -161,7 +161,7 @@ class FileDeletionServiceTest {
         jobFailed.setStatus(JobStatus.FAILED);
         jobFailed.setJobUuid(UUID.randomUUID().toString());
         jobFailed.setCreatedAt(OffsetDateTime.now().minusHours(1));
-        jobFailed.setUser(user);
+        jobFailed.setPdpClient(pdpClient);
         jobFailed.setFhirVersion(STU3);
         jobService.updateJob(jobFailed);
 

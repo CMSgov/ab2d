@@ -122,7 +122,7 @@ public class JobProcessorImpl implements JobProcessor {
 
         // Create a holder for the contract, writer, progress tracker and attested date
         ContractData contractData = new ContractData(contract, progressTracker, job.getSince(),
-                job.getUser() != null ? job.getUser().getUsername() : null);
+                job.getPdpClient() != null ? job.getPdpClient().getClientId() : null);
 
         final Segment contractSegment = NewRelic.getAgent().getTransaction().startSegment("Patient processing of contract " + contract.getContractNumber());
         var jobOutputs = contractProcessor.process(outputDirPath, contractData);
@@ -132,7 +132,7 @@ public class JobProcessorImpl implements JobProcessor {
         jobOutputs.forEach(job::addJobOutput);
         jobOutputRepository.saveAll(jobOutputs);
 
-        eventLogger.log(new ContractBeneSearchEvent(job.getUser() == null ? null : job.getUser().getUsername(),
+        eventLogger.log(new ContractBeneSearchEvent(job.getPdpClient() == null ? null : job.getPdpClient().getClientId(),
                 job.getJobUuid(),
                 contract.getContractNumber(),
                 progressTracker.getExpectedBeneficiaries(),

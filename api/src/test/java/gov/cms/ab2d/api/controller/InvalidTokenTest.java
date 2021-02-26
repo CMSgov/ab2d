@@ -2,7 +2,7 @@ package gov.cms.ab2d.api.controller;
 
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
-import gov.cms.ab2d.common.model.User;
+import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
@@ -20,7 +20,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.*;
-import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
+import static gov.cms.ab2d.common.util.DataSetup.TEST_PDP_CLIENT;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -40,7 +40,7 @@ public class InvalidTokenTest {
     private DataSetup dataSetup;
 
     @Autowired
-    private UserRepository userRepository;
+    private PdpClientRepository pdpClientRepository;
 
     @Autowired
     ContractRepository contractRepository;
@@ -67,10 +67,10 @@ public class InvalidTokenTest {
     // Moved this test to here to avoid using @Before annotation of other Auth tests
     @Test
     public void testInvalidToken() throws Exception {
-        User user = userRepository.findByUsername(TEST_USER);
-        assertNotNull(user);
-        user.setEnabled(false);
-        userRepository.save(user);
+        PdpClient pdpClient = pdpClientRepository.findByClientId(TEST_PDP_CLIENT);
+        assertNotNull(pdpClient);
+        pdpClient.setEnabled(false);
+        pdpClientRepository.save(pdpClient);
 
         this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Patient/$export")
                 .header("Authorization", "Bearer " + token)
