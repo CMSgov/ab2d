@@ -107,7 +107,7 @@ class PatientClaimsProcessorUnitTest {
         StreamHelper helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(),
                 30, 120, eventLogger, null);
 
-        request = new PatientClaimsRequest(coverageSummary, laterAttDate, null, "user", "job",
+        request = new PatientClaimsRequest(coverageSummary, laterAttDate, null, "client", "job",
                 "contractNum", noOpToken, STU3);
     }
 
@@ -243,7 +243,7 @@ class PatientClaimsProcessorUnitTest {
 
         OffsetDateTime sinceDate = earlyAttDate.plusDays(1);
 
-        request = new PatientClaimsRequest(coverageSummary, laterAttDate, sinceDate, "user", "job",
+        request = new PatientClaimsRequest(coverageSummary, laterAttDate, sinceDate, "client", "job",
                 "contractNum", noOpToken, STU3);
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
@@ -265,7 +265,7 @@ class PatientClaimsProcessorUnitTest {
         StreamHelper helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(),
                 30, 120, eventLogger, null);
 
-        request = new PatientClaimsRequest(coverageSummary, earlyAttDate, null, "user", "job",
+        request = new PatientClaimsRequest(coverageSummary, earlyAttDate, null, "client", "job",
                 "contractNum", noOpToken, STU3);
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());

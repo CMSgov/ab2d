@@ -30,7 +30,7 @@ public class JobUtil {
                 return true;
             }
 
-            // Job was successful - now did the user download the files or is it expired
+            // Job was successful - now did the client download the files or is it expired
 
             // Job has expired, it's done.
             if (job.getExpiresAt() != null && job.getExpiresAt().isBefore(OffsetDateTime.now())) {

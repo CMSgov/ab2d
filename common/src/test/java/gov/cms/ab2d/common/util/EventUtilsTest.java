@@ -2,7 +2,7 @@ package gov.cms.ab2d.common.util;
 
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.User;
+import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import org.apache.commons.io.FileUtils;
@@ -20,17 +20,17 @@ import static org.junit.jupiter.api.Assertions.*;
 class EventUtilsTest {
     private Job job;
     private String jobId = "ABC";
-    private User user;
-    private String userName = "DEF";
+    private PdpClient pdpClient;
+    private String pdpClientId = "DEF";
 
     @BeforeEach
     void init() {
-        user = new User();
-        user.setUsername(userName);
+        pdpClient = new PdpClient();
+        pdpClient.setClientId(pdpClientId);
         job = new Job();
         job.setStatus(JobStatus.IN_PROGRESS);
         job.setJobUuid(jobId);
-        job.setUser(user);
+        job.setPdpClient(pdpClient);
         job.setFhirVersion(STU3);
     }
 
@@ -49,7 +49,7 @@ class EventUtilsTest {
         assertEquals(event.getOldStatus(), IN_PROGRESS.name());
         assertEquals(SUCCESSFUL.name(), event.getNewStatus());
         assertEquals(jobId, event.getJobId());
-        assertEquals(userName, event.getUser());
+        assertEquals(pdpClientId, event.getUser());
         assertEquals("Hello World", event.getDescription());
     }
 

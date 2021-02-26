@@ -92,14 +92,14 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             BFDClient.BFD_BULK_JOB_ID.set(request.getJob());
             eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patient.getIdentifiers().getBeneficiaryId(), sinceTime);
             logManager.log(LogManager.LogType.KINESIS,
-                    new BeneficiarySearchEvent(request.getUser(), request.getJob(), request.getContractNum(),
+                    new BeneficiarySearchEvent(request.getClientId(), request.getJob(), request.getContractNum(),
                             start, OffsetDateTime.now(),
                             beneficiaryId,
                             "SUCCESS"));
 
         } catch (Exception ex) {
             logManager.log(LogManager.LogType.KINESIS,
-                    new BeneficiarySearchEvent(request.getUser(), request.getJob(), request.getContractNum(),
+                    new BeneficiarySearchEvent(request.getClientId(), request.getJob(), request.getContractNum(),
                             start, OffsetDateTime.now(),
                             beneficiaryId,
                             "ERROR: " + ex.getMessage()));

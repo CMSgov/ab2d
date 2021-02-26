@@ -43,7 +43,7 @@ public class BulkDataAccessAPIUnusualDataTests {
     private MockMvc mockMvc;
 
     @Autowired
-    private UserRepository userRepository;
+    private PdpClientRepository pdpClientRepository;
 
     @Autowired
     private JobRepository jobRepository;
@@ -100,7 +100,7 @@ public class BulkDataAccessAPIUnusualDataTests {
 
     @Test
     public void testPatientExportWithOnlyParentAttestation() throws Exception {
-        String token = testUtil.setupContractSponsorForParentUserData(List.of(SPONSOR_ROLE));
+        String token = testUtil.setupContractSponsorForParentClientData(List.of(SPONSOR_ROLE));
 
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
@@ -122,7 +122,7 @@ public class BulkDataAccessAPIUnusualDataTests {
         assertEquals("http://localhost" + API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export",
                 job.getRequestUrl());
         assertNull(job.getResourceTypes());
-        assertEquals(userRepository.findByUsername(TEST_USER), job.getUser());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
 
     }
 }

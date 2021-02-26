@@ -5,20 +5,15 @@ import lombok.Data;
 import javax.validation.constraints.NotNull;
 
 @Data
-public class UserDTO {
+public class PdpClientDTO {
 
     private Long id;
 
     @NotNull
-    private String username;
+    private String clientId;
 
     @NotNull
-    private String firstName;
-
-    @NotNull
-    private String lastName;
-
-    private String email;
+    private String organization;
 
     @NotNull
     private Boolean enabled;
