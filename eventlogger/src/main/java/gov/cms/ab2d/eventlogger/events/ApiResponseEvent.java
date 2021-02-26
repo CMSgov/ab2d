@@ -24,9 +24,9 @@ public class ApiResponseEvent extends LoggableEvent {
 
     public ApiResponseEvent() { }
 
-    public ApiResponseEvent(String user, String jobId, HttpStatus responseCode, String responseString, String description,
+    public ApiResponseEvent(String organization, String jobId, HttpStatus responseCode, String responseString, String description,
                             String requestId) {
-        super(OffsetDateTime.now(), user, jobId);
+        super(OffsetDateTime.now(), organization, jobId);
         if (responseCode != null) {
             this.responseCode = responseCode.value();
         }

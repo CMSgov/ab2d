@@ -24,6 +24,7 @@ import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.*;
 
+import static gov.cms.ab2d.common.util.EventUtils.getOrganization;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
 import static java.lang.Boolean.TRUE;
@@ -95,7 +96,7 @@ class ContractProcessorUnitTest {
 
         progressTracker.addPatients(patientsByContract);
         ContractData contractData = new ContractData(contract, progressTracker, job.getSince(),
-                job.getPdpClient() != null ? job.getPdpClient().getClientId() : null);
+                getOrganization(job));
 
         when(jobRepository.findJobStatus(anyString())).thenReturn(JobStatus.CANCELLED);
 
@@ -119,7 +120,7 @@ class ContractProcessorUnitTest {
                 .build();
         progressTracker.addPatients(patientsByContract);
         ContractData contractData = new ContractData(contract, progressTracker, job.getSince(),
-                job.getPdpClient() != null ? job.getPdpClient().getClientId() : null);
+                getOrganization(job));
 
         var jobOutputs = cut.process(outputDir, contractData);
 

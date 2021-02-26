@@ -28,8 +28,8 @@ public class JobStatusChangeEventMapper extends SqlEventMapper {
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
         String query = "insert into event_job_status_change " +
-                " (time_of_event, user_id, job_id, old_status, new_status, description, aws_id, environment) " +
-                " values (:time, :user, :job, :oldStatus, :newStatus, :description, :awsId, :environment)";
+                " (time_of_event, organization, job_id, old_status, new_status, description, aws_id, environment) " +
+                " values (:time, :organization, :job, :oldStatus, :newStatus, :description, :awsId, :environment)";
 
         SqlParameterSource parameters = super.addSuperParams(event)
                 .addValue("oldStatus", be.getOldStatus())

@@ -24,9 +24,9 @@ public class ApiRequestEvent extends LoggableEvent {
 
     public ApiRequestEvent() { }
 
-    public ApiRequestEvent(String user, String jobId, String url, String ipAddress, String token,
-                            String requestId) {
-        super(OffsetDateTime.now(), user, jobId);
+    public ApiRequestEvent(String organization, String jobId, String url, String ipAddress, String token,
+                           String requestId) {
+        super(OffsetDateTime.now(), organization, jobId);
         this.url = url;
         this.ipAddress = ipAddress;
         if (token != null) {

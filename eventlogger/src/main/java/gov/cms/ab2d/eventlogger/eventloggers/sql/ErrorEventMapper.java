@@ -27,8 +27,8 @@ public class ErrorEventMapper extends SqlEventMapper {
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
         String query = "insert into event_error " +
-                " (time_of_event, user_id, job_id, error_type, description, aws_id, environment) " +
-                " values (:time, :user, :job, :errorType, :description, :awsId, :environment)";
+                " (time_of_event, organization, job_id, error_type, description, aws_id, environment) " +
+                " values (:time, :organization, :job, :errorType, :description, :awsId, :environment)";
 
         SqlParameterSource parameters = super.addSuperParams(event)
                 .addValue("errorType", be.getErrorType() != null ? be.getErrorType().name() : null)

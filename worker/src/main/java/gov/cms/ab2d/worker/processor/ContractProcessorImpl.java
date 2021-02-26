@@ -154,7 +154,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             var patientClaimsRequest = new PatientClaimsRequest(patient,
                     contractData.getContract().getAttestedOn(),
                     contractData.getSinceTime(),
-                    contractData.getClientId(), jobUuid,
+                    contractData.getOrganization(), jobUuid,
                     contractData.getContract() != null ? contractData.getContract().getContractNumber() : null, token,
                     version);
             return patientClaimsProcessor.process(patientClaimsRequest);

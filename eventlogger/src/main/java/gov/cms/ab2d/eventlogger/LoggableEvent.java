@@ -23,15 +23,23 @@ public abstract class LoggableEvent {
     // Time the event occurred
     private OffsetDateTime timeOfEvent;
 
-    // The user the event may be related to
-    private String user;
+    // The organization the event may be related to
+    // must not contain a secret value
+    private String organization;
 
     // The job the event may be related to
     private String jobId;
 
-    public LoggableEvent(OffsetDateTime timeOfEvent, String user, String jobId) {
+    /**
+     * A loggable event with the minimum fields necessary for logging
+     * @param timeOfEvent time when the event occurs
+     * @param organization name of the organization (not the credential) the event is associated with
+     * @param jobId uuid of job
+     * @throws IllegalArgumentException if the organization may be an okta client credential
+     */
+    public LoggableEvent(OffsetDateTime timeOfEvent, String organization, String jobId) {
         this.timeOfEvent = timeOfEvent;
-        this.user = user;
+        this.organization = organization;
         this.jobId = jobId;
     }
 
@@ -49,7 +57,7 @@ public abstract class LoggableEvent {
         result = result * 59 + (awsId == null ? 43 : awsId.hashCode());
         OffsetDateTime timeOfEvent = this.getTimeOfEvent();
         result = result * 59 + (timeOfEvent == null ? 43 : timeOfEvent.hashCode());
-        String user = this.getUser();
+        String user = this.getOrganization();
         result = result * 59 + (user == null ? 43 : user.hashCode());
         String jobId = this.getJobId();
         result = result * 59 + (jobId == null ? 43 : jobId.hashCode());
@@ -109,8 +117,8 @@ public abstract class LoggableEvent {
             return false;
         }
 
-        String thisUser = this.getUser();
-        String otherUser = other.getUser();
+        String thisUser = this.getOrganization();
+        String otherUser = other.getOrganization();
         if (thisUser == null) {
         if (otherUser != null) {
                 return false;
