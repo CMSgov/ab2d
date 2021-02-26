@@ -102,3 +102,5 @@ databaseChangeLog:
       file: db/changelog/v2021/rework_user_account_username.sql
   - include:
       file: db/changelog/v2021/rework_event_tables.sql
+  - include:
+      file: db/changelog/v2021/remove_current_admin.sql
