@@ -32,15 +32,12 @@ public class FileDownloadCommon {
     private final JobService jobService;
     private final LogManager eventLogger;
 
-    public ResponseEntity downloadFile(String jobUuid, String filename, HttpServletRequest request) throws IOException {
+    public ResponseEntity downloadFile(String jobUuid, String filename, HttpServletRequest request, HttpServletResponse response) throws IOException {
         MDC.put(JOB_LOG, jobUuid);
         MDC.put(FILE_LOG, filename);
         log.info("Request submitted to download file");
 
         Resource downloadResource = jobService.getResourceForJob(jobUuid, filename);
-
-        RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
-        HttpServletResponse response = ((ServletRequestAttributes) requestAttributes).getResponse();
 
         log.info("Sending " + filename + " file to client");
 

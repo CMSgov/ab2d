@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotBlank;
 import java.io.IOException;
 
@@ -52,9 +53,10 @@ public class FileDownloadAPIV1 {
     @ResponseStatus(value = HttpStatus.OK)
     @GetMapping(value = "/Job/{jobUuid}/file/{filename}", produces = { NDJSON_FIRE_CONTENT_TYPE })
     public ResponseEntity downloadFile(HttpServletRequest request,
+            HttpServletResponse response,
             @ApiParam(value = JOB_ID, required = true) @PathVariable @NotBlank String jobUuid,
             @ApiParam(value = FILE_NAME, required = true) @PathVariable @NotBlank String filename) throws IOException {
 
-        return fileDownloadCommon.downloadFile(jobUuid, filename, request);
+        return fileDownloadCommon.downloadFile(jobUuid, filename, request, response);
     }
 }
