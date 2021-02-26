@@ -14,7 +14,7 @@ public class PatientClaimsRequest {
     private final CoverageSummary coverageSummary;
     private final OffsetDateTime attTime;
     private final OffsetDateTime sinceTime;
-    private final String user;
+    private final String clientId;
     private final String job;
     private final String contractNum;
     private final Token token;

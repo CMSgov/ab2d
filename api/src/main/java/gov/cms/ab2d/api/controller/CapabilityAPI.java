@@ -23,7 +23,7 @@ import java.io.IOException;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
-import static gov.cms.ab2d.common.util.Constants.USERNAME;
+import static gov.cms.ab2d.common.util.Constants.CLIENT;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 
 /**
@@ -54,7 +54,7 @@ public class CapabilityAPI {
     public ResponseEntity<String> capabilityStatement(HttpServletRequest request) {
         String json = getCapabilityStatement();
 
-        eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), null, HttpStatus.OK,
+        eventLogger.log(new ApiResponseEvent(MDC.get(CLIENT), null, HttpStatus.OK,
                 "FHIR Capability Statement",
                 "FHIR Capability Statement Returned", (String) request.getAttribute(REQUEST_ID)));
 

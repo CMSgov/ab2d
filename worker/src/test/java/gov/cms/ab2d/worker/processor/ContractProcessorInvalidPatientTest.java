@@ -69,7 +69,7 @@ class ContractProcessorInvalidPatientTest {
         Contract contract = new Contract();
         contract.setContractNumber(contractId);
         contract.setAttestedOn(OffsetDateTime.now().minusYears(50));
-        contractData = new ContractData(contract, tracker, OffsetDateTime.MIN, "User");
+        contractData = new ContractData(contract, tracker, OffsetDateTime.MIN, "Client");
 
         List<FilterOutByDate.DateRange> dates = singletonList(TestUtil.getOpenRange());
         List<CoverageSummary> summaries = List.of(
