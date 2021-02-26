@@ -19,7 +19,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String clientId) throws UsernameNotFoundException {
         PdpClient pdpClient = pdpClientRepository.findByClientId(clientId);
         if (pdpClient == null) {
-            throw new UsernameNotFoundException("Client " + pdpClient.getOrganization() + " not found with");
+            throw new UsernameNotFoundException("Client not found for client id");
         }
         return pdpClient;
     }
