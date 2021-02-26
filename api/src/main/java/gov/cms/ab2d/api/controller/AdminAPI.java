@@ -28,7 +28,10 @@ import javax.validation.constraints.NotBlank;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-import static gov.cms.ab2d.api.controller.common.ApiText.*;
+import static gov.cms.ab2d.api.controller.common.ApiText.JSON;
+import static gov.cms.ab2d.api.controller.common.ApiText.OUT_FORMAT;
+import static gov.cms.ab2d.api.controller.common.ApiText.SINCE;
+import static gov.cms.ab2d.api.controller.common.ApiText.TYPE;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
 import static gov.cms.ab2d.common.util.Constants.ADMIN_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.USERNAME;

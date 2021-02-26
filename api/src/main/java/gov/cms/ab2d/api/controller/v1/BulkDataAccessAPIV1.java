@@ -25,7 +25,20 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotBlank;
 import java.time.OffsetDateTime;
 
-import static gov.cms.ab2d.api.controller.common.ApiText.*;
+import static gov.cms.ab2d.api.controller.common.ApiText.ASYNC;
+import static gov.cms.ab2d.api.controller.common.ApiText.TYPE;
+import static gov.cms.ab2d.api.controller.common.ApiText.AUTH;
+import static gov.cms.ab2d.api.controller.common.ApiText.BULK_RESPONSE;
+import static gov.cms.ab2d.api.controller.common.ApiText.BULK_RESPONSE_LONG;
+import static gov.cms.ab2d.api.controller.common.ApiText.BULK_SINCE;
+import static gov.cms.ab2d.api.controller.common.ApiText.CONTRACT_NO;
+import static gov.cms.ab2d.api.controller.common.ApiText.CONT_LOC;
+import static gov.cms.ab2d.api.controller.common.ApiText.EXPORT;
+import static gov.cms.ab2d.api.controller.common.ApiText.EXPORT_STARTED;
+import static gov.cms.ab2d.api.controller.common.ApiText.EXP_PATIENT_INFO;
+import static gov.cms.ab2d.api.controller.common.ApiText.OUT_FORMAT;
+import static gov.cms.ab2d.api.controller.common.ApiText.PREFER;
+import static gov.cms.ab2d.api.controller.common.ApiText.SINCE;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_PREFER;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT_TYPE;
@@ -42,7 +55,7 @@ import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 @Api(value = "Bulk Data Access API", description = SwaggerConstants.BULK_MAIN, tags = {"Export"})
 @RestController
 @RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX, produces = {"application/json"})
-@SuppressWarnings("PMD.TooManyStaticImports")
+@SuppressWarnings({"PMD.TooManyStaticImports", "PMD.UnusedImports"})
 public class BulkDataAccessAPIV1 {
     private final JobService jobService;
     private final ApiCommon apiCommon;

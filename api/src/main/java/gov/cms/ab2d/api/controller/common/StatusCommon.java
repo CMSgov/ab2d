@@ -26,7 +26,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static gov.cms.ab2d.api.controller.common.ApiText.*;
+import static gov.cms.ab2d.api.controller.common.ApiText.EXPIRES;
+import static gov.cms.ab2d.api.controller.common.ApiText.RETRY;
+import static gov.cms.ab2d.api.controller.common.ApiText.X_PROG;
 import static gov.cms.ab2d.common.util.Constants.JOB_LOG;
 import static gov.cms.ab2d.common.util.Constants.USERNAME;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
