@@ -1583,7 +1583,8 @@ else
       aws --region "${AWS_DEFAULT_REGION}" ecs update-container-instances-state \
         --cluster "${TARGET_CMS_ENV}-api" \
         --status DRAINING \
-        --container-instances $OLD_API_INSTANCE_LIST
+        --container-instances $OLD_API_INSTANCE_LIST \
+        1> /dev/null
     else
       # shellcheck disable=SC2086
       # $OLD_API_INSTANCE_LIST format is required here
@@ -1610,7 +1611,8 @@ else
       aws --region "${AWS_DEFAULT_REGION}" ecs update-container-instances-state \
         --cluster "${TARGET_CMS_ENV}-worker" \
         --status DRAINING \
-        --container-instances $OLD_WORKER_INSTANCE_LIST
+        --container-instances $OLD_WORKER_INSTANCE_LIST \
+        1> /dev/null
     else
       # shellcheck disable=SC2086
       # $OLD_WORKER_INSTANCE_LIST format is required here
