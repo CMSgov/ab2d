@@ -130,15 +130,16 @@ AWS_ECS_DOCKER_CE_VERSION=$(aws --region "${REGION}" ssm get-parameters \
 
 # Get and install latest Redhat docker CE version based on the recommended AWS ECS docker version
 
-if [ -n "${AWS_ECS_DOCKER_CE_VERSION}" ]; then
+if [ -z "${AWS_ECS_DOCKER_CE_VERSION}" ]; then
+  echo "ERROR: Recommended AWS ECS docker version could not be determined."
+  exit 1
+else
   REDHAT_DOCKER_CE_VERSION=$(curl -s 'https://download.docker.com/linux/centos/7/x86_64/stable/Packages/' \
     | grep "docker-ce-${AWS_ECS_DOCKER_CE_VERSION}" \
     | sort \
     | tail -1 \
     | cut -d'"' -f 2 \
     | grep -E -m1 -o 'docker-.+\.el7')
-else # ensure docker ce version is set if AWS_ECS_DOCKER_CE_VERSION determination fails
-  REDHAT_DOCKER_CE_VERSION=docker-ce-19.03.13-3.el7
 fi
 
 sudo yum -y install "${REDHAT_DOCKER_CE_VERSION}"
