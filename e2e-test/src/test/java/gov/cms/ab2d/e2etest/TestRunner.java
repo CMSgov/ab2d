@@ -79,8 +79,6 @@ class TestRunner {
 
     private static final int JOB_TIMEOUT = 300;
 
-    private static final int MAX_USER_JOBS = 3;
-
     // Default API port exposed on local environments
     private static final int DEFAULT_API_PORT = 8443;
 
@@ -627,7 +625,7 @@ class TestRunner {
 
     @Test
     @Order(8)
-    void testUserCannotDownloadOtherUsersJob() throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
+    void testClientCannotDownloadOtherClientsJob() throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
         System.out.println("Starting test 8");
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(testContract, FHIR_TYPE, null);
         assertEquals(202, exportResponse.statusCode());
@@ -635,15 +633,15 @@ class TestRunner {
 
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, true, testContract);
 
-        APIClient secondUserAPIClient = createSecondUserClient();
+        APIClient secondAPIClient = createSecondClient();
 
-        HttpResponse<InputStream> downloadResponse = secondUserAPIClient.fileDownloadRequest(downloadDetails.getFirst());
+        HttpResponse<InputStream> downloadResponse = secondAPIClient.fileDownloadRequest(downloadDetails.getFirst());
         assertEquals(403, downloadResponse.statusCode());
     }
 
     @Test
     @Order(9)
-    void testUserCannotDeleteOtherUsersJob() throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
+    void testClientCannotDeleteOtherClientsJob() throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
         System.out.println("Starting test 9");
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
 
@@ -652,9 +650,9 @@ class TestRunner {
 
         String jobUUid = JobUtil.getJobUuid(contentLocationList.iterator().next());
 
-        APIClient secondUserAPIClient = createSecondUserClient();
+        APIClient secondAPIClient = createSecondClient();
 
-        HttpResponse<String> deleteResponse = secondUserAPIClient.cancelJobRequest(jobUUid);
+        HttpResponse<String> deleteResponse = secondAPIClient.cancelJobRequest(jobUUid);
         assertEquals(403, deleteResponse.statusCode());
 
         // Cleanup
@@ -664,16 +662,16 @@ class TestRunner {
 
     @Test
     @Order(10)
-    void testUserCannotCheckStatusOtherUsersJob() throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
+    void testClientCannotCheckStatusOtherClientsJob() throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
         System.out.println("Starting test 10");
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
 
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        APIClient secondUserAPIClient = createSecondUserClient();
+        APIClient secondAPIClient = createSecondClient();
 
-        HttpResponse<String> statusResponse = secondUserAPIClient.statusRequest(contentLocationList.iterator().next());
+        HttpResponse<String> statusResponse = secondAPIClient.statusRequest(contentLocationList.iterator().next());
         assertEquals(403, statusResponse.statusCode());
 
         // Cleanup
@@ -682,7 +680,7 @@ class TestRunner {
         assertEquals(202, secondDeleteResponse.statusCode());
     }
 
-    private APIClient createSecondUserClient() throws InterruptedException, JSONException, IOException, KeyManagementException, NoSuchAlgorithmException {
+    private APIClient createSecondClient() throws InterruptedException, JSONException, IOException, KeyManagementException, NoSuchAlgorithmException {
         String oktaUrl = yamlMap.get("okta-url");
 
         String oktaClientId = System.getenv("SECONDARY_USER_OKTA_CLIENT_ID");
@@ -693,7 +691,7 @@ class TestRunner {
 
     @Test
     @Order(11)
-    void testUserCannotMakeRequestWithoutToken() throws IOException, InterruptedException {
+    void testClientCannotMakeRequestWithoutToken() throws IOException, InterruptedException {
         System.out.println("Starting test 11");
         HttpRequest exportRequest = HttpRequest.newBuilder()
                 .uri(URI.create(AB2D_API_URL + PATIENT_EXPORT_PATH))
@@ -709,7 +707,7 @@ class TestRunner {
 
     @Test
     @Order(12)
-    void testUserCannotMakeRequestWithSelfSignedToken() throws IOException, InterruptedException, JSONException {
+    void testClientCannotMakeRequestWithSelfSignedToken() throws IOException, InterruptedException, JSONException {
         System.out.println("Starting test 12");
         String clientSecret = "wefikjweglkhjwelgkjweglkwegwegewg";
         SecretKey sharedSecret = Keys.hmacShaKeyFor(clientSecret.getBytes(StandardCharsets.UTF_8));
@@ -746,7 +744,7 @@ class TestRunner {
 
     @Test
     @Order(13)
-    void testUserCannotMakeRequestWithNullClaims() throws IOException, InterruptedException, JSONException {
+    void testClientCannotMakeRequestWithNullClaims() throws IOException, InterruptedException, JSONException {
         System.out.println("Starting test 13");
         String clientSecret = "wefikjweglkhjwelgkjweglkwegwegewg";
         SecretKey sharedSecret = Keys.hmacShaKeyFor(clientSecret.getBytes(StandardCharsets.UTF_8));

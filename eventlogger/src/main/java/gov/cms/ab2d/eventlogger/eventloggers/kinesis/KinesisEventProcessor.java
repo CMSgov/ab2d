@@ -8,7 +8,6 @@ import com.amazonaws.services.kinesisfirehose.model.Record;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.codehaus.jettison.json.JSONObject;
 
 import java.lang.reflect.InvocationTargetException;
@@ -26,6 +25,7 @@ import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.eventlogger.utils.UtilMethods.camelCaseToUnderscore;
+import static gov.cms.ab2d.eventlogger.utils.UtilMethods.containsClientId;
 
 @AllArgsConstructor
 @Slf4j
@@ -60,9 +60,12 @@ public class KinesisEventProcessor implements Callable<Void> {
             try {
                 // Retrieve the value of the field
                 Object attValue = m.invoke(event);
-                if (m.getName().equalsIgnoreCase("getUser") && event.getUser() != null && !event.getUser().isEmpty()) {
-                    attValue = DigestUtils.sha1Hex(event.getUser()).toUpperCase();
+                if (m.getName().equalsIgnoreCase("getOrganization") && containsClientId(event)) {
+                        log.error("Attempting to log event with timeOfEvent {} jobId {} which may contain an okta client id for its " +
+                                "organization. Organization will be nulled out.", event.getTimeOfEvent(), event.getJobId());
+                        attValue = null;
                 }
+
                 // If we are an OffsetDateTime, convert to UTC, then make it a string in the correct format
                 if (attValue != null && attValue.getClass() == OffsetDateTime.class) {
                     OffsetDateTime timeValue = (OffsetDateTime) attValue;

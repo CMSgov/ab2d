@@ -3,7 +3,7 @@ package gov.cms.ab2d.api.controller.common;
 import gov.cms.ab2d.api.controller.InMaintenanceModeException;
 import gov.cms.ab2d.api.controller.TooManyRequestsException;
 import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.service.InvalidUserInputException;
+import gov.cms.ab2d.common.service.InvalidClientInputException;
 import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -27,7 +27,7 @@ import static gov.cms.ab2d.common.service.JobService.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.USERNAME;
+import static gov.cms.ab2d.common.util.Constants.CLIENT;
 import static gov.cms.ab2d.common.util.Constants.ZIP_SUPPORT_ON;
 import static gov.cms.ab2d.common.util.Constants.JOB_LOG;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
@@ -76,16 +76,16 @@ public class ApiCommon {
             return;
         }
         if (date.isAfter(OffsetDateTime.now())) {
-            throw new InvalidUserInputException("You can not use a time after the current time for _since");
+            throw new InvalidClientInputException("You can not use a time after the current time for _since");
         }
         try {
             OffsetDateTime ed = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
             if (date.isBefore(ed)) {
                 log.error("Invalid _since time received {}", date);
-                throw new InvalidUserInputException("_since must be after " + ed.format(ISO_OFFSET_DATE_TIME));
+                throw new InvalidClientInputException("_since must be after " + ed.format(ISO_OFFSET_DATE_TIME));
             }
         } catch (Exception ex) {
-            throw new InvalidUserInputException("${api.since.date.earliest} date value '" + SINCE_EARLIEST_DATE + "' is invalid");
+            throw new InvalidClientInputException("${api.since.date.earliest} date value '" + SINCE_EARLIEST_DATE + "' is invalid");
         }
     }
 
@@ -95,8 +95,8 @@ public class ApiCommon {
         }
     }
 
-    public void checkIfCurrentUserCanAddJob() {
-        if (!jobService.checkIfCurrentUserCanAddJob()) {
+    public void checkIfCurrentClientCanAddJob() {
+        if (!jobService.checkIfCurrentClientCanAddJob()) {
             String errorMsg = "You already have active export requests in progress. Please wait until they complete before submitting a new one.";
             log.error(errorMsg);
             throw new TooManyRequestsException(errorMsg);
@@ -107,7 +107,7 @@ public class ApiCommon {
         String statusURL = getUrl(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status", request);
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.add(CONT_LOC, statusURL);
-        eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), job.getJobUuid(), HttpStatus.ACCEPTED, "Job Created",
+        eventLogger.log(new ApiResponseEvent(MDC.get(CLIENT), job.getJobUuid(), HttpStatus.ACCEPTED, "Job Created",
                 "Job " + job.getJobUuid() + " was created", requestId));
         return new ResponseEntity<>(null, responseHeaders,
                 HttpStatus.ACCEPTED);
@@ -116,19 +116,19 @@ public class ApiCommon {
     public void checkResourceTypesAndOutputFormat(String resourceTypes, String outputFormat) {
         if (resourceTypes != null && !resourceTypes.equals(EOB)) {
             log.error("Received invalid resourceTypes of {}", resourceTypes);
-            throw new InvalidUserInputException("_type must be " + EOB);
+            throw new InvalidClientInputException("_type must be " + EOB);
         }
 
         final String errMsg = "An _outputFormat of " + outputFormat + " is not valid";
 
         if (outputFormat != null && !ALLOWABLE_OUTPUT_FORMAT_SET.contains(outputFormat)) {
             log.error("Received _outputFormat {}, which is not valid", outputFormat);
-            throw new InvalidUserInputException(errMsg);
+            throw new InvalidClientInputException(errMsg);
         }
 
         final boolean zipSupportOn = propertiesService.isToggleOn(ZIP_SUPPORT_ON);
         if (!zipSupportOn && ZIPFORMAT.equalsIgnoreCase(outputFormat)) {
-            throw new InvalidUserInputException(errMsg);
+            throw new InvalidClientInputException(errMsg);
         }
     }
 
@@ -139,7 +139,7 @@ public class ApiCommon {
 
     public void checkValidCreateJob(OffsetDateTime since, String resourceTypes, String outputFormat) {
         checkIfInMaintenanceMode();
-        checkIfCurrentUserCanAddJob();
+        checkIfCurrentClientCanAddJob();
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
         checkSinceTime(since);
     }

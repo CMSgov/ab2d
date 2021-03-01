@@ -72,7 +72,7 @@ class LoggerEventSummaryTest {
 
         JobSummaryEvent summary = loggerEventSummary.getSummary(jobId);
         assertEquals(jobId, summary.getJobId());
-        assertEquals(usr, summary.getUser());
+        assertEquals(usr, summary.getOrganization());
         assertEquals(firstTime.getNano(), summary.getSubmittedTime().getNano());
         assertEquals(firstTime.plusDays(1).getNano(), summary.getInProgressTime().getNano());
         assertEquals(firstTime.plusDays(7).getNano(), summary.getSuccessfulTime().getNano());
@@ -130,7 +130,7 @@ class LoggerEventSummaryTest {
 
         JobSummaryEvent summary = loggerEventSummary.getSummary(jobId);
         assertEquals(jobId, summary.getJobId());
-        assertEquals(usr, summary.getUser());
+        assertEquals(usr, summary.getOrganization());
         assertEquals(firstTime.getNano(), summary.getSubmittedTime().getNano());
         assertEquals(firstTime.plusDays(1).getNano(), summary.getInProgressTime().getNano());
         assertNull(summary.getSuccessfulTime());
@@ -201,7 +201,7 @@ class LoggerEventSummaryTest {
     JobStatusChangeEvent createEvent(OffsetDateTime timeOfEvent, String status) {
         JobStatusChangeEvent event = new JobStatusChangeEvent();
         event.setTimeOfEvent(timeOfEvent);
-        event.setUser("USER");
+        event.setOrganization("USER");
         event.setJobId("JOB1");
         event.setNewStatus(status);
         return event;

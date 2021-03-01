@@ -133,9 +133,6 @@ public interface CoverageService {
     /**
      * Change a coverage search to {@link JobStatus#SUBMITTED} and log an event.
      *
-     * todo not in use in current code but intended for use when we scan for coverage periods that need
-     *      updates in the future
-     *
      * @param periodId unique id of a coverage search
      * @param description reason or explanation for change
      * @return resulting coverage search event

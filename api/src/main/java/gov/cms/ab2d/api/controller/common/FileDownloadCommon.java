@@ -19,11 +19,16 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import static gov.cms.ab2d.common.util.Constants.*;
+import static gov.cms.ab2d.common.util.Constants.CLIENT;
+import static gov.cms.ab2d.common.util.Constants.FILE_LOG;
+import static gov.cms.ab2d.common.util.Constants.JOB_LOG;
+import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
+import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 
 @Service
 @AllArgsConstructor
 @Slf4j
+@SuppressWarnings("PMD.TooManyStaticImports")
 public class FileDownloadCommon {
     private final JobService jobService;
     private final LogManager eventLogger;
@@ -42,7 +47,7 @@ public class FileDownloadCommon {
         try (OutputStream out = response.getOutputStream(); FileInputStream in = new FileInputStream(downloadResource.getFile())) {
             IOUtils.copy(in, out);
 
-            eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), jobUuid, HttpStatus.OK, "File Download",
+            eventLogger.log(new ApiResponseEvent(MDC.get(CLIENT), jobUuid, HttpStatus.OK, "File Download",
                     "File " + filename + " was downloaded", (String) request.getAttribute(REQUEST_ID)));
 
             jobService.deleteFileForJob(downloadResource.getFile(), jobUuid);

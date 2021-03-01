@@ -24,9 +24,9 @@ public class ContractBeneSearchEvent extends LoggableEvent {
 
     public ContractBeneSearchEvent() { }
 
-    public ContractBeneSearchEvent(String user, String jobId, String contractNumber, int numInContract, int numbSearched,
+    public ContractBeneSearchEvent(String organization, String jobId, String contractNumber, int numInContract, int numbSearched,
                                    int numErrors) {
-        super(OffsetDateTime.now(), user, jobId);
+        super(OffsetDateTime.now(), organization, jobId);
         this.contractNumber = contractNumber;
         this.numSearched = numbSearched;
         this.numInContract = numInContract;

@@ -24,7 +24,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
+import static gov.cms.ab2d.common.util.DataSetup.TEST_PDP_CLIENT;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,7 +41,7 @@ class JobOutputServiceTest {
     JobRepository jobRepository;
 
     @Autowired
-    UserRepository userRepository;
+    PdpClientRepository pdpClientRepository;
 
     @Autowired
     ContractRepository contractRepository;
@@ -61,11 +61,11 @@ class JobOutputServiceTest {
     // Be safe and make sure nothing from another test will impact current test
     @BeforeEach
     public void setup() {
-        dataSetup.setupUser(List.of());
+        dataSetup.setupPdpClient(List.of());
 
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(
-                        new org.springframework.security.core.userdetails.User(TEST_USER,
+                        new org.springframework.security.core.userdetails.User(TEST_PDP_CLIENT,
                                 "test", new ArrayList<>()), "pass"));
     }
 
@@ -78,7 +78,7 @@ class JobOutputServiceTest {
     void testJobOutputUpdate() {
         Job job = new Job();
         job.setJobUuid("uuid");
-        job.setUser(userRepository.findByUsername(TEST_USER));
+        job.setPdpClient(pdpClientRepository.findByClientId(TEST_PDP_CLIENT));
         job.setStatus(JobStatus.FAILED);
         job.setCreatedAt(OffsetDateTime.now());
         job.setFhirVersion(STU3);
@@ -109,7 +109,7 @@ class JobOutputServiceTest {
     void testJobOutputRetrieval() {
         Job job = new Job();
         job.setJobUuid("uuid");
-        job.setUser(userRepository.findByUsername(TEST_USER));
+        job.setPdpClient(pdpClientRepository.findByClientId(TEST_PDP_CLIENT));
         job.setStatus(JobStatus.FAILED);
         job.setCreatedAt(OffsetDateTime.now());
         job.setFhirVersion(STU3);
@@ -135,7 +135,7 @@ class JobOutputServiceTest {
     void testJobOutputRetrievalNotFound() {
         Job job = new Job();
         job.setJobUuid("uuid");
-        job.setUser(userRepository.findByUsername(TEST_USER));
+        job.setPdpClient(pdpClientRepository.findByClientId(TEST_PDP_CLIENT));
         job.setStatus(JobStatus.FAILED);
         job.setCreatedAt(OffsetDateTime.now());
         job.setFhirVersion(STU3);

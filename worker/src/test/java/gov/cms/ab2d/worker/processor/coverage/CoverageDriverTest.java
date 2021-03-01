@@ -61,9 +61,6 @@ class CoverageDriverTest {
     private JobRepository jobRepo;
 
     @Autowired
-    private UserRepository userRepo;
-
-    @Autowired
     private ContractService contractService;
 
     @Autowired
@@ -108,11 +105,11 @@ class CoverageDriverTest {
         february = dataSetup.createCoveragePeriod(contract, 2, 2020);
         march = dataSetup.createCoveragePeriod(contract, 3, 2020);
 
-        User user = dataSetup.setupUser(List.of());
+        PdpClient pdpClient = dataSetup.setupPdpClient(List.of());
         job = new Job();
         job.setContract(contract);
         job.setJobUuid("unique");
-        job.setUser(user);
+        job.setPdpClient(pdpClient);
         job.setStatus(JobStatus.SUBMITTED);
         job.setCreatedAt(OffsetDateTime.now());
         job.setFhirVersion(STU3);

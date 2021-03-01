@@ -1,7 +1,12 @@
 package gov.cms.ab2d.api.controller.v1;
 
 import ca.uhn.fhir.context.FhirVersionEnum;
-import org.hl7.fhir.dstu3.model.*;
+import org.hl7.fhir.dstu3.model.CapabilityStatement;
+import org.hl7.fhir.dstu3.model.CodeType;
+import org.hl7.fhir.dstu3.model.CodeableConcept;
+import org.hl7.fhir.dstu3.model.Coding;
+import org.hl7.fhir.dstu3.model.Enumerations;
+import org.hl7.fhir.dstu3.model.Reference;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;

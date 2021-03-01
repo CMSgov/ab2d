@@ -4,7 +4,12 @@ import ca.uhn.fhir.parser.IParser;
 import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
-import io.swagger.annotations.*;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Authorization;
+import io.swagger.annotations.AuthorizationScope;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.CapabilityStatement;
@@ -18,18 +23,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 
+import static gov.cms.ab2d.api.controller.common.ApiText.AUTH;
 import static gov.cms.ab2d.api.controller.common.ApiText.CAP_STMT;
 import static gov.cms.ab2d.api.controller.common.ApiText.CAP_API;
 import static gov.cms.ab2d.api.controller.common.ApiText.JSON;
 import static gov.cms.ab2d.api.controller.common.ApiText.CAP_REQ;
-import static gov.cms.ab2d.api.controller.common.ApiText.AUTH;
 import static gov.cms.ab2d.api.controller.common.ApiText.CAP_DESC;
 import static gov.cms.ab2d.api.controller.common.ApiText.CAP_RET;
 
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
-import static gov.cms.ab2d.common.util.Constants.USERNAME;
+import static gov.cms.ab2d.common.util.Constants.CLIENT;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
@@ -58,7 +63,7 @@ public class CapabilityAPIV1 {
 
         IParser parser = STU3.getJsonParser();
 
-        eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), null, HttpStatus.OK,
+        eventLogger.log(new ApiResponseEvent(MDC.get(CLIENT), null, HttpStatus.OK,
                 CAP_STMT, CAP_RET, (String) request.getAttribute(REQUEST_ID)));
 
         String server = common.getCurrentUrl(request).replace("/metadata", "");

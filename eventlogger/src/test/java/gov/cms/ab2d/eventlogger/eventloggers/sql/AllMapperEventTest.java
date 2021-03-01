@@ -6,10 +6,9 @@ import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.SpringBootApp;
 import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
-import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +24,7 @@ import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.List;
 
+import static gov.cms.ab2d.eventlogger.utils.UtilMethods.hashIt;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -96,12 +96,12 @@ public class AllMapperEventTest {
         assertEquals("dev", event.getEnvironment());
         assertTrue(event.getId() > 0);
         assertEquals(event.getId(), jsce.getId());
-        assertEquals("laila", event.getUser());
+        assertEquals("laila", event.getOrganization());
         assertEquals("job123", event.getJobId());
         assertEquals(val.getNano(), event.getTimeOfEvent().getNano());
         assertEquals("http://localhost", event.getUrl());
         assertEquals("127.0.0.1", event.getIpAddress());
-        assertEquals(UtilMethods.hashIt("token"), event.getTokenHash());
+        assertEquals(hashIt("token"), event.getTokenHash());
         assertEquals("123", event.getRequestId());
 
         loggerEventRepository.delete(ApiRequestEvent.class);
@@ -132,7 +132,7 @@ public class AllMapperEventTest {
         assertEquals("dev", event.getEnvironment());
         assertTrue(event.getId() > 0);
         assertEquals(event.getId(), jsce.getId());
-        assertEquals("laila", event.getUser());
+        assertEquals("laila", event.getOrganization());
         assertEquals("job123", event.getJobId());
         assertEquals(event, jsce);
         assertEquals("Description", event.getDescription());
@@ -167,7 +167,7 @@ public class AllMapperEventTest {
         assertTrue(event.getId() > 0);
         assertEquals(event, cbse);
         assertEquals(event.getId(), cbse.getId());
-        assertEquals("laila", event.getUser());
+        assertEquals("laila", event.getOrganization());
         assertEquals("jobIdVal", event.getJobId());
         assertEquals("Contract123", event.getContractNumber());
         assertEquals(100, event.getNumInContract());
@@ -202,7 +202,7 @@ public class AllMapperEventTest {
         assertEquals("dev", event.getEnvironment());
         assertTrue(event.getId() > 0);
         assertEquals(event.getId(), jsce.getId());
-        assertEquals("laila", event.getUser());
+        assertEquals("laila", event.getOrganization());
         assertEquals("job123", event.getJobId());
         assertEquals(val.getNano(), event.getTimeOfEvent().getNano());
         assertEquals(ErrorEvent.ErrorType.CONTRACT_NOT_FOUND, event.getErrorType());
@@ -239,7 +239,7 @@ public class AllMapperEventTest {
         assertEquals("dev", event.getEnvironment());
         assertTrue(event.getId() > 0);
         assertEquals(event.getId(), jsce.getId());
-        assertEquals("laila", event.getUser());
+        assertEquals("laila", event.getOrganization());
         assertEquals("job123", event.getJobId());
         assertEquals(val.getNano(), event.getTimeOfEvent().getNano());
         assertEquals(hash, event.getFileHash());
@@ -276,7 +276,7 @@ public class AllMapperEventTest {
         assertEquals("dev", event.getEnvironment());
         assertTrue(event.getId() > 0);
         assertEquals(event.getId(), jsce.getId());
-        assertEquals("laila", event.getUser());
+        assertEquals("laila", event.getOrganization());
         assertEquals("job123", event.getJobId());
         assertEquals(val.getNano(), event.getTimeOfEvent().getNano());
         assertEquals("FAILED", event.getNewStatus());
@@ -310,7 +310,7 @@ public class AllMapperEventTest {
         assertEquals("dev", event.getEnvironment());
         assertTrue(event.getId() > 0);
         assertEquals(event.getId(), cbse.getId());
-        assertNull(event.getUser());
+        assertNull(event.getOrganization());
         assertNull(event.getJobId());
         assertEquals("filename", event.getFileName());
         assertEquals(10, event.getNumberLoaded());
@@ -348,4 +348,20 @@ public class AllMapperEventTest {
         assertEquals(0, events.size());
         loggerEventRepository.delete();
     }
-}
+
+    @DisplayName("Block client ids from being logged")
+    @Test
+    void blockLoggingClientIds() {
+        JobStatusChangeEvent jsce = new JobStatusChangeEvent("0123", "job123", "IN_PROGRESS",
+                "FAILED", "Description");
+        sqlEventLogger.log(jsce);
+
+        List<LoggableEvent> events = loggerEventRepository.load(JobStatusChangeEvent.class);
+        assertEquals(1, events.size());
+
+        JobStatusChangeEvent event = (JobStatusChangeEvent) events.get(0);
+        assertNull(event.getOrganization());
+        loggerEventRepository.delete(JobStatusChangeEvent.class);
+        events = loggerEventRepository.load(JobStatusChangeEvent.class);
+        assertEquals(0, events.size());
+    }}
