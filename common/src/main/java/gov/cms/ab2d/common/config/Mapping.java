@@ -1,7 +1,7 @@
 package gov.cms.ab2d.common.config;
 
+import gov.cms.ab2d.common.dto.PdpClientDTO;
 import gov.cms.ab2d.common.dto.ContractDTO;
-import gov.cms.ab2d.common.dto.UserDTO;
 import gov.cms.ab2d.common.model.*;    // NOPMD
 import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.RoleService;
@@ -56,12 +56,13 @@ public class Mapping {
         };
 
         modelMapper.addConverter(sponsorDTOSponsorConverter);
-        modelMapper.createTypeMap(User.class, UserDTO.class)
-                .addMappings(mapper -> mapper.using(contractContractDTOConverter).map(User::getContract, UserDTO::setContract))
-                .addMappings(mapper -> mapper.using(roleToRoleDTOConverter).map(User::getRoles, UserDTO::setRole))
-                .addMappings(mapper -> mapper.map(User::getContract, UserDTO::setContract));
-        modelMapper.createTypeMap(UserDTO.class, User.class)
-                .addMappings(mapper -> mapper.using(roleDTOToRoleConverter).map(UserDTO::getRole, User::addRole));
+        modelMapper.createTypeMap(PdpClient.class, PdpClientDTO.class)
+                .addMappings(mapper -> mapper.using(contractContractDTOConverter).map(PdpClient::getContract, PdpClientDTO::setContract))
+                .addMappings(mapper -> mapper.using(roleToRoleDTOConverter).map(PdpClient::getRoles, PdpClientDTO::setRole))
+                .addMappings(mapper -> mapper.map(PdpClient::getContract, PdpClientDTO::setContract));
+        modelMapper.createTypeMap(PdpClientDTO.class, PdpClient.class)
+                .addMappings(mapper -> mapper.using(roleDTOToRoleConverter).map(PdpClientDTO::getRole, PdpClient::addRole))
+                .addMappings(mapper -> mapper.map(PdpClientDTO::getClientId, PdpClient::setClientId));
     }
 
     public ModelMapper getModelMapper() {

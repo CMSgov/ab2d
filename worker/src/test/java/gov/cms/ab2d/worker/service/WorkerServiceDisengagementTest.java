@@ -43,7 +43,7 @@ class WorkerServiceDisengagementTest {
 
     @Autowired private DataSetup dataSetup;
     @Autowired private JobRepository jobRepository;
-    @Autowired private UserRepository userRepository;
+    @Autowired private PdpClientRepository pdpClientRepository;
     @Autowired private PropertiesService propertiesService;
     @Autowired private JobService jobService;
 
@@ -98,8 +98,8 @@ class WorkerServiceDisengagementTest {
 
         setEngagement(FeatureEngagement.NEUTRAL);
 
-        final User user = createUser();
-        createJob(user);
+        final PdpClient pdpClient = createClient();
+        createJob(pdpClient);
 
         Thread.sleep(6000L);
 
@@ -118,8 +118,8 @@ class WorkerServiceDisengagementTest {
 
         setEngagement(FeatureEngagement.NEUTRAL);
 
-        createJob(createUser());
-        createJob(createUser2());
+        createJob(createClient());
+        createJob(createClient2());
 
         // There is a 5 second sleep in the WorkerService.
         // So if the result for two jobs comes before 10 seconds, it implies they were not processed sequentially
@@ -135,7 +135,7 @@ class WorkerServiceDisengagementTest {
         assertEquals(2, workerServiceStub.processingCalls);
     }
 
-    private Job createJob(final User user) {
+    private Job createJob(final PdpClient pdpClient) {
         Job job = new Job();
         job.setId((long) getIntRandom());
         job.setJobUuid(UUID.randomUUID().toString());
@@ -143,9 +143,9 @@ class WorkerServiceDisengagementTest {
         job.setStatusMessage("0%");
         job.setResourceTypes(EOB);
         job.setCreatedAt(OffsetDateTime.now());
-        job.setUser(user);
+        job.setPdpClient(pdpClient);
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
-        job.setContract(user.getContract());
+        job.setContract(pdpClient.getContract());
         job.setFhirVersion(STU3);
 
         job = jobRepository.save(job);
@@ -153,28 +153,32 @@ class WorkerServiceDisengagementTest {
         return job;
     }
 
-    private User createUser() {
-        User user = new User();
-        user.setId((long) getIntRandom());
-        user.setUsername("testuser" + getIntRandom());
-        user.setEnabled(true);
-        user.setContract(dataSetup.setupContract("W1234"));
+    private PdpClient createClient() {
+        PdpClient pdpClient = new PdpClient();
+        int clientNum = getIntRandom();
+        pdpClient.setId((long) clientNum);
+        pdpClient.setClientId("testclient" + clientNum);
+        pdpClient.setOrganization("testclient" + clientNum);
+        pdpClient.setEnabled(true);
+        pdpClient.setContract(dataSetup.setupContract("W1234"));
 
-        user = userRepository.save(user);
-        dataSetup.queueForCleanup(user);
-        return user;
+        pdpClient = pdpClientRepository.save(pdpClient);
+        dataSetup.queueForCleanup(pdpClient);
+        return pdpClient;
     }
 
-    private User createUser2() {
-        User user = new User();
-        user.setId((long) getIntRandom());
-        user.setUsername("testuser2" + getIntRandom());
-        user.setEnabled(true);
-        user.setContract(dataSetup.setupContract("W5678"));
+    private PdpClient createClient2() {
+        PdpClient pdpClient = new PdpClient();
+        int clientNum = getIntRandom();
+        pdpClient.setId((long) clientNum);
+        pdpClient.setClientId("testclient2" + clientNum);
+        pdpClient.setOrganization("testclient2" + clientNum);
+        pdpClient.setEnabled(true);
+        pdpClient.setContract(dataSetup.setupContract("W5678"));
 
-        user =  userRepository.save(user);
-        dataSetup.queueForCleanup(user);
-        return user;
+        pdpClient =  pdpClientRepository.save(pdpClient);
+        dataSetup.queueForCleanup(pdpClient);
+        return pdpClient;
     }
 
     private int getIntRandom() {

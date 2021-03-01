@@ -26,8 +26,8 @@ public class ErrorEvent extends LoggableEvent {
 
     public ErrorEvent() { }
 
-    public ErrorEvent(String user, String jobId, ErrorType errorType, String description) {
-        super(OffsetDateTime.now(), user, jobId);
+    public ErrorEvent(String organization, String jobId, ErrorType errorType, String description) {
+        super(OffsetDateTime.now(), organization, jobId);
         this.errorType = errorType;
         this.description = description;
     }

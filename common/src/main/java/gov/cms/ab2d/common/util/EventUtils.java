@@ -9,17 +9,17 @@ import java.io.File;
 
 public class EventUtils {
     public static JobStatusChangeEvent getJobChangeEvent(Job job, JobStatus jobStatus, String message) {
-        return new JobStatusChangeEvent(getUserName(job), getJobId(job), getJobStatus(job),
+        return new JobStatusChangeEvent(getOrganization(job), getJobId(job), getJobStatus(job),
                 jobStatus == null ? null : jobStatus.name(),
                 message);
     }
 
     public static FileEvent getFileEvent(Job job, File file, FileEvent.FileStatus status) {
-        return new FileEvent(getUserName(job), getJobId(job), file, status);
+        return new FileEvent(getOrganization(job), getJobId(job), file, status);
     }
 
-    private static String getUserName(Job job) {
-        return job != null && job.getUser() != null ? job.getUser().getUsername() : null;
+    public static String getOrganization(Job job) {
+        return job != null && job.getPdpClient() != null ? job.getPdpClient().getOrganization() : null;
     }
 
     private static String getJobId(Job job) {

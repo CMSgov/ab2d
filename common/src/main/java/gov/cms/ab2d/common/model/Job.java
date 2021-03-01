@@ -34,7 +34,7 @@ public class Job {
     @ManyToOne
     @NotNull
     @JoinColumn(name = "user_account_id")
-    private User user;
+    private PdpClient pdpClient;
 
     @OneToMany(
             mappedBy = "job",

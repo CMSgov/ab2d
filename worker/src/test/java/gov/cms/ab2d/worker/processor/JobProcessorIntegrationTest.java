@@ -6,7 +6,7 @@ import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.repository.UserRepository;
+import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -74,7 +74,7 @@ class JobProcessorIntegrationTest {
     private JobRepository jobRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    private PdpClientRepository pdpClientRepository;
 
     @Autowired
     private ContractRepository contractRepository;
@@ -114,11 +114,11 @@ class JobProcessorIntegrationTest {
     @BeforeEach
     void setUp() {
         LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
-        User user = createUser();
+        PdpClient pdpClient = createClient();
 
         Contract contract = createContract();
 
-        job = createJob(user);
+        job = createJob(pdpClient);
         job.setContract(contract);
         job.setStatus(JobStatus.IN_PROGRESS);
         jobRepository.saveAndFlush(job);
@@ -189,8 +189,8 @@ class JobProcessorIntegrationTest {
     }
 
     @Test
-    @DisplayName("When a job is in submitted by the parent user, it process the contracts for the children")
-    void whenJobSubmittedByParentUser_ProcessAllContractsForChildrenSponsors() {
+    @DisplayName("When a job is in submitted by the parent client, it process the contracts for the children")
+    void whenJobSubmittedByParentClient_ProcessAllContractsForChildrenSponsors() {
         var processedJob = cut.process(job.getJobUuid());
 
         assertEquals(JobStatus.SUCCESSFUL, processedJob.getStatus());
@@ -290,17 +290,14 @@ class JobProcessorIntegrationTest {
         return new org.hl7.fhir.dstu3.model.Bundle[]{bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1};
     }
 
-    private User createUser() {
-        User user = new User();
-        user.setUsername("Harry_Potter");
-        user.setFirstName("Harry");
-        user.setLastName("Potter");
-        user.setEmail("harry_potter@hogwarts.com");
-        user.setEnabled(TRUE);
-//        user.setContract(createContract());
-        user =  userRepository.saveAndFlush(user);
-        dataSetup.queueForCleanup(user);
-        return user;
+    private PdpClient createClient() {
+        PdpClient pdpClient = new PdpClient();
+        pdpClient.setClientId("Harry_Potter");
+        pdpClient.setOrganization("Harry_Potter");
+        pdpClient.setEnabled(TRUE);
+        pdpClient =  pdpClientRepository.saveAndFlush(pdpClient);
+        dataSetup.queueForCleanup(pdpClient);
+        return pdpClient;
     }
 
     private Contract createContract() {
@@ -314,12 +311,12 @@ class JobProcessorIntegrationTest {
         return contract;
     }
 
-    private Job createJob(User user) {
+    private Job createJob(PdpClient pdpClient) {
         Job job = new Job();
         job.setJobUuid(JOB_UUID);
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage("0%");
-        job.setUser(user);
+        job.setPdpClient(pdpClient);
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setCreatedAt(OffsetDateTime.now());
         job.setFhirVersion(STU3);

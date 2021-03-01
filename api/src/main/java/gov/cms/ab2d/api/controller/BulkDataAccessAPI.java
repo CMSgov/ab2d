@@ -2,7 +2,7 @@ package gov.cms.ab2d.api.controller;
 
 import gov.cms.ab2d.api.util.SwaggerConstants;
 import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.service.InvalidUserInputException;
+import gov.cms.ab2d.common.service.InvalidClientInputException;
 import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -109,7 +109,7 @@ public class BulkDataAccessAPI {
         log.info("Received request to export");
 
         checkIfInMaintenanceMode();
-        checkIfCurrentUserCanAddJob();
+        checkIfCurrentClientCanAddJob();
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
         checkSinceTime(since);
 
@@ -137,16 +137,16 @@ public class BulkDataAccessAPI {
             return;
         }
         if (date.isAfter(OffsetDateTime.now())) {
-            throw new InvalidUserInputException("You can not use a time after the current time for _since");
+            throw new InvalidClientInputException("You can not use a time after the current time for _since");
         }
         try {
             OffsetDateTime ed = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
             if (date.isBefore(ed)) {
                 log.error("Invalid _since time received {}", date);
-                throw new InvalidUserInputException("_since must be after " + ed.format(ISO_OFFSET_DATE_TIME));
+                throw new InvalidClientInputException("_since must be after " + ed.format(ISO_OFFSET_DATE_TIME));
             }
         } catch (Exception ex) {
-            throw new InvalidUserInputException("${api.since.date.earliest} date value '" + SINCE_EARLIEST_DATE + "' is invalid");
+            throw new InvalidClientInputException("${api.since.date.earliest} date value '" + SINCE_EARLIEST_DATE + "' is invalid");
         }
     }
 
@@ -156,8 +156,8 @@ public class BulkDataAccessAPI {
         }
     }
 
-    private void checkIfCurrentUserCanAddJob() {
-        if (!jobService.checkIfCurrentUserCanAddJob()) {
+    private void checkIfCurrentClientCanAddJob() {
+        if (!jobService.checkIfCurrentClientCanAddJob()) {
             String errorMsg = "You already have active export requests in progress. Please wait until they complete before submitting a new one.";
             log.error(errorMsg);
             throw new TooManyRequestsException(errorMsg);
@@ -167,19 +167,19 @@ public class BulkDataAccessAPI {
     private void checkResourceTypesAndOutputFormat(String resourceTypes, String outputFormat) {
         if (resourceTypes != null && !resourceTypes.equals(EOB)) {
             log.error("Received invalid resourceTypes of {}", resourceTypes);
-            throw new InvalidUserInputException("_type must be " + EOB);
+            throw new InvalidClientInputException("_type must be " + EOB);
         }
 
         final String errMsg = "An _outputFormat of " + outputFormat + " is not valid";
 
         if (outputFormat != null && !ALLOWABLE_OUTPUT_FORMAT_SET.contains(outputFormat)) {
             log.error("Received _outputFormat {}, which is not valid", outputFormat);
-            throw new InvalidUserInputException(errMsg);
+            throw new InvalidClientInputException(errMsg);
         }
 
         final boolean zipSupportOn = propertiesService.isToggleOn(ZIP_SUPPORT_ON);
         if (!zipSupportOn && ZIPFORMAT.equalsIgnoreCase(outputFormat)) {
-            throw new InvalidUserInputException(errMsg);
+            throw new InvalidClientInputException(errMsg);
         }
     }
 
@@ -192,7 +192,7 @@ public class BulkDataAccessAPI {
         String statusURL = getUrl(API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status");
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.add("Content-Location", statusURL);
-        eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), job.getJobUuid(), HttpStatus.ACCEPTED, "Job Created",
+        eventLogger.log(new ApiResponseEvent(MDC.get(CLIENT), job.getJobUuid(), HttpStatus.ACCEPTED, "Job Created",
                 "Job " + job.getJobUuid() + " was created", requestId));
         return new ResponseEntity<>(null, responseHeaders,
                 HttpStatus.ACCEPTED);
@@ -238,7 +238,7 @@ public class BulkDataAccessAPI {
         log.info("Received request to export by contractNumber");
 
         checkIfInMaintenanceMode();
-        checkIfCurrentUserCanAddJob();
+        checkIfCurrentClientCanAddJob();
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
         checkSinceTime(since);
 

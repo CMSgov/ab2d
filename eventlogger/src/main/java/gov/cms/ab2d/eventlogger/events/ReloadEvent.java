@@ -28,8 +28,8 @@ public class ReloadEvent extends LoggableEvent {
 
     public ReloadEvent() { }
 
-    public ReloadEvent(String user, FileType fileType, String fileName, int numLoaded) {
-        super(OffsetDateTime.now(), user, null);
+    public ReloadEvent(String organization, FileType fileType, String fileName, int numLoaded) {
+        super(OffsetDateTime.now(), organization, null);
         this.fileType = fileType;
         this.fileName = fileName;
         this.numberLoaded = numLoaded;

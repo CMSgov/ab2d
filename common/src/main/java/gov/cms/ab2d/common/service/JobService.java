@@ -25,5 +25,5 @@ public interface JobService {
 
     void deleteFileForJob(File file, String jobUuid);
 
-    boolean checkIfCurrentUserCanAddJob();
+    boolean checkIfCurrentClientCanAddJob();
 }

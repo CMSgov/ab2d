@@ -27,8 +27,8 @@ public class ApiResponseEventMapper extends SqlEventMapper {
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
         String query = "insert into event_api_response " +
-                " (time_of_event, user_id, job_id, response_code, response_string, description, request_id, aws_id, environment) " +
-                " values (:time, :user, :job, :responseCode, :responseString, :description, :requestId, :awsId, :environment)";
+                " (time_of_event, organization, job_id, response_code, response_string, description, request_id, aws_id, environment) " +
+                " values (:time, :organization, :job, :responseCode, :responseString, :description, :requestId, :awsId, :environment)";
 
         SqlParameterSource parameters = super.addSuperParams(event)
                 .addValue("responseCode", be.getResponseCode())

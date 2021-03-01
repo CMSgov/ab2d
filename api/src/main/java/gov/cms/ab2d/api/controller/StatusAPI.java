@@ -101,7 +101,7 @@ public class StatusAPI {
         Job job = jobService.getAuthorizedJobByJobUuidAndRole(jobUuid);
 
         if (pollingTooMuch(job)) {
-            log.error("User was polling too frequently");
+            log.error("Client was polling too frequently");
             throw new TooManyRequestsException("You are polling too frequently");
         }
 
@@ -115,7 +115,7 @@ public class StatusAPI {
             case IN_PROGRESS:
                 responseHeaders.add("X-Progress", job.getProgress() + "% complete");
                 responseHeaders.add("Retry-After", Integer.toString(retryAfterDelay));
-                eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), job.getJobUuid(), HttpStatus.ACCEPTED,
+                eventLogger.log(new ApiResponseEvent(MDC.get(CLIENT), job.getJobUuid(), HttpStatus.ACCEPTED,
                         "Job in progress", job.getProgress() + "% complete",
                         (String) request.getAttribute(REQUEST_ID)));
                 return new ResponseEntity<>(null, responseHeaders, HttpStatus.ACCEPTED);
@@ -140,7 +140,7 @@ public class StatusAPI {
         log.info("Job status completed successfully");
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
                 .getRequest();
-        eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), job.getJobUuid(), HttpStatus.OK,
+        eventLogger.log(new ApiResponseEvent(MDC.get(CLIENT), job.getJobUuid(), HttpStatus.OK,
                 "Job completed", null, (String) request.getAttribute(REQUEST_ID)));
         return new ResponseEntity<>(resp, responseHeaders, HttpStatus.OK);
     }
@@ -203,7 +203,7 @@ public class StatusAPI {
 
         log.info("Job successfully cancelled");
 
-        eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), jobUuid, HttpStatus.ACCEPTED,
+        eventLogger.log(new ApiResponseEvent(MDC.get(CLIENT), jobUuid, HttpStatus.ACCEPTED,
                 "Job cancelled", null, (String) request.getAttribute(REQUEST_ID)));
 
         return new ResponseEntity<>(null, null,
