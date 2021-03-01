@@ -244,32 +244,59 @@ CONTROLLER_SG_ID=$(aws ec2 describe-security-groups \
   --query "SecurityGroups[*].GroupId" \
   --output text)
 
-terraform apply \
-  --var "aws_account_number=${AWS_ACCOUNT_NUMBER}" \
-  --var "controller_sg_id=${CONTROLLER_SG_ID}" \
-  --var "cpm_backup_db=${CPM_BACKUP_DB}" \
-  --var "db_allocated_storage_size=${DB_ALLOCATED_STORAGE_SIZE}" \
-  --var "db_backup_retention_period=${DB_BACKUP_RETENTION_PERIOD}" \
-  --var "db_backup_window=${DB_BACKUP_WINDOW}" \
-  --var "db_copy_tags_to_snapshot=${DB_COPY_TAGS_TO_SNAPSHOT}" \
-  --var "db_identifier=${CMS_ENV}" \
-  --var "db_instance_class=${DB_INSTANCE_CLASS}" \
-  --var "db_iops=${DB_IOPS}" \
-  --var "db_maintenance_window=${DB_MAINTENANCE_WINDOW}" \
-  --var "db_multi_az=${DB_MULTI_AZ}" \
-  --var "db_parameter_group_name=${CMS_ENV}-rds-parameter-group" \
-  --var "db_password=${AB2D_DB_PASSWORD}" \
-  --var "db_snapshot_id=${DB_SNAPSHOT_ID}" \
-  --var "db_subnet_group_name=${CMS_ENV}-rds-subnet-group" \
-  --var "db_username=${AB2D_DB_USER}" \
-  --var "env=${CMS_ENV}" \
-  --var "jenkins_agent_sec_group_id=${JENKINS_AGENT_SEC_GROUP_ID}" \
-  --var "parent_env=${PARENT_ENV}" \
-  --var "postgres_engine_version=${POSTGRES_ENGINE_VERSION}" \
-  --var "region=${AWS_DEFAULT_REGION}" \
-  --auto-approve \
-  1> /dev/null \
-  2> /dev/null
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  terraform apply \
+    --var "aws_account_number=${AWS_ACCOUNT_NUMBER}" \
+    --var "controller_sg_id=${CONTROLLER_SG_ID}" \
+    --var "cpm_backup_db=${CPM_BACKUP_DB}" \
+    --var "db_allocated_storage_size=${DB_ALLOCATED_STORAGE_SIZE}" \
+    --var "db_backup_retention_period=${DB_BACKUP_RETENTION_PERIOD}" \
+    --var "db_backup_window=${DB_BACKUP_WINDOW}" \
+    --var "db_copy_tags_to_snapshot=${DB_COPY_TAGS_TO_SNAPSHOT}" \
+    --var "db_identifier=${CMS_ENV}" \
+    --var "db_instance_class=${DB_INSTANCE_CLASS}" \
+    --var "db_iops=${DB_IOPS}" \
+    --var "db_maintenance_window=${DB_MAINTENANCE_WINDOW}" \
+    --var "db_multi_az=${DB_MULTI_AZ}" \
+    --var "db_parameter_group_name=${CMS_ENV}-rds-parameter-group" \
+    --var "db_password=${AB2D_DB_PASSWORD}" \
+    --var "db_snapshot_id=${DB_SNAPSHOT_ID}" \
+    --var "db_subnet_group_name=${CMS_ENV}-rds-subnet-group" \
+    --var "db_username=${AB2D_DB_USER}" \
+    --var "env=${CMS_ENV}" \
+    --var "jenkins_agent_sec_group_id=${JENKINS_AGENT_SEC_GROUP_ID}" \
+    --var "parent_env=${PARENT_ENV}" \
+    --var "postgres_engine_version=${POSTGRES_ENGINE_VERSION}" \
+    --var "region=${AWS_DEFAULT_REGION}" \
+    --auto-approve
+else
+  terraform apply \
+    --var "aws_account_number=${AWS_ACCOUNT_NUMBER}" \
+    --var "controller_sg_id=${CONTROLLER_SG_ID}" \
+    --var "cpm_backup_db=${CPM_BACKUP_DB}" \
+    --var "db_allocated_storage_size=${DB_ALLOCATED_STORAGE_SIZE}" \
+    --var "db_backup_retention_period=${DB_BACKUP_RETENTION_PERIOD}" \
+    --var "db_backup_window=${DB_BACKUP_WINDOW}" \
+    --var "db_copy_tags_to_snapshot=${DB_COPY_TAGS_TO_SNAPSHOT}" \
+    --var "db_identifier=${CMS_ENV}" \
+    --var "db_instance_class=${DB_INSTANCE_CLASS}" \
+    --var "db_iops=${DB_IOPS}" \
+    --var "db_maintenance_window=${DB_MAINTENANCE_WINDOW}" \
+    --var "db_multi_az=${DB_MULTI_AZ}" \
+    --var "db_parameter_group_name=${CMS_ENV}-rds-parameter-group" \
+    --var "db_password=${AB2D_DB_PASSWORD}" \
+    --var "db_snapshot_id=${DB_SNAPSHOT_ID}" \
+    --var "db_subnet_group_name=${CMS_ENV}-rds-subnet-group" \
+    --var "db_username=${AB2D_DB_USER}" \
+    --var "env=${CMS_ENV}" \
+    --var "jenkins_agent_sec_group_id=${JENKINS_AGENT_SEC_GROUP_ID}" \
+    --var "parent_env=${PARENT_ENV}" \
+    --var "postgres_engine_version=${POSTGRES_ENGINE_VERSION}" \
+    --var "region=${AWS_DEFAULT_REGION}" \
+    --auto-approve \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 #
 # Create or verify database

@@ -154,15 +154,25 @@ terraform validate
 cd "${START_DIR}/.."
 cd "terraform/environments/${CMS_ENV}/${MODULE}"
 
-terraform apply \
-  --var "aws_account_number=${AWS_ACCOUNT_NUMBER}" \
-  --var "env=${CMS_ENV}" \
-  --var "env_pascal_case=${ENV_PASCAL_CASE}" \
-  --var "parent_env=${PARENT_ENV}" \
-  --var "region=${AWS_DEFAULT_REGION}" \
-  --auto-approve \
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  terraform apply \
+    --var "aws_account_number=${AWS_ACCOUNT_NUMBER}" \
+    --var "env=${CMS_ENV}" \
+    --var "env_pascal_case=${ENV_PASCAL_CASE}" \
+    --var "parent_env=${PARENT_ENV}" \
+    --var "region=${AWS_DEFAULT_REGION}" \
+    --auto-approve
+else
+  terraform apply \
+    --var "aws_account_number=${AWS_ACCOUNT_NUMBER}" \
+    --var "env=${CMS_ENV}" \
+    --var "env_pascal_case=${ENV_PASCAL_CASE}" \
+    --var "parent_env=${PARENT_ENV}" \
+    --var "region=${AWS_DEFAULT_REGION}" \
+    --auto-approve \
     1> /dev/null \
     2> /dev/null
+fi
 
 # Create of verify key pair
 

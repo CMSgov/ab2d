@@ -456,10 +456,15 @@ echo "Build and push API and worker to ECR..."
 
 # Log on to ECR
 
-aws --region "${AWS_DEFAULT_REGION}" ecr get-login-password \
-  | docker login --username AWS --password-stdin "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}.dkr.ecr.us-east-1.amazonaws.com" \
-  1> /dev/null \
-  2> /dev/null
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  aws --region "${AWS_DEFAULT_REGION}" ecr get-login-password \
+    | docker login --username AWS --password-stdin "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}.dkr.ecr.us-east-1.amazonaws.com"
+else
+  aws --region "${AWS_DEFAULT_REGION}" ecr get-login-password \
+    | docker login --username AWS --password-stdin "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}.dkr.ecr.us-east-1.amazonaws.com" \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 # Build API and worker (if creating a new image)
 
@@ -483,10 +488,15 @@ WORKER_ECR_REPO_URI=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-reposito
   --query "repositories[?repositoryName == 'ab2d_worker'].repositoryUri" \
   --output text)
 if [ -z "${WORKER_ECR_REPO_URI}" ]; then
-  aws --region "${AWS_DEFAULT_REGION}" ecr create-repository \
-    --repository-name "ab2d_worker" \
-    1> /dev/null \
-    2> /dev/null
+  if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+    aws --region "${AWS_DEFAULT_REGION}" ecr create-repository \
+      --repository-name "ab2d_worker"
+  else
+    aws --region "${AWS_DEFAULT_REGION}" ecr create-repository \
+      --repository-name "ab2d_worker" \
+      1> /dev/null \
+      2> /dev/null
+  fi
   WORKER_ECR_REPO_URI=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-repositories \
     --query "repositories[?repositoryName == 'ab2d_worker'].repositoryUri" \
     --output text)
@@ -496,11 +506,17 @@ fi
 
 cd "${START_DIR}/.."
 cd "terraform/environments/${CMS_ECR_REPO_ENV}"
-aws --region "${AWS_DEFAULT_REGION}" ecr set-repository-policy \
-  --repository-name ab2d_worker \
-  --policy-text file://ab2d-ecr-policy.json \
-  1> /dev/null \
-  2> /dev/null
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  aws --region "${AWS_DEFAULT_REGION}" ecr set-repository-policy \
+    --repository-name ab2d_worker \
+    --policy-text file://ab2d-ecr-policy.json
+else
+  aws --region "${AWS_DEFAULT_REGION}" ecr set-repository-policy \
+    --repository-name ab2d_worker \
+    --policy-text file://ab2d-ecr-policy.json \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 # Tag and push latest version of worker docker image to ECR
 
@@ -586,48 +602,91 @@ fi
 cd "${START_DIR}/.."
 cd "terraform/environments/${CMS_ENV}/${MODULE}"
 
-terraform apply \
-  --var "ami_id=${AMI_ID}" \
-  --var "aws_account_number=${AWS_ACCOUNT_NUMBER}" \
-  --var "bfd_keystore_file_name=${BFD_KEYSTORE_FILE_NAME}" \
-  --var "bfd_keystore_location=${AB2D_BFD_KEYSTORE_LOCATION}" \
-  --var "bfd_keystore_password=${AB2D_BFD_KEYSTORE_PASSWORD}" \
-  --var "bfd_url=${AB2D_BFD_URL}" \
-  --var "claims_skip_billable_period_check=${CLAIMS_SKIP_BILLABLE_PERIOD_CHECK}" \
-  --var "cpm_backup_worker=${CPM_BACKUP_WORKER}" \
-  --var "db_host=${AB2D_DB_HOST}" \
-  --var "db_name=${AB2D_DB_DATABASE}" \
-  --var "db_password=${AB2D_DB_PASSWORD}" \
-  --var "db_port=${AB2D_DB_PORT}" \
-  --var "db_username=${AB2D_DB_USER}" \
-  --var "ec2_instance_type_worker=${EC2_INSTANCE_TYPE_WORKER}" \
-  --var "ecr_repo_aws_account=${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" \
-  --var "ecs_container_def_memory=${WORKER_MEMORY}" \
-  --var "ecs_task_def_cpu=${WORKER_CPU}" \
-  --var "ecs_task_def_memory=${WORKER_MEMORY}" \
-  --var "env=${CMS_ENV}" \
-  --var "gold_image_name=${GOLD_IMAGE_NAME}" \
-  --var "hicn_hash_iter=${AB2D_HICN_HASH_ITER}" \
-  --var "hicn_hash_pepper=${AB2D_HICN_HASH_PEPPER}" \
-  --var "iam_instance_profile=${IAM_INSTANCE_PROFILE}" \
-  --var "iam_instance_role=${IAM_INSTANCE_ROLE}" \
-  --var "image_version=${IMAGE_VERSION}" \
-  --var "new_relic_app_name=${NEW_RELIC_APP_NAME}" \
-  --var "new_relic_license_key=${NEW_RELIC_LICENSE_KEY}" \
-  --var "override_task_definition_arn=${OVERRIDE_TASK_DEFINITION_ARN}" \
-  --var "percent_capacity_increase=${PERCENT_CAPACITY_INCREASE}" \
-  --var "region=${REGION}" \
-  --var "slack_alert_webhooks=${AB2D_SLACK_ALERT_WEBHOOKS}" \
-  --var "slack_trace_webhooks=${AB2D_SLACK_TRACE_WEBHOOKS}" \
-  --var "ssh_key_name=${SSH_KEY_NAME}" \
-  --var "ssh_username=${SSH_USERNAME}" \
-  --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
-  --var "worker_desired_instances=${WORKER_DESIRED_INSTANCES}" \
-  --var "worker_min_instances=${WORKER_MIN_INSTANCES}" \
-  --var "worker_max_instances=${WORKER_MAX_INSTANCES}" \
-  --auto-approve \
-  1> /dev/null \
-  2> /dev/null
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  terraform apply \
+    --var "ami_id=${AMI_ID}" \
+    --var "aws_account_number=${AWS_ACCOUNT_NUMBER}" \
+    --var "bfd_keystore_file_name=${BFD_KEYSTORE_FILE_NAME}" \
+    --var "bfd_keystore_location=${AB2D_BFD_KEYSTORE_LOCATION}" \
+    --var "bfd_keystore_password=${AB2D_BFD_KEYSTORE_PASSWORD}" \
+    --var "bfd_url=${AB2D_BFD_URL}" \
+    --var "claims_skip_billable_period_check=${CLAIMS_SKIP_BILLABLE_PERIOD_CHECK}" \
+    --var "cpm_backup_worker=${CPM_BACKUP_WORKER}" \
+    --var "db_host=${AB2D_DB_HOST}" \
+    --var "db_name=${AB2D_DB_DATABASE}" \
+    --var "db_password=${AB2D_DB_PASSWORD}" \
+    --var "db_port=${AB2D_DB_PORT}" \
+    --var "db_username=${AB2D_DB_USER}" \
+    --var "ec2_instance_type_worker=${EC2_INSTANCE_TYPE_WORKER}" \
+    --var "ecr_repo_aws_account=${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" \
+    --var "ecs_container_def_memory=${WORKER_MEMORY}" \
+    --var "ecs_task_def_cpu=${WORKER_CPU}" \
+    --var "ecs_task_def_memory=${WORKER_MEMORY}" \
+    --var "env=${CMS_ENV}" \
+    --var "gold_image_name=${GOLD_IMAGE_NAME}" \
+    --var "hicn_hash_iter=${AB2D_HICN_HASH_ITER}" \
+    --var "hicn_hash_pepper=${AB2D_HICN_HASH_PEPPER}" \
+    --var "iam_instance_profile=${IAM_INSTANCE_PROFILE}" \
+    --var "iam_instance_role=${IAM_INSTANCE_ROLE}" \
+    --var "image_version=${IMAGE_VERSION}" \
+    --var "new_relic_app_name=${NEW_RELIC_APP_NAME}" \
+    --var "new_relic_license_key=${NEW_RELIC_LICENSE_KEY}" \
+    --var "override_task_definition_arn=${OVERRIDE_TASK_DEFINITION_ARN}" \
+    --var "percent_capacity_increase=${PERCENT_CAPACITY_INCREASE}" \
+    --var "region=${REGION}" \
+    --var "slack_alert_webhooks=${AB2D_SLACK_ALERT_WEBHOOKS}" \
+    --var "slack_trace_webhooks=${AB2D_SLACK_TRACE_WEBHOOKS}" \
+    --var "ssh_key_name=${SSH_KEY_NAME}" \
+    --var "ssh_username=${SSH_USERNAME}" \
+    --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
+    --var "worker_desired_instances=${WORKER_DESIRED_INSTANCES}" \
+    --var "worker_min_instances=${WORKER_MIN_INSTANCES}" \
+    --var "worker_max_instances=${WORKER_MAX_INSTANCES}" \
+    --auto-approve
+else
+  terraform apply \
+    --var "ami_id=${AMI_ID}" \
+    --var "aws_account_number=${AWS_ACCOUNT_NUMBER}" \
+    --var "bfd_keystore_file_name=${BFD_KEYSTORE_FILE_NAME}" \
+    --var "bfd_keystore_location=${AB2D_BFD_KEYSTORE_LOCATION}" \
+    --var "bfd_keystore_password=${AB2D_BFD_KEYSTORE_PASSWORD}" \
+    --var "bfd_url=${AB2D_BFD_URL}" \
+    --var "claims_skip_billable_period_check=${CLAIMS_SKIP_BILLABLE_PERIOD_CHECK}" \
+    --var "cpm_backup_worker=${CPM_BACKUP_WORKER}" \
+    --var "db_host=${AB2D_DB_HOST}" \
+    --var "db_name=${AB2D_DB_DATABASE}" \
+    --var "db_password=${AB2D_DB_PASSWORD}" \
+    --var "db_port=${AB2D_DB_PORT}" \
+    --var "db_username=${AB2D_DB_USER}" \
+    --var "ec2_instance_type_worker=${EC2_INSTANCE_TYPE_WORKER}" \
+    --var "ecr_repo_aws_account=${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}" \
+    --var "ecs_container_def_memory=${WORKER_MEMORY}" \
+    --var "ecs_task_def_cpu=${WORKER_CPU}" \
+    --var "ecs_task_def_memory=${WORKER_MEMORY}" \
+    --var "env=${CMS_ENV}" \
+    --var "gold_image_name=${GOLD_IMAGE_NAME}" \
+    --var "hicn_hash_iter=${AB2D_HICN_HASH_ITER}" \
+    --var "hicn_hash_pepper=${AB2D_HICN_HASH_PEPPER}" \
+    --var "iam_instance_profile=${IAM_INSTANCE_PROFILE}" \
+    --var "iam_instance_role=${IAM_INSTANCE_ROLE}" \
+    --var "image_version=${IMAGE_VERSION}" \
+    --var "new_relic_app_name=${NEW_RELIC_APP_NAME}" \
+    --var "new_relic_license_key=${NEW_RELIC_LICENSE_KEY}" \
+    --var "override_task_definition_arn=${OVERRIDE_TASK_DEFINITION_ARN}" \
+    --var "percent_capacity_increase=${PERCENT_CAPACITY_INCREASE}" \
+    --var "region=${REGION}" \
+    --var "slack_alert_webhooks=${AB2D_SLACK_ALERT_WEBHOOKS}" \
+    --var "slack_trace_webhooks=${AB2D_SLACK_TRACE_WEBHOOKS}" \
+    --var "ssh_key_name=${SSH_KEY_NAME}" \
+    --var "ssh_username=${SSH_USERNAME}" \
+    --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
+    --var "worker_desired_instances=${WORKER_DESIRED_INSTANCES}" \
+    --var "worker_min_instances=${WORKER_MIN_INSTANCES}" \
+    --var "worker_max_instances=${WORKER_MAX_INSTANCES}" \
+    --auto-approve \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 # Ensure new worker autoscaling group is running containers
 
@@ -662,12 +721,19 @@ else
 
     # shellcheck disable=SC2086
     # $OLD_WORKER_INSTANCE_LIST format is required here
-    aws --region "${AWS_DEFAULT_REGION}" ecs update-container-instances-state \
-      --cluster "${CMS_ENV}-worker" \
-      --status DRAINING \
-      --container-instances $OLD_WORKER_INSTANCE_LIST \
-      1> /dev/null \
-      2> /dev/null
+    if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+      aws --region "${AWS_DEFAULT_REGION}" ecs update-container-instances-state \
+        --cluster "${CMS_ENV}-worker" \
+        --status DRAINING \
+        --container-instances $OLD_WORKER_INSTANCE_LIST
+    else
+      aws --region "${AWS_DEFAULT_REGION}" ecs update-container-instances-state \
+        --cluster "${CMS_ENV}-worker" \
+        --status DRAINING \
+        --container-instances $OLD_WORKER_INSTANCE_LIST \
+        1> /dev/null \
+        2> /dev/null
+    fi
 
     echo "Allowing all instances to drain for 60 seconds before proceeding..."
     sleep 60
@@ -692,11 +758,17 @@ if [ "${WORKER_ASG_COUNT}" -gt 1 ]; then
       | sort \
       | head -n "${i}" \
       | tail -n 1)
-    aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-auto-scaling-group \
-      --auto-scaling-group-name "${DUPLICATIVE_WORKER_ASG}" \
-      --force-delete || true \
-      1> /dev/null \
-      2> /dev/null
+    if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+      aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-auto-scaling-group \
+        --auto-scaling-group-name "${DUPLICATIVE_WORKER_ASG}" \
+        --force-delete || true
+    else
+      aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-auto-scaling-group \
+        --auto-scaling-group-name "${DUPLICATIVE_WORKER_ASG}" \
+        --force-delete || true \
+        1> /dev/null \
+        2> /dev/null
+    fi
   done
 fi
 
@@ -752,11 +824,15 @@ else
       | head -n1 \
       | awk '{print $1}')
 
-    aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-launch-configuration \
-      --launch-configuration-name "${OLD_LAUNCH_CONFIGURATION}" \
-      1> /dev/null \
-      2> /dev/null
-
+    if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+      aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-launch-configuration \
+        --launch-configuration-name "${OLD_LAUNCH_CONFIGURATION}"
+    else
+      aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-launch-configuration \
+        --launch-configuration-name "${OLD_LAUNCH_CONFIGURATION}" \
+        1> /dev/null \
+        2> /dev/null
+    fi
     sleep 5
 
     # TO DO: migrate from "*-test-*" naming to "*-validation-*" naming
