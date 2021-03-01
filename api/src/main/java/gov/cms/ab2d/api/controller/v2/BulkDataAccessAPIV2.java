@@ -95,9 +95,9 @@ public class BulkDataAccessAPIV2 {
 
         log.info("Received request to export");
         apiCommon.checkValidCreateJob(since, resourceTypes, outputFormat);
-        Job job = jobService.createJob(resourceTypes, apiCommon.getCurrentUrl(), null, outputFormat, since, R4);
+        Job job = jobService.createJob(resourceTypes, apiCommon.getCurrentUrl(request), null, outputFormat, since, R4);
         apiCommon.logSuccessfulJobCreation(job);
-        return apiCommon.returnStatusForJobCreation(job, (String) request.getAttribute(REQUEST_ID));
+        return apiCommon.returnStatusForJobCreation(job, (String) request.getAttribute(REQUEST_ID), request);
     }
 
     @ApiOperation(value = BULK_CONTRACT_EXPORT,
@@ -129,8 +129,8 @@ public class BulkDataAccessAPIV2 {
         MDC.put(CONTRACT_LOG, contractNumber);
         log.info("Received request to export by contractNumber");
         apiCommon.checkValidCreateJob(since, resourceTypes, outputFormat);
-        Job job = jobService.createJob(resourceTypes, apiCommon.getCurrentUrl(), contractNumber, outputFormat, since, R4);
+        Job job = jobService.createJob(resourceTypes, apiCommon.getCurrentUrl(request), contractNumber, outputFormat, since, R4);
         apiCommon.logSuccessfulJobCreation(job);
-        return apiCommon.returnStatusForJobCreation(job, (String) request.getAttribute(REQUEST_ID));
+        return apiCommon.returnStatusForJobCreation(job, (String) request.getAttribute(REQUEST_ID), request);
     }
 }

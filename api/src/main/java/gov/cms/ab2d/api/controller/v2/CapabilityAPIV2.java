@@ -63,7 +63,7 @@ public class CapabilityAPIV2 {
         eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), null, HttpStatus.OK,
                 CAP_STMT, CAP_RET, (String) request.getAttribute(REQUEST_ID)));
 
-        String server = common.getCurrentUrl().replace("/metadata", "");
+        String server = common.getCurrentUrl(request).replace("/metadata", "");
         CapabilityStatement capabilityStatement = CapabilityStatementR4.populateCS(server);
         return new ResponseEntity<>(parser.encodeResourceToString(capabilityStatement), null, HttpStatus.OK);
     }

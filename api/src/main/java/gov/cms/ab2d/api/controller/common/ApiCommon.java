@@ -14,8 +14,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
@@ -57,20 +55,18 @@ public class ApiCommon {
         this.propertiesService = propertiesService;
     }
 
-    public boolean shouldReplaceWithHttps() {
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
-                .getRequest();
+    public boolean shouldReplaceWithHttps(HttpServletRequest request) {
         return "https".equalsIgnoreCase(request.getHeader("X-Forwarded-Proto"));
     }
 
-    public String getCurrentUrl() {
-        return shouldReplaceWithHttps() ?
+    public String getCurrentUrl(HttpServletRequest request) {
+        return shouldReplaceWithHttps(request) ?
                 ServletUriComponentsBuilder.fromCurrentRequest().scheme("https").toUriString() :
                 ServletUriComponentsBuilder.fromCurrentRequest().toUriString().replace(":80/", "/");
     }
 
-    public String getUrl(String ending) {
-        return shouldReplaceWithHttps() ?
+    public String getUrl(String ending, HttpServletRequest request) {
+        return shouldReplaceWithHttps(request) ?
                 ServletUriComponentsBuilder.fromCurrentRequestUri().scheme("https").replacePath(ending).toUriString() :
                 ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath(ending).toUriString().replace(":80/", "/");
     }
@@ -107,8 +103,8 @@ public class ApiCommon {
         }
     }
 
-    public ResponseEntity<Void> returnStatusForJobCreation(Job job, String requestId) {
-        String statusURL = getUrl(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status");
+    public ResponseEntity<Void> returnStatusForJobCreation(Job job, String requestId, HttpServletRequest request) {
+        String statusURL = getUrl(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status", request);
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.add(CONT_LOC, statusURL);
         eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), job.getJobUuid(), HttpStatus.ACCEPTED, "Job Created",
