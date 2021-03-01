@@ -8,6 +8,20 @@ pipeline {
     label 'deployment'
   }
   stages {
+    stage('Deploy or update gold disk') {
+      when {
+        expression { params.UPDATE_GOLD_DISK == 'true' }
+      }
+      steps {
+        script {
+	      dir ('Deploy/bash') {
+	        sh '''
+	          ./update-gold-disk.sh
+	        sh '''
+	      }
+	    }
+      }
+    }
     stage('Deploy S3 terraform backend') {
       steps {
         script {
