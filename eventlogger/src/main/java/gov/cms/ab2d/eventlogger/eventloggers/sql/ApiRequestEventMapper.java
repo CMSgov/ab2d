@@ -27,8 +27,8 @@ public class ApiRequestEventMapper extends SqlEventMapper {
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
         String query = "insert into event_api_request " +
-                " (time_of_event, user_id, job_id, url, ip_address, token_hash, request_id, aws_id, environment) " +
-                " values (:time, :user, :job, :url, :ipAddress, :tokenHash, :requestId, :awsId, :environment)";
+                " (time_of_event, organization, job_id, url, ip_address, token_hash, request_id, aws_id, environment) " +
+                " values (:time, :organization, :job, :url, :ipAddress, :tokenHash, :requestId, :awsId, :environment)";
 
         SqlParameterSource parameters = super.addSuperParams(event)
             .addValue("url", be.getUrl())

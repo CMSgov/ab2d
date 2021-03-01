@@ -27,8 +27,8 @@ class FileEventMapper extends SqlEventMapper {
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
         String query = "insert into event_file " +
-                " (time_of_event, user_id, job_id, file_name, status, file_size, file_hash, aws_id, environment) " +
-                " values (:time, :user, :job, :fileName, :status, :fileSize, :fileHash, :awsId, :environment)";
+                " (time_of_event, organization, job_id, file_name, status, file_size, file_hash, aws_id, environment) " +
+                " values (:time, :organization, :job, :fileName, :status, :fileSize, :fileHash, :awsId, :environment)";
 
         SqlParameterSource parameters = super.addSuperParams(event)
                 .addValue("fileName", be.getFileName())
