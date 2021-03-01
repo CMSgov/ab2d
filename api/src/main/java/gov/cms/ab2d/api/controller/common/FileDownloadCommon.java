@@ -19,7 +19,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import static gov.cms.ab2d.common.service.JobService.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.*;
 
 @Service
@@ -38,11 +37,7 @@ public class FileDownloadCommon {
 
         log.info("Sending " + filename + " file to client");
 
-        String mimeType = NDJSON_FIRE_CONTENT_TYPE;
-        if (downloadResource.getFilename().endsWith("zip")) {
-            mimeType = ZIPFORMAT;
-        }
-        response.setHeader(HttpHeaders.CONTENT_TYPE, mimeType);
+        response.setHeader(HttpHeaders.CONTENT_TYPE, NDJSON_FIRE_CONTENT_TYPE);
 
         try (OutputStream out = response.getOutputStream(); FileInputStream in = new FileInputStream(downloadResource.getFile())) {
             IOUtils.copy(in, out);
