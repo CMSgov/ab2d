@@ -61,7 +61,7 @@ class LogManagerTest {
     @Test
     void testOnlySql() {
         logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
-        ErrorEvent event = new ErrorEvent("user", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
+        ErrorEvent event = new ErrorEvent("organization", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
                 "File Deleted");
         logManager.log(LogManager.LogType.SQL, event);
         assertNull(event.getAwsId());

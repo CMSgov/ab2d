@@ -34,6 +34,7 @@ import java.time.OffsetDateTime;
 import java.util.concurrent.ExecutionException;
 
 import static gov.cms.ab2d.common.model.JobStatus.*;
+import static gov.cms.ab2d.common.util.EventUtils.getOrganization;
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.NDJSON;
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.ZIP;
 
@@ -122,7 +123,7 @@ public class JobProcessorImpl implements JobProcessor {
 
         // Create a holder for the contract, writer, progress tracker and attested date
         ContractData contractData = new ContractData(contract, progressTracker, job.getSince(),
-                job.getPdpClient() != null ? job.getPdpClient().getClientId() : null);
+                getOrganization(job));
 
         final Segment contractSegment = NewRelic.getAgent().getTransaction().startSegment("Patient processing of contract " + contract.getContractNumber());
         var jobOutputs = contractProcessor.process(outputDirPath, contractData);
@@ -132,7 +133,7 @@ public class JobProcessorImpl implements JobProcessor {
         jobOutputs.forEach(job::addJobOutput);
         jobOutputRepository.saveAll(jobOutputs);
 
-        eventLogger.log(new ContractBeneSearchEvent(job.getPdpClient() == null ? null : job.getPdpClient().getClientId(),
+        eventLogger.log(new ContractBeneSearchEvent(getOrganization(job),
                 job.getJobUuid(),
                 contract.getContractNumber(),
                 progressTracker.getExpectedBeneficiaries(),

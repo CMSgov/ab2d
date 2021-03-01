@@ -43,14 +43,14 @@ public class LoggerEventSummary {
             allEvents.addAll(downloadEvents);
             allEvents.addAll(contractSearchData);
             String firstUserFound = allEvents.stream()
-                    .map(LoggableEvent::getUser)
+                    .map(LoggableEvent::getOrganization)
                     .filter(Objects::nonNull)
                     .findFirst()
                     .orElse(null);
 
             JobSummaryEvent jobSummaryEvent = new JobSummaryEvent();
             jobSummaryEvent.setJobId(jobId);
-            jobSummaryEvent.setUser(firstUserFound);
+            jobSummaryEvent.setOrganization(firstUserFound);
             jobSummaryEvent.setSubmittedTime(getTime(jobChangeEvents, "SUBMITTED"));
             jobSummaryEvent.setInProgressTime(getTime(jobChangeEvents, "IN_PROGRESS"));
             jobSummaryEvent.setSuccessfulTime(getTime(jobChangeEvents, "SUCCESSFUL"));

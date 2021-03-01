@@ -19,14 +19,16 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class EventUtilsTest {
     private Job job;
-    private String jobId = "ABC";
+    private final String jobId = "ABC";
     private PdpClient pdpClient;
-    private String pdpClientId = "DEF";
+    private static final String CLIENT_ID = "DEF";
+    private static final String ORGANIZATION = "GHI";
 
     @BeforeEach
     void init() {
         pdpClient = new PdpClient();
-        pdpClient.setClientId(pdpClientId);
+        pdpClient.setClientId(CLIENT_ID);
+        pdpClient.setOrganization(ORGANIZATION);
         job = new Job();
         job.setStatus(JobStatus.IN_PROGRESS);
         job.setJobUuid(jobId);
@@ -43,13 +45,13 @@ class EventUtilsTest {
         assertNull(event.getNewStatus());
         assertNull(event.getJobId());
         assertNotNull(event.getTimeOfEvent());
-        assertNull(event.getUser());
+        assertNull(event.getOrganization());
 
         event = EventUtils.getJobChangeEvent(job, SUCCESSFUL, "Hello World");
         assertEquals(event.getOldStatus(), IN_PROGRESS.name());
         assertEquals(SUCCESSFUL.name(), event.getNewStatus());
         assertEquals(jobId, event.getJobId());
-        assertEquals(pdpClientId, event.getUser());
+        assertEquals(ORGANIZATION, event.getOrganization());
         assertEquals("Hello World", event.getDescription());
     }
 

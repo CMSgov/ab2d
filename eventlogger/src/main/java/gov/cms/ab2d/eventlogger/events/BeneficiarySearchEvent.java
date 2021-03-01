@@ -20,10 +20,10 @@ public class BeneficiarySearchEvent extends LoggableEvent {
 
     public BeneficiarySearchEvent() { }
 
-    public BeneficiarySearchEvent(String user, String jobId, String contractNum,
+    public BeneficiarySearchEvent(String organization, String jobId, String contractNum,
                                   OffsetDateTime startTime, OffsetDateTime endTime,
                                   String beneId, String response) {
-        super(startTime, user, jobId);
+        super(startTime, organization, jobId);
         this.response = response;
         this.contractNum = contractNum;
         this.responseDate = endTime;

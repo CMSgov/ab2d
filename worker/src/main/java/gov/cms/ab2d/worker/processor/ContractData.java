@@ -12,5 +12,5 @@ public class ContractData {
     private final Contract contract;
     private final ProgressTracker progressTracker;
     private final OffsetDateTime sinceTime;
-    private final String clientId;
+    private final String organization;
 }

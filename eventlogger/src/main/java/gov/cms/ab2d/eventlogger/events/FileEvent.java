@@ -34,8 +34,8 @@ public class FileEvent extends LoggableEvent {
 
     public FileEvent() { }
 
-    public FileEvent(String user, String jobId, File file, FileStatus status) {
-        super(OffsetDateTime.now(), user, jobId);
+    public FileEvent(String organization, String jobId, File file, FileStatus status) {
+        super(OffsetDateTime.now(), organization, jobId);
         this.status = status;
         if (file != null) {
             this.fileName = file.getAbsolutePath();

@@ -4,11 +4,12 @@ import com.amazonaws.ResponseMetadata;
 import com.amazonaws.services.kinesisfirehose.AmazonKinesisFirehose;
 import com.amazonaws.services.kinesisfirehose.model.PutRecordResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import gov.cms.ab2d.eventlogger.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.SpringBootApp;
 import gov.cms.ab2d.eventlogger.events.*;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +24,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -82,7 +84,7 @@ class KinesisEventLoggerTest {
         e.setId(1L);
         e.setJobId("JOB123");
         e.setTimeOfEvent(OffsetDateTime.now());
-        e.setUser("ME");
+        e.setOrganization("ME");
         logger.log(e, true);
         assertNotNull(e.getAwsId());
     }
@@ -110,7 +112,7 @@ class KinesisEventLoggerTest {
         e.setId(1L);
         e.setJobId("JOB123");
         e.setTimeOfEvent(OffsetDateTime.now());
-        e.setUser("ME");
+        e.setOrganization("ME");
         for (int i = 0; i < 20; i++) {
             logger.log(e, false);
         }
@@ -130,7 +132,7 @@ class KinesisEventLoggerTest {
         e.setId(1L);
         e.setJobId("JOB123");
         e.setTimeOfEvent(OffsetDateTime.now());
-        e.setUser("ME");
+        e.setOrganization("ME");
 
         e.setAwsId("BOGUS");
         logger.log(e, true);
@@ -171,7 +173,7 @@ class KinesisEventLoggerTest {
         e.setId(1L);
         e.setJobId("JOB123");
         e.setTimeOfEvent(now);
-        e.setUser("ME");
+        e.setOrganization("ME");
         e.setAwsId("BOGUS");
         e.setEnvironment("dev");
 
@@ -181,7 +183,7 @@ class KinesisEventLoggerTest {
         assertEquals(1, jsonObj.getInt("id"));
         assertEquals("JOB123", jsonObj.getString("job_id"));
         assertEquals("UNAUTHORIZED_CONTRACT", jsonObj.getString("error_type"));
-        assertEquals(DigestUtils.sha1Hex("ME").toUpperCase(), jsonObj.getString("user"));
+        assertEquals("ME", jsonObj.getString("organization"));
         assertEquals("BOGUS", jsonObj.getString("aws_id"));
         assertEquals("dev", jsonObj.getString("environment"));
         String dateString = jsonObj.getString("time_of_event");
@@ -189,5 +191,35 @@ class KinesisEventLoggerTest {
         assertTrue(dateString.contains("Z"));
         OffsetDateTime dateObj = OffsetDateTime.parse(dateString, DateTimeFormatter.ISO_DATE_TIME);
         assertEquals(now.toEpochSecond(), dateObj.toEpochSecond());
+    }
+
+    @DisplayName("Block client ids from being logged to Kinesis")
+    @Test
+    void blockClientIds() {
+
+        FauxKinesisFirehose firehose = new FauxKinesisFirehose();
+        KinesisEventLogger logger = new KinesisEventLogger(config, firehose, appEnv, kinesisEnabled, streamId);
+        ReflectionTestUtils.setField(logger, "appEnv", "dev");
+
+        ErrorEvent e = new ErrorEvent();
+        e.setDescription("Test Error 2");
+        e.setErrorType(ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT);
+        e.setId(1L);
+        e.setJobId("JOB123");
+        e.setTimeOfEvent(OffsetDateTime.now());
+        e.setOrganization("0123");
+        logger.log(e, true);
+
+        try {
+            byte[] array = firehose.latestRecord.getData().array();
+
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> event = mapper.readValue(new String(array), new TypeReference<>() {});
+
+            assertTrue(event.containsKey("organization"));
+            assertNull(event.get("organization"));
+        } catch (IOException exception) {
+            fail(exception);
+        }
     }
 }
