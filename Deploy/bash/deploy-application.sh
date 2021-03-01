@@ -910,6 +910,16 @@ if [ -n "${API_OLD_LATEST_COMMIT_TAG}" ]; then
 
   # Get manifest of tag to rename
 
+  if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+
+    # Turn off verbose logging to prevent the need for user interaction when run from terminal
+
+    set +x
+
+  fi
+
+  # Get manifest of tag to rename
+
   MANIFEST=$(aws --region "${AWS_DEFAULT_REGION}" ecr batch-get-image \
     --repository-name ab2d_api \
     --image-ids imageTag="${API_OLD_LATEST_COMMIT_TAG}" \
@@ -932,6 +942,14 @@ if [ -n "${API_OLD_LATEST_COMMIT_TAG}" ]; then
         1> /dev/null \
         2> /dev/null
     fi
+  fi
+
+  if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+
+    # Turn on verbose logging
+
+    set -x
+
   fi
 
   # Remove old api tag
@@ -995,6 +1013,18 @@ if [ -n "${WORKER_OLD_LATEST_COMMIT_TAG}" ]; then
 
   RENAME_WORKER_OLD_LATEST_COMMIT_TAG=${WORKER_OLD_LATEST_COMMIT_TAG/'-latest-'/'-'}
 
+  # Turn off verbose logging to prevent the need for user interaction when run from terminal
+
+  # Get manifest of tag to rename
+
+  if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+
+    # Turn off verbose logging to prevent the need for user interaction when run from terminal
+
+    set +x
+
+  fi
+
   # Get manifest of tag to rename
 
   MANIFEST=$(aws --region "${AWS_DEFAULT_REGION}" ecr batch-get-image \
@@ -1019,6 +1049,14 @@ if [ -n "${WORKER_OLD_LATEST_COMMIT_TAG}" ]; then
         1> /dev/null \
         2> /dev/null
     fi
+  fi
+
+  if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+
+    # Turn on verbose logging
+
+    set -x
+
   fi
 
   # Remove old worker tag
