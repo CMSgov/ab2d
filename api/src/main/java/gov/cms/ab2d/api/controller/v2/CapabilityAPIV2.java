@@ -1,6 +1,7 @@
 package gov.cms.ab2d.api.controller.v2;
 
 import ca.uhn.fhir.parser.IParser;
+import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import io.swagger.annotations.*;
@@ -47,6 +48,7 @@ import static gov.cms.ab2d.fhir.FhirVersion.R4;
 public class CapabilityAPIV2 {
 
     private final LogManager eventLogger;
+    private final ApiCommon common;
 
     @ApiOperation(value = CAP_REQ, response = String.class, produces = JSON, authorizations = {
             @Authorization(value = AUTH, scopes = { @AuthorizationScope(description = CAP_DESC, scope = AUTH) })
@@ -61,7 +63,8 @@ public class CapabilityAPIV2 {
         eventLogger.log(new ApiResponseEvent(MDC.get(USERNAME), null, HttpStatus.OK,
                 CAP_STMT, CAP_RET, (String) request.getAttribute(REQUEST_ID)));
 
-        CapabilityStatement capabilityStatement = CapabilityStatementR4.populateCS(request.getServerName());
+        String server = common.getCurrentUrl().replace("/metadata", "");
+        CapabilityStatement capabilityStatement = CapabilityStatementR4.populateCS(server);
         return new ResponseEntity<>(parser.encodeResourceToString(capabilityStatement), null, HttpStatus.OK);
     }
 }

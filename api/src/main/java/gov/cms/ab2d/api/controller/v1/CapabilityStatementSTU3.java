@@ -8,9 +8,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
-import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
-
 public class CapabilityStatementSTU3 {
     public static CapabilityStatement populateCS(String server) {
         CapabilityStatement cs = new CapabilityStatement();
@@ -58,12 +55,12 @@ public class CapabilityStatementSTU3 {
         security.setService(List.of(codeableConcept));
         rest.setSecurity(security);
         List<CapabilityStatement.CapabilityStatementRestOperationComponent> restComponents = new ArrayList<>();
-        restComponents.add(createOperation("export", server + API_PREFIX_V1 + FHIR_PREFIX + "/Patient/$export"));
-        restComponents.add(createOperation("export by contract", server + API_PREFIX_V1 + FHIR_PREFIX + "/Group/{contractNumber}/$export"));
-        restComponents.add(createOperation("cancel", server + API_PREFIX_V1 + FHIR_PREFIX + "/Job/{jobUuid}/$status"));
-        restComponents.add(createOperation("status", server + API_PREFIX_V1 + FHIR_PREFIX + "/Job/{jobUuid}/$status"));
-        restComponents.add(createOperation("download", server + API_PREFIX_V1 + FHIR_PREFIX + "/Job/{jobUuid}/file/{filename}"));
-        restComponents.add(createOperation("capability", server + API_PREFIX_V1 + FHIR_PREFIX + "/metadata"));
+        restComponents.add(createOperation("export", server + "/Patient/$export"));
+        restComponents.add(createOperation("export by contract", server + "/Group/{contractNumber}/$export"));
+        restComponents.add(createOperation("cancel", server + "/Job/{jobUuid}/$status"));
+        restComponents.add(createOperation("status", server + "/Job/{jobUuid}/$status"));
+        restComponents.add(createOperation("download", server + "/Job/{jobUuid}/file/{filename}"));
+        restComponents.add(createOperation("capability", server + "/metadata"));
         rest.setOperation(restComponents);
         rest.setInteraction(List.of(new CapabilityStatement.SystemInteractionComponent().setCode(CapabilityStatement.SystemRestfulInteraction.BATCH)));
         cs.setRest(List.of(rest));
