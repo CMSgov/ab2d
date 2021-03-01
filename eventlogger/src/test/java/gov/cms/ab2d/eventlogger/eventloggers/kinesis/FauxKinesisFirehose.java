@@ -4,31 +4,9 @@ import com.amazonaws.AmazonWebServiceRequest;
 import com.amazonaws.ResponseMetadata;
 import com.amazonaws.regions.Region;
 import com.amazonaws.services.kinesisfirehose.AmazonKinesisFirehose;
-import com.amazonaws.services.kinesisfirehose.model.CreateDeliveryStreamRequest;
-import com.amazonaws.services.kinesisfirehose.model.CreateDeliveryStreamResult;
-import com.amazonaws.services.kinesisfirehose.model.DeleteDeliveryStreamRequest;
-import com.amazonaws.services.kinesisfirehose.model.DeleteDeliveryStreamResult;
-import com.amazonaws.services.kinesisfirehose.model.DescribeDeliveryStreamRequest;
-import com.amazonaws.services.kinesisfirehose.model.DescribeDeliveryStreamResult;
-import com.amazonaws.services.kinesisfirehose.model.ListDeliveryStreamsRequest;
-import com.amazonaws.services.kinesisfirehose.model.ListDeliveryStreamsResult;
-import com.amazonaws.services.kinesisfirehose.model.ListTagsForDeliveryStreamRequest;
-import com.amazonaws.services.kinesisfirehose.model.ListTagsForDeliveryStreamResult;
-import com.amazonaws.services.kinesisfirehose.model.PutRecordBatchRequest;
-import com.amazonaws.services.kinesisfirehose.model.PutRecordBatchResult;
-import com.amazonaws.services.kinesisfirehose.model.PutRecordRequest;
-import com.amazonaws.services.kinesisfirehose.model.PutRecordResult;
+
+import com.amazonaws.services.kinesisfirehose.model.*;
 import com.amazonaws.services.kinesisfirehose.model.Record;
-import com.amazonaws.services.kinesisfirehose.model.StartDeliveryStreamEncryptionRequest;
-import com.amazonaws.services.kinesisfirehose.model.StartDeliveryStreamEncryptionResult;
-import com.amazonaws.services.kinesisfirehose.model.StopDeliveryStreamEncryptionRequest;
-import com.amazonaws.services.kinesisfirehose.model.StopDeliveryStreamEncryptionResult;
-import com.amazonaws.services.kinesisfirehose.model.TagDeliveryStreamRequest;
-import com.amazonaws.services.kinesisfirehose.model.TagDeliveryStreamResult;
-import com.amazonaws.services.kinesisfirehose.model.UntagDeliveryStreamRequest;
-import com.amazonaws.services.kinesisfirehose.model.UntagDeliveryStreamResult;
-import com.amazonaws.services.kinesisfirehose.model.UpdateDestinationRequest;
-import com.amazonaws.services.kinesisfirehose.model.UpdateDestinationResult;
 
 public class FauxKinesisFirehose implements AmazonKinesisFirehose {
 
