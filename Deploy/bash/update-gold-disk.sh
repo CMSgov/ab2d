@@ -1,7 +1,12 @@
 #!/bin/bash
 
-set -e #Exit on first error
-set -x #Be verbose
+set -e # Turn on exit on error
+set +x # <-- Do not change this value!
+       # Logging is turned on in a later step based on CLOUD_TAMER_PARAM.
+       # CLOUD_TAMER_PARAM = false (Jenkins assumed; verbose logging turned off)
+       # CLOUD_TAMER_PARAM = true (Dev machine assumed; verbose logging turned on)
+       # NOTE: Setting the CLOUD_TAMER_PARAM to a value that does not match the
+       #       assumed host machine will cause the script to fail.
 
 #
 # Change to working directory
@@ -37,8 +42,26 @@ fi
 if [ "${CLOUD_TAMER_PARAM}" != "false" ] && [ "${CLOUD_TAMER_PARAM}" != "true" ]; then
   echo "ERROR: CLOUD_TAMER_PARAM parameter must be true or false"
   exit 1
-else
+elif [ "${CLOUD_TAMER_PARAM}" == "false" ]; then
+
+  # Turn off verbose logging for Jenkins jobs
+  set +x
+  echo "Don't print commands and their arguments as they are executed."
   CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
+
+  # Import the "get temporary AWS credentials via AWS STS assume role" function
+  source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh"
+
+else # [ "${CLOUD_TAMER_PARAM}" == "true" ]
+
+  # Turn on verbose logging for development machine testing
+  set -x
+  echo "Print commands and their arguments as they are executed."
+  CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
+
+  # Import the "get temporary AWS credentials via CloudTamer API" function
+  source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh"
+
 fi
 
 # Set Parent AWS environment
@@ -50,7 +73,7 @@ else
 fi
 
 #
-# Set remaining variables
+# Set required variables
 #
 
 export DEBUG_LEVEL="${DEBUG_LEVEL_PARAM}"
@@ -68,6 +91,12 @@ OWNER="${OWNER_PARAM}"
 SSH_USERNAME="${SSH_USERNAME_PARAM}"
 
 VPC_ID="${VPC_ID_PARAM}"
+
+#
+# Set optional variables
+#
+
+SEED_AMI_PINNED="${SEED_AMI_PINNED_PARAM}"
 
 # Set whether CloudTamer API should be used
 
@@ -148,27 +177,47 @@ if [ -n "${AMI_ID_IN_USE}" ]; then
     --query "Images[*].Tags[?Key=='gold_ami'].Value" \
     --output text)
 
-  aws --region "${AWS_DEFAULT_REGION}" ec2 create-tags \
-    --resources "${AMI_ID}" \
-    --tags "Key=Name,Value=${TARGET_CMS_ENV}-ami-gold-disk-${BASE_GOLD_DISK}"
+  if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+    aws --region "${AWS_DEFAULT_REGION}" ec2 create-tags \
+      --resources "${AMI_ID}" \
+      --tags "Key=Name,Value=${TARGET_CMS_ENV}-ami-gold-disk-${BASE_GOLD_DISK}"
+  else
+    aws --region "${AWS_DEFAULT_REGION}" ec2 create-tags \
+      --resources "${AMI_ID}" \
+      --tags "Key=Name,Value=${TARGET_CMS_ENV}-ami-gold-disk-${BASE_GOLD_DISK}" \
+      1> /dev/null \
+      2> /dev/null
+  fi
+
 elif [ -n "${AMI_ID}" ]; then
   echo "Deregister existing ab2d ami..."
-  aws --region "${AWS_DEFAULT_REGION}" ec2 deregister-image \
-    --image-id "${AMI_ID}"
+  if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+    aws --region "${AWS_DEFAULT_REGION}" ec2 deregister-image \
+      --image-id "${AMI_ID}"
+  else
+    aws --region "${AWS_DEFAULT_REGION}" ec2 deregister-image \
+      --image-id "${AMI_ID}" \
+      1> /dev/null \
+      2> /dev/null
+  fi
 else
   echo "Note that there is no existing ab2d ami."
 fi
 
 # Get the latest seed AMI
 
-SEED_AMI=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-images \
-  --owners "${OWNER}" \
-  --filters "Name=name,Values=rhel7-gi-*" \
-  --query "Images[*].[ImageId,CreationDate]" \
-  --output text \
-  | sort -k2 -r \
-  | head -n1 \
-  | awk '{print $1}')
+if [ -n "${SEED_AMI_PINNED}" ]; then
+  SEED_AMI="${SEED_AMI_PINNED}"
+else
+  SEED_AMI=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-images \
+    --owners "${OWNER}" \
+    --filters "Name=name,Values=rhel7-gi-*" \
+    --query "Images[*].[ImageId,CreationDate]" \
+    --output text \
+    | sort -k2 -r \
+    | head -n1 \
+    | awk '{print $1}')
+fi
 
 if [ -z "${SEED_AMI}" ]; then
   echo "ERROR: seed AMI not found..."
@@ -243,7 +292,9 @@ packer build \
   --var unix_epoch_time="${UNIX_EPOCH_TIME}" \
   app.json  2>&1 | tee output.txt
 
-AMI_ID=$(cat output.txt \
+OUTPUT=$(< output.txt)
+
+AMI_ID=$(echo "${OUTPUT}" \
   | awk 'match($0, /ami-.*/) { print substr($0, RSTART, RLENGTH) }' \
   | tail -1 \
   | tr -d '\000-\011\013\014\016-\037' \
@@ -251,6 +302,14 @@ AMI_ID=$(cat output.txt \
 
 # Add name tag to AMI
 
-aws --region "${AWS_DEFAULT_REGION}" ec2 create-tags \
-  --resources "${AMI_ID}" \
-  --tags "Key=Name,Value=${TARGET_CMS_ENV}-ami"
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  aws --region "${AWS_DEFAULT_REGION}" ec2 create-tags \
+    --resources "${AMI_ID}" \
+    --tags "Key=Name,Value=${TARGET_CMS_ENV}-ami"
+else
+  aws --region "${AWS_DEFAULT_REGION}" ec2 create-tags \
+    --resources "${AMI_ID}" \
+    --tags "Key=Name,Value=${TARGET_CMS_ENV}-ami" \
+    1> /dev/null \
+    2> /dev/null
+fi

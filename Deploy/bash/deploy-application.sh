@@ -1,7 +1,12 @@
 #!/bin/bash
 
-set -e #Exit on first error
-set -x #Be verbose
+set -e # Turn on exit on error
+set +x # <-- Do not change this value!
+       # Logging is turned on in a later step based on CLOUD_TAMER_PARAM.
+       # CLOUD_TAMER_PARAM = false (Jenkins assumed; verbose logging turned off)
+       # CLOUD_TAMER_PARAM = true (Dev machine assumed; verbose logging turned on)
+       # NOTE: Setting the CLOUD_TAMER_PARAM to a value that does not match the
+       #       assumed host machine will cause the script to fail.
 
 #
 # Change to working directory
@@ -46,8 +51,26 @@ fi
 if [ "${CLOUD_TAMER_PARAM}" != "false" ] && [ "${CLOUD_TAMER_PARAM}" != "true" ]; then
   echo "ERROR: CLOUD_TAMER_PARAM parameter must be true or false"
   exit 1
-else
+elif [ "${CLOUD_TAMER_PARAM}" == "false" ]; then
+
+  # Turn off verbose logging for Jenkins jobs
+  set +x
+  echo "Don't print commands and their arguments as they are executed."
   CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
+
+  # Import the "get temporary AWS credentials via AWS STS assume role" function
+  source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh"
+
+else # [ "${CLOUD_TAMER_PARAM}" == "true" ]
+
+  # Turn on verbose logging for development machine testing
+  set -x
+  echo "Print commands and their arguments as they are executed."
+  CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
+
+  # Import the "get temporary AWS credentials via CloudTamer API" function
+  source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh"
+
 fi
 
 # Set whether load balancer is internal based on "internet-facing" parameter
@@ -166,10 +189,20 @@ fi
 
 # Reset logging
 
-echo "Setting terraform debug level to $DEBUG_LEVEL..."
-export TF_LOG=$DEBUG_LEVEL
-export TF_LOG_PATH=/var/log/terraform/tf.log
-rm -f /var/log/terraform/tf.log
+if [ "${CLOUD_TAMER}" == "true" ]; then
+
+  # Enable terraform logging on development machine
+  echo "Setting terraform debug level to $DEBUG_LEVEL..."
+  export TF_LOG=$DEBUG_LEVEL
+  export TF_LOG_PATH=/var/log/terraform/tf.log
+  rm -f /var/log/terraform/tf.log
+
+else
+
+  # Disable terraform logging on Jenkins
+  export TF_LOG=
+
+fi
 
 #
 # Configure docker environment
@@ -221,7 +254,13 @@ terraform validate
 echo "Enabling KMS key..."
 cd "${START_DIR}/.."
 cd python3
-./enable-kms-key.py "${KMS_KEY_ID}"
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  ./enable-kms-key.py "${KMS_KEY_ID}"
+else
+  ./enable-kms-key.py "${KMS_KEY_ID}" \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 #
 # Get secrets
@@ -660,7 +699,14 @@ fi
 echo "Enabling KMS key..."
 cd "${START_DIR}/.."
 cd python3
-./enable-kms-key.py "${MGMT_KMS_KEY_ID}"
+
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  ./enable-kms-key.py "${MGMT_KMS_KEY_ID}"
+else
+  ./enable-kms-key.py "${MGMT_KMS_KEY_ID}" \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 # Set environment to the AWS account where the shared ECR repository is maintained
 
@@ -673,8 +719,15 @@ echo "Build and push API and worker to ECR..."
 
 # Log on to ECR
 
-aws --region "${AWS_DEFAULT_REGION}" ecr get-login-password \
-  | docker login --username AWS --password-stdin "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}.dkr.ecr.us-east-1.amazonaws.com"
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  aws --region "${AWS_DEFAULT_REGION}" ecr get-login-password \
+    | docker login --username AWS --password-stdin "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}.dkr.ecr.us-east-1.amazonaws.com"
+else
+  aws --region "${AWS_DEFAULT_REGION}" ecr get-login-password \
+    | docker login --username AWS --password-stdin "${CMS_ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}.dkr.ecr.us-east-1.amazonaws.com" \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 # Build API and worker (if creating a new image)
 
@@ -716,8 +769,15 @@ API_ECR_REPO_URI=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-repositorie
   --query "repositories[?repositoryName == 'ab2d_api'].repositoryUri" \
   --output text)
 if [ -z "${API_ECR_REPO_URI}" ]; then
-  aws --region "${AWS_DEFAULT_REGION}" ecr create-repository \
-    --repository-name "ab2d_api"
+  if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+    aws --region "${AWS_DEFAULT_REGION}" ecr create-repository \
+      --repository-name "ab2d_api"
+  else
+    aws --region "${AWS_DEFAULT_REGION}" ecr create-repository \
+      --repository-name "ab2d_api" \
+      1> /dev/null \
+      2> /dev/null
+  fi
   API_ECR_REPO_URI=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-repositories \
     --query "repositories[?repositoryName == 'ab2d_api'].repositoryUri" \
     --output text)
@@ -733,9 +793,18 @@ ECR_REPO_AWS_ACCOUNT=$(aws --region "${AWS_DEFAULT_REGION}" sts get-caller-ident
 
 cd "${START_DIR}/.."
 cd "terraform/environments/${CMS_ECR_REPO_ENV}"
-aws --region "${AWS_DEFAULT_REGION}" ecr set-repository-policy \
-  --repository-name ab2d_api \
-  --policy-text file://ab2d-ecr-policy.json
+
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  aws --region "${AWS_DEFAULT_REGION}" ecr set-repository-policy \
+    --repository-name ab2d_api \
+    --policy-text file://ab2d-ecr-policy.json
+else
+  aws --region "${AWS_DEFAULT_REGION}" ecr set-repository-policy \
+    --repository-name ab2d_api \
+    --policy-text file://ab2d-ecr-policy.json \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 # Tag and push two copies (image version and latest version) of API docker image to ECR
 # - image version keeps track of the master commit number (e.g. ab2d-dev-latest-3d0905b)
@@ -753,8 +822,15 @@ WORKER_ECR_REPO_URI=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-reposito
   --query "repositories[?repositoryName == 'ab2d_worker'].repositoryUri" \
   --output text)
 if [ -z "${WORKER_ECR_REPO_URI}" ]; then
-  aws --region "${AWS_DEFAULT_REGION}" ecr create-repository \
-    --repository-name "ab2d_worker"
+  if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+    aws --region "${AWS_DEFAULT_REGION}" ecr create-repository \
+      --repository-name "ab2d_worker"
+  else
+    aws --region "${AWS_DEFAULT_REGION}" ecr create-repository \
+      --repository-name "ab2d_worker" \
+      1> /dev/null \
+      2> /dev/null
+  fi
   WORKER_ECR_REPO_URI=$(aws --region "${AWS_DEFAULT_REGION}" ecr describe-repositories \
     --query "repositories[?repositoryName == 'ab2d_worker'].repositoryUri" \
     --output text)
@@ -764,9 +840,18 @@ fi
 
 cd "${START_DIR}/.."
 cd "terraform/environments/${CMS_ECR_REPO_ENV}"
-aws --region "${AWS_DEFAULT_REGION}" ecr set-repository-policy \
-  --repository-name ab2d_worker \
-  --policy-text file://ab2d-ecr-policy.json
+
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  aws --region "${AWS_DEFAULT_REGION}" ecr set-repository-policy \
+    --repository-name ab2d_worker \
+    --policy-text file://ab2d-ecr-policy.json
+else
+  aws --region "${AWS_DEFAULT_REGION}" ecr set-repository-policy \
+    --repository-name ab2d_worker \
+    --policy-text file://ab2d-ecr-policy.json \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 # Tag and push two copies (image version and latest version) of worker docker image to ECR
 # - image version keeps track of the master commit number (e.g. ab2d-dev-latest-3d0905b)
@@ -788,10 +873,19 @@ IMAGES_TO_DELETE=$(aws --region "${AWS_DEFAULT_REGION}" ecr list-images \
 
 # Delete untagged images in the api repository
 
-aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
-  --repository-name ab2d_api \
-  --image-ids "$IMAGES_TO_DELETE" \
-  || true
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
+    --repository-name ab2d_api \
+    --image-ids "$IMAGES_TO_DELETE" \
+    || true
+else
+  aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
+    --repository-name ab2d_api \
+    --image-ids "$IMAGES_TO_DELETE" \
+    || true \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 # Get old 'latest-commit' api tag
 
@@ -816,6 +910,16 @@ if [ -n "${API_OLD_LATEST_COMMIT_TAG}" ]; then
 
   # Get manifest of tag to rename
 
+  if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+
+    # Turn off verbose logging to prevent the need for user interaction when run from terminal
+
+    set +x
+
+  fi
+
+  # Get manifest of tag to rename
+
   MANIFEST=$(aws --region "${AWS_DEFAULT_REGION}" ecr batch-get-image \
     --repository-name ab2d_api \
     --image-ids imageTag="${API_OLD_LATEST_COMMIT_TAG}" \
@@ -825,17 +929,42 @@ if [ -n "${API_OLD_LATEST_COMMIT_TAG}" ]; then
   # Add renamed api tag
 
   if [ -n "${MANIFEST}" ]; then
-    aws --region "${AWS_DEFAULT_REGION}" ecr put-image \
-      --repository-name ab2d_api \
-      --image-tag "${RENAME_API_OLD_LATEST_COMMIT_TAG}" \
-      --image-manifest "${MANIFEST}"
+    if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+      aws --region "${AWS_DEFAULT_REGION}" ecr put-image \
+        --repository-name ab2d_api \
+        --image-tag "${RENAME_API_OLD_LATEST_COMMIT_TAG}" \
+        --image-manifest "${MANIFEST}"
+    else
+      aws --region "${AWS_DEFAULT_REGION}" ecr put-image \
+        --repository-name ab2d_api \
+        --image-tag "${RENAME_API_OLD_LATEST_COMMIT_TAG}" \
+        --image-manifest "${MANIFEST}" \
+        1> /dev/null \
+        2> /dev/null
+    fi
+  fi
+
+  if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+
+    # Turn on verbose logging
+
+    set -x
+
   fi
 
   # Remove old api tag
 
-  aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
-    --repository-name ab2d_api \
-    --image-ids imageTag="${API_OLD_LATEST_COMMIT_TAG}"
+  if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+    aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
+      --repository-name ab2d_api \
+      --image-ids imageTag="${API_OLD_LATEST_COMMIT_TAG}"
+  else
+    aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
+      --repository-name ab2d_api \
+      --image-ids imageTag="${API_OLD_LATEST_COMMIT_TAG}" \
+      1> /dev/null \
+      2> /dev/null
+  fi
 
 fi
 
@@ -849,10 +978,19 @@ IMAGES_TO_DELETE=$(aws --region "${AWS_DEFAULT_REGION}" ecr list-images \
 
 # Delete untagged images in the worker repository
 
-aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
-  --repository-name ab2d_worker \
-  --image-ids "$IMAGES_TO_DELETE" \
-  || true
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
+    --repository-name ab2d_worker \
+    --image-ids "$IMAGES_TO_DELETE" \
+    || true
+else
+  aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
+    --repository-name ab2d_worker \
+    --image-ids "$IMAGES_TO_DELETE" \
+    || true \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 # Get old 'latest-commit' worker tag
 
@@ -875,6 +1013,18 @@ if [ -n "${WORKER_OLD_LATEST_COMMIT_TAG}" ]; then
 
   RENAME_WORKER_OLD_LATEST_COMMIT_TAG=${WORKER_OLD_LATEST_COMMIT_TAG/'-latest-'/'-'}
 
+  # Turn off verbose logging to prevent the need for user interaction when run from terminal
+
+  # Get manifest of tag to rename
+
+  if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+
+    # Turn off verbose logging to prevent the need for user interaction when run from terminal
+
+    set +x
+
+  fi
+
   # Get manifest of tag to rename
 
   MANIFEST=$(aws --region "${AWS_DEFAULT_REGION}" ecr batch-get-image \
@@ -886,17 +1036,42 @@ if [ -n "${WORKER_OLD_LATEST_COMMIT_TAG}" ]; then
   # Add renamed worker tag
 
   if [ -n "${MANIFEST}" ]; then
-    aws --region "${AWS_DEFAULT_REGION}" ecr put-image \
-      --repository-name ab2d_worker \
-      --image-tag "${RENAME_WORKER_OLD_LATEST_COMMIT_TAG}" \
-      --image-manifest "${MANIFEST}"
+    if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+      aws --region "${AWS_DEFAULT_REGION}" ecr put-image \
+        --repository-name ab2d_worker \
+        --image-tag "${RENAME_WORKER_OLD_LATEST_COMMIT_TAG}" \
+        --image-manifest "${MANIFEST}"
+    else
+      aws --region "${AWS_DEFAULT_REGION}" ecr put-image \
+        --repository-name ab2d_worker \
+        --image-tag "${RENAME_WORKER_OLD_LATEST_COMMIT_TAG}" \
+        --image-manifest "${MANIFEST}" \
+        1> /dev/null \
+        2> /dev/null
+    fi
+  fi
+
+  if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+
+    # Turn on verbose logging
+
+    set -x
+
   fi
 
   # Remove old worker tag
 
-  aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
-    --repository-name ab2d_worker \
-    --image-ids imageTag="${WORKER_OLD_LATEST_COMMIT_TAG}"
+  if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+    aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
+      --repository-name ab2d_worker \
+      --image-ids imageTag="${WORKER_OLD_LATEST_COMMIT_TAG}"
+  else
+    aws --region "${AWS_DEFAULT_REGION}" ecr batch-delete-image \
+      --repository-name ab2d_worker \
+      --image-ids imageTag="${WORKER_OLD_LATEST_COMMIT_TAG}" \
+      1> /dev/null \
+      2> /dev/null
+  fi
 
 fi
 
@@ -1130,83 +1305,169 @@ fi
 
 # Run automation for API and worker
 
-terraform apply \
-  --var "env=${TARGET_CMS_ENV}" \
-  --var	"aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
-  --var "ami_id=$AMI_ID" \
-  --var "current_task_definition_arn=$API_TASK_DEFINITION" \
-  --var "db_host=$DATABASE_HOST" \
-  --var "db_port=$DATABASE_PORT" \
-  --var "db_username=$DATABASE_USER" \
-  --var "db_password=$DATABASE_PASSWORD" \
-  --var "db_name=$DATABASE_NAME" \
-  --var "db_host_secret_arn=$DATABASE_HOST_SECRET_ARN" \
-  --var "db_port_secret_arn=$DATABASE_PORT_SECRET_ARN" \
-  --var "db_user_secret_arn=$DATABASE_USER_SECRET_ARN" \
-  --var "db_password_secret_arn=$DATABASE_PASSWORD_SECRET_ARN" \
-  --var "db_name_secret_arn=$DATABASE_NAME_SECRET_ARN" \
-  --var "deployer_ip_address=$DEPLOYER_IP_ADDRESS" \
-  --var "ecr_repo_aws_account=$ECR_REPO_AWS_ACCOUNT" \
-  --var "image_version=$IMAGE_VERSION" \
-  --var "new_relic_app_name=$NEW_RELIC_APP_NAME" \
-  --var "new_relic_license_key=$NEW_RELIC_LICENSE_KEY" \
-  --var "ecs_task_definition_host_port=$ALB_LISTENER_PORT" \
-  --var "host_port=$ALB_LISTENER_PORT" \
-  --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
-  --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
-  --var "alb_internal=$ALB_INTERNAL" \
-  --var "alb_security_group_ip_range=$ALB_SECURITY_GROUP_IP_RANGE" \
-  --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
-  --var "ab2d_keystore_location=${AB2D_KEYSTORE_LOCATION}" \
-  --var "ab2d_keystore_password=${AB2D_KEYSTORE_PASSWORD}" \
-  --var "ab2d_okta_jwt_issuer=${AB2D_OKTA_JWT_ISSUER}" \
-  --var "ab2d_hpms_url=${AB2D_HPMS_URL}" \
-  --var "ab2d_hpms_api_params=${AB2D_HPMS_API_PARAMS}" \
-  --var "ab2d_hpms_auth_key_id=${AB2D_HPMS_AUTH_KEY_ID}" \
-  --var "ab2d_hpms_auth_key_secret=${AB2D_HPMS_AUTH_KEY_SECRET}" \
-  --var "ab2d_slack_alert_webhooks=${AB2D_SLACK_ALERT_WEBHOOKS}" \
-  --var "ab2d_slack_trace_webhooks=${AB2D_SLACK_TRACE_WEBHOOKS}" \
-  --var "gold_image_name=${GOLD_IMAGE_NAME}" \
-  --var "ec2_desired_instance_count_api=${EC2_DESIRED_INSTANCE_COUNT_API}" \
-  --var "ec2_minimum_instance_count_api=${EC2_MINIMUM_INSTANCE_COUNT_API}" \
-  --var "ec2_maximum_instance_count_api=${EC2_MAXIMUM_INSTANCE_COUNT_API}" \
-  --target module.api \
-  --auto-approve
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  terraform apply \
+    --var "env=${TARGET_CMS_ENV}" \
+    --var	"aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
+    --var "ami_id=$AMI_ID" \
+    --var "current_task_definition_arn=$API_TASK_DEFINITION" \
+    --var "db_host=$DATABASE_HOST" \
+    --var "db_port=$DATABASE_PORT" \
+    --var "db_username=$DATABASE_USER" \
+    --var "db_password=$DATABASE_PASSWORD" \
+    --var "db_name=$DATABASE_NAME" \
+    --var "db_host_secret_arn=$DATABASE_HOST_SECRET_ARN" \
+    --var "db_port_secret_arn=$DATABASE_PORT_SECRET_ARN" \
+    --var "db_user_secret_arn=$DATABASE_USER_SECRET_ARN" \
+    --var "db_password_secret_arn=$DATABASE_PASSWORD_SECRET_ARN" \
+    --var "db_name_secret_arn=$DATABASE_NAME_SECRET_ARN" \
+    --var "deployer_ip_address=$DEPLOYER_IP_ADDRESS" \
+    --var "ecr_repo_aws_account=$ECR_REPO_AWS_ACCOUNT" \
+    --var "image_version=$IMAGE_VERSION" \
+    --var "new_relic_app_name=$NEW_RELIC_APP_NAME" \
+    --var "new_relic_license_key=$NEW_RELIC_LICENSE_KEY" \
+    --var "ecs_task_definition_host_port=$ALB_LISTENER_PORT" \
+    --var "host_port=$ALB_LISTENER_PORT" \
+    --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
+    --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
+    --var "alb_internal=$ALB_INTERNAL" \
+    --var "alb_security_group_ip_range=$ALB_SECURITY_GROUP_IP_RANGE" \
+    --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
+    --var "ab2d_keystore_location=${AB2D_KEYSTORE_LOCATION}" \
+    --var "ab2d_keystore_password=${AB2D_KEYSTORE_PASSWORD}" \
+    --var "ab2d_okta_jwt_issuer=${AB2D_OKTA_JWT_ISSUER}" \
+    --var "ab2d_hpms_url=${AB2D_HPMS_URL}" \
+    --var "ab2d_hpms_api_params=${AB2D_HPMS_API_PARAMS}" \
+    --var "ab2d_hpms_auth_key_id=${AB2D_HPMS_AUTH_KEY_ID}" \
+    --var "ab2d_hpms_auth_key_secret=${AB2D_HPMS_AUTH_KEY_SECRET}" \
+    --var "ab2d_slack_alert_webhooks=${AB2D_SLACK_ALERT_WEBHOOKS}" \
+    --var "ab2d_slack_trace_webhooks=${AB2D_SLACK_TRACE_WEBHOOKS}" \
+    --var "gold_image_name=${GOLD_IMAGE_NAME}" \
+    --var "ec2_desired_instance_count_api=${EC2_DESIRED_INSTANCE_COUNT_API}" \
+    --var "ec2_minimum_instance_count_api=${EC2_MINIMUM_INSTANCE_COUNT_API}" \
+    --var "ec2_maximum_instance_count_api=${EC2_MAXIMUM_INSTANCE_COUNT_API}" \
+    --target module.api \
+    --auto-approve
+else
+  terraform apply \
+    --var "env=${TARGET_CMS_ENV}" \
+    --var	"aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
+    --var "ami_id=$AMI_ID" \
+    --var "current_task_definition_arn=$API_TASK_DEFINITION" \
+    --var "db_host=$DATABASE_HOST" \
+    --var "db_port=$DATABASE_PORT" \
+    --var "db_username=$DATABASE_USER" \
+    --var "db_password=$DATABASE_PASSWORD" \
+    --var "db_name=$DATABASE_NAME" \
+    --var "db_host_secret_arn=$DATABASE_HOST_SECRET_ARN" \
+    --var "db_port_secret_arn=$DATABASE_PORT_SECRET_ARN" \
+    --var "db_user_secret_arn=$DATABASE_USER_SECRET_ARN" \
+    --var "db_password_secret_arn=$DATABASE_PASSWORD_SECRET_ARN" \
+    --var "db_name_secret_arn=$DATABASE_NAME_SECRET_ARN" \
+    --var "deployer_ip_address=$DEPLOYER_IP_ADDRESS" \
+    --var "ecr_repo_aws_account=$ECR_REPO_AWS_ACCOUNT" \
+    --var "image_version=$IMAGE_VERSION" \
+    --var "new_relic_app_name=$NEW_RELIC_APP_NAME" \
+    --var "new_relic_license_key=$NEW_RELIC_LICENSE_KEY" \
+    --var "ecs_task_definition_host_port=$ALB_LISTENER_PORT" \
+    --var "host_port=$ALB_LISTENER_PORT" \
+    --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
+    --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
+    --var "alb_internal=$ALB_INTERNAL" \
+    --var "alb_security_group_ip_range=$ALB_SECURITY_GROUP_IP_RANGE" \
+    --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
+    --var "ab2d_keystore_location=${AB2D_KEYSTORE_LOCATION}" \
+    --var "ab2d_keystore_password=${AB2D_KEYSTORE_PASSWORD}" \
+    --var "ab2d_okta_jwt_issuer=${AB2D_OKTA_JWT_ISSUER}" \
+    --var "ab2d_hpms_url=${AB2D_HPMS_URL}" \
+    --var "ab2d_hpms_api_params=${AB2D_HPMS_API_PARAMS}" \
+    --var "ab2d_hpms_auth_key_id=${AB2D_HPMS_AUTH_KEY_ID}" \
+    --var "ab2d_hpms_auth_key_secret=${AB2D_HPMS_AUTH_KEY_SECRET}" \
+    --var "ab2d_slack_alert_webhooks=${AB2D_SLACK_ALERT_WEBHOOKS}" \
+    --var "ab2d_slack_trace_webhooks=${AB2D_SLACK_TRACE_WEBHOOKS}" \
+    --var "gold_image_name=${GOLD_IMAGE_NAME}" \
+    --var "ec2_desired_instance_count_api=${EC2_DESIRED_INSTANCE_COUNT_API}" \
+    --var "ec2_minimum_instance_count_api=${EC2_MINIMUM_INSTANCE_COUNT_API}" \
+    --var "ec2_maximum_instance_count_api=${EC2_MAXIMUM_INSTANCE_COUNT_API}" \
+    --target module.api \
+    --auto-approve \
+    1> /dev/null \
+    2> /dev/null
+fi
 
-terraform apply \
-  --var "env=${TARGET_CMS_ENV}" \
-  --var "aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
-  --var "ami_id=$AMI_ID" \
-  --var "current_task_definition_arn=$WORKER_TASK_DEFINITION" \
-  --var "db_host=$DATABASE_HOST" \
-  --var "db_port=$DATABASE_PORT" \
-  --var "db_username=$DATABASE_USER" \
-  --var "db_password=$DATABASE_PASSWORD" \
-  --var "db_name=$DATABASE_NAME" \
-  --var "db_host_secret_arn=$DATABASE_HOST_SECRET_ARN" \
-  --var "db_port_secret_arn=$DATABASE_PORT_SECRET_ARN" \
-  --var "db_user_secret_arn=$DATABASE_USER_SECRET_ARN" \
-  --var "db_password_secret_arn=$DATABASE_PASSWORD_SECRET_ARN" \
-  --var "db_name_secret_arn=$DATABASE_NAME_SECRET_ARN" \
-  --var "ecr_repo_aws_account=$ECR_REPO_AWS_ACCOUNT" \
-  --var "image_version=$IMAGE_VERSION" \
-  --var "bfd_url=$BFD_URL" \
-  --var "bfd_keystore_location=$BFD_KEYSTORE_LOCATION" \
-  --var "bfd_keystore_password=$BFD_KEYSTORE_PASSWORD" \
-  --var "hicn_hash_pepper=$HICN_HASH_PEPPER" \
-  --var "hicn_hash_iter=$HICN_HASH_ITER" \
-  --var "bfd_keystore_file_name=$BFD_KEYSTORE_FILE_NAME" \
-  --var "new_relic_app_name=$NEW_RELIC_APP_NAME" \
-  --var "new_relic_license_key=$NEW_RELIC_LICENSE_KEY" \
-  --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
-  --var "ab2d_slack_alert_webhooks=${AB2D_SLACK_ALERT_WEBHOOKS}" \
-  --var "ab2d_slack_trace_webhooks=${AB2D_SLACK_TRACE_WEBHOOKS}" \
-  --var "gold_image_name=${GOLD_IMAGE_NAME}" \
-  --var "ec2_desired_instance_count_worker=${EC2_DESIRED_INSTANCE_COUNT_WORKER}" \
-  --var "ec2_minimum_instance_count_worker=${EC2_MINIMUM_INSTANCE_COUNT_WORKER}" \
-  --var "ec2_maximum_instance_count_worker=${EC2_MAXIMUM_INSTANCE_COUNT_WORKER}" \
-  --target module.worker \
-  --auto-approve
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  terraform apply \
+    --var "env=${TARGET_CMS_ENV}" \
+    --var "aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
+    --var "ami_id=$AMI_ID" \
+    --var "current_task_definition_arn=$WORKER_TASK_DEFINITION" \
+    --var "db_host=$DATABASE_HOST" \
+    --var "db_port=$DATABASE_PORT" \
+    --var "db_username=$DATABASE_USER" \
+    --var "db_password=$DATABASE_PASSWORD" \
+    --var "db_name=$DATABASE_NAME" \
+    --var "db_host_secret_arn=$DATABASE_HOST_SECRET_ARN" \
+    --var "db_port_secret_arn=$DATABASE_PORT_SECRET_ARN" \
+    --var "db_user_secret_arn=$DATABASE_USER_SECRET_ARN" \
+    --var "db_password_secret_arn=$DATABASE_PASSWORD_SECRET_ARN" \
+    --var "db_name_secret_arn=$DATABASE_NAME_SECRET_ARN" \
+    --var "ecr_repo_aws_account=$ECR_REPO_AWS_ACCOUNT" \
+    --var "image_version=$IMAGE_VERSION" \
+    --var "bfd_url=$BFD_URL" \
+    --var "bfd_keystore_location=$BFD_KEYSTORE_LOCATION" \
+    --var "bfd_keystore_password=$BFD_KEYSTORE_PASSWORD" \
+    --var "hicn_hash_pepper=$HICN_HASH_PEPPER" \
+    --var "hicn_hash_iter=$HICN_HASH_ITER" \
+    --var "bfd_keystore_file_name=$BFD_KEYSTORE_FILE_NAME" \
+    --var "new_relic_app_name=$NEW_RELIC_APP_NAME" \
+    --var "new_relic_license_key=$NEW_RELIC_LICENSE_KEY" \
+    --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
+    --var "ab2d_slack_alert_webhooks=${AB2D_SLACK_ALERT_WEBHOOKS}" \
+    --var "ab2d_slack_trace_webhooks=${AB2D_SLACK_TRACE_WEBHOOKS}" \
+    --var "gold_image_name=${GOLD_IMAGE_NAME}" \
+    --var "ec2_desired_instance_count_worker=${EC2_DESIRED_INSTANCE_COUNT_WORKER}" \
+    --var "ec2_minimum_instance_count_worker=${EC2_MINIMUM_INSTANCE_COUNT_WORKER}" \
+    --var "ec2_maximum_instance_count_worker=${EC2_MAXIMUM_INSTANCE_COUNT_WORKER}" \
+    --target module.worker \
+    --auto-approve
+else
+  terraform apply \
+    --var "env=${TARGET_CMS_ENV}" \
+    --var "aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
+    --var "ami_id=$AMI_ID" \
+    --var "current_task_definition_arn=$WORKER_TASK_DEFINITION" \
+    --var "db_host=$DATABASE_HOST" \
+    --var "db_port=$DATABASE_PORT" \
+    --var "db_username=$DATABASE_USER" \
+    --var "db_password=$DATABASE_PASSWORD" \
+    --var "db_name=$DATABASE_NAME" \
+    --var "db_host_secret_arn=$DATABASE_HOST_SECRET_ARN" \
+    --var "db_port_secret_arn=$DATABASE_PORT_SECRET_ARN" \
+    --var "db_user_secret_arn=$DATABASE_USER_SECRET_ARN" \
+    --var "db_password_secret_arn=$DATABASE_PASSWORD_SECRET_ARN" \
+    --var "db_name_secret_arn=$DATABASE_NAME_SECRET_ARN" \
+    --var "ecr_repo_aws_account=$ECR_REPO_AWS_ACCOUNT" \
+    --var "image_version=$IMAGE_VERSION" \
+    --var "bfd_url=$BFD_URL" \
+    --var "bfd_keystore_location=$BFD_KEYSTORE_LOCATION" \
+    --var "bfd_keystore_password=$BFD_KEYSTORE_PASSWORD" \
+    --var "hicn_hash_pepper=$HICN_HASH_PEPPER" \
+    --var "hicn_hash_iter=$HICN_HASH_ITER" \
+    --var "bfd_keystore_file_name=$BFD_KEYSTORE_FILE_NAME" \
+    --var "new_relic_app_name=$NEW_RELIC_APP_NAME" \
+    --var "new_relic_license_key=$NEW_RELIC_LICENSE_KEY" \
+    --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
+    --var "ab2d_slack_alert_webhooks=${AB2D_SLACK_ALERT_WEBHOOKS}" \
+    --var "ab2d_slack_trace_webhooks=${AB2D_SLACK_TRACE_WEBHOOKS}" \
+    --var "gold_image_name=${GOLD_IMAGE_NAME}" \
+    --var "ec2_desired_instance_count_worker=${EC2_DESIRED_INSTANCE_COUNT_WORKER}" \
+    --var "ec2_minimum_instance_count_worker=${EC2_MINIMUM_INSTANCE_COUNT_WORKER}" \
+    --var "ec2_maximum_instance_count_worker=${EC2_MAXIMUM_INSTANCE_COUNT_WORKER}" \
+    --target module.worker \
+    --auto-approve \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 #
 # Get the correct target group arn for CloudWatch
@@ -1227,30 +1488,59 @@ cd "terraform/environments/${TARGET_CMS_ENV}"
 
 echo "Deploy CloudWatch..."
 
-terraform apply \
-  --target module.cloudwatch \
-  --var "env=${TARGET_CMS_ENV}" \
-  --var "ami_id=$AMI_ID" \
-  --var "ecs_task_definition_host_port=$ALB_LISTENER_PORT" \
-  --var "host_port=$ALB_LISTENER_PORT" \
-  --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
-  --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
-  --var "alb_internal=$ALB_INTERNAL" \
-  --var "alb_security_group_ip_range=$ALB_SECURITY_GROUP_IP_RANGE" \
-  --var "gold_image_name=${GOLD_IMAGE_NAME}" \
-  --var "target_group_arn_suffix=${TARGET_GROUP_ARN_SUFFIX}" \
-  --auto-approve
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  terraform apply \
+    --target module.cloudwatch \
+    --var "env=${TARGET_CMS_ENV}" \
+    --var "ami_id=$AMI_ID" \
+    --var "ecs_task_definition_host_port=$ALB_LISTENER_PORT" \
+    --var "host_port=$ALB_LISTENER_PORT" \
+    --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
+    --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
+    --var "alb_internal=$ALB_INTERNAL" \
+    --var "alb_security_group_ip_range=$ALB_SECURITY_GROUP_IP_RANGE" \
+    --var "gold_image_name=${GOLD_IMAGE_NAME}" \
+    --var "target_group_arn_suffix=${TARGET_GROUP_ARN_SUFFIX}" \
+    --auto-approve
+else
+  terraform apply \
+    --target module.cloudwatch \
+    --var "env=${TARGET_CMS_ENV}" \
+    --var "ami_id=$AMI_ID" \
+    --var "ecs_task_definition_host_port=$ALB_LISTENER_PORT" \
+    --var "host_port=$ALB_LISTENER_PORT" \
+    --var "alb_listener_protocol=$ALB_LISTENER_PROTOCOL" \
+    --var "alb_listener_certificate_arn=$ALB_LISTENER_CERTIFICATE_ARN" \
+    --var "alb_internal=$ALB_INTERNAL" \
+    --var "alb_security_group_ip_range=$ALB_SECURITY_GROUP_IP_RANGE" \
+    --var "gold_image_name=${GOLD_IMAGE_NAME}" \
+    --var "target_group_arn_suffix=${TARGET_GROUP_ARN_SUFFIX}" \
+    --auto-approve \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 #
 # Deploy AWS WAF
 #
 
-terraform apply \
-  --var "env=${TARGET_CMS_ENV}" \
-  --var "alb_internal=$ALB_INTERNAL" \
-  --var "alb_security_group_ip_range=$ALB_SECURITY_GROUP_IP_RANGE" \
-  --target module.waf \
-  --auto-approve
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  terraform apply \
+    --var "env=${TARGET_CMS_ENV}" \
+    --var "alb_internal=$ALB_INTERNAL" \
+    --var "alb_security_group_ip_range=$ALB_SECURITY_GROUP_IP_RANGE" \
+    --target module.waf \
+    --auto-approve
+else
+  terraform apply \
+    --var "env=${TARGET_CMS_ENV}" \
+    --var "alb_internal=$ALB_INTERNAL" \
+    --var "alb_security_group_ip_range=$ALB_SECURITY_GROUP_IP_RANGE" \
+    --target module.waf \
+    --auto-approve \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 #
 # Apply AWS Shield standard to the application load balancer
@@ -1260,10 +1550,19 @@ terraform apply \
 # the application load balancer. This section may be needed later if AWS Shield Advanced is
 # applied instead.
 
-terraform apply \
-  --var "env=${TARGET_CMS_ENV}" \
-  --target module.shield \
-  --auto-approve
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  terraform apply \
+    --var "env=${TARGET_CMS_ENV}" \
+    --target module.shield \
+    --auto-approve
+else
+  terraform apply \
+    --var "env=${TARGET_CMS_ENV}" \
+    --target module.shield \
+    --auto-approve \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 #
 # Ensure new autoscaling group is running containers
@@ -1316,13 +1615,24 @@ else
       | tr '""' ' ' \
       | tr -d '"')
 
-    # shellcheck disable=SC2086
-    # $OLD_API_INSTANCE_LIST format is required here
-    aws --region "${AWS_DEFAULT_REGION}" ecs update-container-instances-state \
-      --cluster "${TARGET_CMS_ENV}-api" \
-      --status DRAINING \
-      --container-instances $OLD_API_INSTANCE_LIST \
-      1> /dev/null
+    if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+      # shellcheck disable=SC2086
+      # $OLD_API_INSTANCE_LIST format is required here
+      aws --region "${AWS_DEFAULT_REGION}" ecs update-container-instances-state \
+        --cluster "${TARGET_CMS_ENV}-api" \
+        --status DRAINING \
+        --container-instances $OLD_API_INSTANCE_LIST \
+        1> /dev/null
+    else
+      # shellcheck disable=SC2086
+      # $OLD_API_INSTANCE_LIST format is required here
+      aws --region "${AWS_DEFAULT_REGION}" ecs update-container-instances-state \
+        --cluster "${TARGET_CMS_ENV}-api" \
+        --status DRAINING \
+        --container-instances $OLD_API_INSTANCE_LIST \
+        1> /dev/null \
+        2> /dev/null
+    fi
 
   fi
   if [ -n "${OLD_WORKER_CONTAINER_INSTANCES}" ]; then
@@ -1333,13 +1643,24 @@ else
       | tr '""' ' ' \
       | tr -d '"')
 
-    # shellcheck disable=SC2086
-    # $OLD_WORKER_INSTANCE_LIST format is required here
-    aws --region "${AWS_DEFAULT_REGION}" ecs update-container-instances-state \
-      --cluster "${TARGET_CMS_ENV}-worker" \
-      --status DRAINING \
-      --container-instances $OLD_WORKER_INSTANCE_LIST \
-      1> /dev/null
+    if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+      # shellcheck disable=SC2086
+      # $OLD_WORKER_INSTANCE_LIST format is required here
+      aws --region "${AWS_DEFAULT_REGION}" ecs update-container-instances-state \
+        --cluster "${TARGET_CMS_ENV}-worker" \
+        --status DRAINING \
+        --container-instances $OLD_WORKER_INSTANCE_LIST \
+        1> /dev/null
+    else
+      # shellcheck disable=SC2086
+      # $OLD_WORKER_INSTANCE_LIST format is required here
+      aws --region "${AWS_DEFAULT_REGION}" ecs update-container-instances-state \
+        --cluster "${TARGET_CMS_ENV}-worker" \
+        --status DRAINING \
+        --container-instances $OLD_WORKER_INSTANCE_LIST \
+        1> /dev/null \
+        2> /dev/null
+    fi
 
     echo "Allowing all instances to drain for 60 seconds before proceeding..."
     sleep 60
@@ -1364,9 +1685,19 @@ if [ "${API_ASG_COUNT}" -gt 1 ]; then
       | sort \
       | head -n "${i}" \
       | tail -n 1)
-    aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-auto-scaling-group \
-      --auto-scaling-group-name "${DUPLICATIVE_API_ASG}" \
-      --force-delete || true
+
+    if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+      aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-auto-scaling-group \
+        --auto-scaling-group-name "${DUPLICATIVE_API_ASG}" \
+        --force-delete || true
+    else
+      aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-auto-scaling-group \
+        --auto-scaling-group-name "${DUPLICATIVE_API_ASG}" \
+        --force-delete || true \
+        1> /dev/null \
+        2> /dev/null
+    fi
+
   done
 fi
 
@@ -1388,9 +1719,18 @@ if [ "${WORKER_ASG_COUNT}" -gt 1 ]; then
       | sort \
       | head -n "${i}" \
       | tail -n 1)
-    aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-auto-scaling-group \
-      --auto-scaling-group-name "${DUPLICATIVE_WORKER_ASG}" \
-      --force-delete || true
+
+    if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+      aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-auto-scaling-group \
+        --auto-scaling-group-name "${DUPLICATIVE_WORKER_ASG}" \
+        --force-delete || true
+    else
+      aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-auto-scaling-group \
+        --auto-scaling-group-name "${DUPLICATIVE_WORKER_ASG}" \
+        --force-delete || true \
+        1> /dev/null \
+        2> /dev/null
+    fi
   done
 fi
 
@@ -1444,8 +1784,16 @@ else
       | head -n1 \
       | awk '{print $1}')
 
-    aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-launch-configuration \
-      --launch-configuration-name "${OLD_LAUNCH_CONFIGURATION}"
+    if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+      aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-launch-configuration \
+        --launch-configuration-name "${OLD_LAUNCH_CONFIGURATION}"
+    else
+      aws --region "${AWS_DEFAULT_REGION}" autoscaling delete-launch-configuration \
+        --launch-configuration-name "${OLD_LAUNCH_CONFIGURATION}" \
+        1> /dev/null \
+        2> /dev/null
+    fi
+
     sleep 5
 
     # Note that "*-test-*" and "*-validation-*" launch configurations will be excluded
@@ -1481,8 +1829,16 @@ else
         | head -n1 \
         | awk '{print $1}')
 
-      aws --region "${AWS_DEFAULT_REGION}" elbv2 delete-target-group \
-        --target-group-arn "${OLD_TARGET_GROUP_ARN}"
+      if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+        aws --region "${AWS_DEFAULT_REGION}" elbv2 delete-target-group \
+          --target-group-arn "${OLD_TARGET_GROUP_ARN}"
+      else
+        aws --region "${AWS_DEFAULT_REGION}" elbv2 delete-target-group \
+          --target-group-arn "${OLD_TARGET_GROUP_ARN}" \
+          1> /dev/null \
+          2> /dev/null
+      fi
+
     done
   fi
 fi

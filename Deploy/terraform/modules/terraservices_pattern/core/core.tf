@@ -218,6 +218,26 @@ resource "aws_iam_policy" "cloud_watch_logs_policy" {
   policy = data.aws_iam_policy_document.instance_role_cloud_watch_logs_policy.json
 }
 
+# Create Ab2dSsmPolicy
+
+data "aws_iam_policy_document" "instance_role_ssm_policy" {
+  statement {
+    actions = [
+      "ssm:GetParameters"
+    ]
+
+    resources = [
+      "arn:aws:ssm:*:*:parameter/aws/service/ecs*"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "ssm_policy" {
+  name   = "${var.env_pascal_case}SsmPolicy"
+  path   = "/delegatedadmin/developer/"
+  policy = data.aws_iam_policy_document.instance_role_ssm_policy.json
+}
+
 # Attach policies to Instance Role
 
 resource "aws_iam_role_policy_attachment" "instance_role_kms_policy_attach" {
@@ -238,6 +258,11 @@ resource "aws_iam_role_policy_attachment" "instance_role_s3_access_policy_attach
 resource "aws_iam_role_policy_attachment" "instance_role_cloud_watch_logs_policy_attach" {
   role       = aws_iam_role.ab2d_instance_role.name
   policy_arn = aws_iam_policy.cloud_watch_logs_policy.arn
+}
+
+resource "aws_iam_role_policy_attachment" "instance_role_ssm_policy_attach" {
+  role       = aws_iam_role.ab2d_instance_role.name
+  policy_arn = aws_iam_policy.ssm_policy.arn
 }
 
 resource "aws_iam_role_policy_attachment" "amazon_ec2_container_service_for_ec2_role_attach" {

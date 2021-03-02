@@ -225,6 +225,24 @@ psql \
   --username="${DATABASE_USER}" \
   --command="TRUNCATE ${DATABASE_SCHEMA_NAME}.user_role RESTART IDENTITY CASCADE;"
 
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
+  --command="TRUNCATE ${DATABASE_SCHEMA_NAME}.bene_coverage_period RESTART IDENTITY CASCADE;"
+
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
+  --command="TRUNCATE ${DATABASE_SCHEMA_NAME}.event_bene_coverage_search_status_change RESTART IDENTITY CASCADE;"
+
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
+  --command="TRUNCATE ${DATABASE_SCHEMA_NAME}.coverage RESTART IDENTITY CASCADE;"
+
 # Restore data from CSVs to target tables
 
 cd "${HOME}/database_backup/${SOURCE_CMS_ENV}/csv"
@@ -258,3 +276,41 @@ psql \
   --host="${DATABASE_HOST}" \
   --username="${DATABASE_USER}" \
   --command="\\COPY ${DATABASE_SCHEMA_NAME}.user_role FROM '${DATABASE_SCHEMA_NAME}.user_role.csv' WITH (FORMAT CSV);"
+
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
+  --command="\\COPY ${DATABASE_SCHEMA_NAME}.bene_coverage_period FROM '${DATABASE_SCHEMA_NAME}.bene_coverage_period.csv' WITH (FORMAT CSV);"
+
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
+  --command="\\COPY ${DATABASE_SCHEMA_NAME}.event_bene_coverage_search_status_change FROM '${DATABASE_SCHEMA_NAME}.event_bene_coverage_search_status_change.csv' WITH (FORMAT CSV);"
+
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
+  --command="\\COPY ${DATABASE_SCHEMA_NAME}.coverage FROM '${DATABASE_SCHEMA_NAME}.coverage.csv' WITH (FORMAT CSV);"
+
+# Reset sequences
+
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
+  --command="SELECT setval('bene_coverage_period_id_seq', (SELECT MAX(id) FROM ${DATABASE_SCHEMA_NAME}.bene_coverage_period));"
+
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
+  --command="SELECT setval('event_bene_coverage_search_status_change_id_seq', (SELECT MAX(id) FROM ${DATABASE_SCHEMA_NAME}.event_bene_coverage_search_status_change));"
+
+psql \
+  --dbname="${DATABASE_NAME}" \
+  --host="${DATABASE_HOST}" \
+  --username="${DATABASE_USER}" \
+  --command="SELECT setval('coverage_id_seq', (SELECT MAX(id) FROM ${DATABASE_SCHEMA_NAME}.coverage));"

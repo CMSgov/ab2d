@@ -1,7 +1,12 @@
 #!/bin/bash
 
-set -e #Exit on first error
-set -x #Be verbose
+set -e # Turn on exit on error
+set +x # <-- Do not change this value!
+       # Logging is turned on in a later step based on CLOUD_TAMER_PARAM.
+       # CLOUD_TAMER_PARAM = false (Jenkins assumed; verbose logging turned off)
+       # CLOUD_TAMER_PARAM = true (Dev machine assumed; verbose logging turned on)
+       # NOTE: Setting the CLOUD_TAMER_PARAM to a value that does not match the
+       #       assumed host machine will cause the script to fail.
 
 #
 # Change to working directory
@@ -19,6 +24,7 @@ if  [ -z "${CLOUD_TAMER_PARAM}" ] \
     || [ -z "${DATABASE_SECRET_DATETIME_PARAM}" ] \
     || [ -z "${DEBUG_LEVEL_PARAM}" ] \
     || [ -z "${EC2_INSTANCE_TYPE_CONTROLLER_PARAM}" ] \
+    || [ -z "${PARENT_ENV_PARAM}" ] \
     || [ -z "${SSH_USERNAME_PARAM}" ] \
     || [ -z "${TARGET_AWS_ACCOUNT_NUMBER_PARAM}" ] \
     || [ -z "${TARGET_CMS_ENV_PARAM}" ]; then
@@ -35,8 +41,26 @@ fi
 if [ "${CLOUD_TAMER_PARAM}" != "false" ] && [ "${CLOUD_TAMER_PARAM}" != "true" ]; then
   echo "ERROR: CLOUD_TAMER_PARAM parameter must be true or false"
   exit 1
-else
+elif [ "${CLOUD_TAMER_PARAM}" == "false" ]; then
+
+  # Turn off verbose logging for Jenkins jobs
+  set +x
+  echo "Don't print commands and their arguments as they are executed."
   CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
+
+  # Import the "get temporary AWS credentials via AWS STS assume role" function
+  source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh"
+
+else # [ "${CLOUD_TAMER_PARAM}" == "true" ]
+
+  # Turn on verbose logging for development machine testing
+  set -x
+  echo "Print commands and their arguments as they are executed."
+  CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
+
+  # Import the "get temporary AWS credentials via CloudTamer API" function
+  source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh"
+
 fi
 
 #
@@ -48,6 +72,8 @@ DATABASE_SECRET_DATETIME="${DATABASE_SECRET_DATETIME_PARAM}"
 export DEBUG_LEVEL="${DEBUG_LEVEL_PARAM}"
 
 EC2_INSTANCE_TYPE_CONTROLLER="${EC2_INSTANCE_TYPE_CONTROLLER_PARAM}"
+
+PARENT_ENV="${PARENT_ENV_PARAM}"
 
 SSH_USERNAME="${SSH_USERNAME_PARAM}"
 
@@ -101,10 +127,20 @@ VPC_ID=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-vpcs \
 
 # Reset logging
 
-echo "Setting terraform debug level to $DEBUG_LEVEL..."
-export TF_LOG=$DEBUG_LEVEL
-export TF_LOG_PATH=/var/log/terraform/tf.log
-rm -f /var/log/terraform/tf.log
+if [ "${CLOUD_TAMER}" == "true" ]; then
+
+  # Enable terraform logging on development machine
+  echo "Setting terraform debug level to $DEBUG_LEVEL..."
+  export TF_LOG=$DEBUG_LEVEL
+  export TF_LOG_PATH=/var/log/terraform/tf.log
+  rm -f /var/log/terraform/tf.log
+
+else
+
+  # Disable terraform logging on Jenkins
+  export TF_LOG=
+
+fi
 
 # Initialize and validate terraform for the target environment
 
@@ -299,12 +335,25 @@ fi
 
 # Create DB instance (if doesn't exist)
 
-terraform apply \
-  --var "env=${TARGET_CMS_ENV}" \
-  --var "db_username=${DATABASE_USER}" \
-  --var "db_password=${DATABASE_PASSWORD}" \
-  --var "db_name=${DATABASE_NAME}" \
-  --target module.db --auto-approve
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  terraform apply \
+    --var "env=${TARGET_CMS_ENV}" \
+    --var "db_username=${DATABASE_USER}" \
+    --var "db_password=${DATABASE_PASSWORD}" \
+    --var "db_name=${DATABASE_NAME}" \
+    --target module.db \
+    --auto-approve
+else
+  terraform apply \
+    --var "env=${TARGET_CMS_ENV}" \
+    --var "db_username=${DATABASE_USER}" \
+    --var "db_password=${DATABASE_PASSWORD}" \
+    --var "db_name=${DATABASE_NAME}" \
+    --target module.db \
+    --auto-approve \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 DB_ENDPOINT=$(aws --region "${AWS_DEFAULT_REGION}" rds describe-db-instances \
   --query="DBInstances[?DBInstanceIdentifier=='ab2d'].Endpoint.Address" \
@@ -339,16 +388,31 @@ cd "terraform/environments/${TARGET_CMS_ENV}"
 
 echo "Create or update controller..."
 
-terraform apply \
-  --var "env=${TARGET_CMS_ENV}" \
-  --var "db_username=${DATABASE_USER}" \
-  --var "db_password=${DATABASE_PASSWORD}" \
-  --var "db_name=${DATABASE_NAME}" \
-  --var "deployer_ip_address=${DEPLOYER_IP_ADDRESS}" \
-  --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
-  --var "gold_image_name=${GOLD_IMAGE_NAME}" \
-  --target module.controller \
-  --auto-approve
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  terraform apply \
+    --var "env=${TARGET_CMS_ENV}" \
+    --var "db_username=${DATABASE_USER}" \
+    --var "db_password=${DATABASE_PASSWORD}" \
+    --var "db_name=${DATABASE_NAME}" \
+    --var "deployer_ip_address=${DEPLOYER_IP_ADDRESS}" \
+    --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
+    --var "gold_image_name=${GOLD_IMAGE_NAME}" \
+    --target module.controller \
+    --auto-approve
+else
+  terraform apply \
+    --var "env=${TARGET_CMS_ENV}" \
+    --var "db_username=${DATABASE_USER}" \
+    --var "db_password=${DATABASE_PASSWORD}" \
+    --var "db_name=${DATABASE_NAME}" \
+    --var "deployer_ip_address=${DEPLOYER_IP_ADDRESS}" \
+    --var "vpn_private_ip_address_cidr_range=${VPN_PRIVATE_IP_ADDRESS_CIDR_RANGE}" \
+    --var "gold_image_name=${GOLD_IMAGE_NAME}" \
+    --target module.controller \
+    --auto-approve \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 #
 # Deploy EFS
@@ -358,10 +422,19 @@ terraform apply \
 
 echo "Create or update EFS..."
 
-terraform apply \
-  --var "env=${TARGET_CMS_ENV}" \
-  --target module.efs \
-  --auto-approve
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  terraform apply \
+    --var "env=${TARGET_CMS_ENV}" \
+    --target module.efs \
+    --auto-approve
+else
+  terraform apply \
+    --var "env=${TARGET_CMS_ENV}" \
+    --target module.efs \
+    --auto-approve \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 #
 # Create or verify database
@@ -498,11 +571,23 @@ cd "${START_DIR}/.."
 cd "terraform/environments/${TARGET_CMS_ENV}"
 
 if [ "${TARGET_CMS_ENV}" != "ab2d-east-prod" ]; then
-  terraform apply \
-    --var "env=${TARGET_CMS_ENV}" \
-    --var "aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
-    --var "kinesis_firehose_bucket=${AB2D_BFD_INSIGHTS_S3_BUCKET}" \
-    --var "kinesis_firehose_kms_key_arn=${AB2D_BFD_KMS_ARN}" \
-    --target module.kinesis_firehose \
-    --auto-approve
+  if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+    terraform apply \
+      --var "env=${TARGET_CMS_ENV}" \
+      --var "aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
+      --var "kinesis_firehose_bucket=${AB2D_BFD_INSIGHTS_S3_BUCKET}" \
+      --var "kinesis_firehose_kms_key_arn=${AB2D_BFD_KMS_ARN}" \
+      --target module.kinesis_firehose \
+      --auto-approve
+  else
+    terraform apply \
+      --var "env=${TARGET_CMS_ENV}" \
+      --var "aws_account_number=${TARGET_AWS_ACCOUNT_NUMBER}" \
+      --var "kinesis_firehose_bucket=${AB2D_BFD_INSIGHTS_S3_BUCKET}" \
+      --var "kinesis_firehose_kms_key_arn=${AB2D_BFD_KMS_ARN}" \
+      --target module.kinesis_firehose \
+      --auto-approve \
+      1> /dev/null \
+      2> /dev/null
+  fi
 fi
