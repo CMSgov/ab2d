@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
+
 public class CapabilityStatementSTU3 {
     public static CapabilityStatement populateCS(String server) {
         CapabilityStatement cs = new CapabilityStatement();
@@ -24,7 +26,7 @@ public class CapabilityStatementSTU3 {
         cs.setFhirVersion(FhirVersionEnum.DSTU3.getFhirVersionString());
 
         CodeType codeType = new CodeType();
-        codeType.setValue("application/json");
+        codeType.setValue(APPLICATION_JSON);
         CodeType codeType2 = new CodeType();
         codeType2.setValue("application/fhir+json");
         cs.setFormat(List.of(codeType, codeType2));

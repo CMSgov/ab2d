@@ -7,13 +7,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import static gov.cms.ab2d.api.controller.common.ApiText.JSON;
+import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
 import static gov.cms.ab2d.common.util.Constants.*;
 
 @AllArgsConstructor
 @Slf4j
 @RestController
-@RequestMapping(produces = JSON)
+@RequestMapping(produces = APPLICATION_JSON)
 public class MaintenanceModeAPI {
 
     private final PropertiesService propertiesService;

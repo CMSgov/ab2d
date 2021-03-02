@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
+
 public class CapabilityStatementR4 {
     public static CapabilityStatement populateCS(String server) {
         SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
@@ -28,7 +30,7 @@ public class CapabilityStatementR4 {
         cs.setPurpose("Defines FHIR R4 (V2) version of AB2D bulk data download");
 
         CodeType codeType = new CodeType();
-        codeType.setValue("application/json");
+        codeType.setValue(APPLICATION_JSON);
         CodeType codeType2 = new CodeType();
         codeType2.setValue("application/fhir+json");
         cs.setFormat(List.of(codeType, codeType2));

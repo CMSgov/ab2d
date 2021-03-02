@@ -32,20 +32,19 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotBlank;
 import java.time.OffsetDateTime;
 
+import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
 import static gov.cms.ab2d.api.controller.common.ApiText.ASYNC;
-import static gov.cms.ab2d.api.controller.common.ApiText.AUTH;
 import static gov.cms.ab2d.api.controller.common.ApiText.BULK_RESPONSE;
 import static gov.cms.ab2d.api.controller.common.ApiText.BULK_RESPONSE_LONG;
 import static gov.cms.ab2d.api.controller.common.ApiText.BULK_SINCE;
 import static gov.cms.ab2d.api.controller.common.ApiText.CONTRACT_NO;
-import static gov.cms.ab2d.api.controller.common.ApiText.CONT_LOC;
-import static gov.cms.ab2d.api.controller.common.ApiText.EXPORT;
+import static gov.cms.ab2d.api.controller.common.ApiText.EXPORT_CLAIM;
 import static gov.cms.ab2d.api.controller.common.ApiText.EXPORT_STARTED;
 import static gov.cms.ab2d.api.controller.common.ApiText.EXP_PATIENT_INFO;
 import static gov.cms.ab2d.api.controller.common.ApiText.OUT_FORMAT;
 import static gov.cms.ab2d.api.controller.common.ApiText.PREFER;
 import static gov.cms.ab2d.api.controller.common.ApiText.SINCE;
-import static gov.cms.ab2d.api.controller.common.ApiText.TYPE;
+import static gov.cms.ab2d.api.controller.common.ApiText.TYPE_PARAM;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_PREFER;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT_TYPE;
@@ -54,6 +53,8 @@ import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_CONTRACT_EXPORT;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 
 /**
  * The sole REST controller for AB2D's implementation of the FHIR Bulk Data API specification.
@@ -62,7 +63,7 @@ import static gov.cms.ab2d.fhir.FhirVersion.R4;
 @Api(value = "Bulk Data Access API", description = SwaggerConstants.BULK_MAIN, tags = {"Export"})
 @RestController
 @ConditionalOnExpression("${v2.controller.enabled:false}")
-@RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {"application/json"})
+@RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {APPLICATION_JSON})
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class BulkDataAccessAPIV2 {
     private final JobService jobService;
@@ -75,7 +76,7 @@ public class BulkDataAccessAPIV2 {
 
     @ApiOperation(value = BULK_EXPORT,
         authorizations = {
-            @Authorization(value = AUTH, scopes = { @AuthorizationScope(description = EXP_PATIENT_INFO, scope = AUTH) })
+            @Authorization(value = AUTHORIZATION, scopes = { @AuthorizationScope(description = EXP_PATIENT_INFO, scope = AUTHORIZATION) })
         })
     @ApiImplicitParams(value = {
             @ApiImplicitParam(name = PREFER, required = true, paramType = "header", value =
@@ -83,7 +84,7 @@ public class BulkDataAccessAPIV2 {
     )
     @ApiResponses(
             @ApiResponse(code = 202, message = EXPORT_STARTED, responseHeaders =
-            @ResponseHeader(name = CONT_LOC, description = BULK_RESPONSE, response = String.class), response = String.class)
+            @ResponseHeader(name = CONTENT_LOCATION, description = BULK_RESPONSE, response = String.class), response = String.class)
     )
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @GetMapping("/Patient/$export")
@@ -91,7 +92,7 @@ public class BulkDataAccessAPIV2 {
             HttpServletRequest request,
             @RequestHeader(name = PREFER, defaultValue = ASYNC)
             @ApiParam(value = BULK_EXPORT_TYPE, allowableValues = EOB, defaultValue = EOB)
-            @RequestParam(required = false, name = TYPE, defaultValue = EOB) String resourceTypes,
+            @RequestParam(required = false, name = TYPE_PARAM, defaultValue = EOB) String resourceTypes,
             @ApiParam(value = BULK_OUTPUT_FORMAT,
                     allowableValues = ApiCommon.ALLOWABLE_OUTPUT_FORMATS, defaultValue = NDJSON_FIRE_CONTENT_TYPE
             )
@@ -108,11 +109,11 @@ public class BulkDataAccessAPIV2 {
 
     @ApiOperation(value = BULK_CONTRACT_EXPORT,
             authorizations = {
-                    @Authorization(value = AUTH, scopes = { @AuthorizationScope(description = EXPORT, scope = AUTH) })
+                    @Authorization(value = AUTHORIZATION, scopes = { @AuthorizationScope(description = EXPORT_CLAIM, scope = AUTHORIZATION) })
             })
     @ApiResponses(
             @ApiResponse(code = 202, message = EXPORT_STARTED, responseHeaders =
-            @ResponseHeader(name = CONT_LOC, description = BULK_RESPONSE_LONG,
+            @ResponseHeader(name = CONTENT_LOCATION, description = BULK_RESPONSE_LONG,
                     response = String.class), response = String.class)
     )
     // todo: This endpoint no longer makes sense in the new model where one Okta credential maps to one Contract
@@ -123,7 +124,7 @@ public class BulkDataAccessAPIV2 {
             @ApiParam(value = CONTRACT_NO, required = true)
             @PathVariable @NotBlank String contractNumber,
             @ApiParam(value = BULK_EXPORT_TYPE, allowableValues = EOB, defaultValue = EOB)
-            @RequestParam(required = false, name = TYPE) String resourceTypes,
+            @RequestParam(required = false, name = TYPE_PARAM) String resourceTypes,
             @ApiParam(value = BULK_OUTPUT_FORMAT,
                     allowableValues = ApiCommon.ALLOWABLE_OUTPUT_FORMATS, defaultValue = NDJSON_FIRE_CONTENT_TYPE
             )

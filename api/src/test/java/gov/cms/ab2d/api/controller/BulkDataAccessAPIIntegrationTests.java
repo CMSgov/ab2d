@@ -55,6 +55,8 @@ import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
+import static org.springframework.http.HttpHeaders.EXPIRES;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -156,7 +158,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 "http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
 
         resultActions.andExpect(status().isAccepted())
-                .andExpect(header().string(CONT_LOC, statusUrl));
+                .andExpect(header().string(CONTENT_LOCATION, statusUrl));
 
         assertEquals(JobStatus.SUBMITTED, job.getStatus());
         assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
@@ -179,7 +181,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 "https://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
 
         resultActions.andExpect(status().isAccepted())
-                .andExpect(header().string(CONT_LOC, statusUrl));
+                .andExpect(header().string(CONTENT_LOCATION, statusUrl));
 
         assertEquals(JobStatus.SUBMITTED, job.getStatus());
         assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
@@ -300,7 +302,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 "http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
 
         resultActions.andExpect(status().isAccepted())
-                .andExpect(header().string(CONT_LOC, statusUrl));
+                .andExpect(header().string(CONTENT_LOCATION, statusUrl));
 
         assertEquals(JobStatus.SUBMITTED, job.getStatus());
         assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
@@ -500,7 +502,7 @@ public class BulkDataAccessAPIIntegrationTests {
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        String statusUrl = mvcResult.getResponse().getHeader(CONT_LOC);
+        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
         this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
@@ -525,7 +527,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        String statusUrl = mvcResult.getResponse().getHeader(CONT_LOC);
+        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
 
@@ -558,7 +560,7 @@ public class BulkDataAccessAPIIntegrationTests {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
 
-        String statusUrl = mvcResult.getResponse().getHeader(CONT_LOC);
+        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
@@ -617,7 +619,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
 
-        String statusUrl = mvcResult.getResponse().getHeader(CONT_LOC);
+        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
@@ -731,7 +733,7 @@ public class BulkDataAccessAPIIntegrationTests {
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        String statusUrl = mvcResult.getResponse().getHeader(CONT_LOC);
+        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
@@ -842,7 +844,7 @@ public class BulkDataAccessAPIIntegrationTests {
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        String statusUrl = mvcResult.getResponse().getHeader(CONT_LOC);
+        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
         String testFile = "test.ndjson";
@@ -891,7 +893,7 @@ public class BulkDataAccessAPIIntegrationTests {
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        String statusUrl = mvcResult.getResponse().getHeader(CONT_LOC);
+        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
@@ -946,7 +948,7 @@ public class BulkDataAccessAPIIntegrationTests {
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        String statusUrl = mvcResult.getResponse().getHeader(CONT_LOC);
+        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
@@ -986,7 +988,7 @@ public class BulkDataAccessAPIIntegrationTests {
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        String statusUrl = mvcResult.getResponse().getHeader(CONT_LOC);
+        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
@@ -1033,7 +1035,7 @@ public class BulkDataAccessAPIIntegrationTests {
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        String statusUrl = mvcResult.getResponse().getHeader(CONT_LOC);
+        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
@@ -1080,7 +1082,7 @@ public class BulkDataAccessAPIIntegrationTests {
         assertNotNull(statusUrl);
 
         resultActions.andExpect(status().isAccepted())
-                .andExpect(header().string(CONT_LOC, statusUrl));
+                .andExpect(header().string(CONTENT_LOCATION, statusUrl));
 
         assertEquals(JobStatus.SUBMITTED, job.getStatus());
         assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
@@ -1104,7 +1106,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 "http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
 
         resultActions.andExpect(status().isAccepted())
-                .andExpect(header().string(CONT_LOC, statusUrl));
+                .andExpect(header().string(CONTENT_LOCATION, statusUrl));
 
         assertEquals(JobStatus.SUBMITTED, job.getStatus());
         assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
@@ -1132,7 +1134,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 "http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
 
         resultActions.andExpect(status().isAccepted())
-                .andExpect(header().string(CONT_LOC, statusUrl));
+                .andExpect(header().string(CONTENT_LOCATION, statusUrl));
 
         assertEquals(JobStatus.SUBMITTED, job.getStatus());
         assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());

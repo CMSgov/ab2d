@@ -26,35 +26,35 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotBlank;
 import java.io.IOException;
 
-import static gov.cms.ab2d.api.controller.common.ApiText.AUTH;
 import static gov.cms.ab2d.api.controller.common.ApiText.BULK_DNLD;
 import static gov.cms.ab2d.api.controller.common.ApiText.BULK_DNLD_DSC;
-import static gov.cms.ab2d.api.controller.common.ApiText.CONTENT_TYPE;
 import static gov.cms.ab2d.api.controller.common.ApiText.CONTENT_TYPE_DESC;
 import static gov.cms.ab2d.api.controller.common.ApiText.DNLD_DESC;
-import static gov.cms.ab2d.api.controller.common.ApiText.DOWNLOAD;
+import static gov.cms.ab2d.api.controller.common.ApiText.DOWNLOADS_EXPORT_FILE;
 import static gov.cms.ab2d.api.controller.common.ApiText.DOWNLOAD_DESC;
 import static gov.cms.ab2d.api.controller.common.ApiText.FILE_NAME;
 import static gov.cms.ab2d.api.controller.common.ApiText.JOB_ID;
-import static gov.cms.ab2d.api.controller.common.ApiText.JSON;
+import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
 import static gov.cms.ab2d.api.controller.common.ApiText.NOT_FOUND;
 import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 
 @AllArgsConstructor
 @Slf4j
 @Api(value = BULK_DNLD, description = BULK_DNLD_DSC, tags = {"Download"})
 @RestController
 @ConditionalOnExpression("${v2.controller.enabled:false}")
-@RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {JSON, NDJSON_FIRE_CONTENT_TYPE})
+@RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {APPLICATION_JSON, NDJSON_FIRE_CONTENT_TYPE})
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class FileDownloadAPIV2 {
     private FileDownloadCommon fileDownloadCommon;
 
     @ApiOperation(value = DOWNLOAD_DESC, response = String.class, produces = NDJSON_FIRE_CONTENT_TYPE,
-            authorizations = { @Authorization(value = AUTH, scopes = { @AuthorizationScope(description = DOWNLOAD, scope = AUTH) }) })
+            authorizations = { @Authorization(value = AUTHORIZATION, scopes = { @AuthorizationScope(description = DOWNLOADS_EXPORT_FILE, scope = AUTHORIZATION) }) })
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = DNLD_DESC, responseHeaders = {
                     @ResponseHeader(name = CONTENT_TYPE, description = CONTENT_TYPE_DESC + NDJSON_FIRE_CONTENT_TYPE,

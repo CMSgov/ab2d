@@ -24,19 +24,19 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 
-import static gov.cms.ab2d.api.controller.common.ApiText.AUTH;
 import static gov.cms.ab2d.api.controller.common.ApiText.CAP_API;
 import static gov.cms.ab2d.api.controller.common.ApiText.CAP_DESC;
 import static gov.cms.ab2d.api.controller.common.ApiText.CAP_REQ;
 import static gov.cms.ab2d.api.controller.common.ApiText.CAP_RET;
 import static gov.cms.ab2d.api.controller.common.ApiText.CAP_STMT;
-import static gov.cms.ab2d.api.controller.common.ApiText.JSON;
+import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
 import static gov.cms.ab2d.common.util.Constants.CLIENT;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 /**
  * The sole REST controller for AB2D's implementation of the FHIR Bulk Data API capability statement.
@@ -47,14 +47,14 @@ import static gov.cms.ab2d.fhir.FhirVersion.R4;
 @Api(value = CAP_STMT, description = CAP_API, tags = {"Capabilities"})
 @RestController
 @ConditionalOnExpression("${v2.controller.enabled:true}")
-@RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {JSON, NDJSON_FIRE_CONTENT_TYPE})
+@RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {APPLICATION_JSON, NDJSON_FIRE_CONTENT_TYPE})
 public class CapabilityAPIV2 {
 
     private final LogManager eventLogger;
     private final ApiCommon common;
 
-    @ApiOperation(value = CAP_REQ, response = String.class, produces = JSON, authorizations = {
-            @Authorization(value = AUTH, scopes = { @AuthorizationScope(description = CAP_DESC, scope = AUTH) })
+    @ApiOperation(value = CAP_REQ, response = String.class, produces = APPLICATION_JSON, authorizations = {
+            @Authorization(value = AUTHORIZATION, scopes = { @AuthorizationScope(description = CAP_DESC, scope = AUTHORIZATION) })
     })
     @ApiResponses(value = { @ApiResponse(code = 200, message = CAP_DESC, response = String.class)})
     @ResponseStatus(value = HttpStatus.OK)

@@ -25,27 +25,27 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotBlank;
 
-import static gov.cms.ab2d.api.controller.common.ApiText.AUTH;
 import static gov.cms.ab2d.api.controller.common.ApiText.BULK_DATA_API;
-import static gov.cms.ab2d.api.controller.common.ApiText.CANCEL;
-import static gov.cms.ab2d.api.controller.common.ApiText.EXPIRES;
+import static gov.cms.ab2d.api.controller.common.ApiText.CANCEL_JOB;
 import static gov.cms.ab2d.api.controller.common.ApiText.FILE_EXPIRES;
 import static gov.cms.ab2d.api.controller.common.ApiText.JOB_CANCELLED_MSG;
 import static gov.cms.ab2d.api.controller.common.ApiText.JOB_COMPLETE;
 import static gov.cms.ab2d.api.controller.common.ApiText.JOB_ID;
 import static gov.cms.ab2d.api.controller.common.ApiText.JOB_NOT_FOUND;
-import static gov.cms.ab2d.api.controller.common.ApiText.JSON;
+import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
 import static gov.cms.ab2d.api.controller.common.ApiText.PROGRESS;
-import static gov.cms.ab2d.api.controller.common.ApiText.RETRY;
 import static gov.cms.ab2d.api.controller.common.ApiText.STATUS_API;
 import static gov.cms.ab2d.api.controller.common.ApiText.STATUS_DELAY;
 import static gov.cms.ab2d.api.controller.common.ApiText.STATUS_DES;
 import static gov.cms.ab2d.api.controller.common.ApiText.STILL_RUNNING;
-import static gov.cms.ab2d.api.controller.common.ApiText.STATUS;
+import static gov.cms.ab2d.api.controller.common.ApiText.EXPORT_JOB_STATUS;
 import static gov.cms.ab2d.api.controller.common.ApiText.X_PROG;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_CANCEL;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static org.springframework.http.HttpHeaders.EXPIRES;
+import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 
 /**
  * The sole REST controller for AB2D's implementation of the FHIR Bulk Data API Status (both GET & DELETE).
@@ -53,7 +53,7 @@ import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 @Slf4j
 @Api(value = BULK_DATA_API, description = STATUS_API, tags = {"Status"})
 @RestController
-@RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX, produces = {JSON})
+@RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX, produces = {APPLICATION_JSON})
 @AllArgsConstructor
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class StatusAPIV1 {
@@ -61,18 +61,18 @@ public class StatusAPIV1 {
     private final StatusCommon statusCommon;
 
     @ApiOperation(value = STATUS_DES, authorizations = {
-            @Authorization(value = AUTH, scopes = { @AuthorizationScope(description = STATUS, scope = AUTH) })
+            @Authorization(value = AUTHORIZATION, scopes = { @AuthorizationScope(description = EXPORT_JOB_STATUS, scope = AUTHORIZATION) })
     })
     @ApiResponses(value = {
             @ApiResponse(code = 202, message = STILL_RUNNING, responseHeaders = {
                     @ResponseHeader(name = X_PROG, description = PROGRESS, response = String.class),
-                    @ResponseHeader(name = RETRY, description = STATUS_DELAY, response = Integer.class)}),
+                    @ResponseHeader(name = RETRY_AFTER, description = STATUS_DELAY, response = Integer.class)}),
             @ApiResponse(code = 200, message = JOB_COMPLETE, responseHeaders = {
                     @ResponseHeader(name = EXPIRES, description = FILE_EXPIRES, response = String.class)},
                     response = JobCompletedResponse.class),
             @ApiResponse(code = 404, message = JOB_NOT_FOUND, response = SwaggerConfig.OperationOutcome.class)}
     )
-    @GetMapping(value = "/Job/{jobUuid}/$status", produces = JSON)
+    @GetMapping(value = "/Job/{jobUuid}/$status", produces = APPLICATION_JSON)
     @ResponseStatus(value = HttpStatus.OK)
     public ResponseEntity<JobCompletedResponse> getJobStatus(HttpServletRequest request,
             @ApiParam(value = JOB_ID, required = true) @PathVariable @NotBlank String jobUuid) {
@@ -80,7 +80,7 @@ public class StatusAPIV1 {
     }
 
     @ApiOperation(value = BULK_CANCEL, authorizations = {
-                    @Authorization(value = AUTH, scopes = { @AuthorizationScope(description = CANCEL, scope = AUTH) }) })
+                    @Authorization(value = AUTHORIZATION, scopes = { @AuthorizationScope(description = CANCEL_JOB, scope = AUTHORIZATION) }) })
     @ApiResponses(value = {
             @ApiResponse(code = 202, message = JOB_CANCELLED_MSG),
             @ApiResponse(code = 404, message = JOB_NOT_FOUND, response = SwaggerConfig.OperationOutcome.class)}

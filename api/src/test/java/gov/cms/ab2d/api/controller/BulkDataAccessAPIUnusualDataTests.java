@@ -25,12 +25,12 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.util.List;
 import java.util.Optional;
 
-import static gov.cms.ab2d.api.controller.common.ApiText.CONT_LOC;
 import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -115,7 +115,7 @@ public class BulkDataAccessAPIUnusualDataTests {
                 "http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
 
         resultActions.andExpect(status().isAccepted())
-                .andExpect(header().string(CONT_LOC, statusUrl));
+                .andExpect(header().string(CONTENT_LOCATION, statusUrl));
 
         assertEquals(SUBMITTED, job.getStatus());
         assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());

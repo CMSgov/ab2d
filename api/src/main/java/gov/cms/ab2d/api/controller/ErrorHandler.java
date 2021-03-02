@@ -39,9 +39,9 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static gov.cms.ab2d.api.controller.common.ApiText.RETRY;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 import static gov.cms.ab2d.common.util.Constants.CLIENT;
+import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 
 @ControllerAdvice
 @Slf4j
@@ -133,7 +133,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(TooManyRequestsException.class)
     public ResponseEntity<JsonNode> handleTooManyRequestsExceptions(final TooManyRequestsException e, HttpServletRequest request) throws IOException {
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add(RETRY, Integer.toString(retryAfterDelay));
+        httpHeaders.add(RETRY_AFTER, Integer.toString(retryAfterDelay));
         eventLogger.log(new ErrorEvent(MDC.get(CLIENT), UtilMethods.parseJobId(request.getRequestURI()),
                 ErrorEvent.ErrorType.TOO_MANY_STATUS_REQUESTS, "Too many requests performed in too short a time"));
         return generateFHIRError(e, httpHeaders, request);

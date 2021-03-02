@@ -21,11 +21,11 @@ import springfox.documentation.spring.web.plugins.Docket;
 
 import java.util.*;
 
-import static gov.cms.ab2d.api.controller.common.ApiText.AUTH;
 import static gov.cms.ab2d.api.util.SwaggerConstants.MAIN;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @AllArgsConstructor
 @Configuration
@@ -268,6 +268,6 @@ public class SwaggerConfig {
     }
 
     private ApiKey apiKey() {
-        return new ApiKey(AUTH, AUTH, "header");
+        return new ApiKey(AUTHORIZATION, AUTHORIZATION, "header");
     }
 }

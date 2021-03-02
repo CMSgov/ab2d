@@ -21,7 +21,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.time.OffsetDateTime;
 import java.util.Set;
 
-import static gov.cms.ab2d.api.controller.common.ApiText.CONT_LOC;
 import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
 import static gov.cms.ab2d.common.service.JobService.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
@@ -33,6 +32,7 @@ import static gov.cms.ab2d.common.util.Constants.JOB_LOG;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 
 @Service
 @Slf4j
@@ -106,7 +106,7 @@ public class ApiCommon {
     public ResponseEntity<Void> returnStatusForJobCreation(Job job, String requestId, HttpServletRequest request) {
         String statusURL = getUrl(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status", request);
         HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.add(CONT_LOC, statusURL);
+        responseHeaders.add(CONTENT_LOCATION, statusURL);
         eventLogger.log(new ApiResponseEvent(MDC.get(CLIENT), job.getJobUuid(), HttpStatus.ACCEPTED, "Job Created",
                 "Job " + job.getJobUuid() + " was created", requestId));
         return new ResponseEntity<>(null, responseHeaders,

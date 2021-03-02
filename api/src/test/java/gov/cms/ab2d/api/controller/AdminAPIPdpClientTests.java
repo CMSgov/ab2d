@@ -28,12 +28,12 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
 
-import static gov.cms.ab2d.api.controller.common.ApiText.CONT_LOC;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -255,7 +255,7 @@ public class AdminAPIPdpClientTests {
 
         assertEquals(202, mvcResult.getResponse().getStatus());
 
-        String header = mvcResult.getResponse().getHeader(CONT_LOC);
+        String header = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
 
         Job job = jobRepository.findByJobUuid(header.substring(header.indexOf("/Job/") + 5, header.indexOf("/$status")));
         PdpClient jobPdpClient = job.getPdpClient();

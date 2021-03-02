@@ -26,13 +26,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static gov.cms.ab2d.api.controller.common.ApiText.EXPIRES;
-import static gov.cms.ab2d.api.controller.common.ApiText.RETRY;
 import static gov.cms.ab2d.api.controller.common.ApiText.X_PROG;
 import static gov.cms.ab2d.common.util.Constants.CLIENT;
 import static gov.cms.ab2d.common.util.Constants.JOB_LOG;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
+import static org.springframework.http.HttpHeaders.EXPIRES;
+import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 
 @Service
 @Slf4j
@@ -73,7 +73,7 @@ public class StatusCommon {
             case SUBMITTED:
             case IN_PROGRESS:
                 responseHeaders.add(X_PROG, job.getProgress() + "% complete");
-                responseHeaders.add(RETRY, Integer.toString(retryAfterDelay));
+                responseHeaders.add(RETRY_AFTER, Integer.toString(retryAfterDelay));
                 eventLogger.log(new ApiResponseEvent(MDC.get(CLIENT), job.getJobUuid(), HttpStatus.ACCEPTED,
                         "Job in progress", job.getProgress() + "% complete",
                         (String) request.getAttribute(REQUEST_ID)));
