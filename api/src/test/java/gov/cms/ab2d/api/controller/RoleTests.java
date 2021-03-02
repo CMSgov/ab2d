@@ -68,7 +68,7 @@ public class RoleTests {
     public void testAdminRoleAccessingSponsorApiIsDisabled() throws Exception {
         token = testUtil.setupToken(List.of(ADMIN_ROLE));
 
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Patient/$export")
+        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Patient/$export")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
@@ -79,7 +79,7 @@ public class RoleTests {
     public void testAttestorRoleAccessingSponsorApi() throws Exception {
         token = testUtil.setupToken(List.of(ATTESTOR_ROLE));
 
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Patient/$export")
+        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Patient/$export")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
@@ -94,7 +94,7 @@ public class RoleTests {
         InputStream inputStream = this.getClass().getResourceAsStream("/" + fileName);
 
         MockMultipartFile mockMultipartFile = new MockMultipartFile("file", fileName, "application/vnd.ms-excel", inputStream);
-        this.mockMvc.perform(MockMvcRequestBuilders.multipart(API_PREFIX + ADMIN_PREFIX + "/uploadOrgStructureReport")
+        this.mockMvc.perform(MockMvcRequestBuilders.multipart(API_PREFIX_V1 + ADMIN_PREFIX + "/uploadOrgStructureReport")
                 .file(mockMultipartFile).contentType(MediaType.MULTIPART_FORM_DATA)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
@@ -109,7 +109,7 @@ public class RoleTests {
         InputStream inputStream = this.getClass().getResourceAsStream("/" + fileName);
 
         MockMultipartFile mockMultipartFile = new MockMultipartFile("file", fileName, "application/vnd.ms-excel", inputStream);
-        this.mockMvc.perform(MockMvcRequestBuilders.multipart(API_PREFIX + ADMIN_PREFIX + "/uploadOrgStructureReport")
+        this.mockMvc.perform(MockMvcRequestBuilders.multipart(API_PREFIX_V1 + ADMIN_PREFIX + "/uploadOrgStructureReport")
                 .file(mockMultipartFile).contentType(MediaType.MULTIPART_FORM_DATA)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
@@ -119,7 +119,7 @@ public class RoleTests {
     public void testClientWithNoRolesAccessFhir() throws Exception {
         token = testUtil.setupToken(List.of());
 
-        this.mockMvc.perform(get(API_PREFIX +  FHIR_PREFIX + "/Patient/$export")
+        this.mockMvc.perform(get(API_PREFIX_V1 +  FHIR_PREFIX + "/Patient/$export")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
@@ -133,7 +133,7 @@ public class RoleTests {
         InputStream inputStream = this.getClass().getResourceAsStream("/" + fileName);
 
         MockMultipartFile mockMultipartFile = new MockMultipartFile("file", fileName, "application/vnd.ms-excel", inputStream);
-        this.mockMvc.perform(MockMvcRequestBuilders.multipart(API_PREFIX + ADMIN_PREFIX + "/uploadOrgStructureReport")
+        this.mockMvc.perform(MockMvcRequestBuilders.multipart(API_PREFIX_V1 + ADMIN_PREFIX + "/uploadOrgStructureReport")
                 .file(mockMultipartFile).contentType(MediaType.MULTIPART_FORM_DATA)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
@@ -143,7 +143,7 @@ public class RoleTests {
     public void testWrongRoleClientCreate() throws Exception {
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
 
-        this.mockMvc.perform(post(API_PREFIX +  ADMIN_PREFIX + "/client")
+        this.mockMvc.perform(post(API_PREFIX_V1 +  ADMIN_PREFIX + "/client")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
@@ -153,7 +153,7 @@ public class RoleTests {
     public void testWrongRoleClientUpdate() throws Exception {
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
 
-        this.mockMvc.perform(put(API_PREFIX +  ADMIN_PREFIX + "/client")
+        this.mockMvc.perform(put(API_PREFIX_V1 +  ADMIN_PREFIX + "/client")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
@@ -163,7 +163,7 @@ public class RoleTests {
     public void testWrongRolePropertiesRetrieval() throws Exception {
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
 
-        this.mockMvc.perform(get(API_PREFIX +  ADMIN_PREFIX + "/properties")
+        this.mockMvc.perform(get(API_PREFIX_V1 +  ADMIN_PREFIX + "/properties")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
@@ -173,7 +173,7 @@ public class RoleTests {
     public void testWrongRolePropertiesUpdate() throws Exception {
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
 
-        this.mockMvc.perform(put(API_PREFIX +  ADMIN_PREFIX + "/properties")
+        this.mockMvc.perform(put(API_PREFIX_V1 +  ADMIN_PREFIX + "/properties")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
@@ -183,7 +183,7 @@ public class RoleTests {
     public void testWrongRoleCreateJobOnBehalfOfClient() throws Exception {
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
 
-        this.mockMvc.perform(put(API_PREFIX +  ADMIN_PREFIX + "/client/testclient/job")
+        this.mockMvc.perform(put(API_PREFIX_V1 +  ADMIN_PREFIX + "/client/testclient/job")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
@@ -193,7 +193,7 @@ public class RoleTests {
     public void testWrongRoleCreateJobByContractOnBehalfOfClient() throws Exception {
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
 
-        this.mockMvc.perform(put(API_PREFIX +  ADMIN_PREFIX + "/client/testclient/job/Z0001")
+        this.mockMvc.perform(put(API_PREFIX_V1 +  ADMIN_PREFIX + "/client/testclient/job/Z0001")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
@@ -203,7 +203,7 @@ public class RoleTests {
     public void testWrongRoleEnableClient() throws Exception {
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
 
-        this.mockMvc.perform(put(API_PREFIX +  ADMIN_PREFIX + "/client/" + TEST_PDP_CLIENT + "/enable")
+        this.mockMvc.perform(put(API_PREFIX_V1 +  ADMIN_PREFIX + "/client/" + TEST_PDP_CLIENT + "/enable")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
@@ -213,7 +213,7 @@ public class RoleTests {
     public void testWrongRoleDisableClient() throws Exception {
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
 
-        this.mockMvc.perform(put(API_PREFIX +  ADMIN_PREFIX + "/client/" + TEST_PDP_CLIENT + "/disable")
+        this.mockMvc.perform(put(API_PREFIX_V1 +  ADMIN_PREFIX + "/client/" + TEST_PDP_CLIENT + "/disable")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
@@ -223,7 +223,7 @@ public class RoleTests {
     public void testWrongRoleGetClient() throws Exception {
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
 
-        this.mockMvc.perform(get(API_PREFIX +  ADMIN_PREFIX + "/client/" + TEST_PDP_CLIENT)
+        this.mockMvc.perform(get(API_PREFIX_V1 +  ADMIN_PREFIX + "/client/" + TEST_PDP_CLIENT)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
@@ -235,7 +235,7 @@ public class RoleTests {
 
         ObjectMapper mapper = new ObjectMapper();
 
-        this.mockMvc.perform(get(API_PREFIX +  ADMIN_PREFIX + "/ip")
+        this.mockMvc.perform(get(API_PREFIX_V1 +  ADMIN_PREFIX + "/ip")
                 .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString("sponsorDTO"))
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));

@@ -21,7 +21,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -81,7 +80,7 @@ public class APIClient {
                 .build();
 
         this.ab2dUrl = ab2dUrl;
-        this.ab2dApiUrl = buildAB2DAPIUrl(ab2dUrl);
+        this.ab2dApiUrl = buildAB2DAPIUrlV1(ab2dUrl);
         this.oktaUrl = oktaUrl;
         String clientIdAndSecret = oktaClientId + ":" + oktaPassword;
         authEncoded = Base64.getEncoder().encodeToString(clientIdAndSecret.getBytes());
@@ -234,8 +233,8 @@ public class APIClient {
         return HttpRequest.BodyPublishers.ofString(paramString);
     }
 
-    public static String buildAB2DAPIUrl(String baseUrl) {
-        return baseUrl + API_PREFIX + FHIR_PREFIX + "/";
+    public static String buildAB2DAPIUrlV1(String baseUrl) {
+        return baseUrl + API_PREFIX_V1 + FHIR_PREFIX + "/";
     }
 }
 
