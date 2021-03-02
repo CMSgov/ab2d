@@ -1,7 +1,12 @@
 #!/bin/bash
 
-set -e #Exit on first error
-set -x #Be verbose
+set -e # Turn on exit on error
+set +x # <-- Do not change this value!
+       # Logging is turned on in a later step based on CLOUD_TAMER_PARAM.
+       # CLOUD_TAMER_PARAM = false (Jenkins assumed; verbose logging turned off)
+       # CLOUD_TAMER_PARAM = true (Dev machine assumed; verbose logging turned on)
+       # NOTE: Setting the CLOUD_TAMER_PARAM to a value that does not match the
+       #       assumed host machine will cause the script to fail.
 
 #
 # Change to working directory (if not set by a parent script)
@@ -48,23 +53,27 @@ PARENT_ENV="${PARENT_ENV_PARAM}"
 if [ "${CLOUD_TAMER_PARAM}" != "false" ] && [ "${CLOUD_TAMER_PARAM}" != "true" ]; then
   echo "ERROR: CLOUD_TAMER_PARAM parameter must be true or false"
   exit 1
-else
+elif [ "${CLOUD_TAMER_PARAM}" == "false" ]; then
+
+  # Turn off verbose logging for Jenkins jobs
+  set +x
+  echo "Don't print commands and their arguments as they are executed."
   CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
+
+  # Import the "get temporary AWS credentials via AWS STS assume role" function
+  source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh"
+
+else # [ "${CLOUD_TAMER_PARAM}" == "true" ]
+
+  # Turn on verbose logging for development machine testing
+  set -x
+  echo "Print commands and their arguments as they are executed."
+  CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
+
+  # Import the "get temporary AWS credentials via CloudTamer API" function
+  source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh"
+
 fi
-
-#
-# Define functions
-#
-
-# Import the "get temporary AWS credentials via CloudTamer API" function
-
-# shellcheck source=./functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh
-source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh"
-
-# Import the "get temporary AWS credentials via AWS STS assume role" function
-
-# shellcheck source=./functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh
-source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh"
 
 #
 # Set AWS target environment
@@ -98,10 +107,20 @@ fi
 
 # Reset logging
 
-echo "Setting terraform debug level to $DEBUG_LEVEL..."
-export TF_LOG=$DEBUG_LEVEL
-export TF_LOG_PATH=/var/log/terraform/tf.log
-rm -f /var/log/terraform/tf.log
+if [ "${CLOUD_TAMER}" == "true" ]; then
+
+  # Enable terraform logging on development machine
+  echo "Setting terraform debug level to $DEBUG_LEVEL..."
+  export TF_LOG=$DEBUG_LEVEL
+  export TF_LOG_PATH=/var/log/terraform/tf.log
+  rm -f /var/log/terraform/tf.log
+
+else
+
+  # Disable terraform logging on Jenkins
+  export TF_LOG=
+
+fi
 
 #
 # Initialize and validate terraform
@@ -135,13 +154,25 @@ terraform validate
 cd "${START_DIR}/.."
 cd "terraform/environments/${CMS_ENV}/${MODULE}"
 
-terraform apply \
-  --var "aws_account_number=${AWS_ACCOUNT_NUMBER}" \
-  --var "env=${CMS_ENV}" \
-  --var "env_pascal_case=${ENV_PASCAL_CASE}" \
-  --var "parent_env=${PARENT_ENV}" \
-  --var "region=${AWS_DEFAULT_REGION}" \
-  --auto-approve
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  terraform apply \
+    --var "aws_account_number=${AWS_ACCOUNT_NUMBER}" \
+    --var "env=${CMS_ENV}" \
+    --var "env_pascal_case=${ENV_PASCAL_CASE}" \
+    --var "parent_env=${PARENT_ENV}" \
+    --var "region=${AWS_DEFAULT_REGION}" \
+    --auto-approve
+else
+  terraform apply \
+    --var "aws_account_number=${AWS_ACCOUNT_NUMBER}" \
+    --var "env=${CMS_ENV}" \
+    --var "env_pascal_case=${ENV_PASCAL_CASE}" \
+    --var "parent_env=${PARENT_ENV}" \
+    --var "region=${AWS_DEFAULT_REGION}" \
+    --auto-approve \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 # Create of verify key pair
 
@@ -152,16 +183,19 @@ KEY_NAME=$(aws --region "${AWS_DEFAULT_REGION}" ec2 describe-key-pairs \
 
 if [ -z "${KEY_NAME}" ]; then
 
-  # Create private key
+  if [ "${CLOUD_TAMER}" == "true" ]; then
 
-  aws --region "${AWS_DEFAULT_REGION}" ec2 create-key-pair \
-    --key-name "${CMS_ENV}" \
-    --query 'KeyMaterial' \
-    --output text \
-    > "${HOME}/.ssh/${CMS_ENV}.pem"
+    # Create private key
 
-  # Set permissions on private key
+    aws --region "${AWS_DEFAULT_REGION}" ec2 create-key-pair \
+      --key-name "${CMS_ENV}" \
+      --query 'KeyMaterial' \
+      --output text \
+      > "${HOME}/.ssh/${CMS_ENV}.pem"
 
-  chmod 600 "${HOME}/.ssh/${CMS_ENV}.pem"
+    # Set permissions on private key
 
+    chmod 600 "${HOME}/.ssh/${CMS_ENV}.pem"
+
+  fi
 fi

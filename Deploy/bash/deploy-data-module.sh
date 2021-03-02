@@ -1,7 +1,12 @@
 #!/bin/bash
 
-set -e #Exit on first error
-set -x #Be verbose
+set -e # Turn on exit on error
+set +x # <-- Do not change this value!
+       # Logging is turned on in a later step based on CLOUD_TAMER_PARAM.
+       # CLOUD_TAMER_PARAM = false (Jenkins assumed; verbose logging turned off)
+       # CLOUD_TAMER_PARAM = true (Dev machine assumed; verbose logging turned on)
+       # NOTE: Setting the CLOUD_TAMER_PARAM to a value that does not match the
+       #       assumed host machine will cause the script to fail.
 
 #
 # Change to working directory (if not set by a parent script)
@@ -85,34 +90,38 @@ POSTGRES_ENGINE_VERSION="${POSTGRES_ENGINE_VERSION_PARAM}"
 
 SSH_USERNAME="${SSH_USERNAME_PARAM}"
 
-# Set whether CloudTamer API should be used
-
-if [ "${CLOUD_TAMER_PARAM}" != "false" ] && [ "${CLOUD_TAMER_PARAM}" != "true" ]; then
-  echo "ERROR: CLOUD_TAMER_PARAM parameter must be true or false"
-  exit 1
-else
-  CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
-fi
-
 # Set DB_SNAPSHOT_ID to blank, if "N/A"
 
 if [ "${DB_SNAPSHOT_ID}" == "N/A" ]; then
   DB_SNAPSHOT_ID=""
 fi
 
-#
-# Define functions
-#
+# Set whether CloudTamer API should be used
 
-# Import the "get temporary AWS credentials via CloudTamer API" function
+if [ "${CLOUD_TAMER_PARAM}" != "false" ] && [ "${CLOUD_TAMER_PARAM}" != "true" ]; then
+  echo "ERROR: CLOUD_TAMER_PARAM parameter must be true or false"
+  exit 1
+elif [ "${CLOUD_TAMER_PARAM}" == "false" ]; then
 
-# shellcheck source=./functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh
-source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh"
+  # Turn off verbose logging for Jenkins jobs
+  set +x
+  echo "Don't print commands and their arguments as they are executed."
+  CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
 
-# Import the "get temporary AWS credentials via AWS STS assume role" function
+  # Import the "get temporary AWS credentials via AWS STS assume role" function
+  source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh"
 
-# shellcheck source=./functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh
-source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh"
+else # [ "${CLOUD_TAMER_PARAM}" == "true" ]
+
+  # Turn on verbose logging for development machine testing
+  set -x
+  echo "Print commands and their arguments as they are executed."
+  CLOUD_TAMER="${CLOUD_TAMER_PARAM}"
+
+  # Import the "get temporary AWS credentials via CloudTamer API" function
+  source "${START_DIR}/functions/fn_get_temporary_aws_credentials_via_cloudtamer_api.sh"
+
+fi
 
 #
 # Set AWS target environment
@@ -146,10 +155,20 @@ fi
 
 # Reset logging
 
-echo "Setting terraform debug level to $DEBUG_LEVEL..."
-export TF_LOG=$DEBUG_LEVEL
-export TF_LOG_PATH=/var/log/terraform/tf.log
-rm -f /var/log/terraform/tf.log
+if [ "${CLOUD_TAMER}" == "true" ]; then
+
+  # Enable terraform logging on development machine
+  echo "Setting terraform debug level to $DEBUG_LEVEL..."
+  export TF_LOG=$DEBUG_LEVEL
+  export TF_LOG_PATH=/var/log/terraform/tf.log
+  rm -f /var/log/terraform/tf.log
+
+else
+
+  # Disable terraform logging on Jenkins
+  export TF_LOG=
+
+fi
 
 #
 # Initialize and validate terraform
@@ -225,30 +244,59 @@ CONTROLLER_SG_ID=$(aws ec2 describe-security-groups \
   --query "SecurityGroups[*].GroupId" \
   --output text)
 
-terraform apply \
-  --var "aws_account_number=${AWS_ACCOUNT_NUMBER}" \
-  --var "controller_sg_id=${CONTROLLER_SG_ID}" \
-  --var "cpm_backup_db=${CPM_BACKUP_DB}" \
-  --var "db_allocated_storage_size=${DB_ALLOCATED_STORAGE_SIZE}" \
-  --var "db_backup_retention_period=${DB_BACKUP_RETENTION_PERIOD}" \
-  --var "db_backup_window=${DB_BACKUP_WINDOW}" \
-  --var "db_copy_tags_to_snapshot=${DB_COPY_TAGS_TO_SNAPSHOT}" \
-  --var "db_identifier=${CMS_ENV}" \
-  --var "db_instance_class=${DB_INSTANCE_CLASS}" \
-  --var "db_iops=${DB_IOPS}" \
-  --var "db_maintenance_window=${DB_MAINTENANCE_WINDOW}" \
-  --var "db_multi_az=${DB_MULTI_AZ}" \
-  --var "db_parameter_group_name=${CMS_ENV}-rds-parameter-group" \
-  --var "db_password=${AB2D_DB_PASSWORD}" \
-  --var "db_snapshot_id=${DB_SNAPSHOT_ID}" \
-  --var "db_subnet_group_name=${CMS_ENV}-rds-subnet-group" \
-  --var "db_username=${AB2D_DB_USER}" \
-  --var "env=${CMS_ENV}" \
-  --var "jenkins_agent_sec_group_id=${JENKINS_AGENT_SEC_GROUP_ID}" \
-  --var "parent_env=${PARENT_ENV}" \
-  --var "postgres_engine_version=${POSTGRES_ENGINE_VERSION}" \
-  --var "region=${AWS_DEFAULT_REGION}" \
-  --auto-approve
+if [ "${CLOUD_TAMER_PARAM}" == "true" ]; then
+  terraform apply \
+    --var "aws_account_number=${AWS_ACCOUNT_NUMBER}" \
+    --var "controller_sg_id=${CONTROLLER_SG_ID}" \
+    --var "cpm_backup_db=${CPM_BACKUP_DB}" \
+    --var "db_allocated_storage_size=${DB_ALLOCATED_STORAGE_SIZE}" \
+    --var "db_backup_retention_period=${DB_BACKUP_RETENTION_PERIOD}" \
+    --var "db_backup_window=${DB_BACKUP_WINDOW}" \
+    --var "db_copy_tags_to_snapshot=${DB_COPY_TAGS_TO_SNAPSHOT}" \
+    --var "db_identifier=${CMS_ENV}" \
+    --var "db_instance_class=${DB_INSTANCE_CLASS}" \
+    --var "db_iops=${DB_IOPS}" \
+    --var "db_maintenance_window=${DB_MAINTENANCE_WINDOW}" \
+    --var "db_multi_az=${DB_MULTI_AZ}" \
+    --var "db_parameter_group_name=${CMS_ENV}-rds-parameter-group" \
+    --var "db_password=${AB2D_DB_PASSWORD}" \
+    --var "db_snapshot_id=${DB_SNAPSHOT_ID}" \
+    --var "db_subnet_group_name=${CMS_ENV}-rds-subnet-group" \
+    --var "db_username=${AB2D_DB_USER}" \
+    --var "env=${CMS_ENV}" \
+    --var "jenkins_agent_sec_group_id=${JENKINS_AGENT_SEC_GROUP_ID}" \
+    --var "parent_env=${PARENT_ENV}" \
+    --var "postgres_engine_version=${POSTGRES_ENGINE_VERSION}" \
+    --var "region=${AWS_DEFAULT_REGION}" \
+    --auto-approve
+else
+  terraform apply \
+    --var "aws_account_number=${AWS_ACCOUNT_NUMBER}" \
+    --var "controller_sg_id=${CONTROLLER_SG_ID}" \
+    --var "cpm_backup_db=${CPM_BACKUP_DB}" \
+    --var "db_allocated_storage_size=${DB_ALLOCATED_STORAGE_SIZE}" \
+    --var "db_backup_retention_period=${DB_BACKUP_RETENTION_PERIOD}" \
+    --var "db_backup_window=${DB_BACKUP_WINDOW}" \
+    --var "db_copy_tags_to_snapshot=${DB_COPY_TAGS_TO_SNAPSHOT}" \
+    --var "db_identifier=${CMS_ENV}" \
+    --var "db_instance_class=${DB_INSTANCE_CLASS}" \
+    --var "db_iops=${DB_IOPS}" \
+    --var "db_maintenance_window=${DB_MAINTENANCE_WINDOW}" \
+    --var "db_multi_az=${DB_MULTI_AZ}" \
+    --var "db_parameter_group_name=${CMS_ENV}-rds-parameter-group" \
+    --var "db_password=${AB2D_DB_PASSWORD}" \
+    --var "db_snapshot_id=${DB_SNAPSHOT_ID}" \
+    --var "db_subnet_group_name=${CMS_ENV}-rds-subnet-group" \
+    --var "db_username=${AB2D_DB_USER}" \
+    --var "env=${CMS_ENV}" \
+    --var "jenkins_agent_sec_group_id=${JENKINS_AGENT_SEC_GROUP_ID}" \
+    --var "parent_env=${PARENT_ENV}" \
+    --var "postgres_engine_version=${POSTGRES_ENGINE_VERSION}" \
+    --var "region=${AWS_DEFAULT_REGION}" \
+    --auto-approve \
+    1> /dev/null \
+    2> /dev/null
+fi
 
 #
 # Create or verify database
