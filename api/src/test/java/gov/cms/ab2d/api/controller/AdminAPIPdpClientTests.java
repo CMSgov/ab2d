@@ -33,6 +33,7 @@ import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -103,7 +104,7 @@ public class AdminAPIPdpClientTests {
         ObjectMapper mapper = new ObjectMapper();
 
         MvcResult mvcResult = this.mockMvc.perform(
-                post(API_PREFIX + ADMIN_PREFIX + CLIENT_URL)
+                post(API_PREFIX_V1 + ADMIN_PREFIX + CLIENT_URL)
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(pdpClientDTO))
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
@@ -132,7 +133,7 @@ public class AdminAPIPdpClientTests {
         ObjectMapper mapper = new ObjectMapper();
 
         MvcResult mvcResult = this.mockMvc.perform(
-                post(API_PREFIX + ADMIN_PREFIX + CLIENT_URL)
+                post(API_PREFIX_V1 + ADMIN_PREFIX + CLIENT_URL)
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(pdpClientDTO))
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
@@ -161,12 +162,12 @@ public class AdminAPIPdpClientTests {
         ObjectMapper mapper = new ObjectMapper();
 
         this.mockMvc.perform(
-                post(API_PREFIX + ADMIN_PREFIX + CLIENT_URL)
+                post(API_PREFIX_V1 + ADMIN_PREFIX + CLIENT_URL)
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(pdpClientDTO))
                         .header("Authorization", "Bearer " + token));
 
         this.mockMvc.perform(
-                post(API_PREFIX + ADMIN_PREFIX + CLIENT_URL)
+                post(API_PREFIX_V1 + ADMIN_PREFIX + CLIENT_URL)
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(pdpClientDTO))
                         .header("Authorization", "Bearer " + token))
                         .andExpect(status().is(500))
@@ -191,7 +192,7 @@ public class AdminAPIPdpClientTests {
         ObjectMapper mapper = new ObjectMapper();
 
         MvcResult mvcResult = this.mockMvc.perform(
-                post(API_PREFIX + ADMIN_PREFIX + CLIENT_URL)
+                post(API_PREFIX_V1 + ADMIN_PREFIX + CLIENT_URL)
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(pdpClientDTO))
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
@@ -205,7 +206,7 @@ public class AdminAPIPdpClientTests {
         createdPdpClientDTO.setRole(SPONSOR_ROLE);
 
         MvcResult updateMvcResult = this.mockMvc.perform(
-                put(API_PREFIX + ADMIN_PREFIX + CLIENT_URL)
+                put(API_PREFIX_V1 + ADMIN_PREFIX + CLIENT_URL)
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(createdPdpClientDTO))
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
@@ -226,7 +227,7 @@ public class AdminAPIPdpClientTests {
         ObjectMapper mapper = new ObjectMapper();
 
         this.mockMvc.perform(
-                put(API_PREFIX + ADMIN_PREFIX + CLIENT_URL)
+                put(API_PREFIX_V1 + ADMIN_PREFIX + CLIENT_URL)
                         .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(pdpClientDTO))
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(404));
@@ -247,14 +248,14 @@ public class AdminAPIPdpClientTests {
         setupClient("regularClient", true);
 
         MvcResult mvcResult = this.mockMvc.perform(
-                post(API_PREFIX + ADMIN_PREFIX + "/job/Z0000")
+                post(API_PREFIX_V1 + ADMIN_PREFIX + "/job/Z0000")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
         assertEquals(202, mvcResult.getResponse().getStatus());
 
-        String header = mvcResult.getResponse().getHeader("Content-Location");
+        String header = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
 
         Job job = jobRepository.findByJobUuid(header.substring(header.indexOf("/Job/") + 5, header.indexOf("/$status")));
         PdpClient jobPdpClient = job.getPdpClient();
@@ -269,7 +270,7 @@ public class AdminAPIPdpClientTests {
         setupClient(ENABLE_DISABLE_CLIENT, false);
 
         MvcResult mvcResult = this.mockMvc.perform(
-                put(API_PREFIX + ADMIN_PREFIX + CLIENT_URL + "/" + ENABLE_DISABLE_CONTRACT + "/enable")
+                put(API_PREFIX_V1 + ADMIN_PREFIX + CLIENT_URL + "/" + ENABLE_DISABLE_CONTRACT + "/enable")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
@@ -287,7 +288,7 @@ public class AdminAPIPdpClientTests {
     @Test
     public void enableClientNotFound() throws Exception {
         this.mockMvc.perform(
-                put(API_PREFIX + ADMIN_PREFIX + CLIENT_URL + "/badclient/enable")
+                put(API_PREFIX_V1 + ADMIN_PREFIX + CLIENT_URL + "/badclient/enable")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(404));
@@ -299,7 +300,7 @@ public class AdminAPIPdpClientTests {
         setupClient(ENABLE_DISABLE_CLIENT, true);
 
         MvcResult mvcResult = this.mockMvc.perform(
-                put(API_PREFIX + ADMIN_PREFIX + CLIENT_URL + "/" + ENABLE_DISABLE_CONTRACT + "/disable")
+                put(API_PREFIX_V1 + ADMIN_PREFIX + CLIENT_URL + "/" + ENABLE_DISABLE_CONTRACT + "/disable")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
@@ -317,7 +318,7 @@ public class AdminAPIPdpClientTests {
     @Test
     public void disableClientNotFound() throws Exception {
         this.mockMvc.perform(
-                put(API_PREFIX + ADMIN_PREFIX + CLIENT_URL + "/badclient/disable")
+                put(API_PREFIX_V1 + ADMIN_PREFIX + CLIENT_URL + "/badclient/disable")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(404));
@@ -329,7 +330,7 @@ public class AdminAPIPdpClientTests {
         setupClient(ENABLE_DISABLE_CLIENT, true);
 
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX + ADMIN_PREFIX + CLIENT_URL + "/" + ENABLE_DISABLE_CONTRACT)
+                get(API_PREFIX_V1 + ADMIN_PREFIX + CLIENT_URL + "/" + ENABLE_DISABLE_CONTRACT)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
@@ -352,7 +353,7 @@ public class AdminAPIPdpClientTests {
     @Test
     public void getClientNotFound() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX + ADMIN_PREFIX + CLIENT_URL + "/clientNotFound")
+                get(API_PREFIX_V1 + ADMIN_PREFIX + CLIENT_URL + "/clientNotFound")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();

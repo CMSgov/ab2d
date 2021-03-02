@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jayway.jsonpath.JsonPath;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
+import gov.cms.ab2d.api.controller.v1.CapabilityStatementSTU3;
+import gov.cms.ab2d.api.controller.v2.CapabilityStatementR4;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
@@ -43,13 +45,18 @@ import java.util.Optional;
 
 import static gov.cms.ab2d.api.controller.JobCompletedResponse.CHECKSUM_STRING;
 import static gov.cms.ab2d.api.controller.JobCompletedResponse.CONTENT_LENGTH_STRING;
+import static gov.cms.ab2d.api.controller.common.ApiText.*;
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_PDP_CLIENT;
 import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
 import static gov.cms.ab2d.eventlogger.events.ErrorEvent.ErrorType.FILE_ALREADY_DELETED;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
+import static gov.cms.ab2d.fhir.FhirVersion.R4;
+import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
+import static org.springframework.http.HttpHeaders.EXPIRES;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -109,7 +116,7 @@ public class BulkDataAccessAPIIntegrationTests {
     private void createMaxJobs() throws Exception {
         for(int i = 0; i < MAX_JOBS_PER_CLIENT; i++) {
             this.mockMvc.perform(
-                    get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+                    get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                             .header("Authorization", "Bearer " + token))
                     .andExpect(status().is(202));
         }
@@ -118,7 +125,7 @@ public class BulkDataAccessAPIIntegrationTests {
     @Test
     void testBasicPatientExport() throws Exception {
         ResultActions resultActions = this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token));
                 // .andDo(print());
         List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
@@ -148,15 +155,15 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals(job.getJobUuid(), responseEvent.getJobId());
 
         String statusUrl =
-                "http://localhost" + API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
+                "http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
 
         resultActions.andExpect(status().isAccepted())
-                .andExpect(header().string("Content-Location", statusUrl));
+                .andExpect(header().string(CONTENT_LOCATION, statusUrl));
 
         assertEquals(JobStatus.SUBMITTED, job.getStatus());
         assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
         assertEquals(Integer.valueOf(0), job.getProgress());
-        assertEquals("http://localhost" + API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH, job.getRequestUrl());
+        assertEquals("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH, job.getRequestUrl());
         assertEquals(EOB, job.getResourceTypes());
         assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
     }
@@ -164,22 +171,22 @@ public class BulkDataAccessAPIIntegrationTests {
     @Test
     void testBasicPatientExportWithHttps() throws Exception {
         ResultActions resultActions = this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token)
                         .header("X-Forwarded-Proto", "https"));
                 // .andDo(print());
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
         String statusUrl =
-                "https://localhost" + API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
+                "https://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
 
         resultActions.andExpect(status().isAccepted())
-                .andExpect(header().string("Content-Location", statusUrl));
+                .andExpect(header().string(CONTENT_LOCATION, statusUrl));
 
         assertEquals(JobStatus.SUBMITTED, job.getStatus());
         assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
         assertEquals(Integer.valueOf(0), job.getProgress());
-        assertEquals("https://localhost" + API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH, job.getRequestUrl());
+        assertEquals("https://localhost" + API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH, job.getRequestUrl());
         assertEquals(EOB, job.getResourceTypes());
         assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
     }
@@ -189,11 +196,11 @@ public class BulkDataAccessAPIIntegrationTests {
         createMaxJobs();
 
         this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                         .andExpect(status().is(429))
                         .andExpect(header().string("Retry-After", "30"))
-                        .andExpect(header().doesNotExist("X-Progress"));
+                        .andExpect(header().doesNotExist(X_PROG));
         List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
         assertEquals(MAX_JOBS_PER_CLIENT + 1, apiRequestEvents.size());
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
@@ -231,7 +238,7 @@ public class BulkDataAccessAPIIntegrationTests {
         }
 
         this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(202));
     }
@@ -247,11 +254,11 @@ public class BulkDataAccessAPIIntegrationTests {
         }
 
         this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(429))
                 .andExpect(header().string("Retry-After", "30"))
-                .andExpect(header().doesNotExist("X-Progress"));
+                .andExpect(header().doesNotExist(X_PROG));
     }
 
     @Test
@@ -275,7 +282,7 @@ public class BulkDataAccessAPIIntegrationTests {
         }
 
         this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(202));
     }
@@ -285,22 +292,22 @@ public class BulkDataAccessAPIIntegrationTests {
         final String typeParams =
                 "?_type=ExplanationOfBenefit&_outputFormat=application/fhir+ndjson&since=20191015";
         ResultActions resultActions =
-                this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
+                this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON));
                     // .andDo(print());
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
         String statusUrl =
-                "http://localhost" + API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
+                "http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
 
         resultActions.andExpect(status().isAccepted())
-                .andExpect(header().string("Content-Location", statusUrl));
+                .andExpect(header().string(CONTENT_LOCATION, statusUrl));
 
         assertEquals(JobStatus.SUBMITTED, job.getStatus());
         assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
         assertEquals(Integer.valueOf(0), job.getProgress());
-        assertEquals("http://localhost" + API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + typeParams, job.getRequestUrl());
+        assertEquals("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + typeParams, job.getRequestUrl());
         assertEquals(EOB, job.getResourceTypes());
         assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
     }
@@ -308,7 +315,7 @@ public class BulkDataAccessAPIIntegrationTests {
     @Test
     void testPatientExportWithInvalidType() throws Exception {
         final String typeParams = "?_type=PatientInvalid,ExplanationOfBenefit";
-        this.mockMvc.perform(get(API_PREFIX +  FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
+        this.mockMvc.perform(get(API_PREFIX_V1 +  FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(400))
@@ -340,7 +347,7 @@ public class BulkDataAccessAPIIntegrationTests {
     @Test
     void testPatientExportWithInvalidOutputFormat() throws Exception {
         final String typeParams = "?_outputFormat=Invalid";
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
+        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(400))
@@ -372,7 +379,7 @@ public class BulkDataAccessAPIIntegrationTests {
     @Test
     void testPatientExportWithZipOutputFormat() throws Exception {
         final String typeParams = "?_outputFormat=application/zip";
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
+        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(400))
@@ -386,12 +393,12 @@ public class BulkDataAccessAPIIntegrationTests {
     @Test
     void testDeleteJob() throws Exception {
         this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH)
+                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header("Authorization", "Bearer " + token));
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
-        this.mockMvc.perform(delete(API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status")
+        this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(202))
                 .andExpect(content().string(StringUtils.EMPTY));
@@ -411,7 +418,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
     @Test
     void testDeleteNonExistentJob() throws Exception {
-        this.mockMvc.perform(delete(API_PREFIX + FHIR_PREFIX + "/Job/NonExistentJob/$status")
+        this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/NonExistentJob/$status")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(404))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
@@ -443,7 +450,7 @@ public class BulkDataAccessAPIIntegrationTests {
     @Test
     void testDeleteJobsInInvalidState() throws Exception {
         this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token)
         );
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
@@ -451,7 +458,7 @@ public class BulkDataAccessAPIIntegrationTests {
         job.setStatus(JobStatus.FAILED);
         jobRepository.saveAndFlush(job);
 
-        this.mockMvc.perform(delete(API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status")
+        this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
@@ -464,7 +471,7 @@ public class BulkDataAccessAPIIntegrationTests {
         job.setStatus(JobStatus.CANCELLED);
         jobRepository.saveAndFlush(job);
 
-        this.mockMvc.perform(delete(API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status")
+        this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
@@ -477,7 +484,7 @@ public class BulkDataAccessAPIIntegrationTests {
         job.setStatus(JobStatus.SUCCESSFUL);
         jobRepository.saveAndFlush(job);
 
-        this.mockMvc.perform(delete(API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status")
+        this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
@@ -491,11 +498,11 @@ public class BulkDataAccessAPIIntegrationTests {
     @Test
     void testGetStatusWhileSubmitted() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
+        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
         this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
@@ -516,11 +523,11 @@ public class BulkDataAccessAPIIntegrationTests {
     @Test
     public void testGetStatusWhileInProgress() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
+        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
 
@@ -547,13 +554,13 @@ public class BulkDataAccessAPIIntegrationTests {
     @Test
     void testGetStatusWhileFinishedHttps() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                         .header("Authorization", "Bearer " + token)
                         .header("X-Forwarded-Proto", "https")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
 
-        String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
+        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
@@ -589,31 +596,30 @@ public class BulkDataAccessAPIIntegrationTests {
         this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(200))
-                .andExpect(header().string("Expires",
-                        DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC)))
+                .andExpect(header().string(EXPIRES, DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC)))
                 .andExpect(jsonPath("$.transactionTime",
                         Is.is(new org.hl7.fhir.dstu3.model.DateTimeType(job.getCreatedAt().toString()).toHumanDisplay())))
                 .andExpect(jsonPath("$.request", Is.is(job.getRequestUrl())))
                 .andExpect(jsonPath("$.requiresAccessToken", Is.is(true)))
                 .andExpect(jsonPath("$.output[0].type", Is.is(EOB)))
                 .andExpect(jsonPath("$.output[0].url",
-                        Is.is("https://localhost" + API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() +
+                        Is.is("https://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() +
                                 "/file/file.ndjson")))
                 .andExpect(jsonPath("$.error[0].type", Is.is(OPERATION_OUTCOME)))
                 .andExpect(jsonPath("$.error[0].url",
-                        Is.is("https://localhost" + API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() +
+                        Is.is("https://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() +
                                 "/file/error.ndjson")));
     }
 
     @Test
     void testGetStatusWhileFinished() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
 
-        String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
+        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
@@ -649,15 +655,14 @@ public class BulkDataAccessAPIIntegrationTests {
         this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(200))
-                .andExpect(header().string("Expires",
-                        DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC)))
+                .andExpect(header().string(EXPIRES, DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC)))
                 .andExpect(jsonPath("$.transactionTime",
                         Is.is(new org.hl7.fhir.dstu3.model.DateTimeType(job.getCreatedAt().toString()).toHumanDisplay())))
                 .andExpect(jsonPath("$.request", Is.is(job.getRequestUrl())))
                 .andExpect(jsonPath("$.requiresAccessToken", Is.is(true)))
                 .andExpect(jsonPath("$.output[0].type", Is.is(EOB)))
                 .andExpect(jsonPath("$.output[0].url",
-                        Is.is("http://localhost" + API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() +
+                        Is.is("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() +
                                 "/file/file.ndjson")))
                 .andExpect(jsonPath("$.output[0].extension[0].url",
                         Is.is(CHECKSUM_STRING)))
@@ -669,7 +674,7 @@ public class BulkDataAccessAPIIntegrationTests {
                         Is.is(5000)))
                 .andExpect(jsonPath("$.error[0].type", Is.is(OPERATION_OUTCOME)))
                 .andExpect(jsonPath("$.error[0].url",
-                        Is.is("http://localhost" + API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() +
+                        Is.is("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() +
                                 "/file/error.ndjson")))
                 .andExpect(jsonPath("$.error[0].extension[0].url",
                         Is.is(CHECKSUM_STRING)))
@@ -723,12 +728,12 @@ public class BulkDataAccessAPIIntegrationTests {
     @Test
     void testGetStatusWhileFailed() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
+        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
@@ -762,7 +767,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
     @Test
     void testGetStatusWithJobNotFound() throws Exception {
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andReturn();
@@ -774,7 +779,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
         jobRepository.saveAndFlush(job);
 
-        this.mockMvc.perform(get("http://localhost" + API_PREFIX + FHIR_PREFIX + "/Job/BadId/$status")
+        this.mockMvc.perform(get("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/BadId/$status")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(404))
@@ -787,7 +792,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
     @Test
     void testGetStatusWithSpaceUrl() throws Exception {
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
@@ -799,7 +804,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
         jobRepository.saveAndFlush(job);
 
-        this.mockMvc.perform(get("http://localhost" + API_PREFIX + FHIR_PREFIX + "/Job/ /$status")
+        this.mockMvc.perform(get("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/ /$status")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(404))
@@ -812,7 +817,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
     @Test
     void testGetStatusWithBadUrl() throws Exception {
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andReturn();
@@ -824,7 +829,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
         jobRepository.saveAndFlush(job);
 
-        this.mockMvc.perform(get("http://localhost" + API_PREFIX + FHIR_PREFIX + "/Job/$status")
+        this.mockMvc.perform(get("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/$status")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(404));
@@ -834,12 +839,12 @@ public class BulkDataAccessAPIIntegrationTests {
     @Test
     void testDownloadFile() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
+        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
         String testFile = "test.ndjson";
@@ -883,12 +888,12 @@ public class BulkDataAccessAPIIntegrationTests {
     @Test
     void testDownloadMissingFileGenericError() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
+        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
@@ -938,12 +943,12 @@ public class BulkDataAccessAPIIntegrationTests {
     @Test
     void testDownloadBadParameterFile() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
+        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
@@ -978,12 +983,12 @@ public class BulkDataAccessAPIIntegrationTests {
     @Test
     void testDownloadFileAlreadyDownloaded() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
+        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
@@ -1025,12 +1030,12 @@ public class BulkDataAccessAPIIntegrationTests {
     @Test
     void testDownloadFileExpired() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        String statusUrl = mvcResult.getResponse().getHeader("Content-Location");
+        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
@@ -1066,23 +1071,23 @@ public class BulkDataAccessAPIIntegrationTests {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         ResultActions resultActions = this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token)
                         .header("X-Forwarded-Proto", "https"));
                 // .andDo(print());
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
         String statusUrl =
-                "https://localhost" + API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
+                "https://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
         assertNotNull(statusUrl);
 
         resultActions.andExpect(status().isAccepted())
-                .andExpect(header().string("Content-Location", statusUrl));
+                .andExpect(header().string(CONTENT_LOCATION, statusUrl));
 
         assertEquals(JobStatus.SUBMITTED, job.getStatus());
         assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
         assertEquals(Integer.valueOf(0), job.getProgress());
-        assertEquals("https://localhost" + API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export", job.getRequestUrl());
+        assertEquals("https://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export", job.getRequestUrl());
         assertNull(job.getResourceTypes());
         assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
     }
@@ -1092,21 +1097,21 @@ public class BulkDataAccessAPIIntegrationTests {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         ResultActions resultActions = this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token));
                 // .andDo(print());
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
         String statusUrl =
-                "http://localhost" + API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
+                "http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
 
         resultActions.andExpect(status().isAccepted())
-                .andExpect(header().string("Content-Location", statusUrl));
+                .andExpect(header().string(CONTENT_LOCATION, statusUrl));
 
         assertEquals(JobStatus.SUBMITTED, job.getStatus());
         assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
         assertEquals(Integer.valueOf(0), job.getProgress());
-        assertEquals("http://localhost" + API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export",
+        assertEquals("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export",
                 job.getRequestUrl());
         assertNull(job.getResourceTypes());
         assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
@@ -1119,22 +1124,22 @@ public class BulkDataAccessAPIIntegrationTests {
         final String typeParams =
                 "?_type=ExplanationOfBenefit&_outputFormat=application/fhir+ndjson&since=20191015";
         ResultActions resultActions =
-                this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams)
+                this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams)
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON));
                 // .andDo(print());
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
         String statusUrl =
-                "http://localhost" + API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
+                "http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
 
         resultActions.andExpect(status().isAccepted())
-                .andExpect(header().string("Content-Location", statusUrl));
+                .andExpect(header().string(CONTENT_LOCATION, statusUrl));
 
         assertEquals(JobStatus.SUBMITTED, job.getStatus());
         assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
         assertEquals(Integer.valueOf(0), job.getProgress());
-        assertEquals("http://localhost" + API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams,
+        assertEquals("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams,
                 job.getRequestUrl());
         assertEquals(EOB, job.getResourceTypes());
         assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
@@ -1145,7 +1150,7 @@ public class BulkDataAccessAPIIntegrationTests {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         final String typeParams = "?_type=PatientInvalid,ExplanationOfBenefit";
-        this.mockMvc.perform(get(API_PREFIX +  FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams)
+        this.mockMvc.perform(get(API_PREFIX_V1 +  FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(400))
@@ -1161,7 +1166,7 @@ public class BulkDataAccessAPIIntegrationTests {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         final String typeParams = "?_outputFormat=Invalid";
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams)
+        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(400))
@@ -1176,7 +1181,7 @@ public class BulkDataAccessAPIIntegrationTests {
     private void createMaxJobsWithContract(Contract contract) throws Exception {
         for(int i = 0; i < MAX_JOBS_PER_CLIENT; i++) {
             this.mockMvc.perform(
-                    get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                    get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
                             .header("Authorization", "Bearer " + token))
                             .andExpect(status().is(202));
         }
@@ -1189,7 +1194,7 @@ public class BulkDataAccessAPIIntegrationTests {
         createMaxJobsWithContract(contract);
 
         this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(429))
                 .andExpect(header().string("Retry-After", "30"))
@@ -1209,7 +1214,7 @@ public class BulkDataAccessAPIIntegrationTests {
         }
 
         this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(429))
                 .andExpect(header().string("Retry-After", "30"))
@@ -1223,7 +1228,7 @@ public class BulkDataAccessAPIIntegrationTests {
         createMaxJobsWithContract(contract);
 
         this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token));
 
         List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
@@ -1233,7 +1238,7 @@ public class BulkDataAccessAPIIntegrationTests {
         }
 
         this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(202));
     }
@@ -1245,7 +1250,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
         for(int i = 0; i < MAX_JOBS_PER_CLIENT - 1; i++) {
             this.mockMvc.perform(
-                    get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                    get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
                             .header("Authorization", "Bearer " + token))
                     .andExpect(status().is(202));
         }
@@ -1259,7 +1264,7 @@ public class BulkDataAccessAPIIntegrationTests {
         Contract contractNew = dataSetup.setupContract("New Contract");
 
         this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + "/Group/" + contractNew.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contractNew.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
     }
@@ -1286,34 +1291,44 @@ public class BulkDataAccessAPIIntegrationTests {
         }
 
         this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(202));
     }
 
     @Test
-    void testCapabilityStatement() throws Exception {
+    void testCapabilityStatementSTU3() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + "/metadata").contentType(MediaType.APPLICATION_JSON)
+                get("https://localhost:8443/" + API_PREFIX_V1 + FHIR_PREFIX + "/metadata").contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token)).andReturn();
 
         String body = mvcResult.getResponse().getContentAsString();
 
-        assertEquals(body, new JsonMapper()
-                .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
-                .writeValueAsString(new CapabilityStatement()));
+        assertEquals(body, STU3.getJsonParser().encodeResourceToString(
+                CapabilityStatementSTU3.populateCS("https://localhost:8443" + API_PREFIX_V1 + FHIR_PREFIX)));
+    }
+
+    @Test
+    void testCapabilityStatementR4() throws Exception {
+        MvcResult mvcResult = this.mockMvc.perform(
+                get("https://localhost:8443/" + API_PREFIX_V2 + FHIR_PREFIX + "/metadata").contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token)).andReturn();
+
+        String body = mvcResult.getResponse().getContentAsString();
+
+        assertEquals(body, R4.getJsonParser().encodeResourceToString(
+                CapabilityStatementR4.populateCS("https://localhost:8443" + API_PREFIX_V2 + FHIR_PREFIX)));
     }
 
     @Test
     void tlsTest() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get("https://localhost:8443/" + API_PREFIX + FHIR_PREFIX + "/metadata").contentType(MediaType.APPLICATION_JSON)
+                get("https://localhost:8443" + API_PREFIX_V1 + FHIR_PREFIX + "/metadata").contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token)).andReturn();
 
         String body = mvcResult.getResponse().getContentAsString();
 
-        assertEquals(body, new JsonMapper()
-                .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY)
-                .writeValueAsString(new CapabilityStatement()));
+        assertEquals(body, STU3.getJsonParser().encodeResourceToString(
+                CapabilityStatementSTU3.populateCS("https://localhost:8443" + API_PREFIX_V1 + FHIR_PREFIX)));
     }
 }

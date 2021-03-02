@@ -41,8 +41,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             // Add a filter to validate the tokens with every request.
             .addFilterAfter(jwtTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeRequests()
-            .antMatchers(API_PREFIX + ADMIN_PREFIX + "/**").hasAuthority(ADMIN_ROLE)
-            .antMatchers(API_PREFIX + FHIR_PREFIX + "/**").hasAnyAuthority(SPONSOR_ROLE)
+            .antMatchers(API_PREFIX_V1 + ADMIN_PREFIX + "/**").hasAuthority(ADMIN_ROLE)
+            .antMatchers(API_PREFIX_V1 + FHIR_PREFIX + "/**").hasAnyAuthority(SPONSOR_ROLE)
             .anyRequest().authenticated();
     }
 

@@ -1,6 +1,7 @@
 package gov.cms.ab2d.api.controller;
 
 import gov.cms.ab2d.common.dto.PdpClientDTO;
+import gov.cms.ab2d.api.controller.v1.BulkDataAccessAPIV1;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
@@ -27,7 +28,11 @@ import javax.validation.constraints.NotBlank;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-import static gov.cms.ab2d.common.util.Constants.API_PREFIX;
+import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
+import static gov.cms.ab2d.api.controller.common.ApiText.OUT_FORMAT;
+import static gov.cms.ab2d.api.controller.common.ApiText.SINCE;
+import static gov.cms.ab2d.api.controller.common.ApiText.TYPE_PARAM;
+import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
 import static gov.cms.ab2d.common.util.Constants.ADMIN_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.CLIENT;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
@@ -36,7 +41,7 @@ import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 @Slf4j
 @RestController
 @SuppressWarnings("PMD.TooManyStaticImports")
-@RequestMapping(path = API_PREFIX + ADMIN_PREFIX, produces = "application/json")
+@RequestMapping(path = API_PREFIX_V1 + ADMIN_PREFIX, produces = APPLICATION_JSON)
 public class AdminAPI {
 
     private final PdpClientService pdpClientService;
@@ -45,7 +50,7 @@ public class AdminAPI {
 
     private final LogManager eventLogger;
 
-    private final BulkDataAccessAPI bulkDataAccessAPI;
+    private final BulkDataAccessAPIV1 bulkDataAccessAPIV1;
 
     @ResponseStatus(value = HttpStatus.CREATED)
     @PostMapping("/client")
@@ -79,13 +84,13 @@ public class AdminAPI {
 
     @PostMapping("/job/{contractNumber}")
     public ResponseEntity<Void> createJobByContractOnBehalfOfClient(@PathVariable @NotBlank String contractNumber,
-                                                                    HttpServletRequest request,
-                                                                    @RequestParam(required = false, name = "_type", defaultValue = EOB) String resourceTypes,
-                                                                    @RequestParam(required = false, name = "_outputFormat") String outputFormat,
-                                                                    @RequestParam(required = false, name = "_since") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
+                                                        HttpServletRequest request,
+                                                        @RequestParam(required = false, name = TYPE_PARAM, defaultValue = EOB) String resourceTypes,
+                                                        @RequestParam(required = false, name = OUT_FORMAT) String outputFormat,
+                                                        @RequestParam(required = false, name = SINCE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
         pdpClientService.setupClientImpersonation(contractNumber, request);
 
-        return bulkDataAccessAPI.exportPatientsWithContract(request, contractNumber, resourceTypes, outputFormat, since);
+        return bulkDataAccessAPIV1.exportPatientsWithContract(request, contractNumber, resourceTypes, outputFormat, since);
     }
 
     @ResponseStatus(value = HttpStatus.OK)

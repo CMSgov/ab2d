@@ -4,6 +4,7 @@ import com.amazonaws.AmazonWebServiceRequest;
 import com.amazonaws.ResponseMetadata;
 import com.amazonaws.regions.Region;
 import com.amazonaws.services.kinesisfirehose.AmazonKinesisFirehose;
+
 import com.amazonaws.services.kinesisfirehose.model.*;
 import com.amazonaws.services.kinesisfirehose.model.Record;
 
