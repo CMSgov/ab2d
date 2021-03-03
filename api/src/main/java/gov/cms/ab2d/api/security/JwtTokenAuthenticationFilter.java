@@ -103,64 +103,65 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String token = null;
-        String client = null;
+        String client;
+
         try {
             token = getToken(request);
             client = getClientId(token);
         } catch (Exception ex) {
-            logApiRequestEvent(request, token, client, jobId);
+            logApiRequestEvent(request, token, null, jobId);
             throw ex;
         }
 
-        logApiRequestEvent(request, token, client, jobId);
+        if (client.isEmpty()) {
+            logApiRequestEvent(request, token, null, jobId);
 
-        if (!client.isEmpty()) {
-            MDC.put(CLIENT, client);
-            PdpClient pdpClient = getClient(client);
-
-            pdpClientService.setupClientAndRolesInSecurityContext(pdpClient, request);
-        } else {
             String clientBlankMsg = "Client id was blank";
             log.error(clientBlankMsg);
             throw new BadJWTTokenException(clientBlankMsg);
         }
 
+        // Attempt to get client object from repository (to check whether enabled and setup roles if enabled)
+        PdpClient pdpClient;
+        try {
+            pdpClient = pdpClientService.getClientById(client);
+        } catch (ResourceNotFoundException exception) {
+            logApiRequestEvent(request, token, null, jobId);
+            throw new UsernameNotFoundException("Client was not found");
+        }
+
+        // If client is null then continue throwing username not found
+        if (pdpClient == null) {
+            logApiRequestEvent(request, token, null, jobId);
+            throw new UsernameNotFoundException("Client was not found");
+        }
+
+        // Save organization
+        MDC.put(ORGANIZATION, pdpClient.getOrganization());
+
+        // If client is disabled for any reason do not proceed
+        if (!pdpClient.getEnabled()) {
+            log.error("Client {} is not enabled", pdpClient.getOrganization());
+            logApiRequestEvent(request, token, pdpClient.getOrganization(), jobId);
+            throw new ClientNotEnabledException("Client " + pdpClient.getOrganization() + " is not enabled");
+        }
+
+        // Otherwise setup roles and context
+        logApiRequestEvent(request, token, pdpClient.getOrganization(), jobId);
+        pdpClientService.setupClientAndRolesInSecurityContext(pdpClient, request);
+
         // go to the next filter in the filter chain
         chain.doFilter(request, response);
     }
 
-    private void logApiRequestEvent(HttpServletRequest request, String token, String username, String jobId) {
+    private void logApiRequestEvent(HttpServletRequest request, String token, String organization, String jobId) {
         String url = UtilMethods.getURL(request);
         String uniqueId = UUID.randomUUID().toString();
-        ApiRequestEvent requestEvent = new ApiRequestEvent(username, jobId, url, UtilMethods.getIpAddress(request),
+        ApiRequestEvent requestEvent = new ApiRequestEvent(organization, jobId, url, UtilMethods.getIpAddress(request),
                 token, uniqueId);
         eventLogger.log(requestEvent);
 
         request.setAttribute(REQUEST_ID, uniqueId);
-    }
-
-    /**
-     * Given a client id, look up the client in the database
-     *
-     * @param clientId - {@link PdpClient#getClientId()} of a client
-     * @return - an {@link PdpClient} object
-     */
-    private PdpClient getClient(String clientId) {
-        PdpClient pdpClient;
-        try {
-            pdpClient = pdpClientService.getClientById(clientId);
-        } catch (ResourceNotFoundException exception) {
-            throw new UsernameNotFoundException("Client was not found");
-        }
-        if (pdpClient == null) {
-            throw new UsernameNotFoundException("Client was not found");
-        }
-
-        if (!pdpClient.getEnabled()) {
-            log.error("Client {} is not enabled", pdpClient.getOrganization());
-            throw new ClientNotEnabledException("Client " + pdpClient.getOrganization() + " is not enabled");
-        }
-        return pdpClient;
     }
 
     /**

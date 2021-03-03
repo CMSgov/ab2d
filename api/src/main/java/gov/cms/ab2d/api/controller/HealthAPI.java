@@ -29,7 +29,7 @@ public class HealthAPI {
         if (healthCheck.healthy()) {
             return new ResponseEntity<>(HttpStatus.OK);
         } else {
-            eventLogger.log(new ApiResponseEvent(MDC.get(CLIENT), null, HttpStatus.INTERNAL_SERVER_ERROR, "API Health NOT Ok",
+            eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), null, HttpStatus.INTERNAL_SERVER_ERROR, "API Health NOT Ok",
                     null, (String) request.getAttribute(REQUEST_ID)));
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }

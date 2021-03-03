@@ -12,7 +12,7 @@ public final class Constants {
 
     public static final String JOB_LOG = "job";
 
-    public static final String CLIENT = "client";
+    public static final String ORGANIZATION = "organization";
 
     public static final String REQUEST_ID = "RequestId";
 

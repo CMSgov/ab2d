@@ -240,7 +240,7 @@ public class DataSetup {
     private PdpClient savePdpClient(String clientId, Contract contract, List<String> clientRoles) {
         PdpClient pdpClient = new PdpClient();
         pdpClient.setClientId(clientId);
-        pdpClient.setOrganization(clientId);
+        pdpClient.setOrganization("PDP-" + clientId);
         pdpClient.setContract(contract);
         pdpClient.setEnabled(true);
         pdpClient.setMaxParallelJobs(3);
