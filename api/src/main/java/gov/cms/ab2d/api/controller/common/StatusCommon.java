@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.api.controller.common.ApiText.X_PROG;
-import static gov.cms.ab2d.common.util.Constants.CLIENT;
+import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
 import static gov.cms.ab2d.common.util.Constants.JOB_LOG;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
@@ -74,7 +74,7 @@ public class StatusCommon {
             case IN_PROGRESS:
                 responseHeaders.add(X_PROG, job.getProgress() + "% complete");
                 responseHeaders.add(RETRY_AFTER, Integer.toString(retryAfterDelay));
-                eventLogger.log(new ApiResponseEvent(MDC.get(CLIENT), job.getJobUuid(), HttpStatus.ACCEPTED,
+                eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), job.getJobUuid(), HttpStatus.ACCEPTED,
                         "Job in progress", job.getProgress() + "% complete",
                         (String) request.getAttribute(REQUEST_ID)));
                 return new ResponseEntity<>(null, responseHeaders, HttpStatus.ACCEPTED);
@@ -137,7 +137,7 @@ public class StatusCommon {
         responseHeaders.add(EXPIRES, DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC));
         final JobCompletedResponse resp = getJobCompletedResonse(job, request, apiPrefix);
         log.info("Job status completed successfully");
-        eventLogger.log(new ApiResponseEvent(MDC.get(CLIENT), job.getJobUuid(), HttpStatus.OK,
+        eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), job.getJobUuid(), HttpStatus.OK,
                 "Job completed", null, (String) request.getAttribute(REQUEST_ID)));
         return new ResponseEntity<>(resp, responseHeaders, HttpStatus.OK);
     }
@@ -150,7 +150,7 @@ public class StatusCommon {
 
         log.info("Job successfully cancelled");
 
-        eventLogger.log(new ApiResponseEvent(MDC.get(CLIENT), jobUuid, HttpStatus.ACCEPTED,
+        eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), jobUuid, HttpStatus.ACCEPTED,
                 "Job cancelled", null, (String) request.getAttribute(REQUEST_ID)));
 
         return new ResponseEntity<>(null, null,

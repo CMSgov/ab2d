@@ -33,7 +33,7 @@ import static gov.cms.ab2d.api.controller.common.ApiText.CAP_RET;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
-import static gov.cms.ab2d.common.util.Constants.CLIENT;
+import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
@@ -63,7 +63,7 @@ public class CapabilityAPIV1 {
 
         IParser parser = STU3.getJsonParser();
 
-        eventLogger.log(new ApiResponseEvent(MDC.get(CLIENT), null, HttpStatus.OK,
+        eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), null, HttpStatus.OK,
                 CAP_STMT, CAP_RET, (String) request.getAttribute(REQUEST_ID)));
 
         String server = common.getCurrentUrl(request).replace("/metadata", "");

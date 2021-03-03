@@ -34,7 +34,7 @@ import static gov.cms.ab2d.api.controller.common.ApiText.SINCE;
 import static gov.cms.ab2d.api.controller.common.ApiText.TYPE_PARAM;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
 import static gov.cms.ab2d.common.util.Constants.ADMIN_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.CLIENT;
+import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 
 @AllArgsConstructor
@@ -77,7 +77,7 @@ public class AdminAPI {
     @ResponseStatus(value = HttpStatus.OK)
     @PutMapping("/properties")
     public ResponseEntity<List<PropertiesDTO>> updateProperties(@RequestBody List<PropertiesDTO> propertiesDTOs) {
-        eventLogger.log(new ReloadEvent(MDC.get(CLIENT), ReloadEvent.FileType.PROPERTIES, null,
+        eventLogger.log(new ReloadEvent(MDC.get(ORGANIZATION), ReloadEvent.FileType.PROPERTIES, null,
                 propertiesDTOs.size()));
         return new ResponseEntity<>(propertiesService.updateProperties(propertiesDTOs), null, HttpStatus.OK);
     }

@@ -26,7 +26,7 @@ import static gov.cms.ab2d.common.service.JobService.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.CLIENT;
+import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
 import static gov.cms.ab2d.common.util.Constants.ZIP_SUPPORT_ON;
 import static gov.cms.ab2d.common.util.Constants.JOB_LOG;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
@@ -107,7 +107,7 @@ public class ApiCommon {
         String statusURL = getUrl(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status", request);
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.add(CONTENT_LOCATION, statusURL);
-        eventLogger.log(new ApiResponseEvent(MDC.get(CLIENT), job.getJobUuid(), HttpStatus.ACCEPTED, "Job Created",
+        eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), job.getJobUuid(), HttpStatus.ACCEPTED, "Job Created",
                 "Job " + job.getJobUuid() + " was created", requestId));
         return new ResponseEntity<>(null, responseHeaders,
                 HttpStatus.ACCEPTED);

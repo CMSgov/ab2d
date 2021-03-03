@@ -271,7 +271,7 @@ public class BulkDataAccessAPIIntegrationTests {
         pdpClient.setContract(contract);
         pdpClient.setEnabled(true);
         pdpClient.setClientId("test");
-        pdpClient.setOrganization("test");
+        pdpClient.setOrganization("test-org");
         pdpClientRepository.saveAndFlush(pdpClient);
         dataSetup.queueForCleanup(pdpClient);
 
@@ -1279,7 +1279,7 @@ public class BulkDataAccessAPIIntegrationTests {
         pdpClient.setContract(contract);
         pdpClient.setEnabled(true);
         pdpClient.setClientId("test");
-        pdpClient.setOrganization("test");
+        pdpClient.setOrganization("test-org");
         pdpClientRepository.saveAndFlush(pdpClient);
         dataSetup.queueForCleanup(pdpClient);
 

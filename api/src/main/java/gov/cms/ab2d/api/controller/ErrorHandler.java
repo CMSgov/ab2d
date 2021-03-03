@@ -40,7 +40,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
-import static gov.cms.ab2d.common.util.Constants.CLIENT;
+import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
 import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 
 @ControllerAdvice
@@ -105,14 +105,14 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler({JobOutputMissingException.class})
     public ResponseEntity<JsonNode> handleJobOutputMissing(Exception e, HttpServletRequest request) throws IOException {
-        eventLogger.log(new ErrorEvent(MDC.get(CLIENT), UtilMethods.parseJobId(request.getRequestURI()),
+        eventLogger.log(new ErrorEvent(MDC.get(ORGANIZATION), UtilMethods.parseJobId(request.getRequestURI()),
                 ErrorEvent.ErrorType.FILE_ALREADY_DELETED, getRootCause(e)));
         return generateFHIRError(e, request);
     }
 
     @ExceptionHandler({InvalidContractException.class})
     public ResponseEntity<Void> handleInvalidContractErrors(Exception e, HttpServletRequest request) {
-        eventLogger.log(new ErrorEvent(MDC.get(CLIENT), null,
+        eventLogger.log(new ErrorEvent(MDC.get(ORGANIZATION), null,
                 ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT, getRootCause(e)));
         return generateError(e, request);
     }
@@ -134,14 +134,14 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<JsonNode> handleTooManyRequestsExceptions(final TooManyRequestsException e, HttpServletRequest request) throws IOException {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add(RETRY_AFTER, Integer.toString(retryAfterDelay));
-        eventLogger.log(new ErrorEvent(MDC.get(CLIENT), UtilMethods.parseJobId(request.getRequestURI()),
+        eventLogger.log(new ErrorEvent(MDC.get(ORGANIZATION), UtilMethods.parseJobId(request.getRequestURI()),
                 ErrorEvent.ErrorType.TOO_MANY_STATUS_REQUESTS, "Too many requests performed in too short a time"));
         return generateFHIRError(e, httpHeaders, request);
     }
 
     private ResponseEntity<Void> generateError(Exception ex, HttpServletRequest request) {
         HttpStatus status = getErrorResponse(ex.getClass());
-        eventLogger.log(new ApiResponseEvent(MDC.get(CLIENT), null, status,
+        eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), null, status,
                 "API Error", getRootCause(ex), (String) request.getAttribute(REQUEST_ID)));
         return new ResponseEntity<>(null, null, status);
     }
@@ -157,7 +157,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         FhirVersion version = FhirVersion.fromUrl(request.getRequestURI());
         IBaseResource operationOutcome = version.getErrorOutcome(msg);
         String encoded = version.outcomePrettyToJSON(operationOutcome);
-        eventLogger.log(new ApiResponseEvent(MDC.get(CLIENT), null,
+        eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), null,
                 ErrorHandler.getErrorResponse(e.getClass()),
                 "FHIR Error", msg, (String) request.getAttribute(REQUEST_ID)));
 
