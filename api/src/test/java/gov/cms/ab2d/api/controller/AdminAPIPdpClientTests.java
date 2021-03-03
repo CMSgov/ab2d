@@ -46,6 +46,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class AdminAPIPdpClientTests {
 
     public static final String TEST_CLIENT = "test@test.com";
+    public static final String TEST_ORG = "PDP-TEST";
     private static final String CLIENT_URL = "/client";
     private static final String ENABLE_DISABLE_CLIENT = "enableDisableClient";
     private static final String ENABLE_DISABLE_CONTRACT = "Z0000";
@@ -94,7 +95,7 @@ public class AdminAPIPdpClientTests {
     public void testCreateClient() throws Exception {
         PdpClientDTO pdpClientDTO = new PdpClientDTO();
         pdpClientDTO.setClientId(TEST_CLIENT);
-        pdpClientDTO.setOrganization(TEST_CLIENT);
+        pdpClientDTO.setOrganization(TEST_ORG);
         pdpClientDTO.setEnabled(true);
         pdpClientDTO.setContract(buildContractDTO(VALID_CONTRACT_NUMBER));
         pdpClientDTO.setRole(ADMIN_ROLE);
@@ -124,7 +125,7 @@ public class AdminAPIPdpClientTests {
     public void testCreateClientAttestor() throws Exception {
         PdpClientDTO pdpClientDTO = new PdpClientDTO();
         pdpClientDTO.setClientId(TEST_CLIENT);
-        pdpClientDTO.setOrganization(TEST_CLIENT);
+        pdpClientDTO.setOrganization(TEST_ORG);
         pdpClientDTO.setEnabled(true);
         pdpClientDTO.setContract(buildContractDTO(VALID_CONTRACT_NUMBER));
         Role role = roleService.findRoleByName(ATTESTOR_ROLE);
@@ -184,7 +185,7 @@ public class AdminAPIPdpClientTests {
     public void testUpdateClient() throws Exception {
         PdpClientDTO pdpClientDTO = new PdpClientDTO();
         pdpClientDTO.setClientId(TEST_CLIENT);
-        pdpClientDTO.setOrganization(TEST_CLIENT);
+        pdpClientDTO.setOrganization(TEST_ORG);
         pdpClientDTO.setEnabled(true);
         pdpClientDTO.setContract(buildContractDTO(VALID_CONTRACT_NUMBER));
         pdpClientDTO.setRole(ADMIN_ROLE);
@@ -365,7 +366,7 @@ public class AdminAPIPdpClientTests {
         Contract contract = dataSetup.setupContract(ENABLE_DISABLE_CONTRACT);
         PdpClient pdpClient = new PdpClient();
         pdpClient.setClientId(clientId);
-        pdpClient.setOrganization(TEST_CLIENT);
+        pdpClient.setOrganization(TEST_ORG);
         pdpClient.setEnabled(enabled);
         pdpClient.setContract(contract);
 
