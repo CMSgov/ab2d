@@ -121,9 +121,6 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
             throw new BadJWTTokenException(clientBlankMsg);
         }
 
-        // Save current client
-        MDC.put(CLIENT, client);
-
         // Attempt to get client object from repository (to check whether enabled and setup roles if enabled)
         PdpClient pdpClient;
         try {
@@ -138,6 +135,9 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
             logApiRequestEvent(request, token, null, jobId);
             throw new UsernameNotFoundException("Client was not found");
         }
+
+        // Save organization
+        MDC.put(ORGANIZATION, pdpClient.getOrganization());
 
         // If client is disabled for any reason do not proceed
         if (!pdpClient.getEnabled()) {
