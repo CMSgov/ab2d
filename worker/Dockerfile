@@ -1,4 +1,4 @@
-FROM openjdk:13
+FROM openjdk:15.0.2
 WORKDIR /usr/src/ab2d-worker
 ADD target /usr/src/ab2d-worker
 
