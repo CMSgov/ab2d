@@ -25,7 +25,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import java.io.IOException;
 import java.util.List;
 
-import static gov.cms.ab2d.bfd.client.MockUtils.getRawJson;
+import static gov.cms.ab2d.bfd.client.MockUtils.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
 
@@ -37,9 +37,6 @@ import static gov.cms.ab2d.fhir.FhirVersion.R4;
 @ActiveProfiles("test")
 @ContextConfiguration(classes = { BlueButtonClientTestR4.TestConfig.class })
 public class BlueButtonClientTestR4 {
-    // A random example patient (Jane Doe)
-    private static final String TEST_PATIENT_ID = "-20140000010000";
-    // A patient that only has a single EOB record in bluebutton
 
     // Paths to test resources
     private static final String METADATA_PATH = "bb-test-data/r4/meta.json";
@@ -72,11 +69,12 @@ public class BlueButtonClientTestR4 {
     @BeforeAll
     public static void setupBFDClient() throws IOException {
         mockServer = ClientAndServer.startClientAndServer(MOCK_PORT_V2);
-        MockUtils.createMockServerExpectation("/v2/fhir/metadata", HttpStatus.SC_OK,
+        MockUtils.createMockServerExpectation(mockServer, "/v2/fhir/metadata", HttpStatus.SC_OK,
                 getRawJson(METADATA_PATH), List.of(), MOCK_PORT_V2);
 
         // Ensure timeouts are working.
         MockUtils.createMockServerExpectation(
+                mockServer,
                 "/v2/fhir/ExplanationOfBenefit",
                 HttpStatus.SC_OK,
                 getRawJson(SAMPLE_EOB_BUNDLE),
@@ -86,6 +84,7 @@ public class BlueButtonClientTestR4 {
         );
 
         MockUtils.createMockServerExpectation(
+                mockServer,
                 "/v2/fhir/Patient",
                 HttpStatus.SC_OK,
                 getRawJson(SAMPLE_PATIENT_BUNDLE),
@@ -101,7 +100,8 @@ public class BlueButtonClientTestR4 {
     }
 
     @Test
-    public void shouldGetEOBFromPatientID() {
+    public void shouldGetEOBFromPatientID() throws IOException {
+
         org.hl7.fhir.r4.model.Bundle response = (org.hl7.fhir.r4.model.Bundle) bbc.requestEOBFromServer(R4, TEST_PATIENT_ID);
 
         assertNotNull(response, "The demo patient should have a non-null EOB bundle");
@@ -109,7 +109,8 @@ public class BlueButtonClientTestR4 {
     }
 
     @Test
-    public void shouldHaveNextBundle() {
+    public void shouldHaveNextBundle() throws IOException {
+
         org.hl7.fhir.r4.model.Bundle response = (org.hl7.fhir.r4.model.Bundle) bbc.requestEOBFromServer(R4, TEST_PATIENT_ID);
 
         assertNotNull(response, "The demo patient should have a non-null EOB bundle");
@@ -118,7 +119,8 @@ public class BlueButtonClientTestR4 {
      }
 
     @Test
-    public void shouldReturnBundleContainingOnlyEOBs() {
+    public void shouldReturnBundleContainingOnlyEOBs() throws IOException {
+
         org.hl7.fhir.r4.model.Bundle response = (org.hl7.fhir.r4.model.Bundle) bbc.requestEOBFromServer(R4, TEST_PATIENT_ID);
 
         response.getEntry().forEach((entry) -> assertEquals(
@@ -129,7 +131,8 @@ public class BlueButtonClientTestR4 {
     }
 
     @Test
-    public void getCoverageData() {
+    public void getCoverageData() throws IOException {
+
         org.hl7.fhir.r4.model.Bundle response = (org.hl7.fhir.r4.model.Bundle) bbc.requestPartDEnrolleesFromServer(R4, CONTRACT, 12);
         assertNotNull(response);
         List<Bundle.BundleEntryComponent> entries = response.getEntry();

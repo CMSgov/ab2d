@@ -32,16 +32,15 @@ public class BFDClientImpl implements BFDClient {
     public static final String YEAR_URL_PREFIX = "https://bluebutton.cms.gov/resources/variables/rfrnc_yr";
 
     private final BFDSearch bfdSearch;
-    private final BfdClientSearchVersions bfdClientSearchVersions;
+    private final BfdClientVersions bfdClientVersions;
     private final int pageSize;
     private final int contractToBenePageSize;
 
-    public BFDClientImpl(BFDSearch bfdSearch, BfdClientSearchVersions bfdClientSearchVersions,
+    public BFDClientImpl(BFDSearch bfdSearch, BfdClientVersions bfdClientVersions,
                          @Value("${bfd.eob.pagesize}") int pageSize,
                          @Value("${bfd.contract.to.bene.pagesize}") int contractToBenePageSize) {
-        this.client = client;
-        this.bfdClientSearchVersions = fhirContext;
         this.bfdSearch = bfdSearch;
+        this.bfdClientVersions = bfdClientVersions;
         this.pageSize = pageSize;
         this.contractToBenePageSize = contractToBenePageSize;
     }
