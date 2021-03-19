@@ -1,8 +1,6 @@
 package gov.cms.ab2d.filter;
 
 import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.IParser;
-import ca.uhn.fhir.rest.api.EncodingEnum;
 import gov.cms.ab2d.fhir.EobUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -11,6 +9,9 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+
+import static gov.cms.ab2d.fhir.FhirVersion.R4;
+import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 
 /**
  * Loads Explanation of Benefits object from a file or reader
@@ -25,13 +26,13 @@ public class EOBLoadUtilities {
      *             Explanation of Benefit data retrieved from Blue
      * @return the ExplanationOfBenefit object
      */
-    public static org.hl7.fhir.dstu3.model.ExplanationOfBenefit getSTU3EOBFromFileInClassPath(String fileInClassPath, FhirContext context) {
+    public static org.hl7.fhir.dstu3.model.ExplanationOfBenefit getSTU3EOBFromFileInClassPath(String fileInClassPath) {
         if (StringUtils.isBlank(fileInClassPath)) {
             return null;
         }
         ClassLoader classLoader = EOBLoadUtilities.class.getClassLoader();
         InputStream inputStream = classLoader.getResourceAsStream(fileInClassPath);
-        return getParser(context).parseResource(org.hl7.fhir.dstu3.model.ExplanationOfBenefit.class, inputStream);
+        return STU3.getJsonParser().parseResource(org.hl7.fhir.dstu3.model.ExplanationOfBenefit.class, inputStream);
     }
 
     /**
@@ -47,22 +48,12 @@ public class EOBLoadUtilities {
         String response = IOUtils.toString(reader);
         switch (context.getVersion().getVersion()) {
             case DSTU3:
-                return getParser(context).parseResource(org.hl7.fhir.dstu3.model.ExplanationOfBenefit.class, response);
+                return STU3.getJsonParser().parseResource(org.hl7.fhir.dstu3.model.ExplanationOfBenefit.class, response);
             case R4:
-                return getParser(context).parseResource(org.hl7.fhir.r4.model.ExplanationOfBenefit.class, response);
+                return R4.getJsonParser().parseResource(org.hl7.fhir.r4.model.ExplanationOfBenefit.class, response);
             default:
                 return null;
         }
-    }
-
-    /**
-     * Convenience method to create the parser for any method that needs it.
-     *
-     * @return the parser
-     */
-    private static IParser getParser(FhirContext context) {
-        EncodingEnum respType = EncodingEnum.forContentType(EncodingEnum.JSON_PLAIN_STRING);
-        return respType.newParser(context);
     }
 
     /**

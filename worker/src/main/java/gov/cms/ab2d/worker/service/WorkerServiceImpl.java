@@ -17,7 +17,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * This class is responsible for actually processing the job and preparing bulk downloads for users.
+ * This class is responsible for actually processing the job and preparing bulk downloads for clients.
  */
 @Slf4j
 @Service

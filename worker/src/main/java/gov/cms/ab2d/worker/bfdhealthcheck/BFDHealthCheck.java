@@ -4,16 +4,17 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
-import gov.cms.ab2d.fhir.MetaDataUtils;
-import gov.cms.ab2d.fhir.Versions;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.IBaseConformance;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.MAINTENANCE_MODE;
+import static gov.cms.ab2d.fhir.FhirVersion.STU3;
+import static gov.cms.ab2d.worker.bfdhealthcheck.HealthCheckData.Status;
 
 @Component
 @Slf4j
@@ -24,14 +25,7 @@ class BFDHealthCheck {
     private final BFDClient bfdClient;
     private final int consecutiveSuccessesToBringUp;
     private final int consecutiveFailuresToTakeDown;
-
-    // Nothing else should be calling this component except for the scheduler, so keep
-    // state here
-    private int consecutiveSuccesses = 0;
-
-    private int consecutiveFailures = 0;
-
-    private Status bfdStatus = Status.UP;
+    private final List<HealthCheckData> healthCheckData = new ArrayList<>();
 
     BFDHealthCheck(SlackLogger slackLogger, PropertiesService propertiesService, BFDClient bfdClient,
                           @Value("${bfd.health.check.consecutive.successes}") int consecutiveSuccessesToBringUp,
@@ -41,61 +35,63 @@ class BFDHealthCheck {
         this.bfdClient = bfdClient;
         this.consecutiveSuccessesToBringUp = consecutiveSuccessesToBringUp;
         this.consecutiveFailuresToTakeDown = consecutiveFailuresToTakeDown;
+
+        // Eventually, we'll change this to R4, don't need both at this point
+        this.healthCheckData.add(new HealthCheckData(STU3));
     }
 
     void checkBFDHealth() {
+        this.healthCheckData.forEach(c -> checkBFDHealth(c));
+    }
+
+    void checkBFDHealth(HealthCheckData data) {
 
         boolean errorOccurred = false;
         IBaseConformance capabilityStatement = null;
         try {
-            capabilityStatement = bfdClient.capabilityStatement();
+            capabilityStatement = bfdClient.capabilityStatement(data.getVersion());
         } catch (Exception e) {
             errorOccurred = true;
             log.error("Exception occurred while trying to retrieve capability statement", e);
-            markFailure();
+            markFailure(data);
         }
         try {
-            Versions.FhirVersions version = bfdClient.getVersion();
             if (!errorOccurred) {
-                if (!MetaDataUtils.metaDataValid(capabilityStatement, version)) {
-                    markFailure();
+                if (!data.getVersion().metaDataValid(capabilityStatement)) {
+                    markFailure(data);
                 } else {
-                    consecutiveSuccesses++;
-                    consecutiveFailures = 0;
-                    log.debug("{} consecutive successes to connect to BFD", consecutiveSuccesses);
+                    data.incrementSuccesses();
+                    data.setConsecutiveFailures(0);
+                    log.debug("{} consecutive successes to connect to BFD for {}", data.getConsecutiveSuccesses(), data.getVersion());
                 }
             }
         } catch (Exception ex) {
             errorOccurred = true;
             log.error("Exception occurred while trying to retrieve capability statement - Invalid version", ex);
-            markFailure();
+            markFailure(data);
         }
 
-        if (consecutiveSuccesses >= consecutiveSuccessesToBringUp && bfdStatus == Status.DOWN) {
-            updateMaintenanceStatus(Status.UP, "false");
-        } else if (consecutiveFailures >= consecutiveFailuresToTakeDown && bfdStatus == Status.UP) {
-            updateMaintenanceStatus(Status.DOWN, "true");
+        if (data.getConsecutiveSuccesses() >= consecutiveSuccessesToBringUp && data.getStatus() == Status.DOWN) {
+            updateMaintenanceStatus(data, Status.UP, "false");
+        } else if (data.getConsecutiveFailures() >= consecutiveFailuresToTakeDown && data.getStatus() == Status.UP) {
+            updateMaintenanceStatus(data, Status.DOWN, "true");
         }
     }
 
-    private void updateMaintenanceStatus(Status status, String statusString) {
-        bfdStatus = status;
-        consecutiveFailures = 0;
+    private void updateMaintenanceStatus(HealthCheckData data, Status status, String statusString) {
+        data.setStatus(status);
+        data.setConsecutiveFailures(0);
         PropertiesDTO propertiesDTO = new PropertiesDTO();
         propertiesDTO.setKey(MAINTENANCE_MODE);
         propertiesDTO.setValue(statusString);
-        slackLogger.logAlert("Maintenance Mode status: " + statusString);
+        slackLogger.logAlert("Maintenance Mode status for determined from " + data.getVersion() + " is: " + statusString);
         propertiesService.updateProperties(List.of(propertiesDTO));
         log.info("Updated the {} property to {}", MAINTENANCE_MODE, statusString);
     }
 
-    private void markFailure() {
-        consecutiveFailures++;
-        consecutiveSuccesses = 0;
-        log.debug("{} consecutive failures to connect to BFD", consecutiveFailures);
-    }
-
-    private enum Status {
-        UP, DOWN
+    private void markFailure(HealthCheckData data) {
+        data.incrementFailures();
+        data.setConsecutiveSuccesses(0);
+        log.debug("{} consecutive failures to connect to BFD", data.getConsecutiveFailures() + " for version " + data.getVersion().toString());
     }
 }

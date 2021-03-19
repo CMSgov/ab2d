@@ -1,7 +1,9 @@
 package gov.cms.ab2d.eventlogger.utils;
 
+import gov.cms.ab2d.eventlogger.LoggableEvent;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -47,6 +49,19 @@ public final class UtilMethods {
 
     public static String hashIt(InputStream stream) throws IOException {
         return Hex.encodeHexString(DigestUtils.sha256(stream));
+    }
+
+    /**
+     * Detect if a Loggable event contains an Okta client id
+     */
+    public static boolean containsClientId(LoggableEvent event) {
+
+        String organization = event.getOrganization();
+        if (StringUtils.isBlank(organization)) {
+            return false;
+        }
+
+        return organization.trim().startsWith("0");
     }
 
     public static boolean allEmpty(List<?>... events) {

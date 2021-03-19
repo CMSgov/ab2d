@@ -6,7 +6,7 @@ import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.repository.UserRepository;
+import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -16,7 +16,6 @@ import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
-import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.util.HealthCheck;
@@ -43,13 +42,13 @@ import java.util.stream.IntStream;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.eventlogger.events.ErrorEvent.ErrorType.TOO_MANY_SEARCH_ERRORS;
+import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.TestUtil.getOpenRange;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
 import static java.lang.Boolean.TRUE;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -75,7 +74,7 @@ class JobProcessorIntegrationTest {
     private JobRepository jobRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    private PdpClientRepository pdpClientRepository;
 
     @Autowired
     private ContractRepository contractRepository;
@@ -115,11 +114,11 @@ class JobProcessorIntegrationTest {
     @BeforeEach
     void setUp() {
         LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
-        User user = createUser();
+        PdpClient pdpClient = createClient();
 
         Contract contract = createContract();
 
-        job = createJob(user);
+        job = createJob(pdpClient);
         job.setContract(contract);
         job.setStatus(JobStatus.IN_PROGRESS);
         jobRepository.saveAndFlush(job);
@@ -127,8 +126,8 @@ class JobProcessorIntegrationTest {
         IBaseResource eob = EobTestDataUtil.createEOB();
         bundle1 = EobTestDataUtil.createBundle(((ExplanationOfBenefit) eob).copy());
         bundles = getBundles();
-        when(mockBfdClient.requestEOBFromServer(anyString())).thenReturn(bundle1);
-        when(mockBfdClient.requestEOBFromServer(anyString(), any())).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyString())).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyString(), any())).thenReturn(bundle1);
 
         fail = new RuntimeException("TEST EXCEPTION");
 
@@ -139,9 +138,7 @@ class JobProcessorIntegrationTest {
                 fileService,
                 jobRepository,
                 patientClaimsProcessor,
-                logManager,
-                fhirContext
-        );
+                logManager);
 
         ReflectionTestUtils.setField(contractProcessor, "cancellationCheckFrequency", 10);
 
@@ -192,8 +189,8 @@ class JobProcessorIntegrationTest {
     }
 
     @Test
-    @DisplayName("When a job is in submitted by the parent user, it process the contracts for the children")
-    void whenJobSubmittedByParentUser_ProcessAllContractsForChildrenSponsors() {
+    @DisplayName("When a job is in submitted by the parent client, it process the contracts for the children")
+    void whenJobSubmittedByParentClient_ProcessAllContractsForChildrenSponsors() {
         var processedJob = cut.process(job.getJobUuid());
 
         assertEquals(JobStatus.SUCCESSFUL, processedJob.getStatus());
@@ -208,7 +205,7 @@ class JobProcessorIntegrationTest {
     @Test
     @DisplayName("When the error count is below threshold, job does not fail")
     void when_errorCount_is_below_threshold_do_not_fail_job() {
-        when(mockBfdClient.requestEOBFromServer(anyString()))
+        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyString()))
                 .thenReturn(bundle1, bundles)
                 .thenReturn(bundle1, bundles)
                 .thenReturn(bundle1, bundles)
@@ -248,7 +245,7 @@ class JobProcessorIntegrationTest {
     @Test
     @DisplayName("When the error count is greater than or equal to threshold, job should fail")
     void when_errorCount_is_not_below_threshold_fail_job() {
-        when(mockBfdClient.requestEOBFromServer(anyString(), any()))
+        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyString(), any()))
                 .thenReturn(bundle1, bundles)
                 .thenReturn(bundle1, bundles)
                 .thenThrow(fail, fail, fail, fail, fail, fail, fail, fail, fail, fail)
@@ -293,17 +290,14 @@ class JobProcessorIntegrationTest {
         return new org.hl7.fhir.dstu3.model.Bundle[]{bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1};
     }
 
-    private User createUser() {
-        User user = new User();
-        user.setUsername("Harry_Potter");
-        user.setFirstName("Harry");
-        user.setLastName("Potter");
-        user.setEmail("harry_potter@hogwarts.com");
-        user.setEnabled(TRUE);
-//        user.setContract(createContract());
-        user =  userRepository.saveAndFlush(user);
-        dataSetup.queueForCleanup(user);
-        return user;
+    private PdpClient createClient() {
+        PdpClient pdpClient = new PdpClient();
+        pdpClient.setClientId("Harry_Potter");
+        pdpClient.setOrganization("Harry_Potter");
+        pdpClient.setEnabled(TRUE);
+        pdpClient =  pdpClientRepository.saveAndFlush(pdpClient);
+        dataSetup.queueForCleanup(pdpClient);
+        return pdpClient;
     }
 
     private Contract createContract() {
@@ -317,15 +311,15 @@ class JobProcessorIntegrationTest {
         return contract;
     }
 
-    private Job createJob(User user) {
+    private Job createJob(PdpClient pdpClient) {
         Job job = new Job();
         job.setJobUuid(JOB_UUID);
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage("0%");
-        job.setUser(user);
+        job.setPdpClient(pdpClient);
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setCreatedAt(OffsetDateTime.now());
-        job.setFhirVersion(Versions.FhirVersions.STU3);
+        job.setFhirVersion(STU3);
 
         job = jobRepository.saveAndFlush(job);
         dataSetup.queueForCleanup(job);

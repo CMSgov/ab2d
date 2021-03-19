@@ -1,12 +1,10 @@
 package gov.cms.ab2d.worker.processor;
 
-import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.fhir.FhirUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.worker.service.FileService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,6 +13,7 @@ import org.mockito.Mock;
 
 import java.util.*;
 
+import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.processor.ContractProcessorImpl.ID_EXT;
 import static gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable.*;
 import static java.util.Collections.singletonList;
@@ -34,15 +33,11 @@ class ContractProcessorImplTest {
     @Mock
     private JobRepository jobRepository;
 
-    @Mock
-    private FhirContext fhirContext;
-
     private ContractProcessorImpl processor;
 
     @BeforeEach
     public void before() {
-        processor = new ContractProcessorImpl(fileService, jobRepository, patientClaimsProcessor,
-                eventLogger, fhirContext);
+        processor = new ContractProcessorImpl(fileService, jobRepository, patientClaimsProcessor, eventLogger);
     }
 
     @Test
@@ -61,7 +56,7 @@ class ContractProcessorImplTest {
                 put(identifiers.getBeneficiaryId(), new CoverageSummary(identifiers, null, null));
         }};
 
-        FhirUtils.addMbiIdsToEobs(singletonList(eob), coverageSummaries, Versions.FhirVersions.STU3);
+        FhirUtils.addMbiIdsToEobs(singletonList(eob), coverageSummaries, STU3);
 
         assertFalse(eob.getExtension().isEmpty());
         assertEquals(3, eob.getExtension().size());

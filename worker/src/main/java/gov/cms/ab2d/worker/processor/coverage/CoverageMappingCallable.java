@@ -33,18 +33,20 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     private final AtomicBoolean completed;
     private final int year;
     private final boolean skipBillablePeriodCheck;
+    private final FhirVersion version;
 
     private int missingBeneId;
     private int missingCurrentMbi;
     private int hasHistoricalMbi;
     private int filteredByYear;
 
-    public CoverageMappingCallable(CoverageMapping coverageMapping, BFDClient bfdClient, boolean skipBillablePeriodCheck) {
+    public CoverageMappingCallable(FhirVersion version, CoverageMapping coverageMapping, BFDClient bfdClient, boolean skipBillablePeriodCheck) {
         this.coverageMapping = coverageMapping;
         this.bfdClient = bfdClient;
         this.completed = new AtomicBoolean(false);
         this.year = coverageMapping.getPeriod().getYear();
         this.skipBillablePeriodCheck = skipBillablePeriodCheck;
+        this.version = version;
     }
 
     public boolean isCompleted() {
@@ -88,7 +90,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
                 log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}",
                         contractNumber, year, month, bundleNo);
 
-                bundle = bfdClient.requestNextBundleFromServer(bundle);
+                bundle = bfdClient.requestNextBundleFromServer(version, bundle);
 
                 availableLinks = BundleUtils.getAvailableLinksPretty(bundle);
 
@@ -129,7 +131,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     }
 
     private Set<Identifiers> extractAndFilter(IBaseBundle bundle) {
-        return BundleUtils.getPatientStream(bundle, bfdClient.getVersion())
+        return BundleUtils.getPatientStream(bundle, version)
                 .filter(patient -> skipBillablePeriodCheck || filterByYear(patient))
                 .map(this::extractPatientId)
                 .filter(Objects::nonNull)
@@ -181,9 +183,12 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     }
 
     /**
-     * Given a contractNumber & a month, calls BFD API to find all patients active in the contract during the month.
+     * Given a contractNumber, month, and optionally a year, calls BFD API to find all patients active in the contract during the month.
      *
      * This only pulls the first page of the results, all other pages must be pulled using requestNextBundle.
+     *
+     * @param contractNumber - the PDP's contract number
+     * @param month - the month to pull data for (1-12)
      * @return a FHIR bundle of resources containing active patients
      */
     private IBaseBundle getBundle() {
@@ -197,11 +202,11 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
             // use the reference year provided for all sandbox data
             // For some reason this year is always 3
             if (skipBillablePeriodCheck) {
-                return bfdClient.requestPartDEnrolleesFromServer(contractNumber, month, 3);
+                return bfdClient.requestPartDEnrolleesFromServer(version, contractNumber, month, 3);
             }
 
             // If running with production data include the year with the query
-            return bfdClient.requestPartDEnrolleesFromServer(contractNumber, month, year);
+            return bfdClient.requestPartDEnrolleesFromServer(version, contractNumber, month, year);
         } catch (Exception e) {
             final Throwable rootCause = ExceptionUtils.getRootCause(e);
             log.error("Error while calling for Contract-2-Bene API : {}", e.getMessage(), rootCause);

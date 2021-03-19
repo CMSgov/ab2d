@@ -4,7 +4,7 @@ import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.fhir.EobUtils;
 import gov.cms.ab2d.fhir.ExtensionUtils;
-import gov.cms.ab2d.fhir.Versions;
+import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.IBase;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -14,7 +14,7 @@ import java.util.Map;
 
 @Slf4j
 public class FhirUtils {
-    public static void addMbiIdsToEobs(List<IBaseResource> eobs, Map<String, CoverageSummary> patients, Versions.FhirVersions version) {
+    public static void addMbiIdsToEobs(List<IBaseResource> eobs, Map<String, CoverageSummary> patients, FhirVersion version) {
         if (eobs == null || eobs.isEmpty()) {
             return;
         }

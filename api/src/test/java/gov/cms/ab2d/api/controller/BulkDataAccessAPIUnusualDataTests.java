@@ -30,6 +30,7 @@ import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESS
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -43,7 +44,7 @@ public class BulkDataAccessAPIUnusualDataTests {
     private MockMvc mockMvc;
 
     @Autowired
-    private UserRepository userRepository;
+    private PdpClientRepository pdpClientRepository;
 
     @Autowired
     private JobRepository jobRepository;
@@ -76,7 +77,7 @@ public class BulkDataAccessAPIUnusualDataTests {
         String token = testUtil.setupContractWithNoAttestation(List.of(SPONSOR_ROLE));
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export")
+        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
@@ -100,29 +101,29 @@ public class BulkDataAccessAPIUnusualDataTests {
 
     @Test
     public void testPatientExportWithOnlyParentAttestation() throws Exception {
-        String token = testUtil.setupContractSponsorForParentUserData(List.of(SPONSOR_ROLE));
+        String token = testUtil.setupContractSponsorForParentClientData(List.of(SPONSOR_ROLE));
 
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         ResultActions resultActions = this.mockMvc.perform(
-                get(API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andDo(print());
         Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
         String statusUrl =
-                "http://localhost" + API_PREFIX + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
+                "http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
 
         resultActions.andExpect(status().isAccepted())
-                .andExpect(header().string("Content-Location", statusUrl));
+                .andExpect(header().string(CONTENT_LOCATION, statusUrl));
 
         assertEquals(SUBMITTED, job.getStatus());
         assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
         assertEquals(Integer.valueOf(0), job.getProgress());
-        assertEquals("http://localhost" + API_PREFIX + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export",
+        assertEquals("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export",
                 job.getRequestUrl());
         assertNull(job.getResourceTypes());
-        assertEquals(userRepository.findByUsername(TEST_USER), job.getUser());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
 
     }
 }

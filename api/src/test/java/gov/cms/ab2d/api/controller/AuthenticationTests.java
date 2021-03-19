@@ -2,7 +2,7 @@ package gov.cms.ab2d.api.controller;
 
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
-import gov.cms.ab2d.common.model.User;
+import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
@@ -24,7 +24,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.*;
-import static gov.cms.ab2d.common.util.DataSetup.TEST_USER;
+import static gov.cms.ab2d.common.util.DataSetup.TEST_PDP_CLIENT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -41,7 +41,7 @@ public class AuthenticationTests {
     private TestUtil testUtil;
 
     @Autowired
-    private UserRepository userRepository;
+    private PdpClientRepository pdpClientRepository;
 
     @Autowired
     private DataSetup dataSetup;
@@ -68,7 +68,7 @@ public class AuthenticationTests {
     // Negative tests, successful auth tests are essentially done in other suites
     @Test
     public void testNoAuthHeader() throws Exception {
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Patient/$export")
+        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Patient/$export")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(401));
         List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
@@ -83,7 +83,7 @@ public class AuthenticationTests {
 
     @Test
     public void testBadStartToHeader() throws Exception {
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Patient/$export")
+        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Patient/$export")
                 .header("Authorization", "NotBearer")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(401));
@@ -91,18 +91,18 @@ public class AuthenticationTests {
 
     @Test
     public void testNoTokenInHeader() throws Exception {
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Patient/$export")
+        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Patient/$export")
                 .header("Authorization", "Bearer ")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(401));
     }
 
     @Test
-    public void testUserDoesNotExist() throws Exception {
-        User user = userRepository.findByUsername(TEST_USER);
-        userRepository.delete(user);
+    public void testClientDoesNotExist() throws Exception {
+        PdpClient pdpClient = pdpClientRepository.findByClientId(TEST_PDP_CLIENT);
+        pdpClientRepository.delete(pdpClient);
 
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Patient/$export")
+        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Patient/$export")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(403));
@@ -117,12 +117,12 @@ public class AuthenticationTests {
     }
 
     @Test
-    public void testUserIsNotEnabled() throws Exception {
-        User user = userRepository.findByUsername(TEST_USER);
-        user.setEnabled(false);
-        userRepository.save(user);
+    public void testClientIsNotEnabled() throws Exception {
+        PdpClient pdpClient = pdpClientRepository.findByClientId(TEST_PDP_CLIENT);
+        pdpClient.setEnabled(false);
+        pdpClientRepository.save(pdpClient);
 
-        this.mockMvc.perform(get(API_PREFIX + FHIR_PREFIX + "/Patient/$export")
+        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Patient/$export")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(403));

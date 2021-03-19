@@ -6,7 +6,6 @@ import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverStub;
 import gov.cms.ab2d.worker.service.FileService;
@@ -25,6 +24,7 @@ import java.time.OffsetDateTime;
 import java.util.concurrent.ExecutionException;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
+import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
@@ -49,7 +49,7 @@ class ProgressTrackerIntegrationTest {
     private JobOutputRepository jobOutputRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    private PdpClientRepository pdpClientRepository;
 
     @Autowired
     private DataSetup dataSetup;
@@ -85,7 +85,7 @@ class ProgressTrackerIntegrationTest {
 
         Contract contract = dataSetup.setupContract("C0001");
 
-        Job job = createJob(createUser());
+        Job job = createJob(createClient());
         job.setContract(contract);
 
         ProgressTracker progressTracker = ProgressTracker.builder()
@@ -102,9 +102,8 @@ class ProgressTrackerIntegrationTest {
         org.hl7.fhir.dstu3.model.Bundle bundleA = BundleUtils.createBundle(entry1, entry2, entry3);
         org.hl7.fhir.dstu3.model.Bundle bundleB = BundleUtils.createBundle(entry1, entry2, entry3, entry4);
 
-        when(bfdClient.requestPartDEnrolleesFromServer(CONTRACT_NUMBER, 1)).thenReturn(bundleA);
-        when(bfdClient.requestPartDEnrolleesFromServer(CONTRACT_NUMBER, 2)).thenReturn(bundleB);
-        when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
+        when(bfdClient.requestPartDEnrolleesFromServer(STU3, CONTRACT_NUMBER, 1)).thenReturn(bundleA);
+        when(bfdClient.requestPartDEnrolleesFromServer(STU3, CONTRACT_NUMBER, 2)).thenReturn(bundleB);
 
         cut.processContractBenes(job, progressTracker);
 
@@ -112,28 +111,29 @@ class ProgressTrackerIntegrationTest {
         assertEquals(30, loadedVal.getProgress());
     }
 
-    private User createUser() {
+    private PdpClient createClient() {
 
-        User user = new User();
-        user.setUsername("testuser" + 1000L);
-        user.setEnabled(true);
-        user.setContract(dataSetup.setupContract("W1234"));
+        PdpClient pdpClient = new PdpClient();
+        pdpClient.setClientId("testclient" + 1000L);
+        pdpClient.setOrganization("testclient" + 1000L);
+        pdpClient.setEnabled(true);
+        pdpClient.setContract(dataSetup.setupContract("W1234"));
 
-        user = userRepository.save(user);
-        dataSetup.queueForCleanup(user);
-        return user;
+        pdpClient = pdpClientRepository.save(pdpClient);
+        dataSetup.queueForCleanup(pdpClient);
+        return pdpClient;
     }
 
-    private Job createJob(User user) {
+    private Job createJob(PdpClient pdpClient) {
         Job job = new Job();
         job.setJobUuid("S0000");
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage("0%");
-        job.setUser(user);
+        job.setPdpClient(pdpClient);
 
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setCreatedAt(OffsetDateTime.now());
-        job.setFhirVersion(Versions.FhirVersions.STU3);
+        job.setFhirVersion(STU3);
 
         job = jobRepository.saveAndFlush(job);
         dataSetup.queueForCleanup(job);

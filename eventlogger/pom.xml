@@ -82,12 +82,12 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk</artifactId>
-            <version>1.11.892</version>
+            <version>1.11.962</version>
         </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>amazon-kinesis-client</artifactId>
-            <version>1.14.1</version>
+            <version>1.14.2</version>
         </dependency>
         <dependency>
             <groupId>org.codehaus.jettison</groupId>
@@ -109,7 +109,7 @@
         <dependency>
             <groupId>com.slack.api</groupId>
             <artifactId>slack-api-client</artifactId>
-            <version>1.6.0</version>
+            <version>1.6.2</version>
         </dependency>
     </dependencies>
 

@@ -1,7 +1,7 @@
 package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.fhir.Versions;
+import gov.cms.ab2d.fhir.FhirVersion;
 import org.springframework.core.io.Resource;
 
 import java.io.File;
@@ -11,7 +11,7 @@ import java.time.OffsetDateTime;
 public interface JobService {
     String ZIPFORMAT = "application/zip";
 
-    Job createJob(String resourceTypes, String url, String contractNumber, String outputFormat, OffsetDateTime since, Versions.FhirVersions version);
+    Job createJob(String resourceTypes, String url, String contractNumber, String outputFormat, OffsetDateTime since, FhirVersion version);
 
     void cancelJob(String jobUuid);
 
@@ -25,5 +25,5 @@ public interface JobService {
 
     void deleteFileForJob(File file, String jobUuid);
 
-    boolean checkIfCurrentUserCanAddJob();
+    boolean checkIfCurrentClientCanAddJob();
 }

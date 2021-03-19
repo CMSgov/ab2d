@@ -16,6 +16,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static gov.cms.ab2d.fhir.FhirVersion.STU3;
+
 @Slf4j
 @Service
 public class CoverageProcessorImpl implements CoverageProcessor {
@@ -85,7 +87,8 @@ public class CoverageProcessorImpl implements CoverageProcessor {
             log.debug("starting search for {} during {}-{}", mapping.getContract().getContractNumber(),
                     mapping.getPeriod().getMonth(), mapping.getPeriod().getYear());
 
-            CoverageMappingCallable callable = new CoverageMappingCallable(mapping, bfdClient, skipBillablePeriodCheck);
+            // Currently, we are using the STU3 version to get patient mappings
+            CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, skipBillablePeriodCheck);
             executor.submit(callable);
             inProgressMappings.add(callable);
 

@@ -5,7 +5,6 @@ import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.common.util.FilterOutByDate;
-import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.processor.stub.PatientClaimsProcessorStub;
 import gov.cms.ab2d.worker.service.FileService;
@@ -25,6 +24,8 @@ import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.*;
 
+import static gov.cms.ab2d.common.util.EventUtils.getOrganization;
+import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
 import static java.lang.Boolean.TRUE;
 import static org.junit.jupiter.api.Assertions.*;
@@ -51,7 +52,7 @@ class ContractProcessorUnitTest {
     private Path outputDir;
     private Contract contract;
     private Job job;
-    private User user;
+    private PdpClient pdpClient;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -64,16 +65,14 @@ class ContractProcessorUnitTest {
                 fileService,
                 jobRepository,
                 patientClaimsProcessor,
-                eventLogger,
-                fhirContext
-        );
+                eventLogger);
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 2);
         ReflectionTestUtils.setField(cut, "reportProgressDbFrequency", 2);
         ReflectionTestUtils.setField(cut, "reportProgressLogFrequency", 3);
         ReflectionTestUtils.setField(cut, "tryLockTimeout", 30);
 
-        user = createUser();
-        job = createJob(user);
+        pdpClient = createClient();
+        job = createJob(pdpClient);
         contract = createContract();
 
 
@@ -97,7 +96,7 @@ class ContractProcessorUnitTest {
 
         progressTracker.addPatients(patientsByContract);
         ContractData contractData = new ContractData(contract, progressTracker, job.getSince(),
-                job.getUser() != null ? job.getUser().getUsername() : null);
+                getOrganization(job));
 
         when(jobRepository.findJobStatus(anyString())).thenReturn(JobStatus.CANCELLED);
 
@@ -121,7 +120,7 @@ class ContractProcessorUnitTest {
                 .build();
         progressTracker.addPatients(patientsByContract);
         ContractData contractData = new ContractData(contract, progressTracker, job.getSince(),
-                job.getUser() != null ? job.getUser().getUsername() : null);
+                getOrganization(job));
 
         var jobOutputs = cut.process(outputDir, contractData);
 
@@ -130,15 +129,12 @@ class ContractProcessorUnitTest {
         verify(patientClaimsProcessor, atLeast(1)).process(any());
     }
 
-    private User createUser() {
-        User user = new User();
-        user.setUsername("Harry_Potter");
-        user.setFirstName("Harry");
-        user.setLastName("Potter");
-        user.setEmail("harry_potter@hogwarts.edu");
-        user.setEnabled(TRUE);
-        user.setContract(createContract());
-        return user;
+    private PdpClient createClient() {
+        PdpClient pdpClient = new PdpClient();
+        pdpClient.setClientId("Harry_Potter");
+        pdpClient.setEnabled(TRUE);
+        pdpClient.setContract(createContract());
+        return pdpClient;
     }
 
     private Contract createContract() {
@@ -150,13 +146,13 @@ class ContractProcessorUnitTest {
         return contract;
     }
 
-    private Job createJob(User user) {
+    private Job createJob(PdpClient pdpClient) {
         Job job = new Job();
         job.setJobUuid("S0000");
         job.setStatusMessage("0%");
         job.setStatus(JobStatus.IN_PROGRESS);
-        job.setUser(user);
-        job.setFhirVersion(Versions.FhirVersions.STU3);
+        job.setPdpClient(pdpClient);
+        job.setFhirVersion(STU3);
         return job;
     }
 

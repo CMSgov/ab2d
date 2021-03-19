@@ -5,7 +5,6 @@ import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
-import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
@@ -45,6 +44,7 @@ import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESS
 import static gov.cms.ab2d.common.service.JobServiceImpl.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
+import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = SpringBootApp.class)
@@ -52,7 +52,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Testcontainers
 class JobServiceTest {
 
-    public static final String USERNAME = "douglas.adams@towels.com";
+    public static final String CLIENTID = "douglas.adams@towels.com";
     public static final String CONTRACT_NUMBER = "S0000";
     public static final String LOCAL_HOST = "http://localhost:8080";
 
@@ -62,7 +62,7 @@ class JobServiceTest {
     private JobRepository jobRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    private PdpClientRepository pdpClientRepository;
 
     @Autowired
     private ContractRepository contractRepository;
@@ -74,7 +74,7 @@ class JobServiceTest {
     private DataSetup dataSetup;
 
     @Autowired
-    private UserService userService;
+    private PdpClientService pdpClientService;
 
     @Value("${efs.mount}")
     private String tmpJobLocation;
@@ -102,12 +102,12 @@ class JobServiceTest {
     @BeforeEach
     public void setup() {
         LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
-        jobService = new JobServiceImpl(userService, jobRepository, jobOutputService, logManager, loggerEventSummary, tmpJobLocation);
+        jobService = new JobServiceImpl(pdpClientService, jobRepository, jobOutputService, logManager, loggerEventSummary, tmpJobLocation);
         ReflectionTestUtils.setField(jobService, "fileDownloadPath", tmpJobLocation);
 
-        dataSetup.setupNonStandardUser(USERNAME, CONTRACT_NUMBER, List.of());
+        dataSetup.setupNonStandardClient(CLIENTID, CONTRACT_NUMBER, List.of());
 
-        setupRegularUserSecurityContext();
+        setupRegularClientSecurityContext();
     }
 
     @AfterEach
@@ -115,10 +115,10 @@ class JobServiceTest {
         dataSetup.cleanup();
     }
 
-    private void setupRegularUserSecurityContext() {
+    private void setupRegularClientSecurityContext() {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(
-                        new org.springframework.security.core.userdetails.User(USERNAME,
+                        new org.springframework.security.core.userdetails.User(CLIENTID,
                                 "test", new ArrayList<>()), "pass"));
     }
 
@@ -131,7 +131,7 @@ class JobServiceTest {
         assertNotNull(job.getOutputFormat());
         assertEquals(ZIPFORMAT, job.getOutputFormat());
         assertEquals(Integer.valueOf(0), job.getProgress());
-        assertEquals(userRepository.findByUsername(USERNAME), job.getUser());
+        assertEquals(pdpClientRepository.findByClientId(CLIENTID), job.getPdpClient());
         assertEquals(EOB, job.getResourceTypes());
         assertEquals(LOCAL_HOST, job.getRequestUrl());
         assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
@@ -149,8 +149,7 @@ class JobServiceTest {
     void createJobWithContract() {
         Contract contract = contractRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
-        Job job = jobService.createJob(EOB, LOCAL_HOST, contract.getContractNumber(), NDJSON_FIRE_CONTENT_TYPE, null,
-                Versions.FhirVersions.STU3);
+        Job job = jobService.createJob(EOB, LOCAL_HOST, contract.getContractNumber(), NDJSON_FIRE_CONTENT_TYPE, null, STU3);
         dataSetup.queueForCleanup(job);
 
         assertNotNull(job);
@@ -159,13 +158,13 @@ class JobServiceTest {
         assertNotNull(job.getOutputFormat());
         assertEquals(NDJSON_FIRE_CONTENT_TYPE, job.getOutputFormat());
         assertEquals(Integer.valueOf(0), job.getProgress());
-        assertEquals(userRepository.findByUsername(USERNAME), job.getUser());
+        assertEquals(pdpClientRepository.findByClientId(CLIENTID), job.getPdpClient());
         assertEquals(EOB, job.getResourceTypes());
         assertEquals(LOCAL_HOST, job.getRequestUrl());
         assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
         assertEquals(JobStatus.SUBMITTED, job.getStatus());
         assertEquals(0, job.getJobOutputs().size());
-        assertEquals(Versions.FhirVersions.STU3, job.getFhirVersion());
+        assertEquals(STU3, job.getFhirVersion());
         assertNull(job.getLastPollTime());
         assertNull(job.getExpiresAt());
         assertTrue(job.getJobUuid().matches("[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"));
@@ -179,18 +178,18 @@ class JobServiceTest {
 
     @Test
     void createJobWithSpecificContractNoAttestation() {
-        dataSetup.setupContractWithNoAttestation(USERNAME, CONTRACT_NUMBER, List.of());
+        dataSetup.setupContractWithNoAttestation(CLIENTID, CONTRACT_NUMBER, List.of());
         assertThrows(InvalidContractException.class,
                 () -> jobService.createJob(EOB, LOCAL_HOST, DataSetup.VALID_CONTRACT_NUMBER, NDJSON_FIRE_CONTENT_TYPE, null,
-                        Versions.FhirVersions.STU3));
+                        STU3));
     }
 
     @Test
     void createJobWithAllContractsNoAttestation() {
-        dataSetup.setupContractWithNoAttestation(USERNAME, CONTRACT_NUMBER, List.of());
+        dataSetup.setupContractWithNoAttestation(CLIENTID, CONTRACT_NUMBER, List.of());
         assertThrows(InvalidContractException.class,
                 () -> jobService.createJob(EOB, LOCAL_HOST, null, NDJSON_FIRE_CONTENT_TYPE, null,
-                        Versions.FhirVersions.STU3));
+                        STU3));
     }
 
     @Test
@@ -198,7 +197,7 @@ class JobServiceTest {
         assertThrows(TransactionSystemException.class,
                 () -> jobService.createJob("Patient,ExplanationOfBenefit,Coverage", LOCAL_HOST,
                         null, NDJSON_FIRE_CONTENT_TYPE, null,
-                        Versions.FhirVersions.STU3));
+                        STU3));
     }
 
     @Test
@@ -230,10 +229,10 @@ class JobServiceTest {
 
     @Test
     void getJobAdminRole() {
-        // Job created by regular user
+        // Job created by regular client
         Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
 
-        setupAdminUser();
+        setupAdminClient();
 
         Job retrievedJob = jobService.getAuthorizedJobByJobUuidAndRole(job.getJobUuid());
 
@@ -242,35 +241,36 @@ class JobServiceTest {
 
     @Test
     void getJobCreatedByAdminRole() {
-        setupAdminUser();
+        setupAdminClient();
 
-        // Job created by admin user
+        // Job created by admin client
         Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
 
-        setupRegularUserSecurityContext();
+        setupRegularClientSecurityContext();
 
         assertThrows(InvalidJobAccessException.class,
                 () -> jobService.getAuthorizedJobByJobUuidAndRole(job.getJobUuid()));
     }
 
-    private void setupAdminUser() {
+    private void setupAdminClient() {
         dataSetup.createRole(ADMIN_ROLE);
-        final String adminUsername = "ADMIN_USER";
-        User user = new User();
-        user.setUsername(adminUsername);
-        user.setEnabled(true);
+        final String adminClient = "ADMIN_CLIENT";
+        PdpClient pdpClient = new PdpClient();
+        pdpClient.setClientId(adminClient);
+        pdpClient.setOrganization(adminClient);
+        pdpClient.setEnabled(true);
         Role role = roleService.findRoleByName(ADMIN_ROLE);
-        user.addRole(role);
+        pdpClient.addRole(role);
 
         Contract contract = dataSetup.setupContract("Y0000");
-        user.setContract(contract);
+        pdpClient.setContract(contract);
 
-        user = userRepository.saveAndFlush(user);
-        dataSetup.queueForCleanup(user);
+        pdpClient = pdpClientRepository.saveAndFlush(pdpClient);
+        dataSetup.queueForCleanup(pdpClient);
 
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(
-                        new org.springframework.security.core.userdetails.User(adminUsername,
+                        new org.springframework.security.core.userdetails.User(adminClient,
                                 "test", new ArrayList<>()), "pass"));
     }
 
@@ -392,7 +392,7 @@ class JobServiceTest {
     }
 
     @Test
-    void getJobOutputFromDifferentUser() throws IOException {
+    void getJobOutputFromDifferentClient() throws IOException {
         String testFile = "test.ndjson";
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
@@ -405,20 +405,21 @@ class JobServiceTest {
         createNDJSONFile(errorFile, destinationStr);
 
         dataSetup.createRole(SPONSOR_ROLE);
-        User user = new User();
+        PdpClient pdpClient = new PdpClient();
         Role role = roleService.findRoleByName(SPONSOR_ROLE);
-        user.setRoles(Set.of(role));
-        user.setUsername("BadUser");
-        user.setEnabled(true);
-        dataSetup.queueForCleanup(user);
+        pdpClient.setRoles(Set.of(role));
+        pdpClient.setClientId("BadClient");
+        pdpClient.setOrganization("BadClient");
+        pdpClient.setEnabled(true);
+        dataSetup.queueForCleanup(pdpClient);
 
         Contract contract = dataSetup.setupContract("New Contract");
-        user.setContract(contract);
-        User savedUser = userRepository.save(user);
+        pdpClient.setContract(contract);
+        PdpClient savedPdpClient = pdpClientRepository.save(pdpClient);
 
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(
-                        new org.springframework.security.core.userdetails.User(savedUser.getUsername(),
+                        new org.springframework.security.core.userdetails.User(savedPdpClient.getClientId(),
                                 "test", new ArrayList<>()), "pass"));
 
         var exceptionThrown = assertThrows(
@@ -449,7 +450,7 @@ class JobServiceTest {
         job.setRequestUrl("http://localhost");
         job.setStatusMessage("Pending");
         job.setExpiresAt(now.plus(1, ChronoUnit.HOURS));
-        job.setUser(userService.getCurrentUser());
+        job.setPdpClient(pdpClientService.getCurrentClient());
 
         JobOutput jobOutput = new JobOutput();
         jobOutput.setError(false);
@@ -523,26 +524,26 @@ class JobServiceTest {
     }
 
     @Test
-    void checkIfUserCanAddJobTest() {
-        boolean result = jobService.checkIfCurrentUserCanAddJob();
+    void checkIfClientCanAddJobTest() {
+        boolean result = jobService.checkIfCurrentClientCanAddJob();
         assertTrue(result);
     }
 
     @Test
-    void checkIfUserCanAddJobTrueTest() {
+    void checkIfClientCanAddJobTrueTest() {
         createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
 
-        boolean result = jobService.checkIfCurrentUserCanAddJob();
+        boolean result = jobService.checkIfCurrentClientCanAddJob();
         assertTrue(result);
     }
 
     @Test
-    void checkIfUserCanAddJobPastLimitTest() {
+    void checkIfClientCanAddJobPastLimitTest() {
         createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
         createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
         createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
 
-        boolean result = jobService.checkIfCurrentUserCanAddJob();
+        boolean result = jobService.checkIfCurrentClientCanAddJob();
         assertFalse(result);
     }
 
@@ -556,7 +557,7 @@ class JobServiceTest {
 
     private Job createJobAllContracts(String outputFormat) {
         Job job = jobService.createJob(EOB, LOCAL_HOST, null, outputFormat, null,
-                Versions.FhirVersions.STU3);
+                STU3);
         dataSetup.queueForCleanup(job);
         return job;
     }

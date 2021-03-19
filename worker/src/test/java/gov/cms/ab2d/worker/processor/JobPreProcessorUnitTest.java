@@ -4,7 +4,6 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -110,7 +110,7 @@ class JobPreProcessorUnitTest {
         Job job = new Job();
         job.setJobUuid(JOB_UUID);
         job.setStatusMessage("0%");
-        job.setFhirVersion(Versions.FhirVersions.STU3);
+        job.setFhirVersion(STU3);
 
         return job;
     }

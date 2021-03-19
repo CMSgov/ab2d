@@ -22,23 +22,27 @@ import springfox.documentation.spring.web.plugins.Docket;
 import java.util.*;
 
 import static gov.cms.ab2d.api.util.SwaggerConstants.MAIN;
-import static gov.cms.ab2d.common.util.Constants.API_PREFIX;
+import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
+import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @AllArgsConstructor
 @Configuration
+@SuppressWarnings("PMD.TooManyStaticImports")
 public class SwaggerConfig {
 
     private final TypeResolver typeResolver;
 
     @Bean
-    public Docket api() {
+    public Docket apiV1() {
         List<SecurityScheme> auth = List.of(apiKey());
         return new Docket(DocumentationType.OAS_30)
                 .select()
                 .apis(RequestHandlerSelectors.basePackage("gov.cms.ab2d.api.controller"))
-                .paths(PathSelectors.ant(API_PREFIX + FHIR_PREFIX + "/**"))
+                .paths(PathSelectors.ant(API_PREFIX_V1 + FHIR_PREFIX + "/**"))
                 .build()
+                .groupName("V1 - FHIR STU3")
                 .directModelSubstitute(Resource.class, String.class)
                 .useDefaultResponseMessages(false)
                 .securitySchemes(auth)
@@ -46,7 +50,26 @@ public class SwaggerConfig {
                         globalResponseMessages())
                 .globalResponseMessage(RequestMethod.DELETE,
                         globalResponseMessages())
-                .apiInfo(apiInfo()).additionalModels(typeResolver.resolve(OperationOutcome.class));
+                .apiInfo(apiInfoV1()).additionalModels(typeResolver.resolve(OperationOutcome.class));
+    }
+
+    @Bean
+    public Docket apiV2() {
+        List<SecurityScheme> auth = List.of(apiKey());
+        return new Docket(DocumentationType.OAS_30)
+                .select()
+                .apis(RequestHandlerSelectors.basePackage("gov.cms.ab2d.api.controller"))
+                .paths(PathSelectors.ant(API_PREFIX_V2 + FHIR_PREFIX + "/**"))
+                .build()
+                .groupName("V2 - FHIR R4")
+                .directModelSubstitute(Resource.class, String.class)
+                .useDefaultResponseMessages(false)
+                .securitySchemes(auth)
+                .globalResponseMessage(RequestMethod.GET,
+                        globalResponseMessages())
+                .globalResponseMessage(RequestMethod.DELETE,
+                        globalResponseMessages())
+                .apiInfo(apiInfoV2()).additionalModels(typeResolver.resolve(OperationOutcome.class));
     }
 
     private List<ResponseMessage> globalResponseMessages() {
@@ -71,14 +94,24 @@ public class SwaggerConfig {
                 .build());
     }
 
-    private ApiInfo apiInfo() {
+    private ApiInfo apiInfoV1() {
         return new ApiInfo(
-               "AB2D FHIR Bulk Data Access API",
+               "AB2D FHIR STU3 Bulk Data Access API",
                 MAIN,
                "1.0",
                null,
                null,
                null, null, Collections.emptyList());
+    }
+
+    private ApiInfo apiInfoV2() {
+        return new ApiInfo(
+                "AB2D FHIR R4 Bulk Data Access API",
+                MAIN,
+                "2.0",
+                null,
+                null,
+                null, null, Collections.emptyList());
     }
 
     // FHIR's OperationOutcome won't play nice with Swagger. Having to redefine it here
@@ -235,6 +268,6 @@ public class SwaggerConfig {
     }
 
     private ApiKey apiKey() {
-        return new ApiKey("Authorization", "Authorization", "header");
+        return new ApiKey(AUTHORIZATION, AUTHORIZATION, "header");
     }
 }

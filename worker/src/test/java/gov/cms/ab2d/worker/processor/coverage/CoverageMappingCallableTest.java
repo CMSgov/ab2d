@@ -3,7 +3,6 @@ package gov.cms.ab2d.worker.processor.coverage;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.fhir.Versions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,6 +11,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Collections;
 
+import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createPatient;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createPatientWithMultipleMbis;
 import static java.util.Collections.emptyList;
@@ -40,9 +40,8 @@ class CoverageMappingCallableTest {
 
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20, 2020);
 
-        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
-        when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
+        when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         Contract contract = new Contract();
         contract.setContractNumber("TESTING");
@@ -60,7 +59,7 @@ class CoverageMappingCallableTest {
         search.setPeriod(period);
 
         CoverageMapping mapping = new CoverageMapping(cse, search);
-        CoverageMappingCallable callable = new CoverageMappingCallable(mapping, bfdClient, false);
+        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, false);
 
         assertFalse(callable.isCompleted());
 
@@ -122,9 +121,8 @@ class CoverageMappingCallableTest {
 
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20, 3,2020);
 
-        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
-        when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
+        when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         Contract contract = new Contract();
         contract.setContractNumber("TESTING");
@@ -142,7 +140,7 @@ class CoverageMappingCallableTest {
         search.setPeriod(period);
 
         CoverageMapping mapping = new CoverageMapping(cse, search);
-        CoverageMappingCallable callable = new CoverageMappingCallable(mapping, bfdClient, false);
+        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, false);
 
         try {
             callable.call();
@@ -176,9 +174,8 @@ class CoverageMappingCallableTest {
 
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20, 3,2020);
 
-        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
-        when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
+        when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         Contract contract = new Contract();
         contract.setContractNumber("TESTING");
@@ -196,7 +193,7 @@ class CoverageMappingCallableTest {
         search.setPeriod(period);
 
         CoverageMapping mapping = new CoverageMapping(cse, search);
-        CoverageMappingCallable callable = new CoverageMappingCallable(mapping, bfdClient, false);
+        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, false);
 
         try {
             callable.call();
@@ -227,9 +224,8 @@ class CoverageMappingCallableTest {
 
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20, 2019);
 
-        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
-        when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
+        when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         Contract contract = new Contract();
         contract.setContractNumber("TESTING");
@@ -249,7 +245,7 @@ class CoverageMappingCallableTest {
         CoverageMapping mapping = new CoverageMapping(cse, search);
 
         CoverageMappingCallable coverageCallable =
-                new CoverageMappingCallable(mapping, bfdClient, false);
+                new CoverageMappingCallable(STU3, mapping, bfdClient, false);
 
         try {
             mapping = coverageCallable.call();
@@ -278,9 +274,8 @@ class CoverageMappingCallableTest {
             patient.setIdentifier(emptyList());
         });
 
-        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
-        when(bfdClient.getVersion()).thenReturn(Versions.FhirVersions.STU3);
+        when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         Contract contract = new Contract();
         contract.setContractNumber("TESTING");
@@ -300,7 +295,7 @@ class CoverageMappingCallableTest {
         CoverageMapping mapping = new CoverageMapping(cse, search);
 
         CoverageMappingCallable coverageCallable =
-                new CoverageMappingCallable(mapping, bfdClient, false);
+                new CoverageMappingCallable(STU3, mapping, bfdClient, false);
 
         try {
             mapping = coverageCallable.call();
@@ -320,7 +315,7 @@ class CoverageMappingCallableTest {
     @Test
     void exceptionCaught() {
 
-        when(bfdClient.requestPartDEnrolleesFromServer(anyString(), anyInt())).thenThrow(new RuntimeException("exception"));
+        when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt())).thenThrow(new RuntimeException("exception"));
 
         Contract contract = new Contract();
         contract.setContractNumber("TESTING");
@@ -338,7 +333,7 @@ class CoverageMappingCallableTest {
         search.setPeriod(period);
 
         CoverageMapping mapping = new CoverageMapping(cse, search);
-        CoverageMappingCallable callable = new CoverageMappingCallable(mapping, bfdClient, false);
+        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, false);
 
         try {
             callable.call();

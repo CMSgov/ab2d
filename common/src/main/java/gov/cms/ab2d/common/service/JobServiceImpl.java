@@ -1,15 +1,10 @@
 package gov.cms.ab2d.common.service;
 
-import gov.cms.ab2d.common.model.JobOutput;
-import gov.cms.ab2d.common.model.Role;
-import gov.cms.ab2d.common.model.User;
+import gov.cms.ab2d.common.model.*; // NOPMD
 import gov.cms.ab2d.common.repository.JobRepository;
 
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.util.EventUtils;
-import gov.cms.ab2d.fhir.Versions;
+import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.common.util.JobUtil;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -36,7 +31,7 @@ import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
 @Transactional
 public class JobServiceImpl implements JobService {
 
-    private final UserService userService;
+    private final PdpClientService pdpClientService;
     private final JobRepository jobRepository;
     private final JobOutputService jobOutputService;
     private final LogManager eventLogger;
@@ -45,10 +40,10 @@ public class JobServiceImpl implements JobService {
 
     public static final String INITIAL_JOB_STATUS_MESSAGE = "0%";
 
-    public JobServiceImpl(UserService userService, JobRepository jobRepository, JobOutputService jobOutputService,
+    public JobServiceImpl(PdpClientService pdpClientService, JobRepository jobRepository, JobOutputService jobOutputService,
                           LogManager eventLogger, LoggerEventSummary loggerEventSummary,
                           @Value("${efs.mount}") String fileDownloadPath) {
-        this.userService = userService;
+        this.pdpClientService = pdpClientService;
         this.jobRepository = jobRepository;
         this.jobOutputService = jobOutputService;
         this.eventLogger = eventLogger;
@@ -58,7 +53,7 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public Job createJob(String resourceTypes, String url, String contractNumber, String outputFormat,
-                         OffsetDateTime since, Versions.FhirVersions version) {
+                         OffsetDateTime since, FhirVersion version) {
         Job job = new Job();
         job.setResourceTypes(resourceTypes);
         job.setJobUuid(UUID.randomUUID().toString());
@@ -69,13 +64,13 @@ public class JobServiceImpl implements JobService {
         job.setProgress(0);
         job.setSince(since);
         job.setFhirVersion(version);
-        job.setUser(userService.getCurrentUser());
+        job.setPdpClient(pdpClientService.getCurrentClient());
 
         // Check to see if there is any attestation
-        User user = userService.getCurrentUser();
-        Contract contract = user.getContract();
+        PdpClient pdpClient = pdpClientService.getCurrentClient();
+        Contract contract = pdpClient.getContract();
         if (contractNumber != null && !contractNumber.equals(contract.getContractNumber())) {
-            String errorMsg = "Specifying contract: " + contractNumber + " not associated with user: " + user.getUsername();
+            String errorMsg = "Specifying contract: " + contractNumber + " not associated with internal id: " + pdpClient.getId();
             log.error(errorMsg);
             throw new InvalidContractException(errorMsg);
         }
@@ -107,10 +102,10 @@ public class JobServiceImpl implements JobService {
     private Job getAuthorizedJobByJobUuid(String jobUuid) {
         Job job = getJobByJobUuid(jobUuid);
 
-        User user = userService.getCurrentUser();
-        if (!user.equals(job.getUser())) {
-            log.error("User attempted to download a file where they had a valid UUID, but was not logged in as the " +
-                    "user that created the job");
+        PdpClient pdpClient = pdpClientService.getCurrentClient();
+        if (!pdpClient.equals(job.getPdpClient())) {
+            log.error("Client attempted to download a file where they had a valid UUID, but was not logged in as the " +
+                    "client that created the job");
             throw new InvalidJobAccessException("Unauthorized");
         }
 
@@ -119,9 +114,9 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public Job getAuthorizedJobByJobUuidAndRole(String jobUuid) {
-        User user = userService.getCurrentUser();
+        PdpClient pdpClient = pdpClientService.getCurrentClient();
 
-        for (Role role : user.getRoles()) {
+        for (Role role : pdpClient.getRoles()) {
             if (role.getName().equals(ADMIN_ROLE)) {
                 log.info("Admin accessed job {}", jobUuid);
                 return getJobByJobUuid(jobUuid);
@@ -205,9 +200,9 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public boolean checkIfCurrentUserCanAddJob() {
-        User user = userService.getCurrentUser();
-        List<Job> jobs = jobRepository.findActiveJobsByUser(user);
-        return jobs.size() < user.getMaxParallelJobs();
+    public boolean checkIfCurrentClientCanAddJob() {
+        PdpClient pdpClient = pdpClientService.getCurrentClient();
+        List<Job> jobs = jobRepository.findActiveJobsByClient(pdpClient);
+        return jobs.size() < pdpClient.getMaxParallelJobs();
     }
 }

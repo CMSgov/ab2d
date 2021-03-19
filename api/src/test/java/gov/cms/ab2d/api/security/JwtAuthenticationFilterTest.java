@@ -150,13 +150,13 @@ class JwtAuthenticationFilterTest {
 
             // Expect call to fail but just want to check that event was logged
             this.mockMvc.perform(
-                    get(API_PREFIX + ADMIN_PREFIX + "/user/userNotFound")
+                    get(API_PREFIX_V1 + ADMIN_PREFIX + "/client/clientNotFound")
                             .contentType(MediaType.APPLICATION_JSON)
                             .header("Authorization", "Bearer " + token))
                     .andReturn();
 
             List<LoggableEvent> currentEvents = loggerEventRepository.load(ApiRequestEvent.class);
-            assertEquals(1, currentEvents.size(), "request for user not logged");
+            assertEquals(1, currentEvents.size(), "request for client not logged");
         } catch (JwtVerificationException exception) {
             fail("jwt token for test could not be retrieved");
         } catch (Exception exception) {
@@ -177,7 +177,7 @@ class JwtAuthenticationFilterTest {
                     .andExpect(status().is(404));
 
             List<LoggableEvent> currentEvents = loggerEventRepository.load(ApiRequestEvent.class);
-            assertEquals(1, currentEvents.size(), "request for user not logged");
+            assertEquals(1, currentEvents.size(), "request for client not logged");
         } catch (JwtVerificationException exception) {
             fail("jwt token for test could not be retrieved");
         } catch (Exception exception) {
@@ -199,7 +199,7 @@ class JwtAuthenticationFilterTest {
                     .andExpect(status().is(404));
 
             List<LoggableEvent> currentEvents = loggerEventRepository.load(ApiRequestEvent.class);
-            assertEquals(1, currentEvents.size(), "request for user not logged");
+            assertEquals(1, currentEvents.size(), "request for client not logged");
         } catch (JwtVerificationException exception) {
             fail("jwt token for test could not be retrieved");
         } catch (Exception exception) {
@@ -220,7 +220,7 @@ class JwtAuthenticationFilterTest {
                     .andExpect(status().is(404));
 
             List<LoggableEvent> currentEvents = loggerEventRepository.load(ApiRequestEvent.class);
-            assertEquals(1, currentEvents.size(), "request for user not logged");
+            assertEquals(1, currentEvents.size(), "request for client not logged");
         } catch (JwtVerificationException exception) {
             fail("jwt token for test could not be retrieved");
         } catch (Exception exception) {

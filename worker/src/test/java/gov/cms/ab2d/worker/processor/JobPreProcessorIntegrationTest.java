@@ -2,7 +2,7 @@ package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.repository.UserRepository;
+import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -12,7 +12,6 @@ import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
-import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,6 +28,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
+import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -43,7 +43,7 @@ class JobPreProcessorIntegrationTest {
     private JobRepository jobRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    private PdpClientRepository pdpClientRepository;
 
     @Autowired
     private LoggerEventRepository loggerEventRepository;
@@ -60,7 +60,7 @@ class JobPreProcessorIntegrationTest {
     @Mock
     private KinesisEventLogger kinesisEventLogger;
 
-    private User user;
+    private PdpClient pdpClient;
     private Job job;
 
     @Container
@@ -72,8 +72,8 @@ class JobPreProcessorIntegrationTest {
 
         cut = new JobPreProcessorImpl(jobRepository, manager, coverageDriver);
 
-        user = createUser();
-        job = createJob(user);
+        pdpClient = createClient();
+        job = createJob(pdpClient);
     }
 
     @AfterEach
@@ -123,28 +123,26 @@ class JobPreProcessorIntegrationTest {
         assertEquals("Job S0000 is not in SUBMITTED status", exceptionThrown.getMessage());
     }
 
-    private User createUser() {
-        User user = new User();
-        user.setUsername("Harry_Potter");
-        user.setFirstName("Harry");
-        user.setLastName("Potter");
-        user.setEmail("harry_potter@hogwarts.edu");
-        user.setEnabled(true);
+    private PdpClient createClient() {
+        PdpClient pdpClient = new PdpClient();
+        pdpClient.setClientId("Harry_Potter");
+        pdpClient.setOrganization("Harry_Potter");
+        pdpClient.setEnabled(true);
 
-        user = userRepository.save(user);
-        dataSetup.queueForCleanup(user);
-        return user;
+        pdpClient = pdpClientRepository.save(pdpClient);
+        dataSetup.queueForCleanup(pdpClient);
+        return pdpClient;
     }
 
-    private Job createJob(User user) {
+    private Job createJob(PdpClient pdpClient) {
         Job job = new Job();
         job.setJobUuid("S0000");
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage("0%");
-        job.setUser(user);
+        job.setPdpClient(pdpClient);
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setCreatedAt(OffsetDateTime.now());
-        job.setFhirVersion(Versions.FhirVersions.STU3);
+        job.setFhirVersion(STU3);
 
         job = jobRepository.save(job);
         dataSetup.queueForCleanup(job);

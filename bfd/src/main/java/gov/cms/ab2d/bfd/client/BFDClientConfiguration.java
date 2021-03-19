@@ -1,9 +1,5 @@
 package gov.cms.ab2d.bfd.client;
 
-import ca.uhn.fhir.context.FhirContext;
-import ca.uhn.fhir.parser.IParser;
-import ca.uhn.fhir.rest.api.RequestFormatParamStyleEnum;
-import ca.uhn.fhir.rest.client.api.IGenericClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
@@ -25,8 +21,7 @@ import java.security.cert.CertificateException;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Credits: most of the code in this class has been copied over from https://github
- * .com/CMSgov/dpc-app
+ * Credits: most of the code in this class has been copied over from https://github.com/CMSgov/dpc-app
  */
 @Configuration
 @PropertySource("classpath:application.bfd.properties")
@@ -40,7 +35,6 @@ public class BFDClientConfiguration {
     private final int connectionTimeout;
     private final int socketTimeout;
     private final int requestTimeout;
-    private final String serverBaseUrl;
     private final int maxConnPerRoute;
     private final int maxConnTotal;
     private final int connectionTTL;
@@ -51,7 +45,6 @@ public class BFDClientConfiguration {
                                   @Value("${bfd.connectionTimeout}") int connectionTimeout,
                                   @Value("${bfd.socketTimeout}") int socketTimeout,
                                   @Value("${bfd.requestTimeout}") int requestTimeout,
-                                  @Value("${bfd.serverBaseUrl}") String serverBaseUrl,
                                   @Value("${bfd.http.maxConnPerRoute}") int maxConnPerRoute,
                                   @Value("${bfd.http.maxConnTotal}") int maxConnTotal,
                                   @Value("${bfd.http.connTTL}") int connectionTTL) {
@@ -60,23 +53,9 @@ public class BFDClientConfiguration {
         this.connectionTimeout = connectionTimeout;
         this.socketTimeout = socketTimeout;
         this.requestTimeout = requestTimeout;
-        this.serverBaseUrl = serverBaseUrl;
         this.maxConnPerRoute = maxConnPerRoute;
         this.maxConnTotal = maxConnTotal;
         this.connectionTTL = connectionTTL;
-    }
-
-    @Bean
-    public IGenericClient bfdFhirRestClient(FhirContext fhirContext, HttpClient httpClient) {
-        fhirContext.getRestfulClientFactory().setHttpClient(httpClient);
-        IGenericClient client = fhirContext.newRestfulGenericClient(serverBaseUrl);
-        client.setFormatParamStyle(RequestFormatParamStyleEnum.SHORT);
-        return client;
-    }
-
-    @Bean
-    public FhirContext fhirContext() {
-        return FhirContext.forDstu3();
     }
 
     @Bean
@@ -102,19 +81,13 @@ public class BFDClientConfiguration {
     /**
      * Borrowed from https://github.com/CMSgov/dpc-app
      *
-     * @param keyStore
-     * @return
+     * @param keyStore - the keystore
+     * @return the HTTP client
      */
     @Bean
     public HttpClient bfdHttpClient(KeyStore keyStore) {
         return buildMutualTlsClient(keyStore, keystorePassword.toCharArray());
     }
-
-    @Bean
-    public IParser buildParser() {
-        return fhirContext().newJsonParser();
-    }
-
 
     /**
      * Helper function to build a special {@link HttpClient} capable of authenticating with the

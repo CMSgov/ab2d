@@ -90,16 +90,16 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 sinceTime = request.getSinceTime();
             }
             BFDClient.BFD_BULK_JOB_ID.set(request.getJob());
-            eobBundle = bfdClient.requestEOBFromServer(patient.getIdentifiers().getBeneficiaryId(), sinceTime);
+            eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patient.getIdentifiers().getBeneficiaryId(), sinceTime);
             logManager.log(LogManager.LogType.KINESIS,
-                    new BeneficiarySearchEvent(request.getUser(), request.getJob(), request.getContractNum(),
+                    new BeneficiarySearchEvent(request.getOrganization(), request.getJob(), request.getContractNum(),
                             start, OffsetDateTime.now(),
                             beneficiaryId,
                             "SUCCESS"));
 
         } catch (Exception ex) {
             logManager.log(LogManager.LogType.KINESIS,
-                    new BeneficiarySearchEvent(request.getUser(), request.getJob(), request.getContractNum(),
+                    new BeneficiarySearchEvent(request.getOrganization(), request.getJob(), request.getContractNum(),
                             start, OffsetDateTime.now(),
                             beneficiaryId,
                             "ERROR: " + ex.getMessage()));
@@ -112,7 +112,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         final List<IBaseResource> resources = extractResources(request.getContractNum(), entries, patient.getDateRanges(), attTime);
 
         while (BundleUtils.getNextLink(eobBundle) != null) {
-            eobBundle = bfdClient.requestNextBundleFromServer(eobBundle);
+            eobBundle = bfdClient.requestNextBundleFromServer(request.getVersion(), eobBundle);
             final List<IBaseBackboneElement> nextEntries = BundleUtils.getEntries(eobBundle);
             resources.addAll(extractResources(request.getContractNum(), nextEntries, patient.getDateRanges(), attTime));
         }

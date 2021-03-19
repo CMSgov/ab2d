@@ -4,7 +4,6 @@ import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.fhir.Versions;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverStub;
 import gov.cms.ab2d.worker.service.FileService;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +26,7 @@ import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
+import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static java.lang.Boolean.TRUE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -38,8 +38,6 @@ class JobProcessorUnitTest {
     private JobProcessor cut;
 
     private static final String jobUuid = "6d08bf08-f926-4e19-8d89-ad67ef89f17e";
-
-    private Random random = new Random();
 
     @TempDir Path efsMountTmpDir;
 
@@ -68,8 +66,8 @@ class JobProcessorUnitTest {
 
         ReflectionTestUtils.setField(cut, "efsMount", efsMountTmpDir.toString());
 
-        final User user = createUser();
-        job = createJob(user);
+        final PdpClient pdpClient = createClient();
+        job = createJob(pdpClient);
 
         var contract = createContract();
         job.setContract(contract);
@@ -94,9 +92,9 @@ class JobProcessorUnitTest {
     }
 
     @Test
-    @DisplayName("When user belongs to a parent sponsor, contracts for the children sponsors are processed")
-    void whenTheUserBelongsToParent_ChildContractsAreProcessed() throws ExecutionException, InterruptedException {
-        var user = job.getUser();
+    @DisplayName("When client belongs to a parent sponsor, contracts for the children sponsors are processed")
+    void whenTheClientBelongsToParent_ChildContractsAreProcessed() throws ExecutionException, InterruptedException {
+        job.getPdpClient();
 
         var processedJob = cut.process(job.getJobUuid());
 
@@ -188,15 +186,12 @@ class JobProcessorUnitTest {
         verify(coverageDriver, never()).pageCoverage(any(Job.class));
     }
 
-    private User createUser() {
-        User user = new User();
-        user.setUsername("Harry_Potter");
-        user.setFirstName("Harry");
-        user.setLastName("Potter");
-        user.setEmail("harry_potter@hogwarts.edu");
-        user.setEnabled(TRUE);
-        user.setContract(createContract());
-        return user;
+    private PdpClient createClient() {
+        PdpClient pdpClient = new PdpClient();
+        pdpClient.setClientId("Harry_Potter");
+        pdpClient.setEnabled(TRUE);
+        pdpClient.setContract(createContract());
+        return pdpClient;
     }
 
     private Contract createContract() {
@@ -208,13 +203,13 @@ class JobProcessorUnitTest {
         return contract;
     }
 
-    private Job createJob(User user) {
+    private Job createJob(PdpClient pdpClient) {
         Job job = new Job();
         job.setJobUuid("S0000");
         job.setStatusMessage("0%");
         job.setStatus(JobStatus.IN_PROGRESS);
-        job.setUser(user);
-        job.setFhirVersion(Versions.FhirVersions.STU3);
+        job.setPdpClient(pdpClient);
+        job.setFhirVersion(STU3);
         return job;
     }
 }
