@@ -100,7 +100,7 @@ public class BlueButtonClientTestR4 {
     }
 
     @Test
-    public void shouldGetEOBFromPatientID() throws IOException {
+    public void shouldGetEOBFromPatientID() {
 
         org.hl7.fhir.r4.model.Bundle response = (org.hl7.fhir.r4.model.Bundle) bbc.requestEOBFromServer(R4, TEST_PATIENT_ID);
 
@@ -109,7 +109,7 @@ public class BlueButtonClientTestR4 {
     }
 
     @Test
-    public void shouldHaveNextBundle() throws IOException {
+    public void shouldHaveNextBundle() {
 
         org.hl7.fhir.r4.model.Bundle response = (org.hl7.fhir.r4.model.Bundle) bbc.requestEOBFromServer(R4, TEST_PATIENT_ID);
 
@@ -119,7 +119,7 @@ public class BlueButtonClientTestR4 {
      }
 
     @Test
-    public void shouldReturnBundleContainingOnlyEOBs() throws IOException {
+    public void shouldReturnBundleContainingOnlyEOBs() {
 
         org.hl7.fhir.r4.model.Bundle response = (org.hl7.fhir.r4.model.Bundle) bbc.requestEOBFromServer(R4, TEST_PATIENT_ID);
 
@@ -131,7 +131,7 @@ public class BlueButtonClientTestR4 {
     }
 
     @Test
-    public void getCoverageData() throws IOException {
+    public void getCoverageData() {
 
         org.hl7.fhir.r4.model.Bundle response = (org.hl7.fhir.r4.model.Bundle) bbc.requestPartDEnrolleesFromServer(R4, CONTRACT, 12);
         assertNotNull(response);

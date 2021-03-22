@@ -39,8 +39,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @ContextConfiguration(classes = { BlueButtonClientTestSTU3.TestConfig.class })
 public class BlueButtonClientTestSTU3 {
 
-
-
     private static final String CONTRACT = "S00001";
     public static final int MOCK_PORT_V1 = MockUtils.randomMockServerPort();
 
@@ -71,101 +69,6 @@ public class BlueButtonClientTestSTU3 {
         MockUtils.createMockServerExpectation(mockServer, "/v1/fhir/metadata", HttpStatus.SC_OK,
                 getRawJson(METADATA_PATH), List
                         .of(), MOCK_PORT_V1);
-
-//        // Ensure timeouts are working.
-//        MockUtils.createMockServerExpectation(
-//                "/v1/fhir/ExplanationOfBenefit",
-//                HttpStatus.SC_OK,
-//                StringUtils.EMPTY,
-//                Collections.singletonList(Parameter.param("patient", TEST_SLOW_PATIENT_ID)),
-//                8000,
-//                MOCK_PORT_V1
-//        );
-//
-//        for (String patientId : TEST_PATIENT_IDS) {
-//            MockUtils.createMockServerExpectation(
-//                    "/v1/fhir/Patient/" + patientId,
-//                    HttpStatus.SC_OK,
-//                    getRawJson(SAMPLE_PATIENT_PATH_PREFIX + patientId + ".json"),
-//                    List.of(),
-//                    MOCK_PORT_V1
-//            );
-//
-//            MockUtils.createMockServerExpectation(
-//                    "/v1/fhir/ExplanationOfBenefit",
-//                    HttpStatus.SC_OK,
-//                    getRawJson(SAMPLE_EOB_PATH_PREFIX + patientId + ".json"),
-//                    List.of(Parameter.param("patient", patientId),
-//                            Parameter.param("excludeSAMHSA", "true")),
-//                    MOCK_PORT_V1
-//            );
-//        }
-//
-//        MockUtils.createMockServerExpectation(
-//                "/v1/fhir/Patient",
-//                HttpStatus.SC_OK,
-//                getRawJson(SAMPLE_PATIENT_PATH_PREFIX + "/bundle/patientbundle.json"),
-//                List.of(),
-//                MOCK_PORT_V1
-//        );
-//
-//        // Patient that exists, but has no records
-//        MockUtils.createMockServerExpectation(
-//                "/v1/fhir/Patient/" + TEST_NO_RECORD_PATIENT_ID,
-//                HttpStatus.SC_OK,
-//                getRawJson(SAMPLE_PATIENT_PATH_PREFIX + TEST_NO_RECORD_PATIENT_ID + ".json"),
-//                List.of(),
-//                MOCK_PORT_V1
-//        );
-//        MockUtils.createMockServerExpectation(
-//                "/v1/fhir/ExplanationOfBenefit",
-//                HttpStatus.SC_OK,
-//                getRawJson(SAMPLE_EOB_PATH_PREFIX + TEST_NO_RECORD_PATIENT_ID + ".json"),
-//                List.of(Parameter.param("patient", TEST_NO_RECORD_PATIENT_ID),
-//                        Parameter.param("excludeSAMHSA", "true")),
-//                MOCK_PORT_V1
-//        );
-//
-//        MockUtils.createMockServerExpectation(
-//                "/v1/fhir/Patient/" + TEST_NO_RECORD_PATIENT_ID_MBI,
-//                HttpStatus.SC_OK,
-//                getRawJson(SAMPLE_PATIENT_PATH_PREFIX + TEST_NO_RECORD_PATIENT_ID_MBI + ".json"),
-//                List.of(),
-//                MOCK_PORT_V1
-//        );
-//        MockUtils.createMockServerExpectation(
-//                "/v1/fhir/ExplanationOfBenefit",
-//                HttpStatus.SC_OK,
-//                getRawJson(SAMPLE_EOB_PATH_PREFIX + TEST_NO_RECORD_PATIENT_ID_MBI + ".json"),
-//                List.of(Parameter.param("patient", TEST_NO_RECORD_PATIENT_ID_MBI),
-//                        Parameter.param("excludeSAMHSA", "true")),
-//                MOCK_PORT_V1
-//        );
-//
-//        // Create mocks for pages of the results
-//        for (String startIndex : List.of("10", "20", "30")) {
-//            MockUtils.createMockServerExpectation(
-//                    "/v1/fhir/ExplanationOfBenefit",
-//                    HttpStatus.SC_OK,
-//                    getRawJson(SAMPLE_EOB_PATH_PREFIX + TEST_PATIENT_ID + "_" + startIndex + ".json"),
-//                    List.of(Parameter.param("patient", TEST_PATIENT_ID),
-//                            Parameter.param("count", "10"),
-//                            Parameter.param("startIndex", startIndex),
-//                            Parameter.param("excludeSAMHSA", "true")),
-//                    MOCK_PORT_V1
-//            );
-//        }
-//
-//        for(String month : CONTRACT_MONTHS) {
-//            MockUtils.createMockServerExpectation(
-//                    "/v1/fhir/Patient",
-//                    HttpStatus.SC_OK,
-//                    getRawJson(SAMPLE_PATIENT_PATH_PREFIX + "/bundle/patientbundle.json"),
-//                    List.of(Parameter.param("_has:Coverage.extension",
-//                            "https://bluebutton.cms.gov/resources/variables/ptdcntrct" + month + "|" + CONTRACT)),
-//                    MOCK_PORT_V1
-//            );
-//        }
     }
 
     @AfterAll
