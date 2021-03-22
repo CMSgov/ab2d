@@ -8,6 +8,7 @@ import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.Enumerations;
 import org.hl7.fhir.dstu3.model.Reference;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -17,11 +18,18 @@ import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
 
 public class CapabilityStatementSTU3 {
     public static CapabilityStatement populateCS(String server) {
+        SimpleDateFormat sdfLess = new SimpleDateFormat("MM/dd/yyyy HH:mm");
         CapabilityStatement cs = new CapabilityStatement();
         cs.setPublisher("Centers for Medicare &amp; Medicaid Services");
         cs.setKind(CapabilityStatement.CapabilityStatementKind.INSTANCE);
         cs.setStatus(Enumerations.PublicationStatus.ACTIVE);
-        cs.setDate(new Date());
+
+        String dt = sdfLess.format(new Date());
+        try {
+            cs.setDate(sdfLess.parse(dt));
+        } catch (ParseException e) {
+            cs.setDate(new Date());
+        }
         cs.setAcceptUnknown(CapabilityStatement.UnknownContentCode.EXTENSIONS);
         cs.setFhirVersion(FhirVersionEnum.DSTU3.getFhirVersionString());
 
