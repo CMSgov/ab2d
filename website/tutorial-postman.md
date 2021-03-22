@@ -52,43 +52,43 @@ The Postman directions below are broken up into the following sections:
 
 Go to the Postman site [here](https://www.postman.com/downloads/) to download and install the app version of Postman. Because only the app version of Postman is allowed in Production, we promote the use of this version in Sandbox as well. The web version is available to you in Sandbox, but it will not be in Production. The directions below follow along with the app version of Postman.
 
-![alt text](./assets/img/sandbox/postman-1.png "download postman")
+![download postman](./assets/img/sandbox/postman-1.png "download postman")
 
 You will then be directed to an account sign-in page. Note, you are able to directly access the app and skip sign-in by clicking the link at the bottom of the page as shown below. 
 
-![alt text](./assets/img/sandbox/postman-2.png "postman signin")
+![postman signin](./assets/img/sandbox/postman-2.png "postman signin")
 
 ### Creating a new collection
 Click on the orange **+ New** button in the top left corner of the app.
 
-![alt text](./assets/img/sandbox/postman-3.png "postman create new button")
+![postman create new button](./assets/img/sandbox/postman-3.png "postman create new button")
 
 Choose **Create New** to create a new Collection:
-![alt text](./assets/img/sandbox/postman-4.png "postman create new collection")  
+![postman create new collection](./assets/img/sandbox/postman-4.png "postman create new collection")  
 Configure as follows:  
 Name: **ab2d**  
 Choose: **Create.**  
-![alt text](./assets/img/sandbox/postman-5.png "postman create new collection details")  
+![postman create new collection details](./assets/img/sandbox/postman-5.png "postman create new collection details")  
 In the left hand panel, click on the three dot’s next the ab2d node you just created and choose **Add Request:**  
-![alt text](./assets/img/sandbox/postman-6.png "postman new request")
+![postman new request](./assets/img/sandbox/postman-6.png "postman new request")
 
 ### Saving a request
 Configure the “SAVE REQUEST” page as follows:
 - Request name: **retrieve-a-token**
 - Select: **Save to ab2d** at bottom right corner.
 
-![alt text](./assets/img/sandbox/postman-7.png "postman save new request")
+![postman save new request](./assets/img/sandbox/postman-7.png "postman save new request")
 
 ### Posting a request
 Click on **GET, retrieve-a-token** under the ab2d node and immediately, a new tab will appear to the right.  
-![alt text](./assets/img/sandbox/postman-8.png "postman post a request")
+![postman post a request](./assets/img/sandbox/postman-8.png "postman post a request")
 
 Alter the **GET** request to a **POST** request:  
-![alt text](./assets/img/sandbox/postman-9.png "postman change get to post")
+![postman change get to post](./assets/img/sandbox/postman-9.png "postman change get to post")
 
 In the bar next to **POST** enter the following URL:  
 https://test.idp.idm.cms.gov/oauth2/aus2r7y3gdaFMKBol297/v1/token  
-![alt text](./assets/img/sandbox/postman-10.png "postman enter url")
+![postman enter url](./assets/img/sandbox/postman-10.png "postman enter url")
 
 Configure the Params tab as follows: 
 
@@ -111,7 +111,7 @@ Configure the Params tab as follows:
 </tbody>
 </table>
 
-![alt text](./assets/img/sandbox/postman-11.png "postman enter params")
+![postman enter params](./assets/img/sandbox/postman-11.png "postman enter params")
 Configure the Headers tab as follows:  
 Choose one of the sample Base64-encoded credentials from a sample PDP Sponsor. This will be placed under the **Value** column by **Authorization**.
  
@@ -170,11 +170,11 @@ Choose one of the sample Base64-encoded credentials from a sample PDP Sponsor. T
   </tbody>
   </table>
 
-![alt text](./assets/img/sandbox/postman-12.png "postman headers filled")
+![postman headers filled](./assets/img/sandbox/postman-12.png "postman headers filled")
 
 Select **Send.**  
 In the body below you should see a token type, expires in statement, an access token, and scope statement as shown below:  
-![alt text](./assets/img/sandbox/postman-13.png "postman response body")
+![postman response body](./assets/img/sandbox/postman-13.png "postman response body")
 You will use this bearer token, specified by the **access_token** value (in the next hour), to access Sandbox endpoints in Swagger, which we explain how to use below.
 
 ## Step 2:  Swagger Instructions
@@ -187,25 +187,25 @@ The Swagger directions below are broken into the following sections:
 
 ### Authorize a bearer token
 First - you must access the AB2D Swagger site by going [here](https://sandbox.ab2d.cms.gov/swagger-ui/index.html). Click “authorize” in the top right corner.  
-![alt text](./assets/img/sandbox/swagger-1.png "swagger authorize")  
+![swagger authorize](./assets/img/sandbox/swagger-1.png "swagger authorize")  
 Use the bearer token (retrieved in the last 24 hours by you, and no other user) to authorize entry into the Sandbox endpoints. You will place this in the box under Value, adding the word **Bearer before the token.**  
-![alt text](./assets/img/sandbox/swagger-2.png "swagger authorize api key")  
+![swagger authorize api key](./assets/img/sandbox/swagger-2.png "swagger authorize api key")  
 Be sure to leave a space between the word **Bearer** and the actual bearer token. Also remove any quotes from the token itself. Click **Authorize**.
-![alt text](./assets/img/sandbox/swagger-3.png "swagger enter api key")  
+![swagger enter api key](./assets/img/sandbox/swagger-3.png "swagger enter api key")  
 You will see the following message:  
-![alt text](./assets/img/sandbox/swagger-4.png "swagger authorize response")  
+![swagger authorize response](./assets/img/sandbox/swagger-4.png "swagger authorize response")  
 Click Close to **close** the window.  
 
 ## Export a Job ID
 Open up the **Export** menu to view all possible endpoints:  
-![alt text](./assets/img/sandbox/swagger-5.png "swagger export menu")  
+![swagger export menu](./assets/img/sandbox/swagger-5.png "swagger export menu")  
 
 Choose **/api/v1/fhir/Patient/$export** to initiate a Part A & B bulk claim export job. Then choose to **Try it out** in the right hand corner.  
-![alt text](./assets/img/sandbox/swagger-6.png "swagger export parameters")  
+![swagger export parameters](./assets/img/sandbox/swagger-6.png "swagger export parameters")  
 Under **Prefer** add **respond-async** and then click the big blue bar to **Execute.** 
-![alt text](./assets/img/sandbox/swagger-7.png "swagger execute")  
+![swagger execute](./assets/img/sandbox/swagger-7.png "swagger execute")  
 In the responses, look at the first code provided under **Server response**. Below that are all the other possible responses. The correct response should be a **202**, which means **Accepted**. This means the job has been created.  
-![alt text](./assets/img/sandbox/swagger-8.png "swagger response")  
+![swagger response](./assets/img/sandbox/swagger-8.png "swagger response")  
 From the information provided in the response, copy the Job ID from within the status request. 
 Format:  
 *content-location: http://sandbox.ab2d.cms.gov/api/v1/fhir/Job/**{job id}**/$status*
@@ -216,31 +216,34 @@ Example:
 
 ## Check the status of your job
 While these are test jobs and most will run immediately, it is good practice to understand the steps associated with running a job, including checking its status.  
-![alt text](./assets/img/sandbox/swagger-9.png "swagger job status")  
 
 Click on the **Status** menu to view the status endpoints:  
-![alt text](./assets/img/sandbox/swagger-10.png "swagger endpoint status")  
+![swagger job status](./assets/img/sandbox/swagger-9.png "swagger job status")  
 
 Copy the Job ID from the Export step. Click on the **GET /api/v1/fhir/{jobUuid}/$status** endpoint, click **Try it out** and paste the Job ID into the box provided.  
-![alt text](./assets/img/sandbox/swagger-11.png "swagger try it out")  
+![swagger endpoint status](./assets/img/sandbox/swagger-10.png "swagger endpoint status")  
+
 Click on the big blue bar labeled **Execute**.  
- 
+![swagger try it out](./assets/img/sandbox/swagger-11.png "swagger try it out")  
+
 In the responses, view the first value. This is the server response. There are two possible values, 202 or 200. If the response is 202, this means that the job is still in progress. It will give you an indication of the job progress from 1 to 100%.  
+
+![swagger response](./assets/img/sandbox/swagger-12.png "swagger response")  
 
 You will need to re-click on the Execute blue bar periodically until the status returns a 200. This means the job is done and the response will contain a list of files. These files can then be downloaded and contain the claim records for our sample job.  
 
 ## Download your Job ID
 
 Click on the **Download** menu in swagger. Select the **GET /api/v1/fhir/Job/{jobUuid}/file/{filename}** endpoint to download a file. Click **Try it out**. Enter the Job ID of the job you created and the file name, then press the **Execute** big blue bar.  
+![swagger download](./assets/img/sandbox/swagger-13.png "swagger download")  
 
 It might take a while for the file to be downloaded depending on how big the job is. The browser may even stop responding, but it will eventually respond. The **Server response** value should be a **200** and the **Response body** will contain the claims data. To download the data into a file, click on the Download button in the lower right corner. This will be saved as an ndjson (new line delimited JSON) file in your downloads. This data format will be identical to the production data. Only the Job ID from this file is needed - please send the Job ID to the AB2D team per the instructions emailed to your organizations assigned ADOS.  
 
-![alt text](./assets/img/sandbox/swagger-12.png "swagger try it out response")  
-![alt text](./assets/img/sandbox/swagger-13.png "swagger try it out response")  
+![swagger response body](./assets/img/sandbox/swagger-14.png "swagger response body")  
+![swagger json file](./assets/img/sandbox/swagger-15.png "swagger json file")  
 
 # Questions?
 
 Having issues or concerns - please get in touch.  
 [ab2d@gmail.com](mailto:ab2d@gmail.com) - direct email  
 [AB2D Google Group](https://groups.google.com/u/1/g/cms-ab2d-api) - join the conversation
-  
