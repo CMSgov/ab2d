@@ -285,7 +285,7 @@ active-nav: accessing-claims-data-nav
                         <div class="header-title" style="margin-top: 30px;">Connecting to the Sandbox</div>
                         We are providing three different ways to retrieve synthetic claims data:
                         <ol>
-                            <li><a href="tutorial-postman.html">Postman and Swagger User Guide</a></li>
+                            <li><a href="tutorial-postman-swagger.html">Postman and Swagger User Guide</a></li>
                             <li><a href="tutorial-curl.html">Curl User Guide</a></li>
                             <li><a href="advanced-user-guide.html">Advanced User Guide</a></li>
                         </ol>
