@@ -63,12 +63,14 @@ Click on the orange **+ New** button in the top left corner of the app.
 
 ![postman create new button](./assets/img/sandbox/postman-3.png "postman create new button")
 
-Choose **Create New** to create a new Collection:
+Choose **Create New** to create a new Collection:  
 ![postman create new collection](./assets/img/sandbox/postman-4.png "postman create new collection")  
+
 Configure as follows:  
 Name: **ab2d**  
 Choose: **Create.**  
 ![postman create new collection details](./assets/img/sandbox/postman-5.png "postman create new collection details")  
+
 In the left hand panel, click on the three dot’s next the ab2d node you just created and choose **Add Request:**  
 ![postman new request](./assets/img/sandbox/postman-6.png "postman new request")
 
@@ -81,16 +83,16 @@ Configure the “SAVE REQUEST” page as follows:
 
 ### Posting a request
 Click on **GET, retrieve-a-token** under the ab2d node and immediately, a new tab will appear to the right.  
-![postman post a request](./assets/img/sandbox/postman-8.png "postman post a request")
+![postman post a request](./assets/img/sandbox/postman-8.png "postman post a request")  
 
 Alter the **GET** request to a **POST** request:  
-![postman change get to post](./assets/img/sandbox/postman-9.png "postman change get to post")
+![postman change get to post](./assets/img/sandbox/postman-9.png "postman change get to post")  
 
 In the bar next to **POST** enter the following URL:  
 https://test.idp.idm.cms.gov/oauth2/aus2r7y3gdaFMKBol297/v1/token  
-![postman enter url](./assets/img/sandbox/postman-10.png "postman enter url")
+![postman enter url](./assets/img/sandbox/postman-10.png "postman enter url")  
 
-Configure the Params tab as follows: 
+Configure the Params tab as follows:  
 
 <table class="ds-c-table">
 <thead>
@@ -109,14 +111,15 @@ Configure the Params tab as follows:
         <td>clientCreds</td>
     </tr>
 </tbody>
-</table>
+</table>  
+<br />
+![postman enter params](./assets/img/sandbox/postman-11.png "postman enter params")  
 
-![postman enter params](./assets/img/sandbox/postman-11.png "postman enter params")
 Configure the Headers tab as follows:  
-Choose one of the sample Base64-encoded credentials from a sample PDP Sponsor. This will be placed under the **Value** column by **Authorization**.
+Choose one of the sample Base64-encoded credentials from a sample PDP Sponsor. This will be placed under the **Value** column by **Authorization**.  
  
 
-  <table class="ds-c-table">
+<table class="ds-c-table">
   <thead>
       <tr>
           <th>PDP Sponsor</th>
@@ -145,9 +148,11 @@ Choose one of the sample Base64-encoded credentials from a sample PDP Sponsor. T
           <td>nQwbG05cW9BdEpIcUMyOTc6eWJSNjBKbXRjcFJ0NlNBZUxtdmJxNmwtM1lEUkNaUC1XTjFBdDZ0Xw==</td>
       </tr>
   </tbody>
-  </table>
+</table>  
+  
+<br />
 
-   <table class="ds-c-table">
+<table class="ds-c-table">
   <thead>
       <tr>
           <th>Key</th>
@@ -168,13 +173,14 @@ Choose one of the sample Base64-encoded credentials from a sample PDP Sponsor. T
           <td>Basic {Base64-encoded id:password}</td>
       </tr>
   </tbody>
-  </table>
-
-![postman headers filled](./assets/img/sandbox/postman-12.png "postman headers filled")
-
+</table>
+<br />
+![postman headers filled](./assets/img/sandbox/postman-12.png "postman headers filled")  
 Select **Send.**  
+
 In the body below you should see a token type, expires in statement, an access token, and scope statement as shown below:  
-![postman response body](./assets/img/sandbox/postman-13.png "postman response body")
+![postman response body](./assets/img/sandbox/postman-13.png "postman response body")  
+
 You will use this bearer token, specified by the **access_token** value (in the next hour), to access Sandbox endpoints in Swagger, which we explain how to use below.
 
 ## Step 2:  Swagger Instructions
@@ -188,12 +194,16 @@ The Swagger directions below are broken into the following sections:
 ### Authorize a bearer token
 First - you must access the AB2D Swagger site by going [here](https://sandbox.ab2d.cms.gov/swagger-ui/index.html). Click “authorize” in the top right corner.  
 ![swagger authorize](./assets/img/sandbox/swagger-1.png "swagger authorize")  
+
 Use the bearer token (retrieved in the last 24 hours by you, and no other user) to authorize entry into the Sandbox endpoints. You will place this in the box under Value, adding the word **Bearer before the token.**  
 ![swagger authorize api key](./assets/img/sandbox/swagger-2.png "swagger authorize api key")  
+
 Be sure to leave a space between the word **Bearer** and the actual bearer token. Also remove any quotes from the token itself. Click **Authorize**.
 ![swagger enter api key](./assets/img/sandbox/swagger-3.png "swagger enter api key")  
+
 You will see the following message:  
 ![swagger authorize response](./assets/img/sandbox/swagger-4.png "swagger authorize response")  
+
 Click Close to **close** the window.  
 
 ## Export a Job ID
@@ -202,10 +212,13 @@ Open up the **Export** menu to view all possible endpoints:
 
 Choose **/api/v1/fhir/Patient/$export** to initiate a Part A & B bulk claim export job. Then choose to **Try it out** in the right hand corner.  
 ![swagger export parameters](./assets/img/sandbox/swagger-6.png "swagger export parameters")  
+
 Under **Prefer** add **respond-async** and then click the big blue bar to **Execute.** 
 ![swagger execute](./assets/img/sandbox/swagger-7.png "swagger execute")  
+
 In the responses, look at the first code provided under **Server response**. Below that are all the other possible responses. The correct response should be a **202**, which means **Accepted**. This means the job has been created.  
 ![swagger response](./assets/img/sandbox/swagger-8.png "swagger response")  
+
 From the information provided in the response, copy the Job ID from within the status request. 
 Format:  
 *content-location: http://sandbox.ab2d.cms.gov/api/v1/fhir/Job/**{job id}**/$status*
