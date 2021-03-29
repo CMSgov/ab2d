@@ -69,7 +69,7 @@ landing-page: live
 
 <script>
     let scrollLock = false;
-    
+
     const stepMappings = {
         'PostmanInstructions': 'PostmanInstructions-content',
         'SandboxandtheOnboardingProcess': 'SandboxandtheOnboardingProcess-content',
@@ -86,63 +86,71 @@ landing-page: live
         'DownloadyourJobID': 'DownloadyourJobID-content',
         'Questions': 'Questions-content'
     };
-    $(document).ready(function() {
+    $(document).ready(function () {
         const offset = 100;
-    
-        $('.step-accessing-claims').on('click', function(event) {
+
+        $('.step-accessing-claims').on('click', function (event) {
             scrollLock = true;
             highlightNav($(this), true);
         });
-        
-        $(window).scroll(function() {
-            if(scrollLock) {
+
+        $(window).scroll(function () {
+            if (scrollLock) {
                 return;
             }
-                
-            if($(this).scrollTop() < $('#provider-content').offset().top - offset) {
-                highlightNav($('#dates'), false);
-            } else if($(this).scrollTop() >= $('#provider-content').offset().top - offset && $(this).scrollTop() < $('#diagnosis-content').offset().top - offset) {
-                highlightNav($('#provider'), false);
-            } else if($(this).scrollTop() >= $('#diagnosis-content').offset().top - offset && $(this).scrollTop() < $('#faculty-organization-content').offset().top - offset) {
-                highlightNav($('#diagnosis'), false);
-            } else if($(this).scrollTop() >= $('#faculty-organization-content').offset().top - offset && $(this).scrollTop() < $('#location-content').offset().top - offset) {
-                highlightNav($('#faculty-organization'), false);
-            } else if($(this).scrollTop() >= $('#location-content').offset().top - offset && $(this).scrollTop() < $('#procedure-content').offset().top - offset) {
-                highlightNav($('#location'), false);
-            } else if($(this).scrollTop() >= $('#procedure-content').offset().top - offset && $(this).scrollTop() < $('#services-content').offset().top - offset) {
-                highlightNav($('#procedure'), false);
-            } else if($(this).scrollTop() >= $('#services-content').offset().top - offset && $(this).scrollTop() < $('#claim-content').offset().top - offset) {
-                highlightNav($('#services'), false);
-            } else if($(this).scrollTop() >= $('#claim-content').offset().top - offset && $(this).scrollTop() < $('#patient-content').offset().top - offset) {
-                highlightNav($('#claim'), false);
-            } else if($(this).scrollTop() >= $('#patient-content').offset().top - offset && $(this).scrollTop() < $('#meta-content').offset().top - offset) {
-                highlightNav($('#patient'), false);
-            } else if($(this).scrollTop() >= $('#step-4-content').offset().top - offset) {
-                highlightNav($('#meta'), false);
+
+            if ($(this).scrollTop() < $('#SandboxandtheOnboardingProcess-content').offset().top - offset) {
+                highlightNav($('#PostmanInstructions'), false);
+            } else if ($(this).scrollTop() >= $('#SandboxandtheOnboardingProcess-content').offset().top - offset && $(this).scrollTop() < $('#Whatdoesthisinstructionguidecontain-content').offset().top - offset) {
+                highlightNav($('#SandboxandtheOnboardingProcess'), false);
+            } else if ($(this).scrollTop() >= $('#Whatdoesthisinstructionguidecontain-content').offset().top - offset && $(this).scrollTop() < $('#step1-content').offset().top - offset) {
+                highlightNav($('#Whatdoesthisinstructionguidecontain'), false);
+            } else if ($(this).scrollTop() >= $('#step1-content').offset().top - offset && $(this).scrollTop() < $('#DownloadingPostman-content').offset().top - offset) {
+                highlightNav($('#step1'), false);
+            } else if ($(this).scrollTop() >= $('#DownloadingPostman-content').offset().top - offset && $(this).scrollTop() < $('#Creatinganewcollection-content').offset().top - offset) {
+                highlightNav($('#DownloadingPostman'), false);
+            } else if ($(this).scrollTop() >= $('#Creatinganewcollection-content').offset().top - offset && $(this).scrollTop() < $('#Savingarequest-content').offset().top - offset) {
+                highlightNav($('#Creatinganewcollection'), false);
+            } else if ($(this).scrollTop() >= $('#Savingarequest-content').offset().top - offset && $(this).scrollTop() < $('#Postingarequest-content').offset().top - offset) {
+                highlightNav($('#Savingarequest'), false);
+            } else if ($(this).scrollTop() >= $('#Postingarequest-content').offset().top - offset && $(this).scrollTop() < $('#Step2-content').offset().top - offset) {
+                highlightNav($('#Postingarequest'), false);
+            } else if ($(this).scrollTop() >= $('#Step2-content').offset().top - offset && $(this).scrollTop() < $('#Authorizeabearertoken-content').offset().top - offset) {
+                highlightNav($('#Step2'), false);
+            } else if ($(this).scrollTop() >= $('#Authorizeabearertoken-content').offset().top - offset && $(this).scrollTop() < $('#ExportaJobID-content').offset().top - offset) {
+                highlightNav($('#Authorizeabearertoken'), false);
+            } else if ($(this).scrollTop() >= $('#ExportaJobID-content').offset().top - offset && $(this).scrollTop() < $('#Checkthestatusofyourjob-content').offset().top - offset) {
+                highlightNav($('#ExportaJobID'), false);
+            } else if ($(this).scrollTop() >= $('#Checkthestatusofyourjob-content').offset().top - offset && $(this).scrollTop() < $('#DownloadyourJobID-content').offset().top - offset) {
+                highlightNav($('#Checkthestatusofyourjob'), false);
+            } else if ($(this).scrollTop() >= $('#DownloadyourJobID-content').offset().top - offset && $(this).scrollTop() < $('#Questions-content').offset().top - offset) {
+                highlightNav($('#DownloadyourJobID'), false);
+            } else if ($(this).scrollTop() >= $('#Questions-content').offset().top - offset) {
+                highlightNav($('#Questions'), false);
             }
         });
-        
+
         function highlightNav(id, doScroll) {
             const stepId = id.attr('id');
             const idToShow = stepMappings[stepId];
-            
-            $('.step-accessing-claims').each(function() {
+
+            $('.step-accessing-claims').each(function () {
                 $(this).removeClass('step-accessing-claims-active').addClass('step-accessing-claims-nonactive');
                 $(this).find('.step-claims-dash').hide();
             });
-            
+
             id.removeClass('step-accessing-claims-nonactive').addClass('step-accessing-claims-active');
             id.find('.step-claims-dash').show();
-            
-            if(doScroll) {
+
+            if (doScroll) {
                 $('html, body').animate({
                     scrollTop: $('#' + idToShow).offset().top - offset + 2
-                }, 1000, function() {
-                  scrollLock = false;
+                }, 1000, function () {
+                    scrollLock = false;
                 });
             }
         }
-        
+
         if (isIE()) {
             const elements = $('.step-claims-menu');
             Stickyfill.add(elements);
@@ -160,12 +168,15 @@ landing-page: live
                 <div class="step-claims-menu">
                     <div id="PostmanInstructions" class="step-accessing-claims step-accessing-claims-active">
                         Postman Instructions <span class="step-claims-dash"></span>
-                    </div> 
-                    <div id="SandboxandtheOnboardingProcess" class="step-accessing-claims step-accessing-claims-nonactive">
+                    </div>
+                    <div id="SandboxandtheOnboardingProcess"
+                        class="step-accessing-claims step-accessing-claims-nonactive">
                         Sandbox and the Onboarding Process <span class="step-claims-dash" style="display: none;"></span>
                     </div>
-                    <div id="Whatdoesthisinstructionguidecontain" class="step-accessing-claims step-accessing-claims-nonactive">
-                        What does this instruction guide contain? <span class="step-claims-dash" style="display: none;"></span>
+                    <div id="Whatdoesthisinstructionguidecontain"
+                        class="step-accessing-claims step-accessing-claims-nonactive">
+                        What does this instruction guide contain? <span class="step-claims-dash"
+                            style="display: none;"></span>
                     </div>
                     <div id="step1" class="step-accessing-claims step-accessing-claims-nonactive">
                         Step 1: Postman Instructions <span class="step-claims-dash" style="display: none;"></span>
@@ -223,7 +234,7 @@ landing-page: live
                     instructions below: Postman (Step 1) + Swagger (Step 2) are needed to access the Sandbox
                     environment. </p>
 
-                <h4 id="Step1-content">Step 1: Postman Instructions</h4>
+                <h4 id="step1-content">Step 1: Postman Instructions</h4>
                 <p>The Postman directions below are broken up into the following sections:</p>
                 <ul>
                     <li>Downloading Postman</li>
@@ -491,7 +502,7 @@ landing-page: live
                     <em>http://sandbox.ab2d.cms.gov/api/v1/fhir/Job/afc222d1-a55b-403b-ad22-49f5aefec4b6/$status</em>
                 </p>
 
-                <h5 id="Checkthestatusofyourjob-conent">Check the status of your job</h5>
+                <h5 id="Checkthestatusofyourjob-content">Check the status of your job</h5>
 
                 <p>While these are test jobs and most will run immediately, it is good practice to understand the steps
                     associated with running a job, including checking its status.</p>
@@ -534,9 +545,11 @@ landing-page: live
 
                 <p>
                     It might take a while for the file to be downloaded depending on how big the job is. The browser may
-                    even stop responding, but it will eventually respond. The <strong>Server response</strong> value should be a
+                    even stop responding, but it will eventually respond. The <strong>Server response</strong> value
+                    should be a
                     <strong>200</strong>
-                    and the <strong>Response body</strong> will contain the claims data. To download the data into a file, click on
+                    and the <strong>Response body</strong> will contain the claims data. To download the data into a
+                    file, click on
                     the
                     Download button in the lower right corner. This will be saved as an ndjson (new line delimited JSON)
                     file in your downloads. This data format will be identical to the production data. Only the Job ID
@@ -548,7 +561,7 @@ landing-page: live
                 <img src="./assets/img/sandbox/swagger-14.png" alt="swagger response body">
                 <img src="./assets/img/sandbox/swagger-15.png" alt="swagger json file">
 
-                <h1 id="Questions-content">Questions?</h1> 
+                <h1 id="Questions-content">Questions?</h1>
                 <p>
                     Having issues or concerns - please get in touch. <br>
                     <a href="mailto:ab2d@semanticbits.com">ab2d@semanticbits.com</a> - direct email <br>
