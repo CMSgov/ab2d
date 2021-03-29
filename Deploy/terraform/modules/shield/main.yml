@@ -1,4 +1,0 @@
-resource "aws_shield_protection" "api_shield" {
-  name         = "${lower(var.env)}-api-shield"
-  resource_arn = "${var.alb_arn}"
-}
