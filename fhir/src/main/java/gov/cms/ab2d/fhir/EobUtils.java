@@ -28,9 +28,18 @@ public final class EobUtils {
             return null;
         }
         IBase ref = (IBase) Versions.invokeGetMethod(eob, "getPatient");
-        String patientVal =  (String) Versions.invokeGetMethod(ref, "getReference");
-        if (patientVal != null) {
-            return patientVal.replaceFirst("Patient/", "");
+        return getJustId((String) Versions.invokeGetMethod(ref, "getReference"));
+    }
+
+    /**
+     * Return just the ID portion of the Patient ID
+     *
+     * @param patientInfo - contains the full patient ID info in the format Patient/12344
+     * @return just the ID portion - 12344
+     */
+    public static String getJustId(String patientInfo) {
+        if (patientInfo != null) {
+            return patientInfo.replaceFirst("Patient/", "");
         }
         return null;
     }

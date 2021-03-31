@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import java.util.*;
 
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
+import static gov.cms.ab2d.fhir.IdentifierUtils.CURRENCY_IDENTIFIER;
 import static gov.cms.ab2d.worker.processor.ContractProcessorImpl.ID_EXT;
 import static gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable.*;
 import static java.util.Collections.singletonList;

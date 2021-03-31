@@ -13,6 +13,9 @@ import java.util.List;
 
 import static gov.cms.ab2d.fhir.ExtensionUtils.*;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
+import static gov.cms.ab2d.fhir.PatientIdentifier.CURRENT_MBI;
+import static gov.cms.ab2d.fhir.PatientIdentifier.MBI_ID;
+import static gov.cms.ab2d.fhir.IdentifierUtils.CURRENCY_IDENTIFIER;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ExtensionUtilsTest {

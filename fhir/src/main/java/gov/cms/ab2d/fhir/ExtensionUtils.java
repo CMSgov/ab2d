@@ -9,16 +9,17 @@ import java.util.GregorianCalendar;
 import java.util.Calendar;
 import java.util.stream.Collectors;
 
+import static gov.cms.ab2d.fhir.PatientIdentifier.CURRENT_MBI;
+import static gov.cms.ab2d.fhir.PatientIdentifier.HISTORIC_MBI;
+import static gov.cms.ab2d.fhir.PatientIdentifier.MBI_ID;
+import static gov.cms.ab2d.fhir.IdentifierUtils.CURRENCY_IDENTIFIER;
+
 /**
  * Used to support manipulation of extensions to Resource objects for different FHIR versions
  */
 @Slf4j
 public final class ExtensionUtils {
-    public static final String CURRENT_MBI = "current";
-    public static final String HISTORIC_MBI = "historic";
-    public static final String MBI_ID = "http://hl7.org/fhir/sid/us-mbi";
-    public static final String CURRENCY_IDENTIFIER =
-            "https://bluebutton.cms.gov/resources/codesystem/identifier-currency";
+
     static final String ID_EXT = "http://hl7.org/fhir/StructureDefinition/elementdefinition-identifier";
     public static final String REF_YEAR_EXT = "https://bluebutton.cms.gov/resources/variables/rfrnc_yr";
 
