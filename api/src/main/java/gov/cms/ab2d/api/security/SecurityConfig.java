@@ -58,14 +58,17 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .antMatchers(API_PREFIX_V1 + FHIR_PREFIX + "/**").hasAnyAuthority(SPONSOR_ROLE)
             .anyRequest().authenticated();
 
+        // Override default behavior to add more informative logs
         security.exceptionHandling()
                 .accessDeniedHandler((request, response, accessDeniedException) -> {
 
+                    // Log authorization errors like PDP does not have SPONSOR role
                     logSecurityException(request, accessDeniedException, HttpServletResponse.SC_FORBIDDEN);
                     response.sendError(HttpServletResponse.SC_FORBIDDEN);
                 })
                 .authenticationEntryPoint((request, response, authException) -> {
 
+                    // Log authentication errors that are not caught by JWT filter
                     logSecurityException(request, authException, HttpServletResponse.SC_UNAUTHORIZED);
                     response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
                 });
@@ -80,11 +83,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private void logSecurityException(HttpServletRequest request, Exception securityException, int status) {
 
         try {
-            PdpClient client = pdpClientService.getCurrentClient();
             String error = String.format("Security Error: URL (%s), Exception (%s), Message (%s), Origin(%s)",
                     request.getRequestURL(), securityException.getClass(), securityException.getMessage(),
                     securityException.getStackTrace()[0].toString());
 
+            // Attempt to log who made request
+            PdpClient client = pdpClientService.getCurrentClient();
             if (client != null) {
                 error += ", Organization(" + client.getOrganization() + ")";
             }
