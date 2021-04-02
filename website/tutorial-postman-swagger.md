@@ -13,29 +13,18 @@ landing-page: live
         font-size: small;
     }
 
-    textarea {
-        font-family: monospace, monospace;
-        font-size: 1em;
-        background-color: #f3f6fa;
-        border: solid 1px #dddddd;
-        font: 1rem Consolas, "Liberation Mono", Menlo, Courier, monospace;
-        font-size: .8rem;
-        line-height: 1.25;
-        color: #567482;
+    .sub-step {
+        margin-left: 20px;
     }
 
-    #index {
-        margin: auto;
+    p {
+        margin-top: 10px;
+        margin-bottom: 5px;
     }
 
-    #index a {
-        color: #6c7b8d;
-    }
-
-    .sticky {
-        position: fixed;
-        top: 90px;
-        left: 5%;
+    h5,
+    h4 {
+        margin-top: 20px;
     }
 
     #scroll-to-top {
@@ -56,14 +45,20 @@ landing-page: live
         display: block !important;
     }
 
-    p {
-        margin-top: 10px;
-        margin-bottom: 5px;
+    .step-accessing-claims-active {
+        padding-left: 5px;
     }
 
-    h5,
-    h4 {
-        margin-top: 20px;
+    .step-accessing-claims {
+        font-family: Muli;
+        font-size: 15px;
+        font-weight: bold;
+        font-stretch: normal;
+        font-style: normal;
+        line-height: 1.4;
+        letter-spacing: normal;
+        margin-bottom: 10px;
+        cursor: pointer;
     }
 </style>
 
@@ -170,42 +165,47 @@ landing-page: live
                         Postman Instructions <span class="step-claims-dash"></span>
                     </div>
                     <div id="SandboxandtheOnboardingProcess"
-                        class="step-accessing-claims step-accessing-claims-nonactive">
+                        class="step-accessing-claims step-accessing-claims-nonactive sub-step">
                         Sandbox and the Onboarding Process <span class="step-claims-dash" style="display: none;"></span>
                     </div>
                     <div id="Whatdoesthisinstructionguidecontain"
-                        class="step-accessing-claims step-accessing-claims-nonactive">
+                        class="step-accessing-claims step-accessing-claims-nonactive sub-step">
                         What does this instruction guide contain? <span class="step-claims-dash"
                             style="display: none;"></span>
                     </div>
                     <div id="step1" class="step-accessing-claims step-accessing-claims-nonactive">
                         Step 1: Postman Instructions <span class="step-claims-dash" style="display: none;"></span>
                     </div>
-                    <div id="DownloadingPostman" class="step-accessing-claims step-accessing-claims-nonactive">
+                    <div id="DownloadingPostman" class="step-accessing-claims step-accessing-claims-nonactive sub-step">
                         Downloading Postman <span class="step-claims-dash" style="display: none;"></span>
                     </div>
-                    <div id="Creatinganewcollection" class="step-accessing-claims step-accessing-claims-nonactive">
+                    <div id="Creatinganewcollection"
+                        class="step-accessing-claims step-accessing-claims-nonactive sub-step">
                         Creating a new collection <span class="step-claims-dash" style="display: none;"></span>
                     </div>
-                    <div id="Savingarequest" class="step-accessing-claims step-accessing-claims-nonactive">
+                    <div id="Savingarequest sub-step"
+                        class="step-accessing-claims step-accessing-claims-nonactive sub-step">
                         Saving a request <span class="step-claims-dash" style="display: none;"></span>
                     </div>
-                    <div id="Postingarequest" class="step-accessing-claims step-accessing-claims-nonactive">
+                    <div id="Postingarequest sub-step"
+                        class="step-accessing-claims step-accessing-claims-nonactive sub-step">
                         Posting a request <span class="step-claims-dash" style="display: none;"></span>
                     </div>
                     <div id="Step2" class="step-accessing-claims step-accessing-claims-nonactive">
                         Step 2: Swagger Instructions <span class="step-claims-dash" style="display: none;"></span>
                     </div>
-                    <div id="Authorizeabearertoken" class="step-accessing-claims step-accessing-claims-nonactive">
+                    <div id="Authorizeabearertoken"
+                        class="step-accessing-claims step-accessing-claims-nonactive sub-step">
                         Authorize a bearer token <span class="step-claims-dash" style="display: none;"></span>
                     </div>
-                    <div id="ExportaJobID" class="step-accessing-claims step-accessing-claims-nonactive">
+                    <div id="ExportaJobID" class="step-accessing-claims step-accessing-claims-nonactive sub-step">
                         Export a Job ID <span class="step-claims-dash" style="display: none;"></span>
                     </div>
-                    <div id="Checkthestatusofyourjob" class="step-accessing-claims step-accessing-claims-nonactive">
+                    <div id="Checkthestatusofyourjob"
+                        class="step-accessing-claims step-accessing-claims-nonactive sub-step">
                         Check the status of your job <span class="step-claims-dash" style="display: none;"></span>
                     </div>
-                    <div id="DownloadyourJobID" class="step-accessing-claims step-accessing-claims-nonactive">
+                    <div id="DownloadyourJobID" class="step-accessing-claims step-accessing-claims-nonactive sub-step">
                         Download your Job ID <span class="step-claims-dash" style="display: none;"></span>
                     </div>
                     <div id="Questions" class="step-accessing-claims step-accessing-claims-nonactive">
