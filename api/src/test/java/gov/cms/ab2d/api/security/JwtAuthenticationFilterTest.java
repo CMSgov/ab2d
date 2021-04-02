@@ -75,7 +75,7 @@ class JwtAuthenticationFilterTest {
                     .andExpect(status().is(200));
 
             mockMvc.perform(get("/healthy"))
-                    .andExpect(status().is(403));
+                    .andExpect(status().is(401));
         } catch (Exception exception) {
             fail("could not perform basic health check", exception);
         }
