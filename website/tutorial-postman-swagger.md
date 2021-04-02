@@ -183,11 +183,11 @@ landing-page: live
                         class="step-accessing-claims step-accessing-claims-nonactive sub-step">
                         Creating a new collection <span class="step-claims-dash" style="display: none;"></span>
                     </div>
-                    <div id="Savingarequest sub-step"
+                    <div id="Savingarequest"
                         class="step-accessing-claims step-accessing-claims-nonactive sub-step">
                         Saving a request <span class="step-claims-dash" style="display: none;"></span>
                     </div>
-                    <div id="Postingarequest sub-step"
+                    <div id="Postingarequest"
                         class="step-accessing-claims step-accessing-claims-nonactive sub-step">
                         Posting a request <span class="step-claims-dash" style="display: none;"></span>
                     </div>
