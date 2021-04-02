@@ -45,7 +45,7 @@ landing-page: live
         display: block !important;
     }
 
-    .step-accessing-claims-active {
+    .step-active {
         padding-left: 5px;
     }
 
@@ -130,11 +130,11 @@ landing-page: live
             const idToShow = stepMappings[stepId];
 
             $('.step-accessing-claims').each(function () {
-                $(this).removeClass('step-accessing-claims-active').addClass('step-accessing-claims-nonactive');
+                $(this).removeClass('step-active').addClass('step-accessing-claims-nonactive');
                 $(this).find('.step-claims-dash').hide();
             });
 
-            id.removeClass('step-accessing-claims-nonactive').addClass('step-accessing-claims-active');
+            id.removeClass('step-accessing-claims-nonactive').addClass('step-active');
             id.find('.step-claims-dash').show();
 
             if (doScroll) {
