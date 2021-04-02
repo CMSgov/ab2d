@@ -21,6 +21,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.Collections;
 import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.*;
@@ -120,6 +121,26 @@ public class AuthenticationTests {
     public void testClientIsNotEnabled() throws Exception {
         PdpClient pdpClient = pdpClientRepository.findByClientId(TEST_PDP_CLIENT);
         pdpClient.setEnabled(false);
+        pdpClientRepository.save(pdpClient);
+
+        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Patient/$export")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().is(403));
+        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
+        assertEquals(1, apiRequestEvents.size());
+        ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
+        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
+        assertEquals(1, apiResponseEvents.size());
+        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
+        assertEquals(HttpStatus.FORBIDDEN.value(), responseEvent.getResponseCode());
+        assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
+    }
+
+    @Test
+    public void testClientNoAuthorization() throws Exception {
+        PdpClient pdpClient = pdpClientRepository.findByClientId(TEST_PDP_CLIENT);
+        pdpClient.setRoles(Collections.emptySet());
         pdpClientRepository.save(pdpClient);
 
         this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Patient/$export")
