@@ -5,6 +5,7 @@ import com.slack.api.model.block.SectionBlock;
 import com.slack.api.model.block.composition.MarkdownTextObject;
 import com.slack.api.webhook.Payload;
 import com.slack.api.webhook.WebhookResponse;
+import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,17 +28,17 @@ public class SlackLogger {
 
     private final List<String> slackTraceWebhooks;
 
-    private final String appEnv;
+    private final Ab2dEnvironment ab2dEnvironment;
 
     public SlackLogger(Slack slackClient, @Value("${slack.alert.webhooks}") List<String> slackAlertWebhooks,
                        @Value("${slack.trace.webhooks}") List<String> slackTraceWebhooks,
-                       @Value("${execution.env}") String appEnv) {
+                       Ab2dEnvironment ab2dEnvironment) {
         this.slack = slackClient;
         this.slackAlertWebhooks = slackAlertWebhooks.stream().filter(StringUtils::isNotBlank)
                 .map(String::trim).collect(toList());
         this.slackTraceWebhooks = slackTraceWebhooks.stream().filter(StringUtils::isNotBlank)
                 .map(String::trim).collect(toList());
-        this.appEnv = appEnv;
+        this.ab2dEnvironment = ab2dEnvironment;
     }
 
     /**
@@ -51,7 +52,15 @@ public class SlackLogger {
      * @return true if client successfully logged message
      */
     public boolean logAlert(String message) {
-        return log(message, slack, appEnv, slackAlertWebhooks);
+        return log(message, slack, ab2dEnvironment, slackAlertWebhooks);
+    }
+
+    public boolean logAlert(String message, List<Ab2dEnvironment> ab2dEnvironments) {
+        if (ab2dEnvironments != null && ab2dEnvironments.contains(ab2dEnvironment)) {
+            return logAlert(message);
+        }
+
+        return false;
     }
 
     /**
@@ -64,17 +73,25 @@ public class SlackLogger {
      * @return true if all webhooks successfully received message
      */
     public boolean logTrace(String message) {
-        return log(message, slack, appEnv, slackTraceWebhooks);
+        return log(message, slack, ab2dEnvironment, slackTraceWebhooks);
     }
 
-    static boolean log(String msg, Slack slack, String env, List<String> webhooks) {
+    public boolean logTrace(String message, List<Ab2dEnvironment> ab2dEnvironments) {
+        if (ab2dEnvironments != null && ab2dEnvironments.contains(ab2dEnvironment)) {
+            return logTrace(message);
+        }
+
+        return false;
+    }
+
+    static boolean log(String msg, Slack slack, Ab2dEnvironment executionEnv, List<String> webhooks) {
         try {
 
             SectionBlock sectionBlock = new SectionBlock();
             sectionBlock.setBlockId(UUID.randomUUID() + "blockId");
 
             MarkdownTextObject textObject = new MarkdownTextObject();
-            textObject.setText(msg + "\n\n" + env);
+            textObject.setText(msg + "\n\n" + executionEnv.getName());
             sectionBlock.setText(textObject);
 
             Payload payload = Payload.builder()

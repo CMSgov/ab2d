@@ -2,7 +2,9 @@ package gov.cms.ab2d.api.security;
 
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.service.PdpClientService;
+import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +23,8 @@ import org.springframework.security.web.authentication.logout.LogoutFilter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import java.util.List;
+
 import static gov.cms.ab2d.api.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
 
@@ -35,6 +39,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private final JwtTokenAuthenticationFilter jwtTokenAuthenticationFilter;
     private final CustomUserDetailsService customUserDetailsService;
     private final LogManager eventLogger;
+    private final SlackLogger slackLogger;
     private final PdpClientService pdpClientService;
 
     @Override
@@ -99,6 +104,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             // Log api response event to a database for long term analytics
             eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), null, HttpStatus.resolve(status),
                     "API Error", securityException.getMessage(), (String) request.getAttribute(REQUEST_ID)));
+            slackLogger.logAlert(error, List.of(Ab2dEnvironment.PRODUCTION));
         } catch (Exception exception) {
             log.error("Could not additional logs for exception: " + exception.getCause());
         }

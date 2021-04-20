@@ -1,6 +1,7 @@
 package gov.cms.ab2d.eventlogger.eventloggers.kinesis;
 
 import com.amazonaws.services.kinesisfirehose.AmazonKinesisFirehose;
+import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import gov.cms.ab2d.eventlogger.EventLogger;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import lombok.extern.slf4j.Slf4j;
@@ -21,17 +22,17 @@ public class KinesisEventLogger implements EventLogger {
 
     private final KinesisConfig config;
     private final AmazonKinesisFirehose client;
-    private final String appEnv;
+    private final Ab2dEnvironment ab2dEnvironment;
     private final KinesisMode kinesisEnabled;
     private final String streamId;
 
     public KinesisEventLogger(KinesisConfig config, AmazonKinesisFirehose client,
-                              @Value("${execution.env}") String appEnv,
+                              Ab2dEnvironment appEnv,
                               @Value("${eventlogger.kinesis.enabled}") KinesisMode kinesisEnabled,
                               @Value("${eventlogger.kinesis.stream.prefix:}") String streamId) {
         this.config = config;
         this.client = client;
-        this.appEnv = appEnv;
+        this.ab2dEnvironment = appEnv;
         this.kinesisEnabled = kinesisEnabled;
         this.streamId = streamId;
     }
@@ -42,7 +43,7 @@ public class KinesisEventLogger implements EventLogger {
     }
 
     public void log(LoggableEvent event, boolean block) {
-        event.setEnvironment(appEnv);
+        event.setEnvironment(ab2dEnvironment);
 
         // If kinesis is disabled then return immediately
         if (kinesisEnabled == KinesisMode.NONE) {
