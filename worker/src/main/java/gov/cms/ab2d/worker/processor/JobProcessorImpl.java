@@ -40,6 +40,7 @@ import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PROD_LIST;
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.NDJSON;
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.ZIP;
 
+@SuppressWarnings("PMD.TooManyStaticImports")
 @Slf4j
 @Service
 @RequiredArgsConstructor

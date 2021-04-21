@@ -25,7 +25,6 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import static gov.cms.ab2d.common.model.JobStatus.FAILED;
 import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PROD_LIST;
 
