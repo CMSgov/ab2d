@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.processor;
 
-import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -57,7 +56,6 @@ class ContractProcessorUnitTest {
     @BeforeEach
     void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        FhirContext fhirContext = ca.uhn.fhir.context.FhirContext.forDstu3();
 
         patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
 
@@ -78,8 +76,6 @@ class ContractProcessorUnitTest {
 
         var outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
         outputDir = Files.createDirectories(outputDirPath);
-
-
     }
 
     @Test

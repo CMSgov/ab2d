@@ -4,6 +4,7 @@ import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverStub;
 import gov.cms.ab2d.worker.service.FileService;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,6 +47,7 @@ class JobProcessorUnitTest {
     @Mock private JobOutputRepository jobOutputRepository;
     @Mock private ContractProcessor contractProcessor;
     @Mock private LogManager eventLogger;
+    @Mock private SlackLogger slackLogger;
 
     private CoverageDriverStub coverageDriver;
     private Job job;
@@ -61,7 +63,8 @@ class JobProcessorUnitTest {
                 jobOutputRepository,
                 contractProcessor,
                 coverageDriver,
-                eventLogger
+                eventLogger,
+                slackLogger
         );
 
         ReflectionTestUtils.setField(cut, "efsMount", efsMountTmpDir.toString());
@@ -184,6 +187,7 @@ class JobProcessorUnitTest {
 
         verify(fileService).createDirectory(any());
         verify(coverageDriver, never()).pageCoverage(any(Job.class));
+        verify(slackLogger, times(1)).logAlert(anyString(), any());
     }
 
     private PdpClient createClient() {

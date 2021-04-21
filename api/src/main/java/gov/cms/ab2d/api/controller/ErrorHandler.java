@@ -14,7 +14,6 @@ import gov.cms.ab2d.common.service.InvalidContractException;
 import gov.cms.ab2d.common.service.InvalidJobAccessException;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.common.service.JobOutputMissingException;
-import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;

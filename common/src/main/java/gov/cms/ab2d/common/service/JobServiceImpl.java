@@ -4,6 +4,7 @@ import gov.cms.ab2d.common.model.*; // NOPMD
 import gov.cms.ab2d.common.repository.JobRepository;
 
 import gov.cms.ab2d.common.util.EventUtils;
+import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.common.util.JobUtil;
@@ -24,7 +25,9 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import static gov.cms.ab2d.common.model.JobStatus.FAILED;
 import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
+import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PROD_LIST;
 
 @Slf4j
 @Service
@@ -35,18 +38,20 @@ public class JobServiceImpl implements JobService {
     private final JobRepository jobRepository;
     private final JobOutputService jobOutputService;
     private final LogManager eventLogger;
+    private final SlackLogger slackLogger;
     private final LoggerEventSummary loggerEventSummary;
     private final String fileDownloadPath;
 
     public static final String INITIAL_JOB_STATUS_MESSAGE = "0%";
 
     public JobServiceImpl(PdpClientService pdpClientService, JobRepository jobRepository, JobOutputService jobOutputService,
-                          LogManager eventLogger, LoggerEventSummary loggerEventSummary,
+                          LogManager eventLogger, SlackLogger slackLogger, LoggerEventSummary loggerEventSummary,
                           @Value("${efs.mount}") String fileDownloadPath) {
         this.pdpClientService = pdpClientService;
         this.jobRepository = jobRepository;
         this.jobOutputService = jobOutputService;
         this.eventLogger = eventLogger;
+        this.slackLogger = slackLogger;
         this.loggerEventSummary = loggerEventSummary;
         this.fileDownloadPath = fileDownloadPath;
     }
@@ -82,6 +87,13 @@ public class JobServiceImpl implements JobService {
         }
 
         eventLogger.log(EventUtils.getJobChangeEvent(job, JobStatus.SUBMITTED, "Job Created"));
+
+        // Report client running first job in prod
+        if (clientNeverRunAJob(contract)) {
+            String firstJobMessage = String.format("Organization %s is running their first job for contract %s",
+                    pdpClient.getOrganization(), contract.getContractNumber());
+            slackLogger.logAlert(firstJobMessage, PROD_LIST);
+        }
         job.setContract(contract);
         job.setStatus(JobStatus.SUBMITTED);
         return jobRepository.save(job);
@@ -204,5 +216,11 @@ public class JobServiceImpl implements JobService {
         PdpClient pdpClient = pdpClientService.getCurrentClient();
         List<Job> jobs = jobRepository.findActiveJobsByClient(pdpClient);
         return jobs.size() < pdpClient.getMaxParallelJobs();
+    }
+
+    private boolean clientNeverRunAJob(Contract contract) {
+        int completedJobs = jobRepository.countJobByContractAndStatus(contract,
+                List.of(JobStatus.SUBMITTED, JobStatus.IN_PROGRESS, JobStatus.SUCCESSFUL));
+        return completedJobs == 0;
     }
 }

@@ -6,6 +6,7 @@ import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverStub;
 import gov.cms.ab2d.worker.service.FileService;
@@ -61,6 +62,9 @@ class ProgressTrackerIntegrationTest {
     private LogManager eventLogger;
 
     @Mock
+    private SlackLogger slackLogger;
+
+    @Mock
     private BFDClient bfdClient;
 
     @Container
@@ -72,7 +76,7 @@ class ProgressTrackerIntegrationTest {
         CoverageDriver coverageDriver = new CoverageDriverStub(10, 20);
 
         cut = new JobProcessorImpl(fileService, jobRepository, jobOutputRepository,
-                contractProcessor, coverageDriver, eventLogger);
+                contractProcessor, coverageDriver, eventLogger, slackLogger);
     }
 
     @AfterEach
