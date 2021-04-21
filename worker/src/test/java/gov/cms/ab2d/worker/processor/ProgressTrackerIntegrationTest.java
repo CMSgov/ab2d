@@ -62,9 +62,6 @@ class ProgressTrackerIntegrationTest {
     private LogManager eventLogger;
 
     @Mock
-    private SlackLogger slackLogger;
-
-    @Mock
     private BFDClient bfdClient;
 
     @Container
@@ -76,7 +73,7 @@ class ProgressTrackerIntegrationTest {
         CoverageDriver coverageDriver = new CoverageDriverStub(10, 20);
 
         cut = new JobProcessorImpl(fileService, jobRepository, jobOutputRepository,
-                contractProcessor, coverageDriver, eventLogger, slackLogger);
+                contractProcessor, coverageDriver, eventLogger);
     }
 
     @AfterEach

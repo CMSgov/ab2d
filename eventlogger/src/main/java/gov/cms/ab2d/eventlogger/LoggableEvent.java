@@ -52,6 +52,12 @@ public abstract class LoggableEvent {
     }
 
     /**
+     * Convert event to a message
+     * @return the event converted to an alert message.
+     */
+    public abstract String asMessage();
+
+    /**
      * If you implement equals, you have to do hashCode. I gook the one created by lombok and cleaned it.
      * @return the hash code
      */

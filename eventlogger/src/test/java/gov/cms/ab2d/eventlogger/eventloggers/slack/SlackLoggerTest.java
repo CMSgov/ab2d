@@ -4,6 +4,7 @@ import com.slack.api.Slack;
 import com.slack.api.webhook.Payload;
 import com.slack.api.webhook.WebhookResponse;
 import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
+import gov.cms.ab2d.eventlogger.LoggableEvent;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,7 +41,7 @@ public class SlackLoggerTest {
 
         SlackLogger slackLogger = new SlackLogger(slack, List.of("A", "B"), List.of("C", "D"), Ab2dEnvironment.LOCAL);
 
-        boolean result = slackLogger.logAlert("This is a special announcement");
+        boolean result = slackLogger.logAlert("This is a special announcement", Ab2dEnvironment.ALL);
         assertTrue(result, "");
 
         assertTrue(urls.containsAll(List.of("A", "B")));
@@ -50,7 +51,7 @@ public class SlackLoggerTest {
         assertTrue(webhookPayloads.get(0).toString().contains("This is a special announcement"));
         assertTrue(webhookPayloads.get(0).toString().contains("local"));
 
-        slackLogger.logTrace("This is a not so special announcement");
+        slackLogger.logTrace("This is a not so special announcement", Ab2dEnvironment.ALL);
         assertTrue(urls.containsAll(List.of("C", "D")));
         verify(slack, times(4)).send(anyString(), any(Payload.class));
 
@@ -134,8 +135,8 @@ public class SlackLoggerTest {
 
         SlackLogger slackLogger = new SlackLogger(slack, List.of("A", "B"), List.of("C", "D"),  Ab2dEnvironment.LOCAL);
 
-        assertFalse(slackLogger.logAlert("oops"));
-        assertFalse(slackLogger.logTrace("oops"));
+        assertFalse(slackLogger.logAlert("oops", Ab2dEnvironment.ALL));
+        assertFalse(slackLogger.logTrace("oops", Ab2dEnvironment.ALL));
     }
 
     @DisplayName("SlackLogger quietly handles failure to send webhook")
@@ -146,7 +147,7 @@ public class SlackLoggerTest {
 
         SlackLogger slackLogger = new SlackLogger(slack, List.of("A", "B"), List.of("C", "D"), Ab2dEnvironment.LOCAL);
 
-        assertFalse(slackLogger.logAlert("oops"));
-        assertFalse(slackLogger.logTrace("oops"));
+        assertFalse(slackLogger.logAlert("oops", Ab2dEnvironment.ALL));
+        assertFalse(slackLogger.logTrace("oops", Ab2dEnvironment.ALL));
     }
 }

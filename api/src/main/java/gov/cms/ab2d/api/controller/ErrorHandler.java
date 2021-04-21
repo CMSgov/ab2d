@@ -14,8 +14,8 @@ import gov.cms.ab2d.common.service.InvalidContractException;
 import gov.cms.ab2d.common.service.InvalidJobAccessException;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.common.service.JobOutputMissingException;
+import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
@@ -42,7 +42,6 @@ import java.util.Map;
 
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
-import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PROD_LIST;
 import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 
 @ControllerAdvice
@@ -50,7 +49,6 @@ import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 public class ErrorHandler extends ResponseEntityExceptionHandler {
 
     private final LogManager eventLogger;
-    private final SlackLogger slackLogger;
     private final int retryAfterDelay;
 
     private static final Map<Class, HttpStatus> RESPONSE_MAP = new HashMap<>() {
@@ -76,9 +74,8 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         }
     };
 
-    public ErrorHandler(LogManager eventLogger, SlackLogger slackLogger, @Value("${api.retry-after.delay}") int retryAfterDelay) {
+    public ErrorHandler(LogManager eventLogger, @Value("${api.retry-after.delay}") int retryAfterDelay) {
         this.eventLogger = eventLogger;
-        this.slackLogger = slackLogger;
         this.retryAfterDelay = retryAfterDelay;
     }
 
@@ -121,9 +118,10 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
         eventLogger.log(new ErrorEvent(MDC.get(ORGANIZATION), null,
                 ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT, description));
-        eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), null, status,
-                "API Error", description, (String) request.getAttribute(REQUEST_ID)));
-        slackLogger.logAlert(description, PROD_LIST);
+
+        ApiResponseEvent responseEvent = new ApiResponseEvent(MDC.get(ORGANIZATION), null, status,
+                "API Error", description, (String) request.getAttribute(REQUEST_ID));
+        eventLogger.logAndAlert(responseEvent, Ab2dEnvironment.PROD_LIST);
 
         return new ResponseEntity<>(null, null, status);
     }
@@ -141,9 +139,9 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         String description = String.format("%s %s for request %s", ex.getClass().getSimpleName(), ex.getMessage(),
                 request.getAttribute(REQUEST_ID));
 
-        eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), null, status,
-                "API Error", description, (String) request.getAttribute(REQUEST_ID)));
-        slackLogger.logAlert(description, PROD_LIST);
+        ApiResponseEvent responseEvent = new ApiResponseEvent(MDC.get(ORGANIZATION), null, status,
+                "API Error", description, (String) request.getAttribute(REQUEST_ID));
+        eventLogger.logAndAlert(responseEvent, Ab2dEnvironment.PROD_LIST);
 
         return new ResponseEntity<>(null, null, status);
     }
@@ -154,7 +152,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
         eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), null, status,
                 "API Error", ex.getClass().getSimpleName(), (String) request.getAttribute(REQUEST_ID)));
-        slackLogger.logTrace("Maintenance mode blocked API request " + request.getAttribute(REQUEST_ID), PROD_LIST);
+        eventLogger.trace("Maintenance mode blocked API request " + request.getAttribute(REQUEST_ID), Ab2dEnvironment.PROD_LIST);
 
         return new ResponseEntity<>(null, null, status);
     }

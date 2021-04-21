@@ -48,16 +48,12 @@ public class SlackLogger {
      * Alerts are meant for the entire team and indicate an event that needs
      * to be tracked or handled immediately.
      *
-     * @param message message to log
+     * @param message alert to log
      * @return true if client successfully logged message
      */
-    public boolean logAlert(String message) {
-        return log(message, slack, ab2dEnvironment, slackAlertWebhooks);
-    }
-
     public boolean logAlert(String message, List<Ab2dEnvironment> ab2dEnvironments) {
         if (ab2dEnvironments != null && ab2dEnvironments.contains(ab2dEnvironment)) {
-            return logAlert(message);
+            return log(message, slack, ab2dEnvironment, slackAlertWebhooks);
         }
 
         return false;
@@ -69,16 +65,12 @@ public class SlackLogger {
      *
      * Traces are meant for developers.
      *
-     * @param message message to log
+     * @param message trace to log
      * @return true if all webhooks successfully received message
      */
-    public boolean logTrace(String message) {
-        return log(message, slack, ab2dEnvironment, slackTraceWebhooks);
-    }
-
     public boolean logTrace(String message, List<Ab2dEnvironment> ab2dEnvironments) {
         if (ab2dEnvironments != null && ab2dEnvironments.contains(ab2dEnvironment)) {
-            return logTrace(message);
+            return log(message, slack, ab2dEnvironment, slackTraceWebhooks);
         }
 
         return false;

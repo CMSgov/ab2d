@@ -109,9 +109,8 @@ class JobServiceTest {
     // Be safe and make sure nothing from another test will impact current test
     @BeforeEach
     public void setup() {
-        LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
-        jobService = new JobServiceImpl(pdpClientService, jobRepository, jobOutputService, logManager,
-                slackLogger, loggerEventSummary, tmpJobLocation);
+        LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
+        jobService = new JobServiceImpl(pdpClientService, jobRepository, jobOutputService, logManager, loggerEventSummary, tmpJobLocation);
         ReflectionTestUtils.setField(jobService, "fileDownloadPath", tmpJobLocation);
 
         dataSetup.setupNonStandardClient(CLIENTID, CONTRACT_NUMBER, List.of());

@@ -24,7 +24,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
-import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
@@ -47,7 +46,6 @@ class JobProcessorUnitTest {
     @Mock private JobOutputRepository jobOutputRepository;
     @Mock private ContractProcessor contractProcessor;
     @Mock private LogManager eventLogger;
-    @Mock private SlackLogger slackLogger;
 
     private CoverageDriverStub coverageDriver;
     private Job job;
@@ -63,8 +61,7 @@ class JobProcessorUnitTest {
                 jobOutputRepository,
                 contractProcessor,
                 coverageDriver,
-                eventLogger,
-                slackLogger
+                eventLogger
         );
 
         ReflectionTestUtils.setField(cut, "efsMount", efsMountTmpDir.toString());
@@ -187,7 +184,7 @@ class JobProcessorUnitTest {
 
         verify(fileService).createDirectory(any());
         verify(coverageDriver, never()).pageCoverage(any(Job.class));
-        verify(slackLogger, times(1)).logAlert(anyString(), any());
+        verify(eventLogger, times(1)).logAndAlert(any(), any());
     }
 
     private PdpClient createClient() {

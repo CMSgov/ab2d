@@ -4,7 +4,6 @@ import gov.cms.ab2d.common.model.*; // NOPMD
 import gov.cms.ab2d.common.repository.JobRepository;
 
 import gov.cms.ab2d.common.util.EventUtils;
-import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.common.util.JobUtil;
@@ -37,20 +36,18 @@ public class JobServiceImpl implements JobService {
     private final JobRepository jobRepository;
     private final JobOutputService jobOutputService;
     private final LogManager eventLogger;
-    private final SlackLogger slackLogger;
     private final LoggerEventSummary loggerEventSummary;
     private final String fileDownloadPath;
 
     public static final String INITIAL_JOB_STATUS_MESSAGE = "0%";
 
     public JobServiceImpl(PdpClientService pdpClientService, JobRepository jobRepository, JobOutputService jobOutputService,
-                          LogManager eventLogger, SlackLogger slackLogger, LoggerEventSummary loggerEventSummary,
+                          LogManager eventLogger, LoggerEventSummary loggerEventSummary,
                           @Value("${efs.mount}") String fileDownloadPath) {
         this.pdpClientService = pdpClientService;
         this.jobRepository = jobRepository;
         this.jobOutputService = jobOutputService;
         this.eventLogger = eventLogger;
-        this.slackLogger = slackLogger;
         this.loggerEventSummary = loggerEventSummary;
         this.fileDownloadPath = fileDownloadPath;
     }
@@ -91,7 +88,7 @@ public class JobServiceImpl implements JobService {
         if (clientNeverRunAJob(contract)) {
             String firstJobMessage = String.format("Organization %s is running their first job for contract %s",
                     pdpClient.getOrganization(), contract.getContractNumber());
-            slackLogger.logAlert(firstJobMessage, PROD_LIST);
+            eventLogger.alert(firstJobMessage, PROD_LIST);
         }
         job.setContract(contract);
         job.setStatus(JobStatus.SUBMITTED);

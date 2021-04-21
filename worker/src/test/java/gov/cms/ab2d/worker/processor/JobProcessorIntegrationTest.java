@@ -116,7 +116,7 @@ class JobProcessorIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
+        LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
         PdpClient pdpClient = createClient();
 
         Contract contract = createContract();
@@ -157,8 +157,7 @@ class JobProcessorIntegrationTest {
                 jobOutputRepository,
                 contractProcessor,
                 coverageDriver,
-                logManager,
-                slackLogger
+                logManager
         );
 
         ReflectionTestUtils.setField(cut, "efsMount", tmpEfsMountDir.toString());

@@ -17,6 +17,8 @@ public enum Ab2dEnvironment {
     PRODUCTION_VALIDATION("ab2d-east-prod-test"),
     PRODUCTION("ab2d-east-prod");
 
+    public static final List<Ab2dEnvironment> ALL = List.of(LOCAL, DEV, SANDBOX, IMPL, PRODUCTION_VALIDATION, PRODUCTION);
+
     public static final List<Ab2dEnvironment> PROD_LIST = Collections.singletonList(PRODUCTION);
 
     // Name typically expected in application.eventlogger.properties config
