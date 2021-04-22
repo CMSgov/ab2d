@@ -51,7 +51,7 @@ services:
       - NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}"
       - NEW_RELIC_APP_NAME="${NEW_RELIC_APP_NAME}"
       # LOCAL always to shut off Kinesis logging
-      - AB2D_EXECUTION_ENV=LOCAL
+      - AB2D_EXECUTION_ENV=${AB2D_EXECUTION_ENV:-local}
     ports:
       # Set port as an environment variable
       # The e2e-test forcefully sets this itself otherwise set via command line
@@ -84,7 +84,7 @@ services:
       # Location to store files within container
       - AB2D_EFS_MOUNT=/opt/ab2d
       # LOCAL always to shut off Kinesis logging
-      - AB2D_EXECUTION_ENV=LOCAL
+      - AB2D_EXECUTION_ENV=${AB2D_EXECUTION_ENV:-local}
       # BFD prod sandbox credentials and location
       - AB2D_BFD_URL=https://prod-sbx.bfd.cms.gov/v1/fhir/
       - AB2D_BFD_KEYSTORE_PASSWORD=${AB2D_BFD_KEYSTORE_PASSWORD}
