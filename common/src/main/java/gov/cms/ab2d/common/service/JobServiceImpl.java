@@ -85,7 +85,7 @@ public class JobServiceImpl implements JobService {
         eventLogger.log(EventUtils.getJobChangeEvent(job, JobStatus.SUBMITTED, "Job Created"));
 
         // Report client running first job in prod
-        if (clientNeverRunAJob(contract)) {
+        if (clientHasNeverCompletedJob(contract)) {
             String firstJobMessage = String.format("Organization %s is running their first job for contract %s",
                     pdpClient.getOrganization(), contract.getContractNumber());
             eventLogger.alert(firstJobMessage, PROD_LIST);
@@ -214,7 +214,7 @@ public class JobServiceImpl implements JobService {
         return jobs.size() < pdpClient.getMaxParallelJobs();
     }
 
-    private boolean clientNeverRunAJob(Contract contract) {
+    private boolean clientHasNeverCompletedJob(Contract contract) {
         int completedJobs = jobRepository.countJobByContractAndStatus(contract,
                 List.of(JobStatus.SUBMITTED, JobStatus.IN_PROGRESS, JobStatus.SUCCESSFUL));
         return completedJobs == 0;

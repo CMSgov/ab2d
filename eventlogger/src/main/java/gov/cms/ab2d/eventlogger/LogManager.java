@@ -3,10 +3,12 @@ package gov.cms.ab2d.eventlogger;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 public class LogManager {
     private final SqlEventLogger sqlEventLogger;
@@ -41,7 +43,7 @@ public class LogManager {
     }
 
     /**
-     * Alert AB2D team via relevant loggers
+     * Alert only AB2D team via relevant loggers with a high priority alert
      * @param message message to provide
      * @param environments AB2D environments to alert on
      */
@@ -50,7 +52,7 @@ public class LogManager {
     }
 
     /**
-     * Alert AB2D team via relevant loggers with a low priority alert
+     * Alert only AB2D team via relevant loggers with a low priority alert
      * @param message message to provide
      * @param environments AB2D environments to alert on
      */
@@ -69,7 +71,7 @@ public class LogManager {
     public void logAndAlert(LoggableEvent event, List<Ab2dEnvironment> environments) {
         log(event);
 
-        slackLogger.logAlert(event.asMessage(), environments);
+        slackLogger.logAlert(event, environments);
     }
 
     /**
@@ -83,7 +85,7 @@ public class LogManager {
     public void logAndTrace(LoggableEvent event, List<Ab2dEnvironment> environments) {
         log(event);
 
-        slackLogger.logTrace(event.asMessage(), environments);
+        slackLogger.logTrace(event, environments);
     }
 
     /**

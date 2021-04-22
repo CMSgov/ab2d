@@ -85,7 +85,7 @@ class BFDHealthCheck {
         PropertiesDTO propertiesDTO = new PropertiesDTO();
         propertiesDTO.setKey(MAINTENANCE_MODE);
         propertiesDTO.setValue(statusString);
-        logManager.alert("Maintenance Mode status for determined from " + data.getVersion() +
+        logManager.alert("Maintenance Mode status for " + data.getVersion() +
                 " is: " + statusString, Ab2dEnvironment.ALL);
         propertiesService.updateProperties(List.of(propertiesDTO));
         log.info("Updated the {} property to {}", MAINTENANCE_MODE, statusString);

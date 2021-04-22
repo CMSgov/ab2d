@@ -6,6 +6,7 @@ import com.slack.api.model.block.composition.MarkdownTextObject;
 import com.slack.api.webhook.Payload;
 import com.slack.api.webhook.WebhookResponse;
 import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
+import gov.cms.ab2d.eventlogger.LoggableEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -52,11 +53,17 @@ public class SlackLogger {
      * @return true if client successfully logged message
      */
     public boolean logAlert(String message, List<Ab2dEnvironment> ab2dEnvironments) {
-        if (ab2dEnvironments != null && ab2dEnvironments.contains(ab2dEnvironment)) {
-            return log(message, slack, ab2dEnvironment, slackAlertWebhooks);
+        return validateAndLog(message, ab2dEnvironments, slackAlertWebhooks);
+    }
+
+    public boolean logAlert(LoggableEvent event, List<Ab2dEnvironment> ab2dEnvironments) {
+
+        if (event == null) {
+            log.error("cannot build a slack alert message with a null event");
+            return false;
         }
 
-        return false;
+        return validateAndLog(event.asMessage(), ab2dEnvironments, slackAlertWebhooks);
     }
 
     /**
@@ -69,8 +76,32 @@ public class SlackLogger {
      * @return true if all webhooks successfully received message
      */
     public boolean logTrace(String message, List<Ab2dEnvironment> ab2dEnvironments) {
-        if (ab2dEnvironments != null && ab2dEnvironments.contains(ab2dEnvironment)) {
-            return log(message, slack, ab2dEnvironment, slackTraceWebhooks);
+        return validateAndLog(message, ab2dEnvironments, slackTraceWebhooks);
+    }
+
+    public boolean logTrace(LoggableEvent event, List<Ab2dEnvironment> ab2dEnvironments) {
+
+        if (event == null) {
+            log.error("cannot build a slack trace message with a null event");
+            return false;
+        }
+
+        return validateAndLog(event.asMessage(), ab2dEnvironments, slackAlertWebhooks);
+    }
+
+    private boolean validateAndLog(String message, List<Ab2dEnvironment> ab2dEnvironments, List<String> slackWebhooks) {
+        if (StringUtils.isBlank(message)) {
+            log.error("cannot build slack message using a null or empty string");
+            return false;
+        }
+
+        if (ab2dEnvironments == null) {
+            log.error("ab2d environments where slack message should be generated were not provided (are null)");
+            return false;
+        }
+
+        if (ab2dEnvironments.contains(ab2dEnvironment)) {
+            return log(message, slack, ab2dEnvironment, slackWebhooks);
         }
 
         return false;

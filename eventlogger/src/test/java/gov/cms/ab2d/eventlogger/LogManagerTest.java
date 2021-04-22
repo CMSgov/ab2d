@@ -88,7 +88,7 @@ class LogManagerTest {
         ErrorEvent savedEvent = (ErrorEvent) events.get(0);
         assertEquals("aws1111", savedEvent.getAwsId());
 
-        verify(slackLogger, times(1)).logAlert(any(), any());
+        verify(slackLogger, times(1)).logAlert(any(LoggableEvent.class), any());
     }
 
     @Test
@@ -112,7 +112,7 @@ class LogManagerTest {
         ErrorEvent savedEvent = (ErrorEvent) events.get(0);
         assertEquals("aws1111", savedEvent.getAwsId());
 
-        verify(slackLogger, times(1)).logTrace(any(), any());
+        verify(slackLogger, times(1)).logTrace(any(LoggableEvent.class), any());
     }
 
     @Test
@@ -165,7 +165,7 @@ class LogManagerTest {
 
         logManager.alert(event.getDescription(), Ab2dEnvironment.ALL);
 
-        verify(slackLogger, times(1)).logAlert(any(), any());
+        verify(slackLogger, times(1)).logAlert(any(String.class), any());
     }
 
     @Test
@@ -181,6 +181,6 @@ class LogManagerTest {
 
         logManager.trace(event.getDescription(), Ab2dEnvironment.ALL);
 
-        verify(slackLogger, times(1)).logTrace(any(), any());
+        verify(slackLogger, times(1)).logTrace(any(String.class), any());
     }
 }

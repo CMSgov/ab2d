@@ -20,6 +20,8 @@ public class HPMSIngestJob extends QuartzJobBean {
     @SuppressWarnings("NullableProblems")
     @Override
     protected void executeInternal(JobExecutionContext context) {
+        // todo additionally filter hpms engagement by tracking the environment ab2d is running in.
+        //      if the environment is not sandbox or prod do not poll hpms
         if (FeatureEngagement.IN_GEAR == getEngagement()) {
             aus.pollOrganizations();
         }
