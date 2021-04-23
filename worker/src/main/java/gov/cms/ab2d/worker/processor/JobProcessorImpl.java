@@ -95,7 +95,8 @@ public class JobProcessorImpl implements JobProcessor {
         } catch (Exception e) {
 
             // Log exception to relevant loggers
-            String message = "Job %s failed for contract #%s because " + e.getMessage();
+            String contract = job.getContract() != null ? job.getContract().getContractNumber() : "empty";
+            String message = String.format("Job %s failed for contract #%s because %s", jobUuid, contract, e.getMessage());
             eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, FAILED, message), Ab2dEnvironment.PROD_LIST);
             log.error("Unexpected exception ", e);
 
