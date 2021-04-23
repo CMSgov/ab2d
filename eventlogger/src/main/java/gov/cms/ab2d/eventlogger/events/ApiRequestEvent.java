@@ -34,4 +34,9 @@ public class ApiRequestEvent extends LoggableEvent {
         }
         this.requestId = requestId;
     }
+
+    @Override
+    public String asMessage() {
+        return String.format("request to %s from %s", url, ipAddress);
+    }
 }

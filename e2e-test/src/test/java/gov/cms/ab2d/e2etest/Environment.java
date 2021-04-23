@@ -1,5 +1,7 @@
 package gov.cms.ab2d.e2etest;
 
+import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
+
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
@@ -11,13 +13,14 @@ import java.util.stream.Collectors;
 public enum Environment {
 
 
-    LOCAL("local-config.yml", List.of("docker-compose.yml")),
-    CI("local-config.yml", List.of("docker-compose.yml", "docker-compose.jenkins.yml")),
-    DEV("dev-config.yml", Collections.emptyList()),
-    SBX("sbx-config.yml", Collections.emptyList()),
-    IMP("imp-config.yml", Collections.emptyList()),
-    PROD("prod-config.yml", Collections.emptyList());
+    LOCAL(Ab2dEnvironment.LOCAL, "local-config.yml", List.of("docker-compose.yml")),
+    CI(Ab2dEnvironment.LOCAL, "local-config.yml", List.of("docker-compose.yml", "docker-compose.jenkins.yml")),
+    DEV(Ab2dEnvironment.DEV, "dev-config.yml", Collections.emptyList()),
+    SBX(Ab2dEnvironment.SANDBOX, "sbx-config.yml", Collections.emptyList()),
+    IMP(Ab2dEnvironment.IMPL, "imp-config.yml", Collections.emptyList()),
+    PROD(Ab2dEnvironment.PRODUCTION, "prod-config.yml", Collections.emptyList());
 
+    private final Ab2dEnvironment ab2dEnvironment;
     private final String configName;
 
     // Docker compose can actually accept a list of docker-compose yaml files
@@ -26,7 +29,8 @@ public enum Environment {
     // For more information see the documentation here: https://docs.docker.com/compose/extends/
     private final List<String> dockerComposeFiles;
 
-    Environment(String configName, List<String> dockerComposeFiles) {
+    Environment(Ab2dEnvironment ab2dEnvironment, String configName, List<String> dockerComposeFiles) {
+        this.ab2dEnvironment = ab2dEnvironment;
         this.configName = configName;
         this.dockerComposeFiles = dockerComposeFiles;
     }
@@ -49,6 +53,10 @@ public enum Environment {
         composeFiles.toArray(composeFilesArray);
 
         return composeFilesArray;
+    }
+
+    public Ab2dEnvironment getAb2dEnvironment() {
+        return ab2dEnvironment;
     }
 
     /**

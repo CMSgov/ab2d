@@ -3,7 +3,7 @@ package gov.cms.ab2d.hpms.service;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.hpms.SpringBootTestApp;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
@@ -58,7 +58,7 @@ public class AttestationUpdaterServiceTest {
     @TestConfiguration
     static class MockHpmsFetcherConfig {
         @Mock
-        private SlackLogger slackLogger;
+        private LogManager logManager;
 
         @Autowired
         private ContractRepository contractRepository;
@@ -67,7 +67,7 @@ public class AttestationUpdaterServiceTest {
         @Bean()
         public AttestationUpdaterServiceImpl getMockService()
         {
-            return new AttestationUpdaterServiceImpl(contractRepository, new MockHpmsFetcher(), slackLogger);
+            return new AttestationUpdaterServiceImpl(contractRepository, new MockHpmsFetcher(), logManager);
         }
     }
 }

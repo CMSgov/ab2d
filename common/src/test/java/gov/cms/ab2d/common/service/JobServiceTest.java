@@ -7,6 +7,7 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
+import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventSummary;
 import org.apache.commons.io.IOUtils;
@@ -46,6 +47,10 @@ import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @TestPropertySource(locations = "/application.common.properties")
@@ -94,6 +99,9 @@ class JobServiceTest {
     @Mock
     private LoggerEventSummary loggerEventSummary;
 
+    @Mock
+    private SlackLogger slackLogger;
+
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
@@ -101,7 +109,7 @@ class JobServiceTest {
     // Be safe and make sure nothing from another test will impact current test
     @BeforeEach
     public void setup() {
-        LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
+        LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
         jobService = new JobServiceImpl(pdpClientService, jobRepository, jobOutputService, logManager, loggerEventSummary, tmpJobLocation);
         ReflectionTestUtils.setField(jobService, "fileDownloadPath", tmpJobLocation);
 
@@ -174,6 +182,29 @@ class JobServiceTest {
 
         // Verify it actually got persisted in the DB
         assertEquals(job, jobRepository.findById(job.getId()).get());
+    }
+
+    @Test
+    void reportFirstJobRunForAContract() {
+        Contract contract = contractRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+
+        Job job1 = jobService.createJob(EOB, LOCAL_HOST, contract.getContractNumber(), NDJSON_FIRE_CONTENT_TYPE, null, STU3);
+        dataSetup.queueForCleanup(job1);
+        verify(slackLogger, times(1)).logAlert(anyString(), any());
+
+        job1.setStatus(JobStatus.CANCELLED);
+        jobRepository.saveAndFlush(job1);
+
+        Job job2 = jobService.createJob(EOB, LOCAL_HOST, contract.getContractNumber(), NDJSON_FIRE_CONTENT_TYPE, null, STU3);
+        dataSetup.queueForCleanup(job2);
+        verify(slackLogger, times(2)).logAlert(anyString(), any());
+
+        job2.setStatus(JobStatus.SUCCESSFUL);
+        jobRepository.saveAndFlush(job2);
+
+        Job job3 = jobService.createJob(EOB, LOCAL_HOST, contract.getContractNumber(), NDJSON_FIRE_CONTENT_TYPE, null, STU3);
+        dataSetup.queueForCleanup(job3);
+        verify(slackLogger, times(2)).logAlert(anyString(), any());
     }
 
     @Test

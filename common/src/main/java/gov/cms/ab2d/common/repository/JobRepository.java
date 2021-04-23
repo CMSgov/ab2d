@@ -45,4 +45,7 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Query("UPDATE Job j SET j.progress = :percentageCompleted WHERE j.jobUuid = :jobUuid ")
     int updatePercentageCompleted(String jobUuid, int percentageCompleted);
+
+    @Query("SELECT COUNT(j) FROM Job j WHERE j.contract = :contract AND j.status IN :statuses")
+    int countJobByContractAndStatus(Contract contract, List<JobStatus> statuses);
 }

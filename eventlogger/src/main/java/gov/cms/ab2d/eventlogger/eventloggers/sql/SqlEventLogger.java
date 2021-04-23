@@ -1,10 +1,10 @@
 package gov.cms.ab2d.eventlogger.eventloggers.sql;
 
+import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import gov.cms.ab2d.eventlogger.EventLogger;
 import gov.cms.ab2d.eventlogger.EventLoggingException;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -18,19 +18,20 @@ public class SqlEventLogger implements EventLogger {
 
     private final SqlMapperConfig mapperConfig;
     private final JdbcTemplate template;
-    private final String appEnv;
+    private final Ab2dEnvironment ab2dEnvironment;
 
     public SqlEventLogger(SqlMapperConfig mapperConfig, JdbcTemplate template,
-                          @Value("${execution.env}") String appEnv) {
+                          Ab2dEnvironment ab2dEnvironment) {
         this.mapperConfig = mapperConfig;
         this.template = template;
-        this.appEnv = appEnv;
+        this.ab2dEnvironment = ab2dEnvironment;
     }
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void log(LoggableEvent event) {
-        event.setEnvironment(appEnv);
+        event.setEnvironment(ab2dEnvironment);
+
         try {
             SqlEventMapper mapper = mapperConfig.getMapper(event.getClass());
             if (mapper == null) {

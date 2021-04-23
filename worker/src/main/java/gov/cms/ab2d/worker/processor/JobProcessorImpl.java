@@ -10,6 +10,7 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.EventUtils;
+import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
@@ -38,6 +39,7 @@ import static gov.cms.ab2d.common.util.EventUtils.getOrganization;
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.NDJSON;
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.ZIP;
 
+@SuppressWarnings("PMD.TooManyStaticImports")
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -91,13 +93,18 @@ public class JobProcessorImpl implements JobProcessor {
                 deleteExistingDirectory(outputDirPath, job);
             }
         } catch (Exception e) {
-            eventLogger.log(EventUtils.getJobChangeEvent(job, FAILED, "Job Failed - " + e.getMessage()));
+
+            // Log exception to relevant loggers
+            String message = "Job %s failed for contract #%s because " + e.getMessage();
+            eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, FAILED, message), Ab2dEnvironment.PROD_LIST);
             log.error("Unexpected exception ", e);
+
+            // Update database status
             job.setStatus(FAILED);
             job.setStatusMessage(e.getMessage());
             job.setCompletedAt(OffsetDateTime.now());
-            jobRepository.save(job);
             log.info("Job: [{}] FAILED", jobUuid);
+            jobRepository.save(job);
         }
 
         return job;

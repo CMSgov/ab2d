@@ -9,7 +9,6 @@
                 <requestedUrl>requested_url</requestedUrl>
                 <statusCode>status_code</statusCode>
             </fieldNames>
-            <jsonGeneratorDecorator class="net.logstash.logback.decorate.PrettyPrintingJsonGeneratorDecorator" />
             <requestHeaderFilter class="gov.cms.ab2d.api.log.LogstashHeaderFilter">
                 <exclude>Authorization</exclude>
             </requestHeaderFilter>

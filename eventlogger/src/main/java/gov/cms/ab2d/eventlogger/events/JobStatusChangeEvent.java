@@ -27,4 +27,9 @@ public class JobStatusChangeEvent extends LoggableEvent {
         this.newStatus = newStatus;
         this.description = description;
     }
+
+    @Override
+    public String asMessage() {
+        return String.format("(%s) %s -> %s %s", getJobId(), oldStatus, newStatus, description);
+    }
 }

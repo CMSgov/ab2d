@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
+import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PROD_LIST;
 
 @Slf4j
 @Service
@@ -82,6 +83,13 @@ public class JobServiceImpl implements JobService {
         }
 
         eventLogger.log(EventUtils.getJobChangeEvent(job, JobStatus.SUBMITTED, "Job Created"));
+
+        // Report client running first job in prod
+        if (clientHasNeverCompletedJob(contract)) {
+            String firstJobMessage = String.format("Organization %s is running their first job for contract %s",
+                    pdpClient.getOrganization(), contract.getContractNumber());
+            eventLogger.alert(firstJobMessage, PROD_LIST);
+        }
         job.setContract(contract);
         job.setStatus(JobStatus.SUBMITTED);
         return jobRepository.save(job);
@@ -204,5 +212,11 @@ public class JobServiceImpl implements JobService {
         PdpClient pdpClient = pdpClientService.getCurrentClient();
         List<Job> jobs = jobRepository.findActiveJobsByClient(pdpClient);
         return jobs.size() < pdpClient.getMaxParallelJobs();
+    }
+
+    private boolean clientHasNeverCompletedJob(Contract contract) {
+        int completedJobs = jobRepository.countJobByContractAndStatus(contract,
+                List.of(JobStatus.SUBMITTED, JobStatus.IN_PROGRESS, JobStatus.SUCCESSFUL));
+        return completedJobs == 0;
     }
 }

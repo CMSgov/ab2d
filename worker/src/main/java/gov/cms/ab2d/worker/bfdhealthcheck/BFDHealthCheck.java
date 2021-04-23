@@ -3,7 +3,8 @@ package gov.cms.ab2d.worker.bfdhealthcheck;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
+import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
+import gov.cms.ab2d.eventlogger.LogManager;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.IBaseConformance;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,17 +21,17 @@ import static gov.cms.ab2d.worker.bfdhealthcheck.HealthCheckData.Status;
 @Slf4j
 class BFDHealthCheck {
 
-    private final SlackLogger slackLogger;
+    private final LogManager logManager;
     private final PropertiesService propertiesService;
     private final BFDClient bfdClient;
     private final int consecutiveSuccessesToBringUp;
     private final int consecutiveFailuresToTakeDown;
     private final List<HealthCheckData> healthCheckData = new ArrayList<>();
 
-    BFDHealthCheck(SlackLogger slackLogger, PropertiesService propertiesService, BFDClient bfdClient,
+    BFDHealthCheck(LogManager logManager, PropertiesService propertiesService, BFDClient bfdClient,
                           @Value("${bfd.health.check.consecutive.successes}") int consecutiveSuccessesToBringUp,
                           @Value("${bfd.health.check.consecutive.failures}") int consecutiveFailuresToTakeDown) {
-        this.slackLogger = slackLogger;
+        this.logManager = logManager;
         this.propertiesService = propertiesService;
         this.bfdClient = bfdClient;
         this.consecutiveSuccessesToBringUp = consecutiveSuccessesToBringUp;
@@ -84,7 +85,8 @@ class BFDHealthCheck {
         PropertiesDTO propertiesDTO = new PropertiesDTO();
         propertiesDTO.setKey(MAINTENANCE_MODE);
         propertiesDTO.setValue(statusString);
-        slackLogger.logAlert("Maintenance Mode status for determined from " + data.getVersion() + " is: " + statusString);
+        logManager.alert("Maintenance Mode status for " + data.getVersion() +
+                " is: " + statusString, Ab2dEnvironment.ALL);
         propertiesService.updateProperties(List.of(propertiesDTO));
         log.info("Updated the {} property to {}", MAINTENANCE_MODE, statusString);
     }

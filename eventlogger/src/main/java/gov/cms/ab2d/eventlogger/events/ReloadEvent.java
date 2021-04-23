@@ -34,4 +34,9 @@ public class ReloadEvent extends LoggableEvent {
         this.fileName = fileName;
         this.numberLoaded = numLoaded;
     }
+
+    @Override
+    public String asMessage() {
+        return String.format("(%s) %s %s", getJobId(), fileType, fileName);
+    }
 }

@@ -34,4 +34,9 @@ public class ApiResponseEvent extends LoggableEvent {
         this.description = description;
         this.requestId = requestId;
     }
+
+    @Override
+    public String asMessage() {
+        return String.format("(%s): %s", responseCode, description);
+    }
 }
