@@ -2,7 +2,8 @@ package gov.cms.ab2d.hpms.service;
 
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
+import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.hpms.hmsapi.*;  // NOPMD
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
@@ -21,15 +22,15 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
 
     private final ContractRepository contractRepository;
 
-    private final SlackLogger slackLogger;
+    private final LogManager eventLogger;
 
     @Autowired
     public AttestationUpdaterServiceImpl(ContractRepository contractRepository,
                                          HPMSFetcher hpmsFetcher,
-                                         SlackLogger slackLogger) {
+                                         LogManager eventLogger) {
         this.contractRepository = contractRepository;
         this.hpmsFetcher = hpmsFetcher;
-        this.slackLogger = slackLogger;
+        this.eventLogger = eventLogger;
     }
 
     @Override
@@ -106,8 +107,8 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
                     + "Number: " + contract.getContractNumber() + "\n"
                     + "HPMS Attested On: " + attest.getAttestationDate() + "\n"
                     + "Contract Attested On: " + contract.getAttestedOn() + "\n";
-            if (slackLogger != null) {
-                slackLogger.logAlert(msg);
+            if (eventLogger != null) {
+                eventLogger.alert(msg, Ab2dEnvironment.ALL);
             }
             contractRepository.save(contract);
         }
@@ -122,8 +123,8 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
                         + "Name: " + c.getContractName() + "\n"
                         + "Id: " + c.getContractId() + "\n"
                         + "Org: " + c.getOrgMarketingName() + "\n";
-                if (slackLogger != null) {
-                    slackLogger.logAlert(msg);
+                if (eventLogger != null) {
+                    eventLogger.alert(msg, Ab2dEnvironment.ALL);
                 }
             }
         );

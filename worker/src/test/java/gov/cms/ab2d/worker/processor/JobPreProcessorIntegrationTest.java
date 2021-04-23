@@ -8,6 +8,7 @@ import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
+import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
@@ -60,6 +61,9 @@ class JobPreProcessorIntegrationTest {
     @Mock
     private KinesisEventLogger kinesisEventLogger;
 
+    @Mock
+    private SlackLogger slackLogger;
+
     private PdpClient pdpClient;
     private Job job;
 
@@ -68,7 +72,7 @@ class JobPreProcessorIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        LogManager manager = new LogManager(sqlEventLogger, kinesisEventLogger);
+        LogManager manager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
 
         cut = new JobPreProcessorImpl(jobRepository, manager, coverageDriver);
 

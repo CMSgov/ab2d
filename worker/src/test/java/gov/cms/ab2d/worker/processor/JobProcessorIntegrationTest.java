@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.processor;
 
-import ca.uhn.fhir.context.FhirContext;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.ContractRepository;
@@ -12,6 +11,7 @@ import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
+import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
@@ -98,6 +98,9 @@ class JobProcessorIntegrationTest {
     private KinesisEventLogger kinesisEventLogger;
 
     @Mock
+    private SlackLogger slackLogger;
+
+    @Mock
     private BFDClient mockBfdClient;
 
     @TempDir
@@ -113,7 +116,7 @@ class JobProcessorIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger);
+        LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
         PdpClient pdpClient = createClient();
 
         Contract contract = createContract();
@@ -131,7 +134,6 @@ class JobProcessorIntegrationTest {
 
         fail = new RuntimeException("TEST EXCEPTION");
 
-        FhirContext fhirContext = FhirContext.forDstu3();
         PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, logManager);
         ReflectionTestUtils.setField(patientClaimsProcessor, "startDate", "01/01/1900");
         ContractProcessor contractProcessor = new ContractProcessorImpl(

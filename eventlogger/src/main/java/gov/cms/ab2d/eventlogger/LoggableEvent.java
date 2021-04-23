@@ -43,6 +43,20 @@ public abstract class LoggableEvent {
         this.jobId = jobId;
     }
 
+    public void setEnvironment(Ab2dEnvironment executionEnv) {
+        this.environment = executionEnv.getName();
+    }
+
+    public void setEnvironment(String environment) {
+        this.environment = environment;
+    }
+
+    /**
+     * Convert event to a message
+     * @return the event converted to an alert message.
+     */
+    public abstract String asMessage();
+
     /**
      * If you implement equals, you have to do hashCode. I gook the one created by lombok and cleaned it.
      * @return the hash code

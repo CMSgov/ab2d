@@ -2,6 +2,7 @@ package gov.cms.ab2d.api.security;
 
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.service.PdpClientService;
+import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import lombok.AllArgsConstructor;
@@ -97,8 +98,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             log.warn(error);
 
             // Log api response event to a database for long term analytics
-            eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), null, HttpStatus.resolve(status),
-                    "API Error", securityException.getMessage(), (String) request.getAttribute(REQUEST_ID)));
+            ApiResponseEvent response = new ApiResponseEvent(MDC.get(ORGANIZATION), null, HttpStatus.resolve(status),
+                    "API Error", error, (String) request.getAttribute(REQUEST_ID));
+            eventLogger.logAndAlert(response, Ab2dEnvironment.PROD_LIST);
         } catch (Exception exception) {
             log.error("Could not additional logs for exception: " + exception.getCause());
         }

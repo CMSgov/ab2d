@@ -29,4 +29,11 @@ public class BeneficiarySearchEvent extends LoggableEvent {
         this.responseDate = endTime;
         this.beneId = beneId;
     }
+
+    @Override
+    public String asMessage() {
+        return String.format("(%s) bene search %s response %s", getJobId(), contractNum, response);
+    }
 }
+
+

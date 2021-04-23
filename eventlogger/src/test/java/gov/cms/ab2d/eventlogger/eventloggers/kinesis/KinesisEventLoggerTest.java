@@ -3,10 +3,10 @@ package gov.cms.ab2d.eventlogger.eventloggers.kinesis;
 import com.amazonaws.ResponseMetadata;
 import com.amazonaws.services.kinesisfirehose.AmazonKinesisFirehose;
 import com.amazonaws.services.kinesisfirehose.model.PutRecordResult;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import gov.cms.ab2d.eventlogger.AB2DPostgresqlContainer;
+import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.SpringBootApp;
 import gov.cms.ab2d.eventlogger.events.*;
@@ -43,8 +43,8 @@ class KinesisEventLoggerTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
-    @Value("${execution.env}")
-    private String appEnv;
+    @Autowired
+    private Ab2dEnvironment environment;
 
     @Value("${eventlogger.kinesis.enabled}")
     private KinesisMode kinesisEnabled;
@@ -62,8 +62,7 @@ class KinesisEventLoggerTest {
 
     @BeforeEach
     void init() {
-        logger = new KinesisEventLogger(config, firehose, appEnv, kinesisEnabled, streamId);
-        ReflectionTestUtils.setField(logger, "appEnv", "dev");
+        logger = new KinesisEventLogger(config, firehose, environment, kinesisEnabled, streamId);
         doReturn(generateRandomResult()).when(firehose).putRecord(any());
     }
 
@@ -90,7 +89,7 @@ class KinesisEventLoggerTest {
     }
 
     @Test
-    void sendOnlyBeneSearch() throws JsonProcessingException, JSONException {
+    void sendOnlyBeneSearch() {
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime now2 = OffsetDateTime.now();
         BeneficiarySearchEvent se = new BeneficiarySearchEvent("laila", "job1", "contract1",
@@ -175,7 +174,7 @@ class KinesisEventLoggerTest {
         e.setTimeOfEvent(now);
         e.setOrganization("ME");
         e.setAwsId("BOGUS");
-        e.setEnvironment("dev");
+        e.setEnvironment(Ab2dEnvironment.DEV);
 
         String jsonString = getJsonString(e);
         JSONObject jsonObj = new JSONObject(jsonString);
@@ -185,7 +184,7 @@ class KinesisEventLoggerTest {
         assertEquals("UNAUTHORIZED_CONTRACT", jsonObj.getString("error_type"));
         assertEquals("ME", jsonObj.getString("organization"));
         assertEquals("BOGUS", jsonObj.getString("aws_id"));
-        assertEquals("dev", jsonObj.getString("environment"));
+        assertEquals("ab2d-dev", jsonObj.getString("environment"));
         String dateString = jsonObj.getString("time_of_event");
         assertNotNull(dateString);
         assertTrue(dateString.contains("Z"));
@@ -198,8 +197,7 @@ class KinesisEventLoggerTest {
     void blockClientIds() {
 
         FauxKinesisFirehose firehose = new FauxKinesisFirehose();
-        KinesisEventLogger logger = new KinesisEventLogger(config, firehose, appEnv, kinesisEnabled, streamId);
-        ReflectionTestUtils.setField(logger, "appEnv", "dev");
+        KinesisEventLogger logger = new KinesisEventLogger(config, firehose, environment, kinesisEnabled, streamId);
 
         ErrorEvent e = new ErrorEvent();
         e.setDescription("Test Error 2");

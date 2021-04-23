@@ -31,4 +31,9 @@ public class ErrorEvent extends LoggableEvent {
         this.errorType = errorType;
         this.description = description;
     }
+
+    @Override
+    public String asMessage() {
+        return String.format("(%s): %s %s", getJobId(), errorType, description);
+    }
 }

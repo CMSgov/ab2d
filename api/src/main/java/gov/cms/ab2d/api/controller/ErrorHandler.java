@@ -14,6 +14,7 @@ import gov.cms.ab2d.common.service.InvalidContractException;
 import gov.cms.ab2d.common.service.InvalidJobAccessException;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.common.service.JobOutputMissingException;
+import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
@@ -111,10 +112,18 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     }
 
     @ExceptionHandler({InvalidContractException.class})
-    public ResponseEntity<Void> handleInvalidContractErrors(Exception e, HttpServletRequest request) {
+    public ResponseEntity<Void> handleInvalidContractErrors(Exception ex, HttpServletRequest request) {
+        HttpStatus status = getErrorResponse(ex.getClass());
+        String description = getRootCause(ex);
+
         eventLogger.log(new ErrorEvent(MDC.get(ORGANIZATION), null,
-                ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT, getRootCause(e)));
-        return generateError(e, request);
+                ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT, description));
+
+        ApiResponseEvent responseEvent = new ApiResponseEvent(MDC.get(ORGANIZATION), null, status,
+                "API Error", description, (String) request.getAttribute(REQUEST_ID));
+        eventLogger.logAndAlert(responseEvent, Ab2dEnvironment.PROD_LIST);
+
+        return new ResponseEntity<>(null, null, status);
     }
 
     @ExceptionHandler({MissingTokenException.class,
@@ -123,11 +132,29 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
             UsernameNotFoundException.class,
             ClientNotEnabledException.class,
             JwtVerificationException.class,
-            InvalidJobAccessException.class,
-            InMaintenanceModeException.class
+            InvalidJobAccessException.class
     })
     public ResponseEntity<Void> handleErrors(Exception ex, HttpServletRequest request) {
-        return generateError(ex, request);
+        HttpStatus status = getErrorResponse(ex.getClass());
+        String description = String.format("%s %s for request %s", ex.getClass().getSimpleName(), ex.getMessage(),
+                request.getAttribute(REQUEST_ID));
+
+        ApiResponseEvent responseEvent = new ApiResponseEvent(MDC.get(ORGANIZATION), null, status,
+                "API Error", description, (String) request.getAttribute(REQUEST_ID));
+        eventLogger.logAndAlert(responseEvent, Ab2dEnvironment.PROD_LIST);
+
+        return new ResponseEntity<>(null, null, status);
+    }
+
+    @ExceptionHandler({InMaintenanceModeException.class})
+    public ResponseEntity<Void> handleMaintenanceMode(Exception ex, HttpServletRequest request) {
+        HttpStatus status = getErrorResponse(ex.getClass());
+
+        eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), null, status,
+                "API Error", ex.getClass().getSimpleName(), (String) request.getAttribute(REQUEST_ID)));
+        eventLogger.trace("Maintenance mode blocked API request " + request.getAttribute(REQUEST_ID), Ab2dEnvironment.PROD_LIST);
+
+        return new ResponseEntity<>(null, null, status);
     }
 
     @ExceptionHandler(TooManyRequestsException.class)
@@ -137,13 +164,6 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         eventLogger.log(new ErrorEvent(MDC.get(ORGANIZATION), UtilMethods.parseJobId(request.getRequestURI()),
                 ErrorEvent.ErrorType.TOO_MANY_STATUS_REQUESTS, "Too many requests performed in too short a time"));
         return generateFHIRError(e, httpHeaders, request);
-    }
-
-    private ResponseEntity<Void> generateError(Exception ex, HttpServletRequest request) {
-        HttpStatus status = getErrorResponse(ex.getClass());
-        eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), null, status,
-                "API Error", getRootCause(ex), (String) request.getAttribute(REQUEST_ID)));
-        return new ResponseEntity<>(null, null, status);
     }
 
     private ResponseEntity<JsonNode> generateFHIRError(Exception e, HttpServletRequest request) throws IOException {

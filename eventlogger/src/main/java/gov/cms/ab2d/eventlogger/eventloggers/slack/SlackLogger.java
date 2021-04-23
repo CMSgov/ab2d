@@ -5,6 +5,8 @@ import com.slack.api.model.block.SectionBlock;
 import com.slack.api.model.block.composition.MarkdownTextObject;
 import com.slack.api.webhook.Payload;
 import com.slack.api.webhook.WebhookResponse;
+import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
+import gov.cms.ab2d.eventlogger.LoggableEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,17 +29,17 @@ public class SlackLogger {
 
     private final List<String> slackTraceWebhooks;
 
-    private final String appEnv;
+    private final Ab2dEnvironment ab2dEnvironment;
 
     public SlackLogger(Slack slackClient, @Value("${slack.alert.webhooks}") List<String> slackAlertWebhooks,
                        @Value("${slack.trace.webhooks}") List<String> slackTraceWebhooks,
-                       @Value("${execution.env}") String appEnv) {
+                       Ab2dEnvironment ab2dEnvironment) {
         this.slack = slackClient;
         this.slackAlertWebhooks = slackAlertWebhooks.stream().filter(StringUtils::isNotBlank)
                 .map(String::trim).collect(toList());
         this.slackTraceWebhooks = slackTraceWebhooks.stream().filter(StringUtils::isNotBlank)
                 .map(String::trim).collect(toList());
-        this.appEnv = appEnv;
+        this.ab2dEnvironment = ab2dEnvironment;
     }
 
     /**
@@ -47,11 +49,21 @@ public class SlackLogger {
      * Alerts are meant for the entire team and indicate an event that needs
      * to be tracked or handled immediately.
      *
-     * @param message message to log
+     * @param message alert to log
      * @return true if client successfully logged message
      */
-    public boolean logAlert(String message) {
-        return log(message, slack, appEnv, slackAlertWebhooks);
+    public boolean logAlert(String message, List<Ab2dEnvironment> ab2dEnvironments) {
+        return validateAndLog(message, ab2dEnvironments, slackAlertWebhooks);
+    }
+
+    public boolean logAlert(LoggableEvent event, List<Ab2dEnvironment> ab2dEnvironments) {
+
+        if (event == null) {
+            log.error("cannot build a slack alert message with a null event");
+            return false;
+        }
+
+        return validateAndLog(event.asMessage(), ab2dEnvironments, slackAlertWebhooks);
     }
 
     /**
@@ -60,21 +72,49 @@ public class SlackLogger {
      *
      * Traces are meant for developers.
      *
-     * @param message message to log
+     * @param message trace to log
      * @return true if all webhooks successfully received message
      */
-    public boolean logTrace(String message) {
-        return log(message, slack, appEnv, slackTraceWebhooks);
+    public boolean logTrace(String message, List<Ab2dEnvironment> ab2dEnvironments) {
+        return validateAndLog(message, ab2dEnvironments, slackTraceWebhooks);
     }
 
-    static boolean log(String msg, Slack slack, String env, List<String> webhooks) {
+    public boolean logTrace(LoggableEvent event, List<Ab2dEnvironment> ab2dEnvironments) {
+
+        if (event == null) {
+            log.error("cannot build a slack trace message with a null event");
+            return false;
+        }
+
+        return validateAndLog(event.asMessage(), ab2dEnvironments, slackAlertWebhooks);
+    }
+
+    private boolean validateAndLog(String message, List<Ab2dEnvironment> ab2dEnvironments, List<String> slackWebhooks) {
+        if (StringUtils.isBlank(message)) {
+            log.error("cannot build slack message using a null or empty string");
+            return false;
+        }
+
+        if (ab2dEnvironments == null) {
+            log.error("ab2d environments where slack message should be generated were not provided (are null)");
+            return false;
+        }
+
+        if (ab2dEnvironments.contains(ab2dEnvironment)) {
+            return log(message, slack, ab2dEnvironment, slackWebhooks);
+        }
+
+        return false;
+    }
+
+    static boolean log(String msg, Slack slack, Ab2dEnvironment executionEnv, List<String> webhooks) {
         try {
 
             SectionBlock sectionBlock = new SectionBlock();
             sectionBlock.setBlockId(UUID.randomUUID() + "blockId");
 
             MarkdownTextObject textObject = new MarkdownTextObject();
-            textObject.setText(msg + "\n\n" + env);
+            textObject.setText(msg + "\n\n" + executionEnv.getName());
             sectionBlock.setText(textObject);
 
             Payload payload = Payload.builder()
