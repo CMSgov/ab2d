@@ -42,7 +42,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     public void configure(WebSecurity web) {
         web.ignoring().antMatchers("/swagger-ui/**", "/configuration/**",
                 "/swagger-resources/**", "/v3/api-docs", "/webjars/**",
-                "/akamai-*", "/favicon.ico", "/error", HEALTH_ENDPOINT, STATUS_ENDPOINT);
+                "/akamai-test-object.html", "/favicon.ico", "/error", HEALTH_ENDPOINT, STATUS_ENDPOINT);
     }
 
     @Override
