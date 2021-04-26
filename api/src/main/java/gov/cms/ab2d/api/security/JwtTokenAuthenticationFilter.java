@@ -36,6 +36,11 @@ import static gov.cms.ab2d.common.util.Constants.*;
 @SuppressWarnings({"PMD.TooManyStaticImports", "PMD.UnusedPrivateMethod"})
 public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final List<String> SWAGGER_LIST = List.of(
+            "/swagger-ui", "/webjars", "/swagger-resources", "/v3/api-docs",
+            "/configuration", "/error"
+    );
+
     private final AccessTokenVerifier accessTokenVerifier;
     private final PdpClientService pdpClientService;
     private final JwtConfig jwtConfig;
@@ -196,20 +201,25 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
      * @return true if it's public
      */
     private boolean shouldBePublic(String requestUri) {
-        if (requestUri.startsWith("/swagger-ui") || requestUri.startsWith("/webjars") || requestUri.startsWith("/swagger-resources") ||
-                requestUri.startsWith("/v3/api-docs") || requestUri.startsWith("/configuration")) {
-            log.info("Swagger requested");
+        if (SWAGGER_LIST.stream().anyMatch(requestUri::startsWith)) {
+            log.debug("Swagger requested");
             return true;
         }
 
-        if (requestUri.contains("favicon.ico")) {
+        if (requestUri.contains("/favicon.ico")) {
+            return true;
+        }
+
+        if (requestUri.startsWith("/akamai-test-object.html")) {
+            log.debug("Akamai requested");
             return true;
         }
 
         if (requestUri.startsWith(HEALTH_ENDPOINT) || requestUri.startsWith(STATUS_ENDPOINT)) {
-            log.info("Health or maintenance requested");
+            log.debug("Health or maintenance requested");
             return true;
         }
+
         return false;
     }
 
