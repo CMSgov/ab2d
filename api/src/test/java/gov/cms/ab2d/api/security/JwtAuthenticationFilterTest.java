@@ -105,6 +105,23 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
+    void testAkamaiTestObject() {
+
+        rebuildFilters("^/health$","^/akamai-test-object.html$");
+
+        try {
+            mockMvc.perform(get(AKAMAI_TEST_OBJECT))
+                    .andExpect(status().is(404));
+        } catch (Exception exception) {
+            fail("could not perform akamai test call", exception);
+        }
+
+        List<LoggableEvent> currentEvents = loggerEventRepository.load(ApiRequestEvent.class);
+        assertEquals(0, currentEvents.size(), "no events should be logged");
+
+    }
+
+    @Test
     void testRegexFunctions() {
 
         rebuildFilters("/heal*");

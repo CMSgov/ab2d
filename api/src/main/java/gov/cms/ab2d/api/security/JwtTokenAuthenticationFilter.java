@@ -210,7 +210,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
             return true;
         }
 
-        if (requestUri.startsWith("/akamai-test-object.html")) {
+        if (requestUri.startsWith(AKAMAI_TEST_OBJECT)) {
             log.debug("Akamai requested");
             return true;
         }
