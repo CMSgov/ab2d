@@ -62,6 +62,10 @@ public class Contract extends TimestampBase {
     @OneToMany(mappedBy = "contract")
     private Set<CoveragePeriod> coveragePeriods = new HashSet<>();
 
+    public boolean isAutoUpdateable() {
+        return updateMode == UpdateMode.AUTOMATIC;
+    }
+
     public boolean isTestContract() {
         return updateMode == UpdateMode.TEST;
     }
