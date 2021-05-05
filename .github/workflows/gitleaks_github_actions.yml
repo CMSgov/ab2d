@@ -14,7 +14,8 @@ jobs:
     #- name: Execute Gitleaks
     - uses: actions/checkout@v1
     - name: gitleaks-action
-      uses: zricethezav/gitleaks-action@master
+      uses: semanticbits/ab2d-gitleaks-automation/gitleaks-action@master
+      #uses: zricethezav/gitleaks-action@master
       with:
         config-path: https://raw.githubusercontent.com/semanticbits/ab2d-gitleaks-automation/master/ab2d/gitleaks.toml
      # run: |
