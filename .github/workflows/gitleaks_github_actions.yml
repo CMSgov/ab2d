@@ -8,23 +8,12 @@ jobs:
     runs-on: ubuntu-latest
     env:
       REPO: https://github.com/CMSgov/ab2d
-      #REMOTE_EXCLUDES_URL: https://raw.githubusercontent.com/semanticbits/ab2d-gitleaks-automation/master/ab2d/gitleaks.toml
-      #GITLEAKS_VERSION: v7.2.2
     steps:
-    #- name: Execute Gitleaks
     - uses: actions/checkout@v1
     - name: gitleaks-action
       uses: semanticbits/ab2d-gitleaks-automation/gitleaks-action@master
-      #uses: zricethezav/gitleaks-action@master
       with:
         config-path: https://raw.githubusercontent.com/semanticbits/ab2d-gitleaks-automation/master/ab2d/gitleaks.toml
-     # run: |
-      #  wget ${REMOTE_EXCLUDES_URL} -O gitleaks.toml
-       # wget https://github.com/zricethezav/gitleaks/releases/download/${GITLEAKS_VERSION}/gitleaks-linux-amd64 -O gitleaks
-       # chmod +x gitleaks
-       # echo ${GITHUB_SHA}
-       # echo "gitleaks --repo-url=${REPO} -v --redact --commit=${GITHUB_SHA} --config-path=gitleaks.toml"
-       # ./gitleaks --repo-url=${REPO} -v --redact --commit=${GITHUB_SHA} --config-path=gitleaks.toml
     - name: Slack notification
       if: failure()
       env:
