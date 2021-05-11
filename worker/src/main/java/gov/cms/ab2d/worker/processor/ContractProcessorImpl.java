@@ -155,7 +155,8 @@ public class ContractProcessorImpl implements ContractProcessor {
                     contractData.getContract().getAttestedOn(),
                     contractData.getSinceTime(),
                     contractData.getOrganization(), jobUuid,
-                    contractData.getContract() != null ? contractData.getContract().getContractNumber() : null, token,
+                    contractData.getContract() != null ? contractData.getContract().getContractNumber() : null,
+                    token,
                     version);
             return patientClaimsProcessor.process(patientClaimsRequest);
 
