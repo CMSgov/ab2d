@@ -95,9 +95,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         }
 
         final List<IBaseBackboneElement> entries = BundleUtils.getEntries(eobBundle);
-
-        // Track raw entries received before filtering
-        int rawEobCount = entries.size();
+        int bundles = 1;
 
         final List<IBaseResource> resources = extractResources(request.getContractNum(), entries, patient.getDateRanges(), attTime);
 
@@ -105,14 +103,14 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             eobBundle = bfdClient.requestNextBundleFromServer(request.getVersion(), eobBundle);
 
             final List<IBaseBackboneElement> nextEntries = BundleUtils.getEntries(eobBundle);
-            rawEobCount += nextEntries.size();
+            bundles += 1;
 
             resources.addAll(extractResources(request.getContractNum(), nextEntries, patient.getDateRanges(), attTime));
         }
 
         // Record details of EOB request for analysis
-        Map<String, Object> bundleEvent = bundleEvent(request, BundleUtils.getTotal(eobBundle),
-                rawEobCount, entries.size(), sinceTime);
+        Map<String, Object> bundleEvent = bundleEvent(request, bundles,
+                BundleUtils.getTotal(eobBundle), entries.size(), sinceTime);
         NewRelic.getAgent().getInsights().recordCustomEvent("bundleevent", bundleEvent);
         log.debug("Bundle - Total: {} - Entries: {} ", BundleUtils.getTotal(eobBundle), entries.size());
 
