@@ -5,6 +5,7 @@ import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Segment;
+import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -66,6 +67,7 @@ public class BFDClientImpl implements BFDClient {
      * objects
      * @throws ResourceNotFoundException when the requested patient does not exist
      */
+    @Trace
     @Override
     @Retryable(
             maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",
@@ -89,6 +91,7 @@ public class BFDClientImpl implements BFDClient {
      * objects
      * @throws ResourceNotFoundException when the requested patient does not exist
      */
+    @Trace
     @SneakyThrows
     @Override
     @Retryable(
@@ -108,6 +111,7 @@ public class BFDClientImpl implements BFDClient {
         return result;
     }
 
+    @Trace
     @Override
     @Retryable(
             maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",
@@ -134,6 +138,7 @@ public class BFDClientImpl implements BFDClient {
         return jobId;
     }
 
+    @Trace
     @Override
     @Retryable(
             maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",

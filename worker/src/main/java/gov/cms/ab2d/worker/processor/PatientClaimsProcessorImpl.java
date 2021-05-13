@@ -55,7 +55,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
      * Process the retrieval of patient explanation of benefit objects and write them
      * to a file using the writer
      */
-    @Trace(metricName = "EOBRequests", async = true)
+    @Trace(metricName = "EOBRequest", dispatcher = true)
     @Async("patientProcessorThreadPool")
     public Future<EobSearchResult> process(PatientClaimsRequest request) {
         final Token token = request.getToken();
@@ -182,6 +182,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         return this.specialContracts != null && !this.specialContracts.isEmpty() && specialContracts.contains(contract);
     }
 
+    @Trace
     List<IBaseResource> extractResources(String contractNum,
                                      List<IBaseBackboneElement> entries,
                                      final List<FilterOutByDate.DateRange> dateRanges,

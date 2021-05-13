@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
+import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.CoverageSearchRepository;
 import gov.cms.ab2d.common.service.ContractService;
@@ -316,6 +317,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         }
     }
 
+    @Trace(metricName = "EnrollmentIsAvailable", dispatcher = true)
     @Override
     public boolean isCoverageAvailable(Job job) throws InterruptedException {
 
@@ -397,6 +399,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         }
     }
 
+    @Trace(metricName = "EnrollmentCount", dispatcher = true)
     @Override
     public int numberOfBeneficiariesToProcess(Job job) {
 
@@ -424,6 +427,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         return coverageService.countBeneficiariesByCoveragePeriod(periodsToReport);
     }
 
+    @Trace(metricName = "EnrollmentLoadFromDB", dispatcher = true)
     @Override
     public CoveragePagingResult pageCoverage(Job job) {
         ZonedDateTime now = getEndDateTime();
