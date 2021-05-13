@@ -55,7 +55,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
      * Process the retrieval of patient explanation of benefit objects and write them
      * to a file using the writer
      */
-    @Trace(metricName="EOBRequests", async = true)
+    @Trace(metricName = "EOBRequests", async = true)
     @Async("patientProcessorThreadPool")
     public Future<EobSearchResult> process(PatientClaimsRequest request) {
         final Token token = request.getToken();
