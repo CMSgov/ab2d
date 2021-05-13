@@ -72,7 +72,7 @@ public class JobProcessorImpl implements JobProcessor {
      */
     @Override
     @Transactional(propagation = Propagation.NEVER)
-    @Trace(metricName = "Job Processing", dispatcher = true)
+    @Trace(metricName = "JobProcessing", dispatcher = true)
     public Job process(final String jobUuid) {
 
         // Load the job
