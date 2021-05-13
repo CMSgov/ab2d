@@ -55,7 +55,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
      * Process the retrieval of patient explanation of benefit objects and write them
      * to a file using the writer
      */
-    @Trace(async = true)
+    @Trace(metricName="EOBRequests")
     @Async("patientProcessorThreadPool")
     public Future<EobSearchResult> process(PatientClaimsRequest request) {
         final Token token = request.getToken();
@@ -121,6 +121,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         // Record how long eob request took
         long requestDurationMillis = Duration.between(startEobRequest, endEobRequest).toMillis();
         NewRelic.recordResponseTimeMetric(EOB_DURATION, requestDurationMillis);
+        NewRelic.getAgent().getTracedMethod().addCustomAttribute(EOB_DURATION, requestDurationMillis);
 
         log.debug("Bundle - Total: {} - Entries: {} ", BundleUtils.getTotal(eobBundle), entries.size());
 
