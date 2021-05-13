@@ -121,7 +121,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         // Record how long eob request took
         long requestDurationMillis = Duration.between(startEobRequest, endEobRequest).toMillis();
         NewRelic.recordResponseTimeMetric(EOB_DURATION, requestDurationMillis);
-        NewRelic.getAgent().getTracedMethod().addCustomAttribute(EOB_DURATION, requestDurationMillis);
 
         log.debug("Bundle - Total: {} - Entries: {} ", BundleUtils.getTotal(eobBundle), entries.size());
 
