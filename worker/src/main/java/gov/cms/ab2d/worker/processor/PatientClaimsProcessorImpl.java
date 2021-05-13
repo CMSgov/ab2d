@@ -48,7 +48,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     private static final OffsetDateTime START_CHECK = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
 
-    private static final String EOB_DURATION = "Custom/EOBRequest/Duration";
+    private static final String EOB_ATTRIBUTE = "eobrequest.duration";
     private static final String EOB_REQUEST_EVENT = "EobBundleRequests";
 
     /**
@@ -120,8 +120,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
         // Record how long eob request took
         long requestDurationMillis = Duration.between(startEobRequest, endEobRequest).toMillis();
-        NewRelic.recordResponseTimeMetric(EOB_DURATION, requestDurationMillis);
-        NewRelic.getAgent().getTracedMethod().addCustomAttribute(EOB_DURATION, requestDurationMillis);
+        NewRelic.getAgent().getTracedMethod().addCustomAttribute(EOB_ATTRIBUTE, requestDurationMillis);
 
         log.debug("Bundle - Total: {} - Entries: {} ", BundleUtils.getTotal(eobBundle), entries.size());
 
