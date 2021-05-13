@@ -48,7 +48,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     private static final OffsetDateTime START_CHECK = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
 
-    private static final String EOB_ATTRIBUTE = "eobrequest.duration";
     private static final String EOB_REQUEST_EVENT = "EobBundleRequests";
 
     /**
@@ -82,8 +81,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
         OffsetDateTime sinceTime = getSinceTime(request);
 
-        Instant startEobRequest = Instant.now();
-
         try {
 
             BFDClient.BFD_BULK_JOB_ID.set(request.getJob());
@@ -111,16 +108,10 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             resources.addAll(extractResources(request.getContractNum(), nextEntries, patient.getDateRanges(), attTime));
         }
 
-        Instant endEobRequest = Instant.now();
-
         // Record details of EOB request for analysis
         Map<String, Object> bundleEvent = bundleEvent(request, bundles,
                 BundleUtils.getTotal(eobBundle), entries.size(), sinceTime);
         NewRelic.getAgent().getInsights().recordCustomEvent(EOB_REQUEST_EVENT, bundleEvent);
-
-        // Record how long eob request took
-        long requestDurationMillis = Duration.between(startEobRequest, endEobRequest).toMillis();
-        NewRelic.getAgent().getTracedMethod().addCustomAttribute(EOB_ATTRIBUTE, requestDurationMillis);
 
         log.debug("Bundle - Total: {} - Entries: {} ", BundleUtils.getTotal(eobBundle), entries.size());
 
