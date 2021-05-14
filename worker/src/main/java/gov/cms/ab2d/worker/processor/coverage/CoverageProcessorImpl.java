@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
+import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.CoverageMapping;
 import gov.cms.ab2d.common.model.CoveragePeriod;
@@ -165,6 +166,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     /**
      * Only inserts results of coverage mapping jobs run on the current application, not jobs running on other machines
      */
+    @Trace(metricName = "EnrollmentLoadIntoDB", dispatcher = true)
     @Scheduled(fixedDelay = ONE_SECOND, initialDelayString = "${coverage.update.initial.delay}")
     public void insertJobResults() {
 

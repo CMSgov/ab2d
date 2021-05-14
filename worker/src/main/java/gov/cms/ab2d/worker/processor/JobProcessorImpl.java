@@ -1,8 +1,5 @@
 package gov.cms.ab2d.worker.processor;
 
-import com.newrelic.api.agent.NewRelic;
-import com.newrelic.api.agent.Segment;
-import com.newrelic.api.agent.Trace;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoveragePagingResult;
@@ -72,7 +69,6 @@ public class JobProcessorImpl implements JobProcessor {
      */
     @Override
     @Transactional(propagation = Propagation.NEVER)
-    @Trace(metricName = "Job Processing", dispatcher = true)
     public Job process(final String jobUuid) {
 
         // Load the job
@@ -133,9 +129,7 @@ public class JobProcessorImpl implements JobProcessor {
         ContractData contractData = new ContractData(contract, progressTracker, job.getSince(),
                 getOrganization(job));
 
-        final Segment contractSegment = NewRelic.getAgent().getTransaction().startSegment("Patient processing of contract " + contract.getContractNumber());
         var jobOutputs = contractProcessor.process(outputDirPath, contractData);
-        contractSegment.end();
 
         // For each job output, add to the job and save the result
         jobOutputs.forEach(job::addJobOutput);

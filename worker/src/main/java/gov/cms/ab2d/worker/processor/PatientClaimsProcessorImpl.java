@@ -21,9 +21,7 @@ import org.springframework.stereotype.Component;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
@@ -50,11 +48,13 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     private static final OffsetDateTime START_CHECK = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
 
+    private static final String EOB_REQUEST_EVENT = "EobBundleRequests";
+
     /**
      * Process the retrieval of patient explanation of benefit objects and write them
      * to a file using the writer
      */
-    @Trace(async = true)
+    @Trace(metricName = "EOBRequest", dispatcher = true)
     @Async("patientProcessorThreadPool")
     public Future<EobSearchResult> process(PatientClaimsRequest request) {
         final Token token = request.getToken();
@@ -111,7 +111,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         // Record details of EOB request for analysis
         Map<String, Object> bundleEvent = bundleEvent(request, bundles,
                 BundleUtils.getTotal(eobBundle), entries.size(), sinceTime);
-        NewRelic.getAgent().getInsights().recordCustomEvent("bundleevent", bundleEvent);
+        NewRelic.getAgent().getInsights().recordCustomEvent(EOB_REQUEST_EVENT, bundleEvent);
+
         log.debug("Bundle - Total: {} - Entries: {} ", BundleUtils.getTotal(eobBundle), entries.size());
 
         return resources;
@@ -172,6 +173,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         return this.specialContracts != null && !this.specialContracts.isEmpty() && specialContracts.contains(contract);
     }
 
+    @Trace
     List<IBaseResource> extractResources(String contractNum,
                                      List<IBaseBackboneElement> entries,
                                      final List<FilterOutByDate.DateRange> dateRanges,

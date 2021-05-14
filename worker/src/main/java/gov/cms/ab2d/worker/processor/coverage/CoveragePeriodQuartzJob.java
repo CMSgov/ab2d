@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
+import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.Constants;
@@ -18,6 +19,7 @@ public class CoveragePeriodQuartzJob extends QuartzJobBean {
     private final CoverageDriver driver;
     private final PropertiesService propertiesService;
 
+    @Trace(metricName = "EnrollmentCheck", dispatcher = true)
     @Override
     protected void executeInternal(JobExecutionContext jobExecutionContext) throws JobExecutionException {
 
