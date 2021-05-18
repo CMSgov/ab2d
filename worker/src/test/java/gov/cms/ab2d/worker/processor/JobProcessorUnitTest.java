@@ -4,6 +4,7 @@ import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverStub;
 import gov.cms.ab2d.worker.service.FileService;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,7 +24,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
-import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
@@ -184,6 +184,7 @@ class JobProcessorUnitTest {
 
         verify(fileService).createDirectory(any());
         verify(coverageDriver, never()).pageCoverage(any(Job.class));
+        verify(eventLogger, times(1)).logAndAlert(any(), any());
     }
 
     private PdpClient createClient() {

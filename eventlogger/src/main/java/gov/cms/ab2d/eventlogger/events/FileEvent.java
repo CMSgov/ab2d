@@ -51,4 +51,9 @@ public class FileEvent extends LoggableEvent {
             return "";
         }
     }
+
+    @Override
+    public String asMessage() {
+        return String.format("(%s): %s %s", getJobId(), status, fileName);
+    }
 }

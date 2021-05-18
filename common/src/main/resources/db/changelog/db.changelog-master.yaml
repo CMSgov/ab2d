@@ -106,3 +106,5 @@ databaseChangeLog:
       file: db/changelog/v2021/remove_current_admin.sql
   - include:
       file: db/changelog/v2021/remove_sponsor_table.sql
+  - include:
+      file: db/changelog/v2021/delete_akamai_requests.sql

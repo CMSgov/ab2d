@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
+import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.CoverageMapping;
 import gov.cms.ab2d.common.model.Identifiers;
@@ -54,6 +55,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
         return coverageMapping;
     }
 
+    @Trace(metricName = "EnrollmentRequest", dispatcher = true)
     @Override
     public CoverageMapping call() {
 
@@ -127,6 +129,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
 
     }
 
+    @Trace
     private Set<Identifiers> extractAndFilter(IBaseBundle bundle) {
         return BundleUtils.getPatientStream(bundle, version)
                 .filter(patient -> skipBillablePeriodCheck || filterByYear(patient))

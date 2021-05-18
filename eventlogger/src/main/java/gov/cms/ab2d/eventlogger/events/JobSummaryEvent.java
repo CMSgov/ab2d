@@ -26,4 +26,9 @@ public class JobSummaryEvent extends LoggableEvent {
     private int errorSearched;
 
     public JobSummaryEvent() { }
+
+    @Override
+    public String asMessage() {
+        return String.format("(%s) submitted at %s successfully searched %d", getJobId(), submittedTime, successfullySearched);
+    }
 }

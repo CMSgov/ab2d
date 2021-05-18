@@ -2,6 +2,7 @@ package gov.cms.ab2d.worker.processor;
 
 import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Token;
+import com.newrelic.api.agent.Trace;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
@@ -155,7 +156,8 @@ public class ContractProcessorImpl implements ContractProcessor {
                     contractData.getContract().getAttestedOn(),
                     contractData.getSinceTime(),
                     contractData.getOrganization(), jobUuid,
-                    contractData.getContract() != null ? contractData.getContract().getContractNumber() : null, token,
+                    contractData.getContract() != null ? contractData.getContract().getContractNumber() : null,
+                    token,
                     version);
             return patientClaimsProcessor.process(patientClaimsRequest);
 
@@ -231,6 +233,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         return numberOfEobs;
     }
 
+    @Trace(metricName = "EOBWriteToFile", dispatcher = true)
     private int writeOutResource(List<IBaseResource> eobs, StreamHelper helper, FhirVersion version) {
         var jsonParser = version.getJsonParser();
 

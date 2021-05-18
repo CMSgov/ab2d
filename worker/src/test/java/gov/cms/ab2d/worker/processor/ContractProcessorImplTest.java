@@ -2,16 +2,14 @@ package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.model.Identifiers;
-import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.fhir.FhirUtils;
-import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.worker.service.FileService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.fhir.IdentifierUtils.CURRENCY_IDENTIFIER;
@@ -21,25 +19,6 @@ import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ContractProcessorImplTest {
-
-    @Mock
-    private FileService fileService;
-
-    @Mock
-    private PatientClaimsProcessor patientClaimsProcessor;
-
-    @Mock
-    private LogManager eventLogger;
-
-    @Mock
-    private JobRepository jobRepository;
-
-    private ContractProcessorImpl processor;
-
-    @BeforeEach
-    public void before() {
-        processor = new ContractProcessorImpl(fileService, jobRepository, patientClaimsProcessor, eventLogger);
-    }
 
     @Test
     @DisplayName("Creating mbis is done successfully")

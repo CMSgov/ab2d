@@ -32,4 +32,9 @@ public class ContractBeneSearchEvent extends LoggableEvent {
         this.numInContract = numInContract;
         this.numErrors = numErrors;
     }
+
+    @Override
+    public String asMessage() {
+        return String.format("(%s) %s number in contract %s", getJobId(), contractNumber, numInContract);
+    }
 }
