@@ -22,7 +22,6 @@ public enum FhirVersion {
 
     private final String classLocation;
     private final FhirContext context;
-    private IParser jsonParser;
     private final FhirVersionEnum fhirVersionEnum;
     private final String versionString;
     private final Object patientEnum;
@@ -37,11 +36,8 @@ public enum FhirVersion {
     }
 
     public IParser getJsonParser() {
-        if (this.jsonParser == null) {
-            EncodingEnum respType = EncodingEnum.forContentType(EncodingEnum.JSON_PLAIN_STRING);
-            this.jsonParser = respType.newParser(this.context);
-        }
-        return jsonParser;
+        EncodingEnum respType = EncodingEnum.forContentType(EncodingEnum.JSON_PLAIN_STRING);
+        return respType.newParser(FhirContext.forCached(fhirVersionEnum));
     }
 
     public static FhirVersion from(FhirVersionEnum fhirVersionEnum) {
