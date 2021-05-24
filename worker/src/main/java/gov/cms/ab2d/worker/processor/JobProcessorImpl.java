@@ -126,10 +126,10 @@ public class JobProcessorImpl implements JobProcessor {
         processContractBenes(job, progressTracker);
 
         // Create a holder for the contract, writer, progress tracker and attested date
-        ContractData contractData = new ContractData(contract, progressTracker, job.getSince(),
+        JobData jobData = new JobData(contract, progressTracker, job.getSince(),
                 getOrganization(job));
 
-        var jobOutputs = contractProcessor.process(outputDirPath, contractData);
+        var jobOutputs = contractProcessor.process(outputDirPath, jobData);
 
         // For each job output, add to the job and save the result
         jobOutputs.forEach(job::addJobOutput);

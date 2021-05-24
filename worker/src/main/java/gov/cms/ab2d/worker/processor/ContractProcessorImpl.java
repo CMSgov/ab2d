@@ -73,14 +73,14 @@ public class ContractProcessorImpl implements ContractProcessor {
      * see if the job is cancelled and cancel the threads if necessary, otherwise, wait until all threads
      * have processed.
      *
-     * @param contractData - the contract data (contract, progress tracker, attested time, writer)
+     * @param jobData - the contract data (contract, progress tracker, attested time, writer)
      * @return - the job output records containing the file information
      */
-    public List<JobOutput> process(Path outputDirPath, ContractData contractData) {
-        var contractNumber = contractData.getContract().getContractNumber();
+    public List<JobOutput> process(Path outputDirPath, JobData jobData) {
+        var contractNumber = jobData.getContract().getContractNumber();
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contractNumber));
 
-        ProgressTracker progressTracker = contractData.getProgressTracker();
+        ProgressTracker progressTracker = jobData.getProgressTracker();
         Map<String, CoverageSummary> patients = progressTracker.getPatients();
         int patientCount = patients.size();
         log.info("Contract [{}] has [{}] Patients", contractNumber, patientCount);
@@ -88,6 +88,22 @@ public class ContractProcessorImpl implements ContractProcessor {
         long numberOfEobs = 0;
         var jobUuid = progressTracker.getJobUuid();
         Job job = jobRepository.findByJobUuid(jobUuid);
+
+        // FhirVersion
+        // StreamHelper
+        // Job
+        // List<Path> dataFiles
+        // List<Path> errorFiles
+        // Records processed
+        // Eobs processed
+        // List<JobOutput> jobOutputs
+
+        // FileOutput -> JobOutput
+        // file path
+        // checksum
+        // length
+        // error
+
         List<Path> dataFiles = new ArrayList<>();
         List<Path> errorFiles = new ArrayList<>();
         FhirVersion version = STU3;
@@ -100,7 +116,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             var futureHandles = new ArrayList<Future<EobSearchResult>>();
             for (Map.Entry<String, CoverageSummary> patient : patients.entrySet()) {
                 ++recordsProcessedCount;
-                futureHandles.add(processPatient(version, patient.getValue(), contractData));
+                futureHandles.add(processPatient(version, patient.getValue(), jobData));
                 // Periodically check if cancelled
                 if (recordsProcessedCount % cancellationCheckFrequency == 0) {
                     if (hasJobBeenCancelled(jobUuid)) {
@@ -114,6 +130,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             while (!futureHandles.isEmpty()) {
                 sleep();
                 numberOfEobs += processHandles(futureHandles, progressTracker, patients, helper, version);
+
                 if (hasJobBeenCancelled(jobUuid)) {
                     cancelFuturesInQueue(futureHandles);
                     final String errMsg = "Job was cancelled while it was being processed";
@@ -140,23 +157,23 @@ public class ContractProcessorImpl implements ContractProcessor {
      *
      * @param version      - the FHIR version to search
      * @param patient      - process to process
-     * @param contractData - the contract data information
+     * @param jobData - the contract data information
      * @return a Future<EobSearchResult>
      */
-    private Future<EobSearchResult> processPatient(FhirVersion version, CoverageSummary patient, ContractData contractData) {
+    private Future<EobSearchResult> processPatient(FhirVersion version, CoverageSummary patient, JobData jobData) {
         final Token token = NewRelic.getAgent().getTransaction().getToken();
 
         // Using a ThreadLocal to communicate contract number to RoundRobinBlockingQueue
         // could be viewed as a hack by many; but on the other hand it saves us from writing
         // tons of extra code.
-        var jobUuid = contractData.getProgressTracker().getJobUuid();
+        var jobUuid = jobData.getProgressTracker().getJobUuid();
         RoundRobinBlockingQueue.CATEGORY_HOLDER.set(jobUuid);
         try {
             var patientClaimsRequest = new PatientClaimsRequest(patient,
-                    contractData.getContract().getAttestedOn(),
-                    contractData.getSinceTime(),
-                    contractData.getOrganization(), jobUuid,
-                    contractData.getContract() != null ? contractData.getContract().getContractNumber() : null,
+                    jobData.getContract().getAttestedOn(),
+                    jobData.getSinceTime(),
+                    jobData.getOrganization(), jobUuid,
+                    jobData.getContract() != null ? jobData.getContract().getContractNumber() : null,
                     token,
                     version);
             return patientClaimsProcessor.process(patientClaimsRequest);

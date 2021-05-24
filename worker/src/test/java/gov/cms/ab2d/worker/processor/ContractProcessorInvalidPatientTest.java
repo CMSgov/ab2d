@@ -51,7 +51,7 @@ class ContractProcessorInvalidPatientTest {
     File tmpDirFolder;
 
     private ContractProcessor cut;
-    private ContractData contractData;
+    private JobData jobData;
     private ProgressTracker tracker;
     private String jobId = "1234";
     private String contractId = "ABC";
@@ -69,7 +69,7 @@ class ContractProcessorInvalidPatientTest {
         Contract contract = new Contract();
         contract.setContractNumber(contractId);
         contract.setAttestedOn(OffsetDateTime.now().minusYears(50));
-        contractData = new ContractData(contract, tracker, OffsetDateTime.MIN, "Client");
+        jobData = new JobData(contract, tracker, OffsetDateTime.MIN, "Client");
 
         List<FilterOutByDate.DateRange> dates = singletonList(TestUtil.getOpenRange());
         List<CoverageSummary> summaries = List.of(
@@ -92,7 +92,7 @@ class ContractProcessorInvalidPatientTest {
         when(bfdClient.requestEOBFromServer(eq(STU3), eq("1"), any())).thenReturn(b1);
         when(bfdClient.requestEOBFromServer(eq(STU3), eq("2"), any())).thenReturn(b2);
         when(bfdClient.requestEOBFromServer(eq(STU3), eq("3"), any())).thenReturn(b4);
-        List<JobOutput> outputs = cut.process(tmpDirFolder.toPath(), contractData);
+        List<JobOutput> outputs = cut.process(tmpDirFolder.toPath(), jobData);
         assertNotNull(outputs);
         assertEquals(2, outputs.size());
         String fileName1 = contractId + "_0001.ndjson";

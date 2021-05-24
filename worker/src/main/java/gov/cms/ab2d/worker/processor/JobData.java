@@ -8,7 +8,7 @@ import java.time.OffsetDateTime;
 
 @Getter
 @AllArgsConstructor
-public class ContractData {
+public class JobData {
     private final Contract contract;
     private final ProgressTracker progressTracker;
     private final OffsetDateTime sinceTime;

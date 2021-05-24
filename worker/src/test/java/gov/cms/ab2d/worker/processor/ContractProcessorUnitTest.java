@@ -91,13 +91,13 @@ class ContractProcessorUnitTest {
                 .build();
 
         progressTracker.addPatients(patientsByContract);
-        ContractData contractData = new ContractData(contract, progressTracker, job.getSince(),
+        JobData jobData = new JobData(contract, progressTracker, job.getSince(),
                 getOrganization(job));
 
         when(jobRepository.findJobStatus(anyString())).thenReturn(JobStatus.CANCELLED);
 
         var exceptionThrown = assertThrows(JobCancelledException.class,
-                () -> cut.process(outputDir, contractData));
+                () -> cut.process(outputDir, jobData));
 
         assertTrue(exceptionThrown.getMessage().startsWith("Job was cancelled while it was being processed"));
         verify(patientClaimsProcessor, atLeast(1)).process(any());
@@ -115,10 +115,10 @@ class ContractProcessorUnitTest {
                 .failureThreshold(10)
                 .build();
         progressTracker.addPatients(patientsByContract);
-        ContractData contractData = new ContractData(contract, progressTracker, job.getSince(),
+        JobData jobData = new JobData(contract, progressTracker, job.getSince(),
                 getOrganization(job));
 
-        var jobOutputs = cut.process(outputDir, contractData);
+        var jobOutputs = cut.process(outputDir, jobData);
 
         assertFalse(jobOutputs.isEmpty());
         verify(jobRepository, times(9)).updatePercentageCompleted(anyString(), anyInt());

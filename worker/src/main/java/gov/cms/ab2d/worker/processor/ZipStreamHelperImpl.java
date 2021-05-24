@@ -61,16 +61,16 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
      * @throws FileNotFoundException if there was an error writing to the file system
      */
     private ZipOutputStream createStream() throws FileNotFoundException {
-        String zipFileName = getPath().toString() + File.separator + createZipFileName();
+        String zipFileName = path.toString() + File.separator + createZipFileName();
         File f = new File(zipFileName);
         currentFile = f;
-        getLogManager().log(EventUtils.getFileEvent(getJob(), f, FileEvent.FileStatus.OPEN));
+        logManager.log(EventUtils.getFileEvent(job, f, FileEvent.FileStatus.OPEN));
         f.getParentFile().mkdirs();
         Path currentFile = Path.of(zipFileName);
         FileOutputStream fos = new FileOutputStream(zipFileName);
         BufferedOutputStream bos = new BufferedOutputStream(fos);
         setTotalBytesWritten(0);
-        getFilesCreated().add(currentFile);
+        filesCreated.add(currentFile);
         return new ZipOutputStream(bos);
     }
 
@@ -83,7 +83,7 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
         var partName = Integer.toString(currentZipIteration);
         var paddedPartitionNo = StringUtils.leftPad(partName, 4, '0');
         currentZipIteration++;
-        return getContractNumber() +
+        return contractNumber +
                 "_" +
                 paddedPartitionNo +
                 FileOutputType.ZIP.getSuffix();
@@ -109,7 +109,7 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
         if (data == null || data.length == 0) {
             return;
         }
-        tryLock(getDataFileLock());
+        tryLock(dataFileLock);
         try {
             // If streams don't exist, create them
             checkInitStreams();
@@ -123,11 +123,11 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
             }
             currentPartByteStream.write(data);
         } catch (Exception ex) {
-            String err = "Unable to create file output stream for contract " + getContractNumber() + "[" + (currentZipIteration - 1) + "]";
+            String err = "Unable to create file output stream for contract " + contractNumber + "[" + (currentZipIteration - 1) + "]";
             log.error(err, ex);
             throw new IOException(err, ex);
         } finally {
-            getDataFileLock().unlock();
+            dataFileLock.unlock();
         }
     }
 
@@ -162,10 +162,10 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
         ((ZipOutputStream) getCurrentStream()).closeEntry();
         setTotalBytesWritten(getTotalBytesWritten() + entry.getCompressedSize());
         double currentCompression = (double) entry.getCompressedSize() / currentPartByteStream.size();
-        if (getCounter() == 2) {
+        if (counter == 2) {
             averageCompression = currentCompression;
         } else {
-            averageCompression = (averageCompression * (getCounter() - 1) + currentCompression) / getCounter();
+            averageCompression = (averageCompression * (counter - 1) + currentCompression) / counter;
         }
         currentPartByteStream = new ByteArrayOutputStream();
     }
@@ -177,7 +177,7 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
      */
     private void resetZipFile() throws IOException {
         getCurrentStream().close();
-        getLogManager().log(EventUtils.getFileEvent(getJob(), currentFile, FileEvent.FileStatus.CLOSE));
+        logManager.log(EventUtils.getFileEvent(job, currentFile, FileEvent.FileStatus.CLOSE));
         setCurrentStream(createStream());
     }
 
@@ -208,14 +208,14 @@ public class ZipStreamHelperImpl extends StreamHelperImpl {
                 }
                 addPartToFile();
             }
-            getLogManager().log(EventUtils.getFileEvent(getJob(), currentFile, FileEvent.FileStatus.CLOSE));
+            logManager.log(EventUtils.getFileEvent(job, currentFile, FileEvent.FileStatus.CLOSE));
             getCurrentStream().close();
-            int numFiles = getFilesCreated().size();
-            if (getFilesCreated().get(numFiles - 1).toFile().length() == 0) {
-                getFilesCreated().remove(numFiles - 1);
+            int numFiles = filesCreated.size();
+            if (filesCreated.get(numFiles - 1).toFile().length() == 0) {
+                filesCreated.remove(numFiles - 1);
             }
         } catch (Exception ex) {
-            String error = "Unable to close output stream for contract " + getContractNumber() + "[" + currentZipIteration + "]";
+            String error = "Unable to close output stream for contract " + contractNumber + "[" + currentZipIteration + "]";
             log.error(error, ex);
             throw new IOException(error, ex);
         }

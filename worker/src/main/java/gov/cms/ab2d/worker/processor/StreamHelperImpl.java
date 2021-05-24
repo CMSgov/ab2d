@@ -40,23 +40,19 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
         }
     }
 
-    @Getter
-    private LogManager logManager;
+    protected final LogManager logManager;
 
-    @Getter
-    private Job job;
+    // Job that is being output
+    protected final Job job;
 
     // Current file counter
-    @Getter
-    private volatile int counter = 1;
+    protected volatile int counter = 1;
 
     // Passed contract number
-    @Getter
-    private final String contractNumber;
+    protected final String contractNumber;
 
     // Directory where to put the files
-    @Getter
-    private final Path path;
+    protected final Path path;
 
     // Total number of bytes written to the file
     @Getter @Setter
@@ -74,20 +70,16 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
     private final int tryLockTimeout;
 
     // Data file lock
-    @Getter
-    private final Lock dataFileLock  = new ReentrantLock();
+    protected final Lock dataFileLock  = new ReentrantLock();
 
     // Error file lock
-    @Getter
     private final Lock errorFileLock = new ReentrantLock();
 
     // List of data files created
-    @Getter
-    private List<Path> filesCreated;
+    protected final List<Path> filesCreated;
 
     // List of error files created
-    @Getter
-    private List<Path> errorFilesCreated;
+    private final List<Path> errorFilesCreated;
 
     // Location of error file
     private Path errorFile;

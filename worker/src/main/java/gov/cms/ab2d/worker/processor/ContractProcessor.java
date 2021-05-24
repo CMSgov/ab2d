@@ -6,5 +6,5 @@ import java.nio.file.Path;
 import java.util.List;
 
 public interface ContractProcessor {
-    List<JobOutput> process(Path outputDirPath, ContractData contractData);
+    List<JobOutput> process(Path outputDirPath, JobData jobData);
 }
