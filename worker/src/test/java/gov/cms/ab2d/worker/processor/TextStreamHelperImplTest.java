@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -144,5 +145,49 @@ class TextStreamHelperImplTest {
         assertEquals(medString, lines.get(0));
         lines = Files.readAllLines(dataFiles.get(2));
         assertEquals(longString, lines.get(0));
+    }
+
+    @Test
+    void getRolloverDataFile() throws IOException {
+        TextStreamHelperImpl helper = new TextStreamHelperImpl(
+                tmpDirFolder.toPath(), "C1111", 10, 20, eventLogger, null);
+        String shortString = "Hello";
+
+        // Did not rollover so no file
+        Optional<StreamOutput> output = helper.addData(shortString.getBytes());
+        assertTrue(output.isEmpty());
+
+        String longString = "Once upon a time in America, there lived a sweet girl who wandered the planet";
+        output = helper.addData(longString.getBytes());
+        assertTrue(output.isPresent());
+        checkStreamOutput(output.get());
+
+        output = helper.closeLastStream();
+        assertTrue(output.isPresent());
+        checkStreamOutput(output.get());
+        helper.close();
+    }
+
+    @Test
+    void closeEmptyFileNothingReturned() throws IOException {
+        TextStreamHelperImpl helper = new TextStreamHelperImpl(
+                tmpDirFolder.toPath(), "C1111", 10, 20, eventLogger, null);
+
+        Optional<StreamOutput> output = helper.closeLastStream();
+        assertTrue(output.isEmpty());
+
+        // Attempting to write data after last file
+        assertThrows(IOException.class, () -> helper.addData("Hello".getBytes()));
+
+        // Close helper file
+        assertDoesNotThrow(helper::close);
+    }
+
+    private void checkStreamOutput(StreamOutput streamOutput) {
+        assertFalse(streamOutput.getFilePath().isEmpty());
+        assertNotNull(streamOutput.getChecksum());
+        assertFalse(streamOutput.getChecksum().isEmpty());
+        assertNotEquals(0, streamOutput.getFileLength());
+        assertFalse(streamOutput.getError());
     }
 }

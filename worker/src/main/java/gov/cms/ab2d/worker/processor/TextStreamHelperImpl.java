@@ -14,6 +14,7 @@ import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
+import java.util.Optional;
 
 /**
  * Implement a plain text stream helper
@@ -37,7 +38,7 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
             throws FileNotFoundException {
         super(path, contractNumber, totalBytesAllowed, tryLockTimeout, logger, job);
 
-        setCurrentStream(createStream());
+        currentStream = createStream();
     }
 
     /**
@@ -65,20 +66,28 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
      */
     @Trace
     @Override
-    public void addData(byte[] data) throws IOException {
+    public Optional<StreamOutput> addData(byte[] data) throws IOException {
         if (data == null || data.length == 0) {
-            return;
+            return Optional.empty();
         }
+
         tryLock(dataFileLock);
         try {
-            if (getTotalBytesWritten() + data.length > getTotalBytesAllowed() && getTotalBytesWritten() > 0) {
-                getCurrentStream().close();
+            StreamOutput output = null;
+            if (exceedsMaxFileSize(data)) {
+                currentStream.close();
                 logManager.log(EventUtils.getFileEvent(job, currentFile, FileEvent.FileStatus.CLOSE));
-                setCurrentStream(createStream());
+
+                output = createStreamOutput(currentFile, false);
+
+                currentStream = createStream();
                 setTotalBytesWritten(0);
+
             }
-            getCurrentStream().write(data);
+            currentStream.write(data);
             setTotalBytesWritten(getTotalBytesWritten() + data.length);
+
+            return Optional.ofNullable(output);
         } catch (Exception ex) {
             String error = "Unable to create file output stream for contract " + contractNumber + "[" + (counter - 1) + "]";
             log.error(error, ex);
@@ -88,18 +97,41 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
         }
     }
 
+    private boolean exceedsMaxFileSize(byte[] data) {
+        return getTotalBytesWritten() + data.length > getTotalBytesAllowed() && getTotalBytesWritten() > 0;
+    }
+
+    @Override
+    public Optional<StreamOutput> closeLastStream() throws IOException {
+
+        if (currentStream == null) {
+            return Optional.empty();
+        }
+
+        StreamOutput output = null;
+
+        currentStream.close();
+        logManager.log(EventUtils.getFileEvent(job, currentFile, FileEvent.FileStatus.CLOSE));
+        int numFiles = filesCreated.size();
+        if (filesCreated.get(numFiles - 1).toFile().length() == 0) {
+            filesCreated.remove(numFiles - 1);
+        } else {
+            output = createStreamOutput(currentFile, false);
+        }
+
+        // Current stream should never be used again
+        currentStream = null;
+
+        return Optional.ofNullable(output);
+    }
+
     /**
      * Close the stream clean up any empty files in the files created list
      */
     @Override
     public void close() throws IOException {
         try {
-            getCurrentStream().close();
-            logManager.log(EventUtils.getFileEvent(job, currentFile, FileEvent.FileStatus.CLOSE));
-            int numFiles = filesCreated.size();
-            if (filesCreated.get(numFiles - 1).toFile().length() == 0) {
-                filesCreated.remove(numFiles - 1);
-            }
+            closeLastStream();
         } catch (Exception ex) {
             String error = "Unable to close output stream for contract " + contractNumber + "[" + counter + "]";
             log.error(error, ex);

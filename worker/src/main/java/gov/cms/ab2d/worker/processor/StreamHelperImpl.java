@@ -5,11 +5,11 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -63,8 +63,7 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
     private final long totalBytesAllowed;
 
     // The current output stream
-    @Getter @Setter
-    private volatile OutputStream currentStream;
+    protected volatile OutputStream currentStream;
 
     // The time before a lock times out and unlocks
     private final int tryLockTimeout;
@@ -173,6 +172,21 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
             appendToFile(errorFile, data.getBytes(StandardCharsets.UTF_8));
         } finally {
             errorFileLock.unlock();
+        }
+    }
+
+    protected StreamOutput createStreamOutput(File file, boolean error) {
+        String checksum = generateChecksum(file);
+        return new StreamOutput(file.getAbsolutePath(), checksum, file.length(), error);
+    }
+
+    private String generateChecksum(File file) {
+        try (FileInputStream fileInputStream = new FileInputStream(file)) {
+            byte[] bytes = DigestUtils.sha256(fileInputStream);
+            return Hex.encodeHexString(bytes);
+        } catch (IOException e) {
+            log.error("Encountered IO Exception while generating checksum {}", e.getMessage(), e);
+            throw new UncheckedIOException(e);
         }
     }
 
