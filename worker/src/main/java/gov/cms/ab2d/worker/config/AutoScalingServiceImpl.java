@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.config;
 
+import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.worker.properties.PropertiesChangedEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,6 +35,8 @@ import static gov.cms.ab2d.worker.config.AutoScalingServiceImpl.Mode.SCALING_UP;
 public class AutoScalingServiceImpl implements AutoScalingService, ApplicationListener<PropertiesChangedEvent> {
 
     private final ThreadPoolTaskExecutor executor;
+    private final RoundRobinBlockingQueue eobClaimRequestsQueue;
+    private final PropertiesService propertiesService;
 
     // Can be modified by changing values in properties table
     // in the shared Postgres database
@@ -51,10 +54,14 @@ public class AutoScalingServiceImpl implements AutoScalingService, ApplicationLi
      * @param patientProcessorThreadPool {@link Executor} to scale up & down.
      */
     public AutoScalingServiceImpl(Executor patientProcessorThreadPool,
+                                  RoundRobinBlockingQueue eobClaimRequestsQueue,
+                                  PropertiesService propertiesService,
                                   @Value("${pcp.core.pool.size}") int corePoolSize,
                                   @Value("${pcp.max.pool.size}") int maxPoolSize,
                                   @Value("${pcp.scaleToMax.time}") int scaleToMaxTime) {
         this.executor = (ThreadPoolTaskExecutor) patientProcessorThreadPool;
+        this.eobClaimRequestsQueue = eobClaimRequestsQueue;
+        this.propertiesService = propertiesService;
         this.corePoolSize = corePoolSize;
         this.maxPoolSize = maxPoolSize;
         this.scaleToMaxTime = scaleToMaxTime;
@@ -79,8 +86,10 @@ public class AutoScalingServiceImpl implements AutoScalingService, ApplicationLi
     @Override
     @Scheduled(fixedDelay = 5000)
     public void autoscale() {
-        int activeCount = executor.getActiveCount();
-        if (activeCount == 0) {
+
+        // If in maintenance mode immediately scale down because new work won't be processed.
+        // If no new work is present immediately scale down.
+        if (propertiesService.isInMaintenanceMode() || eobClaimRequestsQueue.isEmpty()) {
             // No busy threads -- no active jobs. We can scale back to minimums immediately;
             // no need to do so gradually.
             scaleBackToMin();

@@ -1,6 +1,8 @@
 package gov.cms.ab2d.worker.config;
 
 
+import gov.cms.ab2d.common.dto.PropertiesDTO;
+import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
@@ -16,14 +18,18 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.concurrent.Future;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static gov.cms.ab2d.common.util.Constants.MAINTENANCE_MODE;
+import static gov.cms.ab2d.common.util.Constants.PCP_MAX_POOL_SIZE;
+import static org.junit.jupiter.api.Assertions.*;
 
 // Set property.change.detection to false, otherwise the values from the database will override the values that are being hardcoded here.
-@SpringBootTest(properties = {"pcp.core.pool.size=3" , "pcp.max.pool.size=20", "pcp.scaleToMax.time=20", "property.change.detection=false"})
+@SpringBootTest(properties = {"pcp.core.pool.size=3", "pcp.max.pool.size=20", "pcp.scaleToMax.time=20", "property.change.detection=false"})
 @Testcontainers
 @Slf4j
 public class AutoScalingServiceTest {
@@ -35,23 +41,80 @@ public class AutoScalingServiceTest {
     @Autowired
     private ThreadPoolTaskExecutor patientProcessorThreadPool;
 
+    @Autowired
+    private AutoScalingService autoScalingService;
+
+    @Autowired
+    private PropertiesService propertiesService;
+
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
+    private int originalMaxPoolSize;
 
     @BeforeEach
     public void init() {
         patientProcessorThreadPool.getThreadPoolExecutor().getQueue().clear();
+        originalMaxPoolSize = autoScalingService.getMaxPoolSize();
     }
 
     @AfterEach
     public void cleanup() {
         patientProcessorThreadPool.getThreadPoolExecutor().getQueue().clear();
+
+        PropertiesDTO maintenance = new PropertiesDTO();
+        maintenance.setKey(MAINTENANCE_MODE);
+        maintenance.setValue("false");
+
+        PropertiesDTO max = new PropertiesDTO();
+        max.setKey(PCP_MAX_POOL_SIZE);
+        max.setValue("" + originalMaxPoolSize);
+        propertiesService.updateProperties(List.of(maintenance, max));
+
+    }
+
+    @Test
+    @DisplayName("Auto-scaling does not kick in when maintenance mode is enabled")
+    void maintenanceModeNoAutoScaling() throws InterruptedException {
+
+        final List<Future> futures = new ArrayList<>();
+        RoundRobinBlockingQueue.CATEGORY_HOLDER.set("TEST_CONTRACT");
+        for (int i = 0; i < QUEUE_SIZE; i++) {
+            futures.add(patientProcessorThreadPool.submit(sleepyRunnable()));
+        }
+        RoundRobinBlockingQueue.CATEGORY_HOLDER.remove();
+
+        PropertiesDTO max = new PropertiesDTO();
+        max.setKey(PCP_MAX_POOL_SIZE);
+        max.setValue("" + 4);
+        propertiesService.updateProperties(List.of(max));
+
+        Thread.sleep(1000);
+
+        // Starts at three will scale once there is work in queue
+        assertEquals(3, patientProcessorThreadPool.getMaxPoolSize());
+        assertEquals(3, patientProcessorThreadPool.getCorePoolSize());
+
+        Thread.sleep(7000);
+
+        assertNotEquals(3, patientProcessorThreadPool.getMaxPoolSize());
+
+        PropertiesDTO dto = new PropertiesDTO();
+        dto.setKey(MAINTENANCE_MODE);
+        dto.setValue("true");
+        propertiesService.updateProperties(List.of(dto));
+
+        Thread.sleep(6000);
+
+        assertEquals(3, patientProcessorThreadPool.getMaxPoolSize());
+        assertEquals(3, patientProcessorThreadPool.getCorePoolSize());
+
+        futures.forEach(future -> future.cancel(true));
     }
 
     @Test
     @DisplayName("Auto-scaling does not kick in when the queue remains empty")
-    void autoScalingDoesNotKicksIn() throws InterruptedException {
+    void emptyQueueNoAutoScaling() throws InterruptedException {
         // Verify that initially the pool is sized at the minimums
         assertEquals(3, patientProcessorThreadPool.getMaxPoolSize());
         assertEquals(3, patientProcessorThreadPool.getCorePoolSize());
@@ -113,7 +176,7 @@ public class AutoScalingServiceTest {
         assertEquals(patientProcessorThreadPool.getMaxPoolSize(), MAX_POOL_SIZE);
 
         // Clean up.
-        futures.stream().forEach(future -> future.cancel(true));
+        futures.forEach(future -> future.cancel(true));
 
         // Sleep for a bit to let auto scaling run another cycle. The max pool size should be
         // reverted
@@ -125,14 +188,11 @@ public class AutoScalingServiceTest {
 
 
     private Runnable sleepyRunnable() {
-        return new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(Long.MAX_VALUE);
-                } catch (InterruptedException e) {
-                    // NO-OP
-                }
+        return () -> {
+            try {
+                Thread.sleep(Long.MAX_VALUE);
+            } catch (InterruptedException e) {
+                // NO-OP
             }
         };
     }
