@@ -1,6 +1,7 @@
 package gov.cms.ab2d.bfd.client;
 
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
+import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpHeaders;
@@ -12,8 +13,8 @@ import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-
 import java.io.InputStream;
 import java.time.OffsetDateTime;
 
@@ -31,6 +32,7 @@ public class BFDSearchImpl implements BFDSearch {
         this.bfdClientVersions = bfdClientVersions;
     }
 
+    @Trace
     @Override
     public IBaseBundle searchEOB(String patientId, OffsetDateTime since, int pageSize, String bulkJobId, FhirVersion version) throws IOException {
 
@@ -56,17 +58,27 @@ public class BFDSearchImpl implements BFDSearch {
         request.addHeader(BFDClient.BFD_HDR_BULK_CLIENTID, BFDClient.BFD_CLIENT_ID);
         request.addHeader(BFDClient.BFD_HDR_BULK_JOBID, bulkJobId);
 
+        byte[] responseBytes;
         try (CloseableHttpResponse response = (CloseableHttpResponse) httpClient.execute(request)) {
             int status = response.getStatusLine().getStatusCode();
             if (status >= HttpStatus.SC_OK && status < HttpStatus.SC_MULTIPLE_CHOICES) {
+
                 try (InputStream instream = response.getEntity().getContent()) {
-                    return version.getJsonParser().parseResource(version.getBundleClass(), instream);
+                    responseBytes = instream.readAllBytes();
                 }
+
             } else if (status == HttpStatus.SC_NOT_FOUND) {
                 throw new ResourceNotFoundException("Patient " + patientId + " was not found");
             } else {
                 throw new RuntimeException("Server error occurred");
             }
         }
+
+        return parseBundle(version, responseBytes);
+    }
+
+    @Trace
+    private IBaseBundle parseBundle(FhirVersion version, byte[] responseBytes) {
+        return version.getJsonParser().parseResource(version.getBundleClass(), new ByteArrayInputStream(responseBytes));
     }
 }

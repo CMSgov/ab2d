@@ -271,6 +271,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @param progressTracker - progress tracker instance
      * @param future          - a specific future
      */
+    @Trace
     private EobSearchResult processFuture(List<Future<EobSearchResult>> futureHandles, ProgressTracker progressTracker,
                                           Future<EobSearchResult> future, Map<String, CoverageSummary> patients) {
         progressTracker.incrementEobProcessedCount();

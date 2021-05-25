@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
+import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -62,6 +63,7 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
      *
      * @param data - the data to write
      */
+    @Trace
     @Override
     public void addData(byte[] data) throws IOException {
         if (data == null || data.length == 0) {
