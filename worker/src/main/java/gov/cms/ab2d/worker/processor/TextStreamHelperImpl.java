@@ -66,9 +66,9 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
      */
     @Trace
     @Override
-    public Optional<StreamOutput> addData(byte[] data) throws IOException {
+    public void addData(byte[] data) throws IOException {
         if (data == null || data.length == 0) {
-            return Optional.empty();
+            return;
         }
 
         tryLock(dataFileLock);
@@ -78,7 +78,7 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
                 currentStream.close();
                 logManager.log(EventUtils.getFileEvent(job, currentFile, FileEvent.FileStatus.CLOSE));
 
-                output = createStreamOutput(currentFile, false);
+                createStreamOutput(currentFile, false);
 
                 currentStream = createStream();
                 setTotalBytesWritten(0);
@@ -87,7 +87,6 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
             currentStream.write(data);
             setTotalBytesWritten(getTotalBytesWritten() + data.length);
 
-            return Optional.ofNullable(output);
         } catch (Exception ex) {
             String error = "Unable to create file output stream for contract " + contractNumber + "[" + (counter - 1) + "]";
             log.error(error, ex);
@@ -102,13 +101,11 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
     }
 
     @Override
-    public Optional<StreamOutput> closeLastStream() throws IOException {
+    public void closeLastStream() throws IOException {
 
         if (currentStream == null) {
-            return Optional.empty();
+            return;
         }
-
-        StreamOutput output = null;
 
         currentStream.close();
         logManager.log(EventUtils.getFileEvent(job, currentFile, FileEvent.FileStatus.CLOSE));
@@ -116,13 +113,11 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
         if (filesCreated.get(numFiles - 1).toFile().length() == 0) {
             filesCreated.remove(numFiles - 1);
         } else {
-            output = createStreamOutput(currentFile, false);
+            createStreamOutput(currentFile, false);
         }
 
         // Current stream should never be used again
         currentStream = null;
-
-        return Optional.ofNullable(output);
     }
 
     /**

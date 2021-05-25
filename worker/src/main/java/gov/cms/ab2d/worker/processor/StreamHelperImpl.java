@@ -25,6 +25,7 @@ import static java.nio.file.StandardOpenOption.APPEND;
  * Contains the common methods for other StreamHelper implementations
  */
 @Slf4j
+@SuppressWarnings("checkstyle:visibilitymodifier")
 public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
     public enum FileOutputType {
         NDJSON(".ndjson"),
@@ -76,9 +77,11 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
 
     // List of data files created
     protected final List<Path> filesCreated;
+    protected final List<StreamOutput> fileOutputs;
 
     // List of error files created
     private final List<Path> errorFilesCreated;
+    private final List<StreamOutput> errorOutputs;
 
     // Location of error file
     private Path errorFile;
@@ -98,7 +101,9 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
         this.totalBytesAllowed = totalBytesAllowed;
         this.tryLockTimeout = tryLockTimeout;
         this.filesCreated = new ArrayList<>();
+        this.fileOutputs = new ArrayList<>();
         this.errorFilesCreated = new ArrayList<>();
+        this.errorOutputs = new ArrayList<>();
         this.logManager = logManager;
         this.job = job;
     }
@@ -175,9 +180,15 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
         }
     }
 
-    protected StreamOutput createStreamOutput(File file, boolean error) {
+    protected void createStreamOutput(File file, boolean error) {
         String checksum = generateChecksum(file);
-        return new StreamOutput(file.getAbsolutePath(), checksum, file.length(), error);
+        StreamOutput output = new StreamOutput(file.getName(), checksum, file.length(), error);
+
+        if (error) {
+            errorOutputs.add(output);
+        } else {
+            fileOutputs.add(output);
+        }
     }
 
     private String generateChecksum(File file) {
@@ -219,6 +230,10 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
         return filesCreated;
     }
 
+    public List<StreamOutput> getDataOutputs() {
+        return fileOutputs;
+    }
+
     /**
      * Return the error files (currently just one)
      *
@@ -227,5 +242,14 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
     @Override
     public List<Path> getErrorFiles() {
         return errorFilesCreated;
+    }
+
+    @Override
+    public List<StreamOutput> getErrorOutputs() {
+        if (errorOutputs.isEmpty()) {
+            errorFilesCreated.stream().map(Path::toFile).forEach(file -> createStreamOutput(file, true));
+        }
+
+        return errorOutputs;
     }
 }

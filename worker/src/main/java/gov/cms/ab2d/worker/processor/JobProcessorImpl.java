@@ -139,7 +139,7 @@ public class JobProcessorImpl implements JobProcessor {
                 job.getJobUuid(),
                 contract.getContractNumber(),
                 progressTracker.getExpectedBeneficiaries(),
-                progressTracker.getEobProcessedCount(),
+                progressTracker.getPatientRequestProcessedCount(),
                 progressTracker.getFailureCount()));
     }
 

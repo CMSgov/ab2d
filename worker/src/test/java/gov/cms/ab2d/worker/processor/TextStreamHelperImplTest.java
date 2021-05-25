@@ -154,17 +154,17 @@ class TextStreamHelperImplTest {
         String shortString = "Hello";
 
         // Did not rollover so no file
-        Optional<StreamOutput> output = helper.addData(shortString.getBytes());
-        assertTrue(output.isEmpty());
+        helper.addData(shortString.getBytes());
+        assertTrue(helper.getDataOutputs().isEmpty());
 
         String longString = "Once upon a time in America, there lived a sweet girl who wandered the planet";
-        output = helper.addData(longString.getBytes());
-        assertTrue(output.isPresent());
-        checkStreamOutput(output.get());
+        helper.addData(longString.getBytes());
+        assertFalse(helper.getDataOutputs().isEmpty());
+        checkStreamOutput(helper.getDataOutputs().get(0));
 
-        output = helper.closeLastStream();
-        assertTrue(output.isPresent());
-        checkStreamOutput(output.get());
+        helper.closeLastStream();
+        assertEquals(2, helper.getDataOutputs().size());
+        checkStreamOutput(helper.getDataOutputs().get(1));
         helper.close();
     }
 
@@ -173,8 +173,8 @@ class TextStreamHelperImplTest {
         TextStreamHelperImpl helper = new TextStreamHelperImpl(
                 tmpDirFolder.toPath(), "C1111", 10, 20, eventLogger, null);
 
-        Optional<StreamOutput> output = helper.closeLastStream();
-        assertTrue(output.isEmpty());
+        helper.closeLastStream();
+        assertTrue(helper.getDataOutputs().isEmpty());
 
         // Attempting to write data after last file
         assertThrows(IOException.class, () -> helper.addData("Hello".getBytes()));

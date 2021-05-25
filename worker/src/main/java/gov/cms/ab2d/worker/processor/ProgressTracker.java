@@ -27,7 +27,9 @@ public class ProgressTracker {
     private final Map<String, CoverageSummary> patients = new HashMap<>();
 
     private int metadataProcessedCount;
-    private int eobProcessedCount;
+    private int patientRequestQueuedCount;
+    private int patientRequestProcessedCount;
+    private int eobsProcessedCount;
 
     @Setter
     private int expectedBeneficiaries;
@@ -44,8 +46,16 @@ public class ProgressTracker {
     @Setter
     private int lastUpdatedPercentage;
 
+    public void incrementPatientRequestQueuedCount() {
+        ++patientRequestQueuedCount;
+    }
+
+    public void incrementPatientRequestProcessedCount() {
+        ++patientRequestProcessedCount;
+    }
+
     public void incrementEobProcessedCount() {
-        ++eobProcessedCount;
+        ++eobsProcessedCount;
     }
 
     public void incrementFailureCount() {
@@ -73,7 +83,7 @@ public class ProgressTracker {
      * @return true if it's been long enough
      */
     public boolean isTimeToUpdateDatabase(int reportProgressFrequency) {
-        return eobProcessedCount - lastDbUpdateCount >= reportProgressFrequency;
+        return patientRequestProcessedCount - lastDbUpdateCount >= reportProgressFrequency;
     }
 
     /**
@@ -83,7 +93,7 @@ public class ProgressTracker {
      * @return true if it's  been long enough
      */
     public boolean isTimeToLog(int reportProgressLogFrequency) {
-        return eobProcessedCount - lastLogUpdateCount >= reportProgressLogFrequency;
+        return patientRequestProcessedCount - lastLogUpdateCount >= reportProgressLogFrequency;
     }
 
     /**
@@ -107,7 +117,7 @@ public class ProgressTracker {
         double amountCompleted = percentBenesDone + percentContractBeneSearchDone;
 
         final int percentCompleted = (int) Math.round(amountCompleted * 100);
-        lastDbUpdateCount = eobProcessedCount;
+        lastDbUpdateCount = patientRequestProcessedCount;
         if (percentCompleted > 100) {
             return 99;
         }
@@ -120,7 +130,7 @@ public class ProgressTracker {
             return 0;
         }
 
-        double percentBenesDonePart = (double) eobProcessedCount / expectedBeneficiaries;
+        double percentBenesDonePart = (double) patientRequestProcessedCount / expectedBeneficiaries;
         if (percentBenesDonePart > 1.0) {
             log.error("Percent of beneficiaries done is more than 100%");
             percentBenesDonePart = 1.0;
