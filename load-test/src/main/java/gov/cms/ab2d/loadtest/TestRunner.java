@@ -9,6 +9,7 @@ import org.apache.jmeter.samplers.SampleResult;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import gov.cms.ab2d.fhir.FhirVersion;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -128,7 +129,7 @@ public class TestRunner extends AbstractJavaSamplerClient {
             SampleResult exportResult = createExportResultAndStart(contractResult);
 
             try {
-                HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, FHIR_TYPE, null);
+                HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contractNumber, FHIR_TYPE, null, FhirVersion.STU3);
 
                 exportResult.sampleEnd();
                 exportResult.setResponseCode(String.valueOf(exportResponse.statusCode()));

@@ -87,22 +87,36 @@ class PatientIdentifierUtilsTest {
 
     @Test
     void testR4ExtractIds() throws IOException {
+        List<String> beneIds = List.of("-19990000001101", "-19990000001102", "-19990000001103");
+        List<String> currentMbis = List.of("3S24A00AA00", "4S24A00AA00", "5S24A00AA00");
+        List<String> historicMbis = List.of();
         org.hl7.fhir.r4.model.Bundle resource = (org.hl7.fhir.r4.model.Bundle) extractBundle(FhirVersion.R4, "data/r4patients.json");
         for (org.hl7.fhir.r4.model.Bundle.BundleEntryComponent component : resource.getEntry()) {
             org.hl7.fhir.r4.model.Patient patient = (org.hl7.fhir.r4.model.Patient) component.getResource();
             List<PatientIdentifier> ids = getIdentifiers(patient);
-            assertEquals(4, ids.size());
+            assertEquals(3, ids.size());
+
             PatientIdentifier benId = IdentifierUtils.getBeneId(ids);
-            assertEquals("-19990000001101", benId.getValue());
+            assertTrue(beneIds.contains(benId.getValue()));
             assertEquals(PatientIdentifier.Type.BENE_ID, benId.getType());
             assertEquals(CURRENT, benId.getCurrency());
+
             PatientIdentifier mbiCurrentId = IdentifierUtils.getCurrentMbi(ids);
-            assertEquals("3S24A00AA00", mbiCurrentId.getValue());
+            assertTrue(currentMbis.contains(mbiCurrentId.getValue()));
+
+            /* Currently, no historical MBIs are in test data */
+            Set<PatientIdentifier> historicalMbi = IdentifierUtils.getHistoricMbi(ids);
+            assertEquals(0, historicalMbi.size());
+            historicalMbi.forEach(c -> assertTrue(historicalMbi.contains(c)));
+
+           /*
             Set<PatientIdentifier> historicalMbi = IdentifierUtils.getHistoricMbi(ids);
             assertEquals(1, historicalMbi.size());
             PatientIdentifier hist = historicalMbi.stream().findFirst().get();
             assertEquals("111111111", hist.getValue());
             assertEquals(HISTORIC, hist.getCurrency());
+
+            */
         }
     }
 

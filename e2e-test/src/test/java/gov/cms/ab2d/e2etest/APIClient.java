@@ -1,5 +1,6 @@
 package gov.cms.ab2d.e2etest;
 
+import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +39,7 @@ public class APIClient {
 
     private final String ab2dUrl;
 
-    private final String ab2dApiUrl;
+    private final static Map<FhirVersion, String> ab2dApiUrl = new HashMap<>();
 
     private final String authEncoded;
 
@@ -80,7 +81,9 @@ public class APIClient {
                 .build();
 
         this.ab2dUrl = ab2dUrl;
-        this.ab2dApiUrl = buildAB2DAPIUrlV1(ab2dUrl);
+        this.ab2dApiUrl.put(FhirVersion.STU3, buildAB2DAPIUrlV1(ab2dUrl));
+        this.ab2dApiUrl.put(FhirVersion.R4, buildAB2DAPIUrlV2(ab2dUrl));
+
         this.oktaUrl = oktaUrl;
         String clientIdAndSecret = oktaClientId + ":" + oktaPassword;
         authEncoded = Base64.getEncoder().encodeToString(clientIdAndSecret.getBytes());
@@ -113,13 +116,13 @@ public class APIClient {
         jwtStr = responseJsonObject.getString("access_token");
     }
 
-    public HttpResponse<String> exportRequest(Map<Object, Object> params) throws IOException, InterruptedException {
+    public HttpResponse<String> exportRequest(Map<Object, Object> params, FhirVersion version) throws IOException, InterruptedException {
         String paramString = buildParameterString(params);
         if(!paramString.equals("")) {
             paramString = "?" + paramString;
         }
         HttpRequest exportRequest = HttpRequest.newBuilder()
-                .uri(URI.create(ab2dApiUrl + PATIENT_EXPORT_PATH + paramString))
+                .uri(URI.create(ab2dApiUrl.get(version) + PATIENT_EXPORT_PATH + paramString))
                 .timeout(Duration.ofSeconds(defaultTimeout))
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + jwtStr)
@@ -129,21 +132,21 @@ public class APIClient {
         return httpClient.send(exportRequest, HttpResponse.BodyHandlers.ofString());
     }
 
-    public HttpResponse<String> exportRequest(String exportType, OffsetDateTime since) throws IOException, InterruptedException {
+    public HttpResponse<String> exportRequest(String exportType, OffsetDateTime since, FhirVersion version) throws IOException, InterruptedException {
         Map<Object, Object> map  = new HashMap<>();
         map.put("_outputFormat", exportType);
         if (since != null) {
             map.put("_since", since.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         }
-        return exportRequest(map);
+        return exportRequest(map, version);
     }
 
-    public HttpResponse<String> exportByContractRequest(String contractNumber, String exportType, OffsetDateTime since) throws IOException, InterruptedException {
-        HttpRequest exportRequest = buildExportByContractRequest(contractNumber, exportType, since);
+    public HttpResponse<String> exportByContractRequest(String contractNumber, String exportType, OffsetDateTime since, FhirVersion version) throws IOException, InterruptedException {
+        HttpRequest exportRequest = buildExportByContractRequest(contractNumber, exportType, since, version);
         return httpClient.send(exportRequest, HttpResponse.BodyHandlers.ofString());
     }
 
-    public HttpRequest buildExportByContractRequest(String contractNumber, String exportType, OffsetDateTime since) {
+    public HttpRequest buildExportByContractRequest(String contractNumber, String exportType, OffsetDateTime since, FhirVersion version) {
         var jwtRequestParms = new HashMap<>() {{
             put("_outputFormat", exportType);
         }};
@@ -155,7 +158,7 @@ public class APIClient {
             paramString = "?" + paramString;
         }
         return HttpRequest.newBuilder()
-                .uri(URI.create(ab2dApiUrl + "Group/" + contractNumber + "/$export" + paramString))
+                .uri(URI.create(ab2dApiUrl.get(version) + "Group/" + contractNumber + "/$export" + paramString))
                 .timeout(Duration.ofSeconds(defaultTimeout))
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + jwtStr)
@@ -179,9 +182,9 @@ public class APIClient {
                 .build();
     }
 
-    public HttpResponse<String> cancelJobRequest(String jobId) throws IOException, InterruptedException {
+    public HttpResponse<String> cancelJobRequest(String jobId, FhirVersion version) throws IOException, InterruptedException {
         HttpRequest cancelRequest = HttpRequest.newBuilder()
-                .uri(URI.create(ab2dApiUrl + "Job/" + jobId + "/$status"))
+                .uri(URI.create(ab2dApiUrl.get(version) + "Job/" + jobId + "/$status"))
                 .timeout(Duration.ofSeconds(defaultTimeout))
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + jwtStr)
@@ -233,8 +236,16 @@ public class APIClient {
         return HttpRequest.BodyPublishers.ofString(paramString);
     }
 
+    public static String buildAB2DAPIUrl(FhirVersion version) {
+        return ab2dApiUrl.get(version);
+    }
+
     public static String buildAB2DAPIUrlV1(String baseUrl) {
         return baseUrl + API_PREFIX_V1 + FHIR_PREFIX + "/";
+    }
+
+    public static String buildAB2DAPIUrlV2(String baseUrl) {
+        return baseUrl + API_PREFIX_V2 + FHIR_PREFIX + "/";
     }
 }
 
