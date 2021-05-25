@@ -2,12 +2,10 @@ package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;

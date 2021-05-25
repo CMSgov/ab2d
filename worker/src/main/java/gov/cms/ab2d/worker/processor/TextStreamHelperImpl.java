@@ -7,14 +7,8 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.Path;
-import java.util.Optional;
 
 /**
  * Implement a plain text stream helper
@@ -73,7 +67,6 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
 
         tryLock(dataFileLock);
         try {
-            StreamOutput output = null;
             if (exceedsMaxFileSize(data)) {
                 currentStream.close();
                 logManager.log(EventUtils.getFileEvent(job, currentFile, FileEvent.FileStatus.CLOSE));
