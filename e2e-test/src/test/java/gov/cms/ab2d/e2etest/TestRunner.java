@@ -286,14 +286,14 @@ class TestRunner {
     }
 
     private Pair<String, JSONArray> verifyJsonFromStatusResponse(HttpResponse<String> statusResponse, String jobUuid,
-                                                                 String contractNumber, FhirVersion version) throws JSONException {
+                                                                 boolean hasContract, String contractNumber, FhirVersion version) throws JSONException {
         final JSONObject json = new JSONObject(statusResponse.body());
         Boolean requiresAccessToken = json.getBoolean("requiresAccessToken");
         assertEquals(true, requiresAccessToken);
         String request = json.getString("request");
         String versionUrl = APIClient.buildAB2DAPIUrl(version);
 
-        String stem = versionUrl + (contractNumber == null ? "Patient/" : "Group/" + contractNumber + "/") + "$export?_outputFormat=";
+        String stem = versionUrl + (!hasContract ? "Patient/" : "Group/" + contractNumber + "/") + "$export?_outputFormat=";
         assertTrue(request.startsWith(stem));
         JSONArray errors = json.getJSONArray("error");
 
@@ -546,7 +546,7 @@ class TestRunner {
         }
         assertEquals(200, statusResponseAgain.statusCode());
 
-        return verifyJsonFromStatusResponse(statusResponseAgain, jobUuid, isContract ? contractNumber : null, version);
+        return verifyJsonFromStatusResponse(statusResponseAgain, jobUuid, isContract, contractNumber, version);
     }
 
     @ParameterizedTest
