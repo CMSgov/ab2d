@@ -4,14 +4,13 @@ import com.amazonaws.ResponseMetadata;
 import com.amazonaws.services.kinesisfirehose.AmazonKinesisFirehose;
 import com.amazonaws.services.kinesisfirehose.model.PutRecordResult;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import gov.cms.ab2d.eventlogger.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.SpringBootApp;
 import gov.cms.ab2d.eventlogger.events.*;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -164,7 +163,7 @@ class KinesisEventLoggerTest {
     }
 
     @Test
-    void testJsonConversion() throws JSONException {
+    void testJsonConversion() throws IOException {
         OffsetDateTime now = OffsetDateTime.now();
         ErrorEvent e = new ErrorEvent();
         e.setDescription("Test Error");
@@ -176,16 +175,17 @@ class KinesisEventLoggerTest {
         e.setAwsId("BOGUS");
         e.setEnvironment(Ab2dEnvironment.DEV);
 
+        ObjectMapper mapper = new ObjectMapper();
         String jsonString = getJsonString(e);
-        JSONObject jsonObj = new JSONObject(jsonString);
-        assertEquals("Test Error", jsonObj.getString("description"));
-        assertEquals(1, jsonObj.getInt("id"));
-        assertEquals("JOB123", jsonObj.getString("job_id"));
-        assertEquals("UNAUTHORIZED_CONTRACT", jsonObj.getString("error_type"));
-        assertEquals("ME", jsonObj.getString("organization"));
-        assertEquals("BOGUS", jsonObj.getString("aws_id"));
-        assertEquals("ab2d-dev", jsonObj.getString("environment"));
-        String dateString = jsonObj.getString("time_of_event");
+        JsonNode node = mapper.readTree(jsonString);
+        assertEquals("Test Error", node.get("description").asText());
+        assertEquals(1, node.get("id").asInt());
+        assertEquals("JOB123", node.get("job_id").asText());
+        assertEquals("UNAUTHORIZED_CONTRACT", node.get("error_type").asText());
+        assertEquals("ME", node.get("organization").asText());
+        assertEquals("BOGUS", node.get("aws_id").asText());
+        assertEquals("ab2d-dev", node.get("environment").asText());
+        String dateString = node.get("time_of_event").asText();
         assertNotNull(dateString);
         assertTrue(dateString.contains("Z"));
         OffsetDateTime dateObj = OffsetDateTime.parse(dateString, DateTimeFormatter.ISO_DATE_TIME);
