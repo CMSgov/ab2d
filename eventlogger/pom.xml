@@ -154,7 +154,7 @@
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${project.root}/eventlogger/target/classes/db</outputDirectory>   <!-- output directory -->
+                            <outputDirectory>${project.root}/eventlogger/target/test-classes/db</outputDirectory>   <!-- output directory -->
                             <resources>
                                 <resource>
                                     <directory>${project.root}/common/src/main/resources/db</directory>         <!-- source directory -->
