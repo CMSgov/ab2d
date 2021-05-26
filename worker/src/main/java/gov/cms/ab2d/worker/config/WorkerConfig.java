@@ -3,16 +3,23 @@ package gov.cms.ab2d.worker.config;
 import gov.cms.ab2d.bfd.client.BFDClientConfiguration;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.annotation.Import;
 import org.springframework.integration.config.EnableIntegration;
-import org.springframework.integration.jdbc.lock.*;
+import org.springframework.integration.jdbc.lock.DefaultLockRepository;
+import org.springframework.integration.jdbc.lock.JdbcLockRegistry;
+import org.springframework.integration.jdbc.lock.LockRepository;
 import org.springframework.integration.support.locks.LockRegistry;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import javax.sql.DataSource;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Configures Spring Integration.
@@ -45,13 +52,18 @@ public class WorkerConfig {
     }
 
     @Bean
-    public Executor patientProcessorThreadPool() {
+    public RoundRobinBlockingQueue eobClaimRequestsQueue() {
+        return new RoundRobinBlockingQueue<>();
+    }
+
+    @Bean
+    public Executor patientProcessorThreadPool(RoundRobinBlockingQueue eobClaimRequestsQueue) {
         // Regretfully, no good way to supply a custom queue to ThreadPoolTaskExecutor
         // other than by overriding createQueue
         final ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor() {
             @Override
             protected BlockingQueue<Runnable> createQueue(int queueCapacity) {
-                return new RoundRobinBlockingQueue<>();
+                return eobClaimRequestsQueue;
             }
         };
         taskExecutor.setCorePoolSize(pcpCorePoolSize);
