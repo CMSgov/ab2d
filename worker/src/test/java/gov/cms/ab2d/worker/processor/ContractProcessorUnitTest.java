@@ -6,7 +6,6 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.processor.stub.PatientClaimsProcessorStub;
-import gov.cms.ab2d.worker.service.FileService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,7 +42,6 @@ class ContractProcessorUnitTest {
 
     @TempDir Path efsMountTmpDir;
 
-    @Mock private FileService fileService;
     @Mock private JobRepository jobRepository;
     @Mock private LogManager eventLogger;
     private PatientClaimsProcessor patientClaimsProcessor;
@@ -60,7 +58,6 @@ class ContractProcessorUnitTest {
         patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
 
         cut = new ContractProcessorImpl(
-                fileService,
                 jobRepository,
                 patientClaimsProcessor,
                 eventLogger);
@@ -91,13 +88,13 @@ class ContractProcessorUnitTest {
                 .build();
 
         progressTracker.addPatients(patientsByContract);
-        ContractData contractData = new ContractData(contract, progressTracker, job.getSince(),
+        JobData jobData = new JobData(contract, progressTracker, job.getSince(),
                 getOrganization(job));
 
         when(jobRepository.findJobStatus(anyString())).thenReturn(JobStatus.CANCELLED);
 
         var exceptionThrown = assertThrows(JobCancelledException.class,
-                () -> cut.process(outputDir, contractData));
+                () -> cut.process(outputDir, jobData));
 
         assertTrue(exceptionThrown.getMessage().startsWith("Job was cancelled while it was being processed"));
         verify(patientClaimsProcessor, atLeast(1)).process(any());
@@ -115,10 +112,10 @@ class ContractProcessorUnitTest {
                 .failureThreshold(10)
                 .build();
         progressTracker.addPatients(patientsByContract);
-        ContractData contractData = new ContractData(contract, progressTracker, job.getSince(),
+        JobData jobData = new JobData(contract, progressTracker, job.getSince(),
                 getOrganization(job));
 
-        var jobOutputs = cut.process(outputDir, contractData);
+        var jobOutputs = cut.process(outputDir, jobData);
 
         assertFalse(jobOutputs.isEmpty());
         verify(jobRepository, times(9)).updatePercentageCompleted(anyString(), anyInt());
