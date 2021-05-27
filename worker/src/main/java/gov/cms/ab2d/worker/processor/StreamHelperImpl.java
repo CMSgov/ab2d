@@ -5,11 +5,11 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,6 +25,7 @@ import static java.nio.file.StandardOpenOption.APPEND;
  * Contains the common methods for other StreamHelper implementations
  */
 @Slf4j
+@SuppressWarnings("checkstyle:visibilitymodifier")
 public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
     public enum FileOutputType {
         NDJSON(".ndjson"),
@@ -40,23 +41,19 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
         }
     }
 
-    @Getter
-    private LogManager logManager;
+    protected final LogManager logManager;
 
-    @Getter
-    private Job job;
+    // Job that is being output
+    protected final Job job;
 
     // Current file counter
-    @Getter
-    private volatile int counter = 1;
+    protected volatile int counter = 1;
 
     // Passed contract number
-    @Getter
-    private final String contractNumber;
+    protected final String contractNumber;
 
     // Directory where to put the files
-    @Getter
-    private final Path path;
+    protected final Path path;
 
     // Total number of bytes written to the file
     @Getter @Setter
@@ -67,27 +64,24 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
     private final long totalBytesAllowed;
 
     // The current output stream
-    @Getter @Setter
-    private volatile OutputStream currentStream;
+    protected volatile OutputStream currentStream;
 
     // The time before a lock times out and unlocks
     private final int tryLockTimeout;
 
     // Data file lock
-    @Getter
-    private final Lock dataFileLock  = new ReentrantLock();
+    protected final Lock dataFileLock  = new ReentrantLock();
 
     // Error file lock
-    @Getter
     private final Lock errorFileLock = new ReentrantLock();
 
     // List of data files created
-    @Getter
-    private List<Path> filesCreated;
+    protected final List<Path> filesCreated;
+    protected final List<StreamOutput> fileOutputs;
 
     // List of error files created
-    @Getter
-    private List<Path> errorFilesCreated;
+    private final List<Path> errorFilesCreated;
+    private final List<StreamOutput> errorOutputs;
 
     // Location of error file
     private Path errorFile;
@@ -107,7 +101,9 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
         this.totalBytesAllowed = totalBytesAllowed;
         this.tryLockTimeout = tryLockTimeout;
         this.filesCreated = new ArrayList<>();
+        this.fileOutputs = new ArrayList<>();
         this.errorFilesCreated = new ArrayList<>();
+        this.errorOutputs = new ArrayList<>();
         this.logManager = logManager;
         this.job = job;
     }
@@ -184,6 +180,27 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
         }
     }
 
+    protected void createStreamOutput(File file, boolean error) {
+        String checksum = generateChecksum(file);
+        StreamOutput output = new StreamOutput(file.getName(), checksum, file.length(), error);
+
+        if (error) {
+            errorOutputs.add(output);
+        } else {
+            fileOutputs.add(output);
+        }
+    }
+
+    private String generateChecksum(File file) {
+        try (FileInputStream fileInputStream = new FileInputStream(file)) {
+            byte[] bytes = DigestUtils.sha256(fileInputStream);
+            return Hex.encodeHexString(bytes);
+        } catch (IOException e) {
+            log.error("Encountered IO Exception while generating checksum {}", e.getMessage(), e);
+            throw new UncheckedIOException(e);
+        }
+    }
+
     /**
      * If the error file doesn't exist, create it
      */
@@ -213,6 +230,10 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
         return filesCreated;
     }
 
+    public List<StreamOutput> getDataOutputs() {
+        return fileOutputs;
+    }
+
     /**
      * Return the error files (currently just one)
      *
@@ -221,5 +242,14 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
     @Override
     public List<Path> getErrorFiles() {
         return errorFilesCreated;
+    }
+
+    @Override
+    public List<StreamOutput> getErrorOutputs() {
+        if (errorOutputs.isEmpty()) {
+            errorFilesCreated.stream().map(Path::toFile).forEach(file -> createStreamOutput(file, true));
+        }
+
+        return errorOutputs;
     }
 }

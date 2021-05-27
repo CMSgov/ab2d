@@ -41,13 +41,13 @@ class ProgressTrackerTest {
         assertEquals(expected, percDone);
 
 
-        ReflectionTestUtils.setField(tracker, "eobProcessedCount", 6);
+        ReflectionTestUtils.setField(tracker, "patientRequestProcessedCount", 6);
         percDone = tracker.getPercentageCompleted();
         expected = asPercent((1 - EST_BEN_SEARCH_JOB_PERCENTAGE)
                 + (EST_BEN_SEARCH_JOB_PERCENTAGE * 0.5));
         assertEquals(expected, percDone);
 
-        ReflectionTestUtils.setField(tracker, "eobProcessedCount", 12);
+        ReflectionTestUtils.setField(tracker, "patientRequestProcessedCount", 12);
         percDone = tracker.getPercentageCompleted();
         assertEquals(100, percDone);
     }
@@ -90,7 +90,7 @@ class ProgressTrackerTest {
         assertEquals(asPercent(1.0 - EST_BEN_SEARCH_JOB_PERCENTAGE), percDone);
 
         for (int i = 0; i < 10; i++) {
-            tracker.incrementEobProcessedCount();
+            tracker.incrementPatientRequestProcessedCount();
         }
 
         assertEquals(100, tracker.getPercentageCompleted());
@@ -111,7 +111,7 @@ class ProgressTrackerTest {
 
         assertEquals(asPercent(1 - EST_BEN_SEARCH_JOB_PERCENTAGE), tracker.getPercentageCompleted());
 
-        tracker.incrementEobProcessedCount();
+        tracker.incrementPatientRequestProcessedCount();
 
         double amountEobProc = (double) 1/12 * EST_BEN_SEARCH_JOB_PERCENTAGE;
         double amountMetadataCompleted = 1 - EST_BEN_SEARCH_JOB_PERCENTAGE;

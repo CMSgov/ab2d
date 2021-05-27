@@ -137,7 +137,6 @@ class JobProcessorIntegrationTest {
         PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, logManager);
         ReflectionTestUtils.setField(patientClaimsProcessor, "startDate", "01/01/1900");
         ContractProcessor contractProcessor = new ContractProcessorImpl(
-                fileService,
                 jobRepository,
                 patientClaimsProcessor,
                 logManager);
