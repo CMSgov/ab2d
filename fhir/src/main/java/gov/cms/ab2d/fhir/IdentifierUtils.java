@@ -191,51 +191,69 @@ public final class IdentifierUtils {
      * @return the currency information
      */
     private static PatientIdentifier.Currency getCurrencyMbiStandard(ICompositeType identifier) {
+        PatientIdentifier.Currency currency = getCurrencyFromPeriod(identifier);
+        if (currency != PatientIdentifier.Currency.UNKNOWN) {
+            return currency;
+        }
+        return getCurrencyFromTypeCodingExtension(identifier);
+    }
+
+    private static PatientIdentifier.Currency getCurrencyFromTypeCodingExtension(ICompositeType identifier) {
+        Object type = Versions.invokeGetMethod(identifier, "getType");
+        if (type == null) {
+            return PatientIdentifier.Currency.UNKNOWN;
+        }
+        List vals = (List) Versions.invokeGetMethod(type, "getCoding");
+        if (vals == null || vals.isEmpty()) {
+            return PatientIdentifier.Currency.UNKNOWN;
+        }
+        Object val = vals.get(0);
+        String codeSystem = (String) Versions.invokeGetMethod(val, "getSystem");
+        String codeValue = (String) Versions.invokeGetMethod(val, "getCode");
+        if (codeSystem != null && codeSystem.equalsIgnoreCase(MBI_ID_R4) && ("MB".equalsIgnoreCase(codeValue) || "MC".equalsIgnoreCase(codeValue))) {
+            List extensions = (List) Versions.invokeGetMethod(val, "getExtension");
+            if (extensions != null && extensions.size() > 0) {
+                Object extension = extensions.get(0);
+                String url = (String) Versions.invokeGetMethod(extension, "getUrl");
+                if (url != null && url.equalsIgnoreCase(CURRENCY_IDENTIFIER)) {
+                    Object extValue = Versions.invokeGetMethod(extension, "getValue");
+                    String extValueSystem = (String) Versions.invokeGetMethod(extValue, "getSystem");
+                    if (CURRENCY_IDENTIFIER.equalsIgnoreCase(extValueSystem)) {
+                        String extValueCode = (String) Versions.invokeGetMethod(extValue, "getCode");
+                        if (CURRENT_MBI.equalsIgnoreCase(extValueCode)) {
+                            return PatientIdentifier.Currency.CURRENT;
+                        }
+                        if (HISTORIC_MBI.equalsIgnoreCase(extValueCode)) {
+                            return PatientIdentifier.Currency.HISTORIC;
+                        }
+                    }
+                }
+            }
+        }
+        return PatientIdentifier.Currency.UNKNOWN;
+    }
+
+    /**
+     * If the period has a value for the identifier, return the information from that, otherwise UNKNOWN
+     *
+     * @param identifier - the Identifier
+     * @return the currency or UNKNOWN if there are no values
+     */
+    public static PatientIdentifier.Currency getCurrencyFromPeriod(ICompositeType identifier) {
         Object period = Versions.invokeGetMethod(identifier, "getPeriod");
         Date start = null;
         Date end = null;
-        if (period != null) {
-            start = (Date) Versions.invokeGetMethod(period, "getStart");
-            end = (Date) Versions.invokeGetMethod(period, "getEnd");
+        if (period == null) {
+            return PatientIdentifier.Currency.UNKNOWN;
         }
-        if (period != null && (start != null || end != null)) {
+        start = (Date) Versions.invokeGetMethod(period, "getStart");
+        end = (Date) Versions.invokeGetMethod(period, "getEnd");
+        if (start != null || end != null) {
             Date now = new Date();
             if ((start == null || now.getTime() > start.getTime()) && (end == null || end.getTime() > now.getTime())) {
                 return PatientIdentifier.Currency.CURRENT;
             } else {
                 return PatientIdentifier.Currency.HISTORIC;
-            }
-        } else {
-            Object type = Versions.invokeGetMethod(identifier, "getType");
-            if (type == null) {
-                return PatientIdentifier.Currency.UNKNOWN;
-            }
-            List vals = (List) Versions.invokeGetMethod(type, "getCoding");
-            if (vals == null || vals.isEmpty()) {
-                return PatientIdentifier.Currency.UNKNOWN;
-            }
-            Object val = vals.get(0);
-            String codeSystem = (String) Versions.invokeGetMethod(val, "getSystem");
-            String codeValue = (String) Versions.invokeGetMethod(val, "getCode");
-            if (codeSystem != null && codeSystem.equalsIgnoreCase(MBI_ID_R4) && ("MB".equalsIgnoreCase(codeValue) || "MC".equalsIgnoreCase(codeValue))) {
-                List extensions = (List) Versions.invokeGetMethod(val, "getExtension");
-                if (extensions != null && extensions.size() > 0) {
-                    Object extension = extensions.get(0);
-                    String url = (String) Versions.invokeGetMethod(extension, "getUrl");
-                    if (url != null && url.equalsIgnoreCase(CURRENCY_IDENTIFIER)) {
-                        Object extValue = Versions.invokeGetMethod(extension, "getValue");
-                        String extValueSystem = (String) Versions.invokeGetMethod(extValue, "getSystem");
-                        if (CURRENCY_IDENTIFIER.equalsIgnoreCase(extValueSystem)) {
-                            String extValueCode = (String) Versions.invokeGetMethod(extValue, "getCode");
-                            if (CURRENT_MBI.equalsIgnoreCase(extValueCode)) {
-                                return PatientIdentifier.Currency.CURRENT;
-                            }
-                            if (HISTORIC_MBI.equalsIgnoreCase(extValueCode)) {
-                                return PatientIdentifier.Currency.HISTORIC;
-                            }
-                        }
-                    }
-                }
             }
         }
         return PatientIdentifier.Currency.UNKNOWN;
