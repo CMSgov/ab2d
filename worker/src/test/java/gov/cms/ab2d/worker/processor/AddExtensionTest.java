@@ -5,7 +5,6 @@ import gov.cms.ab2d.common.util.fhir.FhirUtils;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.worker.service.FileService;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -25,8 +24,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
 public class AddExtensionTest {
-    @Mock
-    private FileService fileService;
 
     @Mock
     private JobRepository jobRepository;
@@ -42,7 +39,7 @@ public class AddExtensionTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.initMocks(this);
-        cut = new ContractProcessorImpl(fileService, jobRepository,
+        cut = new ContractProcessorImpl(jobRepository,
                 patientClaimsProcessor, eventLogger);
     }
 

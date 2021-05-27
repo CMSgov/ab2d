@@ -9,7 +9,6 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.worker.TestUtil;
-import gov.cms.ab2d.worker.service.FileService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,8 +35,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ContractProcessorInvalidPatientTest {
-    @Mock
-    private FileService fileService;
+
     @Mock
     private PatientClaimsProcessor patientClaimsProcessor;
     @Mock
@@ -51,7 +49,7 @@ class ContractProcessorInvalidPatientTest {
     File tmpDirFolder;
 
     private ContractProcessor cut;
-    private ContractData contractData;
+    private JobData jobData;
     private ProgressTracker tracker;
     private String jobId = "1234";
     private String contractId = "ABC";
@@ -60,7 +58,7 @@ class ContractProcessorInvalidPatientTest {
     void setup() {
 
         patientClaimsProcessor = new PatientClaimsProcessorImpl(bfdClient, eventLogger);
-        cut = new ContractProcessorImpl(fileService, jobRepository, patientClaimsProcessor, eventLogger);
+        cut = new ContractProcessorImpl(jobRepository, patientClaimsProcessor, eventLogger);
         tracker = ProgressTracker.builder()
                 .jobUuid(jobId)
                 .failureThreshold(100)
@@ -69,7 +67,7 @@ class ContractProcessorInvalidPatientTest {
         Contract contract = new Contract();
         contract.setContractNumber(contractId);
         contract.setAttestedOn(OffsetDateTime.now().minusYears(50));
-        contractData = new ContractData(contract, tracker, OffsetDateTime.MIN, "Client");
+        jobData = new JobData(contract, tracker, OffsetDateTime.MIN, "Client");
 
         List<FilterOutByDate.DateRange> dates = singletonList(TestUtil.getOpenRange());
         List<CoverageSummary> summaries = List.of(
@@ -92,7 +90,7 @@ class ContractProcessorInvalidPatientTest {
         when(bfdClient.requestEOBFromServer(eq(STU3), eq("1"), any())).thenReturn(b1);
         when(bfdClient.requestEOBFromServer(eq(STU3), eq("2"), any())).thenReturn(b2);
         when(bfdClient.requestEOBFromServer(eq(STU3), eq("3"), any())).thenReturn(b4);
-        List<JobOutput> outputs = cut.process(tmpDirFolder.toPath(), contractData);
+        List<JobOutput> outputs = cut.process(tmpDirFolder.toPath(), jobData);
         assertNotNull(outputs);
         assertEquals(2, outputs.size());
         String fileName1 = contractId + "_0001.ndjson";
@@ -113,10 +111,13 @@ class ContractProcessorInvalidPatientTest {
         job.setJobUuid(jobId);
         job.setFhirVersion(STU3);
         String val = "Hello World";
+
         StreamHelper helper = new TextStreamHelperImpl(
                 tmpDirFolder.toPath(), contractId, 2000, 10, eventLogger, job);
-        ((ContractProcessorImpl) cut).writeExceptionToContractErrorFile(
-                helper, val, new RuntimeException("Exception"), STU3);
+        ContractData contractData = new ContractData(STU3, job, ProgressTracker.builder().build(), Collections.emptyMap());
+        contractData.setStreamHelper(helper);
+
+        ((ContractProcessorImpl) cut).writeExceptionToContractErrorFile(contractData, val, new RuntimeException("Exception"));
         String result = Files.readString(Path.of(tmpDirFolder.getAbsolutePath() + File.separator + contractId + "_error.ndjson"));
         assertEquals(val, result);
     }
@@ -126,10 +127,13 @@ class ContractProcessorInvalidPatientTest {
         Job job = new Job();
         job.setJobUuid(jobId);
         job.setFhirVersion(STU3);
+
         StreamHelper helper = new TextStreamHelperImpl(
                 tmpDirFolder.toPath(), contractId, 2000, 10, eventLogger, job);
-        ((ContractProcessorImpl) cut).writeExceptionToContractErrorFile(
-                helper, null, new RuntimeException("Exception"), STU3);
+        ContractData contractData = new ContractData(STU3, job, ProgressTracker.builder().build(), Collections.emptyMap());
+        contractData.setStreamHelper(helper);
+
+        ((ContractProcessorImpl) cut).writeExceptionToContractErrorFile(contractData, null, new RuntimeException("Exception"));
         assertThrows(NoSuchFileException.class, () -> Files.readString(Path.of(tmpDirFolder.getAbsolutePath() + File.separator + contractId + "_error.ndjson")));
     }
 
