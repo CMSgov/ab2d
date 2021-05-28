@@ -78,6 +78,7 @@
         <dependency>
             <groupId>org.liquibase</groupId>
             <artifactId>liquibase-core</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>
@@ -88,11 +89,6 @@
             <groupId>com.amazonaws</groupId>
             <artifactId>amazon-kinesis-client</artifactId>
             <version>1.14.3</version>
-        </dependency>
-        <dependency>
-            <groupId>org.codehaus.jettison</groupId>
-            <artifactId>jettison</artifactId>
-            <version>1.4.1</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
@@ -154,7 +150,7 @@
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${project.root}/eventlogger/target/classes/db</outputDirectory>   <!-- output directory -->
+                            <outputDirectory>${project.root}/eventlogger/target/test-classes/db</outputDirectory>   <!-- output directory -->
                             <resources>
                                 <resource>
                                     <directory>${project.root}/common/src/main/resources/db</directory>         <!-- source directory -->

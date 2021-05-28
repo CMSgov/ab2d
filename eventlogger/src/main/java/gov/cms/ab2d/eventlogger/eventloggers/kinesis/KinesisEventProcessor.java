@@ -5,11 +5,12 @@ import com.amazonaws.services.kinesisfirehose.AmazonKinesisFirehose;
 import com.amazonaws.services.kinesisfirehose.model.PutRecordRequest;
 import com.amazonaws.services.kinesisfirehose.model.PutRecordResult;
 import com.amazonaws.services.kinesisfirehose.model.Record;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.codehaus.jettison.json.JSONObject;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
@@ -30,6 +31,8 @@ import static gov.cms.ab2d.eventlogger.utils.UtilMethods.containsClientId;
 @AllArgsConstructor
 @Slf4j
 public class KinesisEventProcessor implements Callable<Void> {
+    private static final ObjectMapper SERIALIZER = new ObjectMapper();
+
     private final LoggableEvent event;
     private final AmazonKinesisFirehose client;
     private final String streamId;
@@ -42,7 +45,7 @@ public class KinesisEventProcessor implements Callable<Void> {
      * @param event - the event we are serializing
      * @return the JSON string
      */
-    public static String getJsonString(LoggableEvent event) {
+    public static String getJsonString(LoggableEvent event) throws IOException {
         // Get all the methods, including ones from LoggableEvent
         Method[] methods = event.getClass().getDeclaredMethods();
         Method[] superMethods = event.getClass().getSuperclass().getDeclaredMethods();
@@ -78,10 +81,9 @@ public class KinesisEventProcessor implements Callable<Void> {
                 log.info("Unable to call " + m.getName() + " on " + event.getClass().getSimpleName());
             }
         }
-        // Create a JSON object from the map
-        JSONObject jsonObject = new JSONObject(vals);
+
         // Convert to string
-        return jsonObject.toString();
+        return SERIALIZER.writeValueAsString(vals);
     }
 
     @Override
