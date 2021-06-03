@@ -22,8 +22,6 @@ import static java.util.stream.Collectors.*;
 @Slf4j
 public class CoverageMappingCallable implements Callable<CoverageMapping> {
 
-    public static final String CURRENCY_IDENTIFIER =
-            "https://bluebutton.cms.gov/resources/codesystem/identifier-currency";
     public static final String CURRENT_MBI = "current";
     public static final String HISTORIC_MBI = "historic";
     public static final String MBI_ID = "http://hl7.org/fhir/sid/us-mbi";
@@ -162,26 +160,31 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
      * @return patientId if present, null otherwise
      */
     private Identifiers extractPatientId(IDomainResource patient) {
+        List<PatientIdentifier> ids = IdentifierUtils.getIdentifiers(patient);
         // Get patient beneficiary id
         // if not found eobs cannot be looked up so do not return a meaningful list
-        String beneId = IdentifierUtils.getBeneId(patient);
-        if (beneId == null || beneId.isEmpty()) {
+        PatientIdentifier beneIdObj = IdentifierUtils.getBeneId(ids);
+        if (beneIdObj == null || beneIdObj.getValue() == null || beneIdObj.getValue().isEmpty()) {
             missingBeneId += 1;
             return null;
         }
 
         // Get current mbi if present or else log not present
-        String currentMbi = IdentifierUtils.getCurrentMbi(patient);
+        PatientIdentifier currentMbi = IdentifierUtils.getCurrentMbi(ids);
         if (currentMbi == null) {
             missingCurrentMbi += 1;
         }
 
-        LinkedHashSet<String> historicMbis = IdentifierUtils.getHistoricMbi(patient);
+        LinkedHashSet<PatientIdentifier> historicMbis = IdentifierUtils.getHistoricMbi(ids);
         if (historicMbis == null || !historicMbis.isEmpty()) {
             hasHistoricalMbi += 1;
         }
-
-        return new Identifiers(beneId, currentMbi, historicMbis);
+        LinkedHashSet<String> historicalIds = new LinkedHashSet<>();
+        if (historicMbis != null) {
+            historicalIds = historicMbis.stream()
+                    .map(PatientIdentifier::getValue).collect(toCollection(LinkedHashSet::new));
+        }
+        return new Identifiers(beneIdObj.getValue(), currentMbi.getValue(), new LinkedHashSet<>(historicalIds));
     }
 
     /**

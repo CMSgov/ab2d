@@ -5,6 +5,7 @@ import gov.cms.ab2d.fhir.IdentifierUtils;
 
 import java.util.*;
 
+import static gov.cms.ab2d.fhir.IdentifierUtils.CURRENCY_IDENTIFIER;
 import static gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable.*;
 
 public class BundleUtils {
@@ -20,9 +21,7 @@ public class BundleUtils {
     public static org.hl7.fhir.dstu3.model.Bundle createBundle(org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent ... bundleEntries) {
         var bundle = new org.hl7.fhir.dstu3.model.Bundle();
         var entries = bundle.getEntry();
-        for (org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent e : bundleEntries) {
-            entries.add(e);
-        }
+        Collections.addAll(entries, bundleEntries);
         return bundle;
     }
 
@@ -90,7 +89,7 @@ public class BundleUtils {
         org.hl7.fhir.dstu3.model.DateType dateType = new org.hl7.fhir.dstu3.model.DateType();
 
         Calendar calendar = Calendar.getInstance();
-        calendar.set(year, 1, 1, 0, 0, 0);
+        calendar.set(year, Calendar.FEBRUARY, 1, 0, 0, 0);
         dateType.setValue(calendar.getTime());
 
         return new org.hl7.fhir.dstu3.model.Extension()

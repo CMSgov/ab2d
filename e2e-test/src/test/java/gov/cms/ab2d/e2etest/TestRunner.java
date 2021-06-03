@@ -1,5 +1,6 @@
 package gov.cms.ab2d.e2etest;
 
+import gov.cms.ab2d.fhir.FhirVersion;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.impl.DefaultClaims;
@@ -14,6 +15,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.util.Pair;
@@ -42,6 +46,7 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -49,9 +54,12 @@ import java.util.zip.ZipInputStream;
 import static gov.cms.ab2d.common.service.JobService.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
 import static gov.cms.ab2d.e2etest.APIClient.PATIENT_EXPORT_PATH;
+import static gov.cms.ab2d.fhir.FhirVersion.R4;
+import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 // Unit tests here can be run from the IDE and will use LOCAL as the default, they can also be run from the TestLauncher
 // class to specify a custom environment
@@ -73,8 +81,6 @@ class TestRunner {
 
     private static APIClient apiClient;
 
-    private static String AB2D_API_URL;
-
     private static final int DELAY = 5;
 
     private static final int JOB_TIMEOUT = 300;
@@ -93,14 +99,14 @@ class TestRunner {
     private final Set<String> acceptableIdStrings = Set.of("carrier", "dme", "hha", "hospice", "inpatient", "outpatient", "snf");
 
     // Define default test contract
-    private String testContract = "Z0000";
+    private String testContractV1 = "Z0000";
+    private String testContractV2 = "Z0000";
 
     // Get all methods annotated with @Test and run them. This will only be called from TestLaucher when running against
     // an external environment, the regular tests that run as part of a build will be called like they normally would
     // during a build.
     public void runTests(String testContract) throws InvocationTargetException, IllegalAccessException {
         if (testContract != null && !testContract.isEmpty()) {
-            this.testContract = testContract;
             log.info("Running test with contract: " + testContract);
         }
         final Class annotation = Test.class;
@@ -125,7 +131,7 @@ class TestRunner {
 
         log.info("Expecting API to be available at port {}", apiPort);
 
-        if(environment.hasComposeFiles()) {
+        if (environment.hasComposeFiles()) {
             loadDockerComposeContainers(apiPort);
         }
 
@@ -135,7 +141,7 @@ class TestRunner {
     /**
      * Get the api port that is either a default or random based on the environment the end
      * to end tests are running in.
-     *
+     * <p>
      * Use a random port to prevent issues when CI jobs share a VM in Jenkins.
      *
      * @return port to expose api on
@@ -157,6 +163,7 @@ class TestRunner {
 
     /**
      * Load docker-compose containers to support e2e tests locally.
+     *
      * @param apiPort the port to expose the api on
      */
     private void loadDockerComposeContainers(int apiPort) {
@@ -175,7 +182,7 @@ class TestRunner {
                 .withScaledService("worker", 2)
                 .withScaledService("api", 1)
                 .withExposedService("api", DEFAULT_API_PORT, new HostPortWaitStrategy()
-                    .withStartupTimeout(Duration.of(200, SECONDS)))
+                        .withStartupTimeout(Duration.of(200, SECONDS)))
                 // Used to debug failures in tests by piping container logs to console
                 .withLogConsumer("worker", new Slf4jLogConsumer(workerLogger))
                 .withLogConsumer("api", new Slf4jLogConsumer(apiLogger));
@@ -185,6 +192,7 @@ class TestRunner {
 
     /**
      * Load api client by retrieving JSON web token using environment variables for keystore and password.
+     *
      * @param apiPort api port to connect client to, only used in local or CI environments
      */
     private void loadApiClientConfiguration(int apiPort) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
@@ -199,8 +207,6 @@ class TestRunner {
         if (environment == Environment.CI || environment == Environment.LOCAL) {
             baseUrl += ":" + apiPort;
         }
-
-        AB2D_API_URL = APIClient.buildAB2DAPIUrlV1(baseUrl);
 
         String oktaClientId = System.getenv("OKTA_CLIENT_ID");
         String oktaPassword = System.getenv("OKTA_CLIENT_PASSWORD");
@@ -245,7 +251,7 @@ class TestRunner {
         long start = System.currentTimeMillis();
         int status = 0;
         Set<Integer> statusesBetween0And100 = new HashSet<>();
-        while(status != 200 && status != 500) {
+        while (status != 200 && status != 500) {
             Thread.sleep(DELAY * 1000 + 2000);
 
             log.info("polling for status at url start {}", statusUrl);
@@ -259,14 +265,14 @@ class TestRunner {
             log.info("polling for status at url status {} {}", statusUrl, status);
 
             List<String> xProgressList = statusResponse.headers().map().get("x-progress");
-            if(xProgressList != null && !xProgressList.isEmpty()) {
+            if (xProgressList != null && !xProgressList.isEmpty()) {
                 String xProgress = xProgressList.iterator().next();
                 int xProgressValue = Integer.valueOf(xProgress.substring(0, xProgress.indexOf('%')));
                 if (xProgressValue > 0 && xProgressValue < 100) {
                     statusesBetween0And100.add(xProgressValue);
                 }
             }
-            if(System.currentTimeMillis() - start > (JOB_TIMEOUT * 1000)) {
+            if (System.currentTimeMillis() - start > (JOB_TIMEOUT * 1000)) {
                 break;
             }
         }
@@ -279,16 +285,19 @@ class TestRunner {
         }
     }
 
-    private Pair<String, JSONArray> verifyJsonFromStatusResponse(HttpResponse<String> statusResponse, String jobUuid, String contractNumber) throws JSONException {
+    private Pair<String, JSONArray> verifyJsonFromStatusResponse(HttpResponse<String> statusResponse, String jobUuid,
+                                                                 boolean hasContract, String contractNumber, FhirVersion version) throws JSONException {
         final JSONObject json = new JSONObject(statusResponse.body());
         Boolean requiresAccessToken = json.getBoolean("requiresAccessToken");
         assertEquals(true, requiresAccessToken);
         String request = json.getString("request");
-        String stem = AB2D_API_URL + (contractNumber == null ? "Patient/" : "Group/" + contractNumber + "/") + "$export?_outputFormat=";
+        String versionUrl = APIClient.buildAB2DAPIUrl(version);
+
+        String stem = versionUrl + (!hasContract ? "Patient/" : "Group/" + contractNumber + "/") + "$export?_outputFormat=";
         assertTrue(request.startsWith(stem));
         JSONArray errors = json.getJSONArray("error");
 
-        if(errors.length() > 0) {
+        if (errors.length() > 0) {
             System.out.println(errors);
         }
 
@@ -297,7 +306,7 @@ class TestRunner {
         JSONArray output = json.getJSONArray("output");
         JSONObject outputObject = output.getJSONObject(0);
         String url = outputObject.getString("url");
-        String filestem = AB2D_API_URL + "Job/" + jobUuid + "/file/" + testContract + "_0001.";
+        String filestem = versionUrl + "Job/" + jobUuid + "/file/" + contractNumber + "_0001.";
         assertTrue(url.equals(filestem + "ndjson") || (url.equals(filestem + "zip")));
         String type = outputObject.getString("type");
         assertEquals("ExplanationOfBenefit", type);
@@ -446,15 +455,15 @@ class TestRunner {
                 "procedure", "extension");
 
         Set<String> disallowedFields = Set.of("patientTarget", "created", "enterer",
-            "entererTarget", "insurer", "insurerTarget", "providerTarget", "organizationTarget", "referral",
-            "referralTarget", "facilityTarget", "claim", "claimTarget", "claimResponse", "claimResponseTarget",
-            "outcome", "disposition", "related", "prescription", "prescriptionTarget", "originalPrescription",
-            "originalPrescriptionTarget", "payee", "information", "precedence", "insurance", "accident",
-            "employmentImpacted", "hospitalization", "addItem", "totalCost", "unallocDeductable", "totalBenefit",
-            "payment", "form", "contained", "processNote", "benefitBalance");
+                "entererTarget", "insurer", "insurerTarget", "providerTarget", "organizationTarget", "referral",
+                "referralTarget", "facilityTarget", "claim", "claimTarget", "claimResponse", "claimResponseTarget",
+                "outcome", "disposition", "related", "prescription", "prescriptionTarget", "originalPrescription",
+                "originalPrescriptionTarget", "payee", "information", "precedence", "insurance", "accident",
+                "employmentImpacted", "hospitalization", "addItem", "totalCost", "unallocDeductable", "totalBenefit",
+                "payment", "form", "contained", "processNote", "benefitBalance");
 
         JSONArray obj = jsonObject.names();
-        for (int i = 0; i< obj.length(); i++) {
+        for (int i = 0; i < obj.length(); i++) {
             try {
                 String val = (String) obj.get(i);
                 if (!allowedFields.contains(val)) {
@@ -481,7 +490,7 @@ class TestRunner {
         assertEquals("gzip", contentEncoding);
 
         String downloadString;
-        try(GZIPInputStream gzipInputStream = new GZIPInputStream(downloadResponse.body())) {
+        try (GZIPInputStream gzipInputStream = new GZIPInputStream(downloadResponse.body())) {
             downloadString = IOUtils.toString(gzipInputStream, Charset.defaultCharset());
         }
 
@@ -493,7 +502,7 @@ class TestRunner {
         ZipInputStream zipIn = new ZipInputStream(downloadResponse.body());
         ZipEntry entry = zipIn.getNextEntry();
         StringBuilder downloadString = new StringBuilder();
-        while(entry != null) {
+        while (entry != null) {
             downloadString.append(extractZipFileData(entry, zipIn));
             zipIn.closeEntry();
             entry = zipIn.getNextEntry();
@@ -512,7 +521,7 @@ class TestRunner {
     }
 
     private Pair<String, JSONArray> performStatusRequests(List<String> contentLocationList, boolean isContract,
-                                                         String contractNumber) throws JSONException, IOException, InterruptedException {
+                                                          String contractNumber, FhirVersion version) throws JSONException, IOException, InterruptedException {
         HttpResponse<String> statusResponse = apiClient.statusRequest(contentLocationList.iterator().next());
 
         assertEquals(202, statusResponse.statusCode());
@@ -537,106 +546,114 @@ class TestRunner {
         }
         assertEquals(200, statusResponseAgain.statusCode());
 
-        return verifyJsonFromStatusResponse(statusResponseAgain, jobUuid, isContract ? contractNumber : null);
+        return verifyJsonFromStatusResponse(statusResponseAgain, jobUuid, isContract, contractNumber, version);
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("getVersionAndContract")
     @Order(1)
-    void runSystemWideExport() throws IOException, InterruptedException, JSONException {
+    void runSystemWideExport(FhirVersion version, String contract) throws IOException, InterruptedException, JSONException {
         System.out.println("Starting test 1");
-        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
+        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null, version);
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, testContract);
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, contract, version);
         assertNotNull(downloadDetails);
         downloadFile(downloadDetails, null);
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("getVersionAndContract")
     @Order(2)
-    void runSystemWideExportSince() throws IOException, InterruptedException, JSONException {
+    void runSystemWideExportSince(FhirVersion version, String contract) throws IOException, InterruptedException, JSONException {
         System.out.println("Starting test 2");
-        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, earliest);
+        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, earliest, version);
         log.info("run system wide export since {}", exportResponse);
         System.out.println(earliest);
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, testContract);
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, contract, version);
         assertNotNull(downloadDetails);
         downloadFile(downloadDetails, earliest);
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("getVersion")
     @Order(3)
-    void runErrorSince() throws IOException, InterruptedException {
+    void runErrorSince(FhirVersion version) throws IOException, InterruptedException {
         System.out.println("Starting test 3");
         OffsetDateTime timeBeforeEarliest = earliest.minus(1, ChronoUnit.MINUTES);
-        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, timeBeforeEarliest);
+        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, timeBeforeEarliest, version);
         assertEquals(400, exportResponse.statusCode());
 
         OffsetDateTime timeAfterNow = OffsetDateTime.now().plus(1, ChronoUnit.MINUTES);
-        HttpResponse<String> exportResponse2 = apiClient.exportRequest(FHIR_TYPE, timeBeforeEarliest);
+        HttpResponse<String> exportResponse2 = apiClient.exportRequest(FHIR_TYPE, timeBeforeEarliest, version);
         assertEquals(400, exportResponse2.statusCode());
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("getVersion")
     @Order(4)
-    void runSystemWideZipExport() throws IOException, InterruptedException, JSONException {
+    void runSystemWideZipExport(FhirVersion version) throws IOException, InterruptedException, JSONException {
         System.out.println("Starting test 4");
-        HttpResponse<String> exportResponse = apiClient.exportRequest(ZIPFORMAT, null);
+        HttpResponse<String> exportResponse = apiClient.exportRequest(ZIPFORMAT, null, version);
         log.info("run system wide zip export {}", exportResponse);
         assertEquals(400, exportResponse.statusCode());
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("getVersionAndContract")
     @Order(5)
-    void runContractNumberExport() throws IOException, InterruptedException, JSONException {
+    void runContractNumberExport(FhirVersion version, String contract) throws IOException, InterruptedException, JSONException {
         System.out.println("Starting test 5");
-        HttpResponse<String> exportResponse = apiClient.exportByContractRequest(testContract, FHIR_TYPE, null);
+        HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contract, FHIR_TYPE, null, version);
         log.info("run contract number export {}", exportResponse);
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, true, testContract);
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, true, contract, version);
         assertNotNull(downloadDetails);
         downloadFile(downloadDetails, null);
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("getVersionAndContract")
     @Order(6)
-    void runContractNumberZipExport() throws IOException, InterruptedException, JSONException {
+    void runContractNumberZipExport(FhirVersion version, String contract) throws IOException, InterruptedException, JSONException {
         System.out.println("Starting test 6");
-        HttpResponse<String> exportResponse = apiClient.exportByContractRequest(testContract, ZIPFORMAT, null);
+        HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contract, ZIPFORMAT, null, version);
         log.info("run contract number zip export {}", exportResponse);
         assertEquals(400, exportResponse.statusCode());
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("getVersion")
     @Order(7)
-    void testDelete() throws IOException, InterruptedException {
+    void testDelete(FhirVersion version) throws IOException, InterruptedException {
         System.out.println("Starting test 7");
-        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
+        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null, version);
 
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
         String jobUUid = JobUtil.getJobUuid(contentLocationList.iterator().next());
 
-        HttpResponse<String> deleteResponse = apiClient.cancelJobRequest(jobUUid);
+        HttpResponse<String> deleteResponse = apiClient.cancelJobRequest(jobUUid, version);
         assertEquals(202, deleteResponse.statusCode());
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("getVersionAndContract")
     @Order(8)
-    void testClientCannotDownloadOtherClientsJob() throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
+    void testClientCannotDownloadOtherClientsJob(FhirVersion version, String contract) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
         System.out.println("Starting test 8");
-        HttpResponse<String> exportResponse = apiClient.exportByContractRequest(testContract, FHIR_TYPE, null);
+        HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contract, FHIR_TYPE, null, version);
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
-        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, true, testContract);
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, true, contract, version);
 
         APIClient secondAPIClient = createSecondClient();
 
@@ -644,11 +661,12 @@ class TestRunner {
         assertEquals(403, downloadResponse.statusCode());
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("getVersion")
     @Order(9)
-    void testClientCannotDeleteOtherClientsJob() throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
+    void testClientCannotDeleteOtherClientsJob(FhirVersion version) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
         System.out.println("Starting test 9");
-        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
+        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null, version);
 
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
@@ -657,19 +675,20 @@ class TestRunner {
 
         APIClient secondAPIClient = createSecondClient();
 
-        HttpResponse<String> deleteResponse = secondAPIClient.cancelJobRequest(jobUUid);
+        HttpResponse<String> deleteResponse = secondAPIClient.cancelJobRequest(jobUUid, version);
         assertEquals(403, deleteResponse.statusCode());
 
         // Cleanup
-        HttpResponse<String> secondDeleteResponse = apiClient.cancelJobRequest(jobUUid);
+        HttpResponse<String> secondDeleteResponse = apiClient.cancelJobRequest(jobUUid, version);
         assertEquals(202, secondDeleteResponse.statusCode());
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("getVersion")
     @Order(10)
-    void testClientCannotCheckStatusOtherClientsJob() throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
+    void testClientCannotCheckStatusOtherClientsJob(FhirVersion version) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
         System.out.println("Starting test 10");
-        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null);
+        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null, version);
 
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
@@ -681,7 +700,7 @@ class TestRunner {
 
         // Cleanup
         String jobUUid = JobUtil.getJobUuid(contentLocationList.iterator().next());
-        HttpResponse<String> secondDeleteResponse = apiClient.cancelJobRequest(jobUUid);
+        HttpResponse<String> secondDeleteResponse = apiClient.cancelJobRequest(jobUUid, version);
         assertEquals(202, secondDeleteResponse.statusCode());
     }
 
@@ -694,12 +713,13 @@ class TestRunner {
         return new APIClient(baseUrl, oktaUrl, oktaClientId, oktaPassword);
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("getVersion")
     @Order(11)
-    void testClientCannotMakeRequestWithoutToken() throws IOException, InterruptedException {
+    void testClientCannotMakeRequestWithoutToken(FhirVersion version) throws IOException, InterruptedException {
         System.out.println("Starting test 11");
         HttpRequest exportRequest = HttpRequest.newBuilder()
-                .uri(URI.create(AB2D_API_URL + PATIENT_EXPORT_PATH))
+                .uri(URI.create(APIClient.buildAB2DAPIUrl(version) + PATIENT_EXPORT_PATH))
                 .timeout(Duration.ofSeconds(30))
                 .header("Content-Type", "application/json")
                 .GET()
@@ -710,9 +730,10 @@ class TestRunner {
         assertEquals(401, response.statusCode());
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("getVersion")
     @Order(12)
-    void testClientCannotMakeRequestWithSelfSignedToken() throws IOException, InterruptedException, JSONException {
+    void testClientCannotMakeRequestWithSelfSignedToken(FhirVersion version) throws IOException, InterruptedException, JSONException {
         System.out.println("Starting test 12");
         String clientSecret = "wefikjweglkhjwelgkjweglkwegwegewg";
         SecretKey sharedSecret = Keys.hmacShaKeyFor(clientSecret.getBytes(StandardCharsets.UTF_8));
@@ -735,7 +756,7 @@ class TestRunner {
                 .compact();
 
         HttpRequest exportRequest = HttpRequest.newBuilder()
-                .uri(URI.create(AB2D_API_URL + PATIENT_EXPORT_PATH))
+                .uri(URI.create(APIClient.buildAB2DAPIUrl(version) + PATIENT_EXPORT_PATH))
                 .timeout(Duration.ofSeconds(30))
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + jwtStr)
@@ -747,9 +768,10 @@ class TestRunner {
         assertEquals(403, response.statusCode());
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("getVersion")
     @Order(13)
-    void testClientCannotMakeRequestWithNullClaims() throws IOException, InterruptedException, JSONException {
+    void testClientCannotMakeRequestWithNullClaims(FhirVersion version) throws IOException, InterruptedException, JSONException {
         System.out.println("Starting test 13");
         String clientSecret = "wefikjweglkhjwelgkjweglkwegwegewg";
         SecretKey sharedSecret = Keys.hmacShaKeyFor(clientSecret.getBytes(StandardCharsets.UTF_8));
@@ -765,7 +787,7 @@ class TestRunner {
                 .compact();
 
         HttpRequest exportRequest = HttpRequest.newBuilder()
-                .uri(URI.create(AB2D_API_URL + PATIENT_EXPORT_PATH))
+                .uri(URI.create(APIClient.buildAB2DAPIUrl(version) + PATIENT_EXPORT_PATH))
                 .timeout(Duration.ofSeconds(30))
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + jwtStr)
@@ -777,27 +799,29 @@ class TestRunner {
         assertEquals(403, response.statusCode());
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("getVersion")
     @Order(14)
-    void testBadQueryParameterResource() throws IOException, InterruptedException {
+    void testBadQueryParameterResource(FhirVersion version) throws IOException, InterruptedException {
         System.out.println("Starting test 14");
-        var params = new HashMap<>(){{
+        var params = new HashMap<>() {{
             put("_type", "BadParam");
         }};
-        HttpResponse<String> exportResponse = apiClient.exportRequest(params);
+        HttpResponse<String> exportResponse = apiClient.exportRequest(params, version);
 
         log.info("bad query parameter resource {}", exportResponse);
         assertEquals(400, exportResponse.statusCode());
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("getVersion")
     @Order(15)
-    void testBadQueryParameterOutputFormat() throws IOException, InterruptedException {
+    void testBadQueryParameterOutputFormat(FhirVersion version) throws IOException, InterruptedException {
         System.out.println("Starting test 15");
-        var params = new HashMap<>(){{
+        var params = new HashMap<>() {{
             put("_outputFormat", "BadParam");
         }};
-        HttpResponse<String> exportResponse = apiClient.exportRequest(params);
+        HttpResponse<String> exportResponse = apiClient.exportRequest(params, version);
 
         log.info("bad query output format {}", exportResponse);
 
@@ -811,5 +835,27 @@ class TestRunner {
         HttpResponse<String> healthCheckResponse = apiClient.healthCheck();
 
         assertEquals(200, healthCheckResponse.statusCode());
+    }
+
+    /**
+     * Returns the stream of FHIR version and contract to use for that version
+     *
+     * @return the stream of arguments
+     */
+    private Stream<Arguments> getVersionAndContract() {
+        return Stream.of(
+                arguments(STU3, testContractV1) /*, arguments(R4, testContractV2) */
+        );
+    }
+
+    /**
+     * Return the different versions of FHIR to test against
+     *
+     * @return the stream of FHIR versions
+     */
+    private Stream<Arguments> getVersion() {
+        return Stream.of(
+                arguments(STU3) /*, arguments(R4) */
+        );
     }
 }
