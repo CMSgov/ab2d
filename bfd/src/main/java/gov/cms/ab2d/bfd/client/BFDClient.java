@@ -24,6 +24,8 @@ public interface BFDClient {
      */
     IBaseBundle requestPartDEnrolleesFromServer(FhirVersion version, String contractNumber, int month);
 
+    IBaseBundle requestPartDEnrolleesFromServer(FhirVersion version, String contractNumber, int month, int year);
+
     IBaseConformance capabilityStatement(FhirVersion version);
 
     ThreadLocal<String> BFD_BULK_JOB_ID = new ThreadLocal<>();

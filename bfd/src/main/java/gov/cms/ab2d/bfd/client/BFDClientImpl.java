@@ -30,6 +30,7 @@ import java.time.OffsetDateTime;
 public class BFDClientImpl implements BFDClient {
 
     public static final String PTDCNTRCT_URL_PREFIX = "https://bluebutton.cms.gov/resources/variables/ptdcntrct";
+    public static final String YEAR_URL_PREFIX = "https://bluebutton.cms.gov/resources/variables/rfrnc_yr";
 
     @Value("${bfd.eob.pagesize}")
     private int pageSize;
@@ -147,13 +148,13 @@ public class BFDClientImpl implements BFDClient {
     )
     public IBaseBundle requestPartDEnrolleesFromServer(FhirVersion version, String contractNumber, int month) {
         var monthParameter = createMonthParameter(month);
-        var theCriterion = new TokenClientParam("_has:Coverage.extension")
+        var monthCriterion = new TokenClientParam("_has:Coverage.extension")
                 .exactly()
                 .systemAndIdentifier(monthParameter, contractNumber);
 
         return bfdClientVersions.getClient(version).search()
                 .forResource(version.getPatientClass())
-                .where(theCriterion)
+                .where(monthCriterion)
                 .withAdditionalHeader(BFDClient.BFD_HDR_BULK_CLIENTID, BFDClient.BFD_CLIENT_ID)
                 .withAdditionalHeader(BFDClient.BFD_HDR_BULK_JOBID, getJobId())
                 .withAdditionalHeader("IncludeIdentifiers", "mbi")
@@ -161,6 +162,39 @@ public class BFDClientImpl implements BFDClient {
                 .returnBundle(version.getBundleClass())
                 .encodedJson()
                 .execute();
+    }
+
+    @Override
+    @Retryable(
+            maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",
+            backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
+            exclude = { ResourceNotFoundException.class, InvalidRequestException.class }
+    )
+    public IBaseBundle requestPartDEnrolleesFromServer(FhirVersion version, String contractNumber, int month, int year) {
+        var monthParameter = createMonthParameter(month);
+        var monthCriterion = new TokenClientParam("_has:Coverage.extension")
+                .exactly()
+                .systemAndIdentifier(monthParameter, contractNumber);
+        var yearCriterion = new TokenClientParam("_has:Coverage.rfrncyr")
+                .exactly()
+                .systemAndIdentifier(YEAR_URL_PREFIX, createYearParameter(year));
+
+        return bfdClientVersions.getClient(version).search()
+                .forResource(version.getPatientClass())
+                .where(monthCriterion)
+                .and(yearCriterion)
+                .withAdditionalHeader(BFDClient.BFD_HDR_BULK_CLIENTID, BFDClient.BFD_CLIENT_ID)
+                .withAdditionalHeader(BFDClient.BFD_HDR_BULK_JOBID, getJobId())
+                .withAdditionalHeader("IncludeIdentifiers", "mbi")
+                .count(contractToBenePageSize)
+                .returnBundle(version.getBundleClass())
+                .encodedJson()
+                .execute();
+    }
+
+    // Pad year to expected four digits
+    private String createYearParameter(int year) {
+        return StringUtils.leftPad("" + year, 4, '0');
     }
 
     @Override

@@ -103,8 +103,8 @@ public class ApiCommon {
         }
     }
 
-    public ResponseEntity<Void> returnStatusForJobCreation(Job job, String requestId, HttpServletRequest request) {
-        String statusURL = getUrl(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status", request);
+    public ResponseEntity<Void> returnStatusForJobCreation(Job job, String apiPrefix, String requestId, HttpServletRequest request) {
+        String statusURL = getUrl(apiPrefix + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status", request);
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.add(CONTENT_LOCATION, statusURL);
         eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), job.getJobUuid(), HttpStatus.ACCEPTED, "Job Created",

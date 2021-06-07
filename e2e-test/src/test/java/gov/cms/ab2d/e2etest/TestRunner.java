@@ -329,7 +329,8 @@ class TestRunner {
 
             assertTrue(validFields(jsonObject));
             assertEquals("ExplanationOfBenefit", jsonObject.getString("resourceType"));
-            assertEquals(0, jsonObject.getInt("precedence"));
+            String status = jsonObject.getString("status");
+            assertTrue(List.of("active", "cancelled").contains(status));
             String idString = jsonObject.getString("id");
 
             boolean found = false;
@@ -553,7 +554,7 @@ class TestRunner {
     @MethodSource("getVersionAndContract")
     @Order(1)
     void runSystemWideExport(FhirVersion version, String contract) throws IOException, InterruptedException, JSONException {
-        System.out.println("Starting test 1");
+        System.out.println("Starting test 1 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null, version);
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
@@ -567,7 +568,7 @@ class TestRunner {
     @MethodSource("getVersionAndContract")
     @Order(2)
     void runSystemWideExportSince(FhirVersion version, String contract) throws IOException, InterruptedException, JSONException {
-        System.out.println("Starting test 2");
+        System.out.println("Starting test 2 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, earliest, version);
         log.info("run system wide export since {}", exportResponse);
         System.out.println(earliest);
@@ -583,7 +584,7 @@ class TestRunner {
     @MethodSource("getVersion")
     @Order(3)
     void runErrorSince(FhirVersion version) throws IOException, InterruptedException {
-        System.out.println("Starting test 3");
+        System.out.println("Starting test 3 - " + version.toString());
         OffsetDateTime timeBeforeEarliest = earliest.minus(1, ChronoUnit.MINUTES);
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, timeBeforeEarliest, version);
         assertEquals(400, exportResponse.statusCode());
@@ -597,7 +598,7 @@ class TestRunner {
     @MethodSource("getVersion")
     @Order(4)
     void runSystemWideZipExport(FhirVersion version) throws IOException, InterruptedException, JSONException {
-        System.out.println("Starting test 4");
+        System.out.println("Starting test 4 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportRequest(ZIPFORMAT, null, version);
         log.info("run system wide zip export {}", exportResponse);
         assertEquals(400, exportResponse.statusCode());
@@ -607,7 +608,7 @@ class TestRunner {
     @MethodSource("getVersionAndContract")
     @Order(5)
     void runContractNumberExport(FhirVersion version, String contract) throws IOException, InterruptedException, JSONException {
-        System.out.println("Starting test 5");
+        System.out.println("Starting test 5 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contract, FHIR_TYPE, null, version);
         log.info("run contract number export {}", exportResponse);
         assertEquals(202, exportResponse.statusCode());
@@ -622,7 +623,7 @@ class TestRunner {
     @MethodSource("getVersionAndContract")
     @Order(6)
     void runContractNumberZipExport(FhirVersion version, String contract) throws IOException, InterruptedException, JSONException {
-        System.out.println("Starting test 6");
+        System.out.println("Starting test 6 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contract, ZIPFORMAT, null, version);
         log.info("run contract number zip export {}", exportResponse);
         assertEquals(400, exportResponse.statusCode());
@@ -632,7 +633,7 @@ class TestRunner {
     @MethodSource("getVersion")
     @Order(7)
     void testDelete(FhirVersion version) throws IOException, InterruptedException {
-        System.out.println("Starting test 7");
+        System.out.println("Starting test 7 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null, version);
 
         assertEquals(202, exportResponse.statusCode());
@@ -648,7 +649,7 @@ class TestRunner {
     @MethodSource("getVersionAndContract")
     @Order(8)
     void testClientCannotDownloadOtherClientsJob(FhirVersion version, String contract) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
-        System.out.println("Starting test 8");
+        System.out.println("Starting test 8 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contract, FHIR_TYPE, null, version);
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
@@ -665,7 +666,7 @@ class TestRunner {
     @MethodSource("getVersion")
     @Order(9)
     void testClientCannotDeleteOtherClientsJob(FhirVersion version) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
-        System.out.println("Starting test 9");
+        System.out.println("Starting test 9 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null, version);
 
         assertEquals(202, exportResponse.statusCode());
@@ -687,7 +688,7 @@ class TestRunner {
     @MethodSource("getVersion")
     @Order(10)
     void testClientCannotCheckStatusOtherClientsJob(FhirVersion version) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
-        System.out.println("Starting test 10");
+        System.out.println("Starting test 10 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null, version);
 
         assertEquals(202, exportResponse.statusCode());
@@ -717,7 +718,7 @@ class TestRunner {
     @MethodSource("getVersion")
     @Order(11)
     void testClientCannotMakeRequestWithoutToken(FhirVersion version) throws IOException, InterruptedException {
-        System.out.println("Starting test 11");
+        System.out.println("Starting test 11 - " + version.toString());
         HttpRequest exportRequest = HttpRequest.newBuilder()
                 .uri(URI.create(APIClient.buildAB2DAPIUrl(version) + PATIENT_EXPORT_PATH))
                 .timeout(Duration.ofSeconds(30))
@@ -734,7 +735,7 @@ class TestRunner {
     @MethodSource("getVersion")
     @Order(12)
     void testClientCannotMakeRequestWithSelfSignedToken(FhirVersion version) throws IOException, InterruptedException, JSONException {
-        System.out.println("Starting test 12");
+        System.out.println("Starting test 12 - " + version.toString());
         String clientSecret = "wefikjweglkhjwelgkjweglkwegwegewg";
         SecretKey sharedSecret = Keys.hmacShaKeyFor(clientSecret.getBytes(StandardCharsets.UTF_8));
         Instant now = Instant.now();
@@ -772,7 +773,7 @@ class TestRunner {
     @MethodSource("getVersion")
     @Order(13)
     void testClientCannotMakeRequestWithNullClaims(FhirVersion version) throws IOException, InterruptedException, JSONException {
-        System.out.println("Starting test 13");
+        System.out.println("Starting test 13 - " + version.toString());
         String clientSecret = "wefikjweglkhjwelgkjweglkwegwegewg";
         SecretKey sharedSecret = Keys.hmacShaKeyFor(clientSecret.getBytes(StandardCharsets.UTF_8));
         Instant now = Instant.now();
@@ -803,7 +804,7 @@ class TestRunner {
     @MethodSource("getVersion")
     @Order(14)
     void testBadQueryParameterResource(FhirVersion version) throws IOException, InterruptedException {
-        System.out.println("Starting test 14");
+        System.out.println("Starting test 14 - " + version.toString());
         var params = new HashMap<>() {{
             put("_type", "BadParam");
         }};
@@ -817,7 +818,7 @@ class TestRunner {
     @MethodSource("getVersion")
     @Order(15)
     void testBadQueryParameterOutputFormat(FhirVersion version) throws IOException, InterruptedException {
-        System.out.println("Starting test 15");
+        System.out.println("Starting test 15 - " + version.toString());
         var params = new HashMap<>() {{
             put("_outputFormat", "BadParam");
         }};
@@ -843,9 +844,11 @@ class TestRunner {
      * @return the stream of arguments
      */
     private Stream<Arguments> getVersionAndContract() {
-        return Stream.of(
-                arguments(STU3, testContractV1) /*, arguments(R4, testContractV2) */
-        );
+        if (v2Enabled()) {
+            return Stream.of(arguments(STU3, testContractV1),arguments(R4, testContractV2));
+        } else {
+            return Stream.of(arguments(STU3, testContractV1));
+        }
     }
 
     /**
@@ -853,9 +856,19 @@ class TestRunner {
      *
      * @return the stream of FHIR versions
      */
-    private Stream<Arguments> getVersion() {
-        return Stream.of(
-                arguments(STU3) /*, arguments(R4) */
-        );
+    static Stream<Arguments> getVersion() {
+        if (v2Enabled()) {
+            return Stream.of(arguments(STU3), arguments(R4));
+        } else {
+            return Stream.of(arguments(STU3));
+        }
+    }
+
+    private static boolean v2Enabled() {
+        String v2Enabled = System.getenv("AB2D_V2_ENABLED");
+        if (v2Enabled != null && v2Enabled.equalsIgnoreCase("true")) {
+            return true;
+        }
+        return false;
     }
 }
