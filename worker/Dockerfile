@@ -1,4 +1,4 @@
-FROM openjdk:13
+FROM adoptopenjdk:13-jre-openj9
 WORKDIR /usr/src/ab2d-worker
 ADD target /usr/src/ab2d-worker
 
