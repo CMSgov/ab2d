@@ -36,6 +36,7 @@ public class SwaggerConfig {
 
     @Bean
     public Docket apiV1() {
+        System.out.println("\n\n*******************************\nV2 Enabled: " + System.getenv("AB2D_V2_ENABLED") + "\n*******************************\n\n");
         List<SecurityScheme> auth = List.of(apiKey());
         return new Docket(DocumentationType.OAS_30)
                 .select()
