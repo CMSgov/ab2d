@@ -84,18 +84,18 @@ public class AutoScalingServiceTest {
         }
         RoundRobinBlockingQueue.CATEGORY_HOLDER.remove();
 
-        PropertiesDTO max = new PropertiesDTO();
-        max.setKey(PCP_MAX_POOL_SIZE);
-        max.setValue("" + 4);
-        propertiesService.updateProperties(List.of(max));
-
         Thread.sleep(1000);
 
         // Starts at three will scale once there is work in queue
         assertEquals(3, patientProcessorThreadPool.getMaxPoolSize());
         assertEquals(3, patientProcessorThreadPool.getCorePoolSize());
 
-        Thread.sleep(7000);
+        PropertiesDTO max = new PropertiesDTO();
+        max.setKey(PCP_MAX_POOL_SIZE);
+        max.setValue("" + 4);
+        propertiesService.updateProperties(List.of(max));
+
+        Thread.sleep(10000);
 
         assertNotEquals(3, patientProcessorThreadPool.getMaxPoolSize());
 
@@ -173,7 +173,7 @@ public class AutoScalingServiceTest {
         // We need to make sure it does not grow beyond the max though. Let's sleep for a bit
         // and verify the size is still at the same max value.
         Thread.sleep(8000);
-        assertEquals(patientProcessorThreadPool.getMaxPoolSize(), MAX_POOL_SIZE);
+        assertEquals(MAX_POOL_SIZE, patientProcessorThreadPool.getMaxPoolSize());
 
         // Clean up.
         futures.forEach(future -> future.cancel(true));
@@ -181,7 +181,7 @@ public class AutoScalingServiceTest {
         // Sleep for a bit to let auto scaling run another cycle. The max pool size should be
         // reverted
         // back to the original value after that.
-        Thread.sleep(8000);
+        Thread.sleep(10000);
         assertEquals(MIN_POOL_SIZE, patientProcessorThreadPool.getMaxPoolSize());
         assertEquals(0, patientProcessorThreadPool.getThreadPoolExecutor().getActiveCount());
     }
