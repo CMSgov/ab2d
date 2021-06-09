@@ -1,6 +1,7 @@
 FROM adoptopenjdk:13-jre-openj9
 WORKDIR /usr/src/ab2d-worker
-ADD target /usr/src/ab2d-worker
+ADD target/worker-*-SNAPSHOT.jar /usr/src/ab2d-worker/.
+ADD target/newrelic/newrelic.jar /usr/src/ab2d-worker/newrelic/.
 
 # When running in production with one container per EC2 instance these values are acceptable
 ENV JVM_INITIAL_RAM=40.0
