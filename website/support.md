@@ -44,8 +44,52 @@ active-nav: support-nav
     <div class="header-title mb-3 mt-5">
       Frequently Asked Questions
     </div>
+    
 
     <div id="accordion-support" class="accordion-white-bg">
+      <div class="card">
+        <div class="card-header" id="headingEighteen" data-toggle="collapse" data-target="#collapseEighteen"
+          aria-expanded="false" aria-controls="collapseSEighteen">
+          <div class="mb-0 card-header-h5">
+            What can I find in your production documentation, and where can I find it?
+          </div>
+          <i class="material-icons card-expand">expand_more</i>
+        </div>
+        <div id="collapseEighteen" class="collapse" aria-labelledby="headingEighteen">
+          <div class="card-body">
+            <p>
+              The production documentation can be <a href="https://github.com/CMSgov/ab2d-pdp-documentation"
+                rel="noopener noreferrer" target="_blank">found here</a>. This documentation can be helpful in answering
+              the following
+              questions:
+            </p>
+
+            <p>
+              <strong>Accessing the production environment:</strong>
+            <ul>
+              <li>How do I prepare to start pulling in data from production?</li>
+              <li>How do I verify that my setup can successfully connect to the API?</li>
+            </ul>
+            </p>
+            <p>
+              <strong>Support:</strong>
+            <ul>
+              <li>Where can I find information on how to process EOBs?</li>
+              <li>Where can I find information on the production errors I’m seeing?</li>
+            </ul>
+            </p>
+            <p>
+              <strong>Understanding the Data:</strong>
+            <ul>
+              <li>Where can I find information on the non-standard fields produced by AB2D?</li>
+              <li>Where can I find information on handling updated or canceled claims?</li>
+              <li>Where can I find information on uniquely identifying a claim?</li>
+              <li>Where can I find information on how patients are identified in the claims data?</li>
+            </ul>
+            </p>
+          </div>
+        </div>
+      </div>
       <div class="card">
         <div class="card-header" id="headingOne" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false"
           aria-controls="collapseOne">
@@ -362,49 +406,7 @@ active-nav: support-nav
           </div>
         </div>
       </div>
-      <div class="card">
-        <div class="card-header" id="headingEighteen" data-toggle="collapse" data-target="#collapseEighteen"
-          aria-expanded="false" aria-controls="collapseSEighteen">
-          <div class="mb-0 card-header-h5">
-            What can I find in your production documentation, and where can I find it?
-          </div>
-          <i class="material-icons card-expand">expand_more</i>
-        </div>
-        <div id="collapseEighteen" class="collapse" aria-labelledby="headingEighteen">
-          <div class="card-body">
-            <p>
-              The production documentation can be <a href="https://github.com/CMSgov/ab2d-pdp-documentation"
-                rel="noopener noreferrer" target="_blank">found here</a>. This documentation can be helpful in answering
-              the following
-              questions:
-            </p>
-
-            <p>
-              <strong>Accessing the production environment:</strong>
-            <ul>
-              <li>How do I prepare to start pulling in data from production?</li>
-              <li>How do I verify that my setup can successfully connect to the API?</li>
-            </ul>
-            </p>
-            <p>
-              <strong>Support:</strong>
-            <ul>
-              <li>Where can I find information on how to process EOBs?</li>
-              <li>Where can I find information on the production errors I’m seeing?</li>
-            </ul>
-            </p>
-            <p>
-              <strong>Understanding the Data:</strong>
-            <ul>
-              <li>Where can I find information on the non-standard fields produced by AB2D?</li>
-              <li>Where can I find information on handling updated or canceled claims?</li>
-              <li>Where can I find information on uniquely identifying a claim?</li>
-              <li>Where can I find information on how patients are identified in the claims data?</li>
-            </ul>
-            </p>
-          </div>
-        </div>
-      </div>
+     
     </div>
   </div>
 </section>
