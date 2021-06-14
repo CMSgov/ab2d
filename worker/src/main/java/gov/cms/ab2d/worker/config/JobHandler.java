@@ -73,6 +73,10 @@ public class JobHandler implements MessageHandler {
                     if (job.getStatus() == JobStatus.IN_PROGRESS) {
                         log.info("{} job has been started", jobId);
                         break;
+                    } else if (job.getStatus() == JobStatus.CANCELLED) {
+                        log.info("{} job has been cancelled", jobId);
+                    } else if (job.getStatus() == JobStatus.FAILED) {
+                        log.info("{} job has failed to start", jobId);
                     }
 
                 } catch (ResourceNotFoundException rnfe) {

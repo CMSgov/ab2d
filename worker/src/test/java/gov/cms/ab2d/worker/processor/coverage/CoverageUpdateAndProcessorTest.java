@@ -530,6 +530,33 @@ class CoverageUpdateAndProcessorTest {
         assertEquals(0, twoThreads.getActiveCount());
     }
 
+    @DisplayName("Coverage availability throws exception after max attempts retries")
+    @Test
+    void coverageAvailabilityLimitsRetries() {
+
+        Job job = new Job();
+        job.setCreatedAt(OffsetDateTime.now());
+        job.setContract(contract);
+
+        try {
+            Thread.sleep(1000);
+
+            january.setStatus(JobStatus.FAILED);
+            coveragePeriodRepo.saveAndFlush(january);
+
+            february.setStatus(JobStatus.FAILED);
+            coveragePeriodRepo.saveAndFlush(february);
+
+            driver.isCoverageAvailable(job);
+
+            fail("Coverage driver method should throw an exception");
+        } catch (CoverageDriverException coverageDriverException) {
+            // passed
+        } catch (InterruptedException interruptedException) {
+            fail("could not complete test");
+        }
+    }
+
     private CoverageSearchEvent createEvent(CoveragePeriod period, JobStatus status, OffsetDateTime created) {
         CoverageSearchEvent event = new CoverageSearchEvent();
         event.setCoveragePeriod(period);

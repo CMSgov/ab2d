@@ -14,6 +14,7 @@ import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
+import gov.cms.ab2d.worker.processor.coverage.CoverageDriverException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -125,6 +126,30 @@ class JobPreProcessorIntegrationTest {
                 () -> cut.preprocess(inProgress.getJobUuid()));
 
         assertEquals("Job S0000 is not in SUBMITTED status", exceptionThrown.getMessage());
+    }
+
+    @Test
+    @DisplayName("When coverage fails, a job should fail")
+    void whenCoverageFails_ThenJobShouldFail() throws InterruptedException {
+        when(coverageDriver.isCoverageAvailable(any(Job.class))).thenThrow(new CoverageDriverException("test"));
+
+        var processedJob = cut.preprocess(job.getJobUuid());
+        assertEquals(JobStatus.FAILED, processedJob.getStatus());
+
+        List<LoggableEvent> jobStatusChange = loggerEventRepository.load(JobStatusChangeEvent.class);
+        assertEquals(1, jobStatusChange.size());
+        JobStatusChangeEvent event = (JobStatusChangeEvent) jobStatusChange.get(0);
+        assertEquals("SUBMITTED", event.getOldStatus());
+        assertEquals("FAILED", event.getNewStatus());
+
+        assertTrue(UtilMethods.allEmpty(
+                loggerEventRepository.load(ApiRequestEvent.class),
+                loggerEventRepository.load(ApiResponseEvent.class),
+                loggerEventRepository.load(ReloadEvent.class),
+                loggerEventRepository.load(ContractBeneSearchEvent.class),
+                loggerEventRepository.load(ErrorEvent.class),
+                loggerEventRepository.load(FileEvent.class)));
+        loggerEventRepository.delete();
     }
 
     private PdpClient createClient() {
