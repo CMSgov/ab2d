@@ -5,6 +5,8 @@ import gov.cms.ab2d.common.util.fhir.FhirUtils;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
+import org.hl7.fhir.dstu3.model.Coding;
+import org.hl7.fhir.dstu3.model.Extension;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -75,6 +77,69 @@ public class AddExtensionTest {
         assertNotNull(id);
         assertEquals(MBI_ID, id.getSystem());
         assertEquals(mbi, id.getValue());
+    }
+
+    @Test
+    void testAddNullMbiIdToEobs() {
+        String beneId = "1234";
+
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit b = new org.hl7.fhir.dstu3.model.ExplanationOfBenefit();
+        String patientId = "Patient/" + beneId;
+        org.hl7.fhir.dstu3.model.Reference ref = new org.hl7.fhir.dstu3.model.Reference();
+        ref.setReference(patientId);
+        b.setPatient(ref);
+        List<IBaseResource> eobs = List.of(b);
+        FilterOutByDate.DateRange dateRange = FilterOutByDate.getDateRange(1, 1900, 12,
+                Calendar.getInstance().get(Calendar.YEAR));
+
+        CoverageSummary summary = new CoverageSummary(createIdentifier(beneId, null, "HIST_MBI"), null, List.of(dateRange));
+
+        Map<String, CoverageSummary> patients = new HashMap<>();
+        patients.put(beneId, summary);
+
+        FhirUtils.addMbiIdsToEobs(eobs, patients, STU3);
+
+        List<org.hl7.fhir.dstu3.model.Extension> extensions = b.getExtension();
+
+        assertNotNull(extensions);
+        assertEquals(1, extensions.size());
+        org.hl7.fhir.dstu3.model.Extension ext = extensions.get(0);
+        assertEquals(ID_EXT, ext.getUrl());
+
+        org.hl7.fhir.dstu3.model.Identifier id = (org.hl7.fhir.dstu3.model.Identifier) ext.getValue();
+        assertNotNull(id);
+        assertEquals(MBI_ID, id.getSystem());
+        assertEquals("HIST_MBI", id.getValue());
+        assertEquals(1, id.getExtension().size());
+        Extension idExt = id.getExtension().get(0);
+        Coding c = (Coding) idExt.getValue();
+        assertEquals("historic", c.getCode());
+    }
+
+    @Test
+    void testAddNoMbiIdToEobs() {
+        String beneId = "1234";
+
+        org.hl7.fhir.dstu3.model.ExplanationOfBenefit b = new org.hl7.fhir.dstu3.model.ExplanationOfBenefit();
+        String patientId = "Patient/" + beneId;
+        org.hl7.fhir.dstu3.model.Reference ref = new org.hl7.fhir.dstu3.model.Reference();
+        ref.setReference(patientId);
+        b.setPatient(ref);
+        List<IBaseResource> eobs = List.of(b);
+        FilterOutByDate.DateRange dateRange = FilterOutByDate.getDateRange(1, 1900, 12,
+                Calendar.getInstance().get(Calendar.YEAR));
+
+        CoverageSummary summary = new CoverageSummary(createIdentifier(beneId, null), null, List.of(dateRange));
+
+        Map<String, CoverageSummary> patients = new HashMap<>();
+        patients.put(beneId, summary);
+
+        FhirUtils.addMbiIdsToEobs(eobs, patients, STU3);
+
+        List<org.hl7.fhir.dstu3.model.Extension> extensions = b.getExtension();
+
+        assertNotNull(extensions);
+        assertEquals(0, extensions.size());
     }
 
     @DisplayName("Add multiple mbis to a ")
