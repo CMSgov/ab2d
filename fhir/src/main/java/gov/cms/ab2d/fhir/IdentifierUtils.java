@@ -173,10 +173,10 @@ public final class IdentifierUtils {
             return PatientIdentifier.Currency.UNKNOWN;
         }
         Object code = Versions.invokeGetMethod(currencyExtension.get(), "getValue");
-        String codeValue = (String) Versions.invokeGetMethod(code, "getCode");
-        if (codeValue == null) {
+        if (code == null) {
             return PatientIdentifier.Currency.UNKNOWN;
         }
+        String codeValue = (String) Versions.invokeGetMethod(code, "getCode");
         switch (codeValue) {
             case HISTORIC_MBI:
                 return PatientIdentifier.Currency.HISTORIC;
