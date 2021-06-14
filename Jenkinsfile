@@ -87,6 +87,27 @@ pipeline {
             }
         }
 
+        stage('SonarQube Analysis') {
+            steps {
+                // Automatically saves the an id for the SonarQube build
+                withSonarQubeEnv('CMSSonar') {
+                    sh '''mvn sonar:sonar -Dsonar.projectKey=ab2d-project -Dsonar.branch.name=$CI_BRANCH_NAME -DskipTests'''
+                }
+            }
+        }
+
+	  //New Way in declarative pipeline
+        stage("Quality Gate") {
+           options {
+                timeout(time: 10, unit: 'MINUTES')
+            }
+            steps {
+                // Parameter indicates whether to set pipeline to UNSTABLE if Quality Gate fails
+                // true = set pipeline to UNSTABLE, false = don't
+                waitForQualityGate abortPipeline: true
+            }
+        }
+
         stage('Run e2e-test') {
 
             steps {
@@ -113,37 +134,6 @@ pipeline {
                         mvn test -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false
                     '''
                 }
-            }
-        }
-
-        stage('Run codeclimate tests') {
-
-            steps {
-                sh '''
-                    export JACOCO_SOURCE_PATH=./api/src/main/java
-                    ./codeclimate/cc-test-reporter format-coverage ./api/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.api.json
-
-                    export JACOCO_SOURCE_PATH=./fhir/src/main/java
-                    ./codeclimate/cc-test-reporter format-coverage ./fhir/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.fhir.json
-
-                    export JACOCO_SOURCE_PATH=./audit/src/main/java
-                    ./codeclimate/cc-test-reporter format-coverage ./audit/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.audit.json
-
-                    export JACOCO_SOURCE_PATH=./common/src/main/java
-                   ./codeclimate/cc-test-reporter format-coverage ./common/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.common.json
-
-                    export JACOCO_SOURCE_PATH=./filter/src/main/java
-                    ./codeclimate/cc-test-reporter format-coverage ./filter/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.filter.json
-
-                    export JACOCO_SOURCE_PATH=./hpms/src/main/java
-                    ./codeclimate/cc-test-reporter format-coverage ./hpms/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.hpms.json
-
-                    export JACOCO_SOURCE_PATH=./bfd/src/main/java
-                    ./codeclimate/cc-test-reporter format-coverage ./bfd/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.bfd.json
-
-                    export JACOCO_SOURCE_PATH=./worker/src/main/java
-                    ./codeclimate/cc-test-reporter format-coverage ./worker/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.worker.json
-                '''
             }
         }
 
