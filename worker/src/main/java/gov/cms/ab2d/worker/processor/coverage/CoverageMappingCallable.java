@@ -184,6 +184,10 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
             historicalIds = historicMbis.stream()
                     .map(PatientIdentifier::getValue).collect(toCollection(LinkedHashSet::new));
         }
+        if (currentMbi == null) {
+            log.error("Beneficiary " + beneIdObj.getValue() + " has a null MBI ");
+            return null;
+        }
         return new Identifiers(beneIdObj.getValue(), currentMbi.getValue(), new LinkedHashSet<>(historicalIds));
     }
 
