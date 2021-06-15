@@ -242,7 +242,7 @@ public class CoverageServiceImpl implements CoverageService {
                                               String restartDescription, boolean prioritize) {
         CoveragePeriod period = findCoveragePeriod(periodId);
 
-        updateStatus(period, failedDescription, JobStatus.FAILED, true);
+        updateStatus(period, failedDescription, JobStatus.FAILED, false);
 
         // Add to queue of jobs to do
         CoverageSearch search = new CoverageSearch();
@@ -395,13 +395,13 @@ public class CoverageServiceImpl implements CoverageService {
         newStatus.setNewStatus(status);
         newStatus.setDescription(description);
 
-        period.setStatus(status);
 
         if (status == JobStatus.SUCCESSFUL) {
             period.setLastSuccessfulJob(OffsetDateTime.now());
         }
 
         if (updateCoveragePeriod) {
+            period.setStatus(status);
             coveragePeriodRepo.saveAndFlush(period);
         }
 
