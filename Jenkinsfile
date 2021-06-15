@@ -98,6 +98,14 @@ pipeline {
             }
         }
 
+        stage('Wait 60 Seconds') {
+            steps {
+                sh '''
+                    sleep 60
+                '''
+            }
+        }
+
 	  //New Way in declarative pipeline
         stage("Quality Gate") {
            options {
