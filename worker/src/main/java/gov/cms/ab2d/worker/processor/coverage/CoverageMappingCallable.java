@@ -185,7 +185,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
                     .map(PatientIdentifier::getValue).collect(toCollection(LinkedHashSet::new));
         }
         if (currentMbi == null) {
-            int numOfHistorical = historicalIds == null || historicalIds.size() == 0 ? 0 : historicalIds.size();
+            int numOfHistorical = historicalIds.size();
             log.error("Beneficiary " + beneIdObj.getValue() + " has a null MBI and " + numOfHistorical + " historical");
             return new Identifiers(beneIdObj.getValue(), null, new LinkedHashSet<>(historicalIds));
         }
