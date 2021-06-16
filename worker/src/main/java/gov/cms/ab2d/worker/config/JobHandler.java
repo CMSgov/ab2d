@@ -1,7 +1,5 @@
 package gov.cms.ab2d.worker.config;
 
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.worker.service.WorkerService;
