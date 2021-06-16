@@ -52,6 +52,10 @@ public class JobHandler implements MessageHandler {
 
         final List<Map<String, Object>> payload = (List<Map<String, Object>>) message.getPayload();
 
+        if (!payload.isEmpty()) {
+            log.info("iterating over {} submitted jobs to attempt to find one to start", payload.size());
+        }
+
         for (Map<String, Object> submittedJob : payload) {
 
             final String jobId = getJobId(submittedJob);
@@ -68,10 +72,9 @@ public class JobHandler implements MessageHandler {
 
                     // Attempt to start (mark an eob job as in progress) an eob job.
                     // A job may not be started if the workers are busy or if coverage metadata needs an update.
-                    // However if a job is started then
                     Job job = workerService.process(jobId);
                     if (job.getStatus() == JobStatus.IN_PROGRESS) {
-                        log.info("{} job has been started", jobId);
+                        log.info("{} job has been started so exiting loop", jobId);
                         break;
                     }
 
