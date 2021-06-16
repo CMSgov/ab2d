@@ -114,7 +114,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         queueCoveragePeriod(mapping.getPeriod(), mapping.getCoverageSearch().getAttempts(), prioritize);
     }
 
-    private void restartMapping(CoverageMapping mapping, String failedDescription, String restartDescription, boolean prioritize) {
+    private void resubmitMapping(CoverageMapping mapping, String failedDescription, String restartDescription, boolean prioritize) {
 
         if (inShutdown.get()) {
             return;
@@ -169,7 +169,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
             log.warn("could not complete coverage mapping job but will re-attempt");
 
-            restartMapping(mapping, "could not complete coverage mapping due to error",
+            resubmitMapping(mapping, "could not complete coverage mapping due to error",
                     "could not complete coverage mapping job but will re-attempt", true);
         }
     }
@@ -205,7 +205,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                         " contract %s during %d-%d, will re-attempt", contractNumber, month, year);
                 log.debug(message);
 
-                restartMapping(result, message,
+                resubmitMapping(result, message,
                 "shutting down coverage processor before beneficiary data can be inserted into database",
                         true);
             }
@@ -257,7 +257,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                     insertedMapping.getPeriod().getYear());
             log.debug(message);
 
-            restartMapping(insertedMapping, message, message, false);
+            resubmitMapping(insertedMapping, message, message, false);
         }
 
         // Force shutdown all running bfd queries
@@ -273,7 +273,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                         mapping.getPeriod().getYear());
                 log.debug(message);
 
-                restartMapping(mapping, message, message, false);
+                resubmitMapping(mapping, message, message, false);
             });
         }
     }

@@ -68,16 +68,7 @@ public class JobHandler implements MessageHandler {
 
                     // Attempt to start (mark an eob job as in progress) an eob job.
                     // A job may not be started if the workers are busy or if coverage metadata needs an update.
-                    // However if a job is started then
-                    Job job = workerService.process(jobId);
-                    if (job.getStatus() == JobStatus.IN_PROGRESS) {
-                        log.info("{} job has been started", jobId);
-                        break;
-                    } else if (job.getStatus() == JobStatus.CANCELLED) {
-                        log.info("{} job has been cancelled", jobId);
-                    } else if (job.getStatus() == JobStatus.FAILED) {
-                        log.info("{} job has failed to start", jobId);
-                    }
+                    workerService.process(jobId);
 
                 } catch (ResourceNotFoundException rnfe) {
                     throw new MessagingException("could not find job in database for " + jobId + " job uuid", rnfe);

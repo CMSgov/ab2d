@@ -39,10 +39,16 @@ public class WorkerServiceImpl implements WorkerService {
             Job job = jobPreprocessor.preprocess(jobUuid);
 
             if (job.getStatus() == JobStatus.IN_PROGRESS) {
-                log.info("Job was put in progress");
+                log.info("{} has been started", jobUuid);
 
                 job = jobProcessor.process(jobUuid);
                 log.info("Job was processed");
+            } else if (job.getStatus() == JobStatus.SUBMITTED) {
+                log.info("{} job is waiting for enrollment information", jobUuid);
+            } else if (job.getStatus() == JobStatus.CANCELLED) {
+                log.warn("{} job has been cancelled", jobUuid);
+            } else if (job.getStatus() == JobStatus.FAILED) {
+                log.warn("{} job has failed to start", jobUuid);
             }
 
             // Check that job hasn't been cancelled by processor and that we actually changed
