@@ -3,6 +3,10 @@ package gov.cms.ab2d.worker.processor.coverage;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.model.Contract;
+import org.hl7.fhir.dstu3.model.Coding;
+import org.hl7.fhir.dstu3.model.Extension;
+import org.hl7.fhir.dstu3.model.Identifier;
+import org.hl7.fhir.dstu3.model.Patient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,8 +16,11 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.Collections;
 
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
+import static gov.cms.ab2d.fhir.IdentifierUtils.BENEFICIARY_ID;
+import static gov.cms.ab2d.fhir.IdentifierUtils.CURRENCY_IDENTIFIER;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createPatient;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createPatientWithMultipleMbis;
+import static gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable.MBI_ID;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.*;
@@ -26,9 +33,7 @@ class CoverageMappingCallableTest {
 
     @BeforeEach
     public void before() {
-
         bfdClient = Mockito.mock(BFDClient.class);
-
     }
 
     @DisplayName("Successfully completing marks as done and transfers results")
@@ -302,6 +307,74 @@ class CoverageMappingCallableTest {
 
         assertFalse(mapping.isSuccessful());
         assertTrue(callable.isCompleted());
+    }
+
+    @Test
+    void testNullMbi() {
+        Contract contract = new Contract();
+        contract.setContractNumber("TESTING");
+        contract.setContractName("TESTING");
+
+        CoveragePeriod period = new CoveragePeriod();
+        period.setContract(contract);
+        period.setYear(2020);
+        period.setMonth(1);
+
+        CoverageSearchEvent cse = new CoverageSearchEvent();
+        cse.setCoveragePeriod(period);
+
+        CoverageSearch search = new CoverageSearch();
+        search.setPeriod(period);
+
+        CoverageMapping mapping = new CoverageMapping(cse, search);
+        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, false);
+        Patient patient = new Patient();
+
+        Identifiers ids = callable.extractPatientId(patient);
+        assertNull(ids);
+
+        Identifier beneId = new Identifier();
+        beneId.setSystem(BENEFICIARY_ID);
+        beneId.setValue("BENEID");
+        patient.getIdentifier().add(beneId);
+        ids = callable.extractPatientId(patient);
+        assertEquals("BENEID", ids.getBeneficiaryId());
+        assertNull(ids.getCurrentMbi());
+        assertEquals(0, ids.getHistoricMbis().size());
+
+        Identifier mbiHist = new Identifier();
+        mbiHist.setSystem(MBI_ID);
+        mbiHist.setValue("HIST_MBI");
+        Extension extension = new Extension();
+        extension.setUrl(CURRENCY_IDENTIFIER);
+        Coding code1 = new Coding();
+        code1.setCode("historic");
+        extension.setValue(code1);
+        mbiHist.getExtension().add(extension);
+        patient.getIdentifier().add(mbiHist);
+        ids = callable.extractPatientId(patient);
+        assertEquals("BENEID", ids.getBeneficiaryId());
+        assertNull(ids.getCurrentMbi());
+        assertEquals(1, ids.getHistoricMbis().size());
+        assertEquals("HIST_MBI", ids.getHistoricMbis().stream().findAny().get());
+
+
+        Identifier mbiCurrent = new Identifier();
+        mbiCurrent.setSystem(MBI_ID);
+        mbiCurrent.setValue("CURR_MBI");
+        Extension extension2 = new Extension();
+        extension2.setUrl(CURRENCY_IDENTIFIER);
+        Coding code2 = new Coding();
+        code2.setCode("current");
+        extension2.setValue(code2);
+        mbiCurrent.getExtension().add(extension2);
+        patient.getIdentifier().add(mbiCurrent);
+        ids = callable.extractPatientId(patient);
+        assertEquals("BENEID", ids.getBeneficiaryId());
+        assertEquals(1, ids.getHistoricMbis().size());
+        assertEquals("CURR_MBI", ids.getCurrentMbi());
+        assertEquals(1, ids.getHistoricMbis().size());
+        assertEquals("HIST_MBI", ids.getHistoricMbis().stream().findAny().get());
     }
 
     private org.hl7.fhir.dstu3.model.Bundle buildBundle(int startIndex, int endIndex, int year) {

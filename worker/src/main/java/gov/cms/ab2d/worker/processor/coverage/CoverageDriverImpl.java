@@ -349,6 +349,9 @@ public class CoverageDriverImpl implements CoverageDriver {
             List<CoveragePeriod> neverSearched = coverageService.coveragePeriodNeverSearchedSuccessfully().stream()
                     .filter(period -> Objects.equals(job.getContract(), period.getContract())).collect(toList());
             if (!neverSearched.isEmpty()) {
+                // Check that we've not submitted and failed these jobs
+                neverSearched.forEach(period -> checkCoveragePeriodValidity(job, period));
+
                 // Add all never searched coverage periods to the queue for processing
                 neverSearched.forEach(period -> coverageProcessor.queueCoveragePeriod(period, false));
                 return false;
@@ -360,6 +363,8 @@ public class CoverageDriverImpl implements CoverageDriver {
             // then we must update it to guarantee we aren't missing any recent metadata changes
             ZonedDateTime now = ZonedDateTime.now(AB2D_ZONE);
             CoveragePeriod currentPeriod = coverageService.getCoveragePeriod(job.getContract(), now.getMonthValue(), now.getYear());
+            checkCoveragePeriodValidity(job, currentPeriod);
+
             if (currentPeriod.getLastSuccessfulJob() == null || currentPeriod.getLastSuccessfulJob().isBefore(job.getCreatedAt())) {
 
                 // Submit a new search if necessary
@@ -493,6 +498,14 @@ public class CoverageDriverImpl implements CoverageDriver {
 
         return ZonedDateTime.of(startDateTime.getYear(), startDateTime.getMonthValue(),
                 1, 0, 0, 0, 0, AB2D_ZONE);
+    }
+
+    private void checkCoveragePeriodValidity(Job job, CoveragePeriod period) {
+        if (period.getStatus() == JobStatus.FAILED &&
+                period.getModified().isAfter(job.getCreatedAt())) {
+            throw new CoverageDriverException("attempts to pull coverage information failed too many times, " +
+                    "cannot pull coverage");
+        }
     }
 
     @Override

@@ -237,6 +237,28 @@ public class CoverageServiceImpl implements CoverageService {
         return Optional.of(updateStatus(period, description, JobStatus.SUBMITTED));
     }
 
+    @Override
+    public CoverageSearchEvent resubmitSearch(int periodId, int attempts, String failedDescription,
+                                              String restartDescription, boolean prioritize) {
+        CoveragePeriod period = findCoveragePeriod(periodId);
+
+        updateStatus(period, failedDescription, JobStatus.FAILED, false);
+
+        // Add to queue of jobs to do
+        CoverageSearch search = new CoverageSearch();
+        search.setPeriod(period);
+        search.setAttempts(attempts);
+
+        // Force to front of the queue if necessary
+        if (prioritize) {
+            search.setCreated(OffsetDateTime.of(2000, 1, 1,
+                    0, 0, 0, 0, ZoneOffset.UTC));
+        }
+
+        coverageSearchRepo.saveAndFlush(search);
+
+        return updateStatus(period, restartDescription, JobStatus.SUBMITTED);
+    }
 
     @Override
     public Optional<CoverageSearchEvent> prioritizeSearch(int periodId, String description) {
@@ -357,6 +379,10 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     private CoverageSearchEvent updateStatus(CoveragePeriod period, String description, JobStatus status) {
+        return updateStatus(period, description, status, true);
+    }
+
+    private CoverageSearchEvent updateStatus(CoveragePeriod period, String description, JobStatus status, boolean updateCoveragePeriod) {
         CoverageSearchEvent currentStatus = getLastEvent(period);
 
         logStatusChange(period, description, status);
@@ -369,13 +395,15 @@ public class CoverageServiceImpl implements CoverageService {
         newStatus.setNewStatus(status);
         newStatus.setDescription(description);
 
-        period.setStatus(status);
 
         if (status == JobStatus.SUCCESSFUL) {
             period.setLastSuccessfulJob(OffsetDateTime.now());
         }
 
-        coveragePeriodRepo.saveAndFlush(period);
+        if (updateCoveragePeriod) {
+            period.setStatus(status);
+            coveragePeriodRepo.saveAndFlush(period);
+        }
 
         return coverageSearchEventRepo.saveAndFlush(newStatus);
     }

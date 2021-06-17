@@ -180,6 +180,18 @@ public interface CoverageService {
     Optional<CoverageMapping> startSearch(CoverageSearch search, String description);
 
     /**
+     * Resubmit a search that has failed but still has attempts
+     * @param periodId unique id of a coverage search
+     * @param attempts number of attempts already conducted
+     * @param failedDescription reason or explanation for change
+     * @param restartDescription reason or explanation for change
+     * @param prioritize whether to force coverage period to front of the queue
+     * @return resulting coverage search event
+     */
+    CoverageSearchEvent resubmitSearch(int periodId, int attempts, String failedDescription,
+                                       String restartDescription, boolean prioritize);
+
+    /**
      * Change a coverage search to {@link JobStatus#CANCELLED} and log an event.
      * @param periodId unique id of a coverage search
      * @param description reason or explanation for change
