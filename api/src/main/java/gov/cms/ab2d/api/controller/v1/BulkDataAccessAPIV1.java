@@ -107,7 +107,7 @@ public class BulkDataAccessAPIV1 {
         apiCommon.checkValidCreateJob(since, resourceTypes, outputFormat);
         Job job = jobService.createJob(resourceTypes, apiCommon.getCurrentUrl(request), null, outputFormat, since, STU3);
         apiCommon.logSuccessfulJobCreation(job);
-        return apiCommon.returnStatusForJobCreation(job, (String) request.getAttribute(REQUEST_ID), request);
+        return apiCommon.returnStatusForJobCreation(job, API_PREFIX_V1, (String) request.getAttribute(REQUEST_ID), request);
     }
 
     @ApiOperation(value = BULK_CONTRACT_EXPORT,
@@ -141,6 +141,6 @@ public class BulkDataAccessAPIV1 {
         apiCommon.checkValidCreateJob(since, resourceTypes, outputFormat);
         Job job = jobService.createJob(resourceTypes, apiCommon.getCurrentUrl(request), contractNumber, outputFormat, since, STU3);
         apiCommon.logSuccessfulJobCreation(job);
-        return apiCommon.returnStatusForJobCreation(job, (String) request.getAttribute(REQUEST_ID), request);
+        return apiCommon.returnStatusForJobCreation(job, API_PREFIX_V1, (String) request.getAttribute(REQUEST_ID), request);
     }
 }

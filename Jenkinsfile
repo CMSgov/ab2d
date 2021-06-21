@@ -21,6 +21,9 @@ pipeline {
         // with docker-compose.jenkins.yml
         E2E_ENVIRONMENT = 'CI'
         AB2D_HOME="${WORKSPACE}/opt/ab2d"
+
+        // R4 V2 endpoints enabled
+        AB2D_V2_ENABLED = true
     }
 
     agent {

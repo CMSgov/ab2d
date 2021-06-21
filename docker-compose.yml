@@ -52,6 +52,7 @@ services:
       - NEW_RELIC_APP_NAME="${NEW_RELIC_APP_NAME}"
       # LOCAL always to shut off Kinesis logging
       - AB2D_EXECUTION_ENV=${AB2D_EXECUTION_ENV:-local}
+      - AB2D_V2_ENABLED=${AB2D_V2_ENABLED}
     ports:
       # Set port as an environment variable
       # The e2e-test forcefully sets this itself otherwise set via command line
