@@ -407,7 +407,7 @@ class CoverageUpdateAndProcessorTest {
 
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20);
 
-        when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         processor.queueCoveragePeriod(january, false);
@@ -459,7 +459,7 @@ class CoverageUpdateAndProcessorTest {
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20);
 
         Mockito.clearInvocations();
-        when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         driver.loadMappingJob();
