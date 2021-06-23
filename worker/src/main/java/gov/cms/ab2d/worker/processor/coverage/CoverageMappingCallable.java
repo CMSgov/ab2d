@@ -38,7 +38,8 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     private int hasHistoricalMbi;
     private int filteredByYear;
 
-    public CoverageMappingCallable(FhirVersion version, CoverageMapping coverageMapping, BFDClient bfdClient, boolean skipBillablePeriodCheck) {
+    public CoverageMappingCallable(FhirVersion version, CoverageMapping coverageMapping, BFDClient bfdClient,
+                                   boolean skipBillablePeriodCheck) {
         this.coverageMapping = coverageMapping;
         this.bfdClient = bfdClient;
         this.completed = new AtomicBoolean(false);
@@ -70,7 +71,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
 
             BFDClient.BFD_BULK_JOB_ID.set(coverageMapping.getJobId());
 
-            IBaseBundle bundle = getBundle(contractNumber, month);
+            IBaseBundle bundle = getBundle(contractNumber, month, year);
             patientIds.addAll(extractAndFilter(bundle));
 
             String availableLinks = BundleUtils.getAvailableLinks(bundle);
@@ -197,11 +198,12 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
      *
      * @param contractNumber - the PDP's contract number
      * @param month - the month to pull data for (1-12)
+     * @param year - the year to pull data for
      * @return a FHIR bundle of resources containing active patients
      */
-    private IBaseBundle getBundle(String contractNumber, int month) {
+    private IBaseBundle getBundle(String contractNumber, int month, int year) {
         try {
-            return bfdClient.requestPartDEnrolleesFromServer(version, contractNumber, month);
+            return bfdClient.requestPartDEnrolleesFromServer(version, contractNumber, month, year);
         } catch (Exception e) {
             final Throwable rootCause = ExceptionUtils.getRootCause(e);
             log.error("Error while calling for Contract-2-Bene API : {}", e.getMessage(), rootCause);
