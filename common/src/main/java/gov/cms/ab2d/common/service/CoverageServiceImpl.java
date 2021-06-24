@@ -1,5 +1,6 @@
 package gov.cms.ab2d.common.service;
 
+import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoverageMapping;
 import gov.cms.ab2d.common.model.CoveragePagingRequest;
@@ -122,6 +123,7 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
+    @Trace
     public CoverageSearchEvent insertCoverage(long searchEventId, Set<Identifiers> beneficiaryIds) {
 
         // Make sure that coverage period and searchEvent actually exist in the database before inserting
@@ -135,6 +137,7 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
+    @Trace
     public void deletePreviousSearch(int periodId) {
         // Delete previous in progress search before this one
         // but check that coverage period is valid
@@ -143,6 +146,7 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
+    @Trace
     public CoveragePagingResult pageCoverage(CoveragePagingRequest pagingRequest) {
 
         List<Integer> coveragePeriodIds = pagingRequest.getCoveragePeriodIds();
@@ -156,6 +160,7 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
+    @Trace
     public CoverageSearchDiff searchDiff(int periodId) {
 
         CoveragePeriod period = findCoveragePeriod(periodId);
