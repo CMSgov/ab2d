@@ -150,18 +150,23 @@ public class CoverageServiceRepository {
                 prepareCoverageInsertion(statement, searchEvent, beneficiary);
 
                 if (processingCount % BATCH_INSERT_SIZE == 0) {
-                    statement.executeBatch();
+                    executeBatch(statement);
                     processingCount = 0;
                 }
             }
 
             if (processingCount > 0) {
-                statement.executeBatch();
+                executeBatch(statement);
             }
 
         } catch (SQLException sqlException) {
             throw new RuntimeException("failed to insert coverage information", sqlException);
         }
+    }
+
+    @Trace
+    private int[] executeBatch(PreparedStatement statement) throws SQLException {
+        return statement.executeBatch();
     }
 
     private void prepareCoverageInsertion(PreparedStatement statement, CoverageSearchEvent searchEvent, Identifiers beneficiary) throws SQLException {
