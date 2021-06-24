@@ -165,8 +165,8 @@ public class CoverageServiceRepository {
     }
 
     @Trace
-    private int[] executeBatch(PreparedStatement statement) throws SQLException {
-        return statement.executeBatch();
+    private void executeBatch(PreparedStatement statement) throws SQLException {
+        statement.executeBatch();
     }
 
     private void prepareCoverageInsertion(PreparedStatement statement, CoverageSearchEvent searchEvent, Identifiers beneficiary) throws SQLException {

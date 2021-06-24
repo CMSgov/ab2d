@@ -177,7 +177,6 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     /**
      * Only inserts results of coverage mapping jobs run on the current application, not jobs running on other machines
      */
-    @Trace(metricName = "EnrollmentLoadIntoDB", dispatcher = true)
     @Scheduled(fixedDelay = ONE_SECOND, initialDelayString = "${coverage.update.initial.delay}")
     public void insertJobResults() {
 
