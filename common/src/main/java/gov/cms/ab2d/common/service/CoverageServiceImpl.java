@@ -123,15 +123,19 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    @Trace
+    @Trace(metricName = "InsertingCoverage", dispatcher = true)
     public CoverageSearchEvent insertCoverage(long searchEventId, Set<Identifiers> beneficiaryIds) {
 
         // Make sure that coverage period and searchEvent actually exist in the database before inserting
         CoverageSearchEvent searchEvent = findCoverageSearchEvent(searchEventId);
         coverageServiceRepo.insertBatches(searchEvent, beneficiaryIds);
 
+        log.info("Vacuuming coverage table now");
+
         // Update indices after every batch of insertions to make sure speed of database is preserved
         coverageServiceRepo.vacuumCoverage();
+
+        log.info("Vacuuming coverage finished now");
 
         return searchEvent;
     }
@@ -160,7 +164,7 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    @Trace
+    @Trace(metricName = "SearchDiff", dispatcher = true)
     public CoverageSearchDiff searchDiff(int periodId) {
 
         CoveragePeriod period = findCoveragePeriod(periodId);
@@ -182,6 +186,8 @@ public class CoverageServiceImpl implements CoverageService {
 
         int unchanged = 0;
         if (previousCount > 0) {
+            log.info("Calculating the deltas for the search period {}-{}-{}", period.getContract().getContractNumber(),
+                    period.getMonth(), period.getYear());
             coverageDeltaRepository.trackDeltas(previousSearch.get(), current);
             unchanged = coverageServiceRepo.countIntersection(previousSearch.get(), current);
         }

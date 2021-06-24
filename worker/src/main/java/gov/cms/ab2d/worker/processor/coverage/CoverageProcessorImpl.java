@@ -220,10 +220,19 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
         int periodId = result.getPeriodId();
         long eventId = result.getCoverageSearchEvent().getId();
+
         try {
+            String contractNumber = result.getContract().getContractNumber();
+            int month = result.getPeriod().getMonth();
+            int year = result.getPeriod().getYear();
+
             coverageService.insertCoverage(eventId, result.getBeneficiaryIds());
 
+            log.info("finished inserting coverage for {}-{}-{}", contractNumber, month, year);
+
             coverageService.completeSearch(periodId, "successfully inserted all data for in progress search");
+
+            log.info("marked search as completed {}-{}-{}", contractNumber, month, year);
         } catch (Exception exception) {
             log.error("inserting the coverage data failed for {}-{}-{}", result.getContract().getContractNumber(),
                     result.getPeriod().getMonth(), result.getPeriod().getYear());

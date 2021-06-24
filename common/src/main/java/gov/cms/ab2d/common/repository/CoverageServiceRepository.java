@@ -408,6 +408,7 @@ public class CoverageServiceRepository {
                 localEndDate.getMonthValue(), localEndDate.getYear());
     }
 
+    @Trace
     public void vacuumCoverage() {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement("VACUUM coverage")) {
