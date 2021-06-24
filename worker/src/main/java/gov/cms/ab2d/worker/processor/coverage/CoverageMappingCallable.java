@@ -26,6 +26,8 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     public static final String HISTORIC_MBI = "historic";
     public static final String MBI_ID = "http://hl7.org/fhir/sid/us-mbi";
 
+    private static final int SYNTHETIC_DATA_YEAR = 3;
+
     private final CoverageMapping coverageMapping;
     private final BFDClient bfdClient;
     private final AtomicBoolean completed;
@@ -43,7 +45,10 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
         this.coverageMapping = coverageMapping;
         this.bfdClient = bfdClient;
         this.completed = new AtomicBoolean(false);
-        this.year = coverageMapping.getPeriod().getYear();
+
+        // Use year 3 by default since all synthetic data has this year on it
+        // todo get rid of this when data is updated
+        this.year = skipBillablePeriodCheck ? 3 : coverageMapping.getPeriod().getYear();
         this.skipBillablePeriodCheck = skipBillablePeriodCheck;
         this.version = version;
     }
@@ -203,6 +208,10 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
      */
     private IBaseBundle getBundle(String contractNumber, int month, int year) {
         try {
+            if (skipBillablePeriodCheck) {
+                return bfdClient.requestPartDEnrolleesFromServer(version, contractNumber, month, SYNTHETIC_DATA_YEAR);
+            }
+
             return bfdClient.requestPartDEnrolleesFromServer(version, contractNumber, month, year);
         } catch (Exception e) {
             final Throwable rootCause = ExceptionUtils.getRootCause(e);
