@@ -389,6 +389,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @param isError    - if there was an error
      * @return - the job output object
      */
+    @Trace(dispatcher = true)
     @SuppressFBWarnings
     private JobOutput createJobOutput(StreamOutput streamOutput, boolean isError) {
         JobOutput jobOutput = new JobOutput();

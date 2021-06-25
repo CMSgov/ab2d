@@ -150,18 +150,23 @@ public class CoverageServiceRepository {
                 prepareCoverageInsertion(statement, searchEvent, beneficiary);
 
                 if (processingCount % BATCH_INSERT_SIZE == 0) {
-                    statement.executeBatch();
+                    executeBatch(statement);
                     processingCount = 0;
                 }
             }
 
             if (processingCount > 0) {
-                statement.executeBatch();
+                executeBatch(statement);
             }
 
         } catch (SQLException sqlException) {
             throw new RuntimeException("failed to insert coverage information", sqlException);
         }
+    }
+
+    @Trace
+    private void executeBatch(PreparedStatement statement) throws SQLException {
+        statement.executeBatch();
     }
 
     private void prepareCoverageInsertion(PreparedStatement statement, CoverageSearchEvent searchEvent, Identifiers beneficiary) throws SQLException {
@@ -403,6 +408,7 @@ public class CoverageServiceRepository {
                 localEndDate.getMonthValue(), localEndDate.getYear());
     }
 
+    @Trace
     public void vacuumCoverage() {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement("VACUUM coverage")) {
