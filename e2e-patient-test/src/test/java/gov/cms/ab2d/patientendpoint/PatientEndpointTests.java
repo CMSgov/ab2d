@@ -5,6 +5,7 @@ import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.fhir.IdentifierUtils;
 import gov.cms.ab2d.fhir.PatientIdentifier;
+import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IDomainResource;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -20,37 +21,43 @@ import java.util.stream.Stream;
 
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 @SpringBootTest
+@Slf4j
 public class PatientEndpointTests {
     @Autowired
     private BFDClient client;
 
     @ParameterizedTest
     @MethodSource("getVersion")
-    public void test(FhirVersion version, String contract, int month) {
-        System.out.println("Testing IDs for " + version.toString());
+    public void testPatientEndpoint(FhirVersion version, String contract, int month, int year) {
+        BFDClient.BFD_BULK_JOB_ID.set("TEST");
+
+        log.info("Testing IDs for " + version.toString());
         List<PatientIdentifier> patientIds = new ArrayList<>();
 
-        System.out.println("Do Request for " + contract + " for " + month);
-        IBaseBundle bundle = client.requestPartDEnrolleesFromServer(version, contract, 1);
+        log.info(String.format("Do Request for %s for %02d/%04d", contract, month, year));
+        IBaseBundle bundle = client.requestPartDEnrolleesFromServer(version, contract, month, year);
         assertNotNull(bundle);
         int numberOfBenes = BundleUtils.getEntries(bundle).size();
         patientIds.addAll(extractIds(bundle, version));
-        System.out.println("Found: " + numberOfBenes + " benes");
+        log.info("Found: " + numberOfBenes + " benes");
 
         while (BundleUtils.getNextLink(bundle) != null) {
-            System.out.println("Do Next Request for " + contract + " for " + month);
+            log.info(String.format("Do Next Request for %s for %02d/%04d", contract, month, year));
             bundle = client.requestNextBundleFromServer(version, bundle);
             numberOfBenes += BundleUtils.getEntries(bundle).size();
-            System.out.println("Found: " + numberOfBenes + " benes");
+            log.info("Found: " + numberOfBenes + " benes");
             patientIds.addAll(extractIds(bundle, version));
         }
 
-        System.out.println("Contract: " + contract + " has " + numberOfBenes + " benes with " + patientIds.size() + " ids");
+        log.info("Contract: " + contract + " has " + numberOfBenes + " benes with " + patientIds.size() + " ids");
+        assertTrue(patientIds.size() >= 1000);
+        assertEquals(0, patientIds.size() % 1000);
         assertTrue(patientIds.size() >= (2 * numberOfBenes));
     }
 
@@ -69,9 +76,9 @@ public class PatientEndpointTests {
      */
     static Stream<Arguments> getVersion() {
         if (v2Enabled()) {
-            return Stream.of(arguments(STU3, "Z0001", 1), arguments(R4, "Z0001", 1));
+            return Stream.of(arguments(STU3, "Z0001", 1, 3), arguments(R4, "Z0001", 1, 3));
         } else {
-            return Stream.of(arguments(STU3, "Z0001", 1));
+            return Stream.of(arguments(STU3, "Z0001", 1, 3));
         }
     }
 

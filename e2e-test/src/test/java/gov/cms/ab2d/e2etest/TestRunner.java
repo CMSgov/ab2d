@@ -298,7 +298,7 @@ class TestRunner {
         JSONArray errors = json.getJSONArray("error");
 
         if (errors.length() > 0) {
-            System.out.println(errors);
+            log.error(errors.toString());
         }
 
         assertEquals(0, errors.length());
@@ -469,10 +469,10 @@ class TestRunner {
                 String val = (String) obj.get(i);
                 if (!allowedFields.contains(val)) {
                     if (disallowedFields.contains(val)) {
-                        System.out.println("********** API outputted invalid field '" + val + "'");
+                        log.info("********** API outputted invalid field '" + val + "'");
                         return false;
                     } else {
-                        System.out.println("********** API outputted unknown field '" + val + "'");
+                        log.info("********** API outputted unknown field '" + val + "'");
                         return false;
                     }
                 }
@@ -517,7 +517,7 @@ class TestRunner {
         while ((read = zipIn.read()) != -1) {
             result.append((char) read);
         }
-        System.out.println("    Entry " + entry.getName() + " - size: " + result.length());
+        log.info("    Entry " + entry.getName() + " - size: " + result.length());
         return result.toString();
     }
 
@@ -554,7 +554,8 @@ class TestRunner {
     @MethodSource("getVersionAndContract")
     @Order(1)
     void runSystemWideExport(FhirVersion version, String contract) throws IOException, InterruptedException, JSONException {
-        System.out.println("Starting test 1 - " + version.toString());
+        System.out.println();
+        log.info("Starting test 1 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null, version);
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
@@ -568,10 +569,10 @@ class TestRunner {
     @MethodSource("getVersionAndContract")
     @Order(2)
     void runSystemWideExportSince(FhirVersion version, String contract) throws IOException, InterruptedException, JSONException {
-        System.out.println("Starting test 2 - " + version.toString());
+        System.out.println();
+        log.info("Starting test 2 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, earliest, version);
         log.info("run system wide export since {}", exportResponse);
-        System.out.println(earliest);
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
@@ -584,7 +585,8 @@ class TestRunner {
     @MethodSource("getVersion")
     @Order(3)
     void runErrorSince(FhirVersion version) throws IOException, InterruptedException {
-        System.out.println("Starting test 3 - " + version.toString());
+        System.out.println();
+        log.info("Starting test 3 - " + version.toString());
         OffsetDateTime timeBeforeEarliest = earliest.minus(1, ChronoUnit.MINUTES);
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, timeBeforeEarliest, version);
         assertEquals(400, exportResponse.statusCode());
@@ -598,7 +600,8 @@ class TestRunner {
     @MethodSource("getVersion")
     @Order(4)
     void runSystemWideZipExport(FhirVersion version) throws IOException, InterruptedException, JSONException {
-        System.out.println("Starting test 4 - " + version.toString());
+        System.out.println();
+        log.info("Starting test 4 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportRequest(ZIPFORMAT, null, version);
         log.info("run system wide zip export {}", exportResponse);
         assertEquals(400, exportResponse.statusCode());
@@ -608,7 +611,8 @@ class TestRunner {
     @MethodSource("getVersionAndContract")
     @Order(5)
     void runContractNumberExport(FhirVersion version, String contract) throws IOException, InterruptedException, JSONException {
-        System.out.println("Starting test 5 - " + version.toString());
+        System.out.println();
+        log.info("Starting test 5 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contract, FHIR_TYPE, null, version);
         log.info("run contract number export {}", exportResponse);
         assertEquals(202, exportResponse.statusCode());
@@ -623,7 +627,8 @@ class TestRunner {
     @MethodSource("getVersionAndContract")
     @Order(6)
     void runContractNumberZipExport(FhirVersion version, String contract) throws IOException, InterruptedException, JSONException {
-        System.out.println("Starting test 6 - " + version.toString());
+        System.out.println();
+        log.info("Starting test 6 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contract, ZIPFORMAT, null, version);
         log.info("run contract number zip export {}", exportResponse);
         assertEquals(400, exportResponse.statusCode());
@@ -633,7 +638,8 @@ class TestRunner {
     @MethodSource("getVersion")
     @Order(7)
     void testDelete(FhirVersion version) throws IOException, InterruptedException {
-        System.out.println("Starting test 7 - " + version.toString());
+        System.out.println();
+        log.info("Starting test 7 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null, version);
 
         assertEquals(202, exportResponse.statusCode());
@@ -649,7 +655,8 @@ class TestRunner {
     @MethodSource("getVersionAndContract")
     @Order(8)
     void testClientCannotDownloadOtherClientsJob(FhirVersion version, String contract) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
-        System.out.println("Starting test 8 - " + version.toString());
+        System.out.println();
+        log.info("Starting test 8 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contract, FHIR_TYPE, null, version);
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
@@ -666,7 +673,8 @@ class TestRunner {
     @MethodSource("getVersion")
     @Order(9)
     void testClientCannotDeleteOtherClientsJob(FhirVersion version) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
-        System.out.println("Starting test 9 - " + version.toString());
+        System.out.println();
+        log.info("Starting test 9 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null, version);
 
         assertEquals(202, exportResponse.statusCode());
@@ -688,7 +696,8 @@ class TestRunner {
     @MethodSource("getVersion")
     @Order(10)
     void testClientCannotCheckStatusOtherClientsJob(FhirVersion version) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
-        System.out.println("Starting test 10 - " + version.toString());
+        System.out.println();
+        log.info("Starting test 10 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null, version);
 
         assertEquals(202, exportResponse.statusCode());
@@ -718,7 +727,8 @@ class TestRunner {
     @MethodSource("getVersion")
     @Order(11)
     void testClientCannotMakeRequestWithoutToken(FhirVersion version) throws IOException, InterruptedException {
-        System.out.println("Starting test 11 - " + version.toString());
+        System.out.println();
+        log.info("Starting test 11 - " + version.toString());
         HttpRequest exportRequest = HttpRequest.newBuilder()
                 .uri(URI.create(APIClient.buildAB2DAPIUrl(version) + PATIENT_EXPORT_PATH))
                 .timeout(Duration.ofSeconds(30))
@@ -735,7 +745,8 @@ class TestRunner {
     @MethodSource("getVersion")
     @Order(12)
     void testClientCannotMakeRequestWithSelfSignedToken(FhirVersion version) throws IOException, InterruptedException, JSONException {
-        System.out.println("Starting test 12 - " + version.toString());
+        System.out.println();
+        log.info("Starting test 12 - " + version.toString());
         String clientSecret = "wefikjweglkhjwelgkjweglkwegwegewg";
         SecretKey sharedSecret = Keys.hmacShaKeyFor(clientSecret.getBytes(StandardCharsets.UTF_8));
         Instant now = Instant.now();
@@ -773,7 +784,8 @@ class TestRunner {
     @MethodSource("getVersion")
     @Order(13)
     void testClientCannotMakeRequestWithNullClaims(FhirVersion version) throws IOException, InterruptedException, JSONException {
-        System.out.println("Starting test 13 - " + version.toString());
+        System.out.println();
+        log.info("Starting test 13 - " + version.toString());
         String clientSecret = "wefikjweglkhjwelgkjweglkwegwegewg";
         SecretKey sharedSecret = Keys.hmacShaKeyFor(clientSecret.getBytes(StandardCharsets.UTF_8));
         Instant now = Instant.now();
@@ -804,7 +816,8 @@ class TestRunner {
     @MethodSource("getVersion")
     @Order(14)
     void testBadQueryParameterResource(FhirVersion version) throws IOException, InterruptedException {
-        System.out.println("Starting test 14 - " + version.toString());
+        System.out.println();
+        log.info("Starting test 14 - " + version.toString());
         var params = new HashMap<>() {{
             put("_type", "BadParam");
         }};
@@ -818,7 +831,8 @@ class TestRunner {
     @MethodSource("getVersion")
     @Order(15)
     void testBadQueryParameterOutputFormat(FhirVersion version) throws IOException, InterruptedException {
-        System.out.println("Starting test 15 - " + version.toString());
+        System.out.println();
+        log.info("Starting test 15 - " + version.toString());
         var params = new HashMap<>() {{
             put("_outputFormat", "BadParam");
         }};
@@ -832,7 +846,8 @@ class TestRunner {
     @Test
     @Order(16)
     void testHealthEndPoint() throws IOException, InterruptedException {
-        System.out.println("Starting test 16");
+        System.out.println();
+        log.info("Starting test 16");
         HttpResponse<String> healthCheckResponse = apiClient.healthCheck();
 
         assertEquals(200, healthCheckResponse.statusCode());
