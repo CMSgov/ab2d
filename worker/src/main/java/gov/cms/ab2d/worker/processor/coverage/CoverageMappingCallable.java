@@ -46,11 +46,11 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
 
     public CoverageMappingCallable(FhirVersion version, CoverageMapping coverageMapping, BFDClient bfdClient,
                                    boolean skipBillablePeriodCheck) {
+        this.skipBillablePeriodCheck = skipBillablePeriodCheck;
         this.coverageMapping = coverageMapping;
         this.bfdClient = bfdClient;
         this.completed = new AtomicBoolean(false);
         this.year = getCorrectedYear(coverageMapping.getPeriod().getYear());
-        this.skipBillablePeriodCheck = skipBillablePeriodCheck;
         this.version = version;
     }
 
