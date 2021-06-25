@@ -33,7 +33,9 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     private final CoverageMapping coverageMapping;
     private final BFDClient bfdClient;
     private final AtomicBoolean completed;
+
     private final int year;
+
     private final boolean skipBillablePeriodCheck;
     private final FhirVersion version;
 
@@ -47,7 +49,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
         this.coverageMapping = coverageMapping;
         this.bfdClient = bfdClient;
         this.completed = new AtomicBoolean(false);
-        this.year = coverageMapping.getPeriod().getYear();
+        this.year = getCorrectedYear(coverageMapping.getPeriod().getYear());
         this.skipBillablePeriodCheck = skipBillablePeriodCheck;
         this.version = version;
     }
@@ -71,20 +73,20 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
         int bundleNo = 1;
         try {
             log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}",
-                    contractNumber, year, month, bundleNo);
+                    contractNumber, this.year, month, bundleNo);
 
             BFDClient.BFD_BULK_JOB_ID.set(coverageMapping.getJobId());
 
-            IBaseBundle bundle = getBundle(contractNumber, month, year);
+            IBaseBundle bundle = getBundle(contractNumber, month, this.year);
             patientIds.addAll(extractAndFilter(bundle));
 
             String availableLinks = BundleUtils.getAvailableLinks(bundle);
             log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}, available links {}",
-                    contractNumber, year, month, bundleNo, availableLinks);
+                    contractNumber, this.year, month, bundleNo, availableLinks);
 
             if (BundleUtils.getNextLink(bundle) == null) {
                 log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}, does not have a next link",
-                        contractNumber, year, month, bundleNo);
+                        contractNumber, this.year, month, bundleNo);
             }
 
             while (BundleUtils.getNextLink(bundle) != null) {
@@ -92,25 +94,25 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
                 bundleNo += 1;
 
                 log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}",
-                        contractNumber, year, month, bundleNo);
+                        contractNumber, this.year, month, bundleNo);
 
                 bundle = bfdClient.requestNextBundleFromServer(version, bundle);
 
                 availableLinks = BundleUtils.getAvailableLinksPretty(bundle);
 
                 log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}, available links {}",
-                        contractNumber, year, month, bundleNo, availableLinks);
+                        contractNumber, this.year, month, bundleNo, availableLinks);
 
                 if (BundleUtils.getNextLink(bundle) == null) {
                     log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}, does not have a next link",
-                            contractNumber, year, month, bundleNo);
+                            contractNumber, this.year, month, bundleNo);
                 }
 
                 patientIds.addAll(extractAndFilter(bundle));
             }
 
             log.info("retrieving contract membership for Contract {}-{}-{}, #{} bundles received.",
-                    contractNumber, year, month, bundleNo);
+                    contractNumber, this.year, month, bundleNo);
 
             coverageMapping.addBeneficiaries(patientIds);
             log.debug("finished reading [{}] Set<String>resources", patientIds.size());
@@ -118,7 +120,10 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
             coverageMapping.completed();
             return coverageMapping;
         } catch (Exception e) {
-            log.error("Unable to get patient information for " + contractNumber + " for month " + month, e);
+            log.error("Unable to get patient information for " +
+                    contractNumber +
+                    " for month " + month +
+                    " and year " + this.year, e);
             coverageMapping.failed();
             throw e;
         } finally {
@@ -137,21 +142,21 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     @Trace
     private Set<Identifiers> extractAndFilter(IBaseBundle bundle) {
         return BundleUtils.getPatientStream(bundle, version)
-                .filter(patient -> skipBillablePeriodCheck || filterByYear(patient))
+                .filter(this::filterByYear)
                 .map(this::extractPatientId)
                 .filter(Objects::nonNull)
                 .collect(toSet());
     }
 
     private boolean filterByYear(IDomainResource patient) {
-        int year = ExtensionUtils.getReferenceYear(patient);
-        if (year < 0) {
+        int referenceYear = ExtensionUtils.getReferenceYear(patient);
+        if (referenceYear < 0) {
             log.error("patient returned without reference year violating assumptions");
             filteredByYear++;
             return false;
         }
 
-        if (year != this.year) {
+        if (referenceYear != this.year) {
             filteredByYear++;
             return false;
         }
@@ -201,22 +206,32 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
      * given a contractNumber & a month, calls BFD API to find all patients active in the contract during the month
      *
      * @param contractNumber - the PDP's contract number
-     * @param month - the month to pull data for (1-12)
-     * @param year - the year to pull data for
+     * @param searchMonth - the month to pull data for (1-12)
+     * @param searchYear - the year to pull data for
      * @return a FHIR bundle of resources containing active patients
      */
-    private IBaseBundle getBundle(String contractNumber, int month, int year) {
+    private IBaseBundle getBundle(String contractNumber, int searchMonth, int searchYear) {
         try {
-            // Use specific year for synthetic data if in a sandbox environment
-            if (skipBillablePeriodCheck) {
-                return bfdClient.requestPartDEnrolleesFromServer(version, contractNumber, month, SYNTHETIC_DATA_YEAR);
-            }
-
-            return bfdClient.requestPartDEnrolleesFromServer(version, contractNumber, month, year);
+            return bfdClient.requestPartDEnrolleesFromServer(version, contractNumber, searchMonth, searchYear);
         } catch (Exception e) {
             final Throwable rootCause = ExceptionUtils.getRootCause(e);
             log.error("Error while calling for Contract-2-Bene API : {}", e.getMessage(), rootCause);
             throw new RuntimeException(rootCause);
         }
+    }
+
+    /**
+     * We want to find results in the sandbox but all the data in the sandbox is for an invalid
+     * year so we're using this to prevent us from getting no beneficiaries.
+     *
+     * @param coverageYear - the specified coverage year in the coverage search
+     * @return if we're in sandbox, return the synthetic data year
+     */
+    private int getCorrectedYear(int coverageYear) {
+        // Use specific year for synthetic data if in a sandbox environment
+        if (skipBillablePeriodCheck) {
+            return SYNTHETIC_DATA_YEAR;
+        }
+        return coverageYear;
     }
 }
