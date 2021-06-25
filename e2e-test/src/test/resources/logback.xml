@@ -5,6 +5,7 @@
         </encoder>
     </appender>
     <logger name="org.testcontainers.containers" level="WARN"/>
+    <logger name="ca.uhn.fhir.parser.LenientErrorHandler" level="INFO"/>
     <logger name="com.github.dockerjava" level="WARN"/>
     <root level="INFO">
         <appender-ref ref="STDOUT" />
