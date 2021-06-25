@@ -90,6 +90,32 @@ pipeline {
             }
         }
 
+        stage('Run e2e-patient-test') {
+
+            steps {
+
+                withCredentials([file(credentialsId: 'SANDBOX_BFD_KEYSTORE', variable: 'SANDBOX_BFD_KEYSTORE'),
+                            string(credentialsId: 'SANDBOX_BFD_KEYSTORE_PASSWORD', variable: 'AB2D_BFD_KEYSTORE_PASSWORD')]) {
+
+                    sh '''
+                        export AB2D_BFD_KEYSTORE_LOCATION="/opt/ab2d/ab2d_bfd_keystore"
+
+                        export KEYSTORE_LOCATION="$WORKSPACE/opt/ab2d/ab2d_bfd_keystore"
+
+                        cp $SANDBOX_BFD_KEYSTORE $KEYSTORE_LOCATION
+
+                        test -f $KEYSTORE_LOCATION && echo "created keystore file"
+
+                        chmod 666 $KEYSTORE_LOCATION
+
+                        ls -la $KEYSTORE_LOCATION
+
+                        mvn test -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false
+                    '''
+                }
+            }
+        }
+
         stage('Run e2e-test') {
 
             steps {
