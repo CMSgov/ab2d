@@ -110,7 +110,7 @@ pipeline {
 
                         ls -la $KEYSTORE_LOCATION
 
-                        mvn test -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false
+                        mvn test -pl e2e-patient-test -am -Dtest=PatientEndpointTests -DfailIfNoTests=false
                     '''
                 }
             }
