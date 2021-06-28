@@ -152,9 +152,7 @@ public class CoverageDriverImpl implements CoverageDriver {
                 // coverage periods for each contract
                 List<Contract> enabledContracts = pdpClientService.getAllEnabledContracts();
                 for (Contract contract : enabledContracts) {
-                    if (contract.getUpdateMode() != Contract.UpdateMode.TEST) {
-                        discoverCoveragePeriods(contract);
-                    }
+                    discoverCoveragePeriods(contract);
                 }
 
                 log.info("discovered all coverage periods now exiting");
@@ -239,7 +237,11 @@ public class CoverageDriverImpl implements CoverageDriver {
             int year = pastMonthTime.getYear();
 
             if (config.isOverride()) {
-                stalePeriods.addAll(coverageService.getCoveragePeriods(month, year));
+                // Only add coverage periods that are not running already
+                List<CoveragePeriod> periods = coverageService.getCoveragePeriods(month, year);
+                periods.stream().filter(period -> period.getStatus() != JobStatus.SUBMITTED
+                        && period.getStatus() != JobStatus.IN_PROGRESS)
+                        .forEach(stalePeriods::add);
             } else {
                 stalePeriods.addAll(coverageService.coveragePeriodNotUpdatedSince(month, year, lastSunday));
             }
