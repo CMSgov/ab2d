@@ -18,4 +18,6 @@ public class CoverageUpdateConfig {
 
     // Number of days that job is running
     private final int stuckHours;
+
+    private final boolean override;
 }

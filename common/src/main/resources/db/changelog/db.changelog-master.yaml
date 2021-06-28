@@ -108,3 +108,5 @@ databaseChangeLog:
       file: db/changelog/v2021/remove_sponsor_table.sql
   - include:
       file: db/changelog/v2021/delete_akamai_requests.sql
+  - include:
+      file: db/changelog/v2021/add_coverage_search_override.sql

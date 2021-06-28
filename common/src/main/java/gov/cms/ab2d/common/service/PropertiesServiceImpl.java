@@ -111,6 +111,10 @@ public class PropertiesServiceImpl implements PropertiesService {
             validateInt(key, propertiesDTO, 12, 168);
             addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
             break;
+        case COVERAGE_SEARCH_OVERRIDE:
+            validateBoolean(key, propertiesDTO);
+            addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
+            break;
         default:
             break;
         }

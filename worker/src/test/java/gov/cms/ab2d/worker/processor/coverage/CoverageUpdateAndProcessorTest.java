@@ -1,11 +1,13 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.dto.ContractDTO;
+import gov.cms.ab2d.common.dto.PdpClientDTO;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
-import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.CoverageService;
+import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Constants;
@@ -22,12 +24,16 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import javax.annotation.Nullable;
+import java.time.DayOfWeek;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static gov.cms.ab2d.common.util.Constants.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.fhir.IdentifierUtils.BENEFICIARY_ID;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
@@ -59,13 +65,13 @@ class CoverageUpdateAndProcessorTest {
     private CoveragePeriodRepository coveragePeriodRepo;
 
     @Autowired
+    private PdpClientService pdpClientService;
+
+    @Autowired
     private CoverageSearchRepository coverageSearchRepo;
 
     @Autowired
     private CoverageSearchEventRepository coverageSearchEventRepo;
-
-    @Autowired
-    private ContractService contractService;
 
     @Autowired
     private CoverageService coverageService;
@@ -106,6 +112,12 @@ class CoverageUpdateAndProcessorTest {
         february = dataSetup.createCoveragePeriod(contract, 2, 2020);
         march = dataSetup.createCoveragePeriod(contract, 3, 2020);
 
+        dataSetup.createRole(SPONSOR_ROLE);
+
+        PdpClientDTO contractPdpClient = createClient(contract, "TST-123", SPONSOR_ROLE);
+        pdpClientService.createClient(contractPdpClient);
+        dataSetup.queueForCleanup(pdpClientService.getClientById("TST-123"));
+
         bfdClient = mock(BFDClient.class);
 
         ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
@@ -114,7 +126,7 @@ class CoverageUpdateAndProcessorTest {
         taskExecutor.initialize();
 
         processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS, false);
-        driver = new CoverageDriverImpl(coverageSearchRepo, contractService, coverageService, propertiesService, processor, searchLock);
+        driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesService, processor, searchLock);
     }
 
     @AfterEach
@@ -164,9 +176,17 @@ class CoverageUpdateAndProcessorTest {
         attestedAfterEpoch.setAttestedOn(AB2D_EPOCH.toOffsetDateTime().plusMonths(3));
         contractRepo.saveAndFlush(attestedAfterEpoch);
 
+        PdpClientDTO attestedAfterClient = createClient(attestedAfterEpoch, "TST-AFTER-EPOCH", SPONSOR_ROLE);
+        pdpClientService.createClient(attestedAfterClient);
+        dataSetup.queueForCleanup(pdpClientService.getClientById("TST-AFTER-EPOCH"));
+
         Contract attestedBeforeEpoch = dataSetup.setupContract("TST-BEFORE-EPOCH");
         attestedBeforeEpoch.setAttestedOn(AB2D_EPOCH.toOffsetDateTime().minusNanos(1));
         contractRepo.saveAndFlush(attestedBeforeEpoch);
+
+        PdpClientDTO attestedBeforeClient = createClient(attestedBeforeEpoch, "TST-BEFORE-EPOCH", SPONSOR_ROLE);
+        pdpClientService.createClient(attestedBeforeClient);
+        dataSetup.queueForCleanup(pdpClientService.getClientById("TST-BEFORE-EPOCH"));
 
         long months = ChronoUnit.MONTHS.between(AB2D_EPOCH.toOffsetDateTime(), OffsetDateTime.now());
         long expectedNumPeriods = months + 1;
@@ -262,41 +282,49 @@ class CoverageUpdateAndProcessorTest {
         coveragePeriodRepo.deleteAll();
 
         OffsetDateTime currentDate = OffsetDateTime.now(DateUtil.AB2D_ZONE);
+        OffsetDateTime previousSunday = currentDate
+                .truncatedTo(ChronoUnit.DAYS)
+                .with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY))
+                .plusSeconds(1);
 
         OffsetDateTime oneMonthAgo = currentDate.minusMonths(1);
         OffsetDateTime twoMonthsAgo = currentDate.minusMonths(2);
 
         CoveragePeriod currentMonth = dataSetup.createCoveragePeriod(contract, currentDate.getMonthValue(), currentDate.getYear());
         currentMonth.setStatus(JobStatus.SUCCESSFUL);
-        currentMonth.setLastSuccessfulJob(currentDate.minusDays(STALE_DAYS - 1));
+        currentMonth.setLastSuccessfulJob(previousSunday);
         coveragePeriodRepo.saveAndFlush(currentMonth);
 
         CoveragePeriod oneMonth = dataSetup.createCoveragePeriod(contract, oneMonthAgo.getMonthValue(), oneMonthAgo.getYear());
         oneMonth.setStatus(JobStatus.SUCCESSFUL);
-        oneMonth.setLastSuccessfulJob(currentDate.minusDays(2 * STALE_DAYS - 1));
+        oneMonth.setLastSuccessfulJob(previousSunday);
         coveragePeriodRepo.saveAndFlush(oneMonth);
 
         CoveragePeriod twoMonth = dataSetup.createCoveragePeriod(contract, twoMonthsAgo.getMonthValue(), twoMonthsAgo.getYear());
         twoMonth.setStatus(JobStatus.SUCCESSFUL);
-        twoMonth.setLastSuccessfulJob(currentDate.minusDays(3 * STALE_DAYS - 1));
+        twoMonth.setLastSuccessfulJob(previousSunday);
         coveragePeriodRepo.saveAndFlush(twoMonth);
 
-        createEvent(currentMonth, JobStatus.SUCCESSFUL, currentDate.minusDays(STALE_DAYS - 1));
-        createEvent(oneMonth, JobStatus.SUCCESSFUL, currentDate.minusDays(2 * STALE_DAYS - 1));
-        createEvent(twoMonth, JobStatus.SUCCESSFUL, currentDate.minusDays(3 * STALE_DAYS - 1));
+        createEvent(currentMonth, JobStatus.SUCCESSFUL, previousSunday);
+        createEvent(oneMonth, JobStatus.SUCCESSFUL, previousSunday);
+        createEvent(twoMonth, JobStatus.SUCCESSFUL, previousSunday);
 
         driver.queueStaleCoveragePeriods();
 
         assertEquals(0, coverageSearchRepo.findAll().size());
     }
 
-    @DisplayName("Queue stale coverages finds coverage periods whose last successful search is before a boundary in time")
+    @DisplayName("Queue stale coverages ignores old months")
     @Test
     void queueStaleCoverageIgnoresOldMonths() throws CoverageDriverException, InterruptedException {
 
         coveragePeriodRepo.deleteAll();
 
         OffsetDateTime currentDate = OffsetDateTime.now(DateUtil.AB2D_ZONE);
+        OffsetDateTime previousSaturday = currentDate
+                .truncatedTo(ChronoUnit.DAYS)
+                .with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY))
+                .minusSeconds(1);
 
         OffsetDateTime oneMonthAgo = currentDate.minusMonths(1);
         OffsetDateTime twoMonthsAgo = currentDate.minusMonths(2);
@@ -304,28 +332,28 @@ class CoverageUpdateAndProcessorTest {
 
         CoveragePeriod currentMonth = dataSetup.createCoveragePeriod(contract, currentDate.getMonthValue(), currentDate.getYear());
         currentMonth.setStatus(JobStatus.SUCCESSFUL);
-        currentMonth.setLastSuccessfulJob(currentDate.minusDays(STALE_DAYS + 1));
+        currentMonth.setLastSuccessfulJob(previousSaturday);
         coveragePeriodRepo.saveAndFlush(currentMonth);
 
         CoveragePeriod oneMonth = dataSetup.createCoveragePeriod(contract, oneMonthAgo.getMonthValue(), oneMonthAgo.getYear());
         oneMonth.setStatus(JobStatus.SUCCESSFUL);
-        oneMonth.setLastSuccessfulJob(currentDate.minusDays(2 * STALE_DAYS + 1));
+        oneMonth.setLastSuccessfulJob(previousSaturday);
         coveragePeriodRepo.saveAndFlush(oneMonth);
 
         CoveragePeriod twoMonth = dataSetup.createCoveragePeriod(contract, twoMonthsAgo.getMonthValue(), twoMonthsAgo.getYear());
         twoMonth.setStatus(JobStatus.SUCCESSFUL);
-        twoMonth.setLastSuccessfulJob(currentDate.minusDays(3 * STALE_DAYS + 1));
+        twoMonth.setLastSuccessfulJob(previousSaturday);
         coveragePeriodRepo.saveAndFlush(twoMonth);
 
         CoveragePeriod threeMonth = dataSetup.createCoveragePeriod(contract, threeMonthsAgo.getMonthValue(), threeMonthsAgo.getYear());
         threeMonth.setStatus(JobStatus.SUCCESSFUL);
-        threeMonth.setLastSuccessfulJob(currentDate.minusDays(4 * STALE_DAYS + 1));
+        threeMonth.setLastSuccessfulJob(previousSaturday);
         coveragePeriodRepo.saveAndFlush(threeMonth);
 
-        createEvent(currentMonth, JobStatus.SUCCESSFUL, currentDate.minusDays(STALE_DAYS + 1));
-        createEvent(oneMonth, JobStatus.SUCCESSFUL, currentDate.minusDays(2 * STALE_DAYS + 1));
-        createEvent(twoMonth, JobStatus.SUCCESSFUL, currentDate.minusDays(3 * STALE_DAYS + 1));
-        createEvent(threeMonth, JobStatus.SUCCESSFUL, currentDate.minusDays(4 * STALE_DAYS + 1));
+        createEvent(currentMonth, JobStatus.SUCCESSFUL, previousSaturday);
+        createEvent(oneMonth, JobStatus.SUCCESSFUL, previousSaturday);
+        createEvent(twoMonth, JobStatus.SUCCESSFUL, previousSaturday);
+        createEvent(threeMonth, JobStatus.SUCCESSFUL, previousSaturday);
 
         driver.queueStaleCoveragePeriods();
 
@@ -333,7 +361,7 @@ class CoverageUpdateAndProcessorTest {
         assertEquals(3, coverageSearchRepo.findAll().size());
     }
 
-    @DisplayName("Queue stale coverages finds coverage periods whose last successful search before a boundary")
+    @DisplayName("Queue stale coverages finds jobs stuck beyond a threshold of time")
     @Test
     void queueStaleCoverageFindStuckJobs() throws CoverageDriverException, InterruptedException {
 
@@ -367,14 +395,18 @@ class CoverageUpdateAndProcessorTest {
         // Test whether queue stale coverage ignores regular in progress jobs
 
         OffsetDateTime currentDate = OffsetDateTime.now(DateUtil.AB2D_ZONE);
+        OffsetDateTime previousSaturday = currentDate
+                .truncatedTo(ChronoUnit.DAYS)
+                .with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY))
+                .minusSeconds(1);
 
         CoveragePeriod currentMonth = dataSetup.createCoveragePeriod(contract, currentDate.getMonthValue(), currentDate.getYear());
         currentMonth.setStatus(JobStatus.IN_PROGRESS);
-        currentMonth.setLastSuccessfulJob(OffsetDateTime.now().minusDays(STALE_DAYS + 1));
+        currentMonth.setLastSuccessfulJob(previousSaturday);
         coveragePeriodRepo.saveAndFlush(currentMonth);
 
-        createEvent(currentMonth, JobStatus.SUCCESSFUL, currentDate.minusDays(STALE_DAYS + 1));
-        createEvent(currentMonth, JobStatus.IN_PROGRESS, currentDate.minusMinutes(1));
+        createEvent(currentMonth, JobStatus.SUCCESSFUL, previousSaturday);
+        createEvent(currentMonth, JobStatus.IN_PROGRESS, previousSaturday.minusMinutes(1));
 
         driver.queueStaleCoveragePeriods();
 
@@ -389,8 +421,8 @@ class CoverageUpdateAndProcessorTest {
         currentMonth.setStatus(JobStatus.SUBMITTED);
         coveragePeriodRepo.saveAndFlush(currentMonth);
 
-        createEvent(currentMonth, JobStatus.SUCCESSFUL, currentDate.minusDays(STALE_DAYS + 1));
-        createEvent(currentMonth, JobStatus.SUBMITTED, currentDate.minusMinutes(1));
+        createEvent(currentMonth, JobStatus.SUCCESSFUL, previousSaturday);
+        createEvent(currentMonth, JobStatus.SUBMITTED, previousSaturday.minusMinutes(1));
 
         driver.queueStaleCoveragePeriods();
 
@@ -609,5 +641,19 @@ class CoverageUpdateAndProcessorTest {
         } catch (InterruptedException ie) {
 
         }
+    }
+
+
+    private PdpClientDTO createClient(Contract contract, String clientId, @Nullable String roleName) {
+        PdpClientDTO client = new PdpClientDTO();
+        client.setClientId(clientId);
+        client.setOrganization(clientId);
+        client.setEnabled(true);
+        ContractDTO contractDTO = new ContractDTO(contract.getContractNumber(), contract.getContractName(),
+                contract.getAttestedOn().toString());
+        client.setContract(contractDTO);
+        client.setRole(roleName);
+
+        return client;
     }
 }

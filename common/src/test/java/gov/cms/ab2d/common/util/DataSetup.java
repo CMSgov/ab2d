@@ -13,6 +13,7 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.function.Supplier;
 
 import static java.util.stream.Collectors.toList;
 
@@ -245,9 +246,13 @@ public class DataSetup {
         pdpClient.setEnabled(true);
         pdpClient.setMaxParallelJobs(3);
         for(String clientRole :  clientRoles) {
-            Role role = new Role();
-            role.setName(clientRole);
-            roleRepository.save(role);
+            // Use existing role or create a new one for the client
+            Role role = roleRepository.findRoleByName(clientRole).orElseGet(() -> {
+                Role newRole = new Role();
+                newRole.setName(clientRole);
+                return roleRepository.save(newRole);
+            });
+
             pdpClient.addRole(role);
             queueForCleanup(role);
         }
