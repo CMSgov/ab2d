@@ -3,17 +3,20 @@ package gov.cms.ab2d.worker.processor.coverage;
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.CoverageSearchRepository;
-import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.CoverageService;
+import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.Constants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.DayOfWeek;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -33,18 +36,18 @@ public class CoverageDriverImpl implements CoverageDriver {
     private static final int PAGING_SIZE = 10000;
 
     private final CoverageSearchRepository coverageSearchRepository;
-    private final ContractService contractService;
+    private final PdpClientService pdpClientService;
     private final CoverageService coverageService;
     private final CoverageProcessor coverageProcessor;
     private final CoverageLockWrapper coverageLockWrapper;
     private final PropertiesService propertiesService;
 
     public CoverageDriverImpl(CoverageSearchRepository coverageSearchRepository,
-                              ContractService contractService, CoverageService coverageService,
+                              PdpClientService pdpClientService, CoverageService coverageService,
                               PropertiesService propertiesService, CoverageProcessor coverageProcessor,
                               CoverageLockWrapper coverageLockWrapper) {
         this.coverageSearchRepository = coverageSearchRepository;
-        this.contractService = contractService;
+        this.pdpClientService = pdpClientService;
         this.coverageService = coverageService;
         this.coverageProcessor = coverageProcessor;
         this.coverageLockWrapper = coverageLockWrapper;
@@ -60,9 +63,10 @@ public class CoverageDriverImpl implements CoverageDriver {
         String updateMonths = propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_UPDATE_MONTHS).getValue();
         String staleDays = propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_STALE_DAYS).getValue();
         String stuckHours = propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_STUCK_HOURS).getValue();
+        String override = propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_OVERRIDE).getValue();
 
         return new CoverageUpdateConfig(Integer.parseInt(updateMonths), Integer.parseInt(staleDays),
-                Integer.parseInt(stuckHours));
+                Integer.parseInt(stuckHours), Boolean.parseBoolean(override));
     }
 
     /**
@@ -146,8 +150,8 @@ public class CoverageDriverImpl implements CoverageDriver {
 
                 // Iterate through all attested contracts and look for new
                 // coverage periods for each contract
-                List<Contract> attestedContracts = contractService.getAllAttestedContracts();
-                for (Contract contract : attestedContracts) {
+                List<Contract> enabledContracts = pdpClientService.getAllEnabledContracts();
+                for (Contract contract : enabledContracts) {
                     if (contract.getUpdateMode() != Contract.UpdateMode.TEST) {
                         discoverCoveragePeriods(contract);
                     }
@@ -219,17 +223,27 @@ public class CoverageDriverImpl implements CoverageDriver {
         long monthsInPast = 0;
         OffsetDateTime dateTime = OffsetDateTime.now(AB2D_ZONE);
 
+        OffsetDateTime lastSunday;
+        if (dateTime.getDayOfWeek() == DayOfWeek.SUNDAY) {
+            lastSunday = dateTime.truncatedTo(ChronoUnit.DAYS);
+
+        } else {
+            lastSunday = dateTime.with(TemporalAdjusters.previous(DayOfWeek.SUNDAY))
+                    .truncatedTo(ChronoUnit.DAYS);
+        }
+
         do {
             // Get past month and year
             OffsetDateTime pastMonthTime = dateTime.minusMonths(monthsInPast);
             int month = pastMonthTime.getMonthValue();
             int year = pastMonthTime.getYear();
 
-            // Look for coverage periods that have not been updated
-            long daysInPast = config.getStaleDays() * (monthsInPast + 1);
-            OffsetDateTime lastUpdatedAfter = dateTime.minusDays(daysInPast);
+            if (config.isOverride()) {
+                stalePeriods.addAll(coverageService.getCoveragePeriods(month, year));
+            } else {
+                stalePeriods.addAll(coverageService.coveragePeriodNotUpdatedSince(month, year, lastSunday));
+            }
 
-            stalePeriods.addAll(coverageService.coveragePeriodNotUpdatedSince(month, year, lastUpdatedAfter));
             monthsInPast++;
         } while (monthsInPast < config.getPastMonthsToUpdate());
 

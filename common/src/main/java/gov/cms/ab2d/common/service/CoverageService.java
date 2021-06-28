@@ -20,11 +20,18 @@ public interface CoverageService {
 
     /**
      * Get {@link CoveragePeriod} in database matching provided triple
-     * @param contract existing {@link gov.cms.ab2d.common.model.Contract#getId()}
+     * @param contract existing {@link gov.cms.ab2d.common.model.Contract}
      * @param month valid month
      * @param year valid year (not later than current year)
      */
     CoveragePeriod getCoveragePeriod(Contract contract, int month, int year);
+
+    /**
+     * Get {@link CoveragePeriod} in database matching provided triple
+     * @param month valid month
+     * @param year valid year (not later than current year)
+     */
+    List<CoveragePeriod> getCoveragePeriods(int month, int year);
 
     /**
      * Create {@link CoveragePeriod} matching the provided triple

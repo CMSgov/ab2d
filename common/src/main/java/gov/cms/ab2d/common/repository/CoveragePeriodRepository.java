@@ -16,4 +16,6 @@ public interface CoveragePeriodRepository extends JpaRepository<CoveragePeriod, 
     List<CoveragePeriod> findAllByMonthAndYearAndLastSuccessfulJobLessThanEqual(int month, int year, OffsetDateTime time);
 
     Optional<CoveragePeriod> findByContractIdAndMonthAndYear(long contractId, int month, int year);
+
+    List<CoveragePeriod> findAllByMonthAndYear(int month, int year);
 }
