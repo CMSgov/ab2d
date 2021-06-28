@@ -13,6 +13,7 @@ import org.springframework.scheduling.quartz.QuartzJobBean;
 
 import java.time.DayOfWeek;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.COVERAGE_SEARCH_OVERRIDE;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
@@ -69,6 +70,7 @@ public class CoveragePeriodQuartzJob extends QuartzJobBean {
                 PropertiesDTO overrideUpdate = new PropertiesDTO();
                 overrideUpdate.setKey(COVERAGE_SEARCH_OVERRIDE);
                 overrideUpdate.setValue("false");
+                propertiesService.updateProperties(List.of(overrideUpdate));
             }
         }
     }
