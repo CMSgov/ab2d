@@ -377,23 +377,24 @@ public class CoverageDriverImpl implements CoverageDriver {
 
             // If we haven't updated the current month's metadata since the job was submitted
             // then we must update it to guarantee we aren't missing any recent metadata changes
-            ZonedDateTime now = ZonedDateTime.now(AB2D_ZONE);
-            CoveragePeriod currentPeriod = coverageService.getCoveragePeriod(job.getContract(), now.getMonthValue(), now.getYear());
-            checkCoveragePeriodValidity(job, currentPeriod);
-
-            if (currentPeriod.getLastSuccessfulJob() == null || currentPeriod.getLastSuccessfulJob().isBefore(job.getCreatedAt())) {
-
-                // Submit a new search if necessary
-                if (currentPeriod.getStatus() != JobStatus.SUBMITTED || currentPeriod.getStatus() != JobStatus.IN_PROGRESS) {
-                    String reason = String.format("%s-%d-%d must be updated before job %s can run",
-                            currentPeriod.getContract().getContractNumber(), currentPeriod.getYear(), currentPeriod.getMonth(),
-                            job.getJobUuid());
-                    log.info(reason);
-                    coverageService.submitSearch(currentPeriod.getId(), reason);
-                }
-
-                return false;
-            }
+            // TODO re-enable if patient endpoint times improve significantly
+//            ZonedDateTime now = ZonedDateTime.now(AB2D_ZONE);
+//            CoveragePeriod currentPeriod = coverageService.getCoveragePeriod(job.getContract(), now.getMonthValue(), now.getYear());
+//            checkCoveragePeriodValidity(job, currentPeriod);
+//
+//            if (currentPeriod.getLastSuccessfulJob() == null || currentPeriod.getLastSuccessfulJob().isBefore(job.getCreatedAt())) {
+//
+//                // Submit a new search if necessary
+//                if (currentPeriod.getStatus() != JobStatus.SUBMITTED || currentPeriod.getStatus() != JobStatus.IN_PROGRESS) {
+//                    String reason = String.format("%s-%d-%d must be updated before job %s can run",
+//                            currentPeriod.getContract().getContractNumber(), currentPeriod.getYear(), currentPeriod.getMonth(),
+//                            job.getJobUuid());
+//                    log.info(reason);
+//                    coverageService.submitSearch(currentPeriod.getId(), reason);
+//                }
+//
+//                return false;
+//            }
 
             log.info("checking whether any coverage metadata is currently being updated for {}", contractNumber);
             /*
