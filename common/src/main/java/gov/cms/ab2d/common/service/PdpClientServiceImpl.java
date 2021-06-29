@@ -41,8 +41,18 @@ public class PdpClientServiceImpl implements PdpClientService {
     public List<Contract> getAllEnabledContracts() {
         return pdpClientRepository.findAllByEnabledTrue().stream()
                 .filter(client -> client.getContract().getAttestedOn() != null)
-                .filter(client -> client.getRoles().stream().anyMatch(role -> role.getName().equals(SPONSOR_ROLE)))
+                .filter(this::hasSponsorRole)
                 .map(PdpClient::getContract).collect(toList());
+    }
+
+    private boolean hasSponsorRole(PdpClient client) {
+        for (Role role : client.getRoles()) {
+            if (SPONSOR_ROLE.equals(role.getName())) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @Override
