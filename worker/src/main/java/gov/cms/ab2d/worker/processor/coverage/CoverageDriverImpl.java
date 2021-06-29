@@ -88,6 +88,11 @@ public class CoverageDriverImpl implements CoverageDriver {
             // Job runs once a day so we need to grab this lock
             locked = lock.tryLock(TEN_MINUTES, TimeUnit.MINUTES);
 
+            for (CoveragePeriod period : outOfDateInfo) {
+                log.info("Attempting to add {}-{}-{} to queue", period.getContract().getContractNumber(),
+                        period.getYear(), period.getMonth());
+            }
+
             if (locked) {
                 for (CoveragePeriod period : outOfDateInfo) {
                     coverageProcessor.queueCoveragePeriod(period, false);
