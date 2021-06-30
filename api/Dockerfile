@@ -1,4 +1,4 @@
-FROM adoptopenjdk:11.0.11_9-jre-hotspot
+FROM adoptopenjdk:11-jdk
 WORKDIR /usr/src/ab2d-api
 ADD target/api-*-SNAPSHOT.jar /usr/src/ab2d-api/api.jar
 ADD target/newrelic/newrelic.jar /usr/src/ab2d-api/newrelic/newrelic.jar
