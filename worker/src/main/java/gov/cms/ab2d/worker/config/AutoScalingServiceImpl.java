@@ -89,11 +89,18 @@ public class AutoScalingServiceImpl implements AutoScalingService, ApplicationLi
 
         // If in maintenance mode immediately scale down because new work won't be processed.
         // If no new work is present immediately scale down.
-        if (propertiesService.isInMaintenanceMode() || eobClaimRequestsQueue.isEmpty()) {
+        boolean inMaintenanceMode = propertiesService.isInMaintenanceMode();
+        boolean eobClaimRequestsQueueEmpty = eobClaimRequestsQueue.isEmpty();
+        int eobClaimRequestsQueueSize = eobClaimRequestsQueue.size();
+        if (inMaintenanceMode || eobClaimRequestsQueueEmpty) {
+            log.info("Auto-Scaling Maintenance mode: {} and Queue Empty: {} and Queue Size: {}",
+                    inMaintenanceMode, eobClaimRequestsQueueEmpty, eobClaimRequestsQueueSize);
             // No busy threads -- no active jobs. We can scale back to minimums immediately;
             // no need to do so gradually.
             scaleBackToMin();
         } else {
+            log.info("Auto-Scaling Maintenance mode: {} and Queue Empty: {} and Queue Size: {}",
+                    false, false, eobClaimRequestsQueueSize);
             scaleUp();
         }
     }
