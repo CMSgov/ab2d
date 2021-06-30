@@ -5,6 +5,7 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.worker.TestUtil;
+import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.processor.stub.PatientClaimsProcessorStub;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -44,6 +45,7 @@ class ContractProcessorUnitTest {
 
     @Mock private JobRepository jobRepository;
     @Mock private LogManager eventLogger;
+    @Mock private RoundRobinBlockingQueue<PatientClaimsRequest> requestQueue;
     private PatientClaimsProcessor patientClaimsProcessor;
 
     private Path outputDir;
@@ -60,7 +62,8 @@ class ContractProcessorUnitTest {
         cut = new ContractProcessorImpl(
                 jobRepository,
                 patientClaimsProcessor,
-                eventLogger);
+                eventLogger,
+                requestQueue);
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 2);
         ReflectionTestUtils.setField(cut, "reportProgressDbFrequency", 2);
         ReflectionTestUtils.setField(cut, "reportProgressLogFrequency", 3);
@@ -69,7 +72,6 @@ class ContractProcessorUnitTest {
         pdpClient = createClient();
         job = createJob(pdpClient);
         contract = createContract();
-
 
         var outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
         outputDir = Files.createDirectories(outputDirPath);

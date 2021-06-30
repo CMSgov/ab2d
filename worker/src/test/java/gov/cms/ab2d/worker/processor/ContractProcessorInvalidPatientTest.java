@@ -9,6 +9,7 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.worker.TestUtil;
+import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,6 +45,8 @@ class ContractProcessorInvalidPatientTest {
     private BFDClient bfdClient;
     @Mock
     private JobRepository jobRepository;
+    @Mock
+    private RoundRobinBlockingQueue<PatientClaimsRequest> requestQueue;
 
     @TempDir
     File tmpDirFolder;
@@ -58,7 +61,7 @@ class ContractProcessorInvalidPatientTest {
     void setup() {
 
         patientClaimsProcessor = new PatientClaimsProcessorImpl(bfdClient, eventLogger);
-        cut = new ContractProcessorImpl(jobRepository, patientClaimsProcessor, eventLogger);
+        cut = new ContractProcessorImpl(jobRepository, patientClaimsProcessor, eventLogger, requestQueue);
         tracker = ProgressTracker.builder()
                 .jobUuid(jobId)
                 .failureThreshold(100)
