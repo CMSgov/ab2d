@@ -16,7 +16,6 @@ import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.fhir.EobUtils;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
