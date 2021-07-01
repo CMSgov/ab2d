@@ -33,7 +33,7 @@
     <properties>
         <project.root>${basedir}</project.root>
         <java.version>11</java.version>
-        <hapi.version>5.4.0</hapi.version>
+        <hapi.version>5.4.1</hapi.version>
         <!-- eventlogger is imported first by all other modules, if that changes then
          okhttp3 must be imported first anywhere the slack client is used-->
         <okhttp3.version>4.9.1</okhttp3.version>
