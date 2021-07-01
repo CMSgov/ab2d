@@ -32,13 +32,4 @@ public class CoveragePeriodQuartzConfig {
                 .withSchedule(CronScheduleBuilder.cronSchedule(schedule))
                 .build();
     }
-
-    @Bean
-    Trigger coveragePeriodJobStartupTrigger(@Qualifier("coverage_period_update") JobDetail coveragePeriodJobDetail) {
-        return TriggerBuilder.newTrigger()
-                .forJob(coveragePeriodJobDetail)
-                .withIdentity("coverage_period_update_trigger_startup")
-                .startNow()
-                .build();
-    }
 }

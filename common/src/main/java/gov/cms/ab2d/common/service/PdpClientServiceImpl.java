@@ -2,6 +2,7 @@ package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.config.Mapping;
 import gov.cms.ab2d.common.dto.PdpClientDTO;
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
@@ -20,6 +21,9 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 
+import static gov.cms.ab2d.common.util.Constants.SPONSOR_ROLE;
+import static java.util.stream.Collectors.toList;
+
 /**
  * Just gets the current client from the authentication context.
  */
@@ -32,6 +36,24 @@ public class PdpClientServiceImpl implements PdpClientService {
     private final PdpClientRepository pdpClientRepository;
 
     private final Mapping mapping;
+
+    @Override
+    public List<Contract> getAllEnabledContracts() {
+        return pdpClientRepository.findAllByEnabledTrue().stream()
+                .filter(client -> client.getContract().getAttestedOn() != null)
+                .filter(this::hasSponsorRole)
+                .map(PdpClient::getContract).collect(toList());
+    }
+
+    private boolean hasSponsorRole(PdpClient client) {
+        for (Role role : client.getRoles()) {
+            if (SPONSOR_ROLE.equals(role.getName())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     @Override
     public PdpClient getCurrentClient() {

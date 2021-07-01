@@ -228,6 +228,18 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
         }
     }
 
+    public int size(String category) {
+        lock.lock();
+        try {
+            if (!categoryQueues.containsKey(category)) {
+                return 0;
+            }
+            return categoryQueues.get(category).size();
+        } finally {
+            lock.unlock();
+        }
+    }
+
     @Override
     public boolean isEmpty() {
         return size() == 0;

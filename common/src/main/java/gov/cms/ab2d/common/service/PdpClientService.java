@@ -1,6 +1,7 @@
 package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.dto.PdpClientDTO;
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
 import org.springframework.security.core.GrantedAuthority;
 
@@ -8,6 +9,12 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 public interface PdpClientService {
+
+    /**
+     * Find all {@link Contract}s that have credentials which are enabled. This method does not
+     * filter fake contracts Z* from real contracts S*
+     */
+    List<Contract> getAllEnabledContracts();
 
     PdpClient getCurrentClient();
 

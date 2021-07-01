@@ -18,6 +18,8 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
 
     private File currentFile;
 
+    private static final int MIB = 1048576;
+
     /**
      * Implement the text stream helper
      *
@@ -47,7 +49,7 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
         f.getParentFile().mkdirs();
         currentFile = f;
         logManager.log(EventUtils.getFileEvent(job, f, FileEvent.FileStatus.OPEN));
-        OutputStream stream = new BufferedOutputStream(new FileOutputStream(fileName));
+        OutputStream stream = new BufferedOutputStream(new FileOutputStream(fileName), MIB);
         Path p = Path.of(fileName);
         filesCreated.add(p);
         return stream;

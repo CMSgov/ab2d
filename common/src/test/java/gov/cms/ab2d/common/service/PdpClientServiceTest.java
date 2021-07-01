@@ -37,6 +37,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 class PdpClientServiceTest {
 
     @Autowired
+    private ContractService contractService;
+
+    @Autowired
     private PdpClientService pdpClientService;
 
     @Container
@@ -44,6 +47,10 @@ class PdpClientServiceTest {
 
     @Autowired
     private DataSetup dataSetup;
+
+    private static final String TEST_CLIENT = "test@test.com";
+    private static final String ENABLED_CLIENT = "enabled@test.com";
+    private static final String DISABLED_CLIENT = "disabled@test.com";
 
     @BeforeEach
     public void setup() {
@@ -56,8 +63,29 @@ class PdpClientServiceTest {
     }
 
     @Test
+    void testFindEnabledClients() {
+        PdpClientDTO client = buildClientDTO("Enabled", ENABLED_CLIENT, SPONSOR_ROLE);
+        client.setEnabled(true);
+
+        pdpClientService.createClient(client);
+        dataSetup.queueForCleanup(pdpClientService.getClientById(ENABLED_CLIENT));
+
+        client = buildClientDTO("Disabled", DISABLED_CLIENT, SPONSOR_ROLE);
+        client.setEnabled(false);
+
+        pdpClientService.createClient(client);
+        dataSetup.queueForCleanup(pdpClientService.getClientById(DISABLED_CLIENT));
+
+        Contract contract = contractService.getContractByContractNumber("Enabled").get();
+        List<Contract> contracts = pdpClientService.getAllEnabledContracts();
+
+        assertEquals(1, contracts.size());
+        assertEquals(contract, contracts.get(0));
+    }
+
+    @Test
     void testCreateClient() {
-        PdpClientDTO client = buildClientDTO("Test", SPONSOR_ROLE);
+        PdpClientDTO client = buildClientDTO("Test", TEST_CLIENT, SPONSOR_ROLE);
 
         PdpClientDTO createdClient = pdpClientService.createClient(client);
         dataSetup.queueForCleanup(pdpClientService.getClientById("test@test.com"));
@@ -70,7 +98,7 @@ class PdpClientServiceTest {
 
     @Test
     void testCreateDuplicateClient() {
-        PdpClientDTO client = buildClientDTO("Test", SPONSOR_ROLE);
+        PdpClientDTO client = buildClientDTO("Test", TEST_CLIENT, SPONSOR_ROLE);
 
         pdpClientService.createClient(client);
         dataSetup.queueForCleanup(pdpClientService.getClientById("test@test.com"));
@@ -83,28 +111,9 @@ class PdpClientServiceTest {
                 exceptionThrown.getMessage());
     }
 
-    private PdpClientDTO buildClientDTO(String test, String sponsorRole) {
-        Contract contract = dataSetup.setupContract(test);
-
-        return createClient(contract, sponsorRole);
-    }
-
-    private PdpClientDTO createClient(Contract contract, @Nullable String roleName) {
-        PdpClientDTO client = new PdpClientDTO();
-        client.setClientId("test@test.com");
-        client.setOrganization("test");
-        client.setEnabled(true);
-        ContractDTO contractDTO = new ContractDTO(contract.getContractNumber(), contract.getContractName(),
-                contract.getAttestedOn().toString());
-        client.setContract(contractDTO);
-        client.setRole(roleName);
-
-        return client;
-    }
-
     @Test
     void testUpdateClient() {
-        PdpClientDTO client = buildClientDTO("Test", SPONSOR_ROLE);
+        PdpClientDTO client = buildClientDTO("Test", TEST_CLIENT, SPONSOR_ROLE);
 
         PdpClientDTO createdClient = pdpClientService.createClient(client);
         dataSetup.queueForCleanup(pdpClientService.getClientById("test@test.com"));
@@ -123,17 +132,9 @@ class PdpClientServiceTest {
         assertEquals(createdClient.getRole(), updatedClient.getRole());
     }
 
-    private ContractDTO buildContractDTO(Contract contract) {
-        ContractDTO contractDTO = new ContractDTO();
-        contractDTO.setContractName(contract.getContractName());
-        contractDTO.setContractNumber(contract.getContractNumber());
-        contractDTO.setAttestedOn(contract.getAttestedOn().toString());
-        return contractDTO;
-    }
-
     @Test
     void testUpdateClientAddRole() {
-        PdpClientDTO client = buildClientDTO("Test", null);
+        PdpClientDTO client = buildClientDTO("Test", TEST_CLIENT,null);
 
         assertNull(client.getRole());
 
@@ -149,7 +150,7 @@ class PdpClientServiceTest {
 
     @Test
     void testUpdateClientRemoveRole() {
-        PdpClientDTO client = buildClientDTO("TEST", SPONSOR_ROLE);
+        PdpClientDTO client = buildClientDTO("TEST", TEST_CLIENT, SPONSOR_ROLE);
 
         assertEquals(SPONSOR_ROLE, client.getRole());
 
@@ -173,7 +174,7 @@ class PdpClientServiceTest {
         auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(httpServletRequest));
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        PdpClientDTO client = buildClientDTO("Test", SPONSOR_ROLE);
+        PdpClientDTO client = buildClientDTO("Test", TEST_CLIENT, SPONSOR_ROLE);
         PdpClientDTO createdClient = pdpClientService.createClient(client);
         dataSetup.queueForCleanup(pdpClientService.getClientById("test@test.com"));
 
@@ -198,7 +199,7 @@ class PdpClientServiceTest {
 
     @Test
     void testEnableClient() {
-        PdpClientDTO client = buildClientDTO("Test", SPONSOR_ROLE);
+        PdpClientDTO client = buildClientDTO("Test", TEST_CLIENT, SPONSOR_ROLE);
         client.setEnabled(false);
 
         pdpClientService.createClient(client);
@@ -210,11 +211,38 @@ class PdpClientServiceTest {
 
     @Test
     void testDisableClient() {
-        PdpClientDTO client = buildClientDTO("Test", SPONSOR_ROLE);
+        PdpClientDTO client = buildClientDTO("Test", TEST_CLIENT, SPONSOR_ROLE);
         pdpClientService.createClient(client);
         dataSetup.queueForCleanup(pdpClientService.getClientById("test@test.com"));
 
         PdpClientDTO updatedClient = pdpClientService.disableClient(client.getContract().getContractNumber());
         assertEquals(false, updatedClient.getEnabled());
+    }
+
+    private PdpClientDTO buildClientDTO(String contractNumber, String clientId, String sponsorRole) {
+        Contract contract = dataSetup.setupContract(contractNumber);
+
+        return createClient(contract, clientId, sponsorRole);
+    }
+
+    private ContractDTO buildContractDTO(Contract contract) {
+        ContractDTO contractDTO = new ContractDTO();
+        contractDTO.setContractName(contract.getContractName());
+        contractDTO.setContractNumber(contract.getContractNumber());
+        contractDTO.setAttestedOn(contract.getAttestedOn().toString());
+        return contractDTO;
+    }
+
+    private PdpClientDTO createClient(Contract contract, String clientId, @Nullable String roleName) {
+        PdpClientDTO client = new PdpClientDTO();
+        client.setClientId(clientId);
+        client.setOrganization(clientId);
+        client.setEnabled(true);
+        ContractDTO contractDTO = new ContractDTO(contract.getContractNumber(), contract.getContractName(),
+                contract.getAttestedOn().toString());
+        client.setContract(contractDTO);
+        client.setRole(roleName);
+
+        return client;
     }
 }

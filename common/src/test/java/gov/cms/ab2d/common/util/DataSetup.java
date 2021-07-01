@@ -245,9 +245,13 @@ public class DataSetup {
         pdpClient.setEnabled(true);
         pdpClient.setMaxParallelJobs(3);
         for(String clientRole :  clientRoles) {
-            Role role = new Role();
-            role.setName(clientRole);
-            roleRepository.save(role);
+            // Use existing role or create a new one for the client
+            Role role = roleRepository.findRoleByName(clientRole).orElseGet(() -> {
+                Role newRole = new Role();
+                newRole.setName(clientRole);
+                return roleRepository.save(newRole);
+            });
+
             pdpClient.addRole(role);
             queueForCleanup(role);
         }

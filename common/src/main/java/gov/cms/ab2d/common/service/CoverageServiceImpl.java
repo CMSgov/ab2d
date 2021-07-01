@@ -1,5 +1,6 @@
 package gov.cms.ab2d.common.service;
 
+import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoverageMapping;
 import gov.cms.ab2d.common.model.CoveragePagingRequest;
@@ -58,6 +59,13 @@ public class CoverageServiceImpl implements CoverageService {
         Optional<CoveragePeriod> period = coveragePeriodRepo.findByContractIdAndMonthAndYear(contract.getId(), month, year);
         return period.orElseThrow(() ->
                 new EntityNotFoundException("could not find coverage period matching contract, month, and year"));
+    }
+
+    @Override
+    public List<CoveragePeriod> getCoveragePeriods(int month, int year) {
+        checkMonthAndYear(month, year);
+
+        return coveragePeriodRepo.findAllByMonthAndYear(month, year);
     }
 
     @Override
@@ -122,19 +130,25 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
+    @Trace(metricName = "InsertingCoverage", dispatcher = true)
     public CoverageSearchEvent insertCoverage(long searchEventId, Set<Identifiers> beneficiaryIds) {
 
         // Make sure that coverage period and searchEvent actually exist in the database before inserting
         CoverageSearchEvent searchEvent = findCoverageSearchEvent(searchEventId);
         coverageServiceRepo.insertBatches(searchEvent, beneficiaryIds);
 
+        log.info("Vacuuming coverage table now");
+
         // Update indices after every batch of insertions to make sure speed of database is preserved
         coverageServiceRepo.vacuumCoverage();
+
+        log.info("Vacuuming coverage finished now");
 
         return searchEvent;
     }
 
     @Override
+    @Trace
     public void deletePreviousSearch(int periodId) {
         // Delete previous in progress search before this one
         // but check that coverage period is valid
@@ -143,6 +157,7 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
+    @Trace
     public CoveragePagingResult pageCoverage(CoveragePagingRequest pagingRequest) {
 
         List<Integer> coveragePeriodIds = pagingRequest.getCoveragePeriodIds();
@@ -156,6 +171,7 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
+    @Trace(metricName = "SearchDiff", dispatcher = true)
     public CoverageSearchDiff searchDiff(int periodId) {
 
         CoveragePeriod period = findCoveragePeriod(periodId);
@@ -177,6 +193,8 @@ public class CoverageServiceImpl implements CoverageService {
 
         int unchanged = 0;
         if (previousCount > 0) {
+            log.info("Calculating the deltas for the search period {}-{}-{}", period.getContract().getContractNumber(),
+                    period.getMonth(), period.getYear());
             coverageDeltaRepository.trackDeltas(previousSearch.get(), current);
             unchanged = coverageServiceRepo.countIntersection(previousSearch.get(), current);
         }

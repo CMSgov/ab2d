@@ -5,6 +5,7 @@ import gov.cms.ab2d.common.util.fhir.FhirUtils;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.Extension;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -36,13 +37,16 @@ public class AddExtensionTest {
     @Mock
     private LogManager eventLogger;
 
+    @Mock
+    private RoundRobinBlockingQueue<PatientClaimsRequest> requestsQueue;
+
     private ContractProcessorImpl cut;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.initMocks(this);
         cut = new ContractProcessorImpl(jobRepository,
-                patientClaimsProcessor, eventLogger);
+                patientClaimsProcessor, eventLogger, requestsQueue);
     }
 
     @Test

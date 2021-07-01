@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
-import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.CoverageMapping;
 import gov.cms.ab2d.common.model.CoveragePeriod;
@@ -85,7 +84,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                 return false;
             }
 
-            log.debug("starting search for {} during {}-{}", mapping.getContract().getContractNumber(),
+            log.info("starting search for {} during {}-{}", mapping.getContract().getContractNumber(),
                     mapping.getPeriod().getMonth(), mapping.getPeriod().getYear());
 
             // Currently, we are using the STU3 version to get patient mappings
@@ -104,7 +103,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
         // Useful log if we run into concurrency issues
         if (busy) {
-            log.debug("Currently executing {}. Currently inserting {}", executor.getActiveCount(), coverageInsertionQueue.size());
+            log.info("Currently executing {}. Currently inserting {}", executor.getActiveCount(), coverageInsertionQueue.size());
         }
 
         return busy;
@@ -136,7 +135,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
             if (!inShutdown.get()) {
                 Iterator<CoverageMappingCallable> mappingCallableIterator = inProgressMappings.iterator();
 
-                log.debug("Checking running jobs for changes in state");
+                log.info("Checking running jobs for changes in state");
 
                 while (mappingCallableIterator.hasNext()) {
 
@@ -155,7 +154,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
     public void evaluateJob(CoverageMapping mapping) {
         if (mapping.isSuccessful()) {
-            log.debug("finished a search for contract {} during {}-{}", mapping.getContract().getContractNumber(),
+            log.info("finished a search for contract {} during {}-{}", mapping.getContract().getContractNumber(),
                     mapping.getPeriod().getMonth(), mapping.getPeriod().getYear());
 
             coverageInsertionQueue.add(mapping);
@@ -177,7 +176,6 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     /**
      * Only inserts results of coverage mapping jobs run on the current application, not jobs running on other machines
      */
-    @Trace(metricName = "EnrollmentLoadIntoDB", dispatcher = true)
     @Scheduled(fixedDelay = ONE_SECOND, initialDelayString = "${coverage.update.initial.delay}")
     public void insertJobResults() {
 
@@ -195,7 +193,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
             log.info("attempting to insert coverage for {}-{}-{}", contractNumber, month, year);
 
             if (!inShutdown.get()) {
-                log.debug("inserting coverage mapping for contract {} during {}-{}",
+                log.info("inserting coverage mapping for contract {} during {}-{}",
                         contractNumber, month, year);
 
                 attemptCoverageInsertion(result);
@@ -203,14 +201,14 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
                 String message = String.format("shutting down before inserting results for" +
                         " contract %s during %d-%d, will re-attempt", contractNumber, month, year);
-                log.debug(message);
+                log.info(message);
 
                 resubmitMapping(result, message,
                 "shutting down coverage processor before beneficiary data can be inserted into database",
                         true);
             }
         } catch (InterruptedException ie) {
-            log.debug("polling for data to insert failed due to interruption", ie);
+            log.info("polling for data to insert failed due to interruption", ie);
         }
     }
 
@@ -222,10 +220,19 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
         int periodId = result.getPeriodId();
         long eventId = result.getCoverageSearchEvent().getId();
+
         try {
+            String contractNumber = result.getContract().getContractNumber();
+            int month = result.getPeriod().getMonth();
+            int year = result.getPeriod().getYear();
+
             coverageService.insertCoverage(eventId, result.getBeneficiaryIds());
 
+            log.info("finished inserting coverage for {}-{}-{}", contractNumber, month, year);
+
             coverageService.completeSearch(periodId, "successfully inserted all data for in progress search");
+
+            log.info("marked search as completed {}-{}-{}", contractNumber, month, year);
         } catch (Exception exception) {
             log.error("inserting the coverage data failed for {}-{}-{}", result.getContract().getContractNumber(),
                     result.getPeriod().getMonth(), result.getPeriod().getYear());
@@ -239,7 +246,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     @PreDestroy
     public void shutdown() {
 
-        log.debug("shutting down coverage processor");
+        log.warn("shutting down coverage processor");
 
         // Notify all threads that we are shutting down and that work should not progress through pipeline
         synchronized (inProgressMappings) {
@@ -255,7 +262,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
             String message = String.format("shutting down before inserting for contract %s during %d-%d, will re-attempt",
                     insertedMapping.getContract().getContractNumber(), insertedMapping.getPeriod().getMonth(),
                     insertedMapping.getPeriod().getYear());
-            log.debug(message);
+            log.info(message);
 
             resubmitMapping(insertedMapping, message, message, false);
         }
@@ -271,7 +278,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                 String message = String.format("shutting down in progress search for contract %s during %d-%d",
                         mapping.getContract().getContractNumber(), mapping.getPeriod().getMonth(),
                         mapping.getPeriod().getYear());
-                log.debug(message);
+                log.info(message);
 
                 resubmitMapping(mapping, message, message, false);
             });

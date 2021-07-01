@@ -1,5 +1,6 @@
 package gov.cms.ab2d.common.repository;
 
+import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.common.model.CoverageSearchEvent;
 import org.springframework.jdbc.core.namedparam.*;
 import org.springframework.stereotype.Repository;
@@ -21,6 +22,7 @@ public class CoverageDeltaRepository {
         this.dataSource = dataSource;
     }
 
+    @Trace
     public void trackDeltas(CoverageSearchEvent searchEvent1, CoverageSearchEvent searchEvent2) {
 
         SqlParameterSource deletedParams = new MapSqlParameterSource()

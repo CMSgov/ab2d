@@ -1,5 +1,6 @@
 package gov.cms.ab2d.common.repository;
 
+import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoverageMembership;
 import gov.cms.ab2d.common.model.CoveragePagingRequest;
@@ -87,6 +88,7 @@ public class CoverageServiceRepository {
         this.coveragePeriodRepo = coveragePeriodRepo;
     }
 
+    @Trace
     public int countBySearchEvent(CoverageSearchEvent searchEvent) {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(SELECT_COVERAGE_BY_SEARCH_COUNT)) {
@@ -100,6 +102,7 @@ public class CoverageServiceRepository {
         }
     }
 
+    @Trace
     public int countIntersection(CoverageSearchEvent searchEvent1, CoverageSearchEvent searchEvent2) {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(SELECT_INTERSECTION)) {
@@ -132,6 +135,7 @@ public class CoverageServiceRepository {
      * @param searchEvent the search event to add coverage in relation to
      * @param beneIds Collection of beneficiary ids to be added as a batch
      */
+    @Trace
     public void insertBatches(CoverageSearchEvent searchEvent, Iterable<Identifiers> beneIds) {
 
         try (Connection connection = dataSource.getConnection();
@@ -146,18 +150,23 @@ public class CoverageServiceRepository {
                 prepareCoverageInsertion(statement, searchEvent, beneficiary);
 
                 if (processingCount % BATCH_INSERT_SIZE == 0) {
-                    statement.executeBatch();
+                    executeBatch(statement);
                     processingCount = 0;
                 }
             }
 
             if (processingCount > 0) {
-                statement.executeBatch();
+                executeBatch(statement);
             }
 
         } catch (SQLException sqlException) {
             throw new RuntimeException("failed to insert coverage information", sqlException);
         }
+    }
+
+    @Trace
+    private void executeBatch(PreparedStatement statement) throws SQLException {
+        statement.executeBatch();
     }
 
     private void prepareCoverageInsertion(PreparedStatement statement, CoverageSearchEvent searchEvent, Identifiers beneficiary) throws SQLException {
@@ -399,6 +408,7 @@ public class CoverageServiceRepository {
                 localEndDate.getMonthValue(), localEndDate.getYear());
     }
 
+    @Trace
     public void vacuumCoverage() {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement("VACUUM coverage")) {

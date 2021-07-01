@@ -16,7 +16,6 @@ import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.fhir.EobUtils;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -28,6 +27,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
@@ -43,7 +43,6 @@ import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class ContractProcessorImpl implements ContractProcessor {
     private static final int SLEEP_DURATION = 250;
@@ -64,9 +63,23 @@ public class ContractProcessorImpl implements ContractProcessor {
     @Value("${file.try.lock.timeout}")
     private int tryLockTimeout;
 
+    @Value("${eob.job.patient.queue.max.size}")
+    private int eobJobPatientQueueMaxSize;
+
     private final JobRepository jobRepository;
     private final PatientClaimsProcessor patientClaimsProcessor;
     private final LogManager eventLogger;
+    private final RoundRobinBlockingQueue<PatientClaimsRequest> eobClaimRequestsQueue;
+
+    public ContractProcessorImpl(JobRepository jobRepository,
+                                 PatientClaimsProcessor patientClaimsProcessor,
+                                 LogManager eventLogger,
+                                 RoundRobinBlockingQueue<PatientClaimsRequest> eobClaimRequestsQueue) {
+        this.jobRepository = jobRepository;
+        this.patientClaimsProcessor = patientClaimsProcessor;
+        this.eventLogger = eventLogger;
+        this.eobClaimRequestsQueue = eobClaimRequestsQueue;
+    }
 
     /**
      * Process the contract - retrieve all the patients for the contract and create a thread in the
@@ -101,10 +114,19 @@ public class ContractProcessorImpl implements ContractProcessor {
 
             contractData.setStreamHelper(helper);
 
-            for (Map.Entry<String, CoverageSummary> patient : patients.entrySet()) {
+            Iterator<Map.Entry<String, CoverageSummary>> patientEntries = patients.entrySet().iterator();
+
+            while (patientEntries.hasNext()) {
+
+                if (eobClaimRequestsQueue.size(jobUuid) > eobJobPatientQueueMaxSize) {
+                    // Wait for queue to empty out some before adding more
+                    Thread.sleep(1000);
+                    continue;
+                }
 
                 // Queue a patient
-                contractData.addEobRequestHandle(processPatient(version, patient.getValue(), jobData));
+                CoverageSummary patient = patientEntries.next().getValue();
+                contractData.addEobRequestHandle(processPatient(version, patient, jobData));
                 progressTracker.incrementPatientRequestQueuedCount();
 
                 // Periodically check if cancelled
@@ -117,6 +139,9 @@ public class ContractProcessorImpl implements ContractProcessor {
                     processHandles(contractData);
                 }
             }
+
+            // Wait for remaining work to finish before cleaning up after the job
+            // This should be at most eobJobPatientQueueMaxSize requests
             while (contractData.remainingRequestHandles()) {
                 sleep();
                 processHandles(contractData);
@@ -143,6 +168,8 @@ public class ContractProcessorImpl implements ContractProcessor {
 
         } catch (IOException ex) {
             log.error("Unable to open output file");
+        } catch (InterruptedException ex) {
+            log.error("interrupted while processing job for contract");
         }
 
         return jobOutputs;
@@ -389,6 +416,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @param isError    - if there was an error
      * @return - the job output object
      */
+    @Trace(dispatcher = true)
     @SuppressFBWarnings
     private JobOutput createJobOutput(StreamOutput streamOutput, boolean isError) {
         JobOutput jobOutput = new JobOutput();

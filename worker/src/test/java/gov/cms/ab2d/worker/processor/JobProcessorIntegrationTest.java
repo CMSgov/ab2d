@@ -16,6 +16,7 @@ import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
+import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.util.HealthCheck;
@@ -49,8 +50,7 @@ import static java.lang.Boolean.TRUE;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @Testcontainers
@@ -81,6 +81,9 @@ class JobProcessorIntegrationTest {
 
     @Autowired
     private JobOutputRepository jobOutputRepository;
+
+    @Autowired
+    private RoundRobinBlockingQueue<PatientClaimsRequest> eobClaimRequestsQueue;
 
     @Autowired
     private SqlEventLogger sqlEventLogger;
@@ -139,7 +142,8 @@ class JobProcessorIntegrationTest {
         ContractProcessor contractProcessor = new ContractProcessorImpl(
                 jobRepository,
                 patientClaimsProcessor,
-                logManager);
+                logManager,
+                eobClaimRequestsQueue);
 
         ReflectionTestUtils.setField(contractProcessor, "cancellationCheckFrequency", 10);
 

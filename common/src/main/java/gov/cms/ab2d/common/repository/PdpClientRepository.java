@@ -17,4 +17,6 @@ public interface PdpClientRepository extends JpaRepository<PdpClient, Long> {
 
     @Query("SELECT u FROM PdpClient u WHERE u.contract.contractNumber = :contractNumber")
     List<PdpClient> findByContract(@NonNull String contractNumber);
+
+    List<PdpClient> findAllByEnabledTrue();
 }
