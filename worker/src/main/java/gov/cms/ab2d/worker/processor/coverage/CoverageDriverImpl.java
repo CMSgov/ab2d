@@ -183,7 +183,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         // Force first coverage period to be after
         // January 1st 2020 which is the first moment we report data for
         if (attestationTime.isBefore(AB2D_EPOCH)) {
-            log.debug("contract attested before ab2d epoch setting to epoch");
+            log.info("contract attested before ab2d epoch setting to epoch");
             attestationTime = AB2D_EPOCH;
         }
 
@@ -265,12 +265,12 @@ public class CoverageDriverImpl implements CoverageDriver {
     public void loadMappingJob() {
 
         if (propertiesService.isInMaintenanceMode()) {
-            log.debug("waiting to execute queued coverage searches because api is in maintenance mode");
+            log.info("waiting to execute queued coverage searches because api is in maintenance mode");
             return;
         }
 
         if (coverageProcessor.isProcessorBusy()) {
-            log.debug("not starting any new coverage mapping jobs because service is full.");
+            log.info("not starting any new coverage mapping jobs because service is full.");
             return;
         }
 
@@ -286,7 +286,7 @@ public class CoverageDriverImpl implements CoverageDriver {
 
         CoverageMapping mapping = maybeSearch.get();
 
-        log.debug("found a search in queue for contract {} during {}-{}, attempting to search",
+        log.info("found a search in queue for contract {} during {}-{}, attempting to search",
                 mapping.getContract().getContractNumber(), mapping.getPeriod().getMonth(),
                 mapping.getPeriod().getYear());
 
@@ -425,7 +425,7 @@ public class CoverageDriverImpl implements CoverageDriver {
             startDateTime = startDateTime.plusMonths(1);
         }
 
-        log.debug("counting number of beneficiaries for {} coverage periods for job {}",
+        log.info("counting number of beneficiaries for {} coverage periods for job {}",
                 periodsToReport.size(), job.getJobUuid());
 
         return coverageService.countBeneficiariesByCoveragePeriod(periodsToReport);
