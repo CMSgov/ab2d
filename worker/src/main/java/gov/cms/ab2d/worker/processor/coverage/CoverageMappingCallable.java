@@ -42,7 +42,9 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     private int missingBeneId;
     private int missingCurrentMbi;
     private int hasHistoricalMbi;
-    private int filteredByYear;
+    private int missingReferenceYear;
+    private int pastReferenceYear;
+    private final Map<Integer, Integer> referenceYears = new HashMap<>();
 
     public CoverageMappingCallable(FhirVersion version, CoverageMapping coverageMapping, BFDClient bfdClient,
                                    boolean skipBillablePeriodCheck) {
@@ -127,11 +129,19 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
             coverageMapping.failed();
             throw e;
         } finally {
-            int total = patientIds.size() + filteredByYear + missingBeneId;
-            log.info("Search discarded {} entries not meeting year filter criteria out of {}", filteredByYear, total);
-            log.info("Search discarded {} entries missing a beneficiary identifier out of {}", missingBeneId, total);
-            log.info("Search found {} entries missing a current mbi out of {}", missingCurrentMbi, total);
-            log.info("Search found {} entries with a historical mbi out of {}", hasHistoricalMbi, total);
+            int total = patientIds.size() + missingReferenceYear + missingBeneId + pastReferenceYear;
+            log.info("Search {}-{}-{} found {} distribution of reference years over a total of {} benes",
+                    contractNumber, this.year, month, referenceYears, total);
+            log.info("Search {}-{}-{} discarded {} entries missing a reference year out of {}",
+                    contractNumber, this.year, month, missingReferenceYear, total);
+            log.info("Search {}-{}-{} discarded {} entries with a reference year in the past out of {}",
+                    contractNumber, this.year, month, pastReferenceYear, total);
+            log.info("Search {}-{}-{} discarded {} entries missing a beneficiary identifier out of {}",
+                    contractNumber, this.year, month, missingBeneId, total);
+            log.info("Search {}-{}-{} found {} entries missing a current mbi out of {}",
+                    contractNumber, this.year, month, missingCurrentMbi, total);
+            log.info("Search {}-{}-{} found {} entries with a historical mbi out of {}",
+                    contractNumber, this.year, month, hasHistoricalMbi, total);
 
             completed.set(true);
             BFDClient.BFD_BULK_JOB_ID.remove();
@@ -152,14 +162,19 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
         int referenceYear = ExtensionUtils.getReferenceYear(patient);
         if (referenceYear < 0) {
             log.error("patient returned without reference year violating assumptions");
-            filteredByYear++;
+            missingReferenceYear++;
             return false;
         }
 
-        if (referenceYear != this.year) {
-            filteredByYear++;
+        referenceYears.computeIfPresent(referenceYear, (refYear, occurrences) -> occurrences + 1);
+        referenceYears.putIfAbsent(referenceYear, 1);
+
+        // Patient was last a member before this year and should not have been returned
+        if (referenceYear < this.year) {
+            pastReferenceYear++;
             return false;
         }
+
         return true;
     }
 
