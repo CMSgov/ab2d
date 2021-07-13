@@ -14,6 +14,7 @@ import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Collections;
+import java.util.Map;
 
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.fhir.IdentifierUtils.BENEFICIARY_ID;
@@ -178,6 +179,57 @@ class CoverageMappingCallableTest {
 
     }
 
+    @DisplayName("Track distribution of reference years returned to callable")
+    @Test
+    void trackYears() {
+
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = buildBundle(0, 10, 2020);
+        bundle1.setLink(singletonList(new org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent().setRelation(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT)));
+
+        org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20, 2019);
+
+        when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
+        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+
+        Contract contract = new Contract();
+        contract.setContractNumber("TESTING");
+        contract.setContractName("TESTING");
+
+        CoveragePeriod period = new CoveragePeriod();
+        period.setContract(contract);
+        period.setYear(2020);
+        period.setMonth(1);
+
+        CoverageSearchEvent cse = new CoverageSearchEvent();
+        cse.setCoveragePeriod(period);
+
+        CoverageSearch search = new CoverageSearch();
+        search.setPeriod(period);
+
+        CoverageMapping mapping = new CoverageMapping(cse, search);
+
+        CoverageMappingCallable coverageCallable =
+                new CoverageMappingCallable(STU3, mapping, bfdClient, false);
+
+        try {
+            mapping = coverageCallable.call();
+
+            assertEquals(10, mapping.getBeneficiaryIds().size());
+
+            Map<Integer, Integer> referenceYears = (Map<Integer, Integer>) ReflectionTestUtils
+                    .getField(coverageCallable, "referenceYears");
+
+            assertTrue(referenceYears.containsKey(2019));
+            assertTrue(referenceYears.containsKey(2020));
+
+            referenceYears.forEach((referenceYear, occurrences) -> {
+                assertEquals(10, occurrences);
+            });
+        } catch (Exception exception) {
+            fail("could not execute basic job with mock client", exception);
+        }
+    }
+
 
     @DisplayName("Filter out years that do not match the provided year")
     @Test
@@ -216,7 +268,7 @@ class CoverageMappingCallableTest {
 
             assertEquals(10, mapping.getBeneficiaryIds().size());
 
-            int pastYear = (int) ReflectionTestUtils.getField(coverageCallable, "filteredByYear");
+            int pastYear = (int) ReflectionTestUtils.getField(coverageCallable, "pastReferenceYear");
 
             assertEquals(10, pastYear);
         } catch (Exception exception) {
