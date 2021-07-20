@@ -98,8 +98,8 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
     public boolean isProcessorBusy() {
 
-        boolean busy = coverageInsertionQueue.size() >= executor.getMaxPoolSize() ||
-                executor.getActiveCount() >= executor.getMaxPoolSize();
+        boolean busy = coverageInsertionQueue.size() >= executor.getCorePoolSize() ||
+                executor.getActiveCount() >= executor.getCorePoolSize();
 
         // Useful log if we run into concurrency issues
         if (busy) {
