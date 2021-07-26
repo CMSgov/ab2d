@@ -51,8 +51,6 @@ databaseChangeLog:
   - include:
       file: db/changelog/v001/update_contract_numbers.sql
   - include:
-      file: db/changelog/v001/modify_hicn.sql
-  - include:
       file: db/changelog/v001/ab2d-1377-add-aws-id.sql
   - include:
       file: db/changelog/v001/ab2d-1377-add-env-id.sql

@@ -171,7 +171,6 @@ ALTER TABLE job_output ADD CONSTRAINT "fk_job_output_to_job" FOREIGN KEY (job_id
 CREATE TABLE consent
 (
     id                  BIGINT                      NOT NULL,
-    hicn                VARCHAR(64)                 NOT NULL,
     effective_date      DATE                        NOT NULL,
     policy_code         VARCHAR(255)                NOT NULL,
     purpose_code        VARCHAR(255)                NOT NULL,
@@ -180,7 +179,5 @@ CREATE TABLE consent
 );
 
 ALTER TABLE consent ADD CONSTRAINT "pk_consent" PRIMARY KEY (id);
-
-CREATE INDEX "ix_consent_hicn" ON consent (hicn);
 
 --rollback DROP TABLE consent;
