@@ -562,6 +562,45 @@ class CoverageUpdateAndProcessorTest {
         assertEquals(0, twoThreads.getActiveCount());
     }
 
+    @DisplayName("Only ThreadPoolTaskExecutor.getCorePoolSize() jobs allowed to run at once")
+    @Test
+    void limitRunningJobsByThreadPoolSize() {
+
+        ThreadPoolTaskExecutor twoThreads = new ThreadPoolTaskExecutor();
+        twoThreads.setCorePoolSize(2);
+        twoThreads.setMaxPoolSize(2);
+        twoThreads.initialize();
+
+        ReflectionTestUtils.setField(processor, "executor", twoThreads);
+
+        twoThreads.submit(() -> {
+           try {
+               Thread.sleep(5000);
+           } catch (InterruptedException ie) {
+
+           }
+        });
+
+        twoThreads.submit(() -> {
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException ie) {
+
+            }
+        });
+
+        processor.queueCoveragePeriod(january, false);
+        processor.queueCoveragePeriod(february, false);
+        processor.queueCoveragePeriod(march, false);
+
+        driver.loadMappingJob();
+
+        sleep(1000);
+
+        assertEquals(2, twoThreads.getActiveCount());
+        assertTrue(twoThreads.getThreadPoolExecutor().getQueue().isEmpty());
+    }
+
     @DisplayName("Coverage availability throws exception after max attempts retries")
     @Test
     void coverageAvailabilityLimitsRetries() {
