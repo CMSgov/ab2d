@@ -14,4 +14,4 @@ CREATE INDEX "ix_opt_out_ccw_id"        ON opt_out (ccw_id);
 CREATE INDEX "ix_opt_out_ccw_id_hicn"   ON opt_out (ccw_id, hicn);
 
 --rollback DROP INDEX "ix_opt_out_ccw_id";
---rollback DROP INDEX "ix_opt_out_ccw_id_hicn";	
+--rollback DROP INDEX "ix_opt_out_ccw_id_hicn";
