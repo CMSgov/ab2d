@@ -208,7 +208,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                         true);
             }
         } catch (InterruptedException ie) {
-            log.info("polling for data to insert failed due to interruption", ie);
+            log.info("polling for data to insert failed due to interruption {}", ie.getMessage());
         }
     }
 
