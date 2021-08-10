@@ -236,7 +236,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         } catch (Exception exception) {
             log.error("inserting the coverage data failed for {}-{}-{}", result.getContract().getContractNumber(),
                     result.getPeriod().getMonth(), result.getPeriod().getYear());
-            log.error("inserting the coverage data failed", exception);
+            log.error("inserting the coverage data failed {}", exception.getMessage());
             coverageService.failSearch(result.getPeriodId(),
                     "inserting coverage information failed with reason: " +
                     exception.getMessage());
