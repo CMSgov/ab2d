@@ -208,7 +208,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                         true);
             }
         } catch (InterruptedException ie) {
-            log.info("polling for data to insert failed due to interruption", ie);
+            log.info("polling for data to insert failed due to interruption {}", ie.getMessage());
         }
     }
 
@@ -236,7 +236,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         } catch (Exception exception) {
             log.error("inserting the coverage data failed for {}-{}-{}", result.getContract().getContractNumber(),
                     result.getPeriod().getMonth(), result.getPeriod().getYear());
-            log.error("inserting the coverage data failed", exception);
+            log.error("inserting the coverage data failed {}", exception.getMessage());
             coverageService.failSearch(result.getPeriodId(),
                     "inserting coverage information failed with reason: " +
                     exception.getMessage());
