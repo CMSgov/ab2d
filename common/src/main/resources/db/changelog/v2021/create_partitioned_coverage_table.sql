@@ -241,10 +241,3 @@ create table coverage_misc_2022 partition of coverage_misc
 
 create table coverage_misc_2023 partition of coverage_misc
     for values in (2023);
-
-
-
--- uncomment for e2e tests
--- drop table if exists coverage;
---
--- alter table if exists coverage_partitioned rename to coverage;
