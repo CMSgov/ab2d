@@ -5,9 +5,6 @@ pipeline {
         SECONDARY_USER_OKTA_CLIENT_ID = credentials('SECONDARY_USER_OKTA_CLIENT_ID')
         SECONDARY_USER_OKTA_CLIENT_PASSWORD = credentials('SECONDARY_USER_OKTA_CLIENT_PASSWORD')
 
-        AB2D_HICN_HASH_PEPPER = credentials('HICN_HASH_PEPPER')
-        AB2D_HICN_HASH_ITER = 1000
-
         AB2D_CLAIMS_SKIP_BILLABLE_PERIOD_CHECK = true
 
         // Get code climate id
