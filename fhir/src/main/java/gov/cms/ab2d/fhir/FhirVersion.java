@@ -4,6 +4,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.EncodingEnum;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IBaseConformance;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 @Slf4j
+@SuppressFBWarnings(value = "EI_EXPOSE_REP")
 public enum FhirVersion {
     STU3("org.hl7.fhir.dstu3.model", FhirContext.forDstu3(), FhirVersionEnum.DSTU3, "/v1/",
             org.hl7.fhir.dstu3.model.ResourceType.Patient),
