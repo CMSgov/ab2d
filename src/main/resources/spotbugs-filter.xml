@@ -23,8 +23,14 @@
     <!-- Ignore because of lombok issues -->
     <Match>
         <Package name="~gov\.cms\.ab2d.*"/>
-        <Bug pattern="SE_BAD_FIELD"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
     </Match>
+
+    <Match>
+        <Package name="~gov\.cms\.ab2d.*"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
 
     <!-- IntelliJ or PMD will capture this if necessary-->
     <Match>
@@ -52,18 +58,6 @@
     <Match>
         <Class name="~gov\.cms\.ab2d\.worker\.processor\.ContractProcessorImpl"/>
         <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
-    </Match>
-
-    <!-->Side effect of lombok<-->
-    <Match>
-        <Class name="~gov\.cms\.ab2d\.filter\.FilterOutByDate\$DateRange"/>
-        <Bug pattern="EI_EXPOSE_REP"/>
-    </Match>
-
-    <!-->Side effect of lombok<-->
-    <Match>
-        <Class name="~gov\.cms\.ab2d\.filter\.FilterOutByDate\$DateRange"/>
-        <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
 
     <!--getRequest, getResponse may throw NPEs but are never reasonably anticipated-->
