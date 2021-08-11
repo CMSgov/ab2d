@@ -92,9 +92,6 @@ services:
       - AB2D_BFD_KEYSTORE_LOCATION=${AB2D_BFD_KEYSTORE_LOCATION}
       - NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}"
       - NEW_RELIC_APP_NAME="${NEW_RELIC_APP_NAME}"
-      # Hash info to decode encrypted info
-      - AB2D_HICN_HASH_PEPPER=${AB2D_HICN_HASH_PEPPER}
-      - AB2D_HICN_HASH_ITER=${AB2D_HICN_HASH_ITER}
       # Skip if running against prod sandbox data so always true
       - AB2D_CLAIMS_SKIP_BILLABLE_PERIOD_CHECK=${AB2D_CLAIMS_SKIP_BILLABLE_PERIOD_CHECK}
       # Cert used to prove that keystore app has rights to bfd sandbox
