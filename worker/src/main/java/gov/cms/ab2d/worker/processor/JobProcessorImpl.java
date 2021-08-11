@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.processor;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoveragePagingResult;
+import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
@@ -29,9 +30,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-import static gov.cms.ab2d.common.model.JobStatus.*;
+import static gov.cms.ab2d.common.model.JobStatus.FAILED;
+import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.common.util.EventUtils.getOrganization;
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.NDJSON;
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.ZIP;
@@ -123,11 +127,11 @@ public class JobProcessorImpl implements JobProcessor {
         log.info("Job [{}] - contract [{}] ", job.getJobUuid(), contract.getContractNumber());
         // Retrieve the contract beneficiaries
 
-        processContractBenes(job, progressTracker);
+        Map<String, CoverageSummary> patients = processContractBenes(job, progressTracker);
 
         // Create a holder for the contract, writer, progress tracker and attested date
         JobData jobData = new JobData(contract, progressTracker, job.getSince(),
-                getOrganization(job));
+                getOrganization(job), patients);
 
         var jobOutputs = contractProcessor.process(outputDirPath, jobData);
 
@@ -143,25 +147,27 @@ public class JobProcessorImpl implements JobProcessor {
                 progressTracker.getFailureCount()));
     }
 
-    void processContractBenes(Job job, ProgressTracker progressTracker)
-            throws ExecutionException, InterruptedException {
+    Map<String, CoverageSummary> processContractBenes(Job job, ProgressTracker progressTracker) {
         Contract contract = job.getContract();
         assert contract != null;
         try {
-            progressTracker.setExpectedBeneficiaries(coverageDriver.numberOfBeneficiariesToProcess(job));
+            int numBenes = coverageDriver.numberOfBeneficiariesToProcess(job);
+            progressTracker.setExpectedBeneficiaries(numBenes);
+            Map<String, CoverageSummary> retMap = new HashMap<>(numBenes);
 
             CoveragePagingResult result = coverageDriver.pageCoverage(job);
-            progressTracker.addPatients(result.getCoverageSummaries());
+            progressTracker.addPatients(result.getCoverageSummaries().size());
 
             while (result.getNextRequest().isPresent()) {
                 result = coverageDriver.pageCoverage(result.getNextRequest().get());
-                progressTracker.addPatients(result.getCoverageSummaries());
+                result.getCoverageSummaries().forEach(summary -> retMap.put(summary.getIdentifiers().getBeneficiaryId(), summary));
             }
 
             int progress = progressTracker.getPercentageCompleted();
             job.setProgress(progress);
             job.setStatusMessage(progress + "% complete");
             jobRepository.save(job);
+            return retMap;
         } catch (CoverageDriverException ex) {
             log.error("Having issue retrieving patients for contract " + contract.getContractNumber());
             throw ex;
@@ -199,10 +205,9 @@ public class JobProcessorImpl implements JobProcessor {
      * Given a path to a directory, create it. If it already exists, delete it and its contents and recreate it
      *
      * @param outputDirPath - the path to the output directory you want to create
-     * @return the path to the newly created directory
      */
-    private Path createOutputDirectory(Path outputDirPath, Job job) {
-        Path directory = null;
+    private void createOutputDirectory(Path outputDirPath, Job job) {
+        Path directory;
         try {
             directory = fileService.createDirectory(outputDirPath);
         } catch (UncheckedIOException e) {
@@ -217,7 +222,6 @@ public class JobProcessorImpl implements JobProcessor {
         }
 
         log.info("Created job output directory: {}", directory.toAbsolutePath());
-        return directory;
     }
 
     /**
@@ -231,6 +235,7 @@ public class JobProcessorImpl implements JobProcessor {
     private void deleteExistingDirectory(Path outputDirPath, Job job) {
         final File[] files = outputDirPath.toFile().listFiles(getFilenameFilter());
 
+        assert files != null;
         for (File file : files) {
             final Path filePath = file.toPath();
             if (file.isDirectory() || Files.isSymbolicLink(filePath)) {

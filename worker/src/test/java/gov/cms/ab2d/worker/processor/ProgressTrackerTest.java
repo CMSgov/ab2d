@@ -84,7 +84,7 @@ class ProgressTrackerTest {
 
         // Pretend all metadata loading is done
         Contract contract = new Contract();
-        tracker.addPatients(createPatientsByContractResponse(contract, 10));
+        tracker.addPatients(createPatientsByContractResponse(contract, 10).size());
 
         percDone = tracker.getPercentageCompleted();
         assertEquals(asPercent(1.0 - EST_BEN_SEARCH_JOB_PERCENTAGE), percDone);
@@ -107,7 +107,7 @@ class ProgressTrackerTest {
                 .build();
 
         List<CoverageSummary> cb1 = createPatientsByContractResponse(new Contract(), 12);
-        tracker.addPatients(cb1);
+        tracker.addPatients(cb1.size());
 
         assertEquals(asPercent(1 - EST_BEN_SEARCH_JOB_PERCENTAGE), tracker.getPercentageCompleted());
 

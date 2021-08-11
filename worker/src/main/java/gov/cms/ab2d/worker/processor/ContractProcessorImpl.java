@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
@@ -95,7 +94,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contractNumber));
 
         ProgressTracker progressTracker = jobData.getProgressTracker();
-        Map<String, CoverageSummary> patients = progressTracker.getPatients();
+        Map<String, CoverageSummary> patients = jobData.getPatients();
         int patientCount = patients.size();
         log.info("Contract [{}] has [{}] Patients", contractNumber, patientCount);
 
@@ -114,9 +113,7 @@ public class ContractProcessorImpl implements ContractProcessor {
 
             contractData.setStreamHelper(helper);
 
-            Iterator<Map.Entry<String, CoverageSummary>> patientEntries = patients.entrySet().iterator();
-
-            while (patientEntries.hasNext()) {
+            for (Map.Entry<String, CoverageSummary> stringCoverageSummaryEntry : patients.entrySet()) {
 
                 if (eobClaimRequestsQueue.size(jobUuid) > eobJobPatientQueueMaxSize) {
                     // Wait for queue to empty out some before adding more
@@ -125,7 +122,7 @@ public class ContractProcessorImpl implements ContractProcessor {
                 }
 
                 // Queue a patient
-                CoverageSummary patient = patientEntries.next().getValue();
+                CoverageSummary patient = stringCoverageSummaryEntry.getValue();
                 contractData.addEobRequestHandle(processPatient(version, patient, jobData));
                 progressTracker.incrementPatientRequestQueuedCount();
 
