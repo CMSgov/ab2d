@@ -113,7 +113,7 @@ public class ContractProcessorImpl implements ContractProcessor {
 
             contractData.setStreamHelper(helper);
 
-            for (Map.Entry<String, CoverageSummary> stringCoverageSummaryEntry : patients.entrySet()) {
+            for (Map.Entry<String, CoverageSummary> beneCoverageSummary : patients.entrySet()) {
 
                 if (eobClaimRequestsQueue.size(jobUuid) > eobJobPatientQueueMaxSize) {
                     // Wait for queue to empty out some before adding more
@@ -122,7 +122,7 @@ public class ContractProcessorImpl implements ContractProcessor {
                 }
 
                 // Queue a patient
-                CoverageSummary patient = stringCoverageSummaryEntry.getValue();
+                CoverageSummary patient = beneCoverageSummary.getValue();
                 contractData.addEobRequestHandle(processPatient(version, patient, jobData));
                 progressTracker.incrementPatientRequestQueuedCount();
 

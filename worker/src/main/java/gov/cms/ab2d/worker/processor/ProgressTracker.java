@@ -63,7 +63,7 @@ public class ProgressTracker {
      * @return number of patients
      */
     public int getTotalCount() {
-        return metadataProcessedCount;
+        return expectedBeneficiaries;
     }
 
     /**
