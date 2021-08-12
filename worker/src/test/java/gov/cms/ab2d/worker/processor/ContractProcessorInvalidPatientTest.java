@@ -69,15 +69,15 @@ class ContractProcessorInvalidPatientTest {
         Contract contract = new Contract();
         contract.setContractNumber(contractId);
         contract.setAttestedOn(OffsetDateTime.now().minusYears(50));
-        jobData = new JobData(contract, tracker, OffsetDateTime.MIN, "Client", Collections.emptyMap());
 
         List<FilterOutByDate.DateRange> dates = singletonList(TestUtil.getOpenRange());
-        List<CoverageSummary> summaries = List.of(
-                new CoverageSummary(createIdentifierWithoutMbi("1"), null, dates),
-                new CoverageSummary(createIdentifierWithoutMbi("2"), null, dates),
-                new CoverageSummary(createIdentifierWithoutMbi("3"), null, dates)
+        Map<String, CoverageSummary> summaries = Map.of(
+                "1", new CoverageSummary(createIdentifierWithoutMbi("1"), null, dates),
+                "2", new CoverageSummary(createIdentifierWithoutMbi("2"), null, dates),
+                "3", new CoverageSummary(createIdentifierWithoutMbi("3"), null, dates)
         );
 
+        jobData = new JobData(contract, tracker, OffsetDateTime.MIN, "Client", summaries);
         tracker.addPatients(summaries.size());
 
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 20);
