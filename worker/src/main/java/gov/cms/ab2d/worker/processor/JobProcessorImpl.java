@@ -160,6 +160,7 @@ public class JobProcessorImpl implements JobProcessor {
 
             while (result.getNextRequest().isPresent()) {
                 result = coverageDriver.pageCoverage(result.getNextRequest().get());
+                progressTracker.addPatients(result.getCoverageSummaries().size());
                 result.getCoverageSummaries().forEach(summary -> retMap.put(summary.getIdentifiers().getBeneficiaryId(), summary));
             }
 
