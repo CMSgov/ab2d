@@ -156,12 +156,11 @@ public class JobProcessorImpl implements JobProcessor {
             Map<String, CoverageSummary> retMap = new HashMap<>(numBenes);
 
             CoveragePagingResult result = coverageDriver.pageCoverage(job);
-            progressTracker.addPatients(result.getCoverageSummaries().size());
+            addPatients(result, progressTracker, retMap);
 
             while (result.getNextRequest().isPresent()) {
                 result = coverageDriver.pageCoverage(result.getNextRequest().get());
-                progressTracker.addPatients(result.getCoverageSummaries().size());
-                result.getCoverageSummaries().forEach(summary -> retMap.put(summary.getIdentifiers().getBeneficiaryId(), summary));
+                addPatients(result, progressTracker, retMap);
             }
 
             int progress = progressTracker.getPercentageCompleted();
@@ -173,6 +172,11 @@ public class JobProcessorImpl implements JobProcessor {
             log.error("Having issue retrieving patients for contract " + contract.getContractNumber());
             throw ex;
         }
+    }
+
+    private void addPatients(CoveragePagingResult result, ProgressTracker progressTracker, Map<String, CoverageSummary> beneMap) {
+        progressTracker.addPatients(result.getCoverageSummaries().size());
+        result.getCoverageSummaries().forEach(summary -> beneMap.put(summary.getIdentifiers().getBeneficiaryId(), summary));
     }
 
     /**
