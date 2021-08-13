@@ -110,3 +110,7 @@ databaseChangeLog:
       file: db/changelog/v2021/delete_akamai_requests.sql
   - include:
       file: db/changelog/v2021/add_coverage_search_override.sql
+  - include:
+      file: db/changelog/v2021/create_partitioned_coverage_table.sql
+  - include:
+      file: db/changelog/test_only/coverage-fake-partitions.sql
