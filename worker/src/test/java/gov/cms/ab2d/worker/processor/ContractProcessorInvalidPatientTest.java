@@ -53,16 +53,15 @@ class ContractProcessorInvalidPatientTest {
 
     private ContractProcessor cut;
     private JobData jobData;
-    private ProgressTracker tracker;
-    private String jobId = "1234";
-    private String contractId = "ABC";
+    private final String jobId = "1234";
+    private final String contractId = "ABC";
 
     @BeforeEach
     void setup() {
 
         patientClaimsProcessor = new PatientClaimsProcessorImpl(bfdClient, eventLogger);
         cut = new ContractProcessorImpl(jobRepository, patientClaimsProcessor, eventLogger, requestQueue);
-        tracker = ProgressTracker.builder()
+        ProgressTracker tracker = ProgressTracker.builder()
                 .jobUuid(jobId)
                 .failureThreshold(100)
                 .build();
@@ -70,16 +69,16 @@ class ContractProcessorInvalidPatientTest {
         Contract contract = new Contract();
         contract.setContractNumber(contractId);
         contract.setAttestedOn(OffsetDateTime.now().minusYears(50));
-        jobData = new JobData(contract, tracker, OffsetDateTime.MIN, "Client");
 
         List<FilterOutByDate.DateRange> dates = singletonList(TestUtil.getOpenRange());
-        List<CoverageSummary> summaries = List.of(
-                new CoverageSummary(createIdentifierWithoutMbi("1"), null, dates),
-                new CoverageSummary(createIdentifierWithoutMbi("2"), null, dates),
-                new CoverageSummary(createIdentifierWithoutMbi("3"), null, dates)
+        Map<String, CoverageSummary> summaries = Map.of(
+                "1", new CoverageSummary(createIdentifierWithoutMbi("1"), null, dates),
+                "2", new CoverageSummary(createIdentifierWithoutMbi("2"), null, dates),
+                "3", new CoverageSummary(createIdentifierWithoutMbi("3"), null, dates)
         );
 
-        tracker.addPatients(summaries);
+        jobData = new JobData(contract, tracker, OffsetDateTime.MIN, "Client", summaries);
+        tracker.addPatients(summaries.size());
 
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 20);
         ReflectionTestUtils.setField(patientClaimsProcessor, "startDate", "01/01/2020");
