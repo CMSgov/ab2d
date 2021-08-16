@@ -51,7 +51,6 @@ class ContractProcessorUnitTest {
     private Path outputDir;
     private Contract contract;
     private Job job;
-    private PdpClient pdpClient;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -69,7 +68,7 @@ class ContractProcessorUnitTest {
         ReflectionTestUtils.setField(cut, "reportProgressLogFrequency", 3);
         ReflectionTestUtils.setField(cut, "tryLockTimeout", 30);
 
-        pdpClient = createClient();
+        PdpClient pdpClient = createClient();
         job = createJob(pdpClient);
         contract = createContract();
 
@@ -81,7 +80,7 @@ class ContractProcessorUnitTest {
     @DisplayName("When a job is cancelled while it is being processed, then attempt to stop the job gracefully without completing it")
     void whenJobIsCancelledWhileItIsBeingProcessed_ThenAttemptToStopTheJob() {
 
-        List<CoverageSummary> patientsByContract = createPatientsByContractResponse(contract, 3);
+        Map<String, CoverageSummary> patientsByContract = createPatientsByContractResponse(contract, 3);
 
         ProgressTracker progressTracker = ProgressTracker.builder()
                 .jobUuid(jobUuid)
@@ -89,9 +88,9 @@ class ContractProcessorUnitTest {
                 .failureThreshold(10)
                 .build();
 
-        progressTracker.addPatients(patientsByContract);
+        progressTracker.addPatients(patientsByContract.size());
         JobData jobData = new JobData(contract, progressTracker, job.getSince(),
-                getOrganization(job));
+                getOrganization(job), patientsByContract);
 
         when(jobRepository.findJobStatus(anyString())).thenReturn(JobStatus.CANCELLED);
 
@@ -105,17 +104,17 @@ class ContractProcessorUnitTest {
 
     @Test
     @DisplayName("When many patientId are present, 'PercentageCompleted' should be updated many times")
-    void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() throws Exception {
-        List<CoverageSummary> patientsByContract = createPatientsByContractResponse(contract, 18);
+    void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() {
+        Map<String, CoverageSummary> patientsByContract = createPatientsByContractResponse(contract, 18);
 
         ProgressTracker progressTracker = ProgressTracker.builder()
                 .jobUuid(jobUuid)
                 .expectedBeneficiaries(18)
                 .failureThreshold(10)
                 .build();
-        progressTracker.addPatients(patientsByContract);
+        progressTracker.addPatients(patientsByContract.size());
         JobData jobData = new JobData(contract, progressTracker, job.getSince(),
-                getOrganization(job));
+                getOrganization(job), patientsByContract);
 
         var jobOutputs = cut.process(outputDir, jobData);
 
@@ -151,8 +150,8 @@ class ContractProcessorUnitTest {
         return job;
     }
 
-    private static List<CoverageSummary> createPatientsByContractResponse(Contract contract, int num) {
-        List<CoverageSummary> summaries = new ArrayList<>();
+    private static Map<String, CoverageSummary> createPatientsByContractResponse(Contract contract, int num) {
+        Map<String, CoverageSummary> summaries = new HashMap<>();
 
         FilterOutByDate.DateRange dateRange = TestUtil.getOpenRange();
         for (long i = 0; i < num; i++) {
@@ -161,7 +160,7 @@ class ContractProcessorUnitTest {
                     contract,
                     List.of(dateRange)
             );
-            summaries.add(summary);
+            summaries.put(summary.getIdentifiers().getBeneficiaryId(), summary);
         }
         return summaries;
     }
