@@ -28,7 +28,7 @@ class EOBLoadUtilitiesTest {
 
     @Test
     public void testConvertFromFilePatient() throws IOException {
-        assertEquals(EobUtils.getPatientId(eobC), "-199900000022040");
+        assertEquals(EobUtils.getPatientId(eobC), -199900000022040L);
     }
 
     @Test

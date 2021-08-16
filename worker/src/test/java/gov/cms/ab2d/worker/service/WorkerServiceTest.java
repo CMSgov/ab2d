@@ -116,7 +116,7 @@ class WorkerServiceTest {
         pdpClient.setClientId("testclient" + clientNum);
         pdpClient.setOrganization("testclient" + clientNum);
         pdpClient.setEnabled(true);
-        pdpClient.setContract(dataSetup.setupContract("W9876"));
+        pdpClient.setContract(dataSetup.setupContract("TST-12", null));
 
         pdpClient = pdpClientRepository.save(pdpClient);
         dataSetup.queueForCleanup(pdpClient);
@@ -130,7 +130,7 @@ class WorkerServiceTest {
         pdpClient.setClientId("testclient2" + clientNum);
         pdpClient.setOrganization("testclient2" + clientNum);
         pdpClient.setEnabled(true);
-        pdpClient.setContract(dataSetup.setupContract("W8765"));
+        pdpClient.setContract(dataSetup.setupContract("TST-34", null));
 
         pdpClient = pdpClientRepository.save(pdpClient);
         dataSetup.queueForCleanup(pdpClient);

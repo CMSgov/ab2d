@@ -78,14 +78,14 @@ class CoverageDriverUnitTest {
         when(coverageService.pageCoverage(any(CoveragePagingRequest.class))).thenAnswer((invocationMock) -> {
             CoveragePagingRequest request = invocationMock.getArgument(0);
 
-            Optional<String> cursor = request.getCursor();
+            Optional<Long> cursor = request.getCursor();
 
             CoveragePagingRequest nextRequest = null;
             if (cursor.isPresent()) {
-                int cursorValue = Integer.parseInt(cursor.get());
-                nextRequest = new CoveragePagingRequest(pagingSize, "" + (cursorValue + pagingSize), List.of());
+                long cursorValue = cursor.get();
+                nextRequest = new CoveragePagingRequest(pagingSize, (cursorValue + pagingSize), request.getContract(), request.getJobStartTime());
             } else {
-                nextRequest = new CoveragePagingRequest(pagingSize, "" + pagingSize, List.of());
+                nextRequest = new CoveragePagingRequest(pagingSize, (long) pagingSize, request.getContract(), request.getJobStartTime());
 
             }
 
@@ -141,14 +141,14 @@ class CoverageDriverUnitTest {
         when(coverageService.pageCoverage(any(CoveragePagingRequest.class))).thenAnswer((invocationMock) -> {
             CoveragePagingRequest request = invocationMock.getArgument(0);
 
-            Optional<String> cursor = request.getCursor();
+            Optional<Long> cursor = request.getCursor();
 
             CoveragePagingRequest nextRequest = null;
             if (cursor.isPresent()) {
-                int cursorValue = Integer.parseInt(cursor.get());
-                nextRequest = new CoveragePagingRequest(pagingSize, "" + (cursorValue + pagingSize), List.of());
+                long cursorValue = cursor.get();
+                nextRequest = new CoveragePagingRequest(pagingSize, (cursorValue + pagingSize), request.getContract(), request.getJobStartTime());
             } else {
-                nextRequest = new CoveragePagingRequest(pagingSize, "" + pagingSize, List.of());
+                nextRequest = new CoveragePagingRequest(pagingSize, (long) pagingSize, request.getContract(), request.getJobStartTime());
 
             }
 
@@ -166,7 +166,7 @@ class CoverageDriverUnitTest {
 
         CoveragePagingRequest firstNextRequest = firstCall.getNextRequest().get();
         assertTrue(firstNextRequest.getCursor().isPresent());
-        assertEquals("" + pagingSize, firstNextRequest.getCursor().get());
+        assertEquals(pagingSize, firstNextRequest.getCursor().get());
 
         CoveragePagingResult secondCall = driver.pageCoverage(firstNextRequest);
         assertNotNull(secondCall);
@@ -174,6 +174,6 @@ class CoverageDriverUnitTest {
 
         CoveragePagingRequest secondNextRequest = secondCall.getNextRequest().get();
         assertTrue(secondNextRequest.getCursor().isPresent());
-        assertEquals("" + (2 * pagingSize), secondNextRequest.getCursor().get());
+        assertEquals((2L * pagingSize), secondNextRequest.getCursor().get());
     }
 }

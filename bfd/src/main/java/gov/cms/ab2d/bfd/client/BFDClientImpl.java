@@ -75,13 +75,13 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public IBaseBundle requestEOBFromServer(FhirVersion version, String patientID) {
+    public IBaseBundle requestEOBFromServer(FhirVersion version, Long patientID) {
         return requestEOBFromServer(version, patientID, null);
     }
 
     /**
      * Queries Blue Button server for Explanations of Benefit associated with a given patient
-     * similar to {@link #requestEOBFromServer(FhirVersion, String)} but includes a date filter in which the
+     * similar to {@link #requestEOBFromServer(FhirVersion, Long)} but includes a date filter in which the
      * _lastUpdated date must be after
      * <p>
      *
@@ -100,7 +100,7 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public IBaseBundle requestEOBFromServer(FhirVersion version, String patientID, OffsetDateTime sinceTime) {
+    public IBaseBundle requestEOBFromServer(FhirVersion version, Long patientID, OffsetDateTime sinceTime) {
         final Segment bfdSegment = NewRelic.getAgent().getTransaction().startSegment("BFD Call for patient with patient ID " + patientID +
                 " using since " + sinceTime);
         bfdSegment.setMetricName("RequestEOB");

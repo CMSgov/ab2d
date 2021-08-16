@@ -20,7 +20,7 @@ class EobUtilsTest {
         org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob = new org.hl7.fhir.dstu3.model.ExplanationOfBenefit();
         assertTrue(BundleUtils.isExplanationOfBenefitResource(eob));
         assertNull(EobUtils.getPatientId(eob));
-        eob.setPatient(new org.hl7.fhir.dstu3.model.Reference().setReference("Patient/bene-id"));
+        eob.setPatient(new org.hl7.fhir.dstu3.model.Reference().setReference("Patient/1"));
         Date d1 = new Date();
         Date d2 = new Date();
         Period period = new Period().setStart(d1).setEnd(d2);
@@ -28,7 +28,7 @@ class EobUtilsTest {
         CodeableConcept concept = new CodeableConcept().addCoding(new Coding().setSystem("http://www.bluebutton.com/" + EOB_TYPE_CODE_SYS).setCode(EOB_TYPE_PART_D_CODE_VAL));
         eob.setType(concept);
 
-        assertEquals("bene-id", EobUtils.getPatientId(eob));
+        assertEquals(1, EobUtils.getPatientId(eob));
         assertNull(EobUtils.getPatientId(null));
         assertNull(EobUtils.getBillablePeriod(null));
         Period obj = (Period) EobUtils.getBillablePeriod(eob);

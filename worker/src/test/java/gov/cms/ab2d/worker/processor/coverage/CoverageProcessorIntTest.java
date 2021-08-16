@@ -78,7 +78,7 @@ class CoverageProcessorIntTest {
 
         assertEquals(40000, dataSetup.countCoverage());
         assertEquals(4, dataSetup.findCoverage()
-                .stream().map(Coverage::getPeriodId)
+                .stream().map(Coverage::getCoveragePeriod)
                 .collect(toSet()).size());
     }
 

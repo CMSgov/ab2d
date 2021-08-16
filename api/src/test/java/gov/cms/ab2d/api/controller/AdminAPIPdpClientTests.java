@@ -363,7 +363,7 @@ public class AdminAPIPdpClientTests {
     }
 
     private void setupClient(String clientId, boolean enabled) {
-        Contract contract = dataSetup.setupContract(ENABLE_DISABLE_CONTRACT);
+        Contract contract = dataSetup.setupContract(ENABLE_DISABLE_CONTRACT, null);
         PdpClient pdpClient = new PdpClient();
         pdpClient.setClientId(clientId);
         pdpClient.setOrganization(TEST_ORG);

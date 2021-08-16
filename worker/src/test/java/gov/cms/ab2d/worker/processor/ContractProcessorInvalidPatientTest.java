@@ -74,9 +74,9 @@ class ContractProcessorInvalidPatientTest {
 
         List<FilterOutByDate.DateRange> dates = singletonList(TestUtil.getOpenRange());
         List<CoverageSummary> summaries = List.of(
-                new CoverageSummary(createIdentifierWithoutMbi("1"), null, dates),
-                new CoverageSummary(createIdentifierWithoutMbi("2"), null, dates),
-                new CoverageSummary(createIdentifierWithoutMbi("3"), null, dates)
+                new CoverageSummary(createIdentifierWithoutMbi(1L), null, dates),
+                new CoverageSummary(createIdentifierWithoutMbi(2L), null, dates),
+                new CoverageSummary(createIdentifierWithoutMbi(3L), null, dates)
         );
 
         tracker.addPatients(summaries);
@@ -90,9 +90,9 @@ class ContractProcessorInvalidPatientTest {
         org.hl7.fhir.dstu3.model.Bundle b1 = BundleUtils.createBundle(createBundleEntry("1"));
         org.hl7.fhir.dstu3.model.Bundle b2 = BundleUtils.createBundle(createBundleEntry("2"));
         org.hl7.fhir.dstu3.model.Bundle b4 = BundleUtils.createBundle(createBundleEntry("4"));
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq("1"), any())).thenReturn(b1);
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq("2"), any())).thenReturn(b2);
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq("3"), any())).thenReturn(b4);
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(1L), any())).thenReturn(b1);
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(2L), any())).thenReturn(b2);
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(3L), any())).thenReturn(b4);
         List<JobOutput> outputs = cut.process(tmpDirFolder.toPath(), jobData);
         assertNotNull(outputs);
         assertEquals(2, outputs.size());

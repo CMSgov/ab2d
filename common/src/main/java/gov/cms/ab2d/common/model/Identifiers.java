@@ -12,7 +12,7 @@ import java.util.LinkedHashSet;
 public class Identifiers {
 
     @EqualsAndHashCode.Include
-    private final String beneficiaryId;
+    private final Long beneficiaryId;
 
     private final String currentMbi;
 

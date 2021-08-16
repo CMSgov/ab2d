@@ -447,17 +447,15 @@ public class CoverageDriverImpl implements CoverageDriver {
         ZonedDateTime startDateTime = getStartDateTime(job);
 
         try {
-            List<CoveragePeriod> periodsToReport = new ArrayList<>();
+            // Check that all coverage periods necessary are present before beginning to page
             while (startDateTime.isBefore(now)) {
-                CoveragePeriod periodToReport =
-                        coverageService.getCoveragePeriod(contract, startDateTime.getMonthValue(), startDateTime.getYear());
-                periodsToReport.add(periodToReport);
+                // Will throw exception if it doesn't exist
+                coverageService.getCoveragePeriod(contract, startDateTime.getMonthValue(), startDateTime.getYear());
                 startDateTime = startDateTime.plusMonths(1);
             }
 
             // Make initial request which returns a result and a request starting at the next cursor
-            List<Integer> periodIds = periodsToReport.stream().map(CoveragePeriod::getId).collect(toList());
-            CoveragePagingRequest request = new CoveragePagingRequest(PAGING_SIZE, null, periodIds);
+            CoveragePagingRequest request = new CoveragePagingRequest(PAGING_SIZE, null, contract, job.getCreatedAt());
 
             // Make request for coverage metadata
             return coverageService.pageCoverage(request);

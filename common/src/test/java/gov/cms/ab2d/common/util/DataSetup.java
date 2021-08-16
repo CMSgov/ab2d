@@ -157,14 +157,16 @@ public class DataSetup {
 
             List<Coverage> memberships = new ArrayList<>();
             while (rs.next()) {
-                long id = rs.getLong(1);
-                int periodId = rs.getInt(2);
-                long searchEventId = rs.getInt(3);
-                String beneficiaryId = rs.getString(4);
-                String currentMbi = rs.getString(5);
-                String historicalMbis = rs.getString(6);
+                int coveragePeriod = rs.getInt(1);
+                long searchEventId = rs.getInt(2);
+                String contract = rs.getString(3);
+                int year = rs.getInt(4);
+                int month = rs.getInt(5);
+                Long beneficiaryId = rs.getLong(6);
+                String currentMbi = rs.getString(7);
+                String historicalMbis = rs.getString(8);
 
-                memberships.add(new Coverage(id, periodId, searchEventId, beneficiaryId, currentMbi, historicalMbis));
+                memberships.add(new Coverage(coveragePeriod, searchEventId, contract, year, month, beneficiaryId, currentMbi, historicalMbis));
             }
 
             return memberships;
@@ -186,9 +188,14 @@ public class DataSetup {
         coverageSearchEventRepo.delete(event);
     }
 
-    public Contract setupContract(String contractNumber) {
+    public Contract setupContract(String contractNumber, OffsetDateTime attestedOn) {
         Contract contract = new Contract();
-        contract.setAttestedOn(OffsetDateTime.now());
+
+        if (attestedOn != null) {
+            contract.setAttestedOn(attestedOn);
+        } else {
+            contract.setAttestedOn(OffsetDateTime.now());
+        }
         contract.setContractName("Test Contract " + contractNumber);
         contract.setContractNumber(contractNumber);
 
@@ -224,15 +231,7 @@ public class DataSetup {
     }
 
     public void setupContractSponsorForParentClientData(List<String> clientRoles) {
-        Contract contract = setupContract("ABC123");
-
-        savePdpClient(TEST_PDP_CLIENT, contract, clientRoles);
-    }
-
-    public void setupPdpClientBadSponsorData(List<String> clientRoles) {
-        setupContract("ABC123");
-
-        Contract contract = setupContract(BAD_CONTRACT_NUMBER);
+        Contract contract = setupContract("ABC123", null);
 
         savePdpClient(TEST_PDP_CLIENT, contract, clientRoles);
     }
@@ -273,7 +272,7 @@ public class DataSetup {
             return testPdpClient;
         }
 
-        Contract contract = setupContract(VALID_CONTRACT_NUMBER);
+        Contract contract = setupContract(VALID_CONTRACT_NUMBER, null);
 
         return savePdpClient(TEST_PDP_CLIENT, contract, clientRoles);
     }
@@ -284,7 +283,7 @@ public class DataSetup {
             return testPdpClient;
         }
 
-        Contract contract = setupContract(contractNumber);
+        Contract contract = setupContract(contractNumber, null);
 
         return savePdpClient(clientdId, contract, clientRoles);
     }

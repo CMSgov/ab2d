@@ -24,7 +24,7 @@ public class ProgressTracker {
     public static final double EST_BEN_SEARCH_JOB_PERCENTAGE = 0.7;
 
     @Singular
-    private final Map<String, CoverageSummary> patients = new HashMap<>();
+    private final Map<Long, CoverageSummary> patients = new HashMap<>();
 
     private int metadataProcessedCount;
     private int patientRequestQueuedCount;
