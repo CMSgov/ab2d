@@ -72,9 +72,9 @@ class ContractProcessorInvalidPatientTest {
 
         List<FilterOutByDate.DateRange> dates = singletonList(TestUtil.getOpenRange());
         Map<Long, CoverageSummary> summaries = Map.of(
-                1, new CoverageSummary(createIdentifierWithoutMbi("1"), null, dates),
-                2, new CoverageSummary(createIdentifierWithoutMbi("2"), null, dates),
-                3, new CoverageSummary(createIdentifierWithoutMbi("3"), null, dates)
+                1L, new CoverageSummary(createIdentifierWithoutMbi(1L), null, dates),
+                2L, new CoverageSummary(createIdentifierWithoutMbi(2L), null, dates),
+                3L, new CoverageSummary(createIdentifierWithoutMbi(3L), null, dates)
         );
 
         jobData = new JobData(contract, tracker, OffsetDateTime.MIN, "Client", summaries);

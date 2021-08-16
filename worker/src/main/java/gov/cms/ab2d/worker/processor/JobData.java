@@ -15,5 +15,5 @@ public class JobData {
     private final ProgressTracker progressTracker;
     private final OffsetDateTime sinceTime;
     private final String organization;
-    private final Map<String, CoverageSummary> patients;
+    private final Map<Long, CoverageSummary> patients;
 }
