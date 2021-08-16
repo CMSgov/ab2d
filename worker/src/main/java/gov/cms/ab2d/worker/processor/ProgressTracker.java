@@ -1,15 +1,9 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.common.model.CoverageSummary;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.Singular;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Getter
 @Builder
@@ -22,9 +16,6 @@ public class ProgressTracker {
 
     // The ratio between the beneficiary EOF search time in the job vs looking up contract beneficiaries
     public static final double EST_BEN_SEARCH_JOB_PERCENTAGE = 0.7;
-
-    @Singular
-    private final Map<String, CoverageSummary> patients = new HashMap<>();
 
     private int metadataProcessedCount;
     private int patientRequestQueuedCount;
@@ -62,9 +53,8 @@ public class ProgressTracker {
         ++failureCount;
     }
 
-    public void addPatients(List<CoverageSummary> coverage) {
-        coverage.forEach(summary -> patients.put(summary.getIdentifiers().getBeneficiaryId(), summary));
-        metadataProcessedCount += coverage.size();
+    public void addPatients(int numAdded) {
+        metadataProcessedCount += numAdded;
     }
 
     /**
@@ -73,7 +63,7 @@ public class ProgressTracker {
      * @return number of patients
      */
     public int getTotalCount() {
-        return patients.size();
+        return expectedBeneficiaries;
     }
 
     /**
