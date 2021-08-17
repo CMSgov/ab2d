@@ -97,7 +97,7 @@ public class AdminAPIPdpClientTests {
         pdpClientDTO.setClientId(TEST_CLIENT);
         pdpClientDTO.setOrganization(TEST_ORG);
         pdpClientDTO.setEnabled(true);
-        pdpClientDTO.setContract(buildContractDTO(VALID_CONTRACT_NUMBER));
+        pdpClientDTO.setContract(buildContractDTO());
         pdpClientDTO.setRole(ADMIN_ROLE);
         Role role = roleService.findRoleByName(ADMIN_ROLE);
         pdpClientDTO.setRole(role.getName());
@@ -127,7 +127,7 @@ public class AdminAPIPdpClientTests {
         pdpClientDTO.setClientId(TEST_CLIENT);
         pdpClientDTO.setOrganization(TEST_ORG);
         pdpClientDTO.setEnabled(true);
-        pdpClientDTO.setContract(buildContractDTO(VALID_CONTRACT_NUMBER));
+        pdpClientDTO.setContract(buildContractDTO());
         Role role = roleService.findRoleByName(ATTESTOR_ROLE);
         pdpClientDTO.setRole(role.getName());
 
@@ -155,7 +155,7 @@ public class AdminAPIPdpClientTests {
         PdpClientDTO pdpClientDTO = new PdpClientDTO();
         pdpClientDTO.setClientId(TEST_CLIENT);
         pdpClientDTO.setEnabled(true);
-        pdpClientDTO.setContract(buildContractDTO(VALID_CONTRACT_NUMBER));
+        pdpClientDTO.setContract(buildContractDTO());
         pdpClientDTO.setRole(ADMIN_ROLE);
         Role role = roleService.findRoleByName(ADMIN_ROLE);
         pdpClientDTO.setRole(role.getName());
@@ -187,7 +187,7 @@ public class AdminAPIPdpClientTests {
         pdpClientDTO.setClientId(TEST_CLIENT);
         pdpClientDTO.setOrganization(TEST_ORG);
         pdpClientDTO.setEnabled(true);
-        pdpClientDTO.setContract(buildContractDTO(VALID_CONTRACT_NUMBER));
+        pdpClientDTO.setContract(buildContractDTO());
         pdpClientDTO.setRole(ADMIN_ROLE);
 
         ObjectMapper mapper = new ObjectMapper();
@@ -238,7 +238,7 @@ public class AdminAPIPdpClientTests {
         PdpClientDTO pdpClientDTO = new PdpClientDTO();
         pdpClientDTO.setClientId(TEST_CLIENT);
         pdpClientDTO.setEnabled(true);
-        pdpClientDTO.setContract(buildContractDTO(VALID_CONTRACT_NUMBER));
+        pdpClientDTO.setContract(buildContractDTO());
         pdpClientDTO.setRole(SPONSOR_ROLE);
 
         return pdpClientDTO;
@@ -363,7 +363,7 @@ public class AdminAPIPdpClientTests {
     }
 
     private void setupClient(String clientId, boolean enabled) {
-        Contract contract = dataSetup.setupContract(ENABLE_DISABLE_CONTRACT, null);
+        Contract contract = dataSetup.setupContract(ENABLE_DISABLE_CONTRACT);
         PdpClient pdpClient = new PdpClient();
         pdpClient.setClientId(clientId);
         pdpClient.setOrganization(TEST_ORG);
@@ -374,7 +374,7 @@ public class AdminAPIPdpClientTests {
         dataSetup.queueForCleanup(savedPdpClient);
     }
 
-    private ContractDTO buildContractDTO(String contractNumber) {
+    private ContractDTO buildContractDTO() {
 
         ContractDTO contractDTO = new ContractDTO();
         contractDTO.setContractNumber(VALID_CONTRACT_NUMBER);

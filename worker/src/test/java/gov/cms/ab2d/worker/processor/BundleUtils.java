@@ -10,11 +10,11 @@ import static gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable.*;
 
 public class BundleUtils {
 
-    public static Identifiers createIdentifierWithoutMbi(Long beneficiaryId) {
+    public static Identifiers createIdentifierWithoutMbi(long beneficiaryId) {
         return new Identifiers(beneficiaryId, null, new LinkedHashSet<>());
     }
 
-    public static Identifiers createIdentifier(Long beneficiaryId, String currentMbi, String... historicMbis) {
+    public static Identifiers createIdentifier(long beneficiaryId, String currentMbi, String... historicMbis) {
         return new Identifiers(beneficiaryId, currentMbi, new LinkedHashSet<>(Set.of(historicMbis)));
     }
 
@@ -25,7 +25,7 @@ public class BundleUtils {
         return bundle;
     }
 
-    public static org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent createBundleEntry(Long patientId, String mbi, int year) {
+    public static org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent createBundleEntry(long patientId, String mbi, int year) {
         var component = new org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent();
         component.setResource(createPatient(patientId, mbi, year));
         return component;
@@ -49,7 +49,7 @@ public class BundleUtils {
         return patient;
     }
 
-    private static org.hl7.fhir.dstu3.model.Patient createPatient(Long patientId, String mbi, int year, boolean current) {
+    private static org.hl7.fhir.dstu3.model.Patient createPatient(long patientId, String mbi, int year, boolean current) {
         var patient = new org.hl7.fhir.dstu3.model.Patient();
         patient.getIdentifier().add(createBeneficiaryIdentifier(patientId));
         patient.getIdentifier().add(createMbiIdentifier(mbi, current));
@@ -57,7 +57,7 @@ public class BundleUtils {
         return patient;
     }
 
-    public static org.hl7.fhir.dstu3.model.Identifier createBeneficiaryIdentifier(Long beneficiaryId) {
+    public static org.hl7.fhir.dstu3.model.Identifier createBeneficiaryIdentifier(long beneficiaryId) {
         var identifier = new org.hl7.fhir.dstu3.model.Identifier();
         identifier.setSystem(IdentifierUtils.BENEFICIARY_ID);
         identifier.setValue("" + beneficiaryId);

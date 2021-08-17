@@ -75,7 +75,7 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public IBaseBundle requestEOBFromServer(FhirVersion version, Long patientID) {
+    public IBaseBundle requestEOBFromServer(FhirVersion version, long patientID) {
         return requestEOBFromServer(version, patientID, null);
     }
 
@@ -100,7 +100,7 @@ public class BFDClientImpl implements BFDClient {
             backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
             exclude = { ResourceNotFoundException.class }
     )
-    public IBaseBundle requestEOBFromServer(FhirVersion version, Long patientID, OffsetDateTime sinceTime) {
+    public IBaseBundle requestEOBFromServer(FhirVersion version, long patientID, OffsetDateTime sinceTime) {
         final Segment bfdSegment = NewRelic.getAgent().getTransaction().startSegment("BFD Call for patient with patient ID " + patientID +
                 " using since " + sinceTime);
         bfdSegment.setMetricName("RequestEOB");

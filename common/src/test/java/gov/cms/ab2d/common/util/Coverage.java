@@ -18,14 +18,14 @@ public class Coverage {
 
     private final int month;
 
-    private final Long beneficiaryId;
+    private final long beneficiaryId;
 
     private final String currentMbi;
 
     private final List<String> historicMbis;
 
     public Coverage(int coveragePeriod, long searchEventId, String contract, int year, int month,
-                    Long beneficiaryId, String currentMbi, String historicMbis) {
+                    long beneficiaryId, String currentMbi, String historicMbis) {
         this.coveragePeriod = coveragePeriod;
         this.searchEventId = searchEventId;
         this.contract = contract;

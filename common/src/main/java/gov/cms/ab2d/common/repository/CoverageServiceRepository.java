@@ -267,7 +267,7 @@ public class CoverageServiceRepository {
             CoverageMembership coverageMembership = enrollmentIterator.next();
 
             // If not present add to mapping
-            Long beneficiaryId = coverageMembership.getIdentifiers().getBeneficiaryId();
+            long beneficiaryId = coverageMembership.getIdentifiers().getBeneficiaryId();
             enrollmentByBeneficiary.putIfAbsent(beneficiaryId,
                     new ArrayList<>(expectedCoveragePeriods));
             enrollmentByBeneficiary.get(beneficiaryId).add(coverageMembership);

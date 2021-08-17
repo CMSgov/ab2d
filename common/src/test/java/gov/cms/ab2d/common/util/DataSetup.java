@@ -162,7 +162,7 @@ public class DataSetup {
                 String contract = rs.getString(3);
                 int year = rs.getInt(4);
                 int month = rs.getInt(5);
-                Long beneficiaryId = rs.getLong(6);
+                long beneficiaryId = rs.getLong(6);
                 String currentMbi = rs.getString(7);
                 String historicalMbis = rs.getString(8);
 
@@ -186,6 +186,10 @@ public class DataSetup {
 
     public void deleteCoverageSearchEvent(CoverageSearchEvent event) {
         coverageSearchEventRepo.delete(event);
+    }
+
+    public Contract setupContract(String contractNumber) {
+        return setupContract(contractNumber, null);
     }
 
     public Contract setupContract(String contractNumber, OffsetDateTime attestedOn) {
@@ -231,7 +235,7 @@ public class DataSetup {
     }
 
     public void setupContractSponsorForParentClientData(List<String> clientRoles) {
-        Contract contract = setupContract("ABC123", null);
+        Contract contract = setupContract("ABC123");
 
         savePdpClient(TEST_PDP_CLIENT, contract, clientRoles);
     }
@@ -272,7 +276,7 @@ public class DataSetup {
             return testPdpClient;
         }
 
-        Contract contract = setupContract(VALID_CONTRACT_NUMBER, null);
+        Contract contract = setupContract(VALID_CONTRACT_NUMBER);
 
         return savePdpClient(TEST_PDP_CLIENT, contract, clientRoles);
     }
@@ -283,7 +287,7 @@ public class DataSetup {
             return testPdpClient;
         }
 
-        Contract contract = setupContract(contractNumber, null);
+        Contract contract = setupContract(contractNumber);
 
         return savePdpClient(clientdId, contract, clientRoles);
     }

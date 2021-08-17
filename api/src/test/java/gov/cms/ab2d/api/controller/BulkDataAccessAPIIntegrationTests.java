@@ -267,7 +267,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
         List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
         PdpClient pdpClient = new PdpClient();
-        Contract contract = dataSetup.setupContract("Test", null);
+        Contract contract = dataSetup.setupContract("Test");
         pdpClient.setContract(contract);
         pdpClient.setEnabled(true);
         pdpClient.setClientId("test");
@@ -1255,13 +1255,13 @@ public class BulkDataAccessAPIIntegrationTests {
                     .andExpect(status().is(202));
         }
 
-        Contract contract1 = dataSetup.setupContract("Test1", null);
+        Contract contract1 = dataSetup.setupContract("Test1");
 
         PdpClient pdpClient = pdpClientRepository.findByClientId(TEST_PDP_CLIENT);
         assertNotNull(pdpClient);
         pdpClient.setContract(contract1);
         pdpClientRepository.saveAndFlush(pdpClient);
-        Contract contractNew = dataSetup.setupContract("New Contract", null);
+        Contract contractNew = dataSetup.setupContract("New Contract");
 
         this.mockMvc.perform(
                 get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contractNew.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
