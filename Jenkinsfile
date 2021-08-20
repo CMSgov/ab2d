@@ -92,19 +92,12 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 // Automatically saves the an id for the SonarQube build
-                withSonarQubeEnv('CMSSonar') {
+                withSonarQubeEnv('DEVCMSSonar') {
                     sh '''mvn sonar:sonar -Dsonar.projectKey=ab2d-project -Dsonar.branch.name=$CI_BRANCH_NAME -DskipTests'''
                 }
             }
         }
 
-        stage('Wait 60 Seconds') {
-            steps {
-                sh '''
-                    sleep 60
-                '''
-            }
-        }
 
 	  //New Way in declarative pipeline
         stage("Quality Gate") {
