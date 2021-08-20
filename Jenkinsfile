@@ -112,6 +112,27 @@ pipeline {
                 }
             }
         }
+	stage('SonarQube Analysis') {
+            steps {
+                // Automatically saves the an id for the SonarQube build
+                withSonarQubeEnv('CMSSonar') {
+                    sh '''mvn sonar:sonar -Dsonar.projectKey=ab2d-project -Dsonar.branch.name=$CI_BRANCH_NAME -DskipTests'''
+                }
+            }
+        }
+
+	  //New Way in declarative pipeline
+        stage("Quality Gate") {
+           options {
+                timeout(time: 10, unit: 'MINUTES')
+            }
+            steps {
+                // Parameter indicates whether to set pipeline to UNSTABLE if Quality Gate fails
+                // true = set pipeline to UNSTABLE, false = don't
+                waitForQualityGate abortPipeline: true
+            }
+        }
+
 
         stage('Run e2e-test') {
 
