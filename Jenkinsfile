@@ -112,11 +112,11 @@ pipeline {
                 }
             }
         }
-	stage('SonarQube Analysis') {
+	       stage('SonarQube Analysis') {
             steps {
                 // Automatically saves the an id for the SonarQube build
                 withSonarQubeEnv('CMSSonar') {
-                    sh '''mvn package sonar:sonar -Dsonar.projectKey=ab2d-project -DskipTests'''
+                    sh '''mvn sonar:sonar -Dsonar.projectKey=ab2d-project -DskipTests'''
                 }
             }
         }
