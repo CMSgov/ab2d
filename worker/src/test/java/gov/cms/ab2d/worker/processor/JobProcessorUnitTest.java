@@ -4,9 +4,9 @@ import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverStub;
 import gov.cms.ab2d.worker.service.FileService;
+import gov.cms.ab2d.worker.service.JobChannelService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,6 +44,8 @@ class JobProcessorUnitTest {
     @Mock private FileService fileService;
     @Mock private JobRepository jobRepository;
     @Mock private JobOutputRepository jobOutputRepository;
+    @Mock private JobChannelService jobChannelService;
+    @Mock private JobProgressService jobProgressService;
     @Mock private ContractProcessor contractProcessor;
     @Mock private LogManager eventLogger;
 
@@ -57,6 +59,8 @@ class JobProcessorUnitTest {
         coverageDriver = spy(new CoverageDriverStub(10, 20));
         cut = new JobProcessorImpl(
                 fileService,
+                jobChannelService,
+                jobProgressService,
                 jobRepository,
                 jobOutputRepository,
                 contractProcessor,

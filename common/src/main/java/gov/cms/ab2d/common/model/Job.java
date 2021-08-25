@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
+import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static javax.persistence.EnumType.STRING;
 
 @Entity
@@ -61,7 +62,7 @@ public class Job {
     private Integer progress;
 
     @Enumerated(STRING)
-    private FhirVersion fhirVersion;
+    private FhirVersion fhirVersion = STU3;
 
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime lastPollTime;
