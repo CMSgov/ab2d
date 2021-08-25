@@ -27,15 +27,6 @@ public class JobProgressServiceImpl implements JobProgressService {
     }
 
     @Override
-    public void startTrackingJob(String jobId, int failureThreshold) {
-        ProgressTracker progressTracker = ProgressTracker.builder()
-                .jobUuid(jobId)
-                .failureThreshold(failureThreshold)
-                .build();
-        progressTrackerMap.put(jobId, progressTracker);
-    }
-
-    @Override
     public void addMeasure(String jobId, JobMeasure measure, long value) {
         ProgressTracker progressTracker = progressTrackerMap.computeIfAbsent(jobId, (k) ->
                                                         ProgressTracker.builder().jobUuid(jobId).build());

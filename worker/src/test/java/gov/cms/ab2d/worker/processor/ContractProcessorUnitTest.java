@@ -49,6 +49,7 @@ class ContractProcessorUnitTest {
     @Mock private LogManager eventLogger;
     @Mock private RoundRobinBlockingQueue<PatientClaimsRequest> requestQueue;
     private PatientClaimsProcessor patientClaimsProcessor;
+    private JobChannelService jobChannelService;
 
     private Path outputDir;
     private Contract contract;
@@ -63,7 +64,7 @@ class ContractProcessorUnitTest {
         JobProgressService jobProgressService = new JobProgressServiceImpl(jobRepository);
         ReflectionTestUtils.setField(jobProgressService, "reportProgressDbFrequency", 2);
         ReflectionTestUtils.setField(jobProgressService, "reportProgressLogFrequency", 3);
-        JobChannelService jobChannelService = new JobChannelServiceImpl(jobProgressService);
+        jobChannelService = new JobChannelServiceImpl(jobProgressService);
 
         cut = new ContractProcessorImpl(
                 jobRepository,
@@ -90,13 +91,9 @@ class ContractProcessorUnitTest {
 
         Map<String, CoverageSummary> patientsByContract = createPatientsByContractResponse(contract, 3);
 
-        ProgressTracker progressTracker = ProgressTracker.builder()
-                .jobUuid(jobUuid)
-                .expectedBeneficiaries(3)
-                .failureThreshold(10)
-                .build();
+        jobChannelService.sendUpdate(jobUuid, JobMeasure.EXPECTED_BENES, 3);
+        jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
 
-        progressTracker.addPatients(patientsByContract.size());
         JobData jobData = new JobData(jobUuid, job.getSince(),
                 getOrganization(job), patientsByContract);
 
@@ -115,12 +112,8 @@ class ContractProcessorUnitTest {
     void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() {
         Map<String, CoverageSummary> patientsByContract = createPatientsByContractResponse(contract, 18);
 
-        ProgressTracker progressTracker = ProgressTracker.builder()
-                .jobUuid(jobUuid)
-                .expectedBeneficiaries(18)
-                .failureThreshold(10)
-                .build();
-        progressTracker.addPatients(patientsByContract.size());
+        jobChannelService.sendUpdate(jobUuid, JobMeasure.EXPECTED_BENES, 18);
+        jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
         JobData jobData = new JobData(job.getJobUuid(), job.getSince(),
                 getOrganization(job), patientsByContract);
 

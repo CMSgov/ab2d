@@ -10,6 +10,7 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
+import gov.cms.ab2d.worker.service.JobChannelService;
 import gov.cms.ab2d.worker.service.JobChannelServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -63,12 +64,10 @@ class ContractProcessorInvalidPatientTest {
 
         patientClaimsProcessor = new PatientClaimsProcessorImpl(bfdClient, eventLogger);
         JobProgressService jobProgressService = new JobProgressServiceImpl(jobRepository);
+        JobChannelService jobChannelService = new JobChannelServiceImpl(jobProgressService);
         cut = new ContractProcessorImpl(jobRepository, patientClaimsProcessor, eventLogger,
-                requestQueue, new JobChannelServiceImpl(jobProgressService), jobProgressService);
-        ProgressTracker tracker = ProgressTracker.builder()
-                .jobUuid(jobId)
-                .failureThreshold(100)
-                .build();
+                requestQueue, jobChannelService, jobProgressService);
+        jobChannelService.sendUpdate(jobId, JobMeasure.FAILURE_THRESHHOLD, 100);
 
         Contract contract = new Contract();
         contract.setContractNumber(contractId);
@@ -82,9 +81,9 @@ class ContractProcessorInvalidPatientTest {
                 "2", new CoverageSummary(createIdentifierWithoutMbi("2"), null, dates),
                 "3", new CoverageSummary(createIdentifierWithoutMbi("3"), null, dates)
         );
+        jobChannelService.sendUpdate(jobId, JobMeasure.EXPECTED_BENES, summaries.size());
 
         jobData = new JobData(jobId, OffsetDateTime.MIN, "Client", summaries);
-        tracker.addPatients(summaries.size());
 
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 20);
         ReflectionTestUtils.setField(patientClaimsProcessor, "startDate", "01/01/2020");
