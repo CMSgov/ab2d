@@ -143,7 +143,7 @@ class ContractProcessorUnitTest {
 
     private Job createJob(PdpClient pdpClient) {
         Job job = new Job();
-        job.setJobUuid("S0000");
+        job.setJobUuid(jobUuid);
         job.setStatusMessage("0%");
         job.setStatus(JobStatus.IN_PROGRESS);
         job.setPdpClient(pdpClient);
