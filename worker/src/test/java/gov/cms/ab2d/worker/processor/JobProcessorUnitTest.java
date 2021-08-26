@@ -7,6 +7,7 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverStub;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.service.JobChannelService;
+import gov.cms.ab2d.worker.service.JobChannelServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,9 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
-import java.util.concurrent.ExecutionException;
 
-import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static java.lang.Boolean.TRUE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -44,8 +43,6 @@ class JobProcessorUnitTest {
     @Mock private FileService fileService;
     @Mock private JobRepository jobRepository;
     @Mock private JobOutputRepository jobOutputRepository;
-    @Mock private JobChannelService jobChannelService;
-    @Mock private JobProgressService jobProgressService;
     @Mock private ContractProcessor contractProcessor;
     @Mock private LogManager eventLogger;
 
@@ -55,6 +52,9 @@ class JobProcessorUnitTest {
     @BeforeEach
     void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
+
+        JobProgressService jobProgressService = new JobProgressServiceImpl(jobRepository);
+        JobChannelService jobChannelService = new JobChannelServiceImpl(jobProgressService);
 
         coverageDriver = spy(new CoverageDriverStub(10, 20));
         cut = new JobProcessorImpl(
@@ -85,7 +85,7 @@ class JobProcessorUnitTest {
 
     @Test
     @DisplayName("When a job is in submitted status, it can be processed")
-    void processJob_happyPath() throws ExecutionException, InterruptedException {
+    void processJob_happyPath() {
 
         var processedJob = cut.process(job.getJobUuid());
 
@@ -97,7 +97,7 @@ class JobProcessorUnitTest {
 
     @Test
     @DisplayName("When client belongs to a parent sponsor, contracts for the children sponsors are processed")
-    void whenTheClientBelongsToParent_ChildContractsAreProcessed() throws ExecutionException, InterruptedException {
+    void whenTheClientBelongsToParent_ChildContractsAreProcessed() {
         job.getPdpClient();
 
         var processedJob = cut.process(job.getJobUuid());
@@ -108,7 +108,7 @@ class JobProcessorUnitTest {
         doVerify();
     }
 
-    private void doVerify() throws ExecutionException, InterruptedException {
+    private void doVerify() {
         verify(fileService).createDirectory(any());
         verify(coverageDriver).pageCoverage(any(Job.class));
         verify(coverageDriver).pageCoverage(any(CoveragePagingRequest.class));
@@ -116,7 +116,7 @@ class JobProcessorUnitTest {
 
     @Test
     @DisplayName("When output directory for the job already exists, delete it and create it afresh")
-    void whenOutputDirectoryAlreadyExist_DeleteItAndCreateItAfresh() throws IOException, ExecutionException, InterruptedException {
+    void whenOutputDirectoryAlreadyExist_DeleteItAndCreateItAfresh() throws IOException{
 
         //create output dir, so it already exists
         final Path outputDir = Paths.get(efsMountTmpDir.toString(), "S0000");
@@ -148,7 +148,7 @@ class JobProcessorUnitTest {
 
     @Test
     @DisplayName("When existing output directory has a file which is not a regular file, job fails gracefully")
-    void whenExistingOutputDirectoryHasSubDirectory_JobFailsGracefully() throws IOException, ExecutionException, InterruptedException {
+    void whenExistingOutputDirectoryHasSubDirectory_JobFailsGracefully() throws IOException {
 
         //create output dir, so it already exists
         final Path outputDir = Paths.get(efsMountTmpDir.toString(), "S0000");
@@ -173,7 +173,7 @@ class JobProcessorUnitTest {
 
     @Test
     @DisplayName("When output directory creation fails due to unknown IOException, job fails gracefully")
-    void whenOutputDirectoryCreationFailsDueToUnknownReason_JobFailsGracefully() throws IOException, ExecutionException, InterruptedException {
+    void whenOutputDirectoryCreationFailsDueToUnknownReason_JobFailsGracefully() {
 
         var errMsg = "Could not create output directory";
         var uncheckedIOE = new UncheckedIOException(errMsg, new IOException(errMsg));
@@ -210,11 +210,10 @@ class JobProcessorUnitTest {
 
     private Job createJob(PdpClient pdpClient) {
         Job job = new Job();
-        job.setJobUuid("S0000");
+        job.setJobUuid(jobUuid);
         job.setStatusMessage("0%");
         job.setStatus(JobStatus.IN_PROGRESS);
         job.setPdpClient(pdpClient);
-        job.setFhirVersion(STU3);
         return job;
     }
 }
