@@ -42,8 +42,8 @@ public class ProgressTracker {
         patientRequestQueuedCount += numQueued;
     }
 
-    public void incrementPatientRequestProcessedCount() {
-        ++patientRequestProcessedCount;
+    public void addPatientProcessedCount(int value) {
+        patientRequestProcessedCount += value;
     }
 
     public void addProcessedCount(int numProcessed) {

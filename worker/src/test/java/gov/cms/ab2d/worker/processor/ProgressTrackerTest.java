@@ -89,9 +89,7 @@ class ProgressTrackerTest {
         percDone = tracker.getPercentageCompleted();
         assertEquals(asPercent(1.0 - EST_BEN_SEARCH_JOB_PERCENTAGE), percDone);
 
-        for (int i = 0; i < 10; i++) {
-            tracker.incrementPatientRequestProcessedCount();
-        }
+        tracker.addPatientProcessedCount(10);
 
         assertEquals(100, tracker.getPercentageCompleted());
     }
@@ -111,7 +109,7 @@ class ProgressTrackerTest {
 
         assertEquals(asPercent(1 - EST_BEN_SEARCH_JOB_PERCENTAGE), tracker.getPercentageCompleted());
 
-        tracker.incrementPatientRequestProcessedCount();
+        tracker.addPatientProcessedCount(1);
 
         double amountEobProc = (double) 1/12 * EST_BEN_SEARCH_JOB_PERCENTAGE;
         double amountMetadataCompleted = 1 - EST_BEN_SEARCH_JOB_PERCENTAGE;

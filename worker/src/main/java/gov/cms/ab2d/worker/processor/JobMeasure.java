@@ -17,6 +17,11 @@ public enum JobMeasure {
         public void update(ProgressTracker progressTracker, long value) {
             progressTracker.addPatientRequestQueuedCount((int) value);
         }
+    }, PATIENT_REQUEST_PROCESSED() {
+        @Override
+        public void update(ProgressTracker progressTracker, long value) {
+            progressTracker.addPatientProcessedCount((int) value);
+        }
     }, EOBS_FETCHED() {
         @Override
         public void update(ProgressTracker progressTracker, long value) {

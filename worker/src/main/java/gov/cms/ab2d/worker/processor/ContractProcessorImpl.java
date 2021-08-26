@@ -315,6 +315,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      */
     @Trace
     private EobSearchResult processFuture(ContractData contractData, Future<EobSearchResult> future) {
+        jobChannelService.sendUpdate(contractData.getJob().getJobUuid(), JobMeasure.PATIENT_REQUEST_PROCESSED, 1);
         try {
             EobSearchResult result = future.get();
             if (result != null) {
