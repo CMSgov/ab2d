@@ -119,7 +119,7 @@ class JobProcessorUnitTest {
     void whenOutputDirectoryAlreadyExist_DeleteItAndCreateItAfresh() throws IOException{
 
         //create output dir, so it already exists
-        final Path outputDir = Paths.get(efsMountTmpDir.toString(), "S0000");
+        final Path outputDir = Paths.get(efsMountTmpDir.toString(), jobUuid);
         Files.createDirectories(outputDir);
 
         //create files inside the directory.
@@ -151,7 +151,7 @@ class JobProcessorUnitTest {
     void whenExistingOutputDirectoryHasSubDirectory_JobFailsGracefully() throws IOException {
 
         //create output dir, so it already exists
-        final Path outputDir = Paths.get(efsMountTmpDir.toString(), "S0000");
+        final Path outputDir = Paths.get(efsMountTmpDir.toString(), jobUuid);
         Files.createDirectories(outputDir);
 
         //add a file in the directory which is NOT a regular file, but a directory
