@@ -120,7 +120,7 @@ class ContractProcessorUnitTest {
         var jobOutputs = cut.process(outputDir, job, jobData);
 
         assertFalse(jobOutputs.isEmpty());
-        verify(jobRepository, times(9)).updatePercentageCompleted(anyString(), anyInt());
+        verify(jobRepository, times(6)).updatePercentageCompleted(anyString(), anyInt());
         verify(patientClaimsProcessor, atLeast(1)).process(any());
     }
 
