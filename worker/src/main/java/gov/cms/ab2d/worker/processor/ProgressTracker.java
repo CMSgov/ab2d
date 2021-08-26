@@ -50,8 +50,8 @@ public class ProgressTracker {
         eobsProcessedCount += numProcessed;
     }
 
-    public void incrementFailureCount() {
-        ++failureCount;
+    public void addFailureCount(int value) {
+        failureCount += value;
     }
 
     public void addPatients(int numAdded) {

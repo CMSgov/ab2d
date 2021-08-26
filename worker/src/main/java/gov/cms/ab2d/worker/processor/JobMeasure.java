@@ -45,7 +45,7 @@ public enum JobMeasure {
     }, EOBS_ERROR() {
         @Override
         public void update(ProgressTracker progressTracker, long value) {
-            throw new UnsupportedOperationException();
+            progressTracker.addFailureCount((int) value);
         }
     };
 
