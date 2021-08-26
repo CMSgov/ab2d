@@ -10,7 +10,7 @@ public enum JobMeasure {
     }, EXPECTED_BENES() {
         @Override
         public void update(ProgressTracker progressTracker, long value) {
-            progressTracker.addPatients((int) value);
+            progressTracker.setExpectedBeneficiaries((int) value);
         }
     }, BENE_REQUEST_QUEUED() {
         @Override
