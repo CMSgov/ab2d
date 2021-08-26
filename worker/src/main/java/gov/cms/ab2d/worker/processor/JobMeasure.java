@@ -12,7 +12,7 @@ public enum JobMeasure {
         public void update(ProgressTracker progressTracker, long value) {
             progressTracker.addPatients((int) value);
         }
-    }, ACTUAL_BENES() {
+    }, BENE_REQUEST_QUEUED() {
         @Override
         public void update(ProgressTracker progressTracker, long value) {
             progressTracker.addPatientRequestQueuedCount((int) value);

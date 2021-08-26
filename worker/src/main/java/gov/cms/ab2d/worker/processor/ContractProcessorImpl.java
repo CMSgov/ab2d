@@ -171,7 +171,7 @@ public class ContractProcessorImpl implements ContractProcessor {
                 processHandles(contractData);
             }
         }
-        this.jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.ACTUAL_BENES, patients.size());
+        this.jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.BENE_REQUEST_QUEUED, patients.size());
 
     }
 

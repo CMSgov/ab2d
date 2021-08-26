@@ -177,7 +177,7 @@ public class JobProcessorImpl implements JobProcessor {
     }
 
     private void addPatients(String jobId, CoveragePagingResult result, Map<String, CoverageSummary> beneMap) {
-        jobChannelService.sendUpdate(jobId, JobMeasure.ACTUAL_BENES, result.getCoverageSummaries().size());
+        jobChannelService.sendUpdate(jobId, JobMeasure.BENE_REQUEST_QUEUED, result.getCoverageSummaries().size());
         result.getCoverageSummaries().forEach(summary -> beneMap.put(summary.getIdentifiers().getBeneficiaryId(), summary));
     }
 
