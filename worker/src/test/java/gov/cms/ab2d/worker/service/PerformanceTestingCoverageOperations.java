@@ -88,7 +88,7 @@ class PerformanceTestingCoverageOperations {
 
     @BeforeEach
     public void insertContractAndDefaultCoveragePeriod() {
-// If you kill the integration test early uncomment this and comment the code below
+// If you kill the integration test early uncomment this to clean things out before starting the test
 //
 //        deleteCoverage();
 //        coverageSearchRepo.deleteAll();
@@ -99,24 +99,10 @@ class PerformanceTestingCoverageOperations {
 //            sponsorRepo.delete(sponsor);
 //        }
 
-// You will have to find the sponsor repo id manually
         contract = dataSetup.setupContract("TST-12", AB2D_EPOCH.toOffsetDateTime());
-//        contract = contractRepo.findContractByContractNumber("TST-34").get();
-//        contract = contractRepo.findContractByContractNumber("TST-56").get();
-//        contract = contractRepo.findContractByContractNumber("TST-78").get();
-//        contract = contractRepo.findContractByContractNumber("TST-90").get();
-
-//        period1 = coveragePeriodRepo.findById(95).get();
         period1 = dataSetup.createCoveragePeriod(contract, 1, 2020);
         period2 = dataSetup.createCoveragePeriod(contract, 2, 2020);
         period3 = dataSetup.createCoveragePeriod(contract, 3, 2020);
-
-//        sponsor = dataSetup.createSponsor("Cal Ripken", 200, "Cal Ripken Jr.", 201);
-//        contract = dataSetup.setupContract(sponsor, "TST-12");
-
-//        period1 = dataSetup.createCoveragePeriod(contract, 1, 2020);
-//        period2 = dataSetup.createCoveragePeriod(contract, 2, 2020);
-//        period3 = dataSetup.createCoveragePeriod(contract, 3, 2020);
 
     }
 
