@@ -87,7 +87,6 @@ public final class IdentifierUtils {
         PatientIdentifier derivedId = new PatientIdentifier();
         String value = (String) Versions.invokeGetMethod(id, "getValue");
         derivedId.setValue(value);
-
         derivedId.setType(PatientIdentifier.Type.fromSystem(system));
         derivedId.setCurrency(getCurrency(id));
         return derivedId;

@@ -121,7 +121,7 @@ public class InsertionJob implements Callable<CoverageSearchEvent> {
     private void conductBatchInserts(BeneficiaryIdSupplier supplier, long searchEventId, int dataPoints) {
 
         List<Identifiers> batch = new ArrayList<>(dataPoints);
-        IntStream.iterate(0, i -> i + 1).limit(dataPoints).forEach(i -> batch.add(supplier.get()));
+        IntStream.iterate(0, idx -> idx + 1).limit(dataPoints).forEach(idx -> batch.add(supplier.get()));
 
         coverageService.insertCoverage(searchEventId, new HashSet<>(batch));
     }

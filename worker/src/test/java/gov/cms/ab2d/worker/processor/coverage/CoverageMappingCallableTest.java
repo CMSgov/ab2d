@@ -429,9 +429,9 @@ class CoverageMappingCallableTest {
 
     private org.hl7.fhir.dstu3.model.Bundle buildBundle(int startIndex, int endIndex, int year) {
         org.hl7.fhir.dstu3.model.Bundle bundle1 = new org.hl7.fhir.dstu3.model.Bundle();
-        for (long i = startIndex; i < endIndex; i++) {
+        for (long idx = startIndex; idx < endIndex; idx++) {
             org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent component = new org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent();
-            org.hl7.fhir.dstu3.model.Patient patient = createPatient(i, "mbi-" + i, year);
+            org.hl7.fhir.dstu3.model.Patient patient = createPatient(idx, "mbi-" + idx, year);
             component.setResource(patient);
             bundle1.addEntry(component);
         }

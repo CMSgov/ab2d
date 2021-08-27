@@ -128,9 +128,9 @@ class ProgressTrackerTest {
         List<CoverageSummary> summaries = new ArrayList<>();
 
         FilterOutByDate.DateRange dateRange = TestUtil.getOpenRange();
-        for (long i = 0; i < num; i++) {
+        for (long idx = 0; idx < num; idx++) {
             CoverageSummary summary = new CoverageSummary(
-                    createIdentifierWithoutMbi(i),
+                    createIdentifierWithoutMbi(idx),
                     contract,
                     List.of(dateRange)
             );

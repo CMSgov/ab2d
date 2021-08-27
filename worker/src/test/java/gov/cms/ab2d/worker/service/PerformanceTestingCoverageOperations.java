@@ -101,7 +101,6 @@ class PerformanceTestingCoverageOperations {
 
 // You will have to find the sponsor repo id manually
         contract = dataSetup.setupContract("TST-12", AB2D_EPOCH.toOffsetDateTime());
-//        contract = contractRepo.findContractByContractNumber("TST-12").get();
 //        contract = contractRepo.findContractByContractNumber("TST-34").get();
 //        contract = contractRepo.findContractByContractNumber("TST-56").get();
 //        contract = contractRepo.findContractByContractNumber("TST-78").get();
@@ -256,6 +255,10 @@ class PerformanceTestingCoverageOperations {
         ExecutorService executor = Executors.newFixedThreadPool(threads);
 
         Random random = new Random();
+
+        // Use if you want to performance test queries all in one go.
+        // The previous code will populate a database for reuse.
+        // This code will exercise the coverage table by randomly paging through it
 
 //        List<Integer> periodIds = coveragePeriodRepo.findAllByContractId(contract.getId())
 //                .stream().map(CoveragePeriod::getId).collect(Collectors.toList());

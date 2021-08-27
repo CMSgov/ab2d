@@ -189,17 +189,13 @@ public class DataSetup {
     }
 
     public Contract setupContract(String contractNumber) {
-        return setupContract(contractNumber, null);
+        return setupContract(contractNumber, OffsetDateTime.now());
     }
 
     public Contract setupContract(String contractNumber, OffsetDateTime attestedOn) {
         Contract contract = new Contract();
 
-        if (attestedOn != null) {
-            contract.setAttestedOn(attestedOn);
-        } else {
-            contract.setAttestedOn(OffsetDateTime.now());
-        }
+        contract.setAttestedOn(attestedOn);
         contract.setContractName("Test Contract " + contractNumber);
         contract.setContractNumber(contractNumber);
 
