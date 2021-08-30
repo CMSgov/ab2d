@@ -39,14 +39,14 @@ import static org.junit.jupiter.api.Assertions.*;
 @ContextConfiguration(classes = { BlueButtonClientTestSTU3.TestConfig.class })
 public class BlueButtonClientTestSTU3 {
     // A random example patient (Jane Doe)
-    private static final String TEST_PATIENT_ID = "20140000008325";
+    private static final Long TEST_PATIENT_ID = 20140000008325L;
     // A patient that only has a single EOB record in bluebutton
-    private static final String TEST_SINGLE_EOB_PATIENT_ID = "20140000009893";
+    private static final Long TEST_SINGLE_EOB_PATIENT_ID = 20140000009893L;
     // A patient id that should not exist in bluebutton
-    private static final String TEST_NONEXISTENT_PATIENT_ID = "31337";
-    private static final String TEST_SLOW_PATIENT_ID = "20010000001111";
-    private static final String TEST_NO_RECORD_PATIENT_ID = "20010000001115";
-    private static final String TEST_NO_RECORD_PATIENT_ID_MBI = "20010000001116";
+    private static final Long TEST_NONEXISTENT_PATIENT_ID = 31337L;
+    private static final Long TEST_SLOW_PATIENT_ID = 20010000001111L;
+    private static final Long TEST_NO_RECORD_PATIENT_ID = 20010000001115L;
+    private static final Long TEST_NO_RECORD_PATIENT_ID_MBI = 20010000001116L;
 
     // Paths to test resources
     private static final String METADATA_PATH = "bb-test-data/meta.json";
@@ -95,7 +95,7 @@ public class BlueButtonClientTestSTU3 {
                 "/v1/fhir/ExplanationOfBenefit",
                 HttpStatus.SC_OK,
                 StringUtils.EMPTY,
-                Collections.singletonList(Parameter.param("patient", TEST_SLOW_PATIENT_ID)),
+                Collections.singletonList(Parameter.param("patient", TEST_SLOW_PATIENT_ID.toString())),
                 8000,
                 MOCK_PORT_V1
         );
@@ -139,7 +139,7 @@ public class BlueButtonClientTestSTU3 {
                 "/v1/fhir/ExplanationOfBenefit",
                 HttpStatus.SC_OK,
                 getRawJson(SAMPLE_EOB_PATH_PREFIX + TEST_NO_RECORD_PATIENT_ID + ".json"),
-                List.of(Parameter.param("patient", TEST_NO_RECORD_PATIENT_ID),
+                List.of(Parameter.param("patient", TEST_NO_RECORD_PATIENT_ID.toString()),
                         Parameter.param("excludeSAMHSA", "true")),
                 MOCK_PORT_V1
         );
@@ -155,7 +155,7 @@ public class BlueButtonClientTestSTU3 {
                 "/v1/fhir/ExplanationOfBenefit",
                 HttpStatus.SC_OK,
                 getRawJson(SAMPLE_EOB_PATH_PREFIX + TEST_NO_RECORD_PATIENT_ID_MBI + ".json"),
-                List.of(Parameter.param("patient", TEST_NO_RECORD_PATIENT_ID_MBI),
+                List.of(Parameter.param("patient", TEST_NO_RECORD_PATIENT_ID_MBI.toString()),
                         Parameter.param("excludeSAMHSA", "true")),
                 MOCK_PORT_V1
         );
@@ -166,7 +166,7 @@ public class BlueButtonClientTestSTU3 {
                     "/v1/fhir/ExplanationOfBenefit",
                     HttpStatus.SC_OK,
                     getRawJson(SAMPLE_EOB_PATH_PREFIX + TEST_PATIENT_ID + "_" + startIndex + ".json"),
-                    List.of(Parameter.param("patient", TEST_PATIENT_ID),
+                    List.of(Parameter.param("patient", TEST_PATIENT_ID.toString()),
                             Parameter.param("count", "10"),
                             Parameter.param("startIndex", startIndex),
                             Parameter.param("excludeSAMHSA", "true")),

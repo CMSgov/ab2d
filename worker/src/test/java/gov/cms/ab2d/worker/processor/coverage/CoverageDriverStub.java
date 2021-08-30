@@ -1,9 +1,6 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
-import gov.cms.ab2d.common.model.CoveragePagingRequest;
-import gov.cms.ab2d.common.model.CoveragePagingResult;
-import gov.cms.ab2d.common.model.CoverageSummary;
-import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.worker.TestUtil;
 
 import java.util.ArrayList;
@@ -52,7 +49,7 @@ public class CoverageDriverStub implements CoverageDriver {
     @Override
     public CoveragePagingResult pageCoverage(Job job) {
 
-        CoveragePagingRequest nextRequest = getNextRequest(null);
+        CoveragePagingRequest nextRequest = getNextRequest(null, job);
         List<CoverageSummary> results = getSummaries(null);
         return new CoveragePagingResult(results, nextRequest);
     }
@@ -60,19 +57,19 @@ public class CoverageDriverStub implements CoverageDriver {
     @Override
     public CoveragePagingResult pageCoverage(CoveragePagingRequest request) {
 
-        CoveragePagingRequest nextRequest = getNextRequest(request);
+        CoveragePagingRequest nextRequest = getNextRequest(request, null);
         List<CoverageSummary> results = getSummaries(request);
         return new CoveragePagingResult(results, nextRequest);
     }
 
-    private CoveragePagingRequest getNextRequest(CoveragePagingRequest previousRequest) {
+    private CoveragePagingRequest getNextRequest(CoveragePagingRequest previousRequest, Job job) {
         if (previousRequest == null && pageSize < totalRecords) {
-            return new CoveragePagingRequest(pageSize, "" + pageSize, List.of());
+            return new CoveragePagingRequest(pageSize, (long) pageSize, job.getContract(), job.getCreatedAt());
         } else if (previousRequest != null) {
-            int cursor = Integer.parseInt(previousRequest.getCursor().get());
+            long cursor = previousRequest.getCursor().get();
 
             if (cursor + pageSize < totalRecords) {
-                return new CoveragePagingRequest(pageSize, "" + (cursor + pageSize), List.of());
+                return new CoveragePagingRequest(pageSize, (cursor + pageSize), previousRequest.getContract(), previousRequest.getJobStartTime());
             }
         }
 
@@ -81,20 +78,20 @@ public class CoverageDriverStub implements CoverageDriver {
 
     private List<CoverageSummary> getSummaries(CoveragePagingRequest request) {
 
-        int startIndex = 0;
-        int endIndex;
+        long startIndex = 0;
+        long endIndex;
 
         if (request == null) {
             endIndex = Math.min(pageSize, totalRecords);
         } else {
-            startIndex = Integer.parseInt(request.getCursor().get());
+            startIndex = request.getCursor().get();
             endIndex = Math.min(startIndex + pageSize, totalRecords);
         }
 
         List<CoverageSummary> summaries = new ArrayList<>();
-        for (int patient = startIndex; patient < endIndex; patient++) {
+        for (long patient = startIndex; patient < endIndex; patient++) {
             summaries.add(new CoverageSummary(
-                    createIdentifier("patient-" + patient, "mbi-" + patient),
+                    createIdentifier(patient, "mbi-" + patient),
                     null, List.of(TestUtil.getOpenRange())
             ));
         }

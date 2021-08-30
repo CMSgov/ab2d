@@ -101,7 +101,7 @@ public class CoverageServiceImpl implements CoverageService {
     @Override
     public int countBeneficiariesByCoveragePeriod(List<CoveragePeriod> coveragePeriods) {
         List<Integer> ids = coveragePeriods.stream().map(CoveragePeriod::getId).collect(toList());
-        return coverageServiceRepo.countBeneficiariesByPeriods(ids);
+        return coverageServiceRepo.countBeneficiariesByPeriods(ids, coveragePeriods.get(0).getContract().getContractNumber());
     }
 
     @Override
@@ -159,15 +159,7 @@ public class CoverageServiceImpl implements CoverageService {
     @Override
     @Trace
     public CoveragePagingResult pageCoverage(CoveragePagingRequest pagingRequest) {
-
-        List<Integer> coveragePeriodIds = pagingRequest.getCoveragePeriodIds();
-        if (coveragePeriodIds.isEmpty()) {
-            log.error("cannot page coverage if no coverage period ids provided");
-            throw new IllegalArgumentException("must provide more than one period id");
-        }
-
-        CoveragePeriod coveragePeriod = findCoveragePeriod(coveragePeriodIds.get(0));
-        return coverageServiceRepo.pageCoverage(coveragePeriod.getContract(), pagingRequest);
+        return coverageServiceRepo.pageCoverage(pagingRequest);
     }
 
     @Override

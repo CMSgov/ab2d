@@ -44,6 +44,7 @@ import java.util.Set;
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.common.service.JobServiceImpl.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.*;
+import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.junit.jupiter.api.Assertions.*;
@@ -293,7 +294,7 @@ class JobServiceTest {
         Role role = roleService.findRoleByName(ADMIN_ROLE);
         pdpClient.addRole(role);
 
-        Contract contract = dataSetup.setupContract("Y0000");
+        Contract contract = dataSetup.setupContract("Y0000", AB2D_EPOCH.toOffsetDateTime());
         pdpClient.setContract(contract);
 
         pdpClient = pdpClientRepository.saveAndFlush(pdpClient);
@@ -444,7 +445,7 @@ class JobServiceTest {
         pdpClient.setEnabled(true);
         dataSetup.queueForCleanup(pdpClient);
 
-        Contract contract = dataSetup.setupContract("New Contract");
+        Contract contract = dataSetup.setupContract("New Contract", AB2D_EPOCH.toOffsetDateTime());
         pdpClient.setContract(contract);
         PdpClient savedPdpClient = pdpClientRepository.save(pdpClient);
 
