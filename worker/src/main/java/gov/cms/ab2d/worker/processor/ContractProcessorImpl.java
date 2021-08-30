@@ -97,6 +97,7 @@ public class ContractProcessorImpl implements ContractProcessor {
 
         Map<String, CoverageSummary> patients = jobData.getPatients();
         int patientCount = patients.size();
+        this.jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.META_DATA_PROCESSED, patientCount);
         log.info("Contract [{}] has [{}] Patients", contractNumber, patientCount);
 
         List<JobOutput> jobOutputs = new ArrayList<>();

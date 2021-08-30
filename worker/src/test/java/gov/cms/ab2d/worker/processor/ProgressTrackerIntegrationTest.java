@@ -93,6 +93,7 @@ class ProgressTrackerIntegrationTest {
 
         Job job = createJob(createClient());
         job.setContract(contract);
+        this.jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.META_DATA_PROCESSED, 20);
 
         org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent entry1 = BundleUtils.createBundleEntry("P1", "mbi1", year);
         org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent entry2 = BundleUtils.createBundleEntry("P2", "mbi2", year);

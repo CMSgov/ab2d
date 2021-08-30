@@ -12,6 +12,11 @@ public enum JobMeasure {
         public void update(ProgressTracker progressTracker, long value) {
             progressTracker.setExpectedBeneficiaries((int) value);
         }
+    }, META_DATA_PROCESSED() {
+        @Override
+        public void update(ProgressTracker progressTracker, long value) {
+            progressTracker.addPatients((int) value);
+        }
     }, BENE_REQUEST_QUEUED() {
         @Override
         public void update(ProgressTracker progressTracker, long value) {
