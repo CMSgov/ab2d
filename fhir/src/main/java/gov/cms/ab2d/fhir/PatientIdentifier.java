@@ -48,4 +48,12 @@ public class PatientIdentifier {
     private String value;
     private Type type;
     private Currency currency;
+
+    public Long getValueAsLong() {
+        if (value == null) {
+            return null;
+        }
+
+        return Long.parseLong(value);
+    }
 }

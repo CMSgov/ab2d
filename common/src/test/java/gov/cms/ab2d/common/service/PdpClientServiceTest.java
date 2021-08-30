@@ -28,6 +28,7 @@ import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.Constants.SPONSOR_ROLE;
+import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -119,7 +120,7 @@ class PdpClientServiceTest {
         dataSetup.queueForCleanup(pdpClientService.getClientById("test@test.com"));
 
         createdClient.setEnabled(false);
-        ContractDTO contractDTO = buildContractDTO(dataSetup.setupContract("T12345"));
+        ContractDTO contractDTO = buildContractDTO(dataSetup.setupContract("T12345", AB2D_EPOCH.toOffsetDateTime()));
         createdClient.setContract(contractDTO);
         createdClient.setRole(SPONSOR_ROLE);
 
@@ -220,7 +221,7 @@ class PdpClientServiceTest {
     }
 
     private PdpClientDTO buildClientDTO(String contractNumber, String clientId, String sponsorRole) {
-        Contract contract = dataSetup.setupContract(contractNumber);
+        Contract contract = dataSetup.setupContract(contractNumber, AB2D_EPOCH.toOffsetDateTime());
 
         return createClient(contract, clientId, sponsorRole);
     }

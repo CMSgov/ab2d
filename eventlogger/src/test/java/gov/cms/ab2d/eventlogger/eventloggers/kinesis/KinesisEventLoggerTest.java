@@ -92,8 +92,8 @@ class KinesisEventLoggerTest {
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime now2 = OffsetDateTime.now();
         BeneficiarySearchEvent se = new BeneficiarySearchEvent("laila", "job1", "contract1",
-                now, now2, "bene1", "SUCCESS");
-        assertEquals("bene1", se.getBeneId());
+                now, now2, 1L, "SUCCESS");
+        assertEquals(1, se.getBeneId());
         assertEquals("SUCCESS", se.getResponse());
         assertEquals("job1", se.getJobId());
         assertEquals("contract1", se.getContractNum());

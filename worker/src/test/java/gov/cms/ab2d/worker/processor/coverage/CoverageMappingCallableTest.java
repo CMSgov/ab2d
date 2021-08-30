@@ -112,7 +112,6 @@ class CoverageMappingCallableTest {
 
             for (Identifiers patient : mapping.getBeneficiaryIds()) {
                 assertNotNull(patient.getBeneficiaryId());
-                assertTrue(patient.getBeneficiaryId().contains("test-"));
 
                 assertNotNull(patient.getCurrentMbi());
                 assertEquals(2, patient.getHistoricMbis().size());
@@ -165,7 +164,6 @@ class CoverageMappingCallableTest {
 
             for (Identifiers patient : mapping.getBeneficiaryIds()) {
                 assertNotNull(patient.getBeneficiaryId());
-                assertTrue(patient.getBeneficiaryId().contains("test-"));
 
                 assertNotNull(patient.getCurrentMbi());
                 assertTrue(patient.getCurrentMbi().endsWith("mbi-0"));
@@ -387,10 +385,10 @@ class CoverageMappingCallableTest {
 
         Identifier beneId = new Identifier();
         beneId.setSystem(BENEFICIARY_ID);
-        beneId.setValue("BENEID");
+        beneId.setValue("1");
         patient.getIdentifier().add(beneId);
         ids = callable.extractPatientId(patient);
-        assertEquals("BENEID", ids.getBeneficiaryId());
+        assertEquals(1L, ids.getBeneficiaryId());
         assertNull(ids.getCurrentMbi());
         assertEquals(0, ids.getHistoricMbis().size());
 
@@ -405,7 +403,7 @@ class CoverageMappingCallableTest {
         mbiHist.getExtension().add(extension);
         patient.getIdentifier().add(mbiHist);
         ids = callable.extractPatientId(patient);
-        assertEquals("BENEID", ids.getBeneficiaryId());
+        assertEquals(1L, ids.getBeneficiaryId());
         assertNull(ids.getCurrentMbi());
         assertEquals(1, ids.getHistoricMbis().size());
         assertEquals("HIST_MBI", ids.getHistoricMbis().stream().findAny().get());
@@ -422,7 +420,7 @@ class CoverageMappingCallableTest {
         mbiCurrent.getExtension().add(extension2);
         patient.getIdentifier().add(mbiCurrent);
         ids = callable.extractPatientId(patient);
-        assertEquals("BENEID", ids.getBeneficiaryId());
+        assertEquals(1L, ids.getBeneficiaryId());
         assertEquals(1, ids.getHistoricMbis().size());
         assertEquals("CURR_MBI", ids.getCurrentMbi());
         assertEquals(1, ids.getHistoricMbis().size());
@@ -431,9 +429,9 @@ class CoverageMappingCallableTest {
 
     private org.hl7.fhir.dstu3.model.Bundle buildBundle(int startIndex, int endIndex, int year) {
         org.hl7.fhir.dstu3.model.Bundle bundle1 = new org.hl7.fhir.dstu3.model.Bundle();
-        for (int i = startIndex; i < endIndex; i++) {
+        for (long idx = startIndex; idx < endIndex; idx++) {
             org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent component = new org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent();
-            org.hl7.fhir.dstu3.model.Patient patient = createPatient("test-" + i, "mbi-" + i, year);
+            org.hl7.fhir.dstu3.model.Patient patient = createPatient(idx, "mbi-" + idx, year);
             component.setResource(patient);
             bundle1.addEntry(component);
         }
@@ -443,9 +441,9 @@ class CoverageMappingCallableTest {
     private org.hl7.fhir.dstu3.model.Bundle buildBundle(int startIndex, int endIndex, int numMbis, int year) {
         org.hl7.fhir.dstu3.model.Bundle bundle1 = new org.hl7.fhir.dstu3.model.Bundle();
 
-        for (int i = startIndex; i < endIndex; i++) {
+        for (long i = startIndex; i < endIndex; i++) {
             org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent component = new org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent();
-            org.hl7.fhir.dstu3.model.Patient patient = createPatientWithMultipleMbis("test-" + i, numMbis, year);
+            org.hl7.fhir.dstu3.model.Patient patient = createPatientWithMultipleMbis(i, numMbis, year);
             component.setResource(patient);
             bundle1.addEntry(component);
         }

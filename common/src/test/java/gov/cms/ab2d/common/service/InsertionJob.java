@@ -35,16 +35,16 @@ public class InsertionJob implements Callable<CoverageSearchEvent> {
 
     public static class BeneficiaryIdSupplier implements Supplier<Identifiers> {
 
-        private int id = 0;
+        private long id = 0;
 
         public BeneficiaryIdSupplier() {}
 
         public Identifiers get() {
-            int generated = id++;
+            long generated = id++;
             LinkedHashSet<String> historic = new LinkedHashSet<>();
             historic.add("historic-mbi-1");
             historic.add("historic-mbi-2");
-            return new Identifiers("test-" + generated, "mbi-" + generated, historic);
+            return new Identifiers(generated, "mbi-" + generated, historic);
         }
     }
 
@@ -120,12 +120,10 @@ public class InsertionJob implements Callable<CoverageSearchEvent> {
      */
     private void conductBatchInserts(BeneficiaryIdSupplier supplier, long searchEventId, int dataPoints) {
 
-        for (int written = 0; written < dataPoints; written += CHUNK_SIZE) {
-            List<Identifiers> batch = new ArrayList<>(CHUNK_SIZE);
-            IntStream.iterate(0, i -> i + 1).limit(CHUNK_SIZE).forEach(i -> batch.add(supplier.get()));
+        List<Identifiers> batch = new ArrayList<>(dataPoints);
+        IntStream.iterate(0, idx -> idx + 1).limit(dataPoints).forEach(idx -> batch.add(supplier.get()));
 
-            coverageService.insertCoverage(searchEventId, new HashSet<>(batch));
-        }
+        coverageService.insertCoverage(searchEventId, new HashSet<>(batch));
     }
 
     // Delete all rows in coverage table

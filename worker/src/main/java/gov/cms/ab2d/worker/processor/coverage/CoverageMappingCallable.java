@@ -189,7 +189,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
         // Get patient beneficiary id
         // if not found eobs cannot be looked up so do not return a meaningful list
         PatientIdentifier beneIdObj = IdentifierUtils.getBeneId(ids);
-        if (beneIdObj == null || beneIdObj.getValue() == null || beneIdObj.getValue().isEmpty()) {
+        if (beneIdObj == null || beneIdObj.getValue() == null) {
             missingBeneId += 1;
             return null;
         }
@@ -209,12 +209,13 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
             historicalIds = historicMbis.stream()
                     .map(PatientIdentifier::getValue).collect(toCollection(LinkedHashSet::new));
         }
+
         if (currentMbi == null) {
             int numOfHistorical = historicalIds.size();
             log.error("Beneficiary " + beneIdObj.getValue() + " has a null MBI and " + numOfHistorical + " historical");
-            return new Identifiers(beneIdObj.getValue(), null, new LinkedHashSet<>(historicalIds));
+            return new Identifiers(beneIdObj.getValueAsLong(), null, new LinkedHashSet<>(historicalIds));
         }
-        return new Identifiers(beneIdObj.getValue(), currentMbi.getValue(), new LinkedHashSet<>(historicalIds));
+        return new Identifiers(beneIdObj.getValueAsLong(), currentMbi.getValue(), new LinkedHashSet<>(historicalIds));
     }
 
     /**

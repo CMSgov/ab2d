@@ -18,7 +18,7 @@ public class ContractData {
     private final FhirVersion fhirVersion;
     private final Job job;
     private final ProgressTracker progressTracker;
-    private final Map<String, CoverageSummary> patients;
+    private final Map<Long, CoverageSummary> patients;
     private StreamHelper streamHelper;
     private final List<Future<EobSearchResult>> eobRequestHandles = new LinkedList<>();
 

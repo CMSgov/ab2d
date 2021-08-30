@@ -38,7 +38,7 @@ import static gov.cms.ab2d.fhir.FhirVersion.R4;
 @ContextConfiguration(classes = { BlueButtonClientTestR4.TestConfig.class })
 public class BlueButtonClientTestR4 {
     // A random example patient (Jane Doe)
-    private static final String TEST_PATIENT_ID = "-20140000010000";
+    private static final Long TEST_PATIENT_ID = -20140000010000L;
     // A patient that only has a single EOB record in bluebutton
 
     // Paths to test resources
@@ -80,7 +80,7 @@ public class BlueButtonClientTestR4 {
                 "/v2/fhir/ExplanationOfBenefit",
                 HttpStatus.SC_OK,
                 getRawJson(SAMPLE_EOB_BUNDLE),
-                List.of(Parameter.param("patient", TEST_PATIENT_ID),
+                List.of(Parameter.param("patient", TEST_PATIENT_ID.toString()),
                         Parameter.param("excludeSAMHSA", "true")),
                 MOCK_PORT_V2
         );
