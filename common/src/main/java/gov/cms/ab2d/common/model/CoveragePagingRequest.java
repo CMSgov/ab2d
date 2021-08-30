@@ -2,38 +2,41 @@ package gov.cms.ab2d.common.model;
 
 import lombok.ToString;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.time.OffsetDateTime;
 import java.util.Optional;
 
 @ToString
 public class CoveragePagingRequest {
 
-    private final List<Integer> coveragePeriodIds;
+    private final OffsetDateTime jobStartTime;
+    private final Contract contract;
     private final int pageSize;
-    private final String cursor;
+    private final Long cursor;
 
-    public CoveragePagingRequest(int pageSize, String cursor, List<Integer> coveragePeriodIds) {
-        this.coveragePeriodIds = new ArrayList<>(coveragePeriodIds);
+    public CoveragePagingRequest(int pageSize, Long cursor, Contract contract, OffsetDateTime jobStartTime) {
+        this.contract = contract;
         this.pageSize = pageSize;
         this.cursor = cursor;
+        this.jobStartTime = jobStartTime;
     }
 
-    public CoveragePagingRequest(int pageSize, String cursor, Integer... coveragePeriodIds) {
-        this.coveragePeriodIds = List.of(coveragePeriodIds);
-        this.pageSize = pageSize;
-        this.cursor = cursor;
+    public OffsetDateTime getJobStartTime() {
+        return jobStartTime;
     }
 
-    public List<Integer> getCoveragePeriodIds() {
-        return coveragePeriodIds;
+    public Contract getContract() {
+        return contract;
     }
 
     public int getPageSize() {
         return pageSize;
     }
 
-    public Optional<String> getCursor() {
+    public Optional<Long> getCursor() {
         return Optional.ofNullable(cursor);
+    }
+
+    public String getContractNumber() {
+        return contract.getContractNumber();
     }
 }

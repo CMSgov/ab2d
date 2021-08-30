@@ -73,7 +73,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     private List<IBaseResource> getEobBundleResources(PatientClaimsRequest request) {
         CoverageSummary patient = request.getCoverageSummary();
-        String beneficiaryId = patient.getIdentifiers().getBeneficiaryId();
+        long beneficiaryId = patient.getIdentifiers().getBeneficiaryId();
         OffsetDateTime attTime = request.getAttTime();
 
         OffsetDateTime start = OffsetDateTime.now();
@@ -136,7 +136,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         return sinceTime;
     }
 
-    private void logSuccessful(PatientClaimsRequest request, String beneficiaryId, OffsetDateTime start) {
+    private void logSuccessful(PatientClaimsRequest request, long beneficiaryId, OffsetDateTime start) {
         logManager.log(LogManager.LogType.KINESIS,
                 new BeneficiarySearchEvent(request.getOrganization(), request.getJob(), request.getContractNum(),
                         start, OffsetDateTime.now(),
@@ -144,7 +144,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                         "SUCCESS"));
     }
 
-    private void logError(PatientClaimsRequest request, String beneficiaryId, OffsetDateTime start, Exception ex) {
+    private void logError(PatientClaimsRequest request, long beneficiaryId, OffsetDateTime start, Exception ex) {
         logManager.log(LogManager.LogType.KINESIS,
                 new BeneficiarySearchEvent(request.getOrganization(), request.getJob(), request.getContractNum(),
                         start, OffsetDateTime.now(),

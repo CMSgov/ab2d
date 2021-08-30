@@ -89,7 +89,7 @@ class ContractProcessorUnitTest {
     @DisplayName("When a job is cancelled while it is being processed, then attempt to stop the job gracefully without completing it")
     void whenJobIsCancelledWhileItIsBeingProcessed_ThenAttemptToStopTheJob() {
 
-        Map<String, CoverageSummary> patientsByContract = createPatientsByContractResponse(contract, 3);
+        Map<Long, CoverageSummary> patientsByContract = createPatientsByContractResponse(contract, 3);
 
         jobChannelService.sendUpdate(jobUuid, JobMeasure.EXPECTED_BENES, 3);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
@@ -110,7 +110,7 @@ class ContractProcessorUnitTest {
     @Test
     @DisplayName("When many patientId are present, 'PercentageCompleted' should be updated many times")
     void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() {
-        Map<String, CoverageSummary> patientsByContract = createPatientsByContractResponse(contract, 18);
+        Map<Long, CoverageSummary> patientsByContract = createPatientsByContractResponse(contract, 18);
 
         jobChannelService.sendUpdate(jobUuid, JobMeasure.EXPECTED_BENES, 18);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
@@ -151,13 +151,13 @@ class ContractProcessorUnitTest {
         return job;
     }
 
-    private static Map<String, CoverageSummary> createPatientsByContractResponse(Contract contract, int num) {
-        Map<String, CoverageSummary> summaries = new HashMap<>();
+    private static Map<Long, CoverageSummary> createPatientsByContractResponse(Contract contract, int num) {
+        Map<Long, CoverageSummary> summaries = new HashMap<>();
 
         FilterOutByDate.DateRange dateRange = TestUtil.getOpenRange();
-        for (int i = 0; i < num; i++) {
+        for (long i = 0; i < num; i++) {
             CoverageSummary summary = new CoverageSummary(
-                    createIdentifierWithoutMbi("patient_" + i),
+                    createIdentifierWithoutMbi(i),
                     contract,
                     List.of(dateRange)
             );

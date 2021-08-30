@@ -16,7 +16,7 @@ import java.util.concurrent.Future;
 public class ContractData {
 
     private final Job job;
-    private final Map<String, CoverageSummary> patients;
+    private final Map<Long, CoverageSummary> patients;
     private final StreamHelper streamHelper;
     private final List<Future<EobSearchResult>> eobRequestHandles = new LinkedList<>();
 

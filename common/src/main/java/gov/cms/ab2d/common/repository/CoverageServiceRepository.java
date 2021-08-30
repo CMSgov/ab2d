@@ -11,6 +11,7 @@ import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.common.util.FilterOutByDate;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -23,26 +24,31 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-import static java.util.stream.Collectors.groupingBy;
+import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
+import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static java.util.stream.Collectors.toList;
 
+@Slf4j
 @Repository
 public class CoverageServiceRepository {
 
     private static final int BATCH_INSERT_SIZE = 10000;
-    private static final int BATCH_SELECT_SIZE = 5000;
+    private static final List<Integer> YEARS = List.of(2020, 2021, 2022, 2023);
 
     private static final String INSERT_COVERAGE = "INSERT INTO coverage " +
-            "(bene_coverage_period_id, bene_coverage_search_event_id, beneficiary_id, current_mbi, historic_mbis) " +
-            "VALUES(?,?,?,?,?)";
+            "(bene_coverage_period_id, bene_coverage_search_event_id, contract, year, month, beneficiary_id, current_mbi, historic_mbis) " +
+            "VALUES(?,?,?,?,?,?,?,?)";
 
     private static final String SELECT_COVERAGE_BY_SEARCH_COUNT = "SELECT COUNT(*) FROM coverage " +
-            " WHERE bene_coverage_search_event_id = ?";
+            " WHERE bene_coverage_search_event_id = :id AND contract = :contract AND year IN (:years)";
 
     private static final String SELECT_DISTINCT_COVERAGE_BY_PERIOD_COUNT = "SELECT COUNT(DISTINCT beneficiary_id) FROM coverage" +
-            " WHERE bene_coverage_period_id IN(:ids)";
+            " WHERE bene_coverage_period_id IN(:ids) AND contract = :contract AND year IN (:years)";
 
     static final String SELECT_DELTA =
             "SELECT cov1.bene_coverage_period_id, cov1.beneficiary_id, :type as entryType, CURRENT_TIMESTAMP as created" +
@@ -52,30 +58,24 @@ public class CoverageServiceRepository {
                 " WHERE cov1.beneficiary_id = cov2.beneficiary_id and bene_coverage_search_event_id = :search2 )";
 
     private static final String SELECT_INTERSECTION = "SELECT COUNT(*) FROM (" +
-            " SELECT DISTINCT beneficiary_id FROM coverage WHERE bene_coverage_search_event_id = ? " +
+            " SELECT DISTINCT beneficiary_id FROM coverage WHERE bene_coverage_search_event_id = :search1 AND contract = :contract AND year IN (:years)" +
             " INTERSECT " +
-            " SELECT DISTINCT beneficiary_id FROM coverage WHERE bene_coverage_search_event_id = ? " +
+            " SELECT DISTINCT beneficiary_id FROM coverage WHERE bene_coverage_search_event_id = :search2 AND contract = :contract AND year IN (:years)" +
             ") I";
 
-    private static final String SELECT_BENEFICIARIES_BATCH = "SELECT DISTINCT cov.beneficiary_id FROM coverage cov " +
-            " WHERE cov.bene_coverage_period_id IN (:ids)" +
-            " ORDER BY cov.beneficiary_id " +
+    private static final String SELECT_COVERAGE_WITHOUT_CURSOR =
+            "SELECT beneficiary_id, current_mbi, historic_mbis, year, month " +
+            " FROM coverage " +
+            " WHERE contract = :contract and year IN (:years) " +
+            " ORDER BY beneficiary_id " +
             " LIMIT :limit";
 
-    private static final String SELECT_BENEFICIARIES_BATCH_WITH_CURSOR = "SELECT DISTINCT cov.beneficiary_id FROM coverage cov " +
-            " WHERE cov.bene_coverage_period_id IN (:ids) AND cov.beneficiary_id >= :cursor" +
-            " ORDER BY cov.beneficiary_id " +
+    private static final String SELECT_COVERAGE_WITH_CURSOR =
+            "SELECT beneficiary_id, current_mbi, historic_mbis, year, month " +
+            " FROM coverage " +
+            " WHERE contract = :contract and year IN (:years) AND beneficiary_id >= :cursor " +
+            " ORDER BY beneficiary_id " +
             " LIMIT :limit";
-
-    private static final String SELECT_COVERAGE_INFORMATION =
-            "SELECT cov.beneficiary_id, cov.current_mbi, cov.historic_mbis, period.year, period.month " +
-            "FROM bene_coverage_period period INNER JOIN " +
-            "       (SELECT cov.beneficiary_id, cov.current_mbi, cov.historic_mbis, cov.bene_coverage_period_id " +
-            "        FROM coverage cov" +
-            "        WHERE cov.bene_coverage_period_id IN (:coveragePeriods) " +
-            "           AND cov.beneficiary_id IN (:beneficiaryIds) " +
-            "       ) AS cov ON cov.bene_coverage_period_id = period.id ";
-
 
     private final DataSource dataSource;
     private final CoveragePeriodRepository coveragePeriodRepo;
@@ -90,38 +90,41 @@ public class CoverageServiceRepository {
 
     @Trace
     public int countBySearchEvent(CoverageSearchEvent searchEvent) {
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement(SELECT_COVERAGE_BY_SEARCH_COUNT)) {
-            statement.setLong(1, searchEvent.getId());
-            try (ResultSet rs = statement.executeQuery()) {
-                rs.next();
-                return rs.getInt(1);
-            }
-        } catch (SQLException sqlException) {
-            throw new RuntimeException("failed to count by search event", sqlException);
-        }
+
+        SqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("id", searchEvent.getId())
+                .addValue("contract", searchEvent.getCoveragePeriod().getContract().getContractNumber())
+                .addValue("years", YEARS);
+
+        NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
+
+        return template.queryForList(SELECT_COVERAGE_BY_SEARCH_COUNT, parameters, Integer.class)
+                .stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for any" +
+                "of the coverage periods provided"));
     }
 
     @Trace
     public int countIntersection(CoverageSearchEvent searchEvent1, CoverageSearchEvent searchEvent2) {
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement(SELECT_INTERSECTION)) {
-            statement.setLong(1, searchEvent1.getId());
-            statement.setLong(2, searchEvent2.getId());
-
-            try (ResultSet rs = statement.executeQuery()) {
-                rs.next();
-                return rs.getInt(1);
-            }
-        } catch (SQLException sqlException) {
-            throw new RuntimeException("failed to count intersection between searches", sqlException);
-        }
-    }
-
-    public int countBeneficiariesByPeriods(List<Integer> coveragePeriodIds) {
 
         SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("ids", coveragePeriodIds);
+                .addValue("search1", searchEvent1.getId())
+                .addValue("search2", searchEvent2.getId())
+                .addValue("contract", searchEvent1.getCoveragePeriod().getContract().getContractNumber())
+                .addValue("years", YEARS);
+
+        NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
+
+        return template.queryForList(SELECT_INTERSECTION, parameters, Integer.class)
+                .stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for any" +
+                        "of the coverage periods provided"));
+    }
+
+    public int countBeneficiariesByPeriods(List<Integer> coveragePeriodIds, String contractNum) {
+
+        SqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("ids", coveragePeriodIds)
+                .addValue("contract", contractNum)
+                .addValue("years", YEARS);
 
         NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
 
@@ -140,14 +143,19 @@ public class CoverageServiceRepository {
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(INSERT_COVERAGE)) {
+
             int processingCount = 0;
+
+            String contractNum = searchEvent.getCoveragePeriod().getContract().getContractNumber();
+            int year = searchEvent.getCoveragePeriod().getYear();
+            int month = searchEvent.getCoveragePeriod().getMonth();
 
             // Prepare a batch of beneficiary ids to be inserted
             // and periodically conduct an insert if the batch size is large enough
             for (Identifiers beneficiary : beneIds) {
                 processingCount++;
 
-                prepareCoverageInsertion(statement, searchEvent, beneficiary);
+                prepareCoverageInsertion(statement, contractNum, year, month, searchEvent, beneficiary);
 
                 if (processingCount % BATCH_INSERT_SIZE == 0) {
                     executeBatch(statement);
@@ -169,16 +177,19 @@ public class CoverageServiceRepository {
         statement.executeBatch();
     }
 
-    private void prepareCoverageInsertion(PreparedStatement statement, CoverageSearchEvent searchEvent, Identifiers beneficiary) throws SQLException {
+    private void prepareCoverageInsertion(PreparedStatement statement, String contractNum, int year, int month, CoverageSearchEvent searchEvent, Identifiers beneficiary) throws SQLException {
         statement.setInt(1, searchEvent.getCoveragePeriod().getId());
         statement.setLong(2, searchEvent.getId());
-        statement.setString(3, beneficiary.getBeneficiaryId());
-        statement.setString(4, beneficiary.getCurrentMbi());
+        statement.setString(3, contractNum);
+        statement.setInt(4, year);
+        statement.setInt(5, month);
+        statement.setLong(6, beneficiary.getBeneficiaryId());
+        statement.setString(7, beneficiary.getCurrentMbi());
 
         if (beneficiary.getHistoricMbis().isEmpty()) {
-            statement.setString(5, null);
+            statement.setString(8, null);
         } else {
-            statement.setString(5, String.join(",", beneficiary.getHistoricMbis()));
+            statement.setString(8, String.join(",", beneficiary.getHistoricMbis()));
         }
 
         statement.addBatch();
@@ -203,9 +214,8 @@ public class CoverageServiceRepository {
         if (searchEvent.isPresent()) {
             try (Connection connection = dataSource.getConnection();
                  PreparedStatement statement = connection.prepareStatement("DELETE FROM coverage cov WHERE " +
-                         " cov.bene_coverage_period_id = ? AND cov.bene_coverage_search_event_id = ?")) {
-                statement.setLong(1, period.getId());
-                statement.setLong(2, searchEvent.get().getId());
+                         "cov.bene_coverage_search_event_id = ?")) {
+                statement.setLong(1, searchEvent.get().getId());
                 statement.execute();
             } catch (Exception exception) {
                 throw new RuntimeException(exception);
@@ -215,123 +225,97 @@ public class CoverageServiceRepository {
         }
     }
 
-    public CoveragePagingResult pageCoverage(Contract contract, CoveragePagingRequest page) {
+    public CoveragePagingResult pageCoverage(CoveragePagingRequest page) {
 
-        List<Integer> coveragePeriodIds = page.getCoveragePeriodIds();
-        List<CoveragePeriod> coveragePeriods = coveragePeriodRepo.findAllById(coveragePeriodIds);
+        Contract contract = page.getContract();
+        int expectedCoveragePeriods = getExpectedCoveragePeriods(page);
 
-        if (coveragePeriods.size() != coveragePeriodIds.size()) {
-            throw new IllegalArgumentException("at least one coverage period id not found in database");
+        List<CoveragePeriod> coveragePeriods = coveragePeriodRepo.findAllByContractId(contract.getId());
+        if (coveragePeriods.size() != expectedCoveragePeriods) {
+            throw new IllegalArgumentException("at least one coverage period missing from enrollment table for contract "
+                    + page.getContract().getContractNumber());
         }
 
-        /*
-         * Look up a page of beneficiaries sorted by beneficiary id
-         *
-         * Grab one extra id to check whether another page of ids exists or not
-         */
-        List<String> beneficiaries = findActiveBeneficiaryIds(page);
+        long limit = getCoverageLimit(page.getPageSize(), expectedCoveragePeriods);
+        Optional<Long> pageCursor = page.getCursor();
 
-        // If another page exists, the last beneficiary will be the first beneficiary
-        // of the next page so ignore it
-        Map<String, List<CoverageMembership>> coverageMembership;
-        if (beneficiaries.size() > page.getPageSize()) {
-            coverageMembership = findCoverageMemberships(beneficiaries.subList(0, beneficiaries.size() - 1), coveragePeriodIds);
+        MapSqlParameterSource sqlParameterSource = new MapSqlParameterSource()
+                .addValue("contract", page.getContractNumber())
+                .addValue("years", YEARS)
+                .addValue("limit", limit);
+
+        pageCursor.ifPresent((cursor) -> {
+            sqlParameterSource.addValue("cursor", cursor);
+        });
+
+        List<CoverageMembership> enrollment;
+        NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
+        if (pageCursor.isPresent()) {
+            enrollment = template.query(SELECT_COVERAGE_WITH_CURSOR, sqlParameterSource,
+                    CoverageServiceRepository::asMembership);
         } else {
-            coverageMembership = findCoverageMemberships(beneficiaries, coveragePeriodIds);
+            enrollment = template.query(SELECT_COVERAGE_WITHOUT_CURSOR, sqlParameterSource,
+                    CoverageServiceRepository::asMembership);
         }
 
-        List<CoverageSummary> beneficiarySummaries = coverageMembership.entrySet().stream()
+        // Guarantee ordering of results to the order that the beneficiaries were returned from SQL
+        Map<Long, List<CoverageMembership>> enrollmentByBeneficiary = new LinkedHashMap<>();
+
+        // Guarantee insertion order. Could use functional API in future.
+        Iterator<CoverageMembership> enrollmentIterator = enrollment.iterator();
+        while (enrollmentIterator.hasNext()) {
+            CoverageMembership coverageMembership = enrollmentIterator.next();
+
+            // If not present add to mapping
+            long beneficiaryId = coverageMembership.getIdentifiers().getBeneficiaryId();
+            enrollmentByBeneficiary.putIfAbsent(beneficiaryId,
+                    new ArrayList<>(expectedCoveragePeriods));
+            enrollmentByBeneficiary.get(beneficiaryId).add(coverageMembership);
+        }
+
+        // Only summarize page size beneficiaries worth of information and report it
+        List<CoverageSummary> beneficiarySummaries = enrollmentByBeneficiary.entrySet().stream()
+                .limit(page.getPageSize())
                 .map(membershipEntry -> summarizeCoverageMembership(contract, membershipEntry))
                 .collect(toList());
 
+        Optional<Map.Entry<Long, List<CoverageMembership>>> nextCursor =
+                enrollmentByBeneficiary.entrySet().stream().skip(page.getPageSize()).findAny();
+
         CoveragePagingRequest request = null;
-        if (beneficiaries.size() > page.getPageSize()) {
-            request = new CoveragePagingRequest(page.getPageSize(),
-                    beneficiaries.get(beneficiaries.size() - 1), coveragePeriodIds);
+        if (nextCursor.isPresent()) {
+            Map.Entry<Long, List<CoverageMembership>> nextCursorBeneficiary = nextCursor.get();
+            request = new CoveragePagingRequest(page.getPageSize(), nextCursorBeneficiary.getKey(), contract, page.getJobStartTime());
         }
 
         return new CoveragePagingResult(beneficiarySummaries, request);
     }
 
     /**
-     * Find page of beneficiaries then look up all of their coverage information for a range of identified coverage
-     * periods.
+     * Get the number of enrollment entries expected per patient assuming each patient is
+     * a member of the contract since it was attested for.
+     * @return the maximum number of entries required from the database to a pageSize worth of beneficiaries
      */
-    private Map<String, List<CoverageMembership>> findCoverageMemberships(List<String> beneficiaries, List<Integer> coveragePeriodIds) {
+    private long getCoverageLimit(int pageSize, long expectedCoveragePeriods) {
+        return expectedCoveragePeriods * (pageSize + 1);
+    }
 
-        // Look up coverage information for BATCH_SELECT_SIZE beneficiaries at a time
-        // and populate into hash map
-        Map<String, List<CoverageMembership>> coverageMemberships = new HashMap<>(beneficiaries.size());
+    private int getExpectedCoveragePeriods(CoveragePagingRequest pagingRequest) {
+        OffsetDateTime jobStartTime = pagingRequest.getJobStartTime();
 
-        for (int subListStart = 0; subListStart < beneficiaries.size(); subListStart += BATCH_SELECT_SIZE) {
-
-            int subListEnd = Math.min(subListStart + BATCH_SELECT_SIZE, beneficiaries.size());
-
-            // Find all coverage membership information for a batch of beneficiary ids
-            // over the range [subListStart, subListEnd)
-
-            List<String> subList = beneficiaries.subList(subListStart, subListEnd);
-            List<CoverageMembership> membershipInfo = findCoverageInformation(coveragePeriodIds, subList);
-
-            // Group the raw coverage information by beneficiary id
-            Map<String, List<CoverageMembership>> coverages = membershipInfo.stream()
-                    .collect(groupingBy(membership -> membership.getIdentifiers().getBeneficiaryId()));
-
-            coverageMemberships.putAll(coverages);
+        ZonedDateTime startTime = pagingRequest.getContract().getESTAttestationTime();
+        if (startTime.isBefore(AB2D_EPOCH)) {
+            startTime = AB2D_EPOCH;
         }
 
-        return coverageMemberships;
-    }
-
-    /**
-     * Find a subset of active beneficiary ids by
-     * @return page of beneficiary ids
-     */
-    public List<String> findActiveBeneficiaryIds(CoveragePagingRequest page) {
-
-        List<Integer> coveragePeriodIds = page.getCoveragePeriodIds();
-        int pageSize = page.getPageSize();
-        Optional<String> cursor = page.getCursor();
-
-        if (cursor.isEmpty()) {
-            return findActiveBeneficiaryIdsWithoutCursor(coveragePeriodIds, pageSize);
-        }
-
-        return findActiveBeneficiaryIdsWithCursor(coveragePeriodIds, cursor.get(), pageSize);
-    }
-
-    private List<String> findActiveBeneficiaryIdsWithoutCursor(List<Integer> coveragePeriodIds, int pageSize) {
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("ids", coveragePeriodIds)
-                .addValue("limit", pageSize + 1);
-
-        NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
-
-        return template.query(SELECT_BENEFICIARIES_BATCH, parameters,
-                (results, rowNum) -> results.getString(1));
-    }
-
-    private List<String> findActiveBeneficiaryIdsWithCursor(List<Integer> coveragePeriodIds, String cursor, int pageSize) {
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("ids", coveragePeriodIds)
-                .addValue("limit", pageSize + 1)
-                .addValue("cursor", cursor);
-
-        NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
-
-        return template.query(SELECT_BENEFICIARIES_BATCH_WITH_CURSOR, parameters,
-                (results, rowNum) -> results.getString(1));
-    }
-
-    public List<CoverageMembership> findCoverageInformation(List<Integer> coveragePeriodIds, List<String> beneficiaryIds) {
-
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("coveragePeriods", coveragePeriodIds)
-                .addValue("beneficiaryIds", beneficiaryIds);
-
-        NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
-
-        return template.query(SELECT_COVERAGE_INFORMATION, parameters, CoverageServiceRepository::asMembership);
+        // MONTHS.between is exclusive and only counts full months so
+        // January 15th - February 1st would return 0 and not 2 like it needs
+        // We have a coverage period for each month
+        // January 1st - March 1st
+        startTime = startTime.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS);
+        ZonedDateTime endTime = jobStartTime.atZoneSameInstant(AB2D_ZONE)
+                .plusMonths(1).truncatedTo(ChronoUnit.DAYS).plusSeconds(1);
+        return (int) ChronoUnit.MONTHS.between(startTime, endTime);
     }
 
     @SuppressWarnings("PMD.UnusedFormalParameter")
@@ -351,14 +335,14 @@ public class CoverageServiceRepository {
             historicMbis.addAll(Arrays.asList(mbis));
         }
 
-        return new Identifiers(rs.getString(1), rs.getString(2), historicMbis);
+        return new Identifiers(rs.getLong(1), rs.getString(2), historicMbis);
     }
 
     /**
      * Summarize the coverage of one beneficiary for
      */
     private CoverageSummary summarizeCoverageMembership(Contract contract,
-                                                        Map.Entry<String, List<CoverageMembership>> membershipInfo) {
+                                                        Map.Entry<Long, List<CoverageMembership>> membershipInfo) {
 
         List<CoverageMembership> membershipMonths = membershipInfo.getValue();
         Identifiers identifiers = membershipInfo.getValue().get(0).getIdentifiers();

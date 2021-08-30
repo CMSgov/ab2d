@@ -129,7 +129,7 @@ public class JobProcessorImpl implements JobProcessor {
         log.info("Job [{}] - contract [{}] ", job.getJobUuid(), contract.getContractNumber());
         // Retrieve the contract beneficiaries
 
-        Map<String, CoverageSummary> patients = processContractBenes(job);
+        Map<Long, CoverageSummary> patients = processContractBenes(job, progressTracker);
 
         // Create a holder for the contract, writer, progress tracker and attested date
         JobData jobData = new JobData(job.getJobUuid(), job.getSince(), getOrganization(job), patients);
@@ -149,13 +149,13 @@ public class JobProcessorImpl implements JobProcessor {
                 progressTracker.getFailureCount()));
     }
 
-    Map<String, CoverageSummary> processContractBenes(Job job) {
+    Map<Long, CoverageSummary> processContractBenes(Job job, ProgressTracker progressTracker) {
         Contract contract = job.getContract();
         assert contract != null;
         try {
             int numBenes = coverageDriver.numberOfBeneficiariesToProcess(job);
             jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.EXPECTED_BENES, numBenes);
-            Map<String, CoverageSummary> retMap = new HashMap<>(numBenes);
+            Map<Long, CoverageSummary> retMap = new HashMap<>(numBenes);
 
             CoveragePagingResult result = coverageDriver.pageCoverage(job);
             addPatients(job.getJobUuid(), result, retMap);
@@ -176,7 +176,7 @@ public class JobProcessorImpl implements JobProcessor {
         }
     }
 
-    private void addPatients(String jobId, CoveragePagingResult result, Map<String, CoverageSummary> beneMap) {
+    private void addPatients(String jobId, CoveragePagingResult result, Map<Long, CoverageSummary> beneMap) {
         jobChannelService.sendUpdate(jobId, JobMeasure.BENE_REQUEST_QUEUED, result.getCoverageSummaries().size());
         result.getCoverageSummaries().forEach(summary -> beneMap.put(summary.getIdentifiers().getBeneficiaryId(), summary));
     }

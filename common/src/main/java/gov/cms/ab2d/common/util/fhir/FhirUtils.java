@@ -14,7 +14,7 @@ import java.util.Map;
 
 @Slf4j
 public class FhirUtils {
-    public static void addMbiIdsToEobs(List<IBaseResource> eobs, Map<String, CoverageSummary> patients, FhirVersion version) {
+    public static void addMbiIdsToEobs(List<IBaseResource> eobs, Map<Long, CoverageSummary> patients, FhirVersion version) {
         if (eobs == null || eobs.isEmpty()) {
             return;
         }
@@ -22,7 +22,7 @@ public class FhirUtils {
         IBaseResource eob = eobs.get(0);
 
         // Add extesions only if beneficiary id is present and known to memberships
-        String benId = EobUtils.getPatientId(eob);
+        Long benId = EobUtils.getPatientId(eob);
         if (benId != null && patients.containsKey(benId)) {
             Identifiers patient = patients.get(benId).getIdentifiers();
 

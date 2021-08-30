@@ -14,7 +14,7 @@ public class BeneficiarySearchEvent extends LoggableEvent {
     // When a response is received
     private OffsetDateTime responseDate;
     // The beneficiary searched on
-    private String beneId;
+    private Long beneId;
     // The contract it's part of
     private String contractNum;
 
@@ -22,7 +22,7 @@ public class BeneficiarySearchEvent extends LoggableEvent {
 
     public BeneficiarySearchEvent(String organization, String jobId, String contractNum,
                                   OffsetDateTime startTime, OffsetDateTime endTime,
-                                  String beneId, String response) {
+                                  Long beneId, String response) {
         super(startTime, organization, jobId);
         this.response = response;
         this.contractNum = contractNum;

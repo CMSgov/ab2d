@@ -95,11 +95,9 @@ class CoverageDriverTest {
         // Set properties values in database
         addPropertiesTableValues();
 
-        contract = dataSetup.setupContract("TST-123");
-        contract.setAttestedOn(AB2D_EPOCH.toOffsetDateTime());
+        contract = dataSetup.setupContract("TST-12", AB2D_EPOCH.toOffsetDateTime());
 
-        contract1 = dataSetup.setupContract("TST-456");
-        contract1.setAttestedOn(AB2D_EPOCH.toOffsetDateTime());
+        contract1 = dataSetup.setupContract("TST-45", AB2D_EPOCH.toOffsetDateTime());
 
         contractRepo.saveAndFlush(contract);
 
@@ -109,9 +107,9 @@ class CoverageDriverTest {
 
         dataSetup.createRole(SPONSOR_ROLE);
 
-        PdpClientDTO contractPdpClient = createClient(contract, "TST-123", SPONSOR_ROLE);
+        PdpClientDTO contractPdpClient = createClient(contract, "TST-12", SPONSOR_ROLE);
         pdpClientService.createClient(contractPdpClient);
-        dataSetup.queueForCleanup(pdpClientService.getClientById("TST-123"));
+        dataSetup.queueForCleanup(pdpClientService.getClientById("TST-12"));
 
         PdpClient pdpClient = dataSetup.setupPdpClient(List.of());
         job = new Job();
@@ -181,16 +179,16 @@ class CoverageDriverTest {
     @Test
     void discoverCoveragePeriods() {
 
-        Contract attestedAfterEpoch = dataSetup.setupContract("TST-AFTER-EPOCH");
-        attestedAfterEpoch.setAttestedOn(AB2D_EPOCH.toOffsetDateTime().plusMonths(3));
+        Contract attestedAfterEpoch = dataSetup.setupContract("TST-AFTER-EPOCH",
+                AB2D_EPOCH.toOffsetDateTime().plusMonths(3));
         contractRepo.saveAndFlush(attestedAfterEpoch);
 
         PdpClientDTO attestedAfterClient = createClient(attestedAfterEpoch, "TST-AFTER-EPOCH", SPONSOR_ROLE);
         pdpClientService.createClient(attestedAfterClient);
         dataSetup.queueForCleanup(pdpClientService.getClientById("TST-AFTER-EPOCH"));
 
-        Contract attestedBeforeEpoch = dataSetup.setupContract("TST-BEFORE-EPOCH");
-        attestedBeforeEpoch.setAttestedOn(AB2D_EPOCH.toOffsetDateTime().minusNanos(1));
+        Contract attestedBeforeEpoch = dataSetup.setupContract("TST-BEFORE-EPOCH",
+                AB2D_EPOCH.toOffsetDateTime().minusNanos(1));
         contractRepo.saveAndFlush(attestedBeforeEpoch);
 
         PdpClientDTO attestedBeforeClient = createClient(attestedBeforeEpoch, "TST-BEFORE-EPOCH", SPONSOR_ROLE);
@@ -224,8 +222,8 @@ class CoverageDriverTest {
     @Test
     void discoverCoveragePeriodsIgnoresTestContracts() {
 
-        Contract testContract = dataSetup.setupContract("TST-AFTER-EPOCH");
-        testContract.setAttestedOn(AB2D_EPOCH.toOffsetDateTime().plusMonths(3));
+        Contract testContract = dataSetup.setupContract("TST-AFTER-EPOCH",
+                AB2D_EPOCH.toOffsetDateTime().plusMonths(3));
         testContract.setUpdateMode(Contract.UpdateMode.TEST);
 
         contractRepo.saveAndFlush(testContract);

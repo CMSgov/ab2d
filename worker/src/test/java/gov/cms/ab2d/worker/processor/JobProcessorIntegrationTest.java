@@ -40,7 +40,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.io.File;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.function.LongUnaryOperator;
 import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.eventlogger.events.ErrorEvent.ErrorType.TOO_MANY_SEARCH_ERRORS;
@@ -139,8 +141,8 @@ class JobProcessorIntegrationTest {
         IBaseResource eob = EobTestDataUtil.createEOB();
         bundle1 = EobTestDataUtil.createBundle(((ExplanationOfBenefit) eob).copy());
         bundles = getBundles();
-        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyString())).thenReturn(bundle1);
-        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyString(), any())).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong())).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any())).thenReturn(bundle1);
 
         fail = new RuntimeException("TEST EXCEPTION");
 
@@ -221,7 +223,7 @@ class JobProcessorIntegrationTest {
     @Test
     @DisplayName("When the error count is below threshold, job does not fail")
     void when_errorCount_is_below_threshold_do_not_fail_job() {
-        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyString()))
+        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong()))
                 .thenReturn(bundle1, bundles)
                 .thenReturn(bundle1, bundles)
                 .thenReturn(bundle1, bundles)
@@ -261,7 +263,7 @@ class JobProcessorIntegrationTest {
     @Test
     @DisplayName("When the error count is greater than or equal to threshold, job should fail")
     void when_errorCount_is_not_below_threshold_fail_job() {
-        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyString(), any()))
+        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any()))
                 .thenReturn(bundle1, bundles)
                 .thenReturn(bundle1, bundles)
                 .thenThrow(fail, fail, fail, fail, fail, fail, fail, fail, fail, fail)
@@ -344,10 +346,10 @@ class JobProcessorIntegrationTest {
 
     private static List<CoverageSummary> loadFauxMetadata(Contract contract, int rowsToRetrieve) {
 
-        List<String> patientIdRows = IntStream.range(0, rowsToRetrieve).mapToObj(i -> "-" + i).collect(toList());
+        List<Long> patientIdRows = LongStream.range(0, rowsToRetrieve).mapToObj(obj -> obj).collect(toList());
 
         // Add the one id that actually has an eob mapped to it
-        patientIdRows.add("-199900000022040");
+        patientIdRows.add(-199900000022040L);
 
         return patientIdRows.stream().map(patientId -> new CoverageSummary(
                 createIdentifierWithoutMbi(patientId),

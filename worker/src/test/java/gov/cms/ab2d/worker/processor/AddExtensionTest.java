@@ -58,7 +58,7 @@ public class AddExtensionTest {
 
     @Test
     void testAddMbiIdToEobs() {
-        String beneId = "1234";
+        Long beneId = 1234L;
         String mbi = "4567";
 
         org.hl7.fhir.dstu3.model.ExplanationOfBenefit b = new org.hl7.fhir.dstu3.model.ExplanationOfBenefit();
@@ -72,7 +72,7 @@ public class AddExtensionTest {
 
         CoverageSummary summary = new CoverageSummary(createIdentifier(beneId, mbi), null, List.of(dateRange));
 
-        Map<String, CoverageSummary> patients = new HashMap<>();
+        Map<Long, CoverageSummary> patients = new HashMap<>();
         patients.put(beneId, summary);
 
         FhirUtils.addMbiIdsToEobs(eobs, patients, STU3);
@@ -92,7 +92,7 @@ public class AddExtensionTest {
 
     @Test
     void testAddNullMbiIdToEobs() {
-        String beneId = "1234";
+        Long beneId = 1234L;
 
         org.hl7.fhir.dstu3.model.ExplanationOfBenefit b = new org.hl7.fhir.dstu3.model.ExplanationOfBenefit();
         String patientId = "Patient/" + beneId;
@@ -105,7 +105,7 @@ public class AddExtensionTest {
 
         CoverageSummary summary = new CoverageSummary(createIdentifier(beneId, null, "HIST_MBI"), null, List.of(dateRange));
 
-        Map<String, CoverageSummary> patients = new HashMap<>();
+        Map<Long, CoverageSummary> patients = new HashMap<>();
         patients.put(beneId, summary);
 
         FhirUtils.addMbiIdsToEobs(eobs, patients, STU3);
@@ -129,7 +129,7 @@ public class AddExtensionTest {
 
     @Test
     void testAddNoMbiIdToEobs() {
-        String beneId = "1234";
+        Long beneId = 1234L;
 
         org.hl7.fhir.dstu3.model.ExplanationOfBenefit b = new org.hl7.fhir.dstu3.model.ExplanationOfBenefit();
         String patientId = "Patient/" + beneId;
@@ -142,7 +142,7 @@ public class AddExtensionTest {
 
         CoverageSummary summary = new CoverageSummary(createIdentifier(beneId, null), null, List.of(dateRange));
 
-        Map<String, CoverageSummary> patients = new HashMap<>();
+        Map<Long, CoverageSummary> patients = new HashMap<>();
         patients.put(beneId, summary);
 
         FhirUtils.addMbiIdsToEobs(eobs, patients, STU3);
@@ -156,7 +156,7 @@ public class AddExtensionTest {
     @DisplayName("Add multiple mbis to a ")
     @Test
     void testAddMbiIdsToEobs() {
-        String beneId = "1234";
+        Long beneId = 1234L;
         String mbi1 = "456";
         String mbi2 = "789";
 
@@ -171,7 +171,7 @@ public class AddExtensionTest {
 
         CoverageSummary summary = new CoverageSummary(createIdentifier(beneId, mbi1, mbi2), null, List.of(dateRange));
 
-        Map<String, CoverageSummary> patients = new HashMap<>();
+        Map<Long, CoverageSummary> patients = new HashMap<>();
         patients.put(beneId, summary);
 
         FhirUtils.addMbiIdsToEobs(eobs, patients, STU3);
