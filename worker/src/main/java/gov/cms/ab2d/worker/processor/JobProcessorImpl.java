@@ -129,7 +129,7 @@ public class JobProcessorImpl implements JobProcessor {
         log.info("Job [{}] - contract [{}] ", job.getJobUuid(), contract.getContractNumber());
         // Retrieve the contract beneficiaries
 
-        Map<Long, CoverageSummary> patients = processContractBenes(job, progressTracker);
+        Map<Long, CoverageSummary> patients = processContractBenes(job);
 
         // Create a holder for the contract, writer, progress tracker and attested date
         JobData jobData = new JobData(job.getJobUuid(), job.getSince(), getOrganization(job), patients);
@@ -149,7 +149,7 @@ public class JobProcessorImpl implements JobProcessor {
                 progressTracker.getFailureCount()));
     }
 
-    Map<Long, CoverageSummary> processContractBenes(Job job, ProgressTracker progressTracker) {
+    Map<Long, CoverageSummary> processContractBenes(Job job) {
         Contract contract = job.getContract();
         assert contract != null;
         try {

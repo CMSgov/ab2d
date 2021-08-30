@@ -143,10 +143,10 @@ public class ContractProcessorImpl implements ContractProcessor {
         return jobOutputs;
     }
 
-    private void loadRequests(JobData jobData, Job job, Map<String, CoverageSummary> patients,
+    private void loadRequests(JobData jobData, Job job, Map<Long, CoverageSummary> patients,
                               ContractData contractData) throws InterruptedException {
         int numQueued = 0;
-        for (Map.Entry<String, CoverageSummary> beneCoverageSummary : patients.entrySet()) {
+        for (Map.Entry<Long, CoverageSummary> beneCoverageSummary : patients.entrySet()) {
 
             if (eobClaimRequestsQueue.size(jobData.getJobUuid()) > eobJobPatientQueueMaxSize) {
                 // Wait for queue to empty out some before adding more
