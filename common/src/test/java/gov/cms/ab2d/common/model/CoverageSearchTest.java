@@ -15,6 +15,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 
+import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -42,8 +43,8 @@ class CoverageSearchTest {
     void testSearches() {
         try {
 
-            Contract contract1 = dataSetup.setupContract("c123");
-            Contract contract2 = dataSetup.setupContract("c456");
+            Contract contract1 = dataSetup.setupContract("c123", AB2D_EPOCH.toOffsetDateTime());
+            Contract contract2 = dataSetup.setupContract("c456", AB2D_EPOCH.toOffsetDateTime());
 
             CoveragePeriod period1 = dataSetup.createCoveragePeriod(contract1, 10, 2020);
             CoveragePeriod period2 = dataSetup.createCoveragePeriod(contract2, 10, 2020);

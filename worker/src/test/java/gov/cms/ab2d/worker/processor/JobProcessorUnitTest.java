@@ -104,7 +104,7 @@ class JobProcessorUnitTest {
         doVerify();
     }
 
-    private void doVerify() throws ExecutionException, InterruptedException {
+    private void doVerify() {
         verify(fileService).createDirectory(any());
         verify(coverageDriver).pageCoverage(any(Job.class));
         verify(coverageDriver).pageCoverage(any(CoveragePagingRequest.class));

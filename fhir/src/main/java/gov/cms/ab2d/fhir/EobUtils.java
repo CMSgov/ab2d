@@ -23,12 +23,13 @@ public final class EobUtils {
      * @param eob - the ExplanationOfBenefit object
      * @return the patient ID from the patient reference
      */
-    public static String getPatientId(IBase eob) {
+    public static Long getPatientId(IBase eob) {
         if (eob == null) {
             return null;
         }
         IBase ref = (IBase) Versions.invokeGetMethod(eob, "getPatient");
-        return getJustId((String) Versions.invokeGetMethod(ref, "getReference"));
+        String beneId = getJustId((String) Versions.invokeGetMethod(ref, "getReference"));
+        return beneId != null ? Long.parseLong(beneId) : null;
     }
 
     /**

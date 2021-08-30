@@ -11,8 +11,8 @@ public interface BFDClient {
     String BFD_CLIENT_ID = "AB2D";
     String BFD_HDR_BULK_JOBID = "BULK-JOBID";
 
-    IBaseBundle requestEOBFromServer(FhirVersion version, String patientID);
-    IBaseBundle requestEOBFromServer(FhirVersion version, String patientID, OffsetDateTime sinceTime);
+    IBaseBundle requestEOBFromServer(FhirVersion version, long patientID);
+    IBaseBundle requestEOBFromServer(FhirVersion version, long patientID, OffsetDateTime sinceTime);
     IBaseBundle requestNextBundleFromServer(FhirVersion version, IBaseBundle bundle);
 
     /**
