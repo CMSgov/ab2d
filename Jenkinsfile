@@ -114,6 +114,8 @@ pipeline {
         }
 	       stage('SonarQube Analysis') {
             steps {
+            git branch: 'master', credentialsId: 'GITHUB', url: env.GIT_URL
+            git branch: env.BRANCH_NAME, credentialsId: 'GITHUB', url: env.GIT_URL
                 // Automatically saves the an id for the SonarQube build
                 withSonarQubeEnv('CMSSonar') {
                     sh '''mvn sonar:sonar -Dsonar.projectKey=ab2d-project -DskipTests'''
