@@ -94,7 +94,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contractNumber));
 
         ProgressTracker progressTracker = jobData.getProgressTracker();
-        Map<String, CoverageSummary> patients = jobData.getPatients();
+        Map<Long, CoverageSummary> patients = jobData.getPatients();
         int patientCount = patients.size();
         log.info("Contract [{}] has [{}] Patients", contractNumber, patientCount);
 
@@ -113,7 +113,7 @@ public class ContractProcessorImpl implements ContractProcessor {
 
             contractData.setStreamHelper(helper);
 
-            for (Map.Entry<String, CoverageSummary> beneCoverageSummary : patients.entrySet()) {
+            for (Map.Entry<Long, CoverageSummary> beneCoverageSummary : patients.entrySet()) {
 
                 if (eobClaimRequestsQueue.size(jobUuid) > eobJobPatientQueueMaxSize) {
                     // Wait for queue to empty out some before adding more
@@ -323,7 +323,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         return null;
     }
 
-    public String getPatientIdFromEOB(IBaseResource eob) {
+    public Long getPatientIdFromEOB(IBaseResource eob) {
         return EobUtils.getPatientId(eob);
     }
 
@@ -335,12 +335,12 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @param patients - the patient map containing the patient id & patient object
      * @return true if this patient is a member of the correct contract
      */
-    boolean validPatientInContract(IBaseResource benefit, Map<String, CoverageSummary> patients) {
+    boolean validPatientInContract(IBaseResource benefit, Map<Long, CoverageSummary> patients) {
         if (benefit == null || patients == null) {
             log.debug("Passed an invalid benefit or an invalid list of patients");
             return false;
         }
-        String patientId = getPatientIdFromEOB(benefit);
+        Long patientId = getPatientIdFromEOB(benefit);
         if (patientId == null || patients.get(patientId) == null) {
             log.error(patientId + " returned in EOB, but not a member of a contract");
             return false;

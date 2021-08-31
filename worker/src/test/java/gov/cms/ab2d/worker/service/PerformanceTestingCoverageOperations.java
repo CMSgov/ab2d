@@ -1,7 +1,9 @@
-package gov.cms.ab2d.common.service;
+package gov.cms.ab2d.worker.service;
 
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
+import gov.cms.ab2d.common.service.CoverageService;
+import gov.cms.ab2d.common.service.InsertionJob;
 import gov.cms.ab2d.common.util.DataSetup;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
@@ -18,7 +20,9 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
+import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static java.util.stream.Collectors.joining;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -32,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Most of the variables in the test are hard coded and can be changed to make the performance tests
  * more rigorous or simpler.
  */
+@Disabled
 @Slf4j
 @SpringBootTest
 @TestPropertySource(locations = "/application.common.properties")
@@ -83,7 +88,7 @@ class PerformanceTestingCoverageOperations {
 
     @BeforeEach
     public void insertContractAndDefaultCoveragePeriod() {
-// If you kill the integration test early uncomment this and comment the code below
+// If you kill the integration test early uncomment this to clean things out before starting the test
 //
 //        deleteCoverage();
 //        coverageSearchRepo.deleteAll();
@@ -94,23 +99,10 @@ class PerformanceTestingCoverageOperations {
 //            sponsorRepo.delete(sponsor);
 //        }
 
-// You will have to find the sponsor repo id manually
-        contract = contractRepo.findContractByContractNumber("TST-12").get();
-//        contract = contractRepo.findContractByContractNumber("TST-34").get();
-//        contract = contractRepo.findContractByContractNumber("TST-56").get();
-//        contract = contractRepo.findContractByContractNumber("TST-78").get();
-//        contract = contractRepo.findContractByContractNumber("TST-90").get();
-
-        period1 = coveragePeriodRepo.findByContractIdAndMonthAndYear(contract.getId(), 1, 2020).get();
-        period2 = coveragePeriodRepo.findByContractIdAndMonthAndYear(contract.getId(), 2, 2020).get();
-        period3 = coveragePeriodRepo.findByContractIdAndMonthAndYear(contract.getId(), 3, 2020).get();
-
-//        sponsor = dataSetup.createSponsor("Cal Ripken", 200, "Cal Ripken Jr.", 201);
-//        contract = dataSetup.setupContract(sponsor, "TST-12");
-
-//        period1 = dataSetup.createCoveragePeriod(contract, 1, 2020);
-//        period2 = dataSetup.createCoveragePeriod(contract, 2, 2020);
-//        period3 = dataSetup.createCoveragePeriod(contract, 3, 2020);
+        contract = dataSetup.setupContract("TST-12", AB2D_EPOCH.toOffsetDateTime());
+        period1 = dataSetup.createCoveragePeriod(contract, 1, 2020);
+        period2 = dataSetup.createCoveragePeriod(contract, 2, 2020);
+        period3 = dataSetup.createCoveragePeriod(contract, 3, 2020);
 
     }
 
@@ -138,7 +130,7 @@ class PerformanceTestingCoverageOperations {
     void insertPerformanceUsingConnection() {
         // Raise number of datapoints to stress database
         InsertionJob job = new InsertionJob(period1, dataSource, coverageService,
-                1_000_000, 5, coverageSearchRepository);
+                1_000_000, 1, coverageSearchRepository);
         job.call();
     }
 
@@ -150,27 +142,76 @@ class PerformanceTestingCoverageOperations {
     @Test
     void readPerformanceWithJPAPaging() {
 
-        int dataPoints = 20_000_000;
+        int dataPoints = 3_000_000;
         int queries = 200;
         int threads = 10;
         int pageSize = 5000;
         int pages = dataPoints > pageSize ? dataPoints / pageSize : 1;
 
-        List<CoveragePeriod> periods = new ArrayList<>();
-        periods.add(period1);
+        Contract contract2 = dataSetup.setupContract("TST-34", AB2D_EPOCH.toOffsetDateTime());
 
-// If you want to do a full (1hr long) performance test uncomment this code
+        List<CoveragePeriod> periods = new ArrayList<>();
+
+        // Test to make sure there are no problems adding two contracts
+        periods.add(period1);
+        periods.add(dataSetup.createCoveragePeriod(contract2, 1, 2020));
+        periods.add(dataSetup.createCoveragePeriod(contract, 1, 2021));
+        periods.add(dataSetup.createCoveragePeriod(contract2, 1, 2021));
 
         periods.add(period2);
+        periods.add(dataSetup.createCoveragePeriod(contract, 2, 2021));
+        periods.add(dataSetup.createCoveragePeriod(contract2, 2, 2020));
+        periods.add(dataSetup.createCoveragePeriod(contract2, 2, 2021));
+
         periods.add(period3);
+        periods.add(dataSetup.createCoveragePeriod(contract, 4, 2020));
+        periods.add(dataSetup.createCoveragePeriod(contract, 5, 2020));
+        periods.add(dataSetup.createCoveragePeriod(contract, 6, 2020));
+        periods.add(dataSetup.createCoveragePeriod(contract, 7, 2020));
+        periods.add(dataSetup.createCoveragePeriod(contract, 8, 2020));
+        periods.add(dataSetup.createCoveragePeriod(contract, 9, 2020));
+        periods.add(dataSetup.createCoveragePeriod(contract, 10, 2020));
+        periods.add(dataSetup.createCoveragePeriod(contract, 11, 2020));
+        periods.add(dataSetup.createCoveragePeriod(contract, 12, 2020));
 
-//        Contract contract2 = dataSetup.setupContract(sponsor, "TST-34");
-//        Contract contract3 = dataSetup.setupContract(sponsor, "TST-56");
-//        Contract contract4 = dataSetup.setupContract(sponsor, "TST-78");
-//        Contract contract5 = dataSetup.setupContract(sponsor, "TST-90");
+        periods.add(dataSetup.createCoveragePeriod(contract, 3, 2021));
+        periods.add(dataSetup.createCoveragePeriod(contract, 4, 2021));
+        periods.add(dataSetup.createCoveragePeriod(contract, 5, 2021));
+        periods.add(dataSetup.createCoveragePeriod(contract, 6, 2021));
+        periods.add(dataSetup.createCoveragePeriod(contract, 7, 2021));
+        periods.add(dataSetup.createCoveragePeriod(contract, 8, 2021));
+        periods.add(dataSetup.createCoveragePeriod(contract, 9, 2021));
+        periods.add(dataSetup.createCoveragePeriod(contract, 10, 2021));
+        periods.add(dataSetup.createCoveragePeriod(contract, 11, 2021));
+        periods.add(dataSetup.createCoveragePeriod(contract, 12, 2021));
 
-//        periods.add(dataSetup.createCoveragePeriod(contract, 4, 2020));
-//
+        periods.add(dataSetup.createCoveragePeriod(contract2, 3, 2020));
+        periods.add(dataSetup.createCoveragePeriod(contract2, 4, 2020));
+        periods.add(dataSetup.createCoveragePeriod(contract2, 5, 2020));
+        periods.add(dataSetup.createCoveragePeriod(contract2, 6, 2020));
+        periods.add(dataSetup.createCoveragePeriod(contract2, 7, 2020));
+        periods.add(dataSetup.createCoveragePeriod(contract2, 8, 2020));
+        periods.add(dataSetup.createCoveragePeriod(contract2, 9, 2020));
+        periods.add(dataSetup.createCoveragePeriod(contract2, 10, 2020));
+        periods.add(dataSetup.createCoveragePeriod(contract2, 11, 2020));
+        periods.add(dataSetup.createCoveragePeriod(contract2, 12, 2020));
+
+        periods.add(dataSetup.createCoveragePeriod(contract2, 3, 2021));
+        periods.add(dataSetup.createCoveragePeriod(contract2, 4, 2021));
+        periods.add(dataSetup.createCoveragePeriod(contract2, 5, 2021));
+        periods.add(dataSetup.createCoveragePeriod(contract2, 6, 2021));
+        periods.add(dataSetup.createCoveragePeriod(contract2, 7, 2021));
+        periods.add(dataSetup.createCoveragePeriod(contract2, 8, 2021));
+        periods.add(dataSetup.createCoveragePeriod(contract2, 9, 2021));
+        periods.add(dataSetup.createCoveragePeriod(contract2, 10, 2021));
+        periods.add(dataSetup.createCoveragePeriod(contract2, 11, 2021));
+        periods.add(dataSetup.createCoveragePeriod(contract2, 12, 2021));
+
+
+//        Contract contract3 = dataSetup.setupContract("TST-56");
+//        Contract contract4 = dataSetup.setupContract("TST-78");
+//        Contract contract5 = dataSetup.setupContract("TST-90");
+
 //        periods.add(dataSetup.createCoveragePeriod(contract2, 1, 2020));
 //        periods.add(dataSetup.createCoveragePeriod(contract2, 2, 2020));
 //        periods.add(dataSetup.createCoveragePeriod(contract2, 3, 2020));
@@ -191,9 +232,9 @@ class PerformanceTestingCoverageOperations {
 //        periods.add(dataSetup.createCoveragePeriod(contract5, 3, 2020));
 //        periods.add(dataSetup.createCoveragePeriod(contract5, 4, 2020));
 
-//        loadDBWithFakeData(dataPoints, periods);
+        loadDBWithFakeData(dataPoints, periods);
 
-//        coverageServiceRepo.vacuumCoverage();
+        coverageServiceRepo.vacuumCoverage();
 
         System.out.println("Done loading data");
 
@@ -201,53 +242,61 @@ class PerformanceTestingCoverageOperations {
 
         Random random = new Random();
 
-        final List<Long> timing = new ArrayList<>(queries * threads);
+        // Use if you want to performance test queries all in one go.
+        // The previous code will populate a database for reuse.
+        // This code will exercise the coverage table by randomly paging through it
 
-        Runnable select = () -> {
-
-            String name = Thread.currentThread().getName();
-            for (int queryNumber = 0; queryNumber < queries; queryNumber++) {
-                int page = random.nextInt(pages);
-                Instant start = Instant.now();
-                CoveragePagingRequest pagingRequest = new CoveragePagingRequest(pageSize,
-                        "test-" + page * pageSize + 1, period1.getId(), period2.getId());
-                CoveragePagingResult pagingResult = coverageService.pageCoverage(pagingRequest);
-                List<CoverageSummary> content = pagingResult.getCoverageSummaries();
-
-                assertFalse(content.isEmpty());
-                assertEquals(pageSize, content.size());
-                Instant stop = Instant.now();
-
-                if (queryNumber % 10 == 0) {
-                    log.info("{} query {} took {} starting index {}", name, queryNumber, Duration.between(start, stop).toMillis(), page * pageSize);
-                }
-                timing.add(Duration.between(start, stop).toNanos());
-            }
-        };
-
-        List<Future> futures = new ArrayList<>();
-        for (int i = 0; i < threads; i++) {
-            futures.add(executor.submit(select));
-        }
-
-        try {
-            for (Future f : futures) {
-                f.get();
-            }
-        } catch (Exception exception) {
-            exception.printStackTrace();
-            fail("failed to run all select threads", exception);
-        }
-
-        for (int i = 0; i < timing.size(); i++) {
-            timing.set(i, timing.get(i) / 1_000_000);
-        }
-        timing.sort((a, b) -> Long.valueOf(b - a).intValue());
-
-        long sumMillis = timing.stream().mapToLong(i -> i).sum();
-
-        System.out.println("Average millis per select: " + (sumMillis / (queries * threads)));
-        System.out.println("Max times " + timing.stream().limit(30).map(Objects::toString).collect(joining(", ")));
+//        List<Integer> periodIds = coveragePeriodRepo.findAllByContractId(contract.getId())
+//                .stream().map(CoveragePeriod::getId).collect(Collectors.toList());
+//
+//        final List<Long> timing = new ArrayList<>(queries * threads);
+//
+//        Runnable select = () -> {
+//
+//            String name = Thread.currentThread().getName();
+//            for (int queryNumber = 0; queryNumber < queries; queryNumber++) {
+//                int page = random.nextInt(pages);
+//                Instant start = Instant.now();
+//                CoveragePagingRequest pagingRequest = new CoveragePagingRequest(pageSize,
+//                        "test-" + page * pageSize + 1, contract.getContractNumber(),
+//                        periodIds);
+//                CoveragePagingResult pagingResult = coverageService.pageCoverage(pagingRequest);
+//                List<CoverageSummary> content = pagingResult.getCoverageSummaries();
+//
+//                assertFalse(content.isEmpty());
+//                assertEquals(pageSize, content.size());
+//                Instant stop = Instant.now();
+//
+//                if (queryNumber % 10 == 0) {
+//                    log.info("{} query {} took {} starting index {}", name, queryNumber, Duration.between(start, stop).toMillis(), page * pageSize);
+//                }
+//                timing.add(Duration.between(start, stop).toNanos());
+//            }
+//        };
+//
+//        List<Future> futures = new ArrayList<>();
+//        for (int i = 0; i < threads; i++) {
+//            futures.add(executor.submit(select));
+//        }
+//
+//        try {
+//            for (Future f : futures) {
+//                f.get();
+//            }
+//        } catch (Exception exception) {
+//            exception.printStackTrace();
+//            fail("failed to run all select threads", exception);
+//        }
+//
+//        for (int i = 0; i < timing.size(); i++) {
+//            timing.set(i, timing.get(i) / 1_000_000);
+//        }
+//        timing.sort((a, b) -> Long.valueOf(b - a).intValue());
+//
+//        long sumMillis = timing.stream().mapToLong(i -> i).sum();
+//
+//        System.out.println("Average millis per select: " + (sumMillis / (queries * threads)));
+//        System.out.println("Max times " + timing.stream().limit(30).map(Objects::toString).collect(joining(", ")));
     }
 
     @Disabled("Performance test only for use manually")
@@ -289,7 +338,7 @@ class PerformanceTestingCoverageOperations {
 
         if (dataSetup.countCoverage() == 0) {
 
-            ExecutorService executor = Executors.newFixedThreadPool(3);
+            ExecutorService executor = Executors.newFixedThreadPool(1);
             List<Future> insertions = new ArrayList<>();
 
             for (CoveragePeriod period : periods) {

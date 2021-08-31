@@ -8,23 +8,29 @@ import java.util.List;
 @Getter
 public class Coverage {
 
-
-    private final Long id;
-
-    private final int periodId;
+    private final int coveragePeriod;
 
     private final long searchEventId;
 
-    private final String beneficiaryId;
+    private final String contract;
+
+    private final int year;
+
+    private final int month;
+
+    private final long beneficiaryId;
 
     private final String currentMbi;
 
     private final List<String> historicMbis;
 
-    public Coverage(Long id, int periodId, long searchEventId, String beneficiaryId, String currentMbi, String historicMbis) {
-        this.id = id;
-        this.periodId = periodId;
+    public Coverage(int coveragePeriod, long searchEventId, String contract, int year, int month,
+                    long beneficiaryId, String currentMbi, String historicMbis) {
+        this.coveragePeriod = coveragePeriod;
         this.searchEventId = searchEventId;
+        this.contract = contract;
+        this.year = year;
+        this.month = month;
         this.beneficiaryId = beneficiaryId;
         this.currentMbi = currentMbi;
 

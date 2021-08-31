@@ -27,12 +27,12 @@ class ContractProcessorImplTest {
         historic.add("historic-mbi-1");
         historic.add("historic-mbi-2");
 
-        Identifiers identifiers = new Identifiers("bene-id", "current-mbi", historic);
+        Identifiers identifiers = new Identifiers(1L, "current-mbi", historic);
 
         org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob = new org.hl7.fhir.dstu3.model.ExplanationOfBenefit();
-        eob.setPatient(new org.hl7.fhir.dstu3.model.Reference().setReference("Patient/bene-id"));
+        eob.setPatient(new org.hl7.fhir.dstu3.model.Reference().setReference("Patient/1"));
 
-        Map<String, CoverageSummary> coverageSummaries = new HashMap<>() {{
+        Map<Long, CoverageSummary> coverageSummaries = new HashMap<>() {{
                 put(identifiers.getBeneficiaryId(), new CoverageSummary(identifiers, null, null));
         }};
 

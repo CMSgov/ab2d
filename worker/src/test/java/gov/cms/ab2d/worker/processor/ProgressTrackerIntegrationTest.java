@@ -25,6 +25,7 @@ import java.time.OffsetDateTime;
 import java.util.concurrent.ExecutionException;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
+import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
@@ -84,7 +85,7 @@ class ProgressTrackerIntegrationTest {
     @Test
     void testIt() throws ExecutionException, InterruptedException {
 
-        Contract contract = dataSetup.setupContract("C0001");
+        Contract contract = dataSetup.setupContract("C0001", AB2D_EPOCH.toOffsetDateTime());
 
         Job job = createJob(createClient());
         job.setContract(contract);
@@ -95,10 +96,10 @@ class ProgressTrackerIntegrationTest {
                 .expectedBeneficiaries(4)
                 .build();
 
-        org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent entry1 = BundleUtils.createBundleEntry("P1", "mbi1", year);
-        org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent entry2 = BundleUtils.createBundleEntry("P2", "mbi2", year);
-        org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent entry3 = BundleUtils.createBundleEntry("P3", "mbi3", year);
-        org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent entry4 = BundleUtils.createBundleEntry("P4", "mbi4", year);
+        org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent entry1 = BundleUtils.createBundleEntry(1L, "mbi1", year);
+        org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent entry2 = BundleUtils.createBundleEntry(2L, "mbi2", year);
+        org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent entry3 = BundleUtils.createBundleEntry(3L, "mbi3", year);
+        org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent entry4 = BundleUtils.createBundleEntry(4L, "mbi4", year);
 
         org.hl7.fhir.dstu3.model.Bundle bundleA = BundleUtils.createBundle(entry1, entry2, entry3);
         org.hl7.fhir.dstu3.model.Bundle bundleB = BundleUtils.createBundle(entry1, entry2, entry3, entry4);
@@ -118,7 +119,7 @@ class ProgressTrackerIntegrationTest {
         pdpClient.setClientId("testclient" + 1000L);
         pdpClient.setOrganization("testclient" + 1000L);
         pdpClient.setEnabled(true);
-        pdpClient.setContract(dataSetup.setupContract("W1234"));
+        pdpClient.setContract(dataSetup.setupContract("W1234", AB2D_EPOCH.toOffsetDateTime()));
 
         pdpClient = pdpClientRepository.save(pdpClient);
         dataSetup.queueForCleanup(pdpClient);
