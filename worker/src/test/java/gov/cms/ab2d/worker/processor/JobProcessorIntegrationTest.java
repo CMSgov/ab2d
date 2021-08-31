@@ -19,6 +19,7 @@ import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.FileService;
+import gov.cms.ab2d.worker.service.JobChannelService;
 import gov.cms.ab2d.worker.util.HealthCheck;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -74,6 +75,12 @@ class JobProcessorIntegrationTest {
 
     @Autowired
     private JobRepository jobRepository;
+
+    @Autowired
+    private JobChannelService jobChannelService;
+
+    @Autowired
+    private JobProgressService jobProgressService;
 
     @Autowired
     private PdpClientRepository pdpClientRepository;
@@ -145,7 +152,9 @@ class JobProcessorIntegrationTest {
                 jobRepository,
                 patientClaimsProcessor,
                 logManager,
-                eobClaimRequestsQueue);
+                eobClaimRequestsQueue,
+                jobChannelService,
+                jobProgressService);
 
         ReflectionTestUtils.setField(contractProcessor, "cancellationCheckFrequency", 10);
 
@@ -158,6 +167,8 @@ class JobProcessorIntegrationTest {
 
         cut = new JobProcessorImpl(
                 fileService,
+                jobChannelService,
+                jobProgressService,
                 jobRepository,
                 jobOutputRepository,
                 contractProcessor,

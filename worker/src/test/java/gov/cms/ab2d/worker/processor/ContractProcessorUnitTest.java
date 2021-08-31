@@ -7,6 +7,8 @@ import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.processor.stub.PatientClaimsProcessorStub;
+import gov.cms.ab2d.worker.service.JobChannelService;
+import gov.cms.ab2d.worker.service.JobChannelServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -47,6 +49,7 @@ class ContractProcessorUnitTest {
     @Mock private LogManager eventLogger;
     @Mock private RoundRobinBlockingQueue<PatientClaimsRequest> requestQueue;
     private PatientClaimsProcessor patientClaimsProcessor;
+    private JobChannelService jobChannelService;
 
     private Path outputDir;
     private Contract contract;
@@ -58,19 +61,25 @@ class ContractProcessorUnitTest {
 
         patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
 
+        JobProgressService jobProgressService = new JobProgressServiceImpl(jobRepository);
+        ReflectionTestUtils.setField(jobProgressService, "reportProgressDbFrequency", 2);
+        ReflectionTestUtils.setField(jobProgressService, "reportProgressLogFrequency", 3);
+        jobChannelService = new JobChannelServiceImpl(jobProgressService);
+
         cut = new ContractProcessorImpl(
                 jobRepository,
                 patientClaimsProcessor,
                 eventLogger,
-                requestQueue);
+                requestQueue,
+                jobChannelService,
+                jobProgressService);
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 2);
-        ReflectionTestUtils.setField(cut, "reportProgressDbFrequency", 2);
-        ReflectionTestUtils.setField(cut, "reportProgressLogFrequency", 3);
         ReflectionTestUtils.setField(cut, "tryLockTimeout", 30);
 
         PdpClient pdpClient = createClient();
         job = createJob(pdpClient);
         contract = createContract();
+        job.setContract(contract);
 
         var outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
         outputDir = Files.createDirectories(outputDirPath);
@@ -82,20 +91,16 @@ class ContractProcessorUnitTest {
 
         Map<Long, CoverageSummary> patientsByContract = createPatientsByContractResponse(contract, 3);
 
-        ProgressTracker progressTracker = ProgressTracker.builder()
-                .jobUuid(jobUuid)
-                .expectedBeneficiaries(3)
-                .failureThreshold(10)
-                .build();
+        jobChannelService.sendUpdate(jobUuid, JobMeasure.EXPECTED_BENES, 3);
+        jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
 
-        progressTracker.addPatients(patientsByContract.size());
-        JobData jobData = new JobData(contract, progressTracker, job.getSince(),
+        JobData jobData = new JobData(jobUuid, job.getSince(),
                 getOrganization(job), patientsByContract);
 
         when(jobRepository.findJobStatus(anyString())).thenReturn(JobStatus.CANCELLED);
 
         var exceptionThrown = assertThrows(JobCancelledException.class,
-                () -> cut.process(outputDir, jobData));
+                () -> cut.process(outputDir, job, jobData));
 
         assertTrue(exceptionThrown.getMessage().startsWith("Job was cancelled while it was being processed"));
         verify(patientClaimsProcessor, atLeast(1)).process(any());
@@ -107,19 +112,15 @@ class ContractProcessorUnitTest {
     void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() {
         Map<Long, CoverageSummary> patientsByContract = createPatientsByContractResponse(contract, 18);
 
-        ProgressTracker progressTracker = ProgressTracker.builder()
-                .jobUuid(jobUuid)
-                .expectedBeneficiaries(18)
-                .failureThreshold(10)
-                .build();
-        progressTracker.addPatients(patientsByContract.size());
-        JobData jobData = new JobData(contract, progressTracker, job.getSince(),
+        jobChannelService.sendUpdate(jobUuid, JobMeasure.EXPECTED_BENES, 18);
+        jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
+        JobData jobData = new JobData(job.getJobUuid(), job.getSince(),
                 getOrganization(job), patientsByContract);
 
-        var jobOutputs = cut.process(outputDir, jobData);
+        var jobOutputs = cut.process(outputDir, job, jobData);
 
         assertFalse(jobOutputs.isEmpty());
-        verify(jobRepository, times(9)).updatePercentageCompleted(anyString(), anyInt());
+        verify(jobRepository, times(6)).updatePercentageCompleted(anyString(), anyInt());
         verify(patientClaimsProcessor, atLeast(1)).process(any());
     }
 
@@ -142,7 +143,7 @@ class ContractProcessorUnitTest {
 
     private Job createJob(PdpClient pdpClient) {
         Job job = new Job();
-        job.setJobUuid("S0000");
+        job.setJobUuid(jobUuid);
         job.setStatusMessage("0%");
         job.setStatus(JobStatus.IN_PROGRESS);
         job.setPdpClient(pdpClient);

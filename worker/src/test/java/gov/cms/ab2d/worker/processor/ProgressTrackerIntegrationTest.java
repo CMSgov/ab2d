@@ -6,10 +6,10 @@ import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverStub;
 import gov.cms.ab2d.worker.service.FileService;
+import gov.cms.ab2d.worker.service.JobChannelService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,7 +22,6 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.OffsetDateTime;
-import java.util.concurrent.ExecutionException;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
@@ -40,6 +39,12 @@ class ProgressTrackerIntegrationTest {
 
     @Autowired
     private FileService fileService;
+
+    @Autowired
+    private JobChannelService jobChannelService;
+
+    @Autowired
+    private JobProgressService jobProgressService;
 
     @Autowired
     private JobRepository jobRepository;
@@ -73,7 +78,7 @@ class ProgressTrackerIntegrationTest {
 
         CoverageDriver coverageDriver = new CoverageDriverStub(10, 20);
 
-        cut = new JobProcessorImpl(fileService, jobRepository, jobOutputRepository,
+        cut = new JobProcessorImpl(fileService, jobChannelService, jobProgressService, jobRepository, jobOutputRepository,
                 contractProcessor, coverageDriver, eventLogger);
     }
 
@@ -83,18 +88,13 @@ class ProgressTrackerIntegrationTest {
     }
 
     @Test
-    void testIt() throws ExecutionException, InterruptedException {
+    void testIt() {
 
         Contract contract = dataSetup.setupContract("C0001", AB2D_EPOCH.toOffsetDateTime());
 
         Job job = createJob(createClient());
         job.setContract(contract);
-
-        ProgressTracker progressTracker = ProgressTracker.builder()
-                .failureThreshold(2)
-                .jobUuid(job.getJobUuid())
-                .expectedBeneficiaries(4)
-                .build();
+        this.jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.META_DATA_PROCESSED, 20);
 
         org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent entry1 = BundleUtils.createBundleEntry(1L, "mbi1", year);
         org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent entry2 = BundleUtils.createBundleEntry(2L, "mbi2", year);
@@ -107,7 +107,7 @@ class ProgressTrackerIntegrationTest {
         when(bfdClient.requestPartDEnrolleesFromServer(STU3, CONTRACT_NUMBER, 1)).thenReturn(bundleA);
         when(bfdClient.requestPartDEnrolleesFromServer(STU3, CONTRACT_NUMBER, 2)).thenReturn(bundleB);
 
-        cut.processContractBenes(job, progressTracker);
+        cut.processContractBenes(job);
 
         Job loadedVal = jobRepository.findById(job.getId()).get();
         assertEquals(30, loadedVal.getProgress());
