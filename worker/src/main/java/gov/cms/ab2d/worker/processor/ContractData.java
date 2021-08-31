@@ -15,18 +15,10 @@ import java.util.concurrent.Future;
 @Getter
 public class ContractData {
 
-    private final FhirVersion fhirVersion;
     private final Job job;
-    private final ProgressTracker progressTracker;
     private final Map<Long, CoverageSummary> patients;
-    private StreamHelper streamHelper;
+    private final StreamHelper streamHelper;
     private final List<Future<EobSearchResult>> eobRequestHandles = new LinkedList<>();
-
-    public void setStreamHelper(StreamHelper streamHelper) {
-        if (this.streamHelper == null) {
-            this.streamHelper = streamHelper;
-        }
-    }
 
     public void addEobRequestHandle(Future<EobSearchResult> eobRequestHandle) {
         eobRequestHandles.add(eobRequestHandle);
@@ -34,5 +26,9 @@ public class ContractData {
 
     public boolean remainingRequestHandles() {
         return !eobRequestHandles.isEmpty();
+    }
+
+    public FhirVersion getFhirVersion() {
+        return job.getFhirVersion();
     }
 }
