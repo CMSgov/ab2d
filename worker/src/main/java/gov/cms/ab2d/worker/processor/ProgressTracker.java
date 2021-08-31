@@ -25,7 +25,8 @@ public class ProgressTracker {
     @Setter
     private int expectedBeneficiaries;
 
-    private final int failureThreshold;
+    @Setter
+    private int failureThreshold;
     private int failureCount;
 
     @Setter
@@ -37,20 +38,20 @@ public class ProgressTracker {
     @Setter
     private int lastUpdatedPercentage;
 
-    public void incrementPatientRequestQueuedCount() {
-        ++patientRequestQueuedCount;
+    public void addPatientRequestQueuedCount(int numQueued) {
+        patientRequestQueuedCount += numQueued;
     }
 
-    public void incrementPatientRequestProcessedCount() {
-        ++patientRequestProcessedCount;
+    public void addPatientProcessedCount(int value) {
+        patientRequestProcessedCount += value;
     }
 
-    public void incrementEobProcessedCount() {
-        ++eobsProcessedCount;
+    public void addProcessedCount(int numProcessed) {
+        eobsProcessedCount += numProcessed;
     }
 
-    public void incrementFailureCount() {
-        ++failureCount;
+    public void addFailureCount(int value) {
+        failureCount += value;
     }
 
     public void addPatients(int numAdded) {

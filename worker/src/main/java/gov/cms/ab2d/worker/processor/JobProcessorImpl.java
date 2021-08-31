@@ -15,6 +15,7 @@ import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverException;
 import gov.cms.ab2d.worker.service.FileService;
+import gov.cms.ab2d.worker.service.JobChannelService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -59,6 +60,8 @@ public class JobProcessorImpl implements JobProcessor {
     private int failureThreshold;
 
     private final FileService fileService;
+    private final JobChannelService jobChannelService;
+    private final JobProgressService jobProgressService;
     private final JobRepository jobRepository;
     private final JobOutputRepository jobOutputRepository;
     private final ContractProcessor contractProcessor;
@@ -116,29 +119,28 @@ public class JobProcessorImpl implements JobProcessor {
      *
      * @param job             - the job in which the contract belongs
      * @param outputDirPath   - the location of the job output
-     * @param progressTracker - the progress tracker which indicates how far the job is along
      * @throws ExecutionException   when there is an issue with searching
      * @throws InterruptedException - when the search is interrupted
      */
-    void processContract(Job job, Path outputDirPath, ProgressTracker progressTracker)
+    void processContract(Job job, Path outputDirPath)
             throws ExecutionException, InterruptedException {
         Contract contract = job.getContract();
         assert contract != null;
         log.info("Job [{}] - contract [{}] ", job.getJobUuid(), contract.getContractNumber());
         // Retrieve the contract beneficiaries
 
-        Map<Long, CoverageSummary> patients = processContractBenes(job, progressTracker);
+        Map<Long, CoverageSummary> patients = processContractBenes(job);
 
         // Create a holder for the contract, writer, progress tracker and attested date
-        JobData jobData = new JobData(contract, progressTracker, job.getSince(),
-                getOrganization(job), patients);
+        JobData jobData = new JobData(job.getJobUuid(), job.getSince(), getOrganization(job), patients);
 
-        var jobOutputs = contractProcessor.process(outputDirPath, jobData);
+        var jobOutputs = contractProcessor.process(outputDirPath, job, jobData);
 
         // For each job output, add to the job and save the result
         jobOutputs.forEach(job::addJobOutput);
         jobOutputRepository.saveAll(jobOutputs);
 
+        ProgressTracker progressTracker = jobProgressService.getStatus(job.getJobUuid());
         eventLogger.log(new ContractBeneSearchEvent(getOrganization(job),
                 job.getJobUuid(),
                 contract.getContractNumber(),
@@ -147,23 +149,23 @@ public class JobProcessorImpl implements JobProcessor {
                 progressTracker.getFailureCount()));
     }
 
-    Map<Long, CoverageSummary> processContractBenes(Job job, ProgressTracker progressTracker) {
+    Map<Long, CoverageSummary> processContractBenes(Job job) {
         Contract contract = job.getContract();
         assert contract != null;
         try {
             int numBenes = coverageDriver.numberOfBeneficiariesToProcess(job);
-            progressTracker.setExpectedBeneficiaries(numBenes);
+            jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.EXPECTED_BENES, numBenes);
             Map<Long, CoverageSummary> retMap = new HashMap<>(numBenes);
 
             CoveragePagingResult result = coverageDriver.pageCoverage(job);
-            addPatients(result, progressTracker, retMap);
+            addPatients(job.getJobUuid(), result, retMap);
 
             while (result.getNextRequest().isPresent()) {
                 result = coverageDriver.pageCoverage(result.getNextRequest().get());
-                addPatients(result, progressTracker, retMap);
+                addPatients(job.getJobUuid(), result, retMap);
             }
 
-            int progress = progressTracker.getPercentageCompleted();
+            int progress = jobProgressService.getStatus(job.getJobUuid()).getPercentageCompleted();
             job.setProgress(progress);
             job.setStatusMessage(progress + "% complete");
             jobRepository.save(job);
@@ -174,8 +176,8 @@ public class JobProcessorImpl implements JobProcessor {
         }
     }
 
-    private void addPatients(CoveragePagingResult result, ProgressTracker progressTracker, Map<Long, CoverageSummary> beneMap) {
-        progressTracker.addPatients(result.getCoverageSummaries().size());
+    private void addPatients(String jobId, CoveragePagingResult result, Map<Long, CoverageSummary> beneMap) {
+        jobChannelService.sendUpdate(jobId, JobMeasure.BENE_REQUEST_QUEUED, result.getCoverageSummaries().size());
         result.getCoverageSummaries().forEach(summary -> beneMap.put(summary.getIdentifiers().getBeneficiaryId(), summary));
     }
 
@@ -190,14 +192,11 @@ public class JobProcessorImpl implements JobProcessor {
         // Create the output directory
         createOutputDirectory(outputDirPath, job);
 
-        // Retrieve the patients for each contract and start a progress tracker
-        ProgressTracker progressTracker = ProgressTracker.builder()
-                .jobUuid(job.getJobUuid())
-                .failureThreshold(failureThreshold)
-                .build();
+        // start a progress tracker
+        jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.FAILURE_THRESHHOLD, failureThreshold);
 
         try {
-            processContract(job, outputDirPath, progressTracker);
+            processContract(job, outputDirPath);
         } catch (ExecutionException | InterruptedException ex) {
             log.error("Having issue retrieving patients for contract " + job.getContract());
             throw ex;
