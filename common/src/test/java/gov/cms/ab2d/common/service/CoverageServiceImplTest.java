@@ -5,7 +5,7 @@ import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Coverage;
 import gov.cms.ab2d.common.util.DataSetup;
-import gov.cms.ab2d.common.util.FilterOutByDate;
+import gov.cms.ab2d.filter.FilterOutByDate;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

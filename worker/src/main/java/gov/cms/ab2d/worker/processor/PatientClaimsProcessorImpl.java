@@ -10,7 +10,7 @@ import gov.cms.ab2d.eventlogger.events.BeneficiarySearchEvent;
 import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.EobUtils;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
-import gov.cms.ab2d.common.util.FilterOutByDate;
+import gov.cms.ab2d.filter.FilterOutByDate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.*;

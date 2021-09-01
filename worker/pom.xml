@@ -102,6 +102,12 @@
             <artifactId>newrelic-api</artifactId>
             <version>${newrelic.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>gov.cms.ab2d</groupId>
+            <artifactId>ab2d-filter</artifactId>
+            <version>1.0-RELEASE</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
