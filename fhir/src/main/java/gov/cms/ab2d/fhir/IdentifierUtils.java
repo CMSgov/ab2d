@@ -276,9 +276,10 @@ public final class IdentifierUtils {
         }
         if (system.equalsIgnoreCase(PatientIdentifier.Type.MBI.getSystem())) {
             PatientIdentifier.Currency currency = getCurrencyMbi(identifier);
-            if (currency == PatientIdentifier.Currency.UNKNOWN) {
-                return getCurrencyMbiStandard(identifier);
+            if (currency != PatientIdentifier.Currency.UNKNOWN) {
+                return currency;
             }
+            return getCurrencyMbiStandard(identifier);
         }
         return PatientIdentifier.Currency.UNKNOWN;
     }
