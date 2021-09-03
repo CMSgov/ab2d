@@ -219,14 +219,14 @@ public final class IdentifierUtils {
                 Object extension = extensions.get(0);
                 String url = (String) Versions.invokeGetMethod(extension, "getUrl");
                 if (url != null && url.equalsIgnoreCase(CURRENCY_IDENTIFIER)) {
-                    Object extValue = Versions.invokeGetMethod(extension, "getValue");
-                    String extValueSystem = (String) Versions.invokeGetMethod(extValue, "getSystem");
+                    Object currValue = Versions.invokeGetMethod(extension, "getValue");
+                    String extValueSystem = (String) Versions.invokeGetMethod(currValue, "getSystem");
                     if (CURRENCY_IDENTIFIER.equalsIgnoreCase(extValueSystem)) {
-                        String extValueCode = (String) Versions.invokeGetMethod(extValue, "getCode");
-                        if (CURRENT_MBI.equalsIgnoreCase(extValueCode)) {
+                        String currValueCode = (String) Versions.invokeGetMethod(currValue, "getCode");
+                        if (CURRENT_MBI.equalsIgnoreCase(currValueCode)) {
                             return PatientIdentifier.Currency.CURRENT;
                         }
-                        if (HISTORIC_MBI.equalsIgnoreCase(extValueCode)) {
+                        if (HISTORIC_MBI.equalsIgnoreCase(currValueCode)) {
                             return PatientIdentifier.Currency.HISTORIC;
                         }
                     }
@@ -275,10 +275,10 @@ public final class IdentifierUtils {
             return null;
         }
         if (system.equalsIgnoreCase(PatientIdentifier.Type.MBI.getSystem())) {
-            return getCurrencyMbi(identifier);
-        }
-        if (system.equalsIgnoreCase(PatientIdentifier.Type.MBI_R4.getSystem())) {
-            return getCurrencyMbiStandard(identifier);
+            PatientIdentifier.Currency currency = getCurrencyMbi(identifier);
+            if (currency == PatientIdentifier.Currency.UNKNOWN) {
+                return getCurrencyMbiStandard(identifier);
+            }
         }
         return PatientIdentifier.Currency.UNKNOWN;
     }
