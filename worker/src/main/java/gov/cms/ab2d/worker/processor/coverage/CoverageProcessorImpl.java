@@ -135,8 +135,6 @@ public class CoverageProcessorImpl implements CoverageProcessor {
             if (!inShutdown.get()) {
                 Iterator<CoverageMappingCallable> mappingCallableIterator = inProgressMappings.iterator();
 
-                log.info("Checking running jobs for changes in state");
-
                 while (mappingCallableIterator.hasNext()) {
 
                     CoverageMappingCallable mappingCallable = mappingCallableIterator.next();
