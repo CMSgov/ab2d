@@ -24,6 +24,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static gov.cms.ab2d.common.util.EventUtils.getOrganization;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
@@ -122,6 +125,32 @@ class ContractProcessorUnitTest {
         assertFalse(jobOutputs.isEmpty());
         verify(jobRepository, times(6)).updatePercentageCompleted(anyString(), anyInt());
         verify(patientClaimsProcessor, atLeast(1)).process(any());
+    }
+
+    @Test
+    @DisplayName("When round robin blocking queue is full, patients should not be skipped")
+    void whenBlockingQueueFullPatientsNotSkipped() throws InterruptedException {
+
+        Map<Long, CoverageSummary> patientsByContract = createPatientsByContractResponse(contract, 2);
+
+        jobChannelService.sendUpdate(jobUuid, JobMeasure.EXPECTED_BENES, 2);
+        jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 1);
+        JobData jobData = new JobData(job.getJobUuid(), job.getSince(),
+                getOrganization(job), patientsByContract);
+
+        when(requestQueue.size(anyString())).thenReturn(1_0000_000);
+
+        ExecutorService singleThreadedExecutor = Executors.newSingleThreadExecutor();
+
+        Runnable testRunnable = () -> cut.process(outputDir, job, jobData);
+
+        Future<?> future = singleThreadedExecutor.submit(testRunnable);
+
+        Thread.sleep(5000);
+
+        assertFalse(future.isDone());
+
+        future.cancel(true);
     }
 
     private PdpClient createClient() {
