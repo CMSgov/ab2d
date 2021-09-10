@@ -225,7 +225,7 @@ public final class IdentifierUtils {
                 String url = (String) Versions.invokeGetMethod(extension, "getUrl");
                 if (url != null && url.equalsIgnoreCase(CURRENCY_IDENTIFIER)) {
                     Object currValue = Versions.invokeGetMethod(extension, GET_VALUE);
-                    String extValueSystem = (String) Versions.invokeGetMethod(currValue, GET_VALUE);
+                    String extValueSystem = (String) Versions.invokeGetMethod(currValue, GET_SYSTEM);
                     if (CURRENCY_IDENTIFIER.equalsIgnoreCase(extValueSystem)) {
                         String currValueCode = (String) Versions.invokeGetMethod(currValue, GET_CODE);
                         if (CURRENT_MBI.equalsIgnoreCase(currValueCode)) {
