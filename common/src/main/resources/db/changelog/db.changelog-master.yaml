@@ -116,3 +116,5 @@ databaseChangeLog:
       file: db/changelog/test_only/coverage-fake-partitions.sql
   - include:
       file: db/changelog/v2021/replace_coverage_table.sql
+  - include:
+      file: db/changelog/v2021/drop_old_coverage_table.sql
