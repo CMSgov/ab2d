@@ -103,6 +103,7 @@ class PatientIdentifierUtilsTest {
 
             PatientIdentifier mbiCurrentId = IdentifierUtils.getCurrentMbi(ids);
             assertTrue(currentMbis.contains(mbiCurrentId.getValue()));
+            assertEquals(CURRENT, mbiCurrentId.getCurrency());
 
             /* Currently, no historical MBIs are in test data */
             Set<PatientIdentifier> historicalMbi = IdentifierUtils.getHistoricMbi(ids);

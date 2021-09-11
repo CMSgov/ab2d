@@ -29,6 +29,11 @@ public final class IdentifierUtils {
             "https://bluebutton.cms.gov/resources/codesystem/identifier-currency";
     public static final String BENEFICIARY_ID = "https://bluebutton.cms.gov/resources/variables/bene_id";
 
+    private static final String GET_SYSTEM = "getSystem";
+    private static final String GET_VALUE = "getValue";
+    private static final String GET_IDENTIFIER = "getIdentifier";
+    private static final String GET_CODE = "getCode";
+
     private IdentifierUtils() {
     }
 
@@ -52,7 +57,7 @@ public final class IdentifierUtils {
             derivedIds.add(beneId);
         }
 
-        List identifiers = (List) Versions.invokeGetMethod(patient, "getIdentifier");
+        List identifiers = (List) Versions.invokeGetMethod(patient, GET_IDENTIFIER);
         derivedIds.addAll((List<PatientIdentifier>) identifiers.stream()
                 .map(c -> getIdentifier((ICompositeType) c))
                 .filter(c -> c != null)
@@ -80,12 +85,12 @@ public final class IdentifierUtils {
      * @return - our standardized identifier
      */
     public static PatientIdentifier getIdentifier(ICompositeType id) {
-        String system = (String) Versions.invokeGetMethod(id, "getSystem");
+        String system = (String) Versions.invokeGetMethod(id, GET_SYSTEM);
         if (system == null) {
             return null;
         }
         PatientIdentifier derivedId = new PatientIdentifier();
-        String value = (String) Versions.invokeGetMethod(id, "getValue");
+        String value = (String) Versions.invokeGetMethod(id, GET_VALUE);
         derivedId.setValue(value);
         derivedId.setType(PatientIdentifier.Type.fromSystem(system));
         derivedId.setCurrency(getCurrency(id));
@@ -148,7 +153,7 @@ public final class IdentifierUtils {
      * @return the value of the system
      */
     private static String getSystem(ICompositeType identifier) {
-        return (String) Versions.invokeGetMethod(identifier, "getSystem");
+        return (String) Versions.invokeGetMethod(identifier, GET_SYSTEM);
     }
 
     /**
@@ -158,7 +163,7 @@ public final class IdentifierUtils {
      * @return the value of the identifier
      */
     private static String getValue(ICompositeType identifier) {
-        return (String) Versions.invokeGetMethod(identifier, "getValue");
+        return (String) Versions.invokeGetMethod(identifier, GET_VALUE);
     }
 
     /**
@@ -172,11 +177,11 @@ public final class IdentifierUtils {
         if (currencyExtension.isEmpty()) {
             return PatientIdentifier.Currency.UNKNOWN;
         }
-        Object code = Versions.invokeGetMethod(currencyExtension.get(), "getValue");
+        Object code = Versions.invokeGetMethod(currencyExtension.get(), GET_VALUE);
         if (code == null) {
             return PatientIdentifier.Currency.UNKNOWN;
         }
-        String codeValue = (String) Versions.invokeGetMethod(code, "getCode");
+        String codeValue = (String) Versions.invokeGetMethod(code, GET_CODE);
         switch (codeValue) {
             case HISTORIC_MBI:
                 return PatientIdentifier.Currency.HISTORIC;
@@ -211,22 +216,22 @@ public final class IdentifierUtils {
             return PatientIdentifier.Currency.UNKNOWN;
         }
         Object val = vals.get(0);
-        String codeSystem = (String) Versions.invokeGetMethod(val, "getSystem");
-        String codeValue = (String) Versions.invokeGetMethod(val, "getCode");
+        String codeSystem = (String) Versions.invokeGetMethod(val, GET_SYSTEM);
+        String codeValue = (String) Versions.invokeGetMethod(val, GET_CODE);
         if (codeSystem != null && codeSystem.equalsIgnoreCase(MBI_ID_R4) && ("MB".equalsIgnoreCase(codeValue) || "MC".equalsIgnoreCase(codeValue))) {
             List extensions = (List) Versions.invokeGetMethod(val, "getExtension");
             if (extensions != null && extensions.size() > 0) {
                 Object extension = extensions.get(0);
                 String url = (String) Versions.invokeGetMethod(extension, "getUrl");
                 if (url != null && url.equalsIgnoreCase(CURRENCY_IDENTIFIER)) {
-                    Object extValue = Versions.invokeGetMethod(extension, "getValue");
-                    String extValueSystem = (String) Versions.invokeGetMethod(extValue, "getSystem");
+                    Object currValue = Versions.invokeGetMethod(extension, GET_VALUE);
+                    String extValueSystem = (String) Versions.invokeGetMethod(currValue, GET_SYSTEM);
                     if (CURRENCY_IDENTIFIER.equalsIgnoreCase(extValueSystem)) {
-                        String extValueCode = (String) Versions.invokeGetMethod(extValue, "getCode");
-                        if (CURRENT_MBI.equalsIgnoreCase(extValueCode)) {
+                        String currValueCode = (String) Versions.invokeGetMethod(currValue, GET_CODE);
+                        if (CURRENT_MBI.equalsIgnoreCase(currValueCode)) {
                             return PatientIdentifier.Currency.CURRENT;
                         }
-                        if (HISTORIC_MBI.equalsIgnoreCase(extValueCode)) {
+                        if (HISTORIC_MBI.equalsIgnoreCase(currValueCode)) {
                             return PatientIdentifier.Currency.HISTORIC;
                         }
                     }
@@ -275,9 +280,10 @@ public final class IdentifierUtils {
             return null;
         }
         if (system.equalsIgnoreCase(PatientIdentifier.Type.MBI.getSystem())) {
-            return getCurrencyMbi(identifier);
-        }
-        if (system.equalsIgnoreCase(PatientIdentifier.Type.MBI_R4.getSystem())) {
+            PatientIdentifier.Currency currency = getCurrencyMbi(identifier);
+            if (currency != PatientIdentifier.Currency.UNKNOWN) {
+                return currency;
+            }
             return getCurrencyMbiStandard(identifier);
         }
         return PatientIdentifier.Currency.UNKNOWN;
