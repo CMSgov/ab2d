@@ -17,22 +17,20 @@ import static gov.cms.ab2d.fhir.FhirVersion.STU3;
  */
 @Component
 public class BfdClientVersions {
-    private Map<FhirVersion, String> clientUrls = new HashMap();
-    private Map<FhirVersion, IGenericClient> bfdServers = new HashMap();
+    private final Map<FhirVersion, String> clientUrls = new HashMap<>();
+    private final Map<FhirVersion, IGenericClient> bfdServers = new HashMap<>();
     private final HttpClient httpClient;
 
     /**
      * The constructor takes the values for the supported FHIR version URLs
      *
-     * @param stu3Url - FHIR STU3 properties value
-     * @param r4Url - FHIR R4 properties value
+     * @param bfdUrl - base FHIR url
      * @param httpClient the http client
      */
-    public BfdClientVersions(@Value("${bfd.serverBaseUrlStu3}") String stu3Url,
-                             @Value("${bfd.serverBaseUrlR4}") String r4Url,
-                             HttpClient httpClient) {
-        clientUrls.put(STU3, stu3Url);
-        clientUrls.put(R4, r4Url);
+    public BfdClientVersions(@Value("${bfd.url}") String bfdUrl, HttpClient httpClient) {
+        clientUrls.put(STU3, bfdUrl + STU3.getVersionString() + "fhir/");
+        clientUrls.put(R4, bfdUrl + R4.getVersionString() + "fhir/");
+
         this.httpClient = httpClient;
     }
 

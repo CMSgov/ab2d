@@ -56,6 +56,10 @@ public enum FhirVersion {
                 .findFirst().orElse(null);
     }
 
+    public String getVersionString() {
+        return versionString;
+    }
+
     public String getClassName(String name) {
         if (this.classLocation == null) {
             return null;
