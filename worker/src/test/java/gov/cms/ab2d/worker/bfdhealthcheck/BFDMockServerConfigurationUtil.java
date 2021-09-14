@@ -16,7 +16,7 @@ public class BFDMockServerConfigurationUtil {
 
         @Override
         public void initialize(ConfigurableApplicationContext applicationContext) {
-            String baseUrl = "bfd.url=http://localhost:" + MOCK_SERVER_PORT + "/v1/fhir/";
+            String baseUrl = "bfd.url=http://localhost:" + MOCK_SERVER_PORT;
             addInlinedPropertiesToEnvironment(applicationContext, baseUrl);
         }
     }
