@@ -67,9 +67,9 @@ class VersionsTest {
         String url1 = "http://localhost:8080/v1/fhir/$export";
         String url2 = "http://localhost:8080/v2/fhir/$export";
         String url3 = "http://localhost:8080/fhir/$export";
-        assertEquals(STU3, FhirVersion.fromUrl(url1));
-        assertEquals(R4, FhirVersion.fromUrl(url2));
-        assertNull(FhirVersion.fromUrl(url3));
+        assertEquals(STU3, FhirVersion.fromAB2DUrl(url1));
+        assertEquals(R4, FhirVersion.fromAB2DUrl(url2));
+        assertNull(FhirVersion.fromAB2DUrl(url3));
     }
 
     @Test

@@ -15,23 +15,25 @@ import java.util.stream.Stream;
 
 @Slf4j
 public enum FhirVersion {
-    STU3("org.hl7.fhir.dstu3.model", FhirContext.forDstu3(), FhirVersionEnum.DSTU3, "/v1/",
+    STU3("org.hl7.fhir.dstu3.model", FhirContext.forDstu3(), FhirVersionEnum.DSTU3, "/v1/", "/v1/",
             org.hl7.fhir.dstu3.model.ResourceType.Patient),
-    R4("org.hl7.fhir.r4.model", FhirContext.forR4(), FhirVersionEnum.R4, "/v2/",
+    R4("org.hl7.fhir.r4.model", FhirContext.forR4(), FhirVersionEnum.R4, "/v2/", "/v2/",
             org.hl7.fhir.r4.model.ResourceType.Patient);
 
     private final String classLocation;
     private final FhirContext context;
     private final FhirVersionEnum fhirVersionEnum;
-    private final String versionString;
+    private final String ab2dVersionString;
+    private final String bfdVersionString;
     private final Object patientEnum;
 
-    FhirVersion(String classLocation, FhirContext context, FhirVersionEnum fhirVersionEnum, String versionString,
+    FhirVersion(String classLocation, FhirContext context, FhirVersionEnum fhirVersionEnum, String ab2dVersionString, String bfdVersionString,
                 Object patientEnum) {
         this.classLocation = classLocation;
         this.context = context;
         this.fhirVersionEnum = fhirVersionEnum;
-        this.versionString = versionString;
+        this.ab2dVersionString = ab2dVersionString;
+        this.bfdVersionString = bfdVersionString;
         this.patientEnum = patientEnum;
     }
 
@@ -50,14 +52,14 @@ public enum FhirVersion {
         return this.context;
     }
 
-    public static FhirVersion fromUrl(String url) {
+    public static FhirVersion fromAB2DUrl(String url) {
         return Stream.of(FhirVersion.values())
-                .filter(fhir -> url.contains(fhir.versionString))
+                .filter(fhir -> url.contains(fhir.ab2dVersionString))
                 .findFirst().orElse(null);
     }
 
-    public String getVersionString() {
-        return versionString;
+    public String getBfdVersionString() {
+        return bfdVersionString;
     }
 
     public String getClassName(String name) {
