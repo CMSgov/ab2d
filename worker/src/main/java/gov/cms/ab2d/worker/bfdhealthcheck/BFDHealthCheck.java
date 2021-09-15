@@ -42,7 +42,7 @@ class BFDHealthCheck {
     }
 
     void checkBFDHealth() {
-        this.healthCheckData.forEach(c -> checkBFDHealth(c));
+        this.healthCheckData.forEach(this::checkBFDHealth);
     }
 
     void checkBFDHealth(HealthCheckData data) {

@@ -6,6 +6,7 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.MockBfdServiceUtils;
 import gov.cms.ab2d.worker.SpringBootApp;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockserver.integration.ClientAndServer;
@@ -51,9 +52,18 @@ public class BFDHealthCheckTest {
         mockServer = ClientAndServer.startClientAndServer(MOCK_SERVER_PORT);
     }
 
+    @AfterAll
+    public static void tearDown() {
+        mockServer.stop();
+    }
+
+    @AfterEach
+    public void cleanUp() {
+        MockBfdServiceUtils.reset(MOCK_SERVER_PORT);
+    }
+
     @Test
     public void testBfdGoingDown() throws IOException {
-        MockBfdServiceUtils.reset(MOCK_SERVER_PORT);
         MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta-unknown-status.xml", MOCK_SERVER_PORT);
 
         Properties maintenanceProperties = propertiesService.getPropertiesByKey(MAINTENANCE_MODE);
@@ -77,7 +87,6 @@ public class BFDHealthCheckTest {
     @Test
     public void testBfdComingBackUp() throws IOException {
         // First take down, since BFD starts as up
-        MockBfdServiceUtils.reset(MOCK_SERVER_PORT);
         MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta-unknown-status.xml", MOCK_SERVER_PORT);
 
         for(int i = 0; i < consecutiveFailuresToTakeDown; i++) {
@@ -100,7 +109,6 @@ public class BFDHealthCheckTest {
 
     @Test
     public void testBfdGoingUpAndDown() throws IOException {
-        MockBfdServiceUtils.reset(MOCK_SERVER_PORT);
         MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta-unknown-status.xml", MOCK_SERVER_PORT);
 
         for(int i = 0; i < consecutiveFailuresToTakeDown - 1; i++) {
@@ -139,7 +147,6 @@ public class BFDHealthCheckTest {
 
     @Test
     public void testBfdGoingDownPastLimitAndComingBackUp() throws IOException {
-        MockBfdServiceUtils.reset(MOCK_SERVER_PORT);
         MockBfdServiceUtils.createMockServerMetaExpectation(TEST_DIR + "meta-unknown-status.xml", MOCK_SERVER_PORT);
 
         for(int i = 0; i < consecutiveFailuresToTakeDown + 1; i++) {
@@ -158,11 +165,6 @@ public class BFDHealthCheckTest {
 
         maintenanceProperties = propertiesService.getPropertiesByKey(MAINTENANCE_MODE);
         assertEquals("false", maintenanceProperties.getValue());
-    }
-
-    @AfterAll
-    public static void tearDown() {
-        mockServer.stop();
     }
 }
 

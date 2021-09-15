@@ -78,8 +78,7 @@ public class BlueButtonClientTestSTU3 {
         @Bean
         @Primary
         public BfdClientVersions clientVersions() {
-            return new BfdClientVersions("http://localhost:" + MOCK_PORT_V1 + "/v1/fhir/",
-            "http://localhost:" + MOCK_PORT_V1 + "/v1/fhir/", client);
+            return new BfdClientVersions("http://localhost:" + MOCK_PORT_V1, client);
         }
     }
 
