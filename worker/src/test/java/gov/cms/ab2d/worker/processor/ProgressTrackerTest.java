@@ -30,12 +30,12 @@ class ProgressTrackerTest {
         int expected = 0;
         assertEquals(expected, percDone);
 
-        ReflectionTestUtils.setField(tracker, "metadataProcessedCount", 6);
+        ReflectionTestUtils.setField(tracker, "patientsLoadedCount", 6);
         percDone = tracker.getPercentageCompleted();
         expected = asPercent((1.0 - EST_BEN_SEARCH_JOB_PERCENTAGE) * 0.5);
         assertEquals(expected, percDone);
 
-        ReflectionTestUtils.setField(tracker, "metadataProcessedCount", 12);
+        ReflectionTestUtils.setField(tracker, "patientsLoadedCount", 12);
         percDone = tracker.getPercentageCompleted();
         expected = asPercent(1.0 - EST_BEN_SEARCH_JOB_PERCENTAGE);
         assertEquals(expected, percDone);
@@ -64,7 +64,7 @@ class ProgressTrackerTest {
         int percDone = tracker.getPercentageCompleted();
         assertEquals(0, percDone);
 
-        ReflectionTestUtils.setField(tracker, "metadataProcessedCount", 6);
+        ReflectionTestUtils.setField(tracker, "patientsLoadedCount", 6);
         percDone = tracker.getPercentageCompleted();
         assertEquals(0, percDone);
 
@@ -84,7 +84,7 @@ class ProgressTrackerTest {
 
         // Pretend all metadata loading is done
         Contract contract = new Contract();
-        tracker.addPatients(createPatientsByContractResponse(contract, 10).size());
+        tracker.addPatientsLoadedCount(createPatientsByContractResponse(contract, 10).size());
 
         percDone = tracker.getPercentageCompleted();
         assertEquals(asPercent(1.0 - EST_BEN_SEARCH_JOB_PERCENTAGE), percDone);
@@ -101,11 +101,11 @@ class ProgressTrackerTest {
                 .jobUuid("JOBID")
                 .failureThreshold(3)
                 .expectedBeneficiaries(12)
-                .metadataProcessedCount(12)
+                .patientsLoadedCount(12)
                 .build();
 
         List<CoverageSummary> cb1 = createPatientsByContractResponse(new Contract(), 12);
-        tracker.addPatients(cb1.size());
+        tracker.addPatientsLoadedCount(cb1.size());
 
         assertEquals(asPercent(1 - EST_BEN_SEARCH_JOB_PERCENTAGE), tracker.getPercentageCompleted());
 

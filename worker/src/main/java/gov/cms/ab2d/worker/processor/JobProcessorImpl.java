@@ -221,6 +221,10 @@ public class JobProcessorImpl implements JobProcessor {
                 addPatients(job.getJobUuid(), result, retMap);
             }
 
+            if (retMap.size() != numBenes) {
+                throw new RuntimeException("expected " + numBenes + " patients from database but only retrieved " + retMap.size());
+            }
+
             int progress = jobProgressService.getStatus(job.getJobUuid()).getPercentageCompleted();
             job.setProgress(progress);
             job.setStatusMessage(progress + "% complete");
@@ -233,7 +237,7 @@ public class JobProcessorImpl implements JobProcessor {
     }
 
     private void addPatients(String jobId, CoveragePagingResult result, Map<Long, CoverageSummary> beneMap) {
-        jobChannelService.sendUpdate(jobId, JobMeasure.BENE_REQUEST_QUEUED, result.getCoverageSummaries().size());
+        jobChannelService.sendUpdate(jobId, JobMeasure.PATIENT_REQUEST_QUEUED, result.getCoverageSummaries().size());
         result.getCoverageSummaries().forEach(summary -> beneMap.put(summary.getIdentifiers().getBeneficiaryId(), summary));
     }
 

@@ -162,7 +162,7 @@ public class ContractProcessorImpl implements ContractProcessor {
 
             contractData.addEobRequestHandle(processPatient(contractData.getFhirVersion(),
                     patient, job.getContract(), jobData));
-            this.jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.BENE_REQUEST_QUEUED, 1);
+            this.jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENT_REQUEST_QUEUED, 1);
 
             // Periodically check if cancelled
             if (++numQueued % cancellationCheckFrequency == 0) {

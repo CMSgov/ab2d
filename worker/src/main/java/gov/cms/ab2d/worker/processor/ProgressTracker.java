@@ -17,7 +17,7 @@ public class ProgressTracker {
     // The ratio between the beneficiary EOF search time in the job vs looking up contract beneficiaries
     public static final double EST_BEN_SEARCH_JOB_PERCENTAGE = 0.7;
 
-    private int metadataProcessedCount;
+    private int patientsLoadedCount;
     private int patientRequestQueuedCount;
     private int patientRequestProcessedCount;
     private int eobsFetchedCount;
@@ -59,8 +59,8 @@ public class ProgressTracker {
         patientFailureCount += value;
     }
 
-    public void addPatients(int numAdded) {
-        metadataProcessedCount += numAdded;
+    public void addPatientsLoadedCount(int numAdded) {
+        patientsLoadedCount += numAdded;
     }
 
     /**
@@ -150,6 +150,6 @@ public class ProgressTracker {
             return 0;
         }
         // This is the total completed threads done over the amount that needs to be done
-        return ((double) this.metadataProcessedCount) / this.expectedBeneficiaries;
+        return ((double) this.patientsLoadedCount) / this.expectedBeneficiaries;
     }
 }
