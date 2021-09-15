@@ -22,30 +22,30 @@ public enum JobMeasure {
         public void update(ProgressTracker progressTracker, long value) {
             progressTracker.addPatientRequestQueuedCount((int) value);
         }
-    }, PATIENT_REQUEST_PROCESSED() {
+    }, PATIENT_REQUESTS_PROCESSED() {
         @Override
         public void update(ProgressTracker progressTracker, long value) {
             progressTracker.addPatientProcessedCount((int) value);
         }
+    }, PATIENT_REQUESTS_ERRORED() {
+        @Override
+        public void update(ProgressTracker progressTracker, long value) {
+            progressTracker.addPatientFailureCount((int) value);
+        }
     }, EOBS_FETCHED() {
         @Override
         public void update(ProgressTracker progressTracker, long value) {
-            progressTracker.addProcessedCount((int) value);
+            progressTracker.addEobFetchedCount((int) value);
         }
     }, EOBS_WRITTEN() {
         @Override
         public void update(ProgressTracker progressTracker, long value) {
-            progressTracker.addProcessedCount((int) value);
+            progressTracker.addEobProcessedCount((int) value);
         }
     }, EOBS_EMPTY() {
         @Override
         public void update(ProgressTracker progressTracker, long value) {
             throw new UnsupportedOperationException();
-        }
-    }, EOBS_ERROR() {
-        @Override
-        public void update(ProgressTracker progressTracker, long value) {
-            progressTracker.addFailureCount((int) value);
         }
     };
 

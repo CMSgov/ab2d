@@ -40,8 +40,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.io.File;
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.function.LongUnaryOperator;
-import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
@@ -243,13 +241,13 @@ class JobProcessorIntegrationTest {
         assertNotNull(processedJob.getExpiresAt());
         assertNotNull(processedJob.getCompletedAt());
 
-        List<LoggableEvent> beneSearchEvents = loggerEventRepository.load(ContractBeneSearchEvent.class);
+        List<LoggableEvent> beneSearchEvents = loggerEventRepository.load(ContractSearchEvent.class);
         assertEquals(1, beneSearchEvents.size());
-        ContractBeneSearchEvent event = (ContractBeneSearchEvent) beneSearchEvents.get(0);
+        ContractSearchEvent event = (ContractSearchEvent) beneSearchEvents.get(0);
         assertEquals(JOB_UUID, event.getJobId());
-        assertEquals(100, event.getNumInContract());
+        assertEquals(100, event.getBenesExpected());
         assertEquals(CONTRACT_NAME, event.getContractNumber());
-        assertEquals(100, event.getNumSearched());
+        assertEquals(100, event.getBenesSearched());
 
         final List<JobOutput> jobOutputs = processedJob.getJobOutputs();
         assertFalse(jobOutputs.isEmpty());
@@ -292,16 +290,18 @@ class JobProcessorIntegrationTest {
         assertTrue(((FileEvent) fileEvents.get(0)).getFileName().contains("0001.ndjson"));
         assertEquals(20, fileEvents.stream().filter(e -> ((FileEvent) e).getFileHash().length() > 0).count());
 
-        assertTrue(UtilMethods.allEmpty(
-                loggerEventRepository.load(ApiRequestEvent.class),
+        assertTrue(UtilMethods.allEmpty(loggerEventRepository.load(ApiRequestEvent.class),
                 loggerEventRepository.load(ApiResponseEvent.class),
-                loggerEventRepository.load(ReloadEvent.class),
-                loggerEventRepository.load(ContractBeneSearchEvent.class)));
+                loggerEventRepository.load(ReloadEvent.class)
+        ));
 
         assertEquals(JobStatus.FAILED, processedJob.getStatus());
         assertEquals("Too many patient records in the job had failures", processedJob.getStatusMessage());
         assertNull(processedJob.getExpiresAt());
         assertNotNull(processedJob.getCompletedAt());
+
+        List<LoggableEvent> contractSearchEvents = loggerEventRepository.load(ContractSearchEvent.class);
+        assertEquals(1, contractSearchEvents.size());
     }
 
     private org.hl7.fhir.dstu3.model.Bundle[] getBundles() {

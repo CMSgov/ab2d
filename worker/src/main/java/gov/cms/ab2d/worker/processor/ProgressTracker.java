@@ -20,6 +20,7 @@ public class ProgressTracker {
     private int metadataProcessedCount;
     private int patientRequestQueuedCount;
     private int patientRequestProcessedCount;
+    private int eobsFetchedCount;
     private int eobsProcessedCount;
 
     @Setter
@@ -27,7 +28,7 @@ public class ProgressTracker {
 
     @Setter
     private int failureThreshold;
-    private int failureCount;
+    private int patientFailureCount;
 
     @Setter
     private int lastDbUpdateCount;
@@ -46,12 +47,16 @@ public class ProgressTracker {
         patientRequestProcessedCount += value;
     }
 
-    public void addProcessedCount(int numProcessed) {
+    public void addEobFetchedCount(int numFetched) {
+        eobsFetchedCount += numFetched;
+    }
+
+    public void addEobProcessedCount(int numProcessed) {
         eobsProcessedCount += numProcessed;
     }
 
-    public void addFailureCount(int value) {
-        failureCount += value;
+    public void addPatientFailureCount(int value) {
+        patientFailureCount += value;
     }
 
     public void addPatients(int numAdded) {
@@ -131,7 +136,7 @@ public class ProgressTracker {
     }
 
     public boolean isErrorCountBelowThreshold() {
-        return (failureCount * 100) / getTotalCount() < failureThreshold;
+        return (patientFailureCount * 100) / getTotalCount() < failureThreshold;
     }
 
     /**

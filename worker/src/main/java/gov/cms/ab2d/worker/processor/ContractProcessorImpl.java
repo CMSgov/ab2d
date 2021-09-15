@@ -159,8 +159,10 @@ public class ContractProcessorImpl implements ContractProcessor {
             // Queue a patient
             CoverageSummary patient = patientEntries.next().getValue();
             assert job.getContract() != null;
+
             contractData.addEobRequestHandle(processPatient(contractData.getFhirVersion(),
                     patient, job.getContract(), jobData));
+            this.jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.BENE_REQUEST_QUEUED, 1);
 
             // Periodically check if cancelled
             if (++numQueued % cancellationCheckFrequency == 0) {
@@ -174,7 +176,6 @@ public class ContractProcessorImpl implements ContractProcessor {
                 processHandles(contractData);
             }
         }
-        this.jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.BENE_REQUEST_QUEUED, patients.size());
 
     }
 
@@ -256,21 +257,28 @@ public class ContractProcessorImpl implements ContractProcessor {
      */
     private void processHandles(ContractData contractData) {
         var iterator = contractData.getEobRequestHandles().iterator();
-        int eobsFetched = 0;
+
         while (iterator.hasNext()) {
             var future = iterator.next();
             if (future.isDone()) {
+                jobChannelService.sendUpdate(contractData.getJob().getJobUuid(), JobMeasure.PATIENT_REQUESTS_PROCESSED, 1);
+
+                // If the request completed successfully there will be results to process
                 EobSearchResult result = processFuture(contractData, future);
-                if (result != null) {
+
+                if (result == null) {
+                    log.debug("ignoring empty results because pulling eobs failed");
+                } else if (result.getEobs() == null) {
+                    log.error("result returned but the eob list is null which should not be possible");
+                } else if (!result.getEobs().isEmpty()) {
                     FhirUtils.addMbiIdsToEobs(result.getEobs(), contractData.getPatients(), contractData.getFhirVersion());
                     writeOutResource(contractData, result.getEobs());
-                    eobsFetched++;
                 }
+
                 iterator.remove();
             }
         }
 
-        jobChannelService.sendUpdate(contractData.getJob().getJobUuid(), JobMeasure.EOBS_FETCHED, eobsFetched);
     }
 
     @Trace(metricName = "EOBWriteToFile", dispatcher = true)
@@ -279,6 +287,9 @@ public class ContractProcessorImpl implements ContractProcessor {
 
         String payload = "";
         try {
+
+            jobChannelService.sendUpdate(contractData.getJob().getJobUuid(), JobMeasure.EOBS_FETCHED, eobs.size());
+
             int eobsWritten = 0;
             int eobsError = 0;
             for (IBaseResource resource : eobs) {
@@ -288,14 +299,16 @@ public class ContractProcessorImpl implements ContractProcessor {
                             .addData(payload.getBytes(StandardCharsets.UTF_8));
                     eobsWritten++;
                 } catch (Exception e) {
-                    log.warn("Encountered exception while processing job resources: {}", e.getMessage());
+                    log.warn("Encountered exception while processing job resources: {}", e.getClass());
                     writeExceptionToContractErrorFile(contractData, payload, e);
                     eobsError++;
                 }
             }
+
             jobChannelService.sendUpdate(contractData.getJob().getJobUuid(), JobMeasure.EOBS_WRITTEN, eobsWritten);
+            // Log that the patient failed but do not log how many eobs failed. Each eob will be written to a file
             if (eobsError != 0) {
-                jobChannelService.sendUpdate(contractData.getJob().getJobUuid(), JobMeasure.EOBS_ERROR, eobs.size());
+                jobChannelService.sendUpdate(contractData.getJob().getJobUuid(), JobMeasure.PATIENT_REQUESTS_ERRORED, 1);
             }
         } catch (Exception e) {
             try {
@@ -318,7 +331,6 @@ public class ContractProcessorImpl implements ContractProcessor {
      */
     @Trace
     private EobSearchResult processFuture(ContractData contractData, Future<EobSearchResult> future) {
-        jobChannelService.sendUpdate(contractData.getJob().getJobUuid(), JobMeasure.PATIENT_REQUEST_PROCESSED, 1);
         try {
             EobSearchResult result = future.get();
             if (result != null) {
@@ -363,7 +375,7 @@ public class ContractProcessorImpl implements ContractProcessor {
 
     private void analyzeException(ContractData contractData, Exception e) {
         String jobId = contractData.getJob().getJobUuid();
-        jobChannelService.sendUpdate(jobId, JobMeasure.EOBS_ERROR, 1);
+        jobChannelService.sendUpdate(jobId, JobMeasure.PATIENT_REQUESTS_ERRORED, 1);
         ProgressTracker progressTracker = jobProgressService.getStatus(jobId);
 
         if (progressTracker.isErrorCountBelowThreshold()) {
@@ -372,10 +384,10 @@ public class ContractProcessorImpl implements ContractProcessor {
             // log exception, but continue processing job as errorCount is below threshold
         } else {
             cancelFuturesInQueue(contractData.getEobRequestHandles());
-            String description = progressTracker.getFailureCount() + " out of " + progressTracker.getTotalCount() + " records failed. Stopping job";
+            String description = progressTracker.getPatientFailureCount() + " out of " + progressTracker.getTotalCount() + " records failed. Stopping job";
             eventLogger.log(new ErrorEvent(null, progressTracker.getJobUuid(),
                     ErrorEvent.ErrorType.TOO_MANY_SEARCH_ERRORS, description));
-            log.error("{} out of {} records failed. Stopping job", progressTracker.getFailureCount(), progressTracker.getTotalCount());
+            log.error("{} out of {} records failed. Stopping job", progressTracker.getPatientFailureCount(), progressTracker.getTotalCount());
             throw new RuntimeException("Too many patient records in the job had failures");
         }
     }
