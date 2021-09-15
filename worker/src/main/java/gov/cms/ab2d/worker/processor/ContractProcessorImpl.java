@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
@@ -146,7 +147,8 @@ public class ContractProcessorImpl implements ContractProcessor {
     private void loadRequests(JobData jobData, Job job, Map<Long, CoverageSummary> patients,
                               ContractData contractData) throws InterruptedException {
         int numQueued = 0;
-        for (Map.Entry<Long, CoverageSummary> beneCoverageSummary : patients.entrySet()) {
+        Iterator<Map.Entry<Long, CoverageSummary>> patientEntries = patients.entrySet().iterator();
+        while (patientEntries.hasNext()) {
 
             if (eobClaimRequestsQueue.size(jobData.getJobUuid()) > eobJobPatientQueueMaxSize) {
                 // Wait for queue to empty out some before adding more
@@ -155,7 +157,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             }
 
             // Queue a patient
-            CoverageSummary patient = beneCoverageSummary.getValue();
+            CoverageSummary patient = patientEntries.next().getValue();
             assert job.getContract() != null;
             contractData.addEobRequestHandle(processPatient(contractData.getFhirVersion(),
                     patient, job.getContract(), jobData));

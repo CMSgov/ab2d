@@ -174,7 +174,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         String msg = getRootCause(e);
         HttpStatus httpStatus = getErrorResponse(e.getClass());
 
-        FhirVersion version = FhirVersion.fromUrl(request.getRequestURI());
+        FhirVersion version = FhirVersion.fromAB2DUrl(request.getRequestURI());
         IBaseResource operationOutcome = version.getErrorOutcome(msg);
         String encoded = version.outcomePrettyToJSON(operationOutcome);
         eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), null,

@@ -44,22 +44,26 @@ public class HPMSFetcherTest {
     @Test
     public void fetchTheSlippers() {
         fetcher.retrieveSponsorInfo(this::processOrgInfo);
-        waitForCallback();
+        int retries = 0;
+        do {
+            waitForCallback();
+        } while (orgs == null && retries++ < 20);
 
         assertNotNull(orgs);
         assertFalse(orgs.getOrgs().isEmpty());
 
-        final int NUM_CONTRACTS = 3;
-        List<String> top3Contracts = extractTopContractIDs(NUM_CONTRACTS);
-        assertNotNull(top3Contracts);
-        assertFalse(top3Contracts.isEmpty());
+        final int NUM_CONTRACTS = 6;
+        List<String> top6Contracts = extractTopContractIDs(NUM_CONTRACTS);
+        assertNotNull(top6Contracts);
+        assertFalse(top6Contracts.isEmpty());
 
         lock = new CountDownLatch(1);
-        fetcher.retrieveAttestationInfo(this::processAttestations, top3Contracts);
+        fetcher.retrieveAttestationInfo(this::processAttestations, top6Contracts);
         waitForCallback();
         assertNotNull(attestations);
         assertFalse(attestations.getContracts().isEmpty());
-        assertEquals(NUM_CONTRACTS, attestations.getContracts().size());
+        // E4744 is not returned by the API
+        assertEquals(NUM_CONTRACTS -1, attestations.getContracts().size());
     }
 
     private void waitForCallback() {

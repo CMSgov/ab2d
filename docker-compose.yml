@@ -87,7 +87,7 @@ services:
       # LOCAL always to shut off Kinesis logging
       - AB2D_EXECUTION_ENV=${AB2D_EXECUTION_ENV:-local}
       # BFD prod sandbox credentials and location
-      - AB2D_BFD_URL=https://prod-sbx.bfd.cms.gov/v1/fhir/
+      - AB2D_BFD_URL=https://prod-sbx.bfd.cms.gov
       - AB2D_BFD_KEYSTORE_PASSWORD=${AB2D_BFD_KEYSTORE_PASSWORD}
       - AB2D_BFD_KEYSTORE_LOCATION=${AB2D_BFD_KEYSTORE_LOCATION}
       - NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}"
