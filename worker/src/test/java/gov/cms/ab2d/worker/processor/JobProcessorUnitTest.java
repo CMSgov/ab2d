@@ -247,6 +247,17 @@ class JobProcessorUnitTest {
         verify(jobProgressService, times(3)).getStatus(any());
     }
 
+    @Test
+    @DisplayName("When contract benes loaded doesn't match expected, fail immediately")
+    void whenBenesLoadedMismatch_thenFailJob() {
+        when(coverageDriver.numberOfBeneficiariesToProcess(any())).thenReturn(1);
+
+        var processedJob = cut.process(job.getJobUuid());
+        assertEquals(JobStatus.FAILED, processedJob.getStatus());
+        assertTrue(processedJob.getStatusMessage().contains("patients from database but only retrieved"));
+
+    }
+
     private PdpClient createClient() {
         PdpClient pdpClient = new PdpClient();
         pdpClient.setClientId("Harry_Potter");
