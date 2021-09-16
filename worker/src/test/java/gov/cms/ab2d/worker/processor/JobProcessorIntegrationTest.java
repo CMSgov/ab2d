@@ -202,6 +202,9 @@ class JobProcessorIntegrationTest {
 
         final List<JobOutput> jobOutputs = processedJob.getJobOutputs();
         assertFalse(jobOutputs.isEmpty());
+
+        // Always generate a contract search event
+        assertFalse(loggerEventRepository.load(ContractSearchEvent.class).isEmpty());
     }
 
     @Test
@@ -216,6 +219,9 @@ class JobProcessorIntegrationTest {
 
         final List<JobOutput> jobOutputs = processedJob.getJobOutputs();
         assertFalse(jobOutputs.isEmpty());
+
+        // Always generate a contract search event
+        assertFalse(loggerEventRepository.load(ContractSearchEvent.class).isEmpty());
     }
 
     @Test
@@ -294,6 +300,9 @@ class JobProcessorIntegrationTest {
                 loggerEventRepository.load(ApiResponseEvent.class),
                 loggerEventRepository.load(ReloadEvent.class)
         ));
+
+        // Even though a job has failed, expect an event to be generated with the progress
+        assertFalse(loggerEventRepository.load(ContractSearchEvent.class).isEmpty());
 
         assertEquals(JobStatus.FAILED, processedJob.getStatus());
         assertEquals("Too many patient records in the job had failures", processedJob.getStatusMessage());

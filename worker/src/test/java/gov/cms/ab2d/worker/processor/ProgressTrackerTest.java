@@ -23,7 +23,7 @@ class ProgressTrackerTest {
         ProgressTracker tracker = ProgressTracker.builder()
                 .jobUuid("JOBID")
                 .failureThreshold(3)
-                .expectedBeneficiaries(12)
+                .patientsExpected(12)
                 .build();
 
         int percDone = tracker.getPercentageCompleted();
@@ -76,7 +76,7 @@ class ProgressTrackerTest {
         ProgressTracker tracker = ProgressTracker.builder()
                 .jobUuid("JOBID")
                 .failureThreshold(3)
-                .expectedBeneficiaries(10)
+                .patientsExpected(10)
                 .build();
 
         int percDone = tracker.getPercentageCompleted();
@@ -100,7 +100,7 @@ class ProgressTrackerTest {
         ProgressTracker tracker = ProgressTracker.builder()
                 .jobUuid("JOBID")
                 .failureThreshold(3)
-                .expectedBeneficiaries(12)
+                .patientsExpected(12)
                 .patientsLoadedCount(12)
                 .build();
 

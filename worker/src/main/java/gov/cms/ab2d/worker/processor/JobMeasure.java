@@ -7,10 +7,10 @@ public enum JobMeasure {
             // It's always an int where sourced, so truncation is fine.
             progressTracker.setFailureThreshold((int) value);
         }
-    }, EXPECTED_BENES() {
+    }, PATIENTS_EXPECTED() {
         @Override
         public void update(ProgressTracker progressTracker, long value) {
-            progressTracker.setExpectedBeneficiaries((int) value);
+            progressTracker.setPatientsExpected((int) value);
         }
     }, META_DATA_PROCESSED() {
         @Override

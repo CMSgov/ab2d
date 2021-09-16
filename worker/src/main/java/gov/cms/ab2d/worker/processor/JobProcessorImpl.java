@@ -149,34 +149,9 @@ public class JobProcessorImpl implements JobProcessor {
         }
     }
 
-    private void persistTrackedJobProgress(Job job, Contract contract) {
+    void verifyTrackedJobProgress(Job job, Contract contract) {
         ProgressTracker progressTracker = jobProgressService.getStatus(job.getJobUuid());
-        if (progressTracker == null) {
-            log.info("Job [{}] - contract [{}] does not have any progress information, skipping persisting tracker",
-                    job.getJobUuid(), contract.getContractNumber());
-            return;
-        }
 
-        int eobFilesCreated = progressTracker.getPatientFailureCount() == 0 ? job.getJobOutputs().size()
-                : job.getJobOutputs().size() - 1;
-
-        // Regardless of whether we pass or fail the basic
-        eventLogger.log(new ContractSearchEvent(getOrganization(job),
-                job.getJobUuid(),
-                contract.getContractNumber(),
-                progressTracker.getExpectedBeneficiaries(),
-                progressTracker.getPatientRequestQueuedCount(),
-                progressTracker.getPatientRequestProcessedCount(),
-                progressTracker.getPatientFailureCount(),
-                progressTracker.getEobsFetchedCount(),
-                progressTracker.getEobsProcessedCount(),
-                eobFilesCreated
-        ));
-    }
-
-    private void verifyTrackedJobProgress(Job job, Contract contract) {
-
-        ProgressTracker progressTracker = jobProgressService.getStatus(job.getJobUuid());
         if (progressTracker == null) {
             log.info("Job [{}] - contract [{}] does not have any progress information, skipping verifying tracker",
                     job.getJobUuid(), contract.getContractNumber());
@@ -184,7 +159,7 @@ public class JobProcessorImpl implements JobProcessor {
         }
 
         // Number in database
-        int expectedPatients = progressTracker.getExpectedBeneficiaries();
+        int expectedPatients = progressTracker.getPatientsExpected();
 
         // Number queued to retrieve
         int queuedPatients = progressTracker.getPatientRequestQueuedCount();
@@ -205,12 +180,38 @@ public class JobProcessorImpl implements JobProcessor {
         }
     }
 
+    void persistTrackedJobProgress(Job job, Contract contract) {
+        ProgressTracker progressTracker = jobProgressService.getStatus(job.getJobUuid());
+
+        if (progressTracker == null) {
+            log.info("Job [{}] - contract [{}] does not have any progress information, skipping persisting tracker",
+                    job.getJobUuid(), contract.getContractNumber());
+            return;
+        }
+
+        int eobFilesCreated = progressTracker.getPatientFailureCount() == 0 ? job.getJobOutputs().size()
+                : job.getJobOutputs().size() - 1;
+
+        // Regardless of whether we pass or fail the basic
+        eventLogger.log(new ContractSearchEvent(getOrganization(job),
+                job.getJobUuid(),
+                contract.getContractNumber(),
+                progressTracker.getPatientsExpected(),
+                progressTracker.getPatientRequestQueuedCount(),
+                progressTracker.getPatientRequestProcessedCount(),
+                progressTracker.getPatientFailureCount(),
+                progressTracker.getEobsFetchedCount(),
+                progressTracker.getEobsProcessedCount(),
+                eobFilesCreated
+        ));
+    }
+
     Map<Long, CoverageSummary> processContractBenes(Job job) {
         Contract contract = job.getContract();
         assert contract != null;
         try {
             int numBenes = coverageDriver.numberOfBeneficiariesToProcess(job);
-            jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.EXPECTED_BENES, numBenes);
+            jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENTS_EXPECTED, numBenes);
             Map<Long, CoverageSummary> retMap = new HashMap<>(numBenes);
 
             CoveragePagingResult result = coverageDriver.pageCoverage(job);

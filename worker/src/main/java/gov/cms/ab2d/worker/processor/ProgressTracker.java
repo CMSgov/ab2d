@@ -24,7 +24,7 @@ public class ProgressTracker {
     private int eobsProcessedCount;
 
     @Setter
-    private int expectedBeneficiaries;
+    private int patientsExpected;
 
     @Setter
     private int failureThreshold;
@@ -69,7 +69,7 @@ public class ProgressTracker {
      * @return number of patients
      */
     public int getTotalCount() {
-        return expectedBeneficiaries;
+        return patientsExpected;
     }
 
     /**
@@ -122,11 +122,11 @@ public class ProgressTracker {
 
     private double getPercentEobsCompleted() {
 
-        if (expectedBeneficiaries == 0) {
+        if (patientsExpected == 0) {
             return 0;
         }
 
-        double percentBenesDonePart = (double) patientRequestProcessedCount / expectedBeneficiaries;
+        double percentBenesDonePart = (double) patientRequestProcessedCount / patientsExpected;
         if (percentBenesDonePart > 1.0) {
             log.error("Percent of beneficiaries done is more than 100%");
             percentBenesDonePart = 1.0;
@@ -146,10 +146,10 @@ public class ProgressTracker {
      */
     public double getPercentMetadataCompleted() {
 
-        if (expectedBeneficiaries == 0) {
+        if (patientsExpected == 0) {
             return 0;
         }
         // This is the total completed threads done over the amount that needs to be done
-        return ((double) this.patientsLoadedCount) / this.expectedBeneficiaries;
+        return ((double) this.patientsLoadedCount) / this.patientsExpected;
     }
 }
