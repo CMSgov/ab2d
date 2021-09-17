@@ -8,10 +8,10 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.EventUtils;
-import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ContractSearchEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
+import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverException;
 import gov.cms.ab2d.worker.service.FileService;
@@ -38,6 +38,7 @@ import java.util.concurrent.ExecutionException;
 import static gov.cms.ab2d.common.model.JobStatus.FAILED;
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.common.util.EventUtils.getOrganization;
+import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PROD_LIST;
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.NDJSON;
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.ZIP;
 
@@ -100,7 +101,7 @@ public class JobProcessorImpl implements JobProcessor {
             // Log exception to relevant loggers
             String contract = job.getContract() != null ? job.getContract().getContractNumber() : "empty";
             String message = String.format("Job %s failed for contract #%s because %s", jobUuid, contract, e.getMessage());
-            eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, FAILED, message), Ab2dEnvironment.PROD_LIST);
+            eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, FAILED, message), PROD_LIST);
             log.error("Unexpected exception executing job {}", e.getMessage());
 
             // Update database status
@@ -170,13 +171,13 @@ public class JobProcessorImpl implements JobProcessor {
         if (expectedPatients != queuedPatients) {
             String alertMessage = String.format("[%s] expected beneficiaries (%d) does not match queued beneficiaries (%d)",
                     job.getJobUuid(), expectedPatients, queuedPatients);
-            eventLogger.alert(alertMessage, Ab2dEnvironment.PROD_LIST);
+            eventLogger.alert(alertMessage, PROD_LIST);
         }
 
         if (expectedPatients != processedPatients) {
             String alertMessage = String.format("[%s] expected beneficiaries (%d) does not match processed beneficiaries (%d)",
                     job.getJobUuid(), expectedPatients, queuedPatients);
-            eventLogger.alert(alertMessage, Ab2dEnvironment.PROD_LIST);
+            eventLogger.alert(alertMessage, PROD_LIST);
         }
     }
 
@@ -346,7 +347,18 @@ public class JobProcessorImpl implements JobProcessor {
      * @param job - The job to set as complete
      */
     private void completeJob(Job job) {
-        eventLogger.log(EventUtils.getJobChangeEvent(job, SUCCESSFUL, "Job Finished"));
+        ProgressTracker progressTracker = jobProgressService.getStatus(job.getJobUuid());
+        String jobFinishedMessage = String.format("Contract %s processed " +
+                "%d patients generating %d eobs and %d files (including the error file if any)",
+                job.getContract().getContractNumber(), progressTracker.getPatientRequestProcessedCount(),
+                progressTracker.getEobsProcessedCount(),
+                job.getJobOutputs().size());
+
+        // In all environments log to database and or Kinesis
+        // In prod additionally log to Slack as an alert
+        JobStatusChangeEvent statusEvent = EventUtils.getJobChangeEvent(job, SUCCESSFUL, jobFinishedMessage);
+        eventLogger.logAndAlert(statusEvent, PROD_LIST);
+
         job.setStatus(SUCCESSFUL);
         job.setStatusMessage("100%");
         job.setProgress(100);

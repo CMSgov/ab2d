@@ -5,6 +5,7 @@ import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ContractSearchEvent;
+import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverStub;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.service.JobChannelService;
@@ -26,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 import static java.lang.Boolean.TRUE;
 import static org.junit.jupiter.api.Assertions.*;
@@ -113,6 +115,9 @@ class JobProcessorUnitTest {
         verify(fileService).createDirectory(any());
         verify(coverageDriver).pageCoverage(any(Job.class));
         verify(coverageDriver).pageCoverage(any(CoveragePagingRequest.class));
+
+        // Successful searches trigger an alert to slack
+        verify(eventLogger).logAndAlert(any(JobStatusChangeEvent.class), any(List.class));
     }
 
     @Test
@@ -244,7 +249,8 @@ class JobProcessorUnitTest {
         verify(eventLogger, times(1)).log(any(ContractSearchEvent.class));
 
         // Status is pulled after finishing loading benes
-        verify(jobProgressService, times(3)).getStatus(any());
+        // Status is also pulled when job succeeds
+        verify(jobProgressService, times(4)).getStatus(any());
     }
 
     @Test
