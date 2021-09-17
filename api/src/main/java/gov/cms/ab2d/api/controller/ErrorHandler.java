@@ -44,6 +44,12 @@ import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
 import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 
+/**
+ * Don't change exception classes without updating alerts in Splunk. Splunk alerts rely on the classname to filter
+ * for these exceptions.
+ *
+ * TODO: in the future use an enum instead to make it more consistent
+ */
 @ControllerAdvice
 @Slf4j
 public class ErrorHandler extends ResponseEntityExceptionHandler {
