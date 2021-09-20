@@ -20,7 +20,7 @@ public class JobProgressServiceImpl implements JobProgressService {
 
     private final JobRepository jobRepository;
 
-    private final Map<String, ProgressTracker>  progressTrackerMap = new HashMap<>(89);
+    private final Map<String, ProgressTracker> progressTrackerMap = new HashMap<>(89);
 
     public JobProgressServiceImpl(JobRepository jobRepository) {
         this.jobRepository = jobRepository;
@@ -31,6 +31,8 @@ public class JobProgressServiceImpl implements JobProgressService {
         ProgressTracker progressTracker = getOrCreateTracker(jobUuid);
 
         measure.update(progressTracker, value);
+
+        updateProgress(progressTracker);
     }
 
     @Override
@@ -41,11 +43,10 @@ public class JobProgressServiceImpl implements JobProgressService {
     /**
      * Update the database or log with the % complete on the job periodically
      *
-     * @param jobUuid unique id of the job to update the progress for
+     * @param progressTracker progressTracker
      */
 
-    public void updateProgress(String jobUuid) {
-        ProgressTracker progressTracker = getOrCreateTracker(jobUuid);
+    private void updateProgress(ProgressTracker progressTracker) {
         if (progressTracker.isTimeToUpdateDatabase(reportProgressDbFrequency)) {
             final int percentageCompleted = progressTracker.getPercentageCompleted();
 

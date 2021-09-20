@@ -170,7 +170,6 @@ public class ContractProcessorImpl implements ContractProcessor {
 
                 // Update progress periodically as well
                 this.jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUEST_QUEUED, numQueued);
-                jobProgressService.updateProgress(jobUuid);
 
                 numQueued = 0;
 
@@ -185,8 +184,6 @@ public class ContractProcessorImpl implements ContractProcessor {
         }
 
         this.jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUEST_QUEUED, numQueued);
-        jobProgressService.updateProgress(jobUuid);
-
     }
 
     /**
@@ -195,8 +192,8 @@ public class ContractProcessorImpl implements ContractProcessor {
      * On using new-relic tokens with async calls
      * See https://docs.newrelic.com/docs/agents/java-agent/async-instrumentation/java-agent-api-asynchronous-applications
      *
-     * @param version      - the FHIR version to search
-     * @param patient      - process to process
+     * @param version - the FHIR version to search
+     * @param patient - process to process
      * @param jobData - the contract data information
      * @return a Future<EobSearchResult>
      */
@@ -302,8 +299,8 @@ public class ContractProcessorImpl implements ContractProcessor {
      * process the future that is marked as done.
      * On doing a get(), if an exception is thrown, analyze it to decide whether to stop the batch or not.
      *
-     * @param contractData    - standard contract data
-     * @param future          - a specific future
+     * @param contractData - standard contract data
+     * @param future       - a specific future
      */
     @Trace
     private EobSearchResult processFuture(ContractData contractData, ProgressTrackerUpdate update, Future<EobSearchResult> future) {
@@ -418,8 +415,6 @@ public class ContractProcessorImpl implements ContractProcessor {
                 updateTracker.getPatientRequestProcessedCount());
         jobChannelService.sendUpdate(jobUuid, JobMeasure.EOBS_FETCHED,
                 updateTracker.getEobsFetchedCount());
-
-        jobProgressService.updateProgress(jobUuid);
     }
 
     private void checkErrorThreshold(ContractData contractData) {
@@ -439,7 +434,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      * From a file, return the JobOutput object
      *
      * @param streamOutput - the output file from the job
-     * @param isError    - if there was an error
+     * @param isError      - if there was an error
      * @return - the job output object
      */
     @Trace(dispatcher = true)
