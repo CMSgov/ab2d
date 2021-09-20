@@ -27,27 +27,25 @@ public class JobProgressServiceImpl implements JobProgressService {
     }
 
     @Override
-    public void addMeasure(String jobId, JobMeasure measure, long value) {
-        ProgressTracker progressTracker = progressTrackerMap.computeIfAbsent(jobId, (k) ->
-                                                        ProgressTracker.builder().jobUuid(jobId).build());
-        measure.update(progressTracker, value);
+    public void addMeasure(String jobUuid, JobMeasure measure, long value) {
+        ProgressTracker progressTracker = getOrCreateTracker(jobUuid);
 
-        // update the progress in the DB & logs periodically
-        trackProgress(progressTracker);
+        measure.update(progressTracker, value);
     }
 
     @Override
-    public ProgressTracker getStatus(String jobId) {
-        return progressTrackerMap.get(jobId);
+    public ProgressTracker getStatus(String jobUuid) {
+        return progressTrackerMap.get(jobUuid);
     }
 
     /**
      * Update the database or log with the % complete on the job periodically
      *
-     * @param progressTracker - the progress tracker
+     * @param jobUuid unique id of the job to update the progress for
      */
 
-    private void trackProgress(ProgressTracker progressTracker) {
+    public void updateProgress(String jobUuid) {
+        ProgressTracker progressTracker = getOrCreateTracker(jobUuid);
         if (progressTracker.isTimeToUpdateDatabase(reportProgressDbFrequency)) {
             final int percentageCompleted = progressTracker.getPercentageCompleted();
 
@@ -67,4 +65,8 @@ public class JobProgressServiceImpl implements JobProgressService {
         }
     }
 
+    private ProgressTracker getOrCreateTracker(String jobUuid) {
+        return progressTrackerMap.computeIfAbsent(jobUuid, (k) ->
+                ProgressTracker.builder().jobUuid(jobUuid).build());
+    }
 }

@@ -10,25 +10,25 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ProgressTracker {
 
-    private final String jobUuid;
 
     // Related to determining whether the beneficiary search is complete
 
     // The ratio between the beneficiary EOF search time in the job vs looking up contract beneficiaries
     public static final double EST_BEN_SEARCH_JOB_PERCENTAGE = 0.7;
 
+    private final String jobUuid;
+
+    @Setter
+    private int patientsExpected;
     private int patientsLoadedCount;
     private int patientRequestQueuedCount;
     private int patientRequestProcessedCount;
+    private int patientFailureCount;
     private int eobsFetchedCount;
     private int eobsProcessedCount;
 
     @Setter
-    private int patientsExpected;
-
-    @Setter
     private int failureThreshold;
-    private int patientFailureCount;
 
     @Setter
     private int lastDbUpdateCount;
@@ -135,8 +135,8 @@ public class ProgressTracker {
         return  percentBenesDonePart * EST_BEN_SEARCH_JOB_PERCENTAGE;
     }
 
-    public boolean isErrorCountBelowThreshold() {
-        return (patientFailureCount * 100) / getTotalCount() < failureThreshold;
+    public boolean isErrorThresholdExceeded() {
+        return (patientFailureCount * 100) / getTotalCount() >= failureThreshold;
     }
 
     /**
