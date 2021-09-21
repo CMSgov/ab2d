@@ -52,7 +52,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
         this.coverageMapping = coverageMapping;
         this.bfdClient = bfdClient;
         this.completed = new AtomicBoolean(false);
-        this.year = getCorrectedYear(coverageMapping.getPeriod().getYear());
+        this.year = getCorrectedYear(coverageMapping.getContract().getContractNumber(), coverageMapping.getPeriod().getYear());
         this.version = version;
     }
 
@@ -241,11 +241,11 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
      * year so we're using this to prevent us from getting no beneficiaries.
      *
      * @param coverageYear - the specified coverage year in the coverage search
-     * @return if we're in sandbox, return the synthetic data year
+     * @return if we're in sandbox, return the synthetic data year unless it's the new Synthia data
      */
-    private int getCorrectedYear(int coverageYear) {
+    private int getCorrectedYear(String contract, int coverageYear) {
         // Use specific year for synthetic data if in a sandbox environment
-        if (skipBillablePeriodCheck) {
+        if (contract.startsWith("Z") && !contract.startsWith("Z1")) {
             return SYNTHETIC_DATA_YEAR;
         }
         return coverageYear;
