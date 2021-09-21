@@ -20,33 +20,34 @@ public class JobProgressServiceImpl implements JobProgressService {
 
     private final JobRepository jobRepository;
 
-    private final Map<String, ProgressTracker> progressTrackerMap = new HashMap<>(89);
+    private final Map<String, ProgressTracker>  progressTrackerMap = new HashMap<>(89);
 
     public JobProgressServiceImpl(JobRepository jobRepository) {
         this.jobRepository = jobRepository;
     }
 
     @Override
-    public void addMeasure(String jobUuid, JobMeasure measure, long value) {
-        ProgressTracker progressTracker = getOrCreateTracker(jobUuid);
-
+    public void addMeasure(String jobId, JobMeasure measure, long value) {
+        ProgressTracker progressTracker = progressTrackerMap.computeIfAbsent(jobId, (k) ->
+                                                        ProgressTracker.builder().jobUuid(jobId).build());
         measure.update(progressTracker, value);
 
-        updateProgress(progressTracker);
+        // update the progress in the DB & logs periodically
+        trackProgress(progressTracker);
     }
 
     @Override
-    public ProgressTracker getStatus(String jobUuid) {
-        return progressTrackerMap.get(jobUuid);
+    public ProgressTracker getStatus(String jobId) {
+        return progressTrackerMap.get(jobId);
     }
 
     /**
      * Update the database or log with the % complete on the job periodically
      *
-     * @param progressTracker progressTracker
+     * @param progressTracker - the progress tracker
      */
 
-    private void updateProgress(ProgressTracker progressTracker) {
+    private void trackProgress(ProgressTracker progressTracker) {
         if (progressTracker.isTimeToUpdateDatabase(reportProgressDbFrequency)) {
             final int percentageCompleted = progressTracker.getPercentageCompleted();
 
@@ -66,8 +67,4 @@ public class JobProgressServiceImpl implements JobProgressService {
         }
     }
 
-    private ProgressTracker getOrCreateTracker(String jobUuid) {
-        return progressTrackerMap.computeIfAbsent(jobUuid, (k) ->
-                ProgressTracker.builder().jobUuid(jobUuid).build());
-    }
 }
