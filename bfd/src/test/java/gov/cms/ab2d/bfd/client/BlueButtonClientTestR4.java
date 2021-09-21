@@ -1,7 +1,6 @@
 package gov.cms.ab2d.bfd.client;
 
 import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Extension;
 import org.hl7.fhir.r4.model.Identifier;
@@ -14,10 +13,8 @@ import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.Parameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -26,8 +23,9 @@ import java.io.IOException;
 import java.util.List;
 
 import static gov.cms.ab2d.bfd.client.MockUtils.getRawJson;
-import static org.junit.jupiter.api.Assertions.*;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.context.support.TestPropertySourceUtils.addInlinedPropertiesToEnvironment;
 
 /**
  * Credits: most of the code in this class has been adopted from https://github.com/CMSgov/dpc-app
@@ -35,7 +33,7 @@ import static gov.cms.ab2d.fhir.FhirVersion.R4;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = SpringBootApp.class)
 @ActiveProfiles("test")
-@ContextConfiguration(classes = { BlueButtonClientTestR4.TestConfig.class })
+@ContextConfiguration(initializers = {MockUtils.PropertyOverrider.class, BlueButtonClientTestR4.PropertyOverrider.class})
 public class BlueButtonClientTestR4 {
     // A random example patient (Jane Doe)
     private static final Long TEST_PATIENT_ID = -20140000010000L;
@@ -54,17 +52,12 @@ public class BlueButtonClientTestR4 {
 
     private static ClientAndServer mockServer;
 
-    @Profile("test")
-    @Configuration
-    public static class TestConfig {
+    public static class PropertyOverrider implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
-        @Autowired
-        private HttpClient client;
-
-        @Bean
-        @Primary
-        public BfdClientVersions clientVersions() {
-            return new BfdClientVersions("http://localhost:" + MOCK_PORT_V2, client);
+        @Override
+        public void initialize(ConfigurableApplicationContext applicationContext) {
+            String baseUrl = "bfd.url=http://localhost:" + MOCK_PORT_V2;
+            addInlinedPropertiesToEnvironment(applicationContext, baseUrl);
         }
     }
 
@@ -114,7 +107,7 @@ public class BlueButtonClientTestR4 {
         assertNotNull(response, "The demo patient should have a non-null EOB bundle");
         assertNotNull(response.getLink(org.hl7.fhir.r4.model.Bundle.LINK_NEXT),
                 "Should have no next link since all the resources are in the bundle");
-     }
+    }
 
     @Test
     public void shouldReturnBundleContainingOnlyEOBs() {

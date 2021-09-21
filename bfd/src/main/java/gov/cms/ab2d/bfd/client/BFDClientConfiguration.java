@@ -3,7 +3,6 @@ package gov.cms.ab2d.bfd.client;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContexts;
 import org.springframework.beans.BeanInstantiationException;
@@ -11,11 +10,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.util.ResourceUtils;
 
 import javax.net.ssl.SSLContext;
-import java.io.FileInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.concurrent.TimeUnit;
@@ -27,8 +27,6 @@ import java.util.concurrent.TimeUnit;
 @PropertySource("classpath:application.bfd.properties")
 @Slf4j
 public class BFDClientConfiguration {
-
-    public static final String JKS = "JKS";
 
     @Value("${bfd.keystore.location}")
     private String keystorePath;
@@ -54,58 +52,44 @@ public class BFDClientConfiguration {
     @Value("${bfd.http.connTTL}")
     private int connectionTTL;
 
-    @Bean
-    public KeyStore bfdKeyStore() {
-        // First try to load the keystore from the classpath, if that doesn't work, try the filesystem
-        try (InputStream keyStoreStream = getKeyStoreStream()) {
-            KeyStore keyStore = KeyStore.getInstance(JKS);
-
-            // keyStore.load will NOT throw an exception in case of a null keystore stream :shrug:
-            keyStore.load(keyStoreStream, keystorePassword.toCharArray());
-            return keyStore;
-        } catch (IOException | KeyStoreException | NoSuchAlgorithmException | CertificateException ex) {
-            log.error(ex.getMessage(), ex);
-            throw new BeanInstantiationException(KeyStore.class, ex.getMessage());
-        }
-    }
-
-    private InputStream getKeyStoreStream() throws IOException {
-        InputStream keyStoreStream = this.getClass().getResourceAsStream(keystorePath);
-        return keyStoreStream != null ? keyStoreStream : new FileInputStream(keystorePath);
-    }
-
     /**
-     * Borrowed from https://github.com/CMSgov/dpc-app
-     *
-     * @param keyStore - the keystore
+     * Get http client alloweed to connect to BFD domain only. The domain is limited by Mutual TLS cert verification.
      * @return the HTTP client
      */
     @Bean
-    public HttpClient bfdHttpClient(KeyStore keyStore) {
-        return buildMutualTlsClient(keyStore, keystorePassword.toCharArray());
+    public HttpClient bfdHttpClient() {
+
+        try {
+            File keyStoreFile = new File(keystorePath);
+            if (!keyStoreFile.exists()) {
+                keyStoreFile = ResourceUtils.getFile(keystorePath);
+            }
+
+            return buildMutualTlsClient(keyStoreFile, keystorePassword.toCharArray());
+        } catch (FileNotFoundException fnf) {
+            throw new BeanInstantiationException(HttpClient.class, "Keystore file does not exist");
+        }
     }
 
     /**
      * Helper function to build a special {@link HttpClient} capable of authenticating with the
      * Blue Button server using a client TLS certificate
-     * Borrowed from https://github.com/CMSgov/dpc-app.
      *
-     * @param keyStore     {@link KeyStore} containing, at a minimum, the client tls certificate
-     *                     and private key
+     * @param keystoreFile file containing key and trust material
      * @param keyStorePass password for keystore (default: "changeit")
      * @return {@link HttpClient} compatible with HAPI FHIR TLS client
      */
-    private HttpClient buildMutualTlsClient(KeyStore keyStore, char[] keyStorePass) {
+    private HttpClient buildMutualTlsClient(File keystoreFile, char[] keyStorePass) {
         final SSLContext sslContext;
 
         try {
             // BlueButton FHIR servers have a self-signed cert and require a client cert
             sslContext = SSLContexts.custom()
-                    .loadKeyMaterial(keyStore, keyStorePass)
-                    .loadTrustMaterial(keyStore, new TrustSelfSignedStrategy())
+                    .loadKeyMaterial(keystoreFile, keyStorePass, keyStorePass)
+                    .loadTrustMaterial(keystoreFile, keyStorePass)
                     .build();
 
-        } catch (KeyManagementException | NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException ex) {
+        } catch (IOException | CertificateException | KeyManagementException | NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException ex) {
             log.error(ex.getMessage());
             throw new BeanInstantiationException(KeyStore.class, ex.getMessage());
         }

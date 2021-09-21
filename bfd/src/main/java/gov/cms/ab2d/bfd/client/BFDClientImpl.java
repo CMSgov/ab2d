@@ -205,13 +205,17 @@ public class BFDClientImpl implements BFDClient {
     )
     public IBaseConformance capabilityStatement(FhirVersion version) {
         try {
-            Class<? extends IBaseConformance> resource = version.getCapabilityClass();
-            return bfdClientVersions.getClient(version).capabilities()
-                .ofType(resource)
-                .execute();
+            return getCapabilityStatement(version);
         } catch (Exception ex) {
             return null;
         }
+    }
+
+    IBaseConformance getCapabilityStatement(FhirVersion version) {
+        Class<? extends IBaseConformance> resource = version.getCapabilityClass();
+        return bfdClientVersions.getClient(version).capabilities()
+                .ofType(resource)
+                .execute();
     }
 
     private String createMonthParameter(int month) {
