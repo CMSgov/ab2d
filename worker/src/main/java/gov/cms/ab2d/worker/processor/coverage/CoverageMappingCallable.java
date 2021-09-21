@@ -240,8 +240,9 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
      * We want to find results in the sandbox but all the data in the sandbox is for an invalid
      * year so we're using this to prevent us from getting no beneficiaries.
      *
+     * @param contract - the specified contract number
      * @param coverageYear - the specified coverage year in the coverage search
-     * @return if we're in sandbox, return the synthetic data year unless it's the new Synthia data
+     * @return if we're in sandbox, return the synthetic data year unless it's the new Synthea data
      */
     private int getCorrectedYear(String contract, int coverageYear) {
         // Use specific year for synthetic data if in a sandbox environment
