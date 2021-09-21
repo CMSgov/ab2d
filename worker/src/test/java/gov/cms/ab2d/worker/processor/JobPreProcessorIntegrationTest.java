@@ -106,7 +106,7 @@ class JobPreProcessorIntegrationTest {
                 loggerEventRepository.load(ApiRequestEvent.class),
                 loggerEventRepository.load(ApiResponseEvent.class),
                 loggerEventRepository.load(ReloadEvent.class),
-                loggerEventRepository.load(ContractBeneSearchEvent.class),
+                loggerEventRepository.load(ContractSearchEvent.class),
                 loggerEventRepository.load(ErrorEvent.class),
                 loggerEventRepository.load(FileEvent.class)));
         loggerEventRepository.delete();
@@ -146,7 +146,7 @@ class JobPreProcessorIntegrationTest {
                 loggerEventRepository.load(ApiRequestEvent.class),
                 loggerEventRepository.load(ApiResponseEvent.class),
                 loggerEventRepository.load(ReloadEvent.class),
-                loggerEventRepository.load(ContractBeneSearchEvent.class),
+                loggerEventRepository.load(ContractSearchEvent.class),
                 loggerEventRepository.load(ErrorEvent.class),
                 loggerEventRepository.load(FileEvent.class)));
         loggerEventRepository.delete();

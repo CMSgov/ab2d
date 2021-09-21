@@ -117,7 +117,7 @@ public class AdminAPIMaintenanceModeTests {
         assertEquals(ReloadEvent.FileType.PROPERTIES, reloadEvent.getFileType());
 
         assertTrue(UtilMethods.allEmpty(
-                loggerEventRepository.load(ContractBeneSearchEvent.class),
+                loggerEventRepository.load(ContractSearchEvent.class),
                 loggerEventRepository.load(ErrorEvent.class),
                 loggerEventRepository.load(FileEvent.class),
                 loggerEventRepository.load(JobStatusChangeEvent.class)

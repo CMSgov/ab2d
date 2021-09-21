@@ -39,7 +39,7 @@ public class SqlEventLogger implements EventLogger {
             }
             mapper.log(event);
         } catch (Exception ex) {
-            log.error("Error in logging event " + event.toString());
+            log.error("Error in logging event " + event);
         }
     }
 
