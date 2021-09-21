@@ -16,6 +16,8 @@ import javax.net.ssl.SSLContext;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.concurrent.TimeUnit;
@@ -62,11 +64,18 @@ public class BFDClientConfiguration {
         try {
             File keyStoreFile = new File(keystorePath);
             if (!keyStoreFile.exists()) {
-                keyStoreFile = ResourceUtils.getFile(keystorePath);
+                URL resource = BFDClientConfiguration.class.getResource(keystorePath);
+                if (resource != null) {
+                    keyStoreFile = new File(resource.toURI());
+                }
+            }
+
+            if (!keyStoreFile.exists()) {
+                throw new BeanInstantiationException(HttpClient.class, "Keystore file does not exist");
             }
 
             return buildMutualTlsClient(keyStoreFile, keystorePassword.toCharArray());
-        } catch (FileNotFoundException fnf) {
+        } catch (URISyntaxException fnf) {
             throw new BeanInstantiationException(HttpClient.class, "Keystore file does not exist");
         }
     }

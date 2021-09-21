@@ -21,7 +21,10 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import javax.net.ssl.SSLHandshakeException;
+import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.List;
 
 import static gov.cms.ab2d.bfd.client.MockUtils.getRawJson;
@@ -31,7 +34,7 @@ import static org.springframework.test.context.support.TestPropertySourceUtils.a
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = SpringBootApp.class)
-@ContextConfiguration(initializers = {MockUtils.PropertyOverrider.class, BFDClientConfigurationTest.PropertyOverrider.class})
+@ContextConfiguration(initializers = {BFDClientConfigurationTest.PropertyOverrider.class})
 public class BFDClientConfigurationTest {
 
     @Autowired
@@ -66,9 +69,24 @@ public class BFDClientConfigurationTest {
                 getRawJson(METADATA_PATH), List
                         .of(), MOCK_PORT_V1);
 
+
+        URL keyUrl = BFDClientConfigurationTest.class.getResource("/mitm_bfd_cert.key");
+        if (keyUrl == null) {
+            fail("could not pull mitm private key for tests");
+        }
+
+        URL certUrl = BFDClientConfigurationTest.class.getResource("/mitm_bfd_cert.pem");
+        if (certUrl == null) {
+            fail("could not pull mitm cert for tests");
+        }
+
         // MITM attack private key and cert with same common name as BFD
-        ConfigurationProperties.certificateAuthorityPrivateKey(MockUtils.MITM_KEY);
-        ConfigurationProperties.certificateAuthorityCertificate(MockUtils.MITM_PEM);
+        try {
+            ConfigurationProperties.certificateAuthorityPrivateKey(new File(keyUrl.toURI()).toString());
+            ConfigurationProperties.certificateAuthorityCertificate(new File(certUrl.toURI()).toString());
+        } catch (URISyntaxException se) {
+            fail("could not convert resource url to file path");
+        }
     }
 
     @AfterAll

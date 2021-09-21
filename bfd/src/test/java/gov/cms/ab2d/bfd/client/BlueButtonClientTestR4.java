@@ -33,7 +33,7 @@ import static org.springframework.test.context.support.TestPropertySourceUtils.a
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = SpringBootApp.class)
 @ActiveProfiles("test")
-@ContextConfiguration(initializers = {MockUtils.PropertyOverrider.class, BlueButtonClientTestR4.PropertyOverrider.class})
+@ContextConfiguration(initializers = {BlueButtonClientTestR4.PropertyOverrider.class})
 public class BlueButtonClientTestR4 {
     // A random example patient (Jane Doe)
     private static final Long TEST_PATIENT_ID = -20140000010000L;
