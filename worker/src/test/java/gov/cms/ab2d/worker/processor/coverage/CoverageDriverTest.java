@@ -129,7 +129,7 @@ class CoverageDriverTest {
         taskExecutor.setCorePoolSize(3);
         taskExecutor.initialize();
 
-        processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS, false);
+        processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS);
         driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesService, processor, searchLock);
     }
 

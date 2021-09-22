@@ -36,7 +36,6 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
 
     private final int year;
 
-    private final boolean skipBillablePeriodCheck;
     private final FhirVersion version;
 
     private int missingBeneId;
@@ -46,9 +45,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     private int pastReferenceYear;
     private final Map<Integer, Integer> referenceYears = new HashMap<>();
 
-    public CoverageMappingCallable(FhirVersion version, CoverageMapping coverageMapping, BFDClient bfdClient,
-                                   boolean skipBillablePeriodCheck) {
-        this.skipBillablePeriodCheck = skipBillablePeriodCheck;
+    public CoverageMappingCallable(FhirVersion version, CoverageMapping coverageMapping, BFDClient bfdClient) {
         this.coverageMapping = coverageMapping;
         this.bfdClient = bfdClient;
         this.completed = new AtomicBoolean(false);
