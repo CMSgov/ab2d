@@ -287,11 +287,4 @@ public class DataSetup {
 
         return savePdpClient(clientdId, contract, clientRoles);
     }
-
-    public void createRole(String sponsorRole) {
-        Role role = new Role();
-        role.setName(sponsorRole);
-        roleRepository.save(role);
-        queueForCleanup(role);
-    }
 }

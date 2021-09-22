@@ -53,11 +53,6 @@ class PdpClientServiceTest {
     private static final String ENABLED_CLIENT = "enabled@test.com";
     private static final String DISABLED_CLIENT = "disabled@test.com";
 
-    @BeforeEach
-    public void setup() {
-        dataSetup.createRole(SPONSOR_ROLE);
-    }
-
     @AfterEach
     public void teardown() {
         dataSetup.cleanup();

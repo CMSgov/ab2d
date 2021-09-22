@@ -105,8 +105,6 @@ class CoverageDriverTest {
         february = dataSetup.createCoveragePeriod(contract, 2, 2020);
         march = dataSetup.createCoveragePeriod(contract, 3, 2020);
 
-        dataSetup.createRole(SPONSOR_ROLE);
-
         PdpClientDTO contractPdpClient = createClient(contract, "TST-12", SPONSOR_ROLE);
         pdpClientService.createClient(contractPdpClient);
         dataSetup.queueForCleanup(pdpClientService.getClientById("TST-12"));
