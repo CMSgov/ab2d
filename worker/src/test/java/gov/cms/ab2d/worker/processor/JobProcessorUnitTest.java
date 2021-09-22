@@ -4,6 +4,8 @@ import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.eventlogger.events.ContractSearchEvent;
+import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverStub;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.service.JobChannelService;
@@ -25,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 import static java.lang.Boolean.TRUE;
 import static org.junit.jupiter.api.Assertions.*;
@@ -34,7 +37,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class JobProcessorUnitTest {
     // class under test
-    private JobProcessor cut;
+    private JobProcessorImpl cut;
 
     private static final String jobUuid = "6d08bf08-f926-4e19-8d89-ad67ef89f17e";
 
@@ -47,17 +50,19 @@ class JobProcessorUnitTest {
     @Mock private LogManager eventLogger;
 
     private CoverageDriverStub coverageDriver;
+    private JobProgressService jobProgressService;
+    private JobChannelService jobChannelService;
     private Job job;
 
     @BeforeEach
     void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
-        JobProgressService jobProgressService = new JobProgressServiceImpl(jobRepository);
-        JobChannelService jobChannelService = new JobChannelServiceImpl(jobProgressService);
+        jobProgressService = spy(new JobProgressServiceImpl(jobRepository));
+        jobChannelService = new JobChannelServiceImpl(jobProgressService);
 
         coverageDriver = spy(new CoverageDriverStub(10, 20));
-        cut = new JobProcessorImpl(
+        cut = spy(new JobProcessorImpl(
                 fileService,
                 jobChannelService,
                 jobProgressService,
@@ -66,7 +71,7 @@ class JobProcessorUnitTest {
                 contractProcessor,
                 coverageDriver,
                 eventLogger
-        );
+        ));
 
         ReflectionTestUtils.setField(cut, "efsMount", efsMountTmpDir.toString());
 
@@ -79,7 +84,7 @@ class JobProcessorUnitTest {
         final Path outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
         final Path outputDir = Files.createDirectories(outputDirPath);
 
-        when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
+        lenient().when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
         lenient().when(fileService.createDirectory(any(Path.class))).thenReturn(outputDir);
     }
 
@@ -98,8 +103,6 @@ class JobProcessorUnitTest {
     @Test
     @DisplayName("When client belongs to a parent sponsor, contracts for the children sponsors are processed")
     void whenTheClientBelongsToParent_ChildContractsAreProcessed() {
-        job.getPdpClient();
-
         var processedJob = cut.process(job.getJobUuid());
 
         assertEquals(JobStatus.SUCCESSFUL, processedJob.getStatus());
@@ -112,6 +115,9 @@ class JobProcessorUnitTest {
         verify(fileService).createDirectory(any());
         verify(coverageDriver).pageCoverage(any(Job.class));
         verify(coverageDriver).pageCoverage(any(CoveragePagingRequest.class));
+
+        // Successful searches trigger an alert to slack
+        verify(eventLogger).logAndAlert(any(JobStatusChangeEvent.class), any(List.class));
     }
 
     @Test
@@ -189,6 +195,73 @@ class JobProcessorUnitTest {
         verify(fileService).createDirectory(any());
         verify(coverageDriver, never()).pageCoverage(any(Job.class));
         verify(eventLogger, times(1)).logAndAlert(any(), any());
+    }
+
+    @Test
+    @DisplayName("When verifying that progress tracker numbers match, then do not alert")
+    void whenProgressTrackerVerificationNormal_thenNoAlerts() {
+        jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENTS_EXPECTED, 10);
+        jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENT_REQUEST_QUEUED, 10);
+        jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENT_REQUESTS_PROCESSED, 10);
+
+        cut.verifyTrackedJobProgress(job, job.getContract());
+        verify(eventLogger, never()).alert(anyString(), any());
+    }
+
+    @Test
+    @DisplayName("When verifying that progress tracker numbers do not match, then alert")
+    void whenProgressTrackerVerificationFails_thenAlerts() {
+
+        jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENTS_EXPECTED, 10);
+        jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENT_REQUEST_QUEUED, 9);
+        jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENT_REQUESTS_PROCESSED, 9);
+
+        cut.verifyTrackedJobProgress(job, job.getContract());
+        verify(eventLogger, times(2)).alert(anyString(), any());
+    }
+
+
+
+    @Test
+    @DisplayName("When job fails, persistence of progress tracker occurs")
+    void whenJobThrowsException_thenProgressIsLogged() {
+        when(contractProcessor.process(any(), any(), any())).thenThrow(RuntimeException.class);
+
+        var processedJob = cut.process(job.getJobUuid());
+
+        assertEquals(JobStatus.FAILED, processedJob.getStatus());
+
+        verify(cut, times(1)).persistTrackedJobProgress(any(), any());
+
+        // Status is pulled after finishing loading benes
+        verify(jobProgressService, times(2)).getStatus(any());
+    }
+
+    @Test
+    @DisplayName("When job succeeds, verification and persistence of progress tracker occurs")
+    void whenJobSucceeds_thenProgressIsVerified() {
+        var processedJob = cut.process(job.getJobUuid());
+
+        assertEquals(JobStatus.SUCCESSFUL, processedJob.getStatus());
+
+        verify(cut, times(1)).verifyTrackedJobProgress(any(), any());
+        verify(cut, times(1)).persistTrackedJobProgress(any(), any());
+        verify(eventLogger, times(1)).log(any(ContractSearchEvent.class));
+
+        // Status is pulled after finishing loading benes
+        // Status is also pulled when job succeeds
+        verify(jobProgressService, times(4)).getStatus(any());
+    }
+
+    @Test
+    @DisplayName("When contract benes loaded doesn't match expected, fail immediately")
+    void whenBenesLoadedMismatch_thenFailJob() {
+        when(coverageDriver.numberOfBeneficiariesToProcess(any())).thenReturn(1);
+
+        var processedJob = cut.process(job.getJobUuid());
+        assertEquals(JobStatus.FAILED, processedJob.getStatus());
+        assertTrue(processedJob.getStatusMessage().contains("patients from database but only retrieved"));
+
     }
 
     private PdpClient createClient() {

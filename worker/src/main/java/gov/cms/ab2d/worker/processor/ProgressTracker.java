@@ -10,24 +10,25 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ProgressTracker {
 
-    private final String jobUuid;
 
     // Related to determining whether the beneficiary search is complete
 
     // The ratio between the beneficiary EOF search time in the job vs looking up contract beneficiaries
     public static final double EST_BEN_SEARCH_JOB_PERCENTAGE = 0.7;
 
-    private int metadataProcessedCount;
+    private final String jobUuid;
+
+    @Setter
+    private int patientsExpected;
+    private int patientsLoadedCount;
     private int patientRequestQueuedCount;
     private int patientRequestProcessedCount;
+    private int patientFailureCount;
+    private int eobsFetchedCount;
     private int eobsProcessedCount;
 
     @Setter
-    private int expectedBeneficiaries;
-
-    @Setter
     private int failureThreshold;
-    private int failureCount;
 
     @Setter
     private int lastDbUpdateCount;
@@ -46,16 +47,20 @@ public class ProgressTracker {
         patientRequestProcessedCount += value;
     }
 
-    public void addProcessedCount(int numProcessed) {
+    public void addEobFetchedCount(int numFetched) {
+        eobsFetchedCount += numFetched;
+    }
+
+    public void addEobProcessedCount(int numProcessed) {
         eobsProcessedCount += numProcessed;
     }
 
-    public void addFailureCount(int value) {
-        failureCount += value;
+    public void addPatientFailureCount(int value) {
+        patientFailureCount += value;
     }
 
-    public void addPatients(int numAdded) {
-        metadataProcessedCount += numAdded;
+    public void addPatientsLoadedCount(int numAdded) {
+        patientsLoadedCount += numAdded;
     }
 
     /**
@@ -64,7 +69,7 @@ public class ProgressTracker {
      * @return number of patients
      */
     public int getTotalCount() {
-        return expectedBeneficiaries;
+        return patientsExpected;
     }
 
     /**
@@ -117,11 +122,11 @@ public class ProgressTracker {
 
     private double getPercentEobsCompleted() {
 
-        if (expectedBeneficiaries == 0) {
+        if (patientsExpected == 0) {
             return 0;
         }
 
-        double percentBenesDonePart = (double) patientRequestProcessedCount / expectedBeneficiaries;
+        double percentBenesDonePart = (double) patientRequestProcessedCount / patientsExpected;
         if (percentBenesDonePart > 1.0) {
             log.error("Percent of beneficiaries done is more than 100%");
             percentBenesDonePart = 1.0;
@@ -130,8 +135,8 @@ public class ProgressTracker {
         return  percentBenesDonePart * EST_BEN_SEARCH_JOB_PERCENTAGE;
     }
 
-    public boolean isErrorCountBelowThreshold() {
-        return (failureCount * 100) / getTotalCount() < failureThreshold;
+    public boolean isErrorThresholdExceeded() {
+        return (patientFailureCount * 100) / getTotalCount() >= failureThreshold;
     }
 
     /**
@@ -141,10 +146,10 @@ public class ProgressTracker {
      */
     public double getPercentMetadataCompleted() {
 
-        if (expectedBeneficiaries == 0) {
+        if (patientsExpected == 0) {
             return 0;
         }
         // This is the total completed threads done over the amount that needs to be done
-        return ((double) this.metadataProcessedCount) / this.expectedBeneficiaries;
+        return ((double) this.patientsLoadedCount) / this.patientsExpected;
     }
 }

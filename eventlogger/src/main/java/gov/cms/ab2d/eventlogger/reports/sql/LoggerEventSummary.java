@@ -5,7 +5,7 @@ import gov.cms.ab2d.eventlogger.events.JobSummaryEvent;
 import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
-import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
+import gov.cms.ab2d.eventlogger.events.ContractSearchEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -36,7 +36,7 @@ public class LoggerEventSummary {
                     loggerEventRepository.load(ApiResponseEvent.class, jobId).stream()
                             .filter(e -> "File Download".equalsIgnoreCase(((ApiResponseEvent) e).getResponseString()))
                             .collect(Collectors.toList());
-            List<LoggableEvent> contractSearchData = loggerEventRepository.load(ContractBeneSearchEvent.class, jobId);
+            List<LoggableEvent> contractSearchData = loggerEventRepository.load(ContractSearchEvent.class, jobId);
             List<LoggableEvent> allEvents = new ArrayList<>();
             allEvents.addAll(jobChangeEvents);
             allEvents.addAll(fileEvents);
@@ -60,13 +60,13 @@ public class LoggerEventSummary {
             jobSummaryEvent.setNumFilesDeleted(getUniqueNumFilesOfType(fileEvents, FileEvent.FileStatus.DELETE));
             jobSummaryEvent.setNumFilesDownloaded(downloadEvents.size());
             if (!contractSearchData.isEmpty()) {
-                List<ContractBeneSearchEvent> searches = new ArrayList<>();
+                List<ContractSearchEvent> searches = new ArrayList<>();
                 for (LoggableEvent event : contractSearchData) {
-                    searches.add((ContractBeneSearchEvent) event);
+                    searches.add((ContractSearchEvent) event);
                 }
-                jobSummaryEvent.setSuccessfullySearched(searches.stream().map(ContractBeneSearchEvent::getNumSearched).reduce(0, Integer::sum));
-                jobSummaryEvent.setErrorSearched(searches.stream().map(ContractBeneSearchEvent::getNumErrors).reduce(0, Integer::sum));
-                jobSummaryEvent.setTotalNum(searches.stream().map(ContractBeneSearchEvent::getNumInContract).reduce(0, Integer::sum));
+                jobSummaryEvent.setSuccessfullySearched(searches.stream().map(ContractSearchEvent::getBenesSearched).reduce(0, Integer::sum));
+                jobSummaryEvent.setErrorSearched(searches.stream().map(ContractSearchEvent::getBenesErrored).reduce(0, Integer::sum));
+                jobSummaryEvent.setTotalNum(searches.stream().map(ContractSearchEvent::getBenesExpected).reduce(0, Integer::sum));
             }
             return jobSummaryEvent;
         } catch (Exception ex) {

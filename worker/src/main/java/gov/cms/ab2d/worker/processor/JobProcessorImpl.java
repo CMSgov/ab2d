@@ -8,10 +8,10 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.EventUtils;
-import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
+import gov.cms.ab2d.eventlogger.events.ContractSearchEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
+import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverException;
 import gov.cms.ab2d.worker.service.FileService;
@@ -38,6 +38,7 @@ import java.util.concurrent.ExecutionException;
 import static gov.cms.ab2d.common.model.JobStatus.FAILED;
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.common.util.EventUtils.getOrganization;
+import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PROD_LIST;
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.NDJSON;
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.ZIP;
 
@@ -100,7 +101,7 @@ public class JobProcessorImpl implements JobProcessor {
             // Log exception to relevant loggers
             String contract = job.getContract() != null ? job.getContract().getContractNumber() : "empty";
             String message = String.format("Job %s failed for contract #%s because %s", jobUuid, contract, e.getMessage());
-            eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, FAILED, message), Ab2dEnvironment.PROD_LIST);
+            eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, FAILED, message), PROD_LIST);
             log.error("Unexpected exception executing job {}", e.getMessage());
 
             // Update database status
@@ -127,26 +128,83 @@ public class JobProcessorImpl implements JobProcessor {
         Contract contract = job.getContract();
         assert contract != null;
         log.info("Job [{}] - contract [{}] ", job.getJobUuid(), contract.getContractNumber());
-        // Retrieve the contract beneficiaries
 
-        Map<Long, CoverageSummary> patients = processContractBenes(job);
+        try {
+            // Retrieve the contract beneficiaries
+            Map<Long, CoverageSummary> patients = processContractBenes(job);
 
-        // Create a holder for the contract, writer, progress tracker and attested date
-        JobData jobData = new JobData(job.getJobUuid(), job.getSince(), getOrganization(job), patients);
+            // Create a holder for the contract, writer, progress tracker and attested date
+            JobData jobData = new JobData(job.getJobUuid(), job.getSince(), getOrganization(job), patients);
 
-        var jobOutputs = contractProcessor.process(outputDirPath, job, jobData);
+            var jobOutputs = contractProcessor.process(outputDirPath, job, jobData);
 
-        // For each job output, add to the job and save the result
-        jobOutputs.forEach(job::addJobOutput);
-        jobOutputRepository.saveAll(jobOutputs);
+            // For each job output, add to the job and save the result
+            jobOutputs.forEach(job::addJobOutput);
+            jobOutputRepository.saveAll(jobOutputs);
 
+            // If the job is done searching
+            verifyTrackedJobProgress(job, contract);
+        } finally {
+            // Guarantee that we write out statistics on the job if possible
+            persistTrackedJobProgress(job, contract);
+        }
+    }
+
+    void verifyTrackedJobProgress(Job job, Contract contract) {
         ProgressTracker progressTracker = jobProgressService.getStatus(job.getJobUuid());
-        eventLogger.log(new ContractBeneSearchEvent(getOrganization(job),
+
+        if (progressTracker == null) {
+            log.info("Job [{}] - contract [{}] does not have any progress information, skipping verifying tracker",
+                    job.getJobUuid(), contract.getContractNumber());
+            return;
+        }
+
+        // Number in database
+        int expectedPatients = progressTracker.getPatientsExpected();
+
+        // Number queued to retrieve
+        int queuedPatients = progressTracker.getPatientRequestQueuedCount();
+
+        // Number of retrievals processed
+        int processedPatients = progressTracker.getPatientRequestProcessedCount();
+
+        if (expectedPatients != queuedPatients) {
+            String alertMessage = String.format("[%s] expected beneficiaries (%d) does not match queued beneficiaries (%d)",
+                    job.getJobUuid(), expectedPatients, queuedPatients);
+            eventLogger.alert(alertMessage, PROD_LIST);
+        }
+
+        if (expectedPatients != processedPatients) {
+            String alertMessage = String.format("[%s] expected beneficiaries (%d) does not match processed beneficiaries (%d)",
+                    job.getJobUuid(), expectedPatients, queuedPatients);
+            eventLogger.alert(alertMessage, PROD_LIST);
+        }
+    }
+
+    void persistTrackedJobProgress(Job job, Contract contract) {
+        ProgressTracker progressTracker = jobProgressService.getStatus(job.getJobUuid());
+
+        if (progressTracker == null) {
+            log.info("Job [{}] - contract [{}] does not have any progress information, skipping persisting tracker",
+                    job.getJobUuid(), contract.getContractNumber());
+            return;
+        }
+
+        int eobFilesCreated = progressTracker.getPatientFailureCount() == 0 ? job.getJobOutputs().size()
+                : job.getJobOutputs().size() - 1;
+
+        // Regardless of whether we pass or fail the basic
+        eventLogger.log(new ContractSearchEvent(getOrganization(job),
                 job.getJobUuid(),
                 contract.getContractNumber(),
-                progressTracker.getExpectedBeneficiaries(),
+                progressTracker.getPatientsExpected(),
+                progressTracker.getPatientRequestQueuedCount(),
                 progressTracker.getPatientRequestProcessedCount(),
-                progressTracker.getFailureCount()));
+                progressTracker.getPatientFailureCount(),
+                progressTracker.getEobsFetchedCount(),
+                progressTracker.getEobsProcessedCount(),
+                eobFilesCreated
+        ));
     }
 
     Map<Long, CoverageSummary> processContractBenes(Job job) {
@@ -154,7 +212,7 @@ public class JobProcessorImpl implements JobProcessor {
         assert contract != null;
         try {
             int numBenes = coverageDriver.numberOfBeneficiariesToProcess(job);
-            jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.EXPECTED_BENES, numBenes);
+            jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENTS_EXPECTED, numBenes);
             Map<Long, CoverageSummary> retMap = new HashMap<>(numBenes);
 
             CoveragePagingResult result = coverageDriver.pageCoverage(job);
@@ -163,6 +221,10 @@ public class JobProcessorImpl implements JobProcessor {
             while (result.getNextRequest().isPresent()) {
                 result = coverageDriver.pageCoverage(result.getNextRequest().get());
                 addPatients(job.getJobUuid(), result, retMap);
+            }
+
+            if (retMap.size() != numBenes) {
+                throw new RuntimeException("expected " + numBenes + " patients from database but only retrieved " + retMap.size());
             }
 
             int progress = jobProgressService.getStatus(job.getJobUuid()).getPercentageCompleted();
@@ -177,7 +239,7 @@ public class JobProcessorImpl implements JobProcessor {
     }
 
     private void addPatients(String jobId, CoveragePagingResult result, Map<Long, CoverageSummary> beneMap) {
-        jobChannelService.sendUpdate(jobId, JobMeasure.BENE_REQUEST_QUEUED, result.getCoverageSummaries().size());
+        jobChannelService.sendUpdate(jobId, JobMeasure.PATIENT_REQUEST_QUEUED, result.getCoverageSummaries().size());
         result.getCoverageSummaries().forEach(summary -> beneMap.put(summary.getIdentifiers().getBeneficiaryId(), summary));
     }
 
@@ -285,7 +347,18 @@ public class JobProcessorImpl implements JobProcessor {
      * @param job - The job to set as complete
      */
     private void completeJob(Job job) {
-        eventLogger.log(EventUtils.getJobChangeEvent(job, SUCCESSFUL, "Job Finished"));
+        ProgressTracker progressTracker = jobProgressService.getStatus(job.getJobUuid());
+        String jobFinishedMessage = String.format("Contract %s processed " +
+                "%d patients generating %d eobs and %d files (including the error file if any)",
+                job.getContract().getContractNumber(), progressTracker.getPatientRequestProcessedCount(),
+                progressTracker.getEobsProcessedCount(),
+                job.getJobOutputs().size());
+
+        // In all environments log to database and or Kinesis
+        // In prod additionally log to Slack as an alert
+        JobStatusChangeEvent statusEvent = EventUtils.getJobChangeEvent(job, SUCCESSFUL, jobFinishedMessage);
+        eventLogger.logAndAlert(statusEvent, PROD_LIST);
+
         job.setStatus(SUCCESSFUL);
         job.setStatusMessage("100%");
         job.setProgress(100);
