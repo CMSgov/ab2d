@@ -12,7 +12,7 @@ public enum JobMeasure {
         public void update(ProgressTracker progressTracker, long value) {
             progressTracker.setPatientsExpected((int) value);
         }
-    }, META_DATA_PROCESSED() {
+    }, PATIENTS_LOADED() {
         @Override
         public void update(ProgressTracker progressTracker, long value) {
             progressTracker.addPatientsLoadedCount((int) value);

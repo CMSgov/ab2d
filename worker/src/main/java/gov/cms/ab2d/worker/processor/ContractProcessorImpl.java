@@ -97,9 +97,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contractNumber));
 
         Map<Long, CoverageSummary> patients = jobData.getPatients();
-        int patientCount = patients.size();
-        this.jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.META_DATA_PROCESSED, patientCount);
-        log.info("Contract [{}] has [{}] Patients", contractNumber, patientCount);
+        log.info("Contract [{}] has [{}] Patients", contractNumber, patients.size());
 
         List<JobOutput> jobOutputs = new ArrayList<>();
         try (StreamHelper helper = new TextStreamHelperImpl(outputDirPath, contractNumber, getRollOverThreshold(), tryLockTimeout,
@@ -412,9 +410,9 @@ public class ContractProcessorImpl implements ContractProcessor {
                 updateTracker.getPatientFailureCount());
 
         jobChannelService.sendUpdate(jobUuid, JobMeasure.EOBS_FETCHED,
-                updateTracker.getPatientRequestProcessedCount());
-        jobChannelService.sendUpdate(jobUuid, JobMeasure.EOBS_FETCHED,
                 updateTracker.getEobsFetchedCount());
+        jobChannelService.sendUpdate(jobUuid, JobMeasure.EOBS_WRITTEN,
+                updateTracker.getPatientRequestProcessedCount());
     }
 
     private void checkErrorThreshold(ContractData contractData) {
