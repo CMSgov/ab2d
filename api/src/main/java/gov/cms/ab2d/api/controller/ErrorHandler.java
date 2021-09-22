@@ -44,6 +44,12 @@ import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
 import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 
+/**
+ * Don't change exception classes without updating alerts in Splunk. Splunk alerts rely on the classname to filter
+ * for these exceptions.
+ *
+ * todo in the future use an enum instead to make it more consistent
+ */
 @ControllerAdvice
 @Slf4j
 public class ErrorHandler extends ResponseEntityExceptionHandler {
@@ -134,14 +140,19 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
             JwtVerificationException.class,
             InvalidJobAccessException.class
     })
-    public ResponseEntity<Void> handleErrors(Exception ex, HttpServletRequest request) {
+    public ResponseEntity<Void> handleAuthorizationErrors(Exception ex, HttpServletRequest request) {
         HttpStatus status = getErrorResponse(ex.getClass());
+
         String description = String.format("%s %s for request %s", ex.getClass().getSimpleName(), ex.getMessage(),
                 request.getAttribute(REQUEST_ID));
 
+        // Log so that Splunk can pick this up and alert
+        log.warn(description);
+
+        // Then log to other destinations
         ApiResponseEvent responseEvent = new ApiResponseEvent(MDC.get(ORGANIZATION), null, status,
                 "API Error", description, (String) request.getAttribute(REQUEST_ID));
-        eventLogger.logAndAlert(responseEvent, Ab2dEnvironment.PROD_LIST);
+        eventLogger.log(responseEvent);
 
         return new ResponseEntity<>(null, null, status);
     }
@@ -150,6 +161,10 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<Void> handleMaintenanceMode(Exception ex, HttpServletRequest request) {
         HttpStatus status = getErrorResponse(ex.getClass());
 
+        // Log so that Splunk can pick this up and alert
+        log.warn("Maintenance mode blocked API request " + request.getAttribute(REQUEST_ID));
+
+        // Then log to other destinations
         eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), null, status,
                 "API Error", ex.getClass().getSimpleName(), (String) request.getAttribute(REQUEST_ID)));
         eventLogger.trace("Maintenance mode blocked API request " + request.getAttribute(REQUEST_ID), Ab2dEnvironment.PROD_LIST);
@@ -177,6 +192,10 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         FhirVersion version = FhirVersion.fromAB2DUrl(request.getRequestURI());
         IBaseResource operationOutcome = version.getErrorOutcome(msg);
         String encoded = version.outcomePrettyToJSON(operationOutcome);
+
+        // Log so that Splunk can pick this up and alert
+        log.warn("{} {}", ExceptionUtils.getRootCause(e).getClass(), msg);
+
         eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), null,
                 ErrorHandler.getErrorResponse(e.getClass()),
                 "FHIR Error", msg, (String) request.getAttribute(REQUEST_ID)));

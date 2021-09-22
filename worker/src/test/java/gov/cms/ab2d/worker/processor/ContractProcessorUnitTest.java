@@ -94,7 +94,7 @@ class ContractProcessorUnitTest {
 
         Map<Long, CoverageSummary> patientsByContract = createPatientsByContractResponse(contract, 3);
 
-        jobChannelService.sendUpdate(jobUuid, JobMeasure.EXPECTED_BENES, 3);
+        jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_EXPECTED, 3);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
 
         JobData jobData = new JobData(jobUuid, job.getSince(),
@@ -115,7 +115,7 @@ class ContractProcessorUnitTest {
     void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() {
         Map<Long, CoverageSummary> patientsByContract = createPatientsByContractResponse(contract, 18);
 
-        jobChannelService.sendUpdate(jobUuid, JobMeasure.EXPECTED_BENES, 18);
+        jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_EXPECTED, 18);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
         JobData jobData = new JobData(job.getJobUuid(), job.getSince(),
                 getOrganization(job), patientsByContract);
@@ -123,7 +123,7 @@ class ContractProcessorUnitTest {
         var jobOutputs = cut.process(outputDir, job, jobData);
 
         assertFalse(jobOutputs.isEmpty());
-        verify(jobRepository, times(6)).updatePercentageCompleted(anyString(), anyInt());
+        verify(jobRepository, times(9)).updatePercentageCompleted(anyString(), anyInt());
         verify(patientClaimsProcessor, atLeast(1)).process(any());
     }
 
@@ -133,7 +133,7 @@ class ContractProcessorUnitTest {
 
         Map<Long, CoverageSummary> patientsByContract = createPatientsByContractResponse(contract, 2);
 
-        jobChannelService.sendUpdate(jobUuid, JobMeasure.EXPECTED_BENES, 2);
+        jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_EXPECTED, 2);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 1);
         JobData jobData = new JobData(job.getJobUuid(), job.getSince(),
                 getOrganization(job), patientsByContract);
