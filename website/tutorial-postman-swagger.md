@@ -224,6 +224,15 @@ landing-page: live
                     organizations must provide the AB2D team with the Job ID from a successful run in the test (Sandbox)
                     environment.
                 </p>
+                <p>
+                    <b>Additional synthetic data is now available in the sandbox environment for testing!</b>
+                </p>
+                <p>
+                    The existing set of data contains contracts with varying numbers of beneficiaries.  This allows you
+                    to test small and large contracts. The new Synthea data has about 600-800 beneficiaries per contact,
+                    but the EOB data is more realistic (although still 100% synthetic). For more information on how this data was generated, please
+                    visit <a href="https://synthea.mitre.org">https://synthea.mitre.org</a>
+                </p>
 
                 <h5 id="Whatdoesthisinstructionguidecontain-content">What does this instruction guide contain?</h5>
 
@@ -357,27 +366,21 @@ landing-page: live
                     </thead>
                     <tbody>
                         <tr>
-                            <td>0oa2t0lsrdZw5uWRx297</td>
+                            <td>PDP-100</td>
                             <td>MG9hMnQwbHNyZFp3NXVXUngyOTc6SEhkdVdHNkxvZ0l2RElRdVdncDNabG85T1lNVmFsVHRINU9CY3VIdw==
                             </td>
                         </tr>
                         <tr>
-                            <td>0lc65ErV8OmY297</td>
-                            <td>MG9hMnQwbGM2NUVyVjhPbVkyOTc6MUJsM0hHTzZlZ2xrWFVEdGpWanRvM0wtM0Mwb2ZmelRNazJxbHo5cg==
-                            </td>
+                            <td>PDP-10000</td>
+                            <td>MG9hMnQwbG05cW9BdEpIcUMyOTc6eWJSNjBKbXRjcFJ0NlNBZUxtdmJxNmwtM1lEUkNaUC1XTjFBdDZ0Xw==</td>
                         </tr>
                         <tr>
-                            <td>0oa2t0lkicpxFGkGt297</td>
-                            <td>MG9hMnQwbGtpY3B4RkdrR3QyOTc6ZURwYW5KVHR3OTB2WTJ2aVlsWDRvMnJnVlJJUjR0RFJIMG1Xcjl2Tg==
-                            </td>
+                            <td>PDP-1001 (Synthea)</td>
+                            <td>MG9hOWp5eDJ3OVowQW50TEUyOTc6aHNrYlB1LVlvV2ZHRFkxZ2NRcTM0QmZJRXlNVnVheXU4N3pXRGxpRw==</td>
                         </tr>
                         <tr>
-                            <td>0oa2t0l6c1tQbTikz297</td>
-                            <td>nQwbDZjMXRRYlRpa3oyOTc6ODB6WC03R2VpTWlpQTZ6VmdoaXFZWkw4Mm9MQVdTeGhnZkJrZm8wVA==</td>
-                        </tr>
-                        <tr>
-                            <td>0oa2t0lm9qoAtJHqC297</td>
-                            <td>nQwbG05cW9BdEpIcUMyOTc6eWJSNjBKbXRjcFJ0NlNBZUxtdmJxNmwtM1lEUkNaUC1XTjFBdDZ0Xw==</td>
+                            <td>PDP-1002 (Synthea)</td>
+                            <td>MG9hOWp6MGUxZHlOZlJNbTYyOTc6c2huRzZOR2tIY3UyOXB0RHNLS1JXNnE1dUZKU1NwSXBkbF9LNWZWVw==</td>
                         </tr>
                     </tbody>
                 </table>

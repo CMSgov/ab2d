@@ -14,6 +14,14 @@ landing-page: live
 }
 </style>
 
+## Introducing Synthea Data
+**Additional synthetic data is now available in the sandbox environment for testing!**
+
+The existing set of data contains contracts with varying numbers of beneficiaries.  This allows you
+to test small and large contracts. The new Synthea data has about 600-800 beneficiaries per contact,
+but the EOB data is more realistic (although still 100% synthetic). For more information on how this data was generated, please
+visit [https://synthea.mitre.org](https://synthea.mitre.org)
+
 ## Prerequisites &amp; Caveats
 These instructions have been tested on the following machines:
 - Mac - [Setup Information](setup-mac.html)
@@ -25,7 +33,7 @@ associated with your machine.
 
 ## Retrieve JSON Web Token
 
-1. Note that there are 5 users (clients) setup in the sandbox
+1. Note that there are 4 users (clients) setup in the sandbox
 
    <table class="ds-c-table">
      <thead>
@@ -44,29 +52,23 @@ associated with your machine.
          <td>HHduWG6LogIvDIQuWgp3Zlo9OYMValTtH5OBcuHw</td>
        </tr>
        <tr>
-         <td>PDP-1000</td>
-         <td>Z0001</td>
-         <td>0oa2t0lc65ErV8OmY297</td>
-         <td>1Bl3HGO6eglkXUDtjVjto3L-3C0offzTMk2qlz9r</td>
-       </tr>
-       <tr>
-         <td>PDP-2000</td>
-         <td>Z0002</td>
-         <td>0oa2t0lkicpxFGkGt297</td>
-         <td>eDpanJTtw90vY2viYlX4o2rgVRIR4tDRH0mWr9vN</td>
-       </tr>
-       <tr>
-         <td>PDP-5000</td>
-         <td>Z0005</td>
-         <td>0oa2t0l6c1tQbTikz297</td>
-         <td>80zX-7GeiMiiA6zVghiqYZL82oLAWSxhgfBkfo0T</td>
-       </tr>
-       <tr>
          <td>PDP-10000</td>
          <td>Z0010</td>
          <td>0oa2t0lm9qoAtJHqC297</td>
          <td>ybR60JmtcpRt6SAeLmvbq6l-3YDRCZP-WN1At6t_</td>
        </tr>
+      <tr>
+         <td>PDP-1001 (Synthea)</td>
+         <td>Z1001</td>
+         <td>0oa9jyx2w9Z0AntLE297</td>
+         <td>hskbPu-YoWfGDY1gcQq34BfIEyMVuayu87zWDliG</td>
+      </tr>
+      <tr>
+         <td>PDP-1002 (Synthea)</td>
+         <td>Z1002</td>
+         <td>0oa9jz0e1dyNfRMm6297</td>
+         <td>GkHcu29ptDsKKRW6q5uFJSSpIpdl_K5fVW</td>
+      </tr>
      </tbody>
    </table>
 
@@ -91,25 +93,20 @@ associated with your machine.
          <td>MG9hMnQwbHNyZFp3NXVXUngyOTc6SEhkdVdHNkxvZ0l2RElRdVdncDNabG85T1lNVmFsVHRINU9CY3VIdw==</td>
        </tr>
        <tr>
-         <td>0lc65ErV8OmY297</td>
-         <td>MG9hMnQwbGM2NUVyVjhPbVkyOTc6MUJsM0hHTzZlZ2xrWFVEdGpWanRvM0wtM0Mwb2ZmelRNazJxbHo5cg==</td>
-       </tr>
-       <tr>
-         <td>0oa2t0lkicpxFGkGt297</td>
-         <td>MG9hMnQwbGtpY3B4RkdrR3QyOTc6ZURwYW5KVHR3OTB2WTJ2aVlsWDRvMnJnVlJJUjR0RFJIMG1Xcjl2Tg==</td>
-       </tr>
-       <tr>
-         <td>0oa2t0l6c1tQbTikz297</td>
-         <td>MG9hMnQwbDZjMXRRYlRpa3oyOTc6ODB6WC03R2VpTWlpQTZ6VmdoaXFZWkw4Mm9MQVdTeGhnZkJrZm8wVA==</td>
-       </tr>
-       <tr>
          <td>0oa2t0lm9qoAtJHqC297</td>
          <td>MG9hMnQwbG05cW9BdEpIcUMyOTc6eWJSNjBKbXRjcFJ0NlNBZUxtdmJxNmwtM1lEUkNaUC1XTjFBdDZ0Xw==</td>
+       </tr>
+       <tr>
+         <td>0oa9jyx2w9Z0AntLE297</td>
+         <td>MG9hOWp5eDJ3OVowQW50TEUyOTc6aHNrYlB1LVlvV2ZHRFkxZ2NRcTM0QmZJRXlNVnVheXU4N3pXRGxpRw==</td>
+       </tr>
+       <tr>
+         <td>0oa9jz0e1dyNfRMm6297</td><td>MG9hOWp6MGUxZHlOZlJNbTYyOTc6c2huRzZOR2tIY3UyOXB0RHNLS1JXNnE1dUZKU1NwSXBkbF9LNWZWVw==</td>
        </tr>
      </tbody>
    </table>
 
-3. Choose the desired user to test. The first user has the least data and each successive user has a greater amount of data.
+3. Choose the desired user to test. The first user has the least data, the second the most and the last two use Synthea data.
 
 4. Open a new terminal
 
@@ -140,7 +137,7 @@ associated with your machine.
 
 In this section, you will initiate a Part A & B bulk explanation of benefit export job.
 
-<i style="font-size: small">Note to Windows users - When you are instructed to "open a terminal", the instructions are assuming that you are 
+<i style="font-size: small">Note to Windows users - When you are instructed to "open a terminal", the instructions are assuming that you are
 opening ubuntu or some other terminal that supports curl and jq. See [Windows 10 Setup information](setup-windows.html).</i>
 
 1. Open a terminal
@@ -349,8 +346,10 @@ opening ubuntu or some other terminal that supports curl and jq. See [Windows 10
        </tr>
      </thead>
      <tr>
-       <td>200 The job is completed.</td>
-       <td>202 The job is still in progress.</td>
+       <td>200</td><td>The job is completed.</td>
+     </tr>
+     <tr>
+       <td>202</td><td>The job is still in progress.</td>
      </tr>
      <tr>
        <td>400</td>

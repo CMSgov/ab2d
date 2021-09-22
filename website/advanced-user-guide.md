@@ -26,6 +26,14 @@ was used to implement the [HL7 FHIR standard](https://www.hl7.org/fhir/overview.
 [FHIR Bulk Data Export](https://hl7.org/fhir/uv/bulkdata/export/index.html) pattern to perform data export. Errors come
 back in the [Resource OperationOutcome](errors come back in the https://www.hl7.org/fhir/operationoutcome.html) format.
 
+### Introducing Synthea Data
+**Additional synthetic data is now available in the sandbox environment for testing!**
+
+The existing set of data contains contracts with varying numbers of beneficiaries.  This allows you
+to test small and large contracts. The new Synthea data has about 600-800 beneficiaries per contact,
+but the EOB data is more realistic (although still 100% synthetic). For more information on how this data was generated, please
+visit [https://synthea.mitre.org](https://synthea.mitre.org)
+
 ### Sandbox
 The Sandbox/Swagger page is available [here](https://sandbox.ab2d.cms.gov/swagger-ui/index.html).
 
@@ -66,81 +74,6 @@ sponsor PDP-100 will have 100 patients and PDP-1000 will have 1000 patients. Eac
     <tbody>
         <tr>
             <td><b>Sponsor</b></td>
-            <td>PDP-1000</td>
-        </tr>
-        <tr>
-            <td><b>Contract</b></td>
-            <td>Z0001</td>
-        </tr>
-        <tr>
-            <td><b>Client ID</b></td>
-            <td>0oa2t0lc65ErV8OmY297</td>
-        </tr>
-        <tr>
-            <td><b>Client Password</b></td>
-            <td>1Bl3HGO6eglkXUDtjVjto3L-3C0offzTMk2qlz9r</td>
-        </tr>
-        <tr>
-            <td><b>Base64-encoded id:password</b></td>
-            <td>MG9hMnQwbGM2NUVyVjhPbVkyOTc6MUJsM0hHTzZlZ2xrWFVEdGpWanRvM0wtM0Mwb2ZmelRNazJxbHo5cg==</td>
-        </tr>
-    </tbody>
-</table>
-<br/>
-<table class="ds-c-table">
-    <tbody>
-        <tr>
-            <td><b>Sponsor</b></td>
-            <td>PDP-2000</td>
-        </tr>
-        <tr>
-            <td><b>Contract</b></td>
-            <td>Z0002</td>
-        </tr>
-        <tr>
-            <td><b>Client ID</b></td>
-            <td>0oa2t0lkicpxFGkGt297	</td>
-        </tr>
-        <tr>
-            <td><b>Client Password</b></td>
-            <td>eDpanJTtw90vY2viYlX4o2rgVRIR4tDRH0mWr9vN</td>
-        </tr>
-        <tr>
-            <td><b>Base64-encoded id:password</b></td>
-            <td>MG9hMnQwbGtpY3B4RkdrR3QyOTc6ZURwYW5KVHR3OTB2WTJ2aVlsWDRvMnJnVlJJUjR0RFJIMG1Xcjl2Tg==</td>
-        </tr>
-    </tbody>
-</table>
-<br/>
-<table class="ds-c-table">
-    <tbody>
-        <tr>
-            <td><b>Sponsor</b></td>
-            <td>PDP-5000</td>
-        </tr>
-        <tr>
-            <td><b>Contract</b></td>
-            <td>Z0005</td>
-        </tr>
-        <tr>
-            <td><b>Client ID</b></td>
-            <td>0oa2t0l6c1tQbTikz297</td>
-        </tr>
-        <tr>
-            <td><b>Client Password</b></td>
-            <td>80zX-7GeiMiiA6zVghiqYZL82oLAWSxhgfBkfo0T</td>
-        </tr>
-        <tr>
-            <td><b>Base64-encoded id:password</b></td>
-            <td>MG9hMnQwbDZjMXRRYlRpa3oyOTc6ODB6WC03R2VpTWlpQTZ6VmdoaXFZWkw4Mm9MQVdTeGhnZkJrZm8wVA==</td>
-        </tr>
-    </tbody>
-</table>
-<br/>
-<table class="ds-c-table">
-    <tbody>
-        <tr>
-            <td><b>Sponsor</b></td>
             <td>PDP-10000</td>
         </tr>
         <tr>
@@ -158,6 +91,56 @@ sponsor PDP-100 will have 100 patients and PDP-1000 will have 1000 patients. Eac
         <tr>
             <td><b>Base64-encoded id:password</b></td>
             <td>MG9hMnQwbG05cW9BdEpIcUMyOTc6eWJSNjBKbXRjcFJ0NlNBZUxtdmJxNmwtM1lEUkNaUC1XTjFBdDZ0Xw==</td>
+        </tr>
+    </tbody>
+</table>
+<br/>
+<table class="ds-c-table">
+    <tbody>
+        <tr>
+            <td><b>Sponsor</b></td>
+            <td>PDP-1001 (Synthea)</td>
+        </tr>
+        <tr>
+            <td><b>Contract</b></td>
+            <td>Z1001</td>
+        </tr>
+        <tr>
+            <td><b>Client ID</b></td>
+            <td>0oa9jyx2w9Z0AntLE297</td>
+        </tr>
+        <tr>
+            <td><b>Client Password</b></td>
+            <td>hskbPu-YoWfGDY1gcQq34BfIEyMVuayu87zWDliG</td>
+        </tr>
+        <tr>
+            <td><b>Base64-encoded id:password</b></td>
+            <td>MG9hOWp5eDJ3OVowQW50TEUyOTc6aHNrYlB1LVlvV2ZHRFkxZ2NRcTM0QmZJRXlNVnVheXU4N3pXRGxpRw==</td>
+        </tr>
+    </tbody>
+</table>
+<br/>
+<table class="ds-c-table">
+    <tbody>
+        <tr>
+            <td><b>Sponsor</b></td>
+            <td>PDP-1002 (Synthea)</td>
+        </tr>
+        <tr>
+            <td><b>Contract</b></td>
+            <td>Z1002</td>
+        </tr>
+        <tr>
+            <td><b>Client ID</b></td>
+            <td>0oa9jz0e1dyNfRMm6297</td>
+        </tr>
+        <tr>
+            <td><b>Client Password</b></td>
+            <td>shnG6NGkHcu29ptDsKKRW6q5uFJSSpIpdl_K5fVW</td>
+        </tr>
+        <tr>
+            <td><b>Base64-encoded id:password</b></td>
+            <td>MG9hOWp6MGUxZHlOZlJNbTYyOTc6c2huRzZOR2tIY3UyOXB0RHNLS1JXNnE1dUZKU1NwSXBkbF9LNWZWVw==</td>
         </tr>
     </tbody>
 </table>
