@@ -8,16 +8,13 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.Parameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
@@ -34,11 +31,9 @@ import static org.springframework.test.context.support.TestPropertySourceUtils.a
 /**
  * Credits: most of the code in this class has been adopted from https://github.com/CMSgov/dpc-app
  */
-@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = SpringBootApp.class)
-@ActiveProfiles("test")
-@ContextConfiguration(initializers = {BlueButtonClientTestSTU3.PropertyOverrider.class})
-public class BlueButtonClientTestSTU3 {
+@ContextConfiguration(initializers = {BlueButtonClientSTU3Test.PropertyOverrider.class})
+public class BlueButtonClientSTU3Test {
     // A random example patient (Jane Doe)
     private static final Long TEST_PATIENT_ID = 20140000008325L;
     // A patient that only has a single EOB record in bluebutton
@@ -52,7 +47,6 @@ public class BlueButtonClientTestSTU3 {
     // Paths to test resources
     private static final String METADATA_PATH = "bb-test-data/meta.json";
     private static final String SAMPLE_EOB_PATH_PREFIX = "bb-test-data/eob/";
-    private static final String SAMPLE_COVERAGE_PATH_PREFIX = "bb-test-data/coverage/";
     private static final String SAMPLE_PATIENT_PATH_PREFIX = "bb-test-data/patient/";
     private static final String[] TEST_PATIENT_IDS = {"20140000008325", "20140000009893"};
 

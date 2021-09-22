@@ -8,16 +8,13 @@ import org.hl7.fhir.r4.model.Patient;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.Parameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.IOException;
 import java.util.List;
@@ -30,11 +27,9 @@ import static org.springframework.test.context.support.TestPropertySourceUtils.a
 /**
  * Credits: most of the code in this class has been adopted from https://github.com/CMSgov/dpc-app
  */
-@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = SpringBootApp.class)
-@ActiveProfiles("test")
-@ContextConfiguration(initializers = {BlueButtonClientTestR4.PropertyOverrider.class})
-public class BlueButtonClientTestR4 {
+@ContextConfiguration(initializers = {BlueButtonClientR4Test.PropertyOverrider.class})
+public class BlueButtonClientR4Test {
     // A random example patient (Jane Doe)
     private static final Long TEST_PATIENT_ID = -20140000010000L;
     // A patient that only has a single EOB record in bluebutton
@@ -131,12 +126,10 @@ public class BlueButtonClientTestR4 {
         assertNotNull(patient);
         List<Identifier> identifiers = patient.getIdentifier();
         assertTrue(identifiers.stream()
-                .filter(c -> c.getSystem().equalsIgnoreCase("http://hl7.org/fhir/sid/us-mbi"))
-                .findFirst().isPresent());
+                .anyMatch(c -> c.getSystem().equalsIgnoreCase("http://hl7.org/fhir/sid/us-mbi")));
         List<Extension> extensions = patient.getExtension();
         assertTrue(extensions.stream()
-                .filter(c -> c.getUrl().equalsIgnoreCase("https://bluebutton.cms.gov/resources/variables/rfrnc_yr"))
-                .findFirst().isPresent());
+                .anyMatch(c -> c.getUrl().equalsIgnoreCase("https://bluebutton.cms.gov/resources/variables/rfrnc_yr")));
     }
 
     @Test

@@ -8,7 +8,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.configuration.ConfigurationProperties;
 import org.mockserver.integration.ClientAndServer;
@@ -19,7 +18,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.net.ssl.SSLHandshakeException;
@@ -34,7 +32,6 @@ import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.context.support.TestPropertySourceUtils.addInlinedPropertiesToEnvironment;
 
-@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = SpringBootApp.class)
 @ContextConfiguration(initializers = {BFDClientConfigurationTest.PropertyOverrider.class})
 class BFDClientConfigurationTest {

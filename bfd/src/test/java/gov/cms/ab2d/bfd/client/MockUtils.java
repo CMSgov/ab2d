@@ -18,7 +18,7 @@ public class MockUtils {
 
     static String getRawJson(String path) throws IOException {
         InputStream sampleData =
-                BlueButtonClientTestR4.class.getClassLoader().getResourceAsStream(path);
+                BlueButtonClientR4Test.class.getClassLoader().getResourceAsStream(path);
 
         if (sampleData == null) {
             throw new IOException("Cannot find sample requests for path " + path);
