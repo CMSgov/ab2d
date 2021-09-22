@@ -31,6 +31,7 @@ import static gov.cms.ab2d.common.util.Constants.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @TestPropertySource(locations = "/application.common.properties")
@@ -76,7 +77,7 @@ class PdpClientServiceTest {
         List<Contract> contracts = pdpClientService.getAllEnabledContracts();
 
         assertEquals(10, contracts.size());
-        assertEquals(contract, contracts.get(0));
+        assertTrue(contracts.stream().filter(c -> c.getContractNumber().equals(contract.getContractName())).findAny().isPresent());
     }
 
     @Test
