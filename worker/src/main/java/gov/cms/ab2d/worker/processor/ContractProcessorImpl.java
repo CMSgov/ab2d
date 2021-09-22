@@ -412,7 +412,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         jobChannelService.sendUpdate(jobUuid, JobMeasure.EOBS_FETCHED,
                 updateTracker.getEobsFetchedCount());
         jobChannelService.sendUpdate(jobUuid, JobMeasure.EOBS_WRITTEN,
-                updateTracker.getPatientRequestProcessedCount());
+                updateTracker.getEobsProcessedCount());
     }
 
     private void checkErrorThreshold(ContractData contractData) {
