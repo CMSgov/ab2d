@@ -77,7 +77,7 @@ class PdpClientServiceTest {
         List<Contract> contracts = pdpClientService.getAllEnabledContracts();
 
         assertEquals(10, contracts.size());
-        assertTrue(contracts.stream().filter(c -> c.getContractNumber().equals(contract.getContractName())).findAny().isPresent());
+        assertTrue(contracts.stream().filter(c -> c.getContractNumber().equals(contract.getContractNumber())).findAny().isPresent());
     }
 
     @Test
