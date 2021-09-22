@@ -75,7 +75,7 @@ class PdpClientServiceTest {
         Contract contract = contractService.getContractByContractNumber("Enabled").get();
         List<Contract> contracts = pdpClientService.getAllEnabledContracts();
 
-        assertEquals(1, contracts.size());
+        assertEquals(10, contracts.size());
         assertEquals(contract, contracts.get(0));
     }
 
