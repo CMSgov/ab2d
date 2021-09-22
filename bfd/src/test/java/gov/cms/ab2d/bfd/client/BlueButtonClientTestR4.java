@@ -47,6 +47,7 @@ public class BlueButtonClientTestR4 {
     private static final String CONTRACT = "Z0012";
     public static final int MOCK_PORT_V2 = MockUtils.randomMockServerPort();
 
+    // Leave so code coverage works
     @Autowired
     private BFDClientImpl bbc;
 

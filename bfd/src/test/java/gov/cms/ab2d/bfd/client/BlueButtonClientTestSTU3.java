@@ -63,6 +63,7 @@ public class BlueButtonClientTestSTU3 {
     private static final String CONTRACT = "S00001";
     public static final int MOCK_PORT_V1 = MockUtils.randomMockServerPort();
 
+    // Leave so code coverage works
     @Autowired
     private BFDClientImpl bbc;
 

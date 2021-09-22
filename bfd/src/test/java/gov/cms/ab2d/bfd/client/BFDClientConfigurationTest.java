@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.configuration.ConfigurationProperties;
 import org.mockserver.integration.ClientAndServer;
+import org.springframework.beans.BeanInstantiationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -36,8 +37,9 @@ import static org.springframework.test.context.support.TestPropertySourceUtils.a
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = SpringBootApp.class)
 @ContextConfiguration(initializers = {BFDClientConfigurationTest.PropertyOverrider.class})
-public class BFDClientConfigurationTest {
+class BFDClientConfigurationTest {
 
+    // Leave so code coverage works
     @Autowired
     private BFDClientImpl bbc;
 
@@ -60,7 +62,7 @@ public class BFDClientConfigurationTest {
     }
 
     @BeforeAll
-    public static void setupBFDClient() throws IOException {
+    static void setupBFDClient() throws IOException {
         mockServer = ClientAndServer.startClientAndServer(MOCK_PORT_V1);
         MockUtils.createMockServerExpectation("/v1/fhir/metadata", HttpStatus.SC_OK,
                 getRawJson(METADATA_PATH), List
@@ -87,13 +89,13 @@ public class BFDClientConfigurationTest {
     }
 
     @AfterAll
-    public static void tearDown() throws IOException {
+    static void tearDown() throws IOException {
         mockServer.stop();
     }
 
     @DisplayName("Do not trust self signed certs unless they are part of truststore")
     @Test
-    public void doNotTrustSelfSignedCerts() {
+    void doNotTrustSelfSignedCerts() {
         assertNull(bbc.capabilityStatement(STU3));
 
         // Because this is so important explicitly test the code being run
@@ -107,7 +109,7 @@ public class BFDClientConfigurationTest {
 
     @DisplayName("Certs with public authority are not trusted unless they are explicitly listed in the truststore")
     @Test
-    public void doNotTrustPublicCerts() {
+    void doNotTrustPublicCerts() {
         HttpGet httpget = new HttpGet("https://www.verisign.com/");
 
         try {
@@ -120,6 +122,32 @@ public class BFDClientConfigurationTest {
                 // ignore
             }
         }
+
+    }
+
+    @DisplayName("Missing keystore file throws bean instantiation exception")
+    @Test
+    void missingKeystoreFile() {
+
+        BFDClientConfiguration clientConfiguration = new BFDClientConfiguration();
+
+        ReflectionTestUtils.setField(clientConfiguration, "keystorePath", "/dne");
+        assertThrows(BeanInstantiationException.class, () -> clientConfiguration.bfdHttpClient());
+
+        ReflectionTestUtils.setField(clientConfiguration, "keystorePath", ":]:dne");
+        assertThrows(BeanInstantiationException.class, () -> clientConfiguration.bfdHttpClient());
+
+    }
+
+    @DisplayName("Missing file when creating SSL context causes exception")
+    @Test
+    void missingFile() {
+
+        BFDClientConfiguration clientConfiguration = new BFDClientConfiguration();
+
+        assertThrows(BeanInstantiationException.class, () -> ReflectionTestUtils.invokeMethod(clientConfiguration,
+                "buildMutualTlsClient", new File("/dne"), "dne".toCharArray())
+        );
 
     }
 }
