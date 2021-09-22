@@ -77,6 +77,31 @@ class CoverageMappingCallableTest {
         assertEquals(20, results.getBeneficiaryIds().size());
     }
 
+    @DisplayName("Test to see if it returns the correct year for test contracts")
+    @Test
+    void testTestContractYears() {
+        Contract contract = new Contract();
+        contract.setContractNumber("Z0010");
+        contract.setContractName("TESTING");
+
+        CoveragePeriod period = new CoveragePeriod();
+        period.setContract(contract);
+        period.setYear(2020);
+        period.setMonth(1);
+
+        CoverageSearchEvent cse = new CoverageSearchEvent();
+        cse.setCoveragePeriod(period);
+
+        CoverageSearch search = new CoverageSearch();
+        search.setPeriod(period);
+
+        CoverageMapping mapping = new CoverageMapping(cse, search);
+        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient);
+        assertEquals(3, callable.getCorrectedYear(contract.getContractNumber(), 2020));
+        contract.setContractNumber("Z1001");
+        assertEquals(2020, callable.getCorrectedYear(contract.getContractNumber(), 2020));
+    }
+
     @DisplayName("Multiple mbis captured")
     @Test
     void multipleMbis() {
