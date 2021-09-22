@@ -64,7 +64,7 @@ public class BlueButtonClientTestSTU3 {
     public static final int MOCK_PORT_V1 = MockUtils.randomMockServerPort();
 
     @Autowired
-    private BFDClient bbc;
+    private BFDClientImpl bbc;
 
     private static ClientAndServer mockServer;
 

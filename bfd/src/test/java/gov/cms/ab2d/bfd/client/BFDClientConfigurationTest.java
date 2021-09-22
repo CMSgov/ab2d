@@ -39,7 +39,7 @@ import static org.springframework.test.context.support.TestPropertySourceUtils.a
 public class BFDClientConfigurationTest {
 
     @Autowired
-    private BFDClient bbc;
+    private BFDClientImpl bbc;
 
     @Autowired
     @Qualifier("bfdHttpClient")
