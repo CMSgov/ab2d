@@ -211,7 +211,7 @@ public class BFDClientImpl implements BFDClient {
         }
     }
 
-    IBaseConformance getCapabilityStatement(FhirVersion version) {
+    private IBaseConformance getCapabilityStatement(FhirVersion version) {
         Class<? extends IBaseConformance> resource = version.getCapabilityClass();
         return bfdClientVersions.getClient(version).capabilities()
                 .ofType(resource)

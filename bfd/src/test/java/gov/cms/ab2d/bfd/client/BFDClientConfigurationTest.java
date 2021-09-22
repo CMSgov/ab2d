@@ -19,6 +19,7 @@ import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import javax.net.ssl.SSLHandshakeException;
 import java.io.File;
@@ -38,15 +39,11 @@ import static org.springframework.test.context.support.TestPropertySourceUtils.a
 public class BFDClientConfigurationTest {
 
     @Autowired
-    private BFDClientImpl bbc;
+    private BFDClient bbc;
 
     @Autowired
     @Qualifier("bfdHttpClient")
     private HttpClient httpClient;
-
-    @Autowired
-    private BfdClientVersions bfdClientVersions;
-
 
     private static MockServerClient mockServer;
 
@@ -100,7 +97,8 @@ public class BFDClientConfigurationTest {
         assertNull(bbc.capabilityStatement(STU3));
 
         // Because this is so important explicitly test the code being run
-        Exception exception = assertThrows(FhirClientConnectionException.class, () -> bbc.getCapabilityStatement(STU3));
+        Exception exception = assertThrows(FhirClientConnectionException.class,
+                () -> ReflectionTestUtils.invokeMethod(bbc, "getCapabilityStatement", STU3));
 
         assertEquals(SSLHandshakeException.class, exception.getCause().getCause().getClass());
         assertTrue(exception.getCause().getCause()
