@@ -94,7 +94,7 @@ public class BulkDataAccessAPIUnusualDataTests {
         assertEquals(ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT, errorEvent.getErrorType());
         assertTrue(UtilMethods.allEmpty(
                 loggerEventRepository.load(ReloadEvent.class),
-                loggerEventRepository.load(ContractBeneSearchEvent.class),
+                loggerEventRepository.load(ContractSearchEvent.class),
                 loggerEventRepository.load(JobStatusChangeEvent.class),
                 loggerEventRepository.load(FileEvent.class)));
     }
