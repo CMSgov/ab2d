@@ -149,7 +149,7 @@ class JobServiceTest {
         assertNull(job.getLastPollTime());
         assertNull(job.getExpiresAt());
         assertTrue(job.getJobUuid().matches("[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"));
-
+        assertEquals(JobStartedBy.PDP, job.getStartedBy());
         // Verify it actually got persisted in the DB
         assertEquals(job, jobRepository.findById(job.getId()).get());
     }

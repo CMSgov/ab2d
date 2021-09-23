@@ -76,6 +76,11 @@ public class Job {
     @Pattern(regexp = EOB, message = "_type should be ExplanationOfBenefit")
     private String resourceTypes; // for now just limited to ExplanationOfBenefit
 
+    // Default a job to started by a PDP and only override if necessary
+    @Enumerated(STRING)
+    @NotNull
+    private JobStartedBy startedBy = JobStartedBy.PDP;
+
     @ManyToOne
     @JoinColumn(name = "contract_id")
     @Nullable
