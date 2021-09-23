@@ -120,6 +120,4 @@ databaseChangeLog:
   - include:
       file: db/changelog/v2021/rework_search_event.sql
   - include:
-      file: db/changelog/test_only/add_roles_back.sql
-  - include:
       file: db/changelog/v2021/add_synthea_contracts.sql
