@@ -119,6 +119,6 @@ databaseChangeLog:
   - include:
       file: db/changelog/v2021/drop_old_coverage_table.sql
   - include:
-      file: db/changelog/v2021/add_started_by_column_to_job.sql
-  - include:
       file: db/changelog/v2021/rework_search_event.sql
+  - include:
+      file: db/changelog/v2021/add_started_by_column_to_job.sql
