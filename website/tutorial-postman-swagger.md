@@ -413,6 +413,9 @@ landing-page: live
                 <table class="ds-c-table">
                     <thead>
                         <tr>
+                            <th colspan="2">Simple Datasets</th>
+                        </tr>
+                        <tr>
                             <th>PDP Sponsor</th>
                             <th>Base64-encoded id: password</th>
                         </tr>
@@ -427,12 +430,26 @@ landing-page: live
                             <td>PDP-10000</td>
                             <td>MG9hMnQwbG05cW9BdEpIcUMyOTc6eWJSNjBKbXRjcFJ0NlNBZUxtdmJxNmwtM1lEUkNaUC1XTjFBdDZ0Xw==</td>
                         </tr>
+                    </tbody>
+                </table>
+                <table class="ds-c-table">
+                    <thead>
                         <tr>
-                            <td>PDP-1001 (Synthea)</td>
+                            <th colspan="2">Advanced Datasets</th>
+                        </tr>
+                        <tr>
+                            <th>PDP Sponsor</th>
+                            <th>Base64-encoded id: password</th>
+                        </tr>
+                    </thead>
+                    <br/>
+                    <tbody>
+                        <tr>
+                            <td>PDP-1001</td>
                             <td>MG9hOWp5eDJ3OVowQW50TEUyOTc6aHNrYlB1LVlvV2ZHRFkxZ2NRcTM0QmZJRXlNVnVheXU4N3pXRGxpRw==</td>
                         </tr>
                         <tr>
-                            <td>PDP-1002 (Synthea)</td>
+                            <td>PDP-1002</td>
                             <td>MG9hOWp6MGUxZHlOZlJNbTYyOTc6c2huRzZOR2tIY3UyOXB0RHNLS1JXNnE1dUZKU1NwSXBkbF9LNWZWVw==</td>
                         </tr>
                     </tbody>

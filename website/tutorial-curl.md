@@ -91,6 +91,7 @@ associated with your machine.
    <table class="ds-c-table">
      <thead>
        <tr>
+         <th>Dataset Type</th>
          <th>Sponsor</th>
          <th>Contract</th>
          <th>Client ID</th>
@@ -99,25 +100,29 @@ associated with your machine.
      </thead>
      <tbody>
        <tr>
+         <td>Simple</td>
          <td>PDP-100</td>
          <td>Z0000</td>
          <td>0oa2t0lsrdZw5uWRx297</td>
          <td>HHduWG6LogIvDIQuWgp3Zlo9OYMValTtH5OBcuHw</td>
        </tr>
        <tr>
+         <td>Simple</td>
          <td>PDP-10000</td>
          <td>Z0010</td>
          <td>0oa2t0lm9qoAtJHqC297</td>
          <td>ybR60JmtcpRt6SAeLmvbq6l-3YDRCZP-WN1At6t_</td>
        </tr>
       <tr>
-         <td>PDP-1001 (Synthea)</td>
+         <td>Advanced</td>
+         <td>PDP-1001</td>
          <td>Z1001</td>
          <td>0oa9jyx2w9Z0AntLE297</td>
          <td>hskbPu-YoWfGDY1gcQq34BfIEyMVuayu87zWDliG</td>
       </tr>
       <tr>
-         <td>PDP-1002 (Synthea)</td>
+         <td>Advanced</td>
+         <td>PDP-1002</td>
          <td>Z1002</td>
          <td>0oa9jz0e1dyNfRMm6297</td>
          <td>GkHcu29ptDsKKRW6q5uFJSSpIpdl_K5fVW</td>
