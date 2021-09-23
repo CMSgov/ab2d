@@ -225,15 +225,68 @@ landing-page: live
                     environment.
                 </p>
                 <p>
-                    <b>Additional synthetic data is now available in the sandbox environment for testing!</b>
+                    AB2D provides four sample contracts that have been designed to provide synthetic data for testing purposes.
                 </p>
                 <p>
-                    The existing set of data contains contracts with varying numbers of beneficiaries.  This allows you
-                    to test small and large contracts. The new Synthea data has about 600-800 beneficiaries per contact,
-                    but the EOB data is more realistic (although still 100% synthetic). For more information on how this data was generated, please
-                    visit <a href="https://synthea.mitre.org">https://synthea.mitre.org</a>
+                    <b>Simple Datasets- Two Contracts</b>
                 </p>
-
+                <p>
+                    This dataset provides contracts with a varying number of beneficiaries containing simple 
+                    approximations of AB2D data. These contracts are ideal to test the stress of retrieving and 
+                    downloading different sized data files. The data in these API payloads will not reflect the 
+                    distribution of disease and demographic information you can expect from production data.
+                </p>
+  
+                <table class="ds-c-table">
+                    <thead>
+                        <tr>
+                            <th>PDP Sponsor</th>
+                            <th>Contract</th>
+                            <th>Number of Benes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>PDP-100</td>
+                            <td>Z0000</td>
+                            <td>100</td>
+                        </tr>
+                        <tr>
+                            <td>PDP-10000</td>
+                            <td>Z0010</td>
+                            <td>10,000</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p>
+                    <b>Advanced Datasets- Two Contracts</b>
+                </p>
+                <p>
+                    This dataset provides contracts with sample data that is a more accurate representation of AB2D 
+                    production data. They follow AB2D’s Bulk FHIR format and contain a more realistic distribution of 
+                    disease and demographic information.
+                </p>
+                <table class="ds-c-table">
+                    <thead>
+                        <tr>
+                            <th>PDP Sponsor</th>
+                            <th>Contract</th>
+                            <th>Number of Benes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>PDP-1001</td>
+                            <td>Z1001</td>
+                            <td>600-800</td>
+                        </tr>
+                        <tr>
+                            <td>PDP-10000</td>
+                            <td>Z1002</td>
+                            <td>600-800</td>
+                        </tr>
+                    </tbody>
+                </table>
                 <h5 id="Whatdoesthisinstructionguidecontain-content">What does this instruction guide contain?</h5>
 
                 <p>These instructions will guide you through the process of obtaining a JSON web token (JWT), also

@@ -26,23 +26,77 @@ was used to implement the [HL7 FHIR standard](https://www.hl7.org/fhir/overview.
 [FHIR Bulk Data Export](https://hl7.org/fhir/uv/bulkdata/export/index.html) pattern to perform data export. Errors come
 back in the [Resource OperationOutcome](errors come back in the https://www.hl7.org/fhir/operationoutcome.html) format.
 
-### Introducing Synthea Data
-**Additional synthetic data is now available in the sandbox environment for testing!**
-
-The existing set of data contains contracts with varying numbers of beneficiaries.  This allows you
-to test small and large contracts. The new Synthea data has about 600-800 beneficiaries per contact,
-but the EOB data is more realistic (although still 100% synthetic). For more information on how this data was generated, please
-visit [https://synthea.mitre.org](https://synthea.mitre.org)
 
 ### Sandbox
 The Sandbox/Swagger page is available [here](https://sandbox.ab2d.cms.gov/swagger-ui/index.html).
+
+### AB2D Synthetic Data
+
+AB2D provides four sample contracts that have been designed to provide synthetic data for testing purposes.
+
+**Simple Datasets- Two Contracts**
+
+This dataset provides contracts with a varying number of beneficiaries containing simple approximations of AB2D data. 
+These contracts are ideal to test the stress of retrieving and downloading different sized data files. The data 
+in these API payloads will not reflect the distribution of disease and demographic information you can expect from 
+production data.
+
+   <table class="ds-c-table">
+      <thead>
+         <tr>
+            <th>Sponsor</th>
+            <th>Contract</th>
+            <th>Number of Benes</th>
+         </tr>
+      </thead>
+      <tbody>
+         <tr>
+            <th>PDP-100</th>
+            <th>Z0000</th>
+            <th>100</th>
+         </tr>
+         <tr>
+            <th>PDP-10000</th>
+            <th>Z0010</th>
+            <th>10,000</th>
+         </tr>
+      </tbody>
+   </table>
+<br/>
+
+**Advanced Datasets- Two Contracts**
+
+This dataset provides contracts with sample data that is a more accurate representation of AB2D production data. They
+follow AB2D’s Bulk FHIR format and contain a more realistic distribution of disease and demographic information.
+
+  <table class="ds-c-table">
+      <thead>
+         <tr>
+            <th>Sponsor</th>
+            <th>Contract</th>
+            <th>Number of Benes</th>
+         </tr>
+      </thead>
+      <tbody>
+         <tr>
+            <th>PDP-1001</th>
+            <th>Z1001</th>
+            <th>600-800</th>
+         </tr>
+         <tr>
+            <th>PDP-1002</th>
+            <th>Z1002</th>
+            <th>600-800</th>
+         </tr>
+      </tbody>
+   </table>
+<br/>
 
 ## Authentication and Authorization
 The API uses the JSON Web Tokens (JWT) to authorize use of the endpoints. The token should be sent using the 
 "Authorization" header field with the value specified as "Bearer xxxxx" where xxxxx is the value of the JWT. 
 
-There are 5 users set up in the Sandbox. They are useful to view different types and sizes of data. For example, 
-sponsor PDP-100 will have 100 patients and PDP-1000 will have 1000 patients. Each has one contract associated with it.
+As noted above, there are 4 users set up in the Sandbox.
 
 <table class="ds-c-table">
     <tbody>
@@ -53,6 +107,10 @@ sponsor PDP-100 will have 100 patients and PDP-1000 will have 1000 patients. Eac
         <tr>
             <td><b>Contract</b></td>
             <td>Z0000</td>
+        </tr>
+        <tr>
+            <td><b>Dataset Type</b></td>
+            <td>Simple</td>
         </tr>
         <tr>
             <td><b>Client ID</b></td>
@@ -81,6 +139,10 @@ sponsor PDP-100 will have 100 patients and PDP-1000 will have 1000 patients. Eac
             <td>Z0010</td>
         </tr>
         <tr>
+            <td><b>Dataset Type</b></td>
+            <td>Simple</td>
+        </tr>
+        <tr>
             <td><b>Client ID</b></td>
             <td>0oa2t0lm9qoAtJHqC297</td>
         </tr>
@@ -99,11 +161,15 @@ sponsor PDP-100 will have 100 patients and PDP-1000 will have 1000 patients. Eac
     <tbody>
         <tr>
             <td><b>Sponsor</b></td>
-            <td>PDP-1001 (Synthea)</td>
+            <td>PDP-1001</td>
         </tr>
         <tr>
             <td><b>Contract</b></td>
             <td>Z1001</td>
+        </tr>
+        <tr>
+            <td><b>Dataset Type</b></td>
+            <td>Advanced</td>
         </tr>
         <tr>
             <td><b>Client ID</b></td>
@@ -124,11 +190,15 @@ sponsor PDP-100 will have 100 patients and PDP-1000 will have 1000 patients. Eac
     <tbody>
         <tr>
             <td><b>Sponsor</b></td>
-            <td>PDP-1002 (Synthea)</td>
+            <td>PDP-1002</td>
         </tr>
         <tr>
             <td><b>Contract</b></td>
             <td>Z1002</td>
+        </tr>
+        <tr>
+            <td><b>Dataset Type</b></td>
+            <td>Advanced</td>
         </tr>
         <tr>
             <td><b>Client ID</b></td>
@@ -144,6 +214,7 @@ sponsor PDP-100 will have 100 patients and PDP-1000 will have 1000 patients. Eac
         </tr>
     </tbody>
 </table>
+<br/>
 
 CMS leverages [Okta](http://www.okta.com) for authentication to generate a JWT. Use the  "Client Id" and "Client 
 Password" you've chosen from above. The Okta request should look like this:

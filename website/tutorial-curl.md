@@ -14,13 +14,66 @@ landing-page: live
 }
 </style>
 
-## Introducing Synthea Data
-**Additional synthetic data is now available in the sandbox environment for testing!**
+## AB2D Synthetic Data
 
-The existing set of data contains contracts with varying numbers of beneficiaries.  This allows you
-to test small and large contracts. The new Synthea data has about 600-800 beneficiaries per contact,
-but the EOB data is more realistic (although still 100% synthetic). For more information on how this data was generated, please
-visit [https://synthea.mitre.org](https://synthea.mitre.org)
+AB2D provides four sample contracts that have been designed to provide synthetic data for testing purposes.
+
+**Simple Datasets- Two Contracts**
+
+This dataset provides contracts with a varying number of beneficiaries containing simple approximations of AB2D data. 
+These contracts are ideal to test the stress of retrieving and downloading different sized data files. The data in these 
+API payloads will not reflect the distribution of disease and demographic information you can expect from production data.
+
+   <table class="ds-c-table">
+      <thead>
+         <tr>
+            <th>Sponsor</th>
+            <th>Contract</th>
+            <th>Number of Benes</th>
+         </tr>
+      </thead>
+      <tbody>
+         <tr>
+            <th>PDP-100</th>
+            <th>Z0000</th>
+            <th>100</th>
+         </tr>
+         <tr>
+            <th>PDP-10000</th>
+            <th>Z0010</th>
+            <th>10,000</th>
+         </tr>
+      </tbody>
+   </table>
+<br/>
+
+**Advanced Datasets- Two Contracts**
+
+This dataset provides contracts with sample data that is a more accurate representation of AB2D production data. They 
+follow AB2D’s Bulk FHIR format and contain a more realistic distribution of disease and demographic information.
+
+  <table class="ds-c-table">
+      <thead>
+         <tr>
+            <th>Sponsor</th>
+            <th>Contract</th>
+            <th>Number of Benes</th>
+         </tr>
+      </thead>
+      <tbody>
+         <tr>
+            <th>PDP-1001</th>
+            <th>Z1001</th>
+            <th>600-800</th>
+         </tr>
+         <tr>
+            <th>PDP-1002</th>
+            <th>Z1002</th>
+            <th>600-800</th>
+         </tr>
+      </tbody>
+   </table>
+<br/>
 
 ## Prerequisites &amp; Caveats
 These instructions have been tested on the following machines:
