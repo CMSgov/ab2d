@@ -171,12 +171,14 @@ public class JobProcessorImpl implements JobProcessor {
         if (expectedPatients != queuedPatients) {
             String alertMessage = String.format("[%s] expected beneficiaries (%d) does not match queued beneficiaries (%d)",
                     job.getJobUuid(), expectedPatients, queuedPatients);
+            log.error(alertMessage);
             eventLogger.alert(alertMessage, PROD_LIST);
         }
 
         if (expectedPatients != processedPatients) {
             String alertMessage = String.format("[%s] expected beneficiaries (%d) does not match processed beneficiaries (%d)",
                     job.getJobUuid(), expectedPatients, queuedPatients);
+            log.error(alertMessage);
             eventLogger.alert(alertMessage, PROD_LIST);
         }
     }
@@ -239,7 +241,7 @@ public class JobProcessorImpl implements JobProcessor {
     }
 
     private void addPatients(String jobId, CoveragePagingResult result, Map<Long, CoverageSummary> beneMap) {
-        jobChannelService.sendUpdate(jobId, JobMeasure.PATIENT_REQUEST_QUEUED, result.getCoverageSummaries().size());
+        jobChannelService.sendUpdate(jobId, JobMeasure.PATIENTS_LOADED, result.getCoverageSummaries().size());
         result.getCoverageSummaries().forEach(summary -> beneMap.put(summary.getIdentifiers().getBeneficiaryId(), summary));
     }
 
