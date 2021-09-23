@@ -64,10 +64,10 @@ class ContractProcessorUnitTest {
 
         patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
 
-        JobProgressService jobProgressService = new JobProgressServiceImpl(jobRepository);
-        ReflectionTestUtils.setField(jobProgressService, "reportProgressDbFrequency", 2);
-        ReflectionTestUtils.setField(jobProgressService, "reportProgressLogFrequency", 3);
-        jobChannelService = new JobChannelServiceImpl(jobProgressService);
+        JobProgressServiceImpl jobProgressImpl = new JobProgressServiceImpl(jobRepository);
+        ReflectionTestUtils.setField(jobProgressImpl, "reportProgressDbFrequency", 2);
+        ReflectionTestUtils.setField(jobProgressImpl, "reportProgressLogFrequency", 3);
+        jobChannelService = new JobChannelServiceImpl(jobProgressImpl);
 
         cut = new ContractProcessorImpl(
                 jobRepository,
@@ -75,7 +75,7 @@ class ContractProcessorUnitTest {
                 eventLogger,
                 requestQueue,
                 jobChannelService,
-                jobProgressService);
+                jobProgressImpl);
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 2);
         ReflectionTestUtils.setField(cut, "tryLockTimeout", 30);
 

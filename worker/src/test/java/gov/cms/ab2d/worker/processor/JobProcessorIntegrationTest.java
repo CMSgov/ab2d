@@ -81,6 +81,9 @@ class JobProcessorIntegrationTest {
     private JobProgressService jobProgressService;
 
     @Autowired
+    private JobProgressUpdateService jobProgressUpdateService;
+
+    @Autowired
     private PdpClientRepository pdpClientRepository;
 
     @Autowired
@@ -167,6 +170,7 @@ class JobProcessorIntegrationTest {
                 fileService,
                 jobChannelService,
                 jobProgressService,
+                jobProgressUpdateService,
                 jobRepository,
                 jobOutputRepository,
                 contractProcessor,

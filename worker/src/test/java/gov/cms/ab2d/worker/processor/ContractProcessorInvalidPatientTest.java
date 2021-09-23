@@ -63,10 +63,10 @@ class ContractProcessorInvalidPatientTest {
     void setup() {
 
         patientClaimsProcessor = new PatientClaimsProcessorImpl(bfdClient, eventLogger);
-        JobProgressService jobProgressService = new JobProgressServiceImpl(jobRepository);
-        JobChannelService jobChannelService = new JobChannelServiceImpl(jobProgressService);
+        JobProgressServiceImpl jobProgressUpdateService = new JobProgressServiceImpl(jobRepository);
+        JobChannelService jobChannelService = new JobChannelServiceImpl(jobProgressUpdateService);
         cut = new ContractProcessorImpl(jobRepository, patientClaimsProcessor, eventLogger,
-                requestQueue, jobChannelService, jobProgressService);
+                requestQueue, jobChannelService, jobProgressUpdateService);
         jobChannelService.sendUpdate(jobId, JobMeasure.FAILURE_THRESHHOLD, 100);
 
         Contract contract = new Contract();

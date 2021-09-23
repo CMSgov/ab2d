@@ -1,8 +1,9 @@
 package gov.cms.ab2d.worker.processor;
 
+/**
+ * Read only API for fetching the current status of a job.
+ */
 public interface JobProgressService {
-
-    void addMeasure(String jobUuid, JobMeasure measure, long value);
 
     ProgressTracker getStatus(String jobUuid);
 }

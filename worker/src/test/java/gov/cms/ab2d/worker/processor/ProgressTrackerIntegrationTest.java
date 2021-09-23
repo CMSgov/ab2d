@@ -47,6 +47,9 @@ class ProgressTrackerIntegrationTest {
     private JobProgressService jobProgressService;
 
     @Autowired
+    private JobProgressUpdateService jobProgressUpdateService;
+
+    @Autowired
     private JobRepository jobRepository;
 
     @Autowired
@@ -78,7 +81,8 @@ class ProgressTrackerIntegrationTest {
 
         CoverageDriver coverageDriver = new CoverageDriverStub(10, 20);
 
-        cut = new JobProcessorImpl(fileService, jobChannelService, jobProgressService, jobRepository, jobOutputRepository,
+        cut = new JobProcessorImpl(fileService, jobChannelService, jobProgressService, jobProgressUpdateService,
+                jobRepository, jobOutputRepository,
                 contractProcessor, coverageDriver, eventLogger);
     }
 

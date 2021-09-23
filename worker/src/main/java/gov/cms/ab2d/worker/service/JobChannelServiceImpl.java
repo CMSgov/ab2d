@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.service;
 
 import gov.cms.ab2d.worker.processor.JobMeasure;
-import gov.cms.ab2d.worker.processor.JobProgressService;
+import gov.cms.ab2d.worker.processor.JobProgressUpdateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -9,10 +9,10 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class JobChannelServiceImpl implements JobChannelService {
 
-    private final JobProgressService jobProgressService;
+    private final JobProgressUpdateService jobProgressUpdateService;
 
     @Override
     public void sendUpdate(String jobUuid, JobMeasure measure, long value) {
-        jobProgressService.addMeasure(jobUuid, measure, value);
+        jobProgressUpdateService.addMeasure(jobUuid, measure, value);
     }
 }

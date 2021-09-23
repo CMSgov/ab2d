@@ -58,14 +58,16 @@ class JobProcessorUnitTest {
     void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
-        jobProgressService = spy(new JobProgressServiceImpl(jobRepository));
-        jobChannelService = new JobChannelServiceImpl(jobProgressService);
+        JobProgressServiceImpl jobProgressUpdateService = spy(new JobProgressServiceImpl(jobRepository));
+        jobProgressService = jobProgressUpdateService;
+        jobChannelService = new JobChannelServiceImpl(jobProgressUpdateService);
 
         coverageDriver = spy(new CoverageDriverStub(10, 20));
         cut = spy(new JobProcessorImpl(
                 fileService,
                 jobChannelService,
                 jobProgressService,
+                jobProgressUpdateService,
                 jobRepository,
                 jobOutputRepository,
                 contractProcessor,
