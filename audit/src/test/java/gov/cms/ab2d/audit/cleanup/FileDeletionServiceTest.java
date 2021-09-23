@@ -10,7 +10,7 @@ import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
-import gov.cms.ab2d.eventlogger.events.ContractBeneSearchEvent;
+import gov.cms.ab2d.eventlogger.events.ContractSearchEvent;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
@@ -466,7 +466,7 @@ class FileDeletionServiceTest {
                 loggerEventRepository.load(ApiRequestEvent.class),
                 loggerEventRepository.load(ApiResponseEvent.class),
                 loggerEventRepository.load(ReloadEvent.class),
-                loggerEventRepository.load(ContractBeneSearchEvent.class),
+                loggerEventRepository.load(ContractSearchEvent.class),
                 loggerEventRepository.load(ErrorEvent.class),
                 loggerEventRepository.load(JobStatusChangeEvent.class)));
     }

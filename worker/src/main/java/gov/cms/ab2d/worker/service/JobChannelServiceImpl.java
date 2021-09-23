@@ -12,7 +12,7 @@ public class JobChannelServiceImpl implements JobChannelService {
     private final JobProgressService jobProgressService;
 
     @Override
-    public void sendUpdate(String jobId, JobMeasure measure, long value) {
-        jobProgressService.addMeasure(jobId, measure, value);
+    public void sendUpdate(String jobUuid, JobMeasure measure, long value) {
+        jobProgressService.addMeasure(jobUuid, measure, value);
     }
 }

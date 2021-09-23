@@ -7,45 +7,45 @@ public enum JobMeasure {
             // It's always an int where sourced, so truncation is fine.
             progressTracker.setFailureThreshold((int) value);
         }
-    }, EXPECTED_BENES() {
+    }, PATIENTS_EXPECTED() {
         @Override
         public void update(ProgressTracker progressTracker, long value) {
-            progressTracker.setExpectedBeneficiaries((int) value);
+            progressTracker.setPatientsExpected((int) value);
         }
-    }, META_DATA_PROCESSED() {
+    }, PATIENTS_LOADED() {
         @Override
         public void update(ProgressTracker progressTracker, long value) {
-            progressTracker.addPatients((int) value);
+            progressTracker.addPatientsLoadedCount((int) value);
         }
-    }, BENE_REQUEST_QUEUED() {
+    }, PATIENT_REQUEST_QUEUED() {
         @Override
         public void update(ProgressTracker progressTracker, long value) {
             progressTracker.addPatientRequestQueuedCount((int) value);
         }
-    }, PATIENT_REQUEST_PROCESSED() {
+    }, PATIENT_REQUESTS_PROCESSED() {
         @Override
         public void update(ProgressTracker progressTracker, long value) {
             progressTracker.addPatientProcessedCount((int) value);
         }
+    }, PATIENT_REQUESTS_ERRORED() {
+        @Override
+        public void update(ProgressTracker progressTracker, long value) {
+            progressTracker.addPatientFailureCount((int) value);
+        }
     }, EOBS_FETCHED() {
         @Override
         public void update(ProgressTracker progressTracker, long value) {
-            progressTracker.addProcessedCount((int) value);
+            progressTracker.addEobFetchedCount((int) value);
         }
     }, EOBS_WRITTEN() {
         @Override
         public void update(ProgressTracker progressTracker, long value) {
-            progressTracker.addProcessedCount((int) value);
+            progressTracker.addEobProcessedCount((int) value);
         }
     }, EOBS_EMPTY() {
         @Override
         public void update(ProgressTracker progressTracker, long value) {
             throw new UnsupportedOperationException();
-        }
-    }, EOBS_ERROR() {
-        @Override
-        public void update(ProgressTracker progressTracker, long value) {
-            progressTracker.addFailureCount((int) value);
         }
     };
 
