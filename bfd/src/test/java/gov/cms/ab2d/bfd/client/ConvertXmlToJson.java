@@ -17,11 +17,11 @@ public class ConvertXmlToJson {
         String inputFile = args[0];
         String outputFile = args[1];
         InputStream sampleData =
-                BlueButtonClientTestSTU3.class.getClassLoader().getResourceAsStream(inputFile);
+                BlueButtonClientSTU3Test.class.getClassLoader().getResourceAsStream(inputFile);
 
         if (sampleData == null) {
             throw new MissingResourceException("Cannot find sample requests",
-                    BlueButtonClientTestSTU3.class.getName(), inputFile);
+                    BlueButtonClientSTU3Test.class.getName(), inputFile);
         }
 
         String xmlFileContents = new String(sampleData.readAllBytes(), StandardCharsets.UTF_8);
