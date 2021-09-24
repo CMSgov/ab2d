@@ -64,6 +64,7 @@ class ContractProcessorInvalidPatientTest {
 
         patientClaimsProcessor = new PatientClaimsProcessorImpl(bfdClient, eventLogger);
         JobProgressServiceImpl jobProgressUpdateService = new JobProgressServiceImpl(jobRepository);
+        jobProgressUpdateService.initJob(jobId);
         JobChannelService jobChannelService = new JobChannelServiceImpl(jobProgressUpdateService);
         cut = new ContractProcessorImpl(jobRepository, patientClaimsProcessor, eventLogger,
                 requestQueue, jobChannelService, jobProgressUpdateService);

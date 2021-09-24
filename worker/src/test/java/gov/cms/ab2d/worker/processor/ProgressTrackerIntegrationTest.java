@@ -98,6 +98,7 @@ class ProgressTrackerIntegrationTest {
 
         Job job = createJob(createClient());
         job.setContract(contract);
+        jobProgressUpdateService.initJob(job.getJobUuid());
 
         org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent entry1 = BundleUtils.createBundleEntry(1L, "mbi1", year);
         org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent entry2 = BundleUtils.createBundleEntry(2L, "mbi2", year);
