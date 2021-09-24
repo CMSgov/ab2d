@@ -65,6 +65,7 @@ class ContractProcessorUnitTest {
         patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
 
         JobProgressServiceImpl jobProgressImpl = new JobProgressServiceImpl(jobRepository);
+        jobProgressImpl.initJob(jobUuid);
         ReflectionTestUtils.setField(jobProgressImpl, "reportProgressDbFrequency", 2);
         ReflectionTestUtils.setField(jobProgressImpl, "reportProgressLogFrequency", 3);
         jobChannelService = new JobChannelServiceImpl(jobProgressImpl);
