@@ -59,6 +59,7 @@ class JobProcessorUnitTest {
         MockitoAnnotations.initMocks(this);
 
         JobProgressServiceImpl jobProgressUpdateService = spy(new JobProgressServiceImpl(jobRepository));
+        jobProgressUpdateService.initJob(jobUuid);
         jobProgressService = jobProgressUpdateService;
         jobChannelService = new JobChannelServiceImpl(jobProgressUpdateService);
 
