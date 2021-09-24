@@ -10,13 +10,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class MockUtils {
+
     static String getRawJson(String path) throws IOException {
         InputStream sampleData =
-                BlueButtonClientTestR4.class.getClassLoader().getResourceAsStream(path);
+                BlueButtonClientR4Test.class.getClassLoader().getResourceAsStream(path);
 
         if (sampleData == null) {
             throw new IOException("Cannot find sample requests for path " + path);
@@ -36,7 +38,7 @@ public class MockUtils {
      *                      response
      */
     static void createMockServerExpectation(String path, int respCode, String payload,
-                                                    List<Parameter> qStringParams, int port) {
+                                            List<Parameter> qStringParams, int port) {
         var delay = 100;
         createMockServerExpectation(path, respCode, payload, qStringParams, delay, port);
     }
@@ -69,5 +71,9 @@ public class MockUtils {
         } catch (IOException ioException) {
             throw new RuntimeException("could not find open port");
         }
+    }
+
+    static void createKeystoreFile(Path tempDir) {
+
     }
 }

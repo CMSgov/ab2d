@@ -111,8 +111,6 @@ class CoverageUpdateAndProcessorTest {
         february = dataSetup.createCoveragePeriod(contract, 2, 2020);
         march = dataSetup.createCoveragePeriod(contract, 3, 2020);
 
-        dataSetup.createRole(SPONSOR_ROLE);
-
         PdpClientDTO contractPdpClient = createClient(contract, "TST-12", SPONSOR_ROLE);
         pdpClientService.createClient(contractPdpClient);
         dataSetup.queueForCleanup(pdpClientService.getClientById("TST-12"));
@@ -124,7 +122,7 @@ class CoverageUpdateAndProcessorTest {
         taskExecutor.setCorePoolSize(3);
         taskExecutor.initialize();
 
-        processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS, false);
+        processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS);
         driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesService, processor, searchLock);
     }
 

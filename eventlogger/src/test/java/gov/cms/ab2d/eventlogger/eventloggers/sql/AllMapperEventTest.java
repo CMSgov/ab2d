@@ -147,22 +147,23 @@ public class AllMapperEventTest {
     @Test
     void exceptionContractSearchTests() {
         assertThrows(EventLoggingException.class, () ->
-                new ContractBeneSearchEventMapper(null).log(new ErrorEvent()));
+                new ContractSearchEventMapper(null).log(new ErrorEvent()));
     }
 
     @Test
     void logContractSearch() {
-        ContractBeneSearchEvent cbse = new ContractBeneSearchEvent(
-                "laila", "jobIdVal", "Contract123", 100, 98, 2);
+        ContractSearchEvent cbse = new ContractSearchEvent(
+                "laila", "jobIdVal", "Contract123", 100, 100, 100, 2, 1000, 1000, 1);
         sqlEventLogger.log(cbse);
         assertEquals("ab2d-dev", cbse.getEnvironment());
         long id = cbse.getId();
         OffsetDateTime val = cbse.getTimeOfEvent();
-        List<LoggableEvent> events = loggerEventRepository.load(ContractBeneSearchEvent.class);
+        List<LoggableEvent> events = loggerEventRepository.load(ContractSearchEvent.class);
         assertEquals(1, events.size());
         List<LoggableEvent> events2 = loggerEventRepository.load();
         assertEquals(events.size(), events2.size());
-        ContractBeneSearchEvent event = (ContractBeneSearchEvent) events.get(0);
+
+        ContractSearchEvent event = (ContractSearchEvent) events.get(0);
         assertEquals("ab2d-dev", event.getEnvironment());
         assertTrue(event.getId() > 0);
         assertEquals(event, cbse);
@@ -170,12 +171,20 @@ public class AllMapperEventTest {
         assertEquals("laila", event.getOrganization());
         assertEquals("jobIdVal", event.getJobId());
         assertEquals("Contract123", event.getContractNumber());
-        assertEquals(100, event.getNumInContract());
-        assertEquals(98, event.getNumSearched());
-        assertEquals(2, event.getNumErrors());
+
+        assertEquals(100, event.getBenesExpected());
+        assertEquals(100, event.getBenesQueued());
+        assertEquals(100, event.getBenesSearched());
+        assertEquals(2, event.getBenesErrored());
+
+        assertEquals(1000, event.getEobsFetched());
+        assertEquals(1000, event.getEobsWritten());
+        assertEquals(1, event.getEobFiles());
+
+
         assertEquals(val.getNano(), event.getTimeOfEvent().getNano());
-        loggerEventRepository.delete(ContractBeneSearchEvent.class);
-        events = loggerEventRepository.load(ContractBeneSearchEvent.class);
+        loggerEventRepository.delete(ContractSearchEvent.class);
+        events = loggerEventRepository.load(ContractSearchEvent.class);
         assertEquals(0, events.size());
     }
 
@@ -327,8 +336,8 @@ public class AllMapperEventTest {
                 "127.0.0.1", "token", "123"));
         sqlEventLogger.log(new ApiResponseEvent("laila", "job123", HttpStatus.NOT_FOUND,
                 "Not Found", "Description", "123"));
-        sqlEventLogger.log(new ContractBeneSearchEvent(
-                "laila", "jobIdVal", "Contract123", 100, 98, 2));
+        sqlEventLogger.log(new ContractSearchEvent(
+                "laila", "jobIdVal", "Contract123", 100, 100, 100, 2, 1000, 1000, 1));
         sqlEventLogger.log(new ErrorEvent("laila", "job123", ErrorEvent.ErrorType.CONTRACT_NOT_FOUND,
                 "Description"));
         Path p = Path.of(tmpDir.toString(), "testFile");

@@ -150,8 +150,8 @@ class KinesisEventLoggerTest {
         assertEquals("api_response_event", camelCaseToUnderscore(event.getClass().getSimpleName()));
         event = new BeneficiarySearchEvent();
         assertEquals("beneficiary_search_event", camelCaseToUnderscore(event.getClass().getSimpleName()));
-        event = new ContractBeneSearchEvent();
-        assertEquals("contract_bene_search_event", camelCaseToUnderscore(event.getClass().getSimpleName()));
+        event = new ContractSearchEvent();
+        assertEquals("contract_search_event", camelCaseToUnderscore(event.getClass().getSimpleName()));
         event = new ErrorEvent();
         assertEquals("error_event", camelCaseToUnderscore(event.getClass().getSimpleName()));
         event = new FileEvent();

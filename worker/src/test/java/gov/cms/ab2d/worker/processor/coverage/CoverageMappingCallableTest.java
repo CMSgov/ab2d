@@ -65,7 +65,7 @@ class CoverageMappingCallableTest {
         search.setPeriod(period);
 
         CoverageMapping mapping = new CoverageMapping(cse, search);
-        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, false);
+        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient);
 
         assertFalse(callable.isCompleted());
 
@@ -75,6 +75,31 @@ class CoverageMappingCallableTest {
         assertTrue(callable.isCompleted());
         assertTrue(mapping.isSuccessful());
         assertEquals(20, results.getBeneficiaryIds().size());
+    }
+
+    @DisplayName("Test to see if it returns the correct year for test contracts")
+    @Test
+    void testTestContractYears() {
+        Contract contract = new Contract();
+        contract.setContractNumber("Z0010");
+        contract.setContractName("TESTING");
+
+        CoveragePeriod period = new CoveragePeriod();
+        period.setContract(contract);
+        period.setYear(2020);
+        period.setMonth(1);
+
+        CoverageSearchEvent cse = new CoverageSearchEvent();
+        cse.setCoveragePeriod(period);
+
+        CoverageSearch search = new CoverageSearch();
+        search.setPeriod(period);
+
+        CoverageMapping mapping = new CoverageMapping(cse, search);
+        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient);
+        assertEquals(3, callable.getCorrectedYear(contract.getContractNumber(), 2020));
+        contract.setContractNumber("Z1001");
+        assertEquals(2020, callable.getCorrectedYear(contract.getContractNumber(), 2020));
     }
 
     @DisplayName("Multiple mbis captured")
@@ -105,7 +130,7 @@ class CoverageMappingCallableTest {
         search.setPeriod(period);
 
         CoverageMapping mapping = new CoverageMapping(cse, search);
-        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, false);
+        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient);
 
         try {
             callable.call();
@@ -157,7 +182,7 @@ class CoverageMappingCallableTest {
         search.setPeriod(period);
 
         CoverageMapping mapping = new CoverageMapping(cse, search);
-        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, false);
+        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient);
 
         try {
             callable.call();
@@ -207,7 +232,7 @@ class CoverageMappingCallableTest {
         CoverageMapping mapping = new CoverageMapping(cse, search);
 
         CoverageMappingCallable coverageCallable =
-                new CoverageMappingCallable(STU3, mapping, bfdClient, false);
+                new CoverageMappingCallable(STU3, mapping, bfdClient);
 
         try {
             mapping = coverageCallable.call();
@@ -259,7 +284,7 @@ class CoverageMappingCallableTest {
         CoverageMapping mapping = new CoverageMapping(cse, search);
 
         CoverageMappingCallable coverageCallable =
-                new CoverageMappingCallable(STU3, mapping, bfdClient, false);
+                new CoverageMappingCallable(STU3, mapping, bfdClient);
 
         try {
             mapping = coverageCallable.call();
@@ -309,7 +334,7 @@ class CoverageMappingCallableTest {
         CoverageMapping mapping = new CoverageMapping(cse, search);
 
         CoverageMappingCallable coverageCallable =
-                new CoverageMappingCallable(STU3, mapping, bfdClient, false);
+                new CoverageMappingCallable(STU3, mapping, bfdClient);
 
         try {
             mapping = coverageCallable.call();
@@ -347,7 +372,7 @@ class CoverageMappingCallableTest {
         search.setPeriod(period);
 
         CoverageMapping mapping = new CoverageMapping(cse, search);
-        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, false);
+        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient);
 
         try {
             callable.call();
@@ -377,7 +402,7 @@ class CoverageMappingCallableTest {
         search.setPeriod(period);
 
         CoverageMapping mapping = new CoverageMapping(cse, search);
-        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, false);
+        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient);
         Patient patient = new Patient();
 
         Identifiers ids = callable.extractPatientId(patient);

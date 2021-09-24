@@ -81,7 +81,7 @@ class ContractProcessorInvalidPatientTest {
                 2L, new CoverageSummary(createIdentifierWithoutMbi(2L), null, dates),
                 3L, new CoverageSummary(createIdentifierWithoutMbi(3L), null, dates)
         );
-        jobChannelService.sendUpdate(jobId, JobMeasure.EXPECTED_BENES, summaries.size());
+        jobChannelService.sendUpdate(jobId, JobMeasure.PATIENTS_EXPECTED, summaries.size());
 
         jobData = new JobData(jobId, OffsetDateTime.MIN, "Client", summaries);
 

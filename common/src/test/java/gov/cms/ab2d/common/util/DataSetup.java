@@ -248,11 +248,11 @@ public class DataSetup {
             Role role = roleRepository.findRoleByName(clientRole).orElseGet(() -> {
                 Role newRole = new Role();
                 newRole.setName(clientRole);
+                queueForCleanup(clientRole);
                 return roleRepository.save(newRole);
             });
 
             pdpClient.addRole(role);
-            queueForCleanup(role);
         }
 
         pdpClient =  pdpClientRepository.save(pdpClient);
@@ -286,12 +286,5 @@ public class DataSetup {
         Contract contract = setupContract(contractNumber);
 
         return savePdpClient(clientdId, contract, clientRoles);
-    }
-
-    public void createRole(String sponsorRole) {
-        Role role = new Role();
-        role.setName(sponsorRole);
-        roleRepository.save(role);
-        queueForCleanup(role);
     }
 }
