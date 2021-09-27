@@ -186,7 +186,7 @@ associated with your machine.
      | jq --raw-output ".access_token")
    ```
 
-   You will need this "BEARER_TOKEN" environment variable in order to do any of the following sections. All commands should
+   You will need this "BEARER_TOKEN" environment variable to complete any of the following sections. All commands should
    be in this same terminal window since the value of the environment variable is only set in that terminal.
 
    The bearer token will expire in 1 hour.
@@ -257,7 +257,7 @@ opening ubuntu or some other terminal that supports curl and jq. See [Windows 10
    x-frame-options: DENY
    ```
 
-   Note the response and job id from the output
+   Note the response and Job ID from the output
    
    Example:
 
@@ -383,7 +383,7 @@ opening ubuntu or some other terminal that supports curl and jq. See [Windows 10
    }
    ```
 
-   The JSON (formated here for readability) will contain the location of the files in the .output[].url values. Z0001 indicates the contract number, 0001 indicates the file for that contract number. If the contract is big enough that breaking it into parts is warranted, you might see Z0001_00002.ndjson, for example.
+   The JSON (formatted here for readability) will contain the location of the files in the .output[].url values. Z0001 indicates the contract number, 0001 indicates the file for that contract number. If the contract is big enough that breaking it into parts is warranted, you might see Z0001_00002.ndjson, for example.
 
 9. Note the response code and file to download from the output
 

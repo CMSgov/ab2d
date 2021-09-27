@@ -535,7 +535,7 @@ landing-page: live
 
                 <h5 id="ExportaJobID-content">Export a Job ID</h5>
                 <p>
-                    Open up the <strong>Export</strong> menu to view all possible endpoints:
+                    Open the <strong>Export</strong> menu to view all possible endpoints:
                 </p>
 
                 <img src="./assets/img/sandbox/swagger-5.png" alt="swagger export menu">
@@ -547,7 +547,7 @@ landing-page: live
 
                 <img src="./assets/img/sandbox/swagger-6.png" alt="swagger export parameters">
 
-                <p>Under <strong>Prefer</strong> add <strong> respond-async</strong> and then click the big blue bar to
+                <p>Under <strong>Prefer,</strong> add <strong> respond-async</strong> and then click the big blue bar to
                     <strong> Execute.</strong>
                 </p>
 
@@ -624,7 +624,8 @@ landing-page: live
                     and the <strong>Response body</strong> will contain the claims data. To download the data into a
                     file, click on
                     the
-                    Download button in the lower right corner. This will be saved as an ndjson (new line delimited JSON)
+                    Download button in the lower right corner. This will be saved as an ndjson (new line delimited JSON,
+                    also known as JSON lines)
                     file in your downloads. This data format will be identical to the production data. Only the Job ID
                     from
                     this file is needed - please send the Job ID to the AB2D team per the instructions emailed to your

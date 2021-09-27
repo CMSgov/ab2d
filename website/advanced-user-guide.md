@@ -307,7 +307,7 @@ GET /api/v1/fhir/metadata
 As required by the FHIR Bulk Export specification, the files are provided in NDJSON format, which is essentially 
 plain-text. Depending on the number of patients in a Part D contract, these files can become rather large. 
 The API does support "Content-Encoding: gzip" when serving the files so that the downloads could complete faster and 
-use less bandwidth. Thus, it is strongly encouraged that the API client you build also supports compressed media 
+use less bandwidth. Thus, it is strongly encouraged that the API client also supports compressed media 
 types and properly advertises so by specifying  "Accept-Encoding: gzip, deflate" header.
 
 ## Tutorials
@@ -345,17 +345,17 @@ Your token is either incorrect or has expired
 
 ### 404 HTTP Response - Page not found
 - The page doesn't exist. Check the URL to make sure it exists. Put it in a browser and see what the error is. You will 
-not have passed credentials or necessary parameters so it will give you another error but it shouldn't give you a 404.
+not have passed credentials or necessary parameters, so it will give you another error, but it shouldn't give you a 404.
 - If you are using cURL at the command line, you may have to escape characters. For example, $ is used in $export and 
 $status but $ means a variable value in the bash command line.
 
 ### Unable to Download Bulk Data File
 - Your file name or job name are not correct. You can call the $status command again and verify that you have the file 
 name & job name correct.
-- You can only download the file once. If you have already done that, it no longer exists on our system
-- The time between when the job completed and you requested the file was greater than 72 hours. Files are 
+- You can only download the file once. For security purposes, once downloaded, the file no longer exists in our system.
+- The time between when the job completes and you request the file is greater than 72 hours. Files are 
 automatically deleted (or expired) after 72 hours.
-- There was an error on our server. If this continues to happen, contact technical support
+- There was an error on our server. If this continues to happen, contact technical support at [ab2d@semanticbits.com](ab2d@semanticbits.com).
 
 ### Other
 If none of these hints work, you can always start a new job and retrieve the information again.
