@@ -224,6 +224,7 @@ landing-page: live
                     organizations must provide the AB2D team with the Job ID from a successful run in the test (Sandbox)
                     environment.
                 </p>
+                <h5>AB2D Synthetic Data</h5>
                 <p>
                     AB2D provides four sample contracts that have been designed to provide synthetic data for testing purposes.
                 </p>
