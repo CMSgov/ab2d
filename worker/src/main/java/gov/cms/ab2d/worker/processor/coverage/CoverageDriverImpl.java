@@ -512,7 +512,7 @@ public class CoverageDriverImpl implements CoverageDriver {
                 null, issues)).collect(toList());
 
         Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(enabledContracts)
-                .stream().collect(groupingBy(CoverageCount::getContractNumber));
+                .stream().sorted().collect(groupingBy(CoverageCount::getContractNumber));
 
         // todo create a stream of contracts and execute checks against
 
