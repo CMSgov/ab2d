@@ -312,7 +312,7 @@ public class CoverageCheckPredicatesUnitTest {
         event3.setId(3L);
 
         when(coverageService.findEventWithSuccessfulOffset(anyInt(), anyInt()))
-                .thenReturn(Optional.of(event1)).thenReturn(Optional.empty());
+                .thenReturn(Optional.of(event1)).thenReturn(Optional.empty()).thenReturn(Optional.of(event3));
         List<CoverageCount> fakeCounts = List.of(
                 new CoverageCount("TEST", ATTESTATION_TIME.plusMonths(0).getYear(),
                         ATTESTATION_TIME.plusMonths(0).getMonthValue(), 1, 1, 1),

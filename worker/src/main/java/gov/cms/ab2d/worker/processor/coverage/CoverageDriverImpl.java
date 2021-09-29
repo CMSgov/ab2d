@@ -27,6 +27,7 @@ import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getAttestatio
 import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getEndDateTime;
 import static java.util.stream.Collectors.toList;
 
+@SuppressWarnings("PMD.TooManyStaticImports")
 @Slf4j
 @Service
 public class CoverageDriverImpl implements CoverageDriver {
