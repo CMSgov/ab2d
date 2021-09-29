@@ -5,8 +5,6 @@ on: [push]
 jobs:
   gitleaks:
     runs-on: ubuntu-latest
-    env:
-      REPO: https://github.com/CMSgov/ab2d
      steps:
     - uses: actions/checkout@v2
       with:
