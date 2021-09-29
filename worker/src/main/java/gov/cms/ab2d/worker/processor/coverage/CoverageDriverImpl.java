@@ -7,7 +7,11 @@ import gov.cms.ab2d.common.service.CoverageService;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.Constants;
+import gov.cms.ab2d.worker.processor.coverage.verifier.CoveragePeriodsPresentCheck;
+import gov.cms.ab2d.worker.processor.coverage.verifier.EnrollmentPresentCheck;
+import gov.cms.ab2d.worker.processor.coverage.verifier.EnrollmentStableCheck;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +27,9 @@ import java.util.concurrent.locks.Lock;
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
+import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getAttestationTime;
+import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getEndDateTime;
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 
 @Slf4j
@@ -178,14 +185,7 @@ public class CoverageDriverImpl implements CoverageDriver {
     private void discoverCoveragePeriods(Contract contract) {
         // Assume current time is EST since all AWS deployments are in EST
         ZonedDateTime now = getEndDateTime();
-        ZonedDateTime attestationTime = contract.getESTAttestationTime();
-
-        // Force first coverage period to be after
-        // January 1st 2020 which is the first moment we report data for
-        if (attestationTime.isBefore(AB2D_EPOCH)) {
-            log.info("contract attested before ab2d epoch setting to epoch");
-            attestationTime = AB2D_EPOCH;
-        }
+        ZonedDateTime attestationTime = getAttestationTime(contract);
 
         int coveragePeriodsForContracts = 0;
         while (attestationTime.isBefore(now)) {
@@ -465,15 +465,6 @@ public class CoverageDriverImpl implements CoverageDriver {
         }
     }
 
-    private static ZonedDateTime getEndDateTime() {
-        // Assume current time zone is EST since all deployments are in EST
-        ZonedDateTime now = ZonedDateTime.now(AB2D_ZONE);
-        now = now.plusMonths(1);
-        now = ZonedDateTime.of(now.getYear(), now.getMonthValue(),
-                1, 0, 0, 0, 0,  AB2D_ZONE);
-        return now;
-    }
-
     private ZonedDateTime getStartDateTime(Job job) {
         Contract contract = job.getContract();
 
@@ -508,5 +499,30 @@ public class CoverageDriverImpl implements CoverageDriver {
     @Override
     public CoveragePagingResult pageCoverage(CoveragePagingRequest request) {
         return coverageService.pageCoverage(request);
+    }
+
+    @Override
+    public void verifyCoverage() {
+
+        List<String> issues = new ArrayList<>();
+
+        List<Contract> enabledContracts = pdpClientService.getAllEnabledContracts();
+
+        enabledContracts = enabledContracts.stream().filter(new CoveragePeriodsPresentCheck(coverageService,
+                null, issues)).collect(toList());
+
+        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(enabledContracts)
+                .stream().collect(groupingBy(CoverageCount::getContractNumber));
+
+        // todo create a stream of contracts and execute checks against
+
+        enabledContracts.stream()
+                .filter(new EnrollmentPresentCheck(coverageService, coverageCounts, issues))
+                .filter(new EnrollmentStableCheck(coverageService, coverageCounts, issues));
+
+        // Additionally check that search event is most recent search event
+        // and that there are no coverage periods with more than one search event contributing enrollment
+
+
     }
 }

@@ -58,4 +58,9 @@ public interface CoverageDriver {
      * @return result containing page of beneficiaries and request to get next page if more beneficiaries are present
      */
     CoveragePagingResult pageCoverage(CoveragePagingRequest request);
+
+    /**
+     * Verify that the coverage stored in the database meets all minimum
+     */
+    void verifyCoverage();
 }

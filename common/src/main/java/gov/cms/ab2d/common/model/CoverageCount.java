@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @AllArgsConstructor
 @Getter
-public class CoverageCount {
+public class CoverageCount implements Comparable<CoverageCount> {
 
     private final String contractNumber;
     private final int year;
@@ -15,4 +15,16 @@ public class CoverageCount {
     private final int coverageEventId;
     private final int beneficiaryCount;
 
+    @Override
+    public int compareTo(CoverageCount otherCount) {
+        if (!contractNumber.equals(otherCount.getContractNumber())) {
+            return contractNumber.compareTo(otherCount.getContractNumber());
+        }
+
+        if (year != otherCount.getYear()) {
+            return year - otherCount.getYear();
+        }
+
+        return month - otherCount.getMonth();
+    }
 }
