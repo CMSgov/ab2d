@@ -63,6 +63,8 @@ public class JobProcessorImpl implements JobProcessor {
     private final FileService fileService;
     private final JobChannelService jobChannelService;
     private final JobProgressService jobProgressService;
+    private final JobProgressUpdateService jobProgressUpdateService;
+
     private final JobRepository jobRepository;
     private final JobOutputRepository jobOutputRepository;
     private final ContractProcessor contractProcessor;
@@ -257,6 +259,7 @@ public class JobProcessorImpl implements JobProcessor {
         createOutputDirectory(outputDirPath, job);
 
         // start a progress tracker
+        jobProgressUpdateService.initJob(job.getJobUuid());     // A hack since everything runs in the worker JVM
         jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.FAILURE_THRESHHOLD, failureThreshold);
 
         try {
