@@ -6,7 +6,10 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Coverage;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.FilterOutByDate;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
@@ -18,16 +21,14 @@ import javax.persistence.EntityNotFoundException;
 import javax.sql.DataSource;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.repository.CoverageDeltaRepository.COVERAGE_ADDED;
 import static gov.cms.ab2d.common.repository.CoverageDeltaRepository.COVERAGE_DELETED;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
-import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static java.util.Collections.disjoint;
-import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.junit.jupiter.api.Assertions.*;
@@ -219,6 +220,102 @@ class CoverageServiceImplTest {
         // but don't count beneficiaries shared by these coverage periods
         int combinedCount = coverageService.countBeneficiariesByCoveragePeriod(List.of(period1Jan, period1Feb));
         assertEquals(sharedBeneficiaries + 3, combinedCount);
+    }
+
+    @DisplayName("Count coverage records for a group of contracts")
+    @Test
+    void countForContracts() {
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        coverageService.submitSearch(period1Feb.getId(), "testing");
+        coverageService.submitSearch(period1March.getId(), "testing");
+        coverageService.submitSearch(period1April.getId(), "testing");
+
+        CoveragePeriod period2Feb = dataSetup.createCoveragePeriod(contract2, 2, 2020);
+        CoveragePeriod period2March = dataSetup.createCoveragePeriod(contract2, 3, 2020);
+        CoveragePeriod period2April = dataSetup.createCoveragePeriod(contract2, 4, 2020);
+        CoveragePeriod period2May = dataSetup.createCoveragePeriod(contract2, 5, 2020);
+
+        coverageService.submitSearch(period2Jan.getId(), "testing");
+        coverageService.submitSearch(period2Feb.getId(), "testing");
+        coverageService.submitSearch(period2March.getId(), "testing");
+        coverageService.submitSearch(period2April.getId(), "testing");
+        coverageService.submitSearch(period2May.getId(), "testing");
+
+        CoverageSearchEvent jan1Progress = startSearchAndPullEvent();
+        startSearchAndPullEvent();
+        CoverageSearchEvent march1Progress = startSearchAndPullEvent();
+        CoverageSearchEvent april1Progress = startSearchAndPullEvent();
+
+        CoverageSearchEvent jan2Progress = startSearchAndPullEvent();
+        startSearchAndPullEvent();
+        CoverageSearchEvent march2Progress = startSearchAndPullEvent();
+        startSearchAndPullEvent();
+        CoverageSearchEvent may2Progress = startSearchAndPullEvent();
+
+        // Number of beneficiaries shared between months
+        // large number to attempt to trigger indexing
+        // for more realistic results
+        int sharedBeneficiaries = 10000;
+
+        Set<Identifiers> fullIdentifiers = new LinkedHashSet<>();
+        for (long idx = 0; idx < sharedBeneficiaries; idx++) {
+            fullIdentifiers.add(createIdentifier(idx));
+        }
+
+        Set<Identifiers> halfIdentifiers = fullIdentifiers.stream().limit(5000).collect(toSet());
+
+        // Save shared beneficiaries between months
+        coverageService.insertCoverage(jan1Progress.getId(), fullIdentifiers);
+        coverageService.insertCoverage(march1Progress.getId(), halfIdentifiers);
+        coverageService.insertCoverage(april1Progress.getId(), fullIdentifiers);
+        coverageService.completeSearch(period1Jan.getId(), "testing");
+        coverageService.completeSearch(period1Feb.getId(), "testing");
+        coverageService.completeSearch(period1March.getId(), "testing");
+        coverageService.completeSearch(period1April.getId(), "testing");
+
+        coverageService.insertCoverage(jan2Progress.getId(), halfIdentifiers);
+        coverageService.insertCoverage(march2Progress.getId(), fullIdentifiers);
+        coverageService.insertCoverage(may2Progress.getId(), halfIdentifiers);
+        coverageService.completeSearch(period2Jan.getId(), "testing");
+        coverageService.completeSearch(period2Feb.getId(), "testing");
+        coverageService.completeSearch(period2March.getId(), "testing");
+        coverageService.completeSearch(period2April.getId(), "testing");
+        coverageService.completeSearch(period2May.getId(), "testing");
+
+        List<CoverageCount> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contract1, contract2));
+
+        assertNotNull(coverageCounts);
+        assertEquals(6, coverageCounts.size());
+        // No duplicate coverage periods or events
+        assertEquals(coverageCounts.size(), coverageCounts.stream().map(CoverageCount::getCoveragePeriodId).collect(toSet()).size());
+        assertEquals(coverageCounts.size(), coverageCounts.stream().map(CoverageCount::getCoverageEventId).collect(toSet()).size());
+
+        Map<Integer, CoverageCount> coverageCountMap = coverageCounts.stream()
+                .collect(Collectors.toMap(CoverageCount::getCoveragePeriodId, Function.identity()));
+
+        assertTrue(coverageCountMap.containsKey(period1Jan.getId()));
+        assertEquals(fullIdentifiers.size(), coverageCountMap.get(period1Jan.getId()).getBeneficiaryCount());
+
+        assertFalse(coverageCountMap.containsKey(period1Feb.getId()));
+
+        assertTrue(coverageCountMap.containsKey(period1March.getId()));
+        assertEquals(halfIdentifiers.size(), coverageCountMap.get(period1March.getId()).getBeneficiaryCount());
+
+        assertTrue(coverageCountMap.containsKey(period1April.getId()));
+        assertEquals(fullIdentifiers.size(), coverageCountMap.get(period1April.getId()).getBeneficiaryCount());
+
+        assertTrue(coverageCountMap.containsKey(period2Jan.getId()));
+        assertEquals(halfIdentifiers.size(), coverageCountMap.get(period2Jan.getId()).getBeneficiaryCount());
+
+        assertFalse(coverageCountMap.containsKey(period2Feb.getId()));
+
+        assertTrue(coverageCountMap.containsKey(period2March.getId()));
+        assertEquals(fullIdentifiers.size(), coverageCountMap.get(period2March.getId()).getBeneficiaryCount());
+
+        assertFalse(coverageCountMap.containsKey(period2April.getId()));
+
+        assertTrue(coverageCountMap.containsKey(period2May.getId()));
+        assertEquals(halfIdentifiers.size(), coverageCountMap.get(period2May.getId()).getBeneficiaryCount());
     }
 
     @DisplayName("DB structure matches JPA")

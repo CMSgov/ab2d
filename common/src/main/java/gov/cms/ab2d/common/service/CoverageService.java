@@ -1,15 +1,6 @@
 package gov.cms.ab2d.common.service;
 
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.CoverageMapping;
-import gov.cms.ab2d.common.model.CoveragePagingRequest;
-import gov.cms.ab2d.common.model.CoveragePagingResult;
-import gov.cms.ab2d.common.model.CoveragePeriod;
-import gov.cms.ab2d.common.model.CoverageSearchDiff;
-import gov.cms.ab2d.common.model.CoverageSearchEvent;
-import gov.cms.ab2d.common.model.CoverageSearch;
-import gov.cms.ab2d.common.model.Identifiers;
-import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.model.*;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -56,7 +47,22 @@ public interface CoverageService {
      */
     boolean isCoveragePeriodInProgress(int periodId);
 
+    /**
+     * Given a list of coverage periods count the number of distinct beneficiaries over all of those coverage periods
+     * @param coveragePeriods list of coverage periods that should have enrollment
+     * @return number of distinct beneficiaries found
+     */
     int countBeneficiariesByCoveragePeriod(List<CoveragePeriod> coveragePeriods);
+
+    /**
+     * Get coverage count for each coverage period related to a list of contracts. If a contract/year/month is missing
+     * from the summary it means that either the coverage period does not exist or there are no records for that
+     * coverage period.
+     *
+     * @param contracts list of contracts to search for
+     * @return a summary of the coverage records found for a contract/year/month
+     */
+    List<CoverageCount> countBeneficiariesForContracts(List<Contract> contracts);
 
     /**
      * Can an EOB search be started based on whether a contract mapping is in progress

@@ -1,25 +1,22 @@
 package gov.cms.ab2d.common.service;
 
 import com.newrelic.api.agent.Trace;
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.CoverageMapping;
-import gov.cms.ab2d.common.model.CoveragePagingRequest;
-import gov.cms.ab2d.common.model.CoveragePagingResult;
-import gov.cms.ab2d.common.model.CoveragePeriod;
-import gov.cms.ab2d.common.model.CoverageSearch;
-import gov.cms.ab2d.common.model.CoverageSearchDiff;
-import gov.cms.ab2d.common.model.CoverageSearchEvent;
-import gov.cms.ab2d.common.model.Identifiers;
-import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.repository.*;      // NOPMD
+import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.common.repository.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
-import java.time.*;
-import java.util.*;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH_YEAR;
 import static java.util.stream.Collectors.toList;
@@ -102,6 +99,19 @@ public class CoverageServiceImpl implements CoverageService {
     public int countBeneficiariesByCoveragePeriod(List<CoveragePeriod> coveragePeriods) {
         List<Integer> ids = coveragePeriods.stream().map(CoveragePeriod::getId).collect(toList());
         return coverageServiceRepo.countBeneficiariesByPeriods(ids, coveragePeriods.get(0).getContract().getContractNumber());
+    }
+
+    @Override
+    public List<CoverageCount> countBeneficiariesForContracts(List<Contract> contracts) {
+        int partitionSize = 10;
+        List<List<Contract>> contractPartitions = new ArrayList<>();
+
+        for (int idx = 0; idx < contracts.size(); idx += partitionSize) {
+            contractPartitions.add(contracts.subList(idx, Math.min(idx + partitionSize, contracts.size())));
+        }
+
+        return contractPartitions.stream().map(coverageServiceRepo::countByContractCoverage)
+                .flatMap(List::stream).collect(toList());
     }
 
     @Override
