@@ -1,7 +1,6 @@
 package gov.cms.ab2d.bfd.client;
 
 import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
 import org.hl7.fhir.r4.model.Bundle;
 import org.hl7.fhir.r4.model.Extension;
 import org.hl7.fhir.r4.model.Identifier;
@@ -9,34 +8,28 @@ import org.hl7.fhir.r4.model.Patient;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.Parameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.context.annotation.Profile;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.IOException;
 import java.util.List;
 
 import static gov.cms.ab2d.bfd.client.MockUtils.getRawJson;
-import static org.junit.jupiter.api.Assertions.*;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.context.support.TestPropertySourceUtils.addInlinedPropertiesToEnvironment;
 
 /**
  * Credits: most of the code in this class has been adopted from https://github.com/CMSgov/dpc-app
  */
-@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = SpringBootApp.class)
-@ActiveProfiles("test")
-@ContextConfiguration(classes = { BlueButtonClientTestR4.TestConfig.class })
-public class BlueButtonClientTestR4 {
+@ContextConfiguration(initializers = {BlueButtonClientR4Test.PropertyOverrider.class})
+public class BlueButtonClientR4Test {
     // A random example patient (Jane Doe)
     private static final Long TEST_PATIENT_ID = -20140000010000L;
     // A patient that only has a single EOB record in bluebutton
@@ -49,22 +42,18 @@ public class BlueButtonClientTestR4 {
     private static final String CONTRACT = "Z0012";
     public static final int MOCK_PORT_V2 = MockUtils.randomMockServerPort();
 
+    // Leave so code coverage works
     @Autowired
-    private BFDClient bbc;
+    private BFDClientImpl bbc;
 
     private static ClientAndServer mockServer;
 
-    @Profile("test")
-    @Configuration
-    public static class TestConfig {
+    public static class PropertyOverrider implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
-        @Autowired
-        private HttpClient client;
-
-        @Bean
-        @Primary
-        public BfdClientVersions clientVersions() {
-            return new BfdClientVersions("http://localhost:" + MOCK_PORT_V2, client);
+        @Override
+        public void initialize(ConfigurableApplicationContext applicationContext) {
+            String baseUrl = "bfd.url=http://localhost:" + MOCK_PORT_V2;
+            addInlinedPropertiesToEnvironment(applicationContext, baseUrl);
         }
     }
 
@@ -114,7 +103,7 @@ public class BlueButtonClientTestR4 {
         assertNotNull(response, "The demo patient should have a non-null EOB bundle");
         assertNotNull(response.getLink(org.hl7.fhir.r4.model.Bundle.LINK_NEXT),
                 "Should have no next link since all the resources are in the bundle");
-     }
+    }
 
     @Test
     public void shouldReturnBundleContainingOnlyEOBs() {
@@ -137,12 +126,10 @@ public class BlueButtonClientTestR4 {
         assertNotNull(patient);
         List<Identifier> identifiers = patient.getIdentifier();
         assertTrue(identifiers.stream()
-                .filter(c -> c.getSystem().equalsIgnoreCase("http://hl7.org/fhir/sid/us-mbi"))
-                .findFirst().isPresent());
+                .anyMatch(c -> c.getSystem().equalsIgnoreCase("http://hl7.org/fhir/sid/us-mbi")));
         List<Extension> extensions = patient.getExtension();
         assertTrue(extensions.stream()
-                .filter(c -> c.getUrl().equalsIgnoreCase("https://bluebutton.cms.gov/resources/variables/rfrnc_yr"))
-                .findFirst().isPresent());
+                .anyMatch(c -> c.getUrl().equalsIgnoreCase("https://bluebutton.cms.gov/resources/variables/rfrnc_yr")));
     }
 
     @Test

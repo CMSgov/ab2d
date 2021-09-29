@@ -29,7 +29,6 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     private final BFDClient bfdClient;
     private final ThreadPoolTaskExecutor executor;
     private final int maxAttempts;
-    private final boolean skipBillablePeriodCheck;
 
     private final List<CoverageMappingCallable> inProgressMappings = new ArrayList<>();
 
@@ -40,13 +39,11 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
     public CoverageProcessorImpl(CoverageService coverageService, BFDClient bfdClient,
                                  @Qualifier("patientCoverageThreadPool") ThreadPoolTaskExecutor executor,
-                                 @Value("${coverage.update.max.attempts}") int maxAttempts,
-                                 @Value("${claims.skipBillablePeriodCheck}") boolean skipBillablePeriodCheck) {
+                                 @Value("${coverage.update.max.attempts}") int maxAttempts) {
         this.coverageService = coverageService;
         this.bfdClient = bfdClient;
         this.executor = executor;
         this.maxAttempts = maxAttempts;
-        this.skipBillablePeriodCheck = skipBillablePeriodCheck;
     }
 
     @Override
@@ -88,7 +85,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                     mapping.getPeriod().getMonth(), mapping.getPeriod().getYear());
 
             // Currently, we are using the STU3 version to get patient mappings
-            CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, skipBillablePeriodCheck);
+            CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient);
             executor.submit(callable);
             inProgressMappings.add(callable);
 
