@@ -267,6 +267,13 @@ class JobProcessorUnitTest {
 
     }
 
+    @Test
+    @DisplayName("Send Measure to missing listener.")
+    void sendMeasureToMissingListener() {
+        // As long as no exceptions are thrown, this test passes
+        jobChannelService.sendUpdate("silly-not-a-real-guid", JobMeasure.EOBS_WRITTEN, -1);
+    }
+
     private PdpClient createClient() {
         PdpClient pdpClient = new PdpClient();
         pdpClient.setClientId("Harry_Potter");
