@@ -7,8 +7,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       REPO: https://github.com/CMSgov/ab2d
-    steps:
-    - uses: actions/checkout@v1
+     steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: '0'
     - name: gitleaks-action
       uses: semanticbits/ab2d-gitleaks-automation/gitleaks-action@master
       with:
