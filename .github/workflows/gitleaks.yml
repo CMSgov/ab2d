@@ -5,9 +5,10 @@ on: [push]
 jobs:
   gitleaks:
     runs-on: ubuntu-latest
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: '0'
+    env:
+      REPO: https://github.com/CMSgov/ab2d
+    steps:
+    - uses: actions/checkout@v1
     - name: gitleaks-action
       uses: semanticbits/ab2d-gitleaks-automation/gitleaks-action@master
       with:
