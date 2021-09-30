@@ -3,8 +3,7 @@ name: Github Secrets Scanner
 on: [push]
 
 jobs:
-  build:
-
+  gitleaks:
     runs-on: ubuntu-latest
     env:
       REPO: https://github.com/CMSgov/ab2d
