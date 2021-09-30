@@ -26,15 +26,77 @@ was used to implement the [HL7 FHIR standard](https://www.hl7.org/fhir/overview.
 [FHIR Bulk Data Export](https://hl7.org/fhir/uv/bulkdata/export/index.html) pattern to perform data export. Errors come
 back in the [Resource OperationOutcome](errors come back in the https://www.hl7.org/fhir/operationoutcome.html) format.
 
+
 ### Sandbox
 The Sandbox/Swagger page is available [here](https://sandbox.ab2d.cms.gov/swagger-ui/index.html).
+
+### AB2D Synthetic Data
+
+AB2D provides four sample contracts that have been designed to provide synthetic data for testing purposes.
+
+**Simple Datasets- Two Contracts**
+
+This dataset provides contracts with a varying number of beneficiaries containing simple approximations of AB2D data. 
+These contracts are ideal to test the stress of retrieving and downloading different sized data files. The data 
+in these API payloads will not reflect the distribution of disease and demographic information you can expect from 
+production data.
+
+   <table class="ds-c-table">
+      <thead>
+         <tr>
+            <th>Sponsor</th>
+            <th>Contract</th>
+            <th>Number of Benes</th>
+         </tr>
+      </thead>
+      <tbody>
+         <tr>
+            <th>PDP-100</th>
+            <th>Z0000</th>
+            <th>100</th>
+         </tr>
+         <tr>
+            <th>PDP-10000</th>
+            <th>Z0010</th>
+            <th>10,000</th>
+         </tr>
+      </tbody>
+   </table>
+<br/>
+
+**Advanced Datasets- Two Contracts**
+
+This dataset provides contracts with sample data that is a more accurate representation of AB2D production data. They
+follow AB2D’s Bulk FHIR format and contain a more realistic distribution of disease and demographic information.
+
+  <table class="ds-c-table">
+      <thead>
+         <tr>
+            <th>Sponsor</th>
+            <th>Contract</th>
+            <th>Number of Benes</th>
+         </tr>
+      </thead>
+      <tbody>
+         <tr>
+            <th>PDP-1001</th>
+            <th>Z1001</th>
+            <th>600-800</th>
+         </tr>
+         <tr>
+            <th>PDP-1002</th>
+            <th>Z1002</th>
+            <th>600-800</th>
+         </tr>
+      </tbody>
+   </table>
+<br/>
 
 ## Authentication and Authorization
 The API uses the JSON Web Tokens (JWT) to authorize use of the endpoints. The token should be sent using the 
 "Authorization" header field with the value specified as "Bearer xxxxx" where xxxxx is the value of the JWT. 
 
-There are 5 users set up in the Sandbox. They are useful to view different types and sizes of data. For example, 
-sponsor PDP-100 will have 100 patients and PDP-1000 will have 1000 patients. Each has one contract associated with it.
+As noted above, there are 4 users set up in the Sandbox.
 
 <table class="ds-c-table">
     <tbody>
@@ -45,6 +107,10 @@ sponsor PDP-100 will have 100 patients and PDP-1000 will have 1000 patients. Eac
         <tr>
             <td><b>Contract</b></td>
             <td>Z0000</td>
+        </tr>
+        <tr>
+            <td><b>Dataset Type</b></td>
+            <td>Simple</td>
         </tr>
         <tr>
             <td><b>Client ID</b></td>
@@ -66,86 +132,15 @@ sponsor PDP-100 will have 100 patients and PDP-1000 will have 1000 patients. Eac
     <tbody>
         <tr>
             <td><b>Sponsor</b></td>
-            <td>PDP-1000</td>
-        </tr>
-        <tr>
-            <td><b>Contract</b></td>
-            <td>Z0001</td>
-        </tr>
-        <tr>
-            <td><b>Client ID</b></td>
-            <td>0oa2t0lc65ErV8OmY297</td>
-        </tr>
-        <tr>
-            <td><b>Client Password</b></td>
-            <td>1Bl3HGO6eglkXUDtjVjto3L-3C0offzTMk2qlz9r</td>
-        </tr>
-        <tr>
-            <td><b>Base64-encoded id:password</b></td>
-            <td>MG9hMnQwbGM2NUVyVjhPbVkyOTc6MUJsM0hHTzZlZ2xrWFVEdGpWanRvM0wtM0Mwb2ZmelRNazJxbHo5cg==</td>
-        </tr>
-    </tbody>
-</table>
-<br/>
-<table class="ds-c-table">
-    <tbody>
-        <tr>
-            <td><b>Sponsor</b></td>
-            <td>PDP-2000</td>
-        </tr>
-        <tr>
-            <td><b>Contract</b></td>
-            <td>Z0002</td>
-        </tr>
-        <tr>
-            <td><b>Client ID</b></td>
-            <td>0oa2t0lkicpxFGkGt297	</td>
-        </tr>
-        <tr>
-            <td><b>Client Password</b></td>
-            <td>eDpanJTtw90vY2viYlX4o2rgVRIR4tDRH0mWr9vN</td>
-        </tr>
-        <tr>
-            <td><b>Base64-encoded id:password</b></td>
-            <td>MG9hMnQwbGtpY3B4RkdrR3QyOTc6ZURwYW5KVHR3OTB2WTJ2aVlsWDRvMnJnVlJJUjR0RFJIMG1Xcjl2Tg==</td>
-        </tr>
-    </tbody>
-</table>
-<br/>
-<table class="ds-c-table">
-    <tbody>
-        <tr>
-            <td><b>Sponsor</b></td>
-            <td>PDP-5000</td>
-        </tr>
-        <tr>
-            <td><b>Contract</b></td>
-            <td>Z0005</td>
-        </tr>
-        <tr>
-            <td><b>Client ID</b></td>
-            <td>0oa2t0l6c1tQbTikz297</td>
-        </tr>
-        <tr>
-            <td><b>Client Password</b></td>
-            <td>80zX-7GeiMiiA6zVghiqYZL82oLAWSxhgfBkfo0T</td>
-        </tr>
-        <tr>
-            <td><b>Base64-encoded id:password</b></td>
-            <td>MG9hMnQwbDZjMXRRYlRpa3oyOTc6ODB6WC03R2VpTWlpQTZ6VmdoaXFZWkw4Mm9MQVdTeGhnZkJrZm8wVA==</td>
-        </tr>
-    </tbody>
-</table>
-<br/>
-<table class="ds-c-table">
-    <tbody>
-        <tr>
-            <td><b>Sponsor</b></td>
             <td>PDP-10000</td>
         </tr>
         <tr>
             <td><b>Contract</b></td>
             <td>Z0010</td>
+        </tr>
+        <tr>
+            <td><b>Dataset Type</b></td>
+            <td>Simple</td>
         </tr>
         <tr>
             <td><b>Client ID</b></td>
@@ -161,6 +156,65 @@ sponsor PDP-100 will have 100 patients and PDP-1000 will have 1000 patients. Eac
         </tr>
     </tbody>
 </table>
+<br/>
+<table class="ds-c-table">
+    <tbody>
+        <tr>
+            <td><b>Sponsor</b></td>
+            <td>PDP-1001</td>
+        </tr>
+        <tr>
+            <td><b>Contract</b></td>
+            <td>Z1001</td>
+        </tr>
+        <tr>
+            <td><b>Dataset Type</b></td>
+            <td>Advanced</td>
+        </tr>
+        <tr>
+            <td><b>Client ID</b></td>
+            <td>0oa9jyx2w9Z0AntLE297</td>
+        </tr>
+        <tr>
+            <td><b>Client Password</b></td>
+            <td>hskbPu-YoWfGDY1gcQq34BfIEyMVuayu87zWDliG</td>
+        </tr>
+        <tr>
+            <td><b>Base64-encoded id:password</b></td>
+            <td>MG9hOWp5eDJ3OVowQW50TEUyOTc6aHNrYlB1LVlvV2ZHRFkxZ2NRcTM0QmZJRXlNVnVheXU4N3pXRGxpRw==</td>
+        </tr>
+    </tbody>
+</table>
+<br/>
+<table class="ds-c-table">
+    <tbody>
+        <tr>
+            <td><b>Sponsor</b></td>
+            <td>PDP-1002</td>
+        </tr>
+        <tr>
+            <td><b>Contract</b></td>
+            <td>Z1002</td>
+        </tr>
+        <tr>
+            <td><b>Dataset Type</b></td>
+            <td>Advanced</td>
+        </tr>
+        <tr>
+            <td><b>Client ID</b></td>
+            <td>0oa9jz0e1dyNfRMm6297</td>
+        </tr>
+        <tr>
+            <td><b>Client Password</b></td>
+            <td>shnG6NGkHcu29ptDsKKRW6q5uFJSSpIpdl_K5fVW</td>
+        </tr>
+        <tr>
+            <td><b>Base64-encoded id:password</b></td>
+            <td>MG9hOWp6MGUxZHlOZlJNbTYyOTc6c2huRzZOR2tIY3UyOXB0RHNLS1JXNnE1dUZKU1NwSXBkbF9LNWZWVw==</td>
+        </tr>
+    </tbody>
+</table>
+<br/>
 
 CMS leverages [Okta](http://www.okta.com) for authentication to generate a JWT. Use the  "Client Id" and "Client 
 Password" you've chosen from above. The Okta request should look like this:
@@ -253,7 +307,7 @@ GET /api/v1/fhir/metadata
 As required by the FHIR Bulk Export specification, the files are provided in NDJSON format, which is essentially 
 plain-text. Depending on the number of patients in a Part D contract, these files can become rather large. 
 The API does support "Content-Encoding: gzip" when serving the files so that the downloads could complete faster and 
-use less bandwidth. Thus, it is strongly encouraged that the API client you build also supports compressed media 
+use less bandwidth. Thus, it is strongly encouraged that the API client also supports compressed media 
 types and properly advertises so by specifying  "Accept-Encoding: gzip, deflate" header.
 
 ## Tutorials
@@ -291,17 +345,17 @@ Your token is either incorrect or has expired
 
 ### 404 HTTP Response - Page not found
 - The page doesn't exist. Check the URL to make sure it exists. Put it in a browser and see what the error is. You will 
-not have passed credentials or necessary parameters so it will give you another error but it shouldn't give you a 404.
+not have passed credentials or necessary parameters, so it will give you another error, but it shouldn't give you a 404.
 - If you are using cURL at the command line, you may have to escape characters. For example, $ is used in $export and 
 $status but $ means a variable value in the bash command line.
 
 ### Unable to Download Bulk Data File
 - Your file name or job name are not correct. You can call the $status command again and verify that you have the file 
 name & job name correct.
-- You can only download the file once. If you have already done that, it no longer exists on our system
-- The time between when the job completed and you requested the file was greater than 72 hours. Files are 
+- You can only download the file once. For security purposes, once downloaded, the file no longer exists in our system.
+- The time between when the job completes and you request the file is greater than 72 hours. Files are 
 automatically deleted (or expired) after 72 hours.
-- There was an error on our server. If this continues to happen, contact technical support
+- There was an error on our server. If this continues to happen, contact technical support at [ab2d@semanticbits.com](ab2d@semanticbits.com).
 
 ### Other
 If none of these hints work, you can always start a new job and retrieve the information again.
