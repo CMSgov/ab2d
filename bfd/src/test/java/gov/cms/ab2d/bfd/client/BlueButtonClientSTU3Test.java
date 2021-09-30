@@ -4,20 +4,17 @@ import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.Parameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.context.annotation.Profile;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
@@ -29,15 +26,14 @@ import java.util.List;
 import static gov.cms.ab2d.bfd.client.MockUtils.getRawJson;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.context.support.TestPropertySourceUtils.addInlinedPropertiesToEnvironment;
 
 /**
  * Credits: most of the code in this class has been adopted from https://github.com/CMSgov/dpc-app
  */
-@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = SpringBootApp.class)
-@ActiveProfiles("test")
-@ContextConfiguration(classes = { BlueButtonClientTestSTU3.TestConfig.class })
-public class BlueButtonClientTestSTU3 {
+@ContextConfiguration(initializers = {BlueButtonClientSTU3Test.PropertyOverrider.class})
+public class BlueButtonClientSTU3Test {
     // A random example patient (Jane Doe)
     private static final Long TEST_PATIENT_ID = 20140000008325L;
     // A patient that only has a single EOB record in bluebutton
@@ -51,34 +47,28 @@ public class BlueButtonClientTestSTU3 {
     // Paths to test resources
     private static final String METADATA_PATH = "bb-test-data/meta.json";
     private static final String SAMPLE_EOB_PATH_PREFIX = "bb-test-data/eob/";
-    private static final String SAMPLE_COVERAGE_PATH_PREFIX = "bb-test-data/coverage/";
     private static final String SAMPLE_PATIENT_PATH_PREFIX = "bb-test-data/patient/";
     private static final String[] TEST_PATIENT_IDS = {"20140000008325", "20140000009893"};
 
-    private static final String [] CONTRACT_MONTHS = {"ptdcntrct01", "ptdcntrct02", "ptdcntrct03", "ptdcntrct04",
+    private static final String[] CONTRACT_MONTHS = {"ptdcntrct01", "ptdcntrct02", "ptdcntrct03", "ptdcntrct04",
             "ptdcntrct05", "ptdcntrct06", "ptdcntrct07", "ptdcntrct08", "ptdcntrct09", "ptdcntrct10",
             "ptdcntrct11", "ptdcntrct12"
     };
     private static final String CONTRACT = "S00001";
     public static final int MOCK_PORT_V1 = MockUtils.randomMockServerPort();
 
+    // Leave so code coverage works
     @Autowired
-    private BFDClient bbc;
+    private BFDClientImpl bbc;
 
     private static ClientAndServer mockServer;
 
-    // The test data is in XML format, so change the parse so that it can
-    @Profile("test")
-    @Configuration
-    public static class TestConfig {
+    public static class PropertyOverrider implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
-        @Autowired
-        private HttpClient client;
-
-        @Bean
-        @Primary
-        public BfdClientVersions clientVersions() {
-            return new BfdClientVersions("http://localhost:" + MOCK_PORT_V1, client);
+        @Override
+        public void initialize(ConfigurableApplicationContext applicationContext) {
+            String baseUrl = "bfd.url=http://localhost:" + MOCK_PORT_V1;
+            addInlinedPropertiesToEnvironment(applicationContext, baseUrl);
         }
     }
 
@@ -173,7 +163,7 @@ public class BlueButtonClientTestSTU3 {
             );
         }
 
-        for(String month : CONTRACT_MONTHS) {
+        for (String month : CONTRACT_MONTHS) {
             MockUtils.createMockServerExpectation(
                     "/v1/fhir/Patient",
                     HttpStatus.SC_OK,
@@ -289,7 +279,7 @@ public class BlueButtonClientTestSTU3 {
 
     @Test
     public void shouldGetPatientBundleFromPartDEnrolleeRequest() {
-        for(int i = 1; i <= 12; i++) {
+        for (int i = 1; i <= 12; i++) {
             org.hl7.fhir.dstu3.model.Bundle response = (org.hl7.fhir.dstu3.model.Bundle) bbc.requestPartDEnrolleesFromServer(STU3, CONTRACT, i);
 
             assertNotNull(response, "There should be a non null patient bundle");

@@ -224,7 +224,70 @@ landing-page: live
                     organizations must provide the AB2D team with the Job ID from a successful run in the test (Sandbox)
                     environment.
                 </p>
-
+                <h5>AB2D Synthetic Data</h5>
+                <p>
+                    AB2D provides four sample contracts that have been designed to provide synthetic data for testing purposes.
+                </p>
+                <p>
+                    <b>Simple Datasets- Two Contracts</b>
+                </p>
+                <p>
+                    This dataset provides contracts with a varying number of beneficiaries containing simple 
+                    approximations of AB2D data. These contracts are ideal to test the stress of retrieving and 
+                    downloading different sized data files. The data in these API payloads will not reflect the 
+                    distribution of disease and demographic information you can expect from production data.
+                </p>
+  
+                <table class="ds-c-table">
+                    <thead>
+                        <tr>
+                            <th>PDP Sponsor</th>
+                            <th>Contract</th>
+                            <th>Number of Benes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>PDP-100</td>
+                            <td>Z0000</td>
+                            <td>100</td>
+                        </tr>
+                        <tr>
+                            <td>PDP-10000</td>
+                            <td>Z0010</td>
+                            <td>10,000</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p>
+                    <b>Advanced Datasets- Two Contracts</b>
+                </p>
+                <p>
+                    This dataset provides contracts with sample data that is a more accurate representation of AB2D 
+                    production data. They follow AB2D’s Bulk FHIR format and contain a more realistic distribution of 
+                    disease and demographic information.
+                </p>
+                <table class="ds-c-table">
+                    <thead>
+                        <tr>
+                            <th>PDP Sponsor</th>
+                            <th>Contract</th>
+                            <th>Number of Benes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>PDP-1001</td>
+                            <td>Z1001</td>
+                            <td>600-800</td>
+                        </tr>
+                        <tr>
+                            <td>PDP-10000</td>
+                            <td>Z1002</td>
+                            <td>600-800</td>
+                        </tr>
+                    </tbody>
+                </table>
                 <h5 id="Whatdoesthisinstructionguidecontain-content">What does this instruction guide contain?</h5>
 
                 <p>These instructions will guide you through the process of obtaining a JSON web token (JWT), also
@@ -351,33 +414,44 @@ landing-page: live
                 <table class="ds-c-table">
                     <thead>
                         <tr>
+                            <th colspan="2">Simple Datasets</th>
+                        </tr>
+                        <tr>
                             <th>PDP Sponsor</th>
                             <th>Base64-encoded id: password</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td>0oa2t0lsrdZw5uWRx297</td>
+                            <td>PDP-100</td>
                             <td>MG9hMnQwbHNyZFp3NXVXUngyOTc6SEhkdVdHNkxvZ0l2RElRdVdncDNabG85T1lNVmFsVHRINU9CY3VIdw==
                             </td>
                         </tr>
                         <tr>
-                            <td>0lc65ErV8OmY297</td>
-                            <td>MG9hMnQwbGM2NUVyVjhPbVkyOTc6MUJsM0hHTzZlZ2xrWFVEdGpWanRvM0wtM0Mwb2ZmelRNazJxbHo5cg==
-                            </td>
+                            <td>PDP-10000</td>
+                            <td>MG9hMnQwbG05cW9BdEpIcUMyOTc6eWJSNjBKbXRjcFJ0NlNBZUxtdmJxNmwtM1lEUkNaUC1XTjFBdDZ0Xw==</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <table class="ds-c-table">
+                    <thead>
+                        <tr>
+                            <th colspan="2">Advanced Datasets</th>
                         </tr>
                         <tr>
-                            <td>0oa2t0lkicpxFGkGt297</td>
-                            <td>MG9hMnQwbGtpY3B4RkdrR3QyOTc6ZURwYW5KVHR3OTB2WTJ2aVlsWDRvMnJnVlJJUjR0RFJIMG1Xcjl2Tg==
-                            </td>
+                            <th>PDP Sponsor</th>
+                            <th>Base64-encoded id: password</th>
+                        </tr>
+                    </thead>
+                    <br/>
+                    <tbody>
+                        <tr>
+                            <td>PDP-1001</td>
+                            <td>MG9hOWp5eDJ3OVowQW50TEUyOTc6aHNrYlB1LVlvV2ZHRFkxZ2NRcTM0QmZJRXlNVnVheXU4N3pXRGxpRw==</td>
                         </tr>
                         <tr>
-                            <td>0oa2t0l6c1tQbTikz297</td>
-                            <td>nQwbDZjMXRRYlRpa3oyOTc6ODB6WC03R2VpTWlpQTZ6VmdoaXFZWkw4Mm9MQVdTeGhnZkJrZm8wVA==</td>
-                        </tr>
-                        <tr>
-                            <td>0oa2t0lm9qoAtJHqC297</td>
-                            <td>nQwbG05cW9BdEpIcUMyOTc6eWJSNjBKbXRjcFJ0NlNBZUxtdmJxNmwtM1lEUkNaUC1XTjFBdDZ0Xw==</td>
+                            <td>PDP-1002</td>
+                            <td>MG9hOWp6MGUxZHlOZlJNbTYyOTc6c2huRzZOR2tIY3UyOXB0RHNLS1JXNnE1dUZKU1NwSXBkbF9LNWZWVw==</td>
                         </tr>
                     </tbody>
                 </table>
@@ -462,7 +536,7 @@ landing-page: live
 
                 <h5 id="ExportaJobID-content">Export a Job ID</h5>
                 <p>
-                    Open up the <strong>Export</strong> menu to view all possible endpoints:
+                    Open the <strong>Export</strong> menu to view all possible endpoints:
                 </p>
 
                 <img src="./assets/img/sandbox/swagger-5.png" alt="swagger export menu">
@@ -474,7 +548,7 @@ landing-page: live
 
                 <img src="./assets/img/sandbox/swagger-6.png" alt="swagger export parameters">
 
-                <p>Under <strong>Prefer</strong> add <strong> respond-async</strong> and then click the big blue bar to
+                <p>Under <strong>Prefer,</strong> add <strong> respond-async</strong> and then click the big blue bar to
                     <strong> Execute.</strong>
                 </p>
 
@@ -551,7 +625,8 @@ landing-page: live
                     and the <strong>Response body</strong> will contain the claims data. To download the data into a
                     file, click on
                     the
-                    Download button in the lower right corner. This will be saved as an ndjson (new line delimited JSON)
+                    Download button in the lower right corner. This will be saved as an ndjson (new line delimited JSON,
+                    also known as JSON lines)
                     file in your downloads. This data format will be identical to the production data. Only the Job ID
                     from
                     this file is needed - please send the Job ID to the AB2D team per the instructions emailed to your

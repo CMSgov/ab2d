@@ -10,7 +10,7 @@ import java.util.Map;
 
 @Slf4j
 @Service
-public class JobProgressServiceImpl implements JobProgressService {
+public class JobProgressServiceImpl implements JobProgressService, JobProgressUpdateService {
 
     @Value("${report.progress.db.frequency:100}")
     private int reportProgressDbFrequency;
@@ -27,9 +27,18 @@ public class JobProgressServiceImpl implements JobProgressService {
     }
 
     @Override
+    public void initJob(String jobUuid) {
+        progressTrackerMap.put(jobUuid, ProgressTracker.builder().jobUuid(jobUuid).build());
+    }
+
+    @Override
     public void addMeasure(String jobId, JobMeasure measure, long value) {
-        ProgressTracker progressTracker = progressTrackerMap.computeIfAbsent(jobId, (k) ->
-                                                        ProgressTracker.builder().jobUuid(jobId).build());
+        ProgressTracker progressTracker = progressTrackerMap.get(jobId);
+        // Most likely being tracked by another instance in the cluster.  Less likely a very stale message and the
+        // progressTracker has been aged out.
+        if (progressTracker == null) {
+            return;
+        }
         measure.update(progressTracker, value);
 
         // update the progress in the DB & logs periodically

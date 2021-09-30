@@ -58,14 +58,17 @@ class JobProcessorUnitTest {
     void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
-        jobProgressService = spy(new JobProgressServiceImpl(jobRepository));
-        jobChannelService = new JobChannelServiceImpl(jobProgressService);
+        JobProgressServiceImpl jobProgressUpdateService = spy(new JobProgressServiceImpl(jobRepository));
+        jobProgressUpdateService.initJob(jobUuid);
+        jobProgressService = jobProgressUpdateService;
+        jobChannelService = new JobChannelServiceImpl(jobProgressUpdateService);
 
         coverageDriver = spy(new CoverageDriverStub(10, 20));
         cut = spy(new JobProcessorImpl(
                 fileService,
                 jobChannelService,
                 jobProgressService,
+                jobProgressUpdateService,
                 jobRepository,
                 jobOutputRepository,
                 contractProcessor,
@@ -262,6 +265,13 @@ class JobProcessorUnitTest {
         assertEquals(JobStatus.FAILED, processedJob.getStatus());
         assertTrue(processedJob.getStatusMessage().contains("patients from database but only retrieved"));
 
+    }
+
+    @Test
+    @DisplayName("Send Measure to missing listener.")
+    void sendMeasureToMissingListener() {
+        // As long as no exceptions are thrown, this test passes
+        jobChannelService.sendUpdate("silly-not-a-real-guid", JobMeasure.EOBS_WRITTEN, -1);
     }
 
     private PdpClient createClient() {

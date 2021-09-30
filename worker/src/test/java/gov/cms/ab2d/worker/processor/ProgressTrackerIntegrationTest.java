@@ -47,6 +47,9 @@ class ProgressTrackerIntegrationTest {
     private JobProgressService jobProgressService;
 
     @Autowired
+    private JobProgressUpdateService jobProgressUpdateService;
+
+    @Autowired
     private JobRepository jobRepository;
 
     @Autowired
@@ -78,7 +81,8 @@ class ProgressTrackerIntegrationTest {
 
         CoverageDriver coverageDriver = new CoverageDriverStub(10, 20);
 
-        cut = new JobProcessorImpl(fileService, jobChannelService, jobProgressService, jobRepository, jobOutputRepository,
+        cut = new JobProcessorImpl(fileService, jobChannelService, jobProgressService, jobProgressUpdateService,
+                jobRepository, jobOutputRepository,
                 contractProcessor, coverageDriver, eventLogger);
     }
 
@@ -94,6 +98,7 @@ class ProgressTrackerIntegrationTest {
 
         Job job = createJob(createClient());
         job.setContract(contract);
+        jobProgressUpdateService.initJob(job.getJobUuid());
 
         org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent entry1 = BundleUtils.createBundleEntry(1L, "mbi1", year);
         org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent entry2 = BundleUtils.createBundleEntry(2L, "mbi2", year);
