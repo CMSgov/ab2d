@@ -18,7 +18,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -54,8 +53,9 @@ class PatientClaimsProcessorUnitTest {
     private final static Long patientId = 1234567890L;
     private final static String SAMPLE_CONTRACT_ID = "CONTRACT1";
 
-    private final OffsetDateTime earlyAttDate = OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
-    private final OffsetDateTime laterAttDate = OffsetDateTime.of(2020, 2, 15, 0, 0, 0, 0, ZoneOffset.UTC);
+    private static final OffsetDateTime EARLY_ATT_DATE = OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
+    private static final OffsetDateTime EARLY_SINCE_DATE = OffsetDateTime.of(2020, 1, 15, 0, 0, 0, 0, ZoneOffset.UTC);
+    private static final OffsetDateTime LATER_ATT_DATE = OffsetDateTime.of(2020, 2, 15, 0, 0, 0, 0, ZoneOffset.UTC);
     private CoverageSummary coverageSummary;
 
     private final Token noOpToken = new Token() {
@@ -107,7 +107,7 @@ class PatientClaimsProcessorUnitTest {
         StreamHelper helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(),
                 30, 120, eventLogger, null);
 
-        request = new PatientClaimsRequest(coverageSummary, laterAttDate, null, "client", "job",
+        request = new PatientClaimsRequest(coverageSummary, LATER_ATT_DATE, null, "client", "job",
                 "contractNum", noOpToken, STU3);
     }
 
@@ -232,40 +232,47 @@ class PatientClaimsProcessorUnitTest {
     }
 
     @Test
-    void process_whenPatientHasSinglePageOfClaimsDataSince() throws ExecutionException, InterruptedException,
-            FileNotFoundException {
+    void process_whenPatientHasSinglePageOfClaimsDataSince() throws ExecutionException, InterruptedException {
         // Override default behavior of setup
         coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(patientId), null, List.of(TestUtil.getOpenRange()));
 
-        Contract contract = new Contract();
-        StreamHelper helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(),
-                30, 120, eventLogger, null);
+        OffsetDateTime sinceDate = EARLY_ATT_DATE.plusDays(1);
 
-        OffsetDateTime sinceDate = earlyAttDate.plusDays(1);
-
-        request = new PatientClaimsRequest(coverageSummary, laterAttDate, sinceDate, "client", "job",
+        request = new PatientClaimsRequest(coverageSummary, LATER_ATT_DATE, sinceDate, "client", "job",
                 "contractNum", noOpToken, STU3);
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
-        when(mockBfdClient.requestEOBFromServer(STU3, patientId, request.getSinceTime())).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(STU3, patientId, LATER_ATT_DATE)).thenReturn(bundle1);
 
         cut.process(request).get();
 
-        verify(mockBfdClient).requestEOBFromServer(STU3, patientId, request.getSinceTime());
+        verify(mockBfdClient).requestEOBFromServer(STU3, patientId, LATER_ATT_DATE);
         verify(mockBfdClient, never()).requestNextBundleFromServer(STU3, bundle1);
     }
 
     @Test
-    void process_whenPatientHasSinglePageOfClaimsDataEarlyAttDate() throws ExecutionException, InterruptedException,
-            FileNotFoundException {
+    void process_whenPatientHasSinglePageOfClaimsDataEarlyAttDate() throws ExecutionException, InterruptedException {
         // Override default behavior of setup
         coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(patientId), null, List.of(TestUtil.getOpenRange()));
 
-        Contract contract = new Contract();
-        StreamHelper helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(),
-                30, 120, eventLogger, null);
+        request = new PatientClaimsRequest(coverageSummary, EARLY_ATT_DATE, null, "client", "job",
+                "contractNum", noOpToken, STU3);
 
-        request = new PatientClaimsRequest(coverageSummary, earlyAttDate, null, "client", "job",
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        when(mockBfdClient.requestEOBFromServer(STU3, patientId, null)).thenReturn(bundle1);
+
+        cut.process(request).get();
+
+        verify(mockBfdClient).requestEOBFromServer(STU3, patientId, null);
+        verify(mockBfdClient, never()).requestNextBundleFromServer(STU3, bundle1);
+    }
+
+    @Test
+    void process_whenPatientHasSinglePageOfClaimsDataEarlySinceDate() throws ExecutionException, InterruptedException {
+        // Override default behavior of setup
+        coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(patientId), null, List.of(TestUtil.getOpenRange()));
+
+        request = new PatientClaimsRequest(coverageSummary, EARLY_ATT_DATE, EARLY_SINCE_DATE, "client", "job",
                 "contractNum", noOpToken, STU3);
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
