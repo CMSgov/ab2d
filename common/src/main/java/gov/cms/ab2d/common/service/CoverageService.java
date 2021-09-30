@@ -94,16 +94,6 @@ public interface CoverageService {
     CoverageSearchEvent insertCoverage(long searchEventId, Set<Identifiers> beneficiaryIds);
 
     /**
-     * Delete all data from previous coverage search conducted for a given {@link CoveragePeriod}.
-     *
-     * Finds all {@link CoverageSearchEvent}s that have the {@link CoverageSearchEvent#getNewStatus()} as {@link JobStatus#IN_PROGRESS}
-     * and deletes the second most recent one.
-     *
-     * @param periodId {@link CoveragePeriod#getId()}
-     */
-    void deletePreviousSearch(int periodId);
-
-    /**
      * Pull coverage information for the given page and pageSize number of beneficiaries.
      *
      * If the page size is 1000 then the first page will get all information for beneficiaries 0 - 999

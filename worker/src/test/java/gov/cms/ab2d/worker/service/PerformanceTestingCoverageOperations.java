@@ -12,15 +12,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static java.util.stream.Collectors.joining;
@@ -320,7 +317,7 @@ class PerformanceTestingCoverageOperations {
         System.out.println("Records present before delete " + coverageServiceRepo.countBySearchEvent(inProgress1));
 
         Instant start = Instant.now();
-        coverageService.deletePreviousSearch(period1.getId());
+        coverageServiceRepo.deletePreviousSearches(period1, 1);
         Instant end = Instant.now();
 
         assertEquals(0, coverageServiceRepo.countBySearchEvent(inProgress1));

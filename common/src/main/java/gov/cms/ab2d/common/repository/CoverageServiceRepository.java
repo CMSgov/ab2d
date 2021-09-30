@@ -42,6 +42,14 @@ public class CoverageServiceRepository {
     private static final String SELECT_DISTINCT_COVERAGE_BY_PERIOD_COUNT = "SELECT COUNT(DISTINCT beneficiary_id) FROM coverage" +
             " WHERE bene_coverage_period_id IN(:ids) AND contract = :contract AND year IN (:years)";
 
+    private static final String DELETE_SEARCH = "DELETE FROM coverage cov " +
+            "WHERE cov.bene_coverage_search_event_id = :searchEvent" +
+            "   AND contract = :contract AND year IN (:years)";
+
+    private static final String DELETE_PREVIOUS_SEARCHES = "DELETE FROM coverage cov " +
+            "WHERE cov.bene_coverage_search_event_id IN (:searchEvents)" +
+            "   AND contract = :contract AND year IN (:years)";
+
     static final String SELECT_DELTA =
             "SELECT cov1.bene_coverage_period_id, cov1.beneficiary_id, :type as entryType, CURRENT_TIMESTAMP as created" +
             " FROM coverage cov1" +
@@ -216,24 +224,54 @@ public class CoverageServiceRepository {
      * with that event.
      *
      * @param period coverage period to remove
-     * @param offset offset into the past 0 is last search done successfully, 1 is search before that, etc.
      */
-    public void deletePreviousSearch(CoveragePeriod period, int offset) {
+    public void deleteCurrentSearch(CoveragePeriod period) {
 
-        Optional<CoverageSearchEvent> searchEvent = coverageSearchEventRepo
-                .findSearchEventWithOffset(period.getId(), JobStatus.IN_PROGRESS.name(), offset);
+        Optional<CoverageSearchEvent> searchEvent = coverageSearchEventRepo.findByPeriodDesc(period.getId(), 100)
+                .stream().filter(event -> event.getNewStatus() == JobStatus.IN_PROGRESS).findFirst();
 
         // Only delete previous search if a previous search exists.
         // For performance reasons this is done via jdbc
         if (searchEvent.isPresent()) {
-            try (Connection connection = dataSource.getConnection();
-                 PreparedStatement statement = connection.prepareStatement("DELETE FROM coverage cov WHERE " +
-                         "cov.bene_coverage_search_event_id = ?")) {
-                statement.setLong(1, searchEvent.get().getId());
-                statement.execute();
-            } catch (Exception exception) {
-                throw new RuntimeException(exception);
-            }
+            MapSqlParameterSource parameterSource = new MapSqlParameterSource()
+                    .addValue("searchEvent", searchEvent.get().getId())
+                    .addValue("contract", period.getContract().getContractNumber())
+                    .addValue("years", YEARS);
+
+            NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
+            template.update(DELETE_SEARCH, parameterSource);
+            vacuumCoverage();
+        }
+    }
+
+    /**
+     * Delete all coverage information related to the results of any search in the past beyond an offset.
+     *
+     * Ex. if you want to delete all enrollment
+     *
+     * @param period coverage period to remove
+     * @param offset offset into the past 0 is last search done successfully, 1 is search before that, etc.
+     */
+    public void deletePreviousSearches(CoveragePeriod period, int offset) {
+
+        // Delete with prejudice
+        List<CoverageSearchEvent> events = coverageSearchEventRepo.findByPeriodDesc(period.getId(), 100);
+
+        // Get all in progress events after offset and delete any enrollment associated with them
+        List<Long> inProgressEvents = events.stream().filter(event -> event.getNewStatus() == JobStatus.IN_PROGRESS)
+                .skip(offset).map(CoverageSearchEvent::getId).collect(toList());
+
+        // Only delete previous search if a previous search exists.
+        // For performance reasons this is done via jdbc
+        if (!inProgressEvents.isEmpty()) {
+
+            MapSqlParameterSource sqlParameterSource = new MapSqlParameterSource()
+                    .addValue("searchEvents", inProgressEvents)
+                    .addValue("contract", period.getContract().getContractNumber())
+                    .addValue("years", YEARS);
+
+            NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
+            template.update(DELETE_PREVIOUS_SEARCHES, sqlParameterSource);
 
             vacuumCoverage();
         }

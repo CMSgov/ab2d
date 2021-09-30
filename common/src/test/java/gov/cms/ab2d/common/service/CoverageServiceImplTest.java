@@ -6,12 +6,14 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Coverage;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.FilterOutByDate;
+import gov.cms.ab2d.eventlogger.LogManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -32,6 +34,8 @@ import static java.util.Collections.disjoint;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 @SpringBootTest
@@ -71,7 +75,7 @@ class CoverageServiceImplTest {
     @Autowired
     CoverageSearchRepository coverageSearchRepo;
 
-    @Autowired
+    @SpyBean
     CoverageServiceRepository coverageServiceRepo;
 
     @Autowired
@@ -85,6 +89,9 @@ class CoverageServiceImplTest {
 
     @Autowired
     CoverageService coverageService;
+
+    @SpyBean
+    LogManager eventLogger;
 
     @Autowired
     DataSetup dataSetup;
@@ -854,7 +861,7 @@ class CoverageServiceImplTest {
 
     @DisplayName("Delete previous search")
     @Test
-    void deletePreviousSearch() {
+    void deletePreviousSearchOnCompletion() {
         Set<Identifiers> results1 = Set.of(createIdentifier(1231L),
                 createIdentifier(4561L), createIdentifier(7891L));
         Set<Identifiers> results2 = Set.of(createIdentifier(1232L),
@@ -870,13 +877,13 @@ class CoverageServiceImplTest {
 
         assertEquals(inProgress1, savedTo1);
 
+        // Completing a second search should trigger deletion of old data
         coverageService.submitSearch(period1Jan.getId(), "testing");
         CoverageSearchEvent inProgress2 = startSearchAndPullEvent();
         CoverageSearchEvent savedTo2 = coverageService.insertCoverage(inProgress2.getId(), results2);
+        coverageService.completeSearch(period1Jan.getId(), "testing");
 
         assertEquals(inProgress2, savedTo2);
-
-        coverageService.deletePreviousSearch(period1Jan.getId());
 
         List<Long> coverages = dataSetup.findCoverage()
                 .stream().map(Coverage::getBeneficiaryId).collect(toList());
@@ -889,6 +896,20 @@ class CoverageServiceImplTest {
 
         assertFalse(distinctSearchEvents.contains(inProgress1.getId()));
         assertTrue(distinctSearchEvents.contains(inProgress2.getId()));
+    }
+
+    @DisplayName("Delete previous search on completion failure triggers alert")
+    @Test
+    void deletePreviousSearchOnCompletionFailure() {
+
+        doThrow(new RuntimeException()).when(coverageServiceRepo).deletePreviousSearches(nullable(CoveragePeriod.class), nullable(Integer.class));
+
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        startSearchAndPullEvent();
+
+        assertThrows(RuntimeException.class, () -> coverageService.completeSearch(period1Jan.getId(), "testing"));
+
+        verify(eventLogger, times(1)).alert(any(), any());
     }
 
     @DisplayName("Check search status on CoveragePeriod")
@@ -1144,6 +1165,36 @@ class CoverageServiceImplTest {
 
         assertEquals(JobStatus.IN_PROGRESS, failedCopy.getOldStatus());
         assertEquals(JobStatus.FAILED, failedCopy.getNewStatus());
+    }
+
+    @DisplayName("Coverage period searches can be cancelled")
+    @Test
+    void failSearchesDeletesData() {
+        Set<Identifiers> results1 = Set.of(createIdentifier(1231L),
+                createIdentifier(4561L), createIdentifier(7891L));
+
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent inProgress1 = startSearchAndPullEvent();
+        coverageService.insertCoverage(inProgress1.getId(), results1);
+
+        coverageService.failSearch(period1Jan.getId(), "testing");
+
+        // Deleting a coverage searches results deletes the data for that search
+        assertTrue(dataSetup.findCoverage().isEmpty());
+    }
+
+    @DisplayName("Coverage period searches can be cancelled")
+    @Test
+    void failSearchDeleteAlerts() {
+
+        doThrow(RuntimeException.class).when(coverageServiceRepo).deleteCurrentSearch(any());
+
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        startSearchAndPullEvent();
+
+        assertThrows(RuntimeException.class, () -> coverageService.failSearch(period1Jan.getId(), "testing"));
+
+        verify(eventLogger, times(1)).alert(any(), any());
     }
 
     @DisplayName("Coverage period month and year are checked correctly")
