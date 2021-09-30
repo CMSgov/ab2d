@@ -14,6 +14,67 @@ landing-page: live
 }
 </style>
 
+## AB2D Synthetic Data
+
+AB2D provides four sample contracts that have been designed to provide synthetic data for testing purposes.
+
+**Simple Datasets- Two Contracts**
+
+This dataset provides contracts with a varying number of beneficiaries containing simple approximations of AB2D data. 
+These contracts are ideal to test the stress of retrieving and downloading different sized data files. The data in these 
+API payloads will not reflect the distribution of disease and demographic information you can expect from production data.
+
+   <table class="ds-c-table">
+      <thead>
+         <tr>
+            <th>Sponsor</th>
+            <th>Contract</th>
+            <th>Number of Benes</th>
+         </tr>
+      </thead>
+      <tbody>
+         <tr>
+            <th>PDP-100</th>
+            <th>Z0000</th>
+            <th>100</th>
+         </tr>
+         <tr>
+            <th>PDP-10000</th>
+            <th>Z0010</th>
+            <th>10,000</th>
+         </tr>
+      </tbody>
+   </table>
+<br/>
+
+**Advanced Datasets- Two Contracts**
+
+This dataset provides contracts with sample data that is a more accurate representation of AB2D production data. They 
+follow AB2D’s Bulk FHIR format and contain a more realistic distribution of disease and demographic information.
+
+  <table class="ds-c-table">
+      <thead>
+         <tr>
+            <th>Sponsor</th>
+            <th>Contract</th>
+            <th>Number of Benes</th>
+         </tr>
+      </thead>
+      <tbody>
+         <tr>
+            <th>PDP-1001</th>
+            <th>Z1001</th>
+            <th>600-800</th>
+         </tr>
+         <tr>
+            <th>PDP-1002</th>
+            <th>Z1002</th>
+            <th>600-800</th>
+         </tr>
+      </tbody>
+   </table>
+<br/>
+
 ## Prerequisites &amp; Caveats
 These instructions have been tested on the following machines:
 - Mac - [Setup Information](setup-mac.html)
@@ -25,11 +86,12 @@ associated with your machine.
 
 ## Retrieve JSON Web Token
 
-1. Note that there are 5 users (clients) setup in the sandbox
+1. Note that there are 4 users (clients) setup in the sandbox
 
    <table class="ds-c-table">
      <thead>
        <tr>
+         <th>Dataset Type</th>
          <th>Sponsor</th>
          <th>Contract</th>
          <th>Client ID</th>
@@ -38,35 +100,33 @@ associated with your machine.
      </thead>
      <tbody>
        <tr>
+         <td>Simple</td>
          <td>PDP-100</td>
          <td>Z0000</td>
          <td>0oa2t0lsrdZw5uWRx297</td>
          <td>HHduWG6LogIvDIQuWgp3Zlo9OYMValTtH5OBcuHw</td>
        </tr>
        <tr>
-         <td>PDP-1000</td>
-         <td>Z0001</td>
-         <td>0oa2t0lc65ErV8OmY297</td>
-         <td>1Bl3HGO6eglkXUDtjVjto3L-3C0offzTMk2qlz9r</td>
-       </tr>
-       <tr>
-         <td>PDP-2000</td>
-         <td>Z0002</td>
-         <td>0oa2t0lkicpxFGkGt297</td>
-         <td>eDpanJTtw90vY2viYlX4o2rgVRIR4tDRH0mWr9vN</td>
-       </tr>
-       <tr>
-         <td>PDP-5000</td>
-         <td>Z0005</td>
-         <td>0oa2t0l6c1tQbTikz297</td>
-         <td>80zX-7GeiMiiA6zVghiqYZL82oLAWSxhgfBkfo0T</td>
-       </tr>
-       <tr>
+         <td>Simple</td>
          <td>PDP-10000</td>
          <td>Z0010</td>
          <td>0oa2t0lm9qoAtJHqC297</td>
          <td>ybR60JmtcpRt6SAeLmvbq6l-3YDRCZP-WN1At6t_</td>
        </tr>
+      <tr>
+         <td>Advanced</td>
+         <td>PDP-1001</td>
+         <td>Z1001</td>
+         <td>0oa9jyx2w9Z0AntLE297</td>
+         <td>hskbPu-YoWfGDY1gcQq34BfIEyMVuayu87zWDliG</td>
+      </tr>
+      <tr>
+         <td>Advanced</td>
+         <td>PDP-1002</td>
+         <td>Z1002</td>
+         <td>0oa9jz0e1dyNfRMm6297</td>
+         <td>GkHcu29ptDsKKRW6q5uFJSSpIpdl_K5fVW</td>
+      </tr>
      </tbody>
    </table>
 
@@ -91,25 +151,20 @@ associated with your machine.
          <td>MG9hMnQwbHNyZFp3NXVXUngyOTc6SEhkdVdHNkxvZ0l2RElRdVdncDNabG85T1lNVmFsVHRINU9CY3VIdw==</td>
        </tr>
        <tr>
-         <td>0lc65ErV8OmY297</td>
-         <td>MG9hMnQwbGM2NUVyVjhPbVkyOTc6MUJsM0hHTzZlZ2xrWFVEdGpWanRvM0wtM0Mwb2ZmelRNazJxbHo5cg==</td>
-       </tr>
-       <tr>
-         <td>0oa2t0lkicpxFGkGt297</td>
-         <td>MG9hMnQwbGtpY3B4RkdrR3QyOTc6ZURwYW5KVHR3OTB2WTJ2aVlsWDRvMnJnVlJJUjR0RFJIMG1Xcjl2Tg==</td>
-       </tr>
-       <tr>
-         <td>0oa2t0l6c1tQbTikz297</td>
-         <td>MG9hMnQwbDZjMXRRYlRpa3oyOTc6ODB6WC03R2VpTWlpQTZ6VmdoaXFZWkw4Mm9MQVdTeGhnZkJrZm8wVA==</td>
-       </tr>
-       <tr>
          <td>0oa2t0lm9qoAtJHqC297</td>
          <td>MG9hMnQwbG05cW9BdEpIcUMyOTc6eWJSNjBKbXRjcFJ0NlNBZUxtdmJxNmwtM1lEUkNaUC1XTjFBdDZ0Xw==</td>
+       </tr>
+       <tr>
+         <td>0oa9jyx2w9Z0AntLE297</td>
+         <td>MG9hOWp5eDJ3OVowQW50TEUyOTc6aHNrYlB1LVlvV2ZHRFkxZ2NRcTM0QmZJRXlNVnVheXU4N3pXRGxpRw==</td>
+       </tr>
+       <tr>
+         <td>0oa9jz0e1dyNfRMm6297</td><td>MG9hOWp6MGUxZHlOZlJNbTYyOTc6c2huRzZOR2tIY3UyOXB0RHNLS1JXNnE1dUZKU1NwSXBkbF9LNWZWVw==</td>
        </tr>
      </tbody>
    </table>
 
-3. Choose the desired user to test. The first user has the least data and each successive user has a greater amount of data.
+3. Choose the desired user to test. The first user has the least data, the second the most and the last two use Synthea data.
 
 4. Open a new terminal
 
@@ -131,7 +186,7 @@ associated with your machine.
      | jq --raw-output ".access_token")
    ```
 
-   You will need this "BEARER_TOKEN" environment variable in order to do any of the following sections. All commands should
+   You will need this "BEARER_TOKEN" environment variable to complete any of the following sections. All commands should
    be in this same terminal window since the value of the environment variable is only set in that terminal.
 
    The bearer token will expire in 1 hour.
@@ -140,7 +195,7 @@ associated with your machine.
 
 In this section, you will initiate a Part A & B bulk explanation of benefit export job.
 
-<i style="font-size: small">Note to Windows users - When you are instructed to "open a terminal", the instructions are assuming that you are 
+<i style="font-size: small">Note to Windows users - When you are instructed to "open a terminal", the instructions are assuming that you are
 opening ubuntu or some other terminal that supports curl and jq. See [Windows 10 Setup information](setup-windows.html).</i>
 
 1. Open a terminal
@@ -202,7 +257,7 @@ opening ubuntu or some other terminal that supports curl and jq. See [Windows 10
    x-frame-options: DENY
    ```
 
-   Note the response and job id from the output
+   Note the response and Job ID from the output
    
    Example:
 
@@ -328,7 +383,7 @@ opening ubuntu or some other terminal that supports curl and jq. See [Windows 10
    }
    ```
 
-   The JSON (formated here for readability) will contain the location of the files in the .output[].url values. Z0001 indicates the contract number, 0001 indicates the file for that contract number. If the contract is big enough that breaking it into parts is warranted, you might see Z0001_00002.ndjson, for example.
+   The JSON (formatted here for readability) will contain the location of the files in the .output[].url values. Z0001 indicates the contract number, 0001 indicates the file for that contract number. If the contract is big enough that breaking it into parts is warranted, you might see Z0001_00002.ndjson, for example.
 
 9. Note the response code and file to download from the output
 
@@ -349,8 +404,10 @@ opening ubuntu or some other terminal that supports curl and jq. See [Windows 10
        </tr>
      </thead>
      <tr>
-       <td>200 The job is completed.</td>
-       <td>202 The job is still in progress.</td>
+       <td>200</td><td>The job is completed.</td>
+     </tr>
+     <tr>
+       <td>202</td><td>The job is still in progress.</td>
      </tr>
      <tr>
        <td>400</td>
