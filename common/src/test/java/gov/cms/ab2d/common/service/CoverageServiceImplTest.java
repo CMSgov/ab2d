@@ -859,11 +859,14 @@ class CoverageServiceImplTest {
         assertEquals(3, deltaTypeCount.get(COVERAGE_ADDED));
     }
 
-    @DisplayName("Delete previous search")
+    @DisplayName("Delete all previous search coverage information on completion of a new search")
     @Test
     void deletePreviousSearchOnCompletion() {
         Set<Identifiers> results1 = Set.of(createIdentifier(1231L),
                 createIdentifier(4561L), createIdentifier(7891L));
+        Set<Long> beneIds1 = results1.stream()
+                .map(Identifiers::getBeneficiaryId)
+                .collect(toSet());
         Set<Identifiers> results2 = Set.of(createIdentifier(1232L),
                 createIdentifier(4562L), createIdentifier(7892L));
         Set<Long> beneIds2 = results2.stream()
@@ -877,25 +880,43 @@ class CoverageServiceImplTest {
 
         assertEquals(inProgress1, savedTo1);
 
-        // Completing a second search should trigger deletion of old data
+        // Failing a search and somehow deletion doesn't process
         coverageService.submitSearch(period1Jan.getId(), "testing");
         CoverageSearchEvent inProgress2 = startSearchAndPullEvent();
-        CoverageSearchEvent savedTo2 = coverageService.insertCoverage(inProgress2.getId(), results2);
-        coverageService.completeSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent savedTo2 = coverageService.insertCoverage(inProgress2.getId(), results1);
 
         assertEquals(inProgress2, savedTo2);
+
+        // Fail search outside of normal method
+        CoverageSearchEvent failSearch = new CoverageSearchEvent();
+        failSearch.setCoveragePeriod(period1Jan);
+        failSearch.setDescription("testing");
+        failSearch.setOldStatus(JobStatus.IN_PROGRESS);
+        failSearch.setNewStatus(JobStatus.FAILED);
+        coverageSearchEventRepo.saveAndFlush(failSearch);
+        period1Jan.setStatus(JobStatus.FAILED);
+        coveragePeriodRepo.saveAndFlush(period1Jan);
+
+        // Completing a second search should trigger deletion of old data
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        CoverageSearchEvent inProgress3 = startSearchAndPullEvent();
+        CoverageSearchEvent savedTo3 = coverageService.insertCoverage(inProgress3.getId(), results2);
+        coverageService.completeSearch(period1Jan.getId(), "testing");
+
+        assertEquals(inProgress3, savedTo3);
 
         List<Long> coverages = dataSetup.findCoverage()
                 .stream().map(Coverage::getBeneficiaryId).collect(toList());
 
-        assertTrue(disjoint(results1, coverages));
+        assertTrue(disjoint(beneIds1, coverages));
         assertTrue(coverages.containsAll(beneIds2));
 
         Set<Long> distinctSearchEvents = dataSetup.findCoverage().stream()
                 .map(Coverage::getSearchEventId).collect(toSet());
 
         assertFalse(distinctSearchEvents.contains(inProgress1.getId()));
-        assertTrue(distinctSearchEvents.contains(inProgress2.getId()));
+        assertFalse(distinctSearchEvents.contains(inProgress2.getId()));
+        assertTrue(distinctSearchEvents.contains(inProgress3.getId()));
     }
 
     @DisplayName("Delete previous search on completion failure triggers alert")
