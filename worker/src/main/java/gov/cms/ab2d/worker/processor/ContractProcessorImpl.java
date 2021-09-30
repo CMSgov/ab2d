@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
+import static gov.cms.ab2d.common.util.EventUtils.getOrganization;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
@@ -88,15 +89,14 @@ public class ContractProcessorImpl implements ContractProcessor {
      * see if the job is cancelled and cancel the threads if necessary, otherwise, wait until all threads
      * have processed.
      *
-     * @param jobData - the contract data (contract, progress tracker, attested time, writer)
+     * @param patients - the map of all the patients we are working on.
      * @return - the job output records containing the file information
      */
-    public List<JobOutput> process(Path outputDirPath, Job job, JobData jobData) {
+    public List<JobOutput> process(Path outputDirPath, Job job, Map<Long, CoverageSummary> patients) {
         assert job.getContract() != null;
         var contractNumber = job.getContract().getContractNumber();
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contractNumber));
 
-        Map<Long, CoverageSummary> patients = jobData.getPatients();
         log.info("Contract [{}] has [{}] Patients", contractNumber, patients.size());
 
         List<JobOutput> jobOutputs = new ArrayList<>();
@@ -104,7 +104,7 @@ public class ContractProcessorImpl implements ContractProcessor {
                 eventLogger, job)) {
 
             ContractData contractData = new ContractData(job, patients, helper);
-            loadRequests(jobData, job, patients, contractData);
+            loadRequests(job, patients, contractData);
 
             // Wait for remaining work to finish before cleaning up after the job
             // This should be at most eobJobPatientQueueMaxSize requests
@@ -112,7 +112,7 @@ public class ContractProcessorImpl implements ContractProcessor {
                 sleep();
                 processHandles(contractData);
 
-                if (hasJobBeenCancelled(jobData.getJobUuid())) {
+                if (hasJobBeenCancelled(job.getJobUuid())) {
                     cancelFuturesInQueue(contractData.getEobRequestHandles());
                     final String errMsg = "Job was cancelled while it was being processed";
                     log.warn("{}", errMsg);
@@ -142,16 +142,18 @@ public class ContractProcessorImpl implements ContractProcessor {
         return jobOutputs;
     }
 
-    private void loadRequests(JobData jobData, Job job, Map<Long, CoverageSummary> patients,
+    private void loadRequests(Job job, Map<Long, CoverageSummary> patients,
                               ContractData contractData) throws InterruptedException {
         String jobUuid = job.getJobUuid();
         int numQueued = 0;
 
         Iterator<Map.Entry<Long, CoverageSummary>> patientEntries = patients.entrySet().iterator();
+        //noinspection WhileLoopReplaceableByForEach
         while (patientEntries.hasNext()) {
 
-            if (eobClaimRequestsQueue.size(jobData.getJobUuid()) > eobJobPatientQueueMaxSize) {
+            if (eobClaimRequestsQueue.size(job.getJobUuid()) > eobJobPatientQueueMaxSize) {
                 // Wait for queue to empty out some before adding more
+                //noinspection BusyWait
                 Thread.sleep(1000);
                 continue;
             }
@@ -160,8 +162,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             CoverageSummary patient = patientEntries.next().getValue();
             assert job.getContract() != null;
 
-            contractData.addEobRequestHandle(processPatient(contractData.getFhirVersion(),
-                    patient, job.getContract(), jobData));
+            contractData.addEobRequestHandle(processPatient(contractData.getFhirVersion(), patient, job));
 
             // Periodically check if cancelled
             if (++numQueued % cancellationCheckFrequency == 0) {
@@ -191,23 +192,26 @@ public class ContractProcessorImpl implements ContractProcessor {
      * See https://docs.newrelic.com/docs/agents/java-agent/async-instrumentation/java-agent-api-asynchronous-applications
      *
      * @param version - the FHIR version to search
-     * @param patient - process to process
-     * @param jobData - the contract data information
+     * @param patient - the patient to process
+     * @param job - all things about the job including the contract data information
      * @return a Future<EobSearchResult>
      */
-    private Future<EobSearchResult> processPatient(FhirVersion version, CoverageSummary patient, Contract contract, JobData jobData) {
+    private Future<EobSearchResult> processPatient(FhirVersion version, CoverageSummary patient, Job job) {
         final Token token = NewRelic.getAgent().getTransaction().getToken();
+        Contract contract = job.getContract();
+        assert contract != null;
 
         // Using a ThreadLocal to communicate contract number to RoundRobinBlockingQueue
         // could be viewed as a hack by many; but on the other hand it saves us from writing
         // tons of extra code.
-        var jobUuid = jobData.getJobUuid();
+        var jobUuid = job.getJobUuid();
         RoundRobinBlockingQueue.CATEGORY_HOLDER.set(jobUuid);
         try {
             var patientClaimsRequest = new PatientClaimsRequest(patient,
                     contract.getAttestedOn(),
-                    jobData.getSinceTime(),
-                    jobData.getOrganization(), jobUuid,
+                    job.getSince(),
+                    getOrganization(job),
+                    jobUuid,
                     contract.getContractNumber(),
                     token,
                     version);
