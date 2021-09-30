@@ -7,9 +7,7 @@ import gov.cms.ab2d.common.service.CoverageService;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.Constants;
-import gov.cms.ab2d.worker.processor.coverage.verifier.CoveragePeriodsPresentCheck;
-import gov.cms.ab2d.worker.processor.coverage.verifier.EnrollmentPresentCheck;
-import gov.cms.ab2d.worker.processor.coverage.verifier.EnrollmentStableCheck;
+import gov.cms.ab2d.worker.processor.coverage.verifier.*;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -518,7 +516,9 @@ public class CoverageDriverImpl implements CoverageDriver {
 
         enabledContracts.stream()
                 .filter(new EnrollmentPresentCheck(coverageService, coverageCounts, issues))
-                .filter(new EnrollmentStableCheck(coverageService, coverageCounts, issues));
+                .filter(new EnrollmentStableCheck(coverageService, coverageCounts, issues))
+                .filter(new NoDuplicatesCheck(coverageService, coverageCounts, issues))
+                .filter(new EnrollmentUpToDateCheck(coverageService, coverageCounts, issues));
 
         // Additionally check that search event is most recent search event
         // and that there are no coverage periods with more than one search event contributing enrollment

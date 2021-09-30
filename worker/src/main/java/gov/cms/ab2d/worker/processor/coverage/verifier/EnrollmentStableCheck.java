@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Check to make sure that month to month enrollment changes are within acceptable bounds
+ * Check to make sure that month to month enrollment changes are within acceptable bounds.
  */
 public class EnrollmentStableCheck extends CoverageCheckPredicate {
 
@@ -25,7 +25,8 @@ public class EnrollmentStableCheck extends CoverageCheckPredicate {
         List<String> enrollmentChangeIssues = listCoveragePeriodsWithChangedEnrollment(coverageCounts.get(contract.getContractNumber()));
         issues.addAll(enrollmentChangeIssues);
 
-        return !enrollmentChangeIssues.isEmpty();    }
+        return !enrollmentChangeIssues.isEmpty();
+    }
 
     private List<String> listCoveragePeriodsWithChangedEnrollment(List<CoverageCount> coverageCounts) {
 
