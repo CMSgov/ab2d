@@ -1,6 +1,16 @@
 package gov.cms.ab2d.common.service;
 
-import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.model.CoverageCount;
+import gov.cms.ab2d.common.model.CoverageMapping;
+import gov.cms.ab2d.common.model.CoveragePagingRequest;
+import gov.cms.ab2d.common.model.CoveragePagingResult;
+import gov.cms.ab2d.common.model.CoveragePeriod;
+import gov.cms.ab2d.common.model.CoverageSearchDiff;
+import gov.cms.ab2d.common.model.CoverageSearchEvent;
+import gov.cms.ab2d.common.model.CoverageSearch;
+import gov.cms.ab2d.common.model.Identifiers;
+import gov.cms.ab2d.common.model.JobStatus;
 
 import java.time.OffsetDateTime;
 import java.util.List;
