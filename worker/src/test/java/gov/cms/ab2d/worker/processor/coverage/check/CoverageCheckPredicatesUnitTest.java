@@ -192,7 +192,7 @@ public class CoverageCheckPredicatesUnitTest {
 
     @DisplayName("Coverage changes are limited to 10% between months passes when true or small contract")
     @Test
-    void whenCoverageUnstable_passCoverageStableCheck() {
+    void whenCoverageStable_passCoverageStableCheck() {
 
         Map<String, List<CoverageCount>> coverageCounts = new HashMap<>();
         List<String> issues = new ArrayList<>();
