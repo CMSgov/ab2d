@@ -28,7 +28,7 @@ public class CoverageStableCheck extends CoverageCheckPredicate {
         List<String> enrollmentChangeIssues = listCoveragePeriodsWithChangedEnrollment(coverageCounts.get(contract.getContractNumber()));
         issues.addAll(enrollmentChangeIssues);
 
-        return !enrollmentChangeIssues.isEmpty();
+        return enrollmentChangeIssues.isEmpty();
     }
 
     private List<String> listCoveragePeriodsWithChangedEnrollment(List<CoverageCount> coverageCounts) {

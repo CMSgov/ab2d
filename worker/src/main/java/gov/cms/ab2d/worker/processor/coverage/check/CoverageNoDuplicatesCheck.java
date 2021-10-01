@@ -40,6 +40,6 @@ public class CoverageNoDuplicatesCheck extends CoverageCheckPredicate {
             }
         });
 
-        return coverageByCoveragePeriod.values().stream().anyMatch(counts -> counts.size() > 1);
+        return coverageByCoveragePeriod.values().stream().noneMatch(counts -> counts.size() > 1);
     }
 }

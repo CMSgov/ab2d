@@ -18,8 +18,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
@@ -51,7 +50,7 @@ public class CoverageCheckPredicatesUnitTest {
         contract.setContractNumber("TEST");
         contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
 
-        presentCheck.test(contract);
+        assertFalse(presentCheck.test(contract));
 
         assertEquals(4, issues.size());
         issues.forEach(issue -> assertTrue(issue.contains("coverage period missing")));
@@ -78,7 +77,7 @@ public class CoverageCheckPredicatesUnitTest {
         List<String> issues = new ArrayList<>();
         CoveragePeriodsPresentCheck presentCheck = new CoveragePeriodsPresentCheck(coverageService, null, issues);
 
-        presentCheck.test(contract);
+        assertTrue(presentCheck.test(contract));
 
         assertTrue(issues.isEmpty());
     }
@@ -97,7 +96,7 @@ public class CoverageCheckPredicatesUnitTest {
         contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
 
         // Fail when no coverage is present
-        presentCheck.test(contract);
+        assertFalse(presentCheck.test(contract));
         assertEquals(1, issues.size());
         assertEquals("TEST has no enrollment", issues.get(0));
 
@@ -112,7 +111,7 @@ public class CoverageCheckPredicatesUnitTest {
         );
         coverageCounts.put("TEST", fakeCounts);
 
-        presentCheck.test(contract);
+        assertFalse(presentCheck.test(contract));
 
         assertEquals(1, issues.size());
         issues.forEach(issue -> assertTrue(issue.contains("no enrollment found")));
@@ -128,7 +127,7 @@ public class CoverageCheckPredicatesUnitTest {
         );
         coverageCounts.put("TEST", fakeCounts);
 
-        presentCheck.test(contract);
+        assertFalse(presentCheck.test(contract));
 
         assertEquals(1, issues.size());
         issues.forEach(issue -> assertTrue(issue.contains("no enrollment found")));
@@ -157,7 +156,7 @@ public class CoverageCheckPredicatesUnitTest {
         );
         coverageCounts.put("TEST", fakeCounts);
 
-        presentCheck.test(contract);
+        assertTrue(presentCheck.test(contract));
         assertTrue(issues.isEmpty());
     }
 
@@ -184,7 +183,7 @@ public class CoverageCheckPredicatesUnitTest {
         );
         coverageCounts.put("TEST", fakeCounts);
 
-        stableCheck.test(contract);
+        assertFalse(stableCheck.test(contract));
 
         assertEquals(2, issues.size());
         issues.forEach(issue -> assertTrue(issue.contains("enrollment changed")));
@@ -214,7 +213,7 @@ public class CoverageCheckPredicatesUnitTest {
         );
         coverageCounts.put("TEST", fakeCounts);
 
-        stableCheck.test(contract);
+        assertTrue(stableCheck.test(contract));
         assertTrue(issues.isEmpty());
 
         fakeCounts = List.of(
@@ -227,7 +226,7 @@ public class CoverageCheckPredicatesUnitTest {
         );
         coverageCounts.put("TEST", fakeCounts);
 
-        stableCheck.test(contract);
+        assertTrue(stableCheck.test(contract));
         assertTrue(issues.isEmpty());
     }
 
@@ -260,7 +259,7 @@ public class CoverageCheckPredicatesUnitTest {
         );
         coverageCounts.put("TEST", fakeCounts);
 
-        duplicatesCheck.test(contract);
+        assertFalse(duplicatesCheck.test(contract));
 
         assertEquals(2, issues.size());
         issues.forEach(issue -> assertTrue(issue.contains("sets of enrollment")));
@@ -289,7 +288,7 @@ public class CoverageCheckPredicatesUnitTest {
         );
         coverageCounts.put("TEST", fakeCounts);
 
-        duplicatesCheck.test(contract);
+        assertTrue(duplicatesCheck.test(contract));
         assertTrue(issues.isEmpty());
     }
 
@@ -324,7 +323,7 @@ public class CoverageCheckPredicatesUnitTest {
         );
         coverageCounts.put("TEST", fakeCounts);
 
-        upToDateCheck.test(contract);
+        assertFalse(upToDateCheck.test(contract));
 
         assertEquals(1, issues.size());
         assertTrue(issues.get(0).contains("no successful search"));
@@ -332,7 +331,7 @@ public class CoverageCheckPredicatesUnitTest {
         issues.clear();
         when(coverageService.findEventWithSuccessfulOffset(anyInt(), anyInt()))
                 .thenReturn(Optional.of(event1)).thenReturn(Optional.of(event1)).thenReturn(Optional.of(event3));
-        upToDateCheck.test(contract);
+        assertFalse(upToDateCheck.test(contract));
 
         assertEquals(1, issues.size());
         assertTrue(issues.get(0).contains("old coverage search"));
@@ -372,7 +371,7 @@ public class CoverageCheckPredicatesUnitTest {
         );
         coverageCounts.put("TEST", fakeCounts);
 
-        upToDateCheck.test(contract);
+        assertTrue(upToDateCheck.test(contract));
         assertTrue(issues.isEmpty());
     }
 }

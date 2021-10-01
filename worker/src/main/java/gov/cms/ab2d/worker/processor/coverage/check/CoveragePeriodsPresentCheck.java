@@ -29,7 +29,7 @@ public class CoveragePeriodsPresentCheck extends CoverageCheckPredicate {
         List<String> missingPeriods = listMissingCoveragePeriods(this.coverageService, contract);
         this.issues.addAll(missingPeriods);
 
-        return !missingPeriods.isEmpty();
+        return missingPeriods.isEmpty();
     }
 
     /**

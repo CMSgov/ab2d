@@ -35,13 +35,13 @@ public class CoveragePresentCheck extends CoverageCheckPredicate {
             String issue = contractNumber + " has no enrollment";
             log.warn(issue);
             issues.add(issue);
-            return true;
+            return false;
         }
 
         List<String> noEnrollmentIssues = listCoveragePeriodsMissingEnrollment(contract, coverageCounts.get(contractNumber));
         issues.addAll(noEnrollmentIssues);
 
-        return !noEnrollmentIssues.isEmpty();
+        return noEnrollmentIssues.isEmpty();
     }
 
     private List<String> listCoveragePeriodsMissingEnrollment(Contract contract, List<CoverageCount> coverageCounts) {
