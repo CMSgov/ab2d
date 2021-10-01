@@ -7,9 +7,7 @@ import gov.cms.ab2d.common.service.CoverageService;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.Constants;
-import gov.cms.ab2d.worker.processor.coverage.verifier.*;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +25,6 @@ import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getAttestationTime;
 import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getEndDateTime;
-import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 
 @Slf4j
@@ -497,32 +494,5 @@ public class CoverageDriverImpl implements CoverageDriver {
     @Override
     public CoveragePagingResult pageCoverage(CoveragePagingRequest request) {
         return coverageService.pageCoverage(request);
-    }
-
-    @Override
-    public void verifyCoverage() {
-
-        List<String> issues = new ArrayList<>();
-
-        List<Contract> enabledContracts = pdpClientService.getAllEnabledContracts();
-
-        enabledContracts = enabledContracts.stream().filter(new CoveragePeriodsPresentCheck(coverageService,
-                null, issues)).collect(toList());
-
-        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(enabledContracts)
-                .stream().sorted().collect(groupingBy(CoverageCount::getContractNumber));
-
-        // todo create a stream of contracts and execute checks against
-
-        enabledContracts.stream()
-                .filter(new EnrollmentPresentCheck(coverageService, coverageCounts, issues))
-                .filter(new EnrollmentStableCheck(coverageService, coverageCounts, issues))
-                .filter(new NoDuplicatesCheck(coverageService, coverageCounts, issues))
-                .filter(new EnrollmentUpToDateCheck(coverageService, coverageCounts, issues));
-
-        // Additionally check that search event is most recent search event
-        // and that there are no coverage periods with more than one search event contributing enrollment
-
-
     }
 }

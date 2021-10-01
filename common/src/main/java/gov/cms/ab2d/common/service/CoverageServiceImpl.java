@@ -141,17 +141,17 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    public Optional<CoverageSearchEvent> findLastEvent(int periodId) {
+    public Optional<CoverageSearchEvent> findMostRecentEvent(int periodId) {
         CoveragePeriod period = findCoveragePeriod(periodId);
-        return findLastEvent(period);
+        return findMostRecentEvent(period);
     }
 
-    private Optional<CoverageSearchEvent> findLastEvent(CoveragePeriod period) {
+    private Optional<CoverageSearchEvent> findMostRecentEvent(CoveragePeriod period) {
         return coverageSearchEventRepo.findFirstByCoveragePeriodOrderByCreatedDesc(period);
     }
 
     private CoverageSearchEvent getLastEvent(CoveragePeriod period) {
-        return findLastEvent(period).orElse(null);
+        return findMostRecentEvent(period).orElse(null);
     }
 
     @Override
@@ -188,8 +188,8 @@ public class CoverageServiceImpl implements CoverageService {
             throw new InvalidJobStateTransition("Cannot diff a currently running search against previous search because results may be added");
         }
 
-        Optional<CoverageSearchEvent> previousSearch = findSearchWithSuccessfulOffset(periodId, 1);
-        Optional<CoverageSearchEvent> currentSearch = findSearchWithSuccessfulOffset(periodId, 0);
+        Optional<CoverageSearchEvent> previousSearch = findEventWithSuccessfulOffset(periodId, 1);
+        Optional<CoverageSearchEvent> currentSearch = findEventWithSuccessfulOffset(periodId, 0);
         CoverageSearchEvent current = currentSearch.orElseThrow(() -> new RuntimeException("could not find latest in progress search event"));
 
         int previousCount = 0;
@@ -216,7 +216,7 @@ public class CoverageServiceImpl implements CoverageService {
      * @param successfulOffset number of successful searches in the past to look at [0,n)
      * @return an in progress search event corresponding to the offset if found
      */
-    private Optional<CoverageSearchEvent> findSearchWithSuccessfulOffset(int periodId, int successfulOffset) {
+    public Optional<CoverageSearchEvent> findEventWithSuccessfulOffset(int periodId, int successfulOffset) {
         List<CoverageSearchEvent> events = coverageSearchEventRepo.findByPeriodDesc(periodId, 100);
 
         int successfulSearches = 0;

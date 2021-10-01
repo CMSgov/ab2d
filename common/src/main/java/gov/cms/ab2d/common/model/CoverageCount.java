@@ -3,6 +3,8 @@ package gov.cms.ab2d.common.model;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.Objects;
+
 @AllArgsConstructor
 @Getter
 public class CoverageCount implements Comparable<CoverageCount> {
@@ -17,7 +19,7 @@ public class CoverageCount implements Comparable<CoverageCount> {
 
     @Override
     public int compareTo(CoverageCount otherCount) {
-        if (!contractNumber.equals(otherCount.getContractNumber())) {
+        if (!Objects.equals(contractNumber, otherCount.getContractNumber())) {
             return contractNumber.compareTo(otherCount.getContractNumber());
         }
 

@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker.processor.coverage.verifier;
+package gov.cms.ab2d.worker.processor.coverage.check;
 
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoverageCount;
@@ -14,10 +14,17 @@ import java.util.Map;
 import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getAttestationTime;
 import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getEndDateTime;
 
+/**
+ * Check that each coverage period has some enrollment in the database. If no coverage found then something
+ * went wrong saving or deleting coverage.
+ *
+ * Ignores the current month of the contract because sometimes the enrollment hasn't arrived during the current month
+ * until late in the month.
+ */
 @Slf4j
-public class EnrollmentPresentCheck extends CoverageCheckPredicate {
+public class CoveragePresentCheck extends CoverageCheckPredicate {
 
-    public EnrollmentPresentCheck(CoverageService coverageService, Map<String, List<CoverageCount>> coverageCounts, List<String> issues) {
+    public CoveragePresentCheck(CoverageService coverageService, Map<String, List<CoverageCount>> coverageCounts, List<String> issues) {
         super(coverageService, coverageCounts, issues);
     }
 
@@ -49,18 +56,27 @@ public class EnrollmentPresentCheck extends CoverageCheckPredicate {
             int year = attestationTime.getYear();
             int month = attestationTime.getMonthValue();
 
-            CoverageCount coverageCount = countIterator.next();
-            if (year != coverageCount.getYear() || month != coverageCount.getMonth()) {
-                countIterator.previous();
-
-                String issue = String.format("%s-%d-%d no enrollment found", contract.getContractNumber(), year, month);
-                log.warn(issue);
-                noEnrollment.add(issue);
+            // If nothing in the iterator
+            if (!countIterator.hasNext()) {
+                logIssue(contract, year, month, noEnrollment);
+            // If something in iterator make sure it matches expected
+            } else {
+                CoverageCount coverageCount = countIterator.next();
+                if (year != coverageCount.getYear() || month != coverageCount.getMonth()) {
+                    countIterator.previous();
+                    logIssue(contract, year, month, noEnrollment);
+                }
             }
 
             attestationTime = attestationTime.plusMonths(1);
         }
 
         return noEnrollment;
+    }
+
+    private void logIssue(Contract contract, int year, int month, List<String> noEnrollment) {
+        String issue = String.format("%s-%d-%d no enrollment found", contract.getContractNumber(), year, month);
+        log.warn(issue);
+        noEnrollment.add(issue);
     }
 }

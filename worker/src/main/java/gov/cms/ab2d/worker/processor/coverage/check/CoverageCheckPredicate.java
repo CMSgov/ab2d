@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker.processor.coverage.verifier;
+package gov.cms.ab2d.worker.processor.coverage.check;
 
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoverageCount;
