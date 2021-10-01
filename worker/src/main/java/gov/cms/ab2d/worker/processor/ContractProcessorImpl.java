@@ -104,7 +104,7 @@ public class ContractProcessorImpl implements ContractProcessor {
                 eventLogger, job)) {
 
             ContractData contractData = new ContractData(job, patients, helper);
-            loadRequests(job, patients, contractData);
+            loadRequests(contractData);
 
             // Wait for remaining work to finish before cleaning up after the job
             // This should be at most eobJobPatientQueueMaxSize requests
@@ -142,16 +142,15 @@ public class ContractProcessorImpl implements ContractProcessor {
         return jobOutputs;
     }
 
-    private void loadRequests(Job job, Map<Long, CoverageSummary> patients,
-                              ContractData contractData) throws InterruptedException {
-        String jobUuid = job.getJobUuid();
+    private void loadRequests(ContractData contractData) throws InterruptedException {
+        String jobUuid = contractData.getJob().getJobUuid();
         int numQueued = 0;
 
-        Iterator<Map.Entry<Long, CoverageSummary>> patientEntries = patients.entrySet().iterator();
+        Iterator<Map.Entry<Long, CoverageSummary>> patientEntries = contractData.getPatients().entrySet().iterator();
         //noinspection WhileLoopReplaceableByForEach
         while (patientEntries.hasNext()) {
 
-            if (eobClaimRequestsQueue.size(job.getJobUuid()) > eobJobPatientQueueMaxSize) {
+            if (eobClaimRequestsQueue.size(jobUuid) > eobJobPatientQueueMaxSize) {
                 // Wait for queue to empty out some before adding more
                 //noinspection BusyWait
                 Thread.sleep(1000);
@@ -160,9 +159,8 @@ public class ContractProcessorImpl implements ContractProcessor {
 
             // Queue a patient
             CoverageSummary patient = patientEntries.next().getValue();
-            assert job.getContract() != null;
 
-            contractData.addEobRequestHandle(processPatient(contractData.getFhirVersion(), patient, job));
+            contractData.addEobRequestHandle(processPatient(patient, contractData.getJob()));
 
             // Periodically check if cancelled
             if (++numQueued % cancellationCheckFrequency == 0) {
@@ -191,12 +189,11 @@ public class ContractProcessorImpl implements ContractProcessor {
      * On using new-relic tokens with async calls
      * See https://docs.newrelic.com/docs/agents/java-agent/async-instrumentation/java-agent-api-asynchronous-applications
      *
-     * @param version - the FHIR version to search
      * @param patient - the patient to process
      * @param job - all things about the job including the contract data information
      * @return a Future<EobSearchResult>
      */
-    private Future<EobSearchResult> processPatient(FhirVersion version, CoverageSummary patient, Job job) {
+    private Future<EobSearchResult> processPatient(CoverageSummary patient, Job job) {
         final Token token = NewRelic.getAgent().getTransaction().getToken();
         Contract contract = job.getContract();
         assert contract != null;
@@ -207,14 +204,15 @@ public class ContractProcessorImpl implements ContractProcessor {
         var jobUuid = job.getJobUuid();
         RoundRobinBlockingQueue.CATEGORY_HOLDER.set(jobUuid);
         try {
+            assert job.getContract() != null;
             var patientClaimsRequest = new PatientClaimsRequest(patient,
-                    contract.getAttestedOn(),
+                    job.getContract().getAttestedOn(),
                     job.getSince(),
                     getOrganization(job),
                     jobUuid,
                     contract.getContractNumber(),
                     token,
-                    version);
+                    job.getFhirVersion());
             return patientClaimsProcessor.process(patientClaimsRequest);
 
         } finally {
