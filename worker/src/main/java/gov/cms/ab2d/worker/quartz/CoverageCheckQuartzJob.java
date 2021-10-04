@@ -1,7 +1,9 @@
-package gov.cms.ab2d.worker.processor.coverage;
+package gov.cms.ab2d.worker.quartz;
 
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
+import gov.cms.ab2d.worker.processor.coverage.CoverageVerificationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.DisallowConcurrentExecution;
@@ -27,7 +29,7 @@ public class CoverageCheckQuartzJob extends QuartzJobBean {
     protected void executeInternal(JobExecutionContext jobExecutionContext) throws JobExecutionException {
 
         if (propertiesService.isInMaintenanceMode()) {
-            log.info("Skipping enrollment verification because ");
+            log.info("Skipping enrollment verification because AB2D is already in maintenance mode");
         }
 
         try {
@@ -35,14 +37,15 @@ public class CoverageCheckQuartzJob extends QuartzJobBean {
         } catch (CoverageVerificationException exception) {
             log.error("coverage is invalid or not able to be verified", exception);
 
-            logManager.alert("Verification failed:\n" + exception.getMessage(), List.of(SANDBOX, PRODUCTION));
+            logManager.alert("Coverage verification failed:\n" + exception.getAlertMessage(),
+                    List.of(SANDBOX, PRODUCTION));
 
             throw new JobExecutionException(exception);
         } catch (Exception exception) {
             log.error("unexpected failure attempting to verify coverage");
 
             logManager.alert("could not verify coverage due to " + exception.getClass()
-                    + ": " + exception.getMessage(), List.of(SANDBOX, PRODUCTION));
+                    + ":\n" + exception.getMessage(), List.of(SANDBOX, PRODUCTION));
 
             throw new JobExecutionException(exception);
         }
