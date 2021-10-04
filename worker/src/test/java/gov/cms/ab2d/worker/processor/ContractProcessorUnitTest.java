@@ -1,9 +1,13 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.model.CoverageSummary;
+import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.filter.FilterOutByDate;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.processor.stub.PatientClaimsProcessorStub;
@@ -23,19 +27,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import static gov.cms.ab2d.common.util.EventUtils.getOrganization;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
 import static java.lang.Boolean.TRUE;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -64,10 +67,11 @@ class ContractProcessorUnitTest {
 
         patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
 
-        JobProgressService jobProgressService = new JobProgressServiceImpl(jobRepository);
-        ReflectionTestUtils.setField(jobProgressService, "reportProgressDbFrequency", 2);
-        ReflectionTestUtils.setField(jobProgressService, "reportProgressLogFrequency", 3);
-        jobChannelService = new JobChannelServiceImpl(jobProgressService);
+        JobProgressServiceImpl jobProgressImpl = new JobProgressServiceImpl(jobRepository);
+        jobProgressImpl.initJob(jobUuid);
+        ReflectionTestUtils.setField(jobProgressImpl, "reportProgressDbFrequency", 2);
+        ReflectionTestUtils.setField(jobProgressImpl, "reportProgressLogFrequency", 3);
+        jobChannelService = new JobChannelServiceImpl(jobProgressImpl);
 
         cut = new ContractProcessorImpl(
                 jobRepository,
@@ -75,7 +79,7 @@ class ContractProcessorUnitTest {
                 eventLogger,
                 requestQueue,
                 jobChannelService,
-                jobProgressService);
+                jobProgressImpl);
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 2);
         ReflectionTestUtils.setField(cut, "tryLockTimeout", 30);
 
@@ -97,13 +101,10 @@ class ContractProcessorUnitTest {
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_EXPECTED, 3);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
 
-        JobData jobData = new JobData(jobUuid, job.getSince(),
-                getOrganization(job), patientsByContract);
-
         when(jobRepository.findJobStatus(anyString())).thenReturn(JobStatus.CANCELLED);
 
         var exceptionThrown = assertThrows(JobCancelledException.class,
-                () -> cut.process(outputDir, job, jobData));
+                () -> cut.process(outputDir, job, patientsByContract));
 
         assertTrue(exceptionThrown.getMessage().startsWith("Job was cancelled while it was being processed"));
         verify(patientClaimsProcessor, atLeast(1)).process(any());
@@ -117,10 +118,8 @@ class ContractProcessorUnitTest {
 
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_EXPECTED, 18);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
-        JobData jobData = new JobData(job.getJobUuid(), job.getSince(),
-                getOrganization(job), patientsByContract);
 
-        var jobOutputs = cut.process(outputDir, job, jobData);
+        var jobOutputs = cut.process(outputDir, job, patientsByContract);
 
         assertFalse(jobOutputs.isEmpty());
         verify(jobRepository, times(9)).updatePercentageCompleted(anyString(), anyInt());
@@ -135,14 +134,12 @@ class ContractProcessorUnitTest {
 
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_EXPECTED, 2);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 1);
-        JobData jobData = new JobData(job.getJobUuid(), job.getSince(),
-                getOrganization(job), patientsByContract);
 
         when(requestQueue.size(anyString())).thenReturn(1_0000_000);
 
         ExecutorService singleThreadedExecutor = Executors.newSingleThreadExecutor();
 
-        Runnable testRunnable = () -> cut.process(outputDir, job, jobData);
+        Runnable testRunnable = () -> cut.process(outputDir, job, patientsByContract);
 
         Future<?> future = singleThreadedExecutor.submit(testRunnable);
 

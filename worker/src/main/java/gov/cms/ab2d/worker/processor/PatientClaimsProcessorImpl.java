@@ -125,14 +125,24 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
      * @param request patient claims request which may contain a since time or attestation time to use
      */
     private OffsetDateTime getSinceTime(PatientClaimsRequest request) {
-        OffsetDateTime sinceTime = null;
-        if (request.getSinceTime() == null) {
-            if (request.getAttTime().isAfter(START_CHECK)) {
+        OffsetDateTime sinceTime = request.getSinceTime();
+
+        if (sinceTime == null) {
+            if (request.getAttTime().isAfter(START_CHECK) || request.getAttTime().isEqual(START_CHECK)) {
                 sinceTime = request.getAttTime();
             }
         } else {
-            sinceTime = request.getSinceTime();
+
+            if (sinceTime.isBefore(request.getAttTime())) {
+                sinceTime = request.getAttTime();
+            }
+
+            // Should not be possible but just in case
+            if (sinceTime.isBefore(START_CHECK)) {
+                sinceTime = null;
+            }
         }
+
         return sinceTime;
     }
 

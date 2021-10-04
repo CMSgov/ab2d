@@ -2,6 +2,7 @@ package gov.cms.ab2d.common.service;
 
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.model.CoverageCount;
 import gov.cms.ab2d.common.model.CoverageMapping;
 import gov.cms.ab2d.common.model.CoveragePagingRequest;
 import gov.cms.ab2d.common.model.CoveragePagingResult;
@@ -12,16 +13,25 @@ import gov.cms.ab2d.common.model.CoverageSearchEvent;
 import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.*;      // NOPMD
+import gov.cms.ab2d.eventlogger.LogManager;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
-import java.time.*;
-import java.util.*;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH_YEAR;
+import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PRODUCTION;
+import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.SANDBOX;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -51,6 +61,8 @@ public class CoverageServiceImpl implements CoverageService {
     private final CoverageServiceRepository coverageServiceRepo;
 
     private final CoverageDeltaRepository coverageDeltaRepository;
+
+    private final LogManager eventLogger;
 
     @Override
     public CoveragePeriod getCoveragePeriod(Contract contract, int month, int year) {
@@ -105,6 +117,19 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
+    public List<CoverageCount> countBeneficiariesForContracts(List<Contract> contracts) {
+        int partitionSize = 10;
+        List<List<Contract>> contractPartitions = new ArrayList<>();
+
+        for (int idx = 0; idx < contracts.size(); idx += partitionSize) {
+            contractPartitions.add(contracts.subList(idx, Math.min(idx + partitionSize, contracts.size())));
+        }
+
+        return contractPartitions.stream().map(coverageServiceRepo::countByContractCoverage)
+                .flatMap(List::stream).collect(toList());
+    }
+
+    @Override
     public boolean canEOBSearchBeStarted(int periodId) {
         return !isCoveragePeriodInProgress(periodId);
     }
@@ -149,15 +174,6 @@ public class CoverageServiceImpl implements CoverageService {
 
     @Override
     @Trace
-    public void deletePreviousSearch(int periodId) {
-        // Delete previous in progress search before this one
-        // but check that coverage period is valid
-        CoveragePeriod period = findCoveragePeriod(periodId);
-        coverageServiceRepo.deletePreviousSearch(period, 1);
-    }
-
-    @Override
-    @Trace
     public CoveragePagingResult pageCoverage(CoveragePagingRequest pagingRequest) {
         return coverageServiceRepo.pageCoverage(pagingRequest);
     }
@@ -172,8 +188,8 @@ public class CoverageServiceImpl implements CoverageService {
             throw new InvalidJobStateTransition("Cannot diff a currently running search against previous search because results may be added");
         }
 
-        Optional<CoverageSearchEvent> previousSearch = coverageSearchEventRepo.findSearchEventWithOffset(periodId, JobStatus.IN_PROGRESS.name(), 1);
-        Optional<CoverageSearchEvent> currentSearch = coverageSearchEventRepo.findSearchEventWithOffset(periodId, JobStatus.IN_PROGRESS.name(), 0);
+        Optional<CoverageSearchEvent> previousSearch = findSearchWithSuccessfulOffset(periodId, 1);
+        Optional<CoverageSearchEvent> currentSearch = findSearchWithSuccessfulOffset(periodId, 0);
         CoverageSearchEvent current = currentSearch.orElseThrow(() -> new RuntimeException("could not find latest in progress search event"));
 
         int previousCount = 0;
@@ -192,6 +208,27 @@ public class CoverageServiceImpl implements CoverageService {
         }
 
         return new CoverageSearchDiff(period, previousCount, currentCount, unchanged);
+    }
+
+    /**
+     * Find data saved from in progress search
+     * @param periodId coverage period id corresponding to contract, year, and month
+     * @param successfulOffset number of successful searches in the past to look at [0,n)
+     * @return an in progress search event corresponding to the offset if found
+     */
+    private Optional<CoverageSearchEvent> findSearchWithSuccessfulOffset(int periodId, int successfulOffset) {
+        List<CoverageSearchEvent> events = coverageSearchEventRepo.findByPeriodDesc(periodId, 100);
+
+        int successfulSearches = 0;
+        for (CoverageSearchEvent event : events) {
+            if (event.getNewStatus() == JobStatus.SUCCESSFUL) {
+                successfulSearches += 1;
+            } else if (event.getNewStatus() == JobStatus.IN_PROGRESS && successfulSearches == successfulOffset) {
+                return Optional.of(event);
+            }
+        }
+
+        return Optional.empty();
     }
 
     @Override
@@ -337,8 +374,16 @@ public class CoverageServiceImpl implements CoverageService {
                     + " to " + JobStatus.FAILED);
         }
 
-        // Delete all results from current search that is failing
-        coverageServiceRepo.deletePreviousSearch(period, 0);
+        try {
+            // Delete all results from current search that is failing
+            coverageServiceRepo.deleteCurrentSearch(period);
+        } catch (Exception exception) {
+            String issue = String.format("Failed to delete coverage for a failed search for %s-%d-%d. " +
+                            "There could be duplicate enrollment data in the db",
+                    period.getContract().getContractNumber(), period.getYear(), period.getMonth());
+            eventLogger.alert(issue, List.of(PRODUCTION, SANDBOX));
+            throw exception;
+        }
 
         return updateStatus(period, description, JobStatus.FAILED);
     }
@@ -360,7 +405,17 @@ public class CoverageServiceImpl implements CoverageService {
         log.info("{}-{}-{} difference between previous metadata and current metadata\n {}",
                 contract.getContractNumber(), period.getYear(), period.getMonth(), diff);
 
-        deletePreviousSearch(periodId);
+        // Execute after diff
+        // this deletion will remove as much past information as it can find
+        try {
+            coverageServiceRepo.deletePreviousSearches(period, 1);
+        } catch (Exception exception) {
+            String issue = String.format("Failed to delete old coverage for newly completed %s-%d-%d." +
+                            " There could be duplicate enrollment data in the db",
+                    period.getContract().getContractNumber(), period.getYear(), period.getMonth());
+            eventLogger.alert(issue, List.of(PRODUCTION, SANDBOX));
+            throw exception;
+        }
 
         return updateStatus(period, description, JobStatus.SUCCESSFUL);
     }

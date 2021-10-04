@@ -63,6 +63,8 @@ public class JobProcessorImpl implements JobProcessor {
     private final FileService fileService;
     private final JobChannelService jobChannelService;
     private final JobProgressService jobProgressService;
+    private final JobProgressUpdateService jobProgressUpdateService;
+
     private final JobRepository jobRepository;
     private final JobOutputRepository jobOutputRepository;
     private final ContractProcessor contractProcessor;
@@ -132,11 +134,7 @@ public class JobProcessorImpl implements JobProcessor {
         try {
             // Retrieve the contract beneficiaries
             Map<Long, CoverageSummary> patients = processContractBenes(job);
-
-            // Create a holder for the contract, writer, progress tracker and attested date
-            JobData jobData = new JobData(job.getJobUuid(), job.getSince(), getOrganization(job), patients);
-
-            var jobOutputs = contractProcessor.process(outputDirPath, job, jobData);
+            var jobOutputs = contractProcessor.process(outputDirPath, job, patients);
 
             // For each job output, add to the job and save the result
             jobOutputs.forEach(job::addJobOutput);
@@ -257,6 +255,7 @@ public class JobProcessorImpl implements JobProcessor {
         createOutputDirectory(outputDirPath, job);
 
         // start a progress tracker
+        jobProgressUpdateService.initJob(job.getJobUuid());     // A hack since everything runs in the worker JVM
         jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.FAILURE_THRESHHOLD, failureThreshold);
 
         try {

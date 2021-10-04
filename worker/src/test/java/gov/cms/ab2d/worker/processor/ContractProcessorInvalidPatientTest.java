@@ -54,19 +54,20 @@ class ContractProcessorInvalidPatientTest {
     File tmpDirFolder;
 
     private ContractProcessor cut;
-    private Job job = new Job();
-    private JobData jobData;
-    private final String jobId = "1234";
+    private final Job job = new Job();
+    Map<Long, CoverageSummary> summaries;
+    private static final String jobId = "1234";
     private final String contractId = "ABC";
 
     @BeforeEach
     void setup() {
 
         patientClaimsProcessor = new PatientClaimsProcessorImpl(bfdClient, eventLogger);
-        JobProgressService jobProgressService = new JobProgressServiceImpl(jobRepository);
-        JobChannelService jobChannelService = new JobChannelServiceImpl(jobProgressService);
+        JobProgressServiceImpl jobProgressUpdateService = new JobProgressServiceImpl(jobRepository);
+        jobProgressUpdateService.initJob(jobId);
+        JobChannelService jobChannelService = new JobChannelServiceImpl(jobProgressUpdateService);
         cut = new ContractProcessorImpl(jobRepository, patientClaimsProcessor, eventLogger,
-                requestQueue, jobChannelService, jobProgressService);
+                requestQueue, jobChannelService, jobProgressUpdateService);
         jobChannelService.sendUpdate(jobId, JobMeasure.FAILURE_THRESHHOLD, 100);
 
         Contract contract = new Contract();
@@ -76,14 +77,12 @@ class ContractProcessorInvalidPatientTest {
         job.setContract(contract);
 
         List<FilterOutByDate.DateRange> dates = singletonList(TestUtil.getOpenRange());
-        Map<Long, CoverageSummary> summaries = Map.of(
+        summaries = Map.of(
                 1L, new CoverageSummary(createIdentifierWithoutMbi(1L), null, dates),
                 2L, new CoverageSummary(createIdentifierWithoutMbi(2L), null, dates),
                 3L, new CoverageSummary(createIdentifierWithoutMbi(3L), null, dates)
         );
         jobChannelService.sendUpdate(jobId, JobMeasure.PATIENTS_EXPECTED, summaries.size());
-
-        jobData = new JobData(jobId, OffsetDateTime.MIN, "Client", summaries);
 
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 20);
         ReflectionTestUtils.setField(patientClaimsProcessor, "startDate", "01/01/2020");
@@ -97,7 +96,7 @@ class ContractProcessorInvalidPatientTest {
         when(bfdClient.requestEOBFromServer(eq(STU3), eq(1L), any())).thenReturn(b1);
         when(bfdClient.requestEOBFromServer(eq(STU3), eq(2L), any())).thenReturn(b2);
         when(bfdClient.requestEOBFromServer(eq(STU3), eq(3L), any())).thenReturn(b4);
-        List<JobOutput> outputs = cut.process(tmpDirFolder.toPath(), job, jobData);
+        List<JobOutput> outputs = cut.process(tmpDirFolder.toPath(), job, summaries);
         assertNotNull(outputs);
         assertEquals(2, outputs.size());
         String fileName1 = contractId + "_0001.ndjson";
