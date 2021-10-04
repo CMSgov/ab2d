@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker.processor.coverage;
+package gov.cms.ab2d.worker.quartz;
 
 import org.quartz.*;
 import org.springframework.beans.factory.annotation.Qualifier;
