@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
+@SuppressWarnings("checkstyle:VisibilityModifier")
 @AllArgsConstructor
 public abstract class CoverageCheckPredicate implements Predicate<Contract> {
 

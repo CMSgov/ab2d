@@ -1,6 +1,8 @@
 package gov.cms.ab2d.worker.processor.coverage.check;
 
 import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.common.repository.CoveragePeriodRepository;
+import gov.cms.ab2d.common.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.common.repository.CoverageSearchRepository;
 import gov.cms.ab2d.common.service.CoverageService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
@@ -22,7 +24,6 @@ import java.util.*;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static java.util.stream.Collectors.groupingBy;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @SpringBootTest(properties = "coverage.update.initial.delay=1000000")
 @Testcontainers
@@ -33,6 +34,12 @@ public class CoverageCheckPredicatesIntegrationTest {
 
     @Autowired
     private CoverageSearchRepository coverageSearchRepo;
+
+    @Autowired
+    private CoverageSearchEventRepository coverageSearchEventRepo;
+
+    @Autowired
+    private CoveragePeriodRepository coveragePeriodRepo;
 
     @Autowired
     private CoverageService coverageService;
@@ -290,10 +297,10 @@ public class CoverageCheckPredicatesIntegrationTest {
 
         insertAndRunSearch(attestationMonth, tenK);
         insertAndRunSearch(attestationMonthPlus1, tenK);
-        insertAndRunSearch(attestationMonthPlus1, tenK);
+        insertAndLeaveDuplicates(attestationMonthPlus1, tenK);
         insertAndRunSearch(attestationMonthPlus2, tenK);
-        insertAndRunSearch(attestationMonthPlus2, tenK);
-        insertAndRunSearch(attestationMonthPlus2, tenK);
+        insertAndLeaveDuplicates(attestationMonthPlus2, tenK);
+        insertAndLeaveDuplicates(attestationMonthPlus2, tenK);
 
         Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contract))
                 .stream().collect(groupingBy(CoverageCount::getContractNumber));
@@ -334,6 +341,67 @@ public class CoverageCheckPredicatesIntegrationTest {
         assertTrue(issues.isEmpty());
     }
 
+    @DisplayName("Out of date enrollment causes a failure")
+    @Test
+    void whenCoverageOutOfDate_failCoverageDateCheck() {
+
+        createCoveragePeriods();
+
+        Set<Identifiers> tenK = new LinkedHashSet<>();
+        for (long idx = 0; idx < 10000; idx++) {
+            tenK.add(createIdentifier(idx));
+        }
+
+        insertAndRunSearch(attestationMonth, tenK);
+        runSearchAndLeaveOld(attestationMonth);
+
+        insertAndRunSearch(attestationMonthPlus1, tenK);
+        runSearchAndLeaveOld(attestationMonthPlus1);
+
+        insertAndRunSearch(attestationMonthPlus2, tenK);
+        runSearchAndLeaveOld(attestationMonthPlus2);
+
+        insertAndRunSearch(attestationMonthPlus3, tenK);
+        runSearchAndLeaveOld(attestationMonthPlus3);
+
+        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contract))
+                .stream().collect(groupingBy(CoverageCount::getContractNumber));
+
+        List<String> issues = new ArrayList<>();
+        CoverageUpToDateCheck upToDateCheck = new CoverageUpToDateCheck(coverageService, coverageCounts, issues);
+
+        assertFalse(upToDateCheck.test(contract));
+
+        assertEquals(4, issues.size());
+        issues.forEach(issue -> assertTrue(issue.contains("old coverage search")));
+    }
+
+    @DisplayName("Up to date enrollment passes")
+    @Test
+    void whenCoverageUpToDate_passCoverageUpToDateCheck() {
+
+        createCoveragePeriods();
+
+        Set<Identifiers> tenK = new LinkedHashSet<>();
+        for (long idx = 0; idx < 10000; idx++) {
+            tenK.add(createIdentifier(idx));
+        }
+
+        insertAndRunSearch(attestationMonth, tenK);
+        insertAndRunSearch(attestationMonthPlus1, tenK);
+        insertAndRunSearch(attestationMonthPlus2, tenK);
+
+        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contract))
+                .stream().collect(groupingBy(CoverageCount::getContractNumber));
+
+        List<String> issues = new ArrayList<>();
+        CoverageUpToDateCheck upToDateCheck =
+                new CoverageUpToDateCheck(coverageService, coverageCounts, issues);
+
+        assertTrue(upToDateCheck.test(contract));
+        assertTrue(issues.isEmpty());
+    }
+
     private void createCoveragePeriods() {
         attestationMonth = dataSetup.createCoveragePeriod(contract, ATTESTATION_TIME.getMonthValue(),  ATTESTATION_TIME.getYear());
         attestationMonthPlus1 = dataSetup.createCoveragePeriod(contract, ATTESTATION_TIME.plusMonths(1).getMonthValue(),
@@ -344,19 +412,50 @@ public class CoverageCheckPredicatesIntegrationTest {
                 ATTESTATION_TIME.plusMonths(3).getYear());
     }
 
-    private CoverageSearchEvent insertAndRunSearch(CoveragePeriod period, Set<Identifiers> identifiers) {
+    private void insertAndRunSearch(CoveragePeriod period, Set<Identifiers> identifiers) {
         coverageService.submitSearch(period.getId(), "testing");
         CoverageSearchEvent progress = startSearchAndPullEvent();
         coverageService.insertCoverage(progress.getId(), identifiers);
         coverageService.completeSearch(period.getId(), "testing");
-        return progress;
     }
 
-    private CoverageSearchEvent runSearch(CoveragePeriod period) {
+    private void insertAndLeaveDuplicates(CoveragePeriod period, Set<Identifiers> identifiers) {
         coverageService.submitSearch(period.getId(), "testing");
         CoverageSearchEvent progress = startSearchAndPullEvent();
+        coverageService.insertCoverage(progress.getId(), identifiers);
+
+        CoverageSearchEvent success = new CoverageSearchEvent();
+        success.setCoveragePeriod(period);
+        success.setDescription("testing");
+        success.setNewStatus(JobStatus.SUCCESSFUL);
+        success.setOldStatus(JobStatus.IN_PROGRESS);
+        coverageSearchEventRepo.saveAndFlush(success);
+
+        period = coveragePeriodRepo.findById(period.getId()).get();
+        period.setStatus(JobStatus.SUCCESSFUL);
+        coveragePeriodRepo.saveAndFlush(period);
+    }
+
+    private void runSearch(CoveragePeriod period) {
+        coverageService.submitSearch(period.getId(), "testing");
+        startSearchAndPullEvent();
         coverageService.completeSearch(period.getId(), "testing");
-        return progress;
+    }
+
+    private void runSearchAndLeaveOld(CoveragePeriod period) {
+        coverageService.submitSearch(period.getId(), "testing");
+        startSearchAndPullEvent();
+
+        CoverageSearchEvent success = new CoverageSearchEvent();
+        success.setCoveragePeriod(period);
+        success.setDescription("testing");
+        success.setNewStatus(JobStatus.SUCCESSFUL);
+        success.setOldStatus(JobStatus.IN_PROGRESS);
+        coverageSearchEventRepo.saveAndFlush(success);
+
+        period = coveragePeriodRepo.findById(period.getId()).get();
+        period.setStatus(JobStatus.SUCCESSFUL);
+        coveragePeriodRepo.saveAndFlush(period);
     }
 
     private CoverageSearchEvent startSearchAndPullEvent() {

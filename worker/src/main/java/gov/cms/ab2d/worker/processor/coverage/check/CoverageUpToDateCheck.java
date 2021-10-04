@@ -28,7 +28,7 @@ public class CoverageUpToDateCheck extends CoverageCheckPredicate {
         // No successful searches found for coverage service so some precondition has been violated anyway
         // Check that the last successful search is the one that we have coverage
         // information for and not an old one
-        return coverageCounts.get(contract.getContractNumber()).stream().noneMatch(count -> {
+        return coverageCounts.get(contract.getContractNumber()).stream().filter(count -> {
             Optional<CoverageSearchEvent> mostRecentSuccessfulSearch =
                     coverageService.findEventWithSuccessfulOffset(count.getCoveragePeriodId(), 1);
 
@@ -52,6 +52,6 @@ public class CoverageUpToDateCheck extends CoverageCheckPredicate {
             }
 
             return successfulEvent.getId() != count.getCoverageEventId();
-        });
+        }).count() == 0;
     }
 }
