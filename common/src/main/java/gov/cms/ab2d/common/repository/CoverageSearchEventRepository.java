@@ -11,23 +11,17 @@ import java.util.Optional;
 
 public interface CoverageSearchEventRepository extends JpaRepository<CoverageSearchEvent, Long> {
 
-    /*
-     * Attempted to JPQL to make the below query but ran into issues with the limit and offset.
-     *
-     * You can use Sortable to potentially solve those issues but it doesn't seem worth it
-     */
-
     /**
-     * Get a single IN_PROGRESS search event from the past
-     * @param periodId id of a coverage period identifying a contractId, month, year triple
-     * @param offset offset in search basically get nth result
-     * @return search event found at offset
+     * Find most recent events associated with a coverage search
+     * @param periodId coverage period corresponding to contract, year, and month
+     * @param limit number of events in the past to find
+     * @return all events associated with coverage period
      */
     @Query(value = "SELECT * FROM event_bene_coverage_search_status_change as ebc " +
-            "   WHERE ebc.bene_coverage_period_id = :periodId AND ebc.new_status = :status" +
-            "   ORDER BY ebc.created DESC LIMIT 1 OFFSET :offset",
+            "   WHERE ebc.bene_coverage_period_id = :periodId" +
+            "   ORDER BY ebc.created DESC LIMIT :limit",
             nativeQuery = true)
-    Optional<CoverageSearchEvent> findSearchEventWithOffset(int periodId, String status, int offset);
+    List<CoverageSearchEvent> findByPeriodDesc(int periodId, int limit);
 
     /**
      * Look for all jobs currently in the provided {@link gov.cms.ab2d.common.model.JobStatus} which have been in that status since
