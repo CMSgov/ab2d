@@ -1,11 +1,13 @@
 package gov.cms.ab2d.common.model;
 
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 import java.util.Objects;
 
 @AllArgsConstructor
+@EqualsAndHashCode
 @Getter
 public class CoverageCount implements Comparable<CoverageCount> {
 
@@ -28,18 +30,5 @@ public class CoverageCount implements Comparable<CoverageCount> {
         }
 
         return month - otherCount.getMonth();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        CoverageCount that = (CoverageCount) o;
-        return year == that.year && month == that.month && contractNumber.equals(that.contractNumber);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(contractNumber, year, month);
     }
 }

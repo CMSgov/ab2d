@@ -26,8 +26,8 @@ public class CoverageNoDuplicatesCheck extends CoverageCheckPredicate {
         Map<Integer, List<CoverageCount>> coverageByCoveragePeriod = coverageCounts.get(contract.getContractNumber())
                 .stream().collect(groupingBy(CoverageCount::getCoveragePeriodId));
 
-
-        coverageByCoveragePeriod.forEach((periodId, counts) -> {
+        return coverageByCoveragePeriod.entrySet().stream().filter(entry -> {
+            List<CoverageCount> counts = entry.getValue();
             // If more than one record a warning
             if (counts.size() > 1) {
                 CoverageCount coverageCount = counts.get(0);
@@ -37,9 +37,10 @@ public class CoverageNoDuplicatesCheck extends CoverageCheckPredicate {
 
                 log.warn(issue);
                 issues.add(issue);
+                return true;
             }
-        });
 
-        return coverageByCoveragePeriod.values().stream().noneMatch(counts -> counts.size() > 1);
+            return false;
+        }).count() == 0;
     }
 }
