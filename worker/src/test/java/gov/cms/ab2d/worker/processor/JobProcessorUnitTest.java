@@ -9,7 +9,7 @@ import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverStub;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.service.JobChannelService;
-import gov.cms.ab2d.worker.service.JobChannelServiceImpl;
+import gov.cms.ab2d.worker.service.JobChannelStubServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -61,7 +61,7 @@ class JobProcessorUnitTest {
         JobProgressServiceImpl jobProgressUpdateService = spy(new JobProgressServiceImpl(jobRepository));
         jobProgressUpdateService.initJob(jobUuid);
         jobProgressService = jobProgressUpdateService;
-        jobChannelService = new JobChannelServiceImpl(jobProgressUpdateService);
+        jobChannelService = new JobChannelStubServiceImpl(jobProgressUpdateService);
 
         coverageDriver = spy(new CoverageDriverStub(10, 20));
         cut = spy(new JobProcessorImpl(
