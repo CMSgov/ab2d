@@ -101,6 +101,8 @@ services:
       # Update coverage frequently so that tests aren't slowed down too much
       - "COVERAGE_UPDATE_LOAD_SCHEDULE=0/1 * * * * ?"
       - "COVERAGE_UPDATE_MONITORING_INTERVAL=0/1 * * * * ?"
+      # Disable verification during e2e tests
+      - "COVERAGE_VERIFY_SCHEDULE=0 0 5 31 2 ?"
     depends_on:
       db:
         condition: service_healthy
