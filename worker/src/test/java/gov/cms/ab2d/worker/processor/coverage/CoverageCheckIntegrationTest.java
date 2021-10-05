@@ -110,6 +110,30 @@ public class CoverageCheckIntegrationTest {
         }
     }
 
+    @DisplayName("Verify coverage ignores contracts being updated")
+    @Test
+    void verifyCoverage_whenUpdateInProgressPass() {
+        createCoveragePeriods();
+
+        Set<Identifiers> tenK = new LinkedHashSet<>();
+        for (long idx = 0; idx < 10000; idx++) {
+            tenK.add(createIdentifier(idx));
+        }
+
+        coverageService.submitSearch(attestationMonth.getId(), "testing");
+
+        CoverageVerificationException exception =
+                assertThrows(CoverageVerificationException.class, () -> coverageDriver.verifyCoverage());
+
+        assertTrue(exception.getAlertMessage().contains("being updated now"));
+
+        startSearchAndPullEvent();
+
+        exception = assertThrows(CoverageVerificationException.class, () -> coverageDriver.verifyCoverage());
+
+        assertTrue(exception.getAlertMessage().contains("being updated now"));
+    }
+
     @DisplayName("Verify coverage stops if coverage periods are missing entirely")
     @Test
     void verifyCoverage_whenMissingPeriods_fail() {

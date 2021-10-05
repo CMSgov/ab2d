@@ -504,7 +504,21 @@ public class CoverageDriverImpl implements CoverageDriver {
 
         List<String> issues = new ArrayList<>();
 
-        List<Contract> enabledContracts = pdpClientService.getAllEnabledContracts();
+        List<Contract> enabledContracts = pdpClientService.getAllEnabledContracts().stream()
+                .filter(contract -> {
+                    List<CoveragePeriod> periods = coverageService.findAssociatedCoveragePeriods(contract);
+
+                    boolean contractBeingUpdated  = periods.stream()
+                            .anyMatch(period -> period.getStatus() == JobStatus.IN_PROGRESS || period.getStatus() == JobStatus.SUBMITTED);
+
+                    if (contractBeingUpdated) {
+                        issues.add("Contract " + contract.getContractNumber() + " is being updated now so coverage verification will be done later");
+                        return false;
+                    }
+
+                    return true;
+                })
+                .collect(toList());
 
         List<Contract> filteredContracts = enabledContracts.stream()
                 .filter(new CoveragePeriodsPresentCheck(coverageService, null, issues))
