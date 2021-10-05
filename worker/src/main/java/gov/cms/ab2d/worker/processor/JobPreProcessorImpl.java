@@ -1,6 +1,8 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobStartedBy;
+import gov.cms.ab2d.common.model.SinceSource;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -12,6 +14,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
 
 import static gov.cms.ab2d.common.model.JobStatus.*;
 
@@ -41,6 +46,16 @@ public class JobPreProcessorImpl implements JobPreProcessor {
             throw new IllegalArgumentException(errMsg);
         }
 
+        if (job.getSince() != null) {
+            // If the user provided a 'since' value
+            job.setSinceSource(SinceSource.USER);
+            jobRepository.save(job);
+        } else if (job.getFhirVersion().supportDefaultSince()) {
+            // If the user did not, but this version supports a default 'since', populate it
+            job = updateSinceTime(job);
+            jobRepository.save(job);
+        }
+
         try {
             if (!coverageDriver.isCoverageAvailable(job)) {
                 log.info("coverage metadata is not up to date so job will not be started");
@@ -65,7 +80,29 @@ public class JobPreProcessorImpl implements JobPreProcessor {
             throw new RuntimeException("could not determine whether coverage metadata was up to date", ie);
         }
 
+        return job;
+    }
 
+    /**
+     * Update the 'since' logic if the user has not supplied one. We pick the date the last job was successfully
+     * run by the PDP (ignoring AB2D run jobs). If no job has every been successfully run, we default to a null
+     * since date.
+     *
+     * @param job - The job object to update (although not save)
+     * @return - the job with the updated since date and auto since source
+     */
+    Job updateSinceTime(Job job) {
+        // Get time of last successful job for that organization
+        Optional<Job> lastSuccessfulJob = jobRepository.findFirstByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(
+            job.getContract(), List.of(SUCCESSFUL), JobStartedBy.PDP);
+        if (lastSuccessfulJob.isPresent()) {
+            // If there was a successful job, set the since time to the last submitted job date
+            job.setSince(lastSuccessfulJob.get().getCreatedAt());
+            job.setSinceSource(SinceSource.AB2D);
+        } else {
+            // If there was not, this mean this is the first time the job was run
+            job.setSinceSource(SinceSource.FIRST_RUN);
+        }
         return job;
     }
 }

@@ -27,9 +27,11 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
+import static gov.cms.ab2d.fhir.FhirVersion.R4;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -150,6 +152,156 @@ class JobPreProcessorIntegrationTest {
                 loggerEventRepository.load(ErrorEvent.class),
                 loggerEventRepository.load(FileEvent.class)));
         loggerEventRepository.delete();
+    }
+
+    @Test
+    @DisplayName("We're R4, there have been successful jobs so set default since")
+    void testDefaultSince() {
+        // This is the last successful job run
+        Job oldJob = new Job();
+        oldJob.setJobUuid("AA-BB");
+        oldJob.setStatus(JobStatus.SUCCESSFUL);
+        oldJob.setStatusMessage("100%");
+        oldJob.setPdpClient(pdpClient);
+        oldJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
+        OffsetDateTime oldJobTime = OffsetDateTime.parse("2021-01-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
+        oldJob.setCreatedAt(oldJobTime);
+        oldJob.setFhirVersion(STU3);
+        oldJob = jobRepository.save(oldJob);
+
+        // This is an even early job (want to make sure it picks the correct old job)
+        Job reallyOldJob = new Job();
+        reallyOldJob.setJobUuid("CC-DD");
+        reallyOldJob.setStatus(JobStatus.SUCCESSFUL);
+        reallyOldJob.setStatusMessage("100%");
+        reallyOldJob.setPdpClient(pdpClient);
+        reallyOldJob.setStartedBy(JobStartedBy.DEVELOPER);
+        reallyOldJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
+        OffsetDateTime reallyOldldJobTime = OffsetDateTime.parse("2020-12-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
+        reallyOldJob.setCreatedAt(reallyOldldJobTime);
+        reallyOldJob.setFhirVersion(R4);
+        reallyOldJob = jobRepository.save(reallyOldJob);
+
+        Job newJob = new Job();
+        newJob.setJobUuid("YY-ZZ");
+        newJob.setStatus(JobStatus.SUBMITTED);
+        newJob.setStatusMessage("0%");
+        newJob.setPdpClient(pdpClient);
+        newJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
+        newJob.setCreatedAt(OffsetDateTime.now());
+        newJob.setFhirVersion(R4);
+        newJob = jobRepository.save(newJob);
+
+        Job processedJob = cut.preprocess(newJob.getJobUuid());
+        assertEquals(oldJobTime.getNano(), processedJob.getSince().getNano());
+        assertEquals(SinceSource.AB2D, processedJob.getSinceSource());
+
+        dataSetup.queueForCleanup(oldJob);
+        dataSetup.queueForCleanup(reallyOldJob);
+        dataSetup.queueForCleanup(newJob);
+    }
+
+    @Test
+    @DisplayName("We're R4, there has been a failed job so don't set default since")
+    void testDefaultSinceFailed() {
+        Job oldJob = new Job();
+        oldJob.setJobUuid("AA-BB");
+        oldJob.setStatus(JobStatus.FAILED);
+        oldJob.setStatusMessage("100%");
+        oldJob.setPdpClient(pdpClient);
+        oldJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
+        OffsetDateTime oldJobTime = OffsetDateTime.parse("2021-01-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
+        oldJob.setCreatedAt(oldJobTime);
+        oldJob.setFhirVersion(STU3);
+        oldJob = jobRepository.save(oldJob);
+
+        Job newJob = new Job();
+        newJob.setJobUuid("YY-ZZ");
+        newJob.setStatus(JobStatus.SUBMITTED);
+        newJob.setStatusMessage("0%");
+        newJob.setPdpClient(pdpClient);
+        newJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
+        OffsetDateTime newJobTime = OffsetDateTime.parse("2021-02-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
+        newJob.setCreatedAt(newJobTime);
+        newJob.setFhirVersion(R4);
+        newJob = jobRepository.save(newJob);
+
+        Job processedJob = cut.preprocess(newJob.getJobUuid());
+        assertNull(processedJob.getSince());
+        assertEquals(SinceSource.FIRST_RUN, processedJob.getSinceSource());
+
+        dataSetup.queueForCleanup(oldJob);
+        dataSetup.queueForCleanup(newJob);
+    }
+
+    @Test
+    @DisplayName("We're R4, there has been a successful job run but it was run by the developers so don't set default since")
+    void testDefaultSinceAB2DRun() {
+        Job oldJob = new Job();
+        oldJob.setJobUuid("AA-BB");
+        oldJob.setStatus(JobStatus.SUCCESSFUL);
+        oldJob.setStatusMessage("100%");
+        oldJob.setPdpClient(pdpClient);
+        oldJob.setStartedBy(JobStartedBy.DEVELOPER);
+        oldJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
+        OffsetDateTime oldJobTime = OffsetDateTime.parse("2021-01-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
+        oldJob.setCreatedAt(oldJobTime);
+        oldJob.setFhirVersion(STU3);
+        oldJob = jobRepository.save(oldJob);
+
+
+        Job newJob = new Job();
+        newJob.setJobUuid("YY-ZZ");
+        newJob.setStatus(JobStatus.SUBMITTED);
+        newJob.setStatusMessage("0%");
+        newJob.setPdpClient(pdpClient);
+        newJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
+        newJob.setCreatedAt(OffsetDateTime.now());
+        newJob.setFhirVersion(R4);
+
+        newJob = jobRepository.save(newJob);
+
+        Job processedJob = cut.preprocess(newJob.getJobUuid());
+        assertNull(processedJob.getSince());
+        assertEquals(SinceSource.FIRST_RUN, processedJob.getSinceSource());
+
+        dataSetup.queueForCleanup(oldJob);
+        dataSetup.queueForCleanup(newJob);
+    }
+
+    @Test
+    @DisplayName("We're R4, there has been a successful job run but we've specified a since date so don't set default since")
+    void testDefaultSinceNotNeeded() {
+        Job oldJob = new Job();
+        oldJob.setJobUuid("AA-BB");
+        oldJob.setStatus(JobStatus.SUCCESSFUL);
+        oldJob.setStatusMessage("100%");
+        oldJob.setPdpClient(pdpClient);
+        oldJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
+        OffsetDateTime oldJobTime = OffsetDateTime.parse("2021-01-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
+        oldJob.setCreatedAt(oldJobTime);
+        oldJob.setFhirVersion(STU3);
+        oldJob = jobRepository.save(oldJob);
+
+        Job newJob = new Job();
+        newJob.setJobUuid("YY-ZZ");
+        newJob.setStatus(JobStatus.SUBMITTED);
+        newJob.setStatusMessage("0%");
+        newJob.setPdpClient(pdpClient);
+        newJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
+        OffsetDateTime suppliedSince = OffsetDateTime.parse("2021-02-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
+        newJob.setSince(suppliedSince);
+        newJob.setCreatedAt(OffsetDateTime.now());
+        newJob.setFhirVersion(R4);
+        newJob.setSince(suppliedSince);
+        newJob = jobRepository.save(newJob);
+
+        Job processedJob = cut.preprocess(newJob.getJobUuid());
+        assertEquals(suppliedSince.getNano(), processedJob.getSince().getNano());
+        assertEquals(SinceSource.USER, processedJob.getSinceSource());
+
+        dataSetup.queueForCleanup(oldJob);
+        dataSetup.queueForCleanup(newJob);
     }
 
     private PdpClient createClient() {

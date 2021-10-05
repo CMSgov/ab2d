@@ -81,6 +81,9 @@ public class Job {
     @NotNull
     private JobStartedBy startedBy = JobStartedBy.PDP;
 
+    @Enumerated(STRING)
+    private SinceSource sinceSource;
+
     @ManyToOne
     @JoinColumn(name = "contract_id")
     @Nullable
