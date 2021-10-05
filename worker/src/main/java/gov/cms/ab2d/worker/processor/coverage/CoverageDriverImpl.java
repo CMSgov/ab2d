@@ -7,7 +7,7 @@ import gov.cms.ab2d.common.service.CoverageService;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.Constants;
-import gov.cms.ab2d.worker.processor.coverage.check.*;
+import gov.cms.ab2d.worker.processor.coverage.check.*; // NOPMD
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
