@@ -23,8 +23,11 @@ import java.util.concurrent.locks.Lock;
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
+import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getAttestationTime;
+import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getEndDateTime;
 import static java.util.stream.Collectors.toList;
 
+@SuppressWarnings("PMD.TooManyStaticImports")
 @Slf4j
 @Service
 public class CoverageDriverImpl implements CoverageDriver {
@@ -178,14 +181,7 @@ public class CoverageDriverImpl implements CoverageDriver {
     private void discoverCoveragePeriods(Contract contract) {
         // Assume current time is EST since all AWS deployments are in EST
         ZonedDateTime now = getEndDateTime();
-        ZonedDateTime attestationTime = contract.getESTAttestationTime();
-
-        // Force first coverage period to be after
-        // January 1st 2020 which is the first moment we report data for
-        if (attestationTime.isBefore(AB2D_EPOCH)) {
-            log.info("contract attested before ab2d epoch setting to epoch");
-            attestationTime = AB2D_EPOCH;
-        }
+        ZonedDateTime attestationTime = getAttestationTime(contract);
 
         int coveragePeriodsForContracts = 0;
         while (attestationTime.isBefore(now)) {
@@ -463,15 +459,6 @@ public class CoverageDriverImpl implements CoverageDriver {
             log.error("coverage period missing or year,month query incorrect, driver should have resolved earlier");
             throw new CoverageDriverException("coverage driver failing preconditions", exception);
         }
-    }
-
-    private static ZonedDateTime getEndDateTime() {
-        // Assume current time zone is EST since all deployments are in EST
-        ZonedDateTime now = ZonedDateTime.now(AB2D_ZONE);
-        now = now.plusMonths(1);
-        now = ZonedDateTime.of(now.getYear(), now.getMonthValue(),
-                1, 0, 0, 0, 0,  AB2D_ZONE);
-        return now;
     }
 
     private ZonedDateTime getStartDateTime(Job job) {

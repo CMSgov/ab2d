@@ -1,11 +1,15 @@
 package gov.cms.ab2d.common.model;
 
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
+import java.util.Objects;
+
 @AllArgsConstructor
+@EqualsAndHashCode
 @Getter
-public class CoverageCount {
+public class CoverageCount implements Comparable<CoverageCount> {
 
     private final String contractNumber;
     private final int year;
@@ -15,4 +19,16 @@ public class CoverageCount {
     private final int coverageEventId;
     private final int beneficiaryCount;
 
+    @Override
+    public int compareTo(CoverageCount otherCount) {
+        if (!Objects.equals(contractNumber, otherCount.getContractNumber())) {
+            return contractNumber.compareTo(otherCount.getContractNumber());
+        }
+
+        if (year != otherCount.getYear()) {
+            return year - otherCount.getYear();
+        }
+
+        return month - otherCount.getMonth();
+    }
 }
