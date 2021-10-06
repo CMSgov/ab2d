@@ -356,12 +356,12 @@ class CoverageServiceImplTest {
     @Test
     void findLastEvent() {
 
-        Optional<CoverageSearchEvent> lastEvent = coverageService.findLastEvent(period1Jan.getId());
+        Optional<CoverageSearchEvent> lastEvent = coverageService.findMostRecentEvent(period1Jan.getId());
 
         assertTrue(lastEvent.isEmpty());
 
         CoverageSearchEvent submission = coverageService.submitSearch(period1Jan.getId(), "testing").get();
-        lastEvent = coverageService.findLastEvent(period1Jan.getId());
+        lastEvent = coverageService.findMostRecentEvent(period1Jan.getId());
 
         assertTrue(lastEvent.isPresent());
         assertEquals(submission.getId(), lastEvent.get().getId());
@@ -369,7 +369,7 @@ class CoverageServiceImplTest {
         assertEquals(JobStatus.SUBMITTED, lastEvent.get().getNewStatus());
 
         CoverageSearchEvent inProgress = startSearchAndPullEvent();
-        lastEvent = coverageService.findLastEvent(period1Jan.getId());
+        lastEvent = coverageService.findMostRecentEvent(period1Jan.getId());
 
         assertTrue(lastEvent.isPresent());
         assertEquals(inProgress.getId(), lastEvent.get().getId());

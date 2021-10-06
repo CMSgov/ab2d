@@ -12,7 +12,7 @@ import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.processor.stub.PatientClaimsProcessorStub;
 import gov.cms.ab2d.worker.service.JobChannelService;
-import gov.cms.ab2d.worker.service.JobChannelServiceImpl;
+import gov.cms.ab2d.worker.service.JobChannelStubServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -71,7 +71,7 @@ class ContractProcessorUnitTest {
         jobProgressImpl.initJob(jobUuid);
         ReflectionTestUtils.setField(jobProgressImpl, "reportProgressDbFrequency", 2);
         ReflectionTestUtils.setField(jobProgressImpl, "reportProgressLogFrequency", 3);
-        jobChannelService = new JobChannelServiceImpl(jobProgressImpl);
+        jobChannelService = new JobChannelStubServiceImpl(jobProgressImpl);
 
         cut = new ContractProcessorImpl(
                 jobRepository,

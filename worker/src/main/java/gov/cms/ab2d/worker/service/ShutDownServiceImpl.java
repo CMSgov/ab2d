@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
+import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
 
 @Slf4j
 @Service
@@ -28,7 +29,8 @@ public class ShutDownServiceImpl implements ShutDownService {
         try {
             for (String jobString : activeJobs) {
                 Job job = jobRepository.findByJobUuid(jobString);
-                eventLogger.log(EventUtils.getJobChangeEvent(job, SUBMITTED, "Job status reset to SUBMITTED on shutdown"));
+                eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, SUBMITTED, "Job status reset to SUBMITTED on shutdown"),
+                        PUBLIC_LIST);
             }
 
             jobRepository.resetJobsToSubmittedStatus(activeJobs);
