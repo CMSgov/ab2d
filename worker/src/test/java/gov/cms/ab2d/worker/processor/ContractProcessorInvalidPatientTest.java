@@ -11,7 +11,7 @@ import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.service.JobChannelService;
-import gov.cms.ab2d.worker.service.JobChannelServiceImpl;
+import gov.cms.ab2d.worker.service.JobChannelStubServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -65,7 +65,7 @@ class ContractProcessorInvalidPatientTest {
         patientClaimsProcessor = new PatientClaimsProcessorImpl(bfdClient, eventLogger);
         JobProgressServiceImpl jobProgressUpdateService = new JobProgressServiceImpl(jobRepository);
         jobProgressUpdateService.initJob(jobId);
-        JobChannelService jobChannelService = new JobChannelServiceImpl(jobProgressUpdateService);
+        JobChannelService jobChannelService = new JobChannelStubServiceImpl(jobProgressUpdateService);
         cut = new ContractProcessorImpl(jobRepository, patientClaimsProcessor, eventLogger,
                 requestQueue, jobChannelService, jobProgressUpdateService);
         jobChannelService.sendUpdate(jobId, JobMeasure.FAILURE_THRESHHOLD, 100);

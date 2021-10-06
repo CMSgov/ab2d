@@ -92,7 +92,17 @@ public interface CoverageService {
      * @param periodId {@link CoveragePeriod#getId()}
      * @return may return empty if no events associated with search have been recorded yet
      */
-    Optional<CoverageSearchEvent> findLastEvent(int periodId);
+    Optional<CoverageSearchEvent> findMostRecentEvent(int periodId);
+
+    /**
+     * Find a search event which may have associated coverage by looking into past successful searches. Ignores
+     * search events associated with failed searches.
+     *
+     * @param periodId a coverage period to look at the search event history of
+     * @param offset number of successful searches in the past to look for
+     * @return a successful search at the offset if it exists
+     */
+    Optional<CoverageSearchEvent> findEventWithSuccessfulOffset(int periodId, int offset);
 
     /**
      * Insert new coverage information for beneficiaries
