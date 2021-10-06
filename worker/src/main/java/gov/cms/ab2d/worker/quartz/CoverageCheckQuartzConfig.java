@@ -16,7 +16,7 @@ public class CoverageCheckQuartzConfig {
     @Qualifier("coverage_verifier")
     @Bean
     JobDetail coverageVerifierJobDetail() {
-        return JobBuilder.newJob(CoveragePeriodQuartzJob.class)
+        return JobBuilder.newJob(CoverageCheckQuartzJob.class)
                 .withIdentity("coverage_verifier")
                 .storeDurably()
                 .build();
