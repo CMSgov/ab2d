@@ -23,9 +23,9 @@ public class CoverageCheckQuartzConfig {
     }
 
     @Bean
-    Trigger coveragePeriodJobPeriodicTrigger(@Qualifier("coverage_verifier") JobDetail coveragePeriodJobDetail) {
+    Trigger coveragePeriodJobPeriodicTrigger(@Qualifier("coverage_verifier") JobDetail coverageCheckJobDetail) {
         return TriggerBuilder.newTrigger()
-                .forJob(coveragePeriodJobDetail)
+                .forJob(coverageCheckJobDetail)
                 .withIdentity("coverage_verifier_trigger_periodic")
                 .withSchedule(CronScheduleBuilder.cronSchedule(schedule))
                 .build();
