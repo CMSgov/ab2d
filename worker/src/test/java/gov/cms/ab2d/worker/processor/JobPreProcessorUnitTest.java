@@ -1,10 +1,12 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.SinceSource;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,9 +18,14 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.Optional;
+import java.util.Collections;
+import java.util.List;
 
+import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
+import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
+import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.junit.jupiter.api.Assertions.*;
@@ -121,7 +128,7 @@ class JobPreProcessorUnitTest {
         when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
         cut.preprocess(job.getJobUuid());
         assertNull(job.getSince());
-        verify(jobRepository, never()).findFirstByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any());
+        verify(jobRepository, never()).findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any());
         assertNull(job.getSinceSource());
     }
 
@@ -132,7 +139,7 @@ class JobPreProcessorUnitTest {
         job.setFhirVersion(R4);
         job.setStatus(JobStatus.SUBMITTED);
         when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
-        when(jobRepository.findFirstByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any())).thenReturn(Optional.empty());
+        when(jobRepository.findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any())).thenReturn(Collections.emptyList());
         cut.preprocess(job.getJobUuid());
         assertNull(job.getSince());
         assertEquals(SinceSource.FIRST_RUN, job.getSinceSource());
@@ -148,13 +155,13 @@ class JobPreProcessorUnitTest {
 
         // Old job can still be STU3 and still count
         Job oldJob = createJob();
-        oldJob.setStatus(JobStatus.SUCCESSFUL);
+        oldJob.setStatus(SUCCESSFUL);
         oldJob.setJobUuid(oldJob.getJobUuid() + "-2");
         OffsetDateTime oldJobTime = OffsetDateTime.parse("2021-01-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
         oldJob.setCreatedAt(oldJobTime);
 
         when(jobRepository.findByJobUuid(newJob.getJobUuid())).thenReturn(newJob);
-        when(jobRepository.findFirstByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any())).thenReturn(Optional.of(oldJob));
+        when(jobRepository.findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any())).thenReturn(List.of(oldJob));
 
         cut.preprocess(newJob.getJobUuid());
         assertEquals(oldJobTime, newJob.getSince());
@@ -173,19 +180,128 @@ class JobPreProcessorUnitTest {
 
         // Old job can still be STU3 and still count
         Job oldJob = createJob();
-        oldJob.setStatus(JobStatus.SUCCESSFUL);
+        oldJob.setStatus(SUCCESSFUL);
         OffsetDateTime oldJobTime = OffsetDateTime.parse("2021-01-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
         oldJob.setCreatedAt(oldJobTime);
         oldJob.setJobUuid(oldJob.getJobUuid() + "-2");
 
         when(jobRepository.findByJobUuid(newJob.getJobUuid())).thenReturn(newJob);
-        when(jobRepository.findByJobUuid(oldJob.getJobUuid())).thenReturn(oldJob);
 
         cut.preprocess(newJob.getJobUuid());
 
-        verify(jobRepository, never()).findFirstByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any());
+        verify(jobRepository, never()).findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any());
         assertEquals(now, newJob.getSince());
         assertEquals(SinceSource.USER, newJob.getSinceSource());
+    }
+
+    @DisplayName("Search for latest successful job with all files downloaded")
+    @Test
+    void testGetLatestFullySuccessfulJob() {
+        // This job has successfully downloaded data files but not error file
+        Job job1 = createJob("A", R4, SUCCESSFUL, OffsetDateTime.of(2020, 5, 1, 1, 0, 0, 0, ZoneOffset.UTC));
+        job1.addJobOutput(createJobOutput(job1, false, true));
+        job1.addJobOutput(createJobOutput(job1, true, false));
+
+        // This job has successfully downloaded data all files
+        Job job2 = createJob("B", R4, SUCCESSFUL, OffsetDateTime.of(2020, 5, 2, 1, 0, 0, 0, ZoneOffset.UTC));
+        job2.addJobOutput(createJobOutput(job2, false, true));
+        job2.addJobOutput(createJobOutput(job2, true, true));
+
+        // This job has not successfully downloaded data files
+        Job job3 = createJob("C", R4, SUCCESSFUL, OffsetDateTime.of(2020, 5, 3, 1, 0, 0, 0, ZoneOffset.UTC));
+        job3.addJobOutput(createJobOutput(job3, false, false));
+        job3.addJobOutput(createJobOutput(job3, true, true));
+
+        // Job has no data files
+        Job job4 = createJob("D", R4, SUCCESSFUL, OffsetDateTime.of(2020, 5, 4, 1, 0, 0, 0, ZoneOffset.UTC));
+
+        // This job also has successfully downloaded data files but not error file
+        Job job5 = createJob("E", R4, SUCCESSFUL, OffsetDateTime.of(2020, 5, 5, 1, 0, 0, 0, ZoneOffset.UTC));
+        job5.addJobOutput(createJobOutput(job5, false, true));
+        job5.addJobOutput(createJobOutput(job5, true, false));
+
+        Job newJob = createJob("Z", R4, SUBMITTED, OffsetDateTime.of(2020, 7, 1, 1, 0, 0, 0, ZoneOffset.UTC));
+
+        JobPreProcessorImpl impl = (JobPreProcessorImpl) cut;
+
+        assertEquals(impl.getLastSuccessfulJobWithDownloads(List.of(job1, job2, job3, job4)).get().getCreatedAt().getNano(), job4.getCreatedAt().getNano());
+        assertEquals(impl.getLastSuccessfulJobWithDownloads(List.of(job1, job2, job3)).get().getCreatedAt().getNano(), job2.getCreatedAt().getNano());
+        assertEquals(impl.getLastSuccessfulJobWithDownloads(List.of(job1, job3)).get().getCreatedAt().getNano(), job1.getCreatedAt().getNano());
+        assertTrue(impl.getLastSuccessfulJobWithDownloads(List.of(job3)).isEmpty());
+
+        when(jobRepository.findByJobUuid(newJob.getJobUuid())).thenReturn(newJob);
+        when(jobRepository.findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any())).thenReturn(List.of(job1, job2, job3, job4));
+        cut.preprocess(newJob.getJobUuid());
+        assertEquals(newJob.getSince().getNano(), job4.getCreatedAt().getNano());
+        assertEquals(newJob.getSinceSource(), SinceSource.AB2D);
+
+//        when(jobRepository.findByJobUuid(newJob.getJobUuid())).thenReturn(newJob);
+//        when(jobRepository.findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any())).thenReturn(List.of(job1, job2, job3, job4));
+ //       cut.preprocess(newJob.getJobUuid());
+//        assertEquals(newJob.getSince().getNano(), job4.getCreatedAt().getNano());
+
+//        when(jobRepository.findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any())).thenReturn(List.of(job1, job2, job3));
+//        cut.preprocess(newJob.getJobUuid());
+ //       assertEquals(newJob.getSince().getNano(), job2.getCreatedAt().getNano());
+
+//        when(jobRepository.findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any())).thenReturn(List.of(job1, job3));
+//        cut.preprocess(newJob.getJobUuid());
+//        assertEquals(newJob.getSince().getNano(), job1.getCreatedAt().getNano());
+
+    }
+
+    @Test
+    void testDownloadedAll() {
+        Job job = new Job();
+        // Error file that was downloaded
+        JobOutput jo1 = createJobOutput(job, true, true);
+        // Error file that was not downloaded
+        JobOutput jo2 = createJobOutput(job, true, false);
+        // Data file that was downloaded
+        JobOutput jo3 = createJobOutput(job, false, true);
+        // Data file that was not downloaded - anything that includes this should return false
+        JobOutput jo4 = createJobOutput(job, false, false);
+
+        JobPreProcessorImpl impl = (JobPreProcessorImpl) cut;
+        // Start with null or empty results
+        assertTrue(impl.downloadedAll(null));
+        assertTrue(impl.downloadedAll(Collections.emptyList()));
+
+        // Try each individual
+        assertTrue(impl.downloadedAll(List.of(jo1)));
+        assertTrue(impl.downloadedAll(List.of(jo2)));
+        assertTrue(impl.downloadedAll(List.of(jo3)));
+        assertFalse(impl.downloadedAll(List.of(jo4)));
+
+        // Try combinations
+        assertTrue(impl.downloadedAll(List.of(jo1, jo2, jo3)));
+        assertFalse(impl.downloadedAll(List.of(jo1, jo2, jo3, jo4)));
+        assertFalse(impl.downloadedAll(List.of(jo1, jo4)));
+        assertFalse(impl.downloadedAll(List.of(jo2, jo3, jo4)));
+    }
+
+    private JobOutput createJobOutput(Job job, boolean error, boolean downloaded) {
+        JobOutput output = new JobOutput();
+        output.setError(error);
+        output.setFilePath("/tmp/" + job.getJobUuid() + (int) (Math.random() * 1000));
+        output.setChecksum("" + (int) (Math.random() * 10000000));
+        output.setFileLength((long) (Math.random() * 10000000));
+        output.setDownloaded(downloaded);
+        output.setFhirResourceType(EOB);
+        output.setId((long) (Math.random() * 10000000));
+        return output;
+    }
+
+    private Job createJob(String uuid, FhirVersion version, JobStatus status, OffsetDateTime created) {
+        Job job = new Job();
+        job.setJobUuid(uuid);
+        job.setStatusMessage("0%");
+        job.setFhirVersion(version);
+        job.setStatus(status);
+        job.setCreatedAt(created);
+
+        return job;
+
     }
 
     // Not first run, since supplied

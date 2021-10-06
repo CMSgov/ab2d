@@ -30,7 +30,7 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     @Query("select j from Job j where j.pdpClient = :pdpClient and (j.status = 'IN_PROGRESS' or j.status = 'SUBMITTED')")
     List<Job> findActiveJobsByClient(PdpClient pdpClient);
 
-    Optional<Job> findFirstByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(
+    List<Job> findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(
             Contract contract, List<JobStatus> statuses, JobStartedBy startedBy);
 
     @Query("select j from Job j where j.pdpClient = :pdpClient and j.contract = :contract and (j.status = 'IN_PROGRESS' or j.status = 'SUBMITTED')")

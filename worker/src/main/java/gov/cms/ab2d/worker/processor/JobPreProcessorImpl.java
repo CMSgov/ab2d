@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStartedBy;
 import gov.cms.ab2d.common.model.SinceSource;
 import gov.cms.ab2d.common.repository.JobRepository;
@@ -15,8 +16,11 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.OffsetDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.model.JobStatus.*;
 
@@ -92,17 +96,59 @@ public class JobPreProcessorImpl implements JobPreProcessor {
      * @return - the job with the updated since date and auto since source
      */
     Job updateSinceTime(Job job) {
+        List<Job> successfulJobs = jobRepository.findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(
+                job.getContract(), List.of(SUCCESSFUL), JobStartedBy.PDP);
+
         // Get time of last successful job for that organization
-        Optional<Job> lastSuccessfulJob = jobRepository.findFirstByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(
-            job.getContract(), List.of(SUCCESSFUL), JobStartedBy.PDP);
-        if (lastSuccessfulJob.isPresent()) {
+        Optional<Job> successfulJob = getLastSuccessfulJobWithDownloads(successfulJobs);
+        if (successfulJob.isPresent()) {
             // If there was a successful job, set the since time to the last submitted job date
-            job.setSince(lastSuccessfulJob.get().getCreatedAt());
+            job.setSince(successfulJob.get().getCreatedAt());
             job.setSinceSource(SinceSource.AB2D);
         } else {
             // If there was not, this mean this is the first time the job was run
             job.setSinceSource(SinceSource.FIRST_RUN);
         }
         return job;
+    }
+
+    /**
+     * While we are looking for previously successful jobs to use it as a since date, we have to be careful
+     * to only include jobs whose data files have been downloaded
+     *
+     * @param successfulJobs - the list of historical successful jobs
+     * @return - the last successful job
+     */
+    Optional<Job> getLastSuccessfulJobWithDownloads(List<Job> successfulJobs) {
+        Comparator<Job> comparator = Comparator.comparing(Job::getCreatedAt);
+
+        List<Job> sortedFilteredlist = successfulJobs.stream()
+                .filter(j -> downloadedAll(j.getJobOutputs()))
+                .sorted(comparator)
+                .collect(Collectors.toList());
+
+        if (sortedFilteredlist.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(sortedFilteredlist.get(0));
+    }
+
+    /**
+     * Return true if all data files have been downloaded for the job
+     *
+     * @param outputs - the data outputs related to the job
+     * @return true if all non error files have been downloaded, false if any data files were not downloaded
+     */
+    boolean downloadedAll(List<JobOutput> outputs) {
+        if (outputs == null) {
+            return true;
+        }
+        return outputs.stream()
+                // Remove any error files from the consideration
+                .filter(o -> !o.getError())
+                // Remove any that has been downloaded
+                .filter(o -> !o.getDownloaded())
+                // Determine if there are any left
+                .findAny().isEmpty();
     }
 }
