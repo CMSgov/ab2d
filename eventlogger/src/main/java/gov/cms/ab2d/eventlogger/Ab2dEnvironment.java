@@ -1,6 +1,5 @@
 package gov.cms.ab2d.eventlogger;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -19,7 +18,9 @@ public enum Ab2dEnvironment {
 
     public static final List<Ab2dEnvironment> ALL = List.of(LOCAL, DEV, SANDBOX, IMPL, PRODUCTION_VALIDATION, PRODUCTION);
 
-    public static final List<Ab2dEnvironment> PROD_LIST = Collections.singletonList(PRODUCTION);
+    public static final List<Ab2dEnvironment> PROD_LIST = List.of(PRODUCTION);
+
+    public static final List<Ab2dEnvironment> PUBLIC_LIST = List.of(PRODUCTION, SANDBOX);
 
     // Name typically expected in application.eventlogger.properties config
     // or passed in as env variable during startup

@@ -39,6 +39,7 @@ import static gov.cms.ab2d.common.model.JobStatus.FAILED;
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.common.util.EventUtils.getOrganization;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PROD_LIST;
+import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.NDJSON;
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.ZIP;
 
@@ -103,7 +104,7 @@ public class JobProcessorImpl implements JobProcessor {
             // Log exception to relevant loggers
             String contract = job.getContract() != null ? job.getContract().getContractNumber() : "empty";
             String message = String.format("Job %s failed for contract #%s because %s", jobUuid, contract, e.getMessage());
-            eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, FAILED, message), PROD_LIST);
+            eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, FAILED, message), PUBLIC_LIST);
             log.error("Unexpected exception executing job {}", e.getMessage());
 
             // Update database status
