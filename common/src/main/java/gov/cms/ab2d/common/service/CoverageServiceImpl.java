@@ -1,18 +1,8 @@
 package gov.cms.ab2d.common.service;
 
 import com.newrelic.api.agent.Trace;
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.CoverageCount;
-import gov.cms.ab2d.common.model.CoverageMapping;
-import gov.cms.ab2d.common.model.CoveragePagingRequest;
-import gov.cms.ab2d.common.model.CoveragePagingResult;
-import gov.cms.ab2d.common.model.CoveragePeriod;
-import gov.cms.ab2d.common.model.CoverageSearch;
-import gov.cms.ab2d.common.model.CoverageSearchDiff;
-import gov.cms.ab2d.common.model.CoverageSearchEvent;
-import gov.cms.ab2d.common.model.Identifiers;
-import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.repository.*;      // NOPMD
+import gov.cms.ab2d.common.model.*; //NOPMD
+import gov.cms.ab2d.common.repository.*; //NOPMD
 import gov.cms.ab2d.eventlogger.LogManager;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,8 +20,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH_YEAR;
-import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PRODUCTION;
-import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.SANDBOX;
+import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -381,7 +370,7 @@ public class CoverageServiceImpl implements CoverageService {
             String issue = String.format("Failed to delete coverage for a failed search for %s-%d-%d. " +
                             "There could be duplicate enrollment data in the db",
                     period.getContract().getContractNumber(), period.getYear(), period.getMonth());
-            eventLogger.alert(issue, List.of(PRODUCTION, SANDBOX));
+            eventLogger.alert(issue, PUBLIC_LIST);
             throw exception;
         }
 
@@ -413,7 +402,7 @@ public class CoverageServiceImpl implements CoverageService {
             String issue = String.format("Failed to delete old coverage for newly completed %s-%d-%d." +
                             " There could be duplicate enrollment data in the db",
                     period.getContract().getContractNumber(), period.getYear(), period.getMonth());
-            eventLogger.alert(issue, List.of(PRODUCTION, SANDBOX));
+            eventLogger.alert(issue, PUBLIC_LIST);
             throw exception;
         }
 

@@ -13,6 +13,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 
 import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
+import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
 
 @Slf4j
 @Component
@@ -41,7 +42,8 @@ public class CancelStuckJobsProcessorImpl implements CancelStuckJobsProcessor {
         for (Job stuckJob : stuckJobs) {
             log.warn("Cancelling job - uuid:{} - created at:{} - status :{} - completed_at {}",
                             stuckJob.getJobUuid(), stuckJob.getCreatedAt(), stuckJob.getStatus(), stuckJob.getCompletedAt());
-            eventLogger.log(EventUtils.getJobChangeEvent(stuckJob, CANCELLED, "Cancelling stuck job"));
+            eventLogger.logAndAlert(EventUtils.getJobChangeEvent(stuckJob, CANCELLED, "Cancelling stuck job"),
+                    PUBLIC_LIST);
             stuckJob.setStatus(CANCELLED);
             jobRepository.save(stuckJob);
         }
