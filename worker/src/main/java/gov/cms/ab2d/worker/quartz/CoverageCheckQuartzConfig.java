@@ -4,7 +4,9 @@ import org.quartz.*;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
+@Configuration
 public class CoverageCheckQuartzConfig {
 
     private final String schedule;
@@ -13,20 +15,20 @@ public class CoverageCheckQuartzConfig {
         this.schedule = schedule;
     }
 
-    @Qualifier("coverage_verifier")
+    @Qualifier("coverage_check")
     @Bean
-    JobDetail coverageVerifierJobDetail() {
+    JobDetail coverageCheckJobDetail() {
         return JobBuilder.newJob(CoverageCheckQuartzJob.class)
-                .withIdentity("coverage_verifier")
+                .withIdentity("coverage_check")
                 .storeDurably()
                 .build();
     }
 
     @Bean
-    Trigger coveragePeriodJobPeriodicTrigger(@Qualifier("coverage_verifier") JobDetail coverageCheckJobDetail) {
+    Trigger coverageCheckPeriodicJobTrigger(@Qualifier("coverage_check") JobDetail coverageCheckJobDetail) {
         return TriggerBuilder.newTrigger()
                 .forJob(coverageCheckJobDetail)
-                .withIdentity("coverage_verifier_trigger_periodic")
+                .withIdentity("coverage_check_trigger_periodic")
                 .withSchedule(CronScheduleBuilder.cronSchedule(schedule))
                 .build();
     }

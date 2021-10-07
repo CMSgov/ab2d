@@ -187,7 +187,12 @@ class TestRunner {
                 .withLogConsumer("worker", new Slf4jLogConsumer(workerLogger))
                 .withLogConsumer("api", new Slf4jLogConsumer(apiLogger));
 
-        container.start();
+        try {
+            container.start();
+        } catch (Exception exception) {
+            exception.printStackTrace();
+            throw exception;
+        }
     }
 
     /**
