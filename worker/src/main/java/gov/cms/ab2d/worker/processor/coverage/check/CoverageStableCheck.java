@@ -2,6 +2,7 @@ package gov.cms.ab2d.worker.processor.coverage.check;
 
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoverageCount;
+import gov.cms.ab2d.common.model.CoveragePeriod;
 import gov.cms.ab2d.common.service.CoverageService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -18,6 +19,8 @@ public class CoverageStableCheck extends CoverageCheckPredicate {
 
     private static final int CHANGE_THRESHOLD = 1000;
     private static final int CHANGE_PERCENT_THRESHOLD = 10;
+    // Higher threshold for alerts for turn of the year
+    private static final int CHANGE_PERCENT_THRESHOLD_NEW_YEAR = 33;
 
     public CoverageStableCheck(CoverageService coverageService, Map<String, List<CoverageCount>> coverageCounts, List<String> issues) {
         super(coverageService, coverageCounts, issues);
@@ -45,8 +48,9 @@ public class CoverageStableCheck extends CoverageCheckPredicate {
                 continue;
             }
 
+            int changePercentThreshold = getThreshold(previousMonth);
             double changePercent = 100.0 * change / previousMonth.getBeneficiaryCount();
-            if (CHANGE_PERCENT_THRESHOLD < changePercent) {
+            if (changePercentThreshold < changePercent) {
                 String issue = String.format("%s enrollment changed %d%% between %d-%d and %d-%d",
                         previousMonth.getContractNumber(), (int) changePercent, previousMonth.getYear(),
                         previousMonth.getMonth(), nextMonth.getYear(), nextMonth.getMonth());
@@ -57,5 +61,14 @@ public class CoverageStableCheck extends CoverageCheckPredicate {
         }
 
         return coveragePeriodsChanged;
+    }
+
+    private static int getThreshold(CoverageCount previousMonth) {
+        // At the turn of the year contracts change drastically so switch to a higher threshold for alerts
+        if (previousMonth.getMonth() == 12) {
+            return CHANGE_PERCENT_THRESHOLD_NEW_YEAR;
+        }
+
+        return CHANGE_PERCENT_THRESHOLD;
     }
 }
