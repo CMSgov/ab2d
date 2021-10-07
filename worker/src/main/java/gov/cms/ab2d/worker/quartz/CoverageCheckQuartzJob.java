@@ -37,8 +37,8 @@ public class CoverageCheckQuartzJob extends QuartzJobBean {
         } catch (CoverageVerificationException exception) {
             log.error("coverage is invalid or not able to be verified", exception);
 
-            logManager.alert("Coverage verification failed:\n" + exception.getAlertMessage(),
-                    List.of(SANDBOX, PRODUCTION));
+            // todo temporarily use null until testing is done
+            logManager.alert("Coverage verification failed:\n" + exception.getAlertMessage(), null);
 
             throw new JobExecutionException(exception);
         } catch (Exception exception) {
