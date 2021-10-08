@@ -119,7 +119,7 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
             return new ArrayList<>();
         }
         newContracts.forEach(c -> {
-                String msg = "*New Attester*\n\nId: " + c.getContractId() + "\n"
+                String msg = "*New Contract*\n\nId: " + c.getContractId() + "\n"
                         + "Name: " + c.getContractName() + "\n"
                         + "Id: " + c.getContractId() + "\n"
                         + "Org: " + c.getOrgMarketingName() + "\n";

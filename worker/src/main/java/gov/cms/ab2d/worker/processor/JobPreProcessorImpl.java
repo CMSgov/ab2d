@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import static gov.cms.ab2d.common.model.JobStatus.*;
+import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
 
 @AllArgsConstructor
 @Slf4j
@@ -47,7 +48,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
                 return job;
             }
 
-            eventLogger.log(EventUtils.getJobChangeEvent(job, IN_PROGRESS, "Job in progress"));
+            eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, IN_PROGRESS, "Job in progress"), PUBLIC_LIST);
 
             job.setStatus(IN_PROGRESS);
             job.setStatusMessage(null);
@@ -55,7 +56,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
             job = jobRepository.save(job);
 
         } catch (CoverageDriverException coverageDriverException) {
-            eventLogger.log(EventUtils.getJobChangeEvent(job, FAILED, "Job in progress"));
+            eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, FAILED, "Job in progress"), PUBLIC_LIST);
 
             job.setStatus(FAILED);
             job.setStatusMessage("could not pull coverage information for contract");
