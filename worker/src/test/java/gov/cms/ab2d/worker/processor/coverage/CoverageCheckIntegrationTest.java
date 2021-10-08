@@ -134,6 +134,21 @@ public class CoverageCheckIntegrationTest {
         assertTrue(exception.getAlertMessage().contains("being updated now"));
     }
 
+    @DisplayName("Verify coverage ignores contracts being updated")
+    @Test
+    void verifyCoverage_whenZContractIgnore() {
+
+        PdpClient client = dataSetup.setupNonStandardClient("special2", "Z5555", List.of("SPONSOR"));
+        Contract contract = client.getContract();
+        contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
+        contractRepo.saveAndFlush(contract);
+
+        CoverageVerificationException exception =
+                assertThrows(CoverageVerificationException.class, () -> coverageDriver.verifyCoverage());
+
+        assertFalse(exception.getAlertMessage().contains("Z5555"));
+    }
+
     @DisplayName("Verify coverage stops if coverage periods are missing entirely")
     @Test
     void verifyCoverage_whenMissingPeriods_fail() {
