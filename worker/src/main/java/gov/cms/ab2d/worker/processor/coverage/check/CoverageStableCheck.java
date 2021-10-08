@@ -2,7 +2,6 @@ package gov.cms.ab2d.worker.processor.coverage.check;
 
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoverageCount;
-import gov.cms.ab2d.common.model.CoveragePeriod;
 import gov.cms.ab2d.common.service.CoverageService;
 import lombok.extern.slf4j.Slf4j;
 
