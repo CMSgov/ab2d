@@ -35,7 +35,7 @@ public class CoverageCheckQuartzJob extends QuartzJobBean {
         try {
             driver.verifyCoverage();
         } catch (CoverageVerificationException exception) {
-            log.error("coverage is invalid or not able to be verified", exception.getAlertMessage());
+            log.error("coverage is invalid or not able to be verified {}", exception.getAlertMessage());
 
             // todo temporarily use null until testing is done
             logManager.alert("Coverage verification failed:\n" + exception.getAlertMessage(), null);
