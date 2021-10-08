@@ -17,7 +17,7 @@ import java.util.Map;
 public class CoverageStableCheck extends CoverageCheckPredicate {
 
     private static final int CHANGE_THRESHOLD = 1000;
-    private static final int CHANGE_PERCENT_THRESHOLD = 10;
+    private static final int CHANGE_PERCENT_THRESHOLD = 15;
 
     public CoverageStableCheck(CoverageService coverageService, Map<String, List<CoverageCount>> coverageCounts, List<String> issues) {
         super(coverageService, coverageCounts, issues);
