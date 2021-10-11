@@ -533,7 +533,7 @@ public class CoverageDriverImpl implements CoverageDriver {
     }
 
     private boolean contractNotBeingUpdated(List<String> issues, Contract contract) {
-        List<CoveragePeriod> periods = coverageService.findAssociatedCoveragePeriods(contract);
+        List<CoveragePeriod> periods = coverageService.findAssociatedCoveragePeriods(contract.getId());
 
         boolean contractBeingUpdated  = periods.stream()
                 .anyMatch(period -> period.getStatus() == JobStatus.IN_PROGRESS || period.getStatus() == JobStatus.SUBMITTED);
