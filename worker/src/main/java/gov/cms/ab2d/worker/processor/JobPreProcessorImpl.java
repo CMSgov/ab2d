@@ -11,6 +11,7 @@ import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -24,7 +25,6 @@ import java.util.stream.Collectors;
 import static gov.cms.ab2d.common.model.JobStatus.*;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
 
-@AllArgsConstructor
 @Slf4j
 @Component
 public class JobPreProcessorImpl implements JobPreProcessor {
@@ -32,6 +32,15 @@ public class JobPreProcessorImpl implements JobPreProcessor {
     private final JobRepository jobRepository;
     private final LogManager eventLogger;
     private final CoverageDriver coverageDriver;
+    private final boolean skipBillablePeriodCheck;
+
+    JobPreProcessorImpl(JobRepository jobRepository, LogManager logManager,
+                        CoverageDriver coverageDriver, @Value("${claims.skipBillablePeriodCheck}") boolean skipBillablePeriodCheck) {
+        this.jobRepository = jobRepository;
+        this.eventLogger = logManager;
+        this.coverageDriver = coverageDriver;
+        this.skipBillablePeriodCheck = skipBillablePeriodCheck;
+    }
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW, isolation = Isolation.SERIALIZABLE)
@@ -54,7 +63,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
             // If the user provided a 'since' value
             job.setSinceSource(SinceSource.USER);
             jobRepository.save(job);
-        } else if (job.getFhirVersion().supportDefaultSince()) {
+        } else if (job.getFhirVersion().supportDefaultSince() && !skipBillablePeriodCheck) {
             // If the user did not, but this version supports a default 'since', populate it
             job = updateSinceTime(job);
             jobRepository.save(job);
@@ -130,7 +139,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
         if (sortedFilteredlist.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(sortedFilteredlist.get(0));
+        return Optional.of(sortedFilteredlist.get(sortedFilteredlist.size() - 1));
     }
 
     /**

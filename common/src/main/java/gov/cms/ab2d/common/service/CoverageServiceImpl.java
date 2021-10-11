@@ -88,8 +88,8 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    public List<CoveragePeriod> findAssociatedCoveragePeriods(Contract contract) {
-        return coveragePeriodRepo.findAllByContractId(contract.getId());
+    public List<CoveragePeriod> findAssociatedCoveragePeriods(Long contractId) {
+        return coveragePeriodRepo.findAllByContractId(contractId);
     }
 
     @Override

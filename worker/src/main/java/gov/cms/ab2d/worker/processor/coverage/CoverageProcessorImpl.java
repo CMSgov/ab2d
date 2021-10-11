@@ -46,6 +46,14 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         this.maxAttempts = maxAttempts;
     }
 
+    public int getNumberInProgressMappings() {
+        return inProgressMappings.size();
+    }
+
+    public int getNumberCoverageInsertion() {
+        return coverageInsertionQueue.size();
+    }
+
     @Override
     public void queueCoveragePeriod(CoveragePeriod period, boolean prioritize) {
         queueCoveragePeriod(period, 0, prioritize);

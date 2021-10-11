@@ -50,7 +50,7 @@ class JobPreProcessorUnitTest {
 
     @BeforeEach
     void setUp() {
-        cut = new JobPreProcessorImpl(jobRepository, eventLogger, coverageDriver);
+        cut = new JobPreProcessorImpl(jobRepository, eventLogger, coverageDriver, false);
         job = createJob();
     }
 
@@ -234,20 +234,40 @@ class JobPreProcessorUnitTest {
         cut.preprocess(newJob.getJobUuid());
         assertEquals(newJob.getSince().getNano(), job4.getCreatedAt().getNano());
         assertEquals(newJob.getSinceSource(), SinceSource.AB2D);
+    }
 
-//        when(jobRepository.findByJobUuid(newJob.getJobUuid())).thenReturn(newJob);
-//        when(jobRepository.findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any())).thenReturn(List.of(job1, job2, job3, job4));
- //       cut.preprocess(newJob.getJobUuid());
-//        assertEquals(newJob.getSince().getNano(), job4.getCreatedAt().getNano());
+    @DisplayName("Make sure we've found the latest successful job")
+    @Test
+    void testGetLatestSuccessfulJobWithMany() {
+        // This job has successfully downloaded data files but not error file
+        Job job1 = createJob("A", R4, SUCCESSFUL, OffsetDateTime.of(2020, 5, 1, 1, 0, 0, 0, ZoneOffset.UTC));
+        job1.addJobOutput(createJobOutput(job1, true, true));
 
-//        when(jobRepository.findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any())).thenReturn(List.of(job1, job2, job3));
-//        cut.preprocess(newJob.getJobUuid());
- //       assertEquals(newJob.getSince().getNano(), job2.getCreatedAt().getNano());
+        // This job has successfully downloaded data all files
+        Job job2 = createJob("B", R4, SUCCESSFUL, OffsetDateTime.of(2020, 5, 2, 1, 0, 0, 0, ZoneOffset.UTC));
+        job2.addJobOutput(createJobOutput(job2, false, true));
+        job2.addJobOutput(createJobOutput(job2, true, true));
 
-//        when(jobRepository.findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any())).thenReturn(List.of(job1, job3));
-//        cut.preprocess(newJob.getJobUuid());
-//        assertEquals(newJob.getSince().getNano(), job1.getCreatedAt().getNano());
+        // This job has not successfully downloaded data files
+        Job job3 = createJob("C", R4, SUCCESSFUL, OffsetDateTime.of(2020, 5, 3, 1, 0, 0, 0, ZoneOffset.UTC));
+        job3.addJobOutput(createJobOutput(job3, false, true));
+        job3.addJobOutput(createJobOutput(job3, true, false));
 
+        // Job has no data files
+        Job job4 = createJob("D", R4, SUCCESSFUL, OffsetDateTime.of(2020, 5, 4, 1, 0, 0, 0, ZoneOffset.UTC));
+
+        // This job also has successfully downloaded data files but not error file
+        Job job5 = createJob("E", R4, SUCCESSFUL, OffsetDateTime.of(2020, 5, 5, 1, 0, 0, 0, ZoneOffset.UTC));
+        job5.addJobOutput(createJobOutput(job5, false, true));
+        job5.addJobOutput(createJobOutput(job5, true, false));
+
+        Job newJob = createJob("Z", R4, SUBMITTED, OffsetDateTime.of(2020, 7, 1, 1, 0, 0, 0, ZoneOffset.UTC));
+
+        JobPreProcessorImpl impl = (JobPreProcessorImpl) cut;
+
+        assertEquals(impl.getLastSuccessfulJobWithDownloads(List.of(job1, job2)).get().getCreatedAt().getNano(), job2.getCreatedAt().getNano());
+        assertEquals(impl.getLastSuccessfulJobWithDownloads(List.of(job1, job2, job3)).get().getCreatedAt().getNano(), job3.getCreatedAt().getNano());
+        assertEquals(impl.getLastSuccessfulJobWithDownloads(List.of(job1, job2, job3, job4)).get().getCreatedAt().getNano(), job4.getCreatedAt().getNano());
     }
 
     @Test

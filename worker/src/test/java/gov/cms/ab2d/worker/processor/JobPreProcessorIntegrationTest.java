@@ -77,7 +77,7 @@ class JobPreProcessorIntegrationTest {
     void setUp() {
         LogManager manager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
 
-        cut = new JobPreProcessorImpl(jobRepository, manager, coverageDriver);
+        cut = new JobPreProcessorImpl(jobRepository, manager, coverageDriver, false);
 
         pdpClient = createClient();
         job = createJob(pdpClient);

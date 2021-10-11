@@ -380,7 +380,7 @@ public class CoverageDriverImpl implements CoverageDriver {
              *
              * There will always be at least one coverage period returned.
              */
-            List<CoveragePeriod> periods = coverageService.findAssociatedCoveragePeriods(job.getContract());
+            List<CoveragePeriod> periods = coverageService.findAssociatedCoveragePeriods(job.getContract().getId());
 
             if (periods.isEmpty()) {
                 log.error("There are no existing coverage periods for this job so no metadata exists");
