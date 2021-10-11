@@ -18,7 +18,7 @@ public class CoverageVerificationException extends RuntimeException {
         this.issues = issues;
     }
 
-    public List<String> getIssues() {
-        return issues;
+    public String getAlertMessage() {
+        return String.join(",\n\t", issues);
     }
 }

@@ -7,6 +7,7 @@ import gov.cms.ab2d.common.service.CoverageService;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.Constants;
+import gov.cms.ab2d.worker.processor.coverage.check.*; // NOPMD
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getAttestationTime;
 import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getEndDateTime;
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 
 @SuppressWarnings("PMD.TooManyStaticImports")
@@ -495,5 +497,52 @@ public class CoverageDriverImpl implements CoverageDriver {
     @Override
     public CoveragePagingResult pageCoverage(CoveragePagingRequest request) {
         return coverageService.pageCoverage(request);
+    }
+
+    @Override
+    public void verifyCoverage() {
+
+        List<String> issues = new ArrayList<>();
+
+        List<Contract> enabledContracts = pdpClientService.getAllEnabledContracts().stream()
+                .filter(contract -> !contract.isTestContract())
+                .filter(contract -> contractNotBeingUpdated(issues, contract))
+                .collect(toList());
+
+        List<Contract> filteredContracts = enabledContracts.stream()
+                .filter(new CoveragePeriodsPresentCheck(coverageService, null, issues))
+                .collect(toList());
+
+        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(filteredContracts)
+                .stream().collect(groupingBy(CoverageCount::getContractNumber));
+
+        long passingContracts = filteredContracts.stream()
+                .filter(new CoverageNoDuplicatesCheck(coverageService, coverageCounts, issues))
+                .filter(new CoveragePresentCheck(coverageService, coverageCounts, issues))
+                .filter(new CoverageUpToDateCheck(coverageService, coverageCounts, issues))
+                .filter(new CoverageStableCheck(coverageService, coverageCounts, issues))
+                .count();
+
+        String message = String.format("Verified that %d contracts pass all coverage checks out of %d",
+                passingContracts, enabledContracts.size());
+        log.info(message);
+
+        if (!issues.isEmpty()) {
+            throw new CoverageVerificationException(message, issues);
+        }
+    }
+
+    private boolean contractNotBeingUpdated(List<String> issues, Contract contract) {
+        List<CoveragePeriod> periods = coverageService.findAssociatedCoveragePeriods(contract);
+
+        boolean contractBeingUpdated  = periods.stream()
+                .anyMatch(period -> period.getStatus() == JobStatus.IN_PROGRESS || period.getStatus() == JobStatus.SUBMITTED);
+
+        if (contractBeingUpdated) {
+            issues.add("Contract " + contract.getContractNumber() + " is being updated now so coverage verification will be done later");
+            return false;
+        }
+
+        return true;
     }
 }
