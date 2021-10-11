@@ -505,7 +505,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         List<String> issues = new ArrayList<>();
 
         List<Contract> enabledContracts = pdpClientService.getAllEnabledContracts().stream()
-                .filter(contract -> !contract.getContractNumber().startsWith("Z"))
+                .filter(contract -> !contract.isTestContract())
                 .filter(contract -> contractNotBeingUpdated(issues, contract))
                 .collect(toList());
 

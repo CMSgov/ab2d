@@ -141,6 +141,7 @@ public class CoverageCheckIntegrationTest {
         PdpClient client = dataSetup.setupNonStandardClient("special2", "Z5555", List.of("SPONSOR"));
         Contract contract = client.getContract();
         contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
+        contract.setUpdateMode(Contract.UpdateMode.TEST);
         contractRepo.saveAndFlush(contract);
 
         CoverageVerificationException exception =
