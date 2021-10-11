@@ -11,11 +11,6 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.springframework.scheduling.quartz.QuartzJobBean;
 
-import java.util.List;
-
-import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PRODUCTION;
-import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.SANDBOX;
-
 @Slf4j
 @RequiredArgsConstructor
 @DisallowConcurrentExecution
@@ -42,10 +37,11 @@ public class CoverageCheckQuartzJob extends QuartzJobBean {
 
             throw new JobExecutionException(exception);
         } catch (Exception exception) {
-            log.error("unexpected failure attempting to verify coverage");
+            log.error("unexpected failure attempting to verify coverage", exception);
 
+            // todo temporarily use null until testing is done
             logManager.alert("could not verify coverage due to " + exception.getClass()
-                    + ":\n" + exception.getMessage(), List.of(SANDBOX, PRODUCTION));
+                    + ":\n" + exception.getMessage(), null);
 
             throw new JobExecutionException(exception);
         }

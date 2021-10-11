@@ -108,7 +108,7 @@ public class CoverageCheckQuartzJobTest {
 
         verify(propertiesService, times(1)).isInMaintenanceMode();
         verify(coverageDriver, times(1)).verifyCoverage();
-        verify(logManager, times(1)).alert(contains("could not verify coverage due"), anyList());
+        verify(logManager, times(1)).alert(contains("could not verify coverage due"), isNull());
     }
 
 }
