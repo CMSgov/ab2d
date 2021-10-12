@@ -14,7 +14,6 @@ import org.springframework.scheduling.quartz.QuartzJobBean;
 import java.util.List;
 
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PRODUCTION;
-import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.SANDBOX;
 
 @Slf4j
 @RequiredArgsConstructor
