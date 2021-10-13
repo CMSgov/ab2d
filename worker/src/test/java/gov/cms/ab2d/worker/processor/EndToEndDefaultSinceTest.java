@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
+import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoverageMapping;
 import gov.cms.ab2d.common.model.CoverageSearch;
@@ -55,6 +56,9 @@ import java.util.UUID;
 
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
+import static gov.cms.ab2d.common.util.Constants.PCP_CORE_POOL_SIZE;
+import static gov.cms.ab2d.common.util.Constants.PCP_MAX_POOL_SIZE;
+import static gov.cms.ab2d.common.util.Constants.PCP_SCALE_TO_MAX_TIME;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -129,6 +133,19 @@ public class EndToEndDefaultSinceTest {
 
     @BeforeEach
     void setUp() {
+
+        PropertiesDTO coreClaimsPool = new PropertiesDTO();
+        coreClaimsPool.setKey(PCP_CORE_POOL_SIZE);
+        coreClaimsPool.setValue("50");
+
+        PropertiesDTO maxClaimsPool = new PropertiesDTO();
+        maxClaimsPool.setKey(PCP_MAX_POOL_SIZE);
+        maxClaimsPool.setValue("60");
+
+        PropertiesDTO scaleToMaxTime = new PropertiesDTO();
+        scaleToMaxTime.setKey(PCP_SCALE_TO_MAX_TIME);
+        scaleToMaxTime.setValue("10");
+
         coverageDriver = new CoverageDriverImpl(coverageSearchRepository, pdpClientService, coverageService,
                 propertiesService, coverageProcessor, coverageLockWrapper);
 

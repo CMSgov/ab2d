@@ -80,11 +80,24 @@ pipeline {
         stage('Run unit and integration tests') {
 
             steps {
-                sh '''
-                    export AB2D_EFS_MOUNT="${AB2D_HOME}"
-                    mvn test -pl eventlogger,fhir,common,api,worker,bfd,filter,audit,hpms
-                '''
-            }
+                 withCredentials([file(credentialsId: 'SANDBOX_BFD_KEYSTORE', variable: 'SANDBOX_BFD_KEYSTORE'),
+                             string(credentialsId: 'SANDBOX_BFD_KEYSTORE_PASSWORD', variable: 'AB2D_BFD_KEYSTORE_PASSWORD')]) {
+                     sh '''
+                         export AB2D_BFD_KEYSTORE_LOCATION="$WORKSPACE/opt/ab2d/ab2d_bfd_keystore"
+
+                         cp $SANDBOX_BFD_KEYSTORE $AB2D_BFD_KEYSTORE_LOCATION
+
+                         test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
+
+                         chmod 666 $AB2D_BFD_KEYSTORE_LOCATION
+
+                         ls -la $AB2D_BFD_KEYSTORE_LOCATION
+
+                         export AB2D_EFS_MOUNT="${AB2D_HOME}"
+                         mvn test -pl eventlogger,fhir,common,api,worker,bfd,filter,audit,hpms
+                     '''
+                 }
+             }
         }
 
         stage('Run e2e-patient-test') {
