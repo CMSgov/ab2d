@@ -136,11 +136,11 @@ public class EndToEndDefaultSinceTest {
 
         PropertiesDTO coreClaimsPool = new PropertiesDTO();
         coreClaimsPool.setKey(PCP_CORE_POOL_SIZE);
-        coreClaimsPool.setValue("50");
+        coreClaimsPool.setValue("20");
 
         PropertiesDTO maxClaimsPool = new PropertiesDTO();
         maxClaimsPool.setKey(PCP_MAX_POOL_SIZE);
-        maxClaimsPool.setValue("60");
+        maxClaimsPool.setValue("30");
 
         PropertiesDTO scaleToMaxTime = new PropertiesDTO();
         scaleToMaxTime.setKey(PCP_SCALE_TO_MAX_TIME);
