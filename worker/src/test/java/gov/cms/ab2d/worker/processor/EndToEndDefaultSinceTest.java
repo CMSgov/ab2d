@@ -35,7 +35,9 @@ import gov.cms.ab2d.worker.service.JobChannelService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
@@ -79,6 +81,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ActiveProfiles("synthea")
 @Testcontainers
 @Slf4j
+@ExtendWith(MockitoExtension.class)
 public class EndToEndDefaultSinceTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
