@@ -146,6 +146,8 @@ public class EndToEndDefaultSinceTest {
         scaleToMaxTime.setKey(PCP_SCALE_TO_MAX_TIME);
         scaleToMaxTime.setValue("10");
 
+        propertiesService.updateProperties(List.of(coreClaimsPool, maxClaimsPool, scaleToMaxTime));
+
         coverageDriver = new CoverageDriverImpl(coverageSearchRepository, pdpClientService, coverageService,
                 propertiesService, coverageProcessor, coverageLockWrapper);
 
