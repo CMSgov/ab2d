@@ -52,11 +52,9 @@ public class PatientClaimsCollector {
 
         bundles += 1;
 
-        // Returns zero if bundle is zero
-        rawEobs = BundleUtils.getTotal(bundle);
-
         // Returns null if bundle is null
         List<IBaseBackboneElement> bundleEntries = BundleUtils.getEntries(bundle);
+        rawEobs += bundleEntries.size();
 
         // Perform filtering actions
         BundleUtils.getEobResources(bundleEntries).stream()

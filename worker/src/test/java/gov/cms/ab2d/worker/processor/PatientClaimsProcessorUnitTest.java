@@ -83,7 +83,7 @@ class PatientClaimsProcessorUnitTest {
                 eventLogger
         );
 
-        ReflectionTestUtils.setField(cut, "startDate", "01/01/1900");
+        ReflectionTestUtils.setField(cut, "earliestDataDate", "01/01/1900");
 
         eob = (ExplanationOfBenefit) EobTestDataUtil.createEOB();
         createOutputFiles();

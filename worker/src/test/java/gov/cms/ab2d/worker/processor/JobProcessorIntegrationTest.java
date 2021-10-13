@@ -22,13 +22,14 @@ import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import gov.cms.ab2d.worker.util.HealthCheck;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
-import org.hl7.fhir.instance.model.api.IBaseResource;
+import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
+import org.mockito.stubbing.OngoingStubbing;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.integration.test.context.SpringIntegrationTest;
@@ -51,7 +52,8 @@ import static java.lang.Boolean.TRUE;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @Testcontainers
@@ -123,8 +125,8 @@ class JobProcessorIntegrationTest {
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
-    private org.hl7.fhir.dstu3.model.Bundle bundle1;
-    private org.hl7.fhir.dstu3.model.Bundle[] bundles;
+    private static final ExplanationOfBenefit EOB = (ExplanationOfBenefit) EobTestDataUtil.createEOB();
+    private static final org.hl7.fhir.dstu3.model.Bundle BUNDLE1 = EobTestDataUtil.createBundle(EOB);
     private RuntimeException fail;
 
     @BeforeEach
@@ -139,16 +141,21 @@ class JobProcessorIntegrationTest {
         job.setStatus(JobStatus.IN_PROGRESS);
         jobRepository.saveAndFlush(job);
 
-        IBaseResource eob = EobTestDataUtil.createEOB();
-        bundle1 = EobTestDataUtil.createBundle(((ExplanationOfBenefit) eob).copy());
-        bundles = getBundles();
-        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong())).thenReturn(bundle1);
-        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any())).thenReturn(bundle1);
+        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong())).thenAnswer((args) -> {
+            ExplanationOfBenefit copy = EOB.copy();
+            copy.getPatient().setReference("Patient/" + args.getArgument(1));
+            return EobTestDataUtil.createBundle(copy);
+        });
+        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any())).thenAnswer((args) -> {
+            ExplanationOfBenefit copy = EOB.copy();
+            copy.getPatient().setReference("Patient/" + args.getArgument(1));
+            return EobTestDataUtil.createBundle(copy);
+        });
 
         fail = new RuntimeException("TEST EXCEPTION");
 
         PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, logManager);
-        ReflectionTestUtils.setField(patientClaimsProcessor, "startDate", "01/01/1900");
+        ReflectionTestUtils.setField(patientClaimsProcessor, "earliestDataDate", "01/01/1900");
         ContractProcessor contractProcessor = new ContractProcessorImpl(
                 jobRepository,
                 patientClaimsProcessor,
@@ -231,18 +238,9 @@ class JobProcessorIntegrationTest {
     @Test
     @DisplayName("When the error count is below threshold, job does not fail")
     void when_errorCount_is_below_threshold_do_not_fail_job() {
-        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong()))
-                .thenReturn(bundle1, bundles)
-                .thenReturn(bundle1, bundles)
-                .thenReturn(bundle1, bundles)
-                .thenReturn(bundle1, bundles)
-                .thenReturn(bundle1, bundles)
-                .thenReturn(bundle1, bundles)
-                .thenReturn(bundle1, bundles)
-                .thenReturn(bundle1, bundles)
-                .thenReturn(bundle1, bundles)
-                .thenReturn(bundle1, bundle1, bundle1, bundle1, bundle1)
-                .thenThrow(fail, fail, fail, fail, fail);
+        OngoingStubbing<IBaseBundle> stubbing = when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong()));
+        stubbing = addThenAnswer(stubbing, 0, 95);
+        stubbing.thenThrow(fail, fail, fail, fail, fail);
 
         var processedJob = cut.process(job.getJobUuid());
 
@@ -271,12 +269,11 @@ class JobProcessorIntegrationTest {
     @Test
     @DisplayName("When the error count is greater than or equal to threshold, job should fail")
     void when_errorCount_is_not_below_threshold_fail_job() {
-        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any()))
-                .thenReturn(bundle1, bundles)
-                .thenReturn(bundle1, bundles)
-                .thenThrow(fail, fail, fail, fail, fail, fail, fail, fail, fail, fail)
-                .thenReturn(bundle1, bundles)
-        ;
+        OngoingStubbing<IBaseBundle> stubbing = when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any()));
+        stubbing = addThenAnswer(stubbing, 0, 20);
+        stubbing = stubbing.thenThrow(fail, fail, fail, fail, fail, fail, fail, fail, fail, fail);
+        addThenAnswer(stubbing, 30, 10);
+
         var processedJob = cut.process(job.getJobUuid());
 
         List<LoggableEvent> errorEvents = loggerEventRepository.load(ErrorEvent.class);
@@ -315,10 +312,6 @@ class JobProcessorIntegrationTest {
 
         List<LoggableEvent> contractSearchEvents = loggerEventRepository.load(ContractSearchEvent.class);
         assertEquals(1, contractSearchEvents.size());
-    }
-
-    private org.hl7.fhir.dstu3.model.Bundle[] getBundles() {
-        return new org.hl7.fhir.dstu3.model.Bundle[]{bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1, bundle1};
     }
 
     private PdpClient createClient() {
@@ -368,5 +361,18 @@ class JobProcessorIntegrationTest {
                 createIdentifierWithoutMbi(patientId),
                 contract, List.of(getOpenRange())
         )).collect(toList());
+    }
+
+    private static OngoingStubbing<IBaseBundle> addThenAnswer(OngoingStubbing<IBaseBundle> stubbing, int startId, int number) {
+
+        for (int id = startId; id < startId + number; id++) {
+            stubbing = stubbing.thenAnswer((args) -> {
+                ExplanationOfBenefit copy = EOB.copy();
+                copy.getPatient().setReference("Patient/" + args.getArgument(1));
+                return EobTestDataUtil.createBundle(copy);
+            });
+        }
+
+        return stubbing;
     }
 }
