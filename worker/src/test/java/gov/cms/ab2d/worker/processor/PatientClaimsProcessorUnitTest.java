@@ -46,7 +46,7 @@ class PatientClaimsProcessorUnitTest {
     File tmpEfsMountDir;
 
     private org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob;
-    private final static Long patientId = 1234567890L;
+    private final static Long patientId = -199900000022040L;
 
     private static final OffsetDateTime EARLY_ATT_DATE = OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
     private static final OffsetDateTime EARLY_SINCE_DATE = OffsetDateTime.of(2020, 1, 15, 0, 0, 0, 0, ZoneOffset.UTC);
@@ -97,10 +97,6 @@ class PatientClaimsProcessorUnitTest {
         CoverageSummary fileSummary = new CoverageSummary(createIdentifierWithoutMbi(-199900000022040L),
                 null, List.of(TestUtil.getOpenRange()));
         coverageSummaries.add(fileSummary);
-
-        Contract contract = new Contract();
-        StreamHelper helper = new TextStreamHelperImpl(tmpEfsMountDir.toPath(), contract.getContractNumber(),
-                30, 120, eventLogger, null);
 
         request = new PatientClaimsRequest(coverageSummary, LATER_ATT_DATE, null, "client", "job",
                 "contractNum", noOpToken, STU3);
