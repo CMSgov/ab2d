@@ -126,7 +126,6 @@ class JobProcessorIntegrationTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
     private static final ExplanationOfBenefit EOB = (ExplanationOfBenefit) EobTestDataUtil.createEOB();
-    private static final org.hl7.fhir.dstu3.model.Bundle BUNDLE1 = EobTestDataUtil.createBundle(EOB);
     private RuntimeException fail;
 
     @BeforeEach
