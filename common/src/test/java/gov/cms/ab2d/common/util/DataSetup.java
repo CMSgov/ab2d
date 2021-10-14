@@ -10,7 +10,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -123,10 +122,6 @@ public class DataSetup {
         return coveragePeriodRepo.saveAndFlush(coveragePeriod);
     }
 
-    public void deleteCoveragePeriod(CoveragePeriod coveragePeriod) {
-        coveragePeriodRepo.delete(coveragePeriod);
-    }
-
     public int countCoverage() {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*) FROM COVERAGE")) {
@@ -189,10 +184,6 @@ public class DataSetup {
         return contract;
     }
 
-    public void deleteContract(Contract contract) {
-        contractRepository.delete(contract);
-    }
-
     public void setupContractWithNoAttestation(List<String> clientRoles) {
         setupPdpClient(clientRoles);
 
@@ -243,12 +234,6 @@ public class DataSetup {
         pdpClient =  pdpClientRepository.save(pdpClient);
         queueForCleanup(pdpClient);
         return pdpClient;
-    }
-
-    public void deletePdpClient(PdpClient pdpClient) {
-        Set<Role> roles = pdpClient.getRoles();
-        roles.forEach(c -> roleRepository.delete(c));
-        pdpClientRepository.delete(pdpClient);
     }
 
     public PdpClient setupPdpClient(List<String> clientRoles) {
