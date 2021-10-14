@@ -59,10 +59,18 @@ public class DataSetup {
         // Based on these assumptions it is safe to simply delete everything associated
         // with those tables
         coverageDeltaTestRepository.deleteAll();
+        coverageDeltaTestRepository.flush();
+
         deleteCoverage();
+
         coverageSearchEventRepo.deleteAll();
+        coverageSearchEventRepo.flush();
+
         coverageSearchRepo.deleteAll();
+        coverageSearchRepo.flush();
+
         coveragePeriodRepo.deleteAll();
+        coveragePeriodRepo.flush();
 
         List<Job> jobsToDelete = domainObjects.stream().filter(object -> object instanceof Job)
                 .map(object -> (Job) object).collect(toList());
