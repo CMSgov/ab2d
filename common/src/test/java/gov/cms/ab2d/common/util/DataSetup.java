@@ -104,17 +104,7 @@ public class DataSetup {
 
     public static final String TEST_PDP_CLIENT = "EileenCFrierson@example.com";
 
-    public static final String BAD_CONTRACT_NUMBER = "WrongContract";
-
     public static final String VALID_CONTRACT_NUMBER = "ABC123";
-
-    public static String createBeneId() {
-        return "patientId_" + Instant.now().getNano();
-    }
-
-    public static String createMbiId() {
-        return "mbi_" + Instant.now().getNano();
-    }
 
     public CoveragePeriod createCoveragePeriod(Contract contract, int month, int year) {
         CoveragePeriod coveragePeriod = new CoveragePeriod();
