@@ -165,19 +165,6 @@ public class DataSetup {
         }
     }
 
-    public CoverageSearchEvent createCoverageSearchEvent(CoveragePeriod coveragePeriod, String description) {
-        CoverageSearchEvent coverageSearchEvent = new CoverageSearchEvent();
-        coverageSearchEvent.setCoveragePeriod(coveragePeriod);
-        coverageSearchEvent.setNewStatus(JobStatus.SUBMITTED);
-        coverageSearchEvent.setDescription(description);
-
-        return coverageSearchEventRepo.saveAndFlush(coverageSearchEvent);
-    }
-
-    public void deleteCoverageSearchEvent(CoverageSearchEvent event) {
-        coverageSearchEventRepo.delete(event);
-    }
-
     public Contract setupContract(String contractNumber) {
         return setupContract(contractNumber, OffsetDateTime.now());
     }
