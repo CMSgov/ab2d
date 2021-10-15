@@ -10,7 +10,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -59,10 +58,18 @@ public class DataSetup {
         // Based on these assumptions it is safe to simply delete everything associated
         // with those tables
         coverageDeltaTestRepository.deleteAll();
+        coverageDeltaTestRepository.flush();
+
         deleteCoverage();
+
         coverageSearchEventRepo.deleteAll();
+        coverageSearchEventRepo.flush();
+
         coverageSearchRepo.deleteAll();
+        coverageSearchRepo.flush();
+
         coveragePeriodRepo.deleteAll();
+        coveragePeriodRepo.flush();
 
         List<Job> jobsToDelete = domainObjects.stream().filter(object -> object instanceof Job)
                 .map(object -> (Job) object).collect(toList());
@@ -104,17 +111,7 @@ public class DataSetup {
 
     public static final String TEST_PDP_CLIENT = "EileenCFrierson@example.com";
 
-    public static final String BAD_CONTRACT_NUMBER = "WrongContract";
-
     public static final String VALID_CONTRACT_NUMBER = "ABC123";
-
-    public static String createBeneId() {
-        return "patientId_" + Instant.now().getNano();
-    }
-
-    public static String createMbiId() {
-        return "mbi_" + Instant.now().getNano();
-    }
 
     public CoveragePeriod createCoveragePeriod(Contract contract, int month, int year) {
         CoveragePeriod coveragePeriod = new CoveragePeriod();
@@ -123,10 +120,6 @@ public class DataSetup {
         coveragePeriod.setYear(year);
 
         return coveragePeriodRepo.saveAndFlush(coveragePeriod);
-    }
-
-    public void deleteCoveragePeriod(CoveragePeriod coveragePeriod) {
-        coveragePeriodRepo.delete(coveragePeriod);
     }
 
     public int countCoverage() {
@@ -175,19 +168,6 @@ public class DataSetup {
         }
     }
 
-    public CoverageSearchEvent createCoverageSearchEvent(CoveragePeriod coveragePeriod, String description) {
-        CoverageSearchEvent coverageSearchEvent = new CoverageSearchEvent();
-        coverageSearchEvent.setCoveragePeriod(coveragePeriod);
-        coverageSearchEvent.setNewStatus(JobStatus.SUBMITTED);
-        coverageSearchEvent.setDescription(description);
-
-        return coverageSearchEventRepo.saveAndFlush(coverageSearchEvent);
-    }
-
-    public void deleteCoverageSearchEvent(CoverageSearchEvent event) {
-        coverageSearchEventRepo.delete(event);
-    }
-
     public Contract setupContract(String contractNumber) {
         return setupContract(contractNumber, OffsetDateTime.now());
     }
@@ -202,10 +182,6 @@ public class DataSetup {
         contract =  contractRepository.save(contract);
         queueForCleanup(contract);
         return contract;
-    }
-
-    public void deleteContract(Contract contract) {
-        contractRepository.delete(contract);
     }
 
     public void setupContractWithNoAttestation(List<String> clientRoles) {
@@ -258,12 +234,6 @@ public class DataSetup {
         pdpClient =  pdpClientRepository.save(pdpClient);
         queueForCleanup(pdpClient);
         return pdpClient;
-    }
-
-    public void deletePdpClient(PdpClient pdpClient) {
-        Set<Role> roles = pdpClient.getRoles();
-        roles.forEach(c -> roleRepository.delete(c));
-        pdpClientRepository.delete(pdpClient);
     }
 
     public PdpClient setupPdpClient(List<String> clientRoles) {
