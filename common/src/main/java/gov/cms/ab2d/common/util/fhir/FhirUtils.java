@@ -9,32 +9,27 @@ import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.IBase;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 
-import java.util.List;
-import java.util.Map;
-
 @Slf4j
 public class FhirUtils {
-    public static void addMbiIdsToEobs(List<IBaseResource> eobs, Map<Long, CoverageSummary> patients, FhirVersion version) {
-        if (eobs == null || eobs.isEmpty()) {
+    public static void addMbiIdsToEobs(IBaseResource eob, CoverageSummary patient, FhirVersion version) {
+        if (eob == null) {
             return;
         }
-        // Get first EOB Bene ID
-        IBaseResource eob = eobs.get(0);
 
         // Add extesions only if beneficiary id is present and known to memberships
         Long benId = EobUtils.getPatientId(eob);
-        if (benId != null && patients.containsKey(benId)) {
-            Identifiers patient = patients.get(benId).getIdentifiers();
+        if (benId != null && patient != null) {
+            Identifiers identifiers = patient.getIdentifiers();
 
             // Add each mbi to each eob
-            if (patient.getCurrentMbi() != null) {
-                IBase currentMbiExtension = ExtensionUtils.createMbiExtension(patient.getCurrentMbi(), true, version);
-                eobs.forEach(e -> ExtensionUtils.addExtension(e, currentMbiExtension, version));
+            if (identifiers.getCurrentMbi() != null) {
+                IBase currentMbiExtension = ExtensionUtils.createMbiExtension(identifiers.getCurrentMbi(), true, version);
+                ExtensionUtils.addExtension(eob, currentMbiExtension, version);
             }
 
-            for (String mbi : patient.getHistoricMbis()) {
+            for (String mbi : identifiers.getHistoricMbis()) {
                 IBase mbiExtension = ExtensionUtils.createMbiExtension(mbi, false, version);
-                eobs.forEach(e -> ExtensionUtils.addExtension(e, mbiExtension, version));
+                ExtensionUtils.addExtension(eob, mbiExtension, version);
             }
         }
     }

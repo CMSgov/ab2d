@@ -4,19 +4,15 @@ import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Token;
 import com.newrelic.api.agent.Trace;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.CoverageSummary;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobOutput;
-import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.Constants;
-import gov.cms.ab2d.common.util.fhir.FhirUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.fhir.EobUtils;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
+import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -29,13 +25,11 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
@@ -50,11 +44,10 @@ public class ContractProcessorImpl implements ContractProcessor {
     private static final int SLEEP_DURATION = 250;
     static final String ID_EXT = "http://hl7.org/fhir/StructureDefinition/elementdefinition-identifier";
 
+    private static final int PAGE_SIZE = 1000;
+
     @Value("${job.file.rollover.ndjson:200}")
     private long ndjsonRollOver;
-
-    @Value("${cancellation.check.frequency:10}")
-    private int cancellationCheckFrequency;
 
     @Value("${file.try.lock.timeout}")
     private int tryLockTimeout;
@@ -63,6 +56,7 @@ public class ContractProcessorImpl implements ContractProcessor {
     private int eobJobPatientQueueMaxSize;
 
     private final JobRepository jobRepository;
+    private final CoverageDriver coverageDriver;
     private final PatientClaimsProcessor patientClaimsProcessor;
     private final LogManager eventLogger;
     private final RoundRobinBlockingQueue<PatientClaimsRequest> eobClaimRequestsQueue;
@@ -70,12 +64,14 @@ public class ContractProcessorImpl implements ContractProcessor {
     private final JobProgressService jobProgressService;
 
     public ContractProcessorImpl(JobRepository jobRepository,
+                                 CoverageDriver coverageDriver,
                                  PatientClaimsProcessor patientClaimsProcessor,
                                  LogManager eventLogger,
                                  RoundRobinBlockingQueue<PatientClaimsRequest> eobClaimRequestsQueue,
                                  JobChannelService jobChannelService,
                                  JobProgressService jobProgressService) {
         this.jobRepository = jobRepository;
+        this.coverageDriver = coverageDriver;
         this.patientClaimsProcessor = patientClaimsProcessor;
         this.eventLogger = eventLogger;
         this.eobClaimRequestsQueue = eobClaimRequestsQueue;
@@ -89,36 +85,27 @@ public class ContractProcessorImpl implements ContractProcessor {
      * see if the job is cancelled and cancel the threads if necessary, otherwise, wait until all threads
      * have processed.
      *
-     * @param patients - the map of all the patients we are working on.
      * @return - the job output records containing the file information
      */
-    public List<JobOutput> process(Path outputDirPath, Job job, Map<Long, CoverageSummary> patients) {
+    public List<JobOutput> process(Path outputDirPath, Job job) {
         assert job.getContract() != null;
         var contractNumber = job.getContract().getContractNumber();
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contractNumber));
 
-        log.info("Contract [{}] has [{}] Patients", contractNumber, patients.size());
+        int numBenes = coverageDriver.numberOfBeneficiariesToProcess(job);
+        jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENTS_EXPECTED, numBenes);
+        log.info("Contract [{}] has [{}] Patients", contractNumber, numBenes);
 
         List<JobOutput> jobOutputs = new ArrayList<>();
         try (StreamHelper helper = new TextStreamHelperImpl(outputDirPath, contractNumber, getRollOverThreshold(), tryLockTimeout,
                 eventLogger, job)) {
 
-            ContractData contractData = new ContractData(job, patients, helper);
-            loadRequests(contractData);
+            ContractData contractData = new ContractData(job, helper);
+            loadEobRequests(contractData);
 
             // Wait for remaining work to finish before cleaning up after the job
             // This should be at most eobJobPatientQueueMaxSize requests
-            while (contractData.remainingRequestHandles()) {
-                sleep();
-                processHandles(contractData);
-
-                if (hasJobBeenCancelled(job.getJobUuid())) {
-                    cancelFuturesInQueue(contractData.getEobRequestHandles());
-                    final String errMsg = "Job was cancelled while it was being processed";
-                    log.warn("{}", errMsg);
-                    throw new JobCancelledException(errMsg);
-                }
-            }
+            processRemainingRequests(job, contractData);
 
             log.info("Finished writing {} EOBs for contract {}",
                     jobProgressService.getStatus(job.getJobUuid()).getEobsProcessedCount(), contractNumber);
@@ -142,13 +129,18 @@ public class ContractProcessorImpl implements ContractProcessor {
         return jobOutputs;
     }
 
-    private void loadRequests(ContractData contractData) throws InterruptedException {
+    private void loadEobRequests(ContractData contractData) throws InterruptedException {
         String jobUuid = contractData.getJob().getJobUuid();
-        int numQueued = 0;
+        Contract contract = contractData.getJob().getContract();
 
-        Iterator<Map.Entry<Long, CoverageSummary>> patientEntries = contractData.getPatients().entrySet().iterator();
+        CoveragePagingResult current = coverageDriver.pageCoverage(
+            new CoveragePagingRequest(PAGE_SIZE, null, contract, contractData.getJob().getCreatedAt())
+        );
+        loadRequestBatch(contractData, current);
+        jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUEST_QUEUED, current.size());
+
         //noinspection WhileLoopReplaceableByForEach
-        while (patientEntries.hasNext()) {
+        while (current.getNextRequest().isPresent()) {
 
             if (eobClaimRequestsQueue.size(jobUuid) > eobJobPatientQueueMaxSize) {
                 // Wait for queue to empty out some before adding more
@@ -157,30 +149,60 @@ public class ContractProcessorImpl implements ContractProcessor {
                 continue;
             }
 
-            // Queue a patient
-            CoverageSummary patient = patientEntries.next().getValue();
+            // Queue a batch of patients
+            current = coverageDriver.pageCoverage(current.getNextRequest().get());
+            loadRequestBatch(contractData, current);
+            jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUEST_QUEUED, current.size());
 
-            contractData.addEobRequestHandle(processPatient(patient, contractData.getJob()));
-
-            // Periodically check if cancelled
-            if (++numQueued % cancellationCheckFrequency == 0) {
-
-                // Update progress periodically as well
-                this.jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUEST_QUEUED, numQueued);
-
-                numQueued = 0;
-
-                if (hasJobBeenCancelled(jobUuid)) {
-                    log.warn("Job [{}] has been cancelled. Attempting to stop processing the job shortly ... ",
-                            jobUuid);
-                    cancelFuturesInQueue(contractData.getEobRequestHandles());
-                    break;
-                }
-                processHandles(contractData);
+            if (hasJobBeenCancelled(jobUuid)) {
+                log.warn("Job [{}] has been cancelled. Attempting to stop processing the job shortly ... ",
+                        jobUuid);
+                cancelFuturesInQueue(contractData.getEobRequestHandles());
+                final String errMsg = "Job was cancelled while it was being processed";
+                log.warn("{}", errMsg);
+                throw new JobCancelledException(errMsg);
             }
+
+            // Process finished requests
+            processHandles(contractData);
         }
 
-        this.jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUEST_QUEUED, numQueued);
+        // Verify that the number of benes requested matches the number expected from the database and fail
+        // immediately if the two do not match
+        ProgressTracker progressTracker = jobProgressService.getStatus(jobUuid);
+        int totalQueued = progressTracker.getPatientRequestQueuedCount();
+        int totalExpected = progressTracker.getPatientsExpected();
+
+        if (totalQueued != totalExpected) {
+            throw new RuntimeException("expected " + totalExpected +
+                    " patients from database but only retrieved " + totalQueued);
+        }
+    }
+
+    private void loadRequestBatch(ContractData contractData, CoveragePagingResult result) {
+
+        for (CoverageSummary summary : result.getCoverageSummaries()) {
+            Future<EobSearchResult> requestFuture = processPatient(summary, contractData.getJob());
+
+            contractData.addEobRequestHandle(requestFuture);
+        }
+    }
+
+    private void processRemainingRequests(Job job, ContractData contractData) {
+
+        processHandles(contractData);
+
+        while (contractData.remainingRequestHandles()) {
+            sleep();
+            processHandles(contractData);
+
+            if (hasJobBeenCancelled(job.getJobUuid())) {
+                cancelFuturesInQueue(contractData.getEobRequestHandles());
+                final String errMsg = "Job was cancelled while it was being processed";
+                log.warn("{}", errMsg);
+                throw new JobCancelledException(errMsg);
+            }
+        }
     }
 
     /**
@@ -273,14 +295,13 @@ public class ContractProcessorImpl implements ContractProcessor {
                 updateTracker.incPatientProcessCount();
 
                 // If the request completed successfully there will be results to process
-                EobSearchResult result = processFuture(contractData, updateTracker, future);
+                EobSearchResult result = processFuture(updateTracker, future);
 
                 if (result == null) {
                     log.debug("ignoring empty results because pulling eobs failed");
                 } else if (result.getEobs() == null) {
                     log.error("result returned but the eob list is null which should not be possible");
                 } else if (!result.getEobs().isEmpty()) {
-                    FhirUtils.addMbiIdsToEobs(result.getEobs(), contractData.getPatients(), contractData.getFhirVersion());
                     writeOutResource(contractData, updateTracker, result.getEobs());
                 }
 
@@ -299,17 +320,12 @@ public class ContractProcessorImpl implements ContractProcessor {
      * process the future that is marked as done.
      * On doing a get(), if an exception is thrown, analyze it to decide whether to stop the batch or not.
      *
-     * @param contractData - standard contract data
      * @param future       - a specific future
      */
     @Trace
-    private EobSearchResult processFuture(ContractData contractData, ProgressTrackerUpdate update, Future<EobSearchResult> future) {
+    private EobSearchResult processFuture(ProgressTrackerUpdate update, Future<EobSearchResult> future) {
         try {
-            EobSearchResult result = future.get();
-            if (result != null) {
-                result.setEobs(result.getEobs().stream().filter(c -> validPatientInContract(c, contractData.getPatients())).collect(Collectors.toList()));
-            }
-            return result;
+            return future.get();
         } catch (CancellationException e) {
             // This could happen in the rare event that a job was cancelled mid-process.
             // due to which the futures in the queue (that were not yet in progress) were cancelled.

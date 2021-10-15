@@ -13,7 +13,6 @@ public class PatientClaimsProcessorStub implements PatientClaimsProcessor {
 
     @Override
     public Future<EobSearchResult> process(PatientClaimsRequest request) {
-        EobSearchResult result = new EobSearchResult();
         org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob = new org.hl7.fhir.dstu3.model.ExplanationOfBenefit();
         org.hl7.fhir.dstu3.model.Reference ref = new org.hl7.fhir.dstu3.model.Reference("Patient/" + request.getCoverageSummary().getIdentifiers().getBeneficiaryId());
         eob.setPatient(ref);
@@ -21,9 +20,9 @@ public class PatientClaimsProcessorStub implements PatientClaimsProcessor {
         period.setStart(new Date(0));
         period.setEnd(new Date());
         eob.setBillablePeriod(period);
-        result.setEobs(Collections.singletonList(eob));
-        result.setJobId(request.getJob());
-        result.setContractNum(request.getContractNum());
+
+        EobSearchResult result = new EobSearchResult(request.getJob(), request.getContractNum(),
+                request.getCoverageSummary(), Collections.singletonList(eob));
         return new AsyncResult<>(result);
     }
 }

@@ -6,6 +6,7 @@ import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
+import gov.cms.ab2d.common.service.CoverageService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -151,26 +152,25 @@ class JobProcessorIntegrationTest {
             return EobTestDataUtil.createBundle(copy);
         });
 
+        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class))).thenReturn(100);
+
+        when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class))).thenReturn(
+                new CoveragePagingResult(loadFauxMetadata(contract, 99), null));
+
+
         fail = new RuntimeException("TEST EXCEPTION");
 
         PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, logManager);
         ReflectionTestUtils.setField(patientClaimsProcessor, "earliestDataDate", "01/01/1900");
         ContractProcessor contractProcessor = new ContractProcessorImpl(
                 jobRepository,
+                coverageDriver,
                 patientClaimsProcessor,
                 logManager,
                 eobClaimRequestsQueue,
                 jobChannelService,
                 jobProgressService);
 
-        ReflectionTestUtils.setField(contractProcessor, "cancellationCheckFrequency", 10);
-
-        coverageDriver = mock(CoverageDriver.class);
-
-        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class))).thenReturn(100);
-
-        when(coverageDriver.pageCoverage(any(Job.class))).thenReturn(
-                new CoveragePagingResult(loadFauxMetadata(contract, 99), null));
 
         cut = new JobProcessorImpl(
                 fileService,
@@ -180,7 +180,6 @@ class JobProcessorIntegrationTest {
                 jobRepository,
                 jobOutputRepository,
                 contractProcessor,
-                coverageDriver,
                 logManager
         );
 

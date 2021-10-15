@@ -1,15 +1,12 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.CoverageSummary;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.PdpClient;
+import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
+import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.stub.PatientClaimsProcessorStub;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import gov.cms.ab2d.worker.service.JobChannelStubServiceImpl;
@@ -33,10 +30,12 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.IntStream;
 
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
 import static java.lang.Boolean.TRUE;
+import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -52,6 +51,7 @@ class ContractProcessorUnitTest {
     @TempDir Path efsMountTmpDir;
 
     @Mock private JobRepository jobRepository;
+    @Mock private CoverageDriver coverageDriver;
     @Mock private LogManager eventLogger;
     @Mock private RoundRobinBlockingQueue<PatientClaimsRequest> requestQueue;
     private PatientClaimsProcessor patientClaimsProcessor;
@@ -75,12 +75,12 @@ class ContractProcessorUnitTest {
 
         cut = new ContractProcessorImpl(
                 jobRepository,
+                coverageDriver,
                 patientClaimsProcessor,
                 eventLogger,
                 requestQueue,
                 jobChannelService,
                 jobProgressImpl);
-        ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 2);
         ReflectionTestUtils.setField(cut, "tryLockTimeout", 30);
 
         PdpClient pdpClient = createClient();
@@ -96,33 +96,54 @@ class ContractProcessorUnitTest {
     @DisplayName("When a job is cancelled while it is being processed, then attempt to stop the job gracefully without completing it")
     void whenJobIsCancelledWhileItIsBeingProcessed_ThenAttemptToStopTheJob() {
 
-        Map<Long, CoverageSummary> patientsByContract = createPatientsByContractResponse(contract, 3);
+        when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 1),
+                        new CoveragePagingRequest(2, null, contract, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 2), null));
 
+        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class))).thenReturn(3);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_EXPECTED, 3);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
 
         when(jobRepository.findJobStatus(anyString())).thenReturn(JobStatus.CANCELLED);
 
         var exceptionThrown = assertThrows(JobCancelledException.class,
-                () -> cut.process(outputDir, job, patientsByContract));
+                () -> cut.process(outputDir, job));
 
         assertTrue(exceptionThrown.getMessage().startsWith("Job was cancelled while it was being processed"));
         verify(patientClaimsProcessor, atLeast(1)).process(any());
-        verify(jobRepository, atLeastOnce()).updatePercentageCompleted(anyString(), anyInt());
     }
 
     @Test
     @DisplayName("When many patientId are present, 'PercentageCompleted' should be updated many times")
     void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() {
-        Map<Long, CoverageSummary> patientsByContract = createPatientsByContractResponse(contract, 18);
+        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class))).thenReturn(18);
+        when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 2),
+                        new CoveragePagingRequest(2, null, contract, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 2),
+                        new CoveragePagingRequest(2, null, contract, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 2),
+                        new CoveragePagingRequest(2, null, contract, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 2),
+                        new CoveragePagingRequest(2, null, contract, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 2),
+                        new CoveragePagingRequest(2, null, contract, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 2),
+                        new CoveragePagingRequest(2, null, contract, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 2),
+                        new CoveragePagingRequest(2, null, contract, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 2),
+                        new CoveragePagingRequest(2, null, contract, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 2), null));
 
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_EXPECTED, 18);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
 
-        var jobOutputs = cut.process(outputDir, job, patientsByContract);
+        var jobOutputs = cut.process(outputDir, job);
 
         assertFalse(jobOutputs.isEmpty());
-        verify(jobRepository, times(9)).updatePercentageCompleted(anyString(), anyInt());
+        verify(jobRepository, times(8)).updatePercentageCompleted(anyString(), anyInt());
         verify(patientClaimsProcessor, atLeast(1)).process(any());
     }
 
@@ -130,7 +151,9 @@ class ContractProcessorUnitTest {
     @DisplayName("When round robin blocking queue is full, patients should not be skipped")
     void whenBlockingQueueFullPatientsNotSkipped() throws InterruptedException {
 
-        Map<Long, CoverageSummary> patientsByContract = createPatientsByContractResponse(contract, 2);
+        when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 1), new CoveragePagingRequest(1, null, contract, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 1), null));
 
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_EXPECTED, 2);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 1);
@@ -139,7 +162,7 @@ class ContractProcessorUnitTest {
 
         ExecutorService singleThreadedExecutor = Executors.newSingleThreadExecutor();
 
-        Runnable testRunnable = () -> cut.process(outputDir, job, patientsByContract);
+        Runnable testRunnable = () -> cut.process(outputDir, job);
 
         Future<?> future = singleThreadedExecutor.submit(testRunnable);
 
@@ -177,18 +200,11 @@ class ContractProcessorUnitTest {
         return job;
     }
 
-    private static Map<Long, CoverageSummary> createPatientsByContractResponse(Contract contract, int num) {
-        Map<Long, CoverageSummary> summaries = new HashMap<>();
-
+    private static List<CoverageSummary> createPatientsByContractResponse(Contract contract, int num) {
         FilterOutByDate.DateRange dateRange = TestUtil.getOpenRange();
-        for (long i = 0; i < num; i++) {
-            CoverageSummary summary = new CoverageSummary(
-                    createIdentifierWithoutMbi(i),
-                    contract,
-                    List.of(dateRange)
-            );
-            summaries.put(summary.getIdentifiers().getBeneficiaryId(), summary);
-        }
-        return summaries;
+        return IntStream.range(0, num).mapToObj(n -> new CoverageSummary(
+                createIdentifierWithoutMbi(n),
+                contract, List.of(dateRange)
+        )).collect(toList());
     }
 }

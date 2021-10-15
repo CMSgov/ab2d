@@ -6,16 +6,13 @@ import gov.cms.ab2d.common.util.fhir.FhirUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.fhir.IdentifierUtils.CURRENCY_IDENTIFIER;
 import static gov.cms.ab2d.worker.processor.ContractProcessorImpl.ID_EXT;
 import static gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable.*;
-import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ContractProcessorImplTest {
@@ -32,11 +29,7 @@ class ContractProcessorImplTest {
         org.hl7.fhir.dstu3.model.ExplanationOfBenefit eob = new org.hl7.fhir.dstu3.model.ExplanationOfBenefit();
         eob.setPatient(new org.hl7.fhir.dstu3.model.Reference().setReference("Patient/1"));
 
-        Map<Long, CoverageSummary> coverageSummaries = new HashMap<>() {{
-                put(identifiers.getBeneficiaryId(), new CoverageSummary(identifiers, null, null));
-        }};
-
-        FhirUtils.addMbiIdsToEobs(singletonList(eob), coverageSummaries, STU3);
+        FhirUtils.addMbiIdsToEobs(eob, new CoverageSummary(identifiers, null, null), STU3);
 
         assertFalse(eob.getExtension().isEmpty());
         assertEquals(3, eob.getExtension().size());
