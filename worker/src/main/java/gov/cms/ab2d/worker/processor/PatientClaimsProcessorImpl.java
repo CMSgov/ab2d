@@ -56,8 +56,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
         try {
             List<IBaseResource> eobs = getEobBundleResources(request);
-            EobSearchResult result = new EobSearchResult(request.getJob(), request.getContractNum(),
-                    request.getCoverageSummary(), eobs);
+            EobSearchResult result = new EobSearchResult(request.getJob(), request.getContractNum(), eobs);
             return new AsyncResult<>(result);
         } catch (Exception ex) {
             return AsyncResult.forExecutionException(ex);
