@@ -2,8 +2,6 @@ package gov.cms.ab2d.worker.processor;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.CoveragePagingResult;
-import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
@@ -29,7 +27,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import static gov.cms.ab2d.common.model.JobStatus.FAILED;

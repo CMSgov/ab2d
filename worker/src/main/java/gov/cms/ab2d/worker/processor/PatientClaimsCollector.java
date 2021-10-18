@@ -57,6 +57,7 @@ public class PatientClaimsCollector {
         List<IBaseBackboneElement> bundleEntries = BundleUtils.getEntries(bundle);
         if (bundleEntries == null) {
             log.error("bundle entries not found for bundle");
+            return;
         }
 
         rawEobs += bundleEntries.size();

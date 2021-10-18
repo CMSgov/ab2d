@@ -1,17 +1,8 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.CoverageSummary;
-import gov.cms.ab2d.common.util.FilterOutByDate;
-import gov.cms.ab2d.worker.TestUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.*;
-
-import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
-import static gov.cms.ab2d.worker.processor.ProgressTracker.EST_BEN_SEARCH_JOB_PERCENTAGE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ProgressTrackerTest {
@@ -26,28 +17,15 @@ class ProgressTrackerTest {
                 .patientsExpected(12)
                 .build();
 
+        // When no work done respond with zero percent completed
         int percDone = tracker.getPercentageCompleted();
-        int expected = 0;
-        assertEquals(expected, percDone);
+        assertEquals(0, percDone);
 
-        ReflectionTestUtils.setField(tracker, "patientsLoadedCount", 6);
+        tracker.addPatientProcessedCount(6);
         percDone = tracker.getPercentageCompleted();
-        expected = asPercent((1.0 - EST_BEN_SEARCH_JOB_PERCENTAGE) * 0.5);
-        assertEquals(expected, percDone);
+        assertEquals(50, percDone);
 
-        ReflectionTestUtils.setField(tracker, "patientsLoadedCount", 12);
-        percDone = tracker.getPercentageCompleted();
-        expected = asPercent(1.0 - EST_BEN_SEARCH_JOB_PERCENTAGE);
-        assertEquals(expected, percDone);
-
-
-        ReflectionTestUtils.setField(tracker, "patientRequestProcessedCount", 6);
-        percDone = tracker.getPercentageCompleted();
-        expected = asPercent((1 - EST_BEN_SEARCH_JOB_PERCENTAGE)
-                + (EST_BEN_SEARCH_JOB_PERCENTAGE * 0.5));
-        assertEquals(expected, percDone);
-
-        ReflectionTestUtils.setField(tracker, "patientRequestProcessedCount", 12);
+        tracker.addPatientProcessedCount(6);
         percDone = tracker.getPercentageCompleted();
         assertEquals(100, percDone);
     }
@@ -62,9 +40,10 @@ class ProgressTrackerTest {
                 .build();
 
         int percDone = tracker.getPercentageCompleted();
+        tracker.addPatientProcessedCount(6);
         assertEquals(0, percDone);
 
-        ReflectionTestUtils.setField(tracker, "patientsLoadedCount", 6);
+        tracker.addPatientProcessedCount(6);
         percDone = tracker.getPercentageCompleted();
         assertEquals(0, percDone);
 
@@ -82,15 +61,12 @@ class ProgressTrackerTest {
         int percDone = tracker.getPercentageCompleted();
         assertEquals(0, percDone);
 
-        // Pretend all metadata loading is done
-        Contract contract = new Contract();
-        tracker.addPatientsLoadedCount(createPatientsByContractResponse(contract, 10).size());
-
+        // Pretend all metadata loading is done but no eobs are done
+        tracker.addPatientsLoadedCount(10);
         percDone = tracker.getPercentageCompleted();
-        assertEquals(asPercent(1.0 - EST_BEN_SEARCH_JOB_PERCENTAGE), percDone);
+        assertEquals(0, percDone);
 
         tracker.addPatientProcessedCount(10);
-
         assertEquals(100, tracker.getPercentageCompleted());
     }
 
@@ -104,36 +80,19 @@ class ProgressTrackerTest {
                 .patientsLoadedCount(12)
                 .build();
 
-        List<CoverageSummary> cb1 = createPatientsByContractResponse(new Contract(), 12);
-        tracker.addPatientsLoadedCount(cb1.size());
-
-        assertEquals(asPercent(1 - EST_BEN_SEARCH_JOB_PERCENTAGE), tracker.getPercentageCompleted());
+        // Loading patients does not contribute
+        tracker.addPatientsLoadedCount(12);
+        assertEquals(0, tracker.getPercentageCompleted());
 
         tracker.addPatientProcessedCount(1);
 
-        double amountEobProc = (double) 1/12 * EST_BEN_SEARCH_JOB_PERCENTAGE;
-        double amountMetadataCompleted = 1 - EST_BEN_SEARCH_JOB_PERCENTAGE;
+        double amountEobProc = (double) 1/12;
 
-        int expectedPercentage = asPercent(amountMetadataCompleted + amountEobProc);
+        int expectedPercentage = asPercent(amountEobProc);
         assertEquals(expectedPercentage, tracker.getPercentageCompleted());
     }
 
     private static int asPercent(double num) {
         return (int) Math.round(100.0 * num);
-    }
-
-    private List<CoverageSummary> createPatientsByContractResponse(Contract contract, int num) {
-        List<CoverageSummary> summaries = new ArrayList<>();
-
-        FilterOutByDate.DateRange dateRange = TestUtil.getOpenRange();
-        for (long idx = 0; idx < num; idx++) {
-            CoverageSummary summary = new CoverageSummary(
-                    createIdentifierWithoutMbi(idx),
-                    contract,
-                    List.of(dateRange)
-            );
-            summaries.add(summary);
-        }
-        return summaries;
     }
 }

@@ -9,7 +9,6 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
-import gov.cms.ab2d.fhir.EobUtils;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
@@ -26,7 +25,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -44,8 +42,6 @@ public class ContractProcessorImpl implements ContractProcessor {
     private static final int SLEEP_DURATION = 250;
     static final String ID_EXT = "http://hl7.org/fhir/StructureDefinition/elementdefinition-identifier";
 
-    private static final int PAGE_SIZE = 1000;
-
     @Value("${job.file.rollover.ndjson:200}")
     private long ndjsonRollOver;
 
@@ -54,6 +50,9 @@ public class ContractProcessorImpl implements ContractProcessor {
 
     @Value("${eob.job.patient.queue.max.size}")
     private int eobJobPatientQueueMaxSize;
+
+    @Value("${eob.job.patient.queue.page.size}")
+    private int eobJobPatientQueuePageSize;
 
     private final JobRepository jobRepository;
     private final CoverageDriver coverageDriver;
@@ -133,12 +132,13 @@ public class ContractProcessorImpl implements ContractProcessor {
         String jobUuid = contractData.getJob().getJobUuid();
         Contract contract = contractData.getJob().getContract();
 
-        CoveragePagingResult current = coverageDriver.pageCoverage(
-            new CoveragePagingRequest(PAGE_SIZE, null, contract, contractData.getJob().getCreatedAt())
-        );
+        // Handle first page of beneficiaries and then enter loop
+        CoveragePagingResult current = coverageDriver.pageCoverage(new CoveragePagingRequest(eobJobPatientQueuePageSize,
+                null, contract, contractData.getJob().getCreatedAt()));
         loadRequestBatch(contractData, current);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUEST_QUEUED, current.size());
 
+        // Do not replace with for each, continue is meant to force patients to wait to be queued
         //noinspection WhileLoopReplaceableByForEach
         while (current.getNextRequest().isPresent()) {
 
@@ -175,7 +175,7 @@ public class ContractProcessorImpl implements ContractProcessor {
 
         if (totalQueued != totalExpected) {
             throw new RuntimeException("expected " + totalExpected +
-                    " patients from database but only retrieved " + totalQueued);
+                    " patients from database but retrieved " + totalQueued);
         }
     }
 
@@ -338,31 +338,6 @@ public class ContractProcessorImpl implements ContractProcessor {
         }
 
         return null;
-    }
-
-    /**
-     * returns true if the patient is a valid member of a contract, false otherwise. If either value is empty,
-     * it returns false
-     *
-     * @param benefit  - The benefit to check
-     * @param patients - the patient map containing the patient id & patient object
-     * @return true if this patient is a member of the correct contract
-     */
-    boolean validPatientInContract(IBaseResource benefit, Map<Long, CoverageSummary> patients) {
-        if (benefit == null || patients == null) {
-            log.debug("Passed an invalid benefit or an invalid list of patients");
-            return false;
-        }
-        Long patientId = getPatientIdFromEOB(benefit);
-        if (patientId == null || patients.get(patientId) == null) {
-            log.error(patientId + " returned in EOB, but not a member of a contract");
-            return false;
-        }
-        return true;
-    }
-
-    public Long getPatientIdFromEOB(IBaseResource eob) {
-        return EobUtils.getPatientId(eob);
     }
 
     @Trace(metricName = "EOBWriteToFile", dispatcher = true)

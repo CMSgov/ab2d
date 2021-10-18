@@ -6,7 +6,6 @@ import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
-import gov.cms.ab2d.common.service.CoverageService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -53,8 +52,7 @@ import static java.lang.Boolean.TRUE;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @Testcontainers
@@ -108,7 +106,7 @@ class JobProcessorIntegrationTest {
     private DataSetup dataSetup;
 
     @Mock
-    private CoverageDriver coverageDriver;
+    private CoverageDriver mockCoverageDriver;
 
     @Mock
     private KinesisEventLogger kinesisEventLogger;
@@ -127,6 +125,8 @@ class JobProcessorIntegrationTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
     private static final ExplanationOfBenefit EOB = (ExplanationOfBenefit) EobTestDataUtil.createEOB();
+
+    private Contract contract;
     private RuntimeException fail;
 
     @BeforeEach
@@ -134,7 +134,8 @@ class JobProcessorIntegrationTest {
         LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
         PdpClient pdpClient = createClient();
 
-        Contract contract = createContract();
+        contract = createContract();
+        fail = new RuntimeException("TEST EXCEPTION");
 
         job = createJob(pdpClient);
         job.setContract(contract);
@@ -152,19 +153,16 @@ class JobProcessorIntegrationTest {
             return EobTestDataUtil.createBundle(copy);
         });
 
-        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class))).thenReturn(100);
+        when(mockCoverageDriver.numberOfBeneficiariesToProcess(any(Job.class))).thenReturn(100);
 
-        when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class))).thenReturn(
+        when(mockCoverageDriver.pageCoverage(any(CoveragePagingRequest.class))).thenReturn(
                 new CoveragePagingResult(loadFauxMetadata(contract, 99), null));
-
-
-        fail = new RuntimeException("TEST EXCEPTION");
 
         PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, logManager);
         ReflectionTestUtils.setField(patientClaimsProcessor, "earliestDataDate", "01/01/1900");
         ContractProcessor contractProcessor = new ContractProcessorImpl(
                 jobRepository,
-                coverageDriver,
+                mockCoverageDriver,
                 patientClaimsProcessor,
                 logManager,
                 eobClaimRequestsQueue,
@@ -237,7 +235,7 @@ class JobProcessorIntegrationTest {
     @DisplayName("When the error count is below threshold, job does not fail")
     void when_errorCount_is_below_threshold_do_not_fail_job() {
         OngoingStubbing<IBaseBundle> stubbing = when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong()));
-        stubbing = addThenAnswer(stubbing, 0, 95);
+        stubbing = andThenAnswerEobs(stubbing, 0, 95);
         stubbing.thenThrow(fail, fail, fail, fail, fail);
 
         var processedJob = cut.process(job.getJobUuid());
@@ -267,10 +265,15 @@ class JobProcessorIntegrationTest {
     @Test
     @DisplayName("When the error count is greater than or equal to threshold, job should fail")
     void when_errorCount_is_not_below_threshold_fail_job() {
+
+        reset(mockCoverageDriver);
+        when(mockCoverageDriver.numberOfBeneficiariesToProcess(any(Job.class))).thenReturn(40);
+        andThenAnswerPatients(mockCoverageDriver, contract, 10, 40);
+
         OngoingStubbing<IBaseBundle> stubbing = when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any()));
-        stubbing = addThenAnswer(stubbing, 0, 20);
+        stubbing = andThenAnswerEobs(stubbing, 0, 20);
         stubbing = stubbing.thenThrow(fail, fail, fail, fail, fail, fail, fail, fail, fail, fail);
-        addThenAnswer(stubbing, 30, 10);
+        andThenAnswerEobs(stubbing, 30, 10);
 
         var processedJob = cut.process(job.getJobUuid());
 
@@ -361,7 +364,7 @@ class JobProcessorIntegrationTest {
         )).collect(toList());
     }
 
-    private static OngoingStubbing<IBaseBundle> addThenAnswer(OngoingStubbing<IBaseBundle> stubbing, int startId, int number) {
+    private static OngoingStubbing<IBaseBundle> andThenAnswerEobs(OngoingStubbing<IBaseBundle> stubbing, int startId, int number) {
 
         for (int id = startId; id < startId + number; id++) {
             stubbing = stubbing.thenAnswer((args) -> {
@@ -372,5 +375,20 @@ class JobProcessorIntegrationTest {
         }
 
         return stubbing;
+    }
+
+    private static OngoingStubbing<CoveragePagingResult> andThenAnswerPatients(CoverageDriver coverageDriver, Contract contract, int pageSize, int total) {
+
+        OngoingStubbing<CoveragePagingResult> stubbing = when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)));
+
+        List<CoverageSummary> fauxBeneficiaries = loadFauxMetadata(contract, total);
+        for (int id = 0; id <= total - pageSize; id += pageSize) {
+            stubbing = stubbing.thenReturn(new CoveragePagingResult(
+                    fauxBeneficiaries.subList(id, id + pageSize),
+                    new CoveragePagingRequest(pageSize, (long) id + pageSize, contract, OffsetDateTime.now())
+            ));
+        }
+
+        return stubbing.thenReturn(new CoveragePagingResult(fauxBeneficiaries.subList(total - pageSize, total), null));
     }
 }
