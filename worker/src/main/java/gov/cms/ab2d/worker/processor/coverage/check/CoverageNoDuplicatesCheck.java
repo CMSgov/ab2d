@@ -23,6 +23,11 @@ public class CoverageNoDuplicatesCheck extends CoverageCheckPredicate {
     @Override
     public boolean test(Contract contract) {
 
+        // Not this checks responsibility if a contract is completely missing enrollment
+        if (!coverageCounts.containsKey(contract.getContractNumber())) {
+            return true;
+        }
+
         Map<Integer, List<CoverageCount>> coverageByCoveragePeriod = coverageCounts.get(contract.getContractNumber())
                 .stream().collect(groupingBy(CoverageCount::getCoveragePeriodId));
 
