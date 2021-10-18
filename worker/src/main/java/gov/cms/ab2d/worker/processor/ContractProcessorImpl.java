@@ -104,7 +104,7 @@ public class ContractProcessorImpl implements ContractProcessor {
 
             // Wait for remaining work to finish before cleaning up after the job
             // This should be at most eobJobPatientQueueMaxSize requests
-            processRemainingRequests(job, contractData);
+            processRemainingRequests(contractData);
 
             log.info("Finished writing {} EOBs for contract {}",
                     jobProgressService.getStatus(job.getJobUuid()).getEobsProcessedCount(), contractNumber);
@@ -154,17 +154,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             loadRequestBatch(contractData, current);
             jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUEST_QUEUED, current.size());
 
-            if (hasJobBeenCancelled(jobUuid)) {
-                log.warn("Job [{}] has been cancelled. Attempting to stop processing the job shortly ... ",
-                        jobUuid);
-                cancelFuturesInQueue(contractData.getEobRequestHandles());
-                final String errMsg = "Job was cancelled while it was being processed";
-                log.warn("{}", errMsg);
-                throw new JobCancelledException(errMsg);
-            }
-
-            // Process finished requests
-            processHandles(contractData);
+            processFinishedRequests(contractData);
         }
 
         // Verify that the number of benes requested matches the number expected from the database and fail
@@ -174,7 +164,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         int totalExpected = progressTracker.getPatientsExpected();
 
         if (totalQueued != totalExpected) {
-            throw new RuntimeException("expected " + totalExpected +
+            throw new ContractProcessingException("expected " + totalExpected +
                     " patients from database but retrieved " + totalQueued);
         }
     }
@@ -188,21 +178,29 @@ public class ContractProcessorImpl implements ContractProcessor {
         }
     }
 
-    private void processRemainingRequests(Job job, ContractData contractData) {
-
-        processHandles(contractData);
+    private void processRemainingRequests(ContractData contractData) {
 
         while (contractData.remainingRequestHandles()) {
             sleep();
-            processHandles(contractData);
 
-            if (hasJobBeenCancelled(job.getJobUuid())) {
-                cancelFuturesInQueue(contractData.getEobRequestHandles());
-                final String errMsg = "Job was cancelled while it was being processed";
-                log.warn("{}", errMsg);
-                throw new JobCancelledException(errMsg);
-            }
+            processFinishedRequests(contractData);
         }
+    }
+
+    private void processFinishedRequests(ContractData contractData) {
+        String jobUuid = contractData.getJob().getJobUuid();
+
+        if (hasJobBeenCancelled(jobUuid)) {
+            log.warn("Job [{}] has been cancelled. Attempting to stop processing the job shortly ... ",
+                    jobUuid);
+            cancelFuturesInQueue(contractData.getEobRequestHandles());
+            final String errMsg = "Job was cancelled while it was being processed";
+            log.warn("{}", errMsg);
+            throw new JobCancelledException(errMsg);
+        }
+
+        // Process finished requests
+        processHandles(contractData);
     }
 
     /**
@@ -217,6 +215,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      */
     private Future<EobSearchResult> processPatient(CoverageSummary patient, Job job) {
         final Token token = NewRelic.getAgent().getTransaction().getToken();
+
         Contract contract = job.getContract();
         assert contract != null;
 
@@ -226,9 +225,8 @@ public class ContractProcessorImpl implements ContractProcessor {
         var jobUuid = job.getJobUuid();
         RoundRobinBlockingQueue.CATEGORY_HOLDER.set(jobUuid);
         try {
-            assert job.getContract() != null;
             var patientClaimsRequest = new PatientClaimsRequest(patient,
-                    job.getContract().getAttestedOn(),
+                    contract.getAttestedOn(),
                     job.getSince(),
                     getOrganization(job),
                     jobUuid,

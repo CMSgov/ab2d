@@ -100,14 +100,11 @@ public class ProgressTracker {
         }
 
         double percentBenesDonePart = (double) patientRequestProcessedCount / patientsExpected;
-        if (percentBenesDonePart > 1.0) {
-            log.error("Percent of beneficiaries done is more than 100%");
-            percentBenesDonePart = 1.0;
-        }
 
         final int percentCompleted = (int) Math.round(percentBenesDonePart * 100);
         lastDbUpdateCount = patientRequestProcessedCount;
         if (percentCompleted > 100) {
+            log.error("Percent of beneficiaries done is more than 100%");
             return 99;
         }
         return percentCompleted;

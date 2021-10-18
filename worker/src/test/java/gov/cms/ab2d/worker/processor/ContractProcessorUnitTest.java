@@ -10,6 +10,7 @@ import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.stub.PatientClaimsProcessorStub;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import gov.cms.ab2d.worker.service.JobChannelStubServiceImpl;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,12 +25,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.stream.IntStream;
 
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
@@ -102,7 +102,6 @@ class ContractProcessorUnitTest {
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 2), null));
 
         when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class))).thenReturn(3);
-        jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_EXPECTED, 3);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
 
         when(jobRepository.findJobStatus(anyString())).thenReturn(JobStatus.CANCELLED);
@@ -145,6 +144,64 @@ class ContractProcessorUnitTest {
         assertFalse(jobOutputs.isEmpty());
         verify(jobRepository, times(8)).updatePercentageCompleted(anyString(), anyInt());
         verify(patientClaimsProcessor, atLeast(1)).process(any());
+    }
+
+    @Test
+    @DisplayName("When a job is cancelled while it is being processed, then attempt to stop the job gracefully without completing it")
+    void whenExpectedPatientsNotMatchActualPatientsFail() {
+
+        when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 1), null));
+        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class))).thenReturn(3);
+
+        ContractProcessingException exception = assertThrows(ContractProcessingException.class, () -> cut.process(outputDir, job));
+
+        assertTrue(exception.getMessage().contains("from database but retrieved"));
+    }
+
+    @Test
+    @DisplayName("When a job has remaining requests, those remaining requests are waited on before finishing")
+    void whenRemainingRequestHandlesThenAttemptToProcess() {
+
+        try (StreamHelper helper = new TextStreamHelperImpl(outputDir, contract.getContractNumber(), 200_000, 30, eventLogger, job)) {
+            ContractData contractData = new ContractData(job, helper);
+
+            jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.FAILURE_THRESHHOLD, 20);
+            jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENTS_EXPECTED, 20);
+
+            contractData.addEobRequestHandle(new Future<EobSearchResult>() {
+                @Override
+                public boolean cancel(boolean mayInterruptIfRunning) {
+                    return false;
+                }
+
+                @Override
+                public boolean isCancelled() {
+                    return false;
+                }
+
+                @Override
+                public boolean isDone() {
+                    return true;
+                }
+
+                @Override
+                public EobSearchResult get() throws InterruptedException, ExecutionException {
+                    return new EobSearchResult(job.getJobUuid(), contract.getContractNumber(), Collections.emptyList());
+                }
+
+                @Override
+                public EobSearchResult get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+                    return null;
+                }
+            });
+
+            ReflectionTestUtils.invokeMethod(cut, "processRemainingRequests", contractData);
+
+            assertFalse(contractData.remainingRequestHandles());
+        } catch (Exception ex) {
+            fail("stream helper failed", ex);
+        }
     }
 
     @Test

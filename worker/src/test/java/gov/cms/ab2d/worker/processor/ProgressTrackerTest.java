@@ -92,6 +92,22 @@ class ProgressTrackerTest {
         assertEquals(expectedPercentage, tracker.getPercentageCompleted());
     }
 
+    @Test
+    @DisplayName("Completion percentage cannot go over 100%")
+    void testPercentageDoneNeverMoreThan100() {
+
+        ProgressTracker tracker = ProgressTracker.builder()
+                .jobUuid("JOBID")
+                .failureThreshold(3)
+                .patientsExpected(12)
+                .patientsLoadedCount(12)
+                .build();
+
+        // Loading patients does not contribute
+        tracker.addPatientProcessedCount(13);
+        assertEquals(99, tracker.getPercentageCompleted());
+    }
+
     private static int asPercent(double num) {
         return (int) Math.round(100.0 * num);
     }
