@@ -21,8 +21,7 @@ public class PatientClaimsProcessorStub implements PatientClaimsProcessor {
         period.setEnd(new Date());
         eob.setBillablePeriod(period);
 
-        EobSearchResult result = new EobSearchResult(request.getJob(), request.getContractNum(),
-                request.getCoverageSummary(), Collections.singletonList(eob));
+        EobSearchResult result = new EobSearchResult(request.getJob(), request.getContractNum(), Collections.singletonList(eob));
         return new AsyncResult<>(result);
     }
 }
