@@ -1,9 +1,11 @@
-package gov.cms.ab2d.worker.processor.coverage;
+package gov.cms.ab2d.worker.quartz;
 
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.Constants;
+import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.DisallowConcurrentExecution;
@@ -17,6 +19,8 @@ import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.COVERAGE_SEARCH_OVERRIDE;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
+import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PRODUCTION;
+import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.SANDBOX;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -25,6 +29,7 @@ public class CoveragePeriodQuartzJob extends QuartzJobBean {
 
     private final CoverageDriver driver;
     private final PropertiesService propertiesService;
+    private final LogManager logManager;
 
     @Override
     protected void executeInternal(JobExecutionContext jobExecutionContext) throws JobExecutionException {
@@ -61,6 +66,7 @@ public class CoveragePeriodQuartzJob extends QuartzJobBean {
             }
         } catch (Exception exception) {
             log.error("coverage period updates could not be conducted");
+            logManager.alert("coverage period updates could not be conducted", List.of(PRODUCTION, SANDBOX));
             throw new JobExecutionException(exception);
         } finally {
             // Only use override once

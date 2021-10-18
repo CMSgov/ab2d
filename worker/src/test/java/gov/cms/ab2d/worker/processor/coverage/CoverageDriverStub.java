@@ -62,6 +62,9 @@ public class CoverageDriverStub implements CoverageDriver {
         return new CoveragePagingResult(results, nextRequest);
     }
 
+    @Override
+    public void verifyCoverage() {}
+
     private CoveragePagingRequest getNextRequest(CoveragePagingRequest previousRequest, Job job) {
         if (previousRequest == null && pageSize < totalRecords) {
             return new CoveragePagingRequest(pageSize, (long) pageSize, job.getContract(), job.getCreatedAt());
