@@ -2,6 +2,7 @@ package gov.cms.ab2d.common.health;
 
 import gov.cms.ab2d.common.SpringBootApp;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -34,9 +35,13 @@ class DatabaseAvailableTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
+    @BeforeEach
+    public void setUp() {
+        MockitoAnnotations.openMocks(this);
+    }
+
     @Test
     void testDatasource() throws SQLException {
-        MockitoAnnotations.openMocks(this);
         assertTrue(DatabaseAvailable.isDbAvailable(dataSource));
         assertFalse(DatabaseAvailable.isDbAvailable(null));
         Mockito.when(bogusDS.getConnection()).thenReturn(null);
