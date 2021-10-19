@@ -21,11 +21,8 @@ public abstract class SqlEventMapper implements RowMapper {
     abstract void log(LoggableEvent event);
 
     static long getIdValue(KeyHolder keyHolder) {
-        if (keyHolder != null && keyHolder.getKeys() != null) {
-            Integer val = (Integer) (keyHolder.getKeys().get("id"));
-            if (val != null) {
-                return val.longValue();
-            }
+        if (keyHolder != null && keyHolder.getKeys() != null && keyHolder.getKeys().get("id") != null) {
+            return ((Integer) (keyHolder.getKeys().get("id"))).longValue();
         }
         return 0;
     }
