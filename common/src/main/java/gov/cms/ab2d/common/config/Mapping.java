@@ -9,6 +9,7 @@ import org.modelmapper.*;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.Optional;
 import java.util.Set;
 
 @Component
@@ -50,8 +51,11 @@ public class Mapping {
                                 context.getSource().getAttestedOn().toString());
         Converter<ContractDTO, Contract> sponsorDTOSponsorConverter = new AbstractConverter<>() {
             protected Contract convert(ContractDTO source) {
+                Optional<Contract> contract = contractService.getContractByContractNumber(source.getContractNumber());
                 //noinspection OptionalGetWithoutIsPresent
-                return contractService.getContractByContractNumber(source.getContractNumber()).get();
+                if (contract.isPresent())
+                    return contract.get();
+                return null;
             }
         };
 

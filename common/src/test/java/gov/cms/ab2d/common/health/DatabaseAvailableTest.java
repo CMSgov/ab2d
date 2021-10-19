@@ -5,6 +5,7 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
@@ -35,6 +36,7 @@ class DatabaseAvailableTest {
 
     @Test
     void testDatasource() throws SQLException {
+        MockitoAnnotations.openMocks(this);
         assertTrue(DatabaseAvailable.isDbAvailable(dataSource));
         assertFalse(DatabaseAvailable.isDbAvailable(null));
         Mockito.when(bogusDS.getConnection()).thenReturn(null);
