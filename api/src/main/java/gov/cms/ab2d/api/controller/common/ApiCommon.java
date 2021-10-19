@@ -19,7 +19,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import javax.servlet.http.HttpServletRequest;
 
 import java.time.OffsetDateTime;
-import java.util.List;
 import java.util.Set;
 
 import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
