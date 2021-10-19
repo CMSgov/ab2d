@@ -23,6 +23,7 @@ import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PROD_LIST;
@@ -212,6 +213,11 @@ public class JobServiceImpl implements JobService {
         PdpClient pdpClient = pdpClientService.getCurrentClient();
         List<Job> jobs = jobRepository.findActiveJobsByClient(pdpClient);
         return jobs.size() < pdpClient.getMaxParallelJobs();
+    }
+
+    @Override
+    public List<String> getActiveJobIds() {
+        return jobRepository.findActiveJobsByClient(pdpClientService.getCurrentClient()).stream().map(Job::getJobUuid).collect(Collectors.toList());
     }
 
     private boolean clientHasNeverCompletedJob(Contract contract) {

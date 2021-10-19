@@ -37,6 +37,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -176,6 +177,9 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<JsonNode> handleTooManyRequestsExceptions(final TooManyRequestsException e, HttpServletRequest request) throws IOException {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add(RETRY_AFTER, Integer.toString(retryAfterDelay));
+        if(e.getJobIds() != null) {
+            httpHeaders.add("jobs", Arrays.toString(e.getJobIds().toArray()));
+        }
         eventLogger.log(new ErrorEvent(MDC.get(ORGANIZATION), UtilMethods.parseJobId(request.getRequestURI()),
                 ErrorEvent.ErrorType.TOO_MANY_STATUS_REQUESTS, "Too many requests performed in too short a time"));
         return generateFHIRError(e, httpHeaders, request);

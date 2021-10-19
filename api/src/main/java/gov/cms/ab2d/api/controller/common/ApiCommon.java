@@ -19,6 +19,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import javax.servlet.http.HttpServletRequest;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Set;
 
 import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
@@ -98,7 +99,7 @@ public class ApiCommon {
         if (!jobService.checkIfCurrentClientCanAddJob()) {
             String errorMsg = "You already have active export requests in progress. Please wait until they complete before submitting a new one.";
             log.error(errorMsg);
-            throw new TooManyRequestsException(errorMsg);
+            throw new TooManyRequestsException(errorMsg, jobService.getActiveJobIds());
         }
     }
 
