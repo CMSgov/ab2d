@@ -177,7 +177,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<JsonNode> handleTooManyRequestsExceptions(final TooManyRequestsException e, HttpServletRequest request) throws IOException {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add(RETRY_AFTER, Integer.toString(retryAfterDelay));
-        if(e.getJobIds() != null) {
+        if (e.getJobIds() != null) {
             httpHeaders.add("jobs", Arrays.toString(e.getJobIds().toArray()));
         }
         eventLogger.log(new ErrorEvent(MDC.get(ORGANIZATION), UtilMethods.parseJobId(request.getRequestURI()),
