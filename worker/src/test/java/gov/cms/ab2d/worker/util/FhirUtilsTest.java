@@ -1,27 +1,26 @@
-package gov.cms.ab2d.worker.processor;
+package gov.cms.ab2d.worker.util;
 
 import gov.cms.ab2d.common.model.CoverageSummary;
+import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.common.util.FilterOutByDate;
-import gov.cms.ab2d.common.util.fhir.FhirUtils;
 import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.Extension;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Calendar;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
+import static gov.cms.ab2d.fhir.ExtensionUtils.ID_EXT;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
-import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifier;
-import static gov.cms.ab2d.worker.processor.ContractProcessorImpl.ID_EXT;
-import static gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable.MBI_ID;
+import static gov.cms.ab2d.fhir.PatientIdentifier.MBI_ID;
 import static org.junit.jupiter.api.Assertions.*;
 
-@ExtendWith(MockitoExtension.class)
-public class AddExtensionTest {
+public class FhirUtilsTest {
 
+    @DisplayName("Add mbi to an eob works and adds in expected format")
     @Test
     void testAddMbiIdToEobs() {
         Long beneId = 1234L;
@@ -51,6 +50,7 @@ public class AddExtensionTest {
         assertEquals(mbi, id.getValue());
     }
 
+    @DisplayName("Add null mbi to eob as null")
     @Test
     void testAddNullMbiIdToEobs() {
         Long beneId = 1234L;
@@ -84,6 +84,7 @@ public class AddExtensionTest {
         assertEquals("historic", c.getCode());
     }
 
+    @DisplayName("Process missing mbi but do not fail")
     @Test
     void testAddNoMbiIdToEobs() {
         Long beneId = 1234L;
@@ -106,7 +107,7 @@ public class AddExtensionTest {
         assertEquals(0, extensions.size());
     }
 
-    @DisplayName("Add multiple mbis to a ")
+    @DisplayName("Add multiple mbis to an eob")
     @Test
     void testAddMbiIdsToEobs() {
         Long beneId = 1234L;
@@ -140,4 +141,9 @@ public class AddExtensionTest {
             assertTrue(id.getValue().equals("456") || id.getValue().equals("789"));
         }
     }
+
+    public static Identifiers createIdentifier(long beneficiaryId, String currentMbi, String... historicMbis) {
+        return new Identifiers(beneficiaryId, currentMbi, new LinkedHashSet<>(Set.of(historicMbis)));
+    }
+
 }

@@ -2,17 +2,17 @@ package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.model.Identifiers;
-import gov.cms.ab2d.common.util.fhir.FhirUtils;
+import gov.cms.ab2d.worker.util.FhirUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashSet;
 import java.util.List;
 
+import static gov.cms.ab2d.fhir.ExtensionUtils.ID_EXT;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.fhir.IdentifierUtils.CURRENCY_IDENTIFIER;
-import static gov.cms.ab2d.worker.processor.ContractProcessorImpl.ID_EXT;
-import static gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable.*;
+import static gov.cms.ab2d.fhir.PatientIdentifier.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ContractProcessorImplTest {

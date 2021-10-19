@@ -2,7 +2,7 @@ package gov.cms.ab2d.worker.processor;
 
 import com.newrelic.api.agent.NewRelic;
 import gov.cms.ab2d.common.util.FilterOutByDate;
-import gov.cms.ab2d.common.util.fhir.FhirUtils;
+import gov.cms.ab2d.worker.util.FhirUtils;
 import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.EobUtils;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;

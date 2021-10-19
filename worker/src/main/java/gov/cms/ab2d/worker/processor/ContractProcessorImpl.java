@@ -40,7 +40,6 @@ import static net.logstash.logback.argument.StructuredArguments.keyValue;
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class ContractProcessorImpl implements ContractProcessor {
     private static final int SLEEP_DURATION = 250;
-    static final String ID_EXT = "http://hl7.org/fhir/StructureDefinition/elementdefinition-identifier";
 
     @Value("${job.file.rollover.ndjson:200}")
     private long ndjsonRollOver;

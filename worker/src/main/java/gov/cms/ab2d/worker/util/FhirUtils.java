@@ -1,4 +1,4 @@
-package gov.cms.ab2d.common.util.fhir;
+package gov.cms.ab2d.worker.util;
 
 import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.model.Identifiers;
@@ -11,6 +11,7 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 
 @Slf4j
 public class FhirUtils {
+
     public static void addMbiIdsToEobs(IBaseResource eob, CoverageSummary patient, FhirVersion version) {
         if (eob == null) {
             return;
