@@ -8,10 +8,12 @@ import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
@@ -47,6 +49,9 @@ public class AllMapperEventTest {
 
     @Mock
     NamedParameterJdbcTemplate template;
+
+    @BeforeEach
+    void setUp() {MockitoAnnotations.openMocks(this); }
 
     @AfterEach
     public void init() {
@@ -203,7 +208,7 @@ public class AllMapperEventTest {
         ErrorEvent event = new ErrorEvent("user", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
                 "File Deleted");
         new ErrorEventMapper(template).log(event);
-        assertEquals(event.getId(), 0);
+        assertEquals(0, event.getId());
     }
 
     @Test

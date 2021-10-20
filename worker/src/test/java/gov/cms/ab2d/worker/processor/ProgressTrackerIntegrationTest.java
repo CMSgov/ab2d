@@ -1,8 +1,13 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.model.*;
-import gov.cms.ab2d.common.repository.*;
+import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.model.PdpClient;
+import gov.cms.ab2d.common.repository.JobOutputRepository;
+import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -14,6 +19,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -78,7 +84,7 @@ class ProgressTrackerIntegrationTest {
 
     @BeforeEach
     void init() {
-
+        MockitoAnnotations.openMocks(this);
         CoverageDriver coverageDriver = new CoverageDriverStub(10, 20);
 
         cut = new JobProcessorImpl(fileService, jobChannelService, jobProgressService, jobProgressUpdateService,

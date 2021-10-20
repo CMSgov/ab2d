@@ -70,6 +70,11 @@ public class AttestationUpdaterServiceTest {
         @Autowired
         private ContractRepository contractRepository;
 
+        @BeforeEach
+        void setUp() {
+            MockitoAnnotations.openMocks(this);
+        }
+
         @Qualifier("for_testing")
         @Bean()
         public AttestationUpdaterServiceImpl getMockService()
