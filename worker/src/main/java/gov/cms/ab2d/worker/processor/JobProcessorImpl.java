@@ -14,6 +14,7 @@ import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.postgresql.util.PSQLException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -94,9 +95,17 @@ public class JobProcessorImpl implements JobProcessor {
             }
         } catch (Exception e) {
 
-            // Log exception to relevant loggers
             String contract = job.getContract() != null ? job.getContract().getContractNumber() : "empty";
-            String message = String.format("Job %s failed for contract #%s because %s", jobUuid, contract, e.getMessage());
+            String message;
+            // Says this is always false but that isn't true
+            if (e instanceof PSQLException) {
+                message = "internal server error";
+                log.error("major database exception", e);
+            } else {
+                message = String.format("Job %s failed for contract #%s because %s", jobUuid, contract, e.getMessage());
+            }
+
+            // Log exception to relevant loggers
             eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, FAILED, message), PUBLIC_LIST);
             log.error("Unexpected exception executing job {}", e.getMessage());
 
