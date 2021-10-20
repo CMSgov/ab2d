@@ -33,7 +33,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
     private final CoverageDriver coverageDriver;
     private final boolean skipBillablePeriodCheck;
 
-    JobPreProcessorImpl(JobRepository jobRepository, LogManager logManager,
+    public JobPreProcessorImpl(JobRepository jobRepository, LogManager logManager,
                         CoverageDriver coverageDriver, @Value("${claims.skipBillablePeriodCheck}") boolean skipBillablePeriodCheck) {
         this.jobRepository = jobRepository;
         this.eventLogger = logManager;
