@@ -6,8 +6,10 @@ import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -38,6 +40,11 @@ class LogManagerTest {
 
     @Autowired
     private LoggerEventRepository loggerEventRepository;
+
+    @BeforeEach
+    public void setUp() {
+        MockitoAnnotations.openMocks(this);
+    }
 
     @AfterEach
     public void cleanUp() {
@@ -116,7 +123,7 @@ class LogManagerTest {
     }
 
     @Test
-    void testOnlySql() {
+    void testNoLogManager() {
         logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
         ErrorEvent event = new ErrorEvent("organization", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
                 "File Deleted");

@@ -96,11 +96,15 @@ public class Versions {
         }
         NEEDED_OBJECTS.put(fullName, object);
         Method method = getMethod(object.getClass(), "copy");
-        try {
-            return method.invoke(object);
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            return null;
+        if (method != null) {
+            try {
+                return method.invoke(object);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                return null;
+            }
         }
+        return null;
+
     }
 
     /**
@@ -168,7 +172,9 @@ public class Versions {
     static void invokeSetMethod(Object resource, String methodName, Object val, Class paramType) {
         try {
             Method method = getMethod(resource.getClass(), methodName, paramType);
-            method.invoke(resource, val);
+            if (method != null) {
+                method.invoke(resource, val);
+            }
         } catch (Exception ex) {
             log.error("Unable to invoke set method " + methodName + " on " + resource.getClass().getName() + " with " + val + " argument", ex);
         }
@@ -227,7 +233,10 @@ public class Versions {
             String topClassName = version.getClassName(cName);
             Class clazz = Class.forName(topClassName);
             Method valueOf = getMethod(clazz, "valueOf", String.class);
-            return valueOf.invoke(null, value);
+            if (valueOf != null)
+                return valueOf.invoke(null, value);
+            else
+                return null;
         } catch (Exception ex) {
             log.error("Unable to instantiate enum " + cName + " with value " + value, ex);
             return null;
@@ -251,7 +260,10 @@ public class Versions {
             for (Class c : classes) {
                 if (c.getName().endsWith("$" + lowerLevel)) {
                     Method valueOf = getMethod(c, "valueOf", String.class);
-                    return valueOf.invoke(null, value);
+                    if (valueOf != null)
+                        return valueOf.invoke(null, value);
+                    else
+                        return null;
                 }
             }
             return null;

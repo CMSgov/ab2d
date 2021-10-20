@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,8 +31,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static gov.cms.ab2d.eventlogger.utils.UtilMethods.camelCaseToUnderscore;
 import static gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventProcessor.getJsonString;
+import static gov.cms.ab2d.eventlogger.utils.UtilMethods.camelCaseToUnderscore;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
@@ -59,8 +60,11 @@ class KinesisEventLoggerTest {
 
     private KinesisEventLogger logger;
 
+
+
     @BeforeEach
     void init() {
+        MockitoAnnotations.openMocks(this);
         logger = new KinesisEventLogger(config, firehose, environment, kinesisEnabled, streamId);
         doReturn(generateRandomResult()).when(firehose).putRecord(any());
     }
