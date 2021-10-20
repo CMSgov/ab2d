@@ -1,5 +1,7 @@
-package gov.cms.ab2d.worker.processor;
+package gov.cms.ab2d.testjobs;
 
+import gov.cms.ab2d.AB2DPostgresqlContainer;
+import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoverageMapping;
@@ -21,10 +23,20 @@ import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.service.JobServiceImpl;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventSummary;
+import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.FhirVersion;
+import gov.cms.ab2d.fhir.IdentifierUtils;
+import gov.cms.ab2d.fhir.PatientIdentifier;
+import gov.cms.ab2d.worker.processor.ContractProcessor;
+import gov.cms.ab2d.worker.processor.JobPreProcessor;
+import gov.cms.ab2d.worker.processor.JobPreProcessorImpl;
+import gov.cms.ab2d.worker.processor.JobProcessor;
+import gov.cms.ab2d.worker.processor.JobProcessorImpl;
+import gov.cms.ab2d.worker.processor.JobProgressService;
+import gov.cms.ab2d.worker.processor.JobProgressUpdateService;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverImpl;
 import gov.cms.ab2d.worker.processor.coverage.CoverageLockWrapper;
@@ -33,16 +45,21 @@ import gov.cms.ab2d.worker.processor.coverage.CoverageProcessorImpl;
 import gov.cms.ab2d.worker.service.FileServiceImpl;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import lombok.extern.slf4j.Slf4j;
+import org.hl7.fhir.instance.model.api.IBaseBundle;
+import org.hl7.fhir.instance.model.api.IDomainResource;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -52,21 +69,22 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
-import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
-import static gov.cms.ab2d.common.util.Constants.PCP_CORE_POOL_SIZE;
-import static gov.cms.ab2d.common.util.Constants.PCP_MAX_POOL_SIZE;
-import static gov.cms.ab2d.common.util.Constants.PCP_SCALE_TO_MAX_TIME;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
+import static gov.cms.ab2d.fhir.FhirVersion.R4;
+import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 /**
  * This is an end to end test for a Synthea contract which also tests the default _since behavior for the R4 API
@@ -78,11 +96,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * (except the last one). All the data pulls from BFDs sandbox Synthea data.
  */
 @SpringBootTest
-@ActiveProfiles("synthea")
 @Testcontainers
 @Slf4j
 @ExtendWith(MockitoExtension.class)
-public class EndToEndDefaultSinceTest {
+public class EndToEndBfdTests {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
@@ -90,6 +107,8 @@ public class EndToEndDefaultSinceTest {
     @Mock
     LogManager logManager;
 
+    @Autowired
+    private BFDClient client;
     @Autowired
     private JobRepository jobRepository;
     @Autowired
@@ -127,7 +146,6 @@ public class EndToEndDefaultSinceTest {
     private CoverageDriver coverageDriver;
     private JobPreProcessor jobPreProcessor;
     private JobProcessor jobProcessor;
-    private PdpClient pdpClient;
 
     private final String path = System.getProperty("java.io.tmpdir");
 
@@ -138,15 +156,15 @@ public class EndToEndDefaultSinceTest {
     void setUp() {
 
         PropertiesDTO coreClaimsPool = new PropertiesDTO();
-        coreClaimsPool.setKey(PCP_CORE_POOL_SIZE);
+        coreClaimsPool.setKey(Constants.PCP_CORE_POOL_SIZE);
         coreClaimsPool.setValue("20");
 
         PropertiesDTO maxClaimsPool = new PropertiesDTO();
-        maxClaimsPool.setKey(PCP_MAX_POOL_SIZE);
+        maxClaimsPool.setKey(Constants.PCP_MAX_POOL_SIZE);
         maxClaimsPool.setValue("30");
 
         PropertiesDTO scaleToMaxTime = new PropertiesDTO();
-        scaleToMaxTime.setKey(PCP_SCALE_TO_MAX_TIME);
+        scaleToMaxTime.setKey(Constants.PCP_SCALE_TO_MAX_TIME);
         scaleToMaxTime.setValue("10");
 
         propertiesService.updateProperties(List.of(coreClaimsPool, maxClaimsPool, scaleToMaxTime));
@@ -164,7 +182,6 @@ public class EndToEndDefaultSinceTest {
         ReflectionTestUtils.setField(jobProcessor, "failureThreshold", 10);
         ReflectionTestUtils.setField(jobProcessor, "efsMount", path);
 
-        pdpClient = setupClient(getContract());
         // Set up the PDP client
     }
 
@@ -179,6 +196,7 @@ public class EndToEndDefaultSinceTest {
      */
     @Test
     void runJobs() throws InterruptedException {
+        PdpClient pdpClient = setupClient(getContract());
 
         final String path = System.getProperty("java.io.tmpdir");
 
@@ -196,13 +214,13 @@ public class EndToEndDefaultSinceTest {
 
         firstJob = jobPreProcessor.preprocess(firstJob.getJobUuid());
 
-        assertEquals(SinceSource.FIRST_RUN, firstJob.getSinceSource());
+        Assertions.assertEquals(SinceSource.FIRST_RUN, firstJob.getSinceSource());
         assertNull(firstJob.getSince());
 
         firstJob = jobProcessor.process(firstJob.getJobUuid());
         List<JobOutput> jobOutputs1 = firstJob.getJobOutputs();
         assertNotNull(jobOutputs1);
-        assertEquals(SUCCESSFUL, firstJob.getStatus());
+        Assertions.assertEquals(JobStatus.SUCCESSFUL, firstJob.getStatus());
         assertTrue(jobOutputs1.size() > 0);
         jobOutputs1.forEach(f -> downloadFile(path, firstJobId, f.getFilePath()));
 
@@ -212,8 +230,8 @@ public class EndToEndDefaultSinceTest {
         String secondJobId = secondJob.getJobUuid();
 
         secondJob = jobPreProcessor.preprocess(secondJob.getJobUuid());
-        assertEquals(SinceSource.AB2D, secondJob.getSinceSource());
-        assertEquals(firstTime.getNano(), secondJob.getSince().getNano());
+        Assertions.assertEquals(SinceSource.AB2D, secondJob.getSinceSource());
+        Assertions.assertEquals(firstTime.getNano(), secondJob.getSince().getNano());
 
         // Set the since to a value that will give us output
         OffsetDateTime newTime = OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
@@ -231,9 +249,9 @@ public class EndToEndDefaultSinceTest {
         OffsetDateTime thirdTime = thirdJob.getCreatedAt();
 
         thirdJob = jobPreProcessor.preprocess(thirdJob.getJobUuid());
-        assertEquals(SinceSource.AB2D, thirdJob.getSinceSource());
+        Assertions.assertEquals(SinceSource.AB2D, thirdJob.getSinceSource());
         // We never downloaded the second job's files so the last successful job is job 1
-        assertEquals(firstTime.getNano(), thirdJob.getSince().getNano());
+        Assertions.assertEquals(firstTime.getNano(), thirdJob.getSince().getNano());
 
         // Since the last job time was just a couple of minutes ago (Job 1), there should be no incremental data
         thirdJob = jobProcessor.process(thirdJob.getJobUuid());
@@ -246,9 +264,9 @@ public class EndToEndDefaultSinceTest {
         Job fourthJob = createJob(pdpClient);
 
         fourthJob = jobPreProcessor.preprocess(fourthJob.getJobUuid());
-        assertEquals(SinceSource.AB2D, fourthJob.getSinceSource());
+        Assertions.assertEquals(SinceSource.AB2D, fourthJob.getSinceSource());
         // We never downloaded the second job's files, but there were none in the third so it should pick that.
-        assertEquals(thirdTime.getNano(), fourthJob.getSince().getNano());
+        Assertions.assertEquals(thirdTime.getNano(), fourthJob.getSince().getNano());
 
         // -------------- CLEAN UP --------------------
         // Now delete the files from job 2
@@ -344,12 +362,12 @@ public class EndToEndDefaultSinceTest {
     }
 
     private Contract getContract() {
-        return contractRepository.findContractByContractNumber(EndToEndDefaultSinceTest.CONTRACT_TO_USE).orElse(null);
+        return contractRepository.findContractByContractNumber(EndToEndBfdTests.CONTRACT_TO_USE).orElse(null);
     }
 
     private PdpClient setupClient(Contract contract) {
         PdpClient pdpClient = new PdpClient();
-        pdpClient.setClientId(EndToEndDefaultSinceTest.CONTRACT_TO_USE_CLIENT_ID);
+        pdpClient.setClientId(EndToEndBfdTests.CONTRACT_TO_USE_CLIENT_ID);
         pdpClient.setOrganization("Synthea Data");
         pdpClient.setEnabled(true);
         pdpClient.setContract(contract);
@@ -369,7 +387,7 @@ public class EndToEndDefaultSinceTest {
         job.setResourceTypes(resourceTypes);
         job.setJobUuid(UUID.randomUUID().toString());
         job.setRequestUrl(url);
-        job.setStatusMessage(INITIAL_JOB_STATUS_MESSAGE);
+        job.setStatusMessage(JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE);
         job.setCreatedAt(OffsetDateTime.now());
         job.setOutputFormat(outputFormat);
         job.setProgress(0);
@@ -392,5 +410,63 @@ public class EndToEndDefaultSinceTest {
         job.setContract(contract);
         job.setStatus(JobStatus.SUBMITTED);
         return jobRepository.save(job);
+    }
+
+    @ParameterizedTest
+    @MethodSource("getVersion")
+    public void testPatientEndpoint(FhirVersion version, String contract, int month, int year) {
+        BFDClient.BFD_BULK_JOB_ID.set("TEST");
+
+        log.info("Testing IDs for " + version.toString());
+        List<PatientIdentifier> patientIds = new ArrayList<>();
+
+        log.info(String.format("Do Request for %s for %02d/%04d", contract, month, year));
+        IBaseBundle bundle = client.requestPartDEnrolleesFromServer(version, contract, month, year);
+        assertNotNull(bundle);
+        int numberOfBenes = BundleUtils.getEntries(bundle).size();
+        patientIds.addAll(extractIds(bundle, version));
+        log.info("Found: " + numberOfBenes + " benes");
+
+        while (BundleUtils.getNextLink(bundle) != null) {
+            log.info(String.format("Do Next Request for %s for %02d/%04d", contract, month, year));
+            bundle = client.requestNextBundleFromServer(version, bundle);
+            numberOfBenes += BundleUtils.getEntries(bundle).size();
+            log.info("Found: " + numberOfBenes + " benes");
+            patientIds.addAll(extractIds(bundle, version));
+        }
+
+        log.info("Contract: " + contract + " has " + numberOfBenes + " benes with " + patientIds.size() + " ids");
+        assertTrue(patientIds.size() >= 1000);
+        assertEquals(0, patientIds.size() % 1000);
+        assertTrue(patientIds.size() >= (2 * numberOfBenes));
+    }
+
+    public static List<PatientIdentifier> extractIds(IBaseBundle bundle, FhirVersion version) {
+        List<PatientIdentifier> ids = new ArrayList<>();
+        List patients = BundleUtils.getPatientStream(bundle, version)
+                .collect(Collectors.toList());
+        patients.forEach(c -> ids.addAll(IdentifierUtils.getIdentifiers((IDomainResource) c)));
+        return ids;
+    }
+
+    /**
+     * Return the different versions of FHIR to test against
+     *
+     * @return the stream of FHIR versions
+     */
+    static Stream<Arguments> getVersion() {
+        if (v2Enabled()) {
+            return Stream.of(arguments(STU3, "Z0001", 1, 3), arguments(R4, "Z0001", 1, 3));
+        } else {
+            return Stream.of(arguments(STU3, "Z0001", 1, 3));
+        }
+    }
+
+    private static boolean v2Enabled() {
+        String v2Enabled = System.getenv("AB2D_V2_ENABLED");
+        if (v2Enabled != null && v2Enabled.equalsIgnoreCase("true")) {
+            return true;
+        }
+        return false;
     }
 }
