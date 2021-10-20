@@ -11,9 +11,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -27,7 +29,6 @@ import java.util.List;
 import static gov.cms.ab2d.eventlogger.utils.UtilMethods.hashIt;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @Testcontainers
@@ -43,6 +44,9 @@ public class AllMapperEventTest {
 
     @TempDir
     Path tmpDir;
+
+    @Mock
+    NamedParameterJdbcTemplate template;
 
     @AfterEach
     public void init() {
@@ -192,6 +196,14 @@ public class AllMapperEventTest {
     void exceptionErrorEventTests() {
         assertThrows(EventLoggingException.class, () ->
                 new ErrorEventMapper(null).log(new FileEvent()));
+    }
+
+    @Test
+    void exceptionErrorEventSentLogTests() {
+        ErrorEvent event = new ErrorEvent("user", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
+                "File Deleted");
+        new ErrorEventMapper(template).log(event);
+        assertEquals(event.getId(), 0);
     }
 
     @Test

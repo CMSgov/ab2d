@@ -27,6 +27,16 @@ class VersionsTest {
     }
 
     @Test
+    void methodNotAvailableWhenInvokeGet() {
+        ExplanationOfBenefit eob = new ExplanationOfBenefit();
+        Versions.invokeSetMethod(eob, "notReal", null, Object.class);
+        Object obj = Versions.invokeGetMethod(eob, "getPatient");
+        assertNull(((Reference) obj).getReference());
+        assertNull(((Reference) obj).getId());
+
+    }
+
+    @Test
     void executeInstantiate() {
         Object obj1 = Versions.getObject(R4, "ExplanationOfBenefit");
         assertEquals(org.hl7.fhir.r4.model.ExplanationOfBenefit.class, obj1.getClass());
@@ -57,7 +67,7 @@ class VersionsTest {
     }
 
     @Test
-    void executeInstantiateSimpleEnum() throws Exception {
+    void executeInstantiateSimpleEnum() {
         Object obj = Versions.instantiateEnum(R4, "Enumerations", "ResourceType", "PATIENT");
         assertEquals(Enumerations.ResourceType.PATIENT, obj);
     }

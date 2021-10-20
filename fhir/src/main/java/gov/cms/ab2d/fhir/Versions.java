@@ -262,8 +262,6 @@ public class Versions {
                     Method valueOf = getMethod(c, "valueOf", String.class);
                     if (valueOf != null)
                         return valueOf.invoke(null, value);
-                    else
-                        return null;
                 }
             }
             return null;
