@@ -89,7 +89,7 @@ public class CoverageCheckQuartzJobTest {
         verify(propertiesService, times(1)).isInMaintenanceMode();
         verify(coverageDriver, times(1)).verifyCoverage();
         verify(logManager, times(1)).alert(
-                argThat(alert -> alert.contains("alertalert") && alert.contains("Coverage verification failed")), isNull());
+                argThat(alert -> alert.contains("alertalert") && alert.contains("Coverage verification failed")), anyList());
     }
 
     @DisplayName("Report failure to run verification as an alert")
@@ -108,7 +108,7 @@ public class CoverageCheckQuartzJobTest {
 
         verify(propertiesService, times(1)).isInMaintenanceMode();
         verify(coverageDriver, times(1)).verifyCoverage();
-        verify(logManager, times(1)).alert(contains("could not verify coverage due"), isNull());
+        verify(logManager, times(1)).alert(contains("could not verify coverage due"), anyList());
     }
 
 }
