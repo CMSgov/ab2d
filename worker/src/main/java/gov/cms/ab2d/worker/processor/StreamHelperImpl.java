@@ -65,7 +65,7 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
     private final long totalBytesAllowed;
 
     // The current output stream
-    protected final ThreadLocal<OutputStream> currentStream = new ThreadLocal<OutputStream>();
+    protected final ThreadLocal<OutputStream> currentStream = new ThreadLocal<>();
 
     // The time before a lock times out and unlocks
     private final int tryLockTimeout;
