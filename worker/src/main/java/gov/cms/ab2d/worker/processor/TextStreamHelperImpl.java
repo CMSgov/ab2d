@@ -34,7 +34,7 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
             throws FileNotFoundException {
         super(path, contractNumber, totalBytesAllowed, tryLockTimeout, logger, job);
 
-        currentStream = createStream();
+        currentStream.set(createStream());
     }
 
     /**
@@ -70,20 +70,20 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
         tryLock(dataFileLock);
         try {
             if (exceedsMaxFileSize(data)) {
-                currentStream.close();
+                currentStream.get().close();
                 logManager.log(EventUtils.getFileEvent(job, currentFile, FileEvent.FileStatus.CLOSE));
 
                 createStreamOutput(currentFile, false);
 
-                currentStream = createStream();
+                currentStream.set(createStream());
                 setTotalBytesWritten(0);
 
             }
-            currentStream.write(data);
+            currentStream.get().write(data);
             setTotalBytesWritten(getTotalBytesWritten() + data.length);
 
         } catch (Exception ex) {
-            String error = "Unable to create file output stream for contract " + contractNumber + "[" + (counter - 1) + "]";
+            String error = "Unable to create file output stream for contract " + contractNumber + "[" + (counter.get() - 1) + "]";
             log.error(error, ex);
             throw new IOException(error, ex);
         } finally {
@@ -98,11 +98,11 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
     @Override
     public void closeLastStream() throws IOException {
 
-        if (currentStream == null) {
+        if (currentStream.get() == null) {
             return;
         }
 
-        currentStream.close();
+        currentStream.get().close();
         logManager.log(EventUtils.getFileEvent(job, currentFile, FileEvent.FileStatus.CLOSE));
         int numFiles = filesCreated.size();
         if (filesCreated.get(numFiles - 1).toFile().length() == 0) {
@@ -112,7 +112,7 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
         }
 
         // Current stream should never be used again
-        currentStream = null;
+        currentStream.remove();
     }
 
     /**

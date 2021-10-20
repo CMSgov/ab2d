@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -47,7 +48,7 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
     protected final Job job;
 
     // Current file counter
-    protected volatile int counter = 1;
+    protected AtomicInteger counter = new AtomicInteger(1);
 
     // Passed contract number
     protected final String contractNumber;
@@ -64,7 +65,7 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
     private final long totalBytesAllowed;
 
     // The current output stream
-    protected volatile OutputStream currentStream;
+    protected final ThreadLocal<OutputStream> currentStream = new ThreadLocal<OutputStream>();
 
     // The time before a lock times out and unlocks
     private final int tryLockTimeout;
@@ -114,9 +115,8 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
      * @return the file name
      */
     String createFileName() {
-        var partName = Integer.toString(counter);
+        var partName = Integer.toString(counter.getAndIncrement());
         var paddedPartitionNo = StringUtils.leftPad(partName, 4, '0');
-        counter++;
         return contractNumber +
                 "_" +
                 paddedPartitionNo +

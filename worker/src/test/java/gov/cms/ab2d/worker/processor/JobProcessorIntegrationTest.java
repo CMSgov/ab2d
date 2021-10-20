@@ -29,6 +29,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.OngoingStubbing;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -130,6 +131,7 @@ class JobProcessorIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        MockitoAnnotations.openMocks(this);
         LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
         PdpClient pdpClient = createClient();
 
