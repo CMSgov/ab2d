@@ -1,9 +1,9 @@
+package gov.cms.ab2d.worker.processor.coverage;
+
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.CoverageMapping;
 import gov.cms.ab2d.common.model.CoveragePeriod;
 import gov.cms.ab2d.common.service.CoverageService;
-import gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable;
-import gov.cms.ab2d.worker.processor.coverage.CoverageProcessor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
