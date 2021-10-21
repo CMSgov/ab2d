@@ -172,9 +172,8 @@ public class Versions {
     static void invokeSetMethod(Object resource, String methodName, Object val, Class paramType) {
         try {
             Method method = getMethod(resource.getClass(), methodName, paramType);
-            if (method != null) {
-                method.invoke(resource, val);
-            }
+            assert method != null;
+            method.invoke(resource, val);
         } catch (Exception ex) {
             log.error("Unable to invoke set method " + methodName + " on " + resource.getClass().getName() + " with " + val + " argument", ex);
         }
@@ -233,10 +232,7 @@ public class Versions {
             String topClassName = version.getClassName(cName);
             Class clazz = Class.forName(topClassName);
             Method valueOf = getMethod(clazz, "valueOf", String.class);
-            if (valueOf != null)
-                return valueOf.invoke(null, value);
-            else
-                return null;
+            return valueOf != null ? valueOf.invoke(null, value) : null;
         } catch (Exception ex) {
             log.error("Unable to instantiate enum " + cName + " with value " + value, ex);
             return null;
