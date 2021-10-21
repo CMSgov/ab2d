@@ -96,15 +96,12 @@ public class Versions {
         }
         NEEDED_OBJECTS.put(fullName, object);
         Method method = getMethod(object.getClass(), "copy");
-        if (method != null) {
-            try {
-                return method.invoke(object);
-            } catch (IllegalAccessException | InvocationTargetException e) {
-                return null;
-            }
+        try {
+            assert method != null;
+            return method.invoke(object);
+        } catch (IllegalAccessException | InvocationTargetException | AssertionError e) {
+            return null;
         }
-        return null;
-
     }
 
     /**
@@ -174,7 +171,7 @@ public class Versions {
             Method method = getMethod(resource.getClass(), methodName, paramType);
             assert method != null;
             method.invoke(resource, val);
-        } catch (Exception ex) {
+        } catch (Exception | AssertionError ex) {
             log.error("Unable to invoke set method " + methodName + " on " + resource.getClass().getName() + " with " + val + " argument", ex);
         }
     }

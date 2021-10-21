@@ -52,10 +52,7 @@ public class Mapping {
         Converter<ContractDTO, Contract> sponsorDTOSponsorConverter = new AbstractConverter<>() {
             protected Contract convert(ContractDTO source) {
                 Optional<Contract> contract = contractService.getContractByContractNumber(source.getContractNumber());
-                //noinspection OptionalGetWithoutIsPresent
-                if (contract.isPresent())
-                    return contract.get();
-                return null;
+                return contractService.getContractByContractNumber(source.getContractNumber()).get(); //NOSONAR
             }
         };
 

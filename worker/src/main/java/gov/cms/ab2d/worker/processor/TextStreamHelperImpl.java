@@ -112,7 +112,7 @@ public class TextStreamHelperImpl extends StreamHelperImpl {
         }
 
         // Current stream should never be used again
-        currentStream.remove();
+        currentStream.set(null);
     }
 
     /**

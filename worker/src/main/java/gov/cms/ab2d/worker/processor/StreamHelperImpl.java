@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -65,7 +66,7 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
     private final long totalBytesAllowed;
 
     // The current output stream
-    protected final ThreadLocal<OutputStream> currentStream = new ThreadLocal<>();
+    protected final AtomicReference<OutputStream> currentStream = new AtomicReference<>();
 
     // The time before a lock times out and unlocks
     private final int tryLockTimeout;
