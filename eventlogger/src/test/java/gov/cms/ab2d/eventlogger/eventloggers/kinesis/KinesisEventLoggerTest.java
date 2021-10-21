@@ -60,8 +60,6 @@ class KinesisEventLoggerTest {
 
     private KinesisEventLogger logger;
 
-
-
     @BeforeEach
     void init() {
         MockitoAnnotations.openMocks(this);

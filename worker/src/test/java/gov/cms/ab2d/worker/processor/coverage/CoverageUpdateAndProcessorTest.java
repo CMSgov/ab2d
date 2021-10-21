@@ -600,12 +600,16 @@ class CoverageUpdateAndProcessorTest {
 
     @DisplayName("Coverage availability throws exception after max attempts retries")
     @Test
-    void coverageAvailabilityLimitsRetries() throws InterruptedException {
+    void coverageAvailabilityLimitsRetries() {
 
         Job job = new Job();
         job.setCreatedAt(OffsetDateTime.now());
         job.setContract(contract);
-        Thread.sleep(1000);
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            fail("could not complete test");
+        }
         january.setStatus(JobStatus.FAILED);
         coveragePeriodRepo.saveAndFlush(january);
 

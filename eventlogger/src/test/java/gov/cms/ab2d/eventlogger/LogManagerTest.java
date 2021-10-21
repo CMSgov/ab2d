@@ -123,7 +123,7 @@ class LogManagerTest {
     }
 
     @Test
-    void testNoLogManager() {
+    void testOnlySql() {
         logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
         ErrorEvent event = new ErrorEvent("organization", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
                 "File Deleted");
