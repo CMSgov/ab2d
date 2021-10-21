@@ -21,12 +21,11 @@ public abstract class SqlEventMapper implements RowMapper {
     abstract void log(LoggableEvent event);
 
     static long getIdValue(KeyHolder keyHolder) {
-        if (keyHolder == null || keyHolder.getKeys() == null || keyHolder.getKeys().get("id") == null) {
-            return 0;
+        if (keyHolder != null && keyHolder.getKeys() != null && keyHolder.getKeys().get("id") != null) {
+            Integer val = (Integer) (keyHolder.getKeys().get("id"));
+            return val.longValue();
         }
-        Integer val = (Integer) (keyHolder.getKeys().get("id"));
-
-        return val.longValue();
+        return 0;
     }
 
     MapSqlParameterSource addSuperParams(LoggableEvent event) {

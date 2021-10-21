@@ -19,6 +19,7 @@ import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
 @AllArgsConstructor
 @Slf4j
 @Component
+@SuppressWarnings("java:S2142")
 public class JobPreProcessorImpl implements JobPreProcessor {
 
     private final JobRepository jobRepository;

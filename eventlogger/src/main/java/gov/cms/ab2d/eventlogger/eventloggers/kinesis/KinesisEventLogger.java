@@ -17,6 +17,7 @@ import java.util.concurrent.TimeoutException;
 
 @Service
 @PropertySource("classpath:application.eventlogger.properties")
+@SuppressWarnings("java:S2142")
 @Slf4j
 public class KinesisEventLogger implements EventLogger {
 
