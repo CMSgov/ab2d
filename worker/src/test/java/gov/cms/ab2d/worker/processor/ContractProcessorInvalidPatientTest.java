@@ -6,8 +6,8 @@ import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.common.util.FilterOutByDate;
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.service.JobChannelService;
@@ -26,7 +26,10 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
@@ -85,7 +88,7 @@ class ContractProcessorInvalidPatientTest {
         jobChannelService.sendUpdate(jobId, JobMeasure.PATIENTS_EXPECTED, summaries.size());
 
         ReflectionTestUtils.setField(cut, "cancellationCheckFrequency", 20);
-        ReflectionTestUtils.setField(patientClaimsProcessor, "startDate", "01/01/2020");
+        ReflectionTestUtils.setField(patientClaimsProcessor, "earliestDataDate", "01/01/2020");
     }
 
     @Test
