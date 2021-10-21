@@ -1,15 +1,18 @@
 package gov.cms.ab2d.common.config;
 
-import gov.cms.ab2d.common.dto.PdpClientDTO;
 import gov.cms.ab2d.common.dto.ContractDTO;
-import gov.cms.ab2d.common.model.*;    // NOPMD
+import gov.cms.ab2d.common.dto.PdpClientDTO;
+import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.model.PdpClient;
+import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.RoleService;
-import org.modelmapper.*;
+import org.modelmapper.AbstractConverter;
+import org.modelmapper.Converter;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.Optional;
 import java.util.Set;
 
 @Component
@@ -51,7 +54,6 @@ public class Mapping {
                                 context.getSource().getAttestedOn().toString());
         Converter<ContractDTO, Contract> sponsorDTOSponsorConverter = new AbstractConverter<>() {
             protected Contract convert(ContractDTO source) {
-                Optional<Contract> contract = contractService.getContractByContractNumber(source.getContractNumber());
                 return contractService.getContractByContractNumber(source.getContractNumber()).get(); //NOSONAR
             }
         };
