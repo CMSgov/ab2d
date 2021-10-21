@@ -132,12 +132,12 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
     void tryLock(Lock lock) {
         final String errMsg = "Terminate processing. Unable to acquire lock";
         try {
-            final boolean lockAcquired = lock.tryLock(tryLockTimeout, TimeUnit.SECONDS);
+            final boolean lockAcquired = lock.tryLock(tryLockTimeout, TimeUnit.SECONDS);  //NOSONAR
             if (!lockAcquired) {
                 final String errMsg1 = errMsg + " after waiting " + tryLockTimeout + " seconds.";
                 throw new RuntimeException(errMsg1);
             }
-        } catch (InterruptedException e) {
+        } catch (InterruptedException e) { //NOSONAR
             throw new RuntimeException(errMsg);
         }
     }

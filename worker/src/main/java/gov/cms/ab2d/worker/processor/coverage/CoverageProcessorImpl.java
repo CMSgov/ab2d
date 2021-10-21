@@ -1,9 +1,9 @@
-package gov.cms.ab2d.worker.processor.coverage;
-
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.CoverageMapping;
 import gov.cms.ab2d.common.model.CoveragePeriod;
 import gov.cms.ab2d.common.service.CoverageService;
+import gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable;
+import gov.cms.ab2d.worker.processor.coverage.CoverageProcessor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,8 +12,13 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PreDestroy;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
@@ -202,7 +207,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                 "shutting down coverage processor before beneficiary data can be inserted into database",
                         true);
             }
-        } catch (InterruptedException ie) {
+        } catch (InterruptedException ie) { //NOSONAR
             log.info("polling for data to insert failed due to interruption {}", ie.getMessage());
         }
     }
