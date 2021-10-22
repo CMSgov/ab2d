@@ -43,10 +43,10 @@ import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.NDJSON;
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.ZIP;
 
-@SuppressWarnings({"PMD.TooManyStaticImports", "java:S2142"})
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings({"PMD.TooManyStaticImports", "java:S2142"})
 public class JobProcessorImpl implements JobProcessor {
 
     @Value("${efs.mount}")
