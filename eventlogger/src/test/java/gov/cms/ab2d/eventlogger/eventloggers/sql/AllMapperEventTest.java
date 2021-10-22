@@ -18,6 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -26,7 +28,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static gov.cms.ab2d.eventlogger.utils.UtilMethods.hashIt;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -209,6 +214,19 @@ public class AllMapperEventTest {
                 "File Deleted");
         new ErrorEventMapper(template).log(event);
         assertEquals(0, event.getId());
+    }
+
+    @Test
+    void exceptionErrorEventNoIdTests() {
+        Map<String, Object> key = new HashMap<>();
+        key.put("ids", null);
+
+        ArrayList<Map<String, Object>> keyList = new ArrayList<>();
+        keyList.add(key);
+
+        KeyHolder keyHolder = new GeneratedKeyHolder(keyList);
+        assertEquals(0,
+                ErrorEventMapper.getIdValue(keyHolder));
     }
 
     @Test
