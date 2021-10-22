@@ -68,7 +68,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -223,55 +222,8 @@ public class EndToEndBfdTests {
         Assertions.assertEquals(JobStatus.SUCCESSFUL, firstJob.getStatus());
         assertTrue(jobOutputs1.size() > 0);
         jobOutputs1.forEach(f -> downloadFile(path, firstJobId, f.getFilePath()));
-
-        // -------------- SECOND JOB --------------------
-
-        Job secondJob = createJob(pdpClient);
-        String secondJobId = secondJob.getJobUuid();
-
-        secondJob = jobPreProcessor.preprocess(secondJob.getJobUuid());
-        Assertions.assertEquals(SinceSource.AB2D, secondJob.getSinceSource());
-        Assertions.assertEquals(firstTime.getNano(), secondJob.getSince().getNano());
-
-        // Set the since to a value that will give us output
-        OffsetDateTime newTime = OffsetDateTime.of(2021, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC);
-        secondJob.setSince(newTime);
-        jobRepository.save(secondJob);
-
-        secondJob = jobProcessor.process(secondJob.getJobUuid());
-        List<JobOutput> jobOutputs2 = secondJob.getJobOutputs();
-
-        assertTrue(jobOutputs2.size() > 0);
-
-        // -------------- THIRD JOB --------------------
-
-        Job thirdJob = createJob(pdpClient);
-        OffsetDateTime thirdTime = thirdJob.getCreatedAt();
-
-        thirdJob = jobPreProcessor.preprocess(thirdJob.getJobUuid());
-        Assertions.assertEquals(SinceSource.AB2D, thirdJob.getSinceSource());
-        // We never downloaded the second job's files so the last successful job is job 1
-        Assertions.assertEquals(firstTime.getNano(), thirdJob.getSince().getNano());
-
-        // Since the last job time was just a couple of minutes ago (Job 1), there should be no incremental data
-        thirdJob = jobProcessor.process(thirdJob.getJobUuid());
-        List<JobOutput> jobOutputs3 = thirdJob.getJobOutputs();
-        assertTrue(jobOutputs3 == null || jobOutputs3.isEmpty());
-        assertNotNull(jobOutputs3);
-
-        // -------------- FOURTH JOB --------------------
-
-        Job fourthJob = createJob(pdpClient);
-
-        fourthJob = jobPreProcessor.preprocess(fourthJob.getJobUuid());
-        Assertions.assertEquals(SinceSource.AB2D, fourthJob.getSinceSource());
-        // We never downloaded the second job's files, but there were none in the third so it should pick that.
-        Assertions.assertEquals(thirdTime.getNano(), fourthJob.getSince().getNano());
-
-        // -------------- CLEAN UP --------------------
-        // Now delete the files from job 2
-        jobOutputs2.forEach(f -> downloadFile(path, secondJobId, f.getFilePath()));
     }
+
 
     /**
      * Call the service to mark the file as downloaded and delete the file
