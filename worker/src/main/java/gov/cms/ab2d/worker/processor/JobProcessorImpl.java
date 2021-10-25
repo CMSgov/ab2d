@@ -46,7 +46,7 @@ import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.ZIP;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@SuppressWarnings({"PMD.TooManyStaticImports", "java:S2142"})
+@SuppressWarnings({"PMD.TooManyStaticImports", "java:S2142"}) //java:S2142: "InterruptedException" should not be ignored
 public class JobProcessorImpl implements JobProcessor {
 
     @Value("${efs.mount}")
