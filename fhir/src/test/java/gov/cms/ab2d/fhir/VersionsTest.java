@@ -29,7 +29,9 @@ class VersionsTest {
     @Test
     void methodNotAvailableWhenInvokeGet() {
         ExplanationOfBenefit eob = new ExplanationOfBenefit();
-        Versions.invokeSetMethod(eob, "notReal", null, Object.class);
+        assertThrows(AssertionError.class, () -> {
+            Versions.invokeSetMethod(eob, "notReal", null, Object.class);
+        });
         Object obj = Versions.invokeGetMethod(eob, "getPatient");
         assertNull(((Reference) obj).getReference());
         assertNull(((Reference) obj).getId());
@@ -89,7 +91,9 @@ class VersionsTest {
         assertEquals("World", ret);
         assertNull(Versions.invokeGetMethodWithArg(val, "substring", "bad", int.class));
         assertNull(Versions.invokeGetMethod(val, "bad"));
-        Versions.invokeSetMethod(val, "bad", "bad", String.class);
+        assertThrows(AssertionError.class, () -> {
+            Versions.invokeSetMethod(val, "bad", "bad", String.class);
+        });
         assertNull(Versions.instantiateEnum(STU3, "bad", "word"));
     }
 
