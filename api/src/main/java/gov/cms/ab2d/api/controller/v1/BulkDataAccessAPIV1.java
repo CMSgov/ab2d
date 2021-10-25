@@ -1,60 +1,25 @@
 package gov.cms.ab2d.api.controller.v1;
 
+import gov.cms.ab2d.api.config.SwaggerConfig;
 import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.api.util.SwaggerConstants;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.service.JobService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.AuthorizationScope;
-import io.swagger.annotations.ResponseHeader;
+import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotBlank;
 import java.time.OffsetDateTime;
 
-import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
-import static gov.cms.ab2d.api.controller.common.ApiText.ASYNC;
-import static gov.cms.ab2d.api.controller.common.ApiText.TYPE_PARAM;
-import static gov.cms.ab2d.api.controller.common.ApiText.BULK_RESPONSE;
-import static gov.cms.ab2d.api.controller.common.ApiText.BULK_RESPONSE_LONG;
-import static gov.cms.ab2d.api.controller.common.ApiText.BULK_SINCE;
-import static gov.cms.ab2d.api.controller.common.ApiText.CONTRACT_NO;
-import static gov.cms.ab2d.api.controller.common.ApiText.EXPORT_CLAIM;
-import static gov.cms.ab2d.api.controller.common.ApiText.EXPORT_STARTED;
-import static gov.cms.ab2d.api.controller.common.ApiText.EXP_PATIENT_INFO;
-import static gov.cms.ab2d.api.controller.common.ApiText.OUT_FORMAT;
-import static gov.cms.ab2d.api.controller.common.ApiText.PREFER;
-import static gov.cms.ab2d.api.controller.common.ApiText.SINCE;
-import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_CONTRACT_EXPORT;
-import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT;
-import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_PREFER;
-import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT_TYPE;
-import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_OUTPUT_FORMAT;
-import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
-import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
-import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
-import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
-import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
+import static gov.cms.ab2d.api.controller.common.ApiText.*;
+import static gov.cms.ab2d.api.util.SwaggerConstants.*;
+import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -85,9 +50,11 @@ public class BulkDataAccessAPIV1 {
             @ApiImplicitParam(name = PREFER, required = true, paramType = "header", value =
                     BULK_PREFER, allowableValues = ASYNC, defaultValue = ASYNC, type = "string")}
     )
-    @ApiResponses(
+    @ApiResponses(value = {
             @ApiResponse(code = 202, message = EXPORT_STARTED, responseHeaders =
-            @ResponseHeader(name = CONTENT_LOCATION, description = BULK_RESPONSE, response = String.class), response = String.class)
+            @ResponseHeader(name = CONTENT_LOCATION, description = BULK_RESPONSE, response = String.class), response = String.class),
+            @ApiResponse(code = 429, message = MAX_JOBS, responseHeaders =
+            @ResponseHeader(name = "jobs", description = RUNNING_JOBIDS, response = String.class), response = SwaggerConfig.OperationOutcome.class)}
     )
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @GetMapping("/Patient/$export")
