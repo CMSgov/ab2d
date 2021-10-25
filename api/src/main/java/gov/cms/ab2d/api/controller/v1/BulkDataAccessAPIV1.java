@@ -2,7 +2,6 @@ package gov.cms.ab2d.api.controller.v1;
 
 import gov.cms.ab2d.api.config.SwaggerConfig;
 import gov.cms.ab2d.api.controller.common.ApiCommon;
-import gov.cms.ab2d.api.util.SwaggerConstants;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.service.JobService;
 import io.swagger.annotations.*;
@@ -29,7 +28,7 @@ import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
  * The sole REST controller for AB2D's implementation of the FHIR Bulk Data API specification.
  */
 @Slf4j
-@Api(value = "Bulk Data Access API", description = SwaggerConstants.BULK_MAIN, tags = {"Export"})
+@Api(value = "Bulk Data Access API", description = BULK_MAIN, tags = {"Export"})
 @RestController
 @RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX, produces = {APPLICATION_JSON})
 @SuppressWarnings({"PMD.TooManyStaticImports", "PMD.UnusedImports"})
