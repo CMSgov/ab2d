@@ -21,11 +21,10 @@ public abstract class SqlEventMapper implements RowMapper {
     abstract void log(LoggableEvent event);
 
     static long getIdValue(KeyHolder keyHolder) {
-        //false NullPointerExceptions positives created in sonarqube
-        if (keyHolder == null || keyHolder.getKeys() == null) {  //NOSONAR
+        if (keyHolder == null || keyHolder.getKeys() == null) {  //NOSONAR NPE
             return 0;
         }
-        Integer val = (Integer) (keyHolder.getKeys().get("id")); //NOSONAR
+        Integer val = (Integer) (keyHolder.getKeys().get("id")); //NOSONAR NPE
         if (val == null) {
             return 0;
         }
