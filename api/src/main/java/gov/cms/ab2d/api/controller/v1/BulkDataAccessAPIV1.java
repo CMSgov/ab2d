@@ -81,7 +81,7 @@ public class BulkDataAccessAPIV1 {
             @ApiResponse(code = 202, message = EXPORT_STARTED, responseHeaders =
             @ResponseHeader(name = CONTENT_LOCATION, description = BULK_RESPONSE, response = String.class), response = String.class),
             @ApiResponse(code = 429, message = MAX_JOBS, responseHeaders =
-            @ResponseHeader(name = "jobs", description = RUNNING_JOBIDS, response = String.class), response = SwaggerConfig.OperationOutcome.class)}
+            @ResponseHeader(name = CONTENT_LOCATION, description = RUNNING_JOBIDS, response = String.class), response = SwaggerConfig.OperationOutcome.class)}
     )
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @GetMapping("/Patient/$export")
