@@ -6,7 +6,6 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ContractSearchEvent;
 import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
-import gov.cms.ab2d.worker.processor.coverage.CoverageDriverStub;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import gov.cms.ab2d.worker.service.JobChannelStubServiceImpl;
@@ -49,7 +48,6 @@ class JobProcessorUnitTest {
     @Mock private ContractProcessor contractProcessor;
     @Mock private LogManager eventLogger;
 
-    private CoverageDriverStub coverageDriver;
     private JobProgressService jobProgressService;
     private JobChannelService jobChannelService;
     private Job job;
@@ -63,7 +61,6 @@ class JobProcessorUnitTest {
         jobProgressService = jobProgressUpdateService;
         jobChannelService = new JobChannelStubServiceImpl(jobProgressUpdateService);
 
-        coverageDriver = spy(new CoverageDriverStub(10, 20));
         cut = spy(new JobProcessorImpl(
                 fileService,
                 jobChannelService,
@@ -72,7 +69,6 @@ class JobProcessorUnitTest {
                 jobRepository,
                 jobOutputRepository,
                 contractProcessor,
-                coverageDriver,
                 eventLogger
         ));
 
@@ -116,8 +112,6 @@ class JobProcessorUnitTest {
 
     private void doVerify() {
         verify(fileService).createDirectory(any());
-        verify(coverageDriver).pageCoverage(any(Job.class));
-        verify(coverageDriver).pageCoverage(any(CoveragePagingRequest.class));
 
         // Successful searches trigger an alert to slack
         verify(eventLogger).logAndAlert(any(JobStatusChangeEvent.class), any(List.class));
@@ -151,8 +145,6 @@ class JobProcessorUnitTest {
         assertNotNull(processedJob.getExpiresAt());
 
         verify(fileService, times(2)).createDirectory(any());
-        verify(coverageDriver).pageCoverage(any(Job.class));
-        verify(coverageDriver).pageCoverage(any(CoveragePagingRequest.class));
     }
 
     @Test
@@ -177,7 +169,6 @@ class JobProcessorUnitTest {
         assertNull(processedJob.getExpiresAt());
 
         verify(fileService).createDirectory(any());
-        verify(coverageDriver, never()).pageCoverage(any(Job.class));
     }
 
     @Test
@@ -196,7 +187,6 @@ class JobProcessorUnitTest {
         assertNull(processedJob.getExpiresAt());
 
         verify(fileService).createDirectory(any());
-        verify(coverageDriver, never()).pageCoverage(any(Job.class));
         verify(eventLogger, times(1)).logAndAlert(any(), any());
     }
 
@@ -228,7 +218,7 @@ class JobProcessorUnitTest {
     @Test
     @DisplayName("When job fails, persistence of progress tracker occurs")
     void whenJobThrowsException_thenProgressIsLogged() {
-        when(contractProcessor.process(any(), any(), any())).thenThrow(RuntimeException.class);
+        when(contractProcessor.process(any(), any())).thenThrow(RuntimeException.class);
 
         var processedJob = cut.process(job.getJobUuid());
 
@@ -236,8 +226,7 @@ class JobProcessorUnitTest {
 
         verify(cut, times(1)).persistTrackedJobProgress(any(), any());
 
-        // Status is pulled after finishing loading benes
-        verify(jobProgressService, times(2)).getStatus(any());
+        verify(jobProgressService, times(1)).getStatus(any());
     }
 
     @Test
@@ -253,19 +242,18 @@ class JobProcessorUnitTest {
 
         // Status is pulled after finishing loading benes
         // Status is also pulled when job succeeds
-        verify(jobProgressService, times(4)).getStatus(any());
+        verify(jobProgressService, times(3)).getStatus(any());
     }
 
-    @Test
-    @DisplayName("When contract benes loaded doesn't match expected, fail immediately")
-    void whenBenesLoadedMismatch_thenFailJob() {
-        when(coverageDriver.numberOfBeneficiariesToProcess(any())).thenReturn(1);
-
-        var processedJob = cut.process(job.getJobUuid());
-        assertEquals(JobStatus.FAILED, processedJob.getStatus());
-        assertTrue(processedJob.getStatusMessage().contains("patients from database but only retrieved"));
-
-    }
+    // todo move to contract processor
+//    @Test
+//    @DisplayName("When contract benes loaded doesn't match expected, fail immediately")
+//    void whenBenesLoadedMismatch_thenFailJob() {
+//        var processedJob = cut.process(job.getJobUuid());
+//        assertEquals(JobStatus.FAILED, processedJob.getStatus());
+//        assertTrue(processedJob.getStatusMessage().contains("patients from database but only retrieved"));
+//
+//    }
 
     @Test
     @DisplayName("Send Measure to missing listener.")

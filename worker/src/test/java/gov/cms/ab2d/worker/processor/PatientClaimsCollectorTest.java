@@ -8,6 +8,7 @@ import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -217,6 +218,45 @@ public class PatientClaimsCollectorTest {
             assertTrue(collector.getEobs().isEmpty());
         } catch (ParseException pe) {
             fail("could not build dates", pe);
+        }
+    }
+
+
+    @DisplayName("Fail quietly on null bundle")
+    @Test
+    void whenBundleNull_thenFailQuietly() {
+
+        CoverageSummary coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(PATIENT_ID),
+                null, List.of(TestUtil.getOpenRange()));
+
+        PatientClaimsRequest request = new PatientClaimsRequest(coverageSummary, OffsetDateTime.now(), null, "client", "job",
+                "contractNum", noOpToken, STU3);
+        PatientClaimsCollector collector = new PatientClaimsCollector(request, false, EPOCH);
+        collector.filterAndAddEntries(null);
+        assertTrue(collector.getEobs().isEmpty());
+    }
+
+    @DisplayName("Fail quietly on null bundle entries")
+    @Test
+    void whenBundleEntriesNull_thenFailQuietly() {
+
+        try {
+            CoverageSummary coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(PATIENT_ID),
+                    null, List.of(TestUtil.getOpenRange()));
+
+            ExplanationOfBenefit eob = (ExplanationOfBenefit) EobTestDataUtil.createEOB();
+            eob.getBillablePeriod().setStart(SDF.parse("01/02/2020"));
+            eob.getBillablePeriod().setEnd(SDF.parse("01/03/2020"));
+            IBaseBundle oldBundle = EobTestDataUtil.createBundle(eob);
+            ReflectionTestUtils.setField(oldBundle, "entry", null);
+
+            PatientClaimsRequest request = new PatientClaimsRequest(coverageSummary, OffsetDateTime.now(), null, "client", "job",
+                    "contractNum", noOpToken, STU3);
+            PatientClaimsCollector collector = new PatientClaimsCollector(request, false, EPOCH);
+            collector.filterAndAddEntries(null);
+            assertTrue(collector.getEobs().isEmpty());
+        } catch (ParseException pe) {
+            fail("could not parse bundle", pe);
         }
     }
 }
