@@ -22,10 +22,6 @@ import static java.util.stream.Collectors.*;
 @Slf4j
 public class CoverageMappingCallable implements Callable<CoverageMapping> {
 
-    public static final String CURRENT_MBI = "current";
-    public static final String HISTORIC_MBI = "historic";
-    public static final String MBI_ID = "http://hl7.org/fhir/sid/us-mbi";
-
     // Use year 3 by default since all synthetic data has this year on it
     // todo get rid of this when data is updated
     private static final int SYNTHETIC_DATA_YEAR = 3;

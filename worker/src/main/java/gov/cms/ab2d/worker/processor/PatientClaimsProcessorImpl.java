@@ -45,24 +45,24 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     private static final OffsetDateTime START_CHECK = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
 
     /**
-     * Process the retrieval of patient explanation of benefit objects and write them
-     * to a file using the writer
+     * Process the retrieval of patient explanation of benefit objects and return the result
+     * for further post-processing
      */
     @Trace(metricName = "EOBRequest", dispatcher = true)
     @Async("patientProcessorThreadPool")
     public Future<EobSearchResult> process(PatientClaimsRequest request) {
         final Token token = request.getToken();
         token.link();
-        EobSearchResult result = new EobSearchResult();
-        result.setJobId(request.getJob());
-        result.setContractNum(request.getContractNum());
+
         try {
-            result.setEobs(getEobBundleResources(request));
+            List<IBaseResource> eobs = getEobBundleResources(request);
+            EobSearchResult result = new EobSearchResult(request.getJob(), request.getContractNum(), eobs);
+            return new AsyncResult<>(result);
         } catch (Exception ex) {
             return AsyncResult.forExecutionException(ex);
+        } finally {
+            token.expire();
         }
-        token.expire();
-        return new AsyncResult<>(result);
     }
 
     private List<IBaseResource> getEobBundleResources(PatientClaimsRequest request) {

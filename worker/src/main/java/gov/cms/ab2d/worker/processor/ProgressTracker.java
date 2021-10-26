@@ -10,12 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ProgressTracker {
 
-
-    // Related to determining whether the beneficiary search is complete
-
-    // The ratio between the beneficiary EOF search time in the job vs looking up contract beneficiaries
-    public static final double EST_BEN_SEARCH_JOB_PERCENTAGE = 0.7;
-
     private final String jobUuid;
 
     @Setter
@@ -101,55 +95,22 @@ public class ProgressTracker {
      */
     public int getPercentageCompleted() {
 
-        double percentMetadataDone = getPercentMetadataCompleted();
-        if (percentMetadataDone > 1.0) {
-            log.error("Percent of contract beneficiaries done is more than 100%");
-            percentMetadataDone = 1.0;
-        }
-
-        double percentBenesDone = getPercentEobsCompleted();
-
-        double percentContractBeneSearchDone = percentMetadataDone * (1 - EST_BEN_SEARCH_JOB_PERCENTAGE);
-        double amountCompleted = percentBenesDone + percentContractBeneSearchDone;
-
-        final int percentCompleted = (int) Math.round(amountCompleted * 100);
-        lastDbUpdateCount = patientRequestProcessedCount;
-        if (percentCompleted > 100) {
-            return 99;
-        }
-        return percentCompleted;
-    }
-
-    private double getPercentEobsCompleted() {
-
         if (patientsExpected == 0) {
             return 0;
         }
 
         double percentBenesDonePart = (double) patientRequestProcessedCount / patientsExpected;
-        if (percentBenesDonePart > 1.0) {
-            log.error("Percent of beneficiaries done is more than 100%");
-            percentBenesDonePart = 1.0;
-        }
 
-        return  percentBenesDonePart * EST_BEN_SEARCH_JOB_PERCENTAGE;
+        final int percentCompleted = (int) Math.round(percentBenesDonePart * 100);
+        lastDbUpdateCount = patientRequestProcessedCount;
+        if (percentCompleted > 100) {
+            log.error("Percent of beneficiaries done is more than 100%");
+            return 99;
+        }
+        return percentCompleted;
     }
 
     public boolean isErrorThresholdExceeded() {
         return (patientFailureCount * 100) / getTotalCount() >= failureThreshold;
-    }
-
-    /**
-     * Return the percentage of the contract beneficiary mapping complete
-     *
-     * @return the percentage (values 0 to 1)
-     */
-    public double getPercentMetadataCompleted() {
-
-        if (patientsExpected == 0) {
-            return 0;
-        }
-        // This is the total completed threads done over the amount that needs to be done
-        return ((double) this.patientsLoadedCount) / this.patientsExpected;
     }
 }
