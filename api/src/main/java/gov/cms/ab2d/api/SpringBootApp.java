@@ -13,7 +13,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
         "gov.cms.ab2d.eventlogger"})
 @EntityScan(basePackages = {"gov.cms.ab2d.common.model"})
 @EnableJpaRepositories("gov.cms.ab2d.common.repository")
-@PropertySource("classpath:application.common.properties")
+// TODO factor HPMS out of the API node into its own service so that one doesn't have a dangling property reference.
+@PropertySource({"classpath:application.common.properties", "application.hpms.properties"})
 @Import({HPMSIngestQuartzSetup.class})
 public class SpringBootApp {
 
