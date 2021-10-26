@@ -1,13 +1,15 @@
 package gov.cms.ab2d.worker.processor;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 
 import java.util.List;
 
-@Data
+@RequiredArgsConstructor
+@Getter
 public class EobSearchResult {
-    private String jobId;
-    private String contractNum;
-    private List<IBaseResource> eobs;
+    private final String jobId;
+    private final String contractNum;
+    private final List<IBaseResource> eobs;
 }

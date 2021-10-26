@@ -20,7 +20,7 @@ import static gov.cms.ab2d.fhir.IdentifierUtils.CURRENCY_IDENTIFIER;
 @Slf4j
 public final class ExtensionUtils {
 
-    static final String ID_EXT = "http://hl7.org/fhir/StructureDefinition/elementdefinition-identifier";
+    public static final String ID_EXT = "http://hl7.org/fhir/StructureDefinition/elementdefinition-identifier";
     public static final String REF_YEAR_EXT = "https://bluebutton.cms.gov/resources/variables/rfrnc_yr";
 
     private ExtensionUtils() { }

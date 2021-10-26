@@ -20,6 +20,10 @@ public class CoveragePagingResult {
         return coverageSummaries;
     }
 
+    public int size() {
+        return coverageSummaries.size();
+    }
+
     public Optional<CoveragePagingRequest> getNextRequest() {
         return Optional.ofNullable(nextRequest);
     }
