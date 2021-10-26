@@ -74,14 +74,11 @@ public class BulkDataAccessAPIV1 {
             @Authorization(value = AUTHORIZATION, scopes = { @AuthorizationScope(description = EXP_PATIENT_INFO, scope = AUTHORIZATION) })
         })
     @ApiImplicitParams(value = {
-            @ApiImplicitParam(name = PREFER, required = true, paramType = "header", value =
-                    BULK_PREFER, allowableValues = ASYNC, defaultValue = ASYNC, type = "string")}
+            @ApiImplicitParam(name = PREFER, required = true, paramType = "header", value = BULK_PREFER, allowableValues = ASYNC, defaultValue = ASYNC, type = "string")}
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 202, message = EXPORT_STARTED, responseHeaders =
-            @ResponseHeader(name = CONTENT_LOCATION, description = BULK_RESPONSE, response = String.class), response = String.class),
-            @ApiResponse(code = 429, message = MAX_JOBS, responseHeaders =
-            @ResponseHeader(name = CONTENT_LOCATION, description = RUNNING_JOBIDS, response = String.class), response = SwaggerConfig.OperationOutcome.class)}
+            @ApiResponse(code = 202, message = EXPORT_STARTED, responseHeaders = @ResponseHeader(name = CONTENT_LOCATION, description = BULK_RESPONSE, response = String.class), response = String.class),
+            @ApiResponse(code = 429, message = MAX_JOBS, responseHeaders = @ResponseHeader(name = CONTENT_LOCATION, description = RUNNING_JOBIDS, response = String.class), response = SwaggerConfig.OperationOutcome.class)}
     )
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @GetMapping("/Patient/$export")
