@@ -225,10 +225,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 loggerEventRepository.load(ContractSearchEvent.class),
                 loggerEventRepository.load(FileEvent.class)));
 
-        assertEquals(MAX_JOBS_PER_CLIENT, Objects.requireNonNull(mvcResult.getResponse().getHeader("jobs"))
-                .replaceAll("\\[", "")
-                .replaceAll("\\]", "")
-                .replaceAll("\\s", "")
+        assertEquals(MAX_JOBS_PER_CLIENT, Objects.requireNonNull(mvcResult.getResponse().getHeader(CONTENT_LOCATION))
                 .split(",").length);
     }
 
@@ -264,7 +261,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(status().is(429))
                 .andExpect(header().string("Retry-After", "30"))
                 .andExpect(header().doesNotExist(X_PROG))
-                .andExpect(header().exists("jobs"));
+                .andExpect(header().exists(CONTENT_LOCATION));
         ;
     }
 
@@ -525,7 +522,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(status().is(429))
                 .andExpect(header().string("Retry-After", "30"))
                 .andExpect(header().doesNotExist("X-Progress"))
-                .andExpect(header().doesNotExist("jobs"));
+                .andExpect(header().doesNotExist(CONTENT_LOCATION));
     }
 
     @Test
@@ -557,7 +554,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(status().is(429))
                 .andExpect(header().string("Retry-After", "30"))
                 .andExpect(header().doesNotExist("X-Progress"))
-                .andExpect(header().doesNotExist("jobs"));
+                .andExpect(header().doesNotExist(CONTENT_LOCATION));
         ;
     }
 
@@ -1209,7 +1206,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(status().is(429))
                 .andExpect(header().string("Retry-After", "30"))
                 .andExpect(header().doesNotExist("X-Progress"))
-                .andExpect(header().exists("jobs"));
+                .andExpect(header().exists(CONTENT_LOCATION));
     }
 
     @Test
@@ -1230,7 +1227,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(status().is(429))
                 .andExpect(header().string("Retry-After", "30"))
                 .andExpect(header().doesNotExist("X-Progress"))
-                .andExpect(header().exists("jobs"));
+                .andExpect(header().exists(CONTENT_LOCATION));
 
     }
 
