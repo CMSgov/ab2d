@@ -8,12 +8,18 @@ import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -22,12 +28,14 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static gov.cms.ab2d.eventlogger.utils.UtilMethods.hashIt;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @Testcontainers
@@ -43,6 +51,12 @@ public class AllMapperEventTest {
 
     @TempDir
     Path tmpDir;
+
+    @Mock
+    NamedParameterJdbcTemplate template;
+
+    @BeforeEach
+    void setUp() {MockitoAnnotations.openMocks(this); }
 
     @AfterEach
     public void init() {
@@ -192,6 +206,27 @@ public class AllMapperEventTest {
     void exceptionErrorEventTests() {
         assertThrows(EventLoggingException.class, () ->
                 new ErrorEventMapper(null).log(new FileEvent()));
+    }
+
+    @Test
+    void exceptionErrorEventSentLogTests() {
+        ErrorEvent event = new ErrorEvent("user", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
+                "File Deleted");
+        new ErrorEventMapper(template).log(event);
+        assertEquals(0, event.getId());
+    }
+
+    @Test
+    void exceptionErrorEventNoIdTests() {
+        Map<String, Object> key = new HashMap<>();
+        key.put("ids", null);
+
+        ArrayList<Map<String, Object>> keyList = new ArrayList<>();
+        keyList.add(key);
+
+        KeyHolder keyHolder = new GeneratedKeyHolder(keyList);
+        assertEquals(0,
+                ErrorEventMapper.getIdValue(keyHolder));
     }
 
     @Test

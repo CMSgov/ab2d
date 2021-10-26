@@ -1,7 +1,9 @@
 package gov.cms.ab2d.loadtest;
 
 import gov.cms.ab2d.e2etest.APIClient;
+import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.jmeter.config.Arguments;
 import org.apache.jmeter.protocol.java.sampler.AbstractJavaSamplerClient;
 import org.apache.jmeter.protocol.java.sampler.JavaSamplerContext;
@@ -9,7 +11,6 @@ import org.apache.jmeter.samplers.SampleResult;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import gov.cms.ab2d.fhir.FhirVersion;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,8 +19,6 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-
-import org.apache.commons.lang3.tuple.ImmutablePair;
 
 @Slf4j
 public class TestRunner extends AbstractJavaSamplerClient {
@@ -47,7 +46,7 @@ public class TestRunner extends AbstractJavaSamplerClient {
         String oktaClientPassword = System.getenv("AB2D_OKTA_CLIENT_PASSWORD");
         try {
             apiClient = new APIClient(apiUrl, oktaUrl, oktaClientId, oktaClientPassword);
-        } catch (IOException | InterruptedException | JSONException | NoSuchAlgorithmException | KeyManagementException e) {
+        } catch (IOException | InterruptedException | JSONException | NoSuchAlgorithmException | KeyManagementException e) { //NOSONAR
             throw new RuntimeException(e);
         }
 
@@ -64,7 +63,7 @@ public class TestRunner extends AbstractJavaSamplerClient {
 
         try {
             countDownLatch.await();
-        } catch (InterruptedException e) {
+        } catch (InterruptedException e) { //NOSONAR
             throw new RuntimeException(e);
         }
 
@@ -162,7 +161,7 @@ public class TestRunner extends AbstractJavaSamplerClient {
                 checkStatusAndPerformDownloadResult(status, statusResult, contractResult, statusResponse);
 
                 contractResult.setSuccessful(true);
-            } catch (Exception e) {
+            } catch (Exception e) { //NOSONAR
                 log.error("Exception occurred during execution of worker", e);
             } finally {
                 contractResult.sampleEnd();

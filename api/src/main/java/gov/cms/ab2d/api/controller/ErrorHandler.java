@@ -40,6 +40,10 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.HashMap;
 
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
@@ -64,28 +68,28 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     private final int retryAfterDelay;
     private final ApiCommon apiCommon;
 
-    private static final Map<Class, HttpStatus> RESPONSE_MAP = new HashMap<>() {
-        {
-            put(InvalidClientInputException.class, HttpStatus.BAD_REQUEST);
-            put(InvalidJobStateTransition.class, HttpStatus.BAD_REQUEST);
-            put(InvalidPropertiesException.class, HttpStatus.BAD_REQUEST);
-            put(MissingTokenException.class, HttpStatus.UNAUTHORIZED);
-            put(InvalidAuthHeaderException.class, HttpStatus.UNAUTHORIZED);
-            put(BadJWTTokenException.class, HttpStatus.FORBIDDEN);
-            put(UsernameNotFoundException.class, HttpStatus.FORBIDDEN);
-            put(ClientNotEnabledException.class, HttpStatus.FORBIDDEN);
-            put(JwtVerificationException.class, HttpStatus.FORBIDDEN);
-            put(InvalidContractException.class, HttpStatus.FORBIDDEN);
-            put(InvalidJobAccessException.class, HttpStatus.FORBIDDEN);
-            put(ResourceNotFoundException.class, HttpStatus.NOT_FOUND);
-            put(TooManyRequestsException.class, HttpStatus.TOO_MANY_REQUESTS);
-            put(InMaintenanceModeException.class, HttpStatus.SERVICE_UNAVAILABLE);
-            put(URISyntaxException.class, HttpStatus.SERVICE_UNAVAILABLE);
-            put(JobOutputMissingException.class, HttpStatus.INTERNAL_SERVER_ERROR);
-            put(JobProcessingException.class, HttpStatus.INTERNAL_SERVER_ERROR);
-            put(DataIntegrityViolationException.class, HttpStatus.INTERNAL_SERVER_ERROR);
+    private static final HashMap<Class, HttpStatus> RESPONSE_MAP;
+        static {
+            RESPONSE_MAP = new HashMap<>();
+            RESPONSE_MAP.put(InvalidClientInputException.class, HttpStatus.BAD_REQUEST);
+            RESPONSE_MAP.put(InvalidJobStateTransition.class, HttpStatus.BAD_REQUEST);
+            RESPONSE_MAP.put(InvalidPropertiesException.class, HttpStatus.BAD_REQUEST);
+            RESPONSE_MAP.put(MissingTokenException.class, HttpStatus.UNAUTHORIZED);
+            RESPONSE_MAP.put(InvalidAuthHeaderException.class, HttpStatus.UNAUTHORIZED);
+            RESPONSE_MAP.put(BadJWTTokenException.class, HttpStatus.FORBIDDEN);
+            RESPONSE_MAP.put(UsernameNotFoundException.class, HttpStatus.FORBIDDEN);
+            RESPONSE_MAP.put(ClientNotEnabledException.class, HttpStatus.FORBIDDEN);
+            RESPONSE_MAP.put(JwtVerificationException.class, HttpStatus.FORBIDDEN);
+            RESPONSE_MAP.put(InvalidContractException.class, HttpStatus.FORBIDDEN);
+            RESPONSE_MAP.put(InvalidJobAccessException.class, HttpStatus.FORBIDDEN);
+            RESPONSE_MAP.put(ResourceNotFoundException.class, HttpStatus.NOT_FOUND);
+            RESPONSE_MAP.put(TooManyRequestsException.class, HttpStatus.TOO_MANY_REQUESTS);
+            RESPONSE_MAP.put(InMaintenanceModeException.class, HttpStatus.SERVICE_UNAVAILABLE);
+            RESPONSE_MAP.put(URISyntaxException.class, HttpStatus.SERVICE_UNAVAILABLE);
+            RESPONSE_MAP.put(JobOutputMissingException.class, HttpStatus.INTERNAL_SERVER_ERROR);
+            RESPONSE_MAP.put(JobProcessingException.class, HttpStatus.INTERNAL_SERVER_ERROR);
+            RESPONSE_MAP.put(DataIntegrityViolationException.class, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    };
 
     public ErrorHandler(LogManager eventLogger, @Value("${api.retry-after.delay}") int retryAfterDelay, ApiCommon apiCommon) {
         this.eventLogger = eventLogger;
