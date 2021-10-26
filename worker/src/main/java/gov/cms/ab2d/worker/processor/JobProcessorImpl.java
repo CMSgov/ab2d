@@ -2,8 +2,6 @@ package gov.cms.ab2d.worker.processor;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.CoveragePagingResult;
-import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
@@ -12,12 +10,11 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ContractSearchEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
-import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
-import gov.cms.ab2d.worker.processor.coverage.CoverageDriverException;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.postgresql.util.PSQLException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -31,8 +28,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import static gov.cms.ab2d.common.model.JobStatus.FAILED;
@@ -69,7 +64,6 @@ public class JobProcessorImpl implements JobProcessor {
     private final JobRepository jobRepository;
     private final JobOutputRepository jobOutputRepository;
     private final ContractProcessor contractProcessor;
-    private final CoverageDriver coverageDriver;
     private final LogManager eventLogger;
 
     /**
@@ -101,9 +95,17 @@ public class JobProcessorImpl implements JobProcessor {
             }
         } catch (Exception e) {
 
-            // Log exception to relevant loggers
             String contract = job.getContract() != null ? job.getContract().getContractNumber() : "empty";
-            String message = String.format("Job %s failed for contract #%s because %s", jobUuid, contract, e.getMessage());
+            String message;
+            // Says this is always false but that isn't true
+            if (e instanceof PSQLException) {
+                message = "internal server error";
+                log.error("major database exception", e);
+            } else {
+                message = String.format("Job %s failed for contract #%s because %s", jobUuid, contract, e.getMessage());
+            }
+
+            // Log exception to relevant loggers
             eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, FAILED, message), PUBLIC_LIST);
             log.error("Unexpected exception executing job {}", e.getMessage());
 
@@ -134,8 +136,7 @@ public class JobProcessorImpl implements JobProcessor {
 
         try {
             // Retrieve the contract beneficiaries
-            Map<Long, CoverageSummary> patients = processContractBenes(job);
-            var jobOutputs = contractProcessor.process(outputDirPath, job, patients);
+            var jobOutputs = contractProcessor.process(outputDirPath, job);
 
             // For each job output, add to the job and save the result
             jobOutputs.forEach(job::addJobOutput);
@@ -206,42 +207,6 @@ public class JobProcessorImpl implements JobProcessor {
                 progressTracker.getEobsProcessedCount(),
                 eobFilesCreated
         ));
-    }
-
-    Map<Long, CoverageSummary> processContractBenes(Job job) {
-        Contract contract = job.getContract();
-        assert contract != null;
-        try {
-            int numBenes = coverageDriver.numberOfBeneficiariesToProcess(job);
-            jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENTS_EXPECTED, numBenes);
-            Map<Long, CoverageSummary> retMap = new HashMap<>(numBenes);
-
-            CoveragePagingResult result = coverageDriver.pageCoverage(job);
-            addPatients(job.getJobUuid(), result, retMap);
-
-            while (result.getNextRequest().isPresent()) {
-                result = coverageDriver.pageCoverage(result.getNextRequest().get());
-                addPatients(job.getJobUuid(), result, retMap);
-            }
-
-            if (retMap.size() != numBenes) {
-                throw new RuntimeException("expected " + numBenes + " patients from database but only retrieved " + retMap.size());
-            }
-
-            int progress = jobProgressService.getStatus(job.getJobUuid()).getPercentageCompleted();
-            job.setProgress(progress);
-            job.setStatusMessage(progress + "% complete");
-            jobRepository.save(job);
-            return retMap;
-        } catch (CoverageDriverException ex) {
-            log.error("Having issue retrieving patients for contract " + contract.getContractNumber());
-            throw ex;
-        }
-    }
-
-    private void addPatients(String jobId, CoveragePagingResult result, Map<Long, CoverageSummary> beneMap) {
-        jobChannelService.sendUpdate(jobId, JobMeasure.PATIENTS_LOADED, result.getCoverageSummaries().size());
-        result.getCoverageSummaries().forEach(summary -> beneMap.put(summary.getIdentifiers().getBeneficiaryId(), summary));
     }
 
     /**
