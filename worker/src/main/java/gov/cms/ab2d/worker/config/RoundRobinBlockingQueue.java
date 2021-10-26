@@ -6,6 +6,7 @@ import org.springframework.util.Assert;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -26,7 +27,7 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
     private final Map<String, Deque<E>> categoryQueues =
             Collections.synchronizedMap(new LinkedHashMap<>());
     // The current category index
-    private volatile int currentIndex;
+    private AtomicInteger currentIndex = new AtomicInteger();
     // Main lock guarding all access
     private final ReentrantLock lock = new ReentrantLock();
     // Not empty condition on the lock
@@ -291,11 +292,11 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
             if (size() == 0) {
                 return null;
             }
-            if (currentIndex >= categoryQueues.keySet().size()) {
-                currentIndex = 0;
+            if (currentIndex.get() >= categoryQueues.keySet().size()) {
+                currentIndex.set(0);
             }
             String currentContract =
-                    categoryQueues.keySet().stream().collect(Collectors.toList()).get(currentIndex);
+                    categoryQueues.keySet().stream().collect(Collectors.toList()).get(currentIndex.get());
             Deque<E> queue = categoryQueues.get(currentContract);
             E val = queue.poll();
             if (queue.size() == 0) {
@@ -303,7 +304,7 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
                 // current index
                 categoryQueues.remove(currentContract);
             } else {
-                currentIndex++;
+                currentIndex.incrementAndGet();
             }
             return val;
         } finally {
@@ -317,11 +318,11 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
             if (size() == 0) {
                 return null;
             }
-            if (currentIndex >= categoryQueues.keySet().size()) {
-                currentIndex = 0;
+            if (currentIndex.get() >= categoryQueues.keySet().size()) {
+                currentIndex.set(0);
             }
             String currentContract =
-                    categoryQueues.keySet().stream().collect(Collectors.toList()).get(currentIndex);
+                    categoryQueues.keySet().stream().collect(Collectors.toList()).get(currentIndex.get());
             return categoryQueues.get(currentContract).peek();
         } finally {
             lock.unlock();

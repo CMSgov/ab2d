@@ -38,10 +38,10 @@ import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.NDJSON;
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.ZIP;
 
-@SuppressWarnings("PMD.TooManyStaticImports")
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings({"PMD.TooManyStaticImports", "java:S2142"}) //java:S2142: "InterruptedException" should not be ignored
 public class JobProcessorImpl implements JobProcessor {
 
     @Value("${efs.mount}")
