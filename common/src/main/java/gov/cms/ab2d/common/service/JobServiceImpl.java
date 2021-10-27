@@ -217,6 +217,8 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public List<String> getActiveJobIds() {
+        //Sorting with stream so we don't affect existing code that uses findActiveJobsByClient.
+        //Number of jobs returned should be small
         return jobRepository.findActiveJobsByClient(pdpClientService.getCurrentClient()).stream()
                 .sorted(Comparator.comparing(Job::getCreatedAt))
                 .map(Job::getJobUuid).collect(Collectors.toList());
