@@ -98,7 +98,7 @@ public class ApiCommon {
         if (!jobService.checkIfCurrentClientCanAddJob()) {
             String errorMsg = "You already have active export requests in progress. Please wait until they complete before submitting a new one.";
             log.error(errorMsg);
-            throw new TooManyRequestsException(errorMsg);
+            throw new TooManyRequestsException(errorMsg, jobService.getActiveJobIds());
         }
     }
 

@@ -1,5 +1,6 @@
 package gov.cms.ab2d.api.controller.v2;
 
+import gov.cms.ab2d.api.config.SwaggerConfig;
 import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.api.util.SwaggerConstants;
 import gov.cms.ab2d.common.model.Job;
@@ -41,16 +42,23 @@ import static gov.cms.ab2d.api.controller.common.ApiText.CONTRACT_NO;
 import static gov.cms.ab2d.api.controller.common.ApiText.EXPORT_CLAIM;
 import static gov.cms.ab2d.api.controller.common.ApiText.EXPORT_STARTED;
 import static gov.cms.ab2d.api.controller.common.ApiText.EXP_PATIENT_INFO;
+import static gov.cms.ab2d.api.controller.common.ApiText.MAX_JOBS;
 import static gov.cms.ab2d.api.controller.common.ApiText.OUT_FORMAT;
 import static gov.cms.ab2d.api.controller.common.ApiText.PREFER;
+import static gov.cms.ab2d.api.controller.common.ApiText.RUNNING_JOBIDS;
 import static gov.cms.ab2d.api.controller.common.ApiText.SINCE;
 import static gov.cms.ab2d.api.controller.common.ApiText.TYPE_PARAM;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_CONTRACT_EXPORT;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT;
-import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_PREFER;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT_TYPE;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_OUTPUT_FORMAT;
-import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_CONTRACT_EXPORT;
-import static gov.cms.ab2d.common.util.Constants.*;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_PREFER;
+import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
+import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
+import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
+import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
+import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
+import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -82,9 +90,11 @@ public class BulkDataAccessAPIV2 {
             @ApiImplicitParam(name = PREFER, required = true, paramType = "header", value =
                     BULK_PREFER, allowableValues = ASYNC, defaultValue = ASYNC, type = "string")}
     )
-    @ApiResponses(
+    @ApiResponses(value = {
             @ApiResponse(code = 202, message = EXPORT_STARTED, responseHeaders =
-            @ResponseHeader(name = CONTENT_LOCATION, description = BULK_RESPONSE, response = String.class), response = String.class)
+            @ResponseHeader(name = CONTENT_LOCATION, description = BULK_RESPONSE, response = String.class), response = String.class),
+            @ApiResponse(code = 429, message = MAX_JOBS, responseHeaders =
+            @ResponseHeader(name = CONTENT_LOCATION, description = RUNNING_JOBIDS, response = String.class), response = SwaggerConfig.OperationOutcome.class)}
     )
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @GetMapping("/Patient/$export")

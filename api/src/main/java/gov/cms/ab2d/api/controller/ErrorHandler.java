@@ -3,23 +3,29 @@ package gov.cms.ab2d.api.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.okta.jwt.JwtVerificationException;
+import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.api.security.BadJWTTokenException;
+import gov.cms.ab2d.api.security.ClientNotEnabledException;
 import gov.cms.ab2d.api.security.InvalidAuthHeaderException;
 import gov.cms.ab2d.api.security.MissingTokenException;
-import gov.cms.ab2d.api.security.ClientNotEnabledException;
 import gov.cms.ab2d.common.service.InvalidClientInputException;
-import gov.cms.ab2d.common.service.InvalidJobStateTransition;
-import gov.cms.ab2d.common.service.InvalidPropertiesException;
 import gov.cms.ab2d.common.service.InvalidContractException;
 import gov.cms.ab2d.common.service.InvalidJobAccessException;
-import gov.cms.ab2d.common.service.ResourceNotFoundException;
+import gov.cms.ab2d.common.service.InvalidJobStateTransition;
+import gov.cms.ab2d.common.service.InvalidPropertiesException;
 import gov.cms.ab2d.common.service.JobOutputMissingException;
+import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.fhir.FhirVersion;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
@@ -34,13 +40,13 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.HashMap;
 
-import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
+import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
+import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
+import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
+import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
+import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 
 /**
@@ -51,10 +57,12 @@ import static org.springframework.http.HttpHeaders.RETRY_AFTER;
  */
 @ControllerAdvice
 @Slf4j
+@SuppressWarnings("PMD.TooManyStaticImports")
 public class ErrorHandler extends ResponseEntityExceptionHandler {
 
     private final LogManager eventLogger;
     private final int retryAfterDelay;
+    private final ApiCommon apiCommon;
 
     private static final HashMap<Class, HttpStatus> RESPONSE_MAP;
         static {
@@ -79,9 +87,10 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
             RESPONSE_MAP.put(DataIntegrityViolationException.class, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-    public ErrorHandler(LogManager eventLogger, @Value("${api.retry-after.delay}") int retryAfterDelay) {
+    public ErrorHandler(LogManager eventLogger, @Value("${api.retry-after.delay}") int retryAfterDelay, ApiCommon apiCommon) {
         this.eventLogger = eventLogger;
         this.retryAfterDelay = retryAfterDelay;
+        this.apiCommon = apiCommon;
     }
 
     private static HttpStatus getErrorResponse(Class clazz) {
@@ -175,9 +184,28 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<JsonNode> handleTooManyRequestsExceptions(final TooManyRequestsException e, HttpServletRequest request) throws IOException {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add(RETRY_AFTER, Integer.toString(retryAfterDelay));
+        if (e.getJobIds() != null) {
+            generateContentLocation(e, request, httpHeaders);
+        }
         eventLogger.log(new ErrorEvent(MDC.get(ORGANIZATION), UtilMethods.parseJobId(request.getRequestURI()),
                 ErrorEvent.ErrorType.TOO_MANY_STATUS_REQUESTS, "Too many requests performed in too short a time"));
         return generateFHIRError(e, httpHeaders, request);
+    }
+
+    private void generateContentLocation(TooManyRequestsException e, HttpServletRequest request, HttpHeaders httpHeaders) {
+        String contentLocationHeader = e.getJobIds().stream().map(jobId -> {
+            StringBuilder uri = new StringBuilder();
+            if (request.getRequestURI().contains("/api/v2/")) {
+                uri.append(API_PREFIX_V2).append(FHIR_PREFIX).append("/Job/").append(jobId).append("/$status");
+
+            } else {
+                uri.append(API_PREFIX_V1).append(FHIR_PREFIX).append("/Job/").append(jobId).append("/$status");
+            }
+
+            return apiCommon.getUrl(uri.toString(), request);
+        }).collect(Collectors.joining(", "));
+
+        httpHeaders.add(CONTENT_LOCATION, contentLocationHeader);
     }
 
     private ResponseEntity<JsonNode> generateFHIRError(Exception e, HttpServletRequest request) throws IOException {
