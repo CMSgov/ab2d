@@ -177,7 +177,7 @@ public class EndToEndBfdTests {
         ReflectionTestUtils.setField(jobPreProcessor, "skipBillablePeriodCheck", false);
 
         jobProcessor = new JobProcessorImpl(new FileServiceImpl(), jobChannelService, jobProgressService, jobProgressUpdateService,
-                jobRepository, jobOutputRepository, contractProcessor, coverageDriver, logManager);
+                jobRepository, jobOutputRepository, contractProcessor, logManager);
         ReflectionTestUtils.setField(jobProcessor, "failureThreshold", 10);
         ReflectionTestUtils.setField(jobProcessor, "efsMount", path);
 
