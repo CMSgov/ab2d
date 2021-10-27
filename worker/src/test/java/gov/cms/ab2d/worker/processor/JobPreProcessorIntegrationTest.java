@@ -33,6 +33,10 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import static gov.cms.ab2d.common.model.JobStartedBy.DEVELOPER;
+import static gov.cms.ab2d.common.model.SinceSource.AB2D;
+import static gov.cms.ab2d.common.model.SinceSource.FIRST_RUN;
+import static gov.cms.ab2d.common.model.SinceSource.USER;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
@@ -179,7 +183,7 @@ class JobPreProcessorIntegrationTest {
         reallyOldJob.setStatus(JobStatus.SUCCESSFUL);
         reallyOldJob.setStatusMessage("100%");
         reallyOldJob.setPdpClient(pdpClient);
-        reallyOldJob.setStartedBy(JobStartedBy.DEVELOPER);
+        reallyOldJob.setStartedBy(DEVELOPER);
         reallyOldJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         OffsetDateTime reallyOldldJobTime = OffsetDateTime.parse("2020-12-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
         reallyOldJob.setCreatedAt(reallyOldldJobTime);
@@ -198,7 +202,7 @@ class JobPreProcessorIntegrationTest {
 
         Job processedJob = cut.preprocess(newJob.getJobUuid());
         assertEquals(oldJobTime.getNano(), processedJob.getSince().getNano());
-        assertEquals(SinceSource.AB2D, processedJob.getSinceSource());
+        assertEquals(AB2D, processedJob.getSinceSource());
 
         dataSetup.queueForCleanup(oldJob);
         dataSetup.queueForCleanup(reallyOldJob);
@@ -232,7 +236,7 @@ class JobPreProcessorIntegrationTest {
 
         Job processedJob = cut.preprocess(newJob.getJobUuid());
         assertNull(processedJob.getSince());
-        assertEquals(SinceSource.FIRST_RUN, processedJob.getSinceSource());
+        assertEquals(FIRST_RUN, processedJob.getSinceSource());
 
         dataSetup.queueForCleanup(oldJob);
         dataSetup.queueForCleanup(newJob);
@@ -246,7 +250,7 @@ class JobPreProcessorIntegrationTest {
         oldJob.setStatus(JobStatus.SUCCESSFUL);
         oldJob.setStatusMessage("100%");
         oldJob.setPdpClient(pdpClient);
-        oldJob.setStartedBy(JobStartedBy.DEVELOPER);
+        oldJob.setStartedBy(DEVELOPER);
         oldJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         OffsetDateTime oldJobTime = OffsetDateTime.parse("2021-01-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
         oldJob.setCreatedAt(oldJobTime);
@@ -267,7 +271,7 @@ class JobPreProcessorIntegrationTest {
 
         Job processedJob = cut.preprocess(newJob.getJobUuid());
         assertNull(processedJob.getSince());
-        assertEquals(SinceSource.FIRST_RUN, processedJob.getSinceSource());
+        assertEquals(FIRST_RUN, processedJob.getSinceSource());
 
         dataSetup.queueForCleanup(oldJob);
         dataSetup.queueForCleanup(newJob);
@@ -302,7 +306,7 @@ class JobPreProcessorIntegrationTest {
 
         Job processedJob = cut.preprocess(newJob.getJobUuid());
         assertEquals(suppliedSince.getNano(), processedJob.getSince().getNano());
-        assertEquals(SinceSource.USER, processedJob.getSinceSource());
+        assertEquals(USER, processedJob.getSinceSource());
 
         dataSetup.queueForCleanup(oldJob);
         dataSetup.queueForCleanup(newJob);
