@@ -2,13 +2,21 @@ package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.model.*; // NOPMD
 import gov.cms.ab2d.common.repository.JobRepository;
-
 import gov.cms.ab2d.common.util.EventUtils;
-import gov.cms.ab2d.fhir.FhirVersion;
-import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.common.util.JobUtil;
 import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventSummary;
+import gov.cms.ab2d.fhir.FhirVersion;
+import java.io.File;
+import java.net.MalformedURLException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.OffsetDateTime;
+import java.util.Comparator;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -16,14 +24,6 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.File;
-import java.net.MalformedURLException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PROD_LIST;
@@ -217,7 +217,9 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public List<String> getActiveJobIds() {
-        return jobRepository.findActiveJobsByClient(pdpClientService.getCurrentClient()).stream().map(Job::getJobUuid).collect(Collectors.toList());
+        return jobRepository.findActiveJobsByClient(pdpClientService.getCurrentClient()).stream()
+                .sorted(Comparator.comparing(Job::getCreatedAt))
+                .map(Job::getJobUuid).collect(Collectors.toList());
     }
 
     private boolean clientHasNeverCompletedJob(Contract contract) {
