@@ -24,6 +24,7 @@ import gov.cms.ab2d.fhir.FhirVersion;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -192,25 +193,19 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     }
 
     private void generateContentLocation(TooManyRequestsException e, HttpServletRequest request, HttpHeaders httpHeaders) {
-        StringBuilder jobIdHeader = new StringBuilder();
-        for (int i = 0; i < e.getJobIds().size(); i++) {
-           String jobId = e.getJobIds().get(i);
+        String contentLocationHeader = e.getJobIds().stream().map(jobId -> {
+            StringBuilder uri = new StringBuilder();
+            if (request.getRequestURI().contains("/api/v2/")) {
+                uri.append(API_PREFIX_V2).append(FHIR_PREFIX).append("/Job/").append(jobId).append("/$status");
 
-           StringBuilder uri = new StringBuilder();
-           if (request.getRequestURI().contains("/api/v2/")) {
-               uri.append(API_PREFIX_V2).append(FHIR_PREFIX).append("/Job/").append(jobId).append("/$status");
+            } else {
+                uri.append(API_PREFIX_V1).append(FHIR_PREFIX).append("/Job/").append(jobId).append("/$status");
+            }
 
-           } else {
-               uri.append(API_PREFIX_V1).append(FHIR_PREFIX).append("/Job/").append(jobId).append("/$status");
-           }
+            return apiCommon.getUrl(uri.toString(), request);
+        }).collect(Collectors.joining(", "));
 
-            jobIdHeader.append(apiCommon.getUrl(uri.toString(), request));
-
-            if (i < e.getJobIds().size() - 1)
-               jobIdHeader.append(", ");
-        }
-
-        httpHeaders.add(CONTENT_LOCATION, jobIdHeader.toString());
+        httpHeaders.add(CONTENT_LOCATION, contentLocationHeader);
     }
 
     private ResponseEntity<JsonNode> generateFHIRError(Exception e, HttpServletRequest request) throws IOException {
