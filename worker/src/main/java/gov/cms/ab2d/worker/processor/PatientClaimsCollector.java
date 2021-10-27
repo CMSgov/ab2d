@@ -2,6 +2,7 @@ package gov.cms.ab2d.worker.processor;
 
 import com.newrelic.api.agent.NewRelic;
 import gov.cms.ab2d.common.util.FilterOutByDate;
+import gov.cms.ab2d.worker.util.FhirUtils;
 import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.EobUtils;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
@@ -54,6 +55,11 @@ public class PatientClaimsCollector {
 
         // Returns null if bundle is null
         List<IBaseBackboneElement> bundleEntries = BundleUtils.getEntries(bundle);
+        if (bundleEntries == null) {
+            log.error("bundle entries not found for bundle");
+            return;
+        }
+
         rawEobs += bundleEntries.size();
 
         // Perform filtering actions
@@ -67,6 +73,7 @@ public class PatientClaimsCollector {
                 // Remove Plan D
                 .filter(resource -> !EobUtils.isPartD(resource))
                 .filter(this::matchingPatient)
+                .peek(eob -> FhirUtils.addMbiIdsToEobs(eob, claimsRequest.getCoverageSummary(), claimsRequest.getVersion()))
                 // compile the list
                 .forEach(eobs::add);
     }

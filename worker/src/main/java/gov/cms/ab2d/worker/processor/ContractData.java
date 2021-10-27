@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.Getter;
@@ -8,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Future;
 
 @RequiredArgsConstructor
@@ -16,7 +14,6 @@ import java.util.concurrent.Future;
 public class ContractData {
 
     private final Job job;
-    private final Map<Long, CoverageSummary> patients;
     private final StreamHelper streamHelper;
     private final List<Future<EobSearchResult>> eobRequestHandles = new LinkedList<>();
 

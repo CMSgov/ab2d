@@ -5,18 +5,25 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.when;
 
 class TextStreamHelperImplTest {
     @TempDir
@@ -26,7 +33,7 @@ class TextStreamHelperImplTest {
 
     @BeforeEach
     void init() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
@@ -81,7 +88,7 @@ class TextStreamHelperImplTest {
                 null, "C1111", 10, 20, eventLogger, null));
         TextStreamHelperImpl helper = new TextStreamHelperImpl(
                 tmpDirFolder.toPath(), "C1111", 10, 1, eventLogger, null);
-        assertThrows(RuntimeException.class, () -> helper.tryLock(null));
+        assertThrows(NullPointerException.class, () -> helper.tryLock(null));
         helper.close();
     }
 
@@ -181,6 +188,22 @@ class TextStreamHelperImplTest {
 
         // Close helper file
         assertDoesNotThrow(helper::close);
+    }
+
+    @Test
+    void throwTryLockExceptionTest() throws IOException, InterruptedException {
+        TextStreamHelperImpl helper = new TextStreamHelperImpl(
+                tmpDirFolder.toPath(), "C1111", 10, 20, eventLogger, null);
+        Lock lock = Mockito.mock(Lock.class);
+        when(lock.tryLock(anyLong(),any(TimeUnit.class))).thenThrow(InterruptedException.class);
+        RuntimeException e =assertThrows(RuntimeException.class,() -> helper.tryLock(lock));
+        assertEquals("Terminate processing. Unable to acquire lock",e.getMessage());
+
+        when(lock.tryLock(anyLong(),any(TimeUnit.class))).thenReturn(false);
+        e = assertThrows(RuntimeException.class,() -> helper.tryLock(lock));
+        assertEquals("Terminate processing. Unable to acquire lock after waiting 20 seconds.",e.getMessage());
+
+        helper.close();
     }
 
     private void checkStreamOutput(StreamOutput streamOutput) {

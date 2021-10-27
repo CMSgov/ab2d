@@ -1,61 +1,26 @@
-package gov.cms.ab2d.worker.processor;
+package gov.cms.ab2d.worker.util;
 
 import gov.cms.ab2d.common.model.CoverageSummary;
-import gov.cms.ab2d.common.util.fhir.FhirUtils;
+import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.common.util.FilterOutByDate;
-import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
-import gov.cms.ab2d.worker.service.JobChannelService;
 import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.Extension;
-import org.hl7.fhir.instance.model.api.IBaseResource;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.*;
+import java.util.Calendar;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
+import static gov.cms.ab2d.fhir.ExtensionUtils.ID_EXT;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
-import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifier;
-import static gov.cms.ab2d.worker.processor.ContractProcessorImpl.ID_EXT;
-import static gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable.MBI_ID;
+import static gov.cms.ab2d.fhir.PatientIdentifier.MBI_ID;
 import static org.junit.jupiter.api.Assertions.*;
 
-@ExtendWith(MockitoExtension.class)
-public class AddExtensionTest {
+public class FhirUtilsTest {
 
-    @Mock
-    private JobRepository jobRepository;
-
-    @Mock
-    private JobChannelService jobChannelService;
-
-    @Mock
-    private JobProgressService jobProgressService;
-
-    @Mock
-    private PatientClaimsProcessor patientClaimsProcessor;
-
-    @Mock
-    private LogManager eventLogger;
-
-    @Mock
-    private RoundRobinBlockingQueue<PatientClaimsRequest> requestsQueue;
-
-    private ContractProcessorImpl cut;
-
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.initMocks(this);
-        cut = new ContractProcessorImpl(jobRepository, patientClaimsProcessor, eventLogger, requestsQueue,
-                jobChannelService, jobProgressService);
-    }
-
+    @DisplayName("Add mbi to an eob works and adds in expected format")
     @Test
     void testAddMbiIdToEobs() {
         Long beneId = 1234L;
@@ -66,16 +31,11 @@ public class AddExtensionTest {
         org.hl7.fhir.dstu3.model.Reference ref = new org.hl7.fhir.dstu3.model.Reference();
         ref.setReference(patientId);
         b.setPatient(ref);
-        List<IBaseResource> eobs = List.of(b);
         FilterOutByDate.DateRange dateRange = FilterOutByDate.getDateRange(1, 1900, 12,
                 Calendar.getInstance().get(Calendar.YEAR));
 
         CoverageSummary summary = new CoverageSummary(createIdentifier(beneId, mbi), null, List.of(dateRange));
-
-        Map<Long, CoverageSummary> patients = new HashMap<>();
-        patients.put(beneId, summary);
-
-        FhirUtils.addMbiIdsToEobs(eobs, patients, STU3);
+        FhirUtils.addMbiIdsToEobs(b, summary, STU3);
 
         List<org.hl7.fhir.dstu3.model.Extension> extensions = b.getExtension();
 
@@ -90,6 +50,7 @@ public class AddExtensionTest {
         assertEquals(mbi, id.getValue());
     }
 
+    @DisplayName("Add null mbi to eob as null")
     @Test
     void testAddNullMbiIdToEobs() {
         Long beneId = 1234L;
@@ -99,16 +60,12 @@ public class AddExtensionTest {
         org.hl7.fhir.dstu3.model.Reference ref = new org.hl7.fhir.dstu3.model.Reference();
         ref.setReference(patientId);
         b.setPatient(ref);
-        List<IBaseResource> eobs = List.of(b);
         FilterOutByDate.DateRange dateRange = FilterOutByDate.getDateRange(1, 1900, 12,
                 Calendar.getInstance().get(Calendar.YEAR));
 
         CoverageSummary summary = new CoverageSummary(createIdentifier(beneId, null, "HIST_MBI"), null, List.of(dateRange));
 
-        Map<Long, CoverageSummary> patients = new HashMap<>();
-        patients.put(beneId, summary);
-
-        FhirUtils.addMbiIdsToEobs(eobs, patients, STU3);
+        FhirUtils.addMbiIdsToEobs(b, summary, STU3);
 
         List<org.hl7.fhir.dstu3.model.Extension> extensions = b.getExtension();
 
@@ -127,6 +84,7 @@ public class AddExtensionTest {
         assertEquals("historic", c.getCode());
     }
 
+    @DisplayName("Process missing mbi but do not fail")
     @Test
     void testAddNoMbiIdToEobs() {
         Long beneId = 1234L;
@@ -136,16 +94,12 @@ public class AddExtensionTest {
         org.hl7.fhir.dstu3.model.Reference ref = new org.hl7.fhir.dstu3.model.Reference();
         ref.setReference(patientId);
         b.setPatient(ref);
-        List<IBaseResource> eobs = List.of(b);
         FilterOutByDate.DateRange dateRange = FilterOutByDate.getDateRange(1, 1900, 12,
                 Calendar.getInstance().get(Calendar.YEAR));
 
         CoverageSummary summary = new CoverageSummary(createIdentifier(beneId, null), null, List.of(dateRange));
 
-        Map<Long, CoverageSummary> patients = new HashMap<>();
-        patients.put(beneId, summary);
-
-        FhirUtils.addMbiIdsToEobs(eobs, patients, STU3);
+        FhirUtils.addMbiIdsToEobs(b, summary, STU3);
 
         List<org.hl7.fhir.dstu3.model.Extension> extensions = b.getExtension();
 
@@ -153,7 +107,7 @@ public class AddExtensionTest {
         assertEquals(0, extensions.size());
     }
 
-    @DisplayName("Add multiple mbis to a ")
+    @DisplayName("Add multiple mbis to an eob")
     @Test
     void testAddMbiIdsToEobs() {
         Long beneId = 1234L;
@@ -165,16 +119,12 @@ public class AddExtensionTest {
         org.hl7.fhir.dstu3.model.Reference ref = new org.hl7.fhir.dstu3.model.Reference();
         ref.setReference(patientId);
         b.setPatient(ref);
-        List<IBaseResource> eobs = List.of(b);
         FilterOutByDate.DateRange dateRange = FilterOutByDate.getDateRange(1, 1900, 12,
                 Calendar.getInstance().get(Calendar.YEAR));
 
         CoverageSummary summary = new CoverageSummary(createIdentifier(beneId, mbi1, mbi2), null, List.of(dateRange));
 
-        Map<Long, CoverageSummary> patients = new HashMap<>();
-        patients.put(beneId, summary);
-
-        FhirUtils.addMbiIdsToEobs(eobs, patients, STU3);
+        FhirUtils.addMbiIdsToEobs(b, summary, STU3);
 
         List<org.hl7.fhir.dstu3.model.Extension> extensions = b.getExtension();
 
@@ -191,4 +141,9 @@ public class AddExtensionTest {
             assertTrue(id.getValue().equals("456") || id.getValue().equals("789"));
         }
     }
+
+    public static Identifiers createIdentifier(long beneficiaryId, String currentMbi, String... historicMbis) {
+        return new Identifiers(beneficiaryId, currentMbi, new LinkedHashSet<>(Set.of(historicMbis)));
+    }
+
 }

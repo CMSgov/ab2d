@@ -9,6 +9,7 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -26,6 +27,7 @@ import static java.nio.file.StandardOpenOption.APPEND;
  */
 @Slf4j
 @SuppressWarnings("checkstyle:visibilitymodifier")
+@NotThreadSafe
 public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
     public enum FileOutputType {
         NDJSON(".ndjson"),
@@ -47,7 +49,7 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
     protected final Job job;
 
     // Current file counter
-    protected volatile int counter = 1;
+    protected int counter = 1;
 
     // Passed contract number
     protected final String contractNumber;
@@ -57,14 +59,14 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
 
     // Total number of bytes written to the file
     @Getter @Setter
-    private volatile long totalBytesWritten = 0;
+    private long totalBytesWritten = 0;
 
     // Total bytes allowed in the file
     @Getter
     private final long totalBytesAllowed;
 
     // The current output stream
-    protected volatile OutputStream currentStream;
+    protected OutputStream currentStream;
 
     // The time before a lock times out and unlocks
     private final int tryLockTimeout;
@@ -131,12 +133,12 @@ public abstract class StreamHelperImpl implements StreamHelper, AutoCloseable {
     void tryLock(Lock lock) {
         final String errMsg = "Terminate processing. Unable to acquire lock";
         try {
-            final boolean lockAcquired = lock.tryLock(tryLockTimeout, TimeUnit.SECONDS);
+            final boolean lockAcquired = lock.tryLock(tryLockTimeout, TimeUnit.SECONDS); //NOSONAR
             if (!lockAcquired) {
                 final String errMsg1 = errMsg + " after waiting " + tryLockTimeout + " seconds.";
                 throw new RuntimeException(errMsg1);
             }
-        } catch (InterruptedException e) {
+        } catch (InterruptedException e) { //NOSONAR
             throw new RuntimeException(errMsg);
         }
     }

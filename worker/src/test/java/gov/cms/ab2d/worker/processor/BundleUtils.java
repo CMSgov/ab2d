@@ -3,10 +3,13 @@ package gov.cms.ab2d.worker.processor;
 import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.fhir.IdentifierUtils;
 
-import java.util.*;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import static gov.cms.ab2d.fhir.IdentifierUtils.CURRENCY_IDENTIFIER;
-import static gov.cms.ab2d.worker.processor.coverage.CoverageMappingCallable.*;
+import static gov.cms.ab2d.fhir.PatientIdentifier.*;
 
 public class BundleUtils {
 

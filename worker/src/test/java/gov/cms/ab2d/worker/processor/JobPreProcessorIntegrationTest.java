@@ -1,6 +1,8 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
@@ -20,6 +22,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -75,6 +78,7 @@ class JobPreProcessorIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        MockitoAnnotations.openMocks(this);
         LogManager manager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
 
         cut = new JobPreProcessorImpl(jobRepository, manager, coverageDriver, false);
