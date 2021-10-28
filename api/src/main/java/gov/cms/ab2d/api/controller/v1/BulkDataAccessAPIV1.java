@@ -116,14 +116,17 @@ public class BulkDataAccessAPIV1 {
         return apiCommon.returnStatusForJobCreation(job, API_PREFIX_V1, (String) request.getAttribute(REQUEST_ID), request);
     }
 
+    @Deprecated
     @ApiOperation(value = BULK_CONTRACT_EXPORT,
             authorizations = {
                     @Authorization(value = AUTHORIZATION, scopes = { @AuthorizationScope(description = EXPORT_CLAIM, scope = AUTHORIZATION) })
             })
-    @ApiResponses(
+    @ApiResponses({
             @ApiResponse(code = 202, message = EXPORT_STARTED, responseHeaders =
             @ResponseHeader(name = CONTENT_LOCATION, description = BULK_RESPONSE_LONG,
-                    response = String.class), response = String.class)
+                    response = String.class), response = String.class),
+            @ApiResponse(code = 429, message = MAX_JOBS, responseHeaders =
+            @ResponseHeader(name = CONTENT_LOCATION, description = RUNNING_JOBIDS, response = String.class), response = SwaggerConfig.OperationOutcome.class)}
     )
     // todo: This endpoint no longer makes sense in the new model where one Okta credential maps to one Contract
     @ResponseStatus(value = HttpStatus.ACCEPTED)
