@@ -38,6 +38,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static gov.cms.ab2d.api.controller.JobCompletedResponse.CHECKSUM_STRING;
@@ -192,12 +193,13 @@ public class BulkDataAccessAPIIntegrationTests {
     public void testPatientExportDuplicateSubmission() throws Exception {
         createMaxJobs();
 
-        this.mockMvc.perform(
+        MvcResult mvcResult = this.mockMvc.perform(
                 get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                         .andExpect(status().is(429))
                         .andExpect(header().string("Retry-After", "30"))
-                        .andExpect(header().doesNotExist(X_PROG));
+                        .andExpect(header().doesNotExist(X_PROG))
+                        .andReturn();
         List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
         assertEquals(MAX_JOBS_PER_CLIENT + 1, apiRequestEvents.size());
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
@@ -222,6 +224,9 @@ public class BulkDataAccessAPIIntegrationTests {
                 loggerEventRepository.load(ReloadEvent.class),
                 loggerEventRepository.load(ContractSearchEvent.class),
                 loggerEventRepository.load(FileEvent.class)));
+
+        assertEquals(MAX_JOBS_PER_CLIENT, Objects.requireNonNull(mvcResult.getResponse().getHeader(CONTENT_LOCATION))
+                .split(",").length);
     }
 
     @Test
@@ -255,7 +260,9 @@ public class BulkDataAccessAPIIntegrationTests {
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(429))
                 .andExpect(header().string("Retry-After", "30"))
-                .andExpect(header().doesNotExist(X_PROG));
+                .andExpect(header().doesNotExist(X_PROG))
+                .andExpect(header().exists(CONTENT_LOCATION));
+        ;
     }
 
     @Test
@@ -514,7 +521,8 @@ public class BulkDataAccessAPIIntegrationTests {
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(429))
                 .andExpect(header().string("Retry-After", "30"))
-                .andExpect(header().doesNotExist("X-Progress"));
+                .andExpect(header().doesNotExist("X-Progress"))
+                .andExpect(header().doesNotExist(CONTENT_LOCATION));
     }
 
     @Test
@@ -545,7 +553,9 @@ public class BulkDataAccessAPIIntegrationTests {
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(429))
                 .andExpect(header().string("Retry-After", "30"))
-                .andExpect(header().doesNotExist("X-Progress"));
+                .andExpect(header().doesNotExist("X-Progress"))
+                .andExpect(header().doesNotExist(CONTENT_LOCATION));
+        ;
     }
 
     @Test
@@ -1195,7 +1205,8 @@ public class BulkDataAccessAPIIntegrationTests {
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(429))
                 .andExpect(header().string("Retry-After", "30"))
-                .andExpect(header().doesNotExist("X-Progress"));
+                .andExpect(header().doesNotExist("X-Progress"))
+                .andExpect(header().exists(CONTENT_LOCATION));
     }
 
     @Test
@@ -1215,7 +1226,9 @@ public class BulkDataAccessAPIIntegrationTests {
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(429))
                 .andExpect(header().string("Retry-After", "30"))
-                .andExpect(header().doesNotExist("X-Progress"));
+                .andExpect(header().doesNotExist("X-Progress"))
+                .andExpect(header().exists(CONTENT_LOCATION));
+
     }
 
     @Test
