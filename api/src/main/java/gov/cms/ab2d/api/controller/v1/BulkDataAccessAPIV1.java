@@ -1,7 +1,7 @@
 package gov.cms.ab2d.api.controller.v1;
 
-import gov.cms.ab2d.api.config.SwaggerConfig;
 import gov.cms.ab2d.api.controller.common.ApiCommon;
+import gov.cms.ab2d.api.util.SwaggerConstants;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.service.JobService;
 import io.swagger.annotations.Api;
@@ -19,10 +19,6 @@ import org.slf4j.MDC;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.NotBlank;
-import java.time.OffsetDateTime;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -31,9 +27,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.NotBlank;
+import java.time.OffsetDateTime;
 
 import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
 import static gov.cms.ab2d.api.controller.common.ApiText.ASYNC;
+import static gov.cms.ab2d.api.controller.common.ApiText.TYPE_PARAM;
 import static gov.cms.ab2d.api.controller.common.ApiText.BULK_RESPONSE;
 import static gov.cms.ab2d.api.controller.common.ApiText.BULK_RESPONSE_LONG;
 import static gov.cms.ab2d.api.controller.common.ApiText.BULK_SINCE;
@@ -41,18 +41,14 @@ import static gov.cms.ab2d.api.controller.common.ApiText.CONTRACT_NO;
 import static gov.cms.ab2d.api.controller.common.ApiText.EXPORT_CLAIM;
 import static gov.cms.ab2d.api.controller.common.ApiText.EXPORT_STARTED;
 import static gov.cms.ab2d.api.controller.common.ApiText.EXP_PATIENT_INFO;
-import static gov.cms.ab2d.api.controller.common.ApiText.MAX_JOBS;
 import static gov.cms.ab2d.api.controller.common.ApiText.OUT_FORMAT;
 import static gov.cms.ab2d.api.controller.common.ApiText.PREFER;
-import static gov.cms.ab2d.api.controller.common.ApiText.RUNNING_JOBIDS;
 import static gov.cms.ab2d.api.controller.common.ApiText.SINCE;
-import static gov.cms.ab2d.api.controller.common.ApiText.TYPE_PARAM;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_CONTRACT_EXPORT;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT;
-import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT_TYPE;
-import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_MAIN;
-import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_OUTPUT_FORMAT;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_PREFER;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT_TYPE;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_OUTPUT_FORMAT;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
@@ -68,7 +64,7 @@ import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
  * The sole REST controller for AB2D's implementation of the FHIR Bulk Data API specification.
  */
 @Slf4j
-@Api(value = "Bulk Data Access API", description = BULK_MAIN, tags = {"Export"})
+@Api(value = "Bulk Data Access API", description = SwaggerConstants.BULK_MAIN, tags = {"Export"})
 @RestController
 @RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX, produces = {APPLICATION_JSON})
 @SuppressWarnings({"PMD.TooManyStaticImports", "PMD.UnusedImports"})
@@ -81,21 +77,19 @@ public class BulkDataAccessAPIV1 {
         this.apiCommon = apiCommon;
     }
 
-    @ResponseStatus(value = HttpStatus.ACCEPTED)
+    @ApiOperation(value = BULK_EXPORT,
+        authorizations = {
+            @Authorization(value = AUTHORIZATION, scopes = { @AuthorizationScope(description = EXP_PATIENT_INFO, scope = AUTHORIZATION) })
+        })
     @ApiImplicitParams(value = {
             @ApiImplicitParam(name = PREFER, required = true, paramType = "header", value =
                     BULK_PREFER, allowableValues = ASYNC, defaultValue = ASYNC, type = "string")}
     )
-    @ApiResponses(value = {
+    @ApiResponses(
             @ApiResponse(code = 202, message = EXPORT_STARTED, responseHeaders =
-            @ResponseHeader(name = CONTENT_LOCATION, description = BULK_RESPONSE, response = String.class), response = String.class),
-            @ApiResponse(code = 429, message = MAX_JOBS, responseHeaders =
-            @ResponseHeader(name = CONTENT_LOCATION, description = RUNNING_JOBIDS, response = String.class), response = SwaggerConfig.OperationOutcome.class)}
+            @ResponseHeader(name = CONTENT_LOCATION, description = BULK_RESPONSE, response = String.class), response = String.class)
     )
-    @ApiOperation(value = BULK_EXPORT,
-            authorizations = {
-                    @Authorization(value = AUTHORIZATION, scopes = { @AuthorizationScope(description = EXP_PATIENT_INFO, scope = AUTHORIZATION) })
-            })
+    @ResponseStatus(value = HttpStatus.ACCEPTED)
     @GetMapping("/Patient/$export")
     public ResponseEntity<Void> exportAllPatients(
             HttpServletRequest request,

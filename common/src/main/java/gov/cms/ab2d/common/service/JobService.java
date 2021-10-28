@@ -7,7 +7,6 @@ import org.springframework.core.io.Resource;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.time.OffsetDateTime;
-import java.util.List;
 
 public interface JobService {
     String ZIPFORMAT = "application/zip";
@@ -27,6 +26,4 @@ public interface JobService {
     void deleteFileForJob(File file, String jobUuid);
 
     boolean checkIfCurrentClientCanAddJob();
-
-    List<String> getActiveJobIds();
 }
