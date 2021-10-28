@@ -26,7 +26,7 @@ public final class SwaggerConstants {
             "requested bulk data files to be generated. Currently, only application/fhir+json and " + ZIPFORMAT +
             " are supported.";
 
-    public static final String BULK_CONTRACT_EXPORT = "Initiate Part A & B bulk claim export job for a given contract number";
+    public static final String BULK_CONTRACT_EXPORT = "Initiate Part A & B bulk claim export job for a given contract number, DEPRECATED";
     public static final String BULK_CANCEL = "Cancel a pending or in progress export job";
     public static final String BULK_EXPORT = "Initiate Part A & B bulk claim export job";
 }
