@@ -115,6 +115,8 @@
                         </goals>
                     </execution>
                 </executions>
+                <!-- We want to use worker as both an executable and as a source jar for the e2e-bfd-test code so
+                have a copy with the exe extension for the executable jar, but don't override the source jar -->
                 <configuration>
                     <executable>true</executable>
                     <classifier>exe</classifier>

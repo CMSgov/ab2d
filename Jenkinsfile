@@ -80,19 +80,7 @@ pipeline {
         stage('Run unit and integration tests') {
 
             steps {
-                 withCredentials([file(credentialsId: 'SANDBOX_BFD_KEYSTORE', variable: 'SANDBOX_BFD_KEYSTORE'),
-                             string(credentialsId: 'SANDBOX_BFD_KEYSTORE_PASSWORD', variable: 'AB2D_BFD_KEYSTORE_PASSWORD')]) {
                      sh '''
-                         export AB2D_BFD_KEYSTORE_LOCATION="$WORKSPACE/opt/ab2d/ab2d_bfd_keystore"
-
-                         cp $SANDBOX_BFD_KEYSTORE $AB2D_BFD_KEYSTORE_LOCATION
-
-                         test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
-
-                         chmod 666 $AB2D_BFD_KEYSTORE_LOCATION
-
-                         ls -la $AB2D_BFD_KEYSTORE_LOCATION
-
                          export AB2D_EFS_MOUNT="${AB2D_HOME}"
                          mvn test -pl eventlogger,fhir,common,api,worker,bfd,filter,audit,hpms
                      '''
@@ -125,10 +113,10 @@ pipeline {
                 }
             }
         }
-	       stage('SonarQube Analysis') {
+	    stage('SonarQube Analysis') {
             steps {
-            git branch: 'master', credentialsId: 'GITHUB_AB2D_JENKINS_PAT', url: env.GIT_URL
-            git branch: env.BRANCH_NAME, credentialsId: 'GITHUB_AB2D_JENKINS_PAT', url: env.GIT_URL
+                git branch: 'master', credentialsId: 'GITHUB_AB2D_JENKINS_PAT', url: env.GIT_URL
+                git branch: env.BRANCH_NAME, credentialsId: 'GITHUB_AB2D_JENKINS_PAT', url: env.GIT_URL
                 // Automatically saves the an id for the SonarQube build
                 withSonarQubeEnv('CMSSonar') {
                     sh '''mvn sonar:sonar -Dsonar.projectKey=ab2d-project -DskipTests'''

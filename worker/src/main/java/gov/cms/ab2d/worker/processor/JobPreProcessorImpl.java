@@ -59,7 +59,8 @@ public class JobPreProcessorImpl implements JobPreProcessor {
             throw new IllegalArgumentException(errMsg);
         }
 
-        if (job.getSince() != null) {
+        Optional sinceValue = Optional.ofNullable(job.getSince());
+        if (sinceValue.isPresent()) {
             // If the user provided a 'since' value
             job.setSinceSource(SinceSource.USER);
             jobRepository.save(job);

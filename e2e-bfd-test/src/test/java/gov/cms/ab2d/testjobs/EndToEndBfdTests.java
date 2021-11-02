@@ -1,6 +1,6 @@
 package gov.cms.ab2d.testjobs;
 
-import gov.cms.ab2d.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.Contract;
@@ -51,6 +51,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -65,6 +66,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
@@ -72,6 +74,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.BlockingQueue;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -141,12 +144,13 @@ public class EndToEndBfdTests {
     @Autowired
     private LoggerEventSummary logEventSummary;
 
+    @TempDir
+    File path;
+
     private JobService jobService;
     private CoverageDriver coverageDriver;
     private JobPreProcessor jobPreProcessor;
     private JobProcessor jobProcessor;
-
-    private final String path = System.getProperty("java.io.tmpdir");
 
     private static final String CONTRACT_TO_USE = "Z1007";
     private static final String CONTRACT_TO_USE_CLIENT_ID = "KtmekgkCTalQkGue2B-0Z0hGC1Dk7khtJ30XMI3J";
@@ -154,6 +158,7 @@ public class EndToEndBfdTests {
     @BeforeEach
     void setUp() {
 
+        /* These properties are set to improve performance of this test */
         PropertiesDTO coreClaimsPool = new PropertiesDTO();
         coreClaimsPool.setKey(Constants.PCP_CORE_POOL_SIZE);
         coreClaimsPool.setValue("20");
@@ -172,14 +177,14 @@ public class EndToEndBfdTests {
                 propertiesService, coverageProcessor, coverageLockWrapper);
 
         // Instantiate the job processors
-        jobService = new JobServiceImpl(pdpClientService, jobRepository, jobOutputService, logManager, logEventSummary, path);
+        jobService = new JobServiceImpl(pdpClientService, jobRepository, jobOutputService, logManager, logEventSummary, path.getAbsolutePath());
         jobPreProcessor = new JobPreProcessorImpl(jobRepository, logManager, coverageDriver, false);
         ReflectionTestUtils.setField(jobPreProcessor, "skipBillablePeriodCheck", false);
 
         jobProcessor = new JobProcessorImpl(new FileServiceImpl(), jobChannelService, jobProgressService, jobProgressUpdateService,
                 jobRepository, jobOutputRepository, contractProcessor, logManager);
         ReflectionTestUtils.setField(jobProcessor, "failureThreshold", 10);
-        ReflectionTestUtils.setField(jobProcessor, "efsMount", path);
+        ReflectionTestUtils.setField(jobProcessor, "efsMount", path.getAbsolutePath());
 
         // Set up the PDP client
     }
@@ -219,7 +224,7 @@ public class EndToEndBfdTests {
         firstJob = jobProcessor.process(firstJob.getJobUuid());
         List<JobOutput> jobOutputs1 = firstJob.getJobOutputs();
         assertNotNull(jobOutputs1);
-        Assertions.assertEquals(JobStatus.SUCCESSFUL, firstJob.getStatus());
+        assertEquals(JobStatus.SUCCESSFUL, firstJob.getStatus());
         assertTrue(jobOutputs1.size() > 0);
         jobOutputs1.forEach(f -> downloadFile(path, firstJobId, f.getFilePath()));
     }
@@ -295,15 +300,15 @@ public class EndToEndBfdTests {
         }
 
         // Wait for all the searches to be done
-        while (((CoverageProcessorImpl) coverageProcessor).getNumberInProgressMappings() > 0) {
-            System.out.println("\n************** " + ((CoverageProcessorImpl) coverageProcessor).getNumberInProgressMappings() + " num searches still to do\n");
+        while (numberOfInProgressMappings() > 0) {
+            System.out.println("\n************** " + numberOfInProgressMappings() + " num searches still to do\n");
             ((CoverageProcessorImpl) coverageProcessor).monitorMappingJobs();
             Thread.sleep(1000);
         }
 
         // Wait for all the inserts to be done
-        while (((CoverageProcessorImpl) coverageProcessor).getNumberCoverageInsertion() > 0) {
-            System.out.println("\n************** " + ((CoverageProcessorImpl) coverageProcessor).getNumberCoverageInsertion() + " num inserts still to do\n");
+        while (numberCoverageInsertion() > 0) {
+            System.out.println("\n************** " + numberCoverageInsertion() + " num inserts still to do\n");
             ((CoverageProcessorImpl) coverageProcessor).insertJobResults();
             Thread.sleep(1000);
         }
@@ -311,6 +316,16 @@ public class EndToEndBfdTests {
         long endTime = System.currentTimeMillis();
         long timeToProcess = endTime - startTime;
         System.out.println("\n*************** It took " + ((double) timeToProcess) / 1000 + " seconds to load coverage data\n");
+    }
+
+    private int numberOfInProgressMappings() {
+        List list = (List) ReflectionTestUtils.getField(coverageProcessor, "inProgressMappings");
+        return list.size();
+    }
+
+    private int numberCoverageInsertion() {
+        BlockingQueue queue = (BlockingQueue) ReflectionTestUtils.getField(coverageProcessor, "coverageInsertionQueue");
+        return queue.size();
     }
 
     private Contract getContract() {
