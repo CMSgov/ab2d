@@ -80,12 +80,11 @@ pipeline {
         stage('Run unit and integration tests') {
 
             steps {
-                     sh '''
-                         export AB2D_EFS_MOUNT="${AB2D_HOME}"
-                         mvn test -pl eventlogger,fhir,common,api,worker,bfd,filter,audit,hpms
-                     '''
-                 }
-             }
+                sh '''
+                    export AB2D_EFS_MOUNT="${AB2D_HOME}"
+                    mvn test -pl eventlogger,fhir,common,api,worker,bfd,filter,audit,hpms
+                '''
+            }
         }
 
         stage('Run e2e-bfd-test') {
