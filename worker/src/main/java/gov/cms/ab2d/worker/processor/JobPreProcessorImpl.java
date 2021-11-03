@@ -32,14 +32,12 @@ public class JobPreProcessorImpl implements JobPreProcessor {
     private final JobRepository jobRepository;
     private final LogManager eventLogger;
     private final CoverageDriver coverageDriver;
-    private final boolean skipBillablePeriodCheck;
 
     public JobPreProcessorImpl(JobRepository jobRepository, LogManager logManager,
-                        CoverageDriver coverageDriver, @Value("${claims.skipBillablePeriodCheck}") boolean skipBillablePeriodCheck) {
+                        CoverageDriver coverageDriver) {
         this.jobRepository = jobRepository;
         this.eventLogger = logManager;
         this.coverageDriver = coverageDriver;
-        this.skipBillablePeriodCheck = skipBillablePeriodCheck;
     }
 
     @Override
@@ -64,10 +62,16 @@ public class JobPreProcessorImpl implements JobPreProcessor {
             // If the user provided a 'since' value
             job.setSinceSource(SinceSource.USER);
             jobRepository.save(job);
-        } else if (job.getFhirVersion().supportDefaultSince() && !skipBillablePeriodCheck) {
-            // If the user did not, but this version supports a default 'since', populate it
-            job = updateSinceTime(job);
-            jobRepository.save(job);
+        } else if (job.getFhirVersion().supportDefaultSince()) {
+            boolean hasDateIssue = false;
+            if (job.getContract() != null) {
+                hasDateIssue = job.getContract().hasTestDateIssues();
+            }
+            if (!hasDateIssue) {
+                // If the user did not, but this version supports a default 'since', populate it
+                job = updateSinceTime(job);
+                jobRepository.save(job);
+            }
         }
 
         try {

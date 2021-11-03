@@ -50,7 +50,7 @@ class JobPreProcessorUnitTest {
 
     @BeforeEach
     void setUp() {
-        cut = new JobPreProcessorImpl(jobRepository, eventLogger, coverageDriver, false);
+        cut = new JobPreProcessorImpl(jobRepository, eventLogger, coverageDriver);
         job = createJob();
     }
 

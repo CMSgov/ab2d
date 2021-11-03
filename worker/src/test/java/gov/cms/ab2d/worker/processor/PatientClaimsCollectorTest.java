@@ -71,7 +71,7 @@ public class PatientClaimsCollectorTest {
         PatientClaimsRequest request = new PatientClaimsRequest(coverageSummary, LATER_ATT_DATE, null, "client", "job",
                 "contractNum", noOpToken, STU3);
 
-        PatientClaimsCollector collector = new PatientClaimsCollector(request, true, EPOCH);
+        PatientClaimsCollector collector = new PatientClaimsCollector(request, EPOCH);
 
         collector.filterAndAddEntries(BUNDLE);
         assertEquals(1, collector.getEobs().size());
@@ -82,7 +82,7 @@ public class PatientClaimsCollectorTest {
         request = new PatientClaimsRequest(coverageSummary, LATER_ATT_DATE, null, "client", "job",
                 "contractNum", noOpToken, STU3);
 
-        collector = new PatientClaimsCollector(request, false, EPOCH);
+        collector = new PatientClaimsCollector(request, EPOCH);
         collector.filterAndAddEntries(BUNDLE);
         assertTrue(collector.getEobs().isEmpty());
     }
@@ -97,7 +97,7 @@ public class PatientClaimsCollectorTest {
         PatientClaimsRequest request = new PatientClaimsRequest(coverageSummary, LATER_ATT_DATE, null, "client", "job",
                 "contractNum", noOpToken, STU3);
 
-        PatientClaimsCollector collector = new PatientClaimsCollector(request, false, EPOCH);
+        PatientClaimsCollector collector = new PatientClaimsCollector(request, EPOCH);
         collector.filterAndAddEntries(BUNDLE);
         assertTrue(collector.getEobs().isEmpty());
 
@@ -106,7 +106,7 @@ public class PatientClaimsCollectorTest {
         request = new PatientClaimsRequest(coverageSummary, LATER_ATT_DATE, null, "client", "job",
                 "contractNum", noOpToken, STU3);
 
-        collector = new PatientClaimsCollector(request, true, EPOCH);
+        collector = new PatientClaimsCollector(request, EPOCH);
         collector.filterAndAddEntries(BUNDLE);
         assertEquals(1, collector.getEobs().size());
 
@@ -121,7 +121,7 @@ public class PatientClaimsCollectorTest {
         PatientClaimsRequest request = new PatientClaimsRequest(coverageSummary, EARLY_ATT_DATE, null, "client", "job",
                 "contractNum", noOpToken, STU3);
 
-        PatientClaimsCollector collector = new PatientClaimsCollector(request, false, EPOCH);
+        PatientClaimsCollector collector = new PatientClaimsCollector(request, EPOCH);
         collector.filterAndAddEntries(BUNDLE);
         assertEquals(1, collector.getEobs().size());
     }
@@ -141,7 +141,7 @@ public class PatientClaimsCollectorTest {
 
             PatientClaimsRequest request = new PatientClaimsRequest(coverageSummary, OffsetDateTime.now().minusYears(100), null, "client", "job",
                     "contractNum", noOpToken, STU3);
-            PatientClaimsCollector collector = new PatientClaimsCollector(request, false, EPOCH);
+            PatientClaimsCollector collector = new PatientClaimsCollector(request, EPOCH);
             collector.filterAndAddEntries(oldBundle);
             assertTrue(collector.getEobs().isEmpty());
         } catch (ParseException pe) {
@@ -165,7 +165,7 @@ public class PatientClaimsCollectorTest {
 
             PatientClaimsRequest request = new PatientClaimsRequest(coverageSummary, OffsetDateTime.now().minusYears(100), null, "client", "job",
                     "contractNum", noOpToken, STU3);
-            PatientClaimsCollector collector = new PatientClaimsCollector(request, false, EPOCH);
+            PatientClaimsCollector collector = new PatientClaimsCollector(request, EPOCH);
             collector.filterAndAddEntries(oldBundle);
             assertTrue(collector.getEobs().isEmpty());
         } catch (ParseException pe) {
@@ -189,7 +189,7 @@ public class PatientClaimsCollectorTest {
 
             PatientClaimsRequest request = new PatientClaimsRequest(coverageSummary, OffsetDateTime.now().minusYears(100), null, "client", "job",
                     "contractNum", noOpToken, STU3);
-            PatientClaimsCollector collector = new PatientClaimsCollector(request, false, EPOCH);
+            PatientClaimsCollector collector = new PatientClaimsCollector(request, EPOCH);
             collector.filterAndAddEntries(oldBundle);
             assertEquals(1, collector.getEobs().size());
         } catch (ParseException pe) {
@@ -213,7 +213,7 @@ public class PatientClaimsCollectorTest {
 
             PatientClaimsRequest request = new PatientClaimsRequest(coverageSummary, OffsetDateTime.now(), null, "client", "job",
                     "contractNum", noOpToken, STU3);
-            PatientClaimsCollector collector = new PatientClaimsCollector(request, false, EPOCH);
+            PatientClaimsCollector collector = new PatientClaimsCollector(request, EPOCH);
             collector.filterAndAddEntries(oldBundle);
             assertTrue(collector.getEobs().isEmpty());
         } catch (ParseException pe) {
@@ -231,7 +231,7 @@ public class PatientClaimsCollectorTest {
 
         PatientClaimsRequest request = new PatientClaimsRequest(coverageSummary, OffsetDateTime.now(), null, "client", "job",
                 "contractNum", noOpToken, STU3);
-        PatientClaimsCollector collector = new PatientClaimsCollector(request, false, EPOCH);
+        PatientClaimsCollector collector = new PatientClaimsCollector(request, EPOCH);
         collector.filterAndAddEntries(null);
         assertTrue(collector.getEobs().isEmpty());
     }
@@ -252,7 +252,7 @@ public class PatientClaimsCollectorTest {
 
             PatientClaimsRequest request = new PatientClaimsRequest(coverageSummary, OffsetDateTime.now(), null, "client", "job",
                     "contractNum", noOpToken, STU3);
-            PatientClaimsCollector collector = new PatientClaimsCollector(request, false, EPOCH);
+            PatientClaimsCollector collector = new PatientClaimsCollector(request, EPOCH);
             collector.filterAndAddEntries(null);
             assertTrue(collector.getEobs().isEmpty());
         } catch (ParseException pe) {

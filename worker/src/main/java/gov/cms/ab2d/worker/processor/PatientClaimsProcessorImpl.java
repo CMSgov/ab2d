@@ -36,9 +36,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     private final BFDClient bfdClient;
     private final LogManager logManager;
 
-    @Value("${claims.skipBillablePeriodCheck}")
-    private boolean skipBillablePeriodCheck;
-
     @Value("${bfd.earliest.data.date:01/01/2020}")
     private String earliestDataDate;
 
@@ -70,7 +67,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         OffsetDateTime requestStartTime = OffsetDateTime.now();
 
         Date earliestDate = getEarliestDataDate();
-        PatientClaimsCollector collector = new PatientClaimsCollector(request, skipBillablePeriodCheck, earliestDate);
+        PatientClaimsCollector collector = new PatientClaimsCollector(request, earliestDate);
 
         CoverageSummary patient = request.getCoverageSummary();
         long beneficiaryId = patient.getIdentifiers().getBeneficiaryId();

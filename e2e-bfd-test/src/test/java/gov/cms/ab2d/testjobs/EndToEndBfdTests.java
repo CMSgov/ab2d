@@ -178,8 +178,7 @@ public class EndToEndBfdTests {
 
         // Instantiate the job processors
         jobService = new JobServiceImpl(pdpClientService, jobRepository, jobOutputService, logManager, logEventSummary, path.getAbsolutePath());
-        jobPreProcessor = new JobPreProcessorImpl(jobRepository, logManager, coverageDriver, false);
-        ReflectionTestUtils.setField(jobPreProcessor, "skipBillablePeriodCheck", false);
+        jobPreProcessor = new JobPreProcessorImpl(jobRepository, logManager, coverageDriver);
 
         jobProcessor = new JobProcessorImpl(new FileServiceImpl(), jobChannelService, jobProgressService, jobProgressUpdateService,
                 jobRepository, jobOutputRepository, contractProcessor, logManager);

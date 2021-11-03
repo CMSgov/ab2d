@@ -5,8 +5,6 @@ pipeline {
         SECONDARY_USER_OKTA_CLIENT_ID = credentials('SECONDARY_USER_OKTA_CLIENT_ID')
         SECONDARY_USER_OKTA_CLIENT_PASSWORD = credentials('SECONDARY_USER_OKTA_CLIENT_PASSWORD')
 
-        AB2D_CLAIMS_SKIP_BILLABLE_PERIOD_CHECK = true
-
         // Get code climate id
         CC_TEST_REPORTER_ID = credentials('CC_TEST_REPORTER_ID')
 

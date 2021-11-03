@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
 import com.newrelic.api.agent.NewRelic;
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.util.FilterOutByDate;
 import gov.cms.ab2d.worker.util.FhirUtils;
 import gov.cms.ab2d.fhir.BundleUtils;
@@ -20,7 +21,6 @@ public class PatientClaimsCollector {
     private static final String EOB_REQUEST_EVENT = "EobBundleRequests";
 
     private final PatientClaimsRequest claimsRequest;
-    private final boolean skipBillablePeriodCheck;
     private final Date attestationDate;
     private final Date earliestDate;
 
@@ -29,9 +29,8 @@ public class PatientClaimsCollector {
 
     private final List<IBaseResource> eobs;
 
-    public PatientClaimsCollector(PatientClaimsRequest claimsRequest, boolean skipBillablePeriodCheck, Date earliestDate) {
+    public PatientClaimsCollector(PatientClaimsRequest claimsRequest, Date earliestDate) {
         this.claimsRequest = claimsRequest;
-        this.skipBillablePeriodCheck = skipBillablePeriodCheck;
 
         long epochMilli = claimsRequest.getAttTime().toInstant().toEpochMilli();
         this.attestationDate = new Date(epochMilli);
@@ -65,7 +64,7 @@ public class PatientClaimsCollector {
         // Perform filtering actions
         BundleUtils.getEobResources(bundleEntries).stream()
                 // Filter by date
-                .filter(resource -> skipBillablePeriodCheck || FilterOutByDate.valid(resource, attestationDate, earliestDate, claimsRequest.getCoverageSummary().getDateRanges()))
+                .filter(resource -> Contract.hasTestDateIssues(claimsRequest.getContractNum()) || FilterOutByDate.valid(resource, attestationDate, earliestDate, claimsRequest.getCoverageSummary().getDateRanges()))
                 // filter it
                 .map(ExplanationOfBenefitTrimmer::getBenefit)
                 // Remove any empty values

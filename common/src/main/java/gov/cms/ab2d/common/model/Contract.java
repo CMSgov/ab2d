@@ -119,4 +119,25 @@ public class Contract extends TimestampBase {
         attestedOn = OffsetDateTime.parse(dateWithTZ, FORMATTER);
         return true;
     }
+
+
+    public boolean isSyntheaContract() {
+        return isSyntheaContract(this.contractNumber);
+    }
+
+    public boolean hasTestDateIssues() {
+        return hasTestDateIssues(this.contractNumber);
+    }
+
+    public static boolean hasTestDateIssues(String contractNumber) {
+        return isTestContract(contractNumber) && !isSyntheaContract(contractNumber);
+    }
+
+    public static boolean isTestContract(String contractNumber) {
+        return contractNumber.startsWith("Z");
+    }
+
+    public static boolean isSyntheaContract(String contractNumber) {
+        return contractNumber.startsWith("Z1");
+    }
 }
