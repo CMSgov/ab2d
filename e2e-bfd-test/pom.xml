@@ -8,7 +8,7 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>e2e-patient-test</artifactId>
+    <artifactId>e2e-bfd-test</artifactId>
 
     <properties>
         <project.root>${basedir}/..</project.root>
@@ -23,6 +23,23 @@
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>bfd</artifactId>
             <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>gov.cms.ab2d</groupId>
+            <artifactId>worker</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>gov.cms.ab2d</groupId>
+            <artifactId>common</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>gov.cms.ab2d</groupId>
+            <artifactId>common</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <type>test-jar</type>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

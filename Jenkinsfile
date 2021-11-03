@@ -87,7 +87,7 @@ pipeline {
             }
         }
 
-        stage('Run e2e-patient-test') {
+        stage('Run e2e-bfd-test') {
 
             steps {
 
@@ -105,17 +105,17 @@ pipeline {
 
                         ls -la $AB2D_BFD_KEYSTORE_LOCATION
 
-                        export AB2D_V2_ENABLED=false
+                        export AB2D_V2_ENABLED=true
 
-                        mvn test -pl e2e-patient-test -am -Dtest=PatientEndpointTests -DfailIfNoTests=false
+                        mvn test -pl e2e-bfd-test -am -Dtest=EndToEndBfdTests -DfailIfNoTests=false
                     '''
                 }
             }
         }
-	       stage('SonarQube Analysis') {
+	    stage('SonarQube Analysis') {
             steps {
-            git branch: 'master', credentialsId: 'GITHUB_AB2D_JENKINS_PAT', url: env.GIT_URL
-            git branch: env.BRANCH_NAME, credentialsId: 'GITHUB_AB2D_JENKINS_PAT', url: env.GIT_URL
+                git branch: 'master', credentialsId: 'GITHUB_AB2D_JENKINS_PAT', url: env.GIT_URL
+                git branch: env.BRANCH_NAME, credentialsId: 'GITHUB_AB2D_JENKINS_PAT', url: env.GIT_URL
                 // Automatically saves the an id for the SonarQube build
                 withSonarQubeEnv('CMSSonar') {
                     sh '''mvn sonar:sonar -Dsonar.projectKey=ab2d-project -DskipTests'''

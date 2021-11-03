@@ -16,9 +16,9 @@ import java.util.stream.Stream;
 @Slf4j
 public enum FhirVersion {
     STU3("org.hl7.fhir.dstu3.model", FhirContext.forDstu3(), FhirVersionEnum.DSTU3, "/v1/", "/v1/",
-            org.hl7.fhir.dstu3.model.ResourceType.Patient),
+            org.hl7.fhir.dstu3.model.ResourceType.Patient, false),
     R4("org.hl7.fhir.r4.model", FhirContext.forR4(), FhirVersionEnum.R4, "/v2/", "/v2/",
-            org.hl7.fhir.r4.model.ResourceType.Patient);
+            org.hl7.fhir.r4.model.ResourceType.Patient, true);
 
     private final String classLocation;
     private final FhirContext context;
@@ -26,15 +26,21 @@ public enum FhirVersion {
     private final String ab2dVersionString;
     private final String bfdVersionString;
     private final Object patientEnum;
+    private final boolean supportsDefaultSince;
 
     FhirVersion(String classLocation, FhirContext context, FhirVersionEnum fhirVersionEnum, String ab2dVersionString, String bfdVersionString,
-                Object patientEnum) {
+                Object patientEnum, boolean supportsDefaultSince) {
         this.classLocation = classLocation;
         this.context = context;
         this.fhirVersionEnum = fhirVersionEnum;
         this.ab2dVersionString = ab2dVersionString;
         this.bfdVersionString = bfdVersionString;
         this.patientEnum = patientEnum;
+        this.supportsDefaultSince = supportsDefaultSince;
+    }
+
+    public boolean supportDefaultSince() {
+        return this.supportsDefaultSince;
     }
 
     public IParser getJsonParser() {

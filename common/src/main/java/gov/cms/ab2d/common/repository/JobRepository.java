@@ -2,6 +2,7 @@ package gov.cms.ab2d.common.repository;
 
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobStartedBy;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.JobStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -27,6 +28,9 @@ public interface JobRepository extends JpaRepository<Job, Long> {
 
     @Query("select j from Job j where j.pdpClient = :pdpClient and (j.status = 'IN_PROGRESS' or j.status = 'SUBMITTED')")
     List<Job> findActiveJobsByClient(PdpClient pdpClient);
+
+    List<Job> findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(
+            Contract contract, List<JobStatus> statuses, JobStartedBy startedBy);
 
     @Query("select j from Job j where j.pdpClient = :pdpClient and j.contract = :contract and (j.status = 'IN_PROGRESS' or j.status = 'SUBMITTED')")
     List<Job> findActiveJobsByClientAndContract(PdpClient pdpClient, Contract contract);
