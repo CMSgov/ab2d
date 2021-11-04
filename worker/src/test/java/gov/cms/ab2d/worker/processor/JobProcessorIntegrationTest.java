@@ -208,6 +208,12 @@ class JobProcessorIntegrationTest {
         assertEquals(COMPLETED_PERCENT, processedJob.getStatusMessage());
         assertNotNull(processedJob.getExpiresAt());
         assertNotNull(processedJob.getCompletedAt());
+    }
+
+    @Test
+    @DisplayName("When a job has not benes, still generate a contract search event")
+    void whenJobHasNoBenes_stillGenerateContractSearchEvent() {
+        var processedJob = cut.process(job.getJobUuid());
 
         final List<JobOutput> jobOutputs = processedJob.getJobOutputs();
         assertFalse(jobOutputs.isEmpty());
@@ -234,9 +240,42 @@ class JobProcessorIntegrationTest {
     }
 
     @Test
+    @DisplayName("When bene has no eobs then do not count bene toward statistic")
+    void when_beneHasNoEobs_notCounted() {
+        reset(mockBfdClient);
+        OngoingStubbing<IBaseBundle> stubbing = when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any()));
+        stubbing = andThenAnswerEobs(stubbing, 0, 95);
+        stubbing.thenReturn(BundleUtils.createBundle())
+                .thenReturn(BundleUtils.createBundle())
+                .thenReturn(BundleUtils.createBundle())
+                .thenReturn(BundleUtils.createBundle())
+                .thenReturn(BundleUtils.createBundle());
+
+        var processedJob = cut.process(job.getJobUuid());
+
+        assertEquals(JobStatus.SUCCESSFUL, processedJob.getStatus());
+        assertEquals(COMPLETED_PERCENT, processedJob.getStatusMessage());
+        assertNotNull(processedJob.getExpiresAt());
+        assertNotNull(processedJob.getCompletedAt());
+
+        List<LoggableEvent> beneSearchEvents = loggerEventRepository.load(ContractSearchEvent.class);
+        assertEquals(1, beneSearchEvents.size());
+        ContractSearchEvent event = (ContractSearchEvent) beneSearchEvents.get(0);
+        assertEquals(JOB_UUID, event.getJobId());
+        assertEquals(100, event.getBenesExpected());
+        assertEquals(100, event.getBenesSearched());
+        assertEquals(CONTRACT_NAME, event.getContractNumber());
+            assertEquals(95, event.getBenesWithEobs());
+
+        final List<JobOutput> jobOutputs = processedJob.getJobOutputs();
+        assertFalse(jobOutputs.isEmpty());
+    }
+
+    @Test
     @DisplayName("When the error count is below threshold, job does not fail")
     void when_errorCount_is_below_threshold_do_not_fail_job() {
-        OngoingStubbing<IBaseBundle> stubbing = when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong()));
+        reset(mockBfdClient);
+        OngoingStubbing<IBaseBundle> stubbing = when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any()));
         stubbing = andThenAnswerEobs(stubbing, 0, 95);
         stubbing.thenThrow(fail, fail, fail, fail, fail);
 
@@ -252,9 +291,9 @@ class JobProcessorIntegrationTest {
         ContractSearchEvent event = (ContractSearchEvent) beneSearchEvents.get(0);
         assertEquals(JOB_UUID, event.getJobId());
         assertEquals(100, event.getBenesExpected());
-        assertEquals(CONTRACT_NAME, event.getContractNumber());
         assertEquals(100, event.getBenesSearched());
-        assertEquals(100, event.getBenesWithEobs());
+        assertEquals(CONTRACT_NAME, event.getContractNumber());
+        assertEquals(95, event.getBenesWithEobs());
 
         final List<JobOutput> jobOutputs = processedJob.getJobOutputs();
         assertFalse(jobOutputs.isEmpty());

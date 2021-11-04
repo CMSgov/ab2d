@@ -167,7 +167,7 @@ public class AllMapperEventTest {
     @Test
     void logContractSearch() {
         ContractSearchEvent cbse = new ContractSearchEvent(
-                "laila", "jobIdVal", "Contract123", 100, 100, 100, 2, 99, 1000, 1000, 1);
+                "laila", "jobIdVal", "Contract123", 100, 90, 80, 2, 70, 1000, 2000, 1);
         sqlEventLogger.log(cbse);
         assertEquals("ab2d-dev", cbse.getEnvironment());
         long id = cbse.getId();
@@ -187,13 +187,13 @@ public class AllMapperEventTest {
         assertEquals("Contract123", event.getContractNumber());
 
         assertEquals(100, event.getBenesExpected());
-        assertEquals(100, event.getBenesQueued());
-        assertEquals(100, event.getBenesSearched());
-        assertEquals(99, event.getBenesWithEobs());
+        assertEquals(90, event.getBenesQueued());
+        assertEquals(80, event.getBenesSearched());
+        assertEquals(70, event.getBenesWithEobs());
         assertEquals(2, event.getBenesErrored());
 
         assertEquals(1000, event.getEobsFetched());
-        assertEquals(1000, event.getEobsWritten());
+        assertEquals(2000, event.getEobsWritten());
         assertEquals(1, event.getEobFiles());
 
 

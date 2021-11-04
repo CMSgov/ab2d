@@ -51,7 +51,7 @@ class LoggerEventSummaryTest {
         LoggableEvent e4 = new FileEvent(usr, jobId, file1, FileEvent.FileStatus.OPEN);
         e4.setTimeOfEvent(firstTime.plusDays(3));
         logger.log(e4);
-        LoggableEvent e5 = new ContractSearchEvent(usr, jobId, "CONTRACT1", 100, 100, 100, 2, 100, 1000, 1000, 1);
+        LoggableEvent e5 = new ContractSearchEvent(usr, jobId, "CONTRACT1", 100, 90, 80, 2, 70, 1000, 2000, 1);
         e5.setTimeOfEvent(firstTime.plusDays(4));
         logger.log(e5);
         LoggableEvent e6 = new FileEvent(usr, jobId, file1, FileEvent.FileStatus.CLOSE);
@@ -82,7 +82,7 @@ class LoggerEventSummaryTest {
         assertEquals(1, summary.getNumFilesDeleted());
         assertEquals(1, summary.getNumFilesDownloaded());
         assertEquals(100, summary.getTotalNum());
-        assertEquals(100, summary.getSuccessfullySearched());
+        assertEquals(80, summary.getSuccessfullySearched());
         assertEquals(2, summary.getErrorSearched());
     }
 
