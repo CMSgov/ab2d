@@ -80,6 +80,16 @@ public class PatientClaimsCollectorTest {
                 null, List.of());
 
         request = new PatientClaimsRequest(coverageSummary, LATER_ATT_DATE, null, "client", "job",
+                "Z1001", noOpToken, STU3);
+
+        collector = new PatientClaimsCollector(request, EPOCH);
+        collector.filterAndAddEntries(BUNDLE);
+        assertTrue(collector.getEobs().isEmpty());
+
+        coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(PATIENT_ID),
+                null, List.of());
+
+        request = new PatientClaimsRequest(coverageSummary, LATER_ATT_DATE, null, "client", "job",
                 "contractNum", noOpToken, STU3);
 
         collector = new PatientClaimsCollector(request, EPOCH);
@@ -104,7 +114,7 @@ public class PatientClaimsCollectorTest {
         coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(PATIENT_ID),
                 null, List.of(TestUtil.getOpenRange()));
         request = new PatientClaimsRequest(coverageSummary, LATER_ATT_DATE, null, "client", "job",
-                "contractNum", noOpToken, STU3);
+                "Z0000", noOpToken, STU3);
 
         collector = new PatientClaimsCollector(request, EPOCH);
         collector.filterAndAddEntries(BUNDLE);
