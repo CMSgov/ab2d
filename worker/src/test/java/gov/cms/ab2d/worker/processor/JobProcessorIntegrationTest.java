@@ -254,6 +254,7 @@ class JobProcessorIntegrationTest {
         assertEquals(100, event.getBenesExpected());
         assertEquals(CONTRACT_NAME, event.getContractNumber());
         assertEquals(100, event.getBenesSearched());
+        assertEquals(100, event.getBenesWithEobs());
 
         final List<JobOutput> jobOutputs = processedJob.getJobOutputs();
         assertFalse(jobOutputs.isEmpty());

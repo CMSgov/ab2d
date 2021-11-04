@@ -167,7 +167,7 @@ public class AllMapperEventTest {
     @Test
     void logContractSearch() {
         ContractSearchEvent cbse = new ContractSearchEvent(
-                "laila", "jobIdVal", "Contract123", 100, 100, 100, 2, 1000, 1000, 1);
+                "laila", "jobIdVal", "Contract123", 100, 100, 100, 2, 99, 1000, 1000, 1);
         sqlEventLogger.log(cbse);
         assertEquals("ab2d-dev", cbse.getEnvironment());
         long id = cbse.getId();
@@ -189,6 +189,7 @@ public class AllMapperEventTest {
         assertEquals(100, event.getBenesExpected());
         assertEquals(100, event.getBenesQueued());
         assertEquals(100, event.getBenesSearched());
+        assertEquals(99, event.getBenesWithEobs());
         assertEquals(2, event.getBenesErrored());
 
         assertEquals(1000, event.getEobsFetched());
@@ -372,7 +373,7 @@ public class AllMapperEventTest {
         sqlEventLogger.log(new ApiResponseEvent("laila", "job123", HttpStatus.NOT_FOUND,
                 "Not Found", "Description", "123"));
         sqlEventLogger.log(new ContractSearchEvent(
-                "laila", "jobIdVal", "Contract123", 100, 100, 100, 2, 1000, 1000, 1));
+                "laila", "jobIdVal", "Contract123", 100, 100, 100, 2, 100, 1000, 1000, 1));
         sqlEventLogger.log(new ErrorEvent("laila", "job123", ErrorEvent.ErrorType.CONTRACT_NOT_FOUND,
                 "Description"));
         Path p = Path.of(tmpDir.toString(), "testFile");

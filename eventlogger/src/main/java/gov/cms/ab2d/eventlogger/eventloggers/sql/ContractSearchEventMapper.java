@@ -27,9 +27,9 @@ public class ContractSearchEventMapper extends SqlEventMapper {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         String query = "insert into event_bene_search " +
                 " (time_of_event, organization, job_id, contract_number, benes_expected, benes_queued, benes_searched, " +
-                "  benes_errored, eobs_fetched, eobs_written, eob_files, aws_id, environment) " +
+                "  benes_errored, benes_with_eobs, eobs_fetched, eobs_written, eob_files, aws_id, environment) " +
                 " values (:time, :organization, :job, :contractNum, :benes_expected, :benes_queued, :benes_searched, " +
-                "   :benes_errored, :eobs_fetched, :eobs_written, :eob_files, :awsId, :environment)";
+                "   :benes_errored, :benes_with_eobs, :eobs_fetched, :eobs_written, :eob_files, :awsId, :environment)";
 
         SqlParameterSource parameters = super.addSuperParams(event)
                 .addValue("contractNum", be.getContractNumber())
@@ -37,6 +37,7 @@ public class ContractSearchEventMapper extends SqlEventMapper {
                 .addValue("benes_queued", be.getBenesQueued())
                 .addValue("benes_searched", be.getBenesSearched())
                 .addValue("benes_errored", be.getBenesErrored())
+                .addValue("benes_with_eobs", be.getBenesWithEobs())
                 .addValue("eobs_fetched", be.getEobsFetched())
                 .addValue("eobs_written", be.getEobsWritten())
                 .addValue("eob_files", be.getEobFiles());
@@ -56,6 +57,7 @@ public class ContractSearchEventMapper extends SqlEventMapper {
         event.setBenesQueued(resultSet.getInt("benes_queued"));
         event.setBenesSearched(resultSet.getInt("benes_searched"));
         event.setBenesErrored(resultSet.getInt("benes_errored"));
+        event.setBenesWithEobs(resultSet.getInt("benes_with_eobs"));
 
         event.setEobsFetched(resultSet.getInt("eobs_fetched"));
         event.setEobsWritten(resultSet.getInt("eobs_written"));

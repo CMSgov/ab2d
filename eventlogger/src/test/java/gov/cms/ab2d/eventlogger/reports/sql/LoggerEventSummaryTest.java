@@ -51,7 +51,7 @@ class LoggerEventSummaryTest {
         LoggableEvent e4 = new FileEvent(usr, jobId, file1, FileEvent.FileStatus.OPEN);
         e4.setTimeOfEvent(firstTime.plusDays(3));
         logger.log(e4);
-        LoggableEvent e5 = new ContractSearchEvent(usr, jobId, "CONTRACT1", 100, 100, 100, 2, 1000, 1000, 1);
+        LoggableEvent e5 = new ContractSearchEvent(usr, jobId, "CONTRACT1", 100, 100, 100, 2, 100, 1000, 1000, 1);
         e5.setTimeOfEvent(firstTime.plusDays(4));
         logger.log(e5);
         LoggableEvent e6 = new FileEvent(usr, jobId, file1, FileEvent.FileStatus.CLOSE);

@@ -6,6 +6,7 @@ import lombok.Getter;
 public class ProgressTrackerUpdate {
 
     private int patientRequestProcessedCount;
+    private int patientWithEobCount;
     private int patientFailureCount;
     private int eobsFetchedCount;
     private int eobsProcessedCount;
@@ -17,6 +18,10 @@ public class ProgressTrackerUpdate {
 
     public void incPatientFailureCount() {
         patientFailureCount++;
+    }
+
+    public void incPatientsWithEobsCount() {
+        patientWithEobCount++;
     }
 
     public void addEobFetchedCount(int numFetched) {

@@ -125,3 +125,5 @@ databaseChangeLog:
       file: db/changelog/v2021/add_synthea_contracts.sql
   - include:
       file: db/changelog/v2021/support_default_since.sql
+  - include:
+      file: db/changelog/v2021/add_patient_eob_count.sql
