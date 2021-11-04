@@ -66,10 +66,10 @@ public class PatientClaimsCollectorTest {
     void whenSkipBillablePeriod() {
 
         CoverageSummary coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(PATIENT_ID),
-                null, List.of(TestUtil.getOpenRange()));
+                null, List.of());
 
         PatientClaimsRequest request = new PatientClaimsRequest(coverageSummary, LATER_ATT_DATE, null, "client", "job",
-                "contractNum", noOpToken, STU3);
+                "Z0000", noOpToken, STU3);
 
         PatientClaimsCollector collector = new PatientClaimsCollector(request, EPOCH);
 
