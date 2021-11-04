@@ -400,7 +400,8 @@ public class ContractProcessorImpl implements ContractProcessor {
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUESTS_ERRORED,
                 updateTracker.getPatientFailureCount());
 
-        jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_WITH_EOBS, updateTracker.getPatientWithEobCount());
+        jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_WITH_EOBS,
+                updateTracker.getPatientWithEobCount());
 
         jobChannelService.sendUpdate(jobUuid, JobMeasure.EOBS_FETCHED,
                 updateTracker.getEobsFetchedCount());
