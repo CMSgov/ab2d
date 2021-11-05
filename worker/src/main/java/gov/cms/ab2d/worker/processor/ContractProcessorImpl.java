@@ -230,6 +230,7 @@ public class ContractProcessorImpl implements ContractProcessor {
                     getOrganization(job),
                     jobUuid,
                     contract.getContractNumber(),
+                    contract.getContractType(),
                     token,
                     job.getFhirVersion());
             return patientClaimsProcessor.process(patientClaimsRequest);

@@ -22,7 +22,8 @@ public class Contract extends TimestampBase {
 
     public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd H:m:s Z");
 
-    public enum UpdateMode { AUTOMATIC, TEST, MANUAL }
+    public enum UpdateMode { AUTOMATIC, NONE, MANUAL }
+    public enum ContractType { NORMAL, OLD_TEST, SYNTHEA }
 
     @Id
     @GeneratedValue
@@ -47,6 +48,9 @@ public class Contract extends TimestampBase {
     @Enumerated(EnumType.STRING)
     private UpdateMode updateMode = UpdateMode.AUTOMATIC;
 
+    @Enumerated(EnumType.STRING)
+    private ContractType contractType = ContractType.NORMAL;
+
     public Contract(@NotNull String contractNumber, String contractName, Long hpmsParentOrgId, String hpmsParentOrg,
                     String hpmsOrgMarketingName) {
         this.contractNumber = contractNumber;
@@ -63,7 +67,7 @@ public class Contract extends TimestampBase {
     private Set<CoveragePeriod> coveragePeriods = new HashSet<>();
 
     public boolean isTestContract() {
-        return updateMode == UpdateMode.TEST;
+        return contractType == ContractType.OLD_TEST || contractType == ContractType.SYNTHEA;
     }
 
     public boolean hasAttestation() {
@@ -118,26 +122,5 @@ public class Contract extends TimestampBase {
         String dateWithTZ = attestationDate + " " + getESTOffset();
         attestedOn = OffsetDateTime.parse(dateWithTZ, FORMATTER);
         return true;
-    }
-
-
-    public boolean isSyntheaContract() {
-        return isSyntheaContract(this.contractNumber);
-    }
-
-    public boolean hasTestDateIssues() {
-        return hasTestDateIssues(this.contractNumber);
-    }
-
-    public static boolean hasTestDateIssues(String contractNumber) {
-        return isTestContract(contractNumber) && !isSyntheaContract(contractNumber);
-    }
-
-    public static boolean isTestContract(String contractNumber) {
-        return contractNumber.startsWith("Z");
-    }
-
-    public static boolean isSyntheaContract(String contractNumber) {
-        return contractNumber.startsWith("Z1");
     }
 }
