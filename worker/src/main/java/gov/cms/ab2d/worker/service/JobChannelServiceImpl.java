@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.service;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
+import com.google.gson.JsonObject;
 import gov.cms.ab2d.worker.processor.JobMeasure;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,9 +23,16 @@ public class JobChannelServiceImpl implements JobChannelService {
 
         SendMessageRequest sendMessageRequest = new SendMessageRequest()
                 .withQueueUrl(queueUrl)
-                .withMessageBody("hello world")
-                .withDelaySeconds(1);
+                .withMessageBody(buildPayload(jobUuid, measure, value));
         sqs.sendMessage(sendMessageRequest);
-        log.info("jobChannelService sendUpdate is done");
+        log.info("JobChannelService sendUpdate is done");
+    }
+
+    private String buildPayload(String jobUuid, JobMeasure measure, long value) {
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("job_uuid", jobUuid);
+        jsonObject.addProperty("measure", measure.toString());
+        jsonObject.addProperty("value", value);
+        return jsonObject.toString();
     }
 }
