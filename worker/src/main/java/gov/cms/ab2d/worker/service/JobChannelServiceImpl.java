@@ -35,4 +35,11 @@ public class JobChannelServiceImpl implements JobChannelService {
         jsonObject.addProperty("value", value);
         return jsonObject.toString();
     }
+
+    //     private final JobProgressUpdateService jobProgressUpdateService;
+//    @ServiceActivator(inputChannel = "jobProgress")
+//    @SqsListener(value = "sample3", deletionPolicy = SqsMessageDeletionPolicy.NEVER)
+//    public void progressReceiver(JsonObject payload, Acknowledgment ack) {
+//
+//    }
 }
