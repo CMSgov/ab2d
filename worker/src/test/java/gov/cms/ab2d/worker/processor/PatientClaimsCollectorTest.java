@@ -70,7 +70,7 @@ public class PatientClaimsCollectorTest {
                 null, List.of());
 
         PatientClaimsRequest request = new PatientClaimsRequest(coverageSummary, LATER_ATT_DATE, null, "client", "job",
-                "Z0000", Contract.ContractType.OLD_TEST, noOpToken, STU3);
+                "Z0000", Contract.ContractType.CLASSIC_TEST, noOpToken, STU3);
 
         PatientClaimsCollector collector = new PatientClaimsCollector(request, EPOCH);
 
@@ -115,7 +115,7 @@ public class PatientClaimsCollectorTest {
         coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(PATIENT_ID),
                 null, List.of(TestUtil.getOpenRange()));
         request = new PatientClaimsRequest(coverageSummary, LATER_ATT_DATE, null, "client", "job",
-                "Z0000", Contract.ContractType.OLD_TEST, noOpToken, STU3);
+                "Z0000", Contract.ContractType.CLASSIC_TEST, noOpToken, STU3);
 
         collector = new PatientClaimsCollector(request, EPOCH);
         collector.filterAndAddEntries(BUNDLE);

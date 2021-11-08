@@ -64,7 +64,7 @@ public class PatientClaimsCollector {
         // Perform filtering actions
         BundleUtils.getEobResources(bundleEntries).stream()
                 // Filter by date
-                .filter(resource -> claimsRequest.getContractType() == Contract.ContractType.OLD_TEST || FilterOutByDate.valid(resource, attestationDate, earliestDate, claimsRequest.getCoverageSummary().getDateRanges()))
+                .filter(resource -> claimsRequest.getContractType() == Contract.ContractType.CLASSIC_TEST || FilterOutByDate.valid(resource, attestationDate, earliestDate, claimsRequest.getCoverageSummary().getDateRanges()))
                 // filter it
                 .map(ExplanationOfBenefitTrimmer::getBenefit)
                 // Remove any empty values

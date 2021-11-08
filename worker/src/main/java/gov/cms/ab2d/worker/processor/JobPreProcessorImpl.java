@@ -65,7 +65,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
         } else if (job.getFhirVersion().supportDefaultSince()) {
             boolean hasDateIssue = false;
             if (job.getContract() != null) {
-                hasDateIssue = job.getContract().getContractType() == Contract.ContractType.OLD_TEST;
+                hasDateIssue = job.getContract().getContractType() == Contract.ContractType.CLASSIC_TEST;
             }
             if (!hasDateIssue) {
                 // If the user did not, but this version supports a default 'since', populate it

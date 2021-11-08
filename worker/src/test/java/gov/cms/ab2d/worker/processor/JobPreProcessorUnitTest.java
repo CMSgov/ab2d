@@ -205,7 +205,7 @@ class JobPreProcessorUnitTest {
 
         Contract contract = new Contract();
         contract.setContractNumber("Z0000");
-        contract.setContractType(Contract.ContractType.OLD_TEST);
+        contract.setContractType(Contract.ContractType.CLASSIC_TEST);
         newJob.setContract(contract);
 
         Job oldJob = createJob();

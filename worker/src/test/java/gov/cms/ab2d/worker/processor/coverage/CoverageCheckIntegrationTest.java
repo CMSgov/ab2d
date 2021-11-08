@@ -142,7 +142,7 @@ public class CoverageCheckIntegrationTest {
         Contract contract = client.getContract();
         contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
         contract.setUpdateMode(Contract.UpdateMode.NONE);
-        contract.setContractType(Contract.ContractType.OLD_TEST);
+        contract.setContractType(Contract.ContractType.CLASSIC_TEST);
         contractRepo.saveAndFlush(contract);
 
         CoverageVerificationException exception =
