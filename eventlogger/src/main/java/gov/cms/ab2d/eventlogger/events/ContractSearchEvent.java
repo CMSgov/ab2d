@@ -28,6 +28,8 @@ public class ContractSearchEvent extends LoggableEvent {
     // The number of errors that occured during searching
     private int benesErrored;
 
+    private int benesWithEobs;
+
     // The number of eobs created
     private int eobsFetched;
 
@@ -41,7 +43,7 @@ public class ContractSearchEvent extends LoggableEvent {
 
     @SuppressWarnings("ParameterNumber")
     public ContractSearchEvent(String organization, String jobId, String contractNumber, int benesExpected,
-                               int benesQueued, int benesSearched, int benesErrors,
+                               int benesQueued, int benesSearched, int benesErrors, int benesWithEobs,
                                int eobsFetched, int eobsWritten, int eobFiles) {
         super(OffsetDateTime.now(), organization, jobId);
         this.contractNumber = contractNumber;
@@ -50,6 +52,7 @@ public class ContractSearchEvent extends LoggableEvent {
         this.benesQueued = benesQueued;
         this.benesSearched = benesSearched;
         this.benesErrored = benesErrors;
+        this.benesWithEobs = benesWithEobs;
 
         this.eobsFetched = eobsFetched;
         this.eobsWritten = eobsWritten;
