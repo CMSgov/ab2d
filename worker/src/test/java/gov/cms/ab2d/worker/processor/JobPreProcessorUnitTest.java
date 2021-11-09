@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
@@ -25,6 +26,7 @@ import java.util.List;
 
 import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
+import static gov.cms.ab2d.common.model.SinceSource.AB2D;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
@@ -50,7 +52,7 @@ class JobPreProcessorUnitTest {
 
     @BeforeEach
     void setUp() {
-        cut = new JobPreProcessorImpl(jobRepository, eventLogger, coverageDriver, false);
+        cut = new JobPreProcessorImpl(jobRepository, eventLogger, coverageDriver);
         job = createJob();
     }
 
@@ -165,7 +167,7 @@ class JobPreProcessorUnitTest {
 
         cut.preprocess(newJob.getJobUuid());
         assertEquals(oldJobTime, newJob.getSince());
-        assertEquals(SinceSource.AB2D, newJob.getSinceSource());
+        assertEquals(AB2D, newJob.getSinceSource());
     }
 
     @DisplayName("has had a successful run, since is set so don't populate it")
@@ -192,6 +194,41 @@ class JobPreProcessorUnitTest {
         verify(jobRepository, never()).findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any());
         assertEquals(now, newJob.getSince());
         assertEquals(SinceSource.USER, newJob.getSinceSource());
+    }
+
+    @Test
+    void testDifferentSinceConditions() {
+        Job newJob = createJob();
+        newJob.setFhirVersion(R4);
+        newJob.setStatus(JobStatus.SUBMITTED);
+        newJob.setCreatedAt(OffsetDateTime.now());
+
+        Contract contract = new Contract();
+        contract.setContractNumber("contractNum");
+        contract.setContractType(Contract.ContractType.CLASSIC_TEST);
+        newJob.setContract(contract);
+
+        Job oldJob = createJob();
+        oldJob.setStatus(SUCCESSFUL);
+        oldJob.setJobUuid(oldJob.getJobUuid() + "-2");
+        OffsetDateTime oldJobTime = OffsetDateTime.parse("2021-01-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
+        oldJob.setCreatedAt(oldJobTime);
+
+        when(jobRepository.findByJobUuid(newJob.getJobUuid())).thenReturn(newJob);
+
+        cut.preprocess(newJob.getJobUuid());
+
+        assertNull(newJob.getSince());
+        assertNull(newJob.getSinceSource());
+
+        contract.setContractNumber("contractNum");
+        contract.setContractType(Contract.ContractType.SYNTHEA);
+        when(jobRepository.findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any())).thenReturn(List.of(oldJob));
+
+        cut.preprocess(newJob.getJobUuid());
+
+        assertEquals(oldJob.getCreatedAt(), newJob.getSince());
+        assertEquals(AB2D, newJob.getSinceSource());
     }
 
     @DisplayName("Search for latest successful job with all files downloaded")
@@ -233,7 +270,7 @@ class JobPreProcessorUnitTest {
         when(jobRepository.findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any())).thenReturn(List.of(job1, job2, job3, job4));
         cut.preprocess(newJob.getJobUuid());
         assertEquals(newJob.getSince().getNano(), job4.getCreatedAt().getNano());
-        assertEquals(newJob.getSinceSource(), SinceSource.AB2D);
+        assertEquals(newJob.getSinceSource(), AB2D);
     }
 
     @DisplayName("Make sure we've found the latest successful job")

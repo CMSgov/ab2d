@@ -2,6 +2,7 @@ package gov.cms.ab2d.worker.processor;
 
 import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.TestUtil;
@@ -98,7 +99,7 @@ class PatientClaimsProcessorUnitTest {
         coverageSummaries.add(fileSummary);
 
         request = new PatientClaimsRequest(coverageSummary, LATER_ATT_DATE, null, "client", "job",
-                "contractNum", noOpToken, STU3);
+                "contractNum", Contract.ContractType.NORMAL, noOpToken, STU3);
     }
 
     @Test
@@ -161,7 +162,7 @@ class PatientClaimsProcessorUnitTest {
         OffsetDateTime sinceDate = EARLY_ATT_DATE.plusDays(1);
 
         request = new PatientClaimsRequest(coverageSummary, LATER_ATT_DATE, sinceDate, "client", "job",
-                "contractNum", noOpToken, STU3);
+                "contractNum", Contract.ContractType.NORMAL, noOpToken, STU3);
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(STU3, patientId, LATER_ATT_DATE)).thenReturn(bundle1);
@@ -178,7 +179,7 @@ class PatientClaimsProcessorUnitTest {
         coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(patientId), null, List.of(TestUtil.getOpenRange()));
 
         request = new PatientClaimsRequest(coverageSummary, EARLY_ATT_DATE, null, "client", "job",
-                "contractNum", noOpToken, STU3);
+                "contractNum", Contract.ContractType.NORMAL, noOpToken, STU3);
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(STU3, patientId, null)).thenReturn(bundle1);
@@ -195,7 +196,7 @@ class PatientClaimsProcessorUnitTest {
         coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(patientId), null, List.of(TestUtil.getOpenRange()));
 
         request = new PatientClaimsRequest(coverageSummary, EARLY_ATT_DATE, EARLY_SINCE_DATE, "client", "job",
-                "contractNum", noOpToken, STU3);
+                "contractNum", Contract.ContractType.NORMAL, noOpToken, STU3);
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(STU3, patientId, null)).thenReturn(bundle1);

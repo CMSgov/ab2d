@@ -22,7 +22,14 @@ public class Contract extends TimestampBase {
 
     public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd H:m:s Z");
 
-    public enum UpdateMode { AUTOMATIC, TEST, MANUAL }
+    public enum UpdateMode { AUTOMATIC, NONE, MANUAL }
+    public enum ContractType {
+        NORMAL, CLASSIC_TEST, SYNTHEA;
+
+        public boolean isTestContract() {
+            return this == CLASSIC_TEST || this == SYNTHEA;
+        }
+    }
 
     @Id
     @GeneratedValue
@@ -47,6 +54,9 @@ public class Contract extends TimestampBase {
     @Enumerated(EnumType.STRING)
     private UpdateMode updateMode = UpdateMode.AUTOMATIC;
 
+    @Enumerated(EnumType.STRING)
+    private ContractType contractType = ContractType.NORMAL;
+
     public Contract(@NotNull String contractNumber, String contractName, Long hpmsParentOrgId, String hpmsParentOrg,
                     String hpmsOrgMarketingName) {
         this.contractNumber = contractNumber;
@@ -63,7 +73,7 @@ public class Contract extends TimestampBase {
     private Set<CoveragePeriod> coveragePeriods = new HashSet<>();
 
     public boolean isTestContract() {
-        return updateMode == UpdateMode.TEST;
+        return contractType.isTestContract();
     }
 
     public boolean hasAttestation() {

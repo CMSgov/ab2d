@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStartedBy;
@@ -10,7 +11,6 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -32,14 +32,12 @@ public class JobPreProcessorImpl implements JobPreProcessor {
     private final JobRepository jobRepository;
     private final LogManager eventLogger;
     private final CoverageDriver coverageDriver;
-    private final boolean skipBillablePeriodCheck;
 
     public JobPreProcessorImpl(JobRepository jobRepository, LogManager logManager,
-                        CoverageDriver coverageDriver, @Value("${claims.skipBillablePeriodCheck}") boolean skipBillablePeriodCheck) {
+                        CoverageDriver coverageDriver) {
         this.jobRepository = jobRepository;
         this.eventLogger = logManager;
         this.coverageDriver = coverageDriver;
-        this.skipBillablePeriodCheck = skipBillablePeriodCheck;
     }
 
     @Override
@@ -64,10 +62,17 @@ public class JobPreProcessorImpl implements JobPreProcessor {
             // If the user provided a 'since' value
             job.setSinceSource(SinceSource.USER);
             jobRepository.save(job);
-        } else if (job.getFhirVersion().supportDefaultSince() && !skipBillablePeriodCheck) {
-            // If the user did not, but this version supports a default 'since', populate it
-            job = updateSinceTime(job);
-            jobRepository.save(job);
+        } else if (job.getFhirVersion().supportDefaultSince()) {
+            // todo guarantee contract is always present https://jira.cms.gov/browse/AB2D-4109
+            boolean hasDateIssue = false;
+            if (job.getContract() != null) {
+                hasDateIssue = job.getContract().getContractType() == Contract.ContractType.CLASSIC_TEST;
+            }
+            if (!hasDateIssue) {
+                // If the user did not, but this version supports a default 'since', populate it
+                job = updateSinceTime(job);
+                jobRepository.save(job);
+            }
         }
 
         try {
