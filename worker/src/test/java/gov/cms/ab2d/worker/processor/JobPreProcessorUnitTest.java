@@ -204,7 +204,7 @@ class JobPreProcessorUnitTest {
         newJob.setCreatedAt(OffsetDateTime.now());
 
         Contract contract = new Contract();
-        contract.setContractNumber("Z0000");
+        contract.setContractNumber("contractNum");
         contract.setContractType(Contract.ContractType.CLASSIC_TEST);
         newJob.setContract(contract);
 
@@ -221,7 +221,7 @@ class JobPreProcessorUnitTest {
         assertNull(newJob.getSince());
         assertNull(newJob.getSinceSource());
 
-        contract.setContractNumber("Z1001");
+        contract.setContractNumber("contractNum");
         contract.setContractType(Contract.ContractType.SYNTHEA);
         when(jobRepository.findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any())).thenReturn(List.of(oldJob));
 

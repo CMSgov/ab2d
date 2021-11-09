@@ -70,25 +70,19 @@ public class PatientClaimsCollectorTest {
                 null, List.of());
 
         PatientClaimsRequest request = new PatientClaimsRequest(coverageSummary, LATER_ATT_DATE, null, "client", "job",
-                "Z0000", Contract.ContractType.CLASSIC_TEST, noOpToken, STU3);
+                "contractNum", Contract.ContractType.CLASSIC_TEST, noOpToken, STU3);
 
         PatientClaimsCollector collector = new PatientClaimsCollector(request, EPOCH);
 
         collector.filterAndAddEntries(BUNDLE);
         assertEquals(1, collector.getEobs().size());
 
-        coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(PATIENT_ID),
-                null, List.of());
-
         request = new PatientClaimsRequest(coverageSummary, LATER_ATT_DATE, null, "client", "job",
-                "Z1001", Contract.ContractType.SYNTHEA, noOpToken, STU3);
+                "contractNum", Contract.ContractType.SYNTHEA, noOpToken, STU3);
 
         collector = new PatientClaimsCollector(request, EPOCH);
         collector.filterAndAddEntries(BUNDLE);
         assertTrue(collector.getEobs().isEmpty());
-
-        coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(PATIENT_ID),
-                null, List.of());
 
         request = new PatientClaimsRequest(coverageSummary, LATER_ATT_DATE, null, "client", "job",
                 "contractNum", Contract.ContractType.NORMAL, noOpToken, STU3);
@@ -115,7 +109,7 @@ public class PatientClaimsCollectorTest {
         coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(PATIENT_ID),
                 null, List.of(TestUtil.getOpenRange()));
         request = new PatientClaimsRequest(coverageSummary, LATER_ATT_DATE, null, "client", "job",
-                "Z0000", Contract.ContractType.CLASSIC_TEST, noOpToken, STU3);
+                "contractNum", Contract.ContractType.NORMAL, noOpToken, STU3);
 
         collector = new PatientClaimsCollector(request, EPOCH);
         collector.filterAndAddEntries(BUNDLE);
@@ -264,7 +258,7 @@ public class PatientClaimsCollectorTest {
             PatientClaimsRequest request = new PatientClaimsRequest(coverageSummary, OffsetDateTime.now(), null, "client", "job",
                     "contractNum", Contract.ContractType.NORMAL, noOpToken, STU3);
             PatientClaimsCollector collector = new PatientClaimsCollector(request, EPOCH);
-            collector.filterAndAddEntries(null);
+            collector.filterAndAddEntries(oldBundle);
             assertTrue(collector.getEobs().isEmpty());
         } catch (ParseException pe) {
             fail("could not parse bundle", pe);
