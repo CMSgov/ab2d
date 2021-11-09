@@ -63,6 +63,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
             job.setSinceSource(SinceSource.USER);
             jobRepository.save(job);
         } else if (job.getFhirVersion().supportDefaultSince()) {
+            // todo guarantee contract is always present https://jira.cms.gov/browse/AB2D-4109
             boolean hasDateIssue = false;
             if (job.getContract() != null) {
                 hasDateIssue = job.getContract().getContractType() == Contract.ContractType.CLASSIC_TEST;
