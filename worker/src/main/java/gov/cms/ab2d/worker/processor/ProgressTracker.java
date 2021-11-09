@@ -18,6 +18,7 @@ public class ProgressTracker {
     private int patientRequestQueuedCount;
     private int patientRequestProcessedCount;
     private int patientFailureCount;
+    private int patientsWithEobsCount;
     private int eobsFetchedCount;
     private int eobsProcessedCount;
 
@@ -51,6 +52,10 @@ public class ProgressTracker {
 
     public void addPatientFailureCount(int value) {
         patientFailureCount += value;
+    }
+
+    public void addPatientsWithEobsCount(int value) {
+        patientsWithEobsCount += value;
     }
 
     public void addPatientsLoadedCount(int numAdded) {
