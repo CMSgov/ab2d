@@ -85,7 +85,7 @@ class JobPreProcessorIntegrationTest {
         MockitoAnnotations.openMocks(this);
         LogManager manager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
 
-        cut = new JobPreProcessorImpl(jobRepository, manager, coverageDriver, false);
+        cut = new JobPreProcessorImpl(jobRepository, manager, coverageDriver);
 
         pdpClient = createClient();
         job = createJob(pdpClient);
