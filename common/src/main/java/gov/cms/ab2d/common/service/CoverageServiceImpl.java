@@ -25,7 +25,21 @@ import static java.util.stream.Collectors.toList;
 
 /**
  * Interact with Coverage, CoveragePeriod, and CoverageSearchEvent entities/tables including
- * bulk insertions, reads, and deletes.
+ * bulk insertions, reads, and deletes. Wraps more complex behavior implemented in {@link CoverageServiceRepository}
+ *
+ * Business requirements implemented in the code here:
+ *
+ *      - Enrollment and hence EOBs must be after AB2D epoch {@link #checkMonthAndYear(int, int)}
+ *      - Only one copy of the enrollment should exist in the database
+ *          {@link #completeSearch(int, String)}, {@link #failSearch(int, String)} via
+ *          {@link CoverageServiceRepository#deleteCurrentSearch(CoveragePeriod)},
+ *          {@link CoverageServiceRepository#deletePreviousSearches(CoveragePeriod, int)}
+ *      - Coverage searches should transition states logically SUBMITTED -> IN_PROGRESS for example
+ *      -
+ *
+ * Each status change method has side effects beyond change a {@link CoveragePeriod}. For example, {@link #completeSearch(int, String)}
+ * marks a search as successful and deletes all previous enrollment related to a search. Sometimes these methods are
+ * more intensive than appears on the surface.
  *
  * Warning: {@link org.springframework.data.jpa.repository.JpaRepository#getOne(Object)}
  * loads lazily which causes issues when an object is returned by the {@link CoverageServiceImpl}
@@ -110,6 +124,7 @@ public class CoverageServiceImpl implements CoverageService {
         int partitionSize = 10;
         List<List<Contract>> contractPartitions = new ArrayList<>();
 
+        // Split queries into smaller pieces so queries don't time out
         for (int idx = 0; idx < contracts.size(); idx += partitionSize) {
             contractPartitions.add(contracts.subList(idx, Math.min(idx + partitionSize, contracts.size())));
         }
@@ -409,6 +424,10 @@ public class CoverageServiceImpl implements CoverageService {
         return updateStatus(period, description, JobStatus.SUCCESSFUL);
     }
 
+    /**
+     * Verify that the coverage period provided should exist and is not in the past or before AB2D began serving
+     * @throws IllegalArgumentException when month and year are not within bounds
+     */
     private static void checkMonthAndYear(int month, int year) {
         if (month < 1 || month > 12) {
             final String errMsg = "invalid value for month. Month must be between 1 and 12";
@@ -436,6 +455,14 @@ public class CoverageServiceImpl implements CoverageService {
         return updateStatus(period, description, status, true);
     }
 
+    /**
+     * Update the status of a {@link CoveragePeriod} in the search workflow.
+     * @param period the coverage period to update
+     * @param description a description of the update
+     * @param status the new status for the coverage period and coverage search
+     * @param updateCoveragePeriod whether the coverage period needs to be updated as well
+     * @return the update coverage search event
+     */
     private CoverageSearchEvent updateStatus(CoveragePeriod period, String description, JobStatus status, boolean updateCoveragePeriod) {
         CoverageSearchEvent currentStatus = getLastEvent(period);
 
@@ -454,6 +481,7 @@ public class CoverageServiceImpl implements CoverageService {
             period.setLastSuccessfulJob(OffsetDateTime.now());
         }
 
+        // For successful, failed, or submitted jobs also update the coverage periods status in the DB
         if (updateCoveragePeriod) {
             period.setStatus(status);
             coveragePeriodRepo.saveAndFlush(period);

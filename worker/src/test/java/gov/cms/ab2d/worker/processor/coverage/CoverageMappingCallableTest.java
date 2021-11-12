@@ -81,7 +81,7 @@ class CoverageMappingCallableTest {
     @Test
     void testTestContractYears() {
         Contract contract = new Contract();
-        contract.setContractNumber("Z0010");
+        contract.setContractNumber("contractNum");
         contract.setContractName("TESTING");
 
         CoveragePeriod period = new CoveragePeriod();
@@ -95,11 +95,15 @@ class CoverageMappingCallableTest {
         CoverageSearch search = new CoverageSearch();
         search.setPeriod(period);
 
+        // First test that the corrected year modification works
+        contract.setContractType(Contract.ContractType.CLASSIC_TEST);
         CoverageMapping mapping = new CoverageMapping(cse, search);
         CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient);
-        assertEquals(3, callable.getCorrectedYear(contract.getContractNumber(), 2020));
-        contract.setContractNumber("Z1001");
-        assertEquals(2020, callable.getCorrectedYear(contract.getContractNumber(), 2020));
+        assertEquals(3, callable.getCorrectedYear(contract, 2020));
+
+        // Test that the corrected year modification is not applied to Synthea
+        contract.setContractType(Contract.ContractType.SYNTHEA);
+        assertEquals(2020, callable.getCorrectedYear(contract, 2020));
     }
 
     @DisplayName("Multiple mbis captured")

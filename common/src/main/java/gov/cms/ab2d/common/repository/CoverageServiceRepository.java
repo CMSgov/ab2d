@@ -34,6 +34,15 @@ import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static java.util.stream.Collectors.toList;
 
+/**
+ * Vanilla SQL interface with the coverage table. The class is designed to be performant and work with the
+ * partitioning strategies in the database.
+ *
+ * IMPORTANT: The coverage table is partitioned by contract and then by year.
+ *
+ * With Postgres, this means that all queries to the coverage table must contain contract or year, otherwise those queries
+ * will trigger a full table scan.
+ */
 @Slf4j
 @Repository
 public class CoverageServiceRepository {
@@ -107,6 +116,16 @@ public class CoverageServiceRepository {
         this.coveragePeriodRepo = coveragePeriodRepo;
     }
 
+    /**
+     * Count the number of beneficiaries in the coverage table related to a specific search {@link CoverageSearchEvent}.
+     *
+     * Coverage is only associated with {@link JobStatus#IN_PROGRESS} search events. So submitting any other search event
+     * will result in no coverage being reported.
+     *
+     * @param searchEvent a specific search done at some point which we need numbers for
+     * @return the number of beneficiaries related to the event, may be zero
+     * @throws RuntimeException if no coverage is found
+     */
     @Trace
     public int countBySearchEvent(CoverageSearchEvent searchEvent) {
 
@@ -118,10 +137,24 @@ public class CoverageServiceRepository {
         NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
 
         return template.queryForList(SELECT_COVERAGE_BY_SEARCH_COUNT, parameters, Integer.class)
-                .stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for any" +
-                "of the coverage periods provided"));
+                .stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for " +
+                        "the coverage search event"));
     }
 
+    /**
+     * Compare the beneficiaries in two searches and count the number of beneficiaries shared between the searches.
+     *
+     * This is used to calculate the difference between an old set of enrollment for a given contract, year, and month,
+     * and the most recent update.
+     *
+     * Coverage is only associated with {@link JobStatus#IN_PROGRESS} search events. So submitting any other search event
+     * will result in no data for the comparison.
+     *
+     * @param searchEvent1 the first search event
+     * @param searchEvent2 the second search event
+     * @return the number of beneficiaries common between the two searches
+     * @throws RuntimeException on failure to find any results from the query for any reason
+     */
     @Trace
     public int countIntersection(CoverageSearchEvent searchEvent1, CoverageSearchEvent searchEvent2) {
 
@@ -135,9 +168,17 @@ public class CoverageServiceRepository {
 
         return template.queryForList(SELECT_INTERSECTION, parameters, Integer.class)
                 .stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for any" +
-                        "of the coverage periods provided"));
+                        "of the search events provided"));
     }
 
+    /**
+     * Calculate the unique number of beneficiaries associated with a period of enrollment.
+     *
+     * @param coveragePeriodIds list of coverage periods {@link CoveragePeriod}s associated with an {@link Contract}
+     * @param contractNum a five character String representing an {@link Contract}
+     * @return total number of unique beneficiaries
+     */
+    @Trace
     public int countBeneficiariesByPeriods(List<Integer> coveragePeriodIds, String contractNum) {
 
         SqlParameterSource parameters = new MapSqlParameterSource()
@@ -148,10 +189,19 @@ public class CoverageServiceRepository {
         NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
 
         return template.queryForList(SELECT_DISTINCT_COVERAGE_BY_PERIOD_COUNT, parameters, Integer.class)
-                .stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for any" +
+                .stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for any " +
                                 "of the coverage periods provided"));
     }
 
+    /**
+     * Calculate exact numbers of beneficiaries enrolled for each month of a contract for each provided contract and return
+     * a list of results {@link CoverageCount}.
+     *
+     * This method primarily helps verify that the coverage table
+     *
+     * @param contracts list of {@link Contract}s
+     * @return counts of the coverage for a given coverage period
+     */
     @Trace
     public List<CoverageCount> countByContractCoverage(List<Contract> contracts) {
         List<String> contractNumbers = contracts.stream().map(Contract::getContractNumber).collect(toList());
@@ -165,9 +215,14 @@ public class CoverageServiceRepository {
     }
 
     /**
-     * Insert a batch of patients using plain jdbc
+     * Mark benficiaries as enrolled in a contract for a specific search event, contract, month, and year using plain JDBC.
+     *
+     * The enrollment is related to a specific search {@link CoverageSearchEvent} that we've done of BFD for a specific
+     * month and year. We may have other older searches also in the database when this insertion is done.
+     *
      * @param searchEvent the search event to add coverage in relation to
      * @param beneIds Collection of beneficiary ids to be added as a batch
+     * @throws RuntimeException if insertion fails due to a syntax or timeout issue with Postgres.
      */
     @Trace
     public void insertBatches(CoverageSearchEvent searchEvent, Iterable<Identifiers> beneIds) {
@@ -188,6 +243,7 @@ public class CoverageServiceRepository {
 
                 prepareCoverageInsertion(statement, contractNum, year, month, searchEvent, beneficiary);
 
+                // Insert a batch of beneficiaries to avoid large, slow, insertions
                 if (processingCount % BATCH_INSERT_SIZE == 0) {
                     executeBatch(statement);
                     processingCount = 0;
@@ -203,17 +259,35 @@ public class CoverageServiceRepository {
         }
     }
 
+    /**
+     * This method exists so that NR can identify this component of the transaction and time it explicitly.
+     *
+     * @param statement a batch statement with tens of thousands
+     * @throws SQLException on failure to make the insertion
+     */
     @Trace
     private void executeBatch(PreparedStatement statement) throws SQLException {
         statement.executeBatch();
     }
 
-    private void prepareCoverageInsertion(PreparedStatement statement, String contractNum, int year, int month, CoverageSearchEvent searchEvent, Identifiers beneficiary) throws SQLException {
+    /**
+     * Add a single beneficiary to the insertion statement.
+     *
+     * @throws SQLException on failure to add single beneficiary to batch
+     */
+    private void prepareCoverageInsertion(PreparedStatement statement, String contractNum, int year, int month,
+                                          CoverageSearchEvent searchEvent, Identifiers beneficiary) throws SQLException {
+        // Fields uniquely identifying a search
         statement.setInt(1, searchEvent.getCoveragePeriod().getId());
         statement.setLong(2, searchEvent.getId());
+
+        // Fields necessary to support partitioning
         statement.setString(3, contractNum);
         statement.setInt(4, year);
+
         statement.setInt(5, month);
+
+        // Fields identifying a beneficiary
         statement.setLong(6, beneficiary.getBeneficiaryId());
         statement.setString(7, beneficiary.getCurrentMbi());
 
@@ -227,7 +301,8 @@ public class CoverageServiceRepository {
     }
 
     /**
-     * Delete all coverage information related to the results of a search defined by an offset into the past.
+     * Delete all coverage information related to the results of a single coverage period
+     * defined by an offset into the past.
      *
      * An offset of 0 finds the current IN_PROGRESS search event and deletes all coverage information associated
      * with that event.
@@ -249,6 +324,7 @@ public class CoverageServiceRepository {
 
             NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
             template.update(DELETE_SEARCH, parameterSource);
+
             vacuumCoverage();
         }
     }
@@ -256,7 +332,7 @@ public class CoverageServiceRepository {
     /**
      * Delete all coverage information related to the results of any search in the past beyond an offset.
      *
-     * Ex. if you want to delete all enrollment
+     * Ex. if you want to delete all past enrollment besides the most recent search
      *
      * @param period coverage period to remove
      * @param offset offset into the past 0 is last search done successfully, 1 is search before that, etc.
@@ -290,7 +366,19 @@ public class CoverageServiceRepository {
      * Page through coverage in database.
      *
      * The paging request will contain a contract, a page size (number of beneficiaries to pull), and a cursor with the
-     * last patient pulled
+     * last patient pulled.
+     *
+     * Steps to this method:
+     *      - Check that contract has enrollment for all necessary months before retrieving a page {@link #getExpectedCoveragePeriods(CoveragePagingRequest)}
+     *      - Calculate number of records which correspond to page size patients to pull from database
+     *          (max one record per month per beneficiary) {@link #getCoverageLimit(int, long)}
+     *      - Conduct the query without processing the results {@link #queryCoverageMembership(CoveragePagingRequest, long)}
+     *      - Group results by patient {@link #aggregateEnrollmentByPatient(int, List)}
+     *      - For each patient condense enrollment down to a single set of date ranges {@link #summarizeCoverageMembership(Contract, Map.Entry)}
+     *      - Determine whether another page of results is necessary
+     *      - If another page of results is necessary create a {@link CoveragePagingRequest}
+     *      - Collect everything into a single {@link CoveragePagingResult}
+     *
      * @param page request for paging coverage
      * @return the result of paging with a cursor to the next request
      */
@@ -355,9 +443,7 @@ public class CoverageServiceRepository {
                 .addValue("years", YEARS)
                 .addValue("limit", limit);
 
-        pageCursor.ifPresent((cursor) -> {
-            sqlParameterSource.addValue("cursor", cursor);
-        });
+        pageCursor.ifPresent((cursor) -> sqlParameterSource.addValue("cursor", cursor));
 
         // Grab the enrollment
         List<CoverageMembership> enrollment;
@@ -505,6 +591,11 @@ public class CoverageServiceRepository {
                 localEndDate.getMonthValue(), localEndDate.getYear());
     }
 
+    /**
+     * Clean up indexes between major changes in coverage to keep queries performant.
+     *
+     * Calling this method introduces significant overhead so make sure it is only called after significant events.
+     */
     @Trace
     public void vacuumCoverage() {
         try (Connection connection = dataSource.getConnection();

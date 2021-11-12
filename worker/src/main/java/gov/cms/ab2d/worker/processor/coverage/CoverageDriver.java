@@ -4,6 +4,12 @@ import gov.cms.ab2d.common.model.CoveragePagingRequest;
 import gov.cms.ab2d.common.model.CoveragePagingResult;
 import gov.cms.ab2d.common.model.Job;
 
+/**
+ * Provide an interface for executing high level actions concerning enrollment.
+ *
+ * Encompasses
+ *      - Start
+ */
 public interface CoverageDriver {
 
     /**
@@ -60,7 +66,11 @@ public interface CoverageDriver {
     CoveragePagingResult pageCoverage(CoveragePagingRequest request);
 
     /**
-     * Verify that the coverage information
+     * Verify that the coverage information in the database meets all business requirements.
+     *
+     * This method is called by {@link gov.cms.ab2d.worker.quartz.CoverageCheckQuartzJob} periodically.
+     *
+     * @throws CoverageVerificationException if verification fails for at least one contract
      */
     void verifyCoverage();
 }

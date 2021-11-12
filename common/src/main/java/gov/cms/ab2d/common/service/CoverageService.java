@@ -203,7 +203,9 @@ public interface CoverageService {
     Optional<CoverageMapping> startSearch(CoverageSearch search, String description);
 
     /**
-     * Resubmit a search that has failed but still has attempts
+     * Resubmit a search that has failed but still has attempts. Marks a search as {@link JobStatus#FAILED}
+     * and then {@link JobStatus#SUBMITTED} in one action.
+     *
      * @param periodId unique id of a coverage search
      * @param attempts number of attempts already conducted
      * @param failedDescription reason or explanation for change

@@ -3,6 +3,11 @@ package gov.cms.ab2d.worker.processor.coverage;
 import gov.cms.ab2d.common.model.CoverageMapping;
 import gov.cms.ab2d.common.model.CoveragePeriod;
 
+/**
+ * Execute coverage searches against BFD and save the results to the database.
+ *
+ * Generally this class is not
+ */
 public interface CoverageProcessor {
 
     /**
@@ -28,8 +33,8 @@ public interface CoverageProcessor {
     void queueMapping(CoverageMapping coverageMapping, boolean prioritize);
 
     /**
-     * Check if processor can except
-     * @return
+     * Check if processor can accept a new coverage period to search
+     * @return if processor has available threads to run a job
      */
     boolean isProcessorBusy();
 

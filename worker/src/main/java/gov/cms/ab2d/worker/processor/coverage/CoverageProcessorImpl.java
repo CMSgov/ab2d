@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.processor.coverage;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.CoverageMapping;
 import gov.cms.ab2d.common.model.CoveragePeriod;
+import gov.cms.ab2d.common.model.CoverageSearch;
 import gov.cms.ab2d.common.service.CoverageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -23,6 +24,32 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 
+/**
+ * Implements the nuts and bolts of updating enrollment by pulling from BFD.
+ *
+ * This class consists of several concurrently running tasks that share resources. These resources are protected
+ * by synchronizing specific objects within the class.
+ *
+ * {@link #inProgressMappings} is synchronized when starting and monitoring jobs
+ * {@link #coverageInsertionQueue} is synchronized when attempting to insert results into the database and also adding
+ * elements to that queue
+ * {@link #inShutdown} is Atomic and is used to attempt a clean shutdown marking searches as failed and restarted
+ *
+ * Main responsibilities and where they are implemented
+ *      - Queue individual coverage periods for search
+ *          - {@link #queueCoveragePeriod(CoveragePeriod, boolean)}, {@link #queueCoveragePeriod(CoveragePeriod, int, boolean)},
+ *      - Start an enrollment search against BFD {@link #startJob(CoverageMapping)}
+ *      - Monitor an enrollment search currently running and
+ *          handle completion, failure, or shutdown {@link #monitorMappingJobs()}
+ *      -
+ *
+ * Methods for changing the status of a search.
+ *      - {@link CoverageService#submitSearch(int, String)}
+ *      - {@link CoverageService#resubmitSearch(int, int, String, String, boolean)}
+ *      - {@link CoverageService#startSearch(CoverageSearch, String)}
+ *      - {@link CoverageService#completeSearch(int, String)}
+ *      - {@link CoverageService#failSearch(int, String)}
+ */
 @Slf4j
 @Service
 public class CoverageProcessorImpl implements CoverageProcessor {
@@ -42,6 +69,15 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
     private final AtomicBoolean inShutdown = new AtomicBoolean(false);
 
+    /**
+     * Coverage processor needs an interface to the database, client for BFD, and thread pool to concurrently execute
+     * searches.
+     *
+     * @param coverageService interface with the database for querying, saving, and inserting searches
+     * @param bfdClient REST client for specific calls to BFD
+     * @param executor thread pool to execute enrollment updates within
+     * @param maxAttempts max number of retries to make for updating enrollment for a specific month before failing outright
+     */
     public CoverageProcessorImpl(CoverageService coverageService, BFDClient bfdClient,
                                  @Qualifier("patientCoverageThreadPool") ThreadPoolTaskExecutor executor,
                                  @Value("${coverage.update.max.attempts}") int maxAttempts) {
@@ -77,6 +113,12 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         }
     }
 
+    /**
+     * Attempt to start a coverage search of BFD
+     * @param mapping a mapping job
+     *
+     */
+    @Override
     public boolean startJob(CoverageMapping mapping) {
 
         synchronized (inProgressMappings) {
@@ -98,6 +140,14 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         }
     }
 
+    /**
+     * Prevent the processor from overwhelming RAM and CPU.
+     *
+     * Prevent these conditions:
+     *      - too many jobs actively pulling enrollment from BFD, may DOS BFD
+     *      - too many job results sitting in memory which may cause OOM issues
+     */
+    @Override
     public boolean isProcessorBusy() {
 
         boolean busy = coverageInsertionQueue.size() >= executor.getCorePoolSize() ||
@@ -111,10 +161,24 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         return busy;
     }
 
+    /**
+     *
+     * @param mapping a coverage mapping to be performed
+     * @param prioritize true if coverage mapping needs to be run first before other periods
+     */
+    @Override
     public void queueMapping(CoverageMapping mapping, boolean prioritize) {
         queueCoveragePeriod(mapping.getPeriod(), mapping.getCoverageSearch().getAttempts(), prioritize);
     }
 
+    /**
+     * Attempt to add a search to the queue again with a record of the attempts already made on that search.
+     *
+     * @param mapping whether mapping of searches
+     * @param failedDescription reason for failure of previous attempt
+     * @param restartDescription report why search is being restarted instead of outright failed
+     * @param prioritize whether search needs to happen before other searches
+     */
     private void resubmitMapping(CoverageMapping mapping, String failedDescription, String restartDescription, boolean prioritize) {
 
         if (inShutdown.get()) {
@@ -128,7 +192,14 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     }
 
     /**
-     * Only monitors jobs running in the current application, not jobs running on other machines
+     * Check in progress coverage searches on the current machine and when one of those searches finishes
+     * evaluate the result whether successful or failed.
+     *
+     * Only monitors jobs running in the current application, not jobs running on other machines.
+     *
+     * This monitoring step only runs if the list of mappings being run can be synchronized and the processor
+     * has not been shut down.
+     *
      */
     @Scheduled(cron = "${coverage.update.monitoring.interval}")
     public void monitorMappingJobs() {
@@ -152,6 +223,15 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         }
     }
 
+    /**
+     * Evaluate the results of a mapping into three buckets:
+     *
+     *      - Coverage successfully pulled from BFD. Coverage is then queued (in memory) to be written to the database
+     *      - Coverage unsuccessfully pulled from BFD and all retries used. Search is marked as failed without a re-attempt
+     *      - Coverage unsuccessfully pulled but there are still retries available. Search is resubmitted for another attempt
+     *
+     * @param mapping results of {@link CoverageMappingCallable}
+     */
     public void evaluateJob(CoverageMapping mapping) {
         if (mapping.isSuccessful()) {
             log.info("finished a search for contract {} during {}-{}", mapping.getContract().getContractNumber(),
@@ -174,6 +254,11 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     }
 
     /**
+     * Insert results of one search at a time into the database unless the processor has shut down.
+     *
+     * The {@link #attemptCoverageInsertion(CoverageMapping)} method will handle failure to insertion by resubmitting
+     * quietly.
+     *
      * Only inserts results of coverage mapping jobs run on the current application, not jobs running on other machines
      */
     @Scheduled(fixedDelay = ONE_SECOND, initialDelayString = "${coverage.update.initial.delay}")
@@ -213,7 +298,13 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     }
 
     /**
-     * Attempt to insert all metadata retrieved in a search
+     * Attempt to insert all metadata retrieved in a search handling failure quietly.
+     *
+     * If the database is unavailable or a query times out fail the search quietly, otherwise mark the search as complete.
+     *
+     * Insertions have failed in the past so each stage of inserting data is logged out for monitoring and postmortems
+     * if necessary.
+     *
      * @param result all metadata retrieved by a search
      */
     private void attemptCoverageInsertion(CoverageMapping result) {

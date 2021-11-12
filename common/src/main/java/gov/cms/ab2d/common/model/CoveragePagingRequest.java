@@ -8,9 +8,22 @@ import java.util.Optional;
 @ToString
 public class CoveragePagingRequest {
 
+    /**
+     * When the job was started at which is used to dictate searches of the database
+     *
+     * Derived from {@link Job#getCreatedAt()}
+     */
     private final OffsetDateTime jobStartTime;
     private final Contract contract;
+
+    /**
+     * Number of beneficiaries to pull from the database
+     */
     private final int pageSize;
+
+    /**
+     * Internal beneficiary id that last page ended on {@link Identifiers#getBeneficiaryId()}
+     */
     private final Long cursor;
 
     public CoveragePagingRequest(int pageSize, Long cursor, Contract contract, OffsetDateTime jobStartTime) {
