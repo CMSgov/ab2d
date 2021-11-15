@@ -43,14 +43,12 @@ class PropertiesServiceTest {
             put(PCP_MAX_POOL_SIZE, 150);
             put(PCP_SCALE_TO_MAX_TIME, 900);
             put(MAINTENANCE_MODE, "false");
-            put(CONTRACT_2_BENE_CACHING_ON, "false");
             put(ZIP_SUPPORT_ON, "false");
             put(WORKER_ENGAGEMENT, "engaged");
             put(HPMS_INGESTION_ENGAGEMENT, "engaged");
             put(COVERAGE_SEARCH_DISCOVERY, "idle");
             put(COVERAGE_SEARCH_QUEUEING, "idle");
             put(COVERAGE_SEARCH_UPDATE_MONTHS, "1");
-            put(COVERAGE_SEARCH_STALE_DAYS, "7");
             put(COVERAGE_SEARCH_STUCK_HOURS, "24");
             put(COVERAGE_SEARCH_OVERRIDE, "false");
         }};
@@ -116,11 +114,6 @@ class PropertiesServiceTest {
         propertiesDTOMaintenanceMode.setValue("true");
         propertiesDTOs.add(propertiesDTOMaintenanceMode);
 
-        PropertiesDTO propertiesDTOContract2BeneCachineOn = new PropertiesDTO();
-        propertiesDTOContract2BeneCachineOn.setKey(CONTRACT_2_BENE_CACHING_ON);
-        propertiesDTOContract2BeneCachineOn.setValue("true");
-        propertiesDTOs.add(propertiesDTOContract2BeneCachineOn);
-
         PropertiesDTO propertiesDTOZipSupportOn = new PropertiesDTO();
         propertiesDTOZipSupportOn.setKey(ZIP_SUPPORT_ON);
         propertiesDTOZipSupportOn.setValue("true");
@@ -128,7 +121,7 @@ class PropertiesServiceTest {
 
         List<PropertiesDTO> updatedPropertiesDTOs = propertiesService.updateProperties(propertiesDTOs);
 
-        assertEquals(6, updatedPropertiesDTOs.size());
+        assertEquals(5, updatedPropertiesDTOs.size());
 
         for(PropertiesDTO propertiesDTO : updatedPropertiesDTOs) {
             switch (propertiesDTO.getKey()) {
@@ -142,7 +135,6 @@ class PropertiesServiceTest {
                     assertEquals("400", propertiesDTO.getValue());
                     break;
                 case MAINTENANCE_MODE:
-                case CONTRACT_2_BENE_CACHING_ON:
                 case ZIP_SUPPORT_ON:
                     assertEquals("true", propertiesDTO.getValue());
                     break;

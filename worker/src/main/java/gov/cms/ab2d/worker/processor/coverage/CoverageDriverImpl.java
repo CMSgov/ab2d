@@ -512,6 +512,8 @@ public class CoverageDriverImpl implements CoverageDriver {
     @Trace(metricName = "EnrollmentLoadFromDB", dispatcher = true)
     @Override
     public CoveragePagingResult pageCoverage(Job job) {
+        ZonedDateTime now = getEndDateTime();
+
         Contract contract = job.getContract();
 
         if (contract == null) {
@@ -520,7 +522,16 @@ public class CoverageDriverImpl implements CoverageDriver {
 
         log.info("attempting to build first page of results for job {}", job.getJobUuid());
 
+        ZonedDateTime startDateTime = getStartDateTime(job);
+
         try {
+            // Check that all coverage periods necessary are present before beginning to page
+            while (startDateTime.isBefore(now)) {
+                // Will throw exception if it doesn't exist
+                coverageService.getCoveragePeriod(contract, startDateTime.getMonthValue(), startDateTime.getYear());
+                startDateTime = startDateTime.plusMonths(1);
+            }
+
             // Make initial request which returns a result and a request starting at the next cursor
             CoveragePagingRequest request = new CoveragePagingRequest(PAGING_SIZE, null, contract, job.getCreatedAt());
 

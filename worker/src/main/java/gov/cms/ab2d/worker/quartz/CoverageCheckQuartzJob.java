@@ -15,6 +15,12 @@ import java.util.List;
 
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PRODUCTION;
 
+/**
+ * Update enrollment cached in database based on expected artifacts of the data and business requirements.
+ *
+ * This update only needs to run as often as BFD receives enrollment updates and should not be run when
+ * AB2D is updating the enrollment cache.
+ */
 @Slf4j
 @RequiredArgsConstructor
 @DisallowConcurrentExecution

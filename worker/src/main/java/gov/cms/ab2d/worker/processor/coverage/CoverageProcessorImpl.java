@@ -3,7 +3,6 @@ package gov.cms.ab2d.worker.processor.coverage;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.CoverageMapping;
 import gov.cms.ab2d.common.model.CoveragePeriod;
-import gov.cms.ab2d.common.model.CoverageSearch;
 import gov.cms.ab2d.common.service.CoverageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -41,12 +40,12 @@ import static gov.cms.ab2d.fhir.FhirVersion.STU3;
  *      - Start an enrollment search against BFD {@link #startJob(CoverageMapping)}
  *      - Monitor an enrollment search currently running and
  *          handle completion, failure, or shutdown {@link #monitorMappingJobs()}
- *      -
+ *      - Insert results from a successful enrollment search into the database and cleanly handle shutdown or failure
  *
  * Methods for changing the status of a search.
  *      - {@link CoverageService#submitSearch(int, String)}
  *      - {@link CoverageService#resubmitSearch(int, int, String, String, boolean)}
- *      - {@link CoverageService#startSearch(CoverageSearch, String)}
+ *      - {@link CoverageService#startSearch(gov.cms.ab2d.common.model.CoverageSearch, String)}
  *      - {@link CoverageService#completeSearch(int, String)}
  *      - {@link CoverageService#failSearch(int, String)}
  */
