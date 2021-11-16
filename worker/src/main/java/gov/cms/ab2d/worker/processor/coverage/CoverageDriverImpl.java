@@ -550,7 +550,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      * @throws CoverageDriverException if somehow start time is in the future like the attestation time being
      *  in the future
      */
-    private ZonedDateTime getStartDateTime(Job job) {
+    ZonedDateTime getStartDateTime(Job job) {
         Contract contract = job.getContract();
 
         // Attestation time should never be null for a job making it to this point
@@ -573,7 +573,7 @@ public class CoverageDriverImpl implements CoverageDriver {
                 1, 0, 0, 0, 0, AB2D_ZONE);
     }
 
-    private void checkCoveragePeriodValidity(Job job, CoveragePeriod period) {
+    void checkCoveragePeriodValidity(Job job, CoveragePeriod period) {
         if (period.getStatus() == JobStatus.FAILED &&
                 period.getModified().isAfter(job.getCreatedAt())) {
             throw new CoverageDriverException("attempts to pull coverage information failed too many times, " +
