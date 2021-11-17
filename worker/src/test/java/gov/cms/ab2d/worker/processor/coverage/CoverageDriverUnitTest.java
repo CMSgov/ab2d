@@ -18,6 +18,7 @@ import javax.persistence.EntityNotFoundException;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -465,13 +466,13 @@ class CoverageDriverUnitTest {
             contract.setContractNumber("contractNum");
 
             CoveragePeriod coveragePeriod = new CoveragePeriod();
-            coveragePeriod.setId(100);
-            coveragePeriod.setMonth(1);
-            coveragePeriod.setYear(2021);
             coveragePeriod.setContract(contract);
+            coveragePeriod.setModified(OffsetDateTime.now().plus(1, ChronoUnit.HOURS));
+            coveragePeriod.setStatus(JobStatus.FAILED);
 
             Job job = new Job();
             job.setContract(contract);
+            job.setCreatedAt(OffsetDateTime.now());
 
             driver.checkCoveragePeriodValidity(job, coveragePeriod);
         });
