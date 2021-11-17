@@ -197,7 +197,8 @@ public class CoverageServiceRepository {
      * Calculate exact numbers of beneficiaries enrolled for each month of a contract for each provided contract and return
      * a list of results {@link CoverageCount}.
      *
-     * This method primarily helps verify that the coverage table
+     * This method provides the statistics necessary to verify that the coverage data in the database meets business
+     * requirements.
      *
      * @param contracts list of {@link Contract}s
      * @return counts of the coverage for a given coverage period

@@ -6,7 +6,7 @@ import gov.cms.ab2d.common.model.CoveragePeriod;
 /**
  * Execute coverage searches against BFD and save the results to the database.
  *
- * Generally this class is not
+ * This class does not trigger coverage searches, it only manages the execution of those searches.
  */
 public interface CoverageProcessor {
 

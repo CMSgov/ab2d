@@ -92,7 +92,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     }
 
     /**
-     *
+     * Queue an already attempted (and cancelled or failed) coverage search for another attempt
      * @param period period to add for the first time
      * @param prioritize whether to place at front of queue or back
      */
@@ -161,7 +161,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     }
 
     /**
-     *
+     * Queue an already attempted search that failed
      * @param mapping a coverage mapping to be performed
      * @param prioritize true if coverage mapping needs to be run first before other periods
      */

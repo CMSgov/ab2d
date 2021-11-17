@@ -72,6 +72,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      * The following parameters are configurable:
      *      - How far into the past to update coverage for
      *      - Force a coverage override
+     *      - Fail a search if it has been running too long
      *
      * @return the current meaningful coverage update configuration
      */
@@ -86,8 +87,6 @@ public class CoverageDriverImpl implements CoverageDriver {
     /**
      * Find all work that needs to be done including new coverage periods, jobs that have been running too long,
      * and coverage information that is too old.
-     *
-     * T
      *
      * @throws InterruptedException if is interrupted by a shutdown
      * @throws CoverageDriverException on failure to acquire lock programmatically
@@ -112,7 +111,7 @@ public class CoverageDriverImpl implements CoverageDriver {
             if (locked) {
 
                 for (CoveragePeriod period : outOfDateInfo) {
-                log.info("Attempting to add {}-{}-{} to queue", period.getContract().getContractNumber(),
+                    log.info("Attempting to add {}-{}-{} to queue", period.getContract().getContractNumber(),
                         period.getYear(), period.getMonth());
                 }
 

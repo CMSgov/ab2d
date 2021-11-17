@@ -8,7 +8,11 @@ import gov.cms.ab2d.common.model.Job;
  * Provide an interface for executing high level actions concerning enrollment.
  *
  * Encompasses
- *      - Start
+ *      - Discovering and queueing coverage periods that need to be updated
+ *      - Determining how many beneficiaries an EOB job should expect to query
+ *      - Determining whether enrollment is in a state where it can be used
+ *      - Retrieving all enrollment/coverage for an EOB job
+ *      - Verifying that enrollment/coverage meets business requirements
  */
 public interface CoverageDriver {
 

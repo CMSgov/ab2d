@@ -35,7 +35,8 @@ import static java.util.stream.Collectors.toList;
  *          {@link CoverageServiceRepository#deleteCurrentSearch(CoveragePeriod)},
  *          {@link CoverageServiceRepository#deletePreviousSearches(CoveragePeriod, int)}
  *      - Coverage searches should transition states logically SUBMITTED -> IN_PROGRESS for example
- *      -
+ *      - Only one coverage search should be running for any given {@link CoveragePeriod}
+ *      - Changes to enrollment should be tracked between updates
  *
  * Each status change method has side effects beyond change a {@link CoveragePeriod}. For example, {@link #completeSearch(int, String)}
  * marks a search as successful and deletes all previous enrollment related to a search. Sometimes these methods are
