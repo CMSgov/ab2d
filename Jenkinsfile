@@ -19,6 +19,9 @@ pipeline {
 
         // R4 V2 endpoints enabled
         AB2D_V2_ENABLED = true
+
+        ARTIFACTORY_URL = credentials('ARTIFACTORY_URL')
+
     }
 
     agent {
@@ -69,9 +72,10 @@ pipeline {
         }
 
         stage('Package without tests') {
-
-            steps {
-                sh 'mvn package -DskipTests'
+            withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
+                steps {
+                    sh 'mvn package -DskipTests'
+                }
             }
         }
 
@@ -80,7 +84,7 @@ pipeline {
             steps {
                 sh '''
                     export AB2D_EFS_MOUNT="${AB2D_HOME}"
-                    mvn test -pl eventlogger,fhir,common,api,worker,bfd,filter,audit,hpms
+                    mvn test -pl eventlogger,fhir,common,api,worker,bfd,audit,hpms
                 '''
             }
         }
@@ -178,9 +182,6 @@ pipeline {
 
                     export JACOCO_SOURCE_PATH=./common/src/main/java
                    ./codeclimate/cc-test-reporter format-coverage ./common/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.common.json
-
-                    export JACOCO_SOURCE_PATH=./filter/src/main/java
-                    ./codeclimate/cc-test-reporter format-coverage ./filter/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.filter.json
 
                     export JACOCO_SOURCE_PATH=./hpms/src/main/java
                     ./codeclimate/cc-test-reporter format-coverage ./hpms/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.hpms.json
