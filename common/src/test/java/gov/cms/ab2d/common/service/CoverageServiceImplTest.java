@@ -5,7 +5,7 @@ import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Coverage;
 import gov.cms.ab2d.common.util.DataSetup;
-import gov.cms.ab2d.common.util.FilterOutByDate;
+import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.eventlogger.LogManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

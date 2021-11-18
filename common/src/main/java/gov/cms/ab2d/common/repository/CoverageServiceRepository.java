@@ -11,7 +11,7 @@ import gov.cms.ab2d.common.model.CoverageSearchEvent;
 import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Identifiers;
-import gov.cms.ab2d.common.util.FilterOutByDate;
+import gov.cms.ab2d.filter.FilterOutByDate;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
