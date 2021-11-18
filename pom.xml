@@ -50,16 +50,8 @@
     </properties>
     <repositories>
         <repository>
-            <id>ogs-maven-prod-virtual</id>
-            <url>${env.ARTIFACTORY_URL}/ogs-maven-prod-virtual</url>
-        </repository>
-        <repository>
-            <id>snapshots</id>
-            <url>${env.ARTIFACTORY_URL}/ogs-maven-prod-virtual</url>
-        </repository>
-        <repository>
-            <id>cache</id>
-            <url>${env.ARTIFACTORY_URL}/maven-central-cache</url>
+            <id>ab2d-maven-repo</id>
+            <url>${env.ARTIFACTORY_URL}/ab2d-maven-repo</url>
         </repository>
         <repository>
             <id>ab2d-main</id>
@@ -69,14 +61,14 @@
     <pluginRepositories>
         <pluginRepository>
             <id>central</id>
-            <url>${env.ARTIFACTORY_URL}/ogs-maven-prod-virtual</url>
+            <url>${env.ARTIFACTORY_URL}/ab2d-maven-repo</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
         </pluginRepository>
         <pluginRepository>
             <id>snapshots</id>
-            <url>${env.ARTIFACTORY_URL}/ogs-maven-prod-virtual</url>
+            <url>${env.ARTIFACTORY_URL}/ab2d-main</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
