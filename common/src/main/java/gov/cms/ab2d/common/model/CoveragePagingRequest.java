@@ -17,11 +17,13 @@ public class CoveragePagingRequest {
     private final Contract contract;
 
     /**
-     * Number of beneficiaries to pull from the database
+     * Number of beneficiaries at a time to pull from the database
      */
     private final int pageSize;
 
     /**
+     * Internal tracking of where in the data set work is being done
+     *
      * Internal beneficiary id that last page ended on {@link Identifiers#getBeneficiaryId()}
      */
     private final Long cursor;
