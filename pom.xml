@@ -48,39 +48,12 @@
         <maven.assembly.plugin.version>2.3</maven.assembly.plugin.version>
         <spotbugs.version>4.4.2</spotbugs.version>
     </properties>
-    <repositories>
-        <repository>
-            <id>ab2d-maven-repo</id>
-            <url>${env.ARTIFACTORY_URL}/ab2d-maven-repo</url>
-        </repository>
-        <repository>
-            <id>ab2d-main</id>
-            <url>${env.ARTIFACTORY_URL}/ab2d-main</url>
-        </repository>
-    </repositories>
-    <pluginRepositories>
-        <pluginRepository>
-            <id>central</id>
-            <url>${env.ARTIFACTORY_URL}/ab2d-maven-repo</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </pluginRepository>
-        <pluginRepository>
-            <id>snapshots</id>
-            <url>${env.ARTIFACTORY_URL}/ab2d-main</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-        </pluginRepository>
-    </pluginRepositories>
     <dependencies>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>

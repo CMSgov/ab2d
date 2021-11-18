@@ -92,7 +92,7 @@ public class PatientClaimsCollector {
                 // Filter by date unless contract is an old synthetic data contract, part D or attestation time is null
                 // Filter out data
                 .filter(resource -> FilterEob.filter(resource, claimsRequest.getCoverageSummary().getDateRanges(), earliestDate,
-                            attestationDate, (claimsRequest.getContractType() == Contract.ContractType.CLASSIC_TEST)).isPresent())
+                            attestationDate, claimsRequest.getContractType() == Contract.ContractType.CLASSIC_TEST).isPresent())
                 // Make sure patients are the same
                 .filter(this::matchingPatient)
                 // Make sure update date is after since date
