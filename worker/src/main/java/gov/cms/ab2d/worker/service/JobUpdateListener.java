@@ -20,13 +20,14 @@ public class JobUpdateListener {
         this.jobProgressUpdateService = jobProgressUpdateService;
     }
 
+    // TODO - Add a mapper so that this method can be directly invoked with a JSONObject.
     @SqsListener(value = "ab2d-job-tracking", deletionPolicy = SqsMessageDeletionPolicy.NEVER)
     public void processJobProgressUpdate(String payload, Acknowledgment ack) {
         log.info("JobUpdateListener: Processing message from SQS: " + payload);
         JsonObject jobUdate = new Gson().fromJson(payload, JsonObject.class);
         log.info("JobUpdateListener: Done parsing: " + jobUdate.size());
         boolean consumed = jobProgressUpdateService.addMeasure(jobUdate.get("job_uuid").getAsString(),
-                JobMeasure.valueOf(jobUdate.get("job_uuid").getAsString()),
+                JobMeasure.valueOf(jobUdate.get("measure").getAsString()),
                 jobUdate.get("value").getAsLong());
 
         if (consumed) {
