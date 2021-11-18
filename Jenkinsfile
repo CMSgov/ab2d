@@ -72,8 +72,8 @@ pipeline {
         }
 
         stage('Package without tests') {
-            withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
-                steps {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
                     sh 'mvn package -DskipTests'
                 }
             }

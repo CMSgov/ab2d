@@ -48,7 +48,37 @@
         <maven.assembly.plugin.version>2.3</maven.assembly.plugin.version>
         <spotbugs.version>4.4.2</spotbugs.version>
     </properties>
-
+    <repositories>
+        <repository>
+            <id>ogs-maven-prod-virtual</id>
+            <url>https://artifactory.cloud.cms.gov/artifactory/ogs-maven-prod-virtual</url>
+        </repository>
+        <repository>
+            <id>snapshots</id>
+            <url>https://artifactory.cloud.cms.gov/artifactory/ogs-maven-prod-virtual</url>
+        </repository>
+        <repository>
+            <id>cache</id>
+            <name>maven-central-cache</name>
+            <url>https://artifactory.cloud.cms.gov/artifactory/maven-central-cache</url>
+        </repository>
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>central</id>
+            <url>https://artifactory.cloud.cms.gov/artifactory/ogs-maven-prod-virtual</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+        <pluginRepository>
+            <id>snapshots</id>
+            <url>https://artifactory.cloud.cms.gov/artifactory/ogs-maven-prod-virtual</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </pluginRepository>
+    </pluginRepositories>
     <dependencies>
         <dependency>
             <groupId>org.projectlombok</groupId>
