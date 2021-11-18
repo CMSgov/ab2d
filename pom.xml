@@ -51,32 +51,32 @@
     <repositories>
         <repository>
             <id>ogs-maven-prod-virtual</id>
-            <url>https://artifactory.cloud.cms.gov/artifactory/ogs-maven-prod-virtual</url>
+            <url>${env.ARTIFACTORY_URL}/ogs-maven-prod-virtual</url>
         </repository>
         <repository>
             <id>snapshots</id>
-            <url>https://artifactory.cloud.cms.gov/artifactory/ogs-maven-prod-virtual</url>
+            <url>${env.ARTIFACTORY_URL}/ogs-maven-prod-virtual</url>
         </repository>
         <repository>
             <id>cache</id>
-            <url>https://artifactory.cloud.cms.gov/artifactory/maven-central-cache</url>
+            <url>${env.ARTIFACTORY_URL}/maven-central-cache</url>
         </repository>
         <repository>
             <id>ab2d-main</id>
-            <url>https://artifactory.cloud.cms.gov/artifactory/ab2d-main</url>
+            <url>${env.ARTIFACTORY_URL}/ab2d-main</url>
         </repository>
     </repositories>
     <pluginRepositories>
         <pluginRepository>
             <id>central</id>
-            <url>https://artifactory.cloud.cms.gov/artifactory/ogs-maven-prod-virtual</url>
+            <url>${env.ARTIFACTORY_URL}/ogs-maven-prod-virtual</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
         </pluginRepository>
         <pluginRepository>
             <id>snapshots</id>
-            <url>https://artifactory.cloud.cms.gov/artifactory/ogs-maven-prod-virtual</url>
+            <url>${env.ARTIFACTORY_URL}/ogs-maven-prod-virtual</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
