@@ -59,8 +59,11 @@
         </repository>
         <repository>
             <id>cache</id>
-            <name>maven-central-cache</name>
             <url>https://artifactory.cloud.cms.gov/artifactory/maven-central-cache</url>
+        </repository>
+        <repository>
+            <id>ab2d-main</id>
+            <url>https://artifactory.cloud.cms.gov/artifactory/ab2d-main</url>
         </repository>
     </repositories>
     <pluginRepositories>
