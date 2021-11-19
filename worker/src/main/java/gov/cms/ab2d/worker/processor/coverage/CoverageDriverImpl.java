@@ -32,6 +32,13 @@ import static java.util.stream.Collectors.toList;
 /**
  * Handle high level actions related to updating and querying enrollment for contracts.
  *
+ * The {@link #loadMappingJob()} runs periodically to check whether searches have been submitted. If a search
+ * is found, and all preconditions are met for starting the search, this method will attempt to start a single
+ * search.
+ *
+ * This method is the main driver for the {@link CoverageProcessor} and uses database locks to guarantee that two
+ * workers do not run the same coverage search.
+ *
  * This class is concurrency aware and handles the existence of other worker nodes potentially attempting to queue
  * searches.
  */
@@ -392,7 +399,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      * Steps
      *      - Lock coverage so no other workers can modify coverage while this check is occurring
      *      - Create any {@link CoveragePeriod}s that are currently missing
-     *      - Check the following to determine whether a job can run (fail if any are not met)
+     *      - Check the following to determine whether a job can run (return false if any are not met)
      *          - Look for whether months have failed to update during earlier attempts
      *          - Look for coverage periods that have never been successfully searched and queue them
      *          - Look for coverage periods currently being updated
@@ -581,7 +588,9 @@ public class CoverageDriverImpl implements CoverageDriver {
     }
 
     /**
-     * Page through coverage using a provided paging request
+     * Retrieve enrollment information for {@link CoveragePagingRequest#getPageSize()} number of beneficiaries
+     * where all enrollment records for each patient are aggregated into an {@link CoverageSummary}
+     *
      * @throws CoverageDriverException if coverage period or some other precondition necessary for paging is missing
      */
     @Override
@@ -599,7 +608,9 @@ public class CoverageDriverImpl implements CoverageDriver {
      *
      * Steps
      *      - List of all contracts that are active contracts
-     *      - Filtered contracts {@link CoveragePeriodsPresentCheck}
+     *      - Check whether contracts have a coverage period for every month since the contract
+     *          attested. If not, log issue and filter out because other checks do not apply.
+     *          {@link CoveragePeriodsPresentCheck}
      *      - Get count of beneficiaries for every month for every contract
      *          - Check that there are no {@link CoverageNoDuplicatesCheck}
      *          - Check that every month for a contract has some enrollment except

@@ -26,6 +26,15 @@ import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 /**
  * Implements the nuts and bolts of updating enrollment by pulling from BFD.
  *
+ * This class is driven by spring annotations which let several methods in this class run repeatedly every
+ * x seconds.
+ *
+ * The following methods are run using the {@link Scheduled} annotation
+ *
+ *      - {@link #monitorMappingJobs()} which monitors all currently running coverage searches against BFD for completion
+ *      - {@link #insertJobResults()} which waits for coverage searches against BFD to finish and then attempts
+ *          to insert the results for each search one at a time.
+ *
  * This class consists of several concurrently running tasks that share resources. These resources are protected
  * by synchronizing specific objects within the class.
  *

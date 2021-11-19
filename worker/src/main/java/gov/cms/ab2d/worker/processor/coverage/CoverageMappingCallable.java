@@ -186,9 +186,10 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     /**
      * Filter out patients with unknown reference years or unexpected reference years.
      *
-     * The reference year on a patient should be equal to or greater than the reference year. Sometimes
-     * the reference year will not match the {@link gov.cms.ab2d.common.model.CoveragePeriod}
-     * but as long as it is greater, then it is okay.
+     * The reference year on a patient should be equal to or greater than the year of enrollment we are searching for.
+     * Sometimes the reference year will not match the {@link gov.cms.ab2d.common.model.CoveragePeriod}
+     * but as long as it is greater than or equal it is okay. Patients with reference years before the
+     * {@link gov.cms.ab2d.common.model.CoveragePeriod#getYear()} are discarded.
      */
     private boolean filterByYear(IDomainResource patient) {
         int referenceYear = ExtensionUtils.getReferenceYear(patient);
@@ -211,7 +212,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     }
 
     /**
-     * Given a patient, extract patient ids associated and package into an {@link Identifiers} object.
+     * Given a patient, extract patient ids and package into an {@link Identifiers} object.
      *
      * Record metrics on the identifiers found.
      *
@@ -221,7 +222,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
      *          - If not present do not add the patient to the list
      *      - Check that a current MBI is present
      *      - Check whether historical MBIs are present
-     *      - Create identifiers using fields that are present.
+     *      - Create identifiers using identifiers that were present in the patient object
      *
      * @param patient - the patient id
      * @return the identifiers present if a beneficiary id is present on the patient
