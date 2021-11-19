@@ -27,7 +27,7 @@ pipeline {
 
     tools {
         maven 'maven-3.6.3'
-        jdk 'adoptjdk13'
+        jdk 'openjdk17'
     }
 
     stages {
