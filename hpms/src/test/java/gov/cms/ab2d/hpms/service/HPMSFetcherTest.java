@@ -63,7 +63,7 @@ public class HPMSFetcherTest {
         assertNotNull(attestations);
         assertFalse(attestations.getContracts().isEmpty());
         // E4744 is not returned by the API
-        assertEquals(NUM_CONTRACTS -1, attestations.getContracts().size());
+        assertEquals(NUM_CONTRACTS, attestations.getContracts().size());
     }
 
     private void waitForCallback() {

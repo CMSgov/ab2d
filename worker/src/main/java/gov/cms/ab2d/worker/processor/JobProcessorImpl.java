@@ -203,6 +203,7 @@ public class JobProcessorImpl implements JobProcessor {
                 progressTracker.getPatientRequestQueuedCount(),
                 progressTracker.getPatientRequestProcessedCount(),
                 progressTracker.getPatientFailureCount(),
+                progressTracker.getPatientsWithEobsCount(),
                 progressTracker.getEobsFetchedCount(),
                 progressTracker.getEobsProcessedCount(),
                 eobFilesCreated

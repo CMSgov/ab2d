@@ -13,6 +13,7 @@ public class ApiText {
     public static final String BULK_RESPONSE = "Absolute URL of an endpoint for subsequent status requests (polling location)";
     public static final String RUNNING_JOBIDS = "URL of Current Jobs that are running, To cancel one of the jobs, invoke Status DELETE call";
     public static final String BULK_SINCE = "Beginning time of query. Returns all records \"since\" this time. At this time, it must be after " + SINCE_EARLIEST_DATE;
+    public static final String BULK_SINCE_DEFAULT = " If no value is provided, it will default to the last time a successful job was requested if it exists.";
     public static final String BULK_RESPONSE_LONG = "Absolute URL of an endpoint for subsequent status requests (polling location)";
     public static final String EXPORT_STARTED = "Export request has started";
     public static final String MAX_JOBS = "Too Many Jobs Running, either wait for the jobs to finish or cancel the job";

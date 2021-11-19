@@ -382,7 +382,7 @@ public class CoverageDriverImpl implements CoverageDriver {
              *
              * There will always be at least one coverage period returned.
              */
-            List<CoveragePeriod> periods = coverageService.findAssociatedCoveragePeriods(job.getContract());
+            List<CoveragePeriod> periods = coverageService.findAssociatedCoveragePeriods(job.getContract().getId());
 
             if (periods.isEmpty()) {
                 log.error("There are no existing coverage periods for this job so no metadata exists");
@@ -533,7 +533,7 @@ public class CoverageDriverImpl implements CoverageDriver {
     }
 
     private boolean contractNotBeingUpdated(List<String> issues, Contract contract) {
-        List<CoveragePeriod> periods = coverageService.findAssociatedCoveragePeriods(contract);
+        List<CoveragePeriod> periods = coverageService.findAssociatedCoveragePeriods(contract.getId());
 
         boolean contractBeingUpdated  = periods.stream()
                 .anyMatch(period -> period.getStatus() == JobStatus.IN_PROGRESS || period.getStatus() == JobStatus.SUBMITTED);

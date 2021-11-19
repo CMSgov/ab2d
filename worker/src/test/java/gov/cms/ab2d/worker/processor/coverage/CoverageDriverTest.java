@@ -222,7 +222,7 @@ class CoverageDriverTest {
 
         Contract testContract = dataSetup.setupContract("TST-AFTER-EPOCH",
                 AB2D_EPOCH.toOffsetDateTime().plusMonths(3));
-        testContract.setUpdateMode(Contract.UpdateMode.TEST);
+        testContract.setUpdateMode(Contract.UpdateMode.NONE);
 
         contractRepo.saveAndFlush(testContract);
 

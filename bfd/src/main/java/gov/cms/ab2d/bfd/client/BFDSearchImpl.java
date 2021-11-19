@@ -32,6 +32,20 @@ public class BFDSearchImpl implements BFDSearch {
         this.bfdClientVersions = bfdClientVersions;
     }
 
+    /**
+     * Search for ebos using the provided parameters
+     *
+     * AB2D does not report SAMHSA claims (https://www.samhsa.gov/).
+     *      - excludeSAMHSA must be set to true to maintain this exclusion
+     *
+     * @param patientId internal beneficiary id
+     * @param since the minimum lastUpdated date which may be null
+     * @param pageSize maximum number of records that can be returned
+     * @param bulkJobId header to uniquely identify what job this is coming from within BFD logs
+     * @param version the version of FHIR that we need from BFD
+     * @return a bundle of eobs for the patient.
+     * @throws IOException on failure to retrieve claims from BFD
+     */
     @Trace
     @Override
     public IBaseBundle searchEOB(long patientId, OffsetDateTime since, int pageSize, String bulkJobId, FhirVersion version) throws IOException {

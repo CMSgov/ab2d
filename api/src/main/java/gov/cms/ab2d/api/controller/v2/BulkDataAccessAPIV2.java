@@ -38,6 +38,7 @@ import static gov.cms.ab2d.api.controller.common.ApiText.ASYNC;
 import static gov.cms.ab2d.api.controller.common.ApiText.BULK_RESPONSE;
 import static gov.cms.ab2d.api.controller.common.ApiText.BULK_RESPONSE_LONG;
 import static gov.cms.ab2d.api.controller.common.ApiText.BULK_SINCE;
+import static gov.cms.ab2d.api.controller.common.ApiText.BULK_SINCE_DEFAULT;
 import static gov.cms.ab2d.api.controller.common.ApiText.CONTRACT_NO;
 import static gov.cms.ab2d.api.controller.common.ApiText.EXPORT_CLAIM;
 import static gov.cms.ab2d.api.controller.common.ApiText.EXPORT_STARTED;
@@ -107,7 +108,7 @@ public class BulkDataAccessAPIV2 {
                     allowableValues = ApiCommon.ALLOWABLE_OUTPUT_FORMATS, defaultValue = NDJSON_FIRE_CONTENT_TYPE
             )
             @RequestParam(required = false, name = OUT_FORMAT) String outputFormat,
-            @ApiParam(value = BULK_SINCE, example = SINCE_EARLIEST_DATE)
+            @ApiParam(value = BULK_SINCE + BULK_SINCE_DEFAULT, example = SINCE_EARLIEST_DATE)
             @RequestParam(required = false, name = SINCE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
 
         log.info("Received request to export");
@@ -143,7 +144,7 @@ public class BulkDataAccessAPIV2 {
             )
             @RequestParam(required = false, name = OUT_FORMAT) String outputFormat,
             @RequestHeader(value = ASYNC)
-            @ApiParam(value = BULK_SINCE, example = SINCE_EARLIEST_DATE)
+            @ApiParam(value = BULK_SINCE + BULK_SINCE_DEFAULT, example = SINCE_EARLIEST_DATE)
             @RequestParam(required = false, name = SINCE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
 
         MDC.put(CONTRACT_LOG, contractNumber);

@@ -36,9 +36,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     private final BFDClient bfdClient;
     private final LogManager logManager;
 
-    @Value("${claims.skipBillablePeriodCheck}")
-    private boolean skipBillablePeriodCheck;
-
     @Value("${bfd.earliest.data.date:01/01/2020}")
     private String earliestDataDate;
 
@@ -65,12 +62,21 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         }
     }
 
+    /**
+     * Begin requesting claims from BFD using the provided {@link PatientClaimsRequest}, page through
+     * the resulting claims until none are left, filter claims not meeting requirements, and filter out fields
+     * in claims that AB2D cannot provide.
+     *
+     * @param request request for claims from a single patient
+     * @return list of matching claims after filtering claims not meeting requirements and stripping fields that AB2D
+     * cannot provide
+     */
     private List<IBaseResource> getEobBundleResources(PatientClaimsRequest request) {
 
         OffsetDateTime requestStartTime = OffsetDateTime.now();
 
         Date earliestDate = getEarliestDataDate();
-        PatientClaimsCollector collector = new PatientClaimsCollector(request, skipBillablePeriodCheck, earliestDate);
+        PatientClaimsCollector collector = new PatientClaimsCollector(request, earliestDate);
 
         CoverageSummary patient = request.getCoverageSummary();
         long beneficiaryId = patient.getIdentifiers().getBeneficiaryId();
@@ -103,8 +109,12 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     }
 
     /**
-     * Determine what since date to use if any. If attestation time is before the earliest date that we can use the
-     * _since parameter for, then return null.
+     * Determine what since date to use if any.
+     *
+     * If since provided by user is null and attestation time is before the earliest date that we can use since for then return null.
+     *
+     * If since provided is not null, check that since date is not before attestation time and that since date is not
+     * before AB2D epoch.
      *
      * @param request patient claims request which may contain a since time or attestation time to use
      */

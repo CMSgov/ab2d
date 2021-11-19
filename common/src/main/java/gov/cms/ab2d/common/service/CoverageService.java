@@ -45,10 +45,10 @@ public interface CoverageService {
 
     /**
      * Retrieve list of coverage periods associated with a contract
-     * @param contract contract to retrieve coverage periods for
+     * @param contractId contract to retrieve coverage periods for
      * @return list of coverage periods associated with a contract
      */
-    List<CoveragePeriod> findAssociatedCoveragePeriods(Contract contract);
+    List<CoveragePeriod> findAssociatedCoveragePeriods(Long contractId);
 
     /**
      * Check current status of a {@link CoveragePeriod}
