@@ -33,7 +33,9 @@ public interface CoverageProcessor {
     void queueMapping(CoverageMapping coverageMapping, boolean prioritize);
 
     /**
-     * Check if processor can accept a new coverage period to search
+     * Check if processor can accept a new coverage period to search or if there are too many in progress searches
+     * either currently querying BFD or inserting data into the AB2D database.
+     *
      * @return if processor has available threads to run a job
      */
     boolean isProcessorBusy();

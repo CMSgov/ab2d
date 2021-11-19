@@ -125,7 +125,8 @@ public interface CoverageService {
     CoveragePagingResult pageCoverage(CoveragePagingRequest pagingRequest);
 
     /**
-     * Get difference in beneficiary membership between last two searches conducted for a given coverage search
+     * Get difference in beneficiary membership between last two searches conducted for a given {@link CoveragePeriod}
+     *
      * @param periodId the search period to find the last two searches for
      * @return difference between the two searches
      */

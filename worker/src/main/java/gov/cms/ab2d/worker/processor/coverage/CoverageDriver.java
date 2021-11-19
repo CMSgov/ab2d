@@ -9,8 +9,12 @@ import gov.cms.ab2d.common.model.Job;
  *
  * Encompasses
  *      - Discovering and queueing coverage periods that need to be updated
- *      - Determining how many beneficiaries an EOB job should expect to query
- *      - Determining whether enrollment is in a state where it can be used
+ *      - Determining how many beneficiaries an EOB job should expect to query from BFD based on the number
+ *          of beneficiaries in the database (used to detect bugs).
+ *      - Determining whether all enrollment necessary to run a Job for a Contract is present
+ *          in the database. Checks that all {@link gov.cms.ab2d.common.model.CoveragePeriod}s
+ *          expected for a contract are present, that updates to the coverage associated with those coverage periods
+ *          are not in progress, and that updates have not failed recently.
  *      - Retrieving all enrollment/coverage for an EOB job
  *      - Verifying that enrollment/coverage meets business requirements
  */

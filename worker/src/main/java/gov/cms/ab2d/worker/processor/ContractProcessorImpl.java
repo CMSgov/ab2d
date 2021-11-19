@@ -81,8 +81,9 @@ public class ContractProcessorImpl implements ContractProcessor {
      * Process the contract - execute an entire {@link Job} from start to finish. Under the hood beneficiaries are
      * loaded from our database, queued for a thread pool to process, and the results processed and written out.
      *
-     * Under the hood all of this is done by paging through beneficiaries. We queue X beneficiaries at a time
-     * and then check to see what requests have finished before attempting to queue more beneficiaries.
+     * Under the hood all of this is done by paging through beneficiaries. We queue {@link #eobJobPatientQueuePageSize}
+     * beneficiaries at a time and then check to see what requests have finished before attempting
+     * to queue more beneficiaries.
      *
      * Steps
      *      - Calculate number of beneficiaries expected to process for the job
@@ -144,7 +145,7 @@ public class ContractProcessorImpl implements ContractProcessor {
     }
 
     /**
-     * Load patients and create an EOB request for each patient. Patients are loaded a page at a time. The page size is
+     * Load beneficiaries and create an EOB request for each patient. Patients are loaded a page at a time. The page size is
      * configurable. At the end of loading all requests, the number of requests loaded is compared to the expected
      * number and the job immediately failed if not equal.
      *

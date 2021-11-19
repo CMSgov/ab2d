@@ -36,12 +36,18 @@ import static java.util.stream.Collectors.toList;
 
 /**
  * Vanilla SQL interface with the coverage table. The class is designed to be performant and work with the
- * partitioning strategies in the database.
+ * partitioning strategies in the database. Partitioning is mainly done to speed up bulk inserts.
  *
  * IMPORTANT: The coverage table is partitioned by contract and then by year.
  *
  * With Postgres, this means that all queries to the coverage table must contain contract or year, otherwise those queries
  * will trigger a full table scan.
+ *
+ * Indexes on the "coverage" table to speed up queries
+ *
+ *      - beneficiary_id, contract, year, month, bene_coverage_search_event_id
+ *      - beneficiary_coverage_period_id, beneficiary_id, contract, year
+ *      - beneficiary_coverage_search_event_id, beneficiary_id, contract, year
  */
 @Slf4j
 @Repository
@@ -50,24 +56,66 @@ public class CoverageServiceRepository {
     private static final int BATCH_INSERT_SIZE = 10000;
     private static final List<Integer> YEARS = List.of(2020, 2021, 2022, 2023);
 
+    /**
+     * Assign a beneficiary as being a member of a contract during a year and month {@link CoveragePeriod}
+     * and record what update from BFD this record is associated with {@link CoverageSearchEvent}.
+     *
+     * Insertion will break if a patient is tied to the same contract, year, month, and search event more than once.
+     * Likewise for coverage period.
+     *
+     * The contract and year must be included to take advantage of partitioning. The month is used
+     * to improve indexing.
+     */
     private static final String INSERT_COVERAGE = "INSERT INTO coverage " +
             "(bene_coverage_period_id, bene_coverage_search_event_id, contract, year, month, beneficiary_id, current_mbi, historic_mbis) " +
             "VALUES(?,?,?,?,?,?,?,?)";
 
+    /**
+     * Return a count of all beneficiaries associated with an {@link CoveragePeriod} by a specific update from BFD
+     * {@link CoverageSearchEvent}.
+     *
+     * The count is not distinct because constraints will break if a patient is assigned to the same
+     * {@link CoverageSearchEvent}
+     *
+     * The contract and year must be included to take advantage of the partitions and prevent a table scan
+     */
     private static final String SELECT_COVERAGE_BY_SEARCH_COUNT = "SELECT COUNT(*) FROM coverage " +
             " WHERE bene_coverage_search_event_id = :id AND contract = :contract AND year IN (:years)";
 
+    /**
+     * Return a count of all beneficiaries associated with an {@link CoveragePeriod}
+     * from any event.
+     */
     private static final String SELECT_DISTINCT_COVERAGE_BY_PERIOD_COUNT = "SELECT COUNT(DISTINCT beneficiary_id) FROM coverage" +
             " WHERE bene_coverage_period_id IN(:ids) AND contract = :contract AND year IN (:years)";
 
+    /**
+     * Delete all coverage associated with a single update from BFD {@link CoverageSearchEvent}
+     *
+     * The contract and year must be included to take advantage of the partitions and prevent a table scan.
+     */
     private static final String DELETE_SEARCH = "DELETE FROM coverage cov " +
             "WHERE cov.bene_coverage_search_event_id = :searchEvent" +
             "   AND contract = :contract AND year IN (:years)";
 
+    /**
+     * Delete all coverage associated with a list of updates from BFD {@link CoverageSearchEvent}
+     *
+     * The contract and year must be included to take advantage of the partitions and prevent a table scan.
+     */
     private static final String DELETE_PREVIOUS_SEARCHES = "DELETE FROM coverage cov " +
             "WHERE cov.bene_coverage_search_event_id IN (:searchEvents)" +
             "   AND contract = :contract AND year IN (:years)";
 
+    /**
+     * List out the patients present in one {@link CoverageSearchEvent} but not present in another {@link CoverageSearchEvent}
+     *
+     * Every time a {@link CoveragePeriod} is updated after the first time coverage is pulled from BFD, this query is
+     * run to determine the drift in enrollment over time. The results of this query are inserted into a records
+     * table as part of the {@link CoverageDeltaRepository}
+     *
+     * The contract and year must be included to take advantage of the partitions and prevent a table scan.
+     */
     static final String SELECT_DELTA =
             "SELECT cov1.bene_coverage_period_id, cov1.beneficiary_id, :type as entryType, CURRENT_TIMESTAMP as created" +
             " FROM coverage cov1" +
@@ -75,12 +123,28 @@ public class CoverageServiceRepository {
                 " (SELECT cov2.beneficiary_id FROM coverage cov2" +
                 " WHERE cov1.beneficiary_id = cov2.beneficiary_id and bene_coverage_search_event_id = :search2 )";
 
+    /**
+     * Count the number of beneficiaries shared between two updates from {@link CoverageSearchEvent} for the same
+     * {@link CoveragePeriod}.
+     *
+     * This number summarizes the detailed information provided by the {@link #SELECT_DELTA} query.
+     *
+     * The contract and year must be included to take advantage of the partitions and prevent a table scan.
+     */
     private static final String SELECT_INTERSECTION = "SELECT COUNT(*) FROM (" +
             " SELECT DISTINCT beneficiary_id FROM coverage WHERE bene_coverage_search_event_id = :search1 AND contract = :contract AND year IN (:years)" +
             " INTERSECT " +
             " SELECT DISTINCT beneficiary_id FROM coverage WHERE bene_coverage_search_event_id = :search2 AND contract = :contract AND year IN (:years)" +
             ") I";
 
+    /**
+     * Select a limited number of records from the coverage table associated with a specific contract. This is the
+     * first call to get records, all subsequent calls require a cursor.
+     *
+     * Without a limit this query will typically return millions of results maybe even tens of millions.
+     *
+     * The contract and year must be included to take advantage of the partitions and prevent a table scan.
+     */
     private static final String SELECT_COVERAGE_WITHOUT_CURSOR =
             "SELECT beneficiary_id, current_mbi, historic_mbis, year, month " +
             " FROM coverage " +
@@ -88,6 +152,14 @@ public class CoverageServiceRepository {
             " ORDER BY beneficiary_id " +
             " LIMIT :limit";
 
+    /**
+     * Select a limited number of records starting from a beneficiary (cursor)
+     * from the coverage table associated with a specific contract.
+     *
+     * This is used to page through the enrollment related to a contract and starts where the last page ended.
+     *
+     * The contract and year must be included to take advantage of the partitions and prevent a table scan.
+     */
     private static final String SELECT_COVERAGE_WITH_CURSOR =
             "SELECT beneficiary_id, current_mbi, historic_mbis, year, month " +
             " FROM coverage " +
@@ -95,6 +167,17 @@ public class CoverageServiceRepository {
             " ORDER BY beneficiary_id " +
             " LIMIT :limit";
 
+    /**
+     * Given a list of contracts, for each contract and all {@link CoveragePeriod}s that contract has been active for,
+     * count the number of beneficiaries covered by the contract and report those results.
+     *
+     * Results are split by {@link CoverageSearchEvent} to detect when duplicate enrollment is present.
+     *
+     * The results contain the {@link Contract#getContractNumber()}, year, month, {@link CoveragePeriod} id,
+     * and {@link CoverageSearchEvent} id
+     *
+     * The contract and year must be included to take advantage of the partitions and prevent a table scan.
+     */
     private static final String SELECT_COUNT_CONTRACT =
             " SELECT coverage.contract, coverage.year, coverage.month, coverage.bene_coverage_period_id," +
                     " coverage.bene_coverage_search_event_id, COUNT(*) as bene_count " +
@@ -117,7 +200,8 @@ public class CoverageServiceRepository {
     }
 
     /**
-     * Count the number of beneficiaries in the coverage table related to a specific search {@link CoverageSearchEvent}.
+     * Count the number of beneficiaries in the coverage table which are associated with a specific
+     * search of BFD {@link CoverageSearchEvent}.
      *
      * Coverage is only associated with {@link JobStatus#IN_PROGRESS} search events. So submitting any other search event
      * will result in no coverage being reported.
@@ -142,10 +226,17 @@ public class CoverageServiceRepository {
     }
 
     /**
-     * Compare the beneficiaries in two searches and count the number of beneficiaries shared between the searches.
+     * Compare the beneficiaries in two searches and count the number of beneficiaries shared between the searches. This
+     * query should only be used when comparing the number of beneficaries for the two most recent {@link CoverageSearchEvent}s
+     * associated with a {@link CoveragePeriod}.
      *
      * This is used to calculate the difference between an old set of enrollment for a given contract, year, and month,
      * and the most recent update.
+     *
+     * This query only makes sense when both {@link CoverageSearchEvent}s provided are
+     * associated with the same {@link CoveragePeriod}. Any other usage will cause misleading results.
+     *
+     * This query should only be
      *
      * Coverage is only associated with {@link JobStatus#IN_PROGRESS} search events. So submitting any other search event
      * will result in no data for the comparison.
@@ -218,8 +309,9 @@ public class CoverageServiceRepository {
     /**
      * Mark benficiaries as enrolled in a contract for a specific search event, contract, month, and year using plain JDBC.
      *
-     * The enrollment is related to a specific search {@link CoverageSearchEvent} that we've done of BFD for a specific
-     * month and year. We may have other older searches also in the database when this insertion is done.
+     * The enrollment is related to a search against BFD {@link CoverageSearchEvent} that we've done for a contract,
+     * month, and year. We may have other older enrollment from previous searches against BFD
+     * also in the database when this insertion is done.
      *
      * @param searchEvent the search event to add coverage in relation to
      * @param beneIds Collection of beneficiary ids to be added as a batch
@@ -261,7 +353,7 @@ public class CoverageServiceRepository {
     }
 
     /**
-     * This method exists so that NR can identify this component of the transaction and time it explicitly.
+     * This method exists so that NewRelic can identify this component of the transaction and time it explicitly.
      *
      * @param statement a batch statement with tens of thousands
      * @throws SQLException on failure to make the insertion
@@ -364,21 +456,49 @@ public class CoverageServiceRepository {
     }
 
     /**
-     * Page through coverage in database.
+     * Page through coverage records in database by beneficiary and aggregate those records into a single object
+     * for beneficiary.
      *
      * The paging request will contain a contract, a page size (number of beneficiaries to pull), and a cursor with the
      * last patient pulled.
      *
-     * Steps to this method:
-     *      - Check that contract has enrollment for all necessary months before retrieving a page {@link #getExpectedCoveragePeriods(CoveragePagingRequest)}
-     *      - Calculate number of records which correspond to page size patients to pull from database
-     *          (max one record per month per beneficiary) {@link #getCoverageLimit(int, long)}
-     *      - Conduct the query without processing the results {@link #queryCoverageMembership(CoveragePagingRequest, long)}
-     *      - Group results by patient {@link #aggregateEnrollmentByPatient(int, List)}
-     *      - For each patient condense enrollment down to a single set of date ranges {@link #summarizeCoverageMembership(Contract, Map.Entry)}
-     *      - Determine whether another page of results is necessary
-     *      - If another page of results is necessary create a {@link CoveragePagingRequest}
-     *      - Collect everything into a single {@link CoveragePagingResult}
+     * The coverage table contains more than one coverage record per beneficiary. Each coverage record corresponds
+     * to a beneficiary belonging to a contract for a specific month and year. These records must be aggregated
+     * for each patient that has ever been a member of the contract to calculate a list of date ranges for their
+     * membership.
+     *
+     * The paging is done by beneficiary, not by enrollment record. A beneficiary may have dozens of enrollment records
+     * in the database.
+     *
+     * For example if
+     *
+     *      1. The page size is 10, and
+     *      2. A contract has been active for two years
+     * Then each beneficiary could have a record for every month they were active in the contract. Assuming each beneficiary
+     * was active for every month of the contract that would be (10 beneficiaries) * (24 months per beneficiary) = 240 records
+     *
+     * Internally the pageCoverage method will pull more beneficiaries' records than it needs for a complete page and then
+     * truncate the results down to the expected page size.
+     *
+     * The page coverage method will also include the cursor with the result for the next page of beneficiaries.
+     *
+     * Step by step what is involved in this method:
+     *
+     * 1. Check that contract has enrollment for all necessary months before retrieving a {@link CoveragePagingRequest#getPageSize()}.
+     *    If a contract does not have enrollment for every month except the current month, then it violates a business requirement
+     *    {@link #getExpectedCoveragePeriods(CoveragePagingRequest)}
+     * 2. Calculate number of coverage records which correspond to page size patients to pull from database. There should be
+     *    at most one coverage record per beneficiary per month the contract has been active
+     *    (pageSize * months * beneficiaries) {@link #getCoverageLimit(int, long)}
+     * 3. Conduct query to receive coverage records for a {@link #getCoverageLimit(int, long)} of enrollment information
+     *    without processing the results. Each record in the results contains all known identifiers associated
+     *    with a patient and specifies a  month and year that the beneficiaries
+     *    are a member of the contract {@link #queryCoverageMembership(CoveragePagingRequest, long)}
+     * 4. Group the previous queries' results by patient {@link #aggregateEnrollmentByPatient(int, List)}
+     * 5. For each patient condense enrollment down to a single set of date ranges {@link #summarizeCoverageMembership(Contract, Map.Entry)}
+     * 6. Determine whether another page of results is necessary
+     * 7. If another page of results is necessary create a {@link CoveragePagingRequest}
+     * 8. Collect the {@link CoverageSummary} and next {@link CoveragePagingRequest }into a single {@link CoveragePagingResult}
      *
      * @param page request for paging coverage
      * @return the result of paging with a cursor to the next request

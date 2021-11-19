@@ -9,7 +9,8 @@ import java.util.Optional;
 public class CoveragePagingRequest {
 
     /**
-     * When the job was started at which is used to dictate searches of the database
+     * When a job is submitted by a PDP. If coverage data is modified after this datetime then
+     * the results of the job are not reliable and the job will fail.
      *
      * Derived from {@link Job#getCreatedAt()}
      */

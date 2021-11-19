@@ -183,6 +183,8 @@ public class CoverageServiceImpl implements CoverageService {
         return coverageServiceRepo.pageCoverage(pagingRequest);
     }
 
+    // todo: consider removing now that the CoverageDeltaRepository functionality exists
+    //  We can write alarms using that delta table if we need to.
     @Override
     @Trace(metricName = "SearchDiff", dispatcher = true)
     public CoverageSearchDiff searchDiff(int periodId) {
@@ -406,6 +408,13 @@ public class CoverageServiceImpl implements CoverageService {
 
         // todo: log to kinesis as well
         Contract contract = period.getContract();
+
+        /*
+         * Log the difference between any earlier enrollment we have for the given coverage period
+         * and the update just performed.
+         *
+         * The intersection should be more than 95%.
+         */
         CoverageSearchDiff diff = searchDiff(periodId);
         log.info("{}-{}-{} difference between previous metadata and current metadata\n {}",
                 contract.getContractNumber(), period.getYear(), period.getMonth(), diff);
@@ -426,7 +435,9 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     /**
-     * Verify that the coverage period provided should exist and is not in the past or before AB2D began serving
+     * Verify that the proposed year and month for a coverage period is not before AB2D began serving claims
+     * or in the future.
+     *
      * @throws IllegalArgumentException when month and year are not within bounds
      */
     private static void checkMonthAndYear(int month, int year) {

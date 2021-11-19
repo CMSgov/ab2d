@@ -140,9 +140,12 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     }
 
     /**
-     * Prevent the processor from overwhelming RAM and CPU.
+     * Check to see if processor is currently running too many searches and needs
+     * to wait before starting more searches.
      *
-     * Prevent these conditions:
+     * Attempts to prevent running out of RAM and CPU by having too many searches running.
+     *
+     * Attempts to avoid these conditions:
      *      - too many jobs actively pulling enrollment from BFD, may DOS BFD
      *      - too many job results sitting in memory which may cause OOM issues
      */
@@ -161,7 +164,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     }
 
     /**
-     * Queue an already attempted search that failed
+     * Queue an already attempted coverage search that failed
      * @param mapping a coverage mapping to be performed
      * @param prioritize true if coverage mapping needs to be run first before other periods
      */
@@ -171,9 +174,9 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     }
 
     /**
-     * Attempt to add a search to the queue again with a record of the attempts already made on that search.
+     * Attempt to add a coverage search to the queue again with a record of the attempts already made on that search.
      *
-     * @param mapping whether mapping of searches
+     * @param mapping search that was attempted
      * @param failedDescription reason for failure of previous attempt
      * @param restartDescription report why search is being restarted instead of outright failed
      * @param prioritize whether search needs to happen before other searches
@@ -226,8 +229,8 @@ public class CoverageProcessorImpl implements CoverageProcessor {
      * Evaluate the results of a mapping into three buckets:
      *
      *      - Coverage successfully pulled from BFD. Coverage is then queued (in memory) to be written to the database
-     *      - Coverage unsuccessfully pulled from BFD and all retries used. Search is marked as failed without a re-attempt
-     *      - Coverage unsuccessfully pulled but there are still retries available. Search is resubmitted for another attempt
+     *      - Coverage unsuccessfully pulled from BFD and all retries used. Coverage search is marked as failed without a re-attempt
+     *      - Coverage unsuccessfully pulled but there are still retries available. Coverage search is resubmitted for another attempt
      *
      * @param mapping results of {@link CoverageMappingCallable}
      */
@@ -253,7 +256,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     }
 
     /**
-     * Insert results of one search at a time into the database unless the processor has shut down.
+     * Insert results of one coverage search at a time into the database unless the processor has shut down.
      *
      * The {@link #attemptCoverageInsertion(CoverageMapping)} method will handle failure to insertion by resubmitting
      * quietly.
@@ -297,9 +300,10 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     }
 
     /**
-     * Attempt to insert all metadata retrieved in a search handling failure quietly.
+     * Attempt to insert all metadata retrieved in a coverage search handling failure quietly.
      *
-     * If the database is unavailable or a query times out fail the search quietly, otherwise mark the search as complete.
+     * If the database is unavailable or a query times out fail the coverage search quietly, otherwise mark
+     * the coverage search as complete.
      *
      * Insertions have failed in the past so each stage of inserting data is logged out for monitoring and postmortems
      * if necessary.

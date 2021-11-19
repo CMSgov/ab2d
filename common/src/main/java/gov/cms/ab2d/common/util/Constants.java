@@ -68,7 +68,9 @@ public final class Constants {
     // How many hours a coverage search can run before it times out
     public static final String COVERAGE_SEARCH_STUCK_HOURS = "coverage.update.stuck.hours";
 
-    // How many months in the past coverage updates should be run for
+    // How many months in the past coverage searches of BFD need to be done for. All coverage
+    // periods for all active contracts within COVERAGE_SEARCH_UPDATE_MONTHS will have coverage
+    // searches queued to update them whenever the coverage period quartz job runs.
     public static final String COVERAGE_SEARCH_UPDATE_MONTHS = "coverage.update.months.past";
 
     // Force a coverage update to run even when not scheduled
