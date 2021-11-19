@@ -21,7 +21,6 @@ pipeline {
         AB2D_V2_ENABLED = true
 
         ARTIFACTORY_URL = credentials('ARTIFACTORY_URL')
-
     }
 
     agent {
@@ -82,10 +81,12 @@ pipeline {
         stage('Run unit and integration tests') {
 
             steps {
-                sh '''
-                    export AB2D_EFS_MOUNT="${AB2D_HOME}"
-                    mvn test -pl eventlogger,fhir,common,api,worker,bfd,audit,hpms
-                '''
+                withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
+                    sh '''
+                        export AB2D_EFS_MOUNT="${AB2D_HOME}"
+                        mvn --settings settings.xml -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD}' test -pl eventlogger,fhir,common,api,worker,bfd,audit,hpms
+                    '''
+                }
             }
         }
 
@@ -94,7 +95,8 @@ pipeline {
             steps {
 
                 withCredentials([file(credentialsId: 'SANDBOX_BFD_KEYSTORE', variable: 'SANDBOX_BFD_KEYSTORE'),
-                            string(credentialsId: 'SANDBOX_BFD_KEYSTORE_PASSWORD', variable: 'AB2D_BFD_KEYSTORE_PASSWORD')]) {
+                            string(credentialsId: 'SANDBOX_BFD_KEYSTORE_PASSWORD', variable: 'AB2D_BFD_KEYSTORE_PASSWORD'),
+                            usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
 
                     sh '''
                         export AB2D_BFD_KEYSTORE_LOCATION="$WORKSPACE/opt/ab2d/ab2d_bfd_keystore"
@@ -109,7 +111,7 @@ pipeline {
 
                         export AB2D_V2_ENABLED=true
 
-                        mvn test -pl e2e-bfd-test -am -Dtest=EndToEndBfdTests -DfailIfNoTests=false
+                        mvn test --settings settings.xml -pl e2e-bfd-test -am -Dtest=EndToEndBfdTests -DfailIfNoTests=false -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD}'
                     '''
                 }
             }
@@ -143,7 +145,8 @@ pipeline {
             steps {
 
                 withCredentials([file(credentialsId: 'SANDBOX_BFD_KEYSTORE', variable: 'SANDBOX_BFD_KEYSTORE'),
-                            string(credentialsId: 'SANDBOX_BFD_KEYSTORE_PASSWORD', variable: 'AB2D_BFD_KEYSTORE_PASSWORD')]) {
+                            string(credentialsId: 'SANDBOX_BFD_KEYSTORE_PASSWORD', variable: 'AB2D_BFD_KEYSTORE_PASSWORD'),
+                            usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
 
                     sh '''
                         export AB2D_BFD_KEYSTORE_LOCATION="/opt/ab2d/ab2d_bfd_keystore"
@@ -161,7 +164,7 @@ pipeline {
 
                         ls -la $KEYSTORE_LOCATION
 
-                        mvn test -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false
+                        mvn test --settings settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD}
                     '''
                 }
             }
