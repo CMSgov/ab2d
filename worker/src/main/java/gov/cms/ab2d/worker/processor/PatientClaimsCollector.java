@@ -2,6 +2,7 @@ package gov.cms.ab2d.worker.processor;
 
 import com.newrelic.api.agent.NewRelic;
 import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
 import gov.cms.ab2d.filter.FilterEob;
 import gov.cms.ab2d.worker.util.FhirUtils;
 import gov.cms.ab2d.fhir.BundleUtils;
@@ -19,7 +20,7 @@ import java.util.*;
  *
  * Relevant classes influencing filtering and behavior:
  *      - {@link gov.cms.ab2d.common.model.CoverageSummary} dates that beneficiary is a member of the contract and list of MBIs
- *      - {@link FilterOutByDate#valid} method filtering out claims from periods when beneficiary was not a member
+ *      - {@link FilterEob.filter} method filtering out claims from periods when beneficiary was not a member
  *      - {@link ExplanationOfBenefitTrimmer#getBenefit} strip fields that AB2D should not provide based on {@link gov.cms.ab2d.fhir.FhirVersion}
  *      - {@link EobUtils#isPartD} remove claims that are PartD
  *      - {@link FhirUtils} add MBIs to a claim
@@ -93,6 +94,8 @@ public class PatientClaimsCollector {
                 // Filter out data
                 .filter(resource -> FilterEob.filter(resource, claimsRequest.getCoverageSummary().getDateRanges(), earliestDate,
                             attestationDate, claimsRequest.getContractType() == Contract.ContractType.CLASSIC_TEST).isPresent())
+                // Filter out unnecessary fields
+                .map(resource -> ExplanationOfBenefitTrimmer.getBenefit(resource))
                 // Make sure patients are the same
                 .filter(this::matchingPatient)
                 // Make sure update date is after since date
