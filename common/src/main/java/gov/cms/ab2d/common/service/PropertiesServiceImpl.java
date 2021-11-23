@@ -85,7 +85,6 @@ public class PropertiesServiceImpl implements PropertiesService {
             break;
 
         case MAINTENANCE_MODE:
-        case CONTRACT_2_BENE_CACHING_ON:
         case ZIP_SUPPORT_ON:
         case COVERAGE_SEARCH_OVERRIDE:
             validateBoolean(key, propertiesDTO);
@@ -102,10 +101,6 @@ public class PropertiesServiceImpl implements PropertiesService {
         // The maximums for these values are arbitrary and may need to be changed
         case COVERAGE_SEARCH_UPDATE_MONTHS:
             validateInt(key, propertiesDTO, 0, 12);
-            addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
-            break;
-        case COVERAGE_SEARCH_STALE_DAYS:
-            validateInt(key, propertiesDTO, 1, 31);
             addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
             break;
         case COVERAGE_SEARCH_STUCK_HOURS:

@@ -5,6 +5,10 @@ import lombok.ToString;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Result of a coverage paging request that contains all enrollment data for the page of beneficiaries
+ * and the request necessary for the next page if another page is present.
+ */
 @ToString
 public class CoveragePagingResult {
 

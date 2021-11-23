@@ -148,18 +148,12 @@ class CoverageUpdateAndProcessorTest {
         pastMonths.setValue("" + PAST_MONTHS);
         propertiesDTOS.add(pastMonths);
 
-        PropertiesDTO staleDays = new PropertiesDTO();
-        staleDays.setKey(Constants.COVERAGE_SEARCH_STALE_DAYS);
-        staleDays.setValue("" + STALE_DAYS);
-        propertiesDTOS.add(staleDays);
-
         PropertiesDTO stuckHours = new PropertiesDTO();
         stuckHours.setKey(Constants.COVERAGE_SEARCH_STUCK_HOURS);
         stuckHours.setValue("" + STUCK_HOURS);
         propertiesDTOS.add(stuckHours);
 
         originalValues.add(propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_UPDATE_MONTHS));
-        originalValues.add(propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_STALE_DAYS));
         originalValues.add(propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_STUCK_HOURS));
 
         propertiesService.updateProperties(propertiesDTOS);

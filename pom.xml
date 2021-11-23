@@ -36,10 +36,10 @@
         <hapi.version>5.5.3</hapi.version>
         <!-- eventlogger is imported first by all other modules, if that changes then
          okhttp3 must be imported first anywhere the slack client is used-->
-        <okhttp3.version>4.9.2</okhttp3.version>
+        <okhttp3.version>4.9.3</okhttp3.version>
         <mockserver.version>5.11.2</mockserver.version>
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
-        <logback-encoder.version>7.0</logback-encoder.version>
+        <logback-encoder.version>7.0.1</logback-encoder.version>
         <testcontainers.version>1.16.2</testcontainers.version>
         <newrelic.version>7.4.0</newrelic.version>
 
@@ -47,7 +47,8 @@
         <jacoco.version>0.8.7</jacoco.version>
         <maven.resources.plugin.version>3.2.0</maven.resources.plugin.version>
         <maven.assembly.plugin.version>2.3</maven.assembly.plugin.version>
-        <spotbugs.version>4.4.2</spotbugs.version>
+        <spotbugs.version>4.5.0</spotbugs.version>
+        <spotbugs.maven.version>4.5.0.0</spotbugs.maven.version>
     </properties>
 
     <dependencies>
@@ -129,7 +130,7 @@
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
-                <version>${spotbugs.version}</version>
+                <version>${spotbugs.maven.version}</version>
                 <configuration>
                     <effort>Max</effort>
                     <threshold>Medium</threshold>
