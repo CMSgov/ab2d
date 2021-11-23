@@ -6,9 +6,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Periodically verify that all business requirements related to the coverage/enrollment cached in the database
+ *
+ */
 @Configuration
 public class CoverageCheckQuartzConfig {
 
+    // Quartz cron schedule for the job
     private final String schedule;
 
     public CoverageCheckQuartzConfig(@Value("${coverage.verify.schedule}") String schedule) {
