@@ -4,6 +4,20 @@ import gov.cms.ab2d.common.model.CoveragePagingRequest;
 import gov.cms.ab2d.common.model.CoveragePagingResult;
 import gov.cms.ab2d.common.model.Job;
 
+/**
+ * Provide an interface for executing high level actions concerning enrollment.
+ *
+ * Encompasses
+ *      - Discovering and queueing coverage periods that need to be updated
+ *      - Determining how many beneficiaries an EOB job should expect to query from BFD based on the number
+ *          of beneficiaries in the database (used to detect bugs).
+ *      - Determining whether all enrollment necessary to run a Job for a Contract is present
+ *          in the database. Checks that all {@link gov.cms.ab2d.common.model.CoveragePeriod}s
+ *          expected for a contract are present, that updates to the coverage associated with those coverage periods
+ *          are not in progress, and that updates have not failed recently.
+ *      - Retrieving all enrollment/coverage for an EOB job
+ *      - Verifying that enrollment/coverage meets business requirements
+ */
 public interface CoverageDriver {
 
     /**
@@ -60,7 +74,11 @@ public interface CoverageDriver {
     CoveragePagingResult pageCoverage(CoveragePagingRequest request);
 
     /**
-     * Verify that the coverage information
+     * Verify that the coverage information in the database meets all business requirements.
+     *
+     * This method is called by {@link gov.cms.ab2d.worker.quartz.CoverageCheckQuartzJob} periodically.
+     *
+     * @throws CoverageVerificationException if verification fails for at least one contract
      */
     void verifyCoverage();
 }

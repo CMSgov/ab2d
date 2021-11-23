@@ -125,7 +125,8 @@ public interface CoverageService {
     CoveragePagingResult pageCoverage(CoveragePagingRequest pagingRequest);
 
     /**
-     * Get difference in beneficiary membership between last two searches conducted for a given coverage search
+     * Get difference in beneficiary membership between last two searches conducted for a given {@link CoveragePeriod}
+     *
      * @param periodId the search period to find the last two searches for
      * @return difference between the two searches
      */
@@ -203,7 +204,9 @@ public interface CoverageService {
     Optional<CoverageMapping> startSearch(CoverageSearch search, String description);
 
     /**
-     * Resubmit a search that has failed but still has attempts
+     * Resubmit a search that has failed but still has attempts. Marks a search as {@link JobStatus#FAILED}
+     * and then {@link JobStatus#SUBMITTED} in one action.
+     *
      * @param periodId unique id of a coverage search
      * @param attempts number of attempts already conducted
      * @param failedDescription reason or explanation for change
