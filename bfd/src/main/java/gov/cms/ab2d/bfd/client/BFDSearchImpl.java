@@ -72,6 +72,13 @@ public class BFDSearchImpl implements BFDSearch {
         request.addHeader(BFDClient.BFD_HDR_BULK_CLIENTID, BFDClient.BFD_CLIENT_ID);
         request.addHeader(BFDClient.BFD_HDR_BULK_JOBID, bulkJobId);
 
+        byte[] responseBytes = getEOBSFromBFD(patientId, request);
+
+        return parseBundle(version, responseBytes);
+    }
+
+    @Trace
+    private byte[] getEOBSFromBFD(long patientId, HttpGet request) throws IOException {
         byte[] responseBytes;
         try (CloseableHttpResponse response = (CloseableHttpResponse) httpClient.execute(request)) {
             int status = response.getStatusLine().getStatusCode();
@@ -87,8 +94,7 @@ public class BFDSearchImpl implements BFDSearch {
                 throw new RuntimeException("Server error occurred");
             }
         }
-
-        return parseBundle(version, responseBytes);
+        return responseBytes;
     }
 
     @Trace
