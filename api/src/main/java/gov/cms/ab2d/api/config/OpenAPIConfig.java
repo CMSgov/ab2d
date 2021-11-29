@@ -3,21 +3,20 @@ package gov.cms.ab2d.api.config;
 import com.fasterxml.classmate.TypeResolver;
 import com.fasterxml.jackson.annotation.*;
 import gov.cms.ab2d.api.util.Constants;
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
 import lombok.AllArgsConstructor;
+import org.springdoc.core.GroupedOpenApi;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.RequestMethod;
-import springfox.documentation.builders.PathSelectors;
-import springfox.documentation.builders.RequestHandlerSelectors;
-import springfox.documentation.builders.ResponseMessageBuilder;
-import springfox.documentation.schema.ModelRef;
-import springfox.documentation.service.ApiInfo;
-import springfox.documentation.service.ApiKey;
-import springfox.documentation.service.ResponseMessage;
-import springfox.documentation.service.SecurityScheme;
-import springfox.documentation.spi.DocumentationType;
-import springfox.documentation.spring.web.plugins.Docket;
 
 import java.util.*;
 
@@ -30,89 +29,85 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 @AllArgsConstructor
 @Configuration
 @SuppressWarnings("PMD.TooManyStaticImports")
-public class SwaggerConfig {
+public class OpenAPIConfig {
 
-    private final TypeResolver typeResolver;
+//    private final TypeResolver typeResolver;
 
     @Bean
-    public Docket apiV1() {
-        List<SecurityScheme> auth = List.of(apiKey());
-        return new Docket(DocumentationType.OAS_30)
-                .select()
-                .apis(RequestHandlerSelectors.basePackage("gov.cms.ab2d.api.controller"))
-                .paths(PathSelectors.ant(API_PREFIX_V1 + FHIR_PREFIX + "/**"))
-                .build()
-                .groupName("V1 - FHIR STU3")
-                .directModelSubstitute(Resource.class, String.class)
-                .useDefaultResponseMessages(false)
-                .securitySchemes(auth)
-                .globalResponseMessage(RequestMethod.GET,
-                        globalResponseMessages())
-                .globalResponseMessage(RequestMethod.DELETE,
-                        globalResponseMessages())
-                .apiInfo(apiInfoV1()).additionalModels(typeResolver.resolve(OperationOutcome.class));
+    public OpenAPI ab2dAPI() {
+        Server local = new Server();
+        local.setUrl("https://localhost:8443/swagger-ui");
+
+        return new OpenAPI()
+                .addServersItem(local)
+                .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
+                .components(new Components().addSecuritySchemes("bearerAuth", new SecurityScheme()
+                        .name("bearerAuth")
+                        .type(SecurityScheme.Type.HTTP)
+                        .scheme("bearer")
+                        .bearerFormat("JWT")))
+                .info(new Info().title("AB2D API"));
     }
 
     @Bean
-    public Docket apiV2() {
-        List<SecurityScheme> auth = List.of(apiKey());
-        return new Docket(DocumentationType.OAS_30)
-                .select()
-                .apis(RequestHandlerSelectors.basePackage("gov.cms.ab2d.api.controller"))
-                .paths(PathSelectors.ant(API_PREFIX_V2 + FHIR_PREFIX + "/**"))
-                .build()
-                .groupName("V2 - FHIR R4")
-                .directModelSubstitute(Resource.class, String.class)
-                .useDefaultResponseMessages(false)
-                .securitySchemes(auth)
-                .globalResponseMessage(RequestMethod.GET,
-                        globalResponseMessages())
-                .globalResponseMessage(RequestMethod.DELETE,
-                        globalResponseMessages())
-                .apiInfo(apiInfoV2()).additionalModels(typeResolver.resolve(OperationOutcome.class));
+    public GroupedOpenApi apiV1() {
+        return GroupedOpenApi.builder()
+                .group("V1 - FHIR STU3")
+                .packagesToScan("gov.cms.ab2d.api.controller")
+                .pathsToMatch(API_PREFIX_V1 + FHIR_PREFIX + "/**")
+                .build();
     }
 
-    private List<ResponseMessage> globalResponseMessages() {
-        return Arrays.asList(new ResponseMessageBuilder()
-                .code(500)
-                .message(
-                        "An error occurred. " + Constants.GENERIC_FHIR_ERR_MSG)
-                .responseModel(new ModelRef("OperationOutcome"))
-                .build(), new ResponseMessageBuilder()
-                .code(400)
-                .message(
-                        "There was a problem with the request. " + Constants.GENERIC_FHIR_ERR_MSG)
-                .responseModel(new ModelRef("OperationOutcome"))
-                .build(), new ResponseMessageBuilder()
-                .code(401)
-                .message(
-                        "Unauthorized. Missing authentication token.")
-                .build(), new ResponseMessageBuilder()
-                .code(403)
-                .message(
-                        "Forbidden. Access not permitted.")
-                .build());
+    @Bean
+    public GroupedOpenApi apiV2() {
+        return GroupedOpenApi.builder()
+                .group("V2 - FHIR R4")
+                .packagesToScan("gov.cms.ab2d.api.controller")
+                .pathsToMatch(API_PREFIX_V2 + FHIR_PREFIX + "/**")
+                .build();
     }
 
-    private ApiInfo apiInfoV1() {
-        return new ApiInfo(
-               "AB2D FHIR STU3 Bulk Data Access API",
-                MAIN,
-               "1.0",
-               null,
-               null,
-               null, null, Collections.emptyList());
-    }
-
-    private ApiInfo apiInfoV2() {
-        return new ApiInfo(
-                "AB2D FHIR R4 Bulk Data Access API",
-                MAIN,
-                "2.0",
-                null,
-                null,
-                null, null, Collections.emptyList());
-    }
+//    private List<ResponseMessage> globalResponseMessages() {
+//        return Arrays.asList(new ResponseMessageBuilder()
+//                .code(500)
+//                .message(
+//                        "An error occurred. " + Constants.GENERIC_FHIR_ERR_MSG)
+//                .responseModel(new ModelRef("OperationOutcome"))
+//                .build(), new ResponseMessageBuilder()
+//                .code(400)
+//                .message(
+//                        "There was a problem with the request. " + Constants.GENERIC_FHIR_ERR_MSG)
+//                .responseModel(new ModelRef("OperationOutcome"))
+//                .build(), new ResponseMessageBuilder()
+//                .code(401)
+//                .message(
+//                        "Unauthorized. Missing authentication token.")
+//                .build(), new ResponseMessageBuilder()
+//                .code(403)
+//                .message(
+//                        "Forbidden. Access not permitted.")
+//                .build());
+//    }
+//
+//    private ApiInfo apiInfoV1() {
+//        return new ApiInfo(
+//               "AB2D FHIR STU3 Bulk Data Access API",
+//                MAIN,
+//               "1.0",
+//               null,
+//               null,
+//               null, null, Collections.emptyList());
+//    }
+//
+//    private ApiInfo apiInfoV2() {
+//        return new ApiInfo(
+//                "AB2D FHIR R4 Bulk Data Access API",
+//                MAIN,
+//                "2.0",
+//                null,
+//                null,
+//                null, null, Collections.emptyList());
+//    }
 
     // FHIR's OperationOutcome won't play nice with Swagger. Having to redefine it here
     // to get the Swagger API spec looking right.
@@ -267,7 +262,7 @@ public class SwaggerConfig {
 
     }
 
-    private ApiKey apiKey() {
-        return new ApiKey(AUTHORIZATION, AUTHORIZATION, "header");
-    }
+//    private ApiKey apiKey() {
+//        return new ApiKey(AUTHORIZATION, AUTHORIZATION, "header");
+//    }
 }

@@ -4,12 +4,12 @@ import ca.uhn.fhir.parser.IParser;
 import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.AuthorizationScope;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.r4.model.CapabilityStatement;
@@ -44,7 +44,7 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 @AllArgsConstructor
 @Slf4j
 @SuppressWarnings("PMD.TooManyStaticImports")
-@Api(value = CAP_STMT, description = CAP_API, tags = {"Capabilities"})
+@Tag(name = "Capabilities", description = CAP_API)
 @RestController
 @ConditionalOnExpression("${v2.controller.enabled:true}")
 @RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {APPLICATION_JSON, NDJSON_FIRE_CONTENT_TYPE})
@@ -53,10 +53,9 @@ public class CapabilityAPIV2 {
     private final LogManager eventLogger;
     private final ApiCommon common;
 
-    @ApiOperation(value = CAP_REQ, response = String.class, produces = APPLICATION_JSON, authorizations = {
-            @Authorization(value = AUTHORIZATION, scopes = { @AuthorizationScope(description = CAP_DESC, scope = AUTHORIZATION) })
-    })
-    @ApiResponses(value = { @ApiResponse(code = 200, message = CAP_DESC, response = String.class)})
+    @Operation(summary = CAP_REQ)
+    @ApiResponses(value = { @ApiResponse(responseCode = "200", description = CAP_DESC,
+        content = @Content(schema = @Schema(type = APPLICATION_JSON)))})
     @ResponseStatus(value = HttpStatus.OK)
     @GetMapping(value = "/metadata")
     public ResponseEntity<String> capabilityStatement(HttpServletRequest request) {

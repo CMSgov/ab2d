@@ -1,20 +1,20 @@
 package gov.cms.ab2d.api.controller.v2;
 
-import gov.cms.ab2d.api.config.SwaggerConfig;
+import gov.cms.ab2d.api.config.OpenAPIConfig;
 import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.api.util.SwaggerConstants;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.service.JobService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.AuthorizationScope;
-import io.swagger.annotations.ResponseHeader;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -40,9 +40,7 @@ import static gov.cms.ab2d.api.controller.common.ApiText.BULK_RESPONSE_LONG;
 import static gov.cms.ab2d.api.controller.common.ApiText.BULK_SINCE;
 import static gov.cms.ab2d.api.controller.common.ApiText.BULK_SINCE_DEFAULT;
 import static gov.cms.ab2d.api.controller.common.ApiText.CONTRACT_NO;
-import static gov.cms.ab2d.api.controller.common.ApiText.EXPORT_CLAIM;
 import static gov.cms.ab2d.api.controller.common.ApiText.EXPORT_STARTED;
-import static gov.cms.ab2d.api.controller.common.ApiText.EXP_PATIENT_INFO;
 import static gov.cms.ab2d.api.controller.common.ApiText.MAX_JOBS;
 import static gov.cms.ab2d.api.controller.common.ApiText.OUT_FORMAT;
 import static gov.cms.ab2d.api.controller.common.ApiText.PREFER;
@@ -62,14 +60,13 @@ import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
-import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 
 /**
  * The sole REST controller for AB2D's implementation of the FHIR Bulk Data API specification.
  */
 @Slf4j
-@Api(value = "Bulk Data Access API", description = SwaggerConstants.BULK_MAIN, tags = {"Export"})
+@Tag(description = SwaggerConstants.BULK_MAIN, name = "Export")
 @RestController
 @ConditionalOnExpression("${v2.controller.enabled:false}")
 @RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {APPLICATION_JSON})
@@ -83,32 +80,31 @@ public class BulkDataAccessAPIV2 {
         this.apiCommon = apiCommon;
     }
 
-    @ApiOperation(value = BULK_EXPORT,
-        authorizations = {
-            @Authorization(value = AUTHORIZATION, scopes = { @AuthorizationScope(description = EXP_PATIENT_INFO, scope = AUTHORIZATION) })
-        })
-    @ApiImplicitParams(value = {
-            @ApiImplicitParam(name = PREFER, required = true, paramType = "header", value =
-                    BULK_PREFER, allowableValues = ASYNC, defaultValue = ASYNC, type = "string")}
+    @Operation(summary = BULK_EXPORT)
+    @Parameters(value = {
+            @Parameter(name = PREFER, required = true, in = ParameterIn.HEADER, description =
+                    BULK_PREFER, schema = @Schema(allowableValues = ASYNC, defaultValue = ASYNC, type = "string"))}
     )
     @ApiResponses(value = {
-            @ApiResponse(code = 202, message = EXPORT_STARTED, responseHeaders =
-            @ResponseHeader(name = CONTENT_LOCATION, description = BULK_RESPONSE, response = String.class), response = String.class),
-            @ApiResponse(code = 429, message = MAX_JOBS, responseHeaders =
-            @ResponseHeader(name = CONTENT_LOCATION, description = RUNNING_JOBIDS, response = String.class), response = SwaggerConfig.OperationOutcome.class)}
+            @ApiResponse(responseCode = "202", description = EXPORT_STARTED, headers =
+                @Header(name = CONTENT_LOCATION, description = BULK_RESPONSE, schema = @Schema(type = "string")),
+                content = @Content(schema = @Schema(type = "string"))),
+            @ApiResponse(responseCode = "429", description = MAX_JOBS, headers =
+                @Header(name = CONTENT_LOCATION, description = RUNNING_JOBIDS, schema = @Schema(type = "string")),
+                content = @Content(schema = @Schema(implementation = OpenAPIConfig.OperationOutcome.class)))}
     )
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @GetMapping("/Patient/$export")
     public ResponseEntity<Void> exportAllPatients(
             HttpServletRequest request,
             @RequestHeader(name = PREFER, defaultValue = ASYNC)
-            @ApiParam(value = BULK_EXPORT_TYPE, allowableValues = EOB, defaultValue = EOB)
+            @Parameter(name = BULK_EXPORT_TYPE, schema = @Schema(type = "string", allowableValues = EOB, defaultValue = EOB))
             @RequestParam(required = false, name = TYPE_PARAM, defaultValue = EOB) String resourceTypes,
-            @ApiParam(value = BULK_OUTPUT_FORMAT,
-                    allowableValues = ApiCommon.ALLOWABLE_OUTPUT_FORMATS, defaultValue = NDJSON_FIRE_CONTENT_TYPE
+            @Parameter(name = BULK_OUTPUT_FORMAT,
+                    schema = @Schema(allowableValues = ApiCommon.ALLOWABLE_OUTPUT_FORMATS, defaultValue = NDJSON_FIRE_CONTENT_TYPE)
             )
             @RequestParam(required = false, name = OUT_FORMAT) String outputFormat,
-            @ApiParam(value = BULK_SINCE + BULK_SINCE_DEFAULT, example = SINCE_EARLIEST_DATE)
+            @Parameter(name = BULK_SINCE + BULK_SINCE_DEFAULT, example = SINCE_EARLIEST_DATE)
             @RequestParam(required = false, name = SINCE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
 
         log.info("Received request to export");
@@ -119,32 +115,31 @@ public class BulkDataAccessAPIV2 {
     }
 
     @Deprecated
-    @ApiOperation(value = BULK_CONTRACT_EXPORT,
-            authorizations = {
-                    @Authorization(value = AUTHORIZATION, scopes = { @AuthorizationScope(description = EXPORT_CLAIM, scope = AUTHORIZATION) })
-            })
+    @Operation(summary = BULK_CONTRACT_EXPORT)
     @ApiResponses({
-            @ApiResponse(code = 202, message = EXPORT_STARTED, responseHeaders =
-            @ResponseHeader(name = CONTENT_LOCATION, description = BULK_RESPONSE_LONG,
-                    response = String.class), response = String.class),
-            @ApiResponse(code = 429, message = MAX_JOBS, responseHeaders =
-            @ResponseHeader(name = CONTENT_LOCATION, description = RUNNING_JOBIDS, response = String.class), response = SwaggerConfig.OperationOutcome.class)}
+            @ApiResponse(responseCode = "202", description = EXPORT_STARTED,
+                headers = @Header(name = CONTENT_LOCATION, description = BULK_RESPONSE_LONG,
+                    schema = @Schema(type = "string")),
+                content = @Content(schema = @Schema(type = "string"))),
+            @ApiResponse(responseCode = "429", description = MAX_JOBS, headers =
+                @Header(name = CONTENT_LOCATION, description = RUNNING_JOBIDS, schema = @Schema(type = "string")),
+                content = @Content(schema = @Schema(implementation = OpenAPIConfig.OperationOutcome.class)))}
     )
     // todo: This endpoint no longer makes sense in the new model where one Okta credential maps to one Contract
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @GetMapping("/Group/{contractNumber}/$export")
     public ResponseEntity<Void> exportPatientsWithContract(
             HttpServletRequest request,
-            @ApiParam(value = CONTRACT_NO, required = true)
+            @Parameter(name = CONTRACT_NO, required = true)
             @PathVariable @NotBlank String contractNumber,
-            @ApiParam(value = BULK_EXPORT_TYPE, allowableValues = EOB, defaultValue = EOB)
+            @Parameter(name = BULK_EXPORT_TYPE, schema = @Schema(type = "string", allowableValues = EOB, defaultValue = EOB))
             @RequestParam(required = false, name = TYPE_PARAM) String resourceTypes,
-            @ApiParam(value = BULK_OUTPUT_FORMAT,
-                    allowableValues = ApiCommon.ALLOWABLE_OUTPUT_FORMATS, defaultValue = NDJSON_FIRE_CONTENT_TYPE
+            @Parameter(name = BULK_OUTPUT_FORMAT,
+                    schema = @Schema(type = "string", allowableValues = ApiCommon.ALLOWABLE_OUTPUT_FORMATS, defaultValue = NDJSON_FIRE_CONTENT_TYPE)
             )
             @RequestParam(required = false, name = OUT_FORMAT) String outputFormat,
             @RequestHeader(value = ASYNC)
-            @ApiParam(value = BULK_SINCE + BULK_SINCE_DEFAULT, example = SINCE_EARLIEST_DATE)
+            @Parameter(name = BULK_SINCE + BULK_SINCE_DEFAULT, example = SINCE_EARLIEST_DATE)
             @RequestParam(required = false, name = SINCE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
 
         MDC.put(CONTRACT_LOG, contractNumber);
