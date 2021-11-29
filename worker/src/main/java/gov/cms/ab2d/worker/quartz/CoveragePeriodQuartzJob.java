@@ -22,6 +22,25 @@ import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PRODUCTION;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.SANDBOX;
 
+/**
+ * Periodically update enrollment cached in the database by pulling enrollment from BFD.
+ *
+ * Typically this runs every Tuesday at midnight eastern time; however, you can override the schedule if enrollment arrives
+ * at an unexpected time by setting {@link Constants#COVERAGE_SEARCH_OVERRIDE}.
+ *
+ * Outside of production this feature will be disabled in most environments. To configure to run weekly,
+ * set the following properties in the database:
+ *
+ *      - {@link Constants#COVERAGE_SEARCH_DISCOVERY} for all active contracts, find if those contracts are missing coverage periods
+ *         and create those missing coverage periods
+ *          and loaded for the first time
+ *      - {@link Constants#COVERAGE_SEARCH_QUEUEING} find all coverage periods missing enrollment or needing
+ *          enrollment updated, trigger those updates
+ *      - {@link Constants#COVERAGE_SEARCH_OVERRIDE} normally this job only runs once a week, set this property to
+ *          override that configuration and force an update to enrollment.
+ *
+ * This only needs to run as often as BFD receives updated enrollment.
+ */
 @Slf4j
 @RequiredArgsConstructor
 @DisallowConcurrentExecution

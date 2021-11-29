@@ -2,6 +2,7 @@ package gov.cms.ab2d.worker.processor.coverage;
 
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoverageMapping;
 import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.fhir.*;
@@ -17,7 +18,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static java.util.stream.Collectors.*;
 
 /**
- * Queries BFD for all of the members of a contract during a given month.
+ * Perform queries to BFD to retrieve all coverage/enrollment related to a Part D contract
+ * for a given month and year.
+ *
+ * The results of these queries are stored into a {@link CoverageMapping} object in-memory. Additionally,
+ * any artifacts/issues with identifiers returned from BFD are documented and reported as statistics.
+ *
+ * The contract, month, and year are represented as an {@link gov.cms.ab2d.common.model.CoveragePeriod}
+ *
  */
 @Slf4j
 public class CoverageMappingCallable implements Callable<CoverageMapping> {
@@ -45,7 +53,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
         this.coverageMapping = coverageMapping;
         this.bfdClient = bfdClient;
         this.completed = new AtomicBoolean(false);
-        this.year = getCorrectedYear(coverageMapping.getContract().getContractNumber(), coverageMapping.getPeriod().getYear());
+        this.year = getCorrectedYear(coverageMapping.getContract(), coverageMapping.getPeriod().getYear());
         this.version = version;
     }
 
@@ -57,6 +65,30 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
         return coverageMapping;
     }
 
+    /**
+     * Execute queries against BFD and collect enrollment result into a single object.
+     *
+     * In the past there have been significant issues related to the values of the enrollment returned by BFD.
+     * These issues have led to adding a bunch of logs in here for most steps in the enrollment process.
+     *
+     * These logs include:
+     *      - log each bundle received with the page number
+     *      - listing all links to additional pages returned by BFD
+     *      - log last page received
+     *      - record statistics regarding potentially missing things like MBIs, beneficiary ids, distribution of reference
+     *          years on the patient, and past reference years which are not expected.
+     *
+     * Steps
+     *      - Set a unique id for the job as a header to BFD for monitoring purposes
+     *      - Get the first page of enrollment results and process those results
+     *      - Loop over the remaining pages of results and query until none are left
+     *      - Add the results to the CoverageMapping object
+     *      - Mark the search as completed
+     *      - Log statistics concerning enrollment pulled
+     *      - Remove the unique id header used for BFD
+     *
+     * @throws Exception on any failure, before the exception is thrown it will be logged
+     */
     @Trace(metricName = "EnrollmentRequest", dispatcher = true)
     @Override
     public CoverageMapping call() {
@@ -110,7 +142,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
                     contractNumber, this.year, month, bundleNo);
 
             coverageMapping.addBeneficiaries(patientIds);
-            log.debug("finished reading [{}] Set<String>resources", patientIds.size());
+            log.debug("finished reading [{}] Set<Identifiers>resources", patientIds.size());
 
             coverageMapping.completed();
             return coverageMapping;
@@ -151,6 +183,14 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
                 .collect(toSet());
     }
 
+    /**
+     * Filter out patients with unknown reference years or unexpected reference years.
+     *
+     * The reference year on a patient should be equal to or greater than the year of enrollment we are searching for.
+     * Sometimes the reference year will not match the {@link gov.cms.ab2d.common.model.CoveragePeriod}
+     * but as long as it is greater than or equal it is okay. Patients with reference years before the
+     * {@link gov.cms.ab2d.common.model.CoveragePeriod#getYear()} are discarded.
+     */
     private boolean filterByYear(IDomainResource patient) {
         int referenceYear = ExtensionUtils.getReferenceYear(patient);
         if (referenceYear < 0) {
@@ -172,10 +212,20 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     }
 
     /**
-     * Given a patient, extract the patientId
+     * Given a patient, extract patient ids and package into an {@link Identifiers} object.
+     *
+     * Record metrics on the identifiers found.
+     *
+     * Steps
+     *      - Find all types of identifiers present on the patient
+     *      - Check that an internal beneficiary id is present for the patient.
+     *          - If not present do not add the patient to the list
+     *      - Check that a current MBI is present
+     *      - Check whether historical MBIs are present
+     *      - Create identifiers using identifiers that were present in the patient object
      *
      * @param patient - the patient id
-     * @return patientId if present, null otherwise
+     * @return the identifiers present if a beneficiary id is present on the patient
      */
     Identifiers extractPatientId(IDomainResource patient) {
         List<PatientIdentifier> ids = IdentifierUtils.getIdentifiers(patient);
@@ -212,7 +262,8 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     }
 
     /**
-     * given a contractNumber & a month, calls BFD API to find all patients active in the contract during the month
+     * Given a contract number, month, and year, call BFDs API to begin paging through all patients
+     * associated with that contract for that {@link gov.cms.ab2d.common.model.CoveragePeriod}
      *
      * @param contractNumber - the PDP's contract number
      * @param searchMonth - the month to pull data for (1-12)
@@ -233,16 +284,19 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
      * We want to find results in the sandbox but all the data in the sandbox is for an invalid
      * year so we're using this to prevent us from getting no beneficiaries.
      *
-     * @param contract - the specified contract number
+     * @param contract - the specified contract
      * @param coverageYear - the specified coverage year in the coverage search
      * @return if we're in sandbox, return the synthetic data year unless it's the new Synthea data which can use
      * the correct year
      */
-    int getCorrectedYear(String contract, int coverageYear) {
-        // Use specific year for synthetic data if in a sandbox environment
-        if (contract.startsWith("Z") && !contract.startsWith("Z1")) {
+    int getCorrectedYear(Contract contract, int coverageYear) {
+
+        // Synthea contracts use realistic enrollment reference years so only original
+        // synthetic contracts need to have the year modified
+        if (contract.getContractType() == Contract.ContractType.CLASSIC_TEST) {
             return SYNTHETIC_DATA_YEAR;
         }
+
         return coverageYear;
     }
 }

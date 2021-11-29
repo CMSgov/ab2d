@@ -129,3 +129,5 @@ databaseChangeLog:
       file: db/changelog/v2021/add_patient_eob_count.sql
   - include:
       file: db/changelog/v2021/update_mode_and_contract_type.sql
+  - include:
+      file: db/changelog/v2021/remove_deprecated_properties.sql

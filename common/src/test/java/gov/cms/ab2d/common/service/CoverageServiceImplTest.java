@@ -478,7 +478,59 @@ class CoverageServiceImplTest {
         assertTrue(pagingResult.getNextRequest().isEmpty());
     }
 
-    @DisplayName("Page coverage when database ")
+    @DisplayName("Page coverage only returns beneficiaries from the right contract only")
+    @Test
+    void pageCoverageOnlyReturnsBeneficiariesForContract() {
+
+        dataSetup.createCoveragePeriod(contract2, 2020, 2);
+        dataSetup.createCoveragePeriod(contract2, 2020, 3);
+        dataSetup.createCoveragePeriod(contract2, 2020, 4);
+
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+        coverageService.submitSearch(period2Jan.getId(), "testing");
+        CoverageSearchEvent inProgressContract1 = startSearchAndPullEvent();
+        CoverageSearchEvent inProgressContract2 = startSearchAndPullEvent();
+
+        // Last page will have only one id
+        int totalBeneficiaries = 500;
+        int pageSize = 1000;
+
+        // Add 700 beneficiaries to
+        Set<Identifiers> identifiersContract1 = new LinkedHashSet<>();
+        for (long idx = 0; idx < totalBeneficiaries; idx++) {
+            identifiersContract1.add(createIdentifier(idx));
+        }
+
+        Set<Identifiers> identifiersContract2 = new LinkedHashSet<>();
+        for (long idx = 500; idx < 500 + totalBeneficiaries; idx++) {
+            identifiersContract1.add(createIdentifier(idx));
+        }
+
+        CoverageSearchEvent savedTo1 = coverageService.insertCoverage(inProgressContract1.getId(), identifiersContract1);
+        CoverageSearchEvent savedTo2 = coverageService.insertCoverage(inProgressContract2.getId(), identifiersContract2);
+
+        assertEquals(inProgressContract1, savedTo1);
+        assertEquals(inProgressContract2, savedTo2);
+
+        CoveragePagingRequest pagingRequest1 = new CoveragePagingRequest(pageSize, null, contract1, jobStartTime);
+
+        CoveragePagingResult pagingResult1 = coverageServiceRepo.pageCoverage(pagingRequest1);
+        List<CoverageSummary> coverageSummaries1 = pagingResult1.getCoverageSummaries();
+
+        assertTrue(coverageSummaries1.stream().map(CoverageSummary::getIdentifiers).allMatch(identifiersContract1::contains));
+        assertTrue(coverageSummaries1.stream().map(CoverageSummary::getIdentifiers).noneMatch(identifiersContract2::contains));
+
+        CoveragePagingRequest pagingRequest2 = new CoveragePagingRequest(pageSize, null, contract2, jobStartTime);
+
+        CoveragePagingResult pagingResult2 = coverageServiceRepo.pageCoverage(pagingRequest2);
+        List<CoverageSummary> coverageSummaries2 = pagingResult2.getCoverageSummaries();
+
+        assertTrue(coverageSummaries2.stream().map(CoverageSummary::getIdentifiers).noneMatch(identifiersContract1::contains));
+        assertTrue(coverageSummaries2.stream().map(CoverageSummary::getIdentifiers).allMatch(identifiersContract2::contains));
+
+    }
+
+    @DisplayName("Page coverage when number of beneficiaries enrollment is one more than page size")
     @Test
     void pageCoverageEdgeCase() {
         coverageService.submitSearch(period1Jan.getId(), "testing");
