@@ -77,6 +77,9 @@ public class BFDSearchImpl implements BFDSearch {
         return parseBundle(version, responseBytes);
     }
 
+    /**
+        Method exists to track connection to BFD for New Relic
+     */
     @Trace
     private byte[] getEOBSFromBFD(long patientId, HttpGet request) throws IOException {
         byte[] responseBytes;
