@@ -19,7 +19,7 @@ services:
       timeout: 5s
       retries: 5
   build:
-    image: maven:3-jdk-13
+    image: maven:3-openjdk-17
     working_dir: /usr/src/mymaven
     # Not necessary to run mvn package since we anticipate that project
     # has already built so we don't need to run this command
