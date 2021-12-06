@@ -40,8 +40,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     public void configure(WebSecurity web) {
-        web.ignoring().antMatchers("context-path/**", "/swagger-ui/**", "/configuration/**",
-                "/swagger-resources/**", "/v3/api-docs", "/webjars/**",
+        web.ignoring().antMatchers("/swagger-ui.html", "/swagger-ui/**", "/configuration/**",
+                "/swagger-resources/**", "/v3/api-docs/**", "/webjars/**",
                 AKAMAI_TEST_OBJECT, "/favicon.ico", "/error", HEALTH_ENDPOINT, STATUS_ENDPOINT);
     }
 

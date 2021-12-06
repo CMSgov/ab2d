@@ -36,7 +36,7 @@ public class OpenAPIConfig {
     @Bean
     public OpenAPI ab2dAPI() {
         Server local = new Server();
-        local.setUrl("https://localhost:8443/swagger-ui");
+        local.setUrl("https://localhost:8443/");
 
         return new OpenAPI()
                 .addServersItem(local)

@@ -5,8 +5,6 @@ import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,10 +31,8 @@ import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
 import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
-import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 /**
  * The sole REST controller for AB2D's implementation of the FHIR Bulk Data API capability statement.
@@ -47,15 +43,14 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 @Tag(name = "Capabilities", description = CAP_API)
 @RestController
 @ConditionalOnExpression("${v2.controller.enabled:true}")
-@RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {APPLICATION_JSON, NDJSON_FIRE_CONTENT_TYPE})
+@RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = APPLICATION_JSON)
 public class CapabilityAPIV2 {
 
     private final LogManager eventLogger;
     private final ApiCommon common;
 
     @Operation(summary = CAP_REQ)
-    @ApiResponses(value = { @ApiResponse(responseCode = "200", description = CAP_DESC,
-        content = @Content(schema = @Schema(type = APPLICATION_JSON)))})
+    @ApiResponses(value = { @ApiResponse(responseCode = "200", description = CAP_DESC + " http://hl7.org/fhir/capabilitystatement.html")})
     @ResponseStatus(value = HttpStatus.OK)
     @GetMapping(value = "/metadata")
     public ResponseEntity<String> capabilityStatement(HttpServletRequest request) {

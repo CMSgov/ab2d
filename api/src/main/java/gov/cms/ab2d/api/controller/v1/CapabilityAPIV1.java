@@ -6,8 +6,6 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.headers.Header;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,7 +31,6 @@ import static gov.cms.ab2d.api.controller.common.ApiText.CAP_RET;
 
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 
@@ -48,15 +45,15 @@ import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 @SuppressWarnings("PMD.TooManyStaticImports")
 @Tag(name = "Capabilities", description = CAP_API)
 @RestController
-@RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX, produces = {APPLICATION_JSON, NDJSON_FIRE_CONTENT_TYPE})
+@RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX, produces = {APPLICATION_JSON})
 public class CapabilityAPIV1 {
 
     private final LogManager eventLogger;
     private final ApiCommon common;
 
     @Operation(summary = CAP_REQ)
-    @ApiResponses(value = { @ApiResponse(responseCode = "200", description = CAP_DESC, content = @Content(schema = @Schema(type = "string")),
-            headers = {@Header(name = CONTENT_TYPE, description = APPLICATION_JSON, schema = @Schema(type = "string"))})})
+    @ApiResponses(value = { @ApiResponse(responseCode = "200", description = CAP_DESC + " https://www.hl7.org/fhir/STU3/capabilitystatement.html",
+            headers = {@Header(name = CONTENT_TYPE, description = APPLICATION_JSON)})})
     @ResponseStatus(value = HttpStatus.OK)
     @GetMapping(value = "/metadata")
     public ResponseEntity<String> capabilityStatement(HttpServletRequest request) {

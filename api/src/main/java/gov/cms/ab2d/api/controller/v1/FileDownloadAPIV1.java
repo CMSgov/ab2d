@@ -4,6 +4,7 @@ import gov.cms.ab2d.api.config.OpenAPIConfig;
 import gov.cms.ab2d.api.controller.common.FileDownloadCommon;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -46,26 +47,31 @@ import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 @Slf4j
 @Tag(name = "Download", description = BULK_DNLD_DSC)
 @RestController
-@RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX, produces = {APPLICATION_JSON, NDJSON_FIRE_CONTENT_TYPE})
+@RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX)
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class FileDownloadAPIV1 {
     private FileDownloadCommon fileDownloadCommon;
 
     @Operation(summary = DOWNLOAD_DESC)
+    @Parameters(value = {
+            @Parameter(name = "jobUuid", description = JOB_ID, required = true),
+            @Parameter(name = "filename", description = FILE_NAME, required = true)
+    })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = DNLD_DESC,
                     headers = {@Header(name = CONTENT_TYPE, description = CONTENT_TYPE_DESC + NDJSON_FIRE_CONTENT_TYPE)},
-                    content = @Content(schema = @Schema(type = NDJSON_FIRE_CONTENT_TYPE))
-                ),
+                    content = @Content(mediaType = NDJSON_FIRE_CONTENT_TYPE)
+            ),
             @ApiResponse(responseCode = "404", description = NOT_FOUND + GENERIC_FHIR_ERR_MSG, content =
-                    @Content(schema = @Schema(implementation = OpenAPIConfig.OperationOutcome.class)))}
+            @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = OpenAPIConfig.OperationOutcome.class)))
+    }
     )
     @ResponseStatus(value = HttpStatus.OK)
     @GetMapping(value = "/Job/{jobUuid}/file/{filename}", produces = { NDJSON_FIRE_CONTENT_TYPE })
     public ResponseEntity downloadFile(HttpServletRequest request,
             HttpServletResponse response,
-            @Parameter(name = JOB_ID, required = true) @PathVariable @NotBlank String jobUuid,
-            @Parameter(name = FILE_NAME, required = true) @PathVariable @NotBlank String filename) throws IOException {
+            @PathVariable @NotBlank String jobUuid,
+            @PathVariable @NotBlank String filename) throws IOException {
 
         return fileDownloadCommon.downloadFile(jobUuid, filename, request, response);
     }

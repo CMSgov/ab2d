@@ -2,9 +2,12 @@ package gov.cms.ab2d.api.controller.v2;
 
 import gov.cms.ab2d.api.config.OpenAPIConfig;
 import gov.cms.ab2d.api.controller.JobCompletedResponse;
+import gov.cms.ab2d.api.controller.common.ApiText;
 import gov.cms.ab2d.api.controller.common.StatusCommon;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -59,10 +62,11 @@ public class StatusAPIV2 {
     private final StatusCommon statusCommon;
 
     @Operation(summary = STATUS_DES)
+    @Parameters(value = @Parameter(name = "jobUuid", description = JOB_ID, required = true, in = ParameterIn.PATH))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "202", description = STILL_RUNNING, headers = {
                     @Header(name = X_PROG, description = PROGRESS, schema = @Schema(type = "string")),
-                    @Header(name = RETRY_AFTER, description = STATUS_DELAY, schema = @Schema(type ="integer"))}),
+                    @Header(name = RETRY_AFTER, description = STATUS_DELAY, schema = @Schema(type = "integer"))}),
             @ApiResponse(responseCode = "200", description = JOB_COMPLETE, headers = {
                     @Header(name = EXPIRES, description = FILE_EXPIRES, schema = @Schema(type = "string"))},
                     content = @Content(schema = @Schema(implementation = JobCompletedResponse.class))),
@@ -72,20 +76,20 @@ public class StatusAPIV2 {
     @GetMapping(value = "/Job/{jobUuid}/$status", produces = APPLICATION_JSON)
     @ResponseStatus(value = HttpStatus.OK)
     public ResponseEntity<JobCompletedResponse> getJobStatus(HttpServletRequest request,
-            @Parameter(name = JOB_ID, required = true) @PathVariable @NotBlank String jobUuid) {
+            @PathVariable @NotBlank String jobUuid) {
         return statusCommon.doStatus(jobUuid, request, API_PREFIX_V2);
     }
 
     @Operation(summary = BULK_CANCEL)
+    @Parameters(value = @Parameter(name = "jobUuid", description = JOB_ID, required = true, in = ParameterIn.PATH))
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "202", description = JOB_CANCELLED_MSG),
+            @ApiResponse(responseCode = "202", description = ApiText.JOB_CANCELLED_MSG),
             @ApiResponse(responseCode = "404", description = JOB_NOT_FOUND,
                     content = @Content(schema = @Schema(implementation = OpenAPIConfig.OperationOutcome.class)))}
     )
     @DeleteMapping(value = "/Job/{jobUuid}/$status")
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     public ResponseEntity deleteRequest(HttpServletRequest request,
-            @Parameter(name = JOB_ID, required = true)
             @PathVariable @NotBlank String jobUuid) {
         return statusCommon.cancelJob(jobUuid, request);
     }

@@ -81,11 +81,20 @@ public class BulkDataAccessAPIV1 {
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @Parameters(value = {
             @Parameter(name = PREFER, required = true, in = ParameterIn.HEADER, description =
-                    BULK_PREFER, schema = @Schema(type = "string", allowableValues = ASYNC, defaultValue = ASYNC))}
+                    BULK_PREFER, schema = @Schema(type = "string", allowableValues = ASYNC, defaultValue = ASYNC)),
+            @Parameter(name = TYPE_PARAM, description = BULK_EXPORT_TYPE, in = ParameterIn.QUERY, schema = @Schema(allowableValues = EOB, defaultValue = EOB)),
+            @Parameter(name = OUT_FORMAT, description = BULK_OUTPUT_FORMAT, in = ParameterIn.QUERY,
+                    schema = @Schema(allowableValues = {
+                            "application/fhir+ndjson", "application/ndjson", "ndjson", "application/zip"
+                    }, defaultValue = NDJSON_FIRE_CONTENT_TYPE)
+            ),
+            @Parameter(name = SINCE, description = BULK_SINCE, schema = @Schema(type = "date-time", description = SINCE_EARLIEST_DATE))
+
+        }
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "202", description = EXPORT_STARTED, headers =
-            @Header(name = CONTENT_LOCATION, description = BULK_RESPONSE, schema = @Schema(type = "string")), content = @Content(schema = @Schema(type = "string"))),
+            @Header(name = CONTENT_LOCATION, description = BULK_RESPONSE, schema = @Schema(type = "string"))),
             @ApiResponse(responseCode = "429", description = MAX_JOBS,
                     headers = @Header(name = CONTENT_LOCATION, description = RUNNING_JOBIDS, schema = @Schema(type = "string")),
                     content = @Content(schema = @Schema(implementation = OpenAPIConfig.OperationOutcome.class)))}
@@ -94,15 +103,12 @@ public class BulkDataAccessAPIV1 {
     @GetMapping("/Patient/$export")
     public ResponseEntity<Void> exportAllPatients(
             HttpServletRequest request,
-            @RequestHeader(name = PREFER, defaultValue = ASYNC)
-            @Parameter(name = BULK_EXPORT_TYPE, schema = @Schema(allowableValues = EOB, defaultValue = EOB))
-            @RequestParam(required = false, name = TYPE_PARAM, defaultValue = EOB) String resourceTypes,
-            @Parameter(name = BULK_OUTPUT_FORMAT,
-                    schema = @Schema(allowableValues = ApiCommon.ALLOWABLE_OUTPUT_FORMATS, defaultValue = NDJSON_FIRE_CONTENT_TYPE)
-            )
-            @RequestParam(required = false, name = OUT_FORMAT) String outputFormat,
-            @Parameter(name = BULK_SINCE, example = SINCE_EARLIEST_DATE)
-            @RequestParam(required = false, name = SINCE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
+            @RequestParam(name = TYPE_PARAM, required = false, defaultValue = EOB)
+                String resourceTypes,
+            @RequestParam(name = OUT_FORMAT, required = false, defaultValue = NDJSON_FIRE_CONTENT_TYPE)
+                String outputFormat,
+            @RequestParam(required = false, name = SINCE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+                OffsetDateTime since) {
 
         log.info("Received request to export");
         apiCommon.checkValidCreateJob(since, resourceTypes, outputFormat);
@@ -113,11 +119,25 @@ public class BulkDataAccessAPIV1 {
 
     @Deprecated
     @Operation(summary = BULK_CONTRACT_EXPORT)
-    @ApiResponses({
+    @Parameters(value = {
+            @Parameter(name = PREFER, required = true, in = ParameterIn.HEADER, description =
+                    BULK_PREFER, schema = @Schema(type = "string", allowableValues = ASYNC, defaultValue = ASYNC)),
+            @Parameter(name = "contractNumber", required = true, in = ParameterIn.PATH, description = CONTRACT_NO, example = "Z0000"),
+            @Parameter(name = TYPE_PARAM, description = BULK_EXPORT_TYPE, in = ParameterIn.QUERY, schema = @Schema(allowableValues = EOB, defaultValue = EOB)),
+            @Parameter(name = OUT_FORMAT, description = BULK_OUTPUT_FORMAT, in = ParameterIn.QUERY,
+                    schema = @Schema(allowableValues = {
+                            "application/fhir+ndjson", "application/ndjson", "ndjson", "application/zip"
+                    }, defaultValue = NDJSON_FIRE_CONTENT_TYPE)
+            ),
+            @Parameter(name = SINCE, description = BULK_SINCE, example = SINCE_EARLIEST_DATE, schema = @Schema(type = "date-time"))
+
+    }
+    )
+    @ApiResponses(value = {
             @ApiResponse(responseCode = "202", description = EXPORT_STARTED, headers =
-            @Header(name = CONTENT_LOCATION, description = BULK_RESPONSE_LONG, schema = @Schema(type = "string"))),
-            @ApiResponse(responseCode = "429", description = MAX_JOBS, headers =
-                    @Header(name = CONTENT_LOCATION, description = RUNNING_JOBIDS, schema = @Schema(type = "string")),
+            @Header(name = CONTENT_LOCATION, description = BULK_RESPONSE, schema = @Schema(type = "string"))),
+            @ApiResponse(responseCode = "429", description = MAX_JOBS,
+                    headers = @Header(name = CONTENT_LOCATION, description = RUNNING_JOBIDS, schema = @Schema(type = "string")),
                     content = @Content(schema = @Schema(implementation = OpenAPIConfig.OperationOutcome.class)))}
     )
     // todo: This endpoint no longer makes sense in the new model where one Okta credential maps to one Contract
@@ -125,17 +145,15 @@ public class BulkDataAccessAPIV1 {
     @GetMapping("/Group/{contractNumber}/$export")
     public ResponseEntity<Void> exportPatientsWithContract(
             HttpServletRequest request,
-            @Parameter(name = CONTRACT_NO, required = true)
-            @PathVariable @NotBlank String contractNumber,
-            @Parameter(name = BULK_EXPORT_TYPE, schema = @Schema(type = "string", allowableValues = EOB, defaultValue = EOB))
-            @RequestParam(required = false, name = TYPE_PARAM) String resourceTypes,
-            @Parameter(name = BULK_OUTPUT_FORMAT,
-                    schema = @Schema(allowableValues = ApiCommon.ALLOWABLE_OUTPUT_FORMATS, defaultValue = NDJSON_FIRE_CONTENT_TYPE)
-            )
-            @RequestParam(required = false, name = OUT_FORMAT) String outputFormat,
-            @RequestHeader(value = ASYNC)
-            @Parameter(name = BULK_SINCE, example = SINCE_EARLIEST_DATE)
-            @RequestParam(required = false, name = SINCE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
+            @PathVariable @NotBlank
+                    String contractNumber,
+            @RequestParam(required = false, name = TYPE_PARAM)
+                    String resourceTypes,
+            @RequestParam(required = false, name = OUT_FORMAT)
+                    String outputFormat,
+            @RequestParam(required = false, name = SINCE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+                    OffsetDateTime since
+    ) {
 
         MDC.put(CONTRACT_LOG, contractNumber);
         log.info("Received request to export by contractNumber");
