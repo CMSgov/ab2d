@@ -1,6 +1,5 @@
 package gov.cms.ab2d.api.controller.v2;
 
-import gov.cms.ab2d.api.config.OpenAPIConfig;
 import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.api.util.SwaggerConstants;
 import gov.cms.ab2d.common.model.Job;
@@ -23,7 +22,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -33,20 +31,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotBlank;
 import java.time.OffsetDateTime;
 
-import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
-import static gov.cms.ab2d.api.controller.common.ApiText.ASYNC;
-import static gov.cms.ab2d.api.controller.common.ApiText.BULK_RESPONSE;
-import static gov.cms.ab2d.api.controller.common.ApiText.BULK_RESPONSE_LONG;
-import static gov.cms.ab2d.api.controller.common.ApiText.BULK_SINCE;
-import static gov.cms.ab2d.api.controller.common.ApiText.BULK_SINCE_DEFAULT;
-import static gov.cms.ab2d.api.controller.common.ApiText.CONTRACT_NO;
-import static gov.cms.ab2d.api.controller.common.ApiText.EXPORT_STARTED;
-import static gov.cms.ab2d.api.controller.common.ApiText.MAX_JOBS;
-import static gov.cms.ab2d.api.controller.common.ApiText.OUT_FORMAT;
-import static gov.cms.ab2d.api.controller.common.ApiText.PREFER;
-import static gov.cms.ab2d.api.controller.common.ApiText.RUNNING_JOBIDS;
-import static gov.cms.ab2d.api.controller.common.ApiText.SINCE;
-import static gov.cms.ab2d.api.controller.common.ApiText.TYPE_PARAM;
+import static gov.cms.ab2d.api.controller.common.ApiText.*;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_CONTRACT_EXPORT;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT_TYPE;
@@ -86,21 +71,24 @@ public class BulkDataAccessAPIV2 {
                     BULK_PREFER, schema = @Schema(type = "string", allowableValues = ASYNC, defaultValue = ASYNC)),
             @Parameter(name = TYPE_PARAM, description = BULK_EXPORT_TYPE, in = ParameterIn.QUERY, schema = @Schema(allowableValues = EOB, defaultValue = EOB)),
             @Parameter(name = OUT_FORMAT, description = BULK_OUTPUT_FORMAT, in = ParameterIn.QUERY,
-                    schema = @Schema(allowableValues = {
-                            "application/fhir+ndjson", "application/ndjson", "ndjson", "application/zip"
-                    }, defaultValue = NDJSON_FIRE_CONTENT_TYPE)
+                schema = @Schema(allowableValues = {
+                    "application/fhir+ndjson", "application/ndjson", "ndjson", "application/zip"
+                }, defaultValue = NDJSON_FIRE_CONTENT_TYPE)
             ),
-            @Parameter(name = SINCE, description = BULK_SINCE, schema = @Schema(type = "date-time", description = SINCE_EARLIEST_DATE))
+            @Parameter(name = SINCE, description = BULK_SINCE_DEFAULT, schema = @Schema(type = "date-time", description = SINCE_EARLIEST_DATE))
 
     }
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "202", description = EXPORT_STARTED, headers =
                 @Header(name = CONTENT_LOCATION, description = BULK_RESPONSE, schema = @Schema(type = "string")),
-                content = @Content(schema = @Schema(type = "string"))),
+                content = @Content(schema = @Schema(type = "string"))
+            ),
             @ApiResponse(responseCode = "429", description = MAX_JOBS, headers =
                 @Header(name = CONTENT_LOCATION, description = RUNNING_JOBIDS, schema = @Schema(type = "string")),
-                content = @Content(schema = @Schema(implementation = OpenAPIConfig.OperationOutcome.class)))}
+                content = @Content(schema = @Schema(ref = "#/components/schemas/OperationOutcome"))
+            )
+        }
     )
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @GetMapping("/Patient/$export")
@@ -132,7 +120,7 @@ public class BulkDataAccessAPIV2 {
                             "application/fhir+ndjson", "application/ndjson", "ndjson", "application/zip"
                     }, defaultValue = NDJSON_FIRE_CONTENT_TYPE)
             ),
-            @Parameter(name = SINCE, description = BULK_SINCE, example = SINCE_EARLIEST_DATE, schema = @Schema(type = "date-time"))
+            @Parameter(name = SINCE, description = BULK_SINCE_DEFAULT, example = SINCE_EARLIEST_DATE, schema = @Schema(type = "date-time"))
 
     }
     )
@@ -140,10 +128,13 @@ public class BulkDataAccessAPIV2 {
             @ApiResponse(responseCode = "202", description = EXPORT_STARTED,
                 headers = @Header(name = CONTENT_LOCATION, description = BULK_RESPONSE_LONG,
                     schema = @Schema(type = "string")),
-                content = @Content(schema = @Schema(type = "string"))),
+                content = @Content(schema = @Schema(type = "string"))
+            ),
             @ApiResponse(responseCode = "429", description = MAX_JOBS, headers =
                 @Header(name = CONTENT_LOCATION, description = RUNNING_JOBIDS, schema = @Schema(type = "string")),
-                content = @Content(schema = @Schema(implementation = OpenAPIConfig.OperationOutcome.class)))}
+                content = @Content(schema = @Schema(ref = "#/components/schemas/OperationOutcome"))
+            )
+        }
     )
     // todo: This endpoint no longer makes sense in the new model where one Okta credential maps to one Contract
     @ResponseStatus(value = HttpStatus.ACCEPTED)

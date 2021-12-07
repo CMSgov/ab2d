@@ -1,52 +1,50 @@
 package gov.cms.ab2d.api.config;
 
-import com.fasterxml.classmate.TypeResolver;
 import com.fasterxml.jackson.annotation.*;
-import gov.cms.ab2d.api.util.Constants;
+import gov.cms.ab2d.api.controller.JobCompletedResponse;
+import io.swagger.v3.core.converter.ModelConverters;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.media.Content;
+import io.swagger.v3.oas.models.media.MediaType;
+import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.responses.ApiResponse;
+import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
-import io.swagger.v3.oas.models.servers.Server;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.GroupedOpenApi;
-import org.springframework.beans.factory.annotation.Value;
+import org.springdoc.core.customizers.OpenApiCustomiser;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.util.*;
 
+import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
 import static gov.cms.ab2d.api.util.SwaggerConstants.MAIN;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
-import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
+@Slf4j
 @AllArgsConstructor
 @Configuration
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class OpenAPIConfig {
 
-//    private final TypeResolver typeResolver;
-
     @Bean
     public OpenAPI ab2dAPI() {
-        Server local = new Server();
-        local.setUrl("https://localhost:8443/");
-
         return new OpenAPI()
-                .addServersItem(local)
                 .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
                 .components(new Components().addSecuritySchemes("bearerAuth", new SecurityScheme()
                         .name("bearerAuth")
                         .type(SecurityScheme.Type.HTTP)
                         .scheme("bearer")
-                        .bearerFormat("JWT")))
-                .info(new Info().title("AB2D API"));
+                        .bearerFormat("JWT"))
+                ).info(new Info().title("AB2D API").description(MAIN));
     }
 
     @Bean
@@ -55,6 +53,7 @@ public class OpenAPIConfig {
                 .group("V1 - FHIR STU3")
                 .packagesToScan("gov.cms.ab2d.api.controller")
                 .pathsToMatch(API_PREFIX_V1 + FHIR_PREFIX + "/**")
+                .addOpenApiCustomiser(defaultResponseMessages())
                 .build();
     }
 
@@ -64,7 +63,52 @@ public class OpenAPIConfig {
                 .group("V2 - FHIR R4")
                 .packagesToScan("gov.cms.ab2d.api.controller")
                 .pathsToMatch(API_PREFIX_V2 + FHIR_PREFIX + "/**")
+                .addOpenApiCustomiser(defaultResponseMessages())
                 .build();
+    }
+
+    public OpenApiCustomiser defaultResponseMessages() {
+        return api -> {
+
+            // Add JSON templates for expected response bodies
+            // These can be referenced by the standard location ex. #/components/schemas/OperationOutcome
+            api.getComponents().getSchemas().putAll(ModelConverters.getInstance().read(OperationOutcome.class));
+            api.getComponents().getSchemas().putAll(ModelConverters.getInstance().read(Issue.class));
+            api.getComponents().getSchemas().putAll(ModelConverters.getInstance().read(Details.class));
+
+            api.getComponents().getSchemas().putAll(ModelConverters.getInstance().read(JobCompletedResponse.class));
+            api.getComponents().getSchemas().putAll(ModelConverters.getInstance().read(JobCompletedResponse.Output.class));
+            api.getComponents().getSchemas().putAll(ModelConverters.getInstance().read(JobCompletedResponse.FileMetadata.class));
+
+            api.getPaths().values().forEach(pathItem -> pathItem.readOperations().forEach(operation -> {
+                ApiResponses responses = operation.getResponses();
+
+                Schema schema = new Schema();
+                schema.setName("OperationOutcome");
+                schema.set$ref("#/components/schemas/OperationOutcome");
+
+                MediaType mediaType = new MediaType();
+                mediaType.schema(schema);
+
+                ApiResponse internalError = new ApiResponse()
+                        .description("An internal error occurred. " + GENERIC_FHIR_ERR_MSG)
+                        .content(new Content().addMediaType(APPLICATION_JSON_VALUE, mediaType));
+                responses.addApiResponse("500", internalError);
+
+                ApiResponse requestError = new ApiResponse()
+                        .description("There was a problem with the request. " + GENERIC_FHIR_ERR_MSG)
+                        .content(new Content().addMediaType(APPLICATION_JSON_VALUE, mediaType));
+                responses.addApiResponse("400", requestError);
+
+                ApiResponse tokenError = new ApiResponse()
+                        .description("Unauthorized. Missing authentication token.");
+                responses.addApiResponse("401", tokenError);
+
+                ApiResponse authError = new ApiResponse()
+                        .description("Forbidden. Access not permitted.");
+                responses.addApiResponse("403", authError);
+            }));
+        };
     }
 
 //    private List<ResponseMessage> globalResponseMessages() {
@@ -87,26 +131,6 @@ public class OpenAPIConfig {
 //                .message(
 //                        "Forbidden. Access not permitted.")
 //                .build());
-//    }
-//
-//    private ApiInfo apiInfoV1() {
-//        return new ApiInfo(
-//               "AB2D FHIR STU3 Bulk Data Access API",
-//                MAIN,
-//               "1.0",
-//               null,
-//               null,
-//               null, null, Collections.emptyList());
-//    }
-//
-//    private ApiInfo apiInfoV2() {
-//        return new ApiInfo(
-//                "AB2D FHIR R4 Bulk Data Access API",
-//                MAIN,
-//                "2.0",
-//                null,
-//                null,
-//                null, null, Collections.emptyList());
 //    }
 
     // FHIR's OperationOutcome won't play nice with Swagger. Having to redefine it here
@@ -261,8 +285,4 @@ public class OpenAPIConfig {
         }
 
     }
-
-//    private ApiKey apiKey() {
-//        return new ApiKey(AUTHORIZATION, AUTHORIZATION, "header");
-//    }
 }

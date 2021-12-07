@@ -54,8 +54,8 @@ public class FileDownloadAPIV1 {
 
     @Operation(summary = DOWNLOAD_DESC)
     @Parameters(value = {
-            @Parameter(name = "jobUuid", description = JOB_ID, required = true),
-            @Parameter(name = "filename", description = FILE_NAME, required = true)
+        @Parameter(name = "jobUuid", description = JOB_ID, required = true),
+        @Parameter(name = "filename", description = FILE_NAME, required = true)
     })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = DNLD_DESC,
@@ -63,8 +63,9 @@ public class FileDownloadAPIV1 {
                     content = @Content(mediaType = NDJSON_FIRE_CONTENT_TYPE)
             ),
             @ApiResponse(responseCode = "404", description = NOT_FOUND + GENERIC_FHIR_ERR_MSG, content =
-            @Content(mediaType = APPLICATION_JSON, schema = @Schema(implementation = OpenAPIConfig.OperationOutcome.class)))
-    }
+                @Content(mediaType = APPLICATION_JSON, schema = @Schema(ref = "#/components/schemas/OperationOutcome"))
+            )
+        }
     )
     @ResponseStatus(value = HttpStatus.OK)
     @GetMapping(value = "/Job/{jobUuid}/file/{filename}", produces = { NDJSON_FIRE_CONTENT_TYPE })

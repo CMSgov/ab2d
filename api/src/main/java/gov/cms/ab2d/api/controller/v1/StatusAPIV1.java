@@ -1,6 +1,5 @@
 package gov.cms.ab2d.api.controller.v1;
 
-import gov.cms.ab2d.api.config.OpenAPIConfig;
 import gov.cms.ab2d.api.controller.JobCompletedResponse;
 import gov.cms.ab2d.api.controller.common.StatusCommon;
 import io.swagger.v3.oas.annotations.Operation;
@@ -62,13 +61,17 @@ public class StatusAPIV1 {
     @Parameters(value = @Parameter(name = "jobUuid", description = JOB_ID, required = true, in = ParameterIn.PATH))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "202", description = STILL_RUNNING, headers = {
-                    @Header(name = X_PROG, description = PROGRESS, schema = @Schema(type = "string")),
-                    @Header(name = RETRY_AFTER, description = STATUS_DELAY, schema = @Schema(type = "integer"))}),
+                @Header(name = X_PROG, description = PROGRESS, schema = @Schema(type = "string")),
+                @Header(name = RETRY_AFTER, description = STATUS_DELAY, schema = @Schema(type = "integer"))}
+            ),
             @ApiResponse(responseCode = "200", description = JOB_COMPLETE, headers = {
-                    @Header(name = EXPIRES, description = FILE_EXPIRES, schema = @Schema(type = "string"))},
-                    content = @Content(schema = @Schema(implementation = JobCompletedResponse.class))),
+                @Header(name = EXPIRES, description = FILE_EXPIRES, schema = @Schema(type = "string"))},
+                content = @Content(schema = @Schema(ref = "#/components/schemas/JobCompletedResponse"))
+            ),
             @ApiResponse(responseCode = "404", description = JOB_NOT_FOUND,
-                    content = @Content(schema = @Schema(implementation = OpenAPIConfig.OperationOutcome.class)))}
+                content = @Content(schema = @Schema(ref = "#/components/schemas/OperationOutcome"))
+            )
+        }
     )
     @GetMapping(value = "/Job/{jobUuid}/$status", produces = APPLICATION_JSON)
     @ResponseStatus(value = HttpStatus.OK)
@@ -82,7 +85,9 @@ public class StatusAPIV1 {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "202", description = JOB_CANCELLED_MSG),
             @ApiResponse(responseCode = "404", description = JOB_NOT_FOUND,
-                    content = @Content(schema = @Schema(implementation = OpenAPIConfig.OperationOutcome.class)))}
+                content = @Content(schema = @Schema(ref = "#/components/schemas/OperationOutcome"))
+            )
+        }
     )
     @DeleteMapping(value = "/Job/{jobUuid}/$status")
     @ResponseStatus(value = HttpStatus.ACCEPTED)

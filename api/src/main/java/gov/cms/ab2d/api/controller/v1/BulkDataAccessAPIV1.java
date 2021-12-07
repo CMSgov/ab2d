@@ -1,6 +1,5 @@
 package gov.cms.ab2d.api.controller.v1;
 
-import gov.cms.ab2d.api.config.OpenAPIConfig;
 import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.service.JobService;
@@ -25,7 +24,6 @@ import javax.validation.constraints.NotBlank;
 import java.time.OffsetDateTime;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -35,7 +33,6 @@ import org.springframework.web.bind.annotation.RestController;
 import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
 import static gov.cms.ab2d.api.controller.common.ApiText.ASYNC;
 import static gov.cms.ab2d.api.controller.common.ApiText.BULK_RESPONSE;
-import static gov.cms.ab2d.api.controller.common.ApiText.BULK_RESPONSE_LONG;
 import static gov.cms.ab2d.api.controller.common.ApiText.BULK_SINCE;
 import static gov.cms.ab2d.api.controller.common.ApiText.CONTRACT_NO;
 import static gov.cms.ab2d.api.controller.common.ApiText.EXPORT_STARTED;
@@ -81,12 +78,12 @@ public class BulkDataAccessAPIV1 {
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @Parameters(value = {
             @Parameter(name = PREFER, required = true, in = ParameterIn.HEADER, description =
-                    BULK_PREFER, schema = @Schema(type = "string", allowableValues = ASYNC, defaultValue = ASYNC)),
+                BULK_PREFER, schema = @Schema(type = "string", allowableValues = ASYNC, defaultValue = ASYNC)),
             @Parameter(name = TYPE_PARAM, description = BULK_EXPORT_TYPE, in = ParameterIn.QUERY, schema = @Schema(allowableValues = EOB, defaultValue = EOB)),
             @Parameter(name = OUT_FORMAT, description = BULK_OUTPUT_FORMAT, in = ParameterIn.QUERY,
-                    schema = @Schema(allowableValues = {
-                            "application/fhir+ndjson", "application/ndjson", "ndjson", "application/zip"
-                    }, defaultValue = NDJSON_FIRE_CONTENT_TYPE)
+                schema = @Schema(allowableValues = {
+                    "application/fhir+ndjson", "application/ndjson", "ndjson", "application/zip"
+                }, defaultValue = NDJSON_FIRE_CONTENT_TYPE)
             ),
             @Parameter(name = SINCE, description = BULK_SINCE, schema = @Schema(type = "date-time", description = SINCE_EARLIEST_DATE))
 
@@ -94,10 +91,13 @@ public class BulkDataAccessAPIV1 {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "202", description = EXPORT_STARTED, headers =
-            @Header(name = CONTENT_LOCATION, description = BULK_RESPONSE, schema = @Schema(type = "string"))),
+                @Header(name = CONTENT_LOCATION, description = BULK_RESPONSE, schema = @Schema(type = "string"))
+            ),
             @ApiResponse(responseCode = "429", description = MAX_JOBS,
-                    headers = @Header(name = CONTENT_LOCATION, description = RUNNING_JOBIDS, schema = @Schema(type = "string")),
-                    content = @Content(schema = @Schema(implementation = OpenAPIConfig.OperationOutcome.class)))}
+                headers = @Header(name = CONTENT_LOCATION, description = RUNNING_JOBIDS, schema = @Schema(type = "string")),
+                content = @Content(schema = @Schema(ref = "#/components/schemas/OperationOutcome"))
+            )
+        }
     )
     @Operation(summary = BULK_EXPORT)
     @GetMapping("/Patient/$export")
@@ -121,24 +121,26 @@ public class BulkDataAccessAPIV1 {
     @Operation(summary = BULK_CONTRACT_EXPORT)
     @Parameters(value = {
             @Parameter(name = PREFER, required = true, in = ParameterIn.HEADER, description =
-                    BULK_PREFER, schema = @Schema(type = "string", allowableValues = ASYNC, defaultValue = ASYNC)),
+                BULK_PREFER, schema = @Schema(type = "string", allowableValues = ASYNC, defaultValue = ASYNC)),
             @Parameter(name = "contractNumber", required = true, in = ParameterIn.PATH, description = CONTRACT_NO, example = "Z0000"),
             @Parameter(name = TYPE_PARAM, description = BULK_EXPORT_TYPE, in = ParameterIn.QUERY, schema = @Schema(allowableValues = EOB, defaultValue = EOB)),
             @Parameter(name = OUT_FORMAT, description = BULK_OUTPUT_FORMAT, in = ParameterIn.QUERY,
-                    schema = @Schema(allowableValues = {
-                            "application/fhir+ndjson", "application/ndjson", "ndjson", "application/zip"
-                    }, defaultValue = NDJSON_FIRE_CONTENT_TYPE)
+                schema = @Schema(allowableValues = {
+                    "application/fhir+ndjson", "application/ndjson", "ndjson", "application/zip"
+                }, defaultValue = NDJSON_FIRE_CONTENT_TYPE)
             ),
             @Parameter(name = SINCE, description = BULK_SINCE, example = SINCE_EARLIEST_DATE, schema = @Schema(type = "date-time"))
-
-    }
+        }
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "202", description = EXPORT_STARTED, headers =
-            @Header(name = CONTENT_LOCATION, description = BULK_RESPONSE, schema = @Schema(type = "string"))),
+                @Header(name = CONTENT_LOCATION, description = BULK_RESPONSE, schema = @Schema(type = "string"))
+            ),
             @ApiResponse(responseCode = "429", description = MAX_JOBS,
-                    headers = @Header(name = CONTENT_LOCATION, description = RUNNING_JOBIDS, schema = @Schema(type = "string")),
-                    content = @Content(schema = @Schema(implementation = OpenAPIConfig.OperationOutcome.class)))}
+                headers = @Header(name = CONTENT_LOCATION, description = RUNNING_JOBIDS, schema = @Schema(type = "string")),
+                content = @Content(schema = @Schema(ref = "#/components/schemas/OperationOutcome"))
+            )
+        }
     )
     // todo: This endpoint no longer makes sense in the new model where one Okta credential maps to one Contract
     @ResponseStatus(value = HttpStatus.ACCEPTED)
