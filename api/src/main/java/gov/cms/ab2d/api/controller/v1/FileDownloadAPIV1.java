@@ -1,6 +1,5 @@
 package gov.cms.ab2d.api.controller.v1;
 
-import gov.cms.ab2d.api.config.OpenAPIConfig;
 import gov.cms.ab2d.api.controller.common.FileDownloadCommon;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

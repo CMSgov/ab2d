@@ -1,6 +1,5 @@
 package gov.cms.ab2d.api.controller.v2;
 
-import gov.cms.ab2d.api.config.OpenAPIConfig;
 import gov.cms.ab2d.api.controller.JobCompletedResponse;
 import gov.cms.ab2d.api.controller.common.StatusCommon;
 import io.swagger.v3.oas.annotations.Operation;
