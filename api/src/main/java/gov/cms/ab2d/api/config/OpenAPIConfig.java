@@ -29,40 +29,64 @@ import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
+/**
+ * Configuration for the swagger ui dictating how annnotations are processed and default security/responses.
+ *
+ * {@link OpenAPI} - the base configuration for all versions of the API
+ * {@link GroupedOpenApi} - one of these for each version of FHIR we support (V1 - STU3, V2 - R4)
+ * {@link OpenApiCustomiser} - customize a {@link GroupedOpenApi} with default behavior
+ */
 @Slf4j
 @AllArgsConstructor
 @Configuration
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class OpenAPIConfig {
 
+    /**
+     * Configuration for the whole swagger page
+     */
     @Bean
     public OpenAPI ab2dAPI() {
         return new OpenAPI()
+                // Dictate that all endpoints within Swagger must make authenticated calls using
+                // a bearer token.
+                // This corresponds to the "Authorize" button in Swagger
                 .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
                 .components(new Components().addSecuritySchemes("bearerAuth", new SecurityScheme()
                         .name("bearerAuth")
                         .type(SecurityScheme.Type.HTTP)
                         .scheme("bearer")
                         .bearerFormat("JWT"))
+                // The main lorem ipsum for the page
                 ).info(new Info().title("AB2D API").description(MAIN));
     }
 
+    /**
+     * Limit to STU3 aspects of the API
+     */
     @Bean
     public GroupedOpenApi apiV1() {
         return GroupedOpenApi.builder()
                 .group("V1 - FHIR STU3")
                 .packagesToScan("gov.cms.ab2d.api.controller")
+                // Only match /v1/fhir calls
                 .pathsToMatch(API_PREFIX_V1 + FHIR_PREFIX + "/**")
+                // Customize the page with default error responses to authentication and internal errors
                 .addOpenApiCustomiser(defaultResponseMessages())
                 .build();
     }
 
+    /**
+     * Limit to R4 aspects of the API
+     */
     @Bean
     public GroupedOpenApi apiV2() {
         return GroupedOpenApi.builder()
                 .group("V2 - FHIR R4")
                 .packagesToScan("gov.cms.ab2d.api.controller")
+                // Only match /v2/fhir calls
                 .pathsToMatch(API_PREFIX_V2 + FHIR_PREFIX + "/**")
+                // Customize the page with default error responses to authentication and internal errors
                 .addOpenApiCustomiser(defaultResponseMessages())
                 .build();
     }
@@ -80,9 +104,11 @@ public class OpenAPIConfig {
             api.getComponents().getSchemas().putAll(ModelConverters.getInstance().read(JobCompletedResponse.Output.class));
             api.getComponents().getSchemas().putAll(ModelConverters.getInstance().read(JobCompletedResponse.FileMetadata.class));
 
+            // For each API endpoint on the page add a set of default responses to what is displayed
             api.getPaths().values().forEach(pathItem -> pathItem.readOperations().forEach(operation -> {
                 ApiResponses responses = operation.getResponses();
 
+                // Response schema that you can display template
                 Schema schema = new Schema();
                 schema.setName("OperationOutcome");
                 schema.set$ref("#/components/schemas/OperationOutcome");
@@ -90,6 +116,7 @@ public class OpenAPIConfig {
                 MediaType mediaType = new MediaType();
                 mediaType.schema(schema);
 
+                // Default responses for standard error conditions
                 ApiResponse internalError = new ApiResponse()
                         .description("An internal error occurred. " + GENERIC_FHIR_ERR_MSG)
                         .content(new Content().addMediaType(APPLICATION_JSON_VALUE, mediaType));
@@ -110,28 +137,6 @@ public class OpenAPIConfig {
             }));
         };
     }
-
-//    private List<ResponseMessage> globalResponseMessages() {
-//        return Arrays.asList(new ResponseMessageBuilder()
-//                .code(500)
-//                .message(
-//                        "An error occurred. " + Constants.GENERIC_FHIR_ERR_MSG)
-//                .responseModel(new ModelRef("OperationOutcome"))
-//                .build(), new ResponseMessageBuilder()
-//                .code(400)
-//                .message(
-//                        "There was a problem with the request. " + Constants.GENERIC_FHIR_ERR_MSG)
-//                .responseModel(new ModelRef("OperationOutcome"))
-//                .build(), new ResponseMessageBuilder()
-//                .code(401)
-//                .message(
-//                        "Unauthorized. Missing authentication token.")
-//                .build(), new ResponseMessageBuilder()
-//                .code(403)
-//                .message(
-//                        "Forbidden. Access not permitted.")
-//                .build());
-//    }
 
     // FHIR's OperationOutcome won't play nice with Swagger. Having to redefine it here
     // to get the Swagger API spec looking right.
