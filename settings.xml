@@ -22,7 +22,7 @@
                         <enabled>false</enabled>
                     </snapshots>
                     <id>central</id>
-                    <name>ab2d-maven</name>
+                    <name>ab2d-maven-cache</name>
                     <url>${env.ARTIFACTORY_URL}/ab2d-maven-repo/</url>
                 </repository>
                 <repository>
@@ -38,7 +38,7 @@
                         <enabled>false</enabled>
                     </snapshots>
                     <id>central</id>
-                    <name>ab2d-maven</name>
+                    <name>ab2d-maven-cache</name>
                     <url>${env.ARTIFACTORY_URL}/ab2d-maven-repo</url>
                 </pluginRepository>
                 <pluginRepository>
