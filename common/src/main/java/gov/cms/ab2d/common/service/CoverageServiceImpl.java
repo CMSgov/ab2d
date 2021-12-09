@@ -122,7 +122,7 @@ public class CoverageServiceImpl implements CoverageService {
 
     @Override
     public List<CoverageCount> countBeneficiariesForContracts(List<Contract> contracts) {
-        int partitionSize = 10;
+        int partitionSize = 5;
         List<List<Contract>> contractPartitions = new ArrayList<>();
 
         // Split queries into smaller pieces so queries don't time out
