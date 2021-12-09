@@ -33,7 +33,7 @@
     <properties>
         <project.root>${basedir}</project.root>
         <java.version>17</java.version>
-        <hapi.version>5.6.0</hapi.version>
+        <hapi.version>5.6.1</hapi.version>
         <!-- eventlogger is imported first by all other modules, if that changes then
          okhttp3 must be imported first anywhere the slack client is used-->
         <okhttp3.version>4.9.3</okhttp3.version>
@@ -47,7 +47,7 @@
         <jacoco.version>0.8.7</jacoco.version>
         <maven.resources.plugin.version>3.2.0</maven.resources.plugin.version>
         <maven.assembly.plugin.version>2.3</maven.assembly.plugin.version>
-        <spotbugs.version>4.5.0</spotbugs.version>
+        <spotbugs.version>4.5.1</spotbugs.version>
         <spotbugs.maven.version>4.5.0.0</spotbugs.maven.version>
     </properties>
 
