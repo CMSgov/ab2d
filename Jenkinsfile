@@ -84,7 +84,7 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
                     sh '''
                         export AB2D_EFS_MOUNT="${AB2D_HOME}"
-                        mvn --settings settings.xml -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD} test -pl eventlogger,fhir,common,api,worker,bfd,audit,hpms
+                        mvn --settings settings.xml -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD} test -pl eventlogger,common,api,worker,bfd,audit,hpms
                     '''
                 }
             }
@@ -178,9 +178,6 @@ pipeline {
                 sh '''
                     export JACOCO_SOURCE_PATH=./api/src/main/java
                     ./codeclimate/cc-test-reporter format-coverage ./api/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.api.json
-
-                    export JACOCO_SOURCE_PATH=./fhir/src/main/java
-                    ./codeclimate/cc-test-reporter format-coverage ./fhir/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.fhir.json
 
                     export JACOCO_SOURCE_PATH=./audit/src/main/java
                     ./codeclimate/cc-test-reporter format-coverage ./audit/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.audit.json
