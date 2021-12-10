@@ -94,8 +94,8 @@
         </dependency>
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
-            <artifactId>fhir</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <artifactId>ab2d-fhir</artifactId>
+            <version>1.0</version>
         </dependency>
 
         <dependency>
