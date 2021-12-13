@@ -31,7 +31,20 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotBlank;
 import java.time.OffsetDateTime;
 
-import static gov.cms.ab2d.api.controller.common.ApiText.*;
+import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
+import static gov.cms.ab2d.api.controller.common.ApiText.ASYNC;
+import static gov.cms.ab2d.api.controller.common.ApiText.BULK_RESPONSE;
+import static gov.cms.ab2d.api.controller.common.ApiText.BULK_RESPONSE_LONG;
+import static gov.cms.ab2d.api.controller.common.ApiText.BULK_SINCE_DEFAULT;
+import static gov.cms.ab2d.api.controller.common.ApiText.CONTRACT_NO;
+import static gov.cms.ab2d.api.controller.common.ApiText.EXPORT_STARTED;
+import static gov.cms.ab2d.api.controller.common.ApiText.MAX_JOBS;
+import static gov.cms.ab2d.api.controller.common.ApiText.OUT_FORMAT;
+import static gov.cms.ab2d.api.controller.common.ApiText.PREFER;
+import static gov.cms.ab2d.api.controller.common.ApiText.RUNNING_JOBIDS;
+import static gov.cms.ab2d.api.controller.common.ApiText.SINCE;
+import static gov.cms.ab2d.api.controller.common.ApiText.TYPE_PARAM;
+
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_CONTRACT_EXPORT;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT_TYPE;
