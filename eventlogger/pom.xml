@@ -83,12 +83,12 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk</artifactId>
-            <version>1.12.126</version>
+            <version>1.12.128</version>
         </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>amazon-kinesis-client</artifactId>
-            <version>1.14.4</version>
+            <version>1.14.5</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
