@@ -10,7 +10,6 @@
         <module>api</module>
         <module>worker</module>
         <module>bfd</module>
-        <module>filter</module>
         <module>audit</module>
         <module>hpms</module>
         <module>e2e-test</module>
@@ -53,14 +52,12 @@
         <!-- Temporarily force log4j version to 2.15.0 in case someone enterprising decides to change to log4j -->
         <log4j2.version>2.15.0</log4j2.version>
     </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>

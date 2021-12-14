@@ -2,11 +2,11 @@ package gov.cms.ab2d.worker.processor;
 
 import com.newrelic.api.agent.NewRelic;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.util.FilterOutByDate;
+import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
+import gov.cms.ab2d.filter.FilterEob;
 import gov.cms.ab2d.worker.util.FhirUtils;
 import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.EobUtils;
-import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.IBaseBackboneElement;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
@@ -20,7 +20,7 @@ import java.util.*;
  *
  * Relevant classes influencing filtering and behavior:
  *      - {@link gov.cms.ab2d.common.model.CoverageSummary} dates that beneficiary is a member of the contract and list of MBIs
- *      - {@link FilterOutByDate#valid} method filtering out claims from periods when beneficiary was not a member
+ *      - {@link FilterEob.filter} method filtering out claims from periods when beneficiary was not a member
  *      - {@link ExplanationOfBenefitTrimmer#getBenefit} strip fields that AB2D should not provide based on {@link gov.cms.ab2d.fhir.FhirVersion}
  *      - {@link EobUtils#isPartD} remove claims that are PartD
  *      - {@link FhirUtils} add MBIs to a claim
@@ -90,18 +90,41 @@ public class PatientClaimsCollector {
 
         // Perform filtering actions
         BundleUtils.getEobResources(bundleEntries).stream()
-                // Filter by date unless contract is an old synthetic data contract
-                .filter(resource -> claimsRequest.getContractType() == Contract.ContractType.CLASSIC_TEST || FilterOutByDate.valid(resource, attestationDate, earliestDate, claimsRequest.getCoverageSummary().getDateRanges()))
-                // filter it
-                .map(ExplanationOfBenefitTrimmer::getBenefit)
-                // Remove any empty values
-                .filter(Objects::nonNull)
-                // Remove Plan D
-                .filter(resource -> !EobUtils.isPartD(resource))
+                // Filter by date unless contract is an old synthetic data contract, part D or attestation time is null
+                // Filter out data
+                .filter(resource -> FilterEob.filter(resource, claimsRequest.getCoverageSummary().getDateRanges(), earliestDate,
+                            attestationDate, claimsRequest.getContractType() == Contract.ContractType.CLASSIC_TEST).isPresent())
+                // Filter out unnecessary fields
+                .map(resource -> ExplanationOfBenefitTrimmer.getBenefit(resource))
+                // Make sure patients are the same
                 .filter(this::matchingPatient)
+                // Make sure update date is after since date
+                .filter(this::afterSinceDate)
+                // Add MBIs to the claim
                 .peek(eob -> FhirUtils.addMbiIdsToEobs(eob, claimsRequest.getCoverageSummary(), claimsRequest.getVersion()))
                 // compile the list
                 .forEach(eobs::add);
+    }
+
+    /**
+     * We want to make sure that the last updated date is not before the _since
+     * date. This should never happen, but it's a sanity check on BFD in case they
+     * want to do this to help people who've made missed out on data and ignore
+     * the _since date
+     *
+     * @param resource - the EOB
+     * @return true if the lastUpdated date is after the since date
+     */
+    boolean afterSinceDate(IBaseResource resource) {
+        OffsetDateTime sinceTime = claimsRequest.getSinceTime();
+        if (sinceTime == null) {
+            return true;
+        }
+        Date lastUpdated = resource.getMeta().getLastUpdated();
+        if (lastUpdated == null) {
+            return false;
+        }
+        return sinceTime.toInstant().toEpochMilli() < lastUpdated.getTime();
     }
 
     /**

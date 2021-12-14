@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker;
 
-import gov.cms.ab2d.common.util.FilterOutByDate;
+import gov.cms.ab2d.filter.FilterOutByDate;
 
 public final class TestUtil {
 
