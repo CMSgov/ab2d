@@ -40,7 +40,7 @@ public class PdpClientServiceImpl implements PdpClientService {
     @Override
     public List<Contract> getAllEnabledContracts() {
         return pdpClientRepository.findAllByEnabledTrue().stream()
-                .filter(client -> client.getContract().getAttestedOn() != null)
+                .filter(client -> client.getContract() != null && client.getContract().getAttestedOn() != null)
                 .filter(this::hasSponsorRole)
                 .map(PdpClient::getContract).collect(toList());
     }

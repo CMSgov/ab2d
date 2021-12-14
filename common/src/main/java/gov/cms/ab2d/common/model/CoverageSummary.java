@@ -1,6 +1,6 @@
 package gov.cms.ab2d.common.model;
 
-import gov.cms.ab2d.common.util.FilterOutByDate.DateRange;
+import gov.cms.ab2d.filter.FilterOutByDate.DateRange;
 import lombok.Getter;
 import lombok.ToString;
 
