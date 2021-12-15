@@ -44,7 +44,7 @@
         <jacoco.version>0.8.7</jacoco.version>
         <maven.resources.plugin.version>3.2.0</maven.resources.plugin.version>
         <maven.assembly.plugin.version>2.3</maven.assembly.plugin.version>
-        <spotbugs.version>4.5.1</spotbugs.version>
+        <spotbugs.version>4.5.2</spotbugs.version>
         <spotbugs.maven.version>4.5.0.0</spotbugs.maven.version>
 
         
