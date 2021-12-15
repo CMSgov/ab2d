@@ -39,13 +39,13 @@
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
         <logback-encoder.version>7.0.1</logback-encoder.version>
         <testcontainers.version>1.16.2</testcontainers.version>
-        <newrelic.version>7.4.1</newrelic.version>
+        <newrelic.version>7.4.2</newrelic.version>
 
         <!-- Maven plugin versions -->
         <jacoco.version>0.8.7</jacoco.version>
         <maven.resources.plugin.version>3.2.0</maven.resources.plugin.version>
         <maven.assembly.plugin.version>2.3</maven.assembly.plugin.version>
-        <spotbugs.version>4.5.1</spotbugs.version>
+        <spotbugs.version>4.5.2</spotbugs.version>
         <spotbugs.maven.version>4.5.0.0</spotbugs.maven.version>
 
         <!-- Temporarily force log4j version to 2.15.0 in case someone enterprising decides to change to log4j -->
