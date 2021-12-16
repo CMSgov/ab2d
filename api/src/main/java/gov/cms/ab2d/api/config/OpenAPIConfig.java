@@ -13,7 +13,6 @@ import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.GroupedOpenApi;
 import org.springdoc.core.customizers.OpenApiCustomiser;
@@ -37,7 +36,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  * {@link OpenApiCustomiser} - customize a {@link GroupedOpenApi} with default behavior
  */
 @Slf4j
-@AllArgsConstructor
 @Configuration
 @SuppressWarnings("PMD.TooManyStaticImports")
 public class OpenAPIConfig {
