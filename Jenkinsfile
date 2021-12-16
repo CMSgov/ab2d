@@ -19,6 +19,8 @@ pipeline {
 
         // R4 V2 endpoints enabled
         AB2D_V2_ENABLED = true
+
+        ARTIFACTORY_URL = credentials('ARTIFACTORY_URL')
     }
 
     agent {
@@ -69,19 +71,22 @@ pipeline {
         }
 
         stage('Package without tests') {
-
             steps {
-                sh 'mvn package -DskipTests'
+                withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
+                    sh 'mvn package --settings settings.xml -DskipTests -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD}'
+                }
             }
         }
 
         stage('Run unit and integration tests') {
 
             steps {
-                sh '''
-                    export AB2D_EFS_MOUNT="${AB2D_HOME}"
-                    mvn test -pl eventlogger,fhir,common,api,worker,bfd,filter,audit,hpms
-                '''
+                withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
+                    sh '''
+                        export AB2D_EFS_MOUNT="${AB2D_HOME}"
+                        mvn --settings settings.xml -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD} test -pl eventlogger,common,api,worker,bfd,audit,hpms
+                    '''
+                }
             }
         }
 
@@ -90,7 +95,8 @@ pipeline {
             steps {
 
                 withCredentials([file(credentialsId: 'SANDBOX_BFD_KEYSTORE', variable: 'SANDBOX_BFD_KEYSTORE'),
-                            string(credentialsId: 'SANDBOX_BFD_KEYSTORE_PASSWORD', variable: 'AB2D_BFD_KEYSTORE_PASSWORD')]) {
+                            string(credentialsId: 'SANDBOX_BFD_KEYSTORE_PASSWORD', variable: 'AB2D_BFD_KEYSTORE_PASSWORD'),
+                            usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
 
                     sh '''
                         export AB2D_BFD_KEYSTORE_LOCATION="$WORKSPACE/opt/ab2d/ab2d_bfd_keystore"
@@ -105,18 +111,20 @@ pipeline {
 
                         export AB2D_V2_ENABLED=true
 
-                        mvn test -pl e2e-bfd-test -am -Dtest=EndToEndBfdTests -DfailIfNoTests=false
+                        mvn test --settings settings.xml -pl e2e-bfd-test -am -Dtest=EndToEndBfdTests -DfailIfNoTests=false -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD}
                     '''
                 }
             }
         }
 	    stage('SonarQube Analysis') {
             steps {
-                git branch: 'master', credentialsId: 'GITHUB_AB2D_JENKINS_PAT', url: env.GIT_URL
-                git branch: env.BRANCH_NAME, credentialsId: 'GITHUB_AB2D_JENKINS_PAT', url: env.GIT_URL
-                // Automatically saves the an id for the SonarQube build
-                withSonarQubeEnv('CMSSonar') {
-                    sh '''mvn sonar:sonar -Dsonar.projectKey=ab2d-project -DskipTests'''
+                withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
+                    git branch: 'master', credentialsId: 'GITHUB_AB2D_JENKINS_PAT', url: env.GIT_URL
+                    git branch: env.BRANCH_NAME, credentialsId: 'GITHUB_AB2D_JENKINS_PAT', url: env.GIT_URL
+                    // Automatically saves the an id for the SonarQube build
+                    withSonarQubeEnv('CMSSonar') {
+                        sh '''mvn --settings settings.xml sonar:sonar -Dsonar.projectKey=ab2d-project -DskipTests -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD}'''
+                    }
                 }
             }
         }
@@ -139,7 +147,8 @@ pipeline {
             steps {
 
                 withCredentials([file(credentialsId: 'SANDBOX_BFD_KEYSTORE', variable: 'SANDBOX_BFD_KEYSTORE'),
-                            string(credentialsId: 'SANDBOX_BFD_KEYSTORE_PASSWORD', variable: 'AB2D_BFD_KEYSTORE_PASSWORD')]) {
+                            string(credentialsId: 'SANDBOX_BFD_KEYSTORE_PASSWORD', variable: 'AB2D_BFD_KEYSTORE_PASSWORD'),
+                            usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
 
                     sh '''
                         export AB2D_BFD_KEYSTORE_LOCATION="/opt/ab2d/ab2d_bfd_keystore"
@@ -157,7 +166,7 @@ pipeline {
 
                         ls -la $KEYSTORE_LOCATION
 
-                        mvn test -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false
+                        mvn test --settings settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD}
                     '''
                 }
             }
@@ -170,17 +179,11 @@ pipeline {
                     export JACOCO_SOURCE_PATH=./api/src/main/java
                     ./codeclimate/cc-test-reporter format-coverage ./api/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.api.json
 
-                    export JACOCO_SOURCE_PATH=./fhir/src/main/java
-                    ./codeclimate/cc-test-reporter format-coverage ./fhir/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.fhir.json
-
                     export JACOCO_SOURCE_PATH=./audit/src/main/java
                     ./codeclimate/cc-test-reporter format-coverage ./audit/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.audit.json
 
                     export JACOCO_SOURCE_PATH=./common/src/main/java
                    ./codeclimate/cc-test-reporter format-coverage ./common/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.common.json
-
-                    export JACOCO_SOURCE_PATH=./filter/src/main/java
-                    ./codeclimate/cc-test-reporter format-coverage ./filter/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.filter.json
 
                     export JACOCO_SOURCE_PATH=./hpms/src/main/java
                     ./codeclimate/cc-test-reporter format-coverage ./hpms/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.hpms.json

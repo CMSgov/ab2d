@@ -23,16 +23,16 @@
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>ab2d-bfd</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>1.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>gov.cms.ab2d</groupId>
+            <artifactId>ab2d-filters</artifactId>
+            <version>1.2</version>
         </dependency>
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>audit</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>gov.cms.ab2d</groupId>
-            <artifactId>filter</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>

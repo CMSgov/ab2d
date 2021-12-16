@@ -20,7 +20,11 @@
             <artifactId>eventlogger</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
-
+        <dependency>
+            <groupId>gov.cms.ab2d</groupId>
+            <artifactId>ab2d-filters</artifactId>
+            <version>1.2</version>
+        </dependency>
         <dependency>
             <groupId>javax.validation</groupId>
             <artifactId>validation-api</artifactId>
@@ -90,8 +94,8 @@
         </dependency>
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
-            <artifactId>fhir</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <artifactId>ab2d-fhir</artifactId>
+            <version>1.0</version>
         </dependency>
 
         <dependency>
