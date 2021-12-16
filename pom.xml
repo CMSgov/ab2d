@@ -4,7 +4,6 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <modules>
-        <module>fhir</module>
         <module>eventlogger</module>
         <module>common</module>
         <module>api</module>
@@ -48,6 +47,7 @@
         <spotbugs.version>4.5.2</spotbugs.version>
         <spotbugs.maven.version>4.5.0.0</spotbugs.maven.version>
 
+        
         <!-- Temporarily force log4j version to 2.15.0 in case someone enterprising decides to change to log4j -->
         <log4j2.version>2.16.0</log4j2.version>
     </properties>
