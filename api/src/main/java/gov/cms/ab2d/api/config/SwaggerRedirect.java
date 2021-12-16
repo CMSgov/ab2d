@@ -9,7 +9,7 @@ import java.io.IOException;
 @Controller
 public class SwaggerRedirect {
 
-    @RequestMapping(value = {"/swagger-ui", "/swagger-ui.html"})
+    @RequestMapping(value = "/swagger-ui.html")
     public void swagger(HttpServletResponse httpResponse) throws IOException {
         httpResponse.sendRedirect("/swagger-ui/index.html");
     }
