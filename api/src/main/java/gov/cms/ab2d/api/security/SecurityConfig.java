@@ -38,10 +38,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private final LogManager eventLogger;
     private final PdpClientService pdpClientService;
 
+    /**
+     * Paths to whitelist as not needing authentication and authorization for access
+     */
     @Override
     public void configure(WebSecurity web) {
         web.ignoring().antMatchers("/swagger-ui/**", "/configuration/**",
-                "/swagger-resources/**", "/v3/api-docs", "/webjars/**",
+                "/swagger-resources/**", "/v3/api-docs/**", "/webjars/**",
                 AKAMAI_TEST_OBJECT, "/favicon.ico", "/error", HEALTH_ENDPOINT, STATUS_ENDPOINT);
     }
 
