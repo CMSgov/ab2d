@@ -8,7 +8,6 @@
         <module>common</module>
         <module>api</module>
         <module>worker</module>
-        <module>bfd</module>
         <module>audit</module>
         <module>hpms</module>
         <module>e2e-test</module>
