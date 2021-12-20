@@ -88,7 +88,7 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>amazon-kinesis-client</artifactId>
-            <version>1.14.5</version>
+            <version>1.14.6</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
@@ -105,7 +105,7 @@
         <dependency>
             <groupId>com.slack.api</groupId>
             <artifactId>slack-api-client</artifactId>
-            <version>1.15.0</version>
+            <version>1.16.0</version>
         </dependency>
     </dependencies>
 
