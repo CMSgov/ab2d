@@ -33,17 +33,17 @@ public class DataSetup {
     @Autowired
     private RoleRepository roleRepository;
 
-    @Autowired
-    private CoveragePeriodRepository coveragePeriodRepo;
-
-    @Autowired
-    private CoverageSearchRepository coverageSearchRepo;
-
-    @Autowired
-    private CoverageSearchEventRepository coverageSearchEventRepo;
-
-    @Autowired
-    CoverageDeltaTestRepository coverageDeltaTestRepository;
+//    @Autowired
+//    private CoveragePeriodRepository coveragePeriodRepo;
+//
+//    @Autowired
+//    private CoverageSearchRepository coverageSearchRepo;
+//
+//    @Autowired
+//    private CoverageSearchEventRepository coverageSearchEventRepo;
+//
+////    @Autowired
+//    CoverageDeltaTestRepository coverageDeltaTestRepository;
 
     private final Set<Object> domainObjects = new HashSet<>();
 
@@ -57,19 +57,19 @@ public class DataSetup {
         // wipe the tables between tests and that the tables started as empty tables.
         // Based on these assumptions it is safe to simply delete everything associated
         // with those tables
-        coverageDeltaTestRepository.deleteAll();
-        coverageDeltaTestRepository.flush();
+//        coverageDeltaTestRepository.deleteAll();
+//        coverageDeltaTestRepository.flush();
 
         deleteCoverage();
 
-        coverageSearchEventRepo.deleteAll();
-        coverageSearchEventRepo.flush();
-
-        coverageSearchRepo.deleteAll();
-        coverageSearchRepo.flush();
-
-        coveragePeriodRepo.deleteAll();
-        coveragePeriodRepo.flush();
+//        coverageSearchEventRepo.deleteAll();
+//        coverageSearchEventRepo.flush();
+//
+//        coverageSearchRepo.deleteAll();
+//        coverageSearchRepo.flush();
+//
+//        coveragePeriodRepo.deleteAll();
+//        coveragePeriodRepo.flush();
 
         List<Job> jobsToDelete = domainObjects.stream().filter(object -> object instanceof Job)
                 .map(object -> (Job) object).collect(toList());
@@ -113,14 +113,14 @@ public class DataSetup {
 
     public static final String VALID_CONTRACT_NUMBER = "ABC123";
 
-    public CoveragePeriod createCoveragePeriod(Contract contract, int month, int year) {
-        CoveragePeriod coveragePeriod = new CoveragePeriod();
-        coveragePeriod.setContract(contract);
-        coveragePeriod.setMonth(month);
-        coveragePeriod.setYear(year);
-
-        return coveragePeriodRepo.saveAndFlush(coveragePeriod);
-    }
+//    public CoveragePeriod createCoveragePeriod(Contract contract, int month, int year) {
+//        CoveragePeriod coveragePeriod = new CoveragePeriod();
+//        coveragePeriod.setContract(contract);
+//        coveragePeriod.setMonth(month);
+//        coveragePeriod.setYear(year);
+//
+//        return coveragePeriodRepo.saveAndFlush(coveragePeriod);
+//    }
 
     public int countCoverage() {
         try (Connection connection = dataSource.getConnection();
@@ -143,30 +143,30 @@ public class DataSetup {
         }
     }
 
-    public List<Coverage> findCoverage() {
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement("SELECT * FROM coverage")) {
-            ResultSet rs = statement.executeQuery();
-
-            List<Coverage> memberships = new ArrayList<>();
-            while (rs.next()) {
-                int coveragePeriod = rs.getInt(1);
-                long searchEventId = rs.getInt(2);
-                String contract = rs.getString(3);
-                int year = rs.getInt(4);
-                int month = rs.getInt(5);
-                long beneficiaryId = rs.getLong(6);
-                String currentMbi = rs.getString(7);
-                String historicalMbis = rs.getString(8);
-
-                memberships.add(new Coverage(coveragePeriod, searchEventId, contract, year, month, beneficiaryId, currentMbi, historicalMbis));
-            }
-
-            return memberships;
-        } catch (SQLException sqlException) {
-            throw new RuntimeException(sqlException);
-        }
-    }
+//    public List<Coverage> findCoverage() {
+//        try (Connection connection = dataSource.getConnection();
+//             PreparedStatement statement = connection.prepareStatement("SELECT * FROM coverage")) {
+//            ResultSet rs = statement.executeQuery();
+//
+//            List<Coverage> memberships = new ArrayList<>();
+//            while (rs.next()) {
+//                int coveragePeriod = rs.getInt(1);
+//                long searchEventId = rs.getInt(2);
+//                String contract = rs.getString(3);
+//                int year = rs.getInt(4);
+//                int month = rs.getInt(5);
+//                long beneficiaryId = rs.getLong(6);
+//                String currentMbi = rs.getString(7);
+//                String historicalMbis = rs.getString(8);
+//
+////                memberships.add(new Coverage(coveragePeriod, searchEventId, contract, year, month, beneficiaryId, currentMbi, historicalMbis));
+//            }
+//
+//            return memberships;
+//        } catch (SQLException sqlException) {
+//            throw new RuntimeException(sqlException);
+//        }
+//    }
 
     public Contract setupContract(String contractNumber) {
         return setupContract(contractNumber, OffsetDateTime.now());

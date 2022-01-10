@@ -9,7 +9,6 @@ import javax.persistence.*;
 
 import java.time.OffsetDateTime;
 
-import static javax.persistence.EnumType.STRING;
 
 @Entity(name = "bene_coverage_period")
 @Getter
@@ -35,7 +34,7 @@ public class CoveragePeriod extends TimestampBase {
     @EqualsAndHashCode.Include
     private int year;
 
-    @Enumerated(STRING)
+    @Enumerated(EnumType.STRING)
     private JobStatus status;
 
     @Column

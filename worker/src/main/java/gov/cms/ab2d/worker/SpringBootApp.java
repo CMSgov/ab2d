@@ -12,6 +12,7 @@ import org.springframework.retry.annotation.EnableRetry;
 
 @SpringBootApplication(scanBasePackages = {
         "gov.cms.ab2d.common",
+        "gov.cms.ab2d.coverage",
         "gov.cms.ab2d.worker",
         "gov.cms.ab2d.bfd.client",
         "gov.cms.ab2d.audit",

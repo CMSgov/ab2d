@@ -12,6 +12,7 @@
         <module>hpms</module>
         <module>e2e-test</module>
         <module>e2e-bfd-test</module>
+        <module>coverage</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>

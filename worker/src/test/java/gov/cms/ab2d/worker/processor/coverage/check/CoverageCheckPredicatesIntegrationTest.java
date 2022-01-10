@@ -1,12 +1,16 @@
 package gov.cms.ab2d.worker.processor.coverage.check;
 
 import gov.cms.ab2d.common.model.*;
-import gov.cms.ab2d.common.repository.CoveragePeriodRepository;
-import gov.cms.ab2d.common.repository.CoverageSearchEventRepository;
-import gov.cms.ab2d.common.repository.CoverageSearchRepository;
-import gov.cms.ab2d.common.service.CoverageService;
-import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.coverage.model.CoverageCount;
+import gov.cms.ab2d.coverage.model.CoverageSearch;
+import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
+import gov.cms.ab2d.coverage.repository.CoveragePeriodRepository;
+import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
+import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
+import gov.cms.ab2d.coverage.service.CoverageService;
+import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -45,7 +49,7 @@ public class CoverageCheckPredicatesIntegrationTest {
     private CoverageService coverageService;
 
     @Autowired
-    private DataSetup dataSetup;
+    private CoverageDataSetup dataSetup;
 
     private static final ZonedDateTime CURRENT_TIME = OffsetDateTime.now().atZoneSameInstant(AB2D_ZONE);
     private static final ZonedDateTime ATTESTATION_TIME = CURRENT_TIME.minusMonths(3);

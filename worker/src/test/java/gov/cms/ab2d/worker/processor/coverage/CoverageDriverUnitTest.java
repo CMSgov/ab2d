@@ -1,7 +1,8 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.common.model.*;
-import gov.cms.ab2d.common.service.CoverageService;
+import gov.cms.ab2d.coverage.model.*;
+import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.Constants;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
-import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;

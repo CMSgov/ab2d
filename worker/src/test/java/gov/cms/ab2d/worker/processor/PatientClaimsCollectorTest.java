@@ -2,7 +2,7 @@ package gov.cms.ab2d.worker.processor;
 
 import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.CoverageSummary;
+import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.TestUtil;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
