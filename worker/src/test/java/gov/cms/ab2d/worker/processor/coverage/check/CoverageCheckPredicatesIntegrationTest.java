@@ -1,8 +1,8 @@
 package gov.cms.ab2d.worker.processor.coverage.check;
 
 import gov.cms.ab2d.common.model.*;
-import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.coverage.model.CoverageCount;
+import gov.cms.ab2d.common.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.repository.CoveragePeriodRepository;

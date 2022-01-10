@@ -1,20 +1,24 @@
 package gov.cms.ab2d.coverage.service;
 
-import gov.cms.ab2d.common.model.*;
-
+import gov.cms.ab2d.common.model.CoveragePeriod;
+import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
+import javax.sql.DataSource;
+
 
 import static java.util.stream.Collectors.joining;
 

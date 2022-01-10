@@ -18,8 +18,8 @@ import org.springframework.retry.annotation.EnableRetry;
         "gov.cms.ab2d.audit",
         "gov.cms.ab2d.eventlogger"
 })
-@EntityScan(basePackages = {"gov.cms.ab2d.common.model"})
-@EnableJpaRepositories("gov.cms.ab2d.common.repository")
+@EntityScan(basePackages = {"gov.cms.ab2d.common.model", "gov.cms.ab2d.coverage.model"})
+@EnableJpaRepositories
 @EnableRetry
 @PropertySource("classpath:application.common.properties")
 @Import({StuckJobQuartzSetup.class, BFDHealthCheckQuartzSetup.class})
