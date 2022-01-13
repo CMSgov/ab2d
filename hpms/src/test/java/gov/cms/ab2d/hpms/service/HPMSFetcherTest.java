@@ -2,8 +2,8 @@ package gov.cms.ab2d.hpms.service;
 
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.hpms.SpringBootTestApp;
-import gov.cms.ab2d.hpms.hmsapi.HPMSAttestationsHolder;
-import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizations;
+import gov.cms.ab2d.hpms.hmsapi.HPMSAttestation;
+import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizationInfo;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +15,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -31,9 +32,9 @@ public class HPMSFetcherTest {
     @Autowired
     private HPMSAuthServiceImpl hpmsAuthService;
 
-    private volatile HPMSOrganizations orgs;
+    private volatile List<HPMSOrganizationInfo> orgs;
 
-    private volatile HPMSAttestationsHolder attestations;
+    private volatile Set<HPMSAttestation>  attestations;
 
     private CountDownLatch lock = new CountDownLatch(1);
 
@@ -50,7 +51,7 @@ public class HPMSFetcherTest {
         } while (orgs == null && retries++ < 20);
 
         assertNotNull(orgs);
-        assertFalse(orgs.getOrgs().isEmpty());
+        assertFalse(orgs.isEmpty());
 
         final int NUM_CONTRACTS = 6;
         List<String> top6Contracts = extractTopContractIDs(NUM_CONTRACTS);
@@ -61,9 +62,9 @@ public class HPMSFetcherTest {
         fetcher.retrieveAttestationInfo(this::processAttestations, top6Contracts);
         waitForCallback();
         assertNotNull(attestations);
-        assertFalse(attestations.getContracts().isEmpty());
+        assertFalse(attestations.isEmpty());
         // E4744 is not returned by the API
-        assertEquals(NUM_CONTRACTS, attestations.getContracts().size());
+        assertEquals(NUM_CONTRACTS, attestations.size());
     }
 
     private void waitForCallback() {
@@ -77,20 +78,20 @@ public class HPMSFetcherTest {
     @SuppressWarnings("SameParameterValue")
     private List<String> extractTopContractIDs(int limit) {
         List<String> retList = new ArrayList<>(3);
-        final int sponsorSize = orgs.getOrgs().size();
+        final int sponsorSize = orgs.size();
         for (int idx = 0; idx < limit && idx < sponsorSize; idx++) {
-            retList.add(orgs.getOrgs().get(idx).getContractId());
+            retList.add(orgs.get(idx).getContractId());
         }
         return retList;
     }
 
-    private void processOrgInfo(HPMSOrganizations orgInfo) {
+    private void processOrgInfo(List<HPMSOrganizationInfo> orgInfo) {
         orgs = orgInfo;
         lock.countDown();
     }
 
-    private void processAttestations(HPMSAttestationsHolder hpmsAttestationsHolder) {
-        attestations = hpmsAttestationsHolder;
+    private void processAttestations(Set<HPMSAttestation> hpmsAttestations) {
+        attestations = hpmsAttestations;
         lock.countDown();
     }
 

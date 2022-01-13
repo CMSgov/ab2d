@@ -4,15 +4,20 @@ import gov.cms.ab2d.hpms.hmsapi.HPMSAuthResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 
 import javax.annotation.PostConstruct;
 import java.net.URI;
 import java.time.Duration;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static org.springframework.http.HttpHeaders.COOKIE;
 
 @Service
 public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuthService {
@@ -29,6 +34,7 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
     private URI fullAuthURI;
 
     private volatile String authToken;
+    private volatile MultiValueMap<String, ResponseCookie> cookies;
 
     private volatile long tokenExpires;
 
@@ -42,6 +48,14 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
     public void buildAuthHeaders(HttpHeaders headers) {
         headers.set("X-API-CONSUMER-ID", hpmsAPIKeyId);
         headers.set(AUTHORIZATION, retrieveAuthToken());
+        // Extracting then re-injecting cookies using  WebClient's cookie handler is even more cumbersome
+        headers.set(COOKIE, cookies.entrySet()
+                .stream()
+                .map(r -> r.getValue()
+                        .stream()
+                        .map(v -> r.getKey() + "=" + v.getValue()))
+                .flatMap(Stream::sorted)
+                .collect(Collectors.joining("; ")));
     }
 
     private String retrieveAuthToken() {
@@ -61,8 +75,10 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(retrieveAuthRequestPayload())
                 .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToFlux(HPMSAuthResponse.class);
+                .exchangeToFlux(r -> {
+                    cookies = r.cookies();
+                    return r.bodyToFlux(HPMSAuthResponse.class);
+                });
 
         // Cough up blood if we can't get an Auth response in a minute.
         HPMSAuthResponse authResponse = orgInfoFlux.blockFirst(Duration.ofMinutes(1));
