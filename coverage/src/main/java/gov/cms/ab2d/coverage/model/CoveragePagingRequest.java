@@ -1,10 +1,9 @@
 package gov.cms.ab2d.coverage.model;
 
 import gov.cms.ab2d.common.model.Contract;
-import lombok.ToString;
-
 import java.time.OffsetDateTime;
 import java.util.Optional;
+import lombok.ToString;
 
 @ToString
 public class CoveragePagingRequest {
@@ -13,6 +12,7 @@ public class CoveragePagingRequest {
      * When a job is submitted by a PDP. If coverage data is modified after this datetime then
      * the results of the job are not reliable and the job will fail.
      *
+     * Derived from {@link gov.cms.ab2d.common.model.Job#getCreatedAt()}
      */
     private final OffsetDateTime jobStartTime;
     private final Contract contract;
@@ -25,6 +25,7 @@ public class CoveragePagingRequest {
     /**
      * Internal tracking of where in the data set work is being done
      *
+     * Internal beneficiary id that last page ended on {@link gov.cms.ab2d.common.model.Identifiers#getBeneficiaryId()}
      */
     private final Long cursor;
 

@@ -3,10 +3,9 @@ package gov.cms.ab2d.coverage.model;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.filter.FilterOutByDate;
+import java.util.List;
 import lombok.Getter;
 import lombok.ToString;
-
-import java.util.List;
 
 /**
  * Summary of coverage membership for a specific contract over a set of date ranges.
