@@ -1,6 +1,10 @@
 package gov.cms.ab2d.coverage.util;
 
-import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.model.CoveragePeriod;
+import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.PdpClient;
+import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
@@ -15,7 +19,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -23,6 +31,7 @@ import org.springframework.stereotype.Component;
 
 import static java.util.stream.Collectors.toList;
 
+//plan on cleaning up when decoupling contract_id foreign keys in database
 @Component
 public class CoverageDataSetup {
 
@@ -190,34 +199,6 @@ public class CoverageDataSetup {
         contract =  contractRepository.save(contract);
         queueForCleanup(contract);
         return contract;
-    }
-
-    public void setupContractWithNoAttestation(List<String> clientRoles) {
-        setupPdpClient(clientRoles);
-
-        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
-        @SuppressWarnings("OptionalGetWithoutIsPresent")
-        Contract contract = contractOptional.get();
-        contract.setAttestedOn(null);
-
-        contractRepository.saveAndFlush(contract);
-    }
-
-    public void setupContractWithNoAttestation(String clientId, String contractNumber, List<String> clientRoles) {
-        setupNonStandardClient(clientId, contractNumber, clientRoles);
-
-        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(contractNumber);
-        @SuppressWarnings("OptionalGetWithoutIsPresent")
-        Contract contract = contractOptional.get();
-        contract.setAttestedOn(null);
-
-        contractRepository.saveAndFlush(contract);
-    }
-
-    public void setupContractSponsorForParentClientData(List<String> clientRoles) {
-        Contract contract = setupContract("ABC123");
-
-        savePdpClient(TEST_PDP_CLIENT, contract, clientRoles);
     }
 
     private PdpClient savePdpClient(String clientId, Contract contract, List<String> clientRoles) {
