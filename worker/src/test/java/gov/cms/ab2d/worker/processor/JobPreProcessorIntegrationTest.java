@@ -81,6 +81,7 @@ class JobPreProcessorIntegrationTest {
 
     private PdpClient pdpClient;
     private Job job;
+    private Contract contract;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
@@ -92,8 +93,13 @@ class JobPreProcessorIntegrationTest {
 
         cut = new JobPreProcessorImpl(contractRepository, jobRepository, manager, coverageDriver);
 
+        Contract tmpContract = new Contract();
+        tmpContract.setContractNumber("JPP1234");
+        tmpContract.setContractName(tmpContract.getContractNumber());
+        contract = contractRepository.save(tmpContract);
+        dataSetup.queueForCleanup(contract);
         pdpClient = createClient();
-        job = createJob(pdpClient);
+        job = createJob(pdpClient, contract.getContractNumber());
     }
 
     @AfterEach
@@ -180,6 +186,7 @@ class JobPreProcessorIntegrationTest {
         OffsetDateTime oldJobTime = OffsetDateTime.parse("2021-01-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
         oldJob.setCreatedAt(oldJobTime);
         oldJob.setFhirVersion(STU3);
+        oldJob.setContractNumber(contract.getContractNumber());
         oldJob = jobRepository.save(oldJob);
 
         // This is an even early job (want to make sure it picks the correct old job)
@@ -193,6 +200,7 @@ class JobPreProcessorIntegrationTest {
         OffsetDateTime reallyOldldJobTime = OffsetDateTime.parse("2020-12-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
         reallyOldJob.setCreatedAt(reallyOldldJobTime);
         reallyOldJob.setFhirVersion(R4);
+        reallyOldJob.setContractNumber(contract.getContractNumber());
         reallyOldJob = jobRepository.save(reallyOldJob);
 
         Job newJob = new Job();
@@ -203,6 +211,7 @@ class JobPreProcessorIntegrationTest {
         newJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         newJob.setCreatedAt(OffsetDateTime.now());
         newJob.setFhirVersion(R4);
+        newJob.setContractNumber(contract.getContractNumber());
         newJob = jobRepository.save(newJob);
 
         Job processedJob = cut.preprocess(newJob.getJobUuid());
@@ -226,6 +235,7 @@ class JobPreProcessorIntegrationTest {
         OffsetDateTime oldJobTime = OffsetDateTime.parse("2021-01-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
         oldJob.setCreatedAt(oldJobTime);
         oldJob.setFhirVersion(STU3);
+        oldJob.setContractNumber(contract.getContractNumber());
         oldJob = jobRepository.save(oldJob);
 
         Job newJob = new Job();
@@ -237,6 +247,7 @@ class JobPreProcessorIntegrationTest {
         OffsetDateTime newJobTime = OffsetDateTime.parse("2021-02-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
         newJob.setCreatedAt(newJobTime);
         newJob.setFhirVersion(R4);
+        newJob.setContractNumber(contract.getContractNumber());
         newJob = jobRepository.save(newJob);
 
         Job processedJob = cut.preprocess(newJob.getJobUuid());
@@ -260,8 +271,8 @@ class JobPreProcessorIntegrationTest {
         OffsetDateTime oldJobTime = OffsetDateTime.parse("2021-01-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
         oldJob.setCreatedAt(oldJobTime);
         oldJob.setFhirVersion(STU3);
+        oldJob.setContractNumber(contract.getContractNumber());
         oldJob = jobRepository.save(oldJob);
-
 
         Job newJob = new Job();
         newJob.setJobUuid("YY-ZZ");
@@ -271,6 +282,7 @@ class JobPreProcessorIntegrationTest {
         newJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         newJob.setCreatedAt(OffsetDateTime.now());
         newJob.setFhirVersion(R4);
+        newJob.setContractNumber(contract.getContractNumber());
 
         newJob = jobRepository.save(newJob);
 
@@ -294,6 +306,7 @@ class JobPreProcessorIntegrationTest {
         OffsetDateTime oldJobTime = OffsetDateTime.parse("2021-01-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
         oldJob.setCreatedAt(oldJobTime);
         oldJob.setFhirVersion(STU3);
+        oldJob.setContractNumber(contract.getContractNumber());
         oldJob = jobRepository.save(oldJob);
 
         Job newJob = new Job();
@@ -307,6 +320,7 @@ class JobPreProcessorIntegrationTest {
         newJob.setCreatedAt(OffsetDateTime.now());
         newJob.setFhirVersion(R4);
         newJob.setSince(suppliedSince);
+        newJob.setContractNumber(contract.getContractNumber());
         newJob = jobRepository.save(newJob);
 
         Job processedJob = cut.preprocess(newJob.getJobUuid());
@@ -328,7 +342,7 @@ class JobPreProcessorIntegrationTest {
         return pdpClient;
     }
 
-    private Job createJob(PdpClient pdpClient) {
+    private Job createJob(PdpClient pdpClient, String contractNumber) {
         Job job = new Job();
         job.setJobUuid("S0000");
         job.setStatus(JobStatus.SUBMITTED);
@@ -337,6 +351,7 @@ class JobPreProcessorIntegrationTest {
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setCreatedAt(OffsetDateTime.now());
         job.setFhirVersion(STU3);
+        job.setContractNumber(contractNumber);
 
         job = jobRepository.save(job);
         dataSetup.queueForCleanup(job);

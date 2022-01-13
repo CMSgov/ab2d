@@ -62,19 +62,17 @@ public class JobPreProcessorImpl implements JobPreProcessor {
         }
 
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(job.getContractNumber());
-        Contract contract = contractOptional.isEmpty() ? null : contractOptional.get();
+        if (contractOptional.isEmpty()) {
+            throw new IllegalArgumentException("A job must always have a contract.");
+        }
+        Contract contract = contractOptional.get();
         Optional<OffsetDateTime> sinceValue = Optional.ofNullable(job.getSince());
         if (sinceValue.isPresent()) {
             // If the user provided a 'since' value
             job.setSinceSource(SinceSource.USER);
             jobRepository.save(job);
         } else if (job.getFhirVersion().supportDefaultSince()) {
-            // todo guarantee contract is always present https://jira.cms.gov/browse/AB2D-4109
-            boolean hasDateIssue = false;
-            if (contract != null) {
-                hasDateIssue = contract.hasDateIssue();
-            }
-            if (!hasDateIssue) {
+            if (!contract.hasDateIssue()) {
                 // If the user did not, but this version supports a default 'since', populate it
                 job = updateSinceTime(job, contract);
                 jobRepository.save(job);
