@@ -17,6 +17,6 @@ WHERE contract_id is null;
 ALTER TABLE job ALTER "contract_number" SET NOT NULL;
 
 -- Foreign key is no longer needed.  The business key will be used going forward
-ALTER TABLE job DROP CONSTRAINT fk_job_contract;
+ALTER TABLE job DROP CONSTRAINT fk_job_to_contract;
 ALTER TABLE job DROP COLUMN contract_id;
 
