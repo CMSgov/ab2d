@@ -1,14 +1,19 @@
 package gov.cms.ab2d.worker.processor;
 
+import ca.uhn.fhir.parser.IParser;
 import com.newrelic.api.agent.Token;
 import com.newrelic.api.agent.Trace;
+import gov.cms.ab2d.aggregator.BeneficiaryStream;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.BeneficiarySearchEvent;
+import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.fhir.BundleUtils;
+import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +21,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -39,6 +46,12 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     @Value("${bfd.earliest.data.date:01/01/2020}")
     private String earliestDataDate;
 
+    @Value("${aggregator.directory.finished}")
+    private String finishedDir;
+
+    @Value("${aggregator.directory.streaming}")
+    private String streamingDir;
+
     private static final OffsetDateTime START_CHECK = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
 
     /**
@@ -47,19 +60,83 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
      */
     @Trace(metricName = "EOBRequest", dispatcher = true)
     @Async("patientProcessorThreadPool")
-    public Future<EobSearchResult> process(PatientClaimsRequest request) {
+    public Future<ProgressTrackerUpdate> process(PatientClaimsRequest request) {
+        ProgressTrackerUpdate update = new ProgressTrackerUpdate();
         final Token token = request.getToken();
         token.link();
-
+        List<CoverageSummary> patients = request.getCoverageSummary();
+        FhirVersion fhirVersion = request.getVersion();
         try {
-            List<IBaseResource> eobs = getEobBundleResources(request);
-            EobSearchResult result = new EobSearchResult(request.getJob(), request.getContractNum(), eobs);
-            return new AsyncResult<>(result);
+            File file = null;
+            String anyErrors = null;
+            try (BeneficiaryStream stream = new BeneficiaryStream(request.getJob(), request.getEfsMount(), false, this.streamingDir, this.finishedDir)) {
+                file = stream.getFile();
+                logManager.log(new FileEvent(request.getOrganization(), request.getJob(), stream.getFile(), FileEvent.FileStatus.OPEN));
+                for (CoverageSummary patient : patients) {
+                    List<IBaseResource> eobs = getEobBundleResources(request, patient, update);
+                    anyErrors = writeOutResource(fhirVersion, update, eobs, stream);
+                    update.incPatientProcessCount();
+                }
+            } finally {
+                logManager.log(new FileEvent(request.getOrganization(), request.getJob(), file, FileEvent.FileStatus.CLOSE));
+            }
+            if (anyErrors != null && anyErrors.length() > 0) {
+                File errorFile = null;
+                try (BeneficiaryStream stream = new BeneficiaryStream(request.getJob(), request.getEfsMount(), true, this.streamingDir, this.finishedDir)) {
+                    errorFile = stream.getFile();
+                    logManager.log(new FileEvent(request.getOrganization(), request.getJob(), stream.getFile(), FileEvent.FileStatus.OPEN));
+                    stream.write(anyErrors);
+                } catch (IOException e) {
+                    log.error("Cannot log error to error file");
+                } finally {
+                    logManager.log(new FileEvent(request.getOrganization(), request.getJob(), errorFile, FileEvent.FileStatus.CLOSE));
+                }
+            }
         } catch (Exception ex) {
             return AsyncResult.forExecutionException(ex);
         } finally {
             token.expire();
         }
+        return AsyncResult.forValue(update);
+    }
+
+    @Trace(metricName = "EOBWriteToFile", dispatcher = true)
+    private String writeOutResource(FhirVersion version, ProgressTrackerUpdate update, List<IBaseResource> eobs, BeneficiaryStream stream) {
+        IParser parser = version.getJsonParser().setPrettyPrint(false);
+        if (eobs == null) {
+            log.debug("ignoring empty results because pulling eobs failed");
+            return null;
+        }
+        if (eobs.isEmpty()) {
+            return null;
+        }
+        int eobsWritten = 0;
+        int eobsError = 0;
+        StringBuilder errorPayload = new StringBuilder();
+        if (eobs.size() > 0) {
+            update.incPatientsWithEobsCount();
+            update.addEobFetchedCount(eobs.size());
+        }
+        for (IBaseResource resource : eobs) {
+            try {
+                stream.write(parser.encodeResourceToString(resource) + System.lineSeparator());
+                eobsWritten++;
+            } catch (Exception ex) {
+                log.warn("Encountered exception while processing job resources: {}", ex.getClass());
+                String errMsg = ExceptionUtils.getRootCauseMessage(ex);
+                IBaseResource operationOutcome = version.getErrorOutcome(errMsg);
+                errorPayload.append(parser.encodeResourceToString(operationOutcome)).append(System.lineSeparator());
+                eobsError++;
+            }
+        }
+
+        update.addEobProcessedCount(eobsWritten);
+
+        if (eobsError != 0) {
+            return errorPayload.toString();
+        }
+
+        return errorPayload.toString();
     }
 
     /**
@@ -68,10 +145,11 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
      * in claims that AB2D cannot provide.
      *
      * @param request request for claims from a single patient
+     * @param patient a single patient
      * @return list of matching claims after filtering claims not meeting requirements and stripping fields that AB2D
      * cannot provide
      */
-    private List<IBaseResource> getEobBundleResources(PatientClaimsRequest request) {
+    private List<IBaseResource> getEobBundleResources(PatientClaimsRequest request, CoverageSummary patient, ProgressTrackerUpdate update) {
 
         OffsetDateTime requestStartTime = OffsetDateTime.now();
 
@@ -80,7 +158,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         // Aggregate claims into a single list
         PatientClaimsCollector collector = new PatientClaimsCollector(request, earliestDate);
 
-        CoverageSummary patient = request.getCoverageSummary();
         long beneficiaryId = patient.getIdentifiers().getBeneficiaryId();
 
         IBaseBundle eobBundle;
@@ -95,11 +172,11 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
             // Make first request and begin looping over remaining pages
             eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patient.getIdentifiers().getBeneficiaryId(), sinceTime);
-            collector.filterAndAddEntries(eobBundle);
+            collector.filterAndAddEntries(eobBundle, patient);
 
             while (BundleUtils.getNextLink(eobBundle) != null) {
                 eobBundle = bfdClient.requestNextBundleFromServer(request.getVersion(), eobBundle);
-                collector.filterAndAddEntries(eobBundle);
+                collector.filterAndAddEntries(eobBundle, patient);
             }
 
             // Log request to Kinesis and NewRelic

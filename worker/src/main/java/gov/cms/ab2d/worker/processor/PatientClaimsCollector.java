@@ -2,6 +2,7 @@ package gov.cms.ab2d.worker.processor;
 
 import com.newrelic.api.agent.NewRelic;
 import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.model.CoverageSummary;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
 import gov.cms.ab2d.filter.FilterEob;
 import gov.cms.ab2d.worker.util.FhirUtils;
@@ -70,7 +71,7 @@ public class PatientClaimsCollector {
      *
      * @param bundle response from BFD containing a list of claims for a specific requested patient
      */
-    public void filterAndAddEntries(IBaseBundle bundle) {
+    public void filterAndAddEntries(IBaseBundle bundle, CoverageSummary patient) {
 
         // Skip if bundle is missing for some reason
         if (bundle == null) {
@@ -92,16 +93,16 @@ public class PatientClaimsCollector {
         BundleUtils.getEobResources(bundleEntries).stream()
                 // Filter by date unless contract is an old synthetic data contract, part D or attestation time is null
                 // Filter out data
-                .filter(resource -> FilterEob.filter(resource, claimsRequest.getCoverageSummary().getDateRanges(), earliestDate,
+                .filter(resource -> FilterEob.filter(resource, patient.getDateRanges(), earliestDate,
                             attestationDate, claimsRequest.getContractType() == Contract.ContractType.CLASSIC_TEST).isPresent())
                 // Filter out unnecessary fields
                 .map(resource -> ExplanationOfBenefitTrimmer.getBenefit(resource))
                 // Make sure patients are the same
-                .filter(this::matchingPatient)
+                .filter(resource -> matchingPatient(resource, patient))
                 // Make sure update date is after since date
                 .filter(this::afterSinceDate)
                 // Add MBIs to the claim
-                .peek(eob -> FhirUtils.addMbiIdsToEobs(eob, claimsRequest.getCoverageSummary(), claimsRequest.getVersion()))
+                .peek(eob -> FhirUtils.addMbiIdsToEobs(eob, patient, claimsRequest.getVersion()))
                 // compile the list
                 .forEach(eobs::add);
     }
@@ -134,10 +135,10 @@ public class PatientClaimsCollector {
      * @param benefit  - The benefit to check
      * @return true if this patient is a member of the correct contract
      */
-    private boolean matchingPatient(IBaseResource benefit) {
+    private boolean matchingPatient(IBaseResource benefit, CoverageSummary patient) {
 
         Long patientId = EobUtils.getPatientId(benefit);
-        if (patientId == null || claimsRequest.getCoverageSummary().getIdentifiers().getBeneficiaryId() != patientId) {
+        if (patientId == null || patient.getIdentifiers().getBeneficiaryId() != patientId) {
             log.error(patientId + " returned in EOB, but does not match eob of");
             return false;
         }

@@ -34,6 +34,7 @@ import org.mockito.stubbing.OngoingStubbing;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.integration.test.context.SpringIntegrationTest;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -64,6 +65,10 @@ class JobProcessorIntegrationTest {
     private static final String CONTRACT_NUMBER = "CONTRACT_0000";
     private static final String JOB_UUID = "S0000";
     public static final String COMPLETED_PERCENT = "100%";
+    public static final String FINISHED_DIR = "finished";
+    public static final String STREAMING_DIR = "streaming";
+    public static final int NUMBER_PATIENT_REQUESTS_PER_THREAD = 5;
+    public static final int MULTIPLIER = 2;
 
     private JobProcessor cut;       // class under test
 
@@ -162,6 +167,12 @@ class JobProcessorIntegrationTest {
 
         PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, logManager);
         ReflectionTestUtils.setField(patientClaimsProcessor, "earliestDataDate", "01/01/1900");
+        ReflectionTestUtils.setField(patientClaimsProcessor, "finishedDir", "finished");
+        ReflectionTestUtils.setField(patientClaimsProcessor, "streamingDir", "streaming");
+
+        ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
+        pool.initialize();
+
         ContractProcessor contractProcessor = new ContractProcessorImpl(
                 jobRepository,
                 mockCoverageDriver,
@@ -169,8 +180,13 @@ class JobProcessorIntegrationTest {
                 logManager,
                 eobClaimRequestsQueue,
                 jobChannelService,
-                jobProgressService);
-
+                jobProgressService,
+                pool);
+        ReflectionTestUtils.setField(contractProcessor, "efsMount", tmpEfsMountDir.toString());
+        ReflectionTestUtils.setField(contractProcessor, "numberPatientRequestsPerThread", NUMBER_PATIENT_REQUESTS_PER_THREAD);
+        ReflectionTestUtils.setField(contractProcessor, "finishedDir", FINISHED_DIR);
+        ReflectionTestUtils.setField(contractProcessor, "streamingDir", STREAMING_DIR);
+        ReflectionTestUtils.setField(contractProcessor, "multiplier", MULTIPLIER);
 
         cut = new JobProcessorImpl(
                 fileService,
@@ -211,7 +227,7 @@ class JobProcessorIntegrationTest {
     }
 
     @Test
-    @DisplayName("When a job has not benes, still generate a contract search event")
+    @DisplayName("When a job has no benes, still generate a contract search event")
     void whenJobHasNoBenes_stillGenerateContractSearchEvent() {
         var processedJob = cut.process(job.getJobUuid());
 
@@ -333,12 +349,10 @@ class JobProcessorIntegrationTest {
         List<LoggableEvent> fileEvents = loggerEventRepository.load(FileEvent.class);
         // Since the max size of the file is not set here (so it's 0), every second write creates a new file since
         // the file is no longer empty after the first write. This means, there were 20 files created so 40 events
-        assertEquals(40, fileEvents.size());
-        assertEquals(20, fileEvents.stream().filter(e -> ((FileEvent) e).getStatus() == FileEvent.FileStatus.OPEN).count());
-        assertEquals(20, fileEvents.stream().filter(e -> ((FileEvent) e).getStatus() == FileEvent.FileStatus.CLOSE).count());
-        assertTrue(((FileEvent) fileEvents.get(39)).getFileName().contains("0020.ndjson"));
-        assertTrue(((FileEvent) fileEvents.get(0)).getFileName().contains("0001.ndjson"));
-        assertEquals(20, fileEvents.stream().filter(e -> ((FileEvent) e).getFileHash().length() > 0).count());
+        assertTrue((fileEvents.size() % 2) == 0);
+        assertEquals(fileEvents.size() / 2, fileEvents.stream().filter(e -> ((FileEvent) e).getStatus() == FileEvent.FileStatus.OPEN).count());
+        assertEquals(fileEvents.size() / 2, fileEvents.stream().filter(e -> ((FileEvent) e).getStatus() == FileEvent.FileStatus.CLOSE).count());
+        assertEquals(fileEvents.size() / 2, fileEvents.stream().filter(e -> ((FileEvent) e).getFileHash().length() > 0).count());
 
         assertTrue(UtilMethods.allEmpty(loggerEventRepository.load(ApiRequestEvent.class),
                 loggerEventRepository.load(ApiResponseEvent.class),

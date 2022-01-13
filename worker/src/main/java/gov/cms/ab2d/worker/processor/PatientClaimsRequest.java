@@ -9,6 +9,7 @@ import lombok.Getter;
 
 import javax.annotation.Nullable;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 /**
  * Request to BFD for a single patient's claims matching the provided parameters and requirements.
@@ -22,7 +23,7 @@ public class PatientClaimsRequest {
      *
      * Do not change without consulting multiple people.
      */
-    private final CoverageSummary coverageSummary;
+    private final List<CoverageSummary> coverageSummary;
 
     // Datetime that contract was legally attested for
     private final OffsetDateTime attTime;
@@ -53,4 +54,6 @@ public class PatientClaimsRequest {
      * Do not change without consulting multiple people.
      */
     private final FhirVersion version;
+
+    private final String efsMount;
 }

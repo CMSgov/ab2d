@@ -19,16 +19,14 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.*;
 import java.util.stream.IntStream;
 
@@ -72,6 +70,8 @@ class ContractProcessorUnitTest {
         ReflectionTestUtils.setField(jobProgressImpl, "reportProgressDbFrequency", 2);
         ReflectionTestUtils.setField(jobProgressImpl, "reportProgressLogFrequency", 3);
         jobChannelService = new JobChannelStubServiceImpl(jobProgressImpl);
+        ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
+        pool.initialize();;
 
         cut = new ContractProcessorImpl(
                 jobRepository,
@@ -80,8 +80,14 @@ class ContractProcessorUnitTest {
                 eventLogger,
                 requestQueue,
                 jobChannelService,
-                jobProgressImpl);
-        ReflectionTestUtils.setField(cut, "tryLockTimeout", 30);
+                jobProgressImpl,
+                pool);
+
+        ReflectionTestUtils.setField(cut, "finishedDir", "finished");
+        ReflectionTestUtils.setField(cut, "streamingDir", "streaming");
+        ReflectionTestUtils.setField(cut, "multiplier", 2);
+        ReflectionTestUtils.setField(cut, "efsMount", efsMountTmpDir.toFile().getAbsolutePath());
+        //ReflectionTestUtils.setField(cut, "numberPatientRequestsPerThread", 2);
 
         PdpClient pdpClient = createClient();
         job = createJob(pdpClient);
@@ -141,8 +147,7 @@ class ContractProcessorUnitTest {
 
         var jobOutputs = cut.process(outputDir, job);
 
-        assertFalse(jobOutputs.isEmpty());
-        verify(jobRepository, times(8)).updatePercentageCompleted(anyString(), anyInt());
+        verify(jobRepository, times(6)).updatePercentageCompleted(anyString(), anyInt());
         verify(patientClaimsProcessor, atLeast(1)).process(any());
     }
 
@@ -163,13 +168,13 @@ class ContractProcessorUnitTest {
     @DisplayName("When a job has remaining requests, those remaining requests are waited on before finishing")
     void whenRemainingRequestHandlesThenAttemptToProcess() {
 
-        try (StreamHelper helper = new TextStreamHelperImpl(outputDir, contract.getContractNumber(), 200_000, 30, eventLogger, job)) {
-            ContractData contractData = new ContractData(job, helper);
+        try {
+            ContractData contractData = new ContractData(job);
 
             jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.FAILURE_THRESHHOLD, 20);
             jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENTS_EXPECTED, 20);
 
-            contractData.addEobRequestHandle(new Future<EobSearchResult>() {
+            contractData.addEobRequestHandle(new Future<>() {
                 @Override
                 public boolean cancel(boolean mayInterruptIfRunning) {
                     return false;
@@ -186,15 +191,15 @@ class ContractProcessorUnitTest {
                 }
 
                 @Override
-                public EobSearchResult get() throws InterruptedException, ExecutionException {
-                    return new EobSearchResult(job.getJobUuid(), contract.getContractNumber(), Collections.emptyList());
+                public ProgressTrackerUpdate get() {
+                    return new ProgressTrackerUpdate();
                 }
 
                 @Override
-                public EobSearchResult get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-                    return null;
+                public ProgressTrackerUpdate get(long timeout, @NotNull TimeUnit unit) {
+                    return new ProgressTrackerUpdate();
                 }
-            });
+            }, 1);
 
             ReflectionTestUtils.invokeMethod(cut, "processRemainingRequests", contractData);
 
@@ -207,6 +212,8 @@ class ContractProcessorUnitTest {
     @Test
     @DisplayName("When round robin blocking queue is full, patients should not be skipped")
     void whenBlockingQueueFullPatientsNotSkipped() throws InterruptedException {
+
+        when(coverageDriver.numberOfBeneficiariesToProcess(any())).thenReturn(2);
 
         when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 1), new CoveragePagingRequest(1, null, contract, OffsetDateTime.now())))

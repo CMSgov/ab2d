@@ -5,8 +5,10 @@ import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Future;
 
 @RequiredArgsConstructor
@@ -14,11 +16,17 @@ import java.util.concurrent.Future;
 public class ContractData {
 
     private final Job job;
-    private final StreamHelper streamHelper;
-    private final List<Future<EobSearchResult>> eobRequestHandles = new LinkedList<>();
+    private final List<Future<ProgressTrackerUpdate>> eobRequestHandles = new LinkedList<>();
+    private Future<Integer> aggregatorHandle;
+    private Map<Integer, Integer> hashBeneMapper = new HashMap();
 
-    public void addEobRequestHandle(Future<EobSearchResult> eobRequestHandle) {
+    public void addEobRequestHandle(Future<ProgressTrackerUpdate> eobRequestHandle, int numBenes) {
         eobRequestHandles.add(eobRequestHandle);
+        hashBeneMapper.put(eobRequestHandle.hashCode(), numBenes);
+    }
+
+    public void addAggregatorHandle(Future<Integer> aggregatorHandle) {
+        this.aggregatorHandle = aggregatorHandle;
     }
 
     public boolean remainingRequestHandles() {
@@ -27,5 +35,14 @@ public class ContractData {
 
     public FhirVersion getFhirVersion() {
         return job.getFhirVersion();
+    }
+
+    public int getNumberBenes(Future<ProgressTrackerUpdate> agg) {
+        int numBenes = 0;
+        Integer number = hashBeneMapper.get(agg.hashCode());
+        if (number == null) {
+            return 0;
+        }
+        return number;
     }
 }
