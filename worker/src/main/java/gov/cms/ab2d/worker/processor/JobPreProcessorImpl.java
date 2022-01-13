@@ -117,8 +117,8 @@ public class JobPreProcessorImpl implements JobPreProcessor {
      * @return - the job with the updated since date and auto since source
      */
     Job updateSinceTime(Job job, Contract contract) {
-        List<Job> successfulJobs = jobRepository.findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(
-                contract, List.of(SUCCESSFUL), JobStartedBy.PDP);
+        List<Job> successfulJobs = jobRepository.findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(
+                contract.getContractNumber(), List.of(SUCCESSFUL), JobStartedBy.PDP);
 
         // Get time of last successful job for that organization
         Optional<Job> successfulJob = getLastSuccessfulJobWithDownloads(successfulJobs);

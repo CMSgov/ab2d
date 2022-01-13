@@ -133,7 +133,7 @@ class JobPreProcessorUnitTest {
         when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
         cut.preprocess(job.getJobUuid());
         assertNull(job.getSince());
-        verify(jobRepository, never()).findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any());
+        verify(jobRepository, never()).findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(anyString(), any(), any());
         assertNull(job.getSinceSource());
     }
 
@@ -144,7 +144,7 @@ class JobPreProcessorUnitTest {
         job.setFhirVersion(R4);
         job.setStatus(JobStatus.SUBMITTED);
         when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
-        when(jobRepository.findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any())).thenReturn(Collections.emptyList());
+        when(jobRepository.findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(anyString(), any(), any())).thenReturn(Collections.emptyList());
         cut.preprocess(job.getJobUuid());
         assertNull(job.getSince());
         assertEquals(SinceSource.FIRST_RUN, job.getSinceSource());
@@ -166,7 +166,7 @@ class JobPreProcessorUnitTest {
         oldJob.setCreatedAt(oldJobTime);
 
         when(jobRepository.findByJobUuid(newJob.getJobUuid())).thenReturn(newJob);
-        when(jobRepository.findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any())).thenReturn(List.of(oldJob));
+        when(jobRepository.findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(anyString(), any(), any())).thenReturn(List.of(oldJob));
 
         cut.preprocess(newJob.getJobUuid());
         assertEquals(oldJobTime, newJob.getSince());
@@ -194,7 +194,7 @@ class JobPreProcessorUnitTest {
 
         cut.preprocess(newJob.getJobUuid());
 
-        verify(jobRepository, never()).findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any());
+        verify(jobRepository, never()).findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(anyString(), any(), any());
         assertEquals(now, newJob.getSince());
         assertEquals(SinceSource.USER, newJob.getSinceSource());
     }
@@ -226,7 +226,7 @@ class JobPreProcessorUnitTest {
 
         contract.setContractNumber("contractNum");
         contract.setContractType(Contract.ContractType.SYNTHEA);
-        when(jobRepository.findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any())).thenReturn(List.of(oldJob));
+        when(jobRepository.findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(anyString(), any(), any())).thenReturn(List.of(oldJob));
 
         cut.preprocess(newJob.getJobUuid());
 
@@ -270,7 +270,7 @@ class JobPreProcessorUnitTest {
         assertTrue(impl.getLastSuccessfulJobWithDownloads(List.of(job3)).isEmpty());
 
         when(jobRepository.findByJobUuid(newJob.getJobUuid())).thenReturn(newJob);
-        when(jobRepository.findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any())).thenReturn(List.of(job1, job2, job3, job4));
+        when(jobRepository.findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(anyString(), any(), any())).thenReturn(List.of(job1, job2, job3, job4));
         cut.preprocess(newJob.getJobUuid());
         assertEquals(newJob.getSince().getNano(), job4.getCreatedAt().getNano());
         assertEquals(newJob.getSinceSource(), AB2D);

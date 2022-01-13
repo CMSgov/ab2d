@@ -1,6 +1,5 @@
 package gov.cms.ab2d.common.repository;
 
-import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStartedBy;
 import gov.cms.ab2d.common.model.PdpClient;
@@ -29,11 +28,8 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     @Query("select j from Job j where j.pdpClient = :pdpClient and (j.status = 'IN_PROGRESS' or j.status = 'SUBMITTED')")
     List<Job> findActiveJobsByClient(PdpClient pdpClient);
 
-    List<Job> findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(
-            Contract contract, List<JobStatus> statuses, JobStartedBy startedBy);
-
-    @Query("select j from Job j where j.pdpClient = :pdpClient and j.contract = :contract and (j.status = 'IN_PROGRESS' or j.status = 'SUBMITTED')")
-    List<Job> findActiveJobsByClientAndContract(PdpClient pdpClient, Contract contract);
+    List<Job> findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(
+            String contractNumber, List<JobStatus> statuses, JobStartedBy startedBy);
 
     @Query("SELECT j.status FROM Job j WHERE j.jobUuid = :jobUuid ")
     JobStatus findJobStatus(String jobUuid);
@@ -50,6 +46,6 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     @Query("UPDATE Job j SET j.progress = :percentageCompleted WHERE j.jobUuid = :jobUuid ")
     int updatePercentageCompleted(String jobUuid, int percentageCompleted);
 
-    @Query("SELECT COUNT(j) FROM Job j WHERE j.contract = :contract AND j.status IN :statuses")
-    int countJobByContractAndStatus(Contract contract, List<JobStatus> statuses);
+    @Query("SELECT COUNT(j) FROM Job j WHERE j.contractNumber = :contractNumber AND j.status IN :statuses")
+    int countJobByContractNumberAndStatus(String contractNumber, List<JobStatus> statuses);
 }
