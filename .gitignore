@@ -89,6 +89,7 @@ build/
 .checkstyle
 
 common/jacoco/**
+coverage/jacoco/**
 
 ### .DS_Store in "src/test" ###
 ### This is needed due to this .gitignore entry: "!**/src/test/**" ###

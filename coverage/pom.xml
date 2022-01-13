@@ -8,14 +8,12 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-
     <artifactId>coverage</artifactId>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
         <project.root>${basedir}/..</project.root>
     </properties>
+
     <dependencies>
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
@@ -30,6 +28,11 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -56,13 +59,6 @@
                         <goals>
                             <goal>check</goal>
                         </goals>
-                        <configuration>
-                            <excludes>
-                                <!-- These are reporting false positives that are already being tested elsewhere -->
-                                <exclude>**/gov/cms/ab2d/common/model/**</exclude>
-                                <exclude>**/gov/cms/ab2d/common/config/**</exclude>
-                            </excludes>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
