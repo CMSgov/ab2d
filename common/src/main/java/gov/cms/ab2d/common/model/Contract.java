@@ -129,4 +129,8 @@ public class Contract extends TimestampBase {
         attestedOn = OffsetDateTime.parse(dateWithTZ, FORMATTER);
         return true;
     }
+
+    public boolean hasDateIssue() {
+        return ContractType.CLASSIC_TEST == contractType;
+    }
 }

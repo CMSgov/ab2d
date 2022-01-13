@@ -91,7 +91,7 @@ public class JobServiceImpl implements JobService {
                     pdpClient.getOrganization(), contract.getContractNumber());
             eventLogger.alert(firstJobMessage, PROD_LIST);
         }
-        job.setContract(contract);
+        job.setContractNumber(contract.getContractNumber());
         job.setStatus(JobStatus.SUBMITTED);
         return jobRepository.save(job);
     }

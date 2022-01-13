@@ -2,6 +2,7 @@ package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -51,6 +52,9 @@ class ContractProcessorInvalidPatientTest {
     private BFDClient bfdClient;
 
     @Mock
+    private ContractRepository contractRepository;
+
+    @Mock
     private JobRepository jobRepository;
 
     @Mock
@@ -60,6 +64,7 @@ class ContractProcessorInvalidPatientTest {
     File tmpDirFolder;
 
     private ContractProcessor cut;
+    private final Contract contract = new Contract();
     private final Job job = new Job();
     private static final String jobId = "1234";
     private final String contractId = "ABC";
@@ -73,7 +78,7 @@ class ContractProcessorInvalidPatientTest {
         JobChannelService jobChannelService = new JobChannelStubServiceImpl(jobProgressUpdateService);
 
 
-        cut = new ContractProcessorImpl(jobRepository, coverageDriver, patientClaimsProcessor, eventLogger,
+        cut = new ContractProcessorImpl(contractRepository, jobRepository, coverageDriver, patientClaimsProcessor, eventLogger,
                 requestQueue, jobChannelService, jobProgressUpdateService);
         jobChannelService.sendUpdate(jobId, JobMeasure.FAILURE_THRESHHOLD, 100);
 
@@ -82,7 +87,7 @@ class ContractProcessorInvalidPatientTest {
         contract.setAttestedOn(OffsetDateTime.now().minusYears(50));
 
         job.setJobUuid(jobId);
-        job.setContract(contract);
+        job.setContractNumber(contract.getContractNumber());
 
         ReflectionTestUtils.setField(patientClaimsProcessor, "earliestDataDate", "01/01/2020");
     }
@@ -96,7 +101,7 @@ class ContractProcessorInvalidPatientTest {
         when(bfdClient.requestEOBFromServer(eq(STU3), eq(2L), any())).thenReturn(b2);
         when(bfdClient.requestEOBFromServer(eq(STU3), eq(3L), any())).thenReturn(b4);
 
-        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class))).thenReturn(3);
+        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(3);
 
         List<FilterOutByDate.DateRange> dates = singletonList(TestUtil.getOpenRange());
         List<CoverageSummary> summaries = List.of(new CoverageSummary(createIdentifierWithoutMbi(1L), null, dates),
@@ -132,7 +137,7 @@ class ContractProcessorInvalidPatientTest {
 
         StreamHelper helper = new TextStreamHelperImpl(
                 tmpDirFolder.toPath(), contractId, 2000, 10, eventLogger, job);
-        ContractData contractData = new ContractData(job, helper);
+        ContractData contractData = new ContractData(contract, job, helper);
 
         ((ContractProcessorImpl) cut).writeExceptionToContractErrorFile(contractData, val, new RuntimeException("Exception"));
         String result = Files.readString(Path.of(tmpDirFolder.getAbsolutePath() + File.separator + contractId + "_error.ndjson"));
@@ -143,7 +148,7 @@ class ContractProcessorInvalidPatientTest {
     void testWriteNullErrors() throws IOException {
         StreamHelper helper = new TextStreamHelperImpl(
                 tmpDirFolder.toPath(), contractId, 2000, 10, eventLogger, job);
-        ContractData contractData = new ContractData(job, helper);
+        ContractData contractData = new ContractData(contract, job, helper);
 
         ((ContractProcessorImpl) cut).writeExceptionToContractErrorFile(contractData, null, new RuntimeException("Exception"));
         assertThrows(NoSuchFileException.class, () -> Files.readString(Path.of(tmpDirFolder.getAbsolutePath() + File.separator + contractId + "_error.ndjson")));

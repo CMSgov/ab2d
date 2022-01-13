@@ -5,6 +5,7 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.SinceSource;
+import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.fhir.FhirVersion;
@@ -42,6 +43,8 @@ class JobPreProcessorUnitTest {
     private static final String JOB_UUID = "6d08bf08-f926-4e19-8d89-ad67ef89f17e";
 
     @Mock
+    private ContractRepository contractRepository;
+    @Mock
     private JobRepository jobRepository;
     @Mock
     private LogManager eventLogger;
@@ -52,7 +55,7 @@ class JobPreProcessorUnitTest {
 
     @BeforeEach
     void setUp() {
-        cut = new JobPreProcessorImpl(jobRepository, eventLogger, coverageDriver);
+        cut = new JobPreProcessorImpl(contractRepository, jobRepository, eventLogger, coverageDriver);
         job = createJob();
     }
 
@@ -87,7 +90,7 @@ class JobPreProcessorUnitTest {
 
         when(jobRepository.save(Mockito.any())).thenReturn(job);
         when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
-        when(coverageDriver.isCoverageAvailable(any(Job.class))).thenReturn(true);
+        when(coverageDriver.isCoverageAvailable(any(Job.class), any(Contract.class))).thenReturn(true);
 
         var processedJob = cut.preprocess(job.getJobUuid());
 
@@ -101,7 +104,7 @@ class JobPreProcessorUnitTest {
 
         job.setStatus(JobStatus.SUBMITTED);
         when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
-        when(coverageDriver.isCoverageAvailable(any(Job.class))).thenReturn(false);
+        when(coverageDriver.isCoverageAvailable(any(Job.class), any(Contract.class))).thenReturn(false);
 
         Job result = cut.preprocess(job.getJobUuid());
         assertEquals(JobStatus.SUBMITTED, result.getStatus());
@@ -113,7 +116,7 @@ class JobPreProcessorUnitTest {
 
         job.setStatus(JobStatus.SUBMITTED);
         when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
-        when(coverageDriver.isCoverageAvailable(any(Job.class))).thenThrow(InterruptedException.class);
+        when(coverageDriver.isCoverageAvailable(any(Job.class), any(Contract.class))).thenThrow(InterruptedException.class);
 
         var exceptionThrown = assertThrows(RuntimeException.class,
                 () -> cut.preprocess(job.getJobUuid()));
@@ -206,7 +209,7 @@ class JobPreProcessorUnitTest {
         Contract contract = new Contract();
         contract.setContractNumber("contractNum");
         contract.setContractType(Contract.ContractType.CLASSIC_TEST);
-        newJob.setContract(contract);
+        newJob.setContractNumber(contract.getContractNumber());
 
         Job oldJob = createJob();
         oldJob.setStatus(SUCCESSFUL);

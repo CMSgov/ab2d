@@ -1,8 +1,10 @@
 package gov.cms.ab2d.worker.processor;
 
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
+import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
@@ -51,6 +53,9 @@ class JobPreProcessorIntegrationTest {
     private JobPreProcessor cut;
 
     @Autowired
+    private ContractRepository contractRepository;
+
+    @Autowired
     private JobRepository jobRepository;
 
     @Autowired
@@ -85,7 +90,7 @@ class JobPreProcessorIntegrationTest {
         MockitoAnnotations.openMocks(this);
         LogManager manager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
 
-        cut = new JobPreProcessorImpl(jobRepository, manager, coverageDriver);
+        cut = new JobPreProcessorImpl(contractRepository, jobRepository, manager, coverageDriver);
 
         pdpClient = createClient();
         job = createJob(pdpClient);
@@ -101,7 +106,7 @@ class JobPreProcessorIntegrationTest {
     @Test
     @DisplayName("When a job is in submitted status, it can be put into progress upon starting processing")
     void whenJobIsInSubmittedStatus_ThenJobShouldBePutInProgress() throws InterruptedException {
-        when(coverageDriver.isCoverageAvailable(any(Job.class))).thenReturn(true);
+        when(coverageDriver.isCoverageAvailable(any(Job.class), any(Contract.class))).thenReturn(true);
 
         var processedJob = cut.preprocess(job.getJobUuid());
         assertEquals(JobStatus.IN_PROGRESS, processedJob.getStatus());
@@ -125,7 +130,7 @@ class JobPreProcessorIntegrationTest {
     @Test
     @DisplayName("When a job is not already in a submitted status, it cannot be put into progress")
     void whenJobIsNotInSubmittedStatus_ThenJobShouldNotBePutInProgress() throws InterruptedException {
-        when(coverageDriver.isCoverageAvailable(any(Job.class))).thenReturn(true);
+        when(coverageDriver.isCoverageAvailable(any(Job.class), any(Contract.class))).thenReturn(true);
 
         job.setStatus(JobStatus.IN_PROGRESS);
 
@@ -141,7 +146,7 @@ class JobPreProcessorIntegrationTest {
     @Test
     @DisplayName("When coverage fails, a job should fail")
     void whenCoverageFails_ThenJobShouldFail() throws InterruptedException {
-        when(coverageDriver.isCoverageAvailable(any(Job.class))).thenThrow(new CoverageDriverException("test"));
+        when(coverageDriver.isCoverageAvailable(any(Job.class), any(Contract.class))).thenThrow(new CoverageDriverException("test"));
 
         var processedJob = cut.preprocess(job.getJobUuid());
         assertEquals(JobStatus.FAILED, processedJob.getStatus());

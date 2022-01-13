@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -26,9 +27,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.*;
 import java.util.stream.IntStream;
 
@@ -51,6 +50,7 @@ class ContractProcessorUnitTest {
     @TempDir Path efsMountTmpDir;
 
     @Mock private JobRepository jobRepository;
+    @Mock private ContractRepository contractRepository;
     @Mock private CoverageDriver coverageDriver;
     @Mock private LogManager eventLogger;
     @Mock private RoundRobinBlockingQueue<PatientClaimsRequest> requestQueue;
@@ -74,6 +74,7 @@ class ContractProcessorUnitTest {
         jobChannelService = new JobChannelStubServiceImpl(jobProgressImpl);
 
         cut = new ContractProcessorImpl(
+                contractRepository,
                 jobRepository,
                 coverageDriver,
                 patientClaimsProcessor,
@@ -86,7 +87,7 @@ class ContractProcessorUnitTest {
         PdpClient pdpClient = createClient();
         job = createJob(pdpClient);
         contract = createContract();
-        job.setContract(contract);
+        job.setContractNumber(contract.getContractNumber());
 
         var outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
         outputDir = Files.createDirectories(outputDirPath);
@@ -101,7 +102,7 @@ class ContractProcessorUnitTest {
                         new CoveragePagingRequest(2, null, contract, OffsetDateTime.now())))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 2), null));
 
-        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class))).thenReturn(3);
+        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(3);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
 
         when(jobRepository.findJobStatus(anyString())).thenReturn(JobStatus.CANCELLED);
@@ -116,7 +117,7 @@ class ContractProcessorUnitTest {
     @Test
     @DisplayName("When many patientId are present, 'PercentageCompleted' should be updated many times")
     void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() {
-        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class))).thenReturn(18);
+        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(18);
         when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 2),
                         new CoveragePagingRequest(2, null, contract, OffsetDateTime.now())))
@@ -152,7 +153,7 @@ class ContractProcessorUnitTest {
 
         when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 1), null));
-        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class))).thenReturn(3);
+        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(3);
 
         ContractProcessingException exception = assertThrows(ContractProcessingException.class, () -> cut.process(outputDir, job));
 
@@ -164,7 +165,7 @@ class ContractProcessorUnitTest {
     void whenRemainingRequestHandlesThenAttemptToProcess() {
 
         try (StreamHelper helper = new TextStreamHelperImpl(outputDir, contract.getContractNumber(), 200_000, 30, eventLogger, job)) {
-            ContractData contractData = new ContractData(job, helper);
+            ContractData contractData = new ContractData(contract, job, helper);
 
             jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.FAILURE_THRESHHOLD, 20);
             jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENTS_EXPECTED, 20);
