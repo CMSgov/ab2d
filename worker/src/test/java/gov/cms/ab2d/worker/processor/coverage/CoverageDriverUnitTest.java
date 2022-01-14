@@ -319,6 +319,7 @@ class CoverageDriverUnitTest {
         Contract contract = new Contract();
         contract.setContractNumber("contractNum");
         Job job = new Job();
+        job.setContractNumber(contract.getContractNumber());
 
         CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, propertiesService, null, lockWrapper);
 
@@ -340,6 +341,7 @@ class CoverageDriverUnitTest {
         Contract contract = new Contract();
         contract.setContractNumber("contractNum");
         Job job = new Job();
+        job.setContractNumber(contract.getContractNumber());
 
         try {
             assertFalse(driver.isCoverageAvailable(job, contract));
