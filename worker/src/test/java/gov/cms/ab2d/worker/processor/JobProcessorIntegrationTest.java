@@ -388,6 +388,7 @@ class JobProcessorIntegrationTest {
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setCreatedAt(OffsetDateTime.now());
         job.setFhirVersion(STU3);
+        job.setContractNumber(contract.getContractNumber());
 
         job = jobRepository.saveAndFlush(job);
         dataSetup.queueForCleanup(job);

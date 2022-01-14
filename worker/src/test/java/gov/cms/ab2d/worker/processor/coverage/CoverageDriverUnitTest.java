@@ -131,7 +131,7 @@ class CoverageDriverUnitTest {
     @Test
     void failPagingRequestWhenContractMissing() {
 
-        CoverageDriverException contractMissing = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(new Job(), new Contract()));
+        CoverageDriverException contractMissing = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(new Job(), null));
 
         assertEquals("cannot retrieve metadata for job missing contract", contractMissing.getMessage());
     }

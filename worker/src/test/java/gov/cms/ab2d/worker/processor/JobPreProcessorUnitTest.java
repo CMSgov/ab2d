@@ -1,15 +1,12 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobOutput;
-import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.SinceSource;
+import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
+import gov.cms.ab2d.worker.repository.StubContractRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -18,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -42,7 +40,7 @@ class JobPreProcessorUnitTest {
 
     private static final String JOB_UUID = "6d08bf08-f926-4e19-8d89-ad67ef89f17e";
 
-    @Mock
+    @Autowired
     private ContractRepository contractRepository;
     @Mock
     private JobRepository jobRepository;
@@ -52,9 +50,15 @@ class JobPreProcessorUnitTest {
     private CoverageDriver coverageDriver;
 
     private Job job;
+    private Contract contract;
 
     @BeforeEach
     void setUp() {
+        Contract tmpContract = new Contract();
+        tmpContract.setContractNumber("JPP5678");
+        tmpContract.setContractName(tmpContract.getContractNumber());
+        contract = tmpContract;
+        contractRepository = new StubContractRepository(contract);
         cut = new JobPreProcessorImpl(contractRepository, jobRepository, eventLogger, coverageDriver);
         job = createJob();
     }
@@ -130,6 +134,7 @@ class JobPreProcessorUnitTest {
         // Test if it's STU3, nothing changes since default 'since' is not defined for STU3
         Job job = createJob();
         job.setStatus(JobStatus.SUBMITTED);
+        job.setContractNumber(contract.getContractNumber());
         when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
         cut.preprocess(job.getJobUuid());
         assertNull(job.getSince());
@@ -222,7 +227,8 @@ class JobPreProcessorUnitTest {
         cut.preprocess(newJob.getJobUuid());
 
         assertNull(newJob.getSince());
-        assertNull(newJob.getSinceSource());
+        // No longer allow null contracts so things get flagged as first run now.
+        assertEquals(SinceSource.FIRST_RUN, newJob.getSinceSource());
 
         contract.setContractNumber("contractNum");
         contract.setContractType(Contract.ContractType.SYNTHEA);
@@ -371,6 +377,7 @@ class JobPreProcessorUnitTest {
         job.setJobUuid(JOB_UUID);
         job.setStatusMessage("0%");
         job.setFhirVersion(STU3);
+        job.setContractNumber(contract.getContractNumber());
 
         return job;
     }

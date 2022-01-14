@@ -9,6 +9,8 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
+import gov.cms.ab2d.worker.repository.StubContractRepository;
+import gov.cms.ab2d.worker.repository.StubJobRepository;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import gov.cms.ab2d.worker.service.JobChannelStubServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,10 +53,8 @@ class ContractProcessorInvalidPatientTest {
     @Mock
     private BFDClient bfdClient;
 
-    @Mock
     private ContractRepository contractRepository;
 
-    @Mock
     private JobRepository jobRepository;
 
     @Mock
@@ -72,22 +72,22 @@ class ContractProcessorInvalidPatientTest {
     @BeforeEach
     void setup() {
 
+        Contract contract = new Contract();
+        contract.setContractNumber(contractId);
+        contract.setAttestedOn(OffsetDateTime.now().minusYears(50));
+        contractRepository = new StubContractRepository(contract);
+
+        job.setJobUuid(jobId);
+        job.setContractNumber(contract.getContractNumber());
+        jobRepository = new StubJobRepository(job);
+
         patientClaimsProcessor = new PatientClaimsProcessorImpl(bfdClient, eventLogger);
         JobProgressServiceImpl jobProgressUpdateService = new JobProgressServiceImpl(jobRepository);
         jobProgressUpdateService.initJob(jobId);
         JobChannelService jobChannelService = new JobChannelStubServiceImpl(jobProgressUpdateService);
-
-
         cut = new ContractProcessorImpl(contractRepository, jobRepository, coverageDriver, patientClaimsProcessor, eventLogger,
                 requestQueue, jobChannelService, jobProgressUpdateService);
         jobChannelService.sendUpdate(jobId, JobMeasure.FAILURE_THRESHHOLD, 100);
-
-        Contract contract = new Contract();
-        contract.setContractNumber(contractId);
-        contract.setAttestedOn(OffsetDateTime.now().minusYears(50));
-
-        job.setJobUuid(jobId);
-        job.setContractNumber(contract.getContractNumber());
 
         ReflectionTestUtils.setField(patientClaimsProcessor, "earliestDataDate", "01/01/2020");
     }
