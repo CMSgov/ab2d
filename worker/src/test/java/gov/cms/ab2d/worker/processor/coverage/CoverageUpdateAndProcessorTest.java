@@ -603,7 +603,7 @@ class CoverageUpdateAndProcessorTest {
 
         Job job = new Job();
         job.setCreatedAt(OffsetDateTime.now());
-        job.setContract(contract);
+        job.setContractNumber(contract.getContractNumber());
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
@@ -616,7 +616,7 @@ class CoverageUpdateAndProcessorTest {
         coveragePeriodRepo.saveAndFlush(february);
 
         try{
-            driver.isCoverageAvailable(job);
+            driver.isCoverageAvailable(job, contract);
         }
         catch (CoverageDriverException coverageDriverException) {
             //passed

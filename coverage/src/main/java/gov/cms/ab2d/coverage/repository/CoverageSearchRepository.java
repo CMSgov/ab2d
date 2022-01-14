@@ -17,7 +17,8 @@ public interface CoverageSearchRepository extends JpaRepository<CoverageSearch, 
 
     @Query(value = "SELECT cs.* " +
         "   FROM coverage_search cs INNER JOIN bene_coverage_period bcp on cs.bene_coverage_period_id = bcp.id " +
-        "   INNER JOIN job j ON bcp.contract_id = j.contract_id " +
+        "   INNER JOIN contract c ON bcp.contract_id = c.id" +
+        "   INNER JOIN job j ON c.contract_number = j.contract_number " +
         "   WHERE j.status = 'SUBMITTED' " +
         "   ORDER BY j.created_at " +
         "   LIMIT 1", nativeQuery = true)

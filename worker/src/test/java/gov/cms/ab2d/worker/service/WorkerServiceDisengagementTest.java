@@ -148,7 +148,7 @@ class WorkerServiceDisengagementTest {
         job.setCreatedAt(OffsetDateTime.now());
         job.setPdpClient(pdpClient);
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
-        job.setContract(pdpClient.getContract());
+        job.setContractNumber(pdpClient.getContract().getContractNumber());
         job.setFhirVersion(STU3);
 
         job = jobRepository.save(job);

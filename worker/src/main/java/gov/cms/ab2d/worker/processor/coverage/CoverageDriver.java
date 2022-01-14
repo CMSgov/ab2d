@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
@@ -49,21 +50,21 @@ public interface CoverageDriver {
      * @throws CoverageDriverException if unexpected behavior causes
      * @throws InterruptedException if thread is interrupted trying to obtain lock
      */
-    boolean isCoverageAvailable(Job job) throws InterruptedException;
+    boolean isCoverageAvailable(Job job, Contract contract) throws InterruptedException;
 
     /**
      * Calculate the number of beneficiaries to process for a given job
      * @param job an already submitted eob job
      * @return the total number of beneficiaries to search for the job which equals the number of eob searches necessary
      */
-    int numberOfBeneficiariesToProcess(Job job);
+    int numberOfBeneficiariesToProcess(Job job, Contract contract);
 
     /**
      * Get first page worth of beneficiaries to run EOB searches on
      * @param job eob job to find first page for
      * @return result containing first page of beneficiaries and request to get next page if more beneficiaries are present
      */
-    CoveragePagingResult pageCoverage(Job job);
+    CoveragePagingResult pageCoverage(Job job, Contract contract);
 
     /**
      * Get a page of beneficiaries based on the provided request. If a cursor is provided use the cursor, otherwise

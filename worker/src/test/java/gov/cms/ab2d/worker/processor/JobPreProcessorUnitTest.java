@@ -1,14 +1,12 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobOutput;
-import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.SinceSource;
+import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
+import gov.cms.ab2d.worker.repository.StubContractRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -17,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -41,6 +40,8 @@ class JobPreProcessorUnitTest {
 
     private static final String JOB_UUID = "6d08bf08-f926-4e19-8d89-ad67ef89f17e";
 
+    @Autowired
+    private ContractRepository contractRepository;
     @Mock
     private JobRepository jobRepository;
     @Mock
@@ -49,10 +50,16 @@ class JobPreProcessorUnitTest {
     private CoverageDriver coverageDriver;
 
     private Job job;
+    private Contract contract;
 
     @BeforeEach
     void setUp() {
-        cut = new JobPreProcessorImpl(jobRepository, eventLogger, coverageDriver);
+        Contract tmpContract = new Contract();
+        tmpContract.setContractNumber("JPP5678");
+        tmpContract.setContractName(tmpContract.getContractNumber());
+        contract = tmpContract;
+        contractRepository = new StubContractRepository(contract);
+        cut = new JobPreProcessorImpl(contractRepository, jobRepository, eventLogger, coverageDriver);
         job = createJob();
     }
 
@@ -87,7 +94,7 @@ class JobPreProcessorUnitTest {
 
         when(jobRepository.save(Mockito.any())).thenReturn(job);
         when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
-        when(coverageDriver.isCoverageAvailable(any(Job.class))).thenReturn(true);
+        when(coverageDriver.isCoverageAvailable(any(Job.class), any(Contract.class))).thenReturn(true);
 
         var processedJob = cut.preprocess(job.getJobUuid());
 
@@ -101,7 +108,7 @@ class JobPreProcessorUnitTest {
 
         job.setStatus(JobStatus.SUBMITTED);
         when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
-        when(coverageDriver.isCoverageAvailable(any(Job.class))).thenReturn(false);
+        when(coverageDriver.isCoverageAvailable(any(Job.class), any(Contract.class))).thenReturn(false);
 
         Job result = cut.preprocess(job.getJobUuid());
         assertEquals(JobStatus.SUBMITTED, result.getStatus());
@@ -113,7 +120,7 @@ class JobPreProcessorUnitTest {
 
         job.setStatus(JobStatus.SUBMITTED);
         when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
-        when(coverageDriver.isCoverageAvailable(any(Job.class))).thenThrow(InterruptedException.class);
+        when(coverageDriver.isCoverageAvailable(any(Job.class), any(Contract.class))).thenThrow(InterruptedException.class);
 
         var exceptionThrown = assertThrows(RuntimeException.class,
                 () -> cut.preprocess(job.getJobUuid()));
@@ -127,10 +134,11 @@ class JobPreProcessorUnitTest {
         // Test if it's STU3, nothing changes since default 'since' is not defined for STU3
         Job job = createJob();
         job.setStatus(JobStatus.SUBMITTED);
+        job.setContractNumber(contract.getContractNumber());
         when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
         cut.preprocess(job.getJobUuid());
         assertNull(job.getSince());
-        verify(jobRepository, never()).findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any());
+        verify(jobRepository, never()).findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(anyString(), any(), any());
         assertNull(job.getSinceSource());
     }
 
@@ -141,7 +149,7 @@ class JobPreProcessorUnitTest {
         job.setFhirVersion(R4);
         job.setStatus(JobStatus.SUBMITTED);
         when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
-        when(jobRepository.findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any())).thenReturn(Collections.emptyList());
+        when(jobRepository.findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(anyString(), any(), any())).thenReturn(Collections.emptyList());
         cut.preprocess(job.getJobUuid());
         assertNull(job.getSince());
         assertEquals(SinceSource.FIRST_RUN, job.getSinceSource());
@@ -163,7 +171,7 @@ class JobPreProcessorUnitTest {
         oldJob.setCreatedAt(oldJobTime);
 
         when(jobRepository.findByJobUuid(newJob.getJobUuid())).thenReturn(newJob);
-        when(jobRepository.findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any())).thenReturn(List.of(oldJob));
+        when(jobRepository.findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(anyString(), any(), any())).thenReturn(List.of(oldJob));
 
         cut.preprocess(newJob.getJobUuid());
         assertEquals(oldJobTime, newJob.getSince());
@@ -191,7 +199,7 @@ class JobPreProcessorUnitTest {
 
         cut.preprocess(newJob.getJobUuid());
 
-        verify(jobRepository, never()).findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any());
+        verify(jobRepository, never()).findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(anyString(), any(), any());
         assertEquals(now, newJob.getSince());
         assertEquals(SinceSource.USER, newJob.getSinceSource());
     }
@@ -206,7 +214,7 @@ class JobPreProcessorUnitTest {
         Contract contract = new Contract();
         contract.setContractNumber("contractNum");
         contract.setContractType(Contract.ContractType.CLASSIC_TEST);
-        newJob.setContract(contract);
+        newJob.setContractNumber(contract.getContractNumber());
 
         Job oldJob = createJob();
         oldJob.setStatus(SUCCESSFUL);
@@ -219,11 +227,12 @@ class JobPreProcessorUnitTest {
         cut.preprocess(newJob.getJobUuid());
 
         assertNull(newJob.getSince());
-        assertNull(newJob.getSinceSource());
+        // No longer allow null contracts so things get flagged as first run now.
+        assertEquals(SinceSource.FIRST_RUN, newJob.getSinceSource());
 
         contract.setContractNumber("contractNum");
         contract.setContractType(Contract.ContractType.SYNTHEA);
-        when(jobRepository.findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any())).thenReturn(List.of(oldJob));
+        when(jobRepository.findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(anyString(), any(), any())).thenReturn(List.of(oldJob));
 
         cut.preprocess(newJob.getJobUuid());
 
@@ -267,7 +276,7 @@ class JobPreProcessorUnitTest {
         assertTrue(impl.getLastSuccessfulJobWithDownloads(List.of(job3)).isEmpty());
 
         when(jobRepository.findByJobUuid(newJob.getJobUuid())).thenReturn(newJob);
-        when(jobRepository.findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(any(), any(), any())).thenReturn(List.of(job1, job2, job3, job4));
+        when(jobRepository.findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(anyString(), any(), any())).thenReturn(List.of(job1, job2, job3, job4));
         cut.preprocess(newJob.getJobUuid());
         assertEquals(newJob.getSince().getNano(), job4.getCreatedAt().getNano());
         assertEquals(newJob.getSinceSource(), AB2D);
@@ -368,6 +377,7 @@ class JobPreProcessorUnitTest {
         job.setJobUuid(JOB_UUID);
         job.setStatusMessage("0%");
         job.setFhirVersion(STU3);
+        job.setContractNumber(contract.getContractNumber());
 
         return job;
     }

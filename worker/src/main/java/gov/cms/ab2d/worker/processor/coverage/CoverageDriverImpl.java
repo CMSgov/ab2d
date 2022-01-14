@@ -418,9 +418,10 @@ public class CoverageDriverImpl implements CoverageDriver {
      */
     @Trace(metricName = "EnrollmentIsAvailable", dispatcher = true)
     @Override
-    public boolean isCoverageAvailable(Job job) throws InterruptedException {
+    public boolean isCoverageAvailable(Job job, Contract contract) throws InterruptedException {
 
-        String contractNumber = job.getContract().getContractNumber();
+        String contractNumber = job.getContractNumber();
+        assert contractNumber.equals(contract.getContractNumber());
 
         Lock coverageLock = coverageLockWrapper.getCoverageLock();
 
@@ -438,7 +439,7 @@ public class CoverageDriverImpl implements CoverageDriver {
 
             // Check whether a coverage period is missing for this contract.
             // If so then create those coverage periods.
-            discoverCoveragePeriods(job.getContract());
+            discoverCoveragePeriods(contract);
 
             log.info("queueing never searched coverage metadata periods for {}", contractNumber);
             /*
@@ -446,7 +447,7 @@ public class CoverageDriverImpl implements CoverageDriver {
              * search
              */
             List<CoveragePeriod> neverSearched = coverageService.coveragePeriodNeverSearchedSuccessfully().stream()
-                    .filter(period -> Objects.equals(job.getContract(), period.getContract())).collect(toList());
+                    .filter(period -> Objects.equals(contract, period.getContract())).collect(toList());
             if (!neverSearched.isEmpty()) {
                 // Check that we've not submitted and failed these jobs
                 neverSearched.forEach(period -> checkCoveragePeriodValidity(job, period));
@@ -462,7 +463,7 @@ public class CoverageDriverImpl implements CoverageDriver {
              *
              * There will always be at least one coverage period returned.
              */
-            List<CoveragePeriod> periods = coverageService.findAssociatedCoveragePeriods(job.getContract().getId());
+            List<CoveragePeriod> periods = coverageService.findAssociatedCoveragePeriods(contract.getId());
 
             if (periods.isEmpty()) {
                 log.error("There are no existing coverage periods for this job so no metadata exists");
@@ -492,17 +493,15 @@ public class CoverageDriverImpl implements CoverageDriver {
      */
     @Trace(metricName = "EnrollmentCount", dispatcher = true)
     @Override
-    public int numberOfBeneficiariesToProcess(Job job) {
+    public int numberOfBeneficiariesToProcess(Job job, Contract contract) {
 
         ZonedDateTime now = getEndDateTime();
-
-        Contract contract = job.getContract();
 
         if (contract == null) {
             throw new CoverageDriverException("cannot retrieve metadata for job missing contract");
         }
 
-        ZonedDateTime startDateTime = getStartDateTime(job);
+        ZonedDateTime startDateTime = getStartDateTime(contract);
 
         List<CoveragePeriod> periodsToReport = new ArrayList<>();
         while (startDateTime.isBefore(now)) {
@@ -525,10 +524,8 @@ public class CoverageDriverImpl implements CoverageDriver {
      */
     @Trace(metricName = "EnrollmentLoadFromDB", dispatcher = true)
     @Override
-    public CoveragePagingResult pageCoverage(Job job) {
+    public CoveragePagingResult pageCoverage(Job job, Contract contract) {
         ZonedDateTime now = getEndDateTime();
-
-        Contract contract = job.getContract();
 
         if (contract == null) {
             throw new CoverageDriverException("cannot retrieve metadata for job missing contract");
@@ -536,7 +533,7 @@ public class CoverageDriverImpl implements CoverageDriver {
 
         log.info("attempting to build first page of results for job {}", job.getJobUuid());
 
-        ZonedDateTime startDateTime = getStartDateTime(job);
+        ZonedDateTime startDateTime = getStartDateTime(contract);
 
         try {
             // Check that all coverage periods necessary are present before beginning to page
@@ -564,9 +561,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      * @throws CoverageDriverException if somehow start time is in the future like the attestation time being
      *  in the future
      */
-    ZonedDateTime getStartDateTime(Job job) {
-        Contract contract = job.getContract();
-
+    ZonedDateTime getStartDateTime(Contract contract) {
         // Attestation time should never be null for a job making it to this point
         ZonedDateTime startDateTime = contract.getESTAttestationTime();
 
