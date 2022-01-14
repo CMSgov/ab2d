@@ -178,7 +178,7 @@ public class EndToEndBfdTests {
 
         // Instantiate the job processors
         jobService = new JobServiceImpl(pdpClientService, jobRepository, jobOutputService, logManager, logEventSummary, path.getAbsolutePath());
-        jobPreProcessor = new JobPreProcessorImpl(jobRepository, logManager, coverageDriver);
+        jobPreProcessor = new JobPreProcessorImpl(contractRepository, jobRepository, logManager, coverageDriver);
 
         jobProcessor = new JobProcessorImpl(new FileServiceImpl(), jobChannelService, jobProgressService, jobProgressUpdateService,
                 jobRepository, jobOutputRepository, contractProcessor, logManager);
@@ -373,7 +373,7 @@ public class EndToEndBfdTests {
             throw new InvalidContractException(errorMsg);
         }
 
-        job.setContract(contract);
+        job.setContractNumber(contract.getContractNumber());
         job.setStatus(JobStatus.SUBMITTED);
         return jobRepository.save(job);
     }

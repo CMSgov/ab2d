@@ -58,6 +58,8 @@ class JobOutputServiceTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
+    private static final String JOB_OUTPUT_CONTRACT_NUMBER = "JJ112233";
+
     // Be safe and make sure nothing from another test will impact current test
     @BeforeEach
     public void setup() {
@@ -82,6 +84,7 @@ class JobOutputServiceTest {
         job.setStatus(JobStatus.FAILED);
         job.setCreatedAt(OffsetDateTime.now());
         job.setFhirVersion(STU3);
+        job.setContractNumber(JOB_OUTPUT_CONTRACT_NUMBER);
         Job savedJob = jobRepository.save(job);
         dataSetup.queueForCleanup(savedJob);
 
@@ -113,6 +116,7 @@ class JobOutputServiceTest {
         job.setStatus(JobStatus.FAILED);
         job.setCreatedAt(OffsetDateTime.now());
         job.setFhirVersion(STU3);
+        job.setContractNumber(JOB_OUTPUT_CONTRACT_NUMBER);
         Job savedJob = jobRepository.save(job);
         dataSetup.queueForCleanup(savedJob);
 
@@ -139,6 +143,7 @@ class JobOutputServiceTest {
         job.setStatus(JobStatus.FAILED);
         job.setCreatedAt(OffsetDateTime.now());
         job.setFhirVersion(STU3);
+        job.setContractNumber(JOB_OUTPUT_CONTRACT_NUMBER);
         Job savedJob = jobRepository.save(job);
         dataSetup.queueForCleanup(savedJob);
 
@@ -152,9 +157,8 @@ class JobOutputServiceTest {
         jobOutput.setJob(savedJob);
         jobOutputRepository.save(jobOutput);
 
-        var exception = Assertions.assertThrows(ResourceNotFoundException.class, () -> {
-            jobOutputService.findByFilePathAndJob("", job);
-        });
+        var exception = Assertions.assertThrows(ResourceNotFoundException.class, () ->
+                jobOutputService.findByFilePathAndJob("", job));
         assertEquals("JobOutput with fileName  was not able to be found" +
                 " for job " + job.getJobUuid(), exception.getMessage());
     }

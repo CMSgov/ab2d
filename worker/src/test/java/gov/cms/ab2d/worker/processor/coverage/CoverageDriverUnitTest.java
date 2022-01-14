@@ -27,7 +27,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
-import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -132,7 +131,7 @@ class CoverageDriverUnitTest {
     @Test
     void failPagingRequestWhenContractMissing() {
 
-        CoverageDriverException contractMissing = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(new Job()));
+        CoverageDriverException contractMissing = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(new Job(), null));
 
         assertEquals("cannot retrieve metadata for job missing contract", contractMissing.getMessage());
     }
@@ -144,9 +143,8 @@ class CoverageDriverUnitTest {
         Job job = new Job();
         Contract contract = new Contract();
         contract.setAttestedOn(OffsetDateTime.now().plusHours(1));
-        job.setContract(contract);
 
-        CoverageDriverException startDateInFuture = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(job));
+        CoverageDriverException startDateInFuture = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(job, contract));
         assertEquals("contract attestation time is after current time," +
                 " cannot find metadata for coverage periods in the future", startDateInFuture.getMessage());
     }
@@ -186,16 +184,15 @@ class CoverageDriverUnitTest {
         Job job = new Job();
         Contract contract = new Contract();
         contract.setAttestedOn(OffsetDateTime.now().plusHours(1));
-        job.setContract(contract);
 
-        CoverageDriverException startDateInFuture = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(job));
+        CoverageDriverException startDateInFuture = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(job, contract));
         assertEquals("contract attestation time is after current time," +
                 " cannot find metadata for coverage periods in the future", startDateInFuture.getMessage());
 
         contract.setAttestedOn(AB2D_EPOCH.toOffsetDateTime());
         job.setSince(OffsetDateTime.now().plusHours(1));
 
-        CoveragePagingResult result = driver.pageCoverage(job);
+        CoveragePagingResult result = driver.pageCoverage(job, contract);
         assertNotNull(result);
     }
 
@@ -208,9 +205,8 @@ class CoverageDriverUnitTest {
         Job job = new Job();
         Contract contract = new Contract();
         contract.setAttestedOn(AB2D_EPOCH.toOffsetDateTime());
-        job.setContract(contract);
 
-        CoverageDriverException startDateInFuture = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(job));
+        CoverageDriverException startDateInFuture = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(job, contract));
         assertEquals(EntityNotFoundException.class, startDateInFuture.getCause().getClass());
     }
 
@@ -249,9 +245,8 @@ class CoverageDriverUnitTest {
         Job job = new Job();
         Contract contract = new Contract();
         contract.setAttestedOn(AB2D_EPOCH.toOffsetDateTime());
-        job.setContract(contract);
 
-        CoveragePagingResult firstCall = driver.pageCoverage(job);
+        CoveragePagingResult firstCall = driver.pageCoverage(job, contract);
         assertNotNull(firstCall);
         assertTrue(firstCall.getNextRequest().isPresent());
 
@@ -324,13 +319,13 @@ class CoverageDriverUnitTest {
         Contract contract = new Contract();
         contract.setContractNumber("contractNum");
         Job job = new Job();
-        job.setContract(contract);
+        job.setContractNumber(contract.getContractNumber());
 
         CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, propertiesService, null, lockWrapper);
 
         assertThrows(InterruptedException.class, driver::discoverCoveragePeriods);
         assertThrows(InterruptedException.class, driver::queueStaleCoveragePeriods);
-        assertThrows(InterruptedException.class, () -> driver.isCoverageAvailable(job));
+        assertThrows(InterruptedException.class, () -> driver.isCoverageAvailable(job, contract));
     }
 
     @DisplayName("When locking fails return false for coverage available")
@@ -346,10 +341,10 @@ class CoverageDriverUnitTest {
         Contract contract = new Contract();
         contract.setContractNumber("contractNum");
         Job job = new Job();
-        job.setContract(contract);
+        job.setContractNumber(contract.getContractNumber());
 
         try {
-            assertFalse(driver.isCoverageAvailable(job));
+            assertFalse(driver.isCoverageAvailable(job, contract));
         } catch (InterruptedException interruptedException) {
             fail("test interrupted during execution");
         }
@@ -450,10 +445,7 @@ class CoverageDriverUnitTest {
         coveragePeriod.setYear(2021);
         coveragePeriod.setContract(contract);
 
-        Job job = new Job();
-        job.setContract(contract);
-
-        ZonedDateTime dateTime = driver.getStartDateTime(job);
+        ZonedDateTime dateTime = driver.getStartDateTime(contract);
         assertEquals(AB2D_EPOCH, dateTime);
     }
 
@@ -471,7 +463,6 @@ class CoverageDriverUnitTest {
             coveragePeriod.setStatus(JobStatus.FAILED);
 
             Job job = new Job();
-            job.setContract(contract);
             job.setCreatedAt(OffsetDateTime.now());
 
             driver.checkCoveragePeriodValidity(job, coveragePeriod);
