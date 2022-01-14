@@ -9,7 +9,7 @@ import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.repository.RoleRepository;
-import gov.cms.ab2d.common.model.CoveragePeriod;
+import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.coverage.repository.CoverageDeltaTestRepository;
 import gov.cms.ab2d.coverage.repository.CoveragePeriodRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
@@ -33,7 +33,7 @@ import static java.util.stream.Collectors.toList;
 
 //plan on cleaning up when decoupling contract_id foreign keys in database
 @Component
-public class CoverageDataSetup {
+public class CoverageDataSetup extends DataSetup {
 
     @Autowired
     private DataSource dataSource;
@@ -68,8 +68,8 @@ public class CoverageDataSetup {
         domainObjects.add(object);
     }
 
+    @Override
     public void cleanup() {
-
         // All of the coverage metadata tests assume that you completely
         // wipe the tables between tests and that the tables started as empty tables.
         // Based on these assumptions it is safe to simply delete everything associated
@@ -126,9 +126,6 @@ public class CoverageDataSetup {
         domainObjects.clear();
     }
 
-    public static final String TEST_PDP_CLIENT = "EileenCFrierson@example.com";
-
-    public static final String VALID_CONTRACT_NUMBER = "ABC123";
 
     public CoveragePeriod createCoveragePeriod(Contract contract, int month, int year) {
         CoveragePeriod coveragePeriod = new CoveragePeriod();
@@ -139,17 +136,6 @@ public class CoverageDataSetup {
         return coveragePeriodRepo.saveAndFlush(coveragePeriod);
     }
 
-    public int countCoverage() {
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*) FROM COVERAGE")) {
-            ResultSet rs = statement.executeQuery();
-
-            rs.next();
-            return rs.getInt(1);
-        } catch (SQLException sqlException) {
-            throw new RuntimeException(sqlException);
-        }
-    }
 
     public void deleteCoverage() {
         try (Connection connection = dataSource.getConnection();
@@ -201,49 +187,5 @@ public class CoverageDataSetup {
         return contract;
     }
 
-    private PdpClient savePdpClient(String clientId, Contract contract, List<String> clientRoles) {
-        PdpClient pdpClient = new PdpClient();
-        pdpClient.setClientId(clientId);
-        pdpClient.setOrganization("PDP-" + clientId);
-        pdpClient.setContract(contract);
-        pdpClient.setEnabled(true);
-        pdpClient.setMaxParallelJobs(3);
-        for(String clientRole :  clientRoles) {
-            // Use existing role or create a new one for the client
-            Role role = roleRepository.findRoleByName(clientRole).orElseGet(() -> {
-                Role newRole = new Role();
-                newRole.setName(clientRole);
-                queueForCleanup(clientRole);
-                return roleRepository.save(newRole);
-            });
 
-            pdpClient.addRole(role);
-        }
-
-        pdpClient =  pdpClientRepository.save(pdpClient);
-        queueForCleanup(pdpClient);
-        return pdpClient;
-    }
-
-    public PdpClient setupPdpClient(List<String> clientRoles) {
-        PdpClient testPdpClient = pdpClientRepository.findByClientId(TEST_PDP_CLIENT);
-        if (testPdpClient != null) {
-            return testPdpClient;
-        }
-
-        Contract contract = setupContract(VALID_CONTRACT_NUMBER);
-
-        return savePdpClient(TEST_PDP_CLIENT, contract, clientRoles);
-    }
-
-    public PdpClient setupNonStandardClient(String clientdId, String contractNumber, List<String> clientRoles) {
-        PdpClient testPdpClient = pdpClientRepository.findByClientId(clientdId);
-        if (testPdpClient != null) {
-            return testPdpClient;
-        }
-
-        Contract contract = setupContract(contractNumber);
-
-        return savePdpClient(clientdId, contract, clientRoles);
-    }
 }
