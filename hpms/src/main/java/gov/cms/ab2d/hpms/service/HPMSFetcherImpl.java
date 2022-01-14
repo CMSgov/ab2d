@@ -20,7 +20,8 @@ import java.util.function.Consumer;
 public class HPMSFetcherImpl extends AbstractHPMSService implements HPMSFetcher {
 
     //https://confluence.cms.gov/display/HPMSMCTAPI/CDA+CY+2022+API+Data+Contract+and+Validations#CDACY2022APIDataContractandValidations-GetAttestationHistoryforContracts
-    private static final String HPMS_BASE_PATH = "/api/cda_v2/v2";
+    @Value("${hmps.base.path}")
+    private String HPMS_BASE_PATH;
 
     @Value("${hpms.base.url}")
     private String hpmsBaseURI;
