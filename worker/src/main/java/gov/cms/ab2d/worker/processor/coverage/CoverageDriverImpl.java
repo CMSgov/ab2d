@@ -413,6 +413,7 @@ public class CoverageDriverImpl implements CoverageDriver {
     public boolean isCoverageAvailable(Job job, Contract contract) throws InterruptedException {
 
         String contractNumber = job.getContractNumber();
+        assert contractNumber.equals(contract.getContractNumber());
 
         Lock coverageLock = coverageLockWrapper.getCoverageLock();
 

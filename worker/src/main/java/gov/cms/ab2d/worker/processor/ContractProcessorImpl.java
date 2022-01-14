@@ -37,7 +37,7 @@ import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 @Slf4j
 @Service
-@SuppressWarnings({"PMD.TooManyStaticImports", "java:S2142", "squid:S00107"}) //java:S2142: "InterruptedException" should not be ignored
+@SuppressWarnings({"PMD.TooManyStaticImports", "java:S2142"}) //java:S2142: "InterruptedException" should not be ignored
 public class ContractProcessorImpl implements ContractProcessor {
     private static final int SLEEP_DURATION = 250;
 
@@ -111,6 +111,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         var contractNumber = job.getContractNumber();
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contractNumber));
 
+        //noinspection OptionalGetWithoutIsPresent
         Contract contract = contractRepository.findContractByContractNumber(contractNumber).get();
         int numBenes = coverageDriver.numberOfBeneficiariesToProcess(job, contract);
         jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENTS_EXPECTED, numBenes);
@@ -120,7 +121,6 @@ public class ContractProcessorImpl implements ContractProcessor {
         try (StreamHelper helper = new TextStreamHelperImpl(outputDirPath, contractNumber, getRollOverThreshold(), tryLockTimeout,
                 eventLogger, job)) {
 
-            //noinspection OptionalGetWithoutIsPresent
             ContractData contractData = new ContractData(contract, job, helper);
             loadEobRequests(contractData);
 
