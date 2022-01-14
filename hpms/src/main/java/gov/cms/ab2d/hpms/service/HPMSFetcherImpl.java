@@ -20,8 +20,8 @@ import java.util.function.Consumer;
 public class HPMSFetcherImpl extends AbstractHPMSService implements HPMSFetcher {
 
     //https://confluence.cms.gov/display/HPMSMCTAPI/CDA+CY+2022+API+Data+Contract+and+Validations#CDACY2022APIDataContractandValidations-GetAttestationHistoryforContracts
-    @Value("${hmps.base.path}")
-    private String HPMS_BASE_PATH;
+    @Value("${hpms.base.path}")
+    private String hpmsBasePath;
 
     @Value("${hpms.base.url}")
     private String hpmsBaseURI;
@@ -39,8 +39,8 @@ public class HPMSFetcherImpl extends AbstractHPMSService implements HPMSFetcher 
     @SuppressWarnings("PMD.UnusedPrivateMethod")
     @PostConstruct
     private void buildURI() {
-        organizationBaseUri = UriComponentsBuilder.fromUriString(hpmsBaseURI + HPMS_BASE_PATH + "/orgs/info").build().toUri();
-        attestationBaseUri = UriComponentsBuilder.fromUriString(hpmsBaseURI + HPMS_BASE_PATH + "/contracts/status").build().toUri();
+        organizationBaseUri = UriComponentsBuilder.fromUriString(hpmsBaseURI + hpmsBasePath + "/orgs/info").build().toUri();
+        attestationBaseUri = UriComponentsBuilder.fromUriString(hpmsBaseURI + hpmsBasePath + "/contracts/status").build().toUri();
     }
 
     @Override
