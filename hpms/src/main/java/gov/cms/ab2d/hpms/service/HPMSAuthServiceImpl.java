@@ -13,9 +13,6 @@ import reactor.core.publisher.Flux;
 import javax.annotation.PostConstruct;
 import java.net.URI;
 import java.time.Duration;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -89,7 +86,7 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
         authToken = authResponse.getAccessToken();
     }
 
-    private String extractCookies(MultiValueMap<String, ResponseCookie> entries){
+    private String extractCookies(MultiValueMap<String, ResponseCookie> entries) {
         return entries.entrySet().stream()
                 .map(cookie -> cookie.getValue()
                         .stream()

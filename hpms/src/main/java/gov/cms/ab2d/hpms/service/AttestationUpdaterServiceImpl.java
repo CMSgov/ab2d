@@ -4,7 +4,8 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.hpms.hmsapi.*;  // NOPMD
+import gov.cms.ab2d.hpms.hmsapi.HPMSAttestation;
+import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizationInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
