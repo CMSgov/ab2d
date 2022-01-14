@@ -13,6 +13,9 @@ import reactor.core.publisher.Flux;
 import javax.annotation.PostConstruct;
 import java.net.URI;
 import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,7 +37,7 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
     private URI fullAuthURI;
 
     private volatile String authToken;
-    private volatile MultiValueMap<String, ResponseCookie> cookies;
+    private volatile String cookies;
 
     private volatile long tokenExpires;
 
@@ -48,14 +51,8 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
     public void buildAuthHeaders(HttpHeaders headers) {
         headers.set("X-API-CONSUMER-ID", hpmsAPIKeyId);
         headers.set(AUTHORIZATION, retrieveAuthToken());
-        // Extracting then re-injecting cookies using  WebClient's cookie handler is even more cumbersome
-        headers.set(COOKIE, cookies.entrySet()
-                .stream()
-                .map(r -> r.getValue()
-                        .stream()
-                        .map(v -> r.getKey() + "=" + v.getValue()))
-                .flatMap(Stream::sorted)
-                .collect(Collectors.joining("; ")));
+        // re-injecting cookies using WebClient's cookie handler is even more cumbersome
+        headers.set(COOKIE, cookies);
     }
 
     private String retrieveAuthToken() {
@@ -76,7 +73,7 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
                 .bodyValue(retrieveAuthRequestPayload())
                 .accept(MediaType.APPLICATION_JSON)
                 .exchangeToFlux(r -> {
-                    cookies = r.cookies();
+                    cookies = extractCookies(r.cookies());
                     return r.bodyToFlux(HPMSAuthResponse.class);
                 });
 
@@ -90,6 +87,15 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
         // a significant operation when the token expires.
         tokenExpires = currentTimestamp + authResponse.getExpires() * 900;
         authToken = authResponse.getAccessToken();
+    }
+
+    private String extractCookies(MultiValueMap<String, ResponseCookie> entries){
+        return entries.entrySet().stream()
+                .map(cookie -> cookie.getValue()
+                        .stream()
+                        .map(v -> cookie.getKey() + "=" + v.getValue()))
+                .flatMap(Stream::sorted)
+                .collect(Collectors.joining("; "));
     }
 
     private String retrieveAuthRequestPayload() {
