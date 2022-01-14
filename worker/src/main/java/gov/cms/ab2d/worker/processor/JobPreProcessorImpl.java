@@ -71,12 +71,10 @@ public class JobPreProcessorImpl implements JobPreProcessor {
             // If the user provided a 'since' value
             job.setSinceSource(SinceSource.USER);
             jobRepository.save(job);
-        } else if (job.getFhirVersion().supportDefaultSince()) {
-            if (!contract.hasDateIssue()) {
-                // If the user did not, but this version supports a default 'since', populate it
-                job = updateSinceTime(job, contract);
-                jobRepository.save(job);
-            }
+        } else if (job.getFhirVersion().supportDefaultSince() && !contract.hasDateIssue()) {
+            // If the user did not, but this version supports a default 'since', populate it
+            job = updateSinceTime(job, contract);
+            jobRepository.save(job);
         }
 
         try {
