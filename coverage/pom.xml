@@ -66,12 +66,6 @@
                         <goals>
                             <goal>check</goal>
                         </goals>
-                        <configuration>
-                            <excludes>
-                                <!-- These are reporting false positives that are already being tested elsewhere -->
-                                <exclude>**/gov/cms/ab2d/coverage/model/**</exclude>
-                            </excludes>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
