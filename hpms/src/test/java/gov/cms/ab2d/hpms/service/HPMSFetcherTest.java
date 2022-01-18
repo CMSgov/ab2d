@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(classes = SpringBootTestApp.class)
 @TestPropertySource(locations = "/application.hpms.properties")
 @Testcontainers
-public class HPMSFetcherTest {
+class HPMSFetcherTest {
 
     @Autowired
     private HPMSFetcher fetcher;
@@ -43,7 +43,7 @@ public class HPMSFetcherTest {
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Test
-    public void fetchTheSlippers() {
+    void fetchTheSlippers() {
         fetcher.retrieveSponsorInfo(this::processOrgInfo);
         int retries = 0;
         do {

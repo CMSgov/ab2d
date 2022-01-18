@@ -17,10 +17,11 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(classes = SpringBootTestApp.class)
 @TestPropertySource(locations = "/application.hpms.properties")
 @Testcontainers
-public class HPMSAuthServiceTest {
+ class HPMSAuthServiceTest {
 
     @Autowired
     HPMSAuthServiceImpl authService;
+
 
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
@@ -57,6 +58,19 @@ public class HPMSAuthServiceTest {
         authService.buildAuthHeaders(headers);
         assertNotEquals(tokenExpiry, authService.getTokenExpires());
     }
+
+    @Test
+    void headers() {
+        HttpHeaders headers = new HttpHeaders();
+        authService.buildAuthHeaders(headers);
+        // Method currently sets 3 headers
+        assertTrue(headers.size() >= 3);
+        headers.forEach((headerName, headerValue) -> {
+            assertNotNull(headerValue);
+        });
+    }
+
+
 
     @AfterEach
     public void shutdown() {
