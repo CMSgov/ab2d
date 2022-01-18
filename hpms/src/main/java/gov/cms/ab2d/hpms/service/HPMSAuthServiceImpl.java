@@ -69,9 +69,9 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(retrieveAuthRequestPayload())
                 .accept(MediaType.APPLICATION_JSON)
-                .exchangeToFlux(r -> {
-                    cookies = extractCookies(r.cookies());
-                    return r.bodyToFlux(HPMSAuthResponse.class);
+                .exchangeToFlux(response -> {
+                    cookies = extractCookies(response.cookies());
+                    return response.bodyToFlux(HPMSAuthResponse.class);
                 });
 
         // Cough up blood if we can't get an Auth response in a minute.
@@ -90,7 +90,7 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
         return entries.entrySet().stream()
                 .map(cookie -> cookie.getValue()
                         .stream()
-                        .map(v -> cookie.getKey() + "=" + v.getValue()))
+                        .map(responseCookie -> cookie.getKey() + "=" + responseCookie.getValue()))
                 .flatMap(Stream::sorted)
                 .collect(Collectors.joining("; "));
     }

@@ -22,9 +22,6 @@ public class HPMSAuthServiceTest {
     @Autowired
     HPMSAuthServiceImpl authService;
 
-    @Autowired
-    HPMSFetcherImpl hpmsFetcher;
-
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
@@ -59,6 +56,11 @@ public class HPMSAuthServiceTest {
         headers = new HttpHeaders();
         authService.buildAuthHeaders(headers);
         assertNotEquals(tokenExpiry, authService.getTokenExpires());
+    }
+
+    @Test
+    public void headerTest() {
+        authService.buildAuthHeaders(new HttpHeaders());
     }
 
     @AfterEach
