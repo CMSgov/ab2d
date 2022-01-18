@@ -2,9 +2,15 @@ package gov.cms.ab2d.worker.service;
 
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
-import gov.cms.ab2d.common.service.CoverageService;
-import gov.cms.ab2d.common.service.InsertionJob;
-import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.common.model.CoveragePeriod;
+import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
+import gov.cms.ab2d.coverage.service.CoverageService;
+import gov.cms.ab2d.coverage.repository.CoveragePeriodRepository;
+import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
+import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
+import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;
+import gov.cms.ab2d.coverage.service.InsertionJob;
+import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,7 +64,7 @@ class PerformanceTestingCoverageOperations {
     private CoverageServiceRepository coverageServiceRepo;
 
     @Autowired
-    private DataSetup dataSetup;
+    private CoverageDataSetup dataSetup;
 
     @Autowired
     private DataSource dataSource;

@@ -1,9 +1,17 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
 import com.newrelic.api.agent.Trace;
-import gov.cms.ab2d.common.model.*;
-import gov.cms.ab2d.common.repository.CoverageSearchRepository;
-import gov.cms.ab2d.common.service.CoverageService;
+import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.model.CoveragePeriod;
+import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.coverage.model.CoverageCount;
+import gov.cms.ab2d.coverage.model.CoverageMapping;
+import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
+import gov.cms.ab2d.coverage.model.CoveragePagingResult;
+import gov.cms.ab2d.coverage.model.CoverageSearch;
+import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
+import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.Constants;
@@ -584,7 +592,7 @@ public class CoverageDriverImpl implements CoverageDriver {
 
     /**
      * Retrieve enrollment information for {@link CoveragePagingRequest#getPageSize()} number of beneficiaries
-     * where all enrollment records for each patient are aggregated into an {@link CoverageSummary}
+     * where all enrollment records for each patient are aggregated into an {@link gov.cms.ab2d.coverage.model.CoverageSummary}
      *
      * @throws CoverageDriverException if coverage period or some other precondition necessary for paging is missing
      */

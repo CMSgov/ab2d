@@ -1,6 +1,9 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
+import gov.cms.ab2d.coverage.model.CoveragePagingResult;
+import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.eventlogger.LogManager;

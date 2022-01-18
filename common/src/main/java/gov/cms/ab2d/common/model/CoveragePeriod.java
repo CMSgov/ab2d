@@ -1,15 +1,21 @@
 package gov.cms.ab2d.common.model;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import javax.persistence.*;
-
 import java.time.OffsetDateTime;
 
-import static javax.persistence.EnumType.STRING;
 
 @Entity(name = "bene_coverage_period")
 @Getter
@@ -35,7 +41,7 @@ public class CoveragePeriod extends TimestampBase {
     @EqualsAndHashCode.Include
     private int year;
 
-    @Enumerated(STRING)
+    @Enumerated(EnumType.STRING)
     private JobStatus status;
 
     @Column

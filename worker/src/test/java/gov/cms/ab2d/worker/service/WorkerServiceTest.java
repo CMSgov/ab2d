@@ -1,12 +1,18 @@
 package gov.cms.ab2d.worker.service;
 
-import gov.cms.ab2d.common.model.*;
-import gov.cms.ab2d.common.repository.*;
+import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.model.PdpClient;
+import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import gov.cms.ab2d.worker.config.JobHandler;
+import java.time.OffsetDateTime;
+import java.util.Random;
+import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -18,9 +24,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.time.OffsetDateTime;
-import java.util.Random;
-import java.util.UUID;
 
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
@@ -37,7 +40,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class WorkerServiceTest {
     private final Random random = new Random();
 
-    @Autowired private DataSetup dataSetup;
+    @Autowired private CoverageDataSetup dataSetup;
     @Autowired private JobRepository jobRepository;
     @Autowired private PdpClientRepository pdpClientRepository;
     @Autowired private JobService jobService;

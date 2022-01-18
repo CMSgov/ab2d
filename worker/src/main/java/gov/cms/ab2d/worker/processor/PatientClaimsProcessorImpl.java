@@ -3,7 +3,7 @@ package gov.cms.ab2d.worker.processor;
 import com.newrelic.api.agent.Token;
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.model.CoverageSummary;
+import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.BeneficiarySearchEvent;
 import gov.cms.ab2d.fhir.BundleUtils;

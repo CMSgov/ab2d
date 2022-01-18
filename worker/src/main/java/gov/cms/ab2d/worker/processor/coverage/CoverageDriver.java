@@ -1,9 +1,9 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.CoveragePagingRequest;
-import gov.cms.ab2d.common.model.CoveragePagingResult;
 import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
+import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 
 /**
  * Provide an interface for executing high level actions concerning enrollment.
@@ -23,7 +23,7 @@ public interface CoverageDriver {
 
     /**
      * Check database for all {@link gov.cms.ab2d.common.model.CoveragePeriod} that are missing information completely
-     * or the last successful search {@link gov.cms.ab2d.common.model.CoverageSearchEvent} is too
+     * or the last successful search {@link gov.cms.ab2d.coverage.model.CoverageSearchEvent} is too
      * long ago and makes the search stale.
      *
      * Only searches for stale searches at a configured number of months into the past.
