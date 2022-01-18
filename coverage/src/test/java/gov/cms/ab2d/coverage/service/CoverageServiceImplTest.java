@@ -21,7 +21,7 @@ import gov.cms.ab2d.coverage.repository.CoveragePeriodRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;
-import gov.cms.ab2d.coverage.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.coverage.util.AB2DCoveragePostgressqlContainer;
 import gov.cms.ab2d.coverage.util.Coverage;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -100,7 +100,7 @@ class CoverageServiceImplTest {
     private static final Date END_APRIL = FilterOutByDate.getEndOfMonth(4, 2020);
 
     @Container
-    private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
+    private static final PostgreSQLContainer postgreSQLContainer= new AB2DCoveragePostgressqlContainer();
 
     @Autowired
     CoveragePeriodRepository coveragePeriodRepo;

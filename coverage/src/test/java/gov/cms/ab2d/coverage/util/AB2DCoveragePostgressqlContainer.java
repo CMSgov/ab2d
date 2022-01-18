@@ -3,11 +3,11 @@ package gov.cms.ab2d.coverage.util;
 import java.util.Collections;
 import org.testcontainers.containers.PostgreSQLContainer;
 
-public class AB2DPostgresqlContainer extends PostgreSQLContainer<AB2DPostgresqlContainer> {
+public class AB2DCoveragePostgressqlContainer extends PostgreSQLContainer<AB2DCoveragePostgressqlContainer> {
 
     private static final String IMAGE_VERSION = "postgres:11";
 
-    public AB2DPostgresqlContainer() {
+    public AB2DCoveragePostgressqlContainer() {
         super(IMAGE_VERSION);
     }
 

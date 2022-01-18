@@ -3,9 +3,10 @@ package gov.cms.ab2d.coverage.model;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoveragePeriod;
 import gov.cms.ab2d.common.model.Identifiers;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.Getter;
-
-import java.util.*;
 
 @Getter
 public class CoverageMapping {

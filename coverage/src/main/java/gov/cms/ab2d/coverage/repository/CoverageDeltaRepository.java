@@ -2,7 +2,9 @@ package gov.cms.ab2d.coverage.repository;
 
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
-import org.springframework.jdbc.core.namedparam.*;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;

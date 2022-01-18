@@ -1,11 +1,15 @@
 package gov.cms.ab2d.coverage.model;
 
 import gov.cms.ab2d.common.model.CoveragePeriod;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import javax.persistence.*;
 import java.time.OffsetDateTime;
 
 @Entity

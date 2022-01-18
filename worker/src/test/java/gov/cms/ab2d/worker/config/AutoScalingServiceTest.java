@@ -3,7 +3,7 @@ package gov.cms.ab2d.worker.config;
 
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.coverage.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.coverage.util.AB2DCoveragePostgressqlContainer;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayDeque;
@@ -50,7 +50,7 @@ public class AutoScalingServiceTest {
     private PropertiesService propertiesService;
 
     @Container
-    private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
+    private static final PostgreSQLContainer postgreSQLContainer = new AB2DCoveragePostgressqlContainer();
 
     private int originalMaxPoolSize;
 

@@ -3,7 +3,7 @@ package gov.cms.ab2d.coverage.model;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
-import gov.cms.ab2d.coverage.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.coverage.util.AB2DCoveragePostgressqlContainer;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -32,7 +32,7 @@ class CoverageSearchTest {
 
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
-    private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
+    private static final PostgreSQLContainer postgreSQLContainer = new AB2DCoveragePostgressqlContainer();
 
     @Autowired
     private CoverageSearchRepository coverageSearchRepository;
