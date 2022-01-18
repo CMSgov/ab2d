@@ -58,11 +58,6 @@ public class HPMSAuthServiceTest {
         assertNotEquals(tokenExpiry, authService.getTokenExpires());
     }
 
-    @Test
-    public void headerTest() {
-        authService.buildAuthHeaders(new HttpHeaders());
-    }
-
     @AfterEach
     public void shutdown() {
         authService.cleanup();
