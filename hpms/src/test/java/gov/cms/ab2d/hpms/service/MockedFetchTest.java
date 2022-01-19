@@ -2,13 +2,14 @@ package gov.cms.ab2d.hpms.service;
 
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.hpms.SpringBootTestApp;
-import gov.cms.ab2d.hpms.hmsapi.HPMSAuthResponse;
+import gov.cms.ab2d.hpms.hmsapi.HPMSAttestation;
+import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizationInfo;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -16,14 +17,20 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.http.HttpHeaders.COOKIE;
 
 @SpringBootTest(classes = SpringBootTestApp.class)
 @TestPropertySource(locations = "/application.hpms.properties")
 @Testcontainers
-class HPMSMockedAuthTest {
+public class MockedFetchTest {
+    @Autowired
+    private HPMSFetcherImpl fetcher;
 
     private final MockWebClient client = new MockWebClient();
 
@@ -31,33 +38,34 @@ class HPMSMockedAuthTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
-    @Autowired
-    HPMSAuthServiceImpl authService;
-    @Autowired
-    MockWebClient mockWebClient;
 
-    @MockBean
+    @Mock
     private WebClient mockedWebClient;
 
-    @Test
-    void auth() {
-        try (MockedStatic<WebClient> webClientStatic = Mockito.mockStatic(WebClient.class)) {
-            client.authRequest( mockedWebClient, webClientStatic, new HPMSAuthResponse());
-            HttpHeaders headers = new HttpHeaders();
-            authService.buildAuthHeaders(headers);
-            assertTrue(headers.get(COOKIE).size() > 0);
 
+    @Test
+    void attestation() {
+        try (MockedStatic<WebClient> webClientStatic = Mockito.mockStatic(WebClient.class)) {
+
+            client.attestationRequest(mockedWebClient, webClientStatic, Set.of(new HPMSAttestation()));
+            fetcher.retrieveAttestationInfo(this::attestation, List.of("test"));
         }
     }
 
     @Test
-    void authFail() {
+    void org() {
         try (MockedStatic<WebClient> webClientStatic = Mockito.mockStatic(WebClient.class)) {
-            client.authRequest(mockedWebClient, webClientStatic, null);
-            HttpHeaders headers = new HttpHeaders();
-            assertThrows(RuntimeException.class, () -> {
-            authService.buildAuthHeaders(headers);
-            });
+            client.orgRequest(mockedWebClient, webClientStatic, List.of(new HPMSOrganizationInfo()));
+            fetcher.retrieveSponsorInfo(this::orgCallback);
         }
+    }
+
+    private void orgCallback(List<HPMSOrganizationInfo> hpmsOrganizationInfos) {
+        assertTrue(hpmsOrganizationInfos.size() > 0);
+    }
+
+
+    private void attestation(Set<HPMSAttestation> hpmsAttestations) {
+        assertTrue(hpmsAttestations.size() > 0);
     }
 }
