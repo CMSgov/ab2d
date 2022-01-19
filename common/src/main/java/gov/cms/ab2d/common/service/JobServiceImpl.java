@@ -86,12 +86,12 @@ public class JobServiceImpl implements JobService {
         eventLogger.log(EventUtils.getJobChangeEvent(job, JobStatus.SUBMITTED, "Job Created"));
 
         // Report client running first job in prod
-        if (clientHasNeverCompletedJob(contract)) {
+        if (clientHasNeverCompletedJob(contract.getContractNumber())) {
             String firstJobMessage = String.format("Organization %s is running their first job for contract %s",
                     pdpClient.getOrganization(), contract.getContractNumber());
             eventLogger.alert(firstJobMessage, PROD_LIST);
         }
-        job.setContract(contract);
+        job.setContractNumber(contract.getContractNumber());
         job.setStatus(JobStatus.SUBMITTED);
         return jobRepository.save(job);
     }
@@ -224,8 +224,8 @@ public class JobServiceImpl implements JobService {
                 .map(Job::getJobUuid).collect(Collectors.toList());
     }
 
-    private boolean clientHasNeverCompletedJob(Contract contract) {
-        int completedJobs = jobRepository.countJobByContractAndStatus(contract,
+    private boolean clientHasNeverCompletedJob(String contractNumber) {
+        int completedJobs = jobRepository.countJobByContractNumberAndStatus(contractNumber,
                 List.of(JobStatus.SUBMITTED, JobStatus.IN_PROGRESS, JobStatus.SUCCESSFUL));
         return completedJobs == 0;
     }

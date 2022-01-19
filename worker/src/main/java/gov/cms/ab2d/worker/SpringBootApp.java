@@ -12,13 +12,14 @@ import org.springframework.retry.annotation.EnableRetry;
 
 @SpringBootApplication(scanBasePackages = {
         "gov.cms.ab2d.common",
+        "gov.cms.ab2d.coverage",
         "gov.cms.ab2d.worker",
         "gov.cms.ab2d.bfd.client",
         "gov.cms.ab2d.audit",
         "gov.cms.ab2d.eventlogger"
 })
-@EntityScan(basePackages = {"gov.cms.ab2d.common.model"})
-@EnableJpaRepositories("gov.cms.ab2d.common.repository")
+@EntityScan(basePackages = {"gov.cms.ab2d.common.model", "gov.cms.ab2d.coverage.model"})
+@EnableJpaRepositories(basePackages = {"gov.cms.ab2d.common.repository", "gov.cms.ab2d.coverage.repository"})
 @EnableRetry
 @PropertySource("classpath:application.common.properties")
 @Import({StuckJobQuartzSetup.class, BFDHealthCheckQuartzSetup.class})

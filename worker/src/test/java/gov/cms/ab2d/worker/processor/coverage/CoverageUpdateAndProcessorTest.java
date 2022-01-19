@@ -6,13 +6,18 @@ import gov.cms.ab2d.common.dto.PdpClientDTO;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
-import gov.cms.ab2d.common.service.CoverageService;
+import gov.cms.ab2d.common.model.CoveragePeriod;
+import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
+import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Constants;
-import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.DateUtil;
+import gov.cms.ab2d.coverage.repository.CoveragePeriodRepository;
+import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
+import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
+import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import org.junit.jupiter.api.*;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,7 +85,7 @@ class CoverageUpdateAndProcessorTest {
     private PropertiesService propertiesService;
 
     @Autowired
-    private DataSetup dataSetup;
+    private CoverageDataSetup dataSetup;
 
     @Autowired
     private CoverageLockWrapper searchLock;
@@ -598,7 +603,7 @@ class CoverageUpdateAndProcessorTest {
 
         Job job = new Job();
         job.setCreatedAt(OffsetDateTime.now());
-        job.setContract(contract);
+        job.setContractNumber(contract.getContractNumber());
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
@@ -611,7 +616,7 @@ class CoverageUpdateAndProcessorTest {
         coveragePeriodRepo.saveAndFlush(february);
 
         try{
-            driver.isCoverageAvailable(job);
+            driver.isCoverageAvailable(job, contract);
         }
         catch (CoverageDriverException coverageDriverException) {
             //passed

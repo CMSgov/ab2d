@@ -5,7 +5,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.annotation.Nullable;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
@@ -13,6 +12,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static javax.persistence.EnumType.STRING;
@@ -84,13 +84,15 @@ public class Job {
     @Enumerated(STRING)
     private SinceSource sinceSource;
 
-    @ManyToOne
-    @JoinColumn(name = "contract_id")
-    @Nullable
-    private Contract contract;
+    @NotNull
+    private String contractNumber;
 
     public void addJobOutput(JobOutput jobOutput) {
         jobOutputs.add(jobOutput);
         jobOutput.setJob(this);
+    }
+
+    public boolean hasJobBeenCancelled() {
+        return CANCELLED == status;
     }
 }

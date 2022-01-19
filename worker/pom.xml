@@ -102,6 +102,20 @@
             <artifactId>newrelic-api</artifactId>
             <version>${newrelic.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>gov.cms.ab2d</groupId>
+            <artifactId>coverage</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>gov.cms.ab2d</groupId>
+            <artifactId>coverage</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

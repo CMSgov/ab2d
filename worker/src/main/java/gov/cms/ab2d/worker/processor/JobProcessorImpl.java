@@ -1,7 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
@@ -95,7 +94,7 @@ public class JobProcessorImpl implements JobProcessor {
             }
         } catch (Exception e) {
 
-            String contract = job.getContract() != null ? job.getContract().getContractNumber() : "empty";
+            String contract = job.getContractNumber();
             String message;
             // Says this is always false but that isn't true
             if (e instanceof PSQLException) {
@@ -130,9 +129,7 @@ public class JobProcessorImpl implements JobProcessor {
      */
     void processContract(Job job, Path outputDirPath)
             throws ExecutionException, InterruptedException {
-        Contract contract = job.getContract();
-        assert contract != null;
-        log.info("Job [{}] - contract [{}] ", job.getJobUuid(), contract.getContractNumber());
+        log.info("Job [{}] - contract [{}] ", job.getJobUuid(), job.getContractNumber());
 
         try {
             // Retrieve the contract beneficiaries
@@ -143,19 +140,19 @@ public class JobProcessorImpl implements JobProcessor {
             jobOutputRepository.saveAll(jobOutputs);
 
             // If the job is done searching
-            verifyTrackedJobProgress(job, contract);
+            verifyTrackedJobProgress(job);
         } finally {
             // Guarantee that we write out statistics on the job if possible
-            persistTrackedJobProgress(job, contract);
+            persistTrackedJobProgress(job);
         }
     }
 
-    void verifyTrackedJobProgress(Job job, Contract contract) {
+    void verifyTrackedJobProgress(Job job) {
         ProgressTracker progressTracker = jobProgressService.getStatus(job.getJobUuid());
 
         if (progressTracker == null) {
             log.info("Job [{}] - contract [{}] does not have any progress information, skipping verifying tracker",
-                    job.getJobUuid(), contract.getContractNumber());
+                    job.getJobUuid(), job.getContractNumber());
             return;
         }
 
@@ -183,12 +180,12 @@ public class JobProcessorImpl implements JobProcessor {
         }
     }
 
-    void persistTrackedJobProgress(Job job, Contract contract) {
+    void persistTrackedJobProgress(Job job) {
         ProgressTracker progressTracker = jobProgressService.getStatus(job.getJobUuid());
 
         if (progressTracker == null) {
             log.info("Job [{}] - contract [{}] does not have any progress information, skipping persisting tracker",
-                    job.getJobUuid(), contract.getContractNumber());
+                    job.getJobUuid(), job.getContractNumber());
             return;
         }
 
@@ -198,7 +195,7 @@ public class JobProcessorImpl implements JobProcessor {
         // Regardless of whether we pass or fail the basic
         eventLogger.log(new ContractSearchEvent(getOrganization(job),
                 job.getJobUuid(),
-                contract.getContractNumber(),
+                job.getContractNumber(),
                 progressTracker.getPatientsExpected(),
                 progressTracker.getPatientRequestQueuedCount(),
                 progressTracker.getPatientRequestProcessedCount(),
@@ -228,7 +225,7 @@ public class JobProcessorImpl implements JobProcessor {
         try {
             processContract(job, outputDirPath);
         } catch (ExecutionException | InterruptedException ex) {
-            log.error("Having issue retrieving patients for contract " + job.getContract());
+            log.error("Having issue retrieving patients for contract " + job.getContractNumber());
             throw ex;
         }
 
@@ -318,7 +315,7 @@ public class JobProcessorImpl implements JobProcessor {
         ProgressTracker progressTracker = jobProgressService.getStatus(job.getJobUuid());
         String jobFinishedMessage = String.format("Contract %s processed " +
                 "%d patients generating %d eobs and %d files (including the error file if any)",
-                job.getContract().getContractNumber(), progressTracker.getPatientRequestProcessedCount(),
+                job.getContractNumber(), progressTracker.getPatientRequestProcessedCount(),
                 progressTracker.getEobsProcessedCount(),
                 job.getJobOutputs().size());
 
