@@ -105,7 +105,7 @@ public class JobProcessorImpl implements JobProcessor {
             }
 
             // Log exception to relevant loggers
-            eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, FAILED, message), PUBLIC_LIST);
+            eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, FAILED, "EOB_JOB_FAILURE " + message), PUBLIC_LIST);
             log.error("Unexpected exception executing job {}", e.getMessage());
 
             // Update database status
@@ -166,14 +166,14 @@ public class JobProcessorImpl implements JobProcessor {
         int processedPatients = progressTracker.getPatientRequestProcessedCount();
 
         if (expectedPatients != queuedPatients) {
-            String alertMessage = String.format("[%s] expected beneficiaries (%d) does not match queued beneficiaries (%d)",
+            String alertMessage = String.format("EOB_QUEUE_MISMATCH [%s] expected beneficiaries (%d) does not match queued beneficiaries (%d)",
                     job.getJobUuid(), expectedPatients, queuedPatients);
             log.error(alertMessage);
             eventLogger.alert(alertMessage, PROD_LIST);
         }
 
         if (expectedPatients != processedPatients) {
-            String alertMessage = String.format("[%s] expected beneficiaries (%d) does not match processed beneficiaries (%d)",
+            String alertMessage = String.format("EOB_CALL_FAILURE [%s] expected beneficiaries (%d) does not match processed beneficiaries (%d)",
                     job.getJobUuid(), expectedPatients, queuedPatients);
             log.error(alertMessage);
             eventLogger.alert(alertMessage, PROD_LIST);
@@ -313,7 +313,7 @@ public class JobProcessorImpl implements JobProcessor {
      */
     private void completeJob(Job job) {
         ProgressTracker progressTracker = jobProgressService.getStatus(job.getJobUuid());
-        String jobFinishedMessage = String.format("Contract %s processed " +
+        String jobFinishedMessage = String.format("EOB_JOB_COMPLETED Contract %s processed " +
                 "%d patients generating %d eobs and %d files (including the error file if any)",
                 job.getContractNumber(), progressTracker.getPatientRequestProcessedCount(),
                 progressTracker.getEobsProcessedCount(),

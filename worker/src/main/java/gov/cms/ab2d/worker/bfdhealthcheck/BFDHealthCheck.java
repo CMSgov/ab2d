@@ -87,7 +87,7 @@ class BFDHealthCheck {
         propertiesDTO.setValue(statusString);
 
         // Slack alert that we are going into maintenance mode
-        logManager.alert("Maintenance Mode status for " + data.getVersion() +
+        logManager.alert("MAINT_MODE Maintenance Mode status for " + data.getVersion() +
                 " is: " + statusString, Ab2dEnvironment.ALL);
         propertiesService.updateProperties(List.of(propertiesDTO));
         log.info("Updated the {} property to {}", MAINTENANCE_MODE, statusString);

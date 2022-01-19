@@ -402,7 +402,7 @@ public class CoverageServiceImpl implements CoverageService {
             // Delete all results from current search that is failing
             coverageServiceRepo.deleteCurrentSearch(period);
         } catch (Exception exception) {
-            String issue = String.format("Failed to delete coverage for a failed search for %s-%d-%d. " +
+            String issue = String.format("COVERAGE_DELETE_FAILED Failed to delete coverage for a failed search for %s-%d-%d. " +
                             "There could be duplicate enrollment data in the db",
                     period.getContract().getContractNumber(), period.getYear(), period.getMonth());
             eventLogger.alert(issue, PUBLIC_LIST);
@@ -441,7 +441,7 @@ public class CoverageServiceImpl implements CoverageService {
         try {
             coverageServiceRepo.deletePreviousSearches(period, 1);
         } catch (Exception exception) {
-            String issue = String.format("Failed to delete old coverage for newly completed %s-%d-%d." +
+            String issue = String.format("COVERAGE_DELETE_FAILED Failed to delete old coverage for newly completed %s-%d-%d." +
                             " There could be duplicate enrollment data in the db",
                     period.getContract().getContractNumber(), period.getYear(), period.getMonth());
             eventLogger.alert(issue, PUBLIC_LIST);

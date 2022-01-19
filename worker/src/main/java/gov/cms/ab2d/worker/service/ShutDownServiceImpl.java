@@ -29,7 +29,7 @@ public class ShutDownServiceImpl implements ShutDownService {
         try {
             for (String jobString : activeJobs) {
                 Job job = jobRepository.findByJobUuid(jobString);
-                eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, SUBMITTED, "Job status reset to SUBMITTED on shutdown"),
+                eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, SUBMITTED, "EOB_JOB_RESUBMITTED Job status reset to SUBMITTED on shutdown"),
                         PUBLIC_LIST);
             }
 

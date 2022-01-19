@@ -30,6 +30,12 @@ public class JobStatusChangeEvent extends LoggableEvent {
 
     @Override
     public String asMessage() {
-        return String.format("(%s) %s -> %s %s", getJobId(), oldStatus, newStatus, description);
+
+        String label = "";
+        if (description != null && !description.isBlank()) {
+            label = description.split("\\s+")[0];
+        }
+
+        return String.format("%s (%s) %s -> %s %s", label, getJobId(), oldStatus, newStatus, description);
     }
 }

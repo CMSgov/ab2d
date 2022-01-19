@@ -87,7 +87,7 @@ public class JobServiceImpl implements JobService {
 
         // Report client running first job in prod
         if (clientHasNeverCompletedJob(contract.getContractNumber())) {
-            String firstJobMessage = String.format("Organization %s is running their first job for contract %s",
+            String firstJobMessage = String.format("ORG_FIRST Organization %s is running their first job for contract %s",
                     pdpClient.getOrganization(), contract.getContractNumber());
             eventLogger.alert(firstJobMessage, PROD_LIST);
         }

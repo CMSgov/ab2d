@@ -85,7 +85,7 @@ public class CoveragePeriodQuartzJob extends QuartzJobBean {
             }
         } catch (Exception exception) {
             log.error("coverage period updates could not be conducted");
-            logManager.alert("coverage period updates could not be conducted", List.of(PRODUCTION, SANDBOX));
+            logManager.alert("COVERAGE_UPDATES_FAILED coverage period updates could not be conducted", List.of(PRODUCTION, SANDBOX));
             throw new JobExecutionException(exception);
         } finally {
             // Only use override once

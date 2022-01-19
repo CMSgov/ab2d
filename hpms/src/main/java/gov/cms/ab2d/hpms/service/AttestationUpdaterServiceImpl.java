@@ -103,7 +103,7 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
 
     private void updateContractIfChanged(HPMSAttestation attest, Contract contract) {
         if (contract.updateAttestation(attest.isAttested(), attest.getAttestationDate())) {
-            String msg = "*Changed Contract*\n\nName: " + contract.getContractName() + "\n"
+            String msg = "CONTRACT_CHANGED *Changed Contract*\n\nName: " + contract.getContractName() + "\n"
                     + "Number: " + contract.getContractNumber() + "\n"
                     + "HPMS Attested On: " + attest.getAttestationDate() + "\n"
                     + "Contract Attested On: " + contract.getAttestedOn() + "\n";
@@ -119,7 +119,7 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
             return new ArrayList<>();
         }
         newContracts.forEach(c -> {
-                String msg = "*New Contract*\n\nId: " + c.getContractId() + "\n"
+                String msg = "CONTRACT_ADDED *New Contract*\n\nId: " + c.getContractId() + "\n"
                         + "Name: " + c.getContractName() + "\n"
                         + "Id: " + c.getContractId() + "\n"
                         + "Org: " + c.getOrgMarketingName() + "\n";
