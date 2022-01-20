@@ -5,6 +5,7 @@ import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.hpms.SpringBootTestApp;
+import gov.cms.ab2d.hpms.hmsapi.HPMSAttestation;
 import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizationInfo;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Assertions;
@@ -27,6 +28,7 @@ import java.lang.reflect.Method;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -100,6 +102,17 @@ public class AttestationUpdaterServiceTest {
     }
 
     @Test
+    void considerContractNoAttestation() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Method method = aus.getClass().getDeclaredMethod("considerContract", List.class, Contract.class, HPMSOrganizationInfo.class);
+        method.setAccessible(true);
+        Contract contract = new Contract();
+        contract.setId(1L);
+        List<Contract> list = new ArrayList<>();
+        method.invoke(aus, list, contract, null);
+        assertTrue(list.isEmpty());
+    }
+
+    @Test
     void considerContractAdd() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         Method method = aus.getClass().getDeclaredMethod("considerContract", List.class, Contract.class, HPMSOrganizationInfo.class);
         method.setAccessible(true);
@@ -108,7 +121,46 @@ public class AttestationUpdaterServiceTest {
         contract.setAttestedOn(OffsetDateTime.now());
         List<Contract> list = new ArrayList<>();
         method.invoke(aus, list, contract, new HPMSOrganizationInfo());
+        assertTrue(list.size() > 0);
     }
+
+    @Test
+    void updateContractIfChanged() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        AttestationUpdaterServiceImpl service = new AttestationUpdaterServiceImpl(null, null, new LogManager(null, null, null));
+        Method method = service.getClass().getDeclaredMethod("updateContractIfChanged", HPMSAttestation.class, Contract.class);
+        method.setAccessible(true);
+        Contract contract = new Contract();
+        contract.setAttestedOn(OffsetDateTime.now());
+        contract.setId(1L);
+        Assertions.assertThrows(Exception.class,
+                () -> method.invoke(service, new HPMSAttestation(), contract));
+    }
+
+    @Test
+    void updateContractMissing() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Method method = aus.getClass().getDeclaredMethod("updateContract", HPMSOrganizationInfo.class);
+        method.setAccessible(true);
+        Optional<Contract> contract = (Optional<Contract>) method.invoke(aus, new HPMSOrganizationInfo());
+        assertTrue(contract.isEmpty());
+    }
+
+    @Test
+    void updateContract() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Contract contract =  new Contract();
+        contract.setContractNumber("1");
+        contract.setContractName("blank");
+        contract.setHpmsParentOrgId(1L);
+        contract = contractRepository.save(contract);
+        Method method = aus.getClass().getDeclaredMethod("updateContract", HPMSOrganizationInfo.class);
+        method.setAccessible(true);
+        HPMSOrganizationInfo info = new HPMSOrganizationInfo();
+        info.setContractName("test");
+        info.setParentOrgId(contract.getHpmsParentOrgId().intValue());
+        info.setContractId(contract.getContractNumber());
+        Optional<Contract> possibleContract = (Optional<Contract>) method.invoke(aus, info);
+        assertTrue(possibleContract.isPresent());
+    }
+
 
     @TestConfiguration
     static class MockHpmsFetcherConfig {
