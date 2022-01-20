@@ -16,8 +16,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.http.HttpHeaders.COOKIE;
 
 @SpringBootTest(classes = SpringBootTestApp.class)
@@ -42,22 +41,12 @@ class HPMSMockedAuthTest {
     @Test
     void auth() {
         try (MockedStatic<WebClient> webClientStatic = Mockito.mockStatic(WebClient.class)) {
-            client.authRequest( mockedWebClient, webClientStatic, new HPMSAuthResponse());
+            client.authRequest(mockedWebClient, webClientStatic, new HPMSAuthResponse());
             HttpHeaders headers = new HttpHeaders();
             authService.buildAuthHeaders(headers);
-            assertTrue(headers.get(COOKIE).size() > 0);
+            assertNotNull(headers.get(COOKIE));
+            assertTrue(headers.get(COOKIE).stream().anyMatch(cookie -> cookie.contains("test")));
 
-        }
-    }
-
-    @Test
-    void authFail() {
-        try (MockedStatic<WebClient> webClientStatic = Mockito.mockStatic(WebClient.class)) {
-            client.authRequest(mockedWebClient, webClientStatic, null);
-            HttpHeaders headers = new HttpHeaders();
-            assertThrows(RuntimeException.class, () -> {
-            authService.buildAuthHeaders(headers);
-            });
         }
     }
 }

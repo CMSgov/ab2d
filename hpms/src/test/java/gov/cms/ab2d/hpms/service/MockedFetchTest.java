@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest(classes = SpringBootTestApp.class)
 @TestPropertySource(locations = "/application.hpms.properties")
 @Testcontainers
-public class MockedFetchTest {
+class MockedFetchTest {
     @Autowired
     private HPMSFetcherImpl fetcher;
 
@@ -46,7 +46,6 @@ public class MockedFetchTest {
     @Test
     void attestation() {
         try (MockedStatic<WebClient> webClientStatic = Mockito.mockStatic(WebClient.class)) {
-
             client.attestationRequest(mockedWebClient, webClientStatic, Set.of(new HPMSAttestation()));
             fetcher.retrieveAttestationInfo(this::attestation, List.of("test"));
         }
