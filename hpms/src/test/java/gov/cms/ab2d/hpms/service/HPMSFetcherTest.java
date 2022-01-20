@@ -9,15 +9,11 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.ResponseCookie;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +27,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestPropertySource(locations = "/application.hpms.properties")
 @Testcontainers
 class HPMSFetcherTest {
+
+    final int NUM_CONTRACTS = 6;
 
     @Autowired
     private HPMSFetcher fetcher;
@@ -64,6 +62,39 @@ class HPMSFetcherTest {
         assertNotNull(top6Contracts);
         assertFalse(top6Contracts.isEmpty());
 
+        lock = new CountDownLatch(1);
+        fetcher.retrieveAttestationInfo(this::processAttestations, top6Contracts);
+        waitForCallback();
+        assertNotNull(attestations);
+        assertFalse(attestations.isEmpty());
+        // E4744 is not returned by the API
+        assertEquals(NUM_CONTRACTS, attestations.size());
+    }
+
+    @Test
+    void retrieveSponsorInfo() {
+        retrieveTop6Contracts();
+    }
+
+    List<String> retrieveTop6Contracts() {
+        fetcher.retrieveSponsorInfo(this::processOrgInfo);
+        int retries = 0;
+        do {
+            waitForCallback();
+        } while (orgs == null && retries++ < 20);
+
+        assertNotNull(orgs);
+        assertFalse(orgs.isEmpty());
+
+        List<String> top6Contracts = extractTopContractIDs(NUM_CONTRACTS);
+        assertNotNull(top6Contracts);
+        assertFalse(top6Contracts.isEmpty());
+        return top6Contracts;
+    }
+
+    @Test
+    void retrieveAttestationInfo() {
+        List<String> top6Contracts = retrieveTop6Contracts();
         lock = new CountDownLatch(1);
         fetcher.retrieveAttestationInfo(this::processAttestations, top6Contracts);
         waitForCallback();
