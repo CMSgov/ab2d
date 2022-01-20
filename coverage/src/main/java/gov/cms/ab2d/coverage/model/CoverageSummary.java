@@ -1,7 +1,5 @@
 package gov.cms.ab2d.coverage.model;
 
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import java.util.List;
 import lombok.Getter;
@@ -18,10 +16,10 @@ import lombok.ToString;
 public class CoverageSummary {
 
     private final Identifiers identifiers;
-    private final Contract contract;
+    private final CoverageContractDTO contract;
     private final List<FilterOutByDate.DateRange> dateRanges;
 
-    public CoverageSummary(Identifiers identifiers, Contract contract, List<FilterOutByDate.DateRange> dateRanges) {
+    public CoverageSummary(Identifiers identifiers, CoverageContractDTO contract, List<FilterOutByDate.DateRange> dateRanges) {
         this.identifiers = identifiers;
         this.contract = contract;
         this.dateRanges = dateRanges;

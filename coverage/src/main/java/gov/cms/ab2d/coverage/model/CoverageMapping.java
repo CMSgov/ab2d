@@ -1,8 +1,5 @@
 package gov.cms.ab2d.coverage.model;
 
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.CoveragePeriod;
-import gov.cms.ab2d.common.model.Identifiers;
 import lombok.Getter;
 
 import java.util.*;
@@ -24,8 +21,8 @@ public class CoverageMapping {
         beneficiaryIds = new HashSet<>();
     }
 
-    public Contract getContract() {
-        return coverageSearchEvent.getCoveragePeriod().getContract();
+    public String getContractNumber() {
+        return coverageSearchEvent.getCoveragePeriod().getContractNumber();
     }
 
     public CoveragePeriod getPeriod() {

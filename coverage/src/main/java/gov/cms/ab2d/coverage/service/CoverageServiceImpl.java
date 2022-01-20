@@ -1,32 +1,23 @@
 package gov.cms.ab2d.coverage.service;
 
 import com.newrelic.api.agent.Trace;
-//NOPMD
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.CoveragePeriod;
-import gov.cms.ab2d.common.model.Identifiers;
-import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.service.InvalidJobStateTransition;
-import gov.cms.ab2d.common.service.ResourceNotFoundException;
+import gov.cms.ab2d.coverage.model.CoverageContractDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
+import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchDiff;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
+import gov.cms.ab2d.coverage.model.Identifiers;
+import gov.cms.ab2d.coverage.model.JobStatus;
 import gov.cms.ab2d.coverage.repository.CoverageDeltaRepository;
 import gov.cms.ab2d.coverage.repository.CoveragePeriodRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
@@ -35,8 +26,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import javax.persistence.EntityNotFoundException;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH_YEAR;
+
+import static gov.cms.ab2d.coverage.repository.CoverageServiceRepository.AB2D_EPOCH_YEAR;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
 import static java.util.stream.Collectors.toList;
 
@@ -86,10 +83,10 @@ public class CoverageServiceImpl implements CoverageService {
     private final LogManager eventLogger;
 
     @Override
-    public CoveragePeriod getCoveragePeriod(Contract contract, int month, int year) {
+    public CoveragePeriod getCoveragePeriod(CoverageContractDTO contract, int month, int year) {
         checkMonthAndYear(month, year);
 
-        Optional<CoveragePeriod> period = coveragePeriodRepo.findByContractIdAndMonthAndYear(contract.getId(), month, year);
+        Optional<CoveragePeriod> period = coveragePeriodRepo.findByContractNumberAndMonthAndYear(contract.getContractNumber(), month, year);
         return period.orElseThrow(() ->
                 new EntityNotFoundException("could not find coverage period matching contract, month, and year"));
     }
@@ -102,17 +99,17 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    public CoveragePeriod getCreateIfAbsentCoveragePeriod(Contract contract, int month, int year) {
+    public CoveragePeriod getCreateIfAbsentCoveragePeriod(CoverageContractDTO contract, int month, int year) {
         checkMonthAndYear(month, year);
 
-        Optional<CoveragePeriod> existing = coveragePeriodRepo.findByContractIdAndMonthAndYear(contract.getId(), month, year);
+        Optional<CoveragePeriod> existing = coveragePeriodRepo.findByContractNumberAndMonthAndYear(contract.getContractNumber(), month, year);
 
         if (existing.isPresent()) {
             return existing.get();
         }
 
         CoveragePeriod period = new CoveragePeriod();
-        period.setContract(contract);
+        period.setContractNumber(contract.getContractNumber());
         period.setMonth(month);
         period.setYear(year);
 
@@ -120,8 +117,8 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    public List<CoveragePeriod> findAssociatedCoveragePeriods(Long contractId) {
-        return coveragePeriodRepo.findAllByContractId(contractId);
+    public List<CoveragePeriod> findAssociatedCoveragePeriods(String contractNumber) {
+        return coveragePeriodRepo.findAllByContractNumber(contractNumber);
     }
 
     @Override
@@ -134,13 +131,13 @@ public class CoverageServiceImpl implements CoverageService {
     @Override
     public int countBeneficiariesByCoveragePeriod(List<CoveragePeriod> coveragePeriods) {
         List<Integer> ids = coveragePeriods.stream().map(CoveragePeriod::getId).collect(toList());
-        return coverageServiceRepo.countBeneficiariesByPeriods(ids, coveragePeriods.get(0).getContract().getContractNumber());
+        return coverageServiceRepo.countBeneficiariesByPeriods(ids, coveragePeriods.get(0).getContractNumber());
     }
 
     @Override
-    public List<CoverageCount> countBeneficiariesForContracts(List<Contract> contracts) {
+    public List<CoverageCount> countBeneficiariesForContracts(List<CoverageContractDTO> contracts) {
         int partitionSize = 5;
-        List<List<Contract>> contractPartitions = new ArrayList<>();
+        List<List<CoverageContractDTO>> contractPartitions = new ArrayList<>();
 
         // Split queries into smaller pieces so queries don't time out
         for (int idx = 0; idx < contracts.size(); idx += partitionSize) {
@@ -225,7 +222,7 @@ public class CoverageServiceImpl implements CoverageService {
 
         int unchanged = 0;
         if (previousCount > 0) {
-            log.info("Calculating the deltas for the search period {}-{}-{}", period.getContract().getContractNumber(),
+            log.info("Calculating the deltas for the search period {}-{}-{}", period.getContractNumber(),
                     period.getMonth(), period.getYear());
             coverageDeltaRepository.trackDeltas(previousSearch.get(), current);
             unchanged = coverageServiceRepo.countIntersection(previousSearch.get(), current);
@@ -404,7 +401,7 @@ public class CoverageServiceImpl implements CoverageService {
         } catch (Exception exception) {
             String issue = String.format("Failed to delete coverage for a failed search for %s-%d-%d. " +
                             "There could be duplicate enrollment data in the db",
-                    period.getContract().getContractNumber(), period.getYear(), period.getMonth());
+                    period.getContractNumber(), period.getYear(), period.getMonth());
             eventLogger.alert(issue, PUBLIC_LIST);
             throw exception;
         }
@@ -424,7 +421,7 @@ public class CoverageServiceImpl implements CoverageService {
         }
 
         // todo: log to kinesis as well
-        Contract contract = period.getContract();
+        String contractNumber = period.getContractNumber();
 
         /*
          * Log the difference between any earlier enrollment we have for the given coverage period
@@ -434,7 +431,7 @@ public class CoverageServiceImpl implements CoverageService {
          */
         CoverageSearchDiff diff = searchDiff(periodId);
         log.info("{}-{}-{} difference between previous metadata and current metadata\n {}",
-                contract.getContractNumber(), period.getYear(), period.getMonth(), diff);
+                contractNumber, period.getYear(), period.getMonth(), diff);
 
         // Execute after diff
         // this deletion will remove as much past information as it can find
@@ -443,7 +440,7 @@ public class CoverageServiceImpl implements CoverageService {
         } catch (Exception exception) {
             String issue = String.format("Failed to delete old coverage for newly completed %s-%d-%d." +
                             " There could be duplicate enrollment data in the db",
-                    period.getContract().getContractNumber(), period.getYear(), period.getMonth());
+                    period.getContractNumber(), period.getYear(), period.getMonth());
             eventLogger.alert(issue, PUBLIC_LIST);
             throw exception;
         }
@@ -520,7 +517,7 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     private void logStatusChange(CoveragePeriod period, String description, JobStatus jobStatus) {
-        log.info("Updating job state for search {}-{}-{} from {} to {} due to {}", period.getContract().getContractNumber(),
+        log.info("Updating job state for search {}-{}-{} from {} to {} due to {}", period.getContractNumber(),
                 period.getMonth(), period.getYear(), period.getStatus(), jobStatus, description);
     }
 

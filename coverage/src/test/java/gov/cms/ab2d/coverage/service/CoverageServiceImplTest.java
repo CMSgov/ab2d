@@ -1,20 +1,18 @@
 package gov.cms.ab2d.coverage.service;
 
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.CoveragePeriod;
-import gov.cms.ab2d.common.model.Identifiers;
-import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.common.service.InvalidJobStateTransition;
+import gov.cms.ab2d.coverage.model.CoverageContractDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.model.CoverageDelta;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
+import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchDiff;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
+import gov.cms.ab2d.coverage.model.Identifiers;
+import gov.cms.ab2d.coverage.model.JobStatus;
 import gov.cms.ab2d.coverage.repository.CoverageDeltaRepository;
 import gov.cms.ab2d.coverage.repository.CoverageDeltaTestRepository;
 import gov.cms.ab2d.coverage.repository.CoveragePeriodRepository;
@@ -57,9 +55,9 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 
-import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.coverage.repository.CoverageDeltaRepository.COVERAGE_ADDED;
 import static gov.cms.ab2d.coverage.repository.CoverageDeltaRepository.COVERAGE_DELETED;
+import static gov.cms.ab2d.coverage.repository.CoverageServiceRepository.AB2D_EPOCH;
 import static java.util.Collections.disjoint;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -76,7 +74,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @EntityScan(basePackages = {"gov.cms.ab2d.common.model", "gov.cms.ab2d.coverage.model"})
 @EnableJpaRepositories({"gov.cms.ab2d.common.repository", "gov.cms.ab2d.coverage.repository"})
 @Testcontainers
-@TestPropertySource(locations = "/application.common.properties")
+@TestPropertySource(locations = "/application.coverage.properties")
 class CoverageServiceImplTest {
 
     private static final int YEAR = 2020;
@@ -115,9 +113,6 @@ class CoverageServiceImplTest {
     CoverageServiceRepository coverageServiceRepo;
 
     @Autowired
-    ContractRepository contractRepo;
-
-    @Autowired
     CoverageDeltaRepository coverageDeltaRepository;
 
     @Autowired
@@ -135,8 +130,9 @@ class CoverageServiceImplTest {
     @Autowired
     DataSource dataSource;
 
-    private Contract contract1;
-    private Contract contract2;
+    private CoverageContractDTO contract1;
+    private CoverageContractDTO contract2;
+    
 
     private CoveragePeriod period1Jan;
     private CoveragePeriod period1Feb;
@@ -148,16 +144,17 @@ class CoverageServiceImplTest {
 
     @BeforeEach
     public void insertContractAndDefaultCoveragePeriod() {
-        contract1 = dataSetup.setupContract("TST-12", AB2D_EPOCH.toOffsetDateTime());
-        contract2 = dataSetup.setupContract("TST-34", AB2D_EPOCH.toOffsetDateTime());
 
-        period1Jan = dataSetup.createCoveragePeriod(contract1, JANUARY, YEAR);
-        period1Feb = dataSetup.createCoveragePeriod(contract1, FEBRUARY, YEAR);
-        period1March = dataSetup.createCoveragePeriod(contract1, MARCH, YEAR);
-        period1April = dataSetup.createCoveragePeriod(contract1, APRIL, YEAR);
+        contract1 = dataSetup.setupContractDTO("TST-12", AB2D_EPOCH.toOffsetDateTime());
+        contract2 = dataSetup.setupContractDTO("TST-34", AB2D_EPOCH.toOffsetDateTime());
+        
+        period1Jan = dataSetup.createCoveragePeriod("TST-12", JANUARY, YEAR);
+        period1Feb = dataSetup.createCoveragePeriod("TST-12", FEBRUARY, YEAR);
+        period1March = dataSetup.createCoveragePeriod("TST-12", MARCH, YEAR);
+        period1April = dataSetup.createCoveragePeriod("TST-12", APRIL, YEAR);
         jobStartTime = OffsetDateTime.of(YEAR, APRIL, 2, 0, 0, 0, 0, ZoneOffset.UTC);
 
-        period2Jan = dataSetup.createCoveragePeriod(contract2, JANUARY, YEAR);
+        period2Jan = dataSetup.createCoveragePeriod("TST-34", JANUARY, YEAR);
     }
 
     @AfterEach
@@ -273,10 +270,10 @@ class CoverageServiceImplTest {
         coverageService.submitSearch(period1March.getId(), "testing");
         coverageService.submitSearch(period1April.getId(), "testing");
 
-        CoveragePeriod period2Feb = dataSetup.createCoveragePeriod(contract2, 2, 2020);
-        CoveragePeriod period2March = dataSetup.createCoveragePeriod(contract2, 3, 2020);
-        CoveragePeriod period2April = dataSetup.createCoveragePeriod(contract2, 4, 2020);
-        CoveragePeriod period2May = dataSetup.createCoveragePeriod(contract2, 5, 2020);
+        CoveragePeriod period2Feb = dataSetup.createCoveragePeriod("TST-34", 2, 2020);
+        CoveragePeriod period2March = dataSetup.createCoveragePeriod("TST-34", 3, 2020);
+        CoveragePeriod period2April = dataSetup.createCoveragePeriod("TST-34", 4, 2020);
+        CoveragePeriod period2May = dataSetup.createCoveragePeriod("TST-34", 5, 2020);
 
         coverageService.submitSearch(period2Jan.getId(), "testing");
         coverageService.submitSearch(period2Feb.getId(), "testing");
@@ -518,9 +515,9 @@ class CoverageServiceImplTest {
     @Test
     void pageCoverageOnlyReturnsBeneficiariesForContract() {
 
-        dataSetup.createCoveragePeriod(contract2, 2020, 2);
-        dataSetup.createCoveragePeriod(contract2, 2020, 3);
-        dataSetup.createCoveragePeriod(contract2, 2020, 4);
+        dataSetup.createCoveragePeriod("TST-34", 2020, 2);
+        dataSetup.createCoveragePeriod("TST-34", 2020, 3);
+        dataSetup.createCoveragePeriod("TST-34", 2020, 4);
 
         coverageService.submitSearch(period1Jan.getId(), "testing");
         coverageService.submitSearch(period2Jan.getId(), "testing");

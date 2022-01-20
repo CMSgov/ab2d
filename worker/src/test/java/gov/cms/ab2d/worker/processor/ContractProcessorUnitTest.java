@@ -101,7 +101,7 @@ class ContractProcessorUnitTest {
     @Test
     @DisplayName("When a job is cancelled while it is being processed, then attempt to stop the job gracefully without completing it")
     void whenJobIsCancelledWhileItIsBeingProcessed_ThenAttemptToStopTheJob() {
-
+        String contract = "CONTRACT_00000";
         when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 1),
                         new CoveragePagingRequest(2, null, contract, OffsetDateTime.now())))
@@ -122,6 +122,7 @@ class ContractProcessorUnitTest {
     @Test
     @DisplayName("When many patientId are present, 'PercentageCompleted' should be updated many times")
     void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() {
+        String contract = "CONTRACT_00000";
         when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(18);
         when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 2),
@@ -155,7 +156,7 @@ class ContractProcessorUnitTest {
     @Test
     @DisplayName("When a job is cancelled while it is being processed, then attempt to stop the job gracefully without completing it")
     void whenExpectedPatientsNotMatchActualPatientsFail() {
-
+        String contract = "CONTRACT_00000";
         when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 1), null));
         when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(3);
@@ -213,6 +214,8 @@ class ContractProcessorUnitTest {
     @Test
     @DisplayName("When round robin blocking queue is full, patients should not be skipped")
     void whenBlockingQueueFullPatientsNotSkipped() throws InterruptedException {
+        String contract = "CONTRACT_00000";
+
 
         when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 1), new CoveragePagingRequest(1, null, contract, OffsetDateTime.now())))
@@ -263,7 +266,7 @@ class ContractProcessorUnitTest {
         return job;
     }
 
-    private static List<CoverageSummary> createPatientsByContractResponse(Contract contract, int num) {
+    private static List<CoverageSummary> createPatientsByContractResponse(String contract, int num) {
         FilterOutByDate.DateRange dateRange = TestUtil.getOpenRange();
         return IntStream.range(0, num).mapToObj(n -> new CoverageSummary(
                 createIdentifierWithoutMbi(n),

@@ -1,11 +1,13 @@
 package gov.cms.ab2d.coverage.repository;
 
 import com.newrelic.api.agent.Trace;
+import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
-import org.springframework.jdbc.core.namedparam.*;
-import org.springframework.stereotype.Repository;
-
 import javax.sql.DataSource;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.stereotype.Repository;
 
 /**
  *
@@ -16,7 +18,7 @@ public class CoverageDeltaRepository {
     public static final String COVERAGE_ADDED = "ADDED";
 
     /**
-     * Calculate the difference between two sets of coverage from BFD for a given {@link gov.cms.ab2d.common.model.CoveragePeriod}
+     * Calculate the difference between two sets of coverage from BFD for a given {@link CoveragePeriod}
      * and insert the results into a records table.
      */
     private static final String INSERT_DELTAS =
@@ -31,7 +33,7 @@ public class CoverageDeltaRepository {
 
     /**
      * Given an original set of coverage from BFD and an updated set of coverage from BFD
-     * {@link gov.cms.ab2d.common.model.CoveragePeriod}, calculate the number of beneficiaries "ADDED"
+     * {@link CoveragePeriod}, calculate the number of beneficiaries "ADDED"
      * by the newer search (currentSearch) and "DELETED" by not being included in the newer search.
      *
      * @param previousSearch an earlier search from a previous update that is now outdated by CCW loads to BFD

@@ -120,7 +120,7 @@ class CoverageDriverUnitTest {
 
     @BeforeEach
     void before() {
-        driver = new CoverageDriverImpl(null, null, coverageService, null, null, null);
+        driver = new CoverageDriverImpl(null, null, coverageService, null, null, null,null);
     }
 
     @AfterEach
@@ -173,9 +173,9 @@ class CoverageDriverUnitTest {
             CoveragePagingRequest nextRequest = null;
             if (cursor.isPresent()) {
                 long cursorValue = cursor.get();
-                nextRequest = new CoveragePagingRequest(pagingSize, (cursorValue + pagingSize), request.getContract(), request.getJobStartTime());
+                nextRequest = new CoveragePagingRequest(pagingSize, (cursorValue + pagingSize), request.getContractNumber(), request.getJobStartTime());
             } else {
-                nextRequest = new CoveragePagingRequest(pagingSize, (long) pagingSize, request.getContract(), request.getJobStartTime());
+                nextRequest = new CoveragePagingRequest(pagingSize, (long) pagingSize, request.getContractNumber(), request.getJobStartTime());
 
             }
 
@@ -234,9 +234,9 @@ class CoverageDriverUnitTest {
             CoveragePagingRequest nextRequest = null;
             if (cursor.isPresent()) {
                 long cursorValue = cursor.get();
-                nextRequest = new CoveragePagingRequest(pagingSize, (cursorValue + pagingSize), request.getContract(), request.getJobStartTime());
+                nextRequest = new CoveragePagingRequest(pagingSize, (cursorValue + pagingSize), request.getContractNumber(), request.getJobStartTime());
             } else {
-                nextRequest = new CoveragePagingRequest(pagingSize, (long) pagingSize, request.getContract(), request.getJobStartTime());
+                nextRequest = new CoveragePagingRequest(pagingSize, (long) pagingSize, request.getContractNumber(), request.getJobStartTime());
 
             }
 
@@ -285,7 +285,7 @@ class CoverageDriverUnitTest {
         when(propertiesService.getPropertiesByKey(eq(Constants.COVERAGE_SEARCH_OVERRIDE)))
                 .thenReturn(overrideProp);
 
-        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, propertiesService, null, lockWrapper);
+        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, propertiesService, null, lockWrapper,null);
 
         CoverageDriverException exception = assertThrows(CoverageDriverException.class, driver::discoverCoveragePeriods);
         assertTrue(exception.getMessage().contains("could not retrieve lock"));
@@ -322,7 +322,7 @@ class CoverageDriverUnitTest {
         Job job = new Job();
         job.setContractNumber(contract.getContractNumber());
 
-        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, propertiesService, null, lockWrapper);
+        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, propertiesService, null, lockWrapper,null);
 
         assertThrows(InterruptedException.class, driver::discoverCoveragePeriods);
         assertThrows(InterruptedException.class, driver::queueStaleCoveragePeriods);
@@ -337,7 +337,7 @@ class CoverageDriverUnitTest {
         when(coverageService.coveragePeriodStuckJobs(any())).thenReturn(Collections.emptyList());
         when(coverageService.coveragePeriodNotUpdatedSince(anyInt(), anyInt(), any())).thenReturn(Collections.emptyList());
 
-        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, null, null, lockWrapper);
+        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, null, null, lockWrapper,null);
 
         Contract contract = new Contract();
         contract.setContractNumber("contractNum");
@@ -356,7 +356,7 @@ class CoverageDriverUnitTest {
     void failureToPageCausesExceptions() {
         when(coverageService.pageCoverage(any())).thenThrow(RuntimeException.class);
 
-        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, null, null, null);
+        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, null, null, null,null);
 
         Contract contract = new Contract();
         contract.setContractNumber("contractNum");
@@ -371,7 +371,7 @@ class CoverageDriverUnitTest {
 
 
         CoverageDriverImpl driver = spy(new CoverageDriverImpl(null, null,
-                coverageService, propertiesService, coverageProcessor, lockWrapper)
+                coverageService, propertiesService, coverageProcessor, lockWrapper,null)
         );
 
         doReturn(true).when(propertiesService).isInMaintenanceMode();

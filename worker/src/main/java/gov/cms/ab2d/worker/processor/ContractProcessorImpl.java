@@ -176,7 +176,7 @@ public class ContractProcessorImpl implements ContractProcessor {
 
         // Handle first page of beneficiaries and then enter loop
         CoveragePagingResult current = coverageDriver.pageCoverage(new CoveragePagingRequest(eobJobPatientQueuePageSize,
-                null, contract, contractData.getJob().getCreatedAt()));
+                null, contract.getContractNumber(), contractData.getJob().getCreatedAt()));
         loadRequestBatch(contractData, current);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUEST_QUEUED, current.size());
 

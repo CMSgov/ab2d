@@ -60,7 +60,7 @@ public class CoverageDriverStub implements CoverageDriver {
     @Override
     public CoveragePagingResult pageCoverage(CoveragePagingRequest request) {
 
-        CoveragePagingRequest nextRequest = getNextRequest(request, null, request.getContract());
+        CoveragePagingRequest nextRequest = getNextRequest(request, null, request.getContractNumber());
         List<CoverageSummary> results = getSummaries(request);
         return new CoveragePagingResult(results, nextRequest);
     }
@@ -75,7 +75,7 @@ public class CoverageDriverStub implements CoverageDriver {
             long cursor = previousRequest.getCursor().get();
 
             if (cursor + pageSize < totalRecords) {
-                return new CoveragePagingRequest(pageSize, (cursor + pageSize), previousRequest.getContract(), previousRequest.getJobStartTime());
+                return new CoveragePagingRequest(pageSize, (cursor + pageSize), previousRequest.getContractNumber(), previousRequest.getJobStartTime());
             }
         }
 

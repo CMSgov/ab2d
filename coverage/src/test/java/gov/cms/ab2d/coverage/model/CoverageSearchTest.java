@@ -1,10 +1,10 @@
 package gov.cms.ab2d.coverage.model;
 
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
+import java.time.OffsetDateTime;
+import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,10 +16,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.time.OffsetDateTime;
-import java.util.Optional;
 
-import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -27,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Testcontainers
 @EntityScan(basePackages = {"gov.cms.ab2d.common.model", "gov.cms.ab2d.coverage.model"})
 @EnableJpaRepositories({"gov.cms.ab2d.common.repository", "gov.cms.ab2d.coverage.repository"})
-@TestPropertySource(locations = "/application.common.properties")
+@TestPropertySource(locations = "/application.coverage.properties")
 class CoverageSearchTest {
 
     @SuppressWarnings({"rawtypes", "unused"})
@@ -49,11 +46,8 @@ class CoverageSearchTest {
     void testSearches() {
         try {
 
-            Contract contract1 = coverageDataSetup.setupContract("c123", AB2D_EPOCH.toOffsetDateTime());
-            Contract contract2 = coverageDataSetup.setupContract("c456", AB2D_EPOCH.toOffsetDateTime());
-
-            CoveragePeriod period1 = coverageDataSetup.createCoveragePeriod(contract1, 10, 2020);
-            CoveragePeriod period2 = coverageDataSetup.createCoveragePeriod(contract2, 10, 2020);
+            CoveragePeriod period1 = coverageDataSetup.createCoveragePeriod("c123", 10, 2020);
+            CoveragePeriod period2 = coverageDataSetup.createCoveragePeriod("c456", 10, 2020);
 
             CoverageSearch search1 = new CoverageSearch(null, period1, OffsetDateTime.now(), 0);
             CoverageSearch search2 = new CoverageSearch(null, period2, OffsetDateTime.now().minusDays(2), 0);

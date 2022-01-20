@@ -1,6 +1,5 @@
 package gov.cms.ab2d.coverage.model;
 
-import gov.cms.ab2d.common.model.CoveragePeriod;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

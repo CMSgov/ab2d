@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.model.CoveragePeriod;
+import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import lombok.extern.slf4j.Slf4j;
@@ -136,7 +136,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                 return false;
             }
 
-            log.info("starting search for {} during {}-{}", mapping.getContract().getContractNumber(),
+            log.info("starting search for {} during {}-{}", mapping.getContractNumber(),
                     mapping.getPeriod().getMonth(), mapping.getPeriod().getYear());
 
             // Currently, we are using the STU3 version to get patient mappings
@@ -245,7 +245,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
      */
     public void evaluateJob(CoverageMapping mapping) {
         if (mapping.isSuccessful()) {
-            log.info("finished a search for contract {} during {}-{}", mapping.getContract().getContractNumber(),
+            log.info("finished a search for contract {} during {}-{}", mapping.getContractNumber().getContractNumber(),
                     mapping.getPeriod().getMonth(), mapping.getPeriod().getYear());
 
             coverageInsertionQueue.add(mapping);
@@ -282,7 +282,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                 return;
             }
 
-            String contractNumber = result.getContract().getContractNumber();
+            String contractNumber = result.getContractNumber().getContractNumber();
             int month = result.getPeriod().getMonth();
             int year = result.getPeriod().getYear();
 
@@ -325,7 +325,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         long eventId = result.getCoverageSearchEvent().getId();
 
         try {
-            String contractNumber = result.getContract().getContractNumber();
+            String contractNumber = result.getContractNumber().getContractNumber();
             int month = result.getPeriod().getMonth();
             int year = result.getPeriod().getYear();
 
@@ -337,7 +337,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
             log.info("marked search as completed {}-{}-{}", contractNumber, month, year);
         } catch (Exception exception) {
-            log.error("inserting the coverage data failed for {}-{}-{}", result.getContract().getContractNumber(),
+            log.error("inserting the coverage data failed for {}-{}-{}", result.getContractNumber().getContractNumber(),
                     result.getPeriod().getMonth(), result.getPeriod().getYear());
             log.error("inserting the coverage data failed {}", exception.getMessage());
             coverageService.failSearch(result.getPeriodId(),
@@ -363,7 +363,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
         for (CoverageMapping insertedMapping : inserting) {
             String message = String.format("shutting down before inserting for contract %s during %d-%d, will re-attempt",
-                    insertedMapping.getContract().getContractNumber(), insertedMapping.getPeriod().getMonth(),
+                    insertedMapping.getContractNumber().getContractNumber(), insertedMapping.getPeriod().getMonth(),
                     insertedMapping.getPeriod().getYear());
             log.info(message);
 
@@ -379,7 +379,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
             inProgressMappings.forEach(callable -> {
                 CoverageMapping mapping = callable.getCoverageMapping();
                 String message = String.format("shutting down in progress search for contract %s during %d-%d",
-                        mapping.getContract().getContractNumber(), mapping.getPeriod().getMonth(),
+                        mapping.getContractNumber().getContractNumber(), mapping.getPeriod().getMonth(),
                         mapping.getPeriod().getYear());
                 log.info(message);
 

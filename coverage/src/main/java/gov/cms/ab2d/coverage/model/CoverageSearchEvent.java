@@ -1,8 +1,6 @@
 package gov.cms.ab2d.coverage.model;
 
-import gov.cms.ab2d.common.model.CoveragePeriod;
-import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.TimestampBase;
+
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;

@@ -2,24 +2,32 @@ package gov.cms.ab2d.worker.processor.coverage;
 
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
+import gov.cms.ab2d.coverage.model.CoveragePeriod;
+import gov.cms.ab2d.coverage.model.Identifiers;
+import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.ExtensionUtils;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.fhir.IdentifierUtils;
 import gov.cms.ab2d.fhir.PatientIdentifier;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IDomainResource;
 
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toSet;
 
 /**
  * Perform queries to BFD to retrieve all coverage/enrollment related to a Part D contract
@@ -28,7 +36,7 @@ import static java.util.stream.Collectors.*;
  * The results of these queries are stored into a {@link CoverageMapping} object in-memory. Additionally,
  * any artifacts/issues with identifiers returned from BFD are documented and reported as statistics.
  *
- * The contract, month, and year are represented as an {@link gov.cms.ab2d.common.model.CoveragePeriod}
+ * The contract, month, and year are represented as an {@link CoveragePeriod}
  *
  */
 @Slf4j
@@ -52,12 +60,14 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     private int missingReferenceYear;
     private int pastReferenceYear;
     private final Map<Integer, Integer> referenceYears = new HashMap<>();
+    private final Ab2dEnvironment appEnv;
 
-    public CoverageMappingCallable(FhirVersion version, CoverageMapping coverageMapping, BFDClient bfdClient) {
+    public CoverageMappingCallable(FhirVersion version, CoverageMapping coverageMapping, BFDClient bfdClient, Ab2dEnvironment appEnv) {
         this.coverageMapping = coverageMapping;
         this.bfdClient = bfdClient;
         this.completed = new AtomicBoolean(false);
-        this.year = getCorrectedYear(coverageMapping.getContract(), coverageMapping.getPeriod().getYear());
+        this.appEnv = appEnv;
+        this.year = getCorrectedYear(this.appEnv, coverageMapping.getPeriod().getYear());
         this.version = version;
     }
 
@@ -98,7 +108,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     public CoverageMapping call() {
 
         int month = coverageMapping.getPeriod().getMonth();
-        String contractNumber = coverageMapping.getContract().getContractNumber();
+        String contractNumber = coverageMapping.getContractNumber();
 
         final Set<Identifiers> patientIds = new HashSet<>();
         int bundleNo = 1;
@@ -191,9 +201,9 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
      * Filter out patients with unknown reference years or unexpected reference years.
      *
      * The reference year on a patient should be equal to or greater than the year of enrollment we are searching for.
-     * Sometimes the reference year will not match the {@link gov.cms.ab2d.common.model.CoveragePeriod}
+     * Sometimes the reference year will not match the {@link CoveragePeriod}
      * but as long as it is greater than or equal it is okay. Patients with reference years before the
-     * {@link gov.cms.ab2d.common.model.CoveragePeriod#getYear()} are discarded.
+     * {@link CoveragePeriod#getYear()} are discarded.
      */
     private boolean filterByYear(IDomainResource patient) {
         int referenceYear = ExtensionUtils.getReferenceYear(patient);
@@ -267,7 +277,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
 
     /**
      * Given a contract number, month, and year, call BFDs API to begin paging through all patients
-     * associated with that contract for that {@link gov.cms.ab2d.common.model.CoveragePeriod}
+     * associated with that contract for that {@link CoveragePeriod}
      *
      * @param contractNumber - the PDP's contract number
      * @param searchMonth - the month to pull data for (1-12)
@@ -293,11 +303,11 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
      * @return if we're in sandbox, return the synthetic data year unless it's the new Synthea data which can use
      * the correct year
      */
-    int getCorrectedYear(Contract contract, int coverageYear) {
+    int getCorrectedYear(Ab2dEnvironment appEnv, int coverageYear) {
 
         // Synthea contracts use realistic enrollment reference years so only original
         // synthetic contracts need to have the year modified
-        if (contract.getContractType() == Contract.ContractType.CLASSIC_TEST) {
+        if (appEnv == Ab2dEnvironment.SANDBOX) {
             return SYNTHETIC_DATA_YEAR;
         }
 
