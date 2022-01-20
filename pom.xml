@@ -164,9 +164,6 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
-                        <configuration>
-                            <outputDirectory>target/site/</outputDirectory>
-                        </configuration>
                     </execution>
                     <execution>
                         <id>jacoco-check</id>
