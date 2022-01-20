@@ -5,7 +5,9 @@ import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.hpms.SpringBootTestApp;
+import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizationInfo;
 import org.assertj.core.util.Lists;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -20,6 +22,10 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -62,6 +68,48 @@ public class AttestationUpdaterServiceTest {
         assertTrue(result.isEmpty());
     }
 
+    @Test
+    void hasChanges() {
+        HPMSOrganizationInfo info = new HPMSOrganizationInfo();
+        info.setParentOrgId(2);
+        Contract contract = new Contract();
+        contract.setHpmsParentOrgId(1L);
+        assertTrue(info.hasChanges(contract));
+    }
+
+    @Test
+    void updateCoverage() {
+        HPMSOrganizationInfo info = new HPMSOrganizationInfo();
+        info.setParentOrgId(2);
+        Contract contract = new Contract();
+        contract.setHpmsParentOrgId(1L);
+        info.updateContract(contract);
+        assertEquals(2L, (long) contract.getHpmsParentOrgId());
+    }
+
+    @Test
+    void considerContract() throws NoSuchMethodException {
+        Method method = aus.getClass().getDeclaredMethod("considerContract", List.class, Contract.class, HPMSOrganizationInfo.class);
+        method.setAccessible(true);
+        Contract contract = new Contract();
+        contract.setId(1L);
+        contract.setAttestedOn(OffsetDateTime.now());
+        List<Contract> list = new ArrayList<>();
+        Assertions.assertThrows(Exception.class,
+                () -> method.invoke(aus, list, contract, null));
+    }
+
+    @Test
+    void considerContractAdd() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Method method = aus.getClass().getDeclaredMethod("considerContract", List.class, Contract.class, HPMSOrganizationInfo.class);
+        method.setAccessible(true);
+        Contract contract = new Contract();
+        contract.setId(1L);
+        contract.setAttestedOn(OffsetDateTime.now());
+        List<Contract> list = new ArrayList<>();
+        method.invoke(aus, list, contract, new HPMSOrganizationInfo());
+    }
+
     @TestConfiguration
     static class MockHpmsFetcherConfig {
         @Mock
@@ -77,8 +125,7 @@ public class AttestationUpdaterServiceTest {
 
         @Qualifier("for_testing")
         @Bean()
-        public AttestationUpdaterServiceImpl getMockService()
-        {
+        public AttestationUpdaterServiceImpl getMockService() {
             return new AttestationUpdaterServiceImpl(contractRepository, new MockHpmsFetcher(), logManager);
         }
     }
