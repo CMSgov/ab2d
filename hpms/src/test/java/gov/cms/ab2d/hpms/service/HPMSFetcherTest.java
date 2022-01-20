@@ -5,14 +5,20 @@ import gov.cms.ab2d.hpms.SpringBootTestApp;
 import gov.cms.ab2d.hpms.hmsapi.HPMSAttestation;
 import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizationInfo;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.ResponseCookie;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -34,7 +40,7 @@ class HPMSFetcherTest {
 
     private volatile List<HPMSOrganizationInfo> orgs;
 
-    private volatile Set<HPMSAttestation>  attestations;
+    private volatile Set<HPMSAttestation> attestations;
 
     private CountDownLatch lock = new CountDownLatch(1);
 
@@ -65,6 +71,13 @@ class HPMSFetcherTest {
         assertFalse(attestations.isEmpty());
         // E4744 is not returned by the API
         assertEquals(NUM_CONTRACTS, attestations.size());
+    }
+
+    @Test
+    void updateContractMissing() throws NoSuchMethodException {
+        Method method = fetcher.getClass().getDeclaredMethod("buildURI");
+        method.setAccessible(true);
+        Assertions.assertDoesNotThrow(() -> method.invoke(fetcher));
     }
 
     private void waitForCallback() {

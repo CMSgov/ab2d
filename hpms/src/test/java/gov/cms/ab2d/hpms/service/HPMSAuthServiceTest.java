@@ -1,23 +1,33 @@
 package gov.cms.ab2d.hpms.service;
 
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.hpms.SpringBootTestApp;
+import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizationInfo;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = SpringBootTestApp.class)
 @TestPropertySource(locations = "/application.hpms.properties")
 @Testcontainers
- class HPMSAuthServiceTest {
+class HPMSAuthServiceTest {
 
     @Autowired
     HPMSAuthServiceImpl authService;
@@ -71,6 +81,22 @@ import static org.junit.jupiter.api.Assertions.*;
     }
 
 
+    @Test
+    void extractCookies() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Method method = authService.getClass().getDeclaredMethod("extractCookies", MultiValueMap.class);
+        method.setAccessible(true);
+        LinkedMultiValueMap<String, ResponseCookie> cookies = new LinkedMultiValueMap<>();
+        cookies.add("test", ResponseCookie.fromClientResponse("test", "test").build());
+        String header = (String) method.invoke(authService, cookies);
+        assertTrue(header.contains("test"));
+    }
+
+    @Test
+    void refreshToken() throws NoSuchMethodException {
+        Method method = authService.getClass().getDeclaredMethod("refreshToken", long.class);
+        method.setAccessible(true);
+        Assertions.assertDoesNotThrow(() -> method.invoke(authService, System.currentTimeMillis()));
+    }
 
     @AfterEach
     public void shutdown() {
