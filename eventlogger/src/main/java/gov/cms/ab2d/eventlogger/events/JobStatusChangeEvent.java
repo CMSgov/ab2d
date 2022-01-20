@@ -37,8 +37,6 @@ public class JobStatusChangeEvent extends LoggableEvent {
         if (description != null && !description.isBlank()) {
             String[] labelAndDescription = description.split("\\s+", 2);
 
-            label = labelAndDescription[0];
-
             // Single word description then do not apply a label
             if (labelAndDescription.length == 1) {
                 description = labelAndDescription[0];
