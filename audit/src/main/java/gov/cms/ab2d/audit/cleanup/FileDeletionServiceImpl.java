@@ -24,7 +24,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -60,6 +62,9 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         log.info("File deletion service kicked off");
         validateEfsMount();
 
+        List<String> jobIds = Stream.of((new File(efsMount)).listFiles())
+                .map(f -> f.getName()).collect(Collectors.toList());
+
         try (Stream<Path> filePaths = Files.walk(Paths.get(efsMount), FileVisitOption.FOLLOW_LINKS)) {
 
             List<Path> validFiles = new ArrayList<>();
@@ -75,18 +80,24 @@ public class FileDeletionServiceImpl implements FileDeletionService {
                 }
             });
 
-            deleteExpiredJobFiles(validFiles);
-            deleteEmptyDirectories(directories);
+            deleteExpiredJobFiles(jobIds, validFiles);
+            deleteEmptyDirectories(jobIds, directories);
 
         } catch (IOException e) {
             log.error("Encountered exception while trying to gather the list of files to delete", e);
         }
     }
 
-    void deleteEmptyDirectories(List<Path> emptyDirectories) {
-        for (Path directory : emptyDirectories) {
+    /**
+     * Delete any directories that are empty and expired.
+     *
+     * @param candidateDirs - the directories to delete (if they're empty and expired)
+     */
+    void deleteEmptyDirectories(List<String> jobIds, List<Path> candidateDirs) {
+            for (Path directory : candidateDirs) {
             try {
-                if (isEmptyDirectory(directory) && isExpiredDirectory(directory)) {
+                Job job = getJob(jobIds, directory);
+                if (isEmptyDirectory(directory) && job != null && isExpiredDirectory(job, directory)) {
                     Files.delete(directory);
 
                     // Log deleting a folder
@@ -101,15 +112,14 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         }
     }
 
-    void deleteExpiredJobFiles(List<Path> validFiles) {
+    void deleteExpiredJobFiles(List<String> jobIds, List<Path> validFiles) {
         // The list of jobs that were expired
         Set<String> jobsDeleted = new HashSet<>();
         for (Path file : validFiles) {
 
             try {
                 // Get the JobId from the name
-                var jobUuid = getJobFromFile(file);
-                var job = findJob(jobUuid, file);
+                var job = getJob(jobIds, file);
                 var currentFileAge = getPathAge(file, job);
                 final Instant deleteBoundary = calculateOldestDeletableTime();
 
@@ -118,7 +128,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
 
                     // If a job file was deleted make sure we capture that
                     if (job != null) {
-                        jobsDeleted.add(jobUuid);
+                        jobsDeleted.add(job.getJobUuid());
                     }
                 } else {
                     logFileNotEligibleForDeletion(file);
@@ -134,10 +144,6 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         }
     }
 
-    private String getJobFromFile(Path file) {
-        return new File(file.toUri()).getParentFile().getName();
-    }
-
     /**
      * Check whether directory contains any files
      * @param directory directory to check which must exist
@@ -151,6 +157,20 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         }
     }
 
+    private Job getJob(List<String> jobIds, Path path) {
+        if (jobIds == null || jobIds.isEmpty()) {
+            return null;
+        }
+
+        Optional<String> foundJob = jobIds.stream().filter(jobId -> path.toFile().getAbsolutePath().contains(jobId)).findAny();
+        if (foundJob.isEmpty()) {
+            return null;
+        }
+
+        String jobId = foundJob.get();
+        return findJob(jobId, path);
+    }
+
     /**
      * Check whether a directory is associated with a job, if the directory is check that the job has completed more
      * than x hours ago.
@@ -158,15 +178,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
      * @return true if directory belongs to a job that has finished long enough ago
      * @throws IOException should not throw ever because getDeleteCheckTime does not hit edge case
      */
-    private boolean isExpiredDirectory(Path directory) throws IOException {
-        var jobUuid = new File(directory.toUri()).getName();
-        var job = findJob(jobUuid, directory);
-
-        // If no job is found then we are not going to delete the file
-        if (job == null) {
-            return false;
-        }
-
+    private boolean isExpiredDirectory(Job job, Path directory) throws IOException {
         // The only way getPathAge throws an IOException is if the job is null,
         // because that is never the case getPathAge should never throw an IOException
         Instant currentAge = getPathAge(directory, job);

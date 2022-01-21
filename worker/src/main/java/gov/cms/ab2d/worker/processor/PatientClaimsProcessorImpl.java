@@ -32,6 +32,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Future;
 
+import static gov.cms.ab2d.aggregator.FileOutputType.DATA;
+import static gov.cms.ab2d.aggregator.FileOutputType.ERROR;
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 
@@ -52,6 +54,9 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     @Value("${aggregator.directory.streaming}")
     private String streamingDir;
 
+    @Value("${aggregator.file.buffer.size}")
+    private int bufferSize;
+
     private static final OffsetDateTime START_CHECK = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
 
     /**
@@ -69,7 +74,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         try {
             File file = null;
             String anyErrors = null;
-            try (BeneficiaryStream stream = new BeneficiaryStream(request.getJob(), request.getEfsMount(), false, this.streamingDir, this.finishedDir)) {
+            try (BeneficiaryStream stream = new BeneficiaryStream(request.getJob(), request.getEfsMount(), DATA,
+                    this.streamingDir, this.finishedDir, this.bufferSize)) {
                 file = stream.getFile();
                 logManager.log(new FileEvent(request.getOrganization(), request.getJob(), stream.getFile(), FileEvent.FileStatus.OPEN));
                 for (CoverageSummary patient : patients) {
@@ -82,7 +88,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             }
             if (anyErrors != null && anyErrors.length() > 0) {
                 File errorFile = null;
-                try (BeneficiaryStream stream = new BeneficiaryStream(request.getJob(), request.getEfsMount(), true, this.streamingDir, this.finishedDir)) {
+                try (BeneficiaryStream stream = new BeneficiaryStream(request.getJob(), request.getEfsMount(), ERROR,
+                        this.streamingDir, this.finishedDir, this.bufferSize)) {
                     errorFile = stream.getFile();
                     logManager.log(new FileEvent(request.getOrganization(), request.getJob(), stream.getFile(), FileEvent.FileStatus.OPEN));
                     stream.write(anyErrors);
@@ -112,11 +119,11 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         }
         int eobsWritten = 0;
         int eobsError = 0;
+
+        update.incPatientsWithEobsCount();
+        update.addEobFetchedCount(eobs.size());
+
         StringBuilder errorPayload = new StringBuilder();
-        if (eobs.size() > 0) {
-            update.incPatientsWithEobsCount();
-            update.addEobFetchedCount(eobs.size());
-        }
         for (IBaseResource resource : eobs) {
             try {
                 stream.write(parser.encodeResourceToString(resource) + System.lineSeparator());

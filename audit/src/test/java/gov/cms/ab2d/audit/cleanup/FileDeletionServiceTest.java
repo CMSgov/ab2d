@@ -537,4 +537,50 @@ class FileDeletionServiceTest {
         // Confirm no exceptions thrown
         fileDeletionService.deleteFiles();
     }
+
+    @Test
+    void testAggregatorStuff(@TempDir File tmpDir) throws IOException {
+        String miscString = "Hello";
+        String jobId = job.getJobUuid();
+
+        ReflectionTestUtils.setField(fileDeletionService, "efsMount", tmpDir.getAbsolutePath());
+
+        // Create the directories
+        Path jobDir = Files.createDirectory(Path.of(tmpDir.getAbsolutePath(), jobId));
+        Path finishedDir = Files.createDirectory(Path.of(tmpDir.getAbsolutePath(), jobId, "finished"));
+        Path streamDir = Files.createDirectory(Path.of(tmpDir.getAbsolutePath(), jobId, "streaming"));
+
+        // Create the files
+        List<Path> files = new ArrayList<>();
+        files.add(Files.createFile(Path.of(tmpDir.getAbsolutePath(), jobId, "tstfile.ndjson")));
+        files.add(Files.createFile(Path.of(tmpDir.getAbsolutePath(), jobId, "tstfile.txt")));
+        files.add(Files.createFile(Path.of(tmpDir.getAbsolutePath(), jobId, "finished", "tstfile.ndjson")));
+        files.add(Files.createFile(Path.of(tmpDir.getAbsolutePath(), jobId, "streaming", "tstfile.ndjson")));
+        files.add(Files.createFile(Path.of(tmpDir.getAbsolutePath(), jobId, "streaming", "tstfile.txt")));
+
+        // Write data to the files
+        for (Path file : files) {
+            Files.writeString(file, miscString);
+            changeFileCreationDate(file);
+        }
+
+        // Update the creation time of the directories after you add the files because putting files in the dir changes
+        // its time.
+        changeFileCreationDate(jobDir);
+        changeFileCreationDate(finishedDir);
+        changeFileCreationDate(streamDir);
+
+        fileDeletionService.deleteFiles();
+
+        int numExists = 0;
+        for (Path p : files) {
+            if (p.toFile().exists()) {
+                numExists++;
+            }
+        }
+        assertEquals(2, numExists);
+
+        assertTrue(streamDir.toFile().exists());
+        assertFalse(finishedDir.toFile().exists());
+    }
 }

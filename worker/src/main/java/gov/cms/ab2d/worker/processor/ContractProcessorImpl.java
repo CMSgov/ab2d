@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.aggregator.AggregatorCallable;
+import gov.cms.ab2d.aggregator.FileOutputType;
 import gov.cms.ab2d.aggregator.FileUtils;
 import gov.cms.ab2d.aggregator.JobHelper;
 import com.newrelic.api.agent.NewRelic;
@@ -32,6 +33,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
+import static gov.cms.ab2d.aggregator.FileOutputType.DATA;
+import static gov.cms.ab2d.aggregator.FileOutputType.ERROR;
 import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
 import static gov.cms.ab2d.common.util.EventUtils.getOrganization;
@@ -162,8 +165,8 @@ public class ContractProcessorImpl implements ContractProcessor {
             }
 
             // Retrieve all the job output info
-            jobOutputs.addAll(getOutputs(job.getJobUuid(), false));
-            jobOutputs.addAll(getOutputs(job.getJobUuid(), true));
+            jobOutputs.addAll(getOutputs(job.getJobUuid(), DATA));
+            jobOutputs.addAll(getOutputs(job.getJobUuid(), ERROR));
             System.out.println("Number of outputs: " + jobOutputs.size());
 
         } catch (InterruptedException | IOException ex) {
@@ -173,12 +176,12 @@ public class ContractProcessorImpl implements ContractProcessor {
         return jobOutputs;
     }
 
-    List<JobOutput> getOutputs(String jobId, boolean error) {
+    List<JobOutput> getOutputs(String jobId, FileOutputType type) {
         List<JobOutput> jobOutputs = new ArrayList<>();
-        List<StreamOutput> dataOutputs = FileUtils.listFiles(efsMount + "/" + jobId, error).stream()
-                .map(file -> OutputHelper.createStreamOutput(file, error))
+        List<StreamOutput> dataOutputs = FileUtils.listFiles(efsMount + "/" + jobId, type).stream()
+                .map(file -> OutputHelper.createStreamOutput(file, type))
                 .collect(Collectors.toList());
-        dataOutputs.stream().map(output -> createJobOutput(output, error)).forEach(jobOutputs::add);
+        dataOutputs.stream().map(output -> createJobOutput(output, type)).forEach(jobOutputs::add);
         return jobOutputs;
     }
 
@@ -450,16 +453,16 @@ public class ContractProcessorImpl implements ContractProcessor {
      * From a file, return the JobOutput object
      *
      * @param streamOutput - the output file from the job
-     * @param isError      - if there was an error
+     * @param type         - file output type
      * @return - the job output object
      */
     @Trace(dispatcher = true)
     @SuppressFBWarnings
-    private JobOutput createJobOutput(StreamOutput streamOutput, boolean isError) {
+    private JobOutput createJobOutput(StreamOutput streamOutput, FileOutputType type) {
         JobOutput jobOutput = new JobOutput();
         jobOutput.setFilePath(streamOutput.getFilePath());
         jobOutput.setFhirResourceType(EOB);
-        jobOutput.setError(isError);
+        jobOutput.setError(type == ERROR);
         jobOutput.setChecksum(streamOutput.getChecksum());
         jobOutput.setFileLength(streamOutput.getFileLength());
         return jobOutput;

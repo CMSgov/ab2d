@@ -58,7 +58,6 @@ public class CoverageCheckPredicatesIntegrationTest {
 
     @BeforeEach
     void setUp() {
-
         contract = dataSetup.setupContract("TEST", ATTESTATION_TIME.toOffsetDateTime());
     }
 

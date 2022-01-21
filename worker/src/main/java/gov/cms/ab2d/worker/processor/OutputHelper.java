@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
+import gov.cms.ab2d.aggregator.FileOutputType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -15,23 +16,10 @@ import java.io.UncheckedIOException;
 @Slf4j
 @SuppressWarnings("checkstyle:visibilitymodifier")
 public class OutputHelper  {
-    public enum FileOutputType {
-        NDJSON(".ndjson"),
-        NDJSON_ERROR("_error.ndjson"),
-        ZIP(".zip");
 
-        private String suffix;
-        FileOutputType(String suffix) {
-            this.suffix = suffix;
-        }
-        public String getSuffix() {
-            return suffix;
-        }
-    }
-
-    public static StreamOutput createStreamOutput(File file, boolean error) {
+    public static StreamOutput createStreamOutput(File file, FileOutputType type) {
         String checksum = generateChecksum(file);
-        return new StreamOutput(file.getName(), checksum, file.length(), error);
+        return new StreamOutput(file.getName(), checksum, file.length(), type);
     }
 
     private static String generateChecksum(File file) {

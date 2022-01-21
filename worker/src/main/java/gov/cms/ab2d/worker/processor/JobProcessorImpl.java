@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import gov.cms.ab2d.aggregator.FileOutputType;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
@@ -35,8 +36,6 @@ import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.common.util.EventUtils.getOrganization;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PROD_LIST;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
-import static gov.cms.ab2d.worker.processor.OutputHelper.FileOutputType.NDJSON;
-import static gov.cms.ab2d.worker.processor.OutputHelper.FileOutputType.ZIP;
 
 @Slf4j
 @Service
@@ -293,9 +292,12 @@ public class JobProcessorImpl implements JobProcessor {
     private FilenameFilter getFilenameFilter() {
         return (dir, name) -> {
             final String filename = name.toLowerCase();
-            final String ndjson = NDJSON.getSuffix();
-            final String zip = ZIP.getSuffix();
-            return filename.endsWith(ndjson) || filename.endsWith(zip);
+            for (FileOutputType type : FileOutputType.values()) {
+                if (filename.endsWith(type.getSuffix())) {
+                    return true;
+                }
+            }
+            return false;
         };
     }
 
