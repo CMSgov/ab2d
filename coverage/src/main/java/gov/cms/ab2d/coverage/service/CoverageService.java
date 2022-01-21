@@ -21,7 +21,7 @@ public interface CoverageService {
 
     /**
      * Get {@link CoveragePeriod} in database matching provided triple
-     * @param contractDto existing
+     * @param contract existing
      * @param month valid month
      * @param year valid year (not later than current year)
      */
@@ -45,7 +45,7 @@ public interface CoverageService {
 
     /**
      * Retrieve list of coverage periods associated with a contract
-     * @param contractId contract to retrieve coverage periods for
+     * @param contractNumber contract to retrieve coverage periods for
      * @return list of coverage periods associated with a contract
      */
     List<CoveragePeriod> findAssociatedCoveragePeriods(String contractNumber);

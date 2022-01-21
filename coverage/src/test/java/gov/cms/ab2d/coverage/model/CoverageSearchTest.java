@@ -1,7 +1,7 @@
 package gov.cms.ab2d.coverage.model;
 
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
-import gov.cms.ab2d.coverage.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.coverage.util.AB2DCoveragePostgressqlContainer;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import java.time.OffsetDateTime;
 import java.util.Optional;
@@ -15,8 +15,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -29,7 +27,7 @@ class CoverageSearchTest {
 
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
-    private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
+    private static final PostgreSQLContainer postgreSQLContainer = new AB2DCoveragePostgressqlContainer();
 
     @Autowired
     private CoverageSearchRepository coverageSearchRepository;

@@ -14,7 +14,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-
 @Entity(name = "bene_coverage_period")
 @Getter
 @Setter

@@ -1,8 +1,9 @@
 package gov.cms.ab2d.coverage.model;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.Getter;
-
-import java.util.*;
 
 @Getter
 public class CoverageMapping {
