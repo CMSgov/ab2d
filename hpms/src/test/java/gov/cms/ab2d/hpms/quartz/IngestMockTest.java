@@ -26,7 +26,7 @@ import static org.mockito.Mockito.when;
 @SpringBootTest(classes = SpringBootTestApp.class)
 @TestPropertySource(locations = "/application.hpms.properties")
 @Testcontainers
-class InjestMockTest {
+class IngestMockTest {
 
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
