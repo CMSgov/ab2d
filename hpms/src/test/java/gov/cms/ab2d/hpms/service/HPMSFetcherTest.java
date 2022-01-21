@@ -14,10 +14,13 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -76,6 +79,21 @@ class HPMSFetcherTest {
         retrieveTop6Contracts();
     }
 
+    @Test
+    void retrieveSponsorInfoNull() {
+        Assertions.assertThrows(NullPointerException.class, () -> fetcher.retrieveSponsorInfo(null));
+    }
+
+    @Test
+    void retrieveAttestationInfoNullCallback() {
+        Assertions.assertThrows(NullPointerException.class, () -> fetcher.retrieveAttestationInfo(null, new ArrayList<>()));
+    }
+
+    @Test
+    void retrieveAttestationInfoNullContracts() {
+        fetcher.retrieveAttestationInfo(this::processAttestations, null);
+    }
+
     List<String> retrieveTop6Contracts() {
         fetcher.retrieveSponsorInfo(this::processOrgInfo);
         int retries = 0;
@@ -109,6 +127,15 @@ class HPMSFetcherTest {
         Method method = fetcher.getClass().getDeclaredMethod("buildURI");
         method.setAccessible(true);
         Assertions.assertDoesNotThrow(() -> method.invoke(fetcher));
+    }
+
+    @Test
+    void buildAttestationURI() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        HPMSFetcherImpl hpmsFetcher = (HPMSFetcherImpl) fetcher;
+        Method method = hpmsFetcher.getClass().getDeclaredMethod("buildAttestationURI", List.class);
+        method.setAccessible(true);
+        String param = UUID.randomUUID().toString();
+        assertTrue(((URI) method.invoke(hpmsFetcher, List.of(param))).getQuery().contains(param));
     }
 
     private void waitForCallback() {
