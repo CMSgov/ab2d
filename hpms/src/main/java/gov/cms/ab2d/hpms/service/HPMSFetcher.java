@@ -1,14 +1,15 @@
 package gov.cms.ab2d.hpms.service;
 
-import gov.cms.ab2d.hpms.hmsapi.HPMSAttestationsHolder;
-import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizations;
+import gov.cms.ab2d.hpms.hmsapi.HPMSAttestation;
+import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizationInfo;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public interface HPMSFetcher {
 
-    void retrieveSponsorInfo(Consumer<HPMSOrganizations> hpmsOrgCallback);
+    void retrieveSponsorInfo(Consumer<List<HPMSOrganizationInfo>> hpmsOrgCallback);
 
-    void retrieveAttestationInfo(Consumer<HPMSAttestationsHolder> hpmsAttestationCallback, List<String> contractIds);
+    void retrieveAttestationInfo(Consumer<Set<HPMSAttestation>> hpmsAttestationCallback, List<String> contractIds);
 }
