@@ -5,10 +5,7 @@ import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.dto.PdpClientDTO;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.coverage.model.CoveragePeriod;
-import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
@@ -17,14 +14,20 @@ import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Constants;
+import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.DateUtil;
+import gov.cms.ab2d.coverage.model.CoverageContractDTO;
+import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
+import gov.cms.ab2d.coverage.model.Identifiers;
+import gov.cms.ab2d.coverage.model.JobStatus;
 import gov.cms.ab2d.coverage.repository.CoveragePeriodRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
+import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import gov.cms.ab2d.fhir.IdentifierUtils;
 import gov.cms.ab2d.worker.config.ContractMapping;
 import java.time.DayOfWeek;
@@ -109,7 +112,10 @@ class CoverageDriverTest {
     private PropertiesService propertiesService;
 
     @Autowired
-    private CoverageDataSetup dataSetup;
+    private DataSetup dataSetup;
+
+    @Autowired
+    private CoverageDataSetup coverageDataSetup;
 
     @Autowired
     private CoverageLockWrapper searchLock;
@@ -119,6 +125,7 @@ class CoverageDriverTest {
 
     private Contract contract;
     private Contract contract1;
+    private CoverageContractDTO coverageContractDTO;
     private CoveragePeriod january;
     private CoveragePeriod february;
     private CoveragePeriod march;
@@ -139,11 +146,13 @@ class CoverageDriverTest {
 
         contract1 = dataSetup.setupContract("TST-45", AB2D_EPOCH.toOffsetDateTime());
 
+        coverageContractDTO = new CoverageContractDTO("TST-45", AB2D_EPOCH.toOffsetDateTime());
+
         contractRepo.saveAndFlush(contract);
 
-        january = dataSetup.createCoveragePeriod(contract, 1, 2020);
-        february = dataSetup.createCoveragePeriod(contract, 2, 2020);
-        march = dataSetup.createCoveragePeriod(contract, 3, 2020);
+        january = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 1, 2020);
+        february = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 2, 2020);
+        march = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 3, 2020);
 
         PdpClientDTO contractPdpClient = createClient(contract, "TST-12", SPONSOR_ROLE);
         pdpClientService.createClient(contractPdpClient);
@@ -154,7 +163,7 @@ class CoverageDriverTest {
         job.setContractNumber(contract.getContractNumber());
         job.setJobUuid("unique");
         job.setPdpClient(pdpClient);
-        job.setStatus(JobStatus.SUBMITTED);
+        job.setStatus(gov.cms.ab2d.common.model.JobStatus.SUBMITTED);
         job.setCreatedAt(OffsetDateTime.now());
         job.setFhirVersion(STU3);
         jobRepo.saveAndFlush(job);
@@ -167,7 +176,7 @@ class CoverageDriverTest {
         taskExecutor.setCorePoolSize(3);
         taskExecutor.initialize();
 
-        processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS);
+        processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS, Ab2dEnvironment.IMPL);
         driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesService, processor, searchLock, contractMapping);
     }
 
@@ -237,15 +246,15 @@ class CoverageDriverTest {
             fail("could not queue periods due to driver exception", exception);
         }
 
-        List<CoveragePeriod> periods = coveragePeriodRepo.findAllByContractId(contract.getId());
+        List<CoveragePeriod> periods = coveragePeriodRepo.findAllByContractNumber(contract.getContractNumber());
         assertFalse(periods.isEmpty());
         assertEquals(expectedNumPeriods, periods.size());
 
-        periods = coveragePeriodRepo.findAllByContractId(attestedAfterEpoch.getId());
+        periods = coveragePeriodRepo.findAllByContractNumber(attestedAfterEpoch.getContractNumber());
         assertFalse(periods.isEmpty());
         assertEquals(expectedNumPeriods - 3, periods.size());
 
-        periods = coveragePeriodRepo.findAllByContractId(attestedBeforeEpoch.getId());
+        periods = coveragePeriodRepo.findAllByContractNumber(attestedBeforeEpoch.getContractNumber());
         assertFalse(periods.isEmpty());
         assertEquals(expectedNumPeriods, periods.size());
 
@@ -266,7 +275,7 @@ class CoverageDriverTest {
         } catch (CoverageDriverException | InterruptedException exception) {
             fail("could not queue periods due to driver exception", exception);
         }
-        List<CoveragePeriod> periods = coveragePeriodRepo.findAllByContractId(testContract.getId());
+        List<CoveragePeriod> periods = coveragePeriodRepo.findAllByContractNumber(testContract.getContractNumber());
         assertTrue(periods.isEmpty());
     }
 
@@ -340,17 +349,17 @@ class CoverageDriverTest {
         OffsetDateTime oneMonthAgo = currentDate.minusMonths(1);
         OffsetDateTime twoMonthsAgo = currentDate.minusMonths(2);
 
-        CoveragePeriod currentMonth = dataSetup.createCoveragePeriod(contract, currentDate.getMonthValue(), currentDate.getYear());
+        CoveragePeriod currentMonth = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), currentDate.getMonthValue(), currentDate.getYear());
         currentMonth.setStatus(JobStatus.SUCCESSFUL);
         currentMonth.setLastSuccessfulJob(previousSunday);
         coveragePeriodRepo.saveAndFlush(currentMonth);
 
-        CoveragePeriod oneMonth = dataSetup.createCoveragePeriod(contract, oneMonthAgo.getMonthValue(), oneMonthAgo.getYear());
+        CoveragePeriod oneMonth = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), oneMonthAgo.getMonthValue(), oneMonthAgo.getYear());
         oneMonth.setStatus(JobStatus.SUCCESSFUL);
         oneMonth.setLastSuccessfulJob(previousSunday);
         coveragePeriodRepo.saveAndFlush(oneMonth);
 
-        CoveragePeriod twoMonth = dataSetup.createCoveragePeriod(contract, twoMonthsAgo.getMonthValue(), twoMonthsAgo.getYear());
+        CoveragePeriod twoMonth = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), twoMonthsAgo.getMonthValue(), twoMonthsAgo.getYear());
         twoMonth.setStatus(JobStatus.SUCCESSFUL);
         twoMonth.setLastSuccessfulJob(previousSunday);
         coveragePeriodRepo.saveAndFlush(twoMonth);
@@ -383,17 +392,17 @@ class CoverageDriverTest {
         OffsetDateTime oneMonthAgo = currentDate.minusMonths(1);
         OffsetDateTime twoMonthsAgo = currentDate.minusMonths(2);
 
-        CoveragePeriod currentMonth = dataSetup.createCoveragePeriod(contract, currentDate.getMonthValue(), currentDate.getYear());
+        CoveragePeriod currentMonth = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), currentDate.getMonthValue(), currentDate.getYear());
         currentMonth.setStatus(JobStatus.SUCCESSFUL);
         currentMonth.setLastSuccessfulJob(previousSunday);
         coveragePeriodRepo.saveAndFlush(currentMonth);
 
-        CoveragePeriod oneMonth = dataSetup.createCoveragePeriod(contract, oneMonthAgo.getMonthValue(), oneMonthAgo.getYear());
+        CoveragePeriod oneMonth = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), oneMonthAgo.getMonthValue(), oneMonthAgo.getYear());
         oneMonth.setStatus(JobStatus.SUCCESSFUL);
         oneMonth.setLastSuccessfulJob(previousSunday);
         coveragePeriodRepo.saveAndFlush(oneMonth);
 
-        CoveragePeriod twoMonth = dataSetup.createCoveragePeriod(contract, twoMonthsAgo.getMonthValue(), twoMonthsAgo.getYear());
+        CoveragePeriod twoMonth = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), twoMonthsAgo.getMonthValue(), twoMonthsAgo.getYear());
         twoMonth.setStatus(JobStatus.SUCCESSFUL);
         twoMonth.setLastSuccessfulJob(previousSunday);
         coveragePeriodRepo.saveAndFlush(twoMonth);
@@ -423,22 +432,22 @@ class CoverageDriverTest {
         OffsetDateTime twoMonthsAgo = currentDate.minusMonths(2);
         OffsetDateTime threeMonthsAgo = currentDate.minusMonths(3);
 
-        CoveragePeriod currentMonth = dataSetup.createCoveragePeriod(contract, currentDate.getMonthValue(), currentDate.getYear());
+        CoveragePeriod currentMonth = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), currentDate.getMonthValue(), currentDate.getYear());
         currentMonth.setStatus(JobStatus.SUCCESSFUL);
         currentMonth.setLastSuccessfulJob(previousSaturday);
         coveragePeriodRepo.saveAndFlush(currentMonth);
 
-        CoveragePeriod oneMonth = dataSetup.createCoveragePeriod(contract, oneMonthAgo.getMonthValue(), oneMonthAgo.getYear());
+        CoveragePeriod oneMonth = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), oneMonthAgo.getMonthValue(), oneMonthAgo.getYear());
         oneMonth.setStatus(JobStatus.SUCCESSFUL);
         oneMonth.setLastSuccessfulJob(previousSaturday);
         coveragePeriodRepo.saveAndFlush(oneMonth);
 
-        CoveragePeriod twoMonth = dataSetup.createCoveragePeriod(contract, twoMonthsAgo.getMonthValue(), twoMonthsAgo.getYear());
+        CoveragePeriod twoMonth = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), twoMonthsAgo.getMonthValue(), twoMonthsAgo.getYear());
         twoMonth.setStatus(JobStatus.SUCCESSFUL);
         twoMonth.setLastSuccessfulJob(previousSaturday);
         coveragePeriodRepo.saveAndFlush(twoMonth);
 
-        CoveragePeriod threeMonth = dataSetup.createCoveragePeriod(contract, threeMonthsAgo.getMonthValue(), threeMonthsAgo.getYear());
+        CoveragePeriod threeMonth = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), threeMonthsAgo.getMonthValue(), threeMonthsAgo.getYear());
         threeMonth.setStatus(JobStatus.SUCCESSFUL);
         threeMonth.setLastSuccessfulJob(previousSaturday);
         coveragePeriodRepo.saveAndFlush(threeMonth);
@@ -462,7 +471,7 @@ class CoverageDriverTest {
 
         OffsetDateTime currentDate = OffsetDateTime.now(DateUtil.AB2D_ZONE);
 
-        CoveragePeriod currentMonth = dataSetup.createCoveragePeriod(contract, currentDate.getMonthValue(), currentDate.getYear());
+        CoveragePeriod currentMonth = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), currentDate.getMonthValue(), currentDate.getYear());
         currentMonth.setStatus(JobStatus.IN_PROGRESS);
         currentMonth.setLastSuccessfulJob(currentDate.minusDays(STALE_DAYS + 1));
         coveragePeriodRepo.saveAndFlush(currentMonth);
@@ -492,7 +501,7 @@ class CoverageDriverTest {
                 .truncatedTo(ChronoUnit.DAYS)
                 .with(TemporalAdjusters.previous(DayOfWeek.SUNDAY)).minusSeconds(1);
 
-        CoveragePeriod currentMonth = dataSetup.createCoveragePeriod(contract, currentDate.getMonthValue(), currentDate.getYear());
+        CoveragePeriod currentMonth = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), currentDate.getMonthValue(), currentDate.getYear());
         currentMonth.setStatus(JobStatus.IN_PROGRESS);
         currentMonth.setLastSuccessfulJob(previousSaturday);
         coveragePeriodRepo.saveAndFlush(currentMonth);
@@ -579,7 +588,7 @@ class CoverageDriverTest {
     @Test
     void getNextSearchPrioritizesCoverageForExistinEobJobs() {
 
-        CoveragePeriod secondPeriod = dataSetup.createCoveragePeriod(contract1, 2, 2020);
+        CoveragePeriod secondPeriod = coverageDataSetup.createCoveragePeriod(contract1.getContractName(), 2, 2020);
 
         assertTrue(driver.getNextSearch().isEmpty());
 
@@ -619,15 +628,15 @@ class CoverageDriverTest {
     void availableCoverageWhenPeriodSubmitted() {
 
         Job job = new Job();
-        job.setContractNumber(contract.getContractNumber());
+        job.setContractNumber(coverageContractDTO.getContractNumber());
         job.setCreatedAt(OffsetDateTime.now());
 
         try {
-            changeStatus(contract, AB2D_EPOCH.toOffsetDateTime(), JobStatus.SUBMITTED);
+            changeStatus(coverageContractDTO, AB2D_EPOCH.toOffsetDateTime(), JobStatus.SUBMITTED);
 
             // Make sure that there is a lastSuccessfulJob
             ZonedDateTime now = ZonedDateTime.now(AB2D_ZONE);
-            CoveragePeriod currentMonth = coverageService.getCoveragePeriod(contract, now.getMonthValue(), now.getYear());
+            CoveragePeriod currentMonth = coverageService.getCoveragePeriod(coverageContractDTO, now.getMonthValue(), now.getYear());
             currentMonth.setLastSuccessfulJob(OffsetDateTime.now().plusHours(2));
             currentMonth.setStatus(JobStatus.SUCCESSFUL);
             coveragePeriodRepo.saveAndFlush(currentMonth);
@@ -650,11 +659,11 @@ class CoverageDriverTest {
 
         try {
 
-            changeStatus(contract, AB2D_EPOCH.toOffsetDateTime(), JobStatus.IN_PROGRESS);
+            changeStatus(coverageContractDTO, AB2D_EPOCH.toOffsetDateTime(), JobStatus.IN_PROGRESS);
 
             // Make sure that there is a lastSuccessfulJob
             ZonedDateTime now = ZonedDateTime.now(AB2D_ZONE);
-            CoveragePeriod currentMonth = coverageService.getCoveragePeriod(contract, now.getMonthValue(), now.getYear());
+            CoveragePeriod currentMonth = coverageService.getCoveragePeriod(coverageContractDTO, now.getMonthValue(), now.getYear());
             currentMonth.setLastSuccessfulJob(OffsetDateTime.now().plusHours(2));
             currentMonth.setStatus(JobStatus.SUCCESSFUL);
             coveragePeriodRepo.saveAndFlush(currentMonth);
@@ -671,16 +680,16 @@ class CoverageDriverTest {
     void availableCoverageWhenAllSuccessful() {
 
         Job job = new Job();
-        job.setContractNumber(contract.getContractNumber());
+        job.setContractNumber(coverageContractDTO.getContractNumber());
         job.setCreatedAt(OffsetDateTime.now());
 
         try {
 
-            changeStatus(contract, AB2D_EPOCH.toOffsetDateTime(), JobStatus.SUCCESSFUL);
+            changeStatus(coverageContractDTO, AB2D_EPOCH.toOffsetDateTime(), JobStatus.SUCCESSFUL);
 
             // Make sure that there is a lastSuccessfulJob
             ZonedDateTime now = ZonedDateTime.now(AB2D_ZONE);
-            CoveragePeriod currentMonth = coverageService.getCoveragePeriod(contract, now.getMonthValue(), now.getYear());
+            CoveragePeriod currentMonth = coverageService.getCoveragePeriod(coverageContractDTO, now.getMonthValue(), now.getYear());
             currentMonth.setLastSuccessfulJob(OffsetDateTime.now().plusHours(2));
             currentMonth.setStatus(JobStatus.SUCCESSFUL);
             coveragePeriodRepo.saveAndFlush(currentMonth);
@@ -704,7 +713,7 @@ class CoverageDriverTest {
         Job job = new Job();
         job.setCreatedAt(OffsetDateTime.now());
 
-        Contract temp = contractRepo.findContractByContractNumber(contract.getContractNumber()).get();
+        Contract temp = contractRepo.findContractByContractNumber(coverageContractDTO.getContractNumber()).get();
         job.setContractNumber(temp.getContractNumber());
 
         OffsetDateTime since = OffsetDateTime.of(LocalDate.of(2020, 3, 1),
@@ -712,7 +721,7 @@ class CoverageDriverTest {
 
         try {
 
-            changeStatus(contract, since, JobStatus.SUCCESSFUL);
+            changeStatus(coverageContractDTO, since, JobStatus.SUCCESSFUL);
 
             LocalDate startMonth = LocalDate.of(2020, 3, 1);
             LocalTime startDay = LocalTime.of(0,0,0);
@@ -734,30 +743,6 @@ class CoverageDriverTest {
         }
     }
 
-    @DisplayName("Create a coverage period and a mapping job for an eob job if any periods do not exist or have never" +
-            " been searched")
-    @Test
-    void availableCoverageDiscoversCoveragePeriodsAndQueuesThem() {
-
-        Job job = new Job();
-        job.setContractNumber(contract.getContractNumber());
-
-        long numberPeriodsBeforeCheck = coveragePeriodRepo.count();
-
-        try {
-
-            boolean inProgressBeginningMonth = driver.isCoverageAvailable(job, contract);
-            assertFalse(inProgressBeginningMonth, "eob searches should run when only month after since is successful");
-
-            assertTrue(numberPeriodsBeforeCheck < coveragePeriodRepo.count());
-
-            Set<CoveragePeriod> periods = contract.getCoveragePeriods();
-            periods.forEach(period -> assertEquals(JobStatus.SUBMITTED, period.getStatus()));
-
-        } catch (InterruptedException | CoverageDriverException exception) {
-            fail("could not check for available coverage", exception);
-        }
-    }
 
     @DisplayName("Number of beneficiaries to process calculation works")
     @Test
@@ -767,7 +752,7 @@ class CoverageDriverTest {
         contract.setAttestedOn(OffsetDateTime.now().minus(1, ChronoUnit.SECONDS));
         contractRepo.save(contract);
 
-        CoveragePeriod period = dataSetup.createCoveragePeriod(contract, contract.getESTAttestationTime().getMonthValue(), contract.getESTAttestationTime().getYear());
+        CoveragePeriod period = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), contract.getESTAttestationTime().getMonthValue(), contract.getESTAttestationTime().getYear());
 
         int total = driver.numberOfBeneficiariesToProcess(job, contract);
         assertEquals(0, total);
@@ -829,7 +814,7 @@ class CoverageDriverTest {
         }
     }
 
-    private void changeStatus(Contract contract, OffsetDateTime attestationTime, JobStatus status) {
+    private void changeStatus(CoverageContractDTO contract, OffsetDateTime attestationTime, JobStatus status) {
 
         OffsetDateTime now = OffsetDateTime.now();
         while (attestationTime.isBefore(now)) {

@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.processor.coverage.check;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.service.CoverageService;
+import gov.cms.ab2d.worker.config.ContractMapping;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.ZonedDateTime;
@@ -49,7 +50,7 @@ public class CoveragePresentCheck extends CoverageCheckPredicate {
         List<String> noEnrollment = new ArrayList<>();
 
         ZonedDateTime now = getEndDateTime().minusMonths(1);
-        ZonedDateTime attestationTime = getAttestationTime(contract);
+        ZonedDateTime attestationTime = getAttestationTime(new ContractMapping().map(contract));
 
         ListIterator<CoverageCount> countIterator = coverageCounts.listIterator();
         while (attestationTime.isBefore(now)) {

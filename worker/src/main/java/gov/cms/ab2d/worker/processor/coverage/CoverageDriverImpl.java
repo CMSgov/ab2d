@@ -211,7 +211,7 @@ public class CoverageDriverImpl implements CoverageDriver {
                 // coverage periods for each contract
                 List<Contract> enabledContracts = pdpClientService.getAllEnabledContracts();
                 for (Contract contract : enabledContracts) {
-                    discoverCoveragePeriods(contract);
+                    discoverCoveragePeriods(mapping.map(contract));
                 }
 
                 log.info("discovered all coverage periods now exiting");
@@ -229,7 +229,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         }
     }
 
-    private void discoverCoveragePeriods(Contract contract) {
+    private void discoverCoveragePeriods(CoverageContractDTO contract) {
         // Assume current time is EST since all AWS deployments are in EST
         ZonedDateTime now = getEndDateTime();
         ZonedDateTime attestationTime = getAttestationTime(contract);
@@ -243,7 +243,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         }
 
         log.info("discovered {} coverage periods for contract {}", coveragePeriodsForContracts,
-                contract.getContractName());
+                contract.getContractNumber());
     }
 
     private Set<CoveragePeriod> findAndCancelStuckCoverageJobs() {
@@ -457,7 +457,7 @@ public class CoverageDriverImpl implements CoverageDriver {
 
             // Check whether a coverage period is missing for this contract.
             // If so then create those coverage periods.
-            discoverCoveragePeriods(contract);
+            discoverCoveragePeriods(mapping.map(contract));
 
             log.info("queueing never searched coverage metadata periods for {}", contractNumber);
             /*

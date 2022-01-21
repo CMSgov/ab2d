@@ -102,6 +102,18 @@ public class CoverageDataSetup {
         domainObjects.clear();
     }
 
+    public int countCoverage() {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*) FROM COVERAGE")) {
+            ResultSet rs = statement.executeQuery();
+
+            rs.next();
+            return rs.getInt(1);
+        } catch (SQLException sqlException) {
+            throw new RuntimeException(sqlException);
+        }
+    }
+
 
     public CoveragePeriod createCoveragePeriod(String contractNumber, int month, int year) {
         CoveragePeriod coveragePeriod = new CoveragePeriod();

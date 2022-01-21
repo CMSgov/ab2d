@@ -7,6 +7,7 @@ import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.worker.TestUtil;
 
+import gov.cms.ab2d.worker.config.ContractMapping;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,13 +20,16 @@ public class CoverageDriverStub implements CoverageDriver {
 
     private final int pageSize;
     private final int totalRecords;
+    private ContractMapping mapping;
 
     public CoverageDriverStub() {
         this.pageSize = 10;
         this.totalRecords = 20;
+        mapping = new ContractMapping();
     }
 
     public CoverageDriverStub(int pageSize, int totalRecords) {
+        super();
         this.pageSize = pageSize;
         this.totalRecords = totalRecords;
     }
@@ -53,7 +57,7 @@ public class CoverageDriverStub implements CoverageDriver {
     @Override
     public CoveragePagingResult pageCoverage(Job job, Contract contract) {
 
-        CoveragePagingRequest nextRequest = getNextRequest(null, job, contract);
+        CoveragePagingRequest nextRequest = getNextRequest(null, job, mapping.map(contract));
         List<CoverageSummary> results = getSummaries(null);
         return new CoveragePagingResult(results, nextRequest);
     }
@@ -61,7 +65,7 @@ public class CoverageDriverStub implements CoverageDriver {
     @Override
     public CoveragePagingResult pageCoverage(CoveragePagingRequest request) {
 
-        CoveragePagingRequest nextRequest = getNextRequest(request, null, request.getContractNumber());
+        CoveragePagingRequest nextRequest = getNextRequest(request, null, request.getContract());
         List<CoverageSummary> results = getSummaries(request);
         return new CoveragePagingResult(results, nextRequest);
     }
@@ -76,7 +80,7 @@ public class CoverageDriverStub implements CoverageDriver {
             long cursor = previousRequest.getCursor().get();
 
             if (cursor + pageSize < totalRecords) {
-                return new CoveragePagingRequest(pageSize, (cursor + pageSize), previousRequest, previousRequest.getJobStartTime());
+                return new CoveragePagingRequest(pageSize, (cursor + pageSize), previousRequest.getContract(), previousRequest.getJobStartTime());
             }
         }
 

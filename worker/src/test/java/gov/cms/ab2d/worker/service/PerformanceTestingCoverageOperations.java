@@ -1,33 +1,40 @@
 package gov.cms.ab2d.worker.service;
 
-import gov.cms.ab2d.common.model.*;
-import gov.cms.ab2d.common.repository.*;
+import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
-import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.repository.CoveragePeriodRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;
+import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.service.InsertionJob;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import javax.sql.DataSource;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 
-import javax.sql.DataSource;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
-import static java.util.stream.Collectors.joining;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Test performance of coverage service bulk read and write operations to make sure that
@@ -64,7 +71,10 @@ class PerformanceTestingCoverageOperations {
     private CoverageServiceRepository coverageServiceRepo;
 
     @Autowired
-    private CoverageDataSetup dataSetup;
+    private DataSetup dataSetup;
+
+    @Autowired
+    private CoverageDataSetup coverageDataSetup;
 
     @Autowired
     private DataSource dataSource;
@@ -103,9 +113,9 @@ class PerformanceTestingCoverageOperations {
 //        }
 
         contract = dataSetup.setupContract("TST-12", AB2D_EPOCH.toOffsetDateTime());
-        period1 = dataSetup.createCoveragePeriod(contract, 1, 2020);
-        period2 = dataSetup.createCoveragePeriod(contract, 2, 2020);
-        period3 = dataSetup.createCoveragePeriod(contract, 3, 2020);
+        period1 = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 1, 2020);
+        period2 = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 2, 2020);
+        period3 = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 3, 2020);
 
     }
 
@@ -157,58 +167,58 @@ class PerformanceTestingCoverageOperations {
 
         // Test to make sure there are no problems adding two contracts
         periods.add(period1);
-        periods.add(dataSetup.createCoveragePeriod(contract2, 1, 2020));
-        periods.add(dataSetup.createCoveragePeriod(contract, 1, 2021));
-        periods.add(dataSetup.createCoveragePeriod(contract2, 1, 2021));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract2.getContractNumber(), 1, 2020));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 1, 2021));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract2.getContractNumber(), 1, 2021));
 
         periods.add(period2);
-        periods.add(dataSetup.createCoveragePeriod(contract, 2, 2021));
-        periods.add(dataSetup.createCoveragePeriod(contract2, 2, 2020));
-        periods.add(dataSetup.createCoveragePeriod(contract2, 2, 2021));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 2, 2021));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract2.getContractNumber(), 2, 2020));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract2.getContractNumber(), 2, 2021));
 
         periods.add(period3);
-        periods.add(dataSetup.createCoveragePeriod(contract, 4, 2020));
-        periods.add(dataSetup.createCoveragePeriod(contract, 5, 2020));
-        periods.add(dataSetup.createCoveragePeriod(contract, 6, 2020));
-        periods.add(dataSetup.createCoveragePeriod(contract, 7, 2020));
-        periods.add(dataSetup.createCoveragePeriod(contract, 8, 2020));
-        periods.add(dataSetup.createCoveragePeriod(contract, 9, 2020));
-        periods.add(dataSetup.createCoveragePeriod(contract, 10, 2020));
-        periods.add(dataSetup.createCoveragePeriod(contract, 11, 2020));
-        periods.add(dataSetup.createCoveragePeriod(contract, 12, 2020));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 4, 2020));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 5, 2020));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 6, 2020));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 7, 2020));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 8, 2020));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 9, 2020));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 10, 2020));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 11, 2020));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 12, 2020));
 
-        periods.add(dataSetup.createCoveragePeriod(contract, 3, 2021));
-        periods.add(dataSetup.createCoveragePeriod(contract, 4, 2021));
-        periods.add(dataSetup.createCoveragePeriod(contract, 5, 2021));
-        periods.add(dataSetup.createCoveragePeriod(contract, 6, 2021));
-        periods.add(dataSetup.createCoveragePeriod(contract, 7, 2021));
-        periods.add(dataSetup.createCoveragePeriod(contract, 8, 2021));
-        periods.add(dataSetup.createCoveragePeriod(contract, 9, 2021));
-        periods.add(dataSetup.createCoveragePeriod(contract, 10, 2021));
-        periods.add(dataSetup.createCoveragePeriod(contract, 11, 2021));
-        periods.add(dataSetup.createCoveragePeriod(contract, 12, 2021));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 3, 2021));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 4, 2021));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 5, 2021));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 6, 2021));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 7, 2021));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 8, 2021));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 9, 2021));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 10, 2021));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 11, 2021));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 12, 2021));
 
-        periods.add(dataSetup.createCoveragePeriod(contract2, 3, 2020));
-        periods.add(dataSetup.createCoveragePeriod(contract2, 4, 2020));
-        periods.add(dataSetup.createCoveragePeriod(contract2, 5, 2020));
-        periods.add(dataSetup.createCoveragePeriod(contract2, 6, 2020));
-        periods.add(dataSetup.createCoveragePeriod(contract2, 7, 2020));
-        periods.add(dataSetup.createCoveragePeriod(contract2, 8, 2020));
-        periods.add(dataSetup.createCoveragePeriod(contract2, 9, 2020));
-        periods.add(dataSetup.createCoveragePeriod(contract2, 10, 2020));
-        periods.add(dataSetup.createCoveragePeriod(contract2, 11, 2020));
-        periods.add(dataSetup.createCoveragePeriod(contract2, 12, 2020));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract2.getContractNumber(), 3, 2020));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract2.getContractNumber(), 4, 2020));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract2.getContractNumber(), 5, 2020));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract2.getContractNumber(), 6, 2020));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract2.getContractNumber(), 7, 2020));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract2.getContractNumber(), 8, 2020));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract2.getContractNumber(), 9, 2020));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract2.getContractNumber(), 10, 2020));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract2.getContractNumber(), 11, 2020));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract2.getContractNumber(), 12, 2020));
 
-        periods.add(dataSetup.createCoveragePeriod(contract2, 3, 2021));
-        periods.add(dataSetup.createCoveragePeriod(contract2, 4, 2021));
-        periods.add(dataSetup.createCoveragePeriod(contract2, 5, 2021));
-        periods.add(dataSetup.createCoveragePeriod(contract2, 6, 2021));
-        periods.add(dataSetup.createCoveragePeriod(contract2, 7, 2021));
-        periods.add(dataSetup.createCoveragePeriod(contract2, 8, 2021));
-        periods.add(dataSetup.createCoveragePeriod(contract2, 9, 2021));
-        periods.add(dataSetup.createCoveragePeriod(contract2, 10, 2021));
-        periods.add(dataSetup.createCoveragePeriod(contract2, 11, 2021));
-        periods.add(dataSetup.createCoveragePeriod(contract2, 12, 2021));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract2.getContractNumber(), 3, 2021));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract2.getContractNumber(), 4, 2021));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract2.getContractNumber(), 5, 2021));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract2.getContractNumber(), 6, 2021));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract2.getContractNumber(), 7, 2021));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract2.getContractNumber(), 8, 2021));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract2.getContractNumber(), 9, 2021));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract2.getContractNumber(), 10, 2021));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract2.getContractNumber(), 11, 2021));
+        periods.add(coverageDataSetup.createCoveragePeriod(contract2.getContractNumber(), 12, 2021));
 
 
 //        Contract contract3 = dataSetup.setupContract("TST-56");

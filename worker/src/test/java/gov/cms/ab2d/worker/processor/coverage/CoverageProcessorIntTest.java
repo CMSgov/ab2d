@@ -61,10 +61,10 @@ class CoverageProcessorIntTest {
 
 
         Contract contract = contractRepo.findContractByContractNumber("Z0010").get();
-        CoveragePeriod january = dataSetup.createCoveragePeriod(contract, 1, 2000);
-        CoveragePeriod february = dataSetup.createCoveragePeriod(contract, 2, 2000);
-        CoveragePeriod march = dataSetup.createCoveragePeriod(contract, 3, 2000);
-        CoveragePeriod april = dataSetup.createCoveragePeriod(contract, 4, 2000);
+        CoveragePeriod january = dataSetup.createCoveragePeriod(contract.getContractNumber(), 1, 2000);
+        CoveragePeriod february = dataSetup.createCoveragePeriod(contract.getContractNumber(), 2, 2000);
+        CoveragePeriod march = dataSetup.createCoveragePeriod(contract.getContractNumber(), 3, 2000);
+        CoveragePeriod april = dataSetup.createCoveragePeriod(contract.getContractNumber(), 4, 2000);
 
         processor.queueCoveragePeriod(january, false);
         processor.queueCoveragePeriod(february, false);
