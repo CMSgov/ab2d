@@ -3,24 +3,32 @@ package gov.cms.ab2d.hpms.service;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.hpms.SpringBootTestApp;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = SpringBootTestApp.class)
 @TestPropertySource(locations = "/application.hpms.properties")
 @Testcontainers
-public class HPMSAuthServiceTest {
+class HPMSAuthServiceTest {
 
     @Autowired
     HPMSAuthServiceImpl authService;
+
 
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
@@ -56,6 +64,17 @@ public class HPMSAuthServiceTest {
         headers = new HttpHeaders();
         authService.buildAuthHeaders(headers);
         assertNotEquals(tokenExpiry, authService.getTokenExpires());
+    }
+
+    @Test
+    void headers() {
+        HttpHeaders headers = new HttpHeaders();
+        authService.buildAuthHeaders(headers);
+        // Method currently sets 3 headers
+        assertTrue(headers.size() >= 3);
+        headers.forEach((headerName, headerValue) -> {
+            assertNotNull(headerValue);
+        });
     }
 
     @AfterEach
