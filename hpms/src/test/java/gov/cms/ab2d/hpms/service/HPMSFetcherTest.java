@@ -86,12 +86,13 @@ class HPMSFetcherTest {
 
     @Test
     void retrieveAttestationInfoNullCallback() {
-        Assertions.assertThrows(NullPointerException.class, () -> fetcher.retrieveAttestationInfo(null, new ArrayList<>()));
+        List<String> contracts = new ArrayList<>();
+        Assertions.assertThrows(NullPointerException.class, () -> fetcher.retrieveAttestationInfo(null, contracts));
     }
 
     @Test
     void retrieveAttestationInfoNullContracts() {
-        fetcher.retrieveAttestationInfo(this::processAttestations, null);
+        Assertions.assertDoesNotThrow(() -> fetcher.retrieveAttestationInfo(this::processAttestations, null));
     }
 
     List<String> retrieveTop6Contracts() {
