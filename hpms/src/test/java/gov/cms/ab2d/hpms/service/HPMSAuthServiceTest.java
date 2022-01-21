@@ -77,24 +77,6 @@ class HPMSAuthServiceTest {
         });
     }
 
-
-    @Test
-    void extractCookies() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        Method method = authService.getClass().getDeclaredMethod("extractCookies", MultiValueMap.class);
-        method.setAccessible(true);
-        LinkedMultiValueMap<String, ResponseCookie> cookies = new LinkedMultiValueMap<>();
-        cookies.add("test", ResponseCookie.fromClientResponse("test", "test").build());
-        String header = (String) method.invoke(authService, cookies);
-        assertTrue(header.contains("test"));
-    }
-
-    @Test
-    void refreshToken() throws NoSuchMethodException {
-        Method method = authService.getClass().getDeclaredMethod("refreshToken", long.class);
-        method.setAccessible(true);
-        Assertions.assertDoesNotThrow(() -> method.invoke(authService, System.currentTimeMillis()));
-    }
-
     @AfterEach
     public void shutdown() {
         authService.cleanup();

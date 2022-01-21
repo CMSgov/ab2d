@@ -50,31 +50,6 @@ class HPMSFetcherTest {
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Test
-    void fetchTheSlippers() {
-        fetcher.retrieveSponsorInfo(this::processOrgInfo);
-        int retries = 0;
-        do {
-            waitForCallback();
-        } while (orgs == null && retries++ < 20);
-
-        assertNotNull(orgs);
-        assertFalse(orgs.isEmpty());
-
-        final int NUM_CONTRACTS = 6;
-        List<String> top6Contracts = extractTopContractIDs(NUM_CONTRACTS);
-        assertNotNull(top6Contracts);
-        assertFalse(top6Contracts.isEmpty());
-
-        lock = new CountDownLatch(1);
-        fetcher.retrieveAttestationInfo(this::processAttestations, top6Contracts);
-        waitForCallback();
-        assertNotNull(attestations);
-        assertFalse(attestations.isEmpty());
-        // E4744 is not returned by the API
-        assertEquals(NUM_CONTRACTS, attestations.size());
-    }
-
-    @Test
     void retrieveSponsorInfo() {
         retrieveTop6Contracts();
     }
@@ -95,6 +70,18 @@ class HPMSFetcherTest {
         Assertions.assertDoesNotThrow(() -> fetcher.retrieveAttestationInfo(this::processAttestations, null));
     }
 
+    @Test
+    void retrieveAttestationInfo() {
+        List<String> top6Contracts = retrieveTop6Contracts();
+        lock = new CountDownLatch(1);
+        fetcher.retrieveAttestationInfo(this::processAttestations, top6Contracts);
+        waitForCallback();
+        assertNotNull(attestations);
+        assertFalse(attestations.isEmpty());
+        // E4744 is not returned by the API
+        assertEquals(NUM_CONTRACTS, attestations.size());
+    }
+
     List<String> retrieveTop6Contracts() {
         fetcher.retrieveSponsorInfo(this::processOrgInfo);
         int retries = 0;
@@ -109,34 +96,6 @@ class HPMSFetcherTest {
         assertNotNull(top6Contracts);
         assertFalse(top6Contracts.isEmpty());
         return top6Contracts;
-    }
-
-    @Test
-    void retrieveAttestationInfo() {
-        List<String> top6Contracts = retrieveTop6Contracts();
-        lock = new CountDownLatch(1);
-        fetcher.retrieveAttestationInfo(this::processAttestations, top6Contracts);
-        waitForCallback();
-        assertNotNull(attestations);
-        assertFalse(attestations.isEmpty());
-        // E4744 is not returned by the API
-        assertEquals(NUM_CONTRACTS, attestations.size());
-    }
-
-    @Test
-    void updateContractMissing() throws NoSuchMethodException {
-        Method method = fetcher.getClass().getDeclaredMethod("buildURI");
-        method.setAccessible(true);
-        Assertions.assertDoesNotThrow(() -> method.invoke(fetcher));
-    }
-
-    @Test
-    void buildAttestationURI() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        HPMSFetcherImpl hpmsFetcher = (HPMSFetcherImpl) fetcher;
-        Method method = hpmsFetcher.getClass().getDeclaredMethod("buildAttestationURI", List.class);
-        method.setAccessible(true);
-        String param = UUID.randomUUID().toString();
-        assertTrue(((URI) method.invoke(hpmsFetcher, List.of(param))).getQuery().contains(param));
     }
 
     private void waitForCallback() {
