@@ -1,9 +1,7 @@
 package gov.cms.ab2d.hpms.service;
 
-import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.hpms.SpringBootTestApp;
-import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizationInfo;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -20,7 +18,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 

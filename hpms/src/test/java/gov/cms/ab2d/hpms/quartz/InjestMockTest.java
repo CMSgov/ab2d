@@ -1,18 +1,15 @@
 package gov.cms.ab2d.hpms.quartz;
 
-import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.Properties;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.hpms.SpringBootTestApp;
-import gov.cms.ab2d.hpms.quartz.HPMSIngestJob;
 import gov.cms.ab2d.hpms.service.AttestationUpdaterService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.quartz.JobExecutionContext;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
@@ -21,12 +18,9 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.lang.reflect.Method;
-import java.util.List;
 
 import static gov.cms.ab2d.common.service.FeatureEngagement.IN_GEAR;
 import static gov.cms.ab2d.common.service.FeatureEngagement.NEUTRAL;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest(classes = SpringBootTestApp.class)
