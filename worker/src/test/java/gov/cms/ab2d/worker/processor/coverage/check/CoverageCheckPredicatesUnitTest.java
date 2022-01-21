@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.processor.coverage.check;
 
 import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.coverage.model.CoverageContractDTO;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
@@ -67,12 +68,12 @@ public class CoverageCheckPredicatesUnitTest {
 
         // Just reuse, check assumes getCoveragePeriod works
         CoveragePeriod coveragePeriod = new CoveragePeriod();
-        coveragePeriod.setContract(contract);
+        coveragePeriod.setContractNumber(contract.getContractNumber());
         coveragePeriod.setYear(ATTESTATION_TIME.getYear());
         coveragePeriod.setMonth(ATTESTATION_TIME.getMonthValue());
 
         doReturn(coveragePeriod).when(coverageService)
-                .getCoveragePeriod(any(Contract.class), anyInt(), anyInt());
+                .getCoveragePeriod(any(CoverageContractDTO.class), anyInt(), anyInt());
 
         List<String> issues = new ArrayList<>();
         CoveragePeriodsPresentCheck presentCheck = new CoveragePeriodsPresentCheck(coverageService, null, issues);

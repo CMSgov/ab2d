@@ -1,13 +1,18 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.model.PdpClient;
+import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.coverage.model.CoverageContractDTO;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
-import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.TestUtil;
+import gov.cms.ab2d.worker.config.ContractMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.stub.PatientClaimsProcessorStub;
@@ -15,6 +20,19 @@ import gov.cms.ab2d.worker.repository.StubContractRepository;
 import gov.cms.ab2d.worker.repository.StubJobRepository;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import gov.cms.ab2d.worker.service.JobChannelStubServiceImpl;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.OffsetDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.IntStream;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -26,22 +44,22 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.OffsetDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.*;
-import java.util.stream.IntStream;
 
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
 import static java.lang.Boolean.TRUE;
 import static java.util.stream.Collectors.toList;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ContractProcessorUnitTest {
@@ -62,6 +80,8 @@ class ContractProcessorUnitTest {
 
     private Path outputDir;
     private Contract contract;
+    private CoverageContractDTO coverageContractDTO;
+    private ContractMapping mapping;
     private Job job;
 
     @BeforeEach
@@ -70,7 +90,9 @@ class ContractProcessorUnitTest {
 
         patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
 
+        mapping = new ContractMapping();
         contract = createContract();
+        coverageContractDTO = mapping.map(contract);
         PdpClient pdpClient = createClient();
         job = createJob(pdpClient);
         job.setContractNumber(contract.getContractNumber());
@@ -90,7 +112,8 @@ class ContractProcessorUnitTest {
                 eventLogger,
                 requestQueue,
                 jobChannelService,
-                jobProgressImpl);
+                jobProgressImpl,
+                mapping);
         ReflectionTestUtils.setField(cut, "tryLockTimeout", 30);
 
 
@@ -101,11 +124,10 @@ class ContractProcessorUnitTest {
     @Test
     @DisplayName("When a job is cancelled while it is being processed, then attempt to stop the job gracefully without completing it")
     void whenJobIsCancelledWhileItIsBeingProcessed_ThenAttemptToStopTheJob() {
-        String contract = "CONTRACT_00000";
         when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 1),
-                        new CoveragePagingRequest(2, null, contract, OffsetDateTime.now())))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 2), null));
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 1),
+                        new CoveragePagingRequest(2, null, coverageContractDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 2), null));
 
         when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(3);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
@@ -122,26 +144,25 @@ class ContractProcessorUnitTest {
     @Test
     @DisplayName("When many patientId are present, 'PercentageCompleted' should be updated many times")
     void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() {
-        String contract = "CONTRACT_00000";
         when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(18);
         when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 2),
-                        new CoveragePagingRequest(2, null, contract, OffsetDateTime.now())))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 2),
-                        new CoveragePagingRequest(2, null, contract, OffsetDateTime.now())))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 2),
-                        new CoveragePagingRequest(2, null, contract, OffsetDateTime.now())))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 2),
-                        new CoveragePagingRequest(2, null, contract, OffsetDateTime.now())))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 2),
-                        new CoveragePagingRequest(2, null, contract, OffsetDateTime.now())))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 2),
-                        new CoveragePagingRequest(2, null, contract, OffsetDateTime.now())))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 2),
-                        new CoveragePagingRequest(2, null, contract, OffsetDateTime.now())))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 2),
-                        new CoveragePagingRequest(2, null, contract, OffsetDateTime.now())))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 2), null));
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 2),
+                        new CoveragePagingRequest(2, null, coverageContractDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 2),
+                        new CoveragePagingRequest(2, null, coverageContractDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 2),
+                        new CoveragePagingRequest(2, null, coverageContractDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 2),
+                        new CoveragePagingRequest(2, null, coverageContractDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 2),
+                        new CoveragePagingRequest(2, null, coverageContractDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 2),
+                        new CoveragePagingRequest(2, null, coverageContractDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 2),
+                        new CoveragePagingRequest(2, null, coverageContractDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 2),
+                        new CoveragePagingRequest(2, null, coverageContractDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 2), null));
 
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_EXPECTED, 18);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
@@ -156,9 +177,8 @@ class ContractProcessorUnitTest {
     @Test
     @DisplayName("When a job is cancelled while it is being processed, then attempt to stop the job gracefully without completing it")
     void whenExpectedPatientsNotMatchActualPatientsFail() {
-        String contract = "CONTRACT_00000";
         when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 1), null));
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 1), null));
         when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(3);
 
         ContractProcessingException exception = assertThrows(ContractProcessingException.class, () -> cut.process(outputDir, job));
@@ -214,12 +234,9 @@ class ContractProcessorUnitTest {
     @Test
     @DisplayName("When round robin blocking queue is full, patients should not be skipped")
     void whenBlockingQueueFullPatientsNotSkipped() throws InterruptedException {
-        String contract = "CONTRACT_00000";
-
-
         when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 1), new CoveragePagingRequest(1, null, contract, OffsetDateTime.now())))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 1), null));
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 1), new CoveragePagingRequest(1, null, coverageContractDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 1), null));
 
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_EXPECTED, 2);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 1);
@@ -266,11 +283,11 @@ class ContractProcessorUnitTest {
         return job;
     }
 
-    private static List<CoverageSummary> createPatientsByContractResponse(String contract, int num) {
+    private static List<CoverageSummary> createPatientsByContractResponse(CoverageContractDTO contractcoverageContractDTO, int num) {
         FilterOutByDate.DateRange dateRange = TestUtil.getOpenRange();
         return IntStream.range(0, num).mapToObj(n -> new CoverageSummary(
                 createIdentifierWithoutMbi(n),
-                contract, List.of(dateRange)
+                contractcoverageContractDTO, List.of(dateRange)
         )).collect(toList());
     }
 }

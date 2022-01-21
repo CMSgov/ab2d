@@ -33,4 +33,8 @@ public class ContractMapping {
     public ModelMapper getModelMapper() {
         return modelMapper;
     }
+
+    public CoverageContractDTO map(Contract contract){
+        return modelMapper.map(contract, CoverageContractDTO.class);
+    }
 }
