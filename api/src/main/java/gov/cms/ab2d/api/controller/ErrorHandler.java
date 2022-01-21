@@ -46,6 +46,7 @@ import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
+import static gov.cms.ab2d.eventlogger.events.SlackEvents.API_INVALID_CONTRACT;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 
@@ -128,7 +129,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler({InvalidContractException.class})
     public ResponseEntity<Void> handleInvalidContractErrors(Exception ex, HttpServletRequest request) {
         HttpStatus status = getErrorResponse(ex.getClass());
-        String description = "API_INVALID_CONTRACT " + getRootCause(ex);
+        String description = API_INVALID_CONTRACT + " " + getRootCause(ex);
 
         eventLogger.log(new ErrorEvent(MDC.get(ORGANIZATION), null,
                 ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT, description));

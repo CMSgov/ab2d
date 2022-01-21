@@ -21,6 +21,7 @@ import static gov.cms.ab2d.common.util.Constants.COVERAGE_SEARCH_OVERRIDE;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PRODUCTION;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.SANDBOX;
+import static gov.cms.ab2d.eventlogger.events.SlackEvents.COVERAGE_UPDATES_FAILED;
 
 /**
  * Periodically update enrollment cached in the database by pulling enrollment from BFD.
@@ -44,6 +45,7 @@ import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.SANDBOX;
 @Slf4j
 @RequiredArgsConstructor
 @DisallowConcurrentExecution
+@SuppressWarnings("PMD.TooManyStaticImports")
 public class CoveragePeriodQuartzJob extends QuartzJobBean {
 
     private final CoverageDriver driver;
@@ -85,7 +87,7 @@ public class CoveragePeriodQuartzJob extends QuartzJobBean {
             }
         } catch (Exception exception) {
             log.error("coverage period updates could not be conducted");
-            logManager.alert("COVERAGE_UPDATES_FAILED coverage period updates could not be conducted", List.of(PRODUCTION, SANDBOX));
+            logManager.alert(COVERAGE_UPDATES_FAILED + " coverage period updates could not be conducted", List.of(PRODUCTION, SANDBOX));
             throw new JobExecutionException(exception);
         } finally {
             // Only use override once

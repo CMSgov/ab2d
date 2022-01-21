@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PROD_LIST;
+import static gov.cms.ab2d.eventlogger.events.SlackEvents.ORG_FIRST;
 
 @Slf4j
 @Service
@@ -87,7 +88,7 @@ public class JobServiceImpl implements JobService {
 
         // Report client running first job in prod
         if (clientHasNeverCompletedJob(contract.getContractNumber())) {
-            String firstJobMessage = String.format("ORG_FIRST Organization %s is running their first job for contract %s",
+            String firstJobMessage = String.format(ORG_FIRST + " Organization %s is running their first job for contract %s",
                     pdpClient.getOrganization(), contract.getContractNumber());
             eventLogger.alert(firstJobMessage, PROD_LIST);
         }

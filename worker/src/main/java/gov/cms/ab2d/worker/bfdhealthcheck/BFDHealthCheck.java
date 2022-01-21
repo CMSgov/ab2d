@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.MAINTENANCE_MODE;
+import static gov.cms.ab2d.eventlogger.events.SlackEvents.MAINT_MODE;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.bfdhealthcheck.HealthCheckData.Status;
 
@@ -87,7 +88,7 @@ class BFDHealthCheck {
         propertiesDTO.setValue(statusString);
 
         // Slack alert that we are going into maintenance mode
-        logManager.alert("MAINT_MODE Maintenance Mode status for " + data.getVersion() +
+        logManager.alert(MAINT_MODE + " Maintenance Mode status for " + data.getVersion() +
                 " is: " + statusString, Ab2dEnvironment.ALL);
         propertiesService.updateProperties(List.of(propertiesDTO));
         log.info("Updated the {} property to {}", MAINTENANCE_MODE, statusString);

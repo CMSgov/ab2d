@@ -14,6 +14,8 @@ import org.springframework.scheduling.quartz.QuartzJobBean;
 import java.util.List;
 
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PRODUCTION;
+import static gov.cms.ab2d.eventlogger.events.SlackEvents.COVERAGE_VERIFICATION_ABORTED;
+import static gov.cms.ab2d.eventlogger.events.SlackEvents.COVERAGE_VERIFICATION_FAILURE;
 
 /**
  * Verify that all coverage/enrollment cached in database meets the expected structure and business requirements.
@@ -57,13 +59,13 @@ public class CoverageCheckQuartzJob extends QuartzJobBean {
         } catch (CoverageVerificationException exception) {
             log.error("coverage is invalid or not able to be verified {}", exception.getAlertMessage());
 
-            logManager.alert("COVERAGE_VERIFICATION_FAILURE Coverage verification failed:\n" + exception.getAlertMessage(), List.of(PRODUCTION));
+            logManager.alert(COVERAGE_VERIFICATION_FAILURE + " Coverage verification failed:\n" + exception.getAlertMessage(), List.of(PRODUCTION));
 
             throw new JobExecutionException(exception);
         } catch (Exception exception) {
             log.error("Encountered unexpected failure attempting to verify coverage", exception);
 
-            logManager.alert("COVERAGE_VERIFICATION_ABORTED could not verify coverage due to " + exception.getClass()
+            logManager.alert(COVERAGE_VERIFICATION_ABORTED + " could not verify coverage due to " + exception.getClass()
                     + ":\n" + exception.getMessage(), List.of(PRODUCTION));
 
             throw new JobExecutionException(exception);
