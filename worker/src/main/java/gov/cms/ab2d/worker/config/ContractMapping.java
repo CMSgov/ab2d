@@ -23,7 +23,7 @@ public class ContractMapping {
 
             @Override
             protected CoverageContractDTO convert(Contract source) {
-                return new CoverageContractDTO(source.getContractNumber(),source.getAttestedOn()); //NOSONAR
+                return new CoverageContractDTO(source.getContractNumber(), source.getAttestedOn()); //NOSONAR
             }
         };
 
@@ -34,7 +34,7 @@ public class ContractMapping {
         return modelMapper;
     }
 
-    public CoverageContractDTO map(Contract contract){
+    public CoverageContractDTO map(Contract contract) {
         return modelMapper.map(contract, CoverageContractDTO.class);
     }
 }

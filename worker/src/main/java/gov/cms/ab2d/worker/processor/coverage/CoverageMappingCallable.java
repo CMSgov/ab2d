@@ -3,7 +3,6 @@ package gov.cms.ab2d.worker.processor.coverage;
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
-import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import gov.cms.ab2d.fhir.BundleUtils;
@@ -36,7 +35,7 @@ import static java.util.stream.Collectors.toSet;
  * The results of these queries are stored into a {@link CoverageMapping} object in-memory. Additionally,
  * any artifacts/issues with identifiers returned from BFD are documented and reported as statistics.
  *
- * The contract, month, and year are represented as an {@link CoveragePeriod}
+ * The contract, month, and year are represented as an {@link gov.cms.ab2d.coverage.model.CoveragePeriod}
  *
  */
 @Slf4j
@@ -201,9 +200,9 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
      * Filter out patients with unknown reference years or unexpected reference years.
      *
      * The reference year on a patient should be equal to or greater than the year of enrollment we are searching for.
-     * Sometimes the reference year will not match the {@link CoveragePeriod}
+     * Sometimes the reference year will not match the {@link gov.cms.ab2d.coverage.model.CoveragePeriod}
      * but as long as it is greater than or equal it is okay. Patients with reference years before the
-     * {@link CoveragePeriod#getYear()} are discarded.
+     * {@link gov.cms.ab2d.coverage.model.CoveragePeriod#getYear()} are discarded.
      */
     private boolean filterByYear(IDomainResource patient) {
         int referenceYear = ExtensionUtils.getReferenceYear(patient);
@@ -277,7 +276,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
 
     /**
      * Given a contract number, month, and year, call BFDs API to begin paging through all patients
-     * associated with that contract for that {@link CoveragePeriod}
+     * associated with that contract for that {@link gov.cms.ab2d.coverage.model.CoveragePeriod}
      *
      * @param contractNumber - the PDP's contract number
      * @param searchMonth - the month to pull data for (1-12)

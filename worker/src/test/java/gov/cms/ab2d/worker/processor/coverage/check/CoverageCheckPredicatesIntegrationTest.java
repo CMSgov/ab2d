@@ -6,7 +6,7 @@ import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.coverage.model.CoverageContractDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
-import gov.cms.ab2d.coverage.model.CoverageSearch;
+import gov.cms.ab2d.coverage.model.CoverageSearchDTO;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.coverage.model.JobStatus;
@@ -480,7 +480,7 @@ public class CoverageCheckPredicatesIntegrationTest {
     }
 
     private CoverageSearchEvent startSearchAndPullEvent() {
-        Optional<CoverageSearch> search = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        Optional<CoverageSearchDTO> search = coverageSearchRepo.findFirstByOrderByCreatedAsc();
         coverageSearchRepo.delete(search.get());
         return coverageService.startSearch(search.get(), "testing").get().getCoverageSearchEvent();
     }

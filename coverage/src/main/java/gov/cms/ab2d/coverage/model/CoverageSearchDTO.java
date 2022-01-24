@@ -14,7 +14,7 @@ import java.time.OffsetDateTime;
 @Entity
 @Data
 @AllArgsConstructor
-public class CoverageSearch {
+public class CoverageSearchDTO {
     @Id
     @GeneratedValue
     @EqualsAndHashCode.Include
@@ -37,7 +37,7 @@ public class CoverageSearch {
      */
     private int attempts;
 
-    public CoverageSearch() {
+    public CoverageSearchDTO() {
         attempts = 0;
         created = OffsetDateTime.now();
     }

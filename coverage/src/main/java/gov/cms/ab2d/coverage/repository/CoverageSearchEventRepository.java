@@ -2,7 +2,6 @@ package gov.cms.ab2d.coverage.repository;
 
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
-import gov.cms.ab2d.coverage.model.JobStatus;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -24,7 +23,7 @@ public interface CoverageSearchEventRepository extends JpaRepository<CoverageSea
     List<CoverageSearchEvent> findByPeriodDesc(int periodId, int limit);
 
     /**
-     * Look for all jobs currently in the provided {@link JobStatus} which have been in that status since
+     * Look for all jobs currently in the provided {@link gov.cms.ab2d.coverage.model.JobStatus} which have been in that status since
      * some point in time.
      *
      * Basically, if today is Tuesday and a job has been in the status IN_PROGRESS since Sunday, then the job

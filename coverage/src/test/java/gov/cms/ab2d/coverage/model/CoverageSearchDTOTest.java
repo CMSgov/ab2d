@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @EntityScan(basePackages = {"gov.cms.ab2d.common.model", "gov.cms.ab2d.coverage.model"})
 @EnableJpaRepositories({"gov.cms.ab2d.common.repository", "gov.cms.ab2d.coverage.repository"})
 @TestPropertySource(locations = "/application.coverage.properties")
-class CoverageSearchTest {
+class CoverageSearchDTOTest {
 
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
@@ -47,16 +47,16 @@ class CoverageSearchTest {
             CoveragePeriod period1 = coverageDataSetup.createCoveragePeriod("c123", 10, 2020);
             CoveragePeriod period2 = coverageDataSetup.createCoveragePeriod("c456", 10, 2020);
 
-            CoverageSearch search1 = new CoverageSearch(null, period1, OffsetDateTime.now(), 0);
-            CoverageSearch search2 = new CoverageSearch(null, period2, OffsetDateTime.now().minusDays(2), 0);
+            CoverageSearchDTO search1 = new CoverageSearchDTO(null, period1, OffsetDateTime.now(), 0);
+            CoverageSearchDTO search2 = new CoverageSearchDTO(null, period2, OffsetDateTime.now().minusDays(2), 0);
 
-            CoverageSearch savedSearch1 = coverageSearchRepository.save(search1);
+            CoverageSearchDTO savedSearch1 = coverageSearchRepository.save(search1);
 
-            CoverageSearch savedSearch2 = coverageSearchRepository.save(search2);
+            CoverageSearchDTO savedSearch2 = coverageSearchRepository.save(search2);
 
-            Optional<CoverageSearch> searchedSearch2Optional = coverageSearchRepository.findFirstByOrderByCreatedAsc();
+            Optional<CoverageSearchDTO> searchedSearch2Optional = coverageSearchRepository.findFirstByOrderByCreatedAsc();
             assertTrue(searchedSearch2Optional.isPresent());
-            CoverageSearch searchedSearch2 = searchedSearch2Optional.get();
+            CoverageSearchDTO searchedSearch2 = searchedSearch2Optional.get();
             assertEquals(savedSearch2, searchedSearch2);
         } finally {
             // Cleanup

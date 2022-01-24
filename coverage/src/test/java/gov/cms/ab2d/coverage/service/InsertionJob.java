@@ -1,7 +1,7 @@
 package gov.cms.ab2d.coverage.service;
 
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
-import gov.cms.ab2d.coverage.model.CoverageSearch;
+import gov.cms.ab2d.coverage.model.CoverageSearchDTO;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
@@ -75,7 +75,7 @@ public class InsertionJob implements Callable<CoverageSearchEvent> {
         // Add in progress event as foreign key for all inserts
         coverageService.submitSearch(period.getId(), "testing");
 
-        CoverageSearch search = new CoverageSearch();
+        CoverageSearchDTO search = new CoverageSearchDTO();
         search.setPeriod(period);
         search.setAttempts(0);
         search.setCreated(OffsetDateTime.now());

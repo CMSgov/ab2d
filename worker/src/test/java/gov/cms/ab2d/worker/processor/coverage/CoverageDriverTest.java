@@ -18,7 +18,7 @@ import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.coverage.model.CoverageContractDTO;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
-import gov.cms.ab2d.coverage.model.CoverageSearch;
+import gov.cms.ab2d.coverage.model.CoverageSearchDTO;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.coverage.model.JobStatus;
@@ -571,9 +571,9 @@ class CoverageDriverTest {
     void getNextSearchDefaultsToFirst() {
         assertTrue(driver.getNextSearch().isEmpty());
 
-        CoverageSearch search1 = new CoverageSearch(null, january, OffsetDateTime.now(), 0);
-        CoverageSearch savedSearch1 = coverageSearchRepo.save(search1);
-        Optional<CoverageSearch> returnedSearch = driver.getNextSearch();
+        CoverageSearchDTO search1 = new CoverageSearchDTO(null, january, OffsetDateTime.now(), 0);
+        CoverageSearchDTO savedSearch1 = coverageSearchRepo.save(search1);
+        Optional<CoverageSearchDTO> returnedSearch = driver.getNextSearch();
 
         assertEquals(savedSearch1.getPeriod().getMonth(), returnedSearch.get().getPeriod().getMonth());
         assertEquals(savedSearch1.getPeriod().getYear(), returnedSearch.get().getPeriod().getYear());
@@ -595,7 +595,7 @@ class CoverageDriverTest {
         coverageService.submitSearch(secondPeriod.getId(), "first submitted");
         coverageService.submitSearch(january.getId(), "second submitted");
 
-        Optional<CoverageSearch> coverageSearch = driver.getNextSearch();
+        Optional<CoverageSearchDTO> coverageSearch = driver.getNextSearch();
         assertTrue(coverageSearch.isPresent());
         assertEquals(january, coverageSearch.get().getPeriod());
 
