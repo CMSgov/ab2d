@@ -36,6 +36,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static gov.cms.ab2d.coverage.repository.CoverageServiceRepository.AB2D_EPOCH_YEAR;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
+import static gov.cms.ab2d.eventlogger.events.SlackEvents.COVERAGE_DELETE_FAILED;
+import static gov.cms.ab2d.eventlogger.events.SlackEvents.COVERAGE_UPDATE_FAILED;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -67,7 +69,7 @@ import static java.util.stream.Collectors.toList;
 @Slf4j
 @Service
 @Transactional
-@SuppressWarnings("PMD.UnusedImports")
+@SuppressWarnings("PMD.TooManyStaticImports")
 public class CoverageServiceImpl implements CoverageService {
 
 
@@ -400,12 +402,18 @@ public class CoverageServiceImpl implements CoverageService {
             // Delete all results from current search that is failing
             coverageServiceRepo.deleteCurrentSearch(period);
         } catch (Exception exception) {
-            String issue = String.format("Failed to delete coverage for a failed search for %s-%d-%d. " +
+            String issue = String.format(COVERAGE_DELETE_FAILED + " Failed to delete coverage for a failed search for %s-%d-%d. " +
                             "There could be duplicate enrollment data in the db",
                     period.getContractNumber(), period.getYear(), period.getMonth());
             eventLogger.alert(issue, PUBLIC_LIST);
             throw exception;
         }
+
+        // Before finishing up alert AB2D team that there could be a problem with enrollment
+        String issue = String.format(COVERAGE_UPDATE_FAILED + " Failed to update coverage for %s-%d-%d." +
+                " There could be out of date enrollment data in the db",
+                period.getContract().getContractNumber(), period.getYear(), period.getMonth());
+        eventLogger.alert(issue, PUBLIC_LIST);
 
         return updateStatus(period, description, JobStatus.FAILED);
     }
@@ -439,7 +447,7 @@ public class CoverageServiceImpl implements CoverageService {
         try {
             coverageServiceRepo.deletePreviousSearches(period, 1);
         } catch (Exception exception) {
-            String issue = String.format("Failed to delete old coverage for newly completed %s-%d-%d." +
+            String issue = String.format(COVERAGE_DELETE_FAILED + " Failed to delete old coverage for newly completed %s-%d-%d." +
                             " There could be duplicate enrollment data in the db",
                     period.getContractNumber(), period.getYear(), period.getMonth());
             eventLogger.alert(issue, PUBLIC_LIST);

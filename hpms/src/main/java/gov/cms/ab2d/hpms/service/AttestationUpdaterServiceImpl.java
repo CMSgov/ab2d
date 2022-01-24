@@ -4,13 +4,17 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.hpms.hmsapi.*;  // NOPMD
+import gov.cms.ab2d.hpms.hmsapi.HPMSAttestation;
+import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizationInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static gov.cms.ab2d.eventlogger.events.SlackEvents.CONTRACT_ADDED;
+import static gov.cms.ab2d.eventlogger.events.SlackEvents.CONTRACT_CHANGED;
 
 @Primary
 @Service
@@ -38,11 +42,11 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
         hpmsFetcher.retrieveSponsorInfo(this::processOrgInfo);
     }
 
-    private void processOrgInfo(HPMSOrganizations orgInfo) {
+    private void processOrgInfo(List<HPMSOrganizationInfo> orgInfo) {
         Map<String, Contract> existingMap = buildExistingContractMap();
 
         // detect changed organizational information, specifically populating the new hpms fields
-        List<Contract> changedContracts = orgInfo.getOrgs().stream()
+        List<Contract> changedContracts = orgInfo.stream()
                 .filter(hpmsInfo -> existingMap.containsKey(hpmsInfo.getContractId()))
                 .map(this::updateContract)
                 .filter(Optional::isPresent)
@@ -53,7 +57,7 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
         }
 
         // detect new Contracts
-        List<HPMSOrganizationInfo> newContracts = orgInfo.getOrgs().stream()
+        List<HPMSOrganizationInfo> newContracts = orgInfo.stream()
                 .filter(hpmsInfo -> !existingMap.containsKey(hpmsInfo.getContractId()))
                 .collect(Collectors.toList());
         List<Contract> contractAttestList = addNewContracts(newContracts);
@@ -95,15 +99,15 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
         hpmsFetcher.retrieveAttestationInfo(this::processContracts, currentChunk);
     }
 
-    private void processContracts(HPMSAttestationsHolder contractHolder) {
+    private void processContracts(Set<HPMSAttestation> contractHolder) {
         Map<String, Contract> existingMap = buildExistingContractMap();
-        contractHolder.getContracts()
+        contractHolder
                 .forEach(attest -> updateContractIfChanged(attest, existingMap.get(attest.getContractId())));
     }
 
     private void updateContractIfChanged(HPMSAttestation attest, Contract contract) {
         if (contract.updateAttestation(attest.isAttested(), attest.getAttestationDate())) {
-            String msg = "*Changed Contract*\n\nName: " + contract.getContractName() + "\n"
+            String msg = CONTRACT_CHANGED + " *Changed Contract*\n\nName: " + contract.getContractName() + "\n"
                     + "Number: " + contract.getContractNumber() + "\n"
                     + "HPMS Attested On: " + attest.getAttestationDate() + "\n"
                     + "Contract Attested On: " + contract.getAttestedOn() + "\n";
@@ -119,7 +123,7 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
             return new ArrayList<>();
         }
         newContracts.forEach(c -> {
-                String msg = "*New Contract*\n\nId: " + c.getContractId() + "\n"
+                String msg = CONTRACT_ADDED + " *New Contract*\n\nId: " + c.getContractId() + "\n"
                         + "Name: " + c.getContractName() + "\n"
                         + "Id: " + c.getContractId() + "\n"
                         + "Org: " + c.getOrgMarketingName() + "\n";
@@ -162,9 +166,9 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
         return existingMap;
     }
 
-    private Map<String, HPMSOrganizationInfo> buildRefreshedMap(HPMSOrganizations orgInfo) {
+    private Map<String, HPMSOrganizationInfo> buildRefreshedMap(List<HPMSOrganizationInfo> orgInfo) {
         Map<String, HPMSOrganizationInfo> refreshed = new HashMap<>();
-        orgInfo.getOrgs().forEach(hpmsOrg -> refreshed.put(hpmsOrg.getContractId(), hpmsOrg));
+        orgInfo.forEach(hpmsOrg -> refreshed.put(hpmsOrg.getContractId(), hpmsOrg));
         return refreshed;
     }
 }
