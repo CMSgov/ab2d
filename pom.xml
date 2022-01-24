@@ -37,7 +37,7 @@
         <mockserver.version>5.11.2</mockserver.version>
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
         <logback-encoder.version>7.0.1</logback-encoder.version>
-        <testcontainers.version>1.16.2</testcontainers.version>
+        <testcontainers.version>1.16.3</testcontainers.version>
         <newrelic.version>7.4.3</newrelic.version>
 
         <!-- Maven plugin versions -->
