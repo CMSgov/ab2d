@@ -29,6 +29,7 @@ class HPMSAuthServiceTest {
     @Autowired
     HPMSAuthServiceImpl authService;
 
+
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();

@@ -9,7 +9,6 @@ import static org.junit.Assert.assertTrue;
 
 class CoverageMappingTest {
 
-
     @DisplayName("coverage mapping constructor works")
     @Test
     void build() {

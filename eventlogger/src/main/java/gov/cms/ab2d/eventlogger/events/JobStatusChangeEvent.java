@@ -30,6 +30,22 @@ public class JobStatusChangeEvent extends LoggableEvent {
 
     @Override
     public String asMessage() {
-        return String.format("(%s) %s -> %s %s", getJobId(), oldStatus, newStatus, description);
+
+        // Prettify alert
+        String label = "";
+        String description = this.description;
+        if (description != null && !description.isBlank()) {
+            String[] labelAndDescription = description.split("\\s+", 2);
+
+            // Single word description then do not apply a label
+            if (labelAndDescription.length == 1) {
+                description = labelAndDescription[0];
+            } else {
+                label = labelAndDescription[0];
+                description = labelAndDescription[1];
+            }
+        }
+
+        return String.format("%s (%s) %s -> %s %s", label, getJobId(), oldStatus, newStatus, description);
     }
 }
