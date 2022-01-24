@@ -159,6 +159,7 @@ class CoverageUpdateAndProcessorTest {
         processor.shutdown();
 
         dataSetup.cleanup();
+        coverageDataSetup.cleanup();
 
         propertiesService.updateProperties(originalValues.stream().map(properties -> {
             PropertiesDTO dto = new PropertiesDTO();

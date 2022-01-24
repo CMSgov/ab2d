@@ -412,7 +412,7 @@ public class CoverageServiceImpl implements CoverageService {
         // Before finishing up alert AB2D team that there could be a problem with enrollment
         String issue = String.format(COVERAGE_UPDATE_FAILED + " Failed to update coverage for %s-%d-%d." +
                 " There could be out of date enrollment data in the db",
-                period.getContract().getContractNumber(), period.getYear(), period.getMonth());
+                period.getContractNumber(), period.getYear(), period.getMonth());
         eventLogger.alert(issue, PUBLIC_LIST);
 
         return updateStatus(period, description, JobStatus.FAILED);

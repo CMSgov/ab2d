@@ -38,9 +38,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import lombok.extern.slf4j.Slf4j;
-import org.modelmapper.AbstractConverter;
-import org.modelmapper.Converter;
-import org.modelmapper.ModelMapper;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -236,7 +233,7 @@ public class CoverageDriverImpl implements CoverageDriver {
 
         int coveragePeriodsForContracts = 0;
         while (attestationTime.isBefore(now)) {
-            coverageService.getCreateIfAbsentCoveragePeriod(getModelMapper().map(contract, CoverageContractDTO.class), attestationTime.getMonthValue(), attestationTime.getYear());
+            coverageService.getCreateIfAbsentCoveragePeriod(contract, attestationTime.getMonthValue(), attestationTime.getYear());
             coveragePeriodsForContracts += 1;
 
             attestationTime = attestationTime.plusMonths(1);
@@ -524,7 +521,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         List<CoveragePeriod> periodsToReport = new ArrayList<>();
         while (startDateTime.isBefore(now)) {
             CoveragePeriod periodToReport =
-                    coverageService.getCoveragePeriod(getModelMapper().map(contract, CoverageContractDTO.class), startDateTime.getMonthValue(), startDateTime.getYear());
+                    coverageService.getCoveragePeriod(mapping.map(contract), startDateTime.getMonthValue(), startDateTime.getYear());
             periodsToReport.add(periodToReport);
             startDateTime = startDateTime.plusMonths(1);
         }
@@ -557,12 +554,12 @@ public class CoverageDriverImpl implements CoverageDriver {
             // Check that all coverage periods necessary are present before beginning to page
             while (startDateTime.isBefore(now)) {
                 // Will throw exception if it doesn't exist
-                coverageService.getCoveragePeriod(getModelMapper().map(contract, CoverageContractDTO.class), startDateTime.getMonthValue(), startDateTime.getYear());
+                coverageService.getCoveragePeriod(mapping.map(contract), startDateTime.getMonthValue(), startDateTime.getYear());
                 startDateTime = startDateTime.plusMonths(1);
             }
 
             // Make initial request which returns a result and a request starting at the next cursor
-            CoveragePagingRequest request = new CoveragePagingRequest(PAGING_SIZE, null, getModelMapper().map(contract, CoverageContractDTO.class), job.getCreatedAt());
+            CoveragePagingRequest request = new CoveragePagingRequest(PAGING_SIZE, null, mapping.map(contract), job.getCreatedAt());
 
             // Make request for coverage metadata
             return coverageService.pageCoverage(request);
@@ -660,7 +657,7 @@ public class CoverageDriverImpl implements CoverageDriver {
                 .collect(toList());
 
         // Query for counts of beneficiaries for each contract
-        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(filteredContracts.stream().map(filter -> getModelMapper().map(filter, CoverageContractDTO.class)).toList())
+        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(filteredContracts.stream().map(mapping::map).toList())
                  .stream().collect(groupingBy(CoverageCount::getContractNumber));
 
         // Use counts to perform other checks and count passing contracts
@@ -699,20 +696,5 @@ public class CoverageDriverImpl implements CoverageDriver {
         }
 
         return true;
-    }
-    private ModelMapper getModelMapper() {
-        ModelMapper modelMapper = new ModelMapper();
-        modelMapper.getConfiguration().setSkipNullEnabled(true);
-
-        Converter<Contract, CoverageContractDTO> coverageContractDTOConverter = new AbstractConverter<>() {
-
-            @Override
-            protected CoverageContractDTO convert(Contract source) {
-                return new CoverageContractDTO(source.getContractNumber(), source.getAttestedOn()); //NOSONAR
-            }
-        };
-
-        modelMapper.addConverter(coverageContractDTOConverter);
-        return modelMapper;
     }
 }

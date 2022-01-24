@@ -126,6 +126,7 @@ class CoverageDriverTest {
     private Contract contract;
     private Contract contract1;
     private CoverageContractDTO coverageContractDTO;
+    private CoverageContractDTO coverageContractDTO1;
     private CoveragePeriod january;
     private CoveragePeriod february;
     private CoveragePeriod march;
@@ -146,7 +147,9 @@ class CoverageDriverTest {
 
         contract1 = dataSetup.setupContract("TST-45", AB2D_EPOCH.toOffsetDateTime());
 
-        coverageContractDTO = new CoverageContractDTO("TST-45", AB2D_EPOCH.toOffsetDateTime());
+        coverageContractDTO = new CoverageContractDTO("TST-12", AB2D_EPOCH.toOffsetDateTime());
+        coverageContractDTO1 = new CoverageContractDTO("TST-45", AB2D_EPOCH.toOffsetDateTime());
+
 
         contractRepo.saveAndFlush(contract);
 
@@ -184,6 +187,7 @@ class CoverageDriverTest {
     void cleanup() {
         processor.shutdown();
 
+        coverageDataSetup.cleanup();
         dataSetup.cleanup();
 
         PropertiesDTO engagement = new PropertiesDTO();

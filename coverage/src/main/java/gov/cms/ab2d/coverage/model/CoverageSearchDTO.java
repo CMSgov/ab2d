@@ -11,7 +11,7 @@ import lombok.EqualsAndHashCode;
 
 import java.time.OffsetDateTime;
 
-@Entity
+@Entity(name = "coverage_search")
 @Data
 @AllArgsConstructor
 public class CoverageSearchDTO {

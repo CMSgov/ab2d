@@ -99,6 +99,7 @@ public class CoverageCheckIntegrationTest {
     void tearDown() {
         enabledContracts.forEach(contract -> pdpClientService.enableClient(contract.getContractNumber()));
         coverageDataSetup.cleanup();
+        dataSetup.cleanup();
     }
 
 

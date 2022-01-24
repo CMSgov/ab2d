@@ -86,6 +86,7 @@ public class CoverageCheckPredicatesIntegrationTest {
     @AfterEach
     void tearDown() {
         coverageDataSetup.cleanup();
+        dataSetup.cleanup();
     }
 
     @DisplayName("Coverage periods outright missing for contract is detected")
