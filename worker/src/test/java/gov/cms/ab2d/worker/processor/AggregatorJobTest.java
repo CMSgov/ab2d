@@ -4,7 +4,7 @@ import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.CoverageSummary;
+import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.common.model.Identifiers;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LogManager;

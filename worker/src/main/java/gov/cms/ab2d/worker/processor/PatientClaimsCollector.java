@@ -2,7 +2,7 @@ package gov.cms.ab2d.worker.processor;
 
 import com.newrelic.api.agent.NewRelic;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.CoverageSummary;
+import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
 import gov.cms.ab2d.filter.FilterEob;
 import gov.cms.ab2d.worker.util.FhirUtils;
@@ -20,7 +20,7 @@ import java.util.*;
  * Collect and filter claims based on AB2D business requirements and allow documenting the results of all actions.
  *
  * Relevant classes influencing filtering and behavior:
- *      - {@link gov.cms.ab2d.common.model.CoverageSummary} dates that beneficiary is a member of the contract and list of MBIs
+ *      - {@link gov.cms.ab2d.coverage.model.CoverageSummary} dates that beneficiary is a member of the contract and list of MBIs
  *      - {@link FilterEob.filter} method filtering out claims from periods when beneficiary was not a member
  *      - {@link ExplanationOfBenefitTrimmer#getBenefit} strip fields that AB2D should not provide based on {@link gov.cms.ab2d.fhir.FhirVersion}
  *      - {@link EobUtils#isPartD} remove claims that are PartD

@@ -8,6 +8,9 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
+import gov.cms.ab2d.coverage.model.CoveragePagingResult;
+import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
@@ -145,7 +148,7 @@ class JobProcessorIntegrationTest {
         fail = new RuntimeException("TEST EXCEPTION");
 
         job = createJob(pdpClient);
-        job.setContract(contract);
+        job.setContractNumber(contract.getContractNumber());
         job.setStatus(JobStatus.IN_PROGRESS);
         jobRepository.saveAndFlush(job);
 
@@ -160,7 +163,7 @@ class JobProcessorIntegrationTest {
             return EobTestDataUtil.createBundle(copy);
         });
 
-        when(mockCoverageDriver.numberOfBeneficiariesToProcess(any(Job.class))).thenReturn(100);
+        when(mockCoverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(100);
 
         when(mockCoverageDriver.pageCoverage(any(CoveragePagingRequest.class))).thenReturn(
                 new CoveragePagingResult(loadFauxMetadata(contract, 99), null));
@@ -174,6 +177,7 @@ class JobProcessorIntegrationTest {
         pool.initialize();
 
         ContractProcessor contractProcessor = new ContractProcessorImpl(
+                contractRepository,
                 jobRepository,
                 mockCoverageDriver,
                 patientClaimsProcessor,
@@ -325,7 +329,7 @@ class JobProcessorIntegrationTest {
     void when_errorCount_is_not_below_threshold_fail_job() {
 
         reset(mockCoverageDriver);
-        when(mockCoverageDriver.numberOfBeneficiariesToProcess(any(Job.class))).thenReturn(40);
+        when(mockCoverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(40);
         andThenAnswerPatients(mockCoverageDriver, contract, 10, 40);
 
         OngoingStubbing<IBaseBundle> stubbing = when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any()));
@@ -401,6 +405,7 @@ class JobProcessorIntegrationTest {
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setCreatedAt(OffsetDateTime.now());
         job.setFhirVersion(STU3);
+        job.setContractNumber(contract.getContractNumber());
 
         job = jobRepository.saveAndFlush(job);
         dataSetup.queueForCleanup(job);
@@ -409,7 +414,7 @@ class JobProcessorIntegrationTest {
 
     private static List<CoverageSummary> loadFauxMetadata(Contract contract, int rowsToRetrieve) {
 
-        List<Long> patientIdRows = LongStream.range(0, rowsToRetrieve).mapToObj(obj -> obj).collect(toList());
+        List<Long> patientIdRows = LongStream.range(0, rowsToRetrieve).boxed().collect(toList());
 
         // Add the one id that actually has an eob mapped to it
         patientIdRows.add(-199900000022040L);

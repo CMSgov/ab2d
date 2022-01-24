@@ -78,7 +78,7 @@ class JobProcessorUnitTest {
         job = createJob(pdpClient);
 
         var contract = createContract();
-        job.setContract(contract);
+        job.setContractNumber(contract.getContractNumber());
 
         final Path outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
         final Path outputDir = Files.createDirectories(outputDirPath);
@@ -197,7 +197,7 @@ class JobProcessorUnitTest {
         jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENT_REQUEST_QUEUED, 10);
         jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENT_REQUESTS_PROCESSED, 10);
 
-        cut.verifyTrackedJobProgress(job, job.getContract());
+        cut.verifyTrackedJobProgress(job);
         verify(eventLogger, never()).alert(anyString(), any());
     }
 
@@ -209,7 +209,7 @@ class JobProcessorUnitTest {
         jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENT_REQUEST_QUEUED, 9);
         jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENT_REQUESTS_PROCESSED, 9);
 
-        cut.verifyTrackedJobProgress(job, job.getContract());
+        cut.verifyTrackedJobProgress(job);
         verify(eventLogger, times(2)).alert(anyString(), any());
     }
 
@@ -224,7 +224,7 @@ class JobProcessorUnitTest {
 
         assertEquals(JobStatus.FAILED, processedJob.getStatus());
 
-        verify(cut, times(1)).persistTrackedJobProgress(any(), any());
+        verify(cut, times(1)).persistTrackedJobProgress(any());
 
         verify(jobProgressService, times(1)).getStatus(any());
     }
@@ -236,8 +236,8 @@ class JobProcessorUnitTest {
 
         assertEquals(JobStatus.SUCCESSFUL, processedJob.getStatus());
 
-        verify(cut, times(1)).verifyTrackedJobProgress(any(), any());
-        verify(cut, times(1)).persistTrackedJobProgress(any(), any());
+        verify(cut, times(1)).verifyTrackedJobProgress(any());
+        verify(cut, times(1)).persistTrackedJobProgress(any());
         verify(eventLogger, times(1)).log(any(ContractSearchEvent.class));
 
         // Status is pulled after finishing loading benes

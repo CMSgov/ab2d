@@ -2,12 +2,18 @@ package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
+import gov.cms.ab2d.coverage.model.CoveragePagingResult;
+import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
+import gov.cms.ab2d.worker.repository.StubContractRepository;
+import gov.cms.ab2d.worker.repository.StubJobRepository;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import gov.cms.ab2d.worker.service.JobChannelStubServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,7 +56,8 @@ class ContractProcessorInvalidPatientTest {
     @Mock
     private BFDClient bfdClient;
 
-    @Mock
+    private ContractRepository contractRepository;
+
     private JobRepository jobRepository;
 
     @Mock
@@ -60,12 +67,22 @@ class ContractProcessorInvalidPatientTest {
     File tmpDirFolder;
 
     private ContractProcessor cut;
+    private final Contract contract = new Contract();
     private final Job job = new Job();
     private static final String jobId = "1234";
     private final String contractId = "ABC";
 
     @BeforeEach
     void setup() {
+
+        Contract contract = new Contract();
+        contract.setContractNumber(contractId);
+        contract.setAttestedOn(OffsetDateTime.now().minusYears(50));
+        contractRepository = new StubContractRepository(contract);
+
+        job.setJobUuid(jobId);
+        job.setContractNumber(contract.getContractNumber());
+        jobRepository = new StubJobRepository(job);
 
         patientClaimsProcessor = new PatientClaimsProcessorImpl(bfdClient, eventLogger);
         JobProgressServiceImpl jobProgressUpdateService = new JobProgressServiceImpl(jobRepository);
@@ -74,7 +91,7 @@ class ContractProcessorInvalidPatientTest {
 
         ThreadPoolTaskExecutor aggTP = new ThreadPoolTaskExecutor();
         aggTP.initialize();
-        cut = new ContractProcessorImpl(jobRepository, coverageDriver, patientClaimsProcessor, eventLogger,
+        cut = new ContractProcessorImpl(contractRepository, jobRepository, coverageDriver, patientClaimsProcessor, eventLogger,
                 requestQueue, jobChannelService, jobProgressUpdateService, aggTP);
         ReflectionTestUtils.setField(cut, "numberPatientRequestsPerThread", 2);
         ReflectionTestUtils.setField(cut, "ndjsonRollOver", 0);
@@ -86,13 +103,6 @@ class ContractProcessorInvalidPatientTest {
         ReflectionTestUtils.setField(cut, "multiplier", 1);
 
         jobChannelService.sendUpdate(jobId, JobMeasure.FAILURE_THRESHHOLD, 100);
-
-        Contract contract = new Contract();
-        contract.setContractNumber(contractId);
-        contract.setAttestedOn(OffsetDateTime.now().minusYears(50));
-
-        job.setJobUuid(jobId);
-        job.setContract(contract);
 
         ReflectionTestUtils.setField(patientClaimsProcessor, "earliestDataDate", "01/01/2020");
         ReflectionTestUtils.setField(patientClaimsProcessor, "finishedDir", "finished");
@@ -108,7 +118,7 @@ class ContractProcessorInvalidPatientTest {
         when(bfdClient.requestEOBFromServer(eq(STU3), eq(2L), any())).thenReturn(b2);
         when(bfdClient.requestEOBFromServer(eq(STU3), eq(3L), any())).thenReturn(b4);
 
-        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class))).thenReturn(3);
+        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(3);
 
         List<FilterOutByDate.DateRange> dates = singletonList(TestUtil.getOpenRange());
         List<CoverageSummary> summaries = List.of(new CoverageSummary(createIdentifierWithoutMbi(1L), null, dates),

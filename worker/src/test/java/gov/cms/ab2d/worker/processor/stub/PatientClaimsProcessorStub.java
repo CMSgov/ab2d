@@ -3,10 +3,8 @@ package gov.cms.ab2d.worker.processor.stub;
 import gov.cms.ab2d.worker.processor.PatientClaimsProcessor;
 import gov.cms.ab2d.worker.processor.PatientClaimsRequest;
 import gov.cms.ab2d.worker.processor.ProgressTrackerUpdate;
-import org.jetbrains.annotations.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
 
-import java.util.Date;
 import java.util.concurrent.Future;
 
 public class PatientClaimsProcessorStub implements PatientClaimsProcessor {

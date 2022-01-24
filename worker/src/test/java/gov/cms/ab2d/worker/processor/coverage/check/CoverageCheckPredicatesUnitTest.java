@@ -1,10 +1,10 @@
 package gov.cms.ab2d.worker.processor.coverage.check;
 
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.CoverageCount;
 import gov.cms.ab2d.common.model.CoveragePeriod;
-import gov.cms.ab2d.common.model.CoverageSearchEvent;
-import gov.cms.ab2d.common.service.CoverageService;
+import gov.cms.ab2d.coverage.model.CoverageCount;
+import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
+import gov.cms.ab2d.coverage.service.CoverageService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

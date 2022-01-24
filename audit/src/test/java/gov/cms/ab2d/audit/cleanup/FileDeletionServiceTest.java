@@ -115,6 +115,7 @@ class FileDeletionServiceTest {
 
     @BeforeEach
     public void init() {
+        final String contractNumber = "FileJob123";
         pathsToDelete = new ArrayList<>();
 
         PdpClient pdpClient = dataSetup.setupPdpClient(List.of());
@@ -128,6 +129,7 @@ class FileDeletionServiceTest {
         job.setExpiresAt(OffsetDateTime.now().minusDays(1));
         job.setPdpClient(pdpClient);
         job.setFhirVersion(STU3);
+        job.setContractNumber(contractNumber);
         jobService.updateJob(job);
 
         // Connected to a job, but in progress
@@ -137,6 +139,7 @@ class FileDeletionServiceTest {
         jobInProgress.setCreatedAt(OffsetDateTime.now().minusHours(1));
         jobInProgress.setPdpClient(pdpClient);
         jobInProgress.setFhirVersion(STU3);
+        jobInProgress.setContractNumber(contractNumber);
         jobService.updateJob(jobInProgress);
 
         // Connected to a job that is finished where the file has yet to expire
@@ -148,6 +151,7 @@ class FileDeletionServiceTest {
         jobNotExpiredYet.setExpiresAt(OffsetDateTime.now().plusHours(17));
         jobNotExpiredYet.setPdpClient(pdpClient);
         jobNotExpiredYet.setFhirVersion(STU3);
+        jobNotExpiredYet.setContractNumber(contractNumber);
 
         jobCancelled = new Job();
         jobCancelled.setStatus(JobStatus.CANCELLED);
@@ -155,6 +159,7 @@ class FileDeletionServiceTest {
         jobCancelled.setCreatedAt(OffsetDateTime.now().minusHours(1));
         jobCancelled.setPdpClient(pdpClient);
         jobCancelled.setFhirVersion(STU3);
+        jobCancelled.setContractNumber(contractNumber);
         jobService.updateJob(jobCancelled);
 
         jobFailed = new Job();
@@ -163,6 +168,7 @@ class FileDeletionServiceTest {
         jobFailed.setCreatedAt(OffsetDateTime.now().minusHours(1));
         jobFailed.setPdpClient(pdpClient);
         jobFailed.setFhirVersion(STU3);
+        jobFailed.setContractNumber(contractNumber);
         jobService.updateJob(jobFailed);
 
         efsMount = tmpDirFolder.toPath().toString();

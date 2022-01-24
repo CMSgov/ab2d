@@ -1,13 +1,18 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.*;
-import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
+import gov.cms.ab2d.coverage.model.CoveragePagingResult;
+import gov.cms.ab2d.coverage.model.CoverageSummary;
+import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.stub.PatientClaimsProcessorStub;
+import gov.cms.ab2d.worker.repository.StubContractRepository;
+import gov.cms.ab2d.worker.repository.StubJobRepository;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import gov.cms.ab2d.worker.service.JobChannelStubServiceImpl;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +53,7 @@ class ContractProcessorUnitTest {
 
     @TempDir Path efsMountTmpDir;
 
-    @Mock private JobRepository jobRepository;
+    private StubJobRepository jobRepository;
     @Mock private CoverageDriver coverageDriver;
     @Mock private LogManager eventLogger;
     @Mock private RoundRobinBlockingQueue<PatientClaimsRequest> requestQueue;
@@ -65,6 +70,11 @@ class ContractProcessorUnitTest {
 
         patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
 
+        contract = createContract();
+        PdpClient pdpClient = createClient();
+        job = createJob(pdpClient);
+        job.setContractNumber(contract.getContractNumber());
+        jobRepository = new StubJobRepository(job);
         JobProgressServiceImpl jobProgressImpl = new JobProgressServiceImpl(jobRepository);
         jobProgressImpl.initJob(jobUuid);
         ReflectionTestUtils.setField(jobProgressImpl, "reportProgressDbFrequency", 2);
@@ -73,7 +83,9 @@ class ContractProcessorUnitTest {
         ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
         pool.initialize();;
 
+        ContractRepository contractRepository = new StubContractRepository(contract);
         cut = new ContractProcessorImpl(
+                contractRepository,
                 jobRepository,
                 coverageDriver,
                 patientClaimsProcessor,
@@ -89,11 +101,6 @@ class ContractProcessorUnitTest {
         ReflectionTestUtils.setField(cut, "efsMount", efsMountTmpDir.toFile().getAbsolutePath());
         //ReflectionTestUtils.setField(cut, "numberPatientRequestsPerThread", 2);
 
-        PdpClient pdpClient = createClient();
-        job = createJob(pdpClient);
-        contract = createContract();
-        job.setContract(contract);
-
         var outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
         outputDir = Files.createDirectories(outputDirPath);
     }
@@ -107,10 +114,10 @@ class ContractProcessorUnitTest {
                         new CoveragePagingRequest(2, null, contract, OffsetDateTime.now())))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 2), null));
 
-        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class))).thenReturn(3);
+        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(3);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
 
-        when(jobRepository.findJobStatus(anyString())).thenReturn(JobStatus.CANCELLED);
+        job.setStatus(JobStatus.CANCELLED);
 
         var exceptionThrown = assertThrows(JobCancelledException.class,
                 () -> cut.process(outputDir, job));
@@ -122,7 +129,7 @@ class ContractProcessorUnitTest {
     @Test
     @DisplayName("When many patientId are present, 'PercentageCompleted' should be updated many times")
     void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() {
-        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class))).thenReturn(18);
+        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(18);
         when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 2),
                         new CoveragePagingRequest(2, null, contract, OffsetDateTime.now())))
@@ -157,7 +164,7 @@ class ContractProcessorUnitTest {
 
         when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 1), null));
-        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class))).thenReturn(3);
+        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(3);
 
         ContractProcessingException exception = assertThrows(ContractProcessingException.class, () -> cut.process(outputDir, job));
 
@@ -169,7 +176,7 @@ class ContractProcessorUnitTest {
     void whenRemainingRequestHandlesThenAttemptToProcess() {
 
         try {
-            ContractData contractData = new ContractData(job);
+            ContractData contractData = new ContractData(contract, job);
 
             jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.FAILURE_THRESHHOLD, 20);
             jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENTS_EXPECTED, 20);
@@ -213,7 +220,7 @@ class ContractProcessorUnitTest {
     @DisplayName("When round robin blocking queue is full, patients should not be skipped")
     void whenBlockingQueueFullPatientsNotSkipped() throws InterruptedException {
 
-        when(coverageDriver.numberOfBeneficiariesToProcess(any())).thenReturn(2);
+        when(coverageDriver.numberOfBeneficiariesToProcess(any(), any())).thenReturn(2);
 
         when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contract, 1), new CoveragePagingRequest(1, null, contract, OffsetDateTime.now())))
