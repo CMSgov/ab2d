@@ -25,6 +25,8 @@ import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.model.JobStatus.*;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
+import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_COVERAGE_ISSUE;
+import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_STARTED;
 
 @Slf4j
 @Component
@@ -83,7 +85,8 @@ public class JobPreProcessorImpl implements JobPreProcessor {
                 return job;
             }
 
-            eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, IN_PROGRESS, "Job in progress"), PUBLIC_LIST);
+            eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, IN_PROGRESS, EOB_JOB_STARTED + " for "
+                    + contract.getContractNumber() + " in progress"), PUBLIC_LIST);
 
             job.setStatus(IN_PROGRESS);
             job.setStatusMessage(null);
@@ -91,7 +94,8 @@ public class JobPreProcessorImpl implements JobPreProcessor {
             job = jobRepository.save(job);
 
         } catch (CoverageDriverException coverageDriverException) {
-            eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, FAILED, "Job in progress"), PUBLIC_LIST);
+            eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, FAILED, EOB_JOB_COVERAGE_ISSUE + " Job for "
+                    + contract.getContractNumber() + " in progress"), PUBLIC_LIST);
 
             job.setStatus(FAILED);
             job.setStatusMessage("could not pull coverage information for contract");
