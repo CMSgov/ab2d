@@ -6,7 +6,7 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.Constants;
-import gov.cms.ab2d.coverage.model.CoverageContractDTO;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
@@ -226,7 +226,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         }
     }
 
-    private void discoverCoveragePeriods(CoverageContractDTO contract) {
+    private void discoverCoveragePeriods(ContractForCoverageDTO contract) {
         // Assume current time is EST since all AWS deployments are in EST
         ZonedDateTime now = getEndDateTime();
         ZonedDateTime attestationTime = getAttestationTime(contract);

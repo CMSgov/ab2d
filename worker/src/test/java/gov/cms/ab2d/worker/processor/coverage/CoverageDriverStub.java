@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.common.model.*;
-import gov.cms.ab2d.coverage.model.CoverageContractDTO;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
@@ -73,7 +73,7 @@ public class CoverageDriverStub implements CoverageDriver {
     @Override
     public void verifyCoverage() {}
 
-    private CoveragePagingRequest getNextRequest(CoveragePagingRequest previousRequest, Job job, CoverageContractDTO contract) {
+    private CoveragePagingRequest getNextRequest(CoveragePagingRequest previousRequest, Job job, ContractForCoverageDTO contract) {
         if (previousRequest == null && pageSize < totalRecords) {
             return new CoveragePagingRequest(pageSize, (long) pageSize, contract, job.getCreatedAt());
         } else if (previousRequest != null) {

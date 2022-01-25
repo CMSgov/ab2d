@@ -1,7 +1,7 @@
 package gov.cms.ab2d.coverage.util;
 
 
-import gov.cms.ab2d.coverage.model.CoverageContractDTO;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.repository.CoverageDeltaTestRepository;
 import gov.cms.ab2d.coverage.repository.CoveragePeriodRepository;
@@ -163,8 +163,8 @@ public class CoverageDataSetup {
 //        return setupContract(contractNumber, OffsetDateTime.now());
 //    }
 
-    public CoverageContractDTO setupContractDTO(String contractNumber, OffsetDateTime attestedOn) {
-        return new CoverageContractDTO(contractNumber, attestedOn);
+    public ContractForCoverageDTO setupContractDTO(String contractNumber, OffsetDateTime attestedOn) {
+        return new ContractForCoverageDTO(contractNumber, attestedOn);
     }
 
 

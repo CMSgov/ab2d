@@ -1,6 +1,6 @@
 package gov.cms.ab2d.coverage.service;
 
-import gov.cms.ab2d.coverage.model.CoverageContractDTO;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.model.CoverageDelta;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
@@ -129,8 +129,8 @@ class CoverageServiceImplTest {
     @Autowired
     DataSource dataSource;
 
-    private CoverageContractDTO contract1;
-    private CoverageContractDTO contract2;
+    private ContractForCoverageDTO contract1;
+    private ContractForCoverageDTO contract2;
     
 
     private CoveragePeriod period1Jan;

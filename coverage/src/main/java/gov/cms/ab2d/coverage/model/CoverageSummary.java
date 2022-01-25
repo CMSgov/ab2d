@@ -16,10 +16,10 @@ import lombok.ToString;
 public class CoverageSummary {
 
     private final Identifiers identifiers;
-    private final CoverageContractDTO contract;
+    private final ContractForCoverageDTO contract;
     private final List<FilterOutByDate.DateRange> dateRanges;
 
-    public CoverageSummary(Identifiers identifiers, CoverageContractDTO contract, List<FilterOutByDate.DateRange> dateRanges) {
+    public CoverageSummary(Identifiers identifiers, ContractForCoverageDTO contract, List<FilterOutByDate.DateRange> dateRanges) {
         this.identifiers = identifiers;
         this.contract = contract;
         this.dateRanges = dateRanges;

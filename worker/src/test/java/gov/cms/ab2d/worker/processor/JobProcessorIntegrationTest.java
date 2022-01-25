@@ -12,7 +12,7 @@ import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
-import gov.cms.ab2d.coverage.model.CoverageContractDTO;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
@@ -153,7 +153,7 @@ class JobProcessorIntegrationTest {
     private static final ExplanationOfBenefit EOB = (ExplanationOfBenefit) EobTestDataUtil.createEOB();
 
     private Contract contract;
-    private CoverageContractDTO coverageContractDTO;
+    private ContractForCoverageDTO contractForCoverageDTO;
     private RuntimeException fail;
 
     @BeforeEach
@@ -163,7 +163,7 @@ class JobProcessorIntegrationTest {
         PdpClient pdpClient = createClient();
 
         contract = createContract();
-        coverageContractDTO = mapping.map(contract);
+        contractForCoverageDTO = mapping.map(contract);
         fail = new RuntimeException("TEST EXCEPTION");
 
         job = createJob(pdpClient);
@@ -185,7 +185,7 @@ class JobProcessorIntegrationTest {
         when(mockCoverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(100);
 
         when(mockCoverageDriver.pageCoverage(any(CoveragePagingRequest.class))).thenReturn(
-                new CoveragePagingResult(loadFauxMetadata(coverageContractDTO, 99), null));
+                new CoveragePagingResult(loadFauxMetadata(contractForCoverageDTO, 99), null));
 
         PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, logManager);
         ReflectionTestUtils.setField(patientClaimsProcessor, "earliestDataDate", "01/01/1900");
@@ -339,7 +339,7 @@ class JobProcessorIntegrationTest {
 
         reset(mockCoverageDriver);
         when(mockCoverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(40);
-        andThenAnswerPatients(mockCoverageDriver, coverageContractDTO, 10, 40);
+        andThenAnswerPatients(mockCoverageDriver, contractForCoverageDTO, 10, 40);
 
         OngoingStubbing<IBaseBundle> stubbing = when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any()));
         stubbing = andThenAnswerEobs(stubbing, 0, 20);
@@ -423,7 +423,7 @@ class JobProcessorIntegrationTest {
         return job;
     }
 
-    private static List<CoverageSummary> loadFauxMetadata(CoverageContractDTO contract, int rowsToRetrieve) {
+    private static List<CoverageSummary> loadFauxMetadata(ContractForCoverageDTO contract, int rowsToRetrieve) {
 
         List<Long> patientIdRows = LongStream.range(0, rowsToRetrieve).boxed().collect(toList());
 
@@ -449,7 +449,7 @@ class JobProcessorIntegrationTest {
         return stubbing;
     }
 
-    private static OngoingStubbing<CoveragePagingResult> andThenAnswerPatients(CoverageDriver coverageDriver, CoverageContractDTO contract, int pageSize, int total) {
+    private static OngoingStubbing<CoveragePagingResult> andThenAnswerPatients(CoverageDriver coverageDriver, ContractForCoverageDTO contract, int pageSize, int total) {
 
         OngoingStubbing<CoveragePagingResult> stubbing = when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)));
 

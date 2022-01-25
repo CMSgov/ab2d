@@ -13,7 +13,7 @@ public class CoveragePagingRequest {
      *
      */
     private final OffsetDateTime jobStartTime;
-    private final CoverageContractDTO contract;
+    private final ContractForCoverageDTO contract;
 
     /**
      * Number of beneficiaries at a time to pull from the database
@@ -27,7 +27,7 @@ public class CoveragePagingRequest {
      */
     private final Long cursor;
 
-    public CoveragePagingRequest(int pageSize, Long cursor, CoverageContractDTO contract, OffsetDateTime jobStartTime) {
+    public CoveragePagingRequest(int pageSize, Long cursor, ContractForCoverageDTO contract, OffsetDateTime jobStartTime) {
         this.contract = contract;
         this.pageSize = pageSize;
         this.cursor = cursor;
@@ -38,7 +38,7 @@ public class CoveragePagingRequest {
         return jobStartTime;
     }
 
-    public CoverageContractDTO getContract() {
+    public ContractForCoverageDTO getContract() {
         return contract;
     }
 

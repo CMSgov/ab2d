@@ -1,7 +1,7 @@
 package gov.cms.ab2d.coverage.service;
 
 import com.newrelic.api.agent.Trace;
-import gov.cms.ab2d.coverage.model.CoverageContractDTO;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
@@ -86,7 +86,7 @@ public class CoverageServiceImpl implements CoverageService {
     private final LogManager eventLogger;
 
     @Override
-    public CoveragePeriod getCoveragePeriod(CoverageContractDTO contract, int month, int year) {
+    public CoveragePeriod getCoveragePeriod(ContractForCoverageDTO contract, int month, int year) {
         checkMonthAndYear(month, year);
 
         Optional<CoveragePeriod> period = coveragePeriodRepo.findByContractNumberAndMonthAndYear(contract.getContractNumber(), month, year);
@@ -102,7 +102,7 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    public CoveragePeriod getCreateIfAbsentCoveragePeriod(CoverageContractDTO contract, int month, int year) {
+    public CoveragePeriod getCreateIfAbsentCoveragePeriod(ContractForCoverageDTO contract, int month, int year) {
         checkMonthAndYear(month, year);
 
         Optional<CoveragePeriod> existing = coveragePeriodRepo.findByContractNumberAndMonthAndYear(contract.getContractNumber(), month, year);
@@ -138,9 +138,9 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    public List<CoverageCount> countBeneficiariesForContracts(List<CoverageContractDTO> contracts) {
+    public List<CoverageCount> countBeneficiariesForContracts(List<ContractForCoverageDTO> contracts) {
         int partitionSize = 5;
-        List<List<CoverageContractDTO>> contractPartitions = new ArrayList<>();
+        List<List<ContractForCoverageDTO>> contractPartitions = new ArrayList<>();
 
         // Split queries into smaller pieces so queries don't time out
         for (int idx = 0; idx < contracts.size(); idx += partitionSize) {

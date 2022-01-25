@@ -12,7 +12,7 @@ import static gov.cms.ab2d.coverage.repository.CoverageServiceRepository.AB2D_ZO
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CoverageContractDTO {
+public class ContractForCoverageDTO {
     private String contractNumber;
     private OffsetDateTime attestedOn;
 

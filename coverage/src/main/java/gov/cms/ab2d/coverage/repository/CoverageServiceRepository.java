@@ -1,7 +1,7 @@
 package gov.cms.ab2d.coverage.repository;
 
 import com.newrelic.api.agent.Trace;
-import gov.cms.ab2d.coverage.model.CoverageContractDTO;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.model.CoverageMembership;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
@@ -304,12 +304,12 @@ public class CoverageServiceRepository {
      * This method provides the statistics necessary to verify that the coverage data in the database meets business
      * requirements.
      *
-     * @param contracts list of {@link CoverageContractDTO}s
+     * @param contracts list of {@link ContractForCoverageDTO}s
      * @return counts of the coverage for a given coverage period
      */
     @Trace
-    public List<CoverageCount> countByContractCoverage(List<CoverageContractDTO> contracts) {
-        List<String> contractNumbers = contracts.stream().map(CoverageContractDTO::getContractNumber).collect(toList());
+    public List<CoverageCount> countByContractCoverage(List<ContractForCoverageDTO> contracts) {
+        List<String> contractNumbers = contracts.stream().map(ContractForCoverageDTO::getContractNumber).collect(toList());
         SqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("contracts", contractNumbers)
                 .addValue("years", YEARS);
@@ -508,7 +508,7 @@ public class CoverageServiceRepository {
      *    with a patient and specifies a  month and year that the beneficiaries
      *    are a member of the contract {@link #queryCoverageMembership(CoveragePagingRequest, long)}
      * 4. Group the previous queries' results by patient {@link #aggregateEnrollmentByPatient(int, List)}
-     * 5. For each patient condense enrollment down to a single set of date ranges {@link #summarizeCoverageMembership(CoverageContractDTO, Map.Entry)}
+     * 5. For each patient condense enrollment down to a single set of date ranges {@link #summarizeCoverageMembership(ContractForCoverageDTO, Map.Entry)}
      * 6. Determine whether another page of results is necessary
      * 7. If another page of results is necessary create a {@link CoveragePagingRequest}
      * 8. Collect the {@link CoverageSummary} and next {@link CoveragePagingRequest }into a single {@link CoveragePagingResult}
@@ -518,7 +518,7 @@ public class CoverageServiceRepository {
      */
     public CoveragePagingResult pageCoverage(CoveragePagingRequest page) {
 
-        CoverageContractDTO contract = page.getContract();
+        ContractForCoverageDTO contract = page.getContract();
         int expectedCoveragePeriods = getExpectedCoveragePeriods(page);
 
         // Make sure all coverage periods are present so that there isn't any missing coverage data
@@ -674,7 +674,7 @@ public class CoverageServiceRepository {
     /**
      * Summarize the coverage of one beneficiary for
      */
-    private CoverageSummary summarizeCoverageMembership(CoverageContractDTO contract,
+    private CoverageSummary summarizeCoverageMembership(ContractForCoverageDTO contract,
                                                         Map.Entry<Long, List<CoverageMembership>> membershipInfo) {
 
         List<CoverageMembership> membershipMonths = membershipInfo.getValue();

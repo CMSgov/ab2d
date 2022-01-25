@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.processor.coverage.check;
 
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.coverage.model.CoverageContractDTO;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.worker.config.ContractMapping;
@@ -40,7 +40,7 @@ public class CoveragePeriodsPresentCheck extends CoverageCheckPredicate {
      * @param contract contract to check enrollment for
      * @return list of issues found if any
      */
-    private List<String> listMissingCoveragePeriods(CoverageService coverageService, CoverageContractDTO contract) {
+    private List<String> listMissingCoveragePeriods(CoverageService coverageService, ContractForCoverageDTO contract) {
 
         List<String> missingPeriods = new ArrayList<>();
 

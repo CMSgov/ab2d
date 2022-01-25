@@ -4,7 +4,7 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.coverage.model.CoverageContractDTO;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
@@ -104,7 +104,7 @@ class ContractProcessorInvalidPatientTest {
 
     @Test
     void testInvalidBenes() throws IOException {
-        when(mapping.map(any(Contract.class))).thenReturn(new CoverageContractDTO(contract.getContractNumber(), contract.getAttestedOn()));
+        when(mapping.map(any(Contract.class))).thenReturn(new ContractForCoverageDTO(contract.getContractNumber(), contract.getAttestedOn()));
         org.hl7.fhir.dstu3.model.Bundle b1 = BundleUtils.createBundle(createBundleEntry("1"));
         org.hl7.fhir.dstu3.model.Bundle b2 = BundleUtils.createBundle(createBundleEntry("2"));
         org.hl7.fhir.dstu3.model.Bundle b4 = BundleUtils.createBundle(createBundleEntry("4"));

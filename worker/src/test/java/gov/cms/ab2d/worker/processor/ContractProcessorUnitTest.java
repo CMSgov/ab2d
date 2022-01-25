@@ -5,7 +5,7 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.coverage.model.CoverageContractDTO;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
@@ -80,7 +80,7 @@ class ContractProcessorUnitTest {
 
     private Path outputDir;
     private Contract contract;
-    private CoverageContractDTO coverageContractDTO;
+    private ContractForCoverageDTO contractForCoverageDTO;
     private ContractMapping mapping;
     private Job job;
 
@@ -92,7 +92,7 @@ class ContractProcessorUnitTest {
 
         mapping = new ContractMapping();
         contract = createContract();
-        coverageContractDTO = mapping.map(contract);
+        contractForCoverageDTO = mapping.map(contract);
         PdpClient pdpClient = createClient();
         job = createJob(pdpClient);
         job.setContractNumber(contract.getContractNumber());
@@ -125,9 +125,9 @@ class ContractProcessorUnitTest {
     @DisplayName("When a job is cancelled while it is being processed, then attempt to stop the job gracefully without completing it")
     void whenJobIsCancelledWhileItIsBeingProcessed_ThenAttemptToStopTheJob() {
         when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 1),
-                        new CoveragePagingRequest(2, null, coverageContractDTO, OffsetDateTime.now())))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 2), null));
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contractForCoverageDTO, 1),
+                        new CoveragePagingRequest(2, null, contractForCoverageDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contractForCoverageDTO, 2), null));
 
         when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(3);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
@@ -146,23 +146,23 @@ class ContractProcessorUnitTest {
     void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() {
         when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(18);
         when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 2),
-                        new CoveragePagingRequest(2, null, coverageContractDTO, OffsetDateTime.now())))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 2),
-                        new CoveragePagingRequest(2, null, coverageContractDTO, OffsetDateTime.now())))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 2),
-                        new CoveragePagingRequest(2, null, coverageContractDTO, OffsetDateTime.now())))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 2),
-                        new CoveragePagingRequest(2, null, coverageContractDTO, OffsetDateTime.now())))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 2),
-                        new CoveragePagingRequest(2, null, coverageContractDTO, OffsetDateTime.now())))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 2),
-                        new CoveragePagingRequest(2, null, coverageContractDTO, OffsetDateTime.now())))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 2),
-                        new CoveragePagingRequest(2, null, coverageContractDTO, OffsetDateTime.now())))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 2),
-                        new CoveragePagingRequest(2, null, coverageContractDTO, OffsetDateTime.now())))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 2), null));
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contractForCoverageDTO, 2),
+                        new CoveragePagingRequest(2, null, contractForCoverageDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contractForCoverageDTO, 2),
+                        new CoveragePagingRequest(2, null, contractForCoverageDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contractForCoverageDTO, 2),
+                        new CoveragePagingRequest(2, null, contractForCoverageDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contractForCoverageDTO, 2),
+                        new CoveragePagingRequest(2, null, contractForCoverageDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contractForCoverageDTO, 2),
+                        new CoveragePagingRequest(2, null, contractForCoverageDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contractForCoverageDTO, 2),
+                        new CoveragePagingRequest(2, null, contractForCoverageDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contractForCoverageDTO, 2),
+                        new CoveragePagingRequest(2, null, contractForCoverageDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contractForCoverageDTO, 2),
+                        new CoveragePagingRequest(2, null, contractForCoverageDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contractForCoverageDTO, 2), null));
 
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_EXPECTED, 18);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
@@ -178,7 +178,7 @@ class ContractProcessorUnitTest {
     @DisplayName("When a job is cancelled while it is being processed, then attempt to stop the job gracefully without completing it")
     void whenExpectedPatientsNotMatchActualPatientsFail() {
         when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 1), null));
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contractForCoverageDTO, 1), null));
         when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(3);
 
         ContractProcessingException exception = assertThrows(ContractProcessingException.class, () -> cut.process(outputDir, job));
@@ -235,8 +235,8 @@ class ContractProcessorUnitTest {
     @DisplayName("When round robin blocking queue is full, patients should not be skipped")
     void whenBlockingQueueFullPatientsNotSkipped() throws InterruptedException {
         when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 1), new CoveragePagingRequest(1, null, coverageContractDTO, OffsetDateTime.now())))
-                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(coverageContractDTO, 1), null));
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contractForCoverageDTO, 1), new CoveragePagingRequest(1, null, contractForCoverageDTO, OffsetDateTime.now())))
+                .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contractForCoverageDTO, 1), null));
 
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_EXPECTED, 2);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 1);
@@ -283,11 +283,11 @@ class ContractProcessorUnitTest {
         return job;
     }
 
-    private static List<CoverageSummary> createPatientsByContractResponse(CoverageContractDTO contractcoverageContractDTO, int num) {
+    private static List<CoverageSummary> createPatientsByContractResponse(ContractForCoverageDTO contractcoverageContractForCoverageDTO, int num) {
         FilterOutByDate.DateRange dateRange = TestUtil.getOpenRange();
         return IntStream.range(0, num).mapToObj(n -> new CoverageSummary(
                 createIdentifierWithoutMbi(n),
-                contractcoverageContractDTO, List.of(dateRange)
+                contractcoverageContractForCoverageDTO, List.of(dateRange)
         )).collect(toList());
     }
 }

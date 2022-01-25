@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
-import gov.cms.ab2d.coverage.model.CoverageContractDTO;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import java.time.ZonedDateTime;
 import lombok.extern.slf4j.Slf4j;
 
@@ -20,7 +20,7 @@ public final class CoverageUtils {
         return now;
     }
 
-    public static ZonedDateTime getAttestationTime(CoverageContractDTO contract) {
+    public static ZonedDateTime getAttestationTime(ContractForCoverageDTO contract) {
         ZonedDateTime attestationTime = contract.getESTAttestationTime();
 
         // Force first coverage period to be after

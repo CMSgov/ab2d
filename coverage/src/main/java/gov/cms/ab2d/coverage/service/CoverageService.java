@@ -1,7 +1,7 @@
 package gov.cms.ab2d.coverage.service;
 
 
-import gov.cms.ab2d.coverage.model.CoverageContractDTO;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
@@ -25,7 +25,7 @@ public interface CoverageService {
      * @param month valid month
      * @param year valid year (not later than current year)
      */
-    CoveragePeriod getCoveragePeriod(CoverageContractDTO contract, int month, int year);
+    CoveragePeriod getCoveragePeriod(ContractForCoverageDTO contract, int month, int year);
 
     /**
      * Get {@link CoveragePeriod} in database matching provided triple
@@ -41,7 +41,7 @@ public interface CoverageService {
      * @param year year of the period
      * @return coverage period as it exists in database
      */
-    CoveragePeriod getCreateIfAbsentCoveragePeriod(CoverageContractDTO contract, int month, int year);
+    CoveragePeriod getCreateIfAbsentCoveragePeriod(ContractForCoverageDTO contract, int month, int year);
 
     /**
      * Retrieve list of coverage periods associated with a contract
@@ -72,7 +72,7 @@ public interface CoverageService {
      * @param contracts list of contracts to search for
      * @return a summary of the coverage records found for a contract/year/month
      */
-    List<CoverageCount> countBeneficiariesForContracts(List<CoverageContractDTO> contracts);
+    List<CoverageCount> countBeneficiariesForContracts(List<ContractForCoverageDTO> contracts);
 
     /**
      * Can an EOB search be started based on whether a contract mapping is in progress
