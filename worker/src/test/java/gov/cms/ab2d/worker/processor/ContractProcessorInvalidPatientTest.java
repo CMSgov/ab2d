@@ -4,6 +4,7 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.coverage.model.CoverageContractDTO;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
@@ -57,6 +58,9 @@ class ContractProcessorInvalidPatientTest {
     @Mock
     private BFDClient bfdClient;
 
+    @Mock
+    private ContractMapping mapping;
+
     private ContractRepository contractRepository;
 
     private JobRepository jobRepository;
@@ -75,11 +79,13 @@ class ContractProcessorInvalidPatientTest {
 
     @BeforeEach
     void setup() {
-        ContractMapping mapping = new ContractMapping();
+
 
         Contract contract = new Contract();
         contract.setContractNumber(contractId);
         contract.setAttestedOn(OffsetDateTime.now().minusYears(50));
+
+        when(mapping.map(any(Contract.class))).thenReturn(new CoverageContractDTO(contract.getContractNumber(), contract.getAttestedOn()));
         contractRepository = new StubContractRepository(contract);
 
         job.setJobUuid(jobId);
