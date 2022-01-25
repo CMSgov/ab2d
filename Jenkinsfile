@@ -188,9 +188,6 @@ pipeline {
                    export JACOCO_SOURCE_PATH=./coverage/src/main/java
                    ./codeclimate/cc-test-reporter format-coverage ./coverage/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.coverage.json
 
-                   export JACOCO_SOURCE_PATH=./coverage/src/main/java
-                   ./codeclimate/cc-test-reporter format-coverage ./coverage/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.coverage.json
-
                     export JACOCO_SOURCE_PATH=./hpms/src/main/java
                     ./codeclimate/cc-test-reporter format-coverage ./hpms/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.hpms.json
 
