@@ -3,7 +3,6 @@ package gov.cms.ab2d.worker.processor.coverage;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
-import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import java.util.ArrayList;
@@ -56,7 +55,7 @@ import static gov.cms.ab2d.fhir.FhirVersion.STU3;
  * Methods for changing the status of a search.
  *      - {@link gov.cms.ab2d.coverage.service.CoverageService#submitSearch(int, String)}
  *      - {@link gov.cms.ab2d.coverage.service.CoverageService#resubmitSearch(int, int, String, String, boolean)}
- *      - {@link CoverageService#startSearch(CoverageSearch, String)}
+ *      - {@link gov.cms.ab2d.coverage.service.CoverageService#startSearch(gov.cms.ab2d.coverage.model.CoverageSearch, String)}
  *      - {@link gov.cms.ab2d.coverage.service.CoverageService#completeSearch(int, String)}
  *      - {@link gov.cms.ab2d.coverage.service.CoverageService#failSearch(int, String)}
  */
