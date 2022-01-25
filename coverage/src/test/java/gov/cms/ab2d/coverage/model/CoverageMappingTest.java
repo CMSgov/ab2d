@@ -14,15 +14,15 @@ class CoverageMappingTest {
     @DisplayName("coverage mapping constructor works")
     @Test
     void build() {
-        CoverageMapping coverageMapping = new CoverageMapping(null, new CoverageSearchDTO());
+        CoverageMapping coverageMapping = new CoverageMapping(null, new CoverageSearch());
 
         coverageMapping.completed();
 
         assertTrue(coverageMapping.isSuccessful());
-        assertEquals(1, coverageMapping.getCoverageSearchDTO().getAttempts());
+        assertEquals(1, coverageMapping.getCoverageSearch().getAttempts());
 
         coverageMapping.failed();
-        assertEquals(2, coverageMapping.getCoverageSearchDTO().getAttempts());
+        assertEquals(2, coverageMapping.getCoverageSearch().getAttempts());
         assertFalse(coverageMapping.isSuccessful());
     }
 

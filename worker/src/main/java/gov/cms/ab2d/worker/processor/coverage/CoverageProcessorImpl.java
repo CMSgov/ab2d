@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.processor.coverage;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
+import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import java.util.ArrayList;
@@ -55,7 +56,7 @@ import static gov.cms.ab2d.fhir.FhirVersion.STU3;
  * Methods for changing the status of a search.
  *      - {@link gov.cms.ab2d.coverage.service.CoverageService#submitSearch(int, String)}
  *      - {@link gov.cms.ab2d.coverage.service.CoverageService#resubmitSearch(int, int, String, String, boolean)}
- *      - {@link CoverageService#startSearch(gov.cms.ab2d.coverage.model.CoverageSearchDTO, String)}
+ *      - {@link CoverageService#startSearch(CoverageSearch, String)}
  *      - {@link gov.cms.ab2d.coverage.service.CoverageService#completeSearch(int, String)}
  *      - {@link gov.cms.ab2d.coverage.service.CoverageService#failSearch(int, String)}
  */
@@ -184,7 +185,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
      */
     @Override
     public void queueMapping(CoverageMapping mapping, boolean prioritize) {
-        queueCoveragePeriod(mapping.getPeriod(), mapping.getCoverageSearchDTO().getAttempts(), prioritize);
+        queueCoveragePeriod(mapping.getPeriod(), mapping.getCoverageSearch().getAttempts(), prioritize);
     }
 
     /**
@@ -203,7 +204,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
         log.info("resubmitted coverage period search at front of queue");
 
-        coverageService.resubmitSearch(mapping.getPeriodId(), mapping.getCoverageSearchDTO().getAttempts(),
+        coverageService.resubmitSearch(mapping.getPeriodId(), mapping.getCoverageSearch().getAttempts(),
                 failedDescription, restartDescription, prioritize);
     }
 
@@ -254,7 +255,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                     mapping.getPeriod().getMonth(), mapping.getPeriod().getYear());
 
             coverageInsertionQueue.add(mapping);
-        } else if (mapping.getCoverageSearchDTO().getAttempts() > maxAttempts) {
+        } else if (mapping.getCoverageSearch().getAttempts() > maxAttempts) {
 
             log.error("could not complete coverage mapping job due to multiple failed attempts and will not re-attempt");
 

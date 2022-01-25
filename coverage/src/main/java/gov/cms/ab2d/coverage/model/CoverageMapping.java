@@ -11,13 +11,13 @@ public class CoverageMapping {
     private final Set<Identifiers> beneficiaryIds;
 
     private final CoverageSearchEvent coverageSearchEvent;
-    private final CoverageSearchDTO coverageSearchDTO;
+    private final CoverageSearch coverageSearch;
 
     private boolean successful;
 
-    public CoverageMapping(CoverageSearchEvent event, CoverageSearchDTO search) {
+    public CoverageMapping(CoverageSearchEvent event, CoverageSearch search) {
         this.coverageSearchEvent = event;
-        this.coverageSearchDTO = search;
+        this.coverageSearch = search;
 
         beneficiaryIds = new HashSet<>();
     }
@@ -39,12 +39,12 @@ public class CoverageMapping {
     }
 
     public void completed() {
-        coverageSearchDTO.incrementAttempts();
+        coverageSearch.incrementAttempts();
         successful = true;
     }
 
     public void failed() {
-        coverageSearchDTO.incrementAttempts();
+        coverageSearch.incrementAttempts();
         successful = false;
     }
 

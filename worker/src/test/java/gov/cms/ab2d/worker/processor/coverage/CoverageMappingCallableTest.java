@@ -4,7 +4,7 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
-import gov.cms.ab2d.coverage.model.CoverageSearchDTO;
+import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
@@ -66,7 +66,7 @@ class CoverageMappingCallableTest {
         CoverageSearchEvent cse = new CoverageSearchEvent();
         cse.setCoveragePeriod(period);
 
-        CoverageSearchDTO search = new CoverageSearchDTO();
+        CoverageSearch search = new CoverageSearch();
         search.setPeriod(period);
 
         CoverageMapping mapping = new CoverageMapping(cse, search);
@@ -97,7 +97,7 @@ class CoverageMappingCallableTest {
         CoverageSearchEvent cse = new CoverageSearchEvent();
         cse.setCoveragePeriod(period);
 
-        CoverageSearchDTO search = new CoverageSearchDTO();
+        CoverageSearch search = new CoverageSearch();
         search.setPeriod(period);
 
         // First test that the corrected year modification works
@@ -135,7 +135,7 @@ class CoverageMappingCallableTest {
         CoverageSearchEvent cse = new CoverageSearchEvent();
         cse.setCoveragePeriod(period);
 
-        CoverageSearchDTO search = new CoverageSearchDTO();
+        CoverageSearch search = new CoverageSearch();
         search.setPeriod(period);
 
         CoverageMapping mapping = new CoverageMapping(cse, search);
@@ -187,7 +187,7 @@ class CoverageMappingCallableTest {
         CoverageSearchEvent cse = new CoverageSearchEvent();
         cse.setCoveragePeriod(period);
 
-        CoverageSearchDTO search = new CoverageSearchDTO();
+        CoverageSearch search = new CoverageSearch();
         search.setPeriod(period);
 
         CoverageMapping mapping = new CoverageMapping(cse, search);
@@ -235,7 +235,7 @@ class CoverageMappingCallableTest {
         CoverageSearchEvent cse = new CoverageSearchEvent();
         cse.setCoveragePeriod(period);
 
-        CoverageSearchDTO search = new CoverageSearchDTO();
+        CoverageSearch search = new CoverageSearch();
         search.setPeriod(period);
 
         CoverageMapping mapping = new CoverageMapping(cse, search);
@@ -287,7 +287,7 @@ class CoverageMappingCallableTest {
         CoverageSearchEvent cse = new CoverageSearchEvent();
         cse.setCoveragePeriod(period);
 
-        CoverageSearchDTO search = new CoverageSearchDTO();
+        CoverageSearch search = new CoverageSearch();
         search.setPeriod(period);
 
         CoverageMapping mapping = new CoverageMapping(cse, search);
@@ -337,7 +337,7 @@ class CoverageMappingCallableTest {
         CoverageSearchEvent cse = new CoverageSearchEvent();
         cse.setCoveragePeriod(period);
 
-        CoverageSearchDTO search = new CoverageSearchDTO();
+        CoverageSearch search = new CoverageSearch();
         search.setPeriod(period);
 
         CoverageMapping mapping = new CoverageMapping(cse, search);
@@ -377,7 +377,7 @@ class CoverageMappingCallableTest {
         CoverageSearchEvent cse = new CoverageSearchEvent();
         cse.setCoveragePeriod(period);
 
-        CoverageSearchDTO search = new CoverageSearchDTO();
+        CoverageSearch search = new CoverageSearch();
         search.setPeriod(period);
 
         CoverageMapping mapping = new CoverageMapping(cse, search);
@@ -407,7 +407,7 @@ class CoverageMappingCallableTest {
         CoverageSearchEvent cse = new CoverageSearchEvent();
         cse.setCoveragePeriod(period);
 
-        CoverageSearchDTO search = new CoverageSearchDTO();
+        CoverageSearch search = new CoverageSearch();
         search.setPeriod(period);
 
         CoverageMapping mapping = new CoverageMapping(cse, search);

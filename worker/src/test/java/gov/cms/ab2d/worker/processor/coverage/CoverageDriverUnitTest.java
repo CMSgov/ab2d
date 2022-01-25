@@ -10,7 +10,7 @@ import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
-import gov.cms.ab2d.coverage.model.CoverageSearchDTO;
+import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.model.JobStatus;
 import gov.cms.ab2d.coverage.service.CoverageService;
@@ -442,7 +442,7 @@ class CoverageDriverUnitTest {
         CoverageSearchEvent event = new CoverageSearchEvent();
         event.setCoveragePeriod(coveragePeriod);
 
-        CoverageSearchDTO search = new CoverageSearchDTO();
+        CoverageSearch search = new CoverageSearch();
 
         CoverageMapping mapping = new CoverageMapping(event, search);
 

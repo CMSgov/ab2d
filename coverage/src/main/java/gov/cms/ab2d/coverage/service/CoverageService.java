@@ -7,7 +7,7 @@ import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
-import gov.cms.ab2d.coverage.model.CoverageSearchDTO;
+import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchDiff;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.model.Identifiers;
@@ -199,7 +199,7 @@ public interface CoverageService {
      * @return resulting coverage search event if there is a search in the queu
      * @throws gov.cms.ab2d.common.service.InvalidJobStateTransition if job is not in the {@link JobStatus#SUBMITTED} state when this job is received
      */
-    Optional<CoverageMapping> startSearch(CoverageSearchDTO search, String description);
+    Optional<CoverageMapping> startSearch(CoverageSearch search, String description);
 
     /**
      * Resubmit a search that has failed but still has attempts. Marks a search as {@link JobStatus#FAILED}

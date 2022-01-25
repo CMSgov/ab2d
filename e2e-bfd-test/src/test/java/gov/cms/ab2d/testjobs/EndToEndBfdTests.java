@@ -11,7 +11,7 @@ import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.SinceSource;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
-import gov.cms.ab2d.coverage.model.CoverageSearchDTO;
+import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
@@ -284,7 +284,7 @@ public class EndToEndBfdTests {
         long startTime = System.currentTimeMillis();
         coverageDriver.discoverCoveragePeriods();
         coverageDriver.queueStaleCoveragePeriods();
-        Optional<CoverageSearchDTO> search = ((CoverageDriverImpl) coverageDriver).getNextSearch();
+        Optional<CoverageSearch> search = ((CoverageDriverImpl) coverageDriver).getNextSearch();
         while (search.isPresent()) {
 
             Optional<CoverageMapping> maybeSearch = coverageService.startSearch(search.get(), "starting a job");

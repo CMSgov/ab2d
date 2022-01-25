@@ -12,7 +12,7 @@ import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
-import gov.cms.ab2d.coverage.model.CoverageSearchDTO;
+import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.JobStatus;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
@@ -347,7 +347,7 @@ public class CoverageDriverImpl implements CoverageDriver {
             return;
         }
 
-        Optional<CoverageSearchDTO> search = getNextSearch();
+        Optional<CoverageSearch> search = getNextSearch();
         if (search.isEmpty()) {
             return;
         }
@@ -380,7 +380,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      *
      * @return the next search or else an empty Optional if there are none or if the table is locked
      */
-    public Optional<CoverageSearchDTO> getNextSearch() {
+    public Optional<CoverageSearch> getNextSearch() {
         Lock lock = coverageLockWrapper.getCoverageLock();
 
         if (!lock.tryLock()) {
@@ -391,7 +391,7 @@ public class CoverageDriverImpl implements CoverageDriver {
 
             // First find if a submitted eob job is waiting on a current search
             // and pick those searches first
-            Optional<CoverageSearchDTO> searchOpt = coverageSearchRepository.findHighestPrioritySearch();
+            Optional<CoverageSearch> searchOpt = coverageSearchRepository.findHighestPrioritySearch();
 
             // If no high priority search has been found
             // instead pick the first submitted search
@@ -404,7 +404,7 @@ public class CoverageDriverImpl implements CoverageDriver {
                 return searchOpt;
             }
 
-            CoverageSearchDTO search = searchOpt.get();
+            CoverageSearch search = searchOpt.get();
             coverageSearchRepository.delete(search);
             coverageSearchRepository.flush();
 

@@ -8,7 +8,7 @@ import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
-import gov.cms.ab2d.coverage.model.CoverageSearchDTO;
+import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchDiff;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.model.Identifiers;
@@ -300,7 +300,7 @@ public class CoverageServiceImpl implements CoverageService {
         }
 
         // Add to queue of jobs to do
-        CoverageSearchDTO search = new CoverageSearchDTO();
+        CoverageSearch search = new CoverageSearch();
         search.setPeriod(period);
         search.setAttempts(attempts);
         coverageSearchRepo.saveAndFlush(search);
@@ -316,7 +316,7 @@ public class CoverageServiceImpl implements CoverageService {
         updateStatus(period, failedDescription, JobStatus.FAILED, false);
 
         // Add to queue of jobs to do
-        CoverageSearchDTO search = new CoverageSearchDTO();
+        CoverageSearch search = new CoverageSearch();
         search.setPeriod(period);
         search.setAttempts(attempts);
 
@@ -347,7 +347,7 @@ public class CoverageServiceImpl implements CoverageService {
         }
 
         // Add to queue of jobs to do
-        CoverageSearchDTO search = new CoverageSearchDTO();
+        CoverageSearch search = new CoverageSearch();
         search.setPeriod(period);
         search.setAttempts(attempts);
         search.setCreated(OffsetDateTime.of(2000, 1, 1,
@@ -358,7 +358,7 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     @Override
-    public Optional<CoverageMapping> startSearch(CoverageSearchDTO submittedSearch, String description) {
+    public Optional<CoverageMapping> startSearch(CoverageSearch submittedSearch, String description) {
 
         if (submittedSearch == null) {
             return Optional.empty();

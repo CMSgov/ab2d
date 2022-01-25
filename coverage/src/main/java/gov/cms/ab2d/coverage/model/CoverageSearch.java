@@ -11,10 +11,10 @@ import lombok.EqualsAndHashCode;
 
 import java.time.OffsetDateTime;
 
-@Entity(name = "coverage_search")
+@Entity
 @Data
 @AllArgsConstructor
-public class CoverageSearchDTO {
+public class CoverageSearch {
     @Id
     @GeneratedValue
     @EqualsAndHashCode.Include
@@ -37,7 +37,7 @@ public class CoverageSearchDTO {
      */
     private int attempts;
 
-    public CoverageSearchDTO() {
+    public CoverageSearch() {
         attempts = 0;
         created = OffsetDateTime.now();
     }

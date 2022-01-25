@@ -7,7 +7,7 @@ import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
-import gov.cms.ab2d.coverage.model.CoverageSearchDTO;
+import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchDiff;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
@@ -206,7 +206,7 @@ class CoverageServiceImplTest {
         assertTrue(coverageService.canEOBSearchBeStarted(period1Jan.getId()));
         assertFalse(coverageService.isCoveragePeriodInProgress(period1Jan.getId()));
 
-        Optional<CoverageSearchDTO> search = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        Optional<CoverageSearch> search = coverageSearchRepo.findFirstByOrderByCreatedAsc();
         coverageService.startSearch(search.get(), "testing");
 
         assertFalse(coverageService.canEOBSearchBeStarted(period1Jan.getId()));
@@ -378,7 +378,7 @@ class CoverageServiceImplTest {
 
         // Submitting a coverage search added row to coverage search table
 
-        Optional<CoverageSearchDTO> search = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        Optional<CoverageSearch> search = coverageSearchRepo.findFirstByOrderByCreatedAsc();
         assertTrue(search.isPresent());
         assertNotNull(search.get().getCreated());
         assertEquals(period1Jan, search.get().getPeriod());
@@ -1063,30 +1063,30 @@ class CoverageServiceImplTest {
         OffsetDateTime startTest = OffsetDateTime.now();
 
         coverageService.submitSearch(period1Jan.getId(), "testing");
-        Optional<CoverageSearchDTO> search1 = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        Optional<CoverageSearch> search1 = coverageSearchRepo.findFirstByOrderByCreatedAsc();
         coverageSearchRepo.delete(search1.get());
         coverageService.startSearch(search1.get(), "testing");
 
         coverageService.submitSearch(period2Jan.getId(), "testing");
-        Optional<CoverageSearchDTO> search2 = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        Optional<CoverageSearch> search2 = coverageSearchRepo.findFirstByOrderByCreatedAsc();
         coverageSearchRepo.delete(search2.get());
         Optional<CoverageMapping> coverageMapping = coverageService.startSearch(search2.get(), "testing");
         coverageService.completeSearch(coverageMapping.get().getPeriodId(), "testing");
 
         coverageService.submitSearch(period1Feb.getId(), "testing");
-        Optional<CoverageSearchDTO> search3 = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        Optional<CoverageSearch> search3 = coverageSearchRepo.findFirstByOrderByCreatedAsc();
         coverageSearchRepo.delete(search3.get());
         coverageService.startSearch(search3.get(), "testing");
 
         OffsetDateTime midTest = OffsetDateTime.now();
 
         coverageService.submitSearch(period1March.getId(), "testing");
-        Optional<CoverageSearchDTO> search4 = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        Optional<CoverageSearch> search4 = coverageSearchRepo.findFirstByOrderByCreatedAsc();
         coverageSearchRepo.delete(search4.get());
         coverageService.startSearch(search4.get(), "testing");
 
         coverageService.submitSearch(period1April.getId(), "testing");
-        Optional<CoverageSearchDTO> search5 = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        Optional<CoverageSearch> search5 = coverageSearchRepo.findFirstByOrderByCreatedAsc();
         coverageSearchRepo.delete(search5.get());
         coverageService.startSearch(search5.get(), "testing");
 
@@ -1115,11 +1115,11 @@ class CoverageServiceImplTest {
         CoverageSearchEvent cs1 = coverageService.submitSearch(period1Jan.getId(), "testing").get();
 
         CoverageSearchEvent cs1Copy = coverageSearchEventRepo.findById(cs1.getId()).get();
-        CoverageSearchDTO coverageSearchDTO = coverageSearchRepo.findFirstByOrderByCreatedAsc().get();
+        CoverageSearch coverageSearch = coverageSearchRepo.findFirstByOrderByCreatedAsc().get();
 
         assertEquals(JobStatus.SUBMITTED, cs1Copy.getNewStatus());
         // Make sure that coverage search and search event match
-        assertEquals(cs1Copy.getCoveragePeriod(), coverageSearchDTO.getPeriod());
+        assertEquals(cs1Copy.getCoveragePeriod(), coverageSearch.getPeriod());
 
         startSearchAndPullEvent();
     }
@@ -1170,7 +1170,7 @@ class CoverageServiceImplTest {
     }
 
     private CoverageSearchEvent startSearchAndPullEvent() {
-        Optional<CoverageSearchDTO> search = coverageSearchRepo.findFirstByOrderByCreatedAsc();
+        Optional<CoverageSearch> search = coverageSearchRepo.findFirstByOrderByCreatedAsc();
         coverageSearchRepo.delete(search.get());
         return coverageService.startSearch(search.get(), "testing").get().getCoverageSearchEvent();
     }
