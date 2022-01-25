@@ -85,7 +85,6 @@ class ContractProcessorInvalidPatientTest {
         contract.setContractNumber(contractId);
         contract.setAttestedOn(OffsetDateTime.now().minusYears(50));
 
-        when(mapping.map(any(Contract.class))).thenReturn(new CoverageContractDTO(contract.getContractNumber(), contract.getAttestedOn()));
         contractRepository = new StubContractRepository(contract);
 
         job.setJobUuid(jobId);
@@ -93,7 +92,7 @@ class ContractProcessorInvalidPatientTest {
         jobRepository = new StubJobRepository(job);
 
         patientClaimsProcessor = new PatientClaimsProcessorImpl(bfdClient, eventLogger);
-        JobProgressServiceImpl jobProgressUpdateService = new JobProgressServiceImpl(jobRepository);
+        JobProgressServiceImpl jobProgressUpdateService  = new JobProgressServiceImpl(jobRepository);
         jobProgressUpdateService.initJob(jobId);
         JobChannelService jobChannelService = new JobChannelStubServiceImpl(jobProgressUpdateService);
         cut = new ContractProcessorImpl(contractRepository, jobRepository, coverageDriver, patientClaimsProcessor, eventLogger,
@@ -105,6 +104,7 @@ class ContractProcessorInvalidPatientTest {
 
     @Test
     void testInvalidBenes() throws IOException {
+        when(mapping.map(any(Contract.class))).thenReturn(new CoverageContractDTO(contract.getContractNumber(), contract.getAttestedOn()));
         org.hl7.fhir.dstu3.model.Bundle b1 = BundleUtils.createBundle(createBundleEntry("1"));
         org.hl7.fhir.dstu3.model.Bundle b2 = BundleUtils.createBundle(createBundleEntry("2"));
         org.hl7.fhir.dstu3.model.Bundle b4 = BundleUtils.createBundle(createBundleEntry("4"));
