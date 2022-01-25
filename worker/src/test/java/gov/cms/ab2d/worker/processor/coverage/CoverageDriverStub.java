@@ -1,13 +1,14 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
-import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.worker.TestUtil;
 
-import gov.cms.ab2d.worker.config.ContractMapping;
+import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,12 +21,12 @@ public class CoverageDriverStub implements CoverageDriver {
 
     private final int pageSize;
     private final int totalRecords;
-    private ContractMapping mapping;
+    private ContractToContractCoverageMapping mapping;
 
     public CoverageDriverStub() {
         this.pageSize = 10;
         this.totalRecords = 20;
-        mapping = new ContractMapping();
+        mapping = new ContractToContractCoverageMapping();
     }
 
     public CoverageDriverStub(int pageSize, int totalRecords) {

@@ -30,7 +30,7 @@ import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
-import gov.cms.ab2d.worker.config.ContractMapping;
+import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.FileService;
@@ -129,7 +129,7 @@ class JobProcessorIntegrationTest {
     private DataSetup dataSetup;
 
     @Autowired
-    private ContractMapping mapping;
+    private ContractToContractCoverageMapping mapping;
 
     @Mock
     private CoverageDriver mockCoverageDriver;

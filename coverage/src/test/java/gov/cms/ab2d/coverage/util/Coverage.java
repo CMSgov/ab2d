@@ -1,9 +1,8 @@
 package gov.cms.ab2d.coverage.util;
 
-import lombok.*;
-
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Getter;
 
 @Getter
 public class Coverage {

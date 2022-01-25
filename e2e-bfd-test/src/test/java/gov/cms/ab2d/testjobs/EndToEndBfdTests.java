@@ -30,7 +30,7 @@ import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.fhir.IdentifierUtils;
 import gov.cms.ab2d.fhir.PatientIdentifier;
-import gov.cms.ab2d.worker.config.ContractMapping;
+import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.processor.ContractProcessor;
 import gov.cms.ab2d.worker.processor.JobPreProcessor;
 import gov.cms.ab2d.worker.processor.JobPreProcessorImpl;
@@ -145,7 +145,7 @@ public class EndToEndBfdTests {
     @Autowired
     private LoggerEventSummary logEventSummary;
     @Autowired
-    private ContractMapping contractMapping;
+    private ContractToContractCoverageMapping contractToContractCoverageMapping;
 
     @TempDir
     File path;
@@ -177,7 +177,7 @@ public class EndToEndBfdTests {
         propertiesService.updateProperties(List.of(coreClaimsPool, maxClaimsPool, scaleToMaxTime));
 
         coverageDriver = new CoverageDriverImpl(coverageSearchRepository, pdpClientService, coverageService,
-                propertiesService, coverageProcessor, coverageLockWrapper,contractMapping);
+                propertiesService, coverageProcessor, coverageLockWrapper, contractToContractCoverageMapping);
 
         // Instantiate the job processors
         jobService = new JobServiceImpl(pdpClientService, jobRepository, jobOutputService, logManager, logEventSummary, path.getAbsolutePath());

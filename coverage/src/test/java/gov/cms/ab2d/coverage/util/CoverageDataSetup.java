@@ -64,41 +64,6 @@ public class CoverageDataSetup {
         coveragePeriodRepo.deleteAll();
         coveragePeriodRepo.flush();
 
-//        List<Job> jobsToDelete = domainObjects.stream().filter(object -> object instanceof Job)
-//                .map(object -> (Job) object).collect(toList());
-//        jobsToDelete.forEach(job -> {
-//            job = jobRepository.findByJobUuid(job.getJobUuid());
-//            jobRepository.delete(job);
-//            jobRepository.flush();
-//        });
-//
-//        List<PdpClient> clientsToDelete = domainObjects.stream().filter(object -> object instanceof PdpClient)
-//                .map(object -> (PdpClient) object).collect(toList());
-//        clientsToDelete.forEach(pdpClient -> {
-//            pdpClient = pdpClientRepository.findByClientId(pdpClient.getClientId());
-//
-//            if (pdpClient != null) {
-//                pdpClientRepository.delete(pdpClient);
-//                pdpClientRepository.flush();
-//            }
-//        });
-
-//        List<Role> rolesToDelete = domainObjects.stream().filter(object -> object instanceof Role)
-//                .map(object -> (Role) object).collect(toList());
-//        rolesToDelete.forEach(role -> {
-//            Optional<Role> roleOptional = roleRepository.findRoleByName(role.getName());
-//
-//            if (roleOptional.isPresent()) {
-//                roleRepository.delete(roleOptional.get());
-//                roleRepository.flush();
-//            }
-//        });
-//
-//        List<Contract> contractsToDelete = domainObjects.stream().filter(object -> object instanceof Contract)
-//                .map(object -> (Contract) object).collect(toList());
-//        contractRepository.deleteAll(contractsToDelete);
-//        contractRepository.flush();
-
         domainObjects.clear();
     }
 
@@ -158,10 +123,6 @@ public class CoverageDataSetup {
             throw new RuntimeException(sqlException);
         }
     }
-
-//    public Contract setupContract(ContractDto contract) {
-//        return setupContract(contractNumber, OffsetDateTime.now());
-//    }
 
     public ContractForCoverageDTO setupContractDTO(String contractNumber, OffsetDateTime attestedOn) {
         return new ContractForCoverageDTO(contractNumber, attestedOn);

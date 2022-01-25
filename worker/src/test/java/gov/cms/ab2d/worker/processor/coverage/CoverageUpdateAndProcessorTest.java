@@ -23,7 +23,7 @@ import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
-import gov.cms.ab2d.worker.config.ContractMapping;
+import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import java.time.DayOfWeek;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
@@ -111,7 +111,7 @@ class CoverageUpdateAndProcessorTest {
     private CoverageLockWrapper searchLock;
 
     @Autowired
-    private ContractMapping mapping;
+    private ContractToContractCoverageMapping mapping;
 
     private Contract contract;
     private CoveragePeriod january;

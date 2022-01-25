@@ -29,7 +29,7 @@ import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import gov.cms.ab2d.fhir.IdentifierUtils;
-import gov.cms.ab2d.worker.config.ContractMapping;
+import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -121,7 +121,7 @@ class CoverageDriverTest {
     private CoverageLockWrapper searchLock;
 
     @Autowired
-    private ContractMapping contractMapping;
+    private ContractToContractCoverageMapping contractToContractCoverageMapping;
 
     private Contract contract;
     private Contract contract1;
@@ -180,7 +180,7 @@ class CoverageDriverTest {
         taskExecutor.initialize();
 
         processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS, Ab2dEnvironment.IMPL);
-        driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesService, processor, searchLock, contractMapping);
+        driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesService, processor, searchLock, contractToContractCoverageMapping);
     }
 
     @AfterEach

@@ -9,7 +9,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ContractMapping {
+public class ContractToContractCoverageMapping {
 
     private static ModelMapper modelMapper;
 
@@ -28,10 +28,6 @@ public class ContractMapping {
         };
 
         modelMapper.addConverter(coverageContractDTOConverter);
-    }
-
-    public ModelMapper getModelMapper() {
-        return modelMapper;
     }
 
     public ContractForCoverageDTO map(Contract contract) {

@@ -14,7 +14,7 @@ import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.model.JobStatus;
 import gov.cms.ab2d.coverage.service.CoverageService;
-import gov.cms.ab2d.worker.config.ContractMapping;
+import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -74,7 +74,7 @@ class CoverageDriverUnitTest {
     private PropertiesService propertiesService;
 
     @Mock
-    private ContractMapping mapping;
+    private ContractToContractCoverageMapping mapping;
 
     private final Lock tryLockFalse = new Lock() {
         @Override

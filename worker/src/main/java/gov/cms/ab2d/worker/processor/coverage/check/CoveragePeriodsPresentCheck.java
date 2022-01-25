@@ -4,7 +4,7 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.service.CoverageService;
-import gov.cms.ab2d.worker.config.ContractMapping;
+import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.persistence.EntityNotFoundException;
@@ -28,7 +28,7 @@ public class CoveragePeriodsPresentCheck extends CoverageCheckPredicate {
 
     @Override
     public boolean test(Contract contract) {
-        ContractMapping mapping = new ContractMapping();
+        ContractToContractCoverageMapping mapping = new ContractToContractCoverageMapping();
         List<String> missingPeriods = listMissingCoveragePeriods(this.coverageService, mapping.map(contract));
         this.issues.addAll(missingPeriods);
 

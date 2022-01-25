@@ -534,15 +534,15 @@ public class CoverageServiceImpl implements CoverageService {
      * Eagerly load a {@link CoveragePeriod} by id.
      * @param periodId coverage period id to load
      * @return coverage period if found
-     * @throws ResourceNotFoundException if coverage period is not found
+     * @throws CoveragePeriodNotFoundException if coverage period is not found
      */
     private CoveragePeriod findCoveragePeriod(int periodId) {
         return coveragePeriodRepo.findById(periodId)
-                .orElseThrow(() -> new ResourceNotFoundException("coverage period with id not found"));
+                .orElseThrow(() -> new CoveragePeriodNotFoundException("coverage period with id not found"));
     }
 
     private CoverageSearchEvent findCoverageSearchEvent(long periodId) {
         return coverageSearchEventRepo.findById(periodId)
-                .orElseThrow(() -> new ResourceNotFoundException("coverage period with id not found"));
+                .orElseThrow(() -> new CoveragePeriodNotFoundException("coverage period with id not found"));
     }
 }

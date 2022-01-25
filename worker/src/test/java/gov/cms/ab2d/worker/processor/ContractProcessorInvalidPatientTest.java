@@ -11,7 +11,7 @@ import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.TestUtil;
-import gov.cms.ab2d.worker.config.ContractMapping;
+import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.repository.StubContractRepository;
@@ -59,7 +59,7 @@ class ContractProcessorInvalidPatientTest {
     private BFDClient bfdClient;
 
     @Mock
-    private ContractMapping mapping;
+    private ContractToContractCoverageMapping mapping;
 
     private ContractRepository contractRepository;
 

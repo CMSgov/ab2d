@@ -16,7 +16,7 @@ import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.JobStatus;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
-import gov.cms.ab2d.worker.config.ContractMapping;
+import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.processor.coverage.check.CoverageNoDuplicatesCheck;
 import gov.cms.ab2d.worker.processor.coverage.check.CoveragePeriodsPresentCheck;
 import gov.cms.ab2d.worker.processor.coverage.check.CoveragePresentCheck;
@@ -79,13 +79,13 @@ public class CoverageDriverImpl implements CoverageDriver {
     private final CoverageProcessor coverageProcessor;
     private final CoverageLockWrapper coverageLockWrapper;
     private final PropertiesService propertiesService;
-    private final ContractMapping mapping;
+    private final ContractToContractCoverageMapping mapping;
 
     public CoverageDriverImpl(CoverageSearchRepository coverageSearchRepository,
                               PdpClientService pdpClientService, CoverageService coverageService,
                               PropertiesService propertiesService, CoverageProcessor coverageProcessor,
                               CoverageLockWrapper coverageLockWrapper,
-                              ContractMapping mapping) {
+                              ContractToContractCoverageMapping mapping) {
         this.coverageSearchRepository = coverageSearchRepository;
         this.pdpClientService = pdpClientService;
         this.coverageService = coverageService;
