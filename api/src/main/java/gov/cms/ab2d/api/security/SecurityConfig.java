@@ -24,6 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import static gov.cms.ab2d.api.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
+import static gov.cms.ab2d.eventlogger.events.SlackEvents.API_AUTHNZ_ERROR;
 
 @Slf4j
 @AllArgsConstructor
@@ -88,7 +89,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private void logSecurityException(HttpServletRequest request, Exception securityException, int status) {
 
         try {
-            String error = String.format("Security Error: URL (%s), Exception (%s), Message (%s), Origin(%s)",
+            String error = String.format(API_AUTHNZ_ERROR + " URL (%s), Exception (%s), Message (%s), Origin(%s)",
                     request.getRequestURL(), securityException.getClass(), securityException.getMessage(),
                     securityException.getStackTrace()[0].toString());
 
