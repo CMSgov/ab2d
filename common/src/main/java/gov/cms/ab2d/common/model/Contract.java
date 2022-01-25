@@ -78,9 +78,6 @@ public class Contract extends TimestampBase {
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime attestedOn;
 
-//    @OneToMany(mappedBy = "contract")
-//    private Set<CoveragePeriod> coveragePeriods = new HashSet<>();
-
     public boolean isTestContract() {
         return contractType.isTestContract();
     }
