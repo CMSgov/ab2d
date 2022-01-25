@@ -15,7 +15,7 @@ public class ContractMapping {
 
 
     @PostConstruct
-    public void init() {
+    public static void init() {
         modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setSkipNullEnabled(true);
 
