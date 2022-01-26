@@ -82,12 +82,6 @@
                         <goals>
                             <goal>check</goal>
                         </goals>
-                        <configuration>
-                            <excludes>
-                                <!-- We don't unit test Swagger config; only visual QA. -->
-                                <exclude>**/coverage/**/model/**</exclude>
-                            </excludes>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
