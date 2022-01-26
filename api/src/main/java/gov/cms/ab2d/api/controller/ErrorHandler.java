@@ -58,7 +58,6 @@ import static org.springframework.http.HttpHeaders.RETRY_AFTER;
  */
 @ControllerAdvice
 @Slf4j
-@SuppressWarnings("PMD.TooManyStaticImports")
 public class ErrorHandler extends ResponseEntityExceptionHandler {
 
     private final LogManager eventLogger;

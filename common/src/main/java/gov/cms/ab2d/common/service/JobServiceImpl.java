@@ -1,6 +1,6 @@
 package gov.cms.ab2d.common.service;
 
-import gov.cms.ab2d.common.model.*; // NOPMD
+import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.common.util.JobUtil;

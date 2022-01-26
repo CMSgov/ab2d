@@ -68,7 +68,6 @@ import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 @RestController
 @ConditionalOnExpression("${v2.controller.enabled:false}")
 @RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {APPLICATION_JSON})
-@SuppressWarnings("PMD.TooManyStaticImports")
 public class BulkDataAccessAPIV2 {
     private final JobService jobService;
     private final ApiCommon apiCommon;
