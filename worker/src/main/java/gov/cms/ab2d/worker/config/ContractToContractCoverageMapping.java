@@ -13,6 +13,11 @@ public class ContractToContractCoverageMapping {
 
     private static ModelMapper modelMapper;
 
+    public ContractToContractCoverageMapping()
+    {
+        init();
+    }
+
 
     @PostConstruct
     public static void init() {
