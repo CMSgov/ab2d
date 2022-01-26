@@ -2,7 +2,6 @@ package gov.cms.ab2d.coverage.service;
 
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
-
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
@@ -69,7 +68,6 @@ import static java.util.stream.Collectors.toList;
 @Slf4j
 @Service
 @Transactional
-@SuppressWarnings("PMD.TooManyStaticImports")
 public class CoverageServiceImpl implements CoverageService {
 
 

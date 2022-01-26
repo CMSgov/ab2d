@@ -38,7 +38,6 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
 
     private volatile long tokenExpires;
 
-    @SuppressWarnings("PMD.UnusedPrivateMethod")
     @PostConstruct
     private void buildFullAuthURI() {
         fullAuthURI = buildFullURI(authURL);

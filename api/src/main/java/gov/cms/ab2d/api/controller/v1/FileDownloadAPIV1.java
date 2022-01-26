@@ -47,7 +47,6 @@ import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 @Tag(name = "Download", description = BULK_DNLD_DSC)
 @RestController
 @RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX)
-@SuppressWarnings("PMD.TooManyStaticImports")
 public class FileDownloadAPIV1 {
     private FileDownloadCommon fileDownloadCommon;
 

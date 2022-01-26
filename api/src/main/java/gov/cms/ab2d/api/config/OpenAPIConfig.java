@@ -37,7 +37,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  */
 @Slf4j
 @Configuration
-@SuppressWarnings("PMD.TooManyStaticImports")
 public class OpenAPIConfig {
 
     /**

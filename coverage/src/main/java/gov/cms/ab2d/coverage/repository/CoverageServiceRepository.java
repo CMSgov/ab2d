@@ -637,7 +637,6 @@ public class CoverageServiceRepository {
         return enrollmentByBeneficiary;
     }
 
-    @SuppressWarnings("PMD.UnusedFormalParameter")
     public static CoverageMembership asMembership(ResultSet rs, int rowNum) throws SQLException {
         Identifiers identifiers = asIdentifiers(rs);
         return new CoverageMembership(identifiers, rs.getInt(4), rs.getInt(5));
@@ -657,7 +656,6 @@ public class CoverageServiceRepository {
         return new Identifiers(rs.getLong(1), rs.getString(2), historicMbis);
     }
 
-    @SuppressWarnings("PMD.UnusedFormalParameter")
     private static CoverageCount asCoverageCount(ResultSet rs, int rowNum) throws SQLException {
 
         String contractNum = rs.getString(1);

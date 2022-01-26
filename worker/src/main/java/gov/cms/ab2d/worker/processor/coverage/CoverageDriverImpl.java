@@ -22,6 +22,9 @@ import gov.cms.ab2d.worker.processor.coverage.check.CoveragePeriodsPresentCheck;
 import gov.cms.ab2d.worker.processor.coverage.check.CoveragePresentCheck;
 import gov.cms.ab2d.worker.processor.coverage.check.CoverageStableCheck;
 import gov.cms.ab2d.worker.processor.coverage.check.CoverageUpToDateCheck;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
 import java.time.DayOfWeek;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -37,9 +40,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
 
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
@@ -62,7 +62,6 @@ import static java.util.stream.Collectors.toList;
  * This class is concurrency aware and handles the existence of other worker nodes potentially attempting to queue
  * searches.
  */
-@SuppressWarnings("PMD.TooManyStaticImports")
 @Slf4j
 @Service
 public class CoverageDriverImpl implements CoverageDriver {

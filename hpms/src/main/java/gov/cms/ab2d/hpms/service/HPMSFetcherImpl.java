@@ -36,7 +36,6 @@ public class HPMSFetcherImpl extends AbstractHPMSService implements HPMSFetcher 
         this.authService = authService;
     }
 
-    @SuppressWarnings("PMD.UnusedPrivateMethod")
     @PostConstruct
     private void buildURI() {
         organizationBaseUri = UriComponentsBuilder.fromUriString(hpmsBaseURI + hpmsBasePath + "/orgs/info").build().toUri();

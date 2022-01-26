@@ -36,7 +36,6 @@ import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 
 @Service
 @Slf4j
-@SuppressWarnings("PMD.TooManyStaticImports")
 public class StatusCommon {
     private final JobService jobService;
     private final LogManager eventLogger;
