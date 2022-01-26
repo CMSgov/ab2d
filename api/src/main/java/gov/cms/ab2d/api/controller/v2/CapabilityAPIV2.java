@@ -39,7 +39,6 @@ import static gov.cms.ab2d.fhir.FhirVersion.R4;
  */
 @AllArgsConstructor
 @Slf4j
-@SuppressWarnings("PMD.TooManyStaticImports")
 @Tag(name = "Capabilities", description = CAP_API)
 @RestController
 @ConditionalOnExpression("${v2.controller.enabled:true}")

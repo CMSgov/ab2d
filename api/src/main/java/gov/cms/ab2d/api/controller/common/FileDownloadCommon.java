@@ -28,7 +28,6 @@ import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 @Service
 @AllArgsConstructor
 @Slf4j
-@SuppressWarnings("PMD.TooManyStaticImports")
 public class FileDownloadCommon {
     private final JobService jobService;
     private final LogManager eventLogger;

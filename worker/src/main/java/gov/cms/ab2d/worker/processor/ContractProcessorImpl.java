@@ -3,7 +3,6 @@ package gov.cms.ab2d.worker.processor;
 import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Token;
 import com.newrelic.api.agent.Trace;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
@@ -42,7 +41,7 @@ import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 @Slf4j
 @Service
-@SuppressWarnings({"PMD.TooManyStaticImports", "java:S2142"}) //java:S2142: "InterruptedException" should not be ignored
+@SuppressWarnings("java:S2142") //java:S2142: "InterruptedException" should not be ignored
 public class ContractProcessorImpl implements ContractProcessor {
     private static final int SLEEP_DURATION = 250;
 
@@ -474,7 +473,6 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @return - the job output object
      */
     @Trace(dispatcher = true)
-    @SuppressFBWarnings
     private JobOutput createJobOutput(StreamOutput streamOutput, boolean isError) {
         JobOutput jobOutput = new JobOutput();
         jobOutput.setFilePath(streamOutput.getFilePath());

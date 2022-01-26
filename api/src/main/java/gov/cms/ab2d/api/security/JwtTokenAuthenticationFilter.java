@@ -33,7 +33,6 @@ import static gov.cms.ab2d.common.util.Constants.*;
 
 @Slf4j
 @Component
-@SuppressWarnings({"PMD.TooManyStaticImports", "PMD.UnusedPrivateMethod"})
 public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
 
     private static final List<String> SWAGGER_LIST = List.of(

@@ -46,7 +46,6 @@ import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 @RestController
 @ConditionalOnExpression("${v2.controller.enabled:false}")
 @RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {APPLICATION_JSON, NDJSON_FIRE_CONTENT_TYPE})
-@SuppressWarnings("PMD.TooManyStaticImports")
 public class FileDownloadAPIV2 {
     private FileDownloadCommon fileDownloadCommon;
 

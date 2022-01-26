@@ -30,7 +30,6 @@ import static gov.cms.ab2d.eventlogger.events.SlackEvents.API_AUTHNZ_ERROR;
 @AllArgsConstructor
 @Configuration
 @EnableWebSecurity
-@SuppressWarnings("PMD.TooManyStaticImports")
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final FilterChainExceptionHandler filterChainExceptionHandler;

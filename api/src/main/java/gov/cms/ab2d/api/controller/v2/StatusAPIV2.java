@@ -54,7 +54,6 @@ import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 @ConditionalOnExpression("${v2.controller.enabled:false}")
 @RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {APPLICATION_JSON})
 @AllArgsConstructor
-@SuppressWarnings("PMD.TooManyStaticImports")
 public class StatusAPIV2 {
 
     private final StatusCommon statusCommon;

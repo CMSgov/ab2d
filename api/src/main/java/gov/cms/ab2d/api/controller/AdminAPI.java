@@ -40,7 +40,6 @@ import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 @AllArgsConstructor
 @Slf4j
 @RestController
-@SuppressWarnings("PMD.TooManyStaticImports")
 @RequestMapping(path = API_PREFIX_V1 + ADMIN_PREFIX, produces = APPLICATION_JSON)
 public class AdminAPI {
 
