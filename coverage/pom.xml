@@ -60,6 +60,11 @@
             <version>7.4.3</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
 
 <!--        We use the sql code for testing. So we need to depend on it for testing only-->
         <dependency>
