@@ -3,6 +3,7 @@ package gov.cms.ab2d.coverage.service;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.model.CoverageDelta;
+import gov.cms.ab2d.coverage.model.CoverageJobStatus;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
@@ -12,7 +13,6 @@ import gov.cms.ab2d.coverage.model.CoverageSearchDiff;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.coverage.model.Identifiers;
-import gov.cms.ab2d.coverage.model.JobStatus;
 import gov.cms.ab2d.coverage.repository.CoverageDeltaRepository;
 import gov.cms.ab2d.coverage.repository.CoverageDeltaTestRepository;
 import gov.cms.ab2d.coverage.repository.CoveragePeriodRepository;
@@ -398,15 +398,15 @@ class CoverageServiceImplTest {
         assertTrue(lastEvent.isPresent());
         assertEquals(submission.getId(), lastEvent.get().getId());
         assertNull(lastEvent.get().getOldStatus());
-        assertEquals(JobStatus.SUBMITTED, lastEvent.get().getNewStatus());
+        assertEquals(CoverageJobStatus.SUBMITTED, lastEvent.get().getNewStatus());
 
         CoverageSearchEvent inProgress = startSearchAndPullEvent();
         lastEvent = coverageService.findMostRecentEvent(period1Jan.getId());
 
         assertTrue(lastEvent.isPresent());
         assertEquals(inProgress.getId(), lastEvent.get().getId());
-        assertEquals(JobStatus.SUBMITTED, lastEvent.get().getOldStatus());
-        assertEquals(JobStatus.IN_PROGRESS, lastEvent.get().getNewStatus());
+        assertEquals(CoverageJobStatus.SUBMITTED, lastEvent.get().getOldStatus());
+        assertEquals(CoverageJobStatus.IN_PROGRESS, lastEvent.get().getNewStatus());
 
     }
 
@@ -975,10 +975,10 @@ class CoverageServiceImplTest {
         CoverageSearchEvent failSearch = new CoverageSearchEvent();
         failSearch.setCoveragePeriod(period1Jan);
         failSearch.setDescription("testing");
-        failSearch.setOldStatus(JobStatus.IN_PROGRESS);
-        failSearch.setNewStatus(JobStatus.FAILED);
+        failSearch.setOldStatus(CoverageJobStatus.IN_PROGRESS);
+        failSearch.setNewStatus(CoverageJobStatus.FAILED);
         coverageSearchEventRepo.saveAndFlush(failSearch);
-        period1Jan.setStatus(JobStatus.FAILED);
+        period1Jan.setStatus(CoverageJobStatus.FAILED);
         coveragePeriodRepo.saveAndFlush(period1Jan);
 
         // Completing a second search should trigger deletion of old data
@@ -1021,7 +1021,7 @@ class CoverageServiceImplTest {
     @Test
     void getSearchStatus() {
 
-        JobStatus status = coverageService.getSearchStatus(period1Jan.getId());
+        CoverageJobStatus status = coverageService.getSearchStatus(period1Jan.getId());
 
         assertNull(status);
 
@@ -1029,7 +1029,7 @@ class CoverageServiceImplTest {
 
         status = coverageService.getSearchStatus(period1Jan.getId());
 
-        assertEquals(JobStatus.SUBMITTED, status);
+        assertEquals(CoverageJobStatus.SUBMITTED, status);
     }
 
     @DisplayName("Find all coverage periods that have not been searched since x time")
@@ -1117,7 +1117,7 @@ class CoverageServiceImplTest {
         CoverageSearchEvent cs1Copy = coverageSearchEventRepo.findById(cs1.getId()).get();
         CoverageSearch coverageSearch = coverageSearchRepo.findFirstByOrderByCreatedAsc().get();
 
-        assertEquals(JobStatus.SUBMITTED, cs1Copy.getNewStatus());
+        assertEquals(CoverageJobStatus.SUBMITTED, cs1Copy.getNewStatus());
         // Make sure that coverage search and search event match
         assertEquals(cs1Copy.getCoveragePeriod(), coverageSearch.getPeriod());
 
@@ -1134,8 +1134,8 @@ class CoverageServiceImplTest {
         CoverageSearchEvent started = startSearchAndPullEvent();
         CoverageSearchEvent startedCopy = coverageSearchEventRepo.findById(started.getId()).get();
 
-        assertEquals(JobStatus.SUBMITTED, startedCopy.getOldStatus());
-        assertEquals(JobStatus.IN_PROGRESS, startedCopy.getNewStatus());
+        assertEquals(CoverageJobStatus.SUBMITTED, startedCopy.getOldStatus());
+        assertEquals(CoverageJobStatus.IN_PROGRESS, startedCopy.getNewStatus());
     }
 
     @DisplayName("Coverage period searches are successfully resubmitted if necessary")
@@ -1146,8 +1146,8 @@ class CoverageServiceImplTest {
         CoverageSearchEvent started = startSearchAndPullEvent();
         CoverageSearchEvent startedCopy = coverageSearchEventRepo.findById(started.getId()).get();
 
-        assertEquals(JobStatus.SUBMITTED, startedCopy.getOldStatus());
-        assertEquals(JobStatus.IN_PROGRESS, startedCopy.getNewStatus());
+        assertEquals(CoverageJobStatus.SUBMITTED, startedCopy.getOldStatus());
+        assertEquals(CoverageJobStatus.IN_PROGRESS, startedCopy.getNewStatus());
 
         coverageService.resubmitSearch(started.getCoveragePeriod().getId(), 1, "failed job", "restarting job", false);
 
@@ -1156,17 +1156,17 @@ class CoverageServiceImplTest {
         List<CoverageSearchEvent> events = coverageSearchEventRepo.findAll();
 
         CoverageSearchEvent failedEvent = events.stream().filter(event -> event.getCoveragePeriod().getId().equals(period.getId()))
-                .filter(event -> JobStatus.FAILED == event.getNewStatus()).findFirst().get();
-        assertEquals(JobStatus.IN_PROGRESS, failedEvent.getOldStatus());
-        assertEquals(JobStatus.FAILED, failedEvent.getNewStatus());
+                .filter(event -> CoverageJobStatus.FAILED == event.getNewStatus()).findFirst().get();
+        assertEquals(CoverageJobStatus.IN_PROGRESS, failedEvent.getOldStatus());
+        assertEquals(CoverageJobStatus.FAILED, failedEvent.getNewStatus());
         assertEquals("failed job", failedEvent.getDescription());
 
         CoverageSearchEvent submitEvent = coverageSearchEventRepo.findFirstByCoveragePeriodOrderByCreatedDesc(period).get();
-        assertEquals(JobStatus.FAILED, submitEvent.getOldStatus());
-        assertEquals(JobStatus.SUBMITTED, submitEvent.getNewStatus());
+        assertEquals(CoverageJobStatus.FAILED, submitEvent.getOldStatus());
+        assertEquals(CoverageJobStatus.SUBMITTED, submitEvent.getNewStatus());
         assertEquals("restarting job", submitEvent.getDescription());
 
-        assertEquals(JobStatus.SUBMITTED, period.getStatus());
+        assertEquals(CoverageJobStatus.SUBMITTED, period.getStatus());
     }
 
     private CoverageSearchEvent startSearchAndPullEvent() {
@@ -1190,8 +1190,8 @@ class CoverageServiceImplTest {
         CoverageSearchEvent completed = coverageService.completeSearch(period1Jan.getId(), "testing");
         CoverageSearchEvent completedCopy = coverageSearchEventRepo.findById(completed.getId()).get();
 
-        assertEquals(JobStatus.IN_PROGRESS, completedCopy.getOldStatus());
-        assertEquals(JobStatus.SUCCESSFUL, completedCopy.getNewStatus());
+        assertEquals(CoverageJobStatus.IN_PROGRESS, completedCopy.getOldStatus());
+        assertEquals(CoverageJobStatus.SUCCESSFUL, completedCopy.getNewStatus());
 
         // Check that last successful job is updated
         assertNotNull(completedCopy.getCoveragePeriod().getLastSuccessfulJob());
@@ -1206,21 +1206,21 @@ class CoverageServiceImplTest {
 
         CoverageSearchEvent cancel = new CoverageSearchEvent();
         cancel.setCoveragePeriod(period2Jan);
-        cancel.setNewStatus(JobStatus.CANCELLED);
-        cancel.setOldStatus(JobStatus.SUBMITTED);
+        cancel.setNewStatus(CoverageJobStatus.CANCELLED);
+        cancel.setOldStatus(CoverageJobStatus.SUBMITTED);
         cancel.setDescription("testing");
 
         CoverageSearchEvent failed = new CoverageSearchEvent();
         failed.setCoveragePeriod(period1Jan);
-        failed.setNewStatus(JobStatus.FAILED);
-        failed.setOldStatus(JobStatus.IN_PROGRESS);
+        failed.setNewStatus(CoverageJobStatus.FAILED);
+        failed.setOldStatus(CoverageJobStatus.IN_PROGRESS);
         failed.setDescription("testing");
 
         coverageSearchEventRepo.save(cancel);
         coverageSearchEventRepo.save(failed);
 
-        period1Jan.setStatus(JobStatus.CANCELLED);
-        period2Jan.setStatus(JobStatus.FAILED);
+        period1Jan.setStatus(CoverageJobStatus.CANCELLED);
+        period2Jan.setStatus(CoverageJobStatus.FAILED);
         coveragePeriodRepo.saveAndFlush(period1Jan);
         coveragePeriodRepo.saveAndFlush(period2Jan);
 
@@ -1238,8 +1238,8 @@ class CoverageServiceImplTest {
         CoverageSearchEvent cancelled = coverageService.cancelSearch(period1Jan.getId(), "testing");
         CoverageSearchEvent cancelledCopy = coverageSearchEventRepo.findById(cancelled.getId()).get();
 
-        assertEquals(JobStatus.SUBMITTED, cancelledCopy.getOldStatus());
-        assertEquals(JobStatus.CANCELLED, cancelledCopy.getNewStatus());
+        assertEquals(CoverageJobStatus.SUBMITTED, cancelledCopy.getOldStatus());
+        assertEquals(CoverageJobStatus.CANCELLED, cancelledCopy.getNewStatus());
 
         // Cannot cancel job twice
         assertThrows(InvalidJobStateTransition.class, () -> coverageService.cancelSearch(period1Jan.getId(), "testing"));
@@ -1268,8 +1268,8 @@ class CoverageServiceImplTest {
         CoverageSearchEvent failed = coverageService.failSearch(period1Jan.getId(), "testing");
         CoverageSearchEvent failedCopy = coverageSearchEventRepo.findById(failed.getId()).get();
 
-        assertEquals(JobStatus.IN_PROGRESS, failedCopy.getOldStatus());
-        assertEquals(JobStatus.FAILED, failedCopy.getNewStatus());
+        assertEquals(CoverageJobStatus.IN_PROGRESS, failedCopy.getOldStatus());
+        assertEquals(CoverageJobStatus.FAILED, failedCopy.getNewStatus());
     }
 
     @DisplayName("Coverage period searches can be cancelled")

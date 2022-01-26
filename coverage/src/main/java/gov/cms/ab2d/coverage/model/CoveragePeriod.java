@@ -37,7 +37,7 @@ public class CoveragePeriod extends TimestampBase {
     private int year;
 
     @Enumerated(EnumType.STRING)
-    private JobStatus status;
+    private CoverageJobStatus status;
 
     @Column
     private OffsetDateTime lastSuccessfulJob;

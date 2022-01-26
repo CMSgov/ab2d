@@ -12,7 +12,7 @@ import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
-import gov.cms.ab2d.coverage.model.JobStatus;
+import gov.cms.ab2d.coverage.model.CoverageJobStatus;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import java.time.OffsetDateTime;
@@ -494,7 +494,7 @@ class CoverageDriverUnitTest {
             CoveragePeriod coveragePeriod = new CoveragePeriod();
             coveragePeriod.setContractNumber(contract.getContractNumber());
             coveragePeriod.setModified(OffsetDateTime.now().plus(1, ChronoUnit.HOURS));
-            coveragePeriod.setStatus(JobStatus.FAILED);
+            coveragePeriod.setStatus(CoverageJobStatus.FAILED);
 
             Job job = new Job();
             job.setCreatedAt(OffsetDateTime.now());

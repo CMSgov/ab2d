@@ -37,10 +37,10 @@ public class CoverageSearchEvent extends TimestampBase {
     private CoveragePeriod coveragePeriod;
 
     @Enumerated(EnumType.STRING)
-    private JobStatus oldStatus;
+    private CoverageJobStatus oldStatus;
 
     @Enumerated(EnumType.STRING)
-    private JobStatus newStatus;
+    private CoverageJobStatus newStatus;
 
     @Column
     private String description;

@@ -8,7 +8,7 @@ ALTER TABLE bene_coverage_period ADD COLUMN contract_number VARCHAR(255);
 UPDATE bene_coverage_period
 SET contract_number = c.contract_number
 FROM contract c
-WHERE contract_id is not null and contract_id = c.id;
+WHERE contract_id = c.id;
 -- There are two bad data cases in the bene_coverage_period table in production.  Put something there.
 UPDATE bene_coverage_period
 SET contract_number = 'UNKNOWN'

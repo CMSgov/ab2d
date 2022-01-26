@@ -34,7 +34,7 @@ public interface CoverageDriver {
     void queueStaleCoveragePeriods() throws InterruptedException;
 
     /**
-     * Check all {@link gov.cms.ab2d.common.model.Contract} for attestation dates and create {@link CoveragePeriod}s
+     * Check all contracts for attestation dates and create {@link gov.cms.ab2d.coverage.model.CoveragePeriod}s
      * for all months since the attestation of those contracts.
      *
      * @throws CoverageDriverException if  lock cannot be obtained within timeout

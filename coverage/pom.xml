@@ -85,7 +85,7 @@
                         <configuration>
                             <excludes>
                                 <!-- We don't unit test Swagger config; only visual QA. -->
-                                <exclude>**/gov/cms/ab2d/coverage/model/**</exclude>
+                                <exclude>**/coverage/**/model/**</exclude>
                             </excludes>
                         </configuration>
                     </execution>

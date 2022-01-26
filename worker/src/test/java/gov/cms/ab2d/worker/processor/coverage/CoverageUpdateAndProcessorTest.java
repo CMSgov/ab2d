@@ -14,9 +14,9 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.DateUtil;
+import gov.cms.ab2d.coverage.model.CoverageJobStatus;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
-import gov.cms.ab2d.coverage.model.JobStatus;
 import gov.cms.ab2d.coverage.repository.CoveragePeriodRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
@@ -259,11 +259,11 @@ class CoverageUpdateAndProcessorTest {
 
         coverageSearchRepo.deleteAll();
 
-        january.setStatus(JobStatus.SUCCESSFUL);
+        january.setStatus(CoverageJobStatus.SUCCESSFUL);
         january.setLastSuccessfulJob(OffsetDateTime.now());
         coveragePeriodRepo.saveAndFlush(january);
 
-        createEvent(january, JobStatus.SUCCESSFUL, OffsetDateTime.now());
+        createEvent(january, CoverageJobStatus.SUCCESSFUL, OffsetDateTime.now());
 
         february.setStatus(null);
         coveragePeriodRepo.saveAndFlush(february);
@@ -279,17 +279,17 @@ class CoverageUpdateAndProcessorTest {
     @Test
     void queueStaleCoverageNeverSuccessful() throws CoverageDriverException, InterruptedException {
 
-        january.setStatus(JobStatus.CANCELLED);
+        january.setStatus(CoverageJobStatus.CANCELLED);
         coveragePeriodRepo.saveAndFlush(january);
 
-        february.setStatus(JobStatus.FAILED);
+        february.setStatus(CoverageJobStatus.FAILED);
         coveragePeriodRepo.saveAndFlush(february);
 
         march.setStatus(null);
         coveragePeriodRepo.saveAndFlush(march);
 
-        createEvent(january, JobStatus.CANCELLED, OffsetDateTime.now());
-        createEvent(february, JobStatus.FAILED, OffsetDateTime.now());
+        createEvent(january, CoverageJobStatus.CANCELLED, OffsetDateTime.now());
+        createEvent(february, CoverageJobStatus.FAILED, OffsetDateTime.now());
 
         driver.queueStaleCoveragePeriods();
         assertEquals(3, coverageSearchRepo.findAll().size());
@@ -311,23 +311,23 @@ class CoverageUpdateAndProcessorTest {
         OffsetDateTime twoMonthsAgo = currentDate.minusMonths(2);
 
         CoveragePeriod currentMonth = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), currentDate.getMonthValue(), currentDate.getYear());
-        currentMonth.setStatus(JobStatus.SUCCESSFUL);
+        currentMonth.setStatus(CoverageJobStatus.SUCCESSFUL);
         currentMonth.setLastSuccessfulJob(previousSunday);
         coveragePeriodRepo.saveAndFlush(currentMonth);
 
         CoveragePeriod oneMonth = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), oneMonthAgo.getMonthValue(), oneMonthAgo.getYear());
-        oneMonth.setStatus(JobStatus.SUCCESSFUL);
+        oneMonth.setStatus(CoverageJobStatus.SUCCESSFUL);
         oneMonth.setLastSuccessfulJob(previousSunday);
         coveragePeriodRepo.saveAndFlush(oneMonth);
 
         CoveragePeriod twoMonth = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), twoMonthsAgo.getMonthValue(), twoMonthsAgo.getYear());
-        twoMonth.setStatus(JobStatus.SUCCESSFUL);
+        twoMonth.setStatus(CoverageJobStatus.SUCCESSFUL);
         twoMonth.setLastSuccessfulJob(previousSunday);
         coveragePeriodRepo.saveAndFlush(twoMonth);
 
-        createEvent(currentMonth, JobStatus.SUCCESSFUL, previousSunday);
-        createEvent(oneMonth, JobStatus.SUCCESSFUL, previousSunday);
-        createEvent(twoMonth, JobStatus.SUCCESSFUL, previousSunday);
+        createEvent(currentMonth, CoverageJobStatus.SUCCESSFUL, previousSunday);
+        createEvent(oneMonth, CoverageJobStatus.SUCCESSFUL, previousSunday);
+        createEvent(twoMonth, CoverageJobStatus.SUCCESSFUL, previousSunday);
 
         driver.queueStaleCoveragePeriods();
 
@@ -351,29 +351,29 @@ class CoverageUpdateAndProcessorTest {
         OffsetDateTime threeMonthsAgo = currentDate.minusMonths(3);
 
         CoveragePeriod currentMonth = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), currentDate.getMonthValue(), currentDate.getYear());
-        currentMonth.setStatus(JobStatus.SUCCESSFUL);
+        currentMonth.setStatus(CoverageJobStatus.SUCCESSFUL);
         currentMonth.setLastSuccessfulJob(previousSaturday);
         coveragePeriodRepo.saveAndFlush(currentMonth);
 
         CoveragePeriod oneMonth = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), oneMonthAgo.getMonthValue(), oneMonthAgo.getYear());
-        oneMonth.setStatus(JobStatus.SUCCESSFUL);
+        oneMonth.setStatus(CoverageJobStatus.SUCCESSFUL);
         oneMonth.setLastSuccessfulJob(previousSaturday);
         coveragePeriodRepo.saveAndFlush(oneMonth);
 
         CoveragePeriod twoMonth = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), twoMonthsAgo.getMonthValue(), twoMonthsAgo.getYear());
-        twoMonth.setStatus(JobStatus.SUCCESSFUL);
+        twoMonth.setStatus(CoverageJobStatus.SUCCESSFUL);
         twoMonth.setLastSuccessfulJob(previousSaturday);
         coveragePeriodRepo.saveAndFlush(twoMonth);
 
         CoveragePeriod threeMonth = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), threeMonthsAgo.getMonthValue(), threeMonthsAgo.getYear());
-        threeMonth.setStatus(JobStatus.SUCCESSFUL);
+        threeMonth.setStatus(CoverageJobStatus.SUCCESSFUL);
         threeMonth.setLastSuccessfulJob(previousSaturday);
         coveragePeriodRepo.saveAndFlush(threeMonth);
 
-        createEvent(currentMonth, JobStatus.SUCCESSFUL, previousSaturday);
-        createEvent(oneMonth, JobStatus.SUCCESSFUL, previousSaturday);
-        createEvent(twoMonth, JobStatus.SUCCESSFUL, previousSaturday);
-        createEvent(threeMonth, JobStatus.SUCCESSFUL, previousSaturday);
+        createEvent(currentMonth, CoverageJobStatus.SUCCESSFUL, previousSaturday);
+        createEvent(oneMonth, CoverageJobStatus.SUCCESSFUL, previousSaturday);
+        createEvent(twoMonth, CoverageJobStatus.SUCCESSFUL, previousSaturday);
+        createEvent(threeMonth, CoverageJobStatus.SUCCESSFUL, previousSaturday);
 
         driver.queueStaleCoveragePeriods();
 
@@ -390,20 +390,20 @@ class CoverageUpdateAndProcessorTest {
         OffsetDateTime currentDate = OffsetDateTime.now(DateUtil.AB2D_ZONE);
 
         CoveragePeriod currentMonth = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), currentDate.getMonthValue(), currentDate.getYear());
-        currentMonth.setStatus(JobStatus.IN_PROGRESS);
+        currentMonth.setStatus(CoverageJobStatus.IN_PROGRESS);
         currentMonth.setLastSuccessfulJob(currentDate.minusDays(STALE_DAYS + 1));
         coveragePeriodRepo.saveAndFlush(currentMonth);
 
-        createEvent(currentMonth, JobStatus.SUCCESSFUL, currentDate.minusDays(STALE_DAYS + 1));
-        createEvent(currentMonth, JobStatus.IN_PROGRESS, currentDate.minusDays(1).minusMinutes(1));
+        createEvent(currentMonth, CoverageJobStatus.SUCCESSFUL, currentDate.minusDays(STALE_DAYS + 1));
+        createEvent(currentMonth, CoverageJobStatus.IN_PROGRESS, currentDate.minusDays(1).minusMinutes(1));
 
         driver.queueStaleCoveragePeriods();
 
         assertEquals(1, coverageSearchRepo.findAll().size());
 
-        assertTrue(coverageSearchEventRepo.findAll().stream().anyMatch(event -> event.getNewStatus() == JobStatus.FAILED));
+        assertTrue(coverageSearchEventRepo.findAll().stream().anyMatch(event -> event.getNewStatus() == CoverageJobStatus.FAILED));
 
-        assertEquals(JobStatus.SUBMITTED, coveragePeriodRepo.findById(currentMonth.getId()).get().getStatus());
+        assertEquals(CoverageJobStatus.SUBMITTED, coveragePeriodRepo.findById(currentMonth.getId()).get().getStatus());
     }
 
     @DisplayName("Queue stale coverages ignore coverage periods with non-stuck submitted or in progress jobs")
@@ -421,33 +421,33 @@ class CoverageUpdateAndProcessorTest {
                 .minusSeconds(1);
 
         CoveragePeriod currentMonth = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), currentDate.getMonthValue(), currentDate.getYear());
-        currentMonth.setStatus(JobStatus.IN_PROGRESS);
+        currentMonth.setStatus(CoverageJobStatus.IN_PROGRESS);
         currentMonth.setLastSuccessfulJob(previousSaturday);
         coveragePeriodRepo.saveAndFlush(currentMonth);
 
-        createEvent(currentMonth, JobStatus.SUCCESSFUL, previousSaturday);
-        createEvent(currentMonth, JobStatus.IN_PROGRESS, previousSaturday.minusMinutes(1));
+        createEvent(currentMonth, CoverageJobStatus.SUCCESSFUL, previousSaturday);
+        createEvent(currentMonth, CoverageJobStatus.IN_PROGRESS, previousSaturday.minusMinutes(1));
 
         driver.queueStaleCoveragePeriods();
 
         assertEquals(0, coverageSearchRepo.findAll().size());
 
-        assertEquals(JobStatus.IN_PROGRESS, coveragePeriodRepo.findById(currentMonth.getId()).get().getStatus());
+        assertEquals(CoverageJobStatus.IN_PROGRESS, coveragePeriodRepo.findById(currentMonth.getId()).get().getStatus());
 
         coverageSearchEventRepo.deleteAll();
 
         // Test whether an already submitted job is queued
 
-        currentMonth.setStatus(JobStatus.SUBMITTED);
+        currentMonth.setStatus(CoverageJobStatus.SUBMITTED);
         coveragePeriodRepo.saveAndFlush(currentMonth);
 
-        createEvent(currentMonth, JobStatus.SUCCESSFUL, previousSaturday);
-        createEvent(currentMonth, JobStatus.SUBMITTED, previousSaturday.minusMinutes(1));
+        createEvent(currentMonth, CoverageJobStatus.SUCCESSFUL, previousSaturday);
+        createEvent(currentMonth, CoverageJobStatus.SUBMITTED, previousSaturday.minusMinutes(1));
 
         driver.queueStaleCoveragePeriods();
 
         assertEquals(0, coverageSearchRepo.findAll().size());
-        assertEquals(JobStatus.SUBMITTED, coveragePeriodRepo.findById(currentMonth.getId()).get().getStatus());
+        assertEquals(CoverageJobStatus.SUBMITTED, coveragePeriodRepo.findById(currentMonth.getId()).get().getStatus());
     }
 
     @DisplayName("Normal workflow functions")
@@ -463,22 +463,22 @@ class CoverageUpdateAndProcessorTest {
         when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
         processor.queueCoveragePeriod(january, false);
-        JobStatus status = coverageService.getSearchStatus(january.getId());
-        assertEquals(JobStatus.SUBMITTED, status);
+        CoverageJobStatus status = coverageService.getSearchStatus(january.getId());
+        assertEquals(CoverageJobStatus.SUBMITTED, status);
 
         driver.loadMappingJob();
         status = coverageService.getSearchStatus(january.getId());
-        assertEquals(JobStatus.IN_PROGRESS, status);
+        assertEquals(CoverageJobStatus.IN_PROGRESS, status);
 
         sleep(1000);
 
         processor.monitorMappingJobs();
         status = coverageService.getSearchStatus(january.getId());
-        assertEquals(JobStatus.IN_PROGRESS, status);
+        assertEquals(CoverageJobStatus.IN_PROGRESS, status);
 
         processor.insertJobResults();
         status = coverageService.getSearchStatus(january.getId());
-        assertEquals(JobStatus.SUCCESSFUL, status);
+        assertEquals(CoverageJobStatus.SUCCESSFUL, status);
     }
 
     @DisplayName("Mapping failure leads to retry but still can succeed on retry")
@@ -488,20 +488,20 @@ class CoverageUpdateAndProcessorTest {
         when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt())).thenThrow(new RuntimeException("oops"));
 
         processor.queueCoveragePeriod(january, false);
-        JobStatus status = coverageService.getSearchStatus(january.getId());
-        assertEquals(JobStatus.SUBMITTED, status);
+        CoverageJobStatus status = coverageService.getSearchStatus(january.getId());
+        assertEquals(CoverageJobStatus.SUBMITTED, status);
 
         driver.loadMappingJob();
         status = coverageService.getSearchStatus(january.getId());
-        assertEquals(JobStatus.IN_PROGRESS, status);
+        assertEquals(CoverageJobStatus.IN_PROGRESS, status);
 
         sleep(1000);
 
         processor.monitorMappingJobs();
-        assertTrue(coverageSearchEventRepo.findAll().stream().anyMatch(event -> event.getNewStatus() == JobStatus.FAILED));
+        assertTrue(coverageSearchEventRepo.findAll().stream().anyMatch(event -> event.getNewStatus() == CoverageJobStatus.FAILED));
 
         status = coverageService.getSearchStatus(january.getId());
-        assertEquals(JobStatus.SUBMITTED, status);
+        assertEquals(CoverageJobStatus.SUBMITTED, status);
 
         reset(bfdClient);
 
@@ -525,7 +525,7 @@ class CoverageUpdateAndProcessorTest {
         processor.insertJobResults();
 
         status = coverageService.getSearchStatus(january.getId());
-        assertEquals(JobStatus.SUCCESSFUL, status);
+        assertEquals(CoverageJobStatus.SUCCESSFUL, status);
     }
 
     @DisplayName("Mapping failure after x retries")
@@ -535,17 +535,17 @@ class CoverageUpdateAndProcessorTest {
         when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt())).thenThrow(new RuntimeException("oops"));
 
         processor.queueCoveragePeriod(january, false);
-        JobStatus status = coverageService.getSearchStatus(january.getId());
-        assertEquals(JobStatus.SUBMITTED, status);
+        CoverageJobStatus status = coverageService.getSearchStatus(january.getId());
+        assertEquals(CoverageJobStatus.SUBMITTED, status);
 
         // Should retry x times
         for (int i = 0; i < maxRetries; i++) {
             status = iterateFailingJob();
-            assertEquals(JobStatus.SUBMITTED, status);
+            assertEquals(CoverageJobStatus.SUBMITTED, status);
         }
 
         status = iterateFailingJob();
-        assertEquals(JobStatus.FAILED, status);
+        assertEquals(CoverageJobStatus.FAILED, status);
     }
 
     @DisplayName("Only ThreadPoolTaskExecutor.getMaxPoolSize() job results allowed in insertion queue")
@@ -633,10 +633,10 @@ class CoverageUpdateAndProcessorTest {
         } catch (InterruptedException e) {
             fail("could not complete test");
         }
-        january.setStatus(JobStatus.FAILED);
+        january.setStatus(CoverageJobStatus.FAILED);
         coveragePeriodRepo.saveAndFlush(january);
 
-        february.setStatus(JobStatus.FAILED);
+        february.setStatus(CoverageJobStatus.FAILED);
         coveragePeriodRepo.saveAndFlush(february);
 
         try{
@@ -651,7 +651,7 @@ class CoverageUpdateAndProcessorTest {
 
     }
 
-    private CoverageSearchEvent createEvent(CoveragePeriod period, JobStatus status, OffsetDateTime created) {
+    private CoverageSearchEvent createEvent(CoveragePeriod period, CoverageJobStatus status, OffsetDateTime created) {
         CoverageSearchEvent event = new CoverageSearchEvent();
         event.setCoveragePeriod(period);
         event.setNewStatus(status);
@@ -665,11 +665,11 @@ class CoverageUpdateAndProcessorTest {
         return event;
     }
 
-    private JobStatus iterateFailingJob() {
-        JobStatus status;
+    private CoverageJobStatus iterateFailingJob() {
+        CoverageJobStatus status;
         driver.loadMappingJob();
         status = coverageService.getSearchStatus(january.getId());
-        assertEquals(JobStatus.IN_PROGRESS, status);
+        assertEquals(CoverageJobStatus.IN_PROGRESS, status);
 
         sleep(1000);
 

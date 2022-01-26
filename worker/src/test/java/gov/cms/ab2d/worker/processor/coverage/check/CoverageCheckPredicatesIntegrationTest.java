@@ -5,11 +5,11 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
+import gov.cms.ab2d.coverage.model.CoverageJobStatus;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.model.Identifiers;
-import gov.cms.ab2d.coverage.model.JobStatus;
 import gov.cms.ab2d.coverage.repository.CoveragePeriodRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
@@ -449,12 +449,12 @@ public class CoverageCheckPredicatesIntegrationTest {
         CoverageSearchEvent success = new CoverageSearchEvent();
         success.setCoveragePeriod(period);
         success.setDescription("testing");
-        success.setNewStatus(JobStatus.SUCCESSFUL);
-        success.setOldStatus(JobStatus.IN_PROGRESS);
+        success.setNewStatus(CoverageJobStatus.SUCCESSFUL);
+        success.setOldStatus(CoverageJobStatus.IN_PROGRESS);
         coverageSearchEventRepo.saveAndFlush(success);
 
         period = coveragePeriodRepo.findById(period.getId()).get();
-        period.setStatus(JobStatus.SUCCESSFUL);
+        period.setStatus(CoverageJobStatus.SUCCESSFUL);
         coveragePeriodRepo.saveAndFlush(period);
     }
 
@@ -471,12 +471,12 @@ public class CoverageCheckPredicatesIntegrationTest {
         CoverageSearchEvent success = new CoverageSearchEvent();
         success.setCoveragePeriod(period);
         success.setDescription("testing");
-        success.setNewStatus(JobStatus.SUCCESSFUL);
-        success.setOldStatus(JobStatus.IN_PROGRESS);
+        success.setNewStatus(CoverageJobStatus.SUCCESSFUL);
+        success.setOldStatus(CoverageJobStatus.IN_PROGRESS);
         coverageSearchEventRepo.saveAndFlush(success);
 
         period = coveragePeriodRepo.findById(period.getId()).get();
-        period.setStatus(JobStatus.SUCCESSFUL);
+        period.setStatus(CoverageJobStatus.SUCCESSFUL);
         coveragePeriodRepo.saveAndFlush(period);
     }
 

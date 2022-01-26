@@ -8,12 +8,12 @@ import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
+import gov.cms.ab2d.coverage.model.CoverageJobStatus;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
-import gov.cms.ab2d.coverage.model.JobStatus;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
@@ -311,8 +311,8 @@ public class CoverageDriverImpl implements CoverageDriver {
             if (config.isOverride()) {
                 // Only add coverage periods that are not running already
                 List<CoveragePeriod> periods = coverageService.getCoveragePeriods(month, year);
-                periods.stream().filter(period -> period.getStatus() != JobStatus.SUBMITTED
-                        && period.getStatus() != JobStatus.IN_PROGRESS)
+                periods.stream().filter(period -> period.getStatus() != CoverageJobStatus.SUBMITTED
+                        && period.getStatus() != CoverageJobStatus.IN_PROGRESS)
                         .forEach(stalePeriods::add);
             } else {
                 stalePeriods.addAll(coverageService.coveragePeriodNotUpdatedSince(month, year, lastSunday));
@@ -485,7 +485,7 @@ public class CoverageDriverImpl implements CoverageDriver {
             }
 
             return periods.stream().map(CoveragePeriod::getStatus).noneMatch(status -> status == null ||
-                    status == JobStatus.IN_PROGRESS || status == JobStatus.SUBMITTED);
+                    status == CoverageJobStatus.IN_PROGRESS || status == CoverageJobStatus.SUBMITTED);
         } catch (InterruptedException interruptedException) {
             log.error("Interrupted attempting to retrieve lock. Cannot confirm coverage metadata is available");
             throw interruptedException;
@@ -597,7 +597,7 @@ public class CoverageDriverImpl implements CoverageDriver {
     }
 
     void checkCoveragePeriodValidity(Job job, CoveragePeriod period) {
-        if (period.getStatus() == JobStatus.FAILED &&
+        if (period.getStatus() == CoverageJobStatus.FAILED &&
                 period.getModified().isAfter(job.getCreatedAt())) {
             throw new CoverageDriverException("attempts to pull coverage information failed too many times, " +
                     "cannot pull coverage");
@@ -687,7 +687,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         List<CoveragePeriod> periods = coverageService.findAssociatedCoveragePeriods(contract.getContractNumber());
 
         boolean contractBeingUpdated  = periods.stream()
-                .anyMatch(period -> period.getStatus() == JobStatus.IN_PROGRESS || period.getStatus() == JobStatus.SUBMITTED);
+                .anyMatch(period -> period.getStatus() == CoverageJobStatus.IN_PROGRESS || period.getStatus() == CoverageJobStatus.SUBMITTED);
 
         if (contractBeingUpdated) {
             issues.add("Contract " + contract.getContractNumber() + " is being updated now so coverage verification will be done later");

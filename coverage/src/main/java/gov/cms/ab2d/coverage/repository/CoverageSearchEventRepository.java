@@ -23,7 +23,7 @@ public interface CoverageSearchEventRepository extends JpaRepository<CoverageSea
     List<CoverageSearchEvent> findByPeriodDesc(int periodId, int limit);
 
     /**
-     * Look for all jobs currently in the provided {@link gov.cms.ab2d.coverage.model.JobStatus} which have been in that status since
+     * Look for all jobs currently in the provided {@link gov.cms.ab2d.coverage.model.CoverageJobStatus} which have been in that status since
      * some point in time.
      *
      * Basically, if today is Tuesday and a job has been in the status IN_PROGRESS since Sunday, then the job

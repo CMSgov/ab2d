@@ -3,6 +3,7 @@ package gov.cms.ab2d.coverage.repository;
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
+import gov.cms.ab2d.coverage.model.CoverageJobStatus;
 import gov.cms.ab2d.coverage.model.CoverageMembership;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
@@ -10,7 +11,6 @@ import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.coverage.model.Identifiers;
-import gov.cms.ab2d.coverage.model.JobStatus;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -216,7 +216,7 @@ public class CoverageServiceRepository {
      * Count the number of beneficiaries in the coverage table which are associated with a specific
      * search of BFD {@link CoverageSearchEvent}.
      *
-     * Coverage is only associated with {@link JobStatus#IN_PROGRESS} search events. So submitting any other search event
+     * Coverage is only associated with {@link CoverageJobStatus#IN_PROGRESS} search events. So submitting any other search event
      * will result in no coverage being reported.
      *
      * @param searchEvent a specific search done at some point which we need numbers for
@@ -251,7 +251,7 @@ public class CoverageServiceRepository {
      *
      * This query should only be
      *
-     * Coverage is only associated with {@link JobStatus#IN_PROGRESS} search events. So submitting any other search event
+     * Coverage is only associated with {@link CoverageJobStatus#IN_PROGRESS} search events. So submitting any other search event
      * will result in no data for the comparison.
      *
      * @param searchEvent1 the first search event
@@ -418,7 +418,7 @@ public class CoverageServiceRepository {
     public void deleteCurrentSearch(CoveragePeriod period) {
 
         Optional<CoverageSearchEvent> searchEvent = coverageSearchEventRepo.findByPeriodDesc(period.getId(), 100)
-                .stream().filter(event -> event.getNewStatus() == JobStatus.IN_PROGRESS).findFirst();
+                .stream().filter(event -> event.getNewStatus() == CoverageJobStatus.IN_PROGRESS).findFirst();
 
         // Only delete previous search if a previous search exists.
         // For performance reasons this is done via jdbc
@@ -449,7 +449,7 @@ public class CoverageServiceRepository {
         List<CoverageSearchEvent> events = coverageSearchEventRepo.findByPeriodDesc(period.getId(), 100);
 
         // Get all in progress events after offset and delete any enrollment associated with them
-        List<Long> inProgressEvents = events.stream().filter(event -> event.getNewStatus() == JobStatus.IN_PROGRESS)
+        List<Long> inProgressEvents = events.stream().filter(event -> event.getNewStatus() == CoverageJobStatus.IN_PROGRESS)
                 .skip(offset).map(CoverageSearchEvent::getId).collect(toList());
 
         // Only delete previous search if a previous search exists.
