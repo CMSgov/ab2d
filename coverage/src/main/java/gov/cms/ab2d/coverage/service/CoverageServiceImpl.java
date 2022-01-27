@@ -110,7 +110,7 @@ public class CoverageServiceImpl implements CoverageService {
         }
 
         CoveragePeriod period = new CoveragePeriod();
-        period.setContractNumber(contract.getContractNumber());
+        period.setContract(contract);
         period.setMonth(month);
         period.setYear(year);
 

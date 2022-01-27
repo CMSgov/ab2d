@@ -2,9 +2,9 @@ package gov.cms.ab2d.worker.processor.coverage;
 
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.Identifiers;
-import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.ExtensionUtils;
 import gov.cms.ab2d.fhir.FhirVersion;
@@ -59,14 +59,12 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     private int missingReferenceYear;
     private int pastReferenceYear;
     private final Map<Integer, Integer> referenceYears = new HashMap<>();
-    private final Ab2dEnvironment appEnv;
 
-    public CoverageMappingCallable(FhirVersion version, CoverageMapping coverageMapping, BFDClient bfdClient, Ab2dEnvironment appEnv) {
+    public CoverageMappingCallable(FhirVersion version, CoverageMapping coverageMapping, BFDClient bfdClient) {
         this.coverageMapping = coverageMapping;
         this.bfdClient = bfdClient;
         this.completed = new AtomicBoolean(false);
-        this.appEnv = appEnv;
-        this.year = getCorrectedYear(this.appEnv, coverageMapping.getPeriod().getYear());
+        this.year = getCorrectedYear(coverageMapping.getPeriod().getContract(), coverageMapping.getPeriod().getYear());
         this.version = version;
     }
 
@@ -302,11 +300,11 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
      * @return if we're in sandbox, return the synthetic data year unless it's the new Synthea data which can use
      * the correct year
      */
-    int getCorrectedYear(Ab2dEnvironment appEnv, int coverageYear) {
+    int getCorrectedYear(ContractForCoverageDTO contract, int coverageYear) {
 
         // Synthea contracts use realistic enrollment reference years so only original
         // synthetic contracts need to have the year modified
-        if (appEnv == Ab2dEnvironment.SANDBOX) {
+        if (contract.getContractType() == ContractForCoverageDTO.ContractType.CLASSIC_TEST) {
             return SYNTHETIC_DATA_YEAR;
         }
 

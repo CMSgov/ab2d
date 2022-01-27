@@ -228,7 +228,7 @@ public class CoverageServiceRepository {
 
         SqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("id", searchEvent.getId())
-                .addValue("contract", searchEvent.getCoveragePeriod().getContractNumber())
+                .addValue("contract", searchEvent.getCoveragePeriod().getContract().getContractNumber())
                 .addValue("years", YEARS);
 
         NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
@@ -265,7 +265,7 @@ public class CoverageServiceRepository {
         SqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("search1", searchEvent1.getId())
                 .addValue("search2", searchEvent2.getId())
-                .addValue("contract", searchEvent1.getCoveragePeriod().getContractNumber())
+                .addValue("contract", searchEvent1.getCoveragePeriod().getContract().getContractNumber())
                 .addValue("years", YEARS);
 
         NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
@@ -338,7 +338,7 @@ public class CoverageServiceRepository {
 
             int processingCount = 0;
 
-            String contractNum = searchEvent.getCoveragePeriod().getContractNumber();
+            String contractNum = searchEvent.getCoveragePeriod().getContract().getContractNumber();
             int year = searchEvent.getCoveragePeriod().getYear();
             int month = searchEvent.getCoveragePeriod().getMonth();
 
@@ -425,7 +425,7 @@ public class CoverageServiceRepository {
         if (searchEvent.isPresent()) {
             MapSqlParameterSource parameterSource = new MapSqlParameterSource()
                     .addValue("searchEvent", searchEvent.get().getId())
-                    .addValue("contract", period.getContractNumber())
+                    .addValue("contract", period.getContract().getContractNumber())
                     .addValue("years", YEARS);
 
             NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
@@ -458,7 +458,7 @@ public class CoverageServiceRepository {
 
             MapSqlParameterSource sqlParameterSource = new MapSqlParameterSource()
                     .addValue("searchEvents", inProgressEvents)
-                    .addValue("contract", period.getContractNumber())
+                    .addValue("contract", period.getContract().getContractNumber())
                     .addValue("years", YEARS);
 
             NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);

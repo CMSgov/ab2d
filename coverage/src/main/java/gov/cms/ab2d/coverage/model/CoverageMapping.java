@@ -23,7 +23,7 @@ public class CoverageMapping {
     }
 
     public String getContractNumber() {
-        return coverageSearchEvent.getCoveragePeriod().getContractNumber();
+        return coverageSearchEvent.getCoveragePeriod().getContract().getContractNumber();
     }
 
     public CoveragePeriod getPeriod() {

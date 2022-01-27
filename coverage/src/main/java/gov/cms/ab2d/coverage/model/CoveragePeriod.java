@@ -8,7 +8,8 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.validation.constraints.NotNull;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,8 +26,10 @@ public class CoveragePeriod extends TimestampBase {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Integer id;
 
-    @NotNull
-    private String contractNumber;
+    @ManyToOne
+    @JoinColumn(name = "contract_number")
+    @EqualsAndHashCode.Include
+    private ContractForCoverageDTO contract;
 
     @Column
     @EqualsAndHashCode.Include

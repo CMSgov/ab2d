@@ -40,7 +40,7 @@ public class CoverageSearchDiff {
     @Override
     public String toString() {
         return "CoverageSearchDiff{" +
-                coveragePeriod.getContractNumber() +
+                coveragePeriod.getContract().getContractNumber() +
                 "-" + coveragePeriod.getYear() + "-" + coveragePeriod.getMonth() +
                 ", previousCount=" + previousCount +
                 ", currentCount=" + currentCount +

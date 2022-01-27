@@ -91,13 +91,11 @@ public class CoverageProcessorImpl implements CoverageProcessor {
      */
     public CoverageProcessorImpl(CoverageService coverageService, BFDClient bfdClient,
                                  @Qualifier("patientCoverageThreadPool") ThreadPoolTaskExecutor executor,
-                                 @Value("${coverage.update.max.attempts}") int maxAttempts,
-                                 Ab2dEnvironment ab2dEnvironment) {
+                                 @Value("${coverage.update.max.attempts}") int maxAttempts) {
         this.coverageService = coverageService;
         this.bfdClient = bfdClient;
         this.executor = executor;
         this.maxAttempts = maxAttempts;
-        this.ab2dEnvironment = ab2dEnvironment;
     }
 
     @Override
@@ -145,7 +143,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                     mapping.getPeriod().getMonth(), mapping.getPeriod().getYear());
 
             // Currently, we are using the STU3 version to get patient mappings
-            CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, ab2dEnvironment);
+            CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient);
             executor.submit(callable);
             inProgressMappings.add(callable);
 

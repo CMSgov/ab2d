@@ -6,6 +6,7 @@ import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageJobStatus;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
@@ -16,6 +17,7 @@ import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
+import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.LinkedHashSet;
@@ -72,6 +74,9 @@ public class CoverageCheckIntegrationTest {
 
     @Autowired
     private CoverageDataSetup coverageDataSetup;
+
+    @Autowired
+    private ContractToContractCoverageMapping mapping;
 
     private static final ZonedDateTime CURRENT_TIME = OffsetDateTime.now().atZoneSameInstant(AB2D_ZONE);
     private static final ZonedDateTime ATTESTATION_TIME = CURRENT_TIME.minusMonths(3);
@@ -309,12 +314,13 @@ public class CoverageCheckIntegrationTest {
 
 
     private void createCoveragePeriods() {
-        attestationMonth = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), ATTESTATION_TIME.getMonthValue(),  ATTESTATION_TIME.getYear());
-        attestationMonthPlus1 = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), ATTESTATION_TIME.plusMonths(1).getMonthValue(),
+        ContractForCoverageDTO contractForCoverageDTO = mapping.map(contract);
+        attestationMonth = coverageDataSetup.createCoveragePeriod(contractForCoverageDTO, ATTESTATION_TIME.getMonthValue(),  ATTESTATION_TIME.getYear());
+        attestationMonthPlus1 = coverageDataSetup.createCoveragePeriod(contractForCoverageDTO, ATTESTATION_TIME.plusMonths(1).getMonthValue(),
                 ATTESTATION_TIME.plusMonths(1).getYear());
-        attestationMonthPlus2 = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), ATTESTATION_TIME.plusMonths(2).getMonthValue(),
+        attestationMonthPlus2 = coverageDataSetup.createCoveragePeriod(contractForCoverageDTO, ATTESTATION_TIME.plusMonths(2).getMonthValue(),
                 ATTESTATION_TIME.plusMonths(2).getYear());
-        attestationMonthPlus3 = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), ATTESTATION_TIME.plusMonths(3).getMonthValue(),
+        attestationMonthPlus3 = coverageDataSetup.createCoveragePeriod(contractForCoverageDTO, ATTESTATION_TIME.plusMonths(3).getMonthValue(),
                 ATTESTATION_TIME.plusMonths(3).getYear());
     }
 

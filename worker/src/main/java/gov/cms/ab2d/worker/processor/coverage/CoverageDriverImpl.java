@@ -140,7 +140,7 @@ public class CoverageDriverImpl implements CoverageDriver {
             if (locked) {
 
                 for (CoveragePeriod period : outOfDateInfo) {
-                    log.info("Attempting to add {}-{}-{} to queue", period.getContractNumber(),
+                    log.info("Attempting to add {}-{}-{} to queue", period.getContract().getContractNumber(),
                         period.getYear(), period.getMonth());
                 }
 
@@ -461,7 +461,7 @@ public class CoverageDriverImpl implements CoverageDriver {
              * search
              */
             List<CoveragePeriod> neverSearched = coverageService.coveragePeriodNeverSearchedSuccessfully().stream()
-                    .filter(period -> Objects.equals(contract.getContractNumber(), period.getContractNumber())).collect(toList());
+                    .filter(period -> Objects.equals(contract.getContractNumber(), period.getContract().getContractNumber())).collect(toList());
             if (!neverSearched.isEmpty()) {
                 // Check that we've not submitted and failed these jobs
                 neverSearched.forEach(period -> checkCoveragePeriodValidity(job, period));

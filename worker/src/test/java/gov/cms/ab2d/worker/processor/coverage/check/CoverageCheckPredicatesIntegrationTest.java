@@ -80,7 +80,7 @@ public class CoverageCheckPredicatesIntegrationTest {
     void setUp() {
 
         contract = dataSetup.setupContract("TEST", ATTESTATION_TIME.toOffsetDateTime());
-        contractForCoverageDTO = new ContractForCoverageDTO("TEST", ATTESTATION_TIME.toOffsetDateTime());
+        contractForCoverageDTO = new ContractForCoverageDTO("TEST", ATTESTATION_TIME.toOffsetDateTime(), null);
     }
 
     @AfterEach
@@ -425,12 +425,12 @@ public class CoverageCheckPredicatesIntegrationTest {
     }
 
     private void createCoveragePeriods() {
-        attestationMonth = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), ATTESTATION_TIME.getMonthValue(),  ATTESTATION_TIME.getYear());
-        attestationMonthPlus1 = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), ATTESTATION_TIME.plusMonths(1).getMonthValue(),
+        attestationMonth = coverageDataSetup.createCoveragePeriod(contractForCoverageDTO, ATTESTATION_TIME.getMonthValue(),  ATTESTATION_TIME.getYear());
+        attestationMonthPlus1 = coverageDataSetup.createCoveragePeriod(contractForCoverageDTO, ATTESTATION_TIME.plusMonths(1).getMonthValue(),
                 ATTESTATION_TIME.plusMonths(1).getYear());
-        attestationMonthPlus2 = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), ATTESTATION_TIME.plusMonths(2).getMonthValue(),
+        attestationMonthPlus2 = coverageDataSetup.createCoveragePeriod(contractForCoverageDTO, ATTESTATION_TIME.plusMonths(2).getMonthValue(),
                 ATTESTATION_TIME.plusMonths(2).getYear());
-        attestationMonthPlus3 = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), ATTESTATION_TIME.plusMonths(3).getMonthValue(),
+        attestationMonthPlus3 = coverageDataSetup.createCoveragePeriod(contractForCoverageDTO, ATTESTATION_TIME.plusMonths(3).getMonthValue(),
                 ATTESTATION_TIME.plusMonths(3).getYear());
     }
 

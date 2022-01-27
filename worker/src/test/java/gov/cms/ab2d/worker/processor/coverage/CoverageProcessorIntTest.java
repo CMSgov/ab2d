@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
@@ -9,6 +10,7 @@ import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.util.Coverage;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
+import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -61,10 +63,11 @@ class CoverageProcessorIntTest {
 
 
         Contract contract = contractRepo.findContractByContractNumber("Z0010").get();
-        CoveragePeriod january = dataSetup.createCoveragePeriod(contract.getContractNumber(), 1, 2000);
-        CoveragePeriod february = dataSetup.createCoveragePeriod(contract.getContractNumber(), 2, 2000);
-        CoveragePeriod march = dataSetup.createCoveragePeriod(contract.getContractNumber(), 3, 2000);
-        CoveragePeriod april = dataSetup.createCoveragePeriod(contract.getContractNumber(), 4, 2000);
+        ContractForCoverageDTO contractForCoverageDTO = new ContractToContractCoverageMapping().map(contract);
+        CoveragePeriod january = dataSetup.createCoveragePeriod(contractForCoverageDTO, 1, 2000);
+        CoveragePeriod february = dataSetup.createCoveragePeriod(contractForCoverageDTO, 2, 2000);
+        CoveragePeriod march = dataSetup.createCoveragePeriod(contractForCoverageDTO, 3, 2000);
+        CoveragePeriod april = dataSetup.createCoveragePeriod(contractForCoverageDTO, 4, 2000);
 
         processor.queueCoveragePeriod(january, false);
         processor.queueCoveragePeriod(february, false);

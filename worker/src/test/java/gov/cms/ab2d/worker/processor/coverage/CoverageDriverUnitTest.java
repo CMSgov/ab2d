@@ -182,7 +182,7 @@ class CoverageDriverUnitTest {
 
         when(coverageService.getCoveragePeriod(any(ContractForCoverageDTO.class), anyInt(), anyInt())).thenAnswer((invocationOnMock) -> {
             CoveragePeriod period = new CoveragePeriod();
-            period.setContractNumber(invocationOnMock.getArgument(0).toString());
+            period.setContract(invocationOnMock.getArgument(0));
             period.setMonth(invocationOnMock.getArgument(1));
             period.setYear(invocationOnMock.getArgument(2));
 
@@ -212,7 +212,7 @@ class CoverageDriverUnitTest {
         Contract contract = new Contract();
         contract.setContractNumber("contract-0");
         contract.setAttestedOn(OffsetDateTime.now().plusHours(1));
-        when(mapping.map(any(Contract.class))).thenReturn(new ContractForCoverageDTO(contract.getContractNumber(),contract.getAttestedOn()));
+        when(mapping.map(any(Contract.class))).thenReturn(new ContractForCoverageDTO(contract.getContractNumber(),contract.getAttestedOn(), ContractForCoverageDTO.ContractType.NORMAL));
 
 
         CoverageDriverException startDateInFuture = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(job, contract));
@@ -246,7 +246,7 @@ class CoverageDriverUnitTest {
 
         when(coverageService.getCoveragePeriod(any(ContractForCoverageDTO.class), anyInt(), anyInt())).thenAnswer((invocationOnMock) -> {
             CoveragePeriod period = new CoveragePeriod();
-            period.setContractNumber((invocationOnMock.getArgument(0).toString()));
+            period.setContract((invocationOnMock.getArgument(0)));
             period.setMonth(invocationOnMock.getArgument(1));
             period.setYear(invocationOnMock.getArgument(2));
 
@@ -277,7 +277,7 @@ class CoverageDriverUnitTest {
         contract.setContractNumber("Contract-0");
         contract.setAttestedOn(AB2D_EPOCH.toOffsetDateTime());
 
-        when(mapping.map(any(Contract.class))).thenReturn(new ContractForCoverageDTO("Contract-0",contract.getAttestedOn()));
+        when(mapping.map(any(Contract.class))).thenReturn(new ContractForCoverageDTO("Contract-0",contract.getAttestedOn(), ContractForCoverageDTO.ContractType.NORMAL));
 
 
         CoveragePagingResult firstCall = driver.pageCoverage(job, contract);
@@ -437,7 +437,7 @@ class CoverageDriverUnitTest {
         coveragePeriod.setId(100);
         coveragePeriod.setMonth(1);
         coveragePeriod.setYear(2021);
-        coveragePeriod.setContractNumber(contract.getContractNumber());
+        coveragePeriod.setContract(new ContractToContractCoverageMapping().map(contract));
 
         CoverageSearchEvent event = new CoverageSearchEvent();
         event.setCoveragePeriod(coveragePeriod);
@@ -477,7 +477,7 @@ class CoverageDriverUnitTest {
         coveragePeriod.setId(100);
         coveragePeriod.setMonth(1);
         coveragePeriod.setYear(2021);
-        coveragePeriod.setContractNumber(contract.getContractNumber());
+        coveragePeriod.setContract(new ContractToContractCoverageMapping().map(contract));
 
         ZonedDateTime dateTime = driver.getStartDateTime(contract);
         assertEquals(AB2D_EPOCH, dateTime);
@@ -492,7 +492,7 @@ class CoverageDriverUnitTest {
             contract.setContractNumber("contractNum");
 
             CoveragePeriod coveragePeriod = new CoveragePeriod();
-            coveragePeriod.setContractNumber(contract.getContractNumber());
+            coveragePeriod.setContract(new ContractToContractCoverageMapping().map(contract));
             coveragePeriod.setModified(OffsetDateTime.now().plus(1, ChronoUnit.HOURS));
             coveragePeriod.setStatus(CoverageJobStatus.FAILED);
 

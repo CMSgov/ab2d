@@ -80,9 +80,9 @@ public class CoverageDataSetup {
     }
 
 
-    public CoveragePeriod createCoveragePeriod(String contractNumber, int month, int year) {
+    public CoveragePeriod createCoveragePeriod(ContractForCoverageDTO contract, int month, int year) {
         CoveragePeriod coveragePeriod = new CoveragePeriod();
-        coveragePeriod.setContractNumber(contractNumber);
+        coveragePeriod.setContract(contract);
         coveragePeriod.setMonth(month);
         coveragePeriod.setYear(year);
 
@@ -125,7 +125,7 @@ public class CoverageDataSetup {
     }
 
     public ContractForCoverageDTO setupContractDTO(String contractNumber, OffsetDateTime attestedOn) {
-        return new ContractForCoverageDTO(contractNumber, attestedOn);
+        return new ContractForCoverageDTO(contractNumber, attestedOn, null);
     }
 
 

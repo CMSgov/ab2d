@@ -6,6 +6,7 @@ import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.service.CoverageService;
+import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -68,7 +69,7 @@ public class CoverageCheckPredicatesUnitTest {
 
         // Just reuse, check assumes getCoveragePeriod works
         CoveragePeriod coveragePeriod = new CoveragePeriod();
-        coveragePeriod.setContractNumber(contract.getContractNumber());
+        coveragePeriod.setContract(new ContractToContractCoverageMapping().map(contract));
         coveragePeriod.setYear(ATTESTATION_TIME.getYear());
         coveragePeriod.setMonth(ATTESTATION_TIME.getMonthValue());
 

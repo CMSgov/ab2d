@@ -27,7 +27,7 @@ public class ContractToContractCoverageMapping {
 
             @Override
             protected ContractForCoverageDTO convert(Contract source) {
-                return new ContractForCoverageDTO(source.getContractNumber(), source.getAttestedOn()); //NOSONAR
+                return new ContractForCoverageDTO(source.getContractNumber(), source.getAttestedOn(), ContractForCoverageDTO.ContractType.valueOf(source.getContractType().toString())); //NOSONAR
             }
         };
 
