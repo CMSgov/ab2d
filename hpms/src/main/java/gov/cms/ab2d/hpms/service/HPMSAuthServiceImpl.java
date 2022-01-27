@@ -1,6 +1,7 @@
 package gov.cms.ab2d.hpms.service;
 
 import gov.cms.ab2d.hpms.hmsapi.HPMSAuthResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -30,6 +31,9 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
 
     @Value("${HPMS_AUTH_KEY_SECRET}")
     private String hpmsSecret;
+
+    @Autowired
+    private WebClient webClient;
 
     private URI fullAuthURI;
 
@@ -63,7 +67,7 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
     private void refreshToken(long currentTimestamp) {
         authToken = null;
 
-        Flux<HPMSAuthResponse> orgInfoFlux = WebClient.create()
+        Flux<HPMSAuthResponse> orgInfoFlux = webClient
                 .post().uri(fullAuthURI)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(retrieveAuthRequestPayload())
@@ -99,12 +103,13 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
     }
 
     // Text Blocks are still a preview feature in JDK 13 and 14, otherwise, it would really clean this up.
-    private static final String AUTH_PAYLOAD_TEMPLATE = "{\n" +
-            "    \"userName\": \"CDA-AB2D-API\",\n" +
-            "    \"keyId\": \"%s\",\n" +
-            "    \"keySecret\": \"%s\",\n" +
-            "    \"scopes\": \"cda_org_att\"\n" +
-            "}";
+    private static final String AUTH_PAYLOAD_TEMPLATE = """
+            {
+                "userName": "CDA-AB2D-API",
+                "keyId": "%s",
+                "keySecret": "%s",
+                "scopes": "cda_org_att"
+            }""";
 
 
     String getAuthToken() {
