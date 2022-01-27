@@ -1,5 +1,6 @@
 package gov.cms.ab2d.coverage.model;
 
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.util.AB2DCoveragePostgressqlContainer;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
@@ -15,6 +16,9 @@ import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+
+import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -43,9 +47,11 @@ class CoverageSearchTest {
     @Test
     void testSearches() {
         try {
+            ContractForCoverageDTO contract1 = new ContractForCoverageDTO("c123", AB2D_EPOCH.toOffsetDateTime(), ContractForCoverageDTO.ContractType.NORMAL);
+            ContractForCoverageDTO contract2 = new ContractForCoverageDTO("c456", AB2D_EPOCH.toOffsetDateTime(), ContractForCoverageDTO.ContractType.NORMAL);
 
-            CoveragePeriod period1 = coverageDataSetup.createCoveragePeriod("c123", 10, 2020);
-            CoveragePeriod period2 = coverageDataSetup.createCoveragePeriod("c456", 10, 2020);
+            CoveragePeriod period1 = coverageDataSetup.createCoveragePeriod(contract1, 10, 2020);
+            CoveragePeriod period2 = coverageDataSetup.createCoveragePeriod(contract2, 10, 2020);
 
             CoverageSearch search1 = new CoverageSearch(null, period1, OffsetDateTime.now(), 0);
             CoverageSearch search2 = new CoverageSearch(null, period2, OffsetDateTime.now().minusDays(2), 0);

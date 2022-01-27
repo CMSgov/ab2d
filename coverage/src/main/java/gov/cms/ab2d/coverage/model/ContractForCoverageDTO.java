@@ -20,7 +20,7 @@ import static gov.cms.ab2d.coverage.repository.CoverageServiceRepository.AB2D_ZO
 @AllArgsConstructor
 public class ContractForCoverageDTO {
 
-    public enum ContractType {NORMAL, CLASSIC_TEST, SYNTHEA}
+    public enum ContractType { NORMAL, CLASSIC_TEST, SYNTHEA }
 
     @Id
     private String contractNumber;

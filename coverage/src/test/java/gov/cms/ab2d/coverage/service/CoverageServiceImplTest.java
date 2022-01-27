@@ -147,13 +147,13 @@ class CoverageServiceImplTest {
         contract1 = dataSetup.setupContractDTO("TST-12", AB2D_EPOCH.toOffsetDateTime());
         contract2 = dataSetup.setupContractDTO("TST-34", AB2D_EPOCH.toOffsetDateTime());
         
-        period1Jan = dataSetup.createCoveragePeriod("TST-12", JANUARY, YEAR);
-        period1Feb = dataSetup.createCoveragePeriod("TST-12", FEBRUARY, YEAR);
-        period1March = dataSetup.createCoveragePeriod("TST-12", MARCH, YEAR);
-        period1April = dataSetup.createCoveragePeriod("TST-12", APRIL, YEAR);
+        period1Jan = dataSetup.createCoveragePeriod(contract1, JANUARY, YEAR);
+        period1Feb = dataSetup.createCoveragePeriod(contract1, FEBRUARY, YEAR);
+        period1March = dataSetup.createCoveragePeriod(contract2, MARCH, YEAR);
+        period1April = dataSetup.createCoveragePeriod(contract2, APRIL, YEAR);
         jobStartTime = OffsetDateTime.of(YEAR, APRIL, 2, 0, 0, 0, 0, ZoneOffset.UTC);
 
-        period2Jan = dataSetup.createCoveragePeriod("TST-34", JANUARY, YEAR);
+        period2Jan = dataSetup.createCoveragePeriod(contract2, JANUARY, YEAR);
     }
 
     @AfterEach
@@ -269,10 +269,10 @@ class CoverageServiceImplTest {
         coverageService.submitSearch(period1March.getId(), "testing");
         coverageService.submitSearch(period1April.getId(), "testing");
 
-        CoveragePeriod period2Feb = dataSetup.createCoveragePeriod("TST-34", 2, 2020);
-        CoveragePeriod period2March = dataSetup.createCoveragePeriod("TST-34", 3, 2020);
-        CoveragePeriod period2April = dataSetup.createCoveragePeriod("TST-34", 4, 2020);
-        CoveragePeriod period2May = dataSetup.createCoveragePeriod("TST-34", 5, 2020);
+        CoveragePeriod period2Feb = dataSetup.createCoveragePeriod(contract2, 2, 2020);
+        CoveragePeriod period2March = dataSetup.createCoveragePeriod(contract2, 3, 2020);
+        CoveragePeriod period2April = dataSetup.createCoveragePeriod(contract2, 4, 2020);
+        CoveragePeriod period2May = dataSetup.createCoveragePeriod(contract2, 5, 2020);
 
         coverageService.submitSearch(period2Jan.getId(), "testing");
         coverageService.submitSearch(period2Feb.getId(), "testing");
@@ -514,9 +514,9 @@ class CoverageServiceImplTest {
     @Test
     void pageCoverageOnlyReturnsBeneficiariesForContract() {
 
-        dataSetup.createCoveragePeriod("TST-34", 2020, 2);
-        dataSetup.createCoveragePeriod("TST-34", 2020, 3);
-        dataSetup.createCoveragePeriod("TST-34", 2020, 4);
+        dataSetup.createCoveragePeriod(contract2, 2020, 2);
+        dataSetup.createCoveragePeriod(contract2, 2020, 3);
+        dataSetup.createCoveragePeriod(contract2, 2020, 4);
 
         coverageService.submitSearch(period1Jan.getId(), "testing");
         coverageService.submitSearch(period2Jan.getId(), "testing");

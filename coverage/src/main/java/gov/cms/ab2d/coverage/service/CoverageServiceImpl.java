@@ -132,7 +132,7 @@ public class CoverageServiceImpl implements CoverageService {
     @Override
     public int countBeneficiariesByCoveragePeriod(List<CoveragePeriod> coveragePeriods) {
         List<Integer> ids = coveragePeriods.stream().map(CoveragePeriod::getId).collect(toList());
-        return coverageServiceRepo.countBeneficiariesByPeriods(ids, coveragePeriods.get(0).getContractNumber());
+        return coverageServiceRepo.countBeneficiariesByPeriods(ids, coveragePeriods.get(0).getContract().getContractNumber());
     }
 
     @Override
@@ -223,7 +223,7 @@ public class CoverageServiceImpl implements CoverageService {
 
         int unchanged = 0;
         if (previousCount > 0) {
-            log.info("Calculating the deltas for the search period {}-{}-{}", period.getContractNumber(),
+            log.info("Calculating the deltas for the search period {}-{}-{}", period.getContract().getContractNumber(),
                     period.getMonth(), period.getYear());
             coverageDeltaRepository.trackDeltas(previousSearch.get(), current);
             unchanged = coverageServiceRepo.countIntersection(previousSearch.get(), current);
@@ -402,7 +402,7 @@ public class CoverageServiceImpl implements CoverageService {
         } catch (Exception exception) {
             String issue = String.format(COVERAGE_DELETE_FAILED + " Failed to delete coverage for a failed search for %s-%d-%d. " +
                             "There could be duplicate enrollment data in the db",
-                    period.getContractNumber(), period.getYear(), period.getMonth());
+                    period.getContract().getContractNumber(), period.getYear(), period.getMonth());
             eventLogger.alert(issue, PUBLIC_LIST);
             throw exception;
         }
@@ -410,7 +410,7 @@ public class CoverageServiceImpl implements CoverageService {
         // Before finishing up alert AB2D team that there could be a problem with enrollment
         String issue = String.format(COVERAGE_UPDATE_FAILED + " Failed to update coverage for %s-%d-%d." +
                 " There could be out of date enrollment data in the db",
-                period.getContractNumber(), period.getYear(), period.getMonth());
+                period.getContract().getContractNumber(), period.getYear(), period.getMonth());
         eventLogger.alert(issue, PUBLIC_LIST);
 
         return updateStatus(period, description, CoverageJobStatus.FAILED);
@@ -428,7 +428,7 @@ public class CoverageServiceImpl implements CoverageService {
         }
 
         // todo: log to kinesis as well
-        String contractNumber = period.getContractNumber();
+        String contractNumber = period.getContract().getContractNumber();
 
         /*
          * Log the difference between any earlier enrollment we have for the given coverage period
@@ -447,7 +447,7 @@ public class CoverageServiceImpl implements CoverageService {
         } catch (Exception exception) {
             String issue = String.format(COVERAGE_DELETE_FAILED + " Failed to delete old coverage for newly completed %s-%d-%d." +
                             " There could be duplicate enrollment data in the db",
-                    period.getContractNumber(), period.getYear(), period.getMonth());
+                    period.getContract().getContractNumber(), period.getYear(), period.getMonth());
             eventLogger.alert(issue, PUBLIC_LIST);
             throw exception;
         }
@@ -524,7 +524,7 @@ public class CoverageServiceImpl implements CoverageService {
     }
 
     private void logStatusChange(CoveragePeriod period, String description, CoverageJobStatus coverageJobStatus) {
-        log.info("Updating job state for search {}-{}-{} from {} to {} due to {}", period.getContractNumber(),
+        log.info("Updating job state for search {}-{}-{} from {} to {} due to {}", period.getContract().getContractNumber(),
                 period.getMonth(), period.getYear(), period.getStatus(), coverageJobStatus, description);
     }
 
