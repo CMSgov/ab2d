@@ -8,7 +8,7 @@ jobs:
     env:
       REPO: https://github.com/CMSgov/ab2d
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2.4.0
     - name: gitleaks-action
       uses: semanticbits/ab2d-gitleaks-automation/gitleaks-action@master
       with:
