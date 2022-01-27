@@ -40,8 +40,6 @@ import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_COMPLETED;
 import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_CALL_FAILURE;
 import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_FAILURE;
 import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_QUEUE_MISMATCH;
-import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.NDJSON;
-import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.ZIP;
 
 @Slf4j
 @Service
