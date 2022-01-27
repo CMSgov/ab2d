@@ -103,13 +103,12 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
     }
 
     // Text Blocks are still a preview feature in JDK 13 and 14, otherwise, it would really clean this up.
-    private static final String AUTH_PAYLOAD_TEMPLATE = """
-            {
-                "userName": "CDA-AB2D-API",
-                "keyId": "%s",
-                "keySecret": "%s",
-                "scopes": "cda_org_att"
-            }""";
+    private static final String AUTH_PAYLOAD_TEMPLATE = "{\n" +
+            "    \"userName\": \"CDA-AB2D-API\",\n" +
+            "    \"keyId\": \"%s\",\n" +
+            "    \"keySecret\": \"%s\",\n" +
+            "    \"scopes\": \"cda_org_att\"\n" +
+            "}";
 
 
     String getAuthToken() {
