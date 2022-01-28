@@ -212,7 +212,7 @@ class CoverageDriverUnitTest {
         Contract contract = new Contract();
         contract.setContractNumber("contract-0");
         contract.setAttestedOn(OffsetDateTime.now().plusHours(1));
-        when(mapping.map(any(Contract.class))).thenReturn(new ContractForCoverageDTO(contract.getContractNumber(),contract.getAttestedOn()));
+        when(mapping.map(any(Contract.class))).thenReturn(new ContractForCoverageDTO(contract.getContractNumber(),contract.getAttestedOn(),ContractForCoverageDTO.ContractType.NORMAL));
 
 
         CoverageDriverException startDateInFuture = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(job, contract));
@@ -277,7 +277,7 @@ class CoverageDriverUnitTest {
         contract.setContractNumber("Contract-0");
         contract.setAttestedOn(AB2D_EPOCH.toOffsetDateTime());
 
-        when(mapping.map(any(Contract.class))).thenReturn(new ContractForCoverageDTO("Contract-0",contract.getAttestedOn()));
+        when(mapping.map(any(Contract.class))).thenReturn(new ContractForCoverageDTO("Contract-0",contract.getAttestedOn(),ContractForCoverageDTO.ContractType.NORMAL));
 
 
         CoveragePagingResult firstCall = driver.pageCoverage(job, contract);

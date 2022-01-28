@@ -125,7 +125,7 @@ public class CoverageDataSetup {
     }
 
     public ContractForCoverageDTO setupContractDTO(String contractNumber, OffsetDateTime attestedOn) {
-        return new ContractForCoverageDTO(contractNumber, attestedOn);
+        return new ContractForCoverageDTO(contractNumber, attestedOn, ContractForCoverageDTO.ContractType.NORMAL);
     }
 
 

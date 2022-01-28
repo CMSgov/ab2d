@@ -2,10 +2,10 @@ package gov.cms.ab2d.worker.processor.coverage;
 
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
+import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.Identifiers;
-import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.ExtensionUtils;
 import gov.cms.ab2d.fhir.FhirVersion;
@@ -17,6 +17,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -49,6 +50,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     private final CoverageMapping coverageMapping;
     private final BFDClient bfdClient;
     private final AtomicBoolean completed;
+    private ContractRepository contractRepository;
 
     private final int year;
 
@@ -60,14 +62,13 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     private int missingReferenceYear;
     private int pastReferenceYear;
     private final Map<Integer, Integer> referenceYears = new HashMap<>();
-    private final Ab2dEnvironment appEnv;
 
-    public CoverageMappingCallable(FhirVersion version, CoverageMapping coverageMapping, BFDClient bfdClient, Ab2dEnvironment appEnv) {
+    public CoverageMappingCallable(FhirVersion version, CoverageMapping coverageMapping, BFDClient bfdClient, ContractRepository contractRepository) {
         this.coverageMapping = coverageMapping;
         this.bfdClient = bfdClient;
         this.completed = new AtomicBoolean(false);
-        this.appEnv = appEnv;
-        this.year = getCorrectedYear(cov, coverageMapping.getPeriod().getYear());
+        this.contractRepository = contractRepository;
+        this.year = getCorrectedYear(contractRepository.findContractByContractNumber(coverageMapping.getPeriod().getContractNumber()), coverageMapping.getPeriod().getYear());
         this.version = version;
     }
 
@@ -303,10 +304,11 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
      * @return if we're in sandbox, return the synthetic data year unless it's the new Synthea data which can use
      * the correct year
      */
-    int getCorrectedYear(ContractForCoverageDTO contract, int coverageYear) {
+    int getCorrectedYear(Optional<Contract> optionalContract, int coverageYear) {
+
         // Synthea contracts use realistic enrollment reference years so only original
         // synthetic contracts need to have the year modified
-        if (contract.getContractType() == ContractForCoverageDTO.ContractType.CLASSIC_TEST) {
+        if (optionalContract.isPresent() && optionalContract.get().getContractType() == Contract.ContractType.CLASSIC_TEST) {
             return SYNTHETIC_DATA_YEAR;
         }
 
