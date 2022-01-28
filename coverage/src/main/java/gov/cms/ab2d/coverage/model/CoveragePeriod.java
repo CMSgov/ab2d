@@ -1,5 +1,6 @@
 package gov.cms.ab2d.coverage.model;
 
+import gov.cms.ab2d.common.model.TimestampBase;
 import java.time.OffsetDateTime;
 import javax.persistence.Column;
 import javax.persistence.Entity;

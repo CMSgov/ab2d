@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 
-import static gov.cms.ab2d.coverage.repository.CoverageServiceRepository.AB2D_ZONE;
+import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 
 @Data
 @NoArgsConstructor

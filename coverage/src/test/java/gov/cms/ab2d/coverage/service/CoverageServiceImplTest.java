@@ -54,9 +54,10 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+
+import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.coverage.repository.CoverageDeltaRepository.COVERAGE_ADDED;
 import static gov.cms.ab2d.coverage.repository.CoverageDeltaRepository.COVERAGE_DELETED;
-import static gov.cms.ab2d.coverage.repository.CoverageServiceRepository.AB2D_EPOCH;
 import static java.util.Collections.disjoint;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;

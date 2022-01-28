@@ -33,7 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
-import static gov.cms.ab2d.coverage.repository.CoverageServiceRepository.AB2D_EPOCH_YEAR;
+import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH_YEAR;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
 import static gov.cms.ab2d.eventlogger.events.SlackEvents.COVERAGE_DELETE_FAILED;
 import static gov.cms.ab2d.eventlogger.events.SlackEvents.COVERAGE_UPDATE_FAILED;
