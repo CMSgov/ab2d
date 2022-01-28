@@ -13,8 +13,13 @@ import static gov.cms.ab2d.coverage.repository.CoverageServiceRepository.AB2D_ZO
 @NoArgsConstructor
 @AllArgsConstructor
 public class ContractForCoverageDTO {
+
+    public enum ContractType {NORMAL, CLASSIC_TEST, SYNTHEA}
+
     private String contractNumber;
     private OffsetDateTime attestedOn;
+    private ContractType contractType;
+    private
 
     public boolean hasAttestation() {
         return attestedOn != null;
