@@ -2,7 +2,7 @@ package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
@@ -45,13 +45,13 @@ import static org.mockito.Mockito.when;
 class CoverageMappingCallableTest {
 
     private BFDClient bfdClient;
-    private ContractRepository contractRepository;
+    private ContractService contractService;
 
     @BeforeEach
     public void before() {
 
         bfdClient = Mockito.mock(BFDClient.class);
-        contractRepository = Mockito.mock(ContractRepository.class);
+        contractService = Mockito.mock(ContractService.class);
     }
 
     @DisplayName("Successfully completing marks as done and transfers results")
@@ -77,7 +77,7 @@ class CoverageMappingCallableTest {
         period.setMonth(1);
 
         Optional<Contract> optionalContract = Optional.of(contract);
-        when(contractRepository.findContractByContractNumber(anyString())).thenReturn(optionalContract);
+        when(contractService.getContractByContractNumber(anyString())).thenReturn(optionalContract);
 
         CoverageSearchEvent cse = new CoverageSearchEvent();
         cse.setCoveragePeriod(period);
@@ -87,7 +87,7 @@ class CoverageMappingCallableTest {
 
 
         CoverageMapping mapping = new CoverageMapping(cse, search);
-        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient,contractRepository);
+        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, contractService);
 
         assertFalse(callable.isCompleted());
 
@@ -122,9 +122,9 @@ class CoverageMappingCallableTest {
         CoverageMapping mapping = new CoverageMapping(cse, search);
 
         Optional<Contract> optionalContract = Optional.of(contract);
-        when(contractRepository.findContractByContractNumber(anyString())).thenReturn(optionalContract);
+        when(contractService.getContractByContractNumber(anyString())).thenReturn(optionalContract);
 
-        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, contractRepository);
+        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, contractService);
         assertEquals(3, callable.getCorrectedYear(optionalContract, 2020));
 
         // Test that the corrected year modification is not applied to Synthea
@@ -163,7 +163,7 @@ class CoverageMappingCallableTest {
         search.setPeriod(period);
 
         CoverageMapping mapping = new CoverageMapping(cse, search);
-        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, contractRepository);
+        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, contractService);
 
         try {
             callable.call();
@@ -215,7 +215,7 @@ class CoverageMappingCallableTest {
         search.setPeriod(period);
 
         CoverageMapping mapping = new CoverageMapping(cse, search);
-        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, contractRepository);
+        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, contractService);
 
         try {
             callable.call();
@@ -265,7 +265,7 @@ class CoverageMappingCallableTest {
         CoverageMapping mapping = new CoverageMapping(cse, search);
 
         CoverageMappingCallable coverageCallable =
-                new CoverageMappingCallable(STU3, mapping, bfdClient, contractRepository);
+                new CoverageMappingCallable(STU3, mapping, bfdClient, contractService);
 
         try {
             mapping = coverageCallable.call();
@@ -317,7 +317,7 @@ class CoverageMappingCallableTest {
         CoverageMapping mapping = new CoverageMapping(cse, search);
 
         CoverageMappingCallable coverageCallable =
-                new CoverageMappingCallable(STU3, mapping, bfdClient,contractRepository);
+                new CoverageMappingCallable(STU3, mapping, bfdClient, contractService);
 
         try {
             mapping = coverageCallable.call();
@@ -367,7 +367,7 @@ class CoverageMappingCallableTest {
         CoverageMapping mapping = new CoverageMapping(cse, search);
 
         CoverageMappingCallable coverageCallable =
-                new CoverageMappingCallable(STU3, mapping, bfdClient, contractRepository);
+                new CoverageMappingCallable(STU3, mapping, bfdClient, contractService);
 
         try {
             mapping = coverageCallable.call();
@@ -405,7 +405,7 @@ class CoverageMappingCallableTest {
         search.setPeriod(period);
 
         CoverageMapping mapping = new CoverageMapping(cse, search);
-        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, contractRepository);
+        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, contractService);
 
         try {
             callable.call();
@@ -435,7 +435,7 @@ class CoverageMappingCallableTest {
         search.setPeriod(period);
 
         CoverageMapping mapping = new CoverageMapping(cse, search);
-        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, contractRepository);
+        CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, contractService);
         Patient patient = new Patient();
 
         Identifiers ids = callable.extractPatientId(patient);

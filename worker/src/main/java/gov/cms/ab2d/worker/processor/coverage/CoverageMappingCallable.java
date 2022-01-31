@@ -4,6 +4,7 @@ import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.fhir.BundleUtils;
@@ -63,12 +64,11 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     private int pastReferenceYear;
     private final Map<Integer, Integer> referenceYears = new HashMap<>();
 
-    public CoverageMappingCallable(FhirVersion version, CoverageMapping coverageMapping, BFDClient bfdClient, ContractRepository contractRepository) {
+    public CoverageMappingCallable(FhirVersion version, CoverageMapping coverageMapping, BFDClient bfdClient, ContractService contractService) {
         this.coverageMapping = coverageMapping;
         this.bfdClient = bfdClient;
         this.completed = new AtomicBoolean(false);
-        this.contractRepository = contractRepository;
-        this.year = getCorrectedYear(contractRepository.findContractByContractNumber(coverageMapping.getPeriod().getContractNumber()), coverageMapping.getPeriod().getYear());
+        this.year = getCorrectedYear(contractService.getContractByContractNumber(coverageMapping.getPeriod().getContractNumber()), coverageMapping.getPeriod().getYear());
         this.version = version;
     }
 
@@ -299,7 +299,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
      * We want to find results in the sandbox but all the data in the sandbox is for an invalid
      * year so we're using this to prevent us from getting no beneficiaries.
      *
-     * @param contract - the specified contract
+     * @param optionalContract - the specified contract
      * @param coverageYear - the specified coverage year in the coverage search
      * @return if we're in sandbox, return the synthetic data year unless it's the new Synthea data which can use
      * the correct year

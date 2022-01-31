@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.service.CoverageService;
@@ -71,7 +71,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     private final ThreadPoolTaskExecutor executor;
     private final int maxAttempts;
 
-    private ContractRepository contractRepository;
+    private ContractService contractService;
 
     private final List<CoverageMappingCallable> inProgressMappings = new ArrayList<>();
 
@@ -92,12 +92,12 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     public CoverageProcessorImpl(CoverageService coverageService, BFDClient bfdClient,
                                  @Qualifier("patientCoverageThreadPool") ThreadPoolTaskExecutor executor,
                                  @Value("${coverage.update.max.attempts}") int maxAttempts,
-                                 ContractRepository contractRepository) {
+                                 ContractService contractService) {
         this.coverageService = coverageService;
         this.bfdClient = bfdClient;
         this.executor = executor;
         this.maxAttempts = maxAttempts;
-        this.contractRepository = contractRepository;
+        this.contractService = contractService;
     }
 
     @Override
@@ -145,7 +145,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                     mapping.getPeriod().getMonth(), mapping.getPeriod().getYear());
 
             // Currently, we are using the STU3 version to get patient mappings
-            CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, contractRepository);
+            CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, contractService);
             executor.submit(callable);
             inProgressMappings.add(callable);
 

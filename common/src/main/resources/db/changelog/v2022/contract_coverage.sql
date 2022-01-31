@@ -9,10 +9,7 @@ UPDATE bene_coverage_period
 SET contract_number = c.contract_number
 FROM contract c
 WHERE contract_id = c.id;
--- There are two bad data cases in the bene_coverage_period table in production.  Put something there.
-UPDATE bene_coverage_period
-SET contract_number = 'UNKNOWN'
-WHERE contract_id is null;
+
 -- Enforce that a saved bene_coverage_period has a contract number
 ALTER TABLE bene_coverage_period ALTER "contract_number" SET NOT NULL;
 

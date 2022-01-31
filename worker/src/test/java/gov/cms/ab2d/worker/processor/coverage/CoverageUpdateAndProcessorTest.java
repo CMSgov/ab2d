@@ -8,6 +8,7 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.Properties;
 import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
@@ -83,6 +84,9 @@ class CoverageUpdateAndProcessorTest {
     private ContractRepository contractRepo;
 
     @Autowired
+    private ContractService contractService;
+
+    @Autowired
     private CoveragePeriodRepository coveragePeriodRepo;
 
     @Autowired
@@ -149,7 +153,7 @@ class CoverageUpdateAndProcessorTest {
         taskExecutor.setCorePoolSize(3);
         taskExecutor.initialize();
 
-        processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS, contractRepo);
+        processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS, contractService);
         driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesService, processor, searchLock, mapping);
     }
 
