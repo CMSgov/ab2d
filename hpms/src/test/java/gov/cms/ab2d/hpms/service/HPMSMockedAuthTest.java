@@ -48,6 +48,7 @@ class HPMSMockedAuthTest {
             assertNotNull(headers.get(COOKIE));
             assertTrue(headers.get(COOKIE).stream().anyMatch(cookie -> cookie.contains("test")));
 
+            authService.cleanup();
         }
     }
 }
