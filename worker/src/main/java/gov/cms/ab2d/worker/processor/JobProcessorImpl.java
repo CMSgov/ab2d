@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.processor;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import gov.cms.ab2d.aggregator.FileOutputType;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
@@ -44,7 +43,7 @@ import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_QUEUE_MISMATCH
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@SuppressWarnings({"PMD.TooManyStaticImports", "java:S2142"}) //java:S2142: "InterruptedException" should not be ignored
+@SuppressWarnings("java:S2142") //java:S2142: "InterruptedException" should not be ignored
 public class JobProcessorImpl implements JobProcessor {
 
     @Value("${efs.mount}")
@@ -217,7 +216,6 @@ public class JobProcessorImpl implements JobProcessor {
      * @param job           - the job to process
      * @param outputDirPath - the output directory to put all the files
      */
-    @SuppressFBWarnings("REC_CATCH_EXCEPTION")
     private void processJob(Job job, Path outputDirPath) throws ExecutionException, InterruptedException {
         // Create the output directory
         createOutputDirectory(outputDirPath, job);
@@ -266,7 +264,6 @@ public class JobProcessorImpl implements JobProcessor {
      *
      * @param outputDirPath - the directory to delete
      */
-    @SuppressFBWarnings
     private void deleteExistingDirectory(Path outputDirPath, Job job) {
         final File[] files = outputDirPath.toFile().listFiles(getFilenameFilter());
 

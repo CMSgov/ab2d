@@ -31,12 +31,14 @@ public class HPMSFetcherImpl extends AbstractHPMSService implements HPMSFetcher 
 
     private final HPMSAuthService authService;
 
+    private final WebClient webClient;
+
     @Autowired
-    public HPMSFetcherImpl(HPMSAuthService authService) {
+    public HPMSFetcherImpl(HPMSAuthService authService, WebClient webClient) {
         this.authService = authService;
+        this.webClient = webClient;
     }
 
-    @SuppressWarnings("PMD.UnusedPrivateMethod")
     @PostConstruct
     private void buildURI() {
         organizationBaseUri = UriComponentsBuilder.fromUriString(hpmsBaseURI + hpmsBasePath + "/orgs/info").build().toUri();
@@ -45,7 +47,7 @@ public class HPMSFetcherImpl extends AbstractHPMSService implements HPMSFetcher 
 
     @Override
     public void retrieveSponsorInfo(Consumer<List<HPMSOrganizationInfo>> hpmsOrgCallback) {
-        Mono<List<HPMSOrganizationInfo>> orgInfoMono = WebClient.create()
+        Mono<List<HPMSOrganizationInfo>> orgInfoMono = webClient
                 .get().uri(organizationBaseUri)
                 .headers(authService::buildAuthHeaders)
                 .retrieve()
@@ -57,7 +59,7 @@ public class HPMSFetcherImpl extends AbstractHPMSService implements HPMSFetcher 
 
     @Override
     public void retrieveAttestationInfo(Consumer<Set<HPMSAttestation>> hpmsAttestationCallback, List<String> contractIds) {
-        Mono<Set<HPMSAttestation>> contractsMono = WebClient.create()
+        Mono<Set<HPMSAttestation>> contractsMono = webClient
                 .get().uri(buildAttestationURI(contractIds))
                 .headers(authService::buildAuthHeaders)
                 .retrieve()

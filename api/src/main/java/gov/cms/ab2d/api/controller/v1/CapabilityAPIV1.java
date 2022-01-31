@@ -42,7 +42,6 @@ import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
  */
 @AllArgsConstructor
 @Slf4j
-@SuppressWarnings("PMD.TooManyStaticImports")
 @Tag(name = "Capabilities", description = CAP_API)
 @RestController
 @RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX, produces = {APPLICATION_JSON})

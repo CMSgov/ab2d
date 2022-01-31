@@ -1,6 +1,7 @@
 package gov.cms.ab2d.hpms.service;
 
 import gov.cms.ab2d.hpms.hmsapi.HPMSAuthResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -31,6 +32,9 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
     @Value("${HPMS_AUTH_KEY_SECRET}")
     private String hpmsSecret;
 
+    @Autowired
+    private WebClient webClient;
+
     private URI fullAuthURI;
 
     private volatile String authToken;
@@ -38,7 +42,6 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
 
     private volatile long tokenExpires;
 
-    @SuppressWarnings("PMD.UnusedPrivateMethod")
     @PostConstruct
     private void buildFullAuthURI() {
         fullAuthURI = buildFullURI(authURL);
@@ -64,7 +67,7 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
     private void refreshToken(long currentTimestamp) {
         authToken = null;
 
-        Flux<HPMSAuthResponse> orgInfoFlux = WebClient.create()
+        Flux<HPMSAuthResponse> orgInfoFlux = webClient
                 .post().uri(fullAuthURI)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(retrieveAuthRequestPayload())

@@ -52,7 +52,6 @@ import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 @RestController
 @RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX, produces = {APPLICATION_JSON})
 @AllArgsConstructor
-@SuppressWarnings("PMD.TooManyStaticImports")
 public class StatusAPIV1 {
 
     private final StatusCommon statusCommon;

@@ -15,7 +15,7 @@ import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.Constants;
-import gov.cms.ab2d.worker.processor.coverage.check.*; // NOPMD
+import gov.cms.ab2d.worker.processor.coverage.check.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -50,7 +50,6 @@ import static java.util.stream.Collectors.toList;
  * This class is concurrency aware and handles the existence of other worker nodes potentially attempting to queue
  * searches.
  */
-@SuppressWarnings("PMD.TooManyStaticImports")
 @Slf4j
 @Service
 public class CoverageDriverImpl implements CoverageDriver {

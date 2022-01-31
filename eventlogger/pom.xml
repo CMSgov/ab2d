@@ -83,7 +83,7 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk</artifactId>
-            <version>1.12.131</version>
+            <version>1.12.145</version>
         </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>
@@ -105,7 +105,7 @@
         <dependency>
             <groupId>com.slack.api</groupId>
             <artifactId>slack-api-client</artifactId>
-            <version>1.16.0</version>
+            <version>1.17.1</version>
         </dependency>
     </dependencies>
 

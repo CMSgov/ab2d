@@ -65,7 +65,6 @@ import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 @Tag(name = "Export", description = BULK_MAIN)
 @RestController
 @RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX, produces = {APPLICATION_JSON})
-@SuppressWarnings({"PMD.TooManyStaticImports", "PMD.UnusedImports"})
 public class BulkDataAccessAPIV1 {
     private final JobService jobService;
     private final ApiCommon apiCommon;
