@@ -41,7 +41,10 @@ public class FileDownloadCommon {
 
         log.info("Sending " + filename + " file to client");
 
+        String fileDownloadName = downloadResource.getFile().getName();
+
         response.setHeader(HttpHeaders.CONTENT_TYPE, NDJSON_FIRE_CONTENT_TYPE);
+        response.setHeader("Content-Disposition", "inline; swaggerDownload=\"attachment\"; filename=\"" + fileDownloadName + "\"");
 
         try (OutputStream out = response.getOutputStream(); FileInputStream in = new FileInputStream(downloadResource.getFile())) {
             IOUtils.copy(in, out);
