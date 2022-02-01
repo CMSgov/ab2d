@@ -34,7 +34,6 @@ class HPMSAuthServiceTest {
 
     @Test
     public void tokenTest() {
-        authService.cleanup();
         assertNotNull(authService);
 
         // Verifying initial state

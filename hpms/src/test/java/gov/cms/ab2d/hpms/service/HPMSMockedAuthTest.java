@@ -3,6 +3,7 @@ package gov.cms.ab2d.hpms.service;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.hpms.SpringBootTestApp;
 import gov.cms.ab2d.hpms.hmsapi.HPMSAuthResponse;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -47,8 +48,11 @@ class HPMSMockedAuthTest {
             authService.buildAuthHeaders(headers);
             assertNotNull(headers.get(COOKIE));
             assertTrue(headers.get(COOKIE).stream().anyMatch(cookie -> cookie.contains("test")));
-
-            authService.cleanup();
         }
+    }
+
+    @AfterEach
+    public void shutdown() {
+        authService.cleanup();
     }
 }

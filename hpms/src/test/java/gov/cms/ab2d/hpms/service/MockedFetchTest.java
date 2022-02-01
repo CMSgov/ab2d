@@ -4,6 +4,7 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.hpms.SpringBootTestApp;
 import gov.cms.ab2d.hpms.hmsapi.HPMSAttestation;
 import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizationInfo;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
@@ -27,6 +28,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class MockedFetchTest {
     @Autowired
     private HPMSFetcherImpl fetcher;
+
+    @Autowired
+    HPMSAuthServiceImpl authService;
 
     private final MockWebClient client = new MockWebClient();
 
@@ -62,5 +66,12 @@ class MockedFetchTest {
 
     private void attestation(Set<HPMSAttestation> hpmsAttestations) {
         assertTrue(hpmsAttestations.size() > 0);
+    }
+
+
+    //Needed because the HPMSFetcherImpl uses authservice that needs to be cleared
+    @AfterEach
+    public void shutdown() {
+        authService.cleanup();
     }
 }
