@@ -38,6 +38,8 @@ class HPMSAuthServiceTest {
     public void tokenTest() {
         assertNotNull(authService);
 
+        authService.cleanup();
+
         // Verifying initial state
         assertNull(authService.getAuthToken());
         assertEquals(0L, authService.getTokenExpires());
