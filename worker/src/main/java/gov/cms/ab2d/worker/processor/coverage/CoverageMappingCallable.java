@@ -3,7 +3,6 @@ package gov.cms.ab2d.worker.processor.coverage;
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.fhir.BundleUtils;
@@ -49,7 +48,6 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     private final CoverageMapping coverageMapping;
     private final BFDClient bfdClient;
     private final AtomicBoolean completed;
-    private ContractRepository contractRepository;
 
     private final int year;
 
