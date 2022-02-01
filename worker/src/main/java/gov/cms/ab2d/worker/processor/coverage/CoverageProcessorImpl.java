@@ -143,7 +143,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                 return false;
             }
             Optional<Contract> contractOptional = contractService.getContractByContractNumber(mapping.getContractNumber());
-            if(contractOptional.isEmpty()){
+            if(contractOptional.isEmpty()) {
                 log.warn("cannot grab contract using contract number {}", mapping.getContractNumber());
                 return false;
             }
