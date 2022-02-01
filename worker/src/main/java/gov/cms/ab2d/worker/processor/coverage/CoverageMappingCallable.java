@@ -295,7 +295,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
      * We want to find results in the sandbox but all the data in the sandbox is for an invalid
      * year so we're using this to prevent us from getting no beneficiaries.
      *
-     * @param optionalContract - the specified contract
+     * @param contract - the specified contract
      * @param coverageYear - the specified coverage year in the coverage search
      * @return if we're in sandbox, return the synthetic data year unless it's the new Synthea data which can use
      * the correct year
