@@ -4,7 +4,6 @@ import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.fhir.BundleUtils;
@@ -18,7 +17,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -64,11 +62,11 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     private int pastReferenceYear;
     private final Map<Integer, Integer> referenceYears = new HashMap<>();
 
-    public CoverageMappingCallable(FhirVersion version, CoverageMapping coverageMapping, BFDClient bfdClient, ContractService contractService) {
+    public CoverageMappingCallable(FhirVersion version, CoverageMapping coverageMapping, BFDClient bfdClient, Contract contract) {
         this.coverageMapping = coverageMapping;
         this.bfdClient = bfdClient;
         this.completed = new AtomicBoolean(false);
-        this.year = getCorrectedYear(contractService.getContractByContractNumber(coverageMapping.getPeriod().getContractNumber()), coverageMapping.getPeriod().getYear());
+        this.year = getCorrectedYear(contract, coverageMapping.getPeriod().getYear());
         this.version = version;
     }
 
@@ -304,11 +302,11 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
      * @return if we're in sandbox, return the synthetic data year unless it's the new Synthea data which can use
      * the correct year
      */
-    int getCorrectedYear(Optional<Contract> optionalContract, int coverageYear) {
+    int getCorrectedYear(Contract contract, int coverageYear) {
 
         // Synthea contracts use realistic enrollment reference years so only original
         // synthetic contracts need to have the year modified
-        if (optionalContract.isPresent() && optionalContract.get().getContractType() == Contract.ContractType.CLASSIC_TEST) {
+        if (contract.getContractType() == Contract.ContractType.CLASSIC_TEST) {
             return SYNTHETIC_DATA_YEAR;
         }
 

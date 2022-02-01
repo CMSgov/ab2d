@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
@@ -9,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -140,12 +142,18 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                 log.warn("cannot start job because service has been shutdown");
                 return false;
             }
+            Optional<Contract> contractOptional = contractService.getContractByContractNumber(mapping.getContractNumber());
+            if(contractOptional.isEmpty()){
+                log.warn("cannot grab contract using contract number {}", mapping.getContractNumber());
+                return false;
+            }
+
 
             log.info("starting search for {} during {}-{}", mapping.getContractNumber(),
                     mapping.getPeriod().getMonth(), mapping.getPeriod().getYear());
 
             // Currently, we are using the STU3 version to get patient mappings
-            CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, contractService);
+            CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, contractOptional.get());
             executor.submit(callable);
             inProgressMappings.add(callable);
 
