@@ -186,7 +186,10 @@ public class CoverageCheckPredicatesUnitTest {
 
         assertFalse(stableCheck.test(contract));
 
-        assertEquals(2, issues.size());
+        int expectedIssues = ATTESTATION_TIME.getMonthValue() == 12 || ATTESTATION_TIME.plusMonths(1).getMonthValue() == 12
+                || ATTESTATION_TIME.plusMonths(2).getMonthValue() == 12 ? 1 : 2;
+
+        assertEquals(expectedIssues, issues.size());
         issues.forEach(issue -> assertTrue(issue.contains("enrollment changed")));
         assertTrue(issues.get(0).contains("20%"));
     }

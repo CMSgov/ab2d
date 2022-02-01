@@ -228,7 +228,10 @@ public class CoverageCheckPredicatesIntegrationTest {
 
         assertFalse(stableCheck.test(contract));
 
-        assertEquals(2, issues.size());
+        int expectedIssues = attestationMonth.getMonth() == 12 || attestationMonthPlus1.getMonth() == 12
+                || attestationMonthPlus2.getMonth() == 12 ? 1 : 2;
+
+        assertEquals(expectedIssues, issues.size());
         issues.forEach(issue -> assertTrue(issue.contains("enrollment changed")));
         assertTrue(issues.get(0).contains("20%"));
     }

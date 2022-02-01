@@ -37,6 +37,8 @@ class HPMSAuthServiceTest {
         authService.cleanup();
         assertNotNull(authService);
 
+        authService.cleanup();
+
         // Verifying initial state
         assertNull(authService.getAuthToken());
         assertEquals(0L, authService.getTokenExpires());
