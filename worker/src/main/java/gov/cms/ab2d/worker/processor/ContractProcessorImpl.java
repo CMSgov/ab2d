@@ -12,13 +12,11 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
-import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.JobChannelService;
@@ -42,7 +40,6 @@ import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.aggregator.FileOutputType.DATA;
 import static gov.cms.ab2d.aggregator.FileOutputType.ERROR;
-import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
 
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
 import static gov.cms.ab2d.common.util.EventUtils.getOrganization;
@@ -266,7 +263,6 @@ public class ContractProcessorImpl implements ContractProcessor {
         Queue<CoverageSummary> coverageSummaries = new LinkedList<>(result.getCoverageSummaries());
         int actualBatchSize = searchBatchSize == 0 ? 1 : searchBatchSize;
 
-        Job job = contractData.getJob();
         while (coverageSummaries.size() > 0) {
             List<CoverageSummary> subList = new ArrayList<>(actualBatchSize);
             for (int i = 0; i < actualBatchSize; i++) {
