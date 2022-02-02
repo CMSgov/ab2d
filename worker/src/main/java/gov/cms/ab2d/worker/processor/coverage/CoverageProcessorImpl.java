@@ -156,8 +156,10 @@ public class CoverageProcessorImpl implements CoverageProcessor {
             log.info("starting search for {} during {}-{}", mapping.getContractNumber(),
                     mapping.getPeriod().getMonth(), mapping.getPeriod().getYear());
 
+            Contract contract = contractOptional.get();
+
             // Currently, we are using the STU3 version to get patient mappings
-            CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, contractCoverageMapping.map(contractOptional.get()));
+            CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, contractCoverageMapping.map(contract).getCorrectedYear(mapping.getPeriod().getYear()));
             executor.submit(callable);
             inProgressMappings.add(callable);
 
