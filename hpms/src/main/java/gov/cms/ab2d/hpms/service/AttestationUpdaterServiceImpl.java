@@ -53,7 +53,9 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
                 .map(Optional::get)
                 .collect(Collectors.toList());
         if (!changedContracts.isEmpty()) {
-            contractRepository.saveAll(changedContracts);
+            List<Contract> updatedContracts = contractRepository.saveAll(changedContracts);
+            // Replace changed contracts in the existing map.  Fixes
+            updatedContracts.forEach(contract -> existingMap.put(contract.getContractNumber(), contract));
         }
 
         // detect new Contracts
