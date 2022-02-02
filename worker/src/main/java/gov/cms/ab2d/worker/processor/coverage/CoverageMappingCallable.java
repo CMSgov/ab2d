@@ -2,7 +2,7 @@ package gov.cms.ab2d.worker.processor.coverage;
 
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.fhir.BundleUtils;
@@ -60,7 +60,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     private int pastReferenceYear;
     private final Map<Integer, Integer> referenceYears = new HashMap<>();
 
-    public CoverageMappingCallable(FhirVersion version, CoverageMapping coverageMapping, BFDClient bfdClient, Contract contract) {
+    public CoverageMappingCallable(FhirVersion version, CoverageMapping coverageMapping, BFDClient bfdClient, ContractForCoverageDTO contract) {
         this.coverageMapping = coverageMapping;
         this.bfdClient = bfdClient;
         this.completed = new AtomicBoolean(false);
@@ -300,11 +300,11 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
      * @return if we're in sandbox, return the synthetic data year unless it's the new Synthea data which can use
      * the correct year
      */
-    int getCorrectedYear(Contract contract, int coverageYear) {
+    int getCorrectedYear(ContractForCoverageDTO contract, int coverageYear) {
 
         // Synthea contracts use realistic enrollment reference years so only original
         // synthetic contracts need to have the year modified
-        if (contract.getContractType() == Contract.ContractType.CLASSIC_TEST) {
+        if (contract.getContractType() == ContractForCoverageDTO.ContractType.CLASSIC_TEST) {
             return SYNTHETIC_DATA_YEAR;
         }
 

@@ -6,6 +6,7 @@ import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.service.CoverageService;
+import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -152,8 +153,10 @@ public class CoverageProcessorImpl implements CoverageProcessor {
             log.info("starting search for {} during {}-{}", mapping.getContractNumber(),
                     mapping.getPeriod().getMonth(), mapping.getPeriod().getYear());
 
+            ContractToContractCoverageMapping contractToContractCoverageMapping = new ContractToContractCoverageMapping();
+
             // Currently, we are using the STU3 version to get patient mappings
-            CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, contractOptional.get());
+            CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, contractToContractCoverageMapping.map(contractOptional.get()));
             executor.submit(callable);
             inProgressMappings.add(callable);
 
