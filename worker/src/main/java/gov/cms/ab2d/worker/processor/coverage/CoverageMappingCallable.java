@@ -43,8 +43,6 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
 
     // Use year 3 by default since all synthetic data has this year on it
     // todo get rid of this when data is updated
-    private static final int SYNTHETIC_DATA_YEAR = 3;
-
     private final CoverageMapping coverageMapping;
     private final BFDClient bfdClient;
     private final AtomicBoolean completed;
@@ -60,11 +58,11 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     private int pastReferenceYear;
     private final Map<Integer, Integer> referenceYears = new HashMap<>();
 
-    public CoverageMappingCallable(FhirVersion version, CoverageMapping coverageMapping, BFDClient bfdClient, ContractForCoverageDTO contract) {
+    public CoverageMappingCallable(FhirVersion version, CoverageMapping coverageMapping, BFDClient bfdClient, ContractForCoverageDTO contractDTO) {
         this.coverageMapping = coverageMapping;
         this.bfdClient = bfdClient;
         this.completed = new AtomicBoolean(false);
-        this.year = getCorrectedYear(contract, coverageMapping.getPeriod().getYear());
+        this.year = contractDTO.getCorrectedYear(coverageMapping.getPeriod().getYear());
         this.version = version;
     }
 
@@ -289,25 +287,5 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
             log.error("Error while calling for Contract-2-Bene API : {}", e.getMessage(), rootCause);
             throw new RuntimeException(rootCause);
         }
-    }
-
-    /**
-     * We want to find results in the sandbox but all the data in the sandbox is for an invalid
-     * year so we're using this to prevent us from getting no beneficiaries.
-     *
-     * @param contract - the specified contract
-     * @param coverageYear - the specified coverage year in the coverage search
-     * @return if we're in sandbox, return the synthetic data year unless it's the new Synthea data which can use
-     * the correct year
-     */
-    int getCorrectedYear(ContractForCoverageDTO contract, int coverageYear) {
-
-        // Synthea contracts use realistic enrollment reference years so only original
-        // synthetic contracts need to have the year modified
-        if (contract.getContractType() == ContractForCoverageDTO.ContractType.CLASSIC_TEST) {
-            return SYNTHETIC_DATA_YEAR;
-        }
-
-        return coverageYear;
     }
 }

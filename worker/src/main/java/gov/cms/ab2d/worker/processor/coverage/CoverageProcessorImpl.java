@@ -74,7 +74,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     private final ThreadPoolTaskExecutor executor;
     private final int maxAttempts;
 
-    private ContractService contractService;
+    private final ContractService contractService;
 
     private final List<CoverageMappingCallable> inProgressMappings = new ArrayList<>();
 
@@ -82,6 +82,9 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     private final BlockingQueue<CoverageMapping> coverageInsertionQueue = new LinkedBlockingQueue<>();
 
     private final AtomicBoolean inShutdown = new AtomicBoolean(false);
+
+    private final ContractToContractCoverageMapping contractCoverageMapping = new ContractToContractCoverageMapping();
+
 
     /**
      * Coverage processor needs an interface to the database, client for BFD, and thread pool to concurrently execute
@@ -153,10 +156,8 @@ public class CoverageProcessorImpl implements CoverageProcessor {
             log.info("starting search for {} during {}-{}", mapping.getContractNumber(),
                     mapping.getPeriod().getMonth(), mapping.getPeriod().getYear());
 
-            ContractToContractCoverageMapping contractToContractCoverageMapping = new ContractToContractCoverageMapping();
-
             // Currently, we are using the STU3 version to get patient mappings
-            CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, contractToContractCoverageMapping.map(contractOptional.get()));
+            CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, contractCoverageMapping.map(contractOptional.get()));
             executor.submit(callable);
             inProgressMappings.add(callable);
 

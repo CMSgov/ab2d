@@ -123,12 +123,12 @@ class CoverageMappingCallableTest {
         ContractForCoverageDTO contractForCoverageDTO = contractToContractCoverageMapping.map(contract);
 
         CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, contractForCoverageDTO);
-        assertEquals(3, callable.getCorrectedYear(contractForCoverageDTO, 2020));
+        assertEquals(3, contractForCoverageDTO.getCorrectedYear(2020));
 
         // Test that the corrected year modification is not applied to Synthea
         contractForCoverageDTO.setContractType(ContractForCoverageDTO.ContractType.SYNTHEA);
 
-        assertEquals(2020, callable.getCorrectedYear(contractForCoverageDTO, 2020));
+        assertEquals(2020, contractForCoverageDTO.getCorrectedYear(2020));
     }
 
     @DisplayName("Multiple mbis captured")

@@ -14,6 +14,8 @@ import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 @AllArgsConstructor
 public class ContractForCoverageDTO {
 
+    private static final int SYNTHETIC_DATA_YEAR = 3;
+
     public enum ContractType { NORMAL, CLASSIC_TEST, SYNTHEA }
 
     private String contractNumber;
@@ -26,5 +28,16 @@ public class ContractForCoverageDTO {
 
     public ZonedDateTime getESTAttestationTime() {
         return hasAttestation() ? attestedOn.atZoneSameInstant(AB2D_ZONE) : null;
+    }
+
+    public int getCorrectedYear(int coverageYear) {
+
+        // Synthea contracts use realistic enrollment reference years so only original
+        // synthetic contracts need to have the year modified
+        if (getContractType() == ContractType.CLASSIC_TEST) {
+            return SYNTHETIC_DATA_YEAR;
+        }
+
+        return coverageYear;
     }
 }
