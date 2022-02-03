@@ -1,16 +1,29 @@
 package gov.cms.ab2d.worker.processor.coverage.check;
 
-import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
-import gov.cms.ab2d.common.model.CoveragePeriod;
+import gov.cms.ab2d.coverage.model.CoverageJobStatus;
+import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
+import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.coverage.repository.CoveragePeriodRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
-import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,13 +34,12 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.time.OffsetDateTime;
-import java.time.ZonedDateTime;
-import java.util.*;
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static java.util.stream.Collectors.groupingBy;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(properties = "coverage.update.initial.delay=1000000")
 @Testcontainers
@@ -49,12 +61,16 @@ public class CoverageCheckPredicatesIntegrationTest {
     private CoverageService coverageService;
 
     @Autowired
-    private CoverageDataSetup dataSetup;
+    private CoverageDataSetup coverageDataSetup;
+
+    @Autowired
+    private DataSetup dataSetup;
 
     private static final ZonedDateTime CURRENT_TIME = OffsetDateTime.now().atZoneSameInstant(AB2D_ZONE);
     private static final ZonedDateTime ATTESTATION_TIME = CURRENT_TIME.minusMonths(3);
 
     private Contract contract;
+    private ContractForCoverageDTO contractForCoverageDTO;
     private CoveragePeriod attestationMonth;
     private CoveragePeriod attestationMonthPlus1;
     private CoveragePeriod attestationMonthPlus2;
@@ -64,10 +80,12 @@ public class CoverageCheckPredicatesIntegrationTest {
     void setUp() {
 
         contract = dataSetup.setupContract("TEST", ATTESTATION_TIME.toOffsetDateTime());
+        contractForCoverageDTO = new ContractForCoverageDTO("TEST", ATTESTATION_TIME.toOffsetDateTime(),ContractForCoverageDTO.ContractType.NORMAL);
     }
 
     @AfterEach
     void tearDown() {
+        coverageDataSetup.cleanup();
         dataSetup.cleanup();
     }
 
@@ -121,7 +139,7 @@ public class CoverageCheckPredicatesIntegrationTest {
         insertAndRunSearch(attestationMonth, Set.of(createIdentifier(1L)));
         insertAndRunSearch(attestationMonthPlus1, Set.of(createIdentifier(1L)));
 
-        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contract))
+        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contractForCoverageDTO))
                 .stream().collect(groupingBy(CoverageCount::getContractNumber));
 
         List<String> issues = new ArrayList<>();
@@ -143,7 +161,7 @@ public class CoverageCheckPredicatesIntegrationTest {
 
         // Fail if intermediate period missing
         // But also check remaining periods and do not alert for them
-        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contract))
+        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contractForCoverageDTO))
                 .stream().collect(groupingBy(CoverageCount::getContractNumber));
 
         List<String> issues = new ArrayList<>();
@@ -167,7 +185,7 @@ public class CoverageCheckPredicatesIntegrationTest {
         insertAndRunSearch(attestationMonthPlus2, Set.of(createIdentifier(1L)));
         insertAndRunSearch(attestationMonthPlus3, Set.of(createIdentifier(1L)));
 
-        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contract))
+        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contractForCoverageDTO))
                 .stream().collect(groupingBy(CoverageCount::getContractNumber));
 
         List<String> issues = new ArrayList<>();
@@ -198,7 +216,7 @@ public class CoverageCheckPredicatesIntegrationTest {
         insertAndRunSearch(attestationMonthPlus1, twelveK);
         insertAndRunSearch(attestationMonthPlus2, tenK);
 
-        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contract))
+        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contractForCoverageDTO))
                 .stream().collect(groupingBy(CoverageCount::getContractNumber));
 
         coverageCounts.get(contract.getContractNumber())
@@ -210,7 +228,10 @@ public class CoverageCheckPredicatesIntegrationTest {
 
         assertFalse(stableCheck.test(contract));
 
-        assertEquals(2, issues.size());
+        int expectedIssues = attestationMonth.getMonth() == 12 || attestationMonthPlus1.getMonth() == 12
+                || attestationMonthPlus2.getMonth() == 12 ? 1 : 2;
+
+        assertEquals(expectedIssues, issues.size());
         issues.forEach(issue -> assertTrue(issue.contains("enrollment changed")));
         assertTrue(issues.get(0).contains("20%"));
     }
@@ -240,7 +261,7 @@ public class CoverageCheckPredicatesIntegrationTest {
         insertAndRunSearch(attestationMonthPlus1, twoHundred);
         insertAndRunSearch(attestationMonthPlus2, twelveHundred);
 
-        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contract))
+        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contractForCoverageDTO))
                 .stream().collect(groupingBy(CoverageCount::getContractNumber));
 
         coverageCounts.get(contract.getContractNumber())
@@ -274,7 +295,7 @@ public class CoverageCheckPredicatesIntegrationTest {
         insertAndRunSearch(attestationMonthPlus1, hundredTenK);
         insertAndRunSearch(attestationMonthPlus2, hundredK);
 
-        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contract))
+        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contractForCoverageDTO))
                 .stream().collect(groupingBy(CoverageCount::getContractNumber));
 
         coverageCounts.get(contract.getContractNumber())
@@ -306,7 +327,7 @@ public class CoverageCheckPredicatesIntegrationTest {
         insertAndLeaveDuplicates(attestationMonthPlus2, tenK);
         insertAndLeaveDuplicates(attestationMonthPlus2, tenK);
 
-        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contract))
+        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contractForCoverageDTO))
                 .stream().collect(groupingBy(CoverageCount::getContractNumber));
 
         List<String> issues = new ArrayList<>();
@@ -334,7 +355,7 @@ public class CoverageCheckPredicatesIntegrationTest {
         insertAndRunSearch(attestationMonthPlus1, tenK);
         insertAndRunSearch(attestationMonthPlus2, tenK);
 
-        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contract))
+        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contractForCoverageDTO))
                 .stream().collect(groupingBy(CoverageCount::getContractNumber));
 
         List<String> issues = new ArrayList<>();
@@ -368,7 +389,7 @@ public class CoverageCheckPredicatesIntegrationTest {
         insertAndRunSearch(attestationMonthPlus3, tenK);
         runSearchAndLeaveOld(attestationMonthPlus3);
 
-        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contract))
+        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contractForCoverageDTO))
                 .stream().collect(groupingBy(CoverageCount::getContractNumber));
 
         List<String> issues = new ArrayList<>();
@@ -395,7 +416,7 @@ public class CoverageCheckPredicatesIntegrationTest {
         insertAndRunSearch(attestationMonthPlus1, tenK);
         insertAndRunSearch(attestationMonthPlus2, tenK);
 
-        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contract))
+        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contractForCoverageDTO))
                 .stream().collect(groupingBy(CoverageCount::getContractNumber));
 
         List<String> issues = new ArrayList<>();
@@ -407,12 +428,12 @@ public class CoverageCheckPredicatesIntegrationTest {
     }
 
     private void createCoveragePeriods() {
-        attestationMonth = dataSetup.createCoveragePeriod(contract, ATTESTATION_TIME.getMonthValue(),  ATTESTATION_TIME.getYear());
-        attestationMonthPlus1 = dataSetup.createCoveragePeriod(contract, ATTESTATION_TIME.plusMonths(1).getMonthValue(),
+        attestationMonth = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), ATTESTATION_TIME.getMonthValue(),  ATTESTATION_TIME.getYear());
+        attestationMonthPlus1 = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), ATTESTATION_TIME.plusMonths(1).getMonthValue(),
                 ATTESTATION_TIME.plusMonths(1).getYear());
-        attestationMonthPlus2 = dataSetup.createCoveragePeriod(contract, ATTESTATION_TIME.plusMonths(2).getMonthValue(),
+        attestationMonthPlus2 = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), ATTESTATION_TIME.plusMonths(2).getMonthValue(),
                 ATTESTATION_TIME.plusMonths(2).getYear());
-        attestationMonthPlus3 = dataSetup.createCoveragePeriod(contract, ATTESTATION_TIME.plusMonths(3).getMonthValue(),
+        attestationMonthPlus3 = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), ATTESTATION_TIME.plusMonths(3).getMonthValue(),
                 ATTESTATION_TIME.plusMonths(3).getYear());
     }
 
@@ -431,12 +452,12 @@ public class CoverageCheckPredicatesIntegrationTest {
         CoverageSearchEvent success = new CoverageSearchEvent();
         success.setCoveragePeriod(period);
         success.setDescription("testing");
-        success.setNewStatus(JobStatus.SUCCESSFUL);
-        success.setOldStatus(JobStatus.IN_PROGRESS);
+        success.setNewStatus(CoverageJobStatus.SUCCESSFUL);
+        success.setOldStatus(CoverageJobStatus.IN_PROGRESS);
         coverageSearchEventRepo.saveAndFlush(success);
 
         period = coveragePeriodRepo.findById(period.getId()).get();
-        period.setStatus(JobStatus.SUCCESSFUL);
+        period.setStatus(CoverageJobStatus.SUCCESSFUL);
         coveragePeriodRepo.saveAndFlush(period);
     }
 
@@ -453,12 +474,12 @@ public class CoverageCheckPredicatesIntegrationTest {
         CoverageSearchEvent success = new CoverageSearchEvent();
         success.setCoveragePeriod(period);
         success.setDescription("testing");
-        success.setNewStatus(JobStatus.SUCCESSFUL);
-        success.setOldStatus(JobStatus.IN_PROGRESS);
+        success.setNewStatus(CoverageJobStatus.SUCCESSFUL);
+        success.setOldStatus(CoverageJobStatus.IN_PROGRESS);
         coverageSearchEventRepo.saveAndFlush(success);
 
         period = coveragePeriodRepo.findById(period.getId()).get();
-        period.setStatus(JobStatus.SUCCESSFUL);
+        period.setStatus(CoverageJobStatus.SUCCESSFUL);
         coveragePeriodRepo.saveAndFlush(period);
     }
 

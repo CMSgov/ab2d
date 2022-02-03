@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.common.model.Identifiers;
+import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.worker.util.FhirUtils;
 import org.junit.jupiter.api.DisplayName;

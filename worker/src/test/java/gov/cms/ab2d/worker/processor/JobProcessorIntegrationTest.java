@@ -1,13 +1,18 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobOutput;
+import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
@@ -16,14 +21,25 @@ import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
-import gov.cms.ab2d.eventlogger.events.*;
+import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
+import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
+import gov.cms.ab2d.eventlogger.events.ContractSearchEvent;
+import gov.cms.ab2d.eventlogger.events.ErrorEvent;
+import gov.cms.ab2d.eventlogger.events.FileEvent;
+import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
+import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
+import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import gov.cms.ab2d.worker.util.HealthCheck;
+import java.io.File;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.stream.LongStream;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.junit.jupiter.api.AfterEach;
@@ -42,10 +58,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.io.File;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.stream.LongStream;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.eventlogger.events.ErrorEvent.ErrorType.TOO_MANY_SEARCH_ERRORS;
@@ -54,9 +66,16 @@ import static gov.cms.ab2d.worker.TestUtil.getOpenRange;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
 import static java.lang.Boolean.TRUE;
 import static java.util.stream.Collectors.toList;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @Testcontainers
@@ -109,6 +128,9 @@ class JobProcessorIntegrationTest {
     @Autowired
     private DataSetup dataSetup;
 
+    @Autowired
+    private ContractToContractCoverageMapping mapping;
+
     @Mock
     private CoverageDriver mockCoverageDriver;
 
@@ -131,6 +153,7 @@ class JobProcessorIntegrationTest {
     private static final ExplanationOfBenefit EOB = (ExplanationOfBenefit) EobTestDataUtil.createEOB();
 
     private Contract contract;
+    private ContractForCoverageDTO contractForCoverageDTO;
     private RuntimeException fail;
 
     @BeforeEach
@@ -140,6 +163,7 @@ class JobProcessorIntegrationTest {
         PdpClient pdpClient = createClient();
 
         contract = createContract();
+        contractForCoverageDTO = mapping.map(contract);
         fail = new RuntimeException("TEST EXCEPTION");
 
         job = createJob(pdpClient);
@@ -161,7 +185,7 @@ class JobProcessorIntegrationTest {
         when(mockCoverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(100);
 
         when(mockCoverageDriver.pageCoverage(any(CoveragePagingRequest.class))).thenReturn(
-                new CoveragePagingResult(loadFauxMetadata(contract, 99), null));
+                new CoveragePagingResult(loadFauxMetadata(contractForCoverageDTO, 99), null));
 
         PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, logManager);
         ReflectionTestUtils.setField(patientClaimsProcessor, "earliestDataDate", "01/01/1900");
@@ -173,7 +197,8 @@ class JobProcessorIntegrationTest {
                 logManager,
                 eobClaimRequestsQueue,
                 jobChannelService,
-                jobProgressService);
+                jobProgressService,
+                mapping);
 
 
         cut = new JobProcessorImpl(
@@ -314,7 +339,7 @@ class JobProcessorIntegrationTest {
 
         reset(mockCoverageDriver);
         when(mockCoverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(40);
-        andThenAnswerPatients(mockCoverageDriver, contract, 10, 40);
+        andThenAnswerPatients(mockCoverageDriver, contractForCoverageDTO, 10, 40);
 
         OngoingStubbing<IBaseBundle> stubbing = when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any()));
         stubbing = andThenAnswerEobs(stubbing, 0, 20);
@@ -398,7 +423,7 @@ class JobProcessorIntegrationTest {
         return job;
     }
 
-    private static List<CoverageSummary> loadFauxMetadata(Contract contract, int rowsToRetrieve) {
+    private static List<CoverageSummary> loadFauxMetadata(ContractForCoverageDTO contract, int rowsToRetrieve) {
 
         List<Long> patientIdRows = LongStream.range(0, rowsToRetrieve).boxed().collect(toList());
 
@@ -424,7 +449,7 @@ class JobProcessorIntegrationTest {
         return stubbing;
     }
 
-    private static OngoingStubbing<CoveragePagingResult> andThenAnswerPatients(CoverageDriver coverageDriver, Contract contract, int pageSize, int total) {
+    private static OngoingStubbing<CoveragePagingResult> andThenAnswerPatients(CoverageDriver coverageDriver, ContractForCoverageDTO contract, int pageSize, int total) {
 
         OngoingStubbing<CoveragePagingResult> stubbing = when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)));
 

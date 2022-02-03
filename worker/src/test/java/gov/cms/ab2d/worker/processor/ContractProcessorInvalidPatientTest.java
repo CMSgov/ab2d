@@ -4,12 +4,14 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.TestUtil;
+import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.repository.StubContractRepository;
@@ -56,6 +58,9 @@ class ContractProcessorInvalidPatientTest {
     @Mock
     private BFDClient bfdClient;
 
+    @Mock
+    private ContractToContractCoverageMapping mapping;
+
     private ContractRepository contractRepository;
 
     private JobRepository jobRepository;
@@ -75,9 +80,11 @@ class ContractProcessorInvalidPatientTest {
     @BeforeEach
     void setup() {
 
+
         Contract contract = new Contract();
         contract.setContractNumber(contractId);
         contract.setAttestedOn(OffsetDateTime.now().minusYears(50));
+
         contractRepository = new StubContractRepository(contract);
 
         job.setJobUuid(jobId);
@@ -85,11 +92,11 @@ class ContractProcessorInvalidPatientTest {
         jobRepository = new StubJobRepository(job);
 
         patientClaimsProcessor = new PatientClaimsProcessorImpl(bfdClient, eventLogger);
-        JobProgressServiceImpl jobProgressUpdateService = new JobProgressServiceImpl(jobRepository);
+        JobProgressServiceImpl jobProgressUpdateService  = new JobProgressServiceImpl(jobRepository);
         jobProgressUpdateService.initJob(jobId);
         JobChannelService jobChannelService = new JobChannelStubServiceImpl(jobProgressUpdateService);
         cut = new ContractProcessorImpl(contractRepository, jobRepository, coverageDriver, patientClaimsProcessor, eventLogger,
-                requestQueue, jobChannelService, jobProgressUpdateService);
+                requestQueue, jobChannelService, jobProgressUpdateService,mapping);
         jobChannelService.sendUpdate(jobId, JobMeasure.FAILURE_THRESHHOLD, 100);
 
         ReflectionTestUtils.setField(patientClaimsProcessor, "earliestDataDate", "01/01/2020");
@@ -97,6 +104,7 @@ class ContractProcessorInvalidPatientTest {
 
     @Test
     void testInvalidBenes() throws IOException {
+        when(mapping.map(any(Contract.class))).thenReturn(new ContractForCoverageDTO(contract.getContractNumber(), contract.getAttestedOn(), ContractForCoverageDTO.ContractType.NORMAL));
         org.hl7.fhir.dstu3.model.Bundle b1 = BundleUtils.createBundle(createBundleEntry("1"));
         org.hl7.fhir.dstu3.model.Bundle b2 = BundleUtils.createBundle(createBundleEntry("2"));
         org.hl7.fhir.dstu3.model.Bundle b4 = BundleUtils.createBundle(createBundleEntry("4"));

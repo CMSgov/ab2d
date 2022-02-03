@@ -3,16 +3,13 @@ package gov.cms.ab2d.common.model;
 
 import gov.cms.ab2d.common.util.DateUtil;
 
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
 import javax.validation.constraints.NotNull;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
@@ -80,9 +77,6 @@ public class Contract extends TimestampBase {
 
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime attestedOn;
-
-    @OneToMany(mappedBy = "contract")
-    private Set<CoveragePeriod> coveragePeriods = new HashSet<>();
 
     public boolean isTestContract() {
         return contractType.isTestContract();

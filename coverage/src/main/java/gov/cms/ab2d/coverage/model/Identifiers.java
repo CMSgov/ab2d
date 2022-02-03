@@ -1,4 +1,4 @@
-package gov.cms.ab2d.common.model;
+package gov.cms.ab2d.coverage.model;
 
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;

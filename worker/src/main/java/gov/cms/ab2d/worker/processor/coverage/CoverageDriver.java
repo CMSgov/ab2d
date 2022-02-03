@@ -13,7 +13,7 @@ import gov.cms.ab2d.coverage.model.CoveragePagingResult;
  *      - Determining how many beneficiaries an EOB job should expect to query from BFD based on the number
  *          of beneficiaries in the database (used to detect bugs).
  *      - Determining whether all enrollment necessary to run a Job for a Contract is present
- *          in the database. Checks that all {@link gov.cms.ab2d.common.model.CoveragePeriod}s
+ *          in the database. Checks that all {@link gov.cms.ab2d.coverage.model.CoveragePeriod}s
  *          expected for a contract are present, that updates to the coverage associated with those coverage periods
  *          are not in progress, and that updates have not failed recently.
  *      - Retrieving all enrollment/coverage for an EOB job
@@ -22,7 +22,7 @@ import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 public interface CoverageDriver {
 
     /**
-     * Check database for all {@link gov.cms.ab2d.common.model.CoveragePeriod} that are missing information completely
+     * Check database for all {@link gov.cms.ab2d.coverage.model.CoveragePeriod} that are missing information completely
      * or the last successful search {@link gov.cms.ab2d.coverage.model.CoverageSearchEvent} is too
      * long ago and makes the search stale.
      *
@@ -34,7 +34,7 @@ public interface CoverageDriver {
     void queueStaleCoveragePeriods() throws InterruptedException;
 
     /**
-     * Check all {@link gov.cms.ab2d.common.model.Contract} for attestation dates and create {@link gov.cms.ab2d.common.model.CoveragePeriod}s
+     * Check all contracts for attestation dates and create {@link gov.cms.ab2d.coverage.model.CoveragePeriod}s
      * for all months since the attestation of those contracts.
      *
      * @throws CoverageDriverException if  lock cannot be obtained within timeout

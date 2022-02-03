@@ -1,16 +1,17 @@
 package gov.cms.ab2d.coverage.service;
 
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.CoveragePeriod;
-import gov.cms.ab2d.common.model.Identifiers;
 
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
+import gov.cms.ab2d.coverage.model.CoverageJobStatus;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
+import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchDiff;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
+import gov.cms.ab2d.coverage.model.Identifiers;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -20,11 +21,11 @@ public interface CoverageService {
 
     /**
      * Get {@link CoveragePeriod} in database matching provided triple
-     * @param contract existing {@link gov.cms.ab2d.common.model.Contract}
+     * @param contract existing
      * @param month valid month
      * @param year valid year (not later than current year)
      */
-    CoveragePeriod getCoveragePeriod(Contract contract, int month, int year);
+    CoveragePeriod getCoveragePeriod(ContractForCoverageDTO contract, int month, int year);
 
     /**
      * Get {@link CoveragePeriod} in database matching provided triple
@@ -35,24 +36,24 @@ public interface CoverageService {
 
     /**
      * Create {@link CoveragePeriod} matching the provided triple
-     * @param contract contract to add coverage period for
+     * @param contract to add coverage period for
      * @param month month of the period
      * @param year year of the period
      * @return coverage period as it exists in database
      */
-    CoveragePeriod getCreateIfAbsentCoveragePeriod(Contract contract, int month, int year);
+    CoveragePeriod getCreateIfAbsentCoveragePeriod(ContractForCoverageDTO contract, int month, int year);
 
     /**
      * Retrieve list of coverage periods associated with a contract
-     * @param contractId contract to retrieve coverage periods for
+     * @param contractNumber contract to retrieve coverage periods for
      * @return list of coverage periods associated with a contract
      */
-    List<CoveragePeriod> findAssociatedCoveragePeriods(Long contractId);
+    List<CoveragePeriod> findAssociatedCoveragePeriods(String contractNumber);
 
     /**
      * Check current status of a {@link CoveragePeriod}
      * @param periodId {@link CoveragePeriod#getId()} of the relevant search
-     * @return true if search {@link CoveragePeriod#getStatus()} is {@link gov.cms.ab2d.common.model.JobStatus#IN_PROGRESS}
+     * @return true if search {@link CoveragePeriod#getStatus()}}
      */
     boolean isCoveragePeriodInProgress(int periodId);
 
@@ -71,20 +72,20 @@ public interface CoverageService {
      * @param contracts list of contracts to search for
      * @return a summary of the coverage records found for a contract/year/month
      */
-    List<CoverageCount> countBeneficiariesForContracts(List<Contract> contracts);
+    List<CoverageCount> countBeneficiariesForContracts(List<ContractForCoverageDTO> contracts);
 
     /**
      * Can an EOB search be started based on whether a contract mapping is in progress
-     * @return true if search {@link CoveragePeriod#getStatus()} is not {@link gov.cms.ab2d.common.model.JobStatus#IN_PROGRESS}
+     * @return true if search {@link CoveragePeriod#getStatus()}}
      */
     boolean canEOBSearchBeStarted(int periodId);
 
     /**
-     * Get search status {@link gov.cms.ab2d.common.model.JobStatus}
+     * Get search status {@link CoverageJobStatus}
      * @param periodId {@link CoveragePeriod#getId()}
      * @return search status or null
      */
-    gov.cms.ab2d.common.model.JobStatus getSearchStatus(int periodId);
+    CoverageJobStatus getSearchStatus(int periodId);
 
     /**
      * Find the last {@link CoverageSearchEvent} associated with a {@link CoveragePeriod}
@@ -154,57 +155,55 @@ public interface CoverageService {
     List<CoveragePeriod> coveragePeriodStuckJobs(OffsetDateTime startedBefore);
 
     /**
-     * Change a coverage search to {@link gov.cms.ab2d.common.model.JobStatus#SUBMITTED} and log an event.
+     * Change a coverage search to {@link CoverageJobStatus#SUBMITTED} and log an event.
      *
      * @param periodId unique id of a coverage search
      * @param description reason or explanation for change
      * @return resulting coverage search event
-     * @throws gov.cms.ab2d.common.service.InvalidJobStateTransition if job is {@link gov.cms.ab2d.common.model.JobStatus#IN_PROGRESS} already
      */
     Optional<CoverageSearchEvent> submitSearch(int periodId, String description);
 
     /**
-     * Change a coverage search to {@link gov.cms.ab2d.common.model.JobStatus#SUBMITTED} and log an event.
+     * Change a coverage search to {@link CoverageJobStatus#SUBMITTED} and log an event.
      * @param periodId unique id of a coverage search
      * @param attempts number of attempts already conducted
      * @param description reason or explanation for change
      * @return resulting coverage search event
-     * @throws gov.cms.ab2d.common.service.InvalidJobStateTransition if job is {@link gov.cms.ab2d.common.model.JobStatus#IN_PROGRESS} already
      */
     Optional<CoverageSearchEvent> submitSearch(int periodId, int attempts, String description);
 
     /**
-     * Change a coverage search to {@link gov.cms.ab2d.common.model.JobStatus#SUBMITTED}, log an event, and make sure this search is given high
+     * Change a coverage search to {@link CoverageJobStatus#SUBMITTED}, log an event, and make sure this search is given high
      * priority to execute as soon as possible
      * @param periodId unique id of a coverage search
      * @param description reason or explanation for change
      * @return resulting coverage search event
-     * @throws gov.cms.ab2d.common.service.InvalidJobStateTransition if job is {@link gov.cms.ab2d.common.model.JobStatus#IN_PROGRESS} already
+     * @throws gov.cms.ab2d.common.service.InvalidJobStateTransition if job is {@link CoverageJobStatus#IN_PROGRESS} already
      */
     Optional<CoverageSearchEvent> prioritizeSearch(int periodId, String description);
 
     /**
-     * Change a coverage search to {@link gov.cms.ab2d.common.model.JobStatus#SUBMITTED}, log an event, and make sure this search is given high
+     * Change a coverage search to {@link CoverageJobStatus#SUBMITTED}, log an event, and make sure this search is given high
      * priority to execute as soon as possible
      * @param periodId unique id of a coverage search
      * @param attempts number of attempts already conducted
      * @param description reason or explanation for change
      * @return resulting coverage search event
-     * @throws gov.cms.ab2d.common.service.InvalidJobStateTransition if job is {@link gov.cms.ab2d.common.model.JobStatus#IN_PROGRESS} already
+     * @throws gov.cms.ab2d.common.service.InvalidJobStateTransition if job is {@link CoverageJobStatus#IN_PROGRESS} already
      */
     Optional<CoverageSearchEvent> prioritizeSearch(int periodId, int attempts, String description);
 
     /**
-     * Find next coverage search to start, change coverage search to {@link gov.cms.ab2d.common.model.JobStatus#IN_PROGRESS}, and log an event.
+     * Find next coverage search to start, change coverage search to {@link CoverageJobStatus#IN_PROGRESS}, and log an event.
      * @param description reason or explanation for change
      * @return resulting coverage search event if there is a search in the queu
-     * @throws gov.cms.ab2d.common.service.InvalidJobStateTransition if job is not in the {@link gov.cms.ab2d.common.model.JobStatus#SUBMITTED} state when this job is received
+     * @throws gov.cms.ab2d.common.service.InvalidJobStateTransition if job is not in the {@link CoverageJobStatus#SUBMITTED} state when this job is received
      */
     Optional<CoverageMapping> startSearch(CoverageSearch search, String description);
 
     /**
-     * Resubmit a search that has failed but still has attempts. Marks a search as {@link gov.cms.ab2d.common.model.JobStatus#FAILED}
-     * and then {@link gov.cms.ab2d.common.model.JobStatus#SUBMITTED} in one action.
+     * Resubmit a search that has failed but still has attempts. Marks a search as {@link CoverageJobStatus#FAILED}
+     * and then {@link CoverageJobStatus#SUBMITTED} in one action.
      *
      * @param periodId unique id of a coverage search
      * @param attempts number of attempts already conducted
@@ -217,31 +216,31 @@ public interface CoverageService {
                                        String restartDescription, boolean prioritize);
 
     /**
-     * Change a coverage search to {@link gov.cms.ab2d.common.model.JobStatus#CANCELLED} and log an event.
+     * Change a coverage search to {@link CoverageJobStatus#CANCELLED} and log an event.
      * @param periodId unique id of a coverage search
      * @param description reason or explanation for change
      * @return resulting coverage search event
-     * @throws gov.cms.ab2d.common.service.InvalidJobStateTransition if job is not in the {@link gov.cms.ab2d.common.model.JobStatus#SUBMITTED} or {@link gov.cms.ab2d.common.model.JobStatus#IN_PROGRESS}
+     * @throws gov.cms.ab2d.common.service.InvalidJobStateTransition if job is not in the {@link CoverageJobStatus#SUBMITTED} or {@link CoverageJobStatus#IN_PROGRESS}
      * state when this job is received
      */
     CoverageSearchEvent cancelSearch(int periodId, String description);
 
     /**
-     * Change a coverage search to {@link gov.cms.ab2d.common.model.JobStatus#FAILED} and log an event.
+     * Change a coverage search to {@link CoverageJobStatus#FAILED} and log an event.
      * @param periodId unique id of a coverage search
      * @param description reason or explanation for change
      * @return resulting coverage search event
-     * @throws gov.cms.ab2d.common.service.InvalidJobStateTransition if job is not {@link gov.cms.ab2d.common.model.JobStatus#SUBMITTED} or {@link gov.cms.ab2d.common.model.JobStatus#IN_PROGRESS}
+     * @throws gov.cms.ab2d.common.service.InvalidJobStateTransition if job is not {@link CoverageJobStatus#SUBMITTED} or {@link CoverageJobStatus#IN_PROGRESS}
      * state when this job is received
      */
     CoverageSearchEvent failSearch(int periodId, String description);
 
     /**
-     * Change a coverage search to {@link gov.cms.ab2d.common.model.JobStatus#SUCCESSFUL} and log an event.
+     * Change a coverage search to {@link CoverageJobStatus#SUCCESSFUL} and log an event.
      * @param periodId unique id of a coverage search
      * @param description reason or explanation for change
      * @return resulting coverage search event
-     * @throws gov.cms.ab2d.common.service.InvalidJobStateTransition if job is not in the {@link gov.cms.ab2d.common.model.JobStatus#IN_PROGRESS} state when this job is received
+     * @throws gov.cms.ab2d.common.service.InvalidJobStateTransition if job is not in the {@link CoverageJobStatus#IN_PROGRESS} state when this job is received
      */
     CoverageSearchEvent completeSearch(int periodId, String description);
 }
