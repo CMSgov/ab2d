@@ -62,8 +62,13 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         log.info("File deletion service kicked off");
         validateEfsMount();
 
-        List<String> jobIds = Stream.of((new File(efsMount)).listFiles())
-                .map(f -> f.getName()).collect(Collectors.toList());
+        File[] files = new File(efsMount).listFiles();
+
+        if (files == null || files.length == 0) {
+            return;
+        }
+
+        List<String> jobIds = Stream.of(files).map(f -> f.getName()).collect(Collectors.toList());
 
         try (Stream<Path> filePaths = Files.walk(Paths.get(efsMount), FileVisitOption.FOLLOW_LINKS)) {
 
