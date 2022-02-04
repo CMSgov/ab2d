@@ -1,9 +1,9 @@
 package gov.cms.ab2d.coverage.service;
 
-import gov.cms.ab2d.common.model.CoveragePeriod;
-import gov.cms.ab2d.common.model.Identifiers;
+import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
+import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -139,5 +139,4 @@ public class InsertionJob implements Callable<CoverageSearchEvent> {
             exception.printStackTrace();
         }
     }
-
 }

@@ -30,6 +30,7 @@ import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.fhir.IdentifierUtils;
 import gov.cms.ab2d.fhir.PatientIdentifier;
+import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.processor.ContractProcessor;
 import gov.cms.ab2d.worker.processor.JobPreProcessor;
 import gov.cms.ab2d.worker.processor.JobPreProcessorImpl;
@@ -143,6 +144,8 @@ public class EndToEndBfdTests {
     private JobOutputService jobOutputService;
     @Autowired
     private LoggerEventSummary logEventSummary;
+    @Autowired
+    private ContractToContractCoverageMapping contractToContractCoverageMapping;
 
     @TempDir
     File path;
@@ -152,7 +155,7 @@ public class EndToEndBfdTests {
     private JobPreProcessor jobPreProcessor;
     private JobProcessor jobProcessor;
 
-    private static final String CONTRACT_TO_USE = "Z0000";
+    private static final String CONTRACT_TO_USE = "Z1007";
     private static final String CONTRACT_TO_USE_CLIENT_ID = "KtmekgkCTalQkGue2B-0Z0hGC1Dk7khtJ30XMI3J";
 
     @BeforeEach
@@ -174,7 +177,7 @@ public class EndToEndBfdTests {
         propertiesService.updateProperties(List.of(coreClaimsPool, maxClaimsPool, scaleToMaxTime));
 
         coverageDriver = new CoverageDriverImpl(coverageSearchRepository, pdpClientService, coverageService,
-                propertiesService, coverageProcessor, coverageLockWrapper);
+                propertiesService, coverageProcessor, coverageLockWrapper, contractToContractCoverageMapping);
 
         // Instantiate the job processors
         jobService = new JobServiceImpl(pdpClientService, jobRepository, jobOutputService, logManager, logEventSummary, path.getAbsolutePath());
@@ -251,7 +254,7 @@ public class EndToEndBfdTests {
      */
     private void disableContractWeDontNeed() {
         List<PdpClient> clients = pdpClientRepository.findAllByEnabledTrue().stream()
-                .filter(client -> client.getContract() != null && client.getContract().getAttestedOn() != null)
+                .filter(client -> client.getContract().getAttestedOn() != null)
                 .collect(toList());
         for (PdpClient pdp : clients) {
             if (!pdp.getContract().getContractNumber().equals(CONTRACT_TO_USE)) {

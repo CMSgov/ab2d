@@ -1,7 +1,8 @@
 package gov.cms.ab2d.worker.processor.coverage.check;
 
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.CoveragePeriod;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
+import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.service.CoverageService;
@@ -67,12 +68,12 @@ public class CoverageCheckPredicatesUnitTest {
 
         // Just reuse, check assumes getCoveragePeriod works
         CoveragePeriod coveragePeriod = new CoveragePeriod();
-        coveragePeriod.setContract(contract);
+        coveragePeriod.setContractNumber(contract.getContractNumber());
         coveragePeriod.setYear(ATTESTATION_TIME.getYear());
         coveragePeriod.setMonth(ATTESTATION_TIME.getMonthValue());
 
         doReturn(coveragePeriod).when(coverageService)
-                .getCoveragePeriod(any(Contract.class), anyInt(), anyInt());
+                .getCoveragePeriod(any(ContractForCoverageDTO.class), anyInt(), anyInt());
 
         List<String> issues = new ArrayList<>();
         CoveragePeriodsPresentCheck presentCheck = new CoveragePeriodsPresentCheck(coverageService, null, issues);
@@ -185,7 +186,10 @@ public class CoverageCheckPredicatesUnitTest {
 
         assertFalse(stableCheck.test(contract));
 
-        assertEquals(2, issues.size());
+        int expectedIssues = ATTESTATION_TIME.getMonthValue() == 12 || ATTESTATION_TIME.plusMonths(1).getMonthValue() == 12
+                || ATTESTATION_TIME.plusMonths(2).getMonthValue() == 12 ? 1 : 2;
+
+        assertEquals(expectedIssues, issues.size());
         issues.forEach(issue -> assertTrue(issue.contains("enrollment changed")));
         assertTrue(issues.get(0).contains("20%"));
     }

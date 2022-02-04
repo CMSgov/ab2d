@@ -17,6 +17,7 @@ import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
+import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.JobChannelService;
@@ -61,6 +62,8 @@ public class ContractProcessorImpl implements ContractProcessor {
     @Value("${eob.job.patient.queue.page.size}")
     private int eobJobPatientQueuePageSize;
 
+    private ContractToContractCoverageMapping mapping;
+
     private final ContractRepository contractRepository;
 
     @Value("${eob.job.patient.number.per.thread}")
@@ -96,6 +99,7 @@ public class ContractProcessorImpl implements ContractProcessor {
                                  RoundRobinBlockingQueue<PatientClaimsRequest> eobClaimRequestsQueue,
                                  JobChannelService jobChannelService,
                                  JobProgressService jobProgressService,
+                                 ContractToContractCoverageMapping mapping,
                                  @Qualifier("aggregatorThreadPool") ThreadPoolTaskExecutor aggregatorThreadPool) {
         this.contractRepository = contractRepository;
         this.jobRepository = jobRepository;
@@ -105,6 +109,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         this.eobClaimRequestsQueue = eobClaimRequestsQueue;
         this.jobChannelService = jobChannelService;
         this.jobProgressService = jobProgressService;
+        this.mapping = mapping;
         this.aggregatorThreadPool = aggregatorThreadPool;
     }
 
@@ -217,7 +222,7 @@ public class ContractProcessorImpl implements ContractProcessor {
 
         // Handle first page of beneficiaries and then enter loop
         CoveragePagingResult current = coverageDriver.pageCoverage(new CoveragePagingRequest(eobJobPatientQueuePageSize,
-                null, contract, contractData.getJob().getCreatedAt()));
+                null, mapping.map(contract), contractData.getJob().getCreatedAt()));
         loadRequestBatch(contractData, current, numberPatientRequestsPerThread);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUEST_QUEUED, current.size());
 

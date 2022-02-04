@@ -4,12 +4,14 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.TestUtil;
+import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.repository.StubContractRepository;
@@ -56,6 +58,9 @@ class ContractProcessorInvalidPatientTest {
     @Mock
     private BFDClient bfdClient;
 
+    @Mock
+    private ContractToContractCoverageMapping mapping;
+
     private ContractRepository contractRepository;
 
     private JobRepository jobRepository;
@@ -92,7 +97,7 @@ class ContractProcessorInvalidPatientTest {
         ThreadPoolTaskExecutor aggTP = new ThreadPoolTaskExecutor();
         aggTP.initialize();
         cut = new ContractProcessorImpl(contractRepository, jobRepository, coverageDriver, patientClaimsProcessor, eventLogger,
-                requestQueue, jobChannelService, jobProgressUpdateService, aggTP);
+                requestQueue, jobChannelService, jobProgressUpdateService, mapping, aggTP);
         ReflectionTestUtils.setField(cut, "numberPatientRequestsPerThread", 2);
         ReflectionTestUtils.setField(cut, "ndjsonRollOver", 0);
         ReflectionTestUtils.setField(cut, "eobJobPatientQueueMaxSize", 1);
@@ -111,6 +116,7 @@ class ContractProcessorInvalidPatientTest {
 
     @Test
     void testInvalidBenes() throws IOException {
+        when(mapping.map(any(Contract.class))).thenReturn(new ContractForCoverageDTO(contract.getContractNumber(), contract.getAttestedOn(), ContractForCoverageDTO.ContractType.NORMAL));
         org.hl7.fhir.dstu3.model.Bundle b1 = BundleUtils.createBundle(createBundleEntry("1"));
         org.hl7.fhir.dstu3.model.Bundle b2 = BundleUtils.createBundle(createBundleEntry("2"));
         org.hl7.fhir.dstu3.model.Bundle b4 = BundleUtils.createBundle(createBundleEntry("4"));
@@ -136,7 +142,6 @@ class ContractProcessorInvalidPatientTest {
         String output1 = outputs.get(0).getFilePath();
 
         assertTrue(output1.equalsIgnoreCase(fileName1));
-
         String actual1 = Files.readString(Path.of(tmpDirFolder.getAbsolutePath() + File.separator + job.getJobUuid() + "/" + output1));
 
         assertTrue(actual1.contains("Patient/1") && actual1.contains("Patient/2"));

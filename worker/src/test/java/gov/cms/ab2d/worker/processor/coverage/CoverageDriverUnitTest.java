@@ -1,29 +1,20 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.CoveragePeriod;
 import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.Properties;
+import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.common.util.Constants;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
+import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
+import gov.cms.ab2d.coverage.model.CoverageJobStatus;
 import gov.cms.ab2d.coverage.service.CoverageService;
-import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.common.util.Constants;
-import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
-
-import javax.persistence.EntityNotFoundException;
+import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -34,6 +25,17 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
+import javax.persistence.EntityNotFoundException;
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -70,6 +72,9 @@ class CoverageDriverUnitTest {
 
     @Mock
     private PropertiesService propertiesService;
+
+    @Mock
+    private ContractToContractCoverageMapping mapping;
 
     private final Lock tryLockFalse = new Lock() {
         @Override
@@ -141,7 +146,7 @@ class CoverageDriverUnitTest {
 
     @BeforeEach
     void before() {
-        driver = new CoverageDriverImpl(null, null, coverageService, null, null, null);
+        driver = new CoverageDriverImpl(null, null, coverageService, null, null, null,mapping);
     }
 
     @AfterEach
@@ -175,9 +180,9 @@ class CoverageDriverUnitTest {
     @Test
     void pageRequestWhenSinceDateAfterNow() {
 
-        when(coverageService.getCoveragePeriod(any(Contract.class), anyInt(), anyInt())).thenAnswer((invocationOnMock) -> {
+        when(coverageService.getCoveragePeriod(any(ContractForCoverageDTO.class), anyInt(), anyInt())).thenAnswer((invocationOnMock) -> {
             CoveragePeriod period = new CoveragePeriod();
-            period.setContract(invocationOnMock.getArgument(0));
+            period.setContractNumber(invocationOnMock.getArgument(0).toString());
             period.setMonth(invocationOnMock.getArgument(1));
             period.setYear(invocationOnMock.getArgument(2));
 
@@ -205,7 +210,10 @@ class CoverageDriverUnitTest {
 
         Job job = new Job();
         Contract contract = new Contract();
+        contract.setContractNumber("contract-0");
         contract.setAttestedOn(OffsetDateTime.now().plusHours(1));
+        when(mapping.map(any(Contract.class))).thenReturn(new ContractForCoverageDTO(contract.getContractNumber(),contract.getAttestedOn(),ContractForCoverageDTO.ContractType.NORMAL));
+
 
         CoverageDriverException startDateInFuture = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(job, contract));
         assertEquals("contract attestation time is after current time," +
@@ -236,9 +244,9 @@ class CoverageDriverUnitTest {
     @Test
     void beginPagingWhenCoveragePeriodsPresent() {
 
-        when(coverageService.getCoveragePeriod(any(Contract.class), anyInt(), anyInt())).thenAnswer((invocationOnMock) -> {
+        when(coverageService.getCoveragePeriod(any(ContractForCoverageDTO.class), anyInt(), anyInt())).thenAnswer((invocationOnMock) -> {
             CoveragePeriod period = new CoveragePeriod();
-            period.setContract(invocationOnMock.getArgument(0));
+            period.setContractNumber((invocationOnMock.getArgument(0).toString()));
             period.setMonth(invocationOnMock.getArgument(1));
             period.setYear(invocationOnMock.getArgument(2));
 
@@ -266,7 +274,11 @@ class CoverageDriverUnitTest {
 
         Job job = new Job();
         Contract contract = new Contract();
+        contract.setContractNumber("Contract-0");
         contract.setAttestedOn(AB2D_EPOCH.toOffsetDateTime());
+
+        when(mapping.map(any(Contract.class))).thenReturn(new ContractForCoverageDTO("Contract-0",contract.getAttestedOn(),ContractForCoverageDTO.ContractType.NORMAL));
+
 
         CoveragePagingResult firstCall = driver.pageCoverage(job, contract);
         assertNotNull(firstCall);
@@ -306,7 +318,7 @@ class CoverageDriverUnitTest {
         when(propertiesService.getPropertiesByKey(eq(Constants.COVERAGE_SEARCH_OVERRIDE)))
                 .thenReturn(overrideProp);
 
-        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, propertiesService, null, lockWrapper);
+        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, propertiesService, null, lockWrapper,null);
 
         CoverageDriverException exception = assertThrows(CoverageDriverException.class, driver::discoverCoveragePeriods);
         assertTrue(exception.getMessage().contains("could not retrieve lock"));
@@ -343,7 +355,7 @@ class CoverageDriverUnitTest {
         Job job = new Job();
         job.setContractNumber(contract.getContractNumber());
 
-        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, propertiesService, null, lockWrapper);
+        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, propertiesService, null, lockWrapper,null);
 
         assertThrows(InterruptedException.class, driver::discoverCoveragePeriods);
         assertThrows(InterruptedException.class, driver::queueStaleCoveragePeriods);
@@ -358,7 +370,7 @@ class CoverageDriverUnitTest {
         when(coverageService.coveragePeriodStuckJobs(any())).thenReturn(Collections.emptyList());
         when(coverageService.coveragePeriodNotUpdatedSince(anyInt(), anyInt(), any())).thenReturn(Collections.emptyList());
 
-        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, null, null, lockWrapper);
+        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, null, null, lockWrapper,null);
 
         Contract contract = new Contract();
         contract.setContractNumber("contractNum");
@@ -377,9 +389,9 @@ class CoverageDriverUnitTest {
     void failureToPageCausesExceptions() {
         when(coverageService.pageCoverage(any())).thenThrow(RuntimeException.class);
 
-        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, null, null, null);
+        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, null, null, null,null);
 
-        Contract contract = new Contract();
+        ContractForCoverageDTO contract = new ContractForCoverageDTO();
         contract.setContractNumber("contractNum");
 
         CoverageDriverException exception = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(new CoveragePagingRequest( 1000, null, contract, OffsetDateTime.now())));
@@ -392,7 +404,7 @@ class CoverageDriverUnitTest {
 
 
         CoverageDriverImpl driver = spy(new CoverageDriverImpl(null, null,
-                coverageService, propertiesService, coverageProcessor, lockWrapper)
+                coverageService, propertiesService, coverageProcessor, lockWrapper,null)
         );
 
         doReturn(true).when(propertiesService).isInMaintenanceMode();
@@ -425,7 +437,7 @@ class CoverageDriverUnitTest {
         coveragePeriod.setId(100);
         coveragePeriod.setMonth(1);
         coveragePeriod.setYear(2021);
-        coveragePeriod.setContract(contract);
+        coveragePeriod.setContractNumber(contract.getContractNumber());
 
         CoverageSearchEvent event = new CoverageSearchEvent();
         event.setCoveragePeriod(coveragePeriod);
@@ -465,7 +477,7 @@ class CoverageDriverUnitTest {
         coveragePeriod.setId(100);
         coveragePeriod.setMonth(1);
         coveragePeriod.setYear(2021);
-        coveragePeriod.setContract(contract);
+        coveragePeriod.setContractNumber(contract.getContractNumber());
 
         ZonedDateTime dateTime = driver.getStartDateTime(contract);
         assertEquals(AB2D_EPOCH, dateTime);
@@ -480,9 +492,9 @@ class CoverageDriverUnitTest {
             contract.setContractNumber("contractNum");
 
             CoveragePeriod coveragePeriod = new CoveragePeriod();
-            coveragePeriod.setContract(contract);
+            coveragePeriod.setContractNumber(contract.getContractNumber());
             coveragePeriod.setModified(OffsetDateTime.now().plus(1, ChronoUnit.HOURS));
-            coveragePeriod.setStatus(JobStatus.FAILED);
+            coveragePeriod.setStatus(CoverageJobStatus.FAILED);
 
             Job job = new Job();
             job.setCreatedAt(OffsetDateTime.now());

@@ -1,9 +1,22 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.model.CoveragePeriod;
+import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
+import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.service.CoverageService;
+import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import javax.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,15 +24,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PreDestroy;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 
@@ -52,11 +56,11 @@ import static gov.cms.ab2d.fhir.FhirVersion.STU3;
  *      - Insert results from a successful enrollment search into the database and cleanly handle shutdown or failure
  *
  * Methods for changing the status of a search.
- *      - {@link CoverageService#submitSearch(int, String)}
- *      - {@link CoverageService#resubmitSearch(int, int, String, String, boolean)}
- *      - {@link CoverageService#startSearch(gov.cms.ab2d.common.model.CoverageSearch, String)}
- *      - {@link CoverageService#completeSearch(int, String)}
- *      - {@link CoverageService#failSearch(int, String)}
+ *      - {@link gov.cms.ab2d.coverage.service.CoverageService#submitSearch(int, String)}
+ *      - {@link gov.cms.ab2d.coverage.service.CoverageService#resubmitSearch(int, int, String, String, boolean)}
+ *      - {@link gov.cms.ab2d.coverage.service.CoverageService#startSearch(gov.cms.ab2d.coverage.model.CoverageSearch, String)}
+ *      - {@link gov.cms.ab2d.coverage.service.CoverageService#completeSearch(int, String)}
+ *      - {@link gov.cms.ab2d.coverage.service.CoverageService#failSearch(int, String)}
  */
 @Slf4j
 @Service
@@ -70,12 +74,16 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     private final ThreadPoolTaskExecutor executor;
     private final int maxAttempts;
 
+    private final ContractService contractService;
+
     private final List<CoverageMappingCallable> inProgressMappings = new ArrayList<>();
 
     // Queue for results of jobs that have already completed
     private final BlockingQueue<CoverageMapping> coverageInsertionQueue = new LinkedBlockingQueue<>();
 
     private final AtomicBoolean inShutdown = new AtomicBoolean(false);
+
+    private final ContractToContractCoverageMapping contractCoverageMapping = new ContractToContractCoverageMapping();
 
     /**
      * Coverage processor needs an interface to the database, client for BFD, and thread pool to concurrently execute
@@ -88,11 +96,13 @@ public class CoverageProcessorImpl implements CoverageProcessor {
      */
     public CoverageProcessorImpl(CoverageService coverageService, BFDClient bfdClient,
                                  @Qualifier("patientCoverageThreadPool") ThreadPoolTaskExecutor executor,
-                                 @Value("${coverage.update.max.attempts}") int maxAttempts) {
+                                 @Value("${coverage.update.max.attempts}") int maxAttempts,
+                                 ContractService contractService) {
         this.coverageService = coverageService;
         this.bfdClient = bfdClient;
         this.executor = executor;
         this.maxAttempts = maxAttempts;
+        this.contractService = contractService;
     }
 
     @Override
@@ -135,12 +145,20 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                 log.warn("cannot start job because service has been shutdown");
                 return false;
             }
+            Optional<Contract> contractOptional = contractService.getContractByContractNumber(mapping.getContractNumber());
+            if (contractOptional.isEmpty()) {
+                log.warn("cannot grab contract using contract number {}", mapping.getContractNumber());
+                return false;
+            }
 
-            log.info("starting search for {} during {}-{}", mapping.getContract().getContractNumber(),
+
+            log.info("starting search for {} during {}-{}", mapping.getContractNumber(),
                     mapping.getPeriod().getMonth(), mapping.getPeriod().getYear());
 
+            Contract contract = contractOptional.get();
+
             // Currently, we are using the STU3 version to get patient mappings
-            CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient);
+            CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, contractCoverageMapping.map(contract).getCorrectedYear(mapping.getPeriod().getYear()));
             executor.submit(callable);
             inProgressMappings.add(callable);
 
@@ -245,7 +263,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
      */
     public void evaluateJob(CoverageMapping mapping) {
         if (mapping.isSuccessful()) {
-            log.info("finished a search for contract {} during {}-{}", mapping.getContract().getContractNumber(),
+            log.info("finished a search for contract {} during {}-{}", mapping.getContractNumber(),
                     mapping.getPeriod().getMonth(), mapping.getPeriod().getYear());
 
             coverageInsertionQueue.add(mapping);
@@ -282,7 +300,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                 return;
             }
 
-            String contractNumber = result.getContract().getContractNumber();
+            String contractNumber = result.getContractNumber();
             int month = result.getPeriod().getMonth();
             int year = result.getPeriod().getYear();
 
@@ -325,7 +343,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
         long eventId = result.getCoverageSearchEvent().getId();
 
         try {
-            String contractNumber = result.getContract().getContractNumber();
+            String contractNumber = result.getContractNumber();
             int month = result.getPeriod().getMonth();
             int year = result.getPeriod().getYear();
 
@@ -337,7 +355,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
             log.info("marked search as completed {}-{}-{}", contractNumber, month, year);
         } catch (Exception exception) {
-            log.error("inserting the coverage data failed for {}-{}-{}", result.getContract().getContractNumber(),
+            log.error("inserting the coverage data failed for {}-{}-{}", result.getContractNumber(),
                     result.getPeriod().getMonth(), result.getPeriod().getYear());
             log.error("inserting the coverage data failed {}", exception.getMessage());
             coverageService.failSearch(result.getPeriodId(),
@@ -363,7 +381,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
         for (CoverageMapping insertedMapping : inserting) {
             String message = String.format("shutting down before inserting for contract %s during %d-%d, will re-attempt",
-                    insertedMapping.getContract().getContractNumber(), insertedMapping.getPeriod().getMonth(),
+                    insertedMapping.getContractNumber(), insertedMapping.getPeriod().getMonth(),
                     insertedMapping.getPeriod().getYear());
             log.info(message);
 
@@ -379,7 +397,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
             inProgressMappings.forEach(callable -> {
                 CoverageMapping mapping = callable.getCoverageMapping();
                 String message = String.format("shutting down in progress search for contract %s during %d-%d",
-                        mapping.getContract().getContractNumber(), mapping.getPeriod().getMonth(),
+                        mapping.getContractNumber(), mapping.getPeriod().getMonth(),
                         mapping.getPeriod().getYear());
                 log.info(message);
 

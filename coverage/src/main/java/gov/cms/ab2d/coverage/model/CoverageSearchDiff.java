@@ -1,6 +1,5 @@
 package gov.cms.ab2d.coverage.model;
 
-import gov.cms.ab2d.common.model.CoveragePeriod;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -41,7 +40,7 @@ public class CoverageSearchDiff {
     @Override
     public String toString() {
         return "CoverageSearchDiff{" +
-                coveragePeriod.getContract().getContractNumber() +
+                coveragePeriod.getContractNumber() +
                 "-" + coveragePeriod.getYear() + "-" + coveragePeriod.getMonth() +
                 ", previousCount=" + previousCount +
                 ", currentCount=" + currentCount +

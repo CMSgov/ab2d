@@ -11,7 +11,7 @@ import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Constants;
-import gov.cms.ab2d.coverage.util.CoverageDataSetup;
+import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.worker.config.JobHandler;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -44,7 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class WorkerServiceDisengagementTest {
     private final Random random = new Random();
 
-    @Autowired private CoverageDataSetup dataSetup;
+    @Autowired private DataSetup dataSetup;
     @Autowired private JobRepository jobRepository;
     @Autowired private PdpClientRepository pdpClientRepository;
     @Autowired private PropertiesService propertiesService;

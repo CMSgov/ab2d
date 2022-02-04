@@ -15,7 +15,7 @@ import java.io.UncheckedIOException;
  */
 @Slf4j
 @SuppressWarnings("checkstyle:visibilitymodifier")
-public class OutputHelper  {
+public class OutputHelper {
 
     public static StreamOutput createStreamOutput(File file, FileOutputType type) {
         String checksum = generateChecksum(file);

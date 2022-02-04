@@ -1,34 +1,17 @@
 package gov.cms.ab2d.coverage.repository;
 
 import com.newrelic.api.agent.Trace;
-import gov.cms.ab2d.common.model.Contract;
-
-import gov.cms.ab2d.common.model.CoveragePeriod;
-import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.Identifiers;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
+import gov.cms.ab2d.coverage.model.CoverageJobStatus;
 import gov.cms.ab2d.coverage.model.CoverageMembership;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
+import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
+import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.filter.FilterOutByDate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.core.namedparam.SqlParameterSource;
-import org.springframework.stereotype.Repository;
-
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -37,6 +20,21 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import javax.sql.DataSource;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.stereotype.Repository;
 
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
@@ -61,7 +59,6 @@ import static java.util.stream.Collectors.toList;
 @Slf4j
 @Repository
 public class CoverageServiceRepository {
-
     private static final int BATCH_INSERT_SIZE = 10000;
     private static final List<Integer> YEARS = List.of(2020, 2021, 2022, 2023);
 
@@ -182,7 +179,7 @@ public class CoverageServiceRepository {
      *
      * Results are split by {@link CoverageSearchEvent} to detect when duplicate enrollment is present.
      *
-     * The results contain the {@link Contract#getContractNumber()}, year, month, {@link CoveragePeriod} id,
+     * The results contain the ContractNumber, year, month, {@link CoveragePeriod} id,
      * and {@link CoverageSearchEvent} id
      *
      * The contract and year must be included to take advantage of the partitions and prevent a table scan.
@@ -212,7 +209,7 @@ public class CoverageServiceRepository {
      * Count the number of beneficiaries in the coverage table which are associated with a specific
      * search of BFD {@link CoverageSearchEvent}.
      *
-     * Coverage is only associated with {@link JobStatus#IN_PROGRESS} search events. So submitting any other search event
+     * Coverage is only associated with {@link CoverageJobStatus#IN_PROGRESS} search events. So submitting any other search event
      * will result in no coverage being reported.
      *
      * @param searchEvent a specific search done at some point which we need numbers for
@@ -224,7 +221,7 @@ public class CoverageServiceRepository {
 
         SqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("id", searchEvent.getId())
-                .addValue("contract", searchEvent.getCoveragePeriod().getContract().getContractNumber())
+                .addValue("contract", searchEvent.getCoveragePeriod().getContractNumber())
                 .addValue("years", YEARS);
 
         NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
@@ -247,7 +244,7 @@ public class CoverageServiceRepository {
      *
      * This query should only be
      *
-     * Coverage is only associated with {@link JobStatus#IN_PROGRESS} search events. So submitting any other search event
+     * Coverage is only associated with {@link CoverageJobStatus#IN_PROGRESS} search events. So submitting any other search event
      * will result in no data for the comparison.
      *
      * @param searchEvent1 the first search event
@@ -261,7 +258,7 @@ public class CoverageServiceRepository {
         SqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("search1", searchEvent1.getId())
                 .addValue("search2", searchEvent2.getId())
-                .addValue("contract", searchEvent1.getCoveragePeriod().getContract().getContractNumber())
+                .addValue("contract", searchEvent1.getCoveragePeriod().getContractNumber())
                 .addValue("years", YEARS);
 
         NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
@@ -274,8 +271,8 @@ public class CoverageServiceRepository {
     /**
      * Calculate the unique number of beneficiaries associated with a period of enrollment.
      *
-     * @param coveragePeriodIds list of coverage periods {@link CoveragePeriod}s associated with an {@link Contract}
-     * @param contractNum a five character String representing an {@link Contract}
+     * @param coveragePeriodIds list of coverage periods {@link CoveragePeriod}s associated with an
+     * @param contractNum a five character String representing an
      * @return total number of unique beneficiaries
      */
     @Trace
@@ -300,12 +297,12 @@ public class CoverageServiceRepository {
      * This method provides the statistics necessary to verify that the coverage data in the database meets business
      * requirements.
      *
-     * @param contracts list of {@link Contract}s
+     * @param contracts list of {@link ContractForCoverageDTO}s
      * @return counts of the coverage for a given coverage period
      */
     @Trace
-    public List<CoverageCount> countByContractCoverage(List<Contract> contracts) {
-        List<String> contractNumbers = contracts.stream().map(Contract::getContractNumber).collect(toList());
+    public List<CoverageCount> countByContractCoverage(List<ContractForCoverageDTO> contracts) {
+        List<String> contractNumbers = contracts.stream().map(ContractForCoverageDTO::getContractNumber).collect(toList());
         SqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("contracts", contractNumbers)
                 .addValue("years", YEARS);
@@ -334,7 +331,7 @@ public class CoverageServiceRepository {
 
             int processingCount = 0;
 
-            String contractNum = searchEvent.getCoveragePeriod().getContract().getContractNumber();
+            String contractNum = searchEvent.getCoveragePeriod().getContractNumber();
             int year = searchEvent.getCoveragePeriod().getYear();
             int month = searchEvent.getCoveragePeriod().getMonth();
 
@@ -414,14 +411,14 @@ public class CoverageServiceRepository {
     public void deleteCurrentSearch(CoveragePeriod period) {
 
         Optional<CoverageSearchEvent> searchEvent = coverageSearchEventRepo.findByPeriodDesc(period.getId(), 100)
-                .stream().filter(event -> event.getNewStatus() == JobStatus.IN_PROGRESS).findFirst();
+                .stream().filter(event -> event.getNewStatus() == CoverageJobStatus.IN_PROGRESS).findFirst();
 
         // Only delete previous search if a previous search exists.
         // For performance reasons this is done via jdbc
         if (searchEvent.isPresent()) {
             MapSqlParameterSource parameterSource = new MapSqlParameterSource()
                     .addValue("searchEvent", searchEvent.get().getId())
-                    .addValue("contract", period.getContract().getContractNumber())
+                    .addValue("contract", period.getContractNumber())
                     .addValue("years", YEARS);
 
             NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
@@ -445,7 +442,7 @@ public class CoverageServiceRepository {
         List<CoverageSearchEvent> events = coverageSearchEventRepo.findByPeriodDesc(period.getId(), 100);
 
         // Get all in progress events after offset and delete any enrollment associated with them
-        List<Long> inProgressEvents = events.stream().filter(event -> event.getNewStatus() == JobStatus.IN_PROGRESS)
+        List<Long> inProgressEvents = events.stream().filter(event -> event.getNewStatus() == CoverageJobStatus.IN_PROGRESS)
                 .skip(offset).map(CoverageSearchEvent::getId).collect(toList());
 
         // Only delete previous search if a previous search exists.
@@ -454,7 +451,7 @@ public class CoverageServiceRepository {
 
             MapSqlParameterSource sqlParameterSource = new MapSqlParameterSource()
                     .addValue("searchEvents", inProgressEvents)
-                    .addValue("contract", period.getContract().getContractNumber())
+                    .addValue("contract", period.getContractNumber())
                     .addValue("years", YEARS);
 
             NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
@@ -504,7 +501,7 @@ public class CoverageServiceRepository {
      *    with a patient and specifies a  month and year that the beneficiaries
      *    are a member of the contract {@link #queryCoverageMembership(CoveragePagingRequest, long)}
      * 4. Group the previous queries' results by patient {@link #aggregateEnrollmentByPatient(int, List)}
-     * 5. For each patient condense enrollment down to a single set of date ranges {@link #summarizeCoverageMembership(Contract, Map.Entry)}
+     * 5. For each patient condense enrollment down to a single set of date ranges {@link #summarizeCoverageMembership(ContractForCoverageDTO, Map.Entry)}
      * 6. Determine whether another page of results is necessary
      * 7. If another page of results is necessary create a {@link CoveragePagingRequest}
      * 8. Collect the {@link CoverageSummary} and next {@link CoveragePagingRequest }into a single {@link CoveragePagingResult}
@@ -514,14 +511,14 @@ public class CoverageServiceRepository {
      */
     public CoveragePagingResult pageCoverage(CoveragePagingRequest page) {
 
-        Contract contract = page.getContract();
+        ContractForCoverageDTO contract = page.getContract();
         int expectedCoveragePeriods = getExpectedCoveragePeriods(page);
 
         // Make sure all coverage periods are present so that there isn't any missing coverage data
         // Do not remove this check because it is a fail safe to guarantee that there isn't something majorly
         // wrong with the enrollment data.
         // A missing period = one month of enrollment missing for the contract
-        List<CoveragePeriod> coveragePeriods = coveragePeriodRepo.findAllByContractId(contract.getId());
+        List<CoveragePeriod> coveragePeriods = coveragePeriodRepo.findAllByContractNumber(contract.getContractNumber());
         if (coveragePeriods.size() != expectedCoveragePeriods) {
             throw new IllegalArgumentException("at least one coverage period missing from enrollment table for contract "
                     + page.getContract().getContractNumber());
@@ -668,7 +665,7 @@ public class CoverageServiceRepository {
     /**
      * Summarize the coverage of one beneficiary for
      */
-    private CoverageSummary summarizeCoverageMembership(Contract contract,
+    private CoverageSummary summarizeCoverageMembership(ContractForCoverageDTO contract,
                                                         Map.Entry<Long, List<CoverageMembership>> membershipInfo) {
 
         List<CoverageMembership> membershipMonths = membershipInfo.getValue();

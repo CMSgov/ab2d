@@ -4,9 +4,10 @@ import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.coverage.model.CoverageSummary;
-import gov.cms.ab2d.common.model.Identifiers;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
+import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.filter.FilterOutByDate;
@@ -85,7 +86,7 @@ public class AggregatorJobTest {
         when(bfdClient.requestEOBFromServer(eq(STU3), eq(9L), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(9)));
         when(bfdClient.requestEOBFromServer(eq(STU3), eq(10L), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(10)));
 
-        Contract contract = createContract(contractNo);
+        ContractForCoverageDTO contract = createContract(contractNo);
 
         PatientClaimsRequest request = new PatientClaimsRequest(createCoverageSummaries(10, contract),
                 OffsetDateTime.of(2020, 1, 1, 0, 0, 0, 9, ZoneOffset.UTC),
@@ -114,13 +115,13 @@ public class AggregatorJobTest {
         return new Identifiers(id, "M" + id, new LinkedHashSet<>());
     }
 
-    CoverageSummary createCoverageSummary(int id, Contract contract) {
+    CoverageSummary createCoverageSummary(int id, ContractForCoverageDTO contract) {
         FilterOutByDate.DateRange range = FilterOutByDate.getDateRange(1, 2020,
                 12, 2099);
         return new CoverageSummary(createIdentifier(id), contract, List.of(range));
     }
 
-    List<CoverageSummary> createCoverageSummaries(int number, Contract contract) {
+    List<CoverageSummary> createCoverageSummaries(int number, ContractForCoverageDTO contract) {
         List<CoverageSummary> summaries = new ArrayList<>();
         for (int i = 1; i <= number; i++) {
             summaries.add(createCoverageSummary(i, contract));
@@ -128,10 +129,10 @@ public class AggregatorJobTest {
         return summaries;
     }
 
-    Contract createContract(String contractNumber) {
-        Contract contract = new Contract();
-        contract.setContractName(contractNumber);
-        contract.setContractName(contractNumber);
+    ContractForCoverageDTO createContract(String contractNumber) {
+        ContractForCoverageDTO contract = new ContractForCoverageDTO();
+        contract.setContractType(ContractForCoverageDTO.ContractType.NORMAL);
+        contract.setContractNumber(contractNumber);
         contract.setAttestedOn(OffsetDateTime.MIN);
         return contract;
     }

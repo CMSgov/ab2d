@@ -26,7 +26,6 @@ class CoverageCountTest {
         assertNotEquals(0,coverageCountTest.compareTo(new CoverageCount("contractNumber", 2021, 1, 1, 1, 1)));
 
         assertNotEquals(0,coverageCountTest.compareTo(new CoverageCount("contractNumber", 2020, 2, 1, 1, 1)));
-
     }
 
 }

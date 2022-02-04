@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.common.model.Identifiers;
+import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.fhir.IdentifierUtils;
 
 import java.util.Calendar;
