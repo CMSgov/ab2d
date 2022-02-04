@@ -73,6 +73,7 @@ class CoverageMappingCallableTest {
         period.setContractNumber(contract.getContractNumber());
         period.setYear(2020);
         period.setMonth(1);
+        
 
         CoverageSearchEvent cse = new CoverageSearchEvent();
         cse.setCoveragePeriod(period);

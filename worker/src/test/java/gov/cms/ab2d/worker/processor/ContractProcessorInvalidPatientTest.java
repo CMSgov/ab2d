@@ -80,9 +80,11 @@ class ContractProcessorInvalidPatientTest {
     @BeforeEach
     void setup() {
 
+
         Contract contract = new Contract();
         contract.setContractNumber(contractId);
         contract.setAttestedOn(OffsetDateTime.now().minusYears(50));
+
         contractRepository = new StubContractRepository(contract);
 
         job.setJobUuid(jobId);
@@ -90,7 +92,7 @@ class ContractProcessorInvalidPatientTest {
         jobRepository = new StubJobRepository(job);
 
         patientClaimsProcessor = new PatientClaimsProcessorImpl(bfdClient, eventLogger);
-        JobProgressServiceImpl jobProgressUpdateService = new JobProgressServiceImpl(jobRepository);
+        JobProgressServiceImpl jobProgressUpdateService  = new JobProgressServiceImpl(jobRepository);
         jobProgressUpdateService.initJob(jobId);
         JobChannelService jobChannelService = new JobChannelStubServiceImpl(jobProgressUpdateService);
 
@@ -106,7 +108,6 @@ class ContractProcessorInvalidPatientTest {
         ReflectionTestUtils.setField(cut, "finishedDir", "finished");
         ReflectionTestUtils.setField(cut, "streamingDir", "streaming");
         ReflectionTestUtils.setField(cut, "multiplier", 1);
-
         jobChannelService.sendUpdate(jobId, JobMeasure.FAILURE_THRESHHOLD, 100);
 
         ReflectionTestUtils.setField(patientClaimsProcessor, "earliestDataDate", "01/01/2020");

@@ -146,7 +146,6 @@ class CoverageServiceImplTest {
 
         contract1 = dataSetup.setupContractDTO("TST-12", AB2D_EPOCH.toOffsetDateTime());
         contract2 = dataSetup.setupContractDTO("TST-34", AB2D_EPOCH.toOffsetDateTime());
-
         period1Jan = dataSetup.createCoveragePeriod("TST-12", JANUARY, YEAR);
         period1Feb = dataSetup.createCoveragePeriod("TST-12", FEBRUARY, YEAR);
         period1March = dataSetup.createCoveragePeriod("TST-12", MARCH, YEAR);
