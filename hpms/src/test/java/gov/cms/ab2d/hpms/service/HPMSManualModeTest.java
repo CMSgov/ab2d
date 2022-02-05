@@ -71,18 +71,14 @@ class HPMSManualModeTest {
     void orgChanged() {
         final var existingMock = "S1234";
         final var bogusContractName = "bogus";
+
+        // Initial building out of the contract table
+        aus.pollOrganizations();
         Optional<Contract> contractOpt = contractRepository.findContractByContractNumber(existingMock);
         assertTrue(contractOpt.isPresent());
         Contract contractResult = contractOpt.get();
         contractResult.setContractName(bogusContractName);
-
-        /*
-        Contract contract = new Contract();
-        contract.setContractNumber(existingMock);
-        contract.setContractName("bogus");
-        Contract savedContract = contractRepository.save(contract);
-
-         */
+        contractRepository.save(contractResult);
 
         aus.pollOrganizations();
         contractOpt = contractRepository.findContractByContractNumber(existingMock);
