@@ -17,6 +17,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -24,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest(classes = SpringBootTestApp.class)
 @TestPropertySource(locations = "/application.hpms.properties")
 @Testcontainers
-public class HPMSManualModeTest {
+class HPMSManualModeTest {
 
     public static final String TEST_CONTRACT_NUMBER = "X1234";
     @Autowired
@@ -39,7 +40,7 @@ public class HPMSManualModeTest {
     private AttestationUpdaterServiceImpl aus;
 
     @Test
-    public void manualLeftAlone() {
+    void manualLeftAlone() {
         Contract contract = buildContract(Contract.UpdateMode.MANUAL);
         Contract savedContract = contractRepository.save(contract);
 
@@ -53,7 +54,7 @@ public class HPMSManualModeTest {
     }
 
     @Test
-    public void cleardOut() {
+    void clearedOut() {
         Contract contract = buildContract(Contract.UpdateMode.AUTOMATIC);
         Contract savedContract = contractRepository.save(contract);
 
@@ -64,6 +65,31 @@ public class HPMSManualModeTest {
         assertNull(contractResult.getAttestedOn());
 
         contractRepository.delete(savedContract);
+    }
+
+    @Test
+    void orgChanged() {
+        final var existingMock = "S1234";
+        final var bogusContractName = "bogus";
+        Optional<Contract> contractOpt = contractRepository.findContractByContractNumber(existingMock);
+        assertTrue(contractOpt.isPresent());
+        Contract contractResult = contractOpt.get();
+        contractResult.setContractName(bogusContractName);
+
+        /*
+        Contract contract = new Contract();
+        contract.setContractNumber(existingMock);
+        contract.setContractName("bogus");
+        Contract savedContract = contractRepository.save(contract);
+
+         */
+
+        aus.pollOrganizations();
+        contractOpt = contractRepository.findContractByContractNumber(existingMock);
+        assertTrue(contractOpt.isPresent());
+        contractResult = contractOpt.get();
+        assertNotNull(contractResult.getHpmsParentOrg());
+        assertNotEquals("bogus", contractResult.getContractName());
     }
 
     @NotNull
