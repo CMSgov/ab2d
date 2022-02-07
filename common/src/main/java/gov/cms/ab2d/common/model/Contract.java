@@ -118,7 +118,7 @@ public class Contract extends TimestampBase {
      * Returns true if new state differs from existing which requires a save.
      */
     public boolean updateAttestation(boolean attested, String attestationDate) {
-        if (updateMode != UpdateMode.AUTOMATIC)
+        if (!isAutoUpdatable())
             return false;
 
         boolean hasAttestation = hasAttestation();
@@ -134,6 +134,10 @@ public class Contract extends TimestampBase {
         String dateWithTZ = attestationDate + " " + getESTOffset();
         attestedOn = OffsetDateTime.parse(dateWithTZ, FORMATTER);
         return true;
+    }
+
+    public boolean isAutoUpdatable() {
+        return updateMode == UpdateMode.AUTOMATIC;
     }
 
     public boolean hasDateIssue() {
