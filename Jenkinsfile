@@ -20,6 +20,9 @@ pipeline {
         // R4 V2 endpoints enabled
         AB2D_V2_ENABLED = true
 
+        // Number concurrent benes
+        AB2D_PATIENT_PER_WRITE_THREAD=20
+
         ARTIFACTORY_URL = credentials('ARTIFACTORY_URL')
     }
 
