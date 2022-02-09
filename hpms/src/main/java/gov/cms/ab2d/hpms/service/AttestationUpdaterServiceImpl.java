@@ -77,7 +77,8 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
             return contractHolder;
 
         Contract contract = contractHolder.get();
-        return hpmsInfo.hasChanges(contract) ? Optional.of(hpmsInfo.updateContract(contract)) : Optional.empty();
+        return contract.isAutoUpdatable() && hpmsInfo.hasChanges(contract) ?
+                Optional.of(hpmsInfo.updateContract(contract)) : Optional.empty();
     }
 
     // Limit the size of the request to BATCH_SIZE, avoiding URLs that are too long and keeping the burden down
@@ -143,8 +144,8 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
 
     private void considerContract(List<Contract> contractAttestList, Contract contract,
                                   HPMSOrganizationInfo hpmsOrganizationInfo) {
-        // Ignore Test contracts
-        if (contract.isTestContract()) {
+        // Pass on contracts that are marked to be left alone.
+        if (!contract.isAutoUpdatable()) {
             return;
         }
 
