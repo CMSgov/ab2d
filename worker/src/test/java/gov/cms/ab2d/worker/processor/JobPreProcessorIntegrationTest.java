@@ -81,7 +81,7 @@ class JobPreProcessorIntegrationTest {
 
     private PdpClient pdpClient;
     private Job job;
-    private Contract contract;
+    private ContractWorkerDto contract;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
@@ -93,7 +93,7 @@ class JobPreProcessorIntegrationTest {
 
         cut = new JobPreProcessorImpl(contractRepository, jobRepository, manager, coverageDriver);
 
-        Contract tmpContract = new Contract();
+        ContractWorkerDto tmpContract = new Contract();
         tmpContract.setContractNumber("JPP1234");
         tmpContract.setContractName(tmpContract.getContractNumber());
         contract = contractRepository.save(tmpContract);

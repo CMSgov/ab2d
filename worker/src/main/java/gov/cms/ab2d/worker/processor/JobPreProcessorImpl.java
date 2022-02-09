@@ -1,29 +1,32 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStartedBy;
 import gov.cms.ab2d.common.model.SinceSource;
-import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.worker.model.ContractWorkerDto;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverException;
+import gov.cms.ab2d.worker.repository.ContractWorkerRepository;
+import java.time.OffsetDateTime;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
-import static gov.cms.ab2d.common.model.JobStatus.*;
+import static gov.cms.ab2d.common.model.JobStatus.FAILED;
+import static gov.cms.ab2d.common.model.JobStatus.IN_PROGRESS;
+import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
+import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
 import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_COVERAGE_ISSUE;
 import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_STARTED;
@@ -33,12 +36,12 @@ import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_STARTED;
 @SuppressWarnings("java:S2142") //java:S2142: "InterruptedException" should not be ignored
 public class JobPreProcessorImpl implements JobPreProcessor {
 
-    private final ContractRepository contractRepository;
+    private final ContractWorkerRepository contractRepository;
     private final JobRepository jobRepository;
     private final LogManager eventLogger;
     private final CoverageDriver coverageDriver;
 
-    public JobPreProcessorImpl(ContractRepository contractRepository, JobRepository jobRepository, LogManager logManager,
+    public JobPreProcessorImpl(ContractWorkerRepository contractRepository, JobRepository jobRepository, LogManager logManager,
                         CoverageDriver coverageDriver) {
         this.contractRepository = contractRepository;
         this.jobRepository = jobRepository;
@@ -63,11 +66,11 @@ public class JobPreProcessorImpl implements JobPreProcessor {
             throw new IllegalArgumentException(errMsg);
         }
 
-        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(job.getContractNumber());
+        Optional<ContractWorkerDto> contractOptional = contractRepository.findContractByContractNumber(job.getContractNumber());
         if (contractOptional.isEmpty()) {
             throw new IllegalArgumentException("A job must always have a contract.");
         }
-        Contract contract = contractOptional.get();
+        ContractWorkerDto contract = contractOptional.get();
         Optional<OffsetDateTime> sinceValue = Optional.ofNullable(job.getSince());
         if (sinceValue.isPresent()) {
             // If the user provided a 'since' value
@@ -116,7 +119,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
      * @param job - The job object to update (although not save)
      * @return - the job with the updated since date and auto since source
      */
-    Job updateSinceTime(Job job, Contract contract) {
+    Job updateSinceTime(Job job, ContractWorkerDto contract) {
         List<Job> successfulJobs = jobRepository.findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(
                 contract.getContractNumber(), List.of(SUCCESSFUL), JobStartedBy.PDP);
 

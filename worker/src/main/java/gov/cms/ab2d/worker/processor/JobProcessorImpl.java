@@ -314,7 +314,7 @@ public class JobProcessorImpl implements JobProcessor {
      */
     private void completeJob(Job job) {
         ProgressTracker progressTracker = jobProgressService.getStatus(job.getJobUuid());
-        String jobFinishedMessage = String.format(EOB_JOB_COMPLETED + " Contract %s processed " +
+        String jobFinishedMessage = String.format(EOB_JOB_COMPLETED + " ContractWorkerDto %s processed " +
                 "%d patients generating %d eobs and %d files (including the error file if any)",
                 job.getContractNumber(), progressTracker.getPatientRequestProcessedCount(),
                 progressTracker.getEobsProcessedCount(),

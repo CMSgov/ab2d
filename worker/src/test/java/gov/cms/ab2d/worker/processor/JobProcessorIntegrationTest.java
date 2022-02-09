@@ -152,7 +152,7 @@ class JobProcessorIntegrationTest {
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
     private static final ExplanationOfBenefit EOB = (ExplanationOfBenefit) EobTestDataUtil.createEOB();
 
-    private Contract contract;
+    private ContractWorkerDto contract;
     private ContractForCoverageDTO contractForCoverageDTO;
     private RuntimeException fail;
 
@@ -396,8 +396,8 @@ class JobProcessorIntegrationTest {
         return pdpClient;
     }
 
-    private Contract createContract() {
-        Contract contract = new Contract();
+    private ContractWorkerDto createContract() {
+        ContractWorkerDto contract = new ContractWorkerDto();
         contract.setContractName(CONTRACT_NAME);
         contract.setContractNumber(CONTRACT_NUMBER);
         contract.setAttestedOn(OffsetDateTime.now().minusDays(10));

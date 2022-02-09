@@ -1,17 +1,17 @@
 package gov.cms.ab2d.worker.processor.coverage.check;
 
-import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
-import lombok.extern.slf4j.Slf4j;
-
-import javax.persistence.EntityNotFoundException;
+import gov.cms.ab2d.worker.model.ContractWorkerDto;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import javax.persistence.EntityNotFoundException;
+import lombok.extern.slf4j.Slf4j;
+
 
 import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getAttestationTime;
 import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getEndDateTime;
@@ -27,7 +27,7 @@ public class CoveragePeriodsPresentCheck extends CoverageCheckPredicate {
     }
 
     @Override
-    public boolean test(Contract contract) {
+    public boolean test(ContractWorkerDto contract) {
         ContractToContractCoverageMapping mapping = new ContractToContractCoverageMapping();
         List<String> missingPeriods = listMissingCoveragePeriods(this.coverageService, mapping.map(contract));
         this.issues.addAll(missingPeriods);

@@ -3,10 +3,8 @@ package gov.cms.ab2d.worker.processor;
 import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Token;
 import com.newrelic.api.agent.Trace;
-import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
-import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
@@ -17,7 +15,9 @@ import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
+import gov.cms.ab2d.worker.model.ContractWorkerDto;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
+import gov.cms.ab2d.worker.service.ContractWorkerService;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -60,7 +60,7 @@ public class ContractProcessorImpl implements ContractProcessor {
 
     private ContractToContractCoverageMapping mapping;
 
-    private final ContractRepository contractRepository;
+    private final ContractWorkerService contractWorkerService;
 
     private final JobRepository jobRepository;
     private final CoverageDriver coverageDriver;
@@ -71,7 +71,7 @@ public class ContractProcessorImpl implements ContractProcessor {
     private final JobProgressService jobProgressService;
 
     @SuppressWarnings("checkstyle:ParameterNumber") // TODO - refactor to eliminate the ridiculous number of args
-    public ContractProcessorImpl(ContractRepository contractRepository,
+    public ContractProcessorImpl(ContractWorkerService contractWorkerService,
                                  JobRepository jobRepository,
                                  CoverageDriver coverageDriver,
                                  PatientClaimsProcessor patientClaimsProcessor,
@@ -80,7 +80,7 @@ public class ContractProcessorImpl implements ContractProcessor {
                                  JobChannelService jobChannelService,
                                  JobProgressService jobProgressService,
                                  ContractToContractCoverageMapping mapping) {
-        this.contractRepository = contractRepository;
+        this.contractWorkerService = contractWorkerService;
         this.jobRepository = jobRepository;
         this.coverageDriver = coverageDriver;
         this.patientClaimsProcessor = patientClaimsProcessor;
@@ -121,7 +121,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contractNumber));
 
         //noinspection OptionalGetWithoutIsPresent
-        Contract contract = contractRepository.findContractByContractNumber(contractNumber).get();
+        ContractWorkerDto contract = contractWorkerService.getContractByContractNumber(contractNumber).get();
         int numBenes = coverageDriver.numberOfBeneficiariesToProcess(job, contract);
         jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENTS_EXPECTED, numBenes);
         log.info("Contract [{}] has [{}] Patients", contractNumber, numBenes);
@@ -176,7 +176,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      */
     private void loadEobRequests(ContractData contractData) throws InterruptedException {
         String jobUuid = contractData.getJob().getJobUuid();
-        Contract contract = contractData.getContract();
+        ContractWorkerDto contract = contractData.getContract();
 
         // Handle first page of beneficiaries and then enter loop
         CoveragePagingResult current = coverageDriver.pageCoverage(new CoveragePagingRequest(eobJobPatientQueuePageSize,

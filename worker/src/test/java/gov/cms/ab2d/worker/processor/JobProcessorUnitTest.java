@@ -270,8 +270,8 @@ class JobProcessorUnitTest {
         return pdpClient;
     }
 
-    private Contract createContract() {
-        Contract contract = new Contract();
+    private ContractWorkerDto createContract() {
+        ContractWorkerDto contract = new ContractWorkerDto();
         contract.setContractName("CONTRACT_NM_00000");
         contract.setContractNumber("CONTRACT_00000");
         contract.setAttestedOn(OffsetDateTime.now().minusDays(10));

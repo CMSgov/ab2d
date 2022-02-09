@@ -60,7 +60,7 @@ class CoverageProcessorIntTest {
     void integrationTest() {
 
 
-        Contract contract = contractRepo.findContractByContractNumber("Z0010").get();
+        ContractWorkerDto contract = contractRepo.findContractByContractNumber("Z0010").get();
         CoveragePeriod january = dataSetup.createCoveragePeriod(contract.getContractNumber(), 1, 2000);
         CoveragePeriod february = dataSetup.createCoveragePeriod(contract.getContractNumber(), 2, 2000);
         CoveragePeriod march = dataSetup.createCoveragePeriod(contract.getContractNumber(), 3, 2000);

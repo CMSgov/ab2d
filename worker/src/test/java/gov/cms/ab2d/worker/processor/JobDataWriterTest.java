@@ -30,7 +30,7 @@ class JobDataWriterTest {
     @BeforeEach
     void setup() throws IOException {
         MockitoAnnotations.initMocks(this);
-        Contract contract = new Contract();
+        ContractWorkerDto contract = new ContractWorkerDto();
         contract.setContractNumber("CONTRACT_NUMBER");
         contract.setContractName("CONTRACT_NAME");
         var OutputDirPath = Paths.get(tempDir.toString(), contract.getContractName());

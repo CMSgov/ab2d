@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.service;
 
-import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
@@ -12,6 +11,7 @@ import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.service.InsertionJob;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
+import gov.cms.ab2d.worker.model.ContractWorkerDto;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -81,7 +81,7 @@ class PerformanceTestingCoverageOperations {
 
     @Autowired CoverageSearchRepository coverageSearchRepository;
 
-    private Contract contract;
+    private ContractWorkerDto contract;
     private CoveragePeriod period1;
     private CoveragePeriod period2;
     private CoveragePeriod period3;
@@ -161,7 +161,7 @@ class PerformanceTestingCoverageOperations {
         int pageSize = 5000;
         int pages = dataPoints > pageSize ? dataPoints / pageSize : 1;
 
-        Contract contract2 = dataSetup.setupContract("TST-34", AB2D_EPOCH.toOffsetDateTime());
+        ContractWorkerDto contract2 = dataSetup.setupContract("TST-34", AB2D_EPOCH.toOffsetDateTime());
 
         List<CoveragePeriod> periods = new ArrayList<>();
 
@@ -221,9 +221,9 @@ class PerformanceTestingCoverageOperations {
         periods.add(coverageDataSetup.createCoveragePeriod(contract2.getContractNumber(), 12, 2021));
 
 
-//        Contract contract3 = dataSetup.setupContract("TST-56");
-//        Contract contract4 = dataSetup.setupContract("TST-78");
-//        Contract contract5 = dataSetup.setupContract("TST-90");
+//        ContractWorkerDto contract3 = dataSetup.setupContract("TST-56");
+//        ContractWorkerDto contract4 = dataSetup.setupContract("TST-78");
+//        ContractWorkerDto contract5 = dataSetup.setupContract("TST-90");
 
 //        periods.add(dataSetup.createCoveragePeriod(contract2, 1, 2020));
 //        periods.add(dataSetup.createCoveragePeriod(contract2, 2, 2020));

@@ -116,7 +116,7 @@ class CoverageUpdateAndProcessorTest {
     @Autowired
     private ContractToContractCoverageMapping mapping;
 
-    private Contract contract;
+    private ContractWorkerDto contract;
     private CoveragePeriod january;
     private CoveragePeriod february;
     private CoveragePeriod march;
@@ -195,7 +195,7 @@ class CoverageUpdateAndProcessorTest {
     @Test
     void discoverCoveragePeriods() throws CoverageDriverException, InterruptedException {
 
-        Contract attestedAfterEpoch = dataSetup.setupContract("TST-AFTER-EPOCH",
+        ContractWorkerDto attestedAfterEpoch = dataSetup.setupContract("TST-AFTER-EPOCH",
                 AB2D_EPOCH.toOffsetDateTime().plusMonths(3));
         contractRepo.saveAndFlush(attestedAfterEpoch);
 
@@ -203,7 +203,7 @@ class CoverageUpdateAndProcessorTest {
         pdpClientService.createClient(attestedAfterClient);
         dataSetup.queueForCleanup(pdpClientService.getClientById("TST-AFTER-EPOCH"));
 
-        Contract attestedBeforeEpoch = dataSetup.setupContract("TST-BEFORE-EPOCH",
+        ContractWorkerDto attestedBeforeEpoch = dataSetup.setupContract("TST-BEFORE-EPOCH",
                 AB2D_EPOCH.toOffsetDateTime().minusNanos(1));
         contractRepo.saveAndFlush(attestedBeforeEpoch);
 

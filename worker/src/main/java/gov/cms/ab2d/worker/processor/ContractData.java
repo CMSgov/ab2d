@@ -1,20 +1,19 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.fhir.FhirVersion;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
+import gov.cms.ab2d.worker.model.ContractWorkerDto;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Future;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Getter
 public class ContractData {
 
-    private final Contract contract;
+    private final ContractWorkerDto contract;
     private final Job job;
     private final StreamHelper streamHelper;
     private final List<Future<EobSearchResult>> eobRequestHandles = new LinkedList<>();

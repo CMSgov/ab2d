@@ -16,6 +16,7 @@ import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
+import gov.cms.ab2d.worker.model.ContractWorkerDto;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.LinkedHashSet;
@@ -76,7 +77,7 @@ public class CoverageCheckIntegrationTest {
     private static final ZonedDateTime CURRENT_TIME = OffsetDateTime.now().atZoneSameInstant(AB2D_ZONE);
     private static final ZonedDateTime ATTESTATION_TIME = CURRENT_TIME.minusMonths(3);
 
-    private Contract contract;
+    private ContractWorkerDto contract;
     private List<Contract> enabledContracts;
     private CoveragePeriod attestationMonth;
     private CoveragePeriod attestationMonthPlus1;
@@ -153,7 +154,7 @@ public class CoverageCheckIntegrationTest {
     void verifyCoverage_whenZContractIgnore() {
 
         PdpClient client = dataSetup.setupNonStandardClient("special2", "Z5555", List.of("SPONSOR"));
-        Contract contract = client.getContract();
+        ContractWorkerDto contract = client.getContract();
         contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
         contract.setUpdateMode(Contract.UpdateMode.NONE);
         contract.setContractType(Contract.ContractType.CLASSIC_TEST);

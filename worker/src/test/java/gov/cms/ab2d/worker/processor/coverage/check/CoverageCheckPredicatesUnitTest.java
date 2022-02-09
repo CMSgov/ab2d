@@ -47,7 +47,7 @@ public class CoverageCheckPredicatesUnitTest {
         List<String> issues = new ArrayList<>();
         CoveragePeriodsPresentCheck presentCheck = new CoveragePeriodsPresentCheck(coverageService, null, issues);
 
-        Contract contract = new Contract();
+        ContractWorkerDto contract = new ContractWorkerDto();
         contract.setContractNumber("TEST");
         contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
 
@@ -61,7 +61,7 @@ public class CoverageCheckPredicatesUnitTest {
     @Test
     void whenCoveragePeriodsPresent_passPresentCheck() {
 
-        Contract contract = new Contract();
+        ContractWorkerDto contract = new ContractWorkerDto();
         contract.setId(1L);
         contract.setContractNumber("TEST");
         contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
@@ -92,7 +92,7 @@ public class CoverageCheckPredicatesUnitTest {
         CoveragePresentCheck presentCheck =
                 new CoveragePresentCheck(coverageService, coverageCounts, issues);
 
-        Contract contract = new Contract();
+        ContractWorkerDto contract = new ContractWorkerDto();
         contract.setContractNumber("TEST");
         contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
 
@@ -143,7 +143,7 @@ public class CoverageCheckPredicatesUnitTest {
         CoveragePresentCheck presentCheck =
                 new CoveragePresentCheck(coverageService, coverageCounts, issues);
 
-        Contract contract = new Contract();
+        ContractWorkerDto contract = new ContractWorkerDto();
         contract.setContractNumber("TEST");
         contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
 
@@ -170,7 +170,7 @@ public class CoverageCheckPredicatesUnitTest {
         CoverageStableCheck stableCheck =
                 new CoverageStableCheck(coverageService, coverageCounts, issues);
 
-        Contract contract = new Contract();
+        ContractWorkerDto contract = new ContractWorkerDto();
         contract.setContractNumber("TEST");
         contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
 
@@ -203,7 +203,7 @@ public class CoverageCheckPredicatesUnitTest {
         CoverageStableCheck stableCheck =
                 new CoverageStableCheck(coverageService, coverageCounts, issues);
 
-        Contract contract = new Contract();
+        ContractWorkerDto contract = new ContractWorkerDto();
         contract.setContractNumber("TEST");
         contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
 
@@ -243,7 +243,7 @@ public class CoverageCheckPredicatesUnitTest {
         CoverageNoDuplicatesCheck duplicatesCheck =
                 new CoverageNoDuplicatesCheck(coverageService, coverageCounts, issues);
 
-        Contract contract = new Contract();
+        ContractWorkerDto contract = new ContractWorkerDto();
         contract.setContractNumber("TEST");
         contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
 
@@ -278,7 +278,7 @@ public class CoverageCheckPredicatesUnitTest {
         CoverageNoDuplicatesCheck duplicatesCheck =
                 new CoverageNoDuplicatesCheck(coverageService, coverageCounts, issues);
 
-        Contract contract = new Contract();
+        ContractWorkerDto contract = new ContractWorkerDto();
         contract.setContractNumber("TEST");
         contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
 
@@ -305,7 +305,7 @@ public class CoverageCheckPredicatesUnitTest {
         CoverageUpToDateCheck upToDateCheck =
                 new CoverageUpToDateCheck(coverageService, coverageCounts, issues);
 
-        Contract contract = new Contract();
+        ContractWorkerDto contract = new ContractWorkerDto();
         contract.setContractNumber("TEST");
         contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
 
@@ -350,7 +350,7 @@ public class CoverageCheckPredicatesUnitTest {
         CoverageUpToDateCheck upToDateCheck =
                 new CoverageUpToDateCheck(coverageService, coverageCounts, issues);
 
-        Contract contract = new Contract();
+        ContractWorkerDto contract = new ContractWorkerDto();
         contract.setContractNumber("TEST");
         contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
 

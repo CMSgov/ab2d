@@ -30,6 +30,7 @@ import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import gov.cms.ab2d.fhir.IdentifierUtils;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
+import gov.cms.ab2d.worker.model.ContractWorkerDto;
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -126,8 +127,8 @@ class CoverageDriverTest {
     @Autowired
     private ContractToContractCoverageMapping contractToContractCoverageMapping;
 
-    private Contract contract;
-    private Contract contract1;
+    private ContractWorkerDto contract;
+    private ContractWorkerDto contract1;
     private ContractForCoverageDTO contractForCoverageDTO;
     private ContractForCoverageDTO contractForCoverageDTO1;
     private CoveragePeriod january;
@@ -228,7 +229,7 @@ class CoverageDriverTest {
     @Test
     void discoverCoveragePeriods() {
 
-        Contract attestedAfterEpoch = dataSetup.setupContract("TST-AFTER-EPOCH",
+        ContractWorkerDto attestedAfterEpoch = dataSetup.setupContract("TST-AFTER-EPOCH",
                 AB2D_EPOCH.toOffsetDateTime().plusMonths(3));
         contractRepo.saveAndFlush(attestedAfterEpoch);
 
@@ -236,7 +237,7 @@ class CoverageDriverTest {
         pdpClientService.createClient(attestedAfterClient);
         dataSetup.queueForCleanup(pdpClientService.getClientById("TST-AFTER-EPOCH"));
 
-        Contract attestedBeforeEpoch = dataSetup.setupContract("TST-BEFORE-EPOCH",
+        ContractWorkerDto attestedBeforeEpoch = dataSetup.setupContract("TST-BEFORE-EPOCH",
                 AB2D_EPOCH.toOffsetDateTime().minusNanos(1));
         contractRepo.saveAndFlush(attestedBeforeEpoch);
 
@@ -271,7 +272,7 @@ class CoverageDriverTest {
     @Test
     void discoverCoveragePeriodsIgnoresTestContracts() {
 
-        Contract testContract = dataSetup.setupContract("TST-AFTER-EPOCH",
+        ContractWorkerDto testContract = dataSetup.setupContract("TST-AFTER-EPOCH",
                 AB2D_EPOCH.toOffsetDateTime().plusMonths(3));
         testContract.setUpdateMode(Contract.UpdateMode.NONE);
 
@@ -720,7 +721,7 @@ class CoverageDriverTest {
         Job job = new Job();
         job.setCreatedAt(OffsetDateTime.now());
 
-        Contract temp = contractRepo.findContractByContractNumber(contractForCoverageDTO.getContractNumber()).get();
+        ContractWorkerDto temp = contractRepo.findContractByContractNumber(contractForCoverageDTO.getContractNumber()).get();
         job.setContractNumber(temp.getContractNumber());
 
         OffsetDateTime since = OffsetDateTime.of(LocalDate.of(2020, 3, 1),

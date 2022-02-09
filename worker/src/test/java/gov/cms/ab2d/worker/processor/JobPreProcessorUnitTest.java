@@ -50,11 +50,11 @@ class JobPreProcessorUnitTest {
     private CoverageDriver coverageDriver;
 
     private Job job;
-    private Contract contract;
+    private ContractWorkerDto contract;
 
     @BeforeEach
     void setUp() {
-        Contract tmpContract = new Contract();
+        ContractWorkerDto tmpContract = new Contract();
         tmpContract.setContractNumber("JPP5678");
         tmpContract.setContractName(tmpContract.getContractNumber());
         contract = tmpContract;
@@ -211,7 +211,7 @@ class JobPreProcessorUnitTest {
         newJob.setStatus(JobStatus.SUBMITTED);
         newJob.setCreatedAt(OffsetDateTime.now());
 
-        Contract contract = new Contract();
+        ContractWorkerDto contract = new ContractWorkerDto();
         contract.setContractNumber("contractNum");
         contract.setContractType(Contract.ContractType.CLASSIC_TEST);
         newJob.setContractNumber(contract.getContractNumber());
