@@ -63,41 +63,16 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
      * Process the retrieval of patient explanation of benefit objects and return the result
      * for further post-processing
      */
-    @Trace(metricName = "EOBRequest", dispatcher = true)
     @Async("patientProcessorThreadPool")
     public Future<ProgressTrackerUpdate> process(PatientClaimsRequest request) {
         ProgressTrackerUpdate update = new ProgressTrackerUpdate();
         final Token token = request.getToken();
         token.link();
-        List<CoverageSummary> patients = request.getCoverageSummary();
         FhirVersion fhirVersion = request.getVersion();
         try {
-            File file = null;
-            String anyErrors = null;
-            try (BeneficiaryStream stream = new BeneficiaryStream(request.getJob(), request.getEfsMount(), DATA,
-                    this.streamingDir, this.finishedDir, this.bufferSize)) {
-                file = stream.getFile();
-                logManager.log(new FileEvent(request.getOrganization(), request.getJob(), stream.getFile(), FileEvent.FileStatus.OPEN));
-                for (CoverageSummary patient : patients) {
-                    List<IBaseResource> eobs = getEobBundleResources(request, patient, update);
-                    anyErrors = writeOutResource(fhirVersion, update, eobs, stream);
-                    update.incPatientProcessCount();
-                }
-            } finally {
-                logManager.log(new FileEvent(request.getOrganization(), request.getJob(), file, FileEvent.FileStatus.CLOSE));
-            }
+            String anyErrors = writeOutData(request, fhirVersion, update);
             if (anyErrors != null && anyErrors.length() > 0) {
-                File errorFile = null;
-                try (BeneficiaryStream stream = new BeneficiaryStream(request.getJob(), request.getEfsMount(), ERROR,
-                        this.streamingDir, this.finishedDir, this.bufferSize)) {
-                    errorFile = stream.getFile();
-                    logManager.log(new FileEvent(request.getOrganization(), request.getJob(), stream.getFile(), FileEvent.FileStatus.OPEN));
-                    stream.write(anyErrors);
-                } catch (IOException e) {
-                    log.error("Cannot log error to error file");
-                } finally {
-                    logManager.log(new FileEvent(request.getOrganization(), request.getJob(), errorFile, FileEvent.FileStatus.CLOSE));
-                }
+                writeOutErrors(anyErrors, request, fhirVersion);
             }
         } catch (Exception ex) {
             return AsyncResult.forExecutionException(ex);
@@ -105,6 +80,38 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             token.expire();
         }
         return AsyncResult.forValue(update);
+    }
+
+    private String writeOutData(PatientClaimsRequest request, FhirVersion fhirVersion, ProgressTrackerUpdate update) throws IOException {
+        File file = null;
+        String anyErrors = null;
+        try (BeneficiaryStream stream = new BeneficiaryStream(request.getJob(), request.getEfsMount(), DATA,
+                this.streamingDir, this.finishedDir, this.bufferSize)) {
+            file = stream.getFile();
+            logManager.log(new FileEvent(request.getOrganization(), request.getJob(), stream.getFile(), FileEvent.FileStatus.OPEN));
+            for (CoverageSummary patient : request.getCoverageSummary()) {
+                List<IBaseResource> eobs = getEobBundleResources(request, patient);
+                anyErrors = writeOutResource(fhirVersion, update, eobs, stream);
+                update.incPatientProcessCount();
+            }
+        } finally {
+            logManager.log(new FileEvent(request.getOrganization(), request.getJob(), file, FileEvent.FileStatus.CLOSE));
+        }
+        return anyErrors;
+    }
+
+    private void writeOutErrors(String anyErrors, PatientClaimsRequest request, FhirVersion fhirVersion) {
+        File errorFile = null;
+        try (BeneficiaryStream stream = new BeneficiaryStream(request.getJob(), request.getEfsMount(), ERROR,
+                this.streamingDir, this.finishedDir, this.bufferSize)) {
+            errorFile = stream.getFile();
+            logManager.log(new FileEvent(request.getOrganization(), request.getJob(), stream.getFile(), FileEvent.FileStatus.OPEN));
+            stream.write(anyErrors);
+        } catch (IOException e) {
+            log.error("Cannot log error to error file");
+        } finally {
+            logManager.log(new FileEvent(request.getOrganization(), request.getJob(), errorFile, FileEvent.FileStatus.CLOSE));
+        }
     }
 
     @Trace(metricName = "EOBWriteToFile", dispatcher = true)
@@ -156,7 +163,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
      * @return list of matching claims after filtering claims not meeting requirements and stripping fields that AB2D
      * cannot provide
      */
-    private List<IBaseResource> getEobBundleResources(PatientClaimsRequest request, CoverageSummary patient, ProgressTrackerUpdate update) {
+    @Trace(metricName = "EOBRequest", dispatcher = true)
+    private List<IBaseResource> getEobBundleResources(PatientClaimsRequest request, CoverageSummary patient) {
 
         OffsetDateTime requestStartTime = OffsetDateTime.now();
 

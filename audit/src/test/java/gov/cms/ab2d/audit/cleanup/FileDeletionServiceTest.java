@@ -40,6 +40,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -50,6 +51,7 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -372,6 +374,58 @@ class FileDeletionServiceTest {
         List<LoggableEvent> fileEvents = loggerEventRepository.load(FileEvent.class);
         FileEvent e1 = (FileEvent) fileEvents.get(0);
         assertTrue(e1.getFileName().equalsIgnoreCase(destinationJobConnection.toString()));
+
+        checkNoOtherEventsLogged();
+    }
+
+    @DisplayName("Make sure there isn't an issue with files that disappear half way through the processing")
+    @Test
+    void dontWorryAboutDeletedFiles() throws IOException, URISyntaxException {
+        Path jobPath = Paths.get(efsMount, job.getJobUuid());
+        File jobDir = new File(jobPath.toString());
+        if (!jobDir.exists()) jobDir.mkdirs();
+        pathsToDelete.add(jobPath);
+
+        Path destinationNdjsonFile1 = Paths.get(jobPath.toString(), "S0000_0001.ndjson");
+        Path destinationNdjsonFile2 = Paths.get(jobPath.toString(), "S0000_0002.ndjson");
+
+        URL urlOfTestFile = this.getClass().getResource(File.separator + TEST_FILE);
+        Path testFile = Paths.get(urlOfTestFile.toURI());
+        Files.copy(testFile, destinationNdjsonFile1, StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(testFile, destinationNdjsonFile2, StandardCopyOption.REPLACE_EXISTING);
+
+        changeFileCreationDate(destinationNdjsonFile1);
+        changeFileCreationDate(destinationNdjsonFile2);
+
+        Stream<Path> filePaths = Files.walk(Paths.get(efsMount), FileVisitOption.FOLLOW_LINKS);
+
+        List<Path> validFiles = new ArrayList<>();
+        List<Path> directories = new ArrayList<>();
+
+        // Split into regular files
+        // and writable directories
+        filePaths.forEach(path -> {
+            if (Files.isRegularFile(path)) {
+                validFiles.add(path);
+            } else if (Files.isDirectory(path) && Files.isWritable(path)) {
+                directories.add(path);
+            }
+        });
+
+        // Delete it in the middle of the processing
+        Files.delete(destinationNdjsonFile2);
+
+        List<String> jobIds = Collections.singletonList(job.getJobUuid());
+        ((FileDeletionServiceImpl) fileDeletionService).deleteExpiredJobFiles(jobIds, validFiles);
+        ((FileDeletionServiceImpl) fileDeletionService).deleteEmptyDirectories(jobIds, directories);
+
+        assertTrue(Files.notExists(jobPath));
+        assertTrue(Files.notExists(destinationNdjsonFile1));
+        assertTrue(Files.notExists(destinationNdjsonFile2));
+
+        List<LoggableEvent> fileEvents = loggerEventRepository.load(FileEvent.class);
+        FileEvent e1 = (FileEvent) fileEvents.get(0);
+        assertTrue(e1.getFileName().equalsIgnoreCase(destinationNdjsonFile1.toString()));
 
         checkNoOtherEventsLogged();
     }

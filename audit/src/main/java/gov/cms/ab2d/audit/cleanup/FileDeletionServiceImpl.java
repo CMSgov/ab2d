@@ -102,7 +102,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
             for (Path directory : candidateDirs) {
             try {
                 Job job = getJob(jobIds, directory);
-                if (isEmptyDirectory(directory) && job != null && isExpiredDirectory(job, directory)) {
+                if (directory.toFile().exists() && isEmptyDirectory(directory) && job != null && isExpiredDirectory(job, directory)) {
                     Files.delete(directory);
 
                     // Log deleting a folder
@@ -121,7 +121,10 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         // The list of jobs that were expired
         Set<String> jobsDeleted = new HashSet<>();
         for (Path file : validFiles) {
-
+            // Sometimes files disappear before we get to them
+            if (!file.toFile().exists()) {
+                continue;
+            }
             try {
                 // Get the JobId from the name
                 var job = getJob(jobIds, file);
@@ -214,8 +217,10 @@ public class FileDeletionServiceImpl implements FileDeletionService {
     private void deleteFile(Path path, Job job) throws IOException {
         FileEvent fileEvent = EventUtils.getFileEvent(job, new File(path.toUri()), FileEvent.FileStatus.DELETE);
 
-        Files.delete(path);
-        log.info("Deleted file {}", path);
+        if (path.toFile().exists()) {
+            Files.delete(path);
+            log.info("Deleted file {}", path);
+        }
 
         // If we reach this point then file was deleted without an exception so log it to Kinesis and SQL
         eventLogger.log(fileEvent);

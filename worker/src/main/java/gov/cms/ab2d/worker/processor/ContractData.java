@@ -40,7 +40,6 @@ public class ContractData {
     }
 
     public int getNumberBenes(Future<ProgressTrackerUpdate> agg) {
-        int numBenes = 0;
         Integer number = hashBeneMapper.get(agg.hashCode());
         if (number == null) {
             return 0;

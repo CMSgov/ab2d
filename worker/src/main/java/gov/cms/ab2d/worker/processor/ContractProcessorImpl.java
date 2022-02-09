@@ -21,6 +21,7 @@ import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.JobChannelService;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -192,10 +193,17 @@ public class ContractProcessorImpl implements ContractProcessor {
         return jobOutputs;
     }
 
+    /**
+     * Look through the job output file and create JobOutput objects with them
+     *
+     * @param jobId - the job id
+     * @param type - the file type
+     * @return the list of outputs
+     */
     List<JobOutput> getOutputs(String jobId, FileOutputType type) {
         List<JobOutput> jobOutputs = new ArrayList<>();
         List<StreamOutput> dataOutputs = FileUtils.listFiles(efsMount + "/" + jobId, type).stream()
-                .map(file -> OutputHelper.createStreamOutput(file, type))
+                .map(file -> new StreamOutput(file, type))
                 .collect(Collectors.toList());
         dataOutputs.stream().map(output -> createJobOutput(output, type)).forEach(jobOutputs::add);
         return jobOutputs;

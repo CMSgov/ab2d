@@ -288,11 +288,11 @@ public class JobProcessorImpl implements JobProcessor {
     /**
      * @return a Filename filter for ndjson and zip files
      */
-    private FilenameFilter getFilenameFilter() {
+    FilenameFilter getFilenameFilter() {
         return (dir, name) -> {
             final String filename = name.toLowerCase();
             for (FileOutputType type : FileOutputType.values()) {
-                if (filename.endsWith(type.getSuffix())) {
+                if (type != FileOutputType.UNKNOWN && filename.endsWith(type.getSuffix())) {
                     return true;
                 }
             }

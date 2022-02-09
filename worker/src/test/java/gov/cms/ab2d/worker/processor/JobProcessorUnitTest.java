@@ -20,6 +20,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -260,6 +261,18 @@ class JobProcessorUnitTest {
     void sendMeasureToMissingListener() {
         // As long as no exceptions are thrown, this test passes
         jobChannelService.sendUpdate("silly-not-a-real-guid", JobMeasure.EOBS_WRITTEN, -1);
+    }
+
+    @Test
+    @DisplayName("Test to see if we match a valid extension")
+    void testValidExtension(@TempDir File tempDir) throws IOException {
+        Files.writeString(Path.of(tempDir.getAbsolutePath(), "file1.ndjson"), "abc");
+        Files.writeString(Path.of(tempDir.getAbsolutePath(), "file2"), "def");
+        Files.writeString(Path.of(tempDir.getAbsolutePath(), "file3_error.ndjson"), "ghi");
+        final File[] files = tempDir.listFiles(cut.getFilenameFilter());
+        assertEquals(2, files.length);
+        assertNotEquals(files[0].getName(), "file2");
+        assertNotEquals(files[1].getName(), "file2");
     }
 
     private PdpClient createClient() {
