@@ -5,10 +5,7 @@ import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.hpms.SpringBootTestApp;
-import gov.cms.ab2d.hpms.hmsapi.HPMSAttestation;
 import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizationInfo;
-import org.assertj.core.util.Lists;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -23,12 +20,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -66,7 +59,7 @@ public class AttestationUpdaterServiceTest {
 
     @Test
     public void noNewContracts() {
-        List<Contract> result = aus.addNewContracts(Lists.emptyList());
+        List<Contract> result = aus.addNewContracts(Collections.emptyList());
         assertTrue(result.isEmpty());
     }
 
