@@ -21,7 +21,7 @@ pipeline {
         AB2D_V2_ENABLED = true
 
         // Number concurrent benes
-        AB2D_PATIENT_PER_WRITE_THREAD=20
+        AB2D_PATIENT_PER_WRITE_THREAD=10
 
         ARTIFACTORY_URL = credentials('ARTIFACTORY_URL')
     }
