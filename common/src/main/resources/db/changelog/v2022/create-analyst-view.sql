@@ -26,7 +26,7 @@ SELECT con.contract_number, con.contract_name, con.attested_on, con.created, con
 FROM contract con
          LEFT JOIN user_account u ON con.id = u.contract_id;
 
-CREATE VIEW bcp_view AS
+CREATE OR REPLACE VIEW bcp_view AS
 SELECT bcp.id AS bcp_id, con.contract_number, bcp.month, bcp.year, bcp.status, bcp.last_successful_job
 FROM bene_coverage_period bcp
          INNER JOIN contract con ON bcp.contract_number = con.contract_number;
