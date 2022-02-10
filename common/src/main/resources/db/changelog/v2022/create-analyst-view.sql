@@ -121,9 +121,6 @@ $$;
 ------------------------------
 -- Grants to ab2d_analyst user
 ------------------------------
-
-CREATE ROLE ab2d_analyst noinherit;
-
 -- Grant read only privileges to a subset of tables in the database
 GRANT SELECT ON event_api_response TO ab2d_analyst;
 GRANT SELECT ON event_api_request TO ab2d_analyst;
