@@ -6,6 +6,7 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.TestUtil;
+import gov.cms.ab2d.worker.config.SearchConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.junit.jupiter.api.BeforeEach;
@@ -80,14 +81,17 @@ class PatientClaimsProcessorUnitTest {
 
     @BeforeEach
     void setUp() throws Exception {
+        SearchConfig searchConfig = new SearchConfig(tmpEfsMountDir.getAbsolutePath(), "streamingDir",
+                "finishedDir",
+                0, 0, 1, 2);
+
         cut = new PatientClaimsProcessorImpl(
                 mockBfdClient,
-                eventLogger
+                eventLogger,
+                searchConfig
         );
 
         ReflectionTestUtils.setField(cut, "earliestDataDate", "01/01/1900");
-        ReflectionTestUtils.setField(cut, "finishedDir", "finishedDir");
-        ReflectionTestUtils.setField(cut, "streamingDir", "streamingDir");
 
         eob = (ExplanationOfBenefit) EobTestDataUtil.createEOB();
         createOutputFiles();

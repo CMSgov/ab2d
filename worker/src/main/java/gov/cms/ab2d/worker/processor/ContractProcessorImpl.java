@@ -19,11 +19,11 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
+import gov.cms.ab2d.worker.config.SearchConfig;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.JobChannelService;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -63,25 +63,8 @@ public class ContractProcessorImpl implements ContractProcessor {
     @Value("${eob.job.patient.queue.page.size}")
     private int eobJobPatientQueuePageSize;
 
-    private ContractToContractCoverageMapping mapping;
-
+    private final ContractToContractCoverageMapping mapping;
     private final ContractRepository contractRepository;
-
-    @Value("${eob.job.patient.number.per.thread}")
-    private int numberPatientRequestsPerThread;
-
-    @Value("${efs.mount}")
-    private String efsMount;
-
-    @Value("${aggregator.directory.finished}")
-    private String finishedDir;
-
-    @Value("${aggregator.directory.streaming}")
-    private String streamingDir;
-
-    @Value("${aggregator.multiplier}")
-    private int multiplier;
-
     private final JobRepository jobRepository;
     private final CoverageDriver coverageDriver;
     private final PatientClaimsProcessor patientClaimsProcessor;
@@ -90,6 +73,7 @@ public class ContractProcessorImpl implements ContractProcessor {
     private final JobChannelService jobChannelService;
     private final JobProgressService jobProgressService;
     private final ThreadPoolTaskExecutor aggregatorThreadPool;
+    private final SearchConfig searchConfig;
 
     @SuppressWarnings("checkstyle:ParameterNumber") // TODO - refactor to eliminate the ridiculous number of args
     public ContractProcessorImpl(ContractRepository contractRepository,
@@ -101,7 +85,8 @@ public class ContractProcessorImpl implements ContractProcessor {
                                  JobChannelService jobChannelService,
                                  JobProgressService jobProgressService,
                                  ContractToContractCoverageMapping mapping,
-                                 @Qualifier("aggregatorThreadPool") ThreadPoolTaskExecutor aggregatorThreadPool) {
+                                 @Qualifier("aggregatorThreadPool") ThreadPoolTaskExecutor aggregatorThreadPool,
+                                 SearchConfig searchConfig) {
         this.contractRepository = contractRepository;
         this.jobRepository = jobRepository;
         this.coverageDriver = coverageDriver;
@@ -112,6 +97,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         this.jobProgressService = jobProgressService;
         this.mapping = mapping;
         this.aggregatorThreadPool = aggregatorThreadPool;
+        this.searchConfig = searchConfig;
     }
 
     /**
@@ -139,7 +125,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      *
      * @return - the job output records containing the file information
      */
-    public List<JobOutput> process(Path outputDirPath, Job job) {
+    public List<JobOutput> process(Job job) {
         var contractNumber = job.getContractNumber();
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contractNumber));
 
@@ -150,13 +136,13 @@ public class ContractProcessorImpl implements ContractProcessor {
         log.info("Contract [{}] has [{}] Patients", contractNumber, numBenes);
 
         // Create the aggregator
-        AggregatorCallable aggregator = new AggregatorCallable(efsMount, job.getJobUuid(), contractNumber,
-                ndjsonRollOver, streamingDir, finishedDir, multiplier);
+        AggregatorCallable aggregator = new AggregatorCallable(searchConfig.getEfsMount(), job.getJobUuid(), contractNumber,
+                ndjsonRollOver, searchConfig.getStreamingDir(), searchConfig.getFinishedDir(), searchConfig.getMultiplier());
 
         List<JobOutput> jobOutputs = new ArrayList<>();
         try {
             // Let the aggregator create all the necessary directories
-            JobHelper.workerSetUpJobDirectories(job.getJobUuid(), efsMount, streamingDir, finishedDir);
+            JobHelper.workerSetUpJobDirectories(job.getJobUuid(), searchConfig.getEfsMount(), searchConfig.getStreamingDir(), searchConfig.getFinishedDir());
             // Create the aggregator thread
             Future<Integer> aggregatorFuture = aggregatorThreadPool.submit(aggregator);
 
@@ -174,7 +160,7 @@ public class ContractProcessorImpl implements ContractProcessor {
                     jobProgressService.getStatus(job.getJobUuid()).getEobsProcessedCount(), contractNumber);
 
             // Mark the job as finished for the aggregator (all file data has been written out)
-            JobHelper.workerFinishJob(efsMount + "/" + job.getJobUuid() + "/" + streamingDir);
+            JobHelper.workerFinishJob(searchConfig.getEfsMount() + "/" + job.getJobUuid() + "/" + searchConfig.getStreamingDir());
 
             // Wait for the aggregator to finish
             while (!aggregatorFuture.isDone()) {
@@ -202,7 +188,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      */
     List<JobOutput> getOutputs(String jobId, FileOutputType type) {
         List<JobOutput> jobOutputs = new ArrayList<>();
-        List<StreamOutput> dataOutputs = FileUtils.listFiles(efsMount + "/" + jobId, type).stream()
+        List<StreamOutput> dataOutputs = FileUtils.listFiles(searchConfig.getEfsMount() + "/" + jobId, type).stream()
                 .map(file -> new StreamOutput(file, type))
                 .collect(Collectors.toList());
         dataOutputs.stream().map(output -> createJobOutput(output, type)).forEach(jobOutputs::add);
@@ -231,7 +217,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         // Handle first page of beneficiaries and then enter loop
         CoveragePagingResult current = coverageDriver.pageCoverage(new CoveragePagingRequest(eobJobPatientQueuePageSize,
                 null, mapping.map(contract), contractData.getJob().getCreatedAt()));
-        loadRequestBatch(contractData, current, numberPatientRequestsPerThread);
+        loadRequestBatch(contractData, current, searchConfig.getNumberBenesPerBatch());
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUEST_QUEUED, current.size());
 
         // Do not replace with for each, continue is meant to force patients to wait to be queued
@@ -247,7 +233,7 @@ public class ContractProcessorImpl implements ContractProcessor {
 
             // Queue a batch of patients
             current = coverageDriver.pageCoverage(current.getNextRequest().get());
-            loadRequestBatch(contractData, current, numberPatientRequestsPerThread);
+            loadRequestBatch(contractData, current, searchConfig.getNumberBenesPerBatch());
             jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUEST_QUEUED, current.size());
 
             processFinishedRequests(contractData);
@@ -350,7 +336,7 @@ public class ContractProcessorImpl implements ContractProcessor {
                     contractData.getContract().getContractType(),
                     token,
                     job.getFhirVersion(),
-                    efsMount);
+                    searchConfig.getEfsMount());
             return patientClaimsProcessor.process(patientClaimsRequest);
 
         } finally {

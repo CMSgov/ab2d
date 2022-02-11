@@ -11,6 +11,7 @@ import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.filter.FilterOutByDate;
+import gov.cms.ab2d.worker.config.SearchConfig;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,9 +62,15 @@ public class AggregatorJobTest {
     @Mock
     private LogManager logManager;
 
+    private static final String STREAMING = "streaming";
+    private static final String FINISHED = "finished";
+
     @BeforeEach
     void setUp() {
-        processor = new PatientClaimsProcessorImpl(bfdClient, logManager);
+        SearchConfig searchConfig = new SearchConfig(tempDir.getAbsolutePath(), STREAMING,
+                FINISHED, 0, 0, 1, 2);
+
+        processor = new PatientClaimsProcessorImpl(bfdClient, logManager, searchConfig);
     }
 
     @Test
@@ -71,8 +78,6 @@ public class AggregatorJobTest {
         String job = "123";
         String contractNo = "ABCD";
         String org = "org1";
-        String finished = "finished";
-        String streaming = "streaming";
         final Token token = NewRelic.getAgent().getTransaction().getToken();
 
         when(bfdClient.requestEOBFromServer(eq(STU3), eq(1L), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(1)));
@@ -92,8 +97,6 @@ public class AggregatorJobTest {
                 OffsetDateTime.of(2020, 1, 1, 0, 0, 0, 9, ZoneOffset.UTC),
                 OffsetDateTime.of(2020, 1, 1, 0, 0, 0, 9, ZoneOffset.UTC),
                 org, job, contract.getContractNumber(), Contract.ContractType.NORMAL, token, FhirVersion.STU3, tempDir.getAbsolutePath());
-        ReflectionTestUtils.setField(processor, "finishedDir", finished);
-        ReflectionTestUtils.setField(processor, "streamingDir", streaming);
         ReflectionTestUtils.setField(processor, "earliestDataDate", "01/01/2020");
 
         Future<ProgressTrackerUpdate> future = processor.process(request);
@@ -101,7 +104,7 @@ public class AggregatorJobTest {
             Thread.sleep(500);
         }
 
-        File[] files = (new File(tempDir + "/" + job + "/finished")).listFiles();
+        File[] files = (new File(tempDir + "/" + job + "/" + FINISHED)).listFiles();
         assertNotNull(files);
         assertEquals(1, files.length);
         List<String> allLines = Files.readAllLines(Path.of(files[0].getAbsolutePath()));

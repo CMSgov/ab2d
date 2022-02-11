@@ -3,7 +3,7 @@ package gov.cms.ab2d.worker.processor;
 import ca.uhn.fhir.parser.IParser;
 import com.newrelic.api.agent.Token;
 import com.newrelic.api.agent.Trace;
-import gov.cms.ab2d.aggregator.BeneficiaryStream;
+import gov.cms.ab2d.aggregator.ClaimsStream;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -11,6 +11,7 @@ import gov.cms.ab2d.eventlogger.events.BeneficiarySearchEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.FhirVersion;
+import gov.cms.ab2d.worker.config.SearchConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -44,18 +45,10 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     private final BFDClient bfdClient;
     private final LogManager logManager;
+    private final SearchConfig searchConfig;
 
     @Value("${bfd.earliest.data.date:01/01/2020}")
     private String earliestDataDate;
-
-    @Value("${aggregator.directory.finished}")
-    private String finishedDir;
-
-    @Value("${aggregator.directory.streaming}")
-    private String streamingDir;
-
-    @Value("${aggregator.file.buffer.size}")
-    private int bufferSize;
 
     private static final OffsetDateTime START_CHECK = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
 
@@ -85,8 +78,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     private String writeOutData(PatientClaimsRequest request, FhirVersion fhirVersion, ProgressTrackerUpdate update) throws IOException {
         File file = null;
         String anyErrors = null;
-        try (BeneficiaryStream stream = new BeneficiaryStream(request.getJob(), request.getEfsMount(), DATA,
-                this.streamingDir, this.finishedDir, this.bufferSize)) {
+        try (ClaimsStream stream = new ClaimsStream(request.getJob(), request.getEfsMount(), DATA,
+                searchConfig.getStreamingDir(), searchConfig.getFinishedDir(), searchConfig.getBufferSize())) {
             file = stream.getFile();
             logManager.log(new FileEvent(request.getOrganization(), request.getJob(), stream.getFile(), FileEvent.FileStatus.OPEN));
             for (CoverageSummary patient : request.getCoverageSummary()) {
@@ -102,8 +95,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     private void writeOutErrors(String anyErrors, PatientClaimsRequest request, FhirVersion fhirVersion) {
         File errorFile = null;
-        try (BeneficiaryStream stream = new BeneficiaryStream(request.getJob(), request.getEfsMount(), ERROR,
-                this.streamingDir, this.finishedDir, this.bufferSize)) {
+        try (ClaimsStream stream = new ClaimsStream(request.getJob(), request.getEfsMount(), ERROR,
+                searchConfig.getStreamingDir(), searchConfig.getFinishedDir(), searchConfig.getBufferSize())) {
             errorFile = stream.getFile();
             logManager.log(new FileEvent(request.getOrganization(), request.getJob(), stream.getFile(), FileEvent.FileStatus.OPEN));
             stream.write(anyErrors);
@@ -115,7 +108,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     }
 
     @Trace(metricName = "EOBWriteToFile", dispatcher = true)
-    private String writeOutResource(FhirVersion version, ProgressTrackerUpdate update, List<IBaseResource> eobs, BeneficiaryStream stream) {
+    private String writeOutResource(FhirVersion version, ProgressTrackerUpdate update, List<IBaseResource> eobs, ClaimsStream stream) {
         IParser parser = version.getJsonParser().setPrettyPrint(false);
         if (eobs == null) {
             log.debug("ignoring empty results because pulling eobs failed");

@@ -139,7 +139,7 @@ public class PatientClaimsCollector {
 
         Long patientId = EobUtils.getPatientId(benefit);
         if (patientId == null || patient.getIdentifiers().getBeneficiaryId() != patientId) {
-            log.error(patientId + " returned in EOB, but does not match eob of");
+            log.error(patientId + " returned in EOB object, but does not match beneficiary id passed to the search");
             return false;
         }
         return true;

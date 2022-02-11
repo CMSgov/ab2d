@@ -13,6 +13,7 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
+import gov.cms.ab2d.worker.config.SearchConfig;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.repository.StubContractRepository;
 import gov.cms.ab2d.worker.repository.StubJobRepository;
@@ -61,10 +62,6 @@ class ContractProcessorInvalidPatientTest {
     @Mock
     private ContractToContractCoverageMapping mapping;
 
-    private ContractRepository contractRepository;
-
-    private JobRepository jobRepository;
-
     @Mock
     private RoundRobinBlockingQueue<PatientClaimsRequest> requestQueue;
 
@@ -76,20 +73,25 @@ class ContractProcessorInvalidPatientTest {
     private final Job job = new Job();
     private static final String jobId = "1234";
     private final String contractId = "ABC";
+    private static final String FINISHED_DIR = "finishedDir";
+    private static final String STREAMING_DIR = "streamingDir";
 
     @BeforeEach
     void setup() {
 
+        SearchConfig searchConfig = new SearchConfig(tmpDirFolder.getAbsolutePath(), STREAMING_DIR,
+                FINISHED_DIR, 0, 0, 1, 2);
+
         Contract contract = new Contract();
         contract.setContractNumber(contractId);
         contract.setAttestedOn(OffsetDateTime.now().minusYears(50));
-        contractRepository = new StubContractRepository(contract);
+        ContractRepository contractRepository = new StubContractRepository(contract);
 
         job.setJobUuid(jobId);
         job.setContractNumber(contract.getContractNumber());
-        jobRepository = new StubJobRepository(job);
+        JobRepository jobRepository = new StubJobRepository(job);
 
-        patientClaimsProcessor = new PatientClaimsProcessorImpl(bfdClient, eventLogger);
+        patientClaimsProcessor = new PatientClaimsProcessorImpl(bfdClient, eventLogger, searchConfig);
         JobProgressServiceImpl jobProgressUpdateService = new JobProgressServiceImpl(jobRepository);
         jobProgressUpdateService.initJob(jobId);
         JobChannelService jobChannelService = new JobChannelStubServiceImpl(jobProgressUpdateService);
@@ -97,20 +99,12 @@ class ContractProcessorInvalidPatientTest {
         ThreadPoolTaskExecutor aggTP = new ThreadPoolTaskExecutor();
         aggTP.initialize();
         cut = new ContractProcessorImpl(contractRepository, jobRepository, coverageDriver, patientClaimsProcessor, eventLogger,
-                requestQueue, jobChannelService, jobProgressUpdateService, mapping, aggTP);
-        ReflectionTestUtils.setField(cut, "numberPatientRequestsPerThread", 2);
-        ReflectionTestUtils.setField(cut, "ndjsonRollOver", 0);
+                requestQueue, jobChannelService, jobProgressUpdateService, mapping, aggTP, searchConfig);
         ReflectionTestUtils.setField(cut, "eobJobPatientQueueMaxSize", 1);
         ReflectionTestUtils.setField(cut, "eobJobPatientQueuePageSize", 1);
-        ReflectionTestUtils.setField(cut, "efsMount", tmpDirFolder.getAbsolutePath());
-        ReflectionTestUtils.setField(cut, "finishedDir", "finished");
-        ReflectionTestUtils.setField(cut, "streamingDir", "streaming");
-        ReflectionTestUtils.setField(cut, "multiplier", 1);
         jobChannelService.sendUpdate(jobId, JobMeasure.FAILURE_THRESHHOLD, 100);
 
         ReflectionTestUtils.setField(patientClaimsProcessor, "earliestDataDate", "01/01/2020");
-        ReflectionTestUtils.setField(patientClaimsProcessor, "finishedDir", "finished");
-        ReflectionTestUtils.setField(patientClaimsProcessor, "streamingDir", "streaming");
     }
 
     @Test
@@ -132,7 +126,7 @@ class ContractProcessorInvalidPatientTest {
         when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class))).thenReturn(
                 new CoveragePagingResult(summaries, null));
 
-        List<JobOutput> outputs = cut.process(tmpDirFolder.toPath(), job);
+        List<JobOutput> outputs = cut.process(job);
 
         assertNotNull(outputs);
         assertEquals(1, outputs.size());

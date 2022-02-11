@@ -219,7 +219,7 @@ class JobProcessorUnitTest {
     @Test
     @DisplayName("When job fails, persistence of progress tracker occurs")
     void whenJobThrowsException_thenProgressIsLogged() {
-        when(contractProcessor.process(any(), any())).thenThrow(RuntimeException.class);
+        when(contractProcessor.process(any())).thenThrow(RuntimeException.class);
 
         var processedJob = cut.process(job.getJobUuid());
 

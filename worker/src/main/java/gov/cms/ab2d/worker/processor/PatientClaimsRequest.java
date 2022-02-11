@@ -18,42 +18,57 @@ import java.util.List;
 @AllArgsConstructor
 public class PatientClaimsRequest {
 
-    /** Identifiers associated with patient and date ranges that patient is/was enrolled in the Part D contract.
+    /**
+     * Identifiers associated with patient and date ranges that patient is/was enrolled in the Part D contract.
      * Used by {@link PatientClaimsCollector} to filter out claims with billable periods outside enrolled dates.
      *
      * Do not change without consulting multiple people.
      */
     private final List<CoverageSummary> coverageSummary;
 
-    // Datetime that contract was legally attested for
+    /**
+     * Datetime when contract was legally attested for
+     */
     private final OffsetDateTime attTime;
 
-    // Optional datetime that PDP wants data for. Does not correspond to when services were conducted only
+    /**
+     * Optional datetime that PDP wants data for. Does not correspond to when services were conducted only
+     */
     @Nullable
     private final OffsetDateTime sinceTime;
 
-    // Organization name of contract that is not sensitive
+    /**
+     * Organization name of contract that is not case sensitive
+     */
     private final String organization;
 
-    // Job UUID
+    /**
+     * Job UUID
+     */
     private final String job;
 
+    /**
+     * Contract number
+     */
     private final String contractNum;
 
-    /** Dictates how date filtering is done in {@link PatientClaimsCollector}.
-     *
-     * Do not change without consulting multiple people.
+    /**
+     * Dictates how date filtering is done in {@link PatientClaimsCollector} for real vs test contracts.
      */
     private final Contract.ContractType contractType;
 
-    // NR token corresponding to transaction. Calls are sampled to profile performance.
+    /**
+     * NR token corresponding to transaction. Calls are sampled to profile performance.
+     */
     private final Token token;
 
-    /** Dictates what fields are removed from claims in {@link PatientClaimsCollector}
-     *
-     * Do not change without consulting multiple people.
+    /**
+     * Dictates which version of FHIR to use when requesting and serializing data
      */
     private final FhirVersion version;
 
+    /**
+     * The starting point for all job files
+     */
     private final String efsMount;
 }

@@ -40,10 +40,6 @@ public class ContractData {
     }
 
     public int getNumberBenes(Future<ProgressTrackerUpdate> agg) {
-        Integer number = hashBeneMapper.get(agg.hashCode());
-        if (number == null) {
-            return 0;
-        }
-        return number;
+        return hashBeneMapper.getOrDefault(agg.hashCode(), 0);
     }
 }

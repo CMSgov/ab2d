@@ -14,6 +14,7 @@ import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
+import gov.cms.ab2d.worker.config.SearchConfig;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.stub.PatientClaimsProcessorStub;
 import gov.cms.ab2d.worker.repository.StubContractRepository;
@@ -76,7 +77,6 @@ class ContractProcessorUnitTest {
     private PatientClaimsProcessor patientClaimsProcessor;
     private JobChannelService jobChannelService;
 
-    private Path outputDir;
     private Contract contract;
     private ContractForCoverageDTO contractForCoverageDTO;
     private ContractToContractCoverageMapping mapping;
@@ -103,6 +103,9 @@ class ContractProcessorUnitTest {
         ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
         pool.initialize();;
 
+        SearchConfig searchConfig = new SearchConfig(efsMountTmpDir.toFile().getAbsolutePath(),
+                "streaming", "finished", 0, 0, 2, 1);
+
         ContractRepository contractRepository = new StubContractRepository(contract);
         cut = new ContractProcessorImpl(
                 contractRepository,
@@ -114,16 +117,13 @@ class ContractProcessorUnitTest {
                 jobChannelService,
                 jobProgressImpl,
                 mapping,
-                pool);
+                pool,
+                searchConfig);
 
-        ReflectionTestUtils.setField(cut, "finishedDir", "finished");
-        ReflectionTestUtils.setField(cut, "streamingDir", "streaming");
-        ReflectionTestUtils.setField(cut, "multiplier", 2);
-        ReflectionTestUtils.setField(cut, "efsMount", efsMountTmpDir.toFile().getAbsolutePath());
         //ReflectionTestUtils.setField(cut, "numberPatientRequestsPerThread", 2);
 
         var outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
-        outputDir = Files.createDirectories(outputDirPath);
+        Files.createDirectories(outputDirPath);
     }
 
     @Test
@@ -140,7 +140,7 @@ class ContractProcessorUnitTest {
         job.setStatus(JobStatus.CANCELLED);
 
         var exceptionThrown = assertThrows(JobCancelledException.class,
-                () -> cut.process(outputDir, job));
+                () -> cut.process(job));
 
         assertTrue(exceptionThrown.getMessage().startsWith("Job was cancelled while it was being processed"));
         verify(patientClaimsProcessor, atLeast(1)).process(any());
@@ -172,7 +172,7 @@ class ContractProcessorUnitTest {
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_EXPECTED, 18);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
 
-        var jobOutputs = cut.process(outputDir, job);
+        var jobOutputs = cut.process(job);
 
         assertEquals(6, jobRepository.getUpdatePercentageCompletedCount());
         verify(patientClaimsProcessor, atLeast(1)).process(any());
@@ -185,7 +185,7 @@ class ContractProcessorUnitTest {
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contractForCoverageDTO, 1), null));
         when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(3);
 
-        ContractProcessingException exception = assertThrows(ContractProcessingException.class, () -> cut.process(outputDir, job));
+        ContractProcessingException exception = assertThrows(ContractProcessingException.class, () -> cut.process(job));
 
         assertTrue(exception.getMessage().contains("from database but retrieved"));
     }
@@ -249,7 +249,7 @@ class ContractProcessorUnitTest {
 
         ExecutorService singleThreadedExecutor = Executors.newSingleThreadExecutor();
 
-        Runnable testRunnable = () -> cut.process(outputDir, job);
+        Runnable testRunnable = () -> cut.process(job);
 
         Future<?> future = singleThreadedExecutor.submit(testRunnable);
 

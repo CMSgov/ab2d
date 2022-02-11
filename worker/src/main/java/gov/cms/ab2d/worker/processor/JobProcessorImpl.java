@@ -136,7 +136,7 @@ public class JobProcessorImpl implements JobProcessor {
 
         try {
             // Retrieve the contract beneficiaries
-            var jobOutputs = contractProcessor.process(outputDirPath, job);
+            var jobOutputs = contractProcessor.process(job);
 
             // For each job output, add to the job and save the result
             jobOutputs.forEach(job::addJobOutput);

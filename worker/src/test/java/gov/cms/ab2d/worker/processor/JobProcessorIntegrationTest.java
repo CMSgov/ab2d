@@ -32,6 +32,7 @@ import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
+import gov.cms.ab2d.worker.config.SearchConfig;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.service.JobChannelService;
@@ -192,10 +193,11 @@ class JobProcessorIntegrationTest {
         when(mockCoverageDriver.pageCoverage(any(CoveragePagingRequest.class))).thenReturn(
                 new CoveragePagingResult(loadFauxMetadata(contractForCoverageDTO, 99), null));
 
-        PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, logManager);
+        SearchConfig searchConfig = new SearchConfig(tmpEfsMountDir.getAbsolutePath(),
+                STREAMING_DIR, FINISHED_DIR, 0, 0, MULTIPLIER, NUMBER_PATIENT_REQUESTS_PER_THREAD);
+
+        PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, logManager, searchConfig);
         ReflectionTestUtils.setField(patientClaimsProcessor, "earliestDataDate", "01/01/1900");
-        ReflectionTestUtils.setField(patientClaimsProcessor, "finishedDir", "finished");
-        ReflectionTestUtils.setField(patientClaimsProcessor, "streamingDir", "streaming");
 
         ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
         pool.initialize();
@@ -210,12 +212,8 @@ class JobProcessorIntegrationTest {
                 jobChannelService,
                 jobProgressService,
                 mapping,
-                pool);
-        ReflectionTestUtils.setField(contractProcessor, "efsMount", tmpEfsMountDir.toString());
-        ReflectionTestUtils.setField(contractProcessor, "numberPatientRequestsPerThread", NUMBER_PATIENT_REQUESTS_PER_THREAD);
-        ReflectionTestUtils.setField(contractProcessor, "finishedDir", FINISHED_DIR);
-        ReflectionTestUtils.setField(contractProcessor, "streamingDir", STREAMING_DIR);
-        ReflectionTestUtils.setField(contractProcessor, "multiplier", MULTIPLIER);
+                pool,
+                searchConfig);
 
         cut = new JobProcessorImpl(
                 fileService,
