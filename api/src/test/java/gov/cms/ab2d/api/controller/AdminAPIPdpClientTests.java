@@ -368,7 +368,7 @@ public class AdminAPIPdpClientTests {
         pdpClient.setClientId(clientId);
         pdpClient.setOrganization(TEST_ORG);
         pdpClient.setEnabled(enabled);
-        pdpClient.setContract(contract);
+        pdpClient.setContractNumber(ENABLE_DISABLE_CONTRACT);
 
         PdpClient savedPdpClient = pdpClientRepository.save(pdpClient);
         dataSetup.queueForCleanup(savedPdpClient);

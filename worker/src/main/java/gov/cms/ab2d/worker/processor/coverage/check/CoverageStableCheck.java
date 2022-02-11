@@ -1,13 +1,12 @@
 package gov.cms.ab2d.worker.processor.coverage.check;
 
-import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.service.CoverageService;
-import lombok.extern.slf4j.Slf4j;
-
+import gov.cms.ab2d.worker.model.ContractWorkerDto;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Check to make sure that month to month enrollment changes are within acceptable bounds. If enrollment goes from
@@ -24,7 +23,7 @@ public class CoverageStableCheck extends CoverageCheckPredicate {
     }
 
     @Override
-    public boolean test(Contract contract) {
+    public boolean test(ContractWorkerDto contract) {
         List<String> enrollmentChangeIssues = listCoveragePeriodsWithChangedEnrollment(coverageCounts.get(contract.getContractNumber()));
         issues.addAll(enrollmentChangeIssues);
 

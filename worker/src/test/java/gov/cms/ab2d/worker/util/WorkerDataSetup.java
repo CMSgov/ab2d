@@ -1,34 +1,37 @@
-package gov.cms.ab2d.common.util;
+package gov.cms.ab2d.worker.util;
 
-import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.Role;
-import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.repository.RoleRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import javax.sql.DataSource;
+import gov.cms.ab2d.worker.model.ContractWorkerDto;
+import gov.cms.ab2d.worker.repository.ContractWorkerRepository;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import javax.sql.DataSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 
 import static java.util.stream.Collectors.toList;
 
 @Component
-public class DataSetup {
+public class WorkerDataSetup {
 
     @Autowired
     private DataSource dataSource;
 
     @Autowired
-    private ContractRepository contractRepository;
+    private ContractWorkerRepository contractRepository;
 
     @Autowired
     private PdpClientRepository pdpClientRepository;
@@ -77,8 +80,8 @@ public class DataSetup {
             }
         });
 
-        List<Contract> contractsToDelete = domainObjects.stream().filter(object -> object instanceof Contract)
-                .map(object -> (Contract) object).collect(toList());
+        List<ContractWorkerDto> contractsToDelete = domainObjects.stream().filter(object -> object instanceof ContractWorkerDto)
+                .map(object -> (ContractWorkerDto) object).collect(toList());
         contractRepository.deleteAll(contractsToDelete);
         contractRepository.flush();
 
@@ -100,15 +103,15 @@ public class DataSetup {
             throw new RuntimeException(sqlException);
         }
     }
-    public Contract setupContract(String contractNumber) {
+    public ContractWorkerDto setupContract(String contractNumber) {
         return setupContract(contractNumber, OffsetDateTime.now());
     }
 
-    public Contract setupContract(String contractNumber, OffsetDateTime attestedOn) {
-        Contract contract = new Contract();
+    public ContractWorkerDto setupContract(String contractNumber, OffsetDateTime attestedOn) {
+        ContractWorkerDto contract = new ContractWorkerDto();
 
         contract.setAttestedOn(attestedOn);
-        contract.setContractName("Test Contract " + contractNumber);
+        contract.setContractName("Test ContractWorkerDto " + contractNumber);
         contract.setContractNumber(contractNumber);
 
         contract =  contractRepository.save(contract);
@@ -119,9 +122,9 @@ public class DataSetup {
     public void setupContractWithNoAttestation(List<String> clientRoles) {
         setupPdpClient(clientRoles);
 
-        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+        Optional<ContractWorkerDto> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         @SuppressWarnings("OptionalGetWithoutIsPresent")
-        Contract contract = contractOptional.get();
+        ContractWorkerDto contract = contractOptional.get();
         contract.setAttestedOn(null);
 
         contractRepository.saveAndFlush(contract);
@@ -130,21 +133,21 @@ public class DataSetup {
     public void setupContractWithNoAttestation(String clientId, String contractNumber, List<String> clientRoles) {
         setupNonStandardClient(clientId, contractNumber, clientRoles);
 
-        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(contractNumber);
+        Optional<ContractWorkerDto> contractOptional = contractRepository.findContractByContractNumber(contractNumber);
         @SuppressWarnings("OptionalGetWithoutIsPresent")
-        Contract contract = contractOptional.get();
+        ContractWorkerDto contract = contractOptional.get();
         contract.setAttestedOn(null);
 
         contractRepository.saveAndFlush(contract);
     }
 
     public void setupContractSponsorForParentClientData(List<String> clientRoles) {
-        Contract contract = setupContract("ABC123");
+        ContractWorkerDto contract = setupContract("ABC123");
 
         savePdpClient(TEST_PDP_CLIENT, contract, clientRoles);
     }
 
-    private PdpClient savePdpClient(String clientId, Contract contract, List<String> clientRoles) {
+    private PdpClient savePdpClient(String clientId, ContractWorkerDto contract, List<String> clientRoles) {
         PdpClient pdpClient = new PdpClient();
         pdpClient.setClientId(clientId);
         pdpClient.setOrganization("PDP-" + clientId);
@@ -174,7 +177,7 @@ public class DataSetup {
             return testPdpClient;
         }
 
-        Contract contract = setupContract(VALID_CONTRACT_NUMBER);
+        ContractWorkerDto contract = setupContract(VALID_CONTRACT_NUMBER);
 
         return savePdpClient(TEST_PDP_CLIENT, contract, clientRoles);
     }
@@ -185,7 +188,7 @@ public class DataSetup {
             return testPdpClient;
         }
 
-        Contract contract = setupContract(contractNumber);
+        ContractWorkerDto contract = setupContract(contractNumber);
 
         return savePdpClient(clientdId, contract, clientRoles);
     }

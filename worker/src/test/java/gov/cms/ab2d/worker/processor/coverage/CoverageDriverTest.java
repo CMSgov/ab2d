@@ -4,18 +4,14 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.dto.PdpClientDTO;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
-import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.PdpClient;
-import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Constants;
-import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageJobStatus;
@@ -31,6 +27,9 @@ import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import gov.cms.ab2d.fhir.IdentifierUtils;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.model.ContractWorkerDto;
+import gov.cms.ab2d.worker.repository.ContractWorkerRepository;
+import gov.cms.ab2d.worker.service.ContractWorkerService;
+import gov.cms.ab2d.worker.util.WorkerDataSetup;
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -89,10 +88,10 @@ class CoverageDriverTest {
     private static final PostgreSQLContainer postgres = new AB2DPostgresqlContainer();
 
     @Autowired
-    private ContractRepository contractRepo;
+    private ContractWorkerRepository contractRepo;
 
     @Autowired
-    private ContractService contractService;
+    private ContractWorkerService contractService;
 
     @Autowired
     private CoveragePeriodRepository coveragePeriodRepo;
@@ -116,7 +115,7 @@ class CoverageDriverTest {
     private PropertiesService propertiesService;
 
     @Autowired
-    private DataSetup dataSetup;
+    private WorkerDataSetup dataSetup;
 
     @Autowired
     private CoverageDataSetup coverageDataSetup;
@@ -184,7 +183,7 @@ class CoverageDriverTest {
         taskExecutor.initialize();
 
         processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS, contractService);
-        driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesService, processor, searchLock, contractToContractCoverageMapping);
+        driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesService, processor, searchLock, contractToContractCoverageMapping, contractService);
     }
 
     @AfterEach
@@ -274,7 +273,7 @@ class CoverageDriverTest {
 
         ContractWorkerDto testContract = dataSetup.setupContract("TST-AFTER-EPOCH",
                 AB2D_EPOCH.toOffsetDateTime().plusMonths(3));
-        testContract.setUpdateMode(Contract.UpdateMode.NONE);
+        testContract.setUpdateMode(ContractWorkerDto.UpdateMode.NONE);
 
         contractRepo.saveAndFlush(testContract);
 
@@ -838,7 +837,7 @@ class CoverageDriverTest {
         }
     }
 
-    private PdpClientDTO createClient(Contract contract, String clientId, @Nullable String roleName) {
+    private PdpClientDTO createClient(ContractWorkerDto contract, String clientId, @Nullable String roleName) {
         PdpClientDTO client = new PdpClientDTO();
         client.setClientId(clientId);
         client.setOrganization(clientId);

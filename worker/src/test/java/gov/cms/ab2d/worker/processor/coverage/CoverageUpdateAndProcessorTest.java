@@ -4,16 +4,12 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.dto.PdpClientDTO;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
-import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.Properties;
-import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Constants;
-import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.coverage.model.CoverageJobStatus;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
@@ -24,6 +20,10 @@ import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
+import gov.cms.ab2d.worker.model.ContractWorkerDto;
+import gov.cms.ab2d.worker.repository.ContractWorkerRepository;
+import gov.cms.ab2d.worker.service.ContractWorkerService;
+import gov.cms.ab2d.worker.util.WorkerDataSetup;
 import java.time.DayOfWeek;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
@@ -81,10 +81,10 @@ class CoverageUpdateAndProcessorTest {
     private int maxRetries;
 
     @Autowired
-    private ContractRepository contractRepo;
+    private ContractWorkerRepository contractRepo;
 
     @Autowired
-    private ContractService contractService;
+    private ContractWorkerService contractService;
 
     @Autowired
     private CoveragePeriodRepository coveragePeriodRepo;
@@ -105,7 +105,7 @@ class CoverageUpdateAndProcessorTest {
     private PropertiesService propertiesService;
 
     @Autowired
-    private DataSetup dataSetup;
+    private WorkerDataSetup dataSetup;
 
     @Autowired
     private CoverageDataSetup coverageDataSetup;
@@ -154,7 +154,7 @@ class CoverageUpdateAndProcessorTest {
         taskExecutor.initialize();
 
         processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS, contractService);
-        driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesService, processor, searchLock, mapping);
+        driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesService, processor, searchLock, mapping, contractService);
     }
 
     @AfterEach
@@ -709,7 +709,7 @@ class CoverageUpdateAndProcessorTest {
     }
 
 
-    private PdpClientDTO createClient(Contract contract, String clientId, @Nullable String roleName) {
+    private PdpClientDTO createClient(ContractWorkerDto contract, String clientId, @Nullable String roleName) {
         PdpClientDTO client = new PdpClientDTO();
         client.setClientId(clientId);
         client.setOrganization(clientId);

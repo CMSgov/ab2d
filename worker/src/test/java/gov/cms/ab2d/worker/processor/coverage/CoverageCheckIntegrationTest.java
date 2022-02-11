@@ -1,11 +1,8 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
-import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
-import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.coverage.model.CoverageJobStatus;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
@@ -17,6 +14,8 @@ import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import gov.cms.ab2d.worker.model.ContractWorkerDto;
+import gov.cms.ab2d.worker.repository.ContractWorkerRepository;
+import gov.cms.ab2d.worker.util.WorkerDataSetup;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.LinkedHashSet;
@@ -48,7 +47,7 @@ public class CoverageCheckIntegrationTest {
     private static final PostgreSQLContainer postgres = new AB2DPostgresqlContainer();
 
     @Autowired
-    private ContractRepository contractRepo;
+    private ContractWorkerRepository contractRepo;
 
     @Autowired
     private CoverageSearchRepository coverageSearchRepo;
@@ -69,7 +68,7 @@ public class CoverageCheckIntegrationTest {
     private PdpClientService pdpClientService;
 
     @Autowired
-    private DataSetup dataSetup;
+    private WorkerDataSetup dataSetup;
 
     @Autowired
     private CoverageDataSetup coverageDataSetup;
@@ -78,7 +77,7 @@ public class CoverageCheckIntegrationTest {
     private static final ZonedDateTime ATTESTATION_TIME = CURRENT_TIME.minusMonths(3);
 
     private ContractWorkerDto contract;
-    private List<Contract> enabledContracts;
+    private List<String> enabledContractNumbers;
     private CoveragePeriod attestationMonth;
     private CoveragePeriod attestationMonthPlus1;
     private CoveragePeriod attestationMonthPlus2;
@@ -86,11 +85,11 @@ public class CoverageCheckIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        enabledContracts = pdpClientService.getAllEnabledContracts();
-        enabledContracts.forEach(contract -> pdpClientService.disableClient(contract.getContractNumber()));
+        enabledContractNumbers = pdpClientService.getAllEnabledContracts();
+        enabledContractNumbers.forEach(contractNumber -> pdpClientService.disableClient(contractNumber));
 
         PdpClient client = dataSetup.setupNonStandardClient("special", "TEST", List.of("SPONSOR"));
-        contract = client.getContract();
+        contract = dataSetup.setupContract("TEST");
         contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
         contractRepo.saveAndFlush(contract);
 
@@ -98,7 +97,7 @@ public class CoverageCheckIntegrationTest {
 
     @AfterEach
     void tearDown() {
-        enabledContracts.forEach(contract -> pdpClientService.enableClient(contract.getContractNumber()));
+        enabledContractNumbers.forEach(contractNumber -> pdpClientService.enableClient(contractNumber));
         coverageDataSetup.cleanup();
         dataSetup.cleanup();
     }
@@ -154,10 +153,10 @@ public class CoverageCheckIntegrationTest {
     void verifyCoverage_whenZContractIgnore() {
 
         PdpClient client = dataSetup.setupNonStandardClient("special2", "Z5555", List.of("SPONSOR"));
-        ContractWorkerDto contract = client.getContract();
+        ContractWorkerDto contract = dataSetup.setupContract("Z5555");
         contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
-        contract.setUpdateMode(Contract.UpdateMode.NONE);
-        contract.setContractType(Contract.ContractType.CLASSIC_TEST);
+        contract.setUpdateMode(ContractWorkerDto.UpdateMode.NONE);
+        contract.setContractType(ContractWorkerDto.ContractType.CLASSIC_TEST);
         contractRepo.saveAndFlush(contract);
 
         CoverageVerificationException exception =

@@ -11,6 +11,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
@@ -21,7 +22,7 @@ import lombok.Setter;
 
 import static gov.cms.ab2d.common.util.DateUtil.getESTOffset;
 
-@Entity(name = "contract")
+@Entity(name="contract")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -39,8 +40,13 @@ public class ContractWorkerDto extends TimestampBase {
         }
     }
 
-    @NotNull
     @Id
+    @GeneratedValue
+    @EqualsAndHashCode.Include
+    private Long id;
+
+    @Column(unique = true)
+    @NotNull
     private String contractNumber;
 
     private String contractName;
@@ -61,7 +67,7 @@ public class ContractWorkerDto extends TimestampBase {
     private ContractType contractType = ContractType.NORMAL;
 
     public ContractWorkerDto(@NotNull String contractNumber, String contractName, Long hpmsParentOrgId, String hpmsParentOrg,
-                             String hpmsOrgMarketingName) {
+                    String hpmsOrgMarketingName) {
         this.contractNumber = contractNumber;
         this.contractName = contractName;
         this.hpmsParentOrgId = hpmsParentOrgId;
@@ -86,9 +92,9 @@ public class ContractWorkerDto extends TimestampBase {
 
     public boolean hasChanges(String hmpsContractName, long parentOrgId, String parentOrgName, String orgMarketingName) {
         boolean allEqual = Objects.equals(hmpsContractName, contractName) &&
-                        Objects.equals(parentOrgId, hpmsParentOrgId) &&
-                        Objects.equals(parentOrgName, hpmsParentOrg) &&
-                        Objects.equals(orgMarketingName, hpmsOrgMarketingName);
+                Objects.equals(parentOrgId, hpmsParentOrgId) &&
+                Objects.equals(parentOrgName, hpmsParentOrg) &&
+                Objects.equals(orgMarketingName, hpmsOrgMarketingName);
 
         return !allEqual;
     }

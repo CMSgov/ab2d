@@ -1,14 +1,13 @@
 package gov.cms.ab2d.worker.processor.coverage.check;
 
-import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.service.CoverageService;
-import lombok.extern.slf4j.Slf4j;
-
+import gov.cms.ab2d.worker.model.ContractWorkerDto;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Check that each coverage period has coverage data only from the most recent successful search and not from a
@@ -22,7 +21,7 @@ public class CoverageUpToDateCheck extends CoverageCheckPredicate {
     }
 
     @Override
-    public boolean test(Contract contract) {
+    public boolean test(ContractWorkerDto contract) {
 
         // Do not refactor, want to report all issues for coverage not first one found for contract
         // No successful searches found for coverage service so some precondition has been violated anyway

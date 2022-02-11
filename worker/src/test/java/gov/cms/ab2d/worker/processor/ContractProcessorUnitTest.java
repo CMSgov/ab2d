@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
@@ -262,7 +261,7 @@ class ContractProcessorUnitTest {
         PdpClient pdpClient = new PdpClient();
         pdpClient.setClientId("Harry_Potter");
         pdpClient.setEnabled(TRUE);
-        pdpClient.setContract(createContract());
+        pdpClient.setContractNumber("CONTRACT_00000");
         return pdpClient;
     }
 

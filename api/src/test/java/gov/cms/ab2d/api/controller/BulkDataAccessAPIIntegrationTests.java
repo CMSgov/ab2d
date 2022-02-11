@@ -271,8 +271,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
         List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
         PdpClient pdpClient = new PdpClient();
-        Contract contract = dataSetup.setupContract("Test");
-        pdpClient.setContract(contract);
+        pdpClient.setContractNumber("Test");
         pdpClient.setEnabled(true);
         pdpClient.setClientId("test");
         pdpClient.setOrganization("test-org");
@@ -1265,11 +1264,10 @@ public class BulkDataAccessAPIIntegrationTests {
                     .andExpect(status().is(202));
         }
 
-        Contract contract1 = dataSetup.setupContract("Test1");
 
         PdpClient pdpClient = pdpClientRepository.findByClientId(TEST_PDP_CLIENT);
         assertNotNull(pdpClient);
-        pdpClient.setContract(contract1);
+        pdpClient.setContractNumber("Test1");
         pdpClientRepository.saveAndFlush(pdpClient);
         Contract contractNew = dataSetup.setupContract("New Contract");
 
@@ -1286,7 +1284,7 @@ public class BulkDataAccessAPIIntegrationTests {
         createMaxJobsWithContract(contract);
 
         PdpClient pdpClient = new PdpClient();
-        pdpClient.setContract(contract);
+        pdpClient.setContractNumber(contract.getContractNumber());
         pdpClient.setEnabled(true);
         pdpClient.setClientId("test");
         pdpClient.setOrganization("test-org");
