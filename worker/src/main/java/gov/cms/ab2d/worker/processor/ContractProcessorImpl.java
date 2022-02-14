@@ -23,7 +23,10 @@ import gov.cms.ab2d.worker.config.SearchConfig;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.JobChannelService;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -163,7 +166,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             JobHelper.workerFinishJob(searchConfig.getEfsMount() + "/" + job.getJobUuid() + "/" + searchConfig.getStreamingDir());
 
             // Wait for the aggregator to finish
-            while (!aggregatorFuture.isDone()) {
+            while (!isDone(aggregatorFuture, job.getJobUuid(), true)) {
                 Thread.sleep(1000);
             }
 
@@ -471,5 +474,60 @@ public class ContractProcessorImpl implements ContractProcessor {
         } catch (InterruptedException e) {
             log.warn("interrupted exception in thread.sleep(). Ignoring");
         }
+    }
+
+    /**
+     * Checks to make sure thread isn't hanging, kills it if it is.
+     *
+     * @param aggregatorThread - the thread to check and cancel if some reason we're stuck
+     * @param jobId - the job ID so we can check the directory
+     * @param jobDone - If the worker is done sending to the streaming directory
+     *
+     * @return true if the job is actually done, false otherwise.
+     */
+    private boolean isDone(Future<Integer> aggregatorThread, String jobId, boolean jobDone) {
+        // If the thread has finished or was cancelled, we're done
+        if (aggregatorThread.isDone() || aggregatorThread.isCancelled()) {
+            return true;
+        }
+        // If the worker isn't done, we're not done even if the directories are empty
+        if (!jobDone) {
+            return false;
+        }
+
+        // Get the relevant directories
+        File finishedDir = searchConfig.getFinishedDir(jobId);
+        File streamingDir = searchConfig.getFinishedDir(jobId);
+
+        // If the finished directory exists but is not empty, we're not done
+        if (finishedDir.exists()) {
+            File[] finishedDirFiles = finishedDir.listFiles();
+            if (finishedDirFiles != null && finishedDirFiles.length > 0) {
+                return false;
+            }
+            try {
+                Files.delete(Path.of(finishedDir.getAbsolutePath()));
+            } catch (Exception ex) {
+                log.error("Unable to delete finished dir");
+            }
+        }
+
+        // If the streaming directory exists but is not empty, we're not done
+        if (streamingDir.exists()) {
+            File[] streamingDirFiles = streamingDir.listFiles();
+            if (streamingDirFiles != null && streamingDirFiles.length > 0) {
+                return false;
+            }
+            // It's an empty directory, delete it
+            try {
+                Files.delete(Path.of(streamingDir.getAbsolutePath()));
+            } catch (Exception ex) {
+                log.error("Unable to delete streaming dir");
+            }
+        }
+        // We're done, all the directories are empty, let's kill the thread
+        log.info("Aggregator was done, but hadn't exited properly, cancelling");
+        aggregatorThread.cancel(true);
+        return true;
     }
 }

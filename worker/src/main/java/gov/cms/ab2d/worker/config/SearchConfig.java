@@ -4,6 +4,9 @@ import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
+import java.nio.file.Path;
+
 @Component
 @Data
 /**
@@ -63,5 +66,13 @@ public class SearchConfig {
         this.ndjsonRollOver = ndjsonRollover;
         this.multiplier = multiplier;
         this.numberBenesPerBatch = numberBenesPerBatch;
+    }
+
+    public File getStreamingDir(String jobId) {
+        return Path.of(efsMount, jobId, streamingDir).toFile();
+    }
+
+    public File getFinishedDir(String jobId) {
+        return Path.of(efsMount, jobId, finishedDir).toFile();
     }
 }
