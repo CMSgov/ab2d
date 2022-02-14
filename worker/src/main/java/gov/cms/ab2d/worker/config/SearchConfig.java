@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.config;
 
-import lombok.Data;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -8,7 +8,7 @@ import java.io.File;
 import java.nio.file.Path;
 
 @Component
-@Data
+@Getter
 /**
  * Loads all the configuration components of a BFD search, data writing and aggregation
  */

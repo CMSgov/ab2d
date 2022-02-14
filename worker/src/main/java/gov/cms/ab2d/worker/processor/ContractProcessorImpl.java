@@ -484,7 +484,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      *
      * @return true if the job is actually done, false otherwise.
      */
-    private boolean isDone(Future<Integer> aggregatorThread, String jobId, boolean jobDone) {
+    boolean isDone(Future<Integer> aggregatorThread, String jobId, boolean jobDone) {
         // If the thread has finished or was cancelled, we're done
         if (aggregatorThread.isDone() || aggregatorThread.isCancelled()) {
             return true;
@@ -496,7 +496,7 @@ public class ContractProcessorImpl implements ContractProcessor {
 
         // Get the relevant directories
         File finishedDir = searchConfig.getFinishedDir(jobId);
-        File streamingDir = searchConfig.getFinishedDir(jobId);
+        File streamingDir = searchConfig.getStreamingDir(jobId);
 
         // If the finished directory exists but is not empty, we're not done
         if (finishedDir.exists()) {

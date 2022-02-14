@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
 import com.newrelic.api.agent.Token;
+import gov.cms.ab2d.aggregator.FileOutputType;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
@@ -78,10 +79,11 @@ class PatientClaimsProcessorUnitTest {
         }
     };
     private PatientClaimsRequest request;
+    private SearchConfig searchConfig;
 
     @BeforeEach
     void setUp() throws Exception {
-        SearchConfig searchConfig = new SearchConfig(tmpEfsMountDir.getAbsolutePath(), "streamingDir",
+        searchConfig = new SearchConfig(tmpEfsMountDir.getAbsolutePath(), "streamingDir",
                 "finishedDir",
                 0, 0, 1, 2);
 
@@ -108,6 +110,18 @@ class PatientClaimsProcessorUnitTest {
 
         request = new PatientClaimsRequest(List.of(coverageSummary), LATER_ATT_DATE, null, "client", "job",
                 "contractNum", Contract.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
+    }
+
+    @Test
+    void testWriteOutErrors() throws IOException {
+        PatientClaimsProcessorImpl impl = (PatientClaimsProcessorImpl) cut;
+        impl.writeOutErrors("The errors", request);
+        Path p = Path.of(tmpEfsMountDir.getAbsolutePath(), "job", searchConfig.getFinishedDir());
+        File[] files = p.toFile().listFiles();
+        assertNotNull(files);
+        assertEquals(1, files.length);
+        assertEquals(FileOutputType.ERROR, FileOutputType.getFileType(files[0]));
+        assertEquals("The errors", Files.readString(Path.of(files[0].getAbsolutePath())));
     }
 
     @Test

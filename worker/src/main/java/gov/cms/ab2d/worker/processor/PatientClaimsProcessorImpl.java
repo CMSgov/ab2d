@@ -75,7 +75,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         return AsyncResult.forValue(update);
     }
 
-    private String writeOutData(PatientClaimsRequest request, FhirVersion fhirVersion, ProgressTrackerUpdate update) throws IOException {
+    String writeOutData(PatientClaimsRequest request, FhirVersion fhirVersion, ProgressTrackerUpdate update) throws IOException {
         File file = null;
         String anyErrors = null;
         try (ClaimsStream stream = new ClaimsStream(request.getJob(), request.getEfsMount(), DATA,
@@ -93,7 +93,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         return anyErrors;
     }
 
-    private void writeOutErrors(String anyErrors, PatientClaimsRequest request) {
+    void writeOutErrors(String anyErrors, PatientClaimsRequest request) {
         File errorFile = null;
         try (ClaimsStream stream = new ClaimsStream(request.getJob(), request.getEfsMount(), ERROR,
                 searchConfig.getStreamingDir(), searchConfig.getFinishedDir(), searchConfig.getBufferSize())) {

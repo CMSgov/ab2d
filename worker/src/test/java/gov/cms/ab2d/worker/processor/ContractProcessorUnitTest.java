@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
+import gov.cms.ab2d.aggregator.AggregatorCallable;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
@@ -21,6 +22,8 @@ import gov.cms.ab2d.worker.repository.StubContractRepository;
 import gov.cms.ab2d.worker.repository.StubJobRepository;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import gov.cms.ab2d.worker.service.JobChannelStubServiceImpl;
+
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -82,6 +85,9 @@ class ContractProcessorUnitTest {
     private ContractToContractCoverageMapping mapping;
     private Job job;
 
+    private static final String STREAMING = "streaming";
+    private static final String FINISHED = "finished";
+
     @BeforeEach
     void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
@@ -104,7 +110,7 @@ class ContractProcessorUnitTest {
         pool.initialize();;
 
         SearchConfig searchConfig = new SearchConfig(efsMountTmpDir.toFile().getAbsolutePath(),
-                "streaming", "finished", 0, 0, 2, 1);
+                STREAMING, FINISHED, 0, 0, 2, 1);
 
         ContractRepository contractRepository = new StubContractRepository(contract);
         cut = new ContractProcessorImpl(
@@ -124,6 +130,32 @@ class ContractProcessorUnitTest {
 
         var outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
         Files.createDirectories(outputDirPath);
+    }
+
+    @Test
+    void testIsDone() throws IOException {
+        String job = "job1";
+        AggregatorCallable callable = new AggregatorCallable(efsMountTmpDir.toFile().getAbsolutePath(), job, "contract1", 200, STREAMING, FINISHED, 3);
+        ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
+        pool.initialize();
+        Future<Integer> aggThread = pool.submit(callable);
+        ContractProcessorImpl impl = (ContractProcessorImpl) cut;
+        assertFalse(impl.isDone(aggThread, job, false));
+        Path testFile = Path.of(efsMountTmpDir.toFile().getAbsolutePath(), job, FINISHED, "tst.ndjson");
+        Path testFinishedDir = Path.of(efsMountTmpDir.toFile().getAbsolutePath(), job, FINISHED);
+        Files.createDirectories(testFinishedDir);
+        Files.createFile(testFile);
+        Files.writeString(testFile, "abc");
+        assertFalse(impl.isDone(aggThread, job, true));
+        Files.delete(testFile);
+        assertTrue(impl.isDone(aggThread, job, true));
+        assertFalse(Files.exists(testFinishedDir));
+
+        AggregatorCallable callable2 = new AggregatorCallable(efsMountTmpDir.toFile().getAbsolutePath(), job, "contract1", 200, STREAMING, FINISHED, 3);
+        Future<Integer> aggThread2 = pool.submit(callable2);
+        assertFalse(impl.isDone(aggThread2, job, false));
+        aggThread2.cancel(true);
+        assertTrue(impl.isDone(aggThread2, job, false));
     }
 
     @Test
