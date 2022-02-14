@@ -63,7 +63,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
             return;
         }
 
-        List<String> jobIds = Stream.of(files).map(f -> f.getName()).collect(Collectors.toList());
+        List<String> jobIds = Stream.of(files).map(File::getName).toList();
         for (String jobId : jobIds) {
             Job job = findJob(jobId);
             if (job == null) {
@@ -90,9 +90,14 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         }
     }
 
+    /**
+     * Recursively delete NDJON files and sub directories
+     *
+     * @param job - the job
+     * @param jobDir - the top level directory
+     */
     void deleteNdjsonFilesAndDirectory(Job job, Path jobDir) {
-        File[] files = jobDir.toFile().listFiles();
-        for (File file : files) {
+        for (File file : jobDir.toFile().listFiles()) {
             Path filePath = Path.of(file.getAbsolutePath());
             if (file.exists() && Files.isRegularFile(filePath) && matchesFilenameExtension(filePath)) {
                 try {
@@ -135,10 +140,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         }
 
         final Instant deleteBoundary = calculateOldestDeletableTime();
-        if (completedTime.toInstant().isBefore(deleteBoundary)) {
-            return true;
-        }
-        return false;
+        return completedTime.toInstant().isBefore(deleteBoundary);
     }
 
     /**

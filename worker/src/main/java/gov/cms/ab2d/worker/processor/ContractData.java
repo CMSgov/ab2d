@@ -20,7 +20,7 @@ public class ContractData {
     private final Job job;
     private final List<Future<ProgressTrackerUpdate>> eobRequestHandles = new LinkedList<>();
     private Future<Integer> aggregatorHandle;
-    private Map<Integer, Integer> hashBeneMapper = new HashMap();
+    private Map<Integer, Integer> hashBeneMapper = new HashMap<>();
 
     public void addEobRequestHandle(Future<ProgressTrackerUpdate> eobRequestHandle, int numBenes) {
         eobRequestHandles.add(eobRequestHandle);

@@ -173,7 +173,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             // Retrieve all the job output info
             jobOutputs.addAll(getOutputs(job.getJobUuid(), DATA));
             jobOutputs.addAll(getOutputs(job.getJobUuid(), ERROR));
-            System.out.println("Number of outputs: " + jobOutputs.size());
+            log.info("Number of outputs: " + jobOutputs.size());
 
         } catch (InterruptedException | IOException ex) {
             log.error("interrupted while processing job for contract");
@@ -193,7 +193,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         List<JobOutput> jobOutputs = new ArrayList<>();
         List<StreamOutput> dataOutputs = FileUtils.listFiles(searchConfig.getEfsMount() + "/" + jobId, type).stream()
                 .map(file -> new StreamOutput(file, type))
-                .collect(Collectors.toList());
+                .toList();
         dataOutputs.stream().map(output -> createJobOutput(output, type)).forEach(jobOutputs::add);
         return jobOutputs;
     }

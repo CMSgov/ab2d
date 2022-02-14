@@ -47,7 +47,7 @@ import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @Testcontainers
-public class AggregatorJobTest {
+class AggregatorJobTest {
     @Container
     private static final PostgreSQLContainer postgres = new AB2DPostgresqlContainer();
 

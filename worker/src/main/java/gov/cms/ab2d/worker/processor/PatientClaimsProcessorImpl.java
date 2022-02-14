@@ -65,7 +65,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         try {
             String anyErrors = writeOutData(request, fhirVersion, update);
             if (anyErrors != null && anyErrors.length() > 0) {
-                writeOutErrors(anyErrors, request, fhirVersion);
+                writeOutErrors(anyErrors, request);
             }
         } catch (Exception ex) {
             return AsyncResult.forExecutionException(ex);
@@ -93,7 +93,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         return anyErrors;
     }
 
-    private void writeOutErrors(String anyErrors, PatientClaimsRequest request, FhirVersion fhirVersion) {
+    private void writeOutErrors(String anyErrors, PatientClaimsRequest request) {
         File errorFile = null;
         try (ClaimsStream stream = new ClaimsStream(request.getJob(), request.getEfsMount(), ERROR,
                 searchConfig.getStreamingDir(), searchConfig.getFinishedDir(), searchConfig.getBufferSize())) {
