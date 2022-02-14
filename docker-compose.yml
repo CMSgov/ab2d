@@ -11,15 +11,15 @@ services:
     # Docker exposes these ports to all containers in the compose by default
     # but if you are debugging on a local machine uncomment to test connectivity or open a connection
     # to the Postgres database
-#    ports:
-#      - "5432:5432"
+    ports:
+      - "5432:5432"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 10s
       timeout: 5s
       retries: 5
   build:
-    image: maven:3-jdk-13
+    image: maven:3-openjdk-17
     working_dir: /usr/src/mymaven
     # Not necessary to run mvn package since we anticipate that project
     # has already built so we don't need to run this command

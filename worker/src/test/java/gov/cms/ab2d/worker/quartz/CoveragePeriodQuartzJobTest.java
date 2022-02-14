@@ -206,7 +206,7 @@ class CoveragePeriodQuartzJobTest {
             assertTrue(exception.getMessage().contains("testing123"));
 
             verify(logManager, times(1))
-                    .alert(eq("coverage period updates could not be conducted"), anyList());
+                    .alert(contains("coverage period updates could not be conducted"), anyList());
 
         } catch (Exception ex) {
             fail("could not execute test due to interruption", ex);

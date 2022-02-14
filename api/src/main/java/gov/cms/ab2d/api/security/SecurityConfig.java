@@ -24,12 +24,12 @@ import javax.servlet.http.HttpServletResponse;
 
 import static gov.cms.ab2d.api.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
+import static gov.cms.ab2d.eventlogger.events.SlackEvents.API_AUTHNZ_ERROR;
 
 @Slf4j
 @AllArgsConstructor
 @Configuration
 @EnableWebSecurity
-@SuppressWarnings("PMD.TooManyStaticImports")
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final FilterChainExceptionHandler filterChainExceptionHandler;
@@ -38,10 +38,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private final LogManager eventLogger;
     private final PdpClientService pdpClientService;
 
+    /**
+     * Paths to whitelist as not needing authentication and authorization for access
+     */
     @Override
     public void configure(WebSecurity web) {
         web.ignoring().antMatchers("/swagger-ui/**", "/configuration/**",
-                "/swagger-resources/**", "/v3/api-docs", "/webjars/**",
+                "/swagger-resources/**", "/v3/api-docs/**", "/webjars/**",
                 AKAMAI_TEST_OBJECT, "/favicon.ico", "/error", HEALTH_ENDPOINT, STATUS_ENDPOINT);
     }
 
@@ -85,7 +88,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private void logSecurityException(HttpServletRequest request, Exception securityException, int status) {
 
         try {
-            String error = String.format("Security Error: URL (%s), Exception (%s), Message (%s), Origin(%s)",
+            String error = String.format(API_AUTHNZ_ERROR + " URL (%s), Exception (%s), Message (%s), Origin(%s)",
                     request.getRequestURL(), securityException.getClass(), securityException.getMessage(),
                     securityException.getStackTrace()[0].toString());
 

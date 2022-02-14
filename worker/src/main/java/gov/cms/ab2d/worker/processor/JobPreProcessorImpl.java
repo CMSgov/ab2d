@@ -5,6 +5,7 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStartedBy;
 import gov.cms.ab2d.common.model.SinceSource;
+import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.OffsetDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -23,18 +25,22 @@ import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.model.JobStatus.*;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
+import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_COVERAGE_ISSUE;
+import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_STARTED;
 
 @Slf4j
 @Component
 @SuppressWarnings("java:S2142") //java:S2142: "InterruptedException" should not be ignored
 public class JobPreProcessorImpl implements JobPreProcessor {
 
+    private final ContractRepository contractRepository;
     private final JobRepository jobRepository;
     private final LogManager eventLogger;
     private final CoverageDriver coverageDriver;
 
-    public JobPreProcessorImpl(JobRepository jobRepository, LogManager logManager,
+    public JobPreProcessorImpl(ContractRepository contractRepository, JobRepository jobRepository, LogManager logManager,
                         CoverageDriver coverageDriver) {
+        this.contractRepository = contractRepository;
         this.jobRepository = jobRepository;
         this.eventLogger = logManager;
         this.coverageDriver = coverageDriver;
@@ -57,31 +63,30 @@ public class JobPreProcessorImpl implements JobPreProcessor {
             throw new IllegalArgumentException(errMsg);
         }
 
-        Optional sinceValue = Optional.ofNullable(job.getSince());
+        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(job.getContractNumber());
+        if (contractOptional.isEmpty()) {
+            throw new IllegalArgumentException("A job must always have a contract.");
+        }
+        Contract contract = contractOptional.get();
+        Optional<OffsetDateTime> sinceValue = Optional.ofNullable(job.getSince());
         if (sinceValue.isPresent()) {
             // If the user provided a 'since' value
             job.setSinceSource(SinceSource.USER);
             jobRepository.save(job);
-        } else if (job.getFhirVersion().supportDefaultSince()) {
-            // todo guarantee contract is always present https://jira.cms.gov/browse/AB2D-4109
-            boolean hasDateIssue = false;
-            if (job.getContract() != null) {
-                hasDateIssue = job.getContract().getContractType() == Contract.ContractType.CLASSIC_TEST;
-            }
-            if (!hasDateIssue) {
-                // If the user did not, but this version supports a default 'since', populate it
-                job = updateSinceTime(job);
-                jobRepository.save(job);
-            }
+        } else if (job.getFhirVersion().supportDefaultSince() && !contract.hasDateIssue()) {
+            // If the user did not, but this version supports a default 'since', populate it
+            job = updateSinceTime(job, contract);
+            jobRepository.save(job);
         }
 
         try {
-            if (!coverageDriver.isCoverageAvailable(job)) {
+            if (!coverageDriver.isCoverageAvailable(job, contract)) {
                 log.info("coverage metadata is not up to date so job will not be started");
                 return job;
             }
 
-            eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, IN_PROGRESS, "Job in progress"), PUBLIC_LIST);
+            eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, IN_PROGRESS, EOB_JOB_STARTED + " for "
+                    + contract.getContractNumber() + " in progress"), PUBLIC_LIST);
 
             job.setStatus(IN_PROGRESS);
             job.setStatusMessage(null);
@@ -89,7 +94,8 @@ public class JobPreProcessorImpl implements JobPreProcessor {
             job = jobRepository.save(job);
 
         } catch (CoverageDriverException coverageDriverException) {
-            eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, FAILED, "Job in progress"), PUBLIC_LIST);
+            eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, FAILED, EOB_JOB_COVERAGE_ISSUE + " Job for "
+                    + contract.getContractNumber() + " in progress"), PUBLIC_LIST);
 
             job.setStatus(FAILED);
             job.setStatusMessage("could not pull coverage information for contract");
@@ -110,9 +116,9 @@ public class JobPreProcessorImpl implements JobPreProcessor {
      * @param job - The job object to update (although not save)
      * @return - the job with the updated since date and auto since source
      */
-    Job updateSinceTime(Job job) {
-        List<Job> successfulJobs = jobRepository.findByContractEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(
-                job.getContract(), List.of(SUCCESSFUL), JobStartedBy.PDP);
+    Job updateSinceTime(Job job, Contract contract) {
+        List<Job> successfulJobs = jobRepository.findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(
+                contract.getContractNumber(), List.of(SUCCESSFUL), JobStartedBy.PDP);
 
         // Get time of last successful job for that organization
         Optional<Job> successfulJob = getLastSuccessfulJobWithDownloads(successfulJobs);

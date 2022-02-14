@@ -1,16 +1,9 @@
 package gov.cms.ab2d.hpms.service;
 
 import gov.cms.ab2d.hpms.hmsapi.HPMSAttestation;
-import gov.cms.ab2d.hpms.hmsapi.HPMSAttestationsHolder;
 import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizationInfo;
-import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizations;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class MockHpmsFetcher implements HPMSFetcher {
@@ -40,19 +33,19 @@ public class MockHpmsFetcher implements HPMSFetcher {
     }
 
     @Override
-    public void retrieveSponsorInfo(Consumer<HPMSOrganizations> hpmsOrgCallback) {
-        hpmsOrgCallback.accept(new HPMSOrganizations(orgSet));
+    public void retrieveSponsorInfo(Consumer<List<HPMSOrganizationInfo>> hpmsOrgCallback) {
+        hpmsOrgCallback.accept(orgSet);
     }
 
     @Override
-    public void retrieveAttestationInfo(Consumer<HPMSAttestationsHolder> hpmsAttestationCallback, List<String> contractIds) {
+    public void retrieveAttestationInfo(Consumer<Set<HPMSAttestation>> hpmsAttestationCallback, List<String> contractIds) {
         Set<HPMSAttestation> retAttests = new HashSet<>();
         for (String contractId : contractIds) {
             if (!attests.containsKey(contractId)) {
-                throw new IllegalArgumentException(contractId + " not found in test data.");
+                throw new IllegalArgumentException(String.format("%s not found in test data.", contractId));
             }
             retAttests.add(attests.get(contractId));
         }
-        hpmsAttestationCallback.accept(new HPMSAttestationsHolder(retAttests));
+        hpmsAttestationCallback.accept(retAttests);
     }
 }

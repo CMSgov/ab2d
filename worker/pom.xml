@@ -22,17 +22,17 @@
         </dependency>
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
-            <artifactId>bfd</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <artifactId>ab2d-bfd</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>gov.cms.ab2d</groupId>
+            <artifactId>ab2d-filters</artifactId>
+            <version>1.2</version>
         </dependency>
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>audit</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>gov.cms.ab2d</groupId>
-            <artifactId>filter</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
@@ -106,6 +106,20 @@
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-aws-messaging</artifactId>
             <version>2.2.6.RELEASE</version>
+        </dependency>
+
+        <dependency>
+            <groupId>gov.cms.ab2d</groupId>
+            <artifactId>coverage</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>gov.cms.ab2d</groupId>
+            <artifactId>coverage</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <type>test-jar</type>
+            <scope>test</scope>
         </dependency>
     </dependencies>
     <build>

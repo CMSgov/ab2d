@@ -3,7 +3,7 @@ package gov.cms.ab2d.worker.processor;
 import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.CoverageSummary;
+import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.TestUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +24,7 @@ import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -100,6 +101,36 @@ class PatientClaimsProcessorUnitTest {
 
         request = new PatientClaimsRequest(coverageSummary, LATER_ATT_DATE, null, "client", "job",
                 "contractNum", Contract.ContractType.NORMAL, noOpToken, STU3);
+    }
+
+    @Test
+    void process_whenPatientHasDataWithBadLastUpdated() throws ExecutionException, InterruptedException {
+        ExplanationOfBenefit firstEob = eob.copy();
+        eob.getMeta().setLastUpdated(null);
+        org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
+        ExplanationOfBenefit eob2 = eob.copy();
+        // now set the last updated date to a time before the since date (which is attribution date here)
+        eob2.getMeta().setLastUpdated(new Date(LATER_ATT_DATE.toInstant().toEpochMilli() - 1000));
+
+        final org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent bundleEntryComponent = new org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent();
+        bundleEntryComponent.setResource(eob2);
+        bundle1.addEntry(bundleEntryComponent);
+
+        ExplanationOfBenefit eob3 = eob.copy();
+        eob2.getMeta().setLastUpdated(new Date());
+        final org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent bundleEntryComponent3 = new org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent();
+        bundleEntryComponent3.setResource(eob3);
+        bundle1.addEntry(bundleEntryComponent3);
+
+        assertEquals(3, bundle1.getEntry().size());
+
+        PatientClaimsRequest request2 = new PatientClaimsRequest(coverageSummary, LATER_ATT_DATE, LATER_ATT_DATE, "client", "job",
+                "contractNum", Contract.ContractType.NORMAL, noOpToken, STU3);
+        when(mockBfdClient.requestEOBFromServer(STU3, patientId, request2.getAttTime())).thenReturn(bundle1);
+
+        EobSearchResult results = cut.process(request2).get();
+        assertEquals(1, results.getEobs().size());
+
     }
 
     @Test

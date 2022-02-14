@@ -4,12 +4,11 @@ import ca.uhn.fhir.parser.IParser;
 import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import io.swagger.annotations.Authorization;
-import io.swagger.annotations.AuthorizationScope;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.dstu3.model.CapabilityStatement;
@@ -32,31 +31,28 @@ import static gov.cms.ab2d.api.controller.common.ApiText.CAP_RET;
 
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
-import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 
 /**
  * The sole REST controller for AB2D's implementation of the FHIR Bulk Data API capability statement.
  */
 @AllArgsConstructor
 @Slf4j
-@SuppressWarnings("PMD.TooManyStaticImports")
-@Api(value = CAP_STMT, description = CAP_API, tags = {"Capabilities"})
+@Tag(name = "Capabilities", description = CAP_API)
 @RestController
-@RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX, produces = {APPLICATION_JSON, NDJSON_FIRE_CONTENT_TYPE})
+@RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX, produces = {APPLICATION_JSON})
 public class CapabilityAPIV1 {
 
     private final LogManager eventLogger;
     private final ApiCommon common;
 
-    @ApiOperation(value = CAP_REQ, response = String.class, produces = APPLICATION_JSON, authorizations = {
-            @Authorization(value = AUTHORIZATION, scopes = { @AuthorizationScope(description = CAP_DESC, scope = AUTHORIZATION) })
-    })
-    @ApiResponses(value = { @ApiResponse(code = 200, message = CAP_DESC, response = String.class)})
+    @Operation(summary = CAP_REQ)
+    @ApiResponses(value = { @ApiResponse(responseCode = "200", description = CAP_DESC + " https://www.hl7.org/fhir/STU3/capabilitystatement.html",
+            headers = {@Header(name = CONTENT_TYPE, description = APPLICATION_JSON)})})
     @ResponseStatus(value = HttpStatus.OK)
     @GetMapping(value = "/metadata")
     public ResponseEntity<String> capabilityStatement(HttpServletRequest request) {

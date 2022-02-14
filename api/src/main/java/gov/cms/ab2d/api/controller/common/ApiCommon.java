@@ -35,7 +35,6 @@ import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 
 @Service
 @Slf4j
-@SuppressWarnings("PMD.TooManyStaticImports")
 public class ApiCommon {
     private final LogManager eventLogger;
     private final JobService jobService;

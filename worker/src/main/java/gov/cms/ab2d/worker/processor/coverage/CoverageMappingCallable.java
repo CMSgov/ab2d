@@ -2,30 +2,46 @@ package gov.cms.ab2d.worker.processor.coverage;
 
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.model.CoverageMapping;
-import gov.cms.ab2d.common.model.Identifiers;
-import gov.cms.ab2d.fhir.*;
+import gov.cms.ab2d.coverage.model.CoverageMapping;
+import gov.cms.ab2d.coverage.model.Identifiers;
+import gov.cms.ab2d.fhir.BundleUtils;
+import gov.cms.ab2d.fhir.ExtensionUtils;
+import gov.cms.ab2d.fhir.FhirVersion;
+import gov.cms.ab2d.fhir.IdentifierUtils;
+import gov.cms.ab2d.fhir.PatientIdentifier;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IDomainResource;
 
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toSet;
 
 /**
- * Queries BFD for all of the members of a contract during a given month.
+ * Perform queries to BFD to retrieve all coverage/enrollment related to a Part D contract
+ * for a given month and year.
+ *
+ * The results of these queries are stored into a {@link CoverageMapping} object in-memory. Additionally,
+ * any artifacts/issues with identifiers returned from BFD are documented and reported as statistics.
+ *
+ * The contract, month, and year are represented as an {@link gov.cms.ab2d.coverage.model.CoveragePeriod}
+ *
  */
 @Slf4j
 public class CoverageMappingCallable implements Callable<CoverageMapping> {
 
     // Use year 3 by default since all synthetic data has this year on it
     // todo get rid of this when data is updated
-    private static final int SYNTHETIC_DATA_YEAR = 3;
-
     private final CoverageMapping coverageMapping;
     private final BFDClient bfdClient;
     private final AtomicBoolean completed;
@@ -41,11 +57,11 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     private int pastReferenceYear;
     private final Map<Integer, Integer> referenceYears = new HashMap<>();
 
-    public CoverageMappingCallable(FhirVersion version, CoverageMapping coverageMapping, BFDClient bfdClient) {
+    public CoverageMappingCallable(FhirVersion version, CoverageMapping coverageMapping, BFDClient bfdClient, int year) {
         this.coverageMapping = coverageMapping;
         this.bfdClient = bfdClient;
         this.completed = new AtomicBoolean(false);
-        this.year = getCorrectedYear(coverageMapping.getContract().getContractNumber(), coverageMapping.getPeriod().getYear());
+        this.year = year;
         this.version = version;
     }
 
@@ -57,12 +73,36 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
         return coverageMapping;
     }
 
+    /**
+     * Execute queries against BFD and collect enrollment result into a single object.
+     *
+     * In the past there have been significant issues related to the values of the enrollment returned by BFD.
+     * These issues have led to adding a bunch of logs in here for most steps in the enrollment process.
+     *
+     * These logs include:
+     *      - log each bundle received with the page number
+     *      - listing all links to additional pages returned by BFD
+     *      - log last page received
+     *      - record statistics regarding potentially missing things like MBIs, beneficiary ids, distribution of reference
+     *          years on the patient, and past reference years which are not expected.
+     *
+     * Steps
+     *      - Set a unique id for the job as a header to BFD for monitoring purposes
+     *      - Get the first page of enrollment results and process those results
+     *      - Loop over the remaining pages of results and query until none are left
+     *      - Add the results to the CoverageMapping object
+     *      - Mark the search as completed
+     *      - Log statistics concerning enrollment pulled
+     *      - Remove the unique id header used for BFD
+     *
+     * @throws Exception on any failure, before the exception is thrown it will be logged
+     */
     @Trace(metricName = "EnrollmentRequest", dispatcher = true)
     @Override
     public CoverageMapping call() {
 
         int month = coverageMapping.getPeriod().getMonth();
-        String contractNumber = coverageMapping.getContract().getContractNumber();
+        String contractNumber = coverageMapping.getContractNumber();
 
         final Set<Identifiers> patientIds = new HashSet<>();
         int bundleNo = 1;
@@ -110,7 +150,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
                     contractNumber, this.year, month, bundleNo);
 
             coverageMapping.addBeneficiaries(patientIds);
-            log.debug("finished reading [{}] Set<String>resources", patientIds.size());
+            log.debug("finished reading [{}] Set<Identifiers>resources", patientIds.size());
 
             coverageMapping.completed();
             return coverageMapping;
@@ -151,6 +191,14 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
                 .collect(toSet());
     }
 
+    /**
+     * Filter out patients with unknown reference years or unexpected reference years.
+     *
+     * The reference year on a patient should be equal to or greater than the year of enrollment we are searching for.
+     * Sometimes the reference year will not match the {@link gov.cms.ab2d.coverage.model.CoveragePeriod}
+     * but as long as it is greater than or equal it is okay. Patients with reference years before the
+     * {@link gov.cms.ab2d.coverage.model.CoveragePeriod#getYear()} are discarded.
+     */
     private boolean filterByYear(IDomainResource patient) {
         int referenceYear = ExtensionUtils.getReferenceYear(patient);
         if (referenceYear < 0) {
@@ -172,10 +220,20 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     }
 
     /**
-     * Given a patient, extract the patientId
+     * Given a patient, extract patient ids and package into an {@link Identifiers} object.
+     *
+     * Record metrics on the identifiers found.
+     *
+     * Steps
+     *      - Find all types of identifiers present on the patient
+     *      - Check that an internal beneficiary id is present for the patient.
+     *          - If not present do not add the patient to the list
+     *      - Check that a current MBI is present
+     *      - Check whether historical MBIs are present
+     *      - Create identifiers using identifiers that were present in the patient object
      *
      * @param patient - the patient id
-     * @return patientId if present, null otherwise
+     * @return the identifiers present if a beneficiary id is present on the patient
      */
     Identifiers extractPatientId(IDomainResource patient) {
         List<PatientIdentifier> ids = IdentifierUtils.getIdentifiers(patient);
@@ -212,7 +270,8 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
     }
 
     /**
-     * given a contractNumber & a month, calls BFD API to find all patients active in the contract during the month
+     * Given a contract number, month, and year, call BFDs API to begin paging through all patients
+     * associated with that contract for that {@link gov.cms.ab2d.coverage.model.CoveragePeriod}
      *
      * @param contractNumber - the PDP's contract number
      * @param searchMonth - the month to pull data for (1-12)
@@ -227,22 +286,5 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
             log.error("Error while calling for Contract-2-Bene API : {}", e.getMessage(), rootCause);
             throw new RuntimeException(rootCause);
         }
-    }
-
-    /**
-     * We want to find results in the sandbox but all the data in the sandbox is for an invalid
-     * year so we're using this to prevent us from getting no beneficiaries.
-     *
-     * @param contract - the specified contract number
-     * @param coverageYear - the specified coverage year in the coverage search
-     * @return if we're in sandbox, return the synthetic data year unless it's the new Synthea data which can use
-     * the correct year
-     */
-    int getCorrectedYear(String contract, int coverageYear) {
-        // Use specific year for synthetic data if in a sandbox environment
-        if (contract.startsWith("Z") && !contract.startsWith("Z1")) {
-            return SYNTHETIC_DATA_YEAR;
-        }
-        return coverageYear;
     }
 }

@@ -15,14 +15,13 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-import static gov.cms.ab2d.common.util.Constants.*; // NOPMD
+import static gov.cms.ab2d.common.util.Constants.*;
 import static java.lang.Boolean.FALSE;
 
 @AllArgsConstructor
 @Service
 @Transactional
 @Slf4j
-@SuppressWarnings("PMD.TooManyStaticImports")
 public class PropertiesServiceImpl implements PropertiesService {
 
     private final Mapping mapping;
@@ -85,7 +84,6 @@ public class PropertiesServiceImpl implements PropertiesService {
             break;
 
         case MAINTENANCE_MODE:
-        case CONTRACT_2_BENE_CACHING_ON:
         case ZIP_SUPPORT_ON:
         case COVERAGE_SEARCH_OVERRIDE:
             validateBoolean(key, propertiesDTO);
@@ -102,10 +100,6 @@ public class PropertiesServiceImpl implements PropertiesService {
         // The maximums for these values are arbitrary and may need to be changed
         case COVERAGE_SEARCH_UPDATE_MONTHS:
             validateInt(key, propertiesDTO, 0, 12);
-            addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
-            break;
-        case COVERAGE_SEARCH_STALE_DAYS:
-            validateInt(key, propertiesDTO, 1, 31);
             addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
             break;
         case COVERAGE_SEARCH_STUCK_HOURS:

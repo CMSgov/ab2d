@@ -1,24 +1,27 @@
 package gov.cms.ab2d.hpms.service;
 
-import gov.cms.ab2d.hpms.hmsapi.HPMSAttestationsHolder;
-import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizations;
+import gov.cms.ab2d.hpms.hmsapi.HPMSAttestation;
+import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizationInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
-import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
 import java.net.URI;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 @Service
 public class HPMSFetcherImpl extends AbstractHPMSService implements HPMSFetcher {
 
-    private static final String HPMS_BASE_PATH = "/api/cda";
+    //https://confluence.cms.gov/display/HPMSMCTAPI/CDA+CY+2022+API+Data+Contract+and+Validations#CDACY2022APIDataContractandValidations-GetAttestationHistoryforContracts
+    @Value("${hpms.base.path}")
+    private String hpmsBasePath;
 
     @Value("${hpms.base.url}")
     private String hpmsBaseURI;
@@ -28,56 +31,48 @@ public class HPMSFetcherImpl extends AbstractHPMSService implements HPMSFetcher 
 
     private final HPMSAuthService authService;
 
+    private final WebClient webClient;
+
     @Autowired
-    public HPMSFetcherImpl(HPMSAuthService authService) {
+    public HPMSFetcherImpl(HPMSAuthService authService, WebClient webClient) {
         this.authService = authService;
+        this.webClient = webClient;
     }
 
-    @SuppressWarnings("PMD.UnusedPrivateMethod")
     @PostConstruct
     private void buildURI() {
-        organizationBaseUri = buildFullURI(hpmsBaseURI + HPMS_BASE_PATH + "/orgs/info");
-        attestationBaseUri = buildFullURI(hpmsBaseURI + HPMS_BASE_PATH + "/contracts/status");
+        organizationBaseUri = UriComponentsBuilder.fromUriString(hpmsBaseURI + hpmsBasePath + "/orgs/info").build().toUri();
+        attestationBaseUri = UriComponentsBuilder.fromUriString(hpmsBaseURI + hpmsBasePath + "/contracts/status").build().toUri();
     }
 
     @Override
-    public void retrieveSponsorInfo(Consumer<HPMSOrganizations> hpmsOrgCallback) {
-        Flux<HPMSOrganizations> orgInfoFlux = WebClient.create()
+    public void retrieveSponsorInfo(Consumer<List<HPMSOrganizationInfo>> hpmsOrgCallback) {
+        Mono<List<HPMSOrganizationInfo>> orgInfoMono = webClient
                 .get().uri(organizationBaseUri)
                 .headers(authService::buildAuthHeaders)
                 .retrieve()
-                .bodyToFlux(HPMSOrganizations.class);
+                .bodyToMono(new ParameterizedTypeReference<>() {
+                });
 
-        orgInfoFlux.subscribe(hpmsOrgCallback);
+        orgInfoMono.subscribe(hpmsOrgCallback);
     }
 
     @Override
-    public void retrieveAttestationInfo(Consumer<HPMSAttestationsHolder> hpmsAttestationCallback, List<String> contractIds) {
-        Flux<HPMSAttestationsHolder> contractsFlux = WebClient.create()
-                .get().uri(buildAttestationURI(serializeContractIds(contractIds)))
+    public void retrieveAttestationInfo(Consumer<Set<HPMSAttestation>> hpmsAttestationCallback, List<String> contractIds) {
+        Mono<Set<HPMSAttestation>> contractsMono = webClient
+                .get().uri(buildAttestationURI(contractIds))
                 .headers(authService::buildAuthHeaders)
                 .retrieve()
-                .bodyToFlux(HPMSAttestationsHolder.class);
+                .bodyToMono(new ParameterizedTypeReference<>() {
+                });
 
-        contractsFlux.subscribe(hpmsAttestationCallback);
+        contractsMono.subscribe(hpmsAttestationCallback);
     }
 
-    /*
-     * Format for contracts variable defined by
-     * https://confluence.cms.gov/pages/viewpage.action?spaceKey=HPMSMCTAPI&title=CDA+CY+2021+API+Data+Contract+and+Validations
-     *
-     * Simple example from that page: ["S0001","S0002"]
-     *
-     * This is a helper method to convert form a list of contract ids to that form.
-     */
-    private String serializeContractIds(List<String> contracts) {
-        return contracts.stream().collect(Collectors.joining("\",\"", "[\"", "\"]"));
-    }
-
-    private URI buildAttestationURI(String contractIds) {
+    private URI buildAttestationURI(List<String>  contractIds) {
         return UriComponentsBuilder
                 .fromUri(attestationBaseUri)
-                .queryParam("contractIds", contractIds)
+                .queryParam("contractId", contractIds)
                 .build().toUri();
     }
 }

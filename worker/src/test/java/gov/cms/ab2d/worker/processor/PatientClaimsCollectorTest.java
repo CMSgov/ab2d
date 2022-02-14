@@ -2,8 +2,8 @@ package gov.cms.ab2d.worker.processor;
 
 import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.CoverageSummary;
-import gov.cms.ab2d.common.util.FilterOutByDate;
+import gov.cms.ab2d.coverage.model.CoverageSummary;
+import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.TestUtil;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
@@ -61,6 +61,33 @@ public class PatientClaimsCollectorTest {
             return false;
         }
     };
+
+    @DisplayName("Test to make sure that the EOB last updated is after since date")
+    @Test
+    void testAfterSinceDate() {
+        ExplanationOfBenefit eob = new ExplanationOfBenefit();
+        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime oneMinuteLater = now.plusMinutes(1);
+        OffsetDateTime oneMinuteEarlier = now.minusMinutes(1);
+        eob.getMeta().setLastUpdated(new Date());
+
+        CoverageSummary coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(PATIENT_ID), null, List.of());
+
+        PatientClaimsRequest request1 = new PatientClaimsRequest(coverageSummary, LATER_ATT_DATE, null, "client", "job",
+                "contractNum", Contract.ContractType.CLASSIC_TEST, noOpToken, STU3);
+        PatientClaimsCollector collector1 = new PatientClaimsCollector(request1, EPOCH);
+        assertTrue(collector1.afterSinceDate(eob));
+
+        PatientClaimsRequest request2 = new PatientClaimsRequest(coverageSummary, LATER_ATT_DATE, oneMinuteEarlier, "client", "job",
+                "contractNum", Contract.ContractType.CLASSIC_TEST, noOpToken, STU3);
+        PatientClaimsCollector collector2 = new PatientClaimsCollector(request2, EPOCH);
+        assertTrue(collector2.afterSinceDate(eob));
+
+        PatientClaimsRequest request3 = new PatientClaimsRequest(coverageSummary, LATER_ATT_DATE, oneMinuteLater, "client", "job",
+                "contractNum", Contract.ContractType.CLASSIC_TEST, noOpToken, STU3);
+        PatientClaimsCollector collector3 = new PatientClaimsCollector(request3, EPOCH);
+        assertFalse(collector3.afterSinceDate(eob));
+    }
 
     @DisplayName("Skip billable period check changes whether eobs are filtered or not")
     @Test

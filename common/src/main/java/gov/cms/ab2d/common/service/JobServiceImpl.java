@@ -1,6 +1,6 @@
 package gov.cms.ab2d.common.service;
 
-import gov.cms.ab2d.common.model.*; // NOPMD
+import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.common.util.JobUtil;
@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PROD_LIST;
+import static gov.cms.ab2d.eventlogger.events.SlackEvents.ORG_FIRST;
 
 @Slf4j
 @Service
@@ -86,12 +87,12 @@ public class JobServiceImpl implements JobService {
         eventLogger.log(EventUtils.getJobChangeEvent(job, JobStatus.SUBMITTED, "Job Created"));
 
         // Report client running first job in prod
-        if (clientHasNeverCompletedJob(contract)) {
-            String firstJobMessage = String.format("Organization %s is running their first job for contract %s",
+        if (clientHasNeverCompletedJob(contract.getContractNumber())) {
+            String firstJobMessage = String.format(ORG_FIRST + " Organization %s is running their first job for contract %s",
                     pdpClient.getOrganization(), contract.getContractNumber());
             eventLogger.alert(firstJobMessage, PROD_LIST);
         }
-        job.setContract(contract);
+        job.setContractNumber(contract.getContractNumber());
         job.setStatus(JobStatus.SUBMITTED);
         return jobRepository.save(job);
     }
@@ -224,8 +225,8 @@ public class JobServiceImpl implements JobService {
                 .map(Job::getJobUuid).collect(Collectors.toList());
     }
 
-    private boolean clientHasNeverCompletedJob(Contract contract) {
-        int completedJobs = jobRepository.countJobByContractAndStatus(contract,
+    private boolean clientHasNeverCompletedJob(String contractNumber) {
+        int completedJobs = jobRepository.countJobByContractNumberAndStatus(contractNumber,
                 List.of(JobStatus.SUBMITTED, JobStatus.IN_PROGRESS, JobStatus.SUCCESSFUL));
         return completedJobs == 0;
     }

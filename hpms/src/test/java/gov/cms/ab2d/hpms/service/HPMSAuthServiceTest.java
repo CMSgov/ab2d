@@ -12,15 +12,21 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import static org.junit.jupiter.api.Assertions.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(classes = SpringBootTestApp.class)
 @TestPropertySource(locations = "/application.hpms.properties")
 @Testcontainers
-public class HPMSAuthServiceTest {
+class HPMSAuthServiceTest {
 
     @Autowired
     HPMSAuthServiceImpl authService;
+
 
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
@@ -56,6 +62,17 @@ public class HPMSAuthServiceTest {
         headers = new HttpHeaders();
         authService.buildAuthHeaders(headers);
         assertNotEquals(tokenExpiry, authService.getTokenExpires());
+    }
+
+    @Test
+    void headers() {
+        HttpHeaders headers = new HttpHeaders();
+        authService.buildAuthHeaders(headers);
+        // Method currently sets 3 headers
+        assertTrue(headers.size() >= 3);
+        headers.forEach((headerName, headerValue) -> {
+            assertNotNull(headerValue);
+        });
     }
 
     @AfterEach

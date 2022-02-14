@@ -12,7 +12,7 @@ volume to give it at least that much space.
 
 ## Tools Configuration
 
-Install Java 13 and Maven 3.6.3 on the jenkins agent.
+Install Java 17 and Maven 3.6.3 on the jenkins agent.
 
 Go to the `<jenkins_ip>:8080/configureTools` url. Add a JDK and Maven installation
 but do not allow Jenkins to install it automatically. For each installation set it to the home of the

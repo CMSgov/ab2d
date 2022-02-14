@@ -2,14 +2,23 @@ package gov.cms.ab2d.common.model;
 
 
 import gov.cms.ab2d.common.util.DateUtil;
-import lombok.*;
 
-import javax.persistence.*;
+import java.util.Objects;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 import javax.validation.constraints.NotNull;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 
 import static gov.cms.ab2d.common.util.DateUtil.getESTOffset;
 
@@ -69,9 +78,6 @@ public class Contract extends TimestampBase {
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime attestedOn;
 
-    @OneToMany(mappedBy = "contract")
-    private Set<CoveragePeriod> coveragePeriods = new HashSet<>();
-
     public boolean isTestContract() {
         return contractType.isTestContract();
     }
@@ -112,7 +118,7 @@ public class Contract extends TimestampBase {
      * Returns true if new state differs from existing which requires a save.
      */
     public boolean updateAttestation(boolean attested, String attestationDate) {
-        if (updateMode != UpdateMode.AUTOMATIC)
+        if (!isAutoUpdatable())
             return false;
 
         boolean hasAttestation = hasAttestation();
@@ -128,5 +134,13 @@ public class Contract extends TimestampBase {
         String dateWithTZ = attestationDate + " " + getESTOffset();
         attestedOn = OffsetDateTime.parse(dateWithTZ, FORMATTER);
         return true;
+    }
+
+    public boolean isAutoUpdatable() {
+        return updateMode == UpdateMode.AUTOMATIC;
+    }
+
+    public boolean hasDateIssue() {
+        return ContractType.CLASSIC_TEST == contractType;
     }
 }

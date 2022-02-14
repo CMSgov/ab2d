@@ -1,7 +1,5 @@
 package gov.cms.ab2d.worker.processor;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
@@ -35,13 +33,17 @@ import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.common.util.EventUtils.getOrganization;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PROD_LIST;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
+import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_COMPLETED;
+import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_CALL_FAILURE;
+import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_FAILURE;
+import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_QUEUE_MISMATCH;
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.NDJSON;
 import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.ZIP;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@SuppressWarnings({"PMD.TooManyStaticImports", "java:S2142"}) //java:S2142: "InterruptedException" should not be ignored
+@SuppressWarnings("java:S2142") //java:S2142: "InterruptedException" should not be ignored
 public class JobProcessorImpl implements JobProcessor {
 
     @Value("${efs.mount}")
@@ -95,7 +97,7 @@ public class JobProcessorImpl implements JobProcessor {
             }
         } catch (Exception e) {
 
-            String contract = job.getContract() != null ? job.getContract().getContractNumber() : "empty";
+            String contract = job.getContractNumber();
             String message;
             // Says this is always false but that isn't true
             if (e instanceof PSQLException) {
@@ -106,7 +108,7 @@ public class JobProcessorImpl implements JobProcessor {
             }
 
             // Log exception to relevant loggers
-            eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, FAILED, message), PUBLIC_LIST);
+            eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, FAILED, EOB_JOB_FAILURE + " " + message), PUBLIC_LIST);
             log.error("Unexpected exception executing job {}", e.getMessage());
 
             // Update database status
@@ -130,9 +132,7 @@ public class JobProcessorImpl implements JobProcessor {
      */
     void processContract(Job job, Path outputDirPath)
             throws ExecutionException, InterruptedException {
-        Contract contract = job.getContract();
-        assert contract != null;
-        log.info("Job [{}] - contract [{}] ", job.getJobUuid(), contract.getContractNumber());
+        log.info("Job [{}] - contract [{}] ", job.getJobUuid(), job.getContractNumber());
 
         try {
             // Retrieve the contract beneficiaries
@@ -143,19 +143,19 @@ public class JobProcessorImpl implements JobProcessor {
             jobOutputRepository.saveAll(jobOutputs);
 
             // If the job is done searching
-            verifyTrackedJobProgress(job, contract);
+            verifyTrackedJobProgress(job);
         } finally {
             // Guarantee that we write out statistics on the job if possible
-            persistTrackedJobProgress(job, contract);
+            persistTrackedJobProgress(job);
         }
     }
 
-    void verifyTrackedJobProgress(Job job, Contract contract) {
+    void verifyTrackedJobProgress(Job job) {
         ProgressTracker progressTracker = jobProgressService.getStatus(job.getJobUuid());
 
         if (progressTracker == null) {
             log.info("Job [{}] - contract [{}] does not have any progress information, skipping verifying tracker",
-                    job.getJobUuid(), contract.getContractNumber());
+                    job.getJobUuid(), job.getContractNumber());
             return;
         }
 
@@ -169,26 +169,26 @@ public class JobProcessorImpl implements JobProcessor {
         int processedPatients = progressTracker.getPatientRequestProcessedCount();
 
         if (expectedPatients != queuedPatients) {
-            String alertMessage = String.format("[%s] expected beneficiaries (%d) does not match queued beneficiaries (%d)",
+            String alertMessage = String.format(EOB_JOB_QUEUE_MISMATCH + " [%s] expected beneficiaries (%d) does not match queued beneficiaries (%d)",
                     job.getJobUuid(), expectedPatients, queuedPatients);
             log.error(alertMessage);
             eventLogger.alert(alertMessage, PROD_LIST);
         }
 
         if (expectedPatients != processedPatients) {
-            String alertMessage = String.format("[%s] expected beneficiaries (%d) does not match processed beneficiaries (%d)",
+            String alertMessage = String.format(EOB_JOB_CALL_FAILURE + " [%s] expected beneficiaries (%d) does not match processed beneficiaries (%d)",
                     job.getJobUuid(), expectedPatients, queuedPatients);
             log.error(alertMessage);
             eventLogger.alert(alertMessage, PROD_LIST);
         }
     }
 
-    void persistTrackedJobProgress(Job job, Contract contract) {
+    void persistTrackedJobProgress(Job job) {
         ProgressTracker progressTracker = jobProgressService.getStatus(job.getJobUuid());
 
         if (progressTracker == null) {
             log.info("Job [{}] - contract [{}] does not have any progress information, skipping persisting tracker",
-                    job.getJobUuid(), contract.getContractNumber());
+                    job.getJobUuid(), job.getContractNumber());
             return;
         }
 
@@ -198,7 +198,7 @@ public class JobProcessorImpl implements JobProcessor {
         // Regardless of whether we pass or fail the basic
         eventLogger.log(new ContractSearchEvent(getOrganization(job),
                 job.getJobUuid(),
-                contract.getContractNumber(),
+                job.getContractNumber(),
                 progressTracker.getPatientsExpected(),
                 progressTracker.getPatientRequestQueuedCount(),
                 progressTracker.getPatientRequestProcessedCount(),
@@ -216,7 +216,6 @@ public class JobProcessorImpl implements JobProcessor {
      * @param job           - the job to process
      * @param outputDirPath - the output directory to put all the files
      */
-    @SuppressFBWarnings("REC_CATCH_EXCEPTION")
     private void processJob(Job job, Path outputDirPath) throws ExecutionException, InterruptedException {
         // Create the output directory
         createOutputDirectory(outputDirPath, job);
@@ -228,7 +227,7 @@ public class JobProcessorImpl implements JobProcessor {
         try {
             processContract(job, outputDirPath);
         } catch (ExecutionException | InterruptedException ex) {
-            log.error("Having issue retrieving patients for contract " + job.getContract());
+            log.error("Having issue retrieving patients for contract " + job.getContractNumber());
             throw ex;
         }
 
@@ -265,7 +264,6 @@ public class JobProcessorImpl implements JobProcessor {
      *
      * @param outputDirPath - the directory to delete
      */
-    @SuppressFBWarnings
     private void deleteExistingDirectory(Path outputDirPath, Job job) {
         final File[] files = outputDirPath.toFile().listFiles(getFilenameFilter());
 
@@ -316,9 +314,9 @@ public class JobProcessorImpl implements JobProcessor {
      */
     private void completeJob(Job job) {
         ProgressTracker progressTracker = jobProgressService.getStatus(job.getJobUuid());
-        String jobFinishedMessage = String.format("Contract %s processed " +
+        String jobFinishedMessage = String.format(EOB_JOB_COMPLETED + " Contract %s processed " +
                 "%d patients generating %d eobs and %d files (including the error file if any)",
-                job.getContract().getContractNumber(), progressTracker.getPatientRequestProcessedCount(),
+                job.getContractNumber(), progressTracker.getPatientRequestProcessedCount(),
                 progressTracker.getEobsProcessedCount(),
                 job.getJobOutputs().size());
 

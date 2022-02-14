@@ -21,7 +21,27 @@ import static gov.cms.ab2d.common.util.Constants.COVERAGE_SEARCH_OVERRIDE;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PRODUCTION;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.SANDBOX;
+import static gov.cms.ab2d.eventlogger.events.SlackEvents.COVERAGE_UPDATES_FAILED;
 
+/**
+ * Periodically update enrollment cached in the database by pulling enrollment from BFD.
+ *
+ * Typically this runs every Tuesday at midnight eastern time; however, you can override the schedule if enrollment arrives
+ * at an unexpected time by setting {@link Constants#COVERAGE_SEARCH_OVERRIDE}.
+ *
+ * Outside of production this feature will be disabled in most environments. To configure to run weekly,
+ * set the following properties in the database:
+ *
+ *      - {@link Constants#COVERAGE_SEARCH_DISCOVERY} for all active contracts, find if those contracts are missing coverage periods
+ *         and create those missing coverage periods
+ *          and loaded for the first time
+ *      - {@link Constants#COVERAGE_SEARCH_QUEUEING} find all coverage periods missing enrollment or needing
+ *          enrollment updated, trigger those updates
+ *      - {@link Constants#COVERAGE_SEARCH_OVERRIDE} normally this job only runs once a week, set this property to
+ *          override that configuration and force an update to enrollment.
+ *
+ * This only needs to run as often as BFD receives updated enrollment.
+ */
 @Slf4j
 @RequiredArgsConstructor
 @DisallowConcurrentExecution
@@ -59,14 +79,14 @@ public class CoveragePeriodQuartzJob extends QuartzJobBean {
                 // Start this job every day on Tuesday at midnight
                 // or override and force start
                 OffsetDateTime now = OffsetDateTime.now(AB2D_ZONE);
-                if ((now.getDayOfWeek() == DayOfWeek.TUESDAY && now.getHour() == 0) || override) {  // NOPMD
+                if ((now.getDayOfWeek() == DayOfWeek.TUESDAY && now.getHour() == 0) || override) {
                     driver.queueStaleCoveragePeriods();
                 }
 
             }
         } catch (Exception exception) {
             log.error("coverage period updates could not be conducted");
-            logManager.alert("coverage period updates could not be conducted", List.of(PRODUCTION, SANDBOX));
+            logManager.alert(COVERAGE_UPDATES_FAILED + " coverage period updates could not be conducted", List.of(PRODUCTION, SANDBOX));
             throw new JobExecutionException(exception);
         } finally {
             // Only use override once

@@ -1,26 +1,46 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
 import com.newrelic.api.agent.Trace;
-import gov.cms.ab2d.common.model.*;
-import gov.cms.ab2d.common.repository.CoverageSearchRepository;
-import gov.cms.ab2d.common.service.CoverageService;
+import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.Constants;
-import gov.cms.ab2d.worker.processor.coverage.check.*; // NOPMD
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
+import gov.cms.ab2d.coverage.model.CoverageCount;
+import gov.cms.ab2d.coverage.model.CoverageJobStatus;
+import gov.cms.ab2d.coverage.model.CoverageMapping;
+import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
+import gov.cms.ab2d.coverage.model.CoveragePagingResult;
+import gov.cms.ab2d.coverage.model.CoveragePeriod;
+import gov.cms.ab2d.coverage.model.CoverageSearch;
+import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
+import gov.cms.ab2d.coverage.service.CoverageService;
+import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
+import gov.cms.ab2d.worker.processor.coverage.check.CoverageNoDuplicatesCheck;
+import gov.cms.ab2d.worker.processor.coverage.check.CoveragePeriodsPresentCheck;
+import gov.cms.ab2d.worker.processor.coverage.check.CoveragePresentCheck;
+import gov.cms.ab2d.worker.processor.coverage.check.CoverageStableCheck;
+import gov.cms.ab2d.worker.processor.coverage.check.CoverageUpToDateCheck;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
 import java.time.DayOfWeek;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
+
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
@@ -29,7 +49,19 @@ import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getEndDateTim
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 
-@SuppressWarnings("PMD.TooManyStaticImports")
+/**
+ * Handle high level actions related to updating and querying enrollment for contracts.
+ *
+ * The {@link #loadMappingJob()} runs periodically to check whether searches have been submitted. If a search
+ * is found, and all preconditions are met for starting the search, this method will attempt to start a single
+ * search.
+ *
+ * This method is the main driver for the {@link CoverageProcessor} and uses database locks to guarantee that two
+ * workers do not run the same coverage search.
+ *
+ * This class is concurrency aware and handles the existence of other worker nodes potentially attempting to queue
+ * searches.
+ */
 @Slf4j
 @Service
 public class CoverageDriverImpl implements CoverageDriver {
@@ -46,37 +78,47 @@ public class CoverageDriverImpl implements CoverageDriver {
     private final CoverageProcessor coverageProcessor;
     private final CoverageLockWrapper coverageLockWrapper;
     private final PropertiesService propertiesService;
+    private final ContractToContractCoverageMapping mapping;
 
     public CoverageDriverImpl(CoverageSearchRepository coverageSearchRepository,
                               PdpClientService pdpClientService, CoverageService coverageService,
                               PropertiesService propertiesService, CoverageProcessor coverageProcessor,
-                              CoverageLockWrapper coverageLockWrapper) {
+                              CoverageLockWrapper coverageLockWrapper,
+                              ContractToContractCoverageMapping mapping) {
         this.coverageSearchRepository = coverageSearchRepository;
         this.pdpClientService = pdpClientService;
         this.coverageService = coverageService;
         this.coverageProcessor = coverageProcessor;
         this.coverageLockWrapper = coverageLockWrapper;
         this.propertiesService = propertiesService;
+        this.mapping = mapping;
     }
 
 
     /**
-     * Retrieve configuration for the coverage search from the database
+     * Retrieve configuration for the coverage search from the database.
+     *
+     * The following parameters are configurable:
+     *      - How far into the past to update coverage for
+     *      - Force a coverage override
+     *      - Fail a search if it has been running too long
+     *
      * @return the current meaningful coverage update configuration
      */
     private CoverageUpdateConfig retrieveConfig() {
         String updateMonths = propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_UPDATE_MONTHS).getValue();
-        String staleDays = propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_STALE_DAYS).getValue();
         String stuckHours = propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_STUCK_HOURS).getValue();
         String override = propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_OVERRIDE).getValue();
 
-        return new CoverageUpdateConfig(Integer.parseInt(updateMonths), Integer.parseInt(staleDays),
-                Integer.parseInt(stuckHours), Boolean.parseBoolean(override));
+        return new CoverageUpdateConfig(Integer.parseInt(updateMonths), Integer.parseInt(stuckHours), Boolean.parseBoolean(override));
     }
 
     /**
      * Find all work that needs to be done including new coverage periods, jobs that have been running too long,
      * and coverage information that is too old.
+     *
+     * @throws InterruptedException if is interrupted by a shutdown
+     * @throws CoverageDriverException on failure to acquire lock programmatically
      */
     @Override
     public void queueStaleCoveragePeriods() throws InterruptedException {
@@ -90,15 +132,18 @@ public class CoverageDriverImpl implements CoverageDriver {
 
             log.info("queueing all stale coverage periods");
 
-            // Job runs once a day so we need to grab this lock
+            /*
+             * Guarantee that no other worker node is also trying to start or update queued searches
+             */
             locked = lock.tryLock(TEN_MINUTES, TimeUnit.MINUTES);
 
-            for (CoveragePeriod period : outOfDateInfo) {
-                log.info("Attempting to add {}-{}-{} to queue", period.getContract().getContractNumber(),
-                        period.getYear(), period.getMonth());
-            }
-
             if (locked) {
+
+                for (CoveragePeriod period : outOfDateInfo) {
+                    log.info("Attempting to add {}-{}-{} to queue", period.getContractNumber(),
+                        period.getYear(), period.getMonth());
+                }
+
                 for (CoveragePeriod period : outOfDateInfo) {
                     coverageProcessor.queueCoveragePeriod(period, false);
                 }
@@ -118,6 +163,16 @@ public class CoverageDriverImpl implements CoverageDriver {
         }
     }
 
+    /**
+     * Get all coverage periods that need an update.
+     *
+     * Steps
+     *      - Find all coverage periods that haven't ever been searched before
+     *      - Find all stuck coverage updates and
+     *      - Find all coverage periods that still need to be updated
+     *
+     * @return list of coverage periods that need to be updated
+     */
     private Set<CoveragePeriod> getCoveragePeriods() {
         log.info("attempting to find all stale coverage periods");
 
@@ -131,19 +186,9 @@ public class CoverageDriverImpl implements CoverageDriver {
         // For all months into the past find old coverage searches
         outOfDateInfo.addAll(findStaleCoverageInformation());
 
-        log.info("queueing all stale coverage periods");
-
-        for (CoveragePeriod period : outOfDateInfo) {
-            coverageProcessor.queueCoveragePeriod(period, false);
-        }
-
-        log.info("queued all stale coverage periods");
         return outOfDateInfo;
     }
 
-    /**
-     * Discover any nonexistent coverage periods and add them to the list of coverage periods
-     */
     @Override
     public void discoverCoveragePeriods() throws CoverageDriverException, InterruptedException {
 
@@ -162,7 +207,7 @@ public class CoverageDriverImpl implements CoverageDriver {
                 // coverage periods for each contract
                 List<Contract> enabledContracts = pdpClientService.getAllEnabledContracts();
                 for (Contract contract : enabledContracts) {
-                    discoverCoveragePeriods(contract);
+                    discoverCoveragePeriods(mapping.map(contract));
                 }
 
                 log.info("discovered all coverage periods now exiting");
@@ -180,7 +225,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         }
     }
 
-    private void discoverCoveragePeriods(Contract contract) {
+    private void discoverCoveragePeriods(ContractForCoverageDTO contract) {
         // Assume current time is EST since all AWS deployments are in EST
         ZonedDateTime now = getEndDateTime();
         ZonedDateTime attestationTime = getAttestationTime(contract);
@@ -194,7 +239,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         }
 
         log.info("discovered {} coverage periods for contract {}", coveragePeriodsForContracts,
-                contract.getContractName());
+                contract.getContractNumber());
     }
 
     private Set<CoveragePeriod> findAndCancelStuckCoverageJobs() {
@@ -214,6 +259,24 @@ public class CoverageDriverImpl implements CoverageDriver {
         return stuckJobs;
     }
 
+    /**
+     * Stale coverage information is defined as coverage data for the past {@link CoverageUpdateConfig#getPastMonthsToUpdate()}
+     * that has not been updated during the current week or, in the case of forced updates,
+     * update regardless of last updated time.
+     *
+     * When the coverage override is set all coverage data for the past {@link CoverageUpdateConfig#getPastMonthsToUpdate()}
+     * will be returned. Sometimes updates are triggered manually and the cron job which normally find stale coverage information
+     * doesn't need to run again.
+     *
+     * This definition is crafted to match BFD data uploads which occur every weekend. If a job is updated on Monday it
+     * does not need to be updated on Tuesday. If a job is updated on Friday it does need to be updated
+     * the upcoming Tuesday.
+     *
+     * Sometimes updates are triggered manually and the cron job which normally find stale coverage information
+     * doesn't need to run again.
+     *
+     * @return set of coverage periods that need to be queued for updates.
+     */
     private Set<CoveragePeriod> findStaleCoverageInformation() {
 
         log.info("attempting to find all coverage information that is out of date and reduce down to coverage periods");
@@ -233,17 +296,23 @@ public class CoverageDriverImpl implements CoverageDriver {
                     .truncatedTo(ChronoUnit.DAYS);
         }
 
+        /* Check coverage periods up to {@link CoverageUpdateConfig#getPastMonthsToUpdate()} */
         do {
             // Get past month and year
             OffsetDateTime pastMonthTime = dateTime.minusMonths(monthsInPast);
             int month = pastMonthTime.getMonthValue();
             int year = pastMonthTime.getYear();
 
+            /*
+             * If override is set, update every qualifying coverage period that is not currently being updated.
+             *
+             * Otherwise update only if coverage has not been updated during the current week.
+             */
             if (config.isOverride()) {
                 // Only add coverage periods that are not running already
                 List<CoveragePeriod> periods = coverageService.getCoveragePeriods(month, year);
-                periods.stream().filter(period -> period.getStatus() != JobStatus.SUBMITTED
-                        && period.getStatus() != JobStatus.IN_PROGRESS)
+                periods.stream().filter(period -> period.getStatus() != CoverageJobStatus.SUBMITTED
+                        && period.getStatus() != CoverageJobStatus.IN_PROGRESS)
                         .forEach(stalePeriods::add);
             } else {
                 stalePeriods.addAll(coverageService.coveragePeriodNotUpdatedSince(month, year, lastSunday));
@@ -257,7 +326,12 @@ public class CoverageDriverImpl implements CoverageDriver {
 
     /**
      * Queues coverage mapping jobs to run on this machine. Coverage mapping jobs are split
-     * between workers
+     * between workers so this worker will get a job to start in a thread safe manner.
+     *
+     * Method checks that worker node is running properly and not too busy before attempting to find a search
+     * and start that search.
+     *
+     * If a coverage job fails to start it is immediately cancelled and queued again silently.
      */
     @Scheduled(cron = "${coverage.update.load.schedule}")
     public void loadMappingJob() {
@@ -285,9 +359,12 @@ public class CoverageDriverImpl implements CoverageDriver {
         CoverageMapping mapping = maybeSearch.get();
 
         log.info("found a search in queue for contract {} during {}-{}, attempting to search",
-                mapping.getContract().getContractNumber(), mapping.getPeriod().getMonth(),
+                mapping.getContractNumber(), mapping.getPeriod().getMonth(),
                 mapping.getPeriod().getYear());
 
+        /*
+         * Start a job, if starting a job fails immediately cancel the job and queue the search again.
+         */
         if (!coverageProcessor.startJob(mapping)) {
             coverageService.cancelSearch(mapping.getPeriodId(), "failed to start job");
             coverageProcessor.queueMapping(mapping, false);
@@ -297,7 +374,8 @@ public class CoverageDriverImpl implements CoverageDriver {
     /**
      * This is the most important part of the class. It retrieves the next search in the table
      * assuming that another thread or application is not currently pulling anything from the table.
-     * If there are no jobs to pull or the table is locked, it returns an empty optional.
+     *
+     * This method locks any modifications to queued searches while it executes.
      *
      * @return the next search or else an empty Optional if there are none or if the table is locked
      */
@@ -336,11 +414,28 @@ public class CoverageDriverImpl implements CoverageDriver {
         }
     }
 
+    /**
+     * Determine whether database contains all necessary enrollment for a contract and that no updates to that
+     * enrollment are currently occurring.
+     *
+     * Steps
+     *      - Lock coverage so no other workers can modify coverage while this check is occurring
+     *      - Create any {@link CoveragePeriod}s that are currently missing
+     *      - Check the following to determine whether a job can run (return false if any are not met)
+     *          - Look for whether months have failed to update during earlier attempts
+     *          - Look for coverage periods that have never been successfully searched and queue them
+     *          - Look for coverage periods currently being updated
+     *
+     * @param job job to check for coverage
+     * @throws CoverageDriverException if enrollment state violates assumed preconditions or database lock cannot be retrieved
+     * @throws InterruptedException if trying to lock the table is interrupted
+     */
     @Trace(metricName = "EnrollmentIsAvailable", dispatcher = true)
     @Override
-    public boolean isCoverageAvailable(Job job) throws InterruptedException {
+    public boolean isCoverageAvailable(Job job, Contract contract) throws InterruptedException {
 
-        String contractNumber = job.getContract().getContractNumber();
+        String contractNumber = job.getContractNumber();
+        assert contractNumber.equals(contract.getContractNumber());
 
         Lock coverageLock = coverageLockWrapper.getCoverageLock();
 
@@ -358,7 +453,7 @@ public class CoverageDriverImpl implements CoverageDriver {
 
             // Check whether a coverage period is missing for this contract.
             // If so then create those coverage periods.
-            discoverCoveragePeriods(job.getContract());
+            discoverCoveragePeriods(mapping.map(contract));
 
             log.info("queueing never searched coverage metadata periods for {}", contractNumber);
             /*
@@ -366,7 +461,7 @@ public class CoverageDriverImpl implements CoverageDriver {
              * search
              */
             List<CoveragePeriod> neverSearched = coverageService.coveragePeriodNeverSearchedSuccessfully().stream()
-                    .filter(period -> Objects.equals(job.getContract(), period.getContract())).collect(toList());
+                    .filter(period -> Objects.equals(contract.getContractNumber(), period.getContractNumber())).collect(toList());
             if (!neverSearched.isEmpty()) {
                 // Check that we've not submitted and failed these jobs
                 neverSearched.forEach(period -> checkCoveragePeriodValidity(job, period));
@@ -382,7 +477,7 @@ public class CoverageDriverImpl implements CoverageDriver {
              *
              * There will always be at least one coverage period returned.
              */
-            List<CoveragePeriod> periods = coverageService.findAssociatedCoveragePeriods(job.getContract().getId());
+            List<CoveragePeriod> periods = coverageService.findAssociatedCoveragePeriods(contract.getContractNumber());
 
             if (periods.isEmpty()) {
                 log.error("There are no existing coverage periods for this job so no metadata exists");
@@ -390,7 +485,7 @@ public class CoverageDriverImpl implements CoverageDriver {
             }
 
             return periods.stream().map(CoveragePeriod::getStatus).noneMatch(status -> status == null ||
-                    status == JobStatus.IN_PROGRESS || status == JobStatus.SUBMITTED);
+                    status == CoverageJobStatus.IN_PROGRESS || status == CoverageJobStatus.SUBMITTED);
         } catch (InterruptedException interruptedException) {
             log.error("Interrupted attempting to retrieve lock. Cannot confirm coverage metadata is available");
             throw interruptedException;
@@ -401,24 +496,31 @@ public class CoverageDriverImpl implements CoverageDriver {
         }
     }
 
+    /**
+     * Determine number of beneficiaries enrolled in the contract which should be pulled from the database
+     * and queried from BFD.
+     *
+     * Get all coverage periods associated with a contract and then find all unique beneficiaries between
+     * those coverage periods.
+     *
+     * @throws CoverageDriverException job has no contract which should not be possible
+     */
     @Trace(metricName = "EnrollmentCount", dispatcher = true)
     @Override
-    public int numberOfBeneficiariesToProcess(Job job) {
+    public int numberOfBeneficiariesToProcess(Job job, Contract contract) {
 
         ZonedDateTime now = getEndDateTime();
-
-        Contract contract = job.getContract();
 
         if (contract == null) {
             throw new CoverageDriverException("cannot retrieve metadata for job missing contract");
         }
 
-        ZonedDateTime startDateTime = getStartDateTime(job);
+        ZonedDateTime startDateTime = getStartDateTime(contract);
 
         List<CoveragePeriod> periodsToReport = new ArrayList<>();
         while (startDateTime.isBefore(now)) {
             CoveragePeriod periodToReport =
-                    coverageService.getCoveragePeriod(contract, startDateTime.getMonthValue(), startDateTime.getYear());
+                    coverageService.getCoveragePeriod(mapping.map(contract), startDateTime.getMonthValue(), startDateTime.getYear());
             periodsToReport.add(periodToReport);
             startDateTime = startDateTime.plusMonths(1);
         }
@@ -429,12 +531,15 @@ public class CoverageDriverImpl implements CoverageDriver {
         return coverageService.countBeneficiariesByCoveragePeriod(periodsToReport);
     }
 
+    /**
+     * Pull an initial page of enrollment from the database with the requisites for the next page.
+     *
+     * @throws CoverageDriverException if coverage period or some other precondition necessary for paging is missing
+     */
     @Trace(metricName = "EnrollmentLoadFromDB", dispatcher = true)
     @Override
-    public CoveragePagingResult pageCoverage(Job job) {
+    public CoveragePagingResult pageCoverage(Job job, Contract contract) {
         ZonedDateTime now = getEndDateTime();
-
-        Contract contract = job.getContract();
 
         if (contract == null) {
             throw new CoverageDriverException("cannot retrieve metadata for job missing contract");
@@ -442,18 +547,18 @@ public class CoverageDriverImpl implements CoverageDriver {
 
         log.info("attempting to build first page of results for job {}", job.getJobUuid());
 
-        ZonedDateTime startDateTime = getStartDateTime(job);
+        ZonedDateTime startDateTime = getStartDateTime(contract);
 
         try {
             // Check that all coverage periods necessary are present before beginning to page
             while (startDateTime.isBefore(now)) {
                 // Will throw exception if it doesn't exist
-                coverageService.getCoveragePeriod(contract, startDateTime.getMonthValue(), startDateTime.getYear());
+                coverageService.getCoveragePeriod(mapping.map(contract), startDateTime.getMonthValue(), startDateTime.getYear());
                 startDateTime = startDateTime.plusMonths(1);
             }
 
             // Make initial request which returns a result and a request starting at the next cursor
-            CoveragePagingRequest request = new CoveragePagingRequest(PAGING_SIZE, null, contract, job.getCreatedAt());
+            CoveragePagingRequest request = new CoveragePagingRequest(PAGING_SIZE, null, mapping.map(contract), job.getCreatedAt());
 
             // Make request for coverage metadata
             return coverageService.pageCoverage(request);
@@ -463,9 +568,14 @@ public class CoverageDriverImpl implements CoverageDriver {
         }
     }
 
-    private ZonedDateTime getStartDateTime(Job job) {
-        Contract contract = job.getContract();
-
+    /**
+     * Get first date that an EOB job needs enrollment for. Make sure that the period of time enrollment is
+     * available for does not violate the attestation time or the AB2D epoch.
+     *
+     * @throws CoverageDriverException if somehow start time is in the future like the attestation time being
+     *  in the future
+     */
+    ZonedDateTime getStartDateTime(Contract contract) {
         // Attestation time should never be null for a job making it to this point
         ZonedDateTime startDateTime = contract.getESTAttestationTime();
 
@@ -486,36 +596,70 @@ public class CoverageDriverImpl implements CoverageDriver {
                 1, 0, 0, 0, 0, AB2D_ZONE);
     }
 
-    private void checkCoveragePeriodValidity(Job job, CoveragePeriod period) {
-        if (period.getStatus() == JobStatus.FAILED &&
+    void checkCoveragePeriodValidity(Job job, CoveragePeriod period) {
+        if (period.getStatus() == CoverageJobStatus.FAILED &&
                 period.getModified().isAfter(job.getCreatedAt())) {
             throw new CoverageDriverException("attempts to pull coverage information failed too many times, " +
                     "cannot pull coverage");
         }
     }
 
+    /**
+     * Retrieve enrollment information for {@link CoveragePagingRequest#getPageSize()} number of beneficiaries
+     * where all enrollment records for each patient are aggregated into an {@link gov.cms.ab2d.coverage.model.CoverageSummary}
+     *
+     * @throws CoverageDriverException if coverage period or some other precondition necessary for paging is missing
+     */
     @Override
     public CoveragePagingResult pageCoverage(CoveragePagingRequest request) {
-        return coverageService.pageCoverage(request);
+        try {
+            return coverageService.pageCoverage(request);
+        } catch (Exception exception) {
+            log.error("coverage period missing or year,month query incorrect, driver should have resolved earlier");
+            throw new CoverageDriverException("coverage driver failing preconditions", exception);
+        }
     }
 
+    /**
+     * Verify that coverage data cached in the database matches expected business requirements.
+     *
+     * Steps
+     *      - List of all contracts that are active contracts
+     *      - Check whether contracts have a coverage period for every month since the contract
+     *          attested. If not, log issue and filter out because other checks do not apply.
+     *          {@link CoveragePeriodsPresentCheck}
+     *      - Get count of beneficiaries for every month for every contract
+     *          - Check that there are no {@link CoverageNoDuplicatesCheck}
+     *          - Check that every month for a contract has some enrollment except
+     *              for the current month {@link CoveragePresentCheck}
+     *          - Check that the coverage for a contract and month is from the latest
+     *              successful search {@link CoverageUpToDateCheck}
+     *          - Check that the coverage month to month has not changed drastically {@link CoverageStableCheck}
+     *      - If there are any issues report all of those issues and fail
+     *
+     * @throws CoverageVerificationException if one or more violations of expected business level behavior are found
+     */
     @Override
     public void verifyCoverage() {
 
         List<String> issues = new ArrayList<>();
 
+        // Only filter contracts that matter
         List<Contract> enabledContracts = pdpClientService.getAllEnabledContracts().stream()
                 .filter(contract -> !contract.isTestContract())
                 .filter(contract -> contractNotBeingUpdated(issues, contract))
                 .collect(toList());
 
+        // Don't perform other verification checks if coverage for months is outright missing
         List<Contract> filteredContracts = enabledContracts.stream()
                 .filter(new CoveragePeriodsPresentCheck(coverageService, null, issues))
                 .collect(toList());
 
-        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(filteredContracts)
-                .stream().collect(groupingBy(CoverageCount::getContractNumber));
+        // Query for counts of beneficiaries for each contract
+        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(filteredContracts.stream().map(mapping::map).toList())
+                 .stream().collect(groupingBy(CoverageCount::getContractNumber));
 
+        // Use counts to perform other checks and count passing contracts
         long passingContracts = filteredContracts.stream()
                 .filter(new CoverageNoDuplicatesCheck(coverageService, coverageCounts, issues))
                 .filter(new CoveragePresentCheck(coverageService, coverageCounts, issues))
@@ -532,11 +676,18 @@ public class CoverageDriverImpl implements CoverageDriver {
         }
     }
 
+    /**
+     * Check that a contract is not currently having its enrollment updated. The verification steps are only valid
+     * for contracts not currently being updated
+     * @param issues list of already discovered issues to append new issues to
+     * @param contract the contract to check
+     * @return true if the contract if not being updated
+     */
     private boolean contractNotBeingUpdated(List<String> issues, Contract contract) {
-        List<CoveragePeriod> periods = coverageService.findAssociatedCoveragePeriods(contract.getId());
+        List<CoveragePeriod> periods = coverageService.findAssociatedCoveragePeriods(contract.getContractNumber());
 
         boolean contractBeingUpdated  = periods.stream()
-                .anyMatch(period -> period.getStatus() == JobStatus.IN_PROGRESS || period.getStatus() == JobStatus.SUBMITTED);
+                .anyMatch(period -> period.getStatus() == CoverageJobStatus.IN_PROGRESS || period.getStatus() == CoverageJobStatus.SUBMITTED);
 
         if (contractBeingUpdated) {
             issues.add("Contract " + contract.getContractNumber() + " is being updated now so coverage verification will be done later");

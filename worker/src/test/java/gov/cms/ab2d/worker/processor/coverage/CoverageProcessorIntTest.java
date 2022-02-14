@@ -1,11 +1,14 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.CoveragePeriod;
+import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import gov.cms.ab2d.common.util.Coverage;
-import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.coverage.repository.CoveragePeriodRepository;
+import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
+import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
+import gov.cms.ab2d.coverage.util.Coverage;
+import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -38,7 +41,7 @@ class CoverageProcessorIntTest {
     private CoverageSearchEventRepository coverageSearchEventRepo;
 
     @Autowired
-    private DataSetup dataSetup;
+    private CoverageDataSetup dataSetup;
 
     @Autowired
     @Qualifier(value = "patientCoverageThreadPool")
@@ -58,10 +61,10 @@ class CoverageProcessorIntTest {
 
 
         Contract contract = contractRepo.findContractByContractNumber("Z0010").get();
-        CoveragePeriod january = dataSetup.createCoveragePeriod(contract, 1, 2000);
-        CoveragePeriod february = dataSetup.createCoveragePeriod(contract, 2, 2000);
-        CoveragePeriod march = dataSetup.createCoveragePeriod(contract, 3, 2000);
-        CoveragePeriod april = dataSetup.createCoveragePeriod(contract, 4, 2000);
+        CoveragePeriod january = dataSetup.createCoveragePeriod(contract.getContractNumber(), 1, 2000);
+        CoveragePeriod february = dataSetup.createCoveragePeriod(contract.getContractNumber(), 2, 2000);
+        CoveragePeriod march = dataSetup.createCoveragePeriod(contract.getContractNumber(), 3, 2000);
+        CoveragePeriod april = dataSetup.createCoveragePeriod(contract.getContractNumber(), 4, 2000);
 
         processor.queueCoveragePeriod(january, false);
         processor.queueCoveragePeriod(february, false);

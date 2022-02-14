@@ -3,7 +3,7 @@ package gov.cms.ab2d.worker.processor;
 import com.newrelic.api.agent.Token;
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.model.CoverageSummary;
+import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.BeneficiarySearchEvent;
 import gov.cms.ab2d.fhir.BundleUtils;
@@ -76,6 +76,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         OffsetDateTime requestStartTime = OffsetDateTime.now();
 
         Date earliestDate = getEarliestDataDate();
+
+        // Aggregate claims into a single list
         PatientClaimsCollector collector = new PatientClaimsCollector(request, earliestDate);
 
         CoverageSummary patient = request.getCoverageSummary();
@@ -83,11 +85,15 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
         IBaseBundle eobBundle;
 
+        // Guarantee that since date provided with job doesn't violate AB2D requirements
         OffsetDateTime sinceTime = getSinceTime(request);
 
         try {
 
+            // Set header for requests so BFD knows where this request originated from
             BFDClient.BFD_BULK_JOB_ID.set(request.getJob());
+
+            // Make first request and begin looping over remaining pages
             eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patient.getIdentifiers().getBeneficiaryId(), sinceTime);
             collector.filterAndAddEntries(eobBundle);
 
@@ -96,6 +102,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                 collector.filterAndAddEntries(eobBundle);
             }
 
+            // Log request to Kinesis and NewRelic
             logSuccessful(request, beneficiaryId, requestStartTime);
             collector.logBundleEvent(sinceTime);
 

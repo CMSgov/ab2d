@@ -5,7 +5,7 @@ import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.hpms.SpringBootTestApp;
-import org.assertj.core.util.Lists;
+import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizationInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -20,6 +20,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -58,8 +59,27 @@ public class AttestationUpdaterServiceTest {
 
     @Test
     public void noNewContracts() {
-        List<Contract> result = aus.addNewContracts(Lists.emptyList());
+        List<Contract> result = aus.addNewContracts(Collections.emptyList());
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void hasChanges() {
+        HPMSOrganizationInfo info = new HPMSOrganizationInfo();
+        info.setParentOrgId(2);
+        Contract contract = new Contract();
+        contract.setHpmsParentOrgId(1L);
+        assertTrue(info.hasChanges(contract));
+    }
+
+    @Test
+    void updateCoverage() {
+        HPMSOrganizationInfo info = new HPMSOrganizationInfo();
+        info.setParentOrgId(2);
+        Contract contract = new Contract();
+        contract.setHpmsParentOrgId(1L);
+        info.updateContract(contract);
+        assertEquals(2L, (long) contract.getHpmsParentOrgId());
     }
 
     @TestConfiguration
@@ -77,8 +97,7 @@ public class AttestationUpdaterServiceTest {
 
         @Qualifier("for_testing")
         @Bean()
-        public AttestationUpdaterServiceImpl getMockService()
-        {
+        public AttestationUpdaterServiceImpl getMockService() {
             return new AttestationUpdaterServiceImpl(contractRepository, new MockHpmsFetcher(), logManager);
         }
     }

@@ -46,6 +46,7 @@ import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
+import static gov.cms.ab2d.eventlogger.events.SlackEvents.API_INVALID_CONTRACT;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 
@@ -57,7 +58,6 @@ import static org.springframework.http.HttpHeaders.RETRY_AFTER;
  */
 @ControllerAdvice
 @Slf4j
-@SuppressWarnings("PMD.TooManyStaticImports")
 public class ErrorHandler extends ResponseEntityExceptionHandler {
 
     private final LogManager eventLogger;
@@ -128,7 +128,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler({InvalidContractException.class})
     public ResponseEntity<Void> handleInvalidContractErrors(Exception ex, HttpServletRequest request) {
         HttpStatus status = getErrorResponse(ex.getClass());
-        String description = getRootCause(ex);
+        String description = API_INVALID_CONTRACT + " " + getRootCause(ex);
 
         eventLogger.log(new ErrorEvent(MDC.get(ORGANIZATION), null,
                 ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT, description));
@@ -175,7 +175,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         // Then log to other destinations
         eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), null, status,
                 "API Error", ex.getClass().getSimpleName(), (String) request.getAttribute(REQUEST_ID)));
-        eventLogger.trace("Maintenance mode blocked API request " + request.getAttribute(REQUEST_ID), Ab2dEnvironment.PROD_LIST);
+        eventLogger.trace("API_MAINT_BLOCKED Maintenance mode blocked API request " + request.getAttribute(REQUEST_ID), Ab2dEnvironment.PROD_LIST);
 
         return new ResponseEntity<>(null, null, status);
     }
