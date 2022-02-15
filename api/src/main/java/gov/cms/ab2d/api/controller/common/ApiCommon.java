@@ -2,12 +2,14 @@ package gov.cms.ab2d.api.controller.common;
 
 import gov.cms.ab2d.api.controller.InMaintenanceModeException;
 import gov.cms.ab2d.api.controller.TooManyRequestsException;
+import gov.cms.ab2d.common.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.service.InvalidClientInputException;
 import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
+import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.http.HttpHeaders;
@@ -135,10 +137,13 @@ public class ApiCommon {
         log.info("Successfully created job");
     }
 
-    public void checkValidCreateJob(OffsetDateTime since, String resourceTypes, String outputFormat) {
+    public StartJobDTO checkValidCreateJob(HttpServletRequest request, String contractNumber, OffsetDateTime since,
+                                           String resourceTypes, String outputFormat, FhirVersion version) {
         checkIfInMaintenanceMode();
         checkIfCurrentClientCanAddJob();
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
         checkSinceTime(since);
+        return new StartJobDTO(contractNumber, null, resourceTypes,
+                getCurrentUrl(request), outputFormat, since, version);
     }
 }
