@@ -135,3 +135,7 @@ databaseChangeLog:
       file: db/changelog/v2022/job_contract_bus_key.sql
   - include:
       file: db/changelog/v2022/contract_coverage.sql
+  - include:
+      file: db/changelog/test_only/create-ab2d-analyst.sql
+  - include:
+      file: db/changelog/v2022/create-analyst-view.sql
