@@ -26,8 +26,6 @@ public final class Constants {
 
     public static final String ATTESTOR_ROLE = "ATTESTOR";
 
-    public static final int ONE_MEGA_BYTE = 1024 * 1024;
-
     public static final String API_PREFIX_V1 = "/api/v1";
 
     public static final String API_PREFIX_V2 = "/api/v2";

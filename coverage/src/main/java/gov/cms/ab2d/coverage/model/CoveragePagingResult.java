@@ -31,6 +31,4 @@ public class CoveragePagingResult {
     public Optional<CoveragePagingRequest> getNextRequest() {
         return Optional.ofNullable(nextRequest);
     }
-
-
 }
