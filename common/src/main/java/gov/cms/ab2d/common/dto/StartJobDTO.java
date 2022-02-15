@@ -9,15 +9,14 @@ import javax.validation.constraints.NotNull;
 import java.time.OffsetDateTime;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
 public class StartJobDTO {
-    private String contractNumber;
-    private String organization;
-    private String resourceTypes;
-    private String url;
-    private String outputFormat;
-    private OffsetDateTime since;
+    private final String contractNumber;
+    private final String organization;// NOSONAR - not quite in use yet
+    private final String resourceTypes;
+    private final String url;
+    private final String outputFormat;
+    private final OffsetDateTime since;
     @NotNull
-    private FhirVersion version;
+    private final FhirVersion version;
 }
