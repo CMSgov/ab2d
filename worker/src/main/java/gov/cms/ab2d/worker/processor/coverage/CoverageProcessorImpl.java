@@ -85,7 +85,6 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
     private final ContractToContractCoverageMapping contractCoverageMapping = new ContractToContractCoverageMapping();
 
-
     /**
      * Coverage processor needs an interface to the database, client for BFD, and thread pool to concurrently execute
      * searches.

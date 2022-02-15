@@ -141,7 +141,7 @@ public class JobServiceImpl implements JobService {
         Job job = jobRepository.findByJobUuid(jobUuid);
 
         if (job == null) {
-            log.error("Job was searched for and was not found");
+            log.error("Job {} was searched for and was not found", jobUuid);
             throw new ResourceNotFoundException("No job with jobUuid " +  jobUuid + " was found");
         }
 

@@ -16,6 +16,14 @@ public class ProgressTrackerUpdate {
         patientRequestProcessedCount++;
     }
 
+    public void incPatientProcessCount(int num) {
+        patientRequestProcessedCount += num;
+    }
+
+    public void incPatientFailureCount(int num) {
+        patientFailureCount += num;
+    }
+
     public void incPatientFailureCount() {
         patientFailureCount++;
     }

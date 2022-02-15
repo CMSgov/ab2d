@@ -1,5 +1,9 @@
 package gov.cms.ab2d.worker.processor;
 
+import gov.cms.ab2d.aggregator.AggregatorCallable;
+import gov.cms.ab2d.aggregator.FileOutputType;
+import gov.cms.ab2d.aggregator.FileUtils;
+import gov.cms.ab2d.aggregator.JobHelper;
 import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Token;
 import com.newrelic.api.agent.Trace;
@@ -8,32 +12,38 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
-import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
+import gov.cms.ab2d.worker.config.SearchConfig;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.JobChannelService;
-import java.io.ByteArrayOutputStream;
+
+import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+
+import static gov.cms.ab2d.aggregator.FileOutputType.DATA;
+import static gov.cms.ab2d.aggregator.FileOutputType.ERROR;
 
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
 import static gov.cms.ab2d.common.util.EventUtils.getOrganization;
@@ -47,10 +57,7 @@ public class ContractProcessorImpl implements ContractProcessor {
     private static final int SLEEP_DURATION = 250;
 
     @Value("${job.file.rollover.ndjson:200}")
-    private long ndjsonRollOver;
-
-    @Value("${file.try.lock.timeout}")
-    private int tryLockTimeout;
+    private int ndjsonRollOver;
 
     @Value("${eob.job.patient.queue.max.size}")
     private int eobJobPatientQueueMaxSize;
@@ -58,10 +65,8 @@ public class ContractProcessorImpl implements ContractProcessor {
     @Value("${eob.job.patient.queue.page.size}")
     private int eobJobPatientQueuePageSize;
 
-    private ContractToContractCoverageMapping mapping;
-
+    private final ContractToContractCoverageMapping mapping;
     private final ContractRepository contractRepository;
-
     private final JobRepository jobRepository;
     private final CoverageDriver coverageDriver;
     private final PatientClaimsProcessor patientClaimsProcessor;
@@ -69,6 +74,8 @@ public class ContractProcessorImpl implements ContractProcessor {
     private final RoundRobinBlockingQueue<PatientClaimsRequest> eobClaimRequestsQueue;
     private final JobChannelService jobChannelService;
     private final JobProgressService jobProgressService;
+    private final ThreadPoolTaskExecutor aggregatorThreadPool;
+    private final SearchConfig searchConfig;
 
     @SuppressWarnings("checkstyle:ParameterNumber") // TODO - refactor to eliminate the ridiculous number of args
     public ContractProcessorImpl(ContractRepository contractRepository,
@@ -79,7 +86,9 @@ public class ContractProcessorImpl implements ContractProcessor {
                                  RoundRobinBlockingQueue<PatientClaimsRequest> eobClaimRequestsQueue,
                                  JobChannelService jobChannelService,
                                  JobProgressService jobProgressService,
-                                 ContractToContractCoverageMapping mapping) {
+                                 ContractToContractCoverageMapping mapping,
+                                 @Qualifier("aggregatorThreadPool") ThreadPoolTaskExecutor aggregatorThreadPool,
+                                 SearchConfig searchConfig) {
         this.contractRepository = contractRepository;
         this.jobRepository = jobRepository;
         this.coverageDriver = coverageDriver;
@@ -89,6 +98,8 @@ public class ContractProcessorImpl implements ContractProcessor {
         this.jobChannelService = jobChannelService;
         this.jobProgressService = jobProgressService;
         this.mapping = mapping;
+        this.aggregatorThreadPool = aggregatorThreadPool;
+        this.searchConfig = searchConfig;
     }
 
     /**
@@ -116,7 +127,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      *
      * @return - the job output records containing the file information
      */
-    public List<JobOutput> process(Path outputDirPath, Job job) {
+    public List<JobOutput> process(Job job) {
         var contractNumber = job.getContractNumber();
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contractNumber));
 
@@ -126,11 +137,21 @@ public class ContractProcessorImpl implements ContractProcessor {
         jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENTS_EXPECTED, numBenes);
         log.info("Contract [{}] has [{}] Patients", contractNumber, numBenes);
 
-        List<JobOutput> jobOutputs = new ArrayList<>();
-        try (StreamHelper helper = new TextStreamHelperImpl(outputDirPath, contractNumber, getRollOverThreshold(), tryLockTimeout,
-                eventLogger, job)) {
+        // Create the aggregator
+        AggregatorCallable aggregator = new AggregatorCallable(searchConfig.getEfsMount(), job.getJobUuid(), contractNumber,
+                ndjsonRollOver, searchConfig.getStreamingDir(), searchConfig.getFinishedDir(), searchConfig.getMultiplier());
 
-            ContractData contractData = new ContractData(contract, job, helper);
+        List<JobOutput> jobOutputs = new ArrayList<>();
+        try {
+            // Let the aggregator create all the necessary directories
+            JobHelper.workerSetUpJobDirectories(job.getJobUuid(), searchConfig.getEfsMount(), searchConfig.getStreamingDir(), searchConfig.getFinishedDir());
+            // Create the aggregator thread
+            Future<Integer> aggregatorFuture = aggregatorThreadPool.submit(aggregator);
+
+            ContractData contractData = new ContractData(contract, job);
+
+            contractData.addAggregatorHandle(aggregatorFuture);
+            // Iterate through pages of beneficiary data
             loadEobRequests(contractData);
 
             // Wait for remaining work to finish before cleaning up after the job
@@ -140,22 +161,39 @@ public class ContractProcessorImpl implements ContractProcessor {
             log.info("Finished writing {} EOBs for contract {}",
                     jobProgressService.getStatus(job.getJobUuid()).getEobsProcessedCount(), contractNumber);
 
+            // Mark the job as finished for the aggregator (all file data has been written out)
+            JobHelper.workerFinishJob(searchConfig.getEfsMount() + "/" + job.getJobUuid() + "/" + searchConfig.getStreamingDir());
 
-            // Close the last file and report it as a job output
-            helper.closeLastStream();
+            // Wait for the aggregator to finish
+            while (!isDone(aggregatorFuture, job.getJobUuid(), true)) {
+                Thread.sleep(1000);
+            }
 
-            List<StreamOutput> dataOutputs = helper.getDataOutputs();
-            dataOutputs.stream().map(output -> createJobOutput(output, false)).forEach(jobOutputs::add);
+            // Retrieve all the job output info
+            jobOutputs.addAll(getOutputs(job.getJobUuid(), DATA));
+            jobOutputs.addAll(getOutputs(job.getJobUuid(), ERROR));
+            log.info("Number of outputs: " + jobOutputs.size());
 
-            List<StreamOutput> errorOutputs = helper.getErrorOutputs();
-            errorOutputs.stream().map(output -> createJobOutput(output, true)).forEach(jobOutputs::add);
-
-        } catch (IOException ex) {
-            log.error("Unable to open output file");
-        } catch (InterruptedException ex) {
+        } catch (InterruptedException | IOException ex) {
             log.error("interrupted while processing job for contract");
         }
 
+        return jobOutputs;
+    }
+
+    /**
+     * Look through the job output file and create JobOutput objects with them
+     *
+     * @param jobId - the job id
+     * @param type - the file type
+     * @return the list of outputs
+     */
+    List<JobOutput> getOutputs(String jobId, FileOutputType type) {
+        List<JobOutput> jobOutputs = new ArrayList<>();
+        List<StreamOutput> dataOutputs = FileUtils.listFiles(searchConfig.getEfsMount() + "/" + jobId, type).stream()
+                .map(file -> new StreamOutput(file, type))
+                .toList();
+        dataOutputs.stream().map(output -> createJobOutput(output, type)).forEach(jobOutputs::add);
         return jobOutputs;
     }
 
@@ -181,7 +219,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         // Handle first page of beneficiaries and then enter loop
         CoveragePagingResult current = coverageDriver.pageCoverage(new CoveragePagingRequest(eobJobPatientQueuePageSize,
                 null, mapping.map(contract), contractData.getJob().getCreatedAt()));
-        loadRequestBatch(contractData, current);
+        loadRequestBatch(contractData, current, searchConfig.getNumberBenesPerBatch());
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUEST_QUEUED, current.size());
 
         // Do not replace with for each, continue is meant to force patients to wait to be queued
@@ -197,7 +235,7 @@ public class ContractProcessorImpl implements ContractProcessor {
 
             // Queue a batch of patients
             current = coverageDriver.pageCoverage(current.getNextRequest().get());
-            loadRequestBatch(contractData, current);
+            loadRequestBatch(contractData, current, searchConfig.getNumberBenesPerBatch());
             jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUEST_QUEUED, current.size());
 
             processFinishedRequests(contractData);
@@ -222,12 +260,19 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @param contractData object containing list of in progress requests
      * @param result       the page of beneficiaries that need requests to be created for them
      */
-    private void loadRequestBatch(ContractData contractData, CoveragePagingResult result) {
+    private void loadRequestBatch(ContractData contractData, CoveragePagingResult result, int searchBatchSize) {
+        Queue<CoverageSummary> coverageSummaries = new LinkedList<>(result.getCoverageSummaries());
+        int actualBatchSize = searchBatchSize == 0 ? 1 : searchBatchSize;
 
-        for (CoverageSummary summary : result.getCoverageSummaries()) {
-            Future<EobSearchResult> requestFuture = queuePatientClaimsRequest(summary, contractData);
-
-            contractData.addEobRequestHandle(requestFuture);
+        while (coverageSummaries.size() > 0) {
+            List<CoverageSummary> subList = new ArrayList<>(actualBatchSize);
+            for (int i = 0; i < actualBatchSize; i++) {
+                if (coverageSummaries.size() > 0) {
+                    subList.add(coverageSummaries.remove());
+                }
+            }
+            Future<ProgressTrackerUpdate> requestFuture = queuePatientClaimsRequest(subList, contractData);
+            contractData.addEobRequestHandle(requestFuture, subList.size());
         }
     }
 
@@ -252,7 +297,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         if (job.hasJobBeenCancelled()) {
             log.warn("Job [{}] has been cancelled. Attempting to stop processing the job shortly ... ",
                     job.getJobUuid());
-            cancelFuturesInQueue(contractData.getEobRequestHandles());
+            cancelFuturesInQueue(contractData);
             final String errMsg = "Job was cancelled while it was being processed";
             log.warn("{}", errMsg);
             throw new JobCancelledException(errMsg);
@@ -274,7 +319,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @param patient - the patient to process
      * @return a pointer to the queued request which will complete or be cancelled at some point.
      */
-    private Future<EobSearchResult> queuePatientClaimsRequest(CoverageSummary patient, ContractData contractData) {
+    private Future<ProgressTrackerUpdate> queuePatientClaimsRequest(List<CoverageSummary> patient, ContractData contractData) {
         final Token token = NewRelic.getAgent().getTransaction().getToken();
 
         Job job = contractData.getJob();
@@ -292,7 +337,8 @@ public class ContractProcessorImpl implements ContractProcessor {
                     job.getContractNumber(),
                     contractData.getContract().getContractType(),
                     token,
-                    job.getFhirVersion());
+                    job.getFhirVersion(),
+                    searchConfig.getEfsMount());
             return patientClaimsProcessor.process(patientClaimsRequest);
 
         } finally {
@@ -301,26 +347,21 @@ public class ContractProcessorImpl implements ContractProcessor {
     }
 
     /**
-     * Return the number of bytes when to rollover given the number of megabytes
-     *
-     * @return the number of bytes
-     */
-    private long getRollOverThreshold() {
-        return ndjsonRollOver * Constants.ONE_MEGA_BYTE;
-    }
-
-    /**
      * Cancel threads
      *
-     * @param eobRequestHandles - all of the handles associated with a job
+     * @param contractData - all of the handles associated with a job (searching & aggregating)
      */
-    private void cancelFuturesInQueue(List<Future<EobSearchResult>> eobRequestHandles) {
+    private void cancelFuturesInQueue(ContractData contractData) {
+        List<Future<ProgressTrackerUpdate>> eobRequestHandles = contractData.getEobRequestHandles();
 
         // cancel any futures that have not started processing and are waiting in the queue.
         eobRequestHandles.parallelStream().forEach(future -> future.cancel(false));
 
         //At this point, there may be a few futures that are already in progress.
         //But all the futures that are not yet in progress would be cancelled.
+
+        // Cancel the aggregator
+        contractData.getAggregatorHandle().cancel(false);
     }
 
     /**
@@ -332,31 +373,16 @@ public class ContractProcessorImpl implements ContractProcessor {
     private void processHandles(ContractData contractData) {
         var iterator = contractData.getEobRequestHandles().iterator();
 
-        ProgressTrackerUpdate updateTracker = new ProgressTrackerUpdate();
-
         while (iterator.hasNext()) {
             var future = iterator.next();
             if (future.isDone()) {
-                updateTracker.incPatientProcessCount();
-
                 // If the request completed successfully there will be results to process
-                EobSearchResult result = processFuture(updateTracker, future);
-
-                if (result == null) {
-                    log.debug("ignoring empty results because pulling eobs failed");
-                } else if (result.getEobs() == null) {
-                    log.error("result returned but the eob list is null which should not be possible");
-                } else if (!result.getEobs().isEmpty()) {
-                    updateTracker.incPatientsWithEobsCount();
-                    writeOutResource(contractData, updateTracker, result.getEobs());
-                }
-
+                ProgressTrackerUpdate update = processFuture(future, contractData);
+                // Update progress after each written out file
+                updateJobProgress(contractData, update);
                 iterator.remove();
             }
         }
-
-        // Update progress after going through the loop
-        updateJobProgress(contractData, updateTracker);
 
         // Check whether failures have reached over the threshold where we need to fail the job
         checkErrorThreshold(contractData);
@@ -369,76 +395,25 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @param future - a specific future
      */
     @Trace
-    private EobSearchResult processFuture(ProgressTrackerUpdate update, Future<EobSearchResult> future) {
+    private ProgressTrackerUpdate processFuture(Future<ProgressTrackerUpdate> future, ContractData data) {
+        int numBenes = 0;
         try {
+            numBenes = data.getNumberBenes(future);
             return future.get();
         } catch (CancellationException e) {
             // This could happen in the rare event that a job was cancelled mid-process.
             // due to which the futures in the queue (that were not yet in progress) were cancelled.
             // Nothing to be done here
             log.warn("CancellationException while calling Future.get() - Job may have been cancelled");
+            return new ProgressTrackerUpdate();
         } catch (InterruptedException | ExecutionException | RuntimeException e) {
-            update.incPatientFailureCount();
+            ProgressTrackerUpdate update = new ProgressTrackerUpdate();
+            update.incPatientProcessCount(numBenes);
+            update.incPatientFailureCount(numBenes);
             final Throwable rootCause = ExceptionUtils.getRootCause(e);
             log.error("exception while processing patient {}", rootCause.getMessage(), rootCause);
+            return update;
         }
-
-        return null;
-    }
-
-    @Trace(metricName = "EOBWriteToFile", dispatcher = true)
-    private void writeOutResource(ContractData contractData, ProgressTrackerUpdate updateTracker, List<IBaseResource> eobs) {
-        var jsonParser = contractData.getFhirVersion().getJsonParser().setPrettyPrint(false);
-
-        String payload = "";
-        try {
-
-            updateTracker.addEobFetchedCount(eobs.size());
-
-            int eobsWritten = 0;
-            int eobsError = 0;
-            for (IBaseResource resource : eobs) {
-                try {
-                    payload = jsonParser.encodeResourceToString(resource) + System.lineSeparator();
-                    contractData.getStreamHelper()
-                            .addData(payload.getBytes(StandardCharsets.UTF_8));
-                    eobsWritten++;
-                } catch (Exception e) {
-                    log.warn("Encountered exception while processing job resources: {}", e.getClass());
-                    writeExceptionToContractErrorFile(contractData, payload, e);
-                    eobsError++;
-                }
-            }
-
-            updateTracker.addEobProcessedCount(eobsWritten);
-
-            // Log that the patient failed but do not log how many eobs failed. Each eob will be written to a file
-            if (eobsError != 0) {
-                updateTracker.incPatientFailureCount();
-            }
-        } catch (Exception e) {
-            try {
-                writeExceptionToContractErrorFile(contractData, payload, e);
-            } catch (IOException e1) {
-                //should not happen - original exception will be thrown
-                log.error("error during exception handling to write error record");
-            }
-
-            throw new RuntimeException(e.getMessage(), e);
-        }
-    }
-
-    void writeExceptionToContractErrorFile(ContractData contractData, String data, Exception e) throws IOException {
-        var errMsg = ExceptionUtils.getRootCauseMessage(e);
-        FhirVersion fhirVersion = contractData.getFhirVersion();
-        IBaseResource operationOutcome = fhirVersion.getErrorOutcome(errMsg);
-
-        var jsonParser = fhirVersion.getJsonParser().setPrettyPrint(false);
-        var payload = jsonParser.encodeResourceToString(operationOutcome) + System.lineSeparator();
-
-        var byteArrayOutputStream = new ByteArrayOutputStream();
-        byteArrayOutputStream.write(payload.getBytes(StandardCharsets.UTF_8));
-        contractData.getStreamHelper().addError(data);
     }
 
     private void updateJobProgress(ContractData contractData, ProgressTrackerUpdate updateTracker) {
@@ -461,7 +436,8 @@ public class ContractProcessorImpl implements ContractProcessor {
         ProgressTracker progressTracker = jobProgressService.getStatus(contractData.getJob().getJobUuid());
 
         if (progressTracker.isErrorThresholdExceeded()) {
-            cancelFuturesInQueue(contractData.getEobRequestHandles());
+            cancelFuturesInQueue(contractData);
+            contractData.getAggregatorHandle().cancel(true);
             String description = progressTracker.getPatientFailureCount() + " out of " + progressTracker.getTotalCount() + " records failed. Stopping job";
             eventLogger.log(new ErrorEvent(null, progressTracker.getJobUuid(),
                     ErrorEvent.ErrorType.TOO_MANY_SEARCH_ERRORS, description));
@@ -474,15 +450,15 @@ public class ContractProcessorImpl implements ContractProcessor {
      * From a file, return the JobOutput object
      *
      * @param streamOutput - the output file from the job
-     * @param isError      - if there was an error
+     * @param type         - file output type
      * @return - the job output object
      */
     @Trace(dispatcher = true)
-    private JobOutput createJobOutput(StreamOutput streamOutput, boolean isError) {
+    private JobOutput createJobOutput(StreamOutput streamOutput, FileOutputType type) {
         JobOutput jobOutput = new JobOutput();
         jobOutput.setFilePath(streamOutput.getFilePath());
         jobOutput.setFhirResourceType(EOB);
-        jobOutput.setError(isError);
+        jobOutput.setError(type == ERROR);
         jobOutput.setChecksum(streamOutput.getChecksum());
         jobOutput.setFileLength(streamOutput.getFileLength());
         return jobOutput;
@@ -497,5 +473,60 @@ public class ContractProcessorImpl implements ContractProcessor {
         } catch (InterruptedException e) {
             log.warn("interrupted exception in thread.sleep(). Ignoring");
         }
+    }
+
+    /**
+     * Checks to make sure thread isn't hanging, kills it if it is.
+     *
+     * @param aggregatorThread - the thread to check and cancel if some reason we're stuck
+     * @param jobId - the job ID so we can check the directory
+     * @param jobDone - If the worker is done sending to the streaming directory
+     *
+     * @return true if the job is actually done, false otherwise.
+     */
+    boolean isDone(Future<Integer> aggregatorThread, String jobId, boolean jobDone) {
+        // If the thread has finished or was cancelled, we're done
+        if (aggregatorThread.isDone() || aggregatorThread.isCancelled()) {
+            return true;
+        }
+        // If the worker isn't done, we're not done even if the directories are empty
+        if (!jobDone) {
+            return false;
+        }
+
+        // Get the relevant directories
+        File finishedDir = searchConfig.getFinishedDir(jobId);
+        File streamingDir = searchConfig.getStreamingDir(jobId);
+
+        // If the finished directory exists but is not empty, we're not done
+        if (finishedDir.exists()) {
+            File[] finishedDirFiles = finishedDir.listFiles();
+            if (finishedDirFiles != null && finishedDirFiles.length > 0) {
+                return false;
+            }
+            try {
+                Files.delete(Path.of(finishedDir.getAbsolutePath()));
+            } catch (Exception ex) {
+                log.error("Unable to delete finished dir");
+            }
+        }
+
+        // If the streaming directory exists but is not empty, we're not done
+        if (streamingDir.exists()) {
+            File[] streamingDirFiles = streamingDir.listFiles();
+            if (streamingDirFiles != null && streamingDirFiles.length > 0) {
+                return false;
+            }
+            // It's an empty directory, delete it
+            try {
+                Files.delete(Path.of(streamingDir.getAbsolutePath()));
+            } catch (Exception ex) {
+                log.error("Unable to delete streaming dir");
+            }
+        }
+        // We're done, all the directories are empty, let's kill the thread
+        log.info("Aggregator was done, but hadn't exited properly, cancelling");
+        aggregatorThread.cancel(true);
+        return true;
     }
 }

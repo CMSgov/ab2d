@@ -13,6 +13,7 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
+import gov.cms.ab2d.worker.config.SearchConfig;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.repository.StubContractRepository;
 import gov.cms.ab2d.worker.repository.StubJobRepository;
@@ -24,12 +25,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.Date;
@@ -61,10 +62,6 @@ class ContractProcessorInvalidPatientTest {
     @Mock
     private ContractToContractCoverageMapping mapping;
 
-    private ContractRepository contractRepository;
-
-    private JobRepository jobRepository;
-
     @Mock
     private RoundRobinBlockingQueue<PatientClaimsRequest> requestQueue;
 
@@ -76,27 +73,35 @@ class ContractProcessorInvalidPatientTest {
     private final Job job = new Job();
     private static final String jobId = "1234";
     private final String contractId = "ABC";
+    private static final String FINISHED_DIR = "finishedDir";
+    private static final String STREAMING_DIR = "streamingDir";
 
     @BeforeEach
     void setup() {
 
+        SearchConfig searchConfig = new SearchConfig(tmpDirFolder.getAbsolutePath(), STREAMING_DIR,
+                FINISHED_DIR, 0, 0, 1, 2);
 
         Contract contract = new Contract();
         contract.setContractNumber(contractId);
         contract.setAttestedOn(OffsetDateTime.now().minusYears(50));
-
-        contractRepository = new StubContractRepository(contract);
+        ContractRepository contractRepository = new StubContractRepository(contract);
 
         job.setJobUuid(jobId);
         job.setContractNumber(contract.getContractNumber());
-        jobRepository = new StubJobRepository(job);
+        JobRepository jobRepository = new StubJobRepository(job);
 
-        patientClaimsProcessor = new PatientClaimsProcessorImpl(bfdClient, eventLogger);
-        JobProgressServiceImpl jobProgressUpdateService  = new JobProgressServiceImpl(jobRepository);
+        patientClaimsProcessor = new PatientClaimsProcessorImpl(bfdClient, eventLogger, searchConfig);
+        JobProgressServiceImpl jobProgressUpdateService = new JobProgressServiceImpl(jobRepository);
         jobProgressUpdateService.initJob(jobId);
         JobChannelService jobChannelService = new JobChannelStubServiceImpl(jobProgressUpdateService);
+
+        ThreadPoolTaskExecutor aggTP = new ThreadPoolTaskExecutor();
+        aggTP.initialize();
         cut = new ContractProcessorImpl(contractRepository, jobRepository, coverageDriver, patientClaimsProcessor, eventLogger,
-                requestQueue, jobChannelService, jobProgressUpdateService,mapping);
+                requestQueue, jobChannelService, jobProgressUpdateService, mapping, aggTP, searchConfig);
+        ReflectionTestUtils.setField(cut, "eobJobPatientQueueMaxSize", 1);
+        ReflectionTestUtils.setField(cut, "eobJobPatientQueuePageSize", 1);
         jobChannelService.sendUpdate(jobId, JobMeasure.FAILURE_THRESHHOLD, 100);
 
         ReflectionTestUtils.setField(patientClaimsProcessor, "earliestDataDate", "01/01/2020");
@@ -121,48 +126,19 @@ class ContractProcessorInvalidPatientTest {
         when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class))).thenReturn(
                 new CoveragePagingResult(summaries, null));
 
-        List<JobOutput> outputs = cut.process(tmpDirFolder.toPath(), job);
+        List<JobOutput> outputs = cut.process(job);
 
         assertNotNull(outputs);
-        assertEquals(2, outputs.size());
+        assertEquals(1, outputs.size());
 
         String fileName1 = contractId + "_0001.ndjson";
-        String fileName2 = contractId + "_0002.ndjson";
         String output1 = outputs.get(0).getFilePath();
-        String output2 = outputs.get(1).getFilePath();
 
-        assertTrue(output1.equalsIgnoreCase(fileName1) || output1.equalsIgnoreCase(fileName2));
-        assertTrue(output2.equalsIgnoreCase(fileName1) || output2.equalsIgnoreCase(fileName2));
+        assertTrue(output1.equalsIgnoreCase(fileName1));
+        String actual1 = Files.readString(Path.of(tmpDirFolder.getAbsolutePath() + File.separator + job.getJobUuid() + "/" + output1));
 
-        String actual1 = Files.readString(Path.of(tmpDirFolder.getAbsolutePath() + File.separator + output1));
-        String actual2 = Files.readString(Path.of(tmpDirFolder.getAbsolutePath() + File.separator + output2));
-
-        assertTrue(actual1.contains("Patient/1") || actual1.contains("Patient/2"));
-        assertTrue(actual2.contains("Patient/1") || actual2.contains("Patient/2"));
-    }
-
-    @Test
-    void testWriteErrors() throws IOException {
-
-        String val = "Hello World";
-
-        StreamHelper helper = new TextStreamHelperImpl(
-                tmpDirFolder.toPath(), contractId, 2000, 10, eventLogger, job);
-        ContractData contractData = new ContractData(contract, job, helper);
-
-        ((ContractProcessorImpl) cut).writeExceptionToContractErrorFile(contractData, val, new RuntimeException("Exception"));
-        String result = Files.readString(Path.of(tmpDirFolder.getAbsolutePath() + File.separator + contractId + "_error.ndjson"));
-        assertEquals(val, result);
-    }
-
-    @Test
-    void testWriteNullErrors() throws IOException {
-        StreamHelper helper = new TextStreamHelperImpl(
-                tmpDirFolder.toPath(), contractId, 2000, 10, eventLogger, job);
-        ContractData contractData = new ContractData(contract, job, helper);
-
-        ((ContractProcessorImpl) cut).writeExceptionToContractErrorFile(contractData, null, new RuntimeException("Exception"));
-        assertThrows(NoSuchFileException.class, () -> Files.readString(Path.of(tmpDirFolder.getAbsolutePath() + File.separator + contractId + "_error.ndjson")));
+        assertTrue(actual1.contains("Patient/1") && actual1.contains("Patient/2"));
+        assertFalse(actual1.contains("Patient/3") || actual1.contains("Patient/4"));
     }
 
     private static org.hl7.fhir.dstu3.model.ExplanationOfBenefit createEOB(String patientId) {

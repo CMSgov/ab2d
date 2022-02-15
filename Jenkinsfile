@@ -20,6 +20,9 @@ pipeline {
         // R4 V2 endpoints enabled
         AB2D_V2_ENABLED = true
 
+        // Number of beneficiaries to search in each PatientClaimsProcessorImpl thread - Patient batch size
+        SEARCH_BENE_BATCH_SIZE=10
+
         ARTIFACTORY_URL = credentials('ARTIFACTORY_URL')
     }
 

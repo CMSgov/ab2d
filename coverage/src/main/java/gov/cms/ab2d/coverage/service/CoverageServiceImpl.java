@@ -70,7 +70,6 @@ import static java.util.stream.Collectors.toList;
 @Transactional
 public class CoverageServiceImpl implements CoverageService {
 
-
     private final CoveragePeriodRepository coveragePeriodRepo;
 
     private final CoverageSearchEventRepository coverageSearchEventRepo;
