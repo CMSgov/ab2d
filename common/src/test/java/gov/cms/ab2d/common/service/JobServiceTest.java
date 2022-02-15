@@ -1,6 +1,7 @@
 package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.SpringBootApp;
+import gov.cms.ab2d.common.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
@@ -137,6 +138,22 @@ class JobServiceTest {
                         new org.springframework.security.core.userdetails.User(CLIENTID,
                                 "test", new ArrayList<>()), "pass"));
     }
+    
+    private StartJobDTO buildStartJobContract(String contractNumber) {
+        return buildStartJob(contractNumber, EOB, NDJSON_FIRE_CONTENT_TYPE);
+    }
+
+    private StartJobDTO buildStartJobOutputFormat(String outputFormat) {
+        return buildStartJob(null, EOB, outputFormat);
+    }
+
+    private StartJobDTO buildStartJobResourceTypes(String resourceTypes) {
+        return buildStartJob(null, resourceTypes, NDJSON_FIRE_CONTENT_TYPE);
+    }
+
+    private StartJobDTO buildStartJob(String contractNumber,  String resourceTypes, String outputFormat) {
+        return new StartJobDTO(contractNumber, null, resourceTypes, LOCAL_HOST, outputFormat, null, STU3);
+    }
 
     @Test
     void createJob() {
@@ -165,7 +182,7 @@ class JobServiceTest {
     void createJobWithContract() {
         Contract contract = contractRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
-        Job job = jobService.createJob(EOB, LOCAL_HOST, contract.getContractNumber(), NDJSON_FIRE_CONTENT_TYPE, null, STU3);
+        Job job = jobService.createJob(buildStartJobContract(contract.getContractNumber()));
         dataSetup.queueForCleanup(job);
 
         assertNotNull(job);
@@ -196,21 +213,21 @@ class JobServiceTest {
     void reportFirstJobRunForAContract() {
         Contract contract = contractRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
-        Job job1 = jobService.createJob(EOB, LOCAL_HOST, contract.getContractNumber(), NDJSON_FIRE_CONTENT_TYPE, null, STU3);
+        Job job1 = jobService.createJob(buildStartJobContract(contract.getContractNumber()));
         dataSetup.queueForCleanup(job1);
         verify(slackLogger, times(1)).logAlert(anyString(), any());
 
         job1.setStatus(JobStatus.CANCELLED);
         jobRepository.saveAndFlush(job1);
 
-        Job job2 = jobService.createJob(EOB, LOCAL_HOST, contract.getContractNumber(), NDJSON_FIRE_CONTENT_TYPE, null, STU3);
+        Job job2 = jobService.createJob(buildStartJobContract(contract.getContractNumber()));
         dataSetup.queueForCleanup(job2);
         verify(slackLogger, times(2)).logAlert(anyString(), any());
 
         job2.setStatus(JobStatus.SUCCESSFUL);
         jobRepository.saveAndFlush(job2);
 
-        Job job3 = jobService.createJob(EOB, LOCAL_HOST, contract.getContractNumber(), NDJSON_FIRE_CONTENT_TYPE, null, STU3);
+        Job job3 = jobService.createJob(buildStartJobContract(contract.getContractNumber()));
         dataSetup.queueForCleanup(job3);
         verify(slackLogger, times(2)).logAlert(anyString(), any());
     }
@@ -219,24 +236,20 @@ class JobServiceTest {
     void createJobWithSpecificContractNoAttestation() {
         dataSetup.setupContractWithNoAttestation(CLIENTID, CONTRACT_NUMBER, List.of());
         assertThrows(InvalidContractException.class,
-                () -> jobService.createJob(EOB, LOCAL_HOST, DataSetup.VALID_CONTRACT_NUMBER, NDJSON_FIRE_CONTENT_TYPE, null,
-                        STU3));
+                () -> jobService.createJob(buildStartJobContract(DataSetup.VALID_CONTRACT_NUMBER)));
     }
 
     @Test
     void createJobWithAllContractsNoAttestation() {
         dataSetup.setupContractWithNoAttestation(CLIENTID, CONTRACT_NUMBER, List.of());
         assertThrows(InvalidContractException.class,
-                () -> jobService.createJob(EOB, LOCAL_HOST, null, NDJSON_FIRE_CONTENT_TYPE, null,
-                        STU3));
+                () -> jobService.createJob(buildStartJobContract(null)));
     }
 
     @Test
     void failedValidation() {
         assertThrows(TransactionSystemException.class,
-                () -> jobService.createJob("Patient,ExplanationOfBenefit,Coverage", LOCAL_HOST,
-                        null, NDJSON_FIRE_CONTENT_TYPE, null,
-                        STU3));
+                () -> jobService.createJob(buildStartJobResourceTypes("Patient,ExplanationOfBenefit,Coverage")));
     }
 
     @Test
@@ -593,8 +606,7 @@ class JobServiceTest {
     }
 
     private Job createJobAllContracts(String outputFormat) {
-        Job job = jobService.createJob(EOB, LOCAL_HOST, null, outputFormat, null,
-                STU3);
+        Job job = jobService.createJob(buildStartJobOutputFormat(outputFormat));
         dataSetup.queueForCleanup(job);
         return job;
     }

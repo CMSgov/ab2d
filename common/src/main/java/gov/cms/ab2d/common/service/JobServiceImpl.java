@@ -1,5 +1,6 @@
 package gov.cms.ab2d.common.service;
 
+import gov.cms.ab2d.common.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.EventUtils;
@@ -7,7 +8,6 @@ import gov.cms.ab2d.common.util.JobUtil;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventSummary;
-import gov.cms.ab2d.fhir.FhirVersion;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
@@ -55,23 +55,23 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public Job createJob(String resourceTypes, String url, String contractNumber, String outputFormat,
-                         OffsetDateTime since, FhirVersion version) {
+    public Job createJob(StartJobDTO startJobDTO) {
         Job job = new Job();
-        job.setResourceTypes(resourceTypes);
+        job.setResourceTypes(startJobDTO.getResourceTypes());
         job.setJobUuid(UUID.randomUUID().toString());
-        job.setRequestUrl(url);
+        job.setRequestUrl(startJobDTO.getUrl());
         job.setStatusMessage(INITIAL_JOB_STATUS_MESSAGE);
         job.setCreatedAt(OffsetDateTime.now());
-        job.setOutputFormat(outputFormat);
+        job.setOutputFormat(startJobDTO.getOutputFormat());
         job.setProgress(0);
-        job.setSince(since);
-        job.setFhirVersion(version);
+        job.setSince(startJobDTO.getSince());
+        job.setFhirVersion(startJobDTO.getVersion());
         job.setPdpClient(pdpClientService.getCurrentClient());
 
         // Check to see if there is any attestation
         PdpClient pdpClient = pdpClientService.getCurrentClient();
         Contract contract = pdpClient.getContract();
+        String contractNumber = startJobDTO.getContractNumber();
         if (contractNumber != null && !contractNumber.equals(contract.getContractNumber())) {
             String errorMsg = "Specifying contract: " + contractNumber + " not associated with internal id: " + pdpClient.getId();
             log.error(errorMsg);
