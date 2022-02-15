@@ -7,11 +7,11 @@ import lombok.Data;
 import javax.validation.constraints.NotNull;
 import java.time.OffsetDateTime;
 
-@Data
+@Data //NOSONAR
 @AllArgsConstructor
 public class StartJobDTO {
     private final String contractNumber;
-    private final String organization;  // NOSONAR - not quite in use yet
+    private final String organization;  //NOSONAR - not quite in use yet
     private final String resourceTypes;
     private final String url;
     private final String outputFormat;
