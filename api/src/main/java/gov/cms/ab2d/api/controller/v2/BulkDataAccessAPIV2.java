@@ -2,6 +2,7 @@ package gov.cms.ab2d.api.controller.v2;
 
 import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.api.util.SwaggerConstants;
+import gov.cms.ab2d.common.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.service.JobService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -114,8 +115,9 @@ public class BulkDataAccessAPIV2 {
                     OffsetDateTime since) {
 
         log.info("Received request to export");
-        apiCommon.checkValidCreateJob(since, resourceTypes, outputFormat);
-        Job job = jobService.createJob(resourceTypes, apiCommon.getCurrentUrl(request), null, outputFormat, since, R4);
+        StartJobDTO startJobDTO = apiCommon.checkValidCreateJob(request, null, since, resourceTypes,
+                outputFormat, R4);
+        Job job = jobService.createJob(startJobDTO);
         apiCommon.logSuccessfulJobCreation(job);
         return apiCommon.returnStatusForJobCreation(job, API_PREFIX_V2, (String) request.getAttribute(REQUEST_ID), request);
     }
@@ -165,8 +167,9 @@ public class BulkDataAccessAPIV2 {
 
         MDC.put(CONTRACT_LOG, contractNumber);
         log.info("Received request to export by contractNumber");
-        apiCommon.checkValidCreateJob(since, resourceTypes, outputFormat);
-        Job job = jobService.createJob(resourceTypes, apiCommon.getCurrentUrl(request), contractNumber, outputFormat, since, R4);
+        StartJobDTO startJobDTO = apiCommon.checkValidCreateJob(request, contractNumber, since, resourceTypes,
+                outputFormat, R4);
+        Job job = jobService.createJob(startJobDTO);
         apiCommon.logSuccessfulJobCreation(job);
         return apiCommon.returnStatusForJobCreation(job, API_PREFIX_V2, (String) request.getAttribute(REQUEST_ID), request);
     }
