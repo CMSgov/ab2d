@@ -3,7 +3,6 @@ package gov.cms.ab2d.common.dto;
 import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
 import java.time.OffsetDateTime;
