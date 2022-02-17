@@ -44,6 +44,7 @@ import java.util.Optional;
 import static gov.cms.ab2d.api.controller.JobCompletedResponse.CHECKSUM_STRING;
 import static gov.cms.ab2d.api.controller.JobCompletedResponse.CONTENT_LENGTH_STRING;
 import static gov.cms.ab2d.api.controller.common.ApiText.*;
+import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_PDP_CLIENT;
@@ -163,7 +164,7 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals(Integer.valueOf(0), job.getProgress());
         assertEquals("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH, job.getRequestUrl());
         assertEquals(EOB, job.getResourceTypes());
-        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), job.getOrganization());
     }
 
     @Test
@@ -186,11 +187,11 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals(Integer.valueOf(0), job.getProgress());
         assertEquals("https://localhost" + API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH, job.getRequestUrl());
         assertEquals(EOB, job.getResourceTypes());
-        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), job.getOrganization());
     }
 
     @Test
-    public void testPatientExportDuplicateSubmission() throws Exception {
+    void testPatientExportDuplicateSubmission() throws Exception {
         createMaxJobs();
 
         MvcResult mvcResult = this.mockMvc.perform(
@@ -230,7 +231,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testPatientExportDuplicateSubmissionWithCancelledStatus() throws Exception {
+    void testPatientExportDuplicateSubmissionWithCancelledStatus() throws Exception {
         createMaxJobs();
 
         List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
@@ -246,7 +247,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testPatientExportDuplicateSubmissionWithInProgressStatus() throws Exception {
+    void testPatientExportDuplicateSubmissionWithInProgressStatus() throws Exception {
         createMaxJobs();
 
         List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
@@ -262,7 +263,6 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(header().string("Retry-After", "30"))
                 .andExpect(header().doesNotExist(X_PROG))
                 .andExpect(header().exists(CONTENT_LOCATION));
-        ;
     }
 
     @Test
@@ -280,7 +280,7 @@ public class BulkDataAccessAPIIntegrationTests {
         dataSetup.queueForCleanup(pdpClient);
 
         for(Job job : jobs) {
-            job.setPdpClient(pdpClient);
+            job.setOrganization(pdpClient.getOrganization());
             jobRepository.saveAndFlush(job);
             dataSetup.queueForCleanup(job);
         }
@@ -313,7 +313,7 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals(Integer.valueOf(0), job.getProgress());
         assertEquals("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + typeParams, job.getRequestUrl());
         assertEquals(EOB, job.getResourceTypes());
-        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), job.getOrganization());
     }
 
     @Test
@@ -526,7 +526,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testGetStatusWhileInProgress() throws Exception {
+    void testGetStatusWhileInProgress() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
                 get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
@@ -555,7 +555,6 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(header().string("Retry-After", "30"))
                 .andExpect(header().doesNotExist("X-Progress"))
                 .andExpect(header().doesNotExist(CONTENT_LOCATION));
-        ;
     }
 
     @Test
@@ -1096,7 +1095,7 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals(Integer.valueOf(0), job.getProgress());
         assertEquals("https://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export", job.getRequestUrl());
         assertNull(job.getResourceTypes());
-        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), job.getOrganization());
     }
 
     @Test
@@ -1121,7 +1120,7 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export",
                 job.getRequestUrl());
         assertNull(job.getResourceTypes());
-        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), job.getOrganization());
     }
 
     @Test
@@ -1149,7 +1148,7 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams,
                 job.getRequestUrl());
         assertEquals(EOB, job.getResourceTypes());
-        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), job.getOrganization());
     }
 
     @Test
@@ -1295,7 +1294,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
         List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
         for(Job job : jobs) {
-            job.setPdpClient(pdpClient);
+            job.setOrganization(pdpClient.getOrganization());
             jobRepository.saveAndFlush(job);
             dataSetup.queueForCleanup(job);
         }

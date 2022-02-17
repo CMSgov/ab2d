@@ -46,7 +46,6 @@ import static gov.cms.ab2d.aggregator.FileOutputType.DATA;
 import static gov.cms.ab2d.aggregator.FileOutputType.ERROR;
 
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
-import static gov.cms.ab2d.common.util.EventUtils.getOrganization;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
@@ -332,7 +331,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             var patientClaimsRequest = new PatientClaimsRequest(patient,
                     contractData.getContract().getAttestedOn(),
                     job.getSince(),
-                    getOrganization(job),
+                    job.getOrganization(),
                     jobUuid,
                     job.getContractNumber(),
                     contractData.getContract().getContractType(),

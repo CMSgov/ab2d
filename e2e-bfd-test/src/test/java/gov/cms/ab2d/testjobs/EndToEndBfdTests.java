@@ -180,7 +180,7 @@ public class EndToEndBfdTests {
                 propertiesService, coverageProcessor, coverageLockWrapper, contractToContractCoverageMapping);
 
         // Instantiate the job processors
-        jobService = new JobServiceImpl(pdpClientService, jobRepository, jobOutputService, logManager, logEventSummary, path.getAbsolutePath());
+        jobService = new JobServiceImpl(jobRepository, jobOutputService, logManager, logEventSummary, path.getAbsolutePath());
         jobPreProcessor = new JobPreProcessorImpl(contractRepository, jobRepository, logManager, coverageDriver);
 
         jobProcessor = new JobProcessorImpl(new FileServiceImpl(), jobChannelService, jobProgressService, jobProgressUpdateService,
@@ -362,7 +362,7 @@ public class EndToEndBfdTests {
         job.setProgress(0);
         job.setSince(since);
         job.setFhirVersion(version);
-        job.setPdpClient(pdpClient);
+        job.setOrganization(pdpClient.getOrganization());
 
         // Check to see if there is any attestation
         Contract contract = pdpClient.getContract();

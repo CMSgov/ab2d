@@ -146,7 +146,7 @@ class WorkerServiceDisengagementTest {
         job.setStatusMessage("0%");
         job.setResourceTypes(EOB);
         job.setCreatedAt(OffsetDateTime.now());
-        job.setPdpClient(pdpClient);
+        job.setOrganization(pdpClient.getOrganization());
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setContractNumber(pdpClient.getContract().getContractNumber());
         job.setFhirVersion(STU3);

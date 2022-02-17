@@ -31,7 +31,6 @@ import java.util.concurrent.ExecutionException;
 
 import static gov.cms.ab2d.common.model.JobStatus.FAILED;
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
-import static gov.cms.ab2d.common.util.EventUtils.getOrganization;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PROD_LIST;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
 
@@ -196,7 +195,7 @@ public class JobProcessorImpl implements JobProcessor {
                 : job.getJobOutputs().size() - 1;
 
         // Regardless of whether we pass or fail the basic
-        eventLogger.log(new ContractSearchEvent(getOrganization(job),
+        eventLogger.log(new ContractSearchEvent(job.getOrganization(),
                 job.getJobUuid(),
                 job.getContractNumber(),
                 progressTracker.getPatientsExpected(),

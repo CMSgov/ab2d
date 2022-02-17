@@ -31,7 +31,7 @@ import java.util.Optional;
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.SPONSOR_ROLE;
+import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_PDP_CLIENT;
 import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
@@ -109,7 +109,7 @@ public class BulkDataAccessAPIV2IntegrationTests {
         assertEquals(Integer.valueOf(0), job.getProgress());
         assertEquals("https://localhost" + API_PREFIX_V2 + FHIR_PREFIX + PATIENT_EXPORT_PATH, job.getRequestUrl());
         assertEquals(EOB, job.getResourceTypes());
-        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), job.getOrganization());
     }
 
     @Test
@@ -135,6 +135,6 @@ public class BulkDataAccessAPIV2IntegrationTests {
         assertEquals(Integer.valueOf(0), job.getProgress());
         assertEquals("https://localhost" + API_PREFIX_V2 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export", job.getRequestUrl());
         assertNull(job.getResourceTypes());
-        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), job.getOrganization());
     }
 }

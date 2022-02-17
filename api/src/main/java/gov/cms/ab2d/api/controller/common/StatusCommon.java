@@ -5,7 +5,9 @@ import gov.cms.ab2d.api.controller.JobProcessingException;
 import gov.cms.ab2d.api.controller.TooManyRequestsException;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
+import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.service.JobService;
+import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import lombok.extern.slf4j.Slf4j;
@@ -37,17 +39,20 @@ import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 @Service
 @Slf4j
 public class StatusCommon {
+    private final PdpClientService pdpClientService;
     private final JobService jobService;
     private final LogManager eventLogger;
     private final int retryAfterDelay;
 
-    StatusCommon(JobService jobService, LogManager eventLogger, @Value("${api.retry-after.delay}") int retryAfterDelay) {
+    StatusCommon(PdpClientService pdpClientService, JobService jobService,
+                 LogManager eventLogger, @Value("${api.retry-after.delay}") int retryAfterDelay) {
+        this.pdpClientService = pdpClientService;
         this.jobService = jobService;
         this.eventLogger = eventLogger;
         this.retryAfterDelay = retryAfterDelay;
     }
 
-    public ResponseEntity throwFailedResponse(String msg) {
+    public void throwFailedResponse(String msg) {
         log.error(msg);
         throw new JobProcessingException(msg);
     }
@@ -56,7 +61,11 @@ public class StatusCommon {
         MDC.put(JOB_LOG, jobUuid);
         log.info("Request submitted to get job status");
 
-        Job job = jobService.getAuthorizedJobByJobUuidAndRole(jobUuid);
+        PdpClient pdpClient = pdpClientService.getCurrentClient();
+        Job job = (pdpClient.isAdmin()) ?
+                jobService.getJobByJobUuid(jobUuid) :
+                jobService.getAuthorizedJobByJobUuid(jobUuid, pdpClient.getOrganization());
+
 
         if (pollingTooMuch(job)) {
             log.error("Client was polling too frequently");
@@ -111,8 +120,7 @@ public class StatusCommon {
             return new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath(), request, apiPrefix), valueOutputs);
         }).collect(Collectors.toList()));
 
-        resp.setError(job.getJobOutputs().stream().filter(o ->
-                o.getError()).map(o -> {
+        resp.setError(job.getJobOutputs().stream().filter(JobOutput::getError).map(o -> {
             List<JobCompletedResponse.FileMetadata> valueOutputs = generateValueOutputs(o);
             return new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath(), request, apiPrefix), valueOutputs);
         }).collect(Collectors.toList()));
@@ -145,7 +153,7 @@ public class StatusCommon {
         MDC.put(JOB_LOG, jobUuid);
         log.info("Request submitted to cancel job");
 
-        jobService.cancelJob(jobUuid);
+        jobService.cancelJob(jobUuid, pdpClientService.getCurrentClient().getOrganization());
 
         log.info("Job successfully cancelled");
 

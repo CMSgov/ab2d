@@ -16,6 +16,10 @@ import javax.persistence.Id;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 public class Role extends TimestampBase {
 
+    public static final String SPONSOR_ROLE = "SPONSOR";
+    public static final String ADMIN_ROLE = "ADMIN";
+    public static final String ATTESTOR_ROLE = "ATTESTOR";
+
     @Id
     @GeneratedValue
     private Long id;

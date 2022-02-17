@@ -13,19 +13,19 @@ public interface JobService {
 
     Job createJob(StartJobDTO startJobDTO);
 
-    void cancelJob(String jobUuid);
+    void cancelJob(String jobUuid, String organization);
 
-    Job getAuthorizedJobByJobUuidAndRole(String jobUuid);
+    Job getAuthorizedJobByJobUuid(String jobUuid, String organization);
 
     Job getJobByJobUuid(String jobUuid);
 
     Job updateJob(Job job);
 
-    Resource getResourceForJob(String jobUuid, String fileName) throws MalformedURLException;
+    Resource getResourceForJob(String jobUuid, String fileName, String organization) throws MalformedURLException;
 
     void deleteFileForJob(File file, String jobUuid);
 
-    boolean checkIfCurrentClientCanAddJob();
+    int activeJobs(String organization);
 
-    List<String> getActiveJobIds();
+    List<String> getActiveJobIds(String organization);
 }

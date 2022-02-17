@@ -107,7 +107,7 @@ class ContractProcessorUnitTest {
         ReflectionTestUtils.setField(jobProgressImpl, "reportProgressLogFrequency", 3);
         jobChannelService = new JobChannelStubServiceImpl(jobProgressImpl);
         ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
-        pool.initialize();;
+        pool.initialize();
 
         SearchConfig searchConfig = new SearchConfig(efsMountTmpDir.toFile().getAbsolutePath(),
                 STREAMING, FINISHED, 0, 0, 2, 1);
@@ -314,7 +314,7 @@ class ContractProcessorUnitTest {
         job.setJobUuid(jobUuid);
         job.setStatusMessage("0%");
         job.setStatus(JobStatus.IN_PROGRESS);
-        job.setPdpClient(pdpClient);
+        job.setOrganization(pdpClient.getOrganization());
         job.setFhirVersion(STU3);
         return job;
     }

@@ -7,13 +7,23 @@ import lombok.Data;
 import javax.validation.constraints.NotNull;
 import java.time.OffsetDateTime;
 
-@Data //NOSONAR
+/**
+ * StartJobDTO is a fully verified and validated request to start a job.
+ *
+ * This means the caller has the permission to run against this contract and that the contract is attested.
+ */
+@Data
 @AllArgsConstructor
 public class StartJobDTO {
+    @NotNull
     private final String contractNumber;
-    private final String organization;  //NOSONAR - not quite in use yet
+    @NotNull
+    private final String organization;
+    @NotNull
     private final String resourceTypes;
+    @NotNull
     private final String url;
+    @NotNull
     private final String outputFormat;
     private final OffsetDateTime since;
     @NotNull
