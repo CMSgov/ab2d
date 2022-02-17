@@ -153,7 +153,7 @@ public class StatusCommon {
         MDC.put(JOB_LOG, jobUuid);
         log.info("Request submitted to cancel job");
 
-        jobService.cancelJob(jobUuid, "TODO");
+        jobService.cancelJob(jobUuid, pdpClientService.getCurrentClient().getOrganization());
 
         log.info("Job successfully cancelled");
 
