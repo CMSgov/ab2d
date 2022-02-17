@@ -32,7 +32,7 @@ class EventUtilsTest {
         job = new Job();
         job.setStatus(JobStatus.IN_PROGRESS);
         job.setJobUuid(jobId);
-        job.setPdpClient(pdpClient);
+        job.setOrganization(ORGANIZATION);
         job.setFhirVersion(STU3);
     }
 

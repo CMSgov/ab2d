@@ -37,7 +37,7 @@ public class FileDownloadCommon {
         MDC.put(FILE_LOG, filename);
         log.info("Request submitted to download file");
 
-        Resource downloadResource = jobService.getResourceForJob(jobUuid, filename);
+        Resource downloadResource = jobService.getResourceForJob(jobUuid, filename, "TODO");
 
         log.info("Sending " + filename + " file to client");
 

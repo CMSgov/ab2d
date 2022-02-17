@@ -314,7 +314,7 @@ class ContractProcessorUnitTest {
         job.setJobUuid(jobUuid);
         job.setStatusMessage("0%");
         job.setStatus(JobStatus.IN_PROGRESS);
-        job.setPdpClient(pdpClient);
+        job.setOrganization(pdpClient.getOrganization());
         job.setFhirVersion(STU3);
         return job;
     }

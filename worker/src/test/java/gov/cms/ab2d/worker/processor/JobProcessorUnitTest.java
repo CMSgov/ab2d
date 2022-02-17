@@ -297,7 +297,7 @@ class JobProcessorUnitTest {
         job.setJobUuid(jobUuid);
         job.setStatusMessage("0%");
         job.setStatus(JobStatus.IN_PROGRESS);
-        job.setPdpClient(pdpClient);
+        job.setOrganization(pdpClient.getOrganization());
         return job;
     }
 }

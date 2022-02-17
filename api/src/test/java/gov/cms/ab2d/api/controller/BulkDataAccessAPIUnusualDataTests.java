@@ -3,6 +3,7 @@ package gov.cms.ab2d.api.controller;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
@@ -74,7 +75,7 @@ public class BulkDataAccessAPIUnusualDataTests {
     @Test
     void testPatientExportWithNoAttestation() throws Exception {
         // Valid contract number for sponsor, but no attestation
-        String token = testUtil.setupContractWithNoAttestation(List.of(SPONSOR_ROLE));
+        String token = testUtil.setupContractWithNoAttestation(List.of(Role.SPONSOR_ROLE));
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export")
@@ -101,7 +102,7 @@ public class BulkDataAccessAPIUnusualDataTests {
 
     @Test
     public void testPatientExportWithOnlyParentAttestation() throws Exception {
-        String token = testUtil.setupContractSponsorForParentClientData(List.of(SPONSOR_ROLE));
+        String token = testUtil.setupContractSponsorForParentClientData(List.of(Role.SPONSOR_ROLE));
 
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
@@ -123,7 +124,7 @@ public class BulkDataAccessAPIUnusualDataTests {
         assertEquals("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export",
                 job.getRequestUrl());
         assertNull(job.getResourceTypes());
-        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), job.getOrganization());
 
     }
 }

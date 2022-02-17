@@ -3,9 +3,14 @@ package gov.cms.ab2d.api.controller.common;
 import gov.cms.ab2d.api.controller.InMaintenanceModeException;
 import gov.cms.ab2d.api.controller.TooManyRequestsException;
 import gov.cms.ab2d.common.dto.StartJobDTO;
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.PdpClient;
+import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.InvalidClientInputException;
+import gov.cms.ab2d.common.service.InvalidContractException;
 import gov.cms.ab2d.common.service.JobService;
+import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
@@ -41,6 +46,8 @@ public class ApiCommon {
     private final LogManager eventLogger;
     private final JobService jobService;
     private final PropertiesService propertiesService;
+    private final PdpClientService pdpClientService;
+    private final ContractService contractService;
 
     // Since this is used in an annotation, it can't be derived from the Set, otherwise it will be an error
     public static final String ALLOWABLE_OUTPUT_FORMATS =
@@ -49,10 +56,13 @@ public class ApiCommon {
     public static final String JOB_CANCELLED_MSG = "Job canceled";
     public static final String JOB_NOT_FOUND_ERROR_MSG = "Job not found. " + GENERIC_FHIR_ERR_MSG;
 
-    public ApiCommon(LogManager eventLogger, JobService jobService, PropertiesService propertiesService) {
+    public ApiCommon(LogManager eventLogger, JobService jobService, PropertiesService propertiesService,
+                     PdpClientService pdpClientService, ContractService contractService) {
         this.eventLogger = eventLogger;
         this.jobService = jobService;
         this.propertiesService = propertiesService;
+        this.pdpClientService = pdpClientService;
+        this.contractService = contractService;
     }
 
     public boolean shouldReplaceWithHttps(HttpServletRequest request) {
@@ -96,10 +106,12 @@ public class ApiCommon {
     }
 
     public void checkIfCurrentClientCanAddJob() {
-        if (!jobService.checkIfCurrentClientCanAddJob()) {
+        PdpClient pdpClient = pdpClientService.getCurrentClient();
+        String organization = pdpClient.getOrganization();
+        if (jobService.activeJobs(organization) >= pdpClient.getMaxParallelJobs()) {
             String errorMsg = "You already have active export requests in progress. Please wait until they complete before submitting a new one.";
             log.error(errorMsg);
-            throw new TooManyRequestsException(errorMsg, jobService.getActiveJobIds());
+            throw new TooManyRequestsException(errorMsg, jobService.getActiveJobIds(organization));
         }
     }
 
@@ -139,6 +151,8 @@ public class ApiCommon {
 
     public StartJobDTO checkValidCreateJob(HttpServletRequest request, String contractNumber, OffsetDateTime since,
                                            String resourceTypes, String outputFormat, FhirVersion version) {
+        PdpClient pdpClient = pdpClientService.getCurrentClient();
+        contractNumber = checkIfContractAttested(pdpClient.getContract(), contractNumber);
         checkIfInMaintenanceMode();
         checkIfCurrentClientCanAddJob();
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
@@ -146,4 +160,64 @@ public class ApiCommon {
         return new StartJobDTO(contractNumber, null, resourceTypes,
                 getCurrentUrl(request), outputFormat, since, version);
     }
+
+    private String checkIfContractAttested(Contract contract, String contractNumber) {
+        if (contractNumber == null) {
+            contractNumber = contract.getContractNumber();
+        }
+
+        if (contract == null) {
+//            contract = fetchContract(contractNumber);
+            throw new IllegalStateException("Not sure if we should really look up a contract if we aren't bound to it.");
+        }
+
+        if (!contract.getContractNumber().equals(contractNumber)) {
+            String errorMsg = "Specifying contract: " + contractNumber + " not associated with internal id: " +
+                    pdpClientService.getCurrentClient().getId();
+            log.error(errorMsg);
+            throw new InvalidContractException(errorMsg);
+        }
+
+        if (!contract.hasAttestation()) {
+            String errorMsg = "Contract: " + contractNumber + " is not attested.";
+            log.error(errorMsg);
+            throw new InvalidContractException(errorMsg);
+        }
+        // Validated contract
+        return contractNumber;
+    }
+
+    /*
+    @NotNull
+    private Contract fetchContract(String contractNumber) {
+        Contract contract;
+        Optional<Contract> contractOptional = contractService.getContractByContractNumber(contractNumber);
+        if (contractOptional.isEmpty()) {
+            // Users are bound to a contract and contracts always exist.
+            String errorMsg = "Lookup for contract: " + contractNumber + " failed.";
+            log.error(errorMsg);
+            throw new IllegalStateException(errorMsg);
+        }
+        contract = contractOptional.get();
+        return contract;
+    }
+
+     */
+
+    /*
+            // Check to see if there is any attestation
+        Contract contract = pdpClient.getContract();
+        String contractNumber = startJobDTO.getContractNumber();
+        if (contractNumber != null && !contractNumber.equals(contract.getContractNumber())) {
+            String errorMsg = "Specifying contract: " + contractNumber + " not associated with internal id: " + pdpClient.getId();
+            log.error(errorMsg);
+            throw new InvalidContractException(errorMsg);
+        }
+
+        if (!contract.hasAttestation()) {
+            String errorMsg = "Contract: " + contractNumber + " is not attested.";
+            log.error(errorMsg);
+            throw new InvalidContractException(errorMsg);
+        }
+     */
 }

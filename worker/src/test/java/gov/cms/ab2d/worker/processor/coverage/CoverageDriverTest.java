@@ -57,7 +57,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 
-import static gov.cms.ab2d.common.util.Constants.SPONSOR_ROLE;
+import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
@@ -168,7 +168,7 @@ class CoverageDriverTest {
         job = new Job();
         job.setContractNumber(contract.getContractNumber());
         job.setJobUuid("unique");
-        job.setPdpClient(pdpClient);
+        job.setOrganization(pdpClient.getOrganization());
         job.setStatus(gov.cms.ab2d.common.model.JobStatus.SUBMITTED);
         job.setCreatedAt(OffsetDateTime.now());
         job.setFhirVersion(STU3);

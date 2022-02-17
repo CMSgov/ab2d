@@ -424,7 +424,7 @@ class JobProcessorIntegrationTest {
         job.setJobUuid(JOB_UUID);
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage("0%");
-        job.setPdpClient(pdpClient);
+        job.setOrganization(pdpClient.getOrganization());
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setCreatedAt(OffsetDateTime.now());
         job.setFhirVersion(STU3);

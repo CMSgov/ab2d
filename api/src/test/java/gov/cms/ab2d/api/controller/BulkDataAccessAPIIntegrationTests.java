@@ -101,7 +101,7 @@ public class BulkDataAccessAPIIntegrationTests {
     @BeforeEach
     public void setup() throws JwtVerificationException {
         testUtil.turnMaintenanceModeOff();
-        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
+        token = testUtil.setupToken(List.of(Role.SPONSOR_ROLE));
     }
 
     @AfterEach
@@ -163,7 +163,7 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals(Integer.valueOf(0), job.getProgress());
         assertEquals("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH, job.getRequestUrl());
         assertEquals(EOB, job.getResourceTypes());
-        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), job.getOrganization());
     }
 
     @Test
@@ -186,7 +186,7 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals(Integer.valueOf(0), job.getProgress());
         assertEquals("https://localhost" + API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH, job.getRequestUrl());
         assertEquals(EOB, job.getResourceTypes());
-        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), job.getOrganization());
     }
 
     @Test
@@ -280,7 +280,7 @@ public class BulkDataAccessAPIIntegrationTests {
         dataSetup.queueForCleanup(pdpClient);
 
         for(Job job : jobs) {
-            job.setPdpClient(pdpClient);
+            job.setOrganization(pdpClient.getOrganization());
             jobRepository.saveAndFlush(job);
             dataSetup.queueForCleanup(job);
         }
@@ -313,7 +313,7 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals(Integer.valueOf(0), job.getProgress());
         assertEquals("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + typeParams, job.getRequestUrl());
         assertEquals(EOB, job.getResourceTypes());
-        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), job.getOrganization());
     }
 
     @Test
@@ -1096,7 +1096,7 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals(Integer.valueOf(0), job.getProgress());
         assertEquals("https://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export", job.getRequestUrl());
         assertNull(job.getResourceTypes());
-        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), job.getOrganization());
     }
 
     @Test
@@ -1121,7 +1121,7 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export",
                 job.getRequestUrl());
         assertNull(job.getResourceTypes());
-        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), job.getOrganization());
     }
 
     @Test
@@ -1149,7 +1149,7 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams,
                 job.getRequestUrl());
         assertEquals(EOB, job.getResourceTypes());
-        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), job.getOrganization());
     }
 
     @Test
@@ -1295,7 +1295,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
         List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
         for(Job job : jobs) {
-            job.setPdpClient(pdpClient);
+            job.setOrganization(pdpClient.getOrganization());
             jobRepository.saveAndFlush(job);
             dataSetup.queueForCleanup(job);
         }

@@ -362,7 +362,7 @@ public class EndToEndBfdTests {
         job.setProgress(0);
         job.setSince(since);
         job.setFhirVersion(version);
-        job.setPdpClient(pdpClient);
+        job.setOrganization(pdpClient.getOrganization());
 
         // Check to see if there is any attestation
         Contract contract = pdpClient.getContract();

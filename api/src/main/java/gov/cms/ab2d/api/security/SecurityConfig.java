@@ -1,6 +1,7 @@
 package gov.cms.ab2d.api.security;
 
 import gov.cms.ab2d.common.model.PdpClient;
+import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -60,7 +61,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .addFilterAfter(jwtTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeRequests()
             .antMatchers(API_PREFIX_V1 + ADMIN_PREFIX + "/**").hasAuthority(ADMIN_ROLE)
-            .antMatchers(API_PREFIX_V1 + FHIR_PREFIX + "/**").hasAnyAuthority(SPONSOR_ROLE)
+            .antMatchers(API_PREFIX_V1 + FHIR_PREFIX + "/**").hasAnyAuthority(Role.SPONSOR_ROLE)
             .anyRequest().authenticated();
 
         // Override default behavior to add more informative logs

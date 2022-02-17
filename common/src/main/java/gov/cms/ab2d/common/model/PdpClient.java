@@ -107,4 +107,13 @@ public class PdpClient extends TimestampBase implements UserDetails {
     public boolean isEnabled() {
         return enabled;
     }
+
+    public boolean isAdmin() {
+        for (Role role : getRoles()) {
+            if (role.getName().equals(Role.ADMIN_ROLE)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

@@ -139,3 +139,5 @@ databaseChangeLog:
       file: db/changelog/test_only/create-ab2d-analyst.sql
   - include:
       file: db/changelog/v2022/create-analyst-view.sql
+  - include:
+      file: db/changelog/v2022/job_pdp_client_bus_key.sql

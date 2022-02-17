@@ -40,7 +40,7 @@ public class StubJobRepository implements JobRepository {
     }
 
     @Override
-    public List<Job> findActiveJobsByClient(PdpClient pdpClient) {
+    public List<Job> findActiveJobsByClient(String organization) {
         return null;
     }
 

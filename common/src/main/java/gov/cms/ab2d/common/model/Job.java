@@ -32,10 +32,8 @@ public class Job {
     @NotNull
     private String jobUuid;
 
-    @ManyToOne
     @NotNull
-    @JoinColumn(name = "user_account_id")
-    private PdpClient pdpClient;
+    private String organization;
 
     @OneToMany(
             mappedBy = "job",

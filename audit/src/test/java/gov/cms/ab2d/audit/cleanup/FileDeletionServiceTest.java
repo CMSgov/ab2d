@@ -128,7 +128,7 @@ class FileDeletionServiceTest {
         job.setCreatedAt(OffsetDateTime.now().minusDays(5));
         job.setCompletedAt(OffsetDateTime.now().minusDays(4));
         job.setExpiresAt(OffsetDateTime.now().minusDays(1));
-        job.setPdpClient(pdpClient);
+        job.setOrganization(pdpClient.getOrganization());
         job.setFhirVersion(STU3);
         job.setContractNumber(contractNumber);
         jobService.updateJob(job);
@@ -138,7 +138,7 @@ class FileDeletionServiceTest {
         jobInProgress.setStatus(JobStatus.IN_PROGRESS);
         jobInProgress.setJobUuid(UUID.randomUUID().toString());
         jobInProgress.setCreatedAt(OffsetDateTime.now().minusHours(1));
-        jobInProgress.setPdpClient(pdpClient);
+        jobInProgress.setOrganization(pdpClient.getOrganization());
         jobInProgress.setFhirVersion(STU3);
         jobInProgress.setContractNumber(contractNumber);
         jobService.updateJob(jobInProgress);
@@ -150,7 +150,7 @@ class FileDeletionServiceTest {
         jobNotExpiredYet.setCreatedAt(OffsetDateTime.now().minusHours(60));
         jobNotExpiredYet.setCompletedAt(OffsetDateTime.now().minusHours(55));
         jobNotExpiredYet.setExpiresAt(OffsetDateTime.now().plusHours(17));
-        jobNotExpiredYet.setPdpClient(pdpClient);
+        jobNotExpiredYet.setOrganization(pdpClient.getOrganization());
         jobNotExpiredYet.setFhirVersion(STU3);
         jobNotExpiredYet.setContractNumber(contractNumber);
 
@@ -158,7 +158,7 @@ class FileDeletionServiceTest {
         jobCancelled.setStatus(JobStatus.CANCELLED);
         jobCancelled.setJobUuid(UUID.randomUUID().toString());
         jobCancelled.setCreatedAt(OffsetDateTime.now().minusHours(1));
-        jobCancelled.setPdpClient(pdpClient);
+        jobCancelled.setOrganization(pdpClient.getOrganization());
         jobCancelled.setFhirVersion(STU3);
         jobCancelled.setContractNumber(contractNumber);
         jobService.updateJob(jobCancelled);
@@ -167,7 +167,7 @@ class FileDeletionServiceTest {
         jobFailed.setStatus(JobStatus.FAILED);
         jobFailed.setJobUuid(UUID.randomUUID().toString());
         jobFailed.setCreatedAt(OffsetDateTime.now().minusHours(1));
-        jobFailed.setPdpClient(pdpClient);
+        jobFailed.setOrganization(pdpClient.getOrganization());
         jobFailed.setFhirVersion(STU3);
         jobFailed.setContractNumber(contractNumber);
         jobService.updateJob(jobFailed);
@@ -639,7 +639,7 @@ class FileDeletionServiceTest {
         newJob.setCreatedAt(OffsetDateTime.now().minusDays(1));
         newJob.setCompletedAt(OffsetDateTime.now().minusDays(1));
         newJob.setExpiresAt(OffsetDateTime.now().plusDays(2));
-        newJob.setPdpClient(job.getPdpClient());
+        newJob.setOrganization(job.getOrganization());
         newJob.setFhirVersion(STU3);
         newJob.setContractNumber("11111");
         jobService.updateJob(newJob);
