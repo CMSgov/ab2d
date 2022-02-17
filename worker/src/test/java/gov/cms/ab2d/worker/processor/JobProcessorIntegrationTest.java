@@ -376,7 +376,7 @@ class JobProcessorIntegrationTest {
         List<LoggableEvent> fileEvents = loggerEventRepository.load(FileEvent.class);
         // Since the max size of the file is not set here (so it's 0), every second write creates a new file since
         // the file is no longer empty after the first write. This means, there were 20 files created so 40 events
-        assertTrue((fileEvents.size() % 2) == 0);
+        assertEquals(0, fileEvents.size() % 2);
         assertEquals(fileEvents.size() / 2, fileEvents.stream().filter(e -> ((FileEvent) e).getStatus() == FileEvent.FileStatus.OPEN).count());
         assertEquals(fileEvents.size() / 2, fileEvents.stream().filter(e -> ((FileEvent) e).getStatus() == FileEvent.FileStatus.CLOSE).count());
         assertEquals(fileEvents.size() / 2, fileEvents.stream().filter(e -> ((FileEvent) e).getFileHash().length() > 0).count());

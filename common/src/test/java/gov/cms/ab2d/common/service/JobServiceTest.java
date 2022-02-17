@@ -119,7 +119,7 @@ class JobServiceTest {
     public void setup() {
         MockitoAnnotations.openMocks(this);
         LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
-        jobService = new JobServiceImpl(pdpClientService, jobRepository, jobOutputService, logManager, loggerEventSummary, tmpJobLocation);
+        jobService = new JobServiceImpl(jobRepository, jobOutputService, logManager, loggerEventSummary, tmpJobLocation);
         ReflectionTestUtils.setField(jobService, "fileDownloadPath", tmpJobLocation);
 
         dataSetup.setupNonStandardClient(CLIENTID, CONTRACT_NUMBER, List.of());
@@ -234,22 +234,6 @@ class JobServiceTest {
         verify(slackLogger, times(2)).logAlert(anyString(), any());
     }
 
-    // TODO - move this test to the API module
-//    @Test
-    void createJobWithSpecificContractNoAttestation() {
-        dataSetup.setupContractWithNoAttestation(CLIENTID, CONTRACT_NUMBER, List.of());
-        assertThrows(InvalidContractException.class,
-                () -> jobService.createJob(buildStartJobContract(DataSetup.VALID_CONTRACT_NUMBER)));
-    }
-
-    // TODO - move this test to the API module
-//    @Test
-    void createJobWithAllContractsNoAttestation() {
-        dataSetup.setupContractWithNoAttestation(CLIENTID, CONTRACT_NUMBER, List.of());
-        assertThrows(InvalidContractException.class,
-                () -> jobService.createJob(buildStartJobContract(CONTRACT_NUMBER)));
-    }
-
     @Test
     void failedValidation() {
         assertThrows(TransactionSystemException.class,
@@ -351,7 +335,7 @@ class JobServiceTest {
     }
 
     @Test
-    public void testJobInCancelledState() {
+    void testJobInCancelledState() {
         Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
 
         job.setStatus(JobStatus.CANCELLED);
@@ -363,7 +347,7 @@ class JobServiceTest {
     }
 
     @Test
-    public void testJobInFailedState() {
+    void testJobInFailedState() {
         Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
 
         job.setStatus(JobStatus.FAILED);

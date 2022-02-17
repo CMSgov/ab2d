@@ -30,9 +30,6 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     List<Job> findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(
             String contractNumber, List<JobStatus> statuses, JobStartedBy startedBy);
 
-    @Query("SELECT j.status FROM Job j WHERE j.jobUuid = :jobUuid ")
-    JobStatus findJobStatus(String jobUuid);
-
     @Query("FROM Job j WHERE j.createdAt < :createdAt AND j.status = 'IN_PROGRESS' AND j.completedAt IS NULL ")
     List<Job> findStuckJobs(OffsetDateTime createdAt);
 

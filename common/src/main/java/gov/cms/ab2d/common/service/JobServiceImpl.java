@@ -41,7 +41,7 @@ public class JobServiceImpl implements JobService {
 
     public static final String INITIAL_JOB_STATUS_MESSAGE = "0%";
 
-    public JobServiceImpl(PdpClientService pdpClientService, JobRepository jobRepository, JobOutputService jobOutputService,
+    public JobServiceImpl(JobRepository jobRepository, JobOutputService jobOutputService,
                           LogManager eventLogger, LoggerEventSummary loggerEventSummary,
                           @Value("${efs.mount}") String fileDownloadPath) {
         this.jobRepository = jobRepository;

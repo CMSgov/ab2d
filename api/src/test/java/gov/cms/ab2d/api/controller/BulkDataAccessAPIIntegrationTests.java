@@ -190,7 +190,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testPatientExportDuplicateSubmission() throws Exception {
+    void testPatientExportDuplicateSubmission() throws Exception {
         createMaxJobs();
 
         MvcResult mvcResult = this.mockMvc.perform(
@@ -230,7 +230,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testPatientExportDuplicateSubmissionWithCancelledStatus() throws Exception {
+    void testPatientExportDuplicateSubmissionWithCancelledStatus() throws Exception {
         createMaxJobs();
 
         List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
@@ -246,7 +246,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testPatientExportDuplicateSubmissionWithInProgressStatus() throws Exception {
+    void testPatientExportDuplicateSubmissionWithInProgressStatus() throws Exception {
         createMaxJobs();
 
         List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
@@ -262,7 +262,6 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(header().string("Retry-After", "30"))
                 .andExpect(header().doesNotExist(X_PROG))
                 .andExpect(header().exists(CONTENT_LOCATION));
-        ;
     }
 
     @Test
@@ -526,7 +525,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testGetStatusWhileInProgress() throws Exception {
+    void testGetStatusWhileInProgress() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
                 get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
@@ -555,7 +554,6 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(header().string("Retry-After", "30"))
                 .andExpect(header().doesNotExist("X-Progress"))
                 .andExpect(header().doesNotExist(CONTENT_LOCATION));
-        ;
     }
 
     @Test

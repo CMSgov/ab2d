@@ -24,8 +24,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-
-import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
@@ -143,9 +141,4 @@ class WorkerServiceTest {
     private int getIntRandom() {
         return random.nextInt(100);
     }
-
-
-    private void checkResult(Job processedJob) {
-        assertEquals(SUCCESSFUL, processedJob.getStatus());
-        assertEquals("100%", processedJob.getStatusMessage());    }
 }

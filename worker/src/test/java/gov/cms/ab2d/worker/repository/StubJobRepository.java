@@ -3,7 +3,6 @@ package gov.cms.ab2d.worker.repository;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStartedBy;
 import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.JobRepository;
 import lombok.Getter;
 import org.springframework.data.domain.Example;
@@ -46,11 +45,6 @@ public class StubJobRepository implements JobRepository {
 
     @Override
     public List<Job> findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(String contractNumber, List<JobStatus> statuses, JobStartedBy startedBy) {
-        return null;
-    }
-
-    @Override
-    public JobStatus findJobStatus(String jobUuid) {
         return null;
     }
 
