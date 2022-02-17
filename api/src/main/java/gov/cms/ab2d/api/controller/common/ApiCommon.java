@@ -152,7 +152,7 @@ public class ApiCommon {
         checkIfCurrentClientCanAddJob();
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
         checkSinceTime(since);
-        return new StartJobDTO(contractNumber, null, resourceTypes,
+        return new StartJobDTO(contractNumber, pdpClient.getOrganization(), resourceTypes,
                 getCurrentUrl(request), outputFormat, since, version);
     }
 
