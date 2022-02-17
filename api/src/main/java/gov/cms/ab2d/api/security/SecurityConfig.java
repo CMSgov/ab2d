@@ -1,7 +1,6 @@
 package gov.cms.ab2d.api.security;
 
 import gov.cms.ab2d.common.model.PdpClient;
-import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -23,7 +22,8 @@ import org.springframework.security.web.authentication.logout.LogoutFilter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import static gov.cms.ab2d.api.util.Constants.ADMIN_ROLE;
+import static gov.cms.ab2d.common.model.Role.ADMIN_ROLE;
+import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.eventlogger.events.SlackEvents.API_AUTHNZ_ERROR;
 
@@ -61,7 +61,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .addFilterAfter(jwtTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeRequests()
             .antMatchers(API_PREFIX_V1 + ADMIN_PREFIX + "/**").hasAuthority(ADMIN_ROLE)
-            .antMatchers(API_PREFIX_V1 + FHIR_PREFIX + "/**").hasAnyAuthority(Role.SPONSOR_ROLE)
+            .antMatchers(API_PREFIX_V1 + FHIR_PREFIX + "/**").hasAnyAuthority(SPONSOR_ROLE)
             .anyRequest().authenticated();
 
         // Override default behavior to add more informative logs

@@ -2,7 +2,6 @@ package gov.cms.ab2d.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import gov.cms.ab2d.api.SpringBootApp;
-import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
@@ -22,7 +21,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.io.InputStream;
 import java.util.List;
 
+import static gov.cms.ab2d.common.model.Role.ADMIN_ROLE;
 import static gov.cms.ab2d.common.model.Role.ATTESTOR_ROLE;
+import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_PDP_CLIENT;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -68,7 +69,7 @@ public class RoleTests {
     // This will test the API using a role that should not be able to access sponsor URLs
     @Test
     public void testAdminRoleAccessingSponsorApiIsDisabled() throws Exception {
-        token = testUtil.setupToken(List.of(Role.ADMIN_ROLE));
+        token = testUtil.setupToken(List.of(ADMIN_ROLE));
 
         this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Patient/$export")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -90,7 +91,7 @@ public class RoleTests {
     // This will test the API using a role that should not be able to access admin URLs
     @Test
     public void testWrongRoleAdminApi() throws Exception {
-        token = testUtil.setupToken(List.of(Role.SPONSOR_ROLE));
+        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
 
         String fileName = "parent_org_and_legal_entity_20191031_111812.xls";
         InputStream inputStream = this.getClass().getResourceAsStream("/" + fileName);
@@ -143,7 +144,7 @@ public class RoleTests {
 
     @Test
     public void testWrongRoleClientCreate() throws Exception {
-        token = testUtil.setupToken(List.of(Role.SPONSOR_ROLE));
+        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
 
         this.mockMvc.perform(post(API_PREFIX_V1 +  ADMIN_PREFIX + "/client")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -153,7 +154,7 @@ public class RoleTests {
 
     @Test
     public void testWrongRoleClientUpdate() throws Exception {
-        token = testUtil.setupToken(List.of(Role.SPONSOR_ROLE));
+        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
 
         this.mockMvc.perform(put(API_PREFIX_V1 +  ADMIN_PREFIX + "/client")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -163,7 +164,7 @@ public class RoleTests {
 
     @Test
     public void testWrongRolePropertiesRetrieval() throws Exception {
-        token = testUtil.setupToken(List.of(Role.SPONSOR_ROLE));
+        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
 
         this.mockMvc.perform(get(API_PREFIX_V1 +  ADMIN_PREFIX + "/properties")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -173,7 +174,7 @@ public class RoleTests {
 
     @Test
     public void testWrongRolePropertiesUpdate() throws Exception {
-        token = testUtil.setupToken(List.of(Role.SPONSOR_ROLE));
+        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
 
         this.mockMvc.perform(put(API_PREFIX_V1 +  ADMIN_PREFIX + "/properties")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -183,7 +184,7 @@ public class RoleTests {
 
     @Test
     public void testWrongRoleCreateJobOnBehalfOfClient() throws Exception {
-        token = testUtil.setupToken(List.of(Role.SPONSOR_ROLE));
+        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
 
         this.mockMvc.perform(put(API_PREFIX_V1 +  ADMIN_PREFIX + "/client/testclient/job")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -193,7 +194,7 @@ public class RoleTests {
 
     @Test
     public void testWrongRoleCreateJobByContractOnBehalfOfClient() throws Exception {
-        token = testUtil.setupToken(List.of(Role.SPONSOR_ROLE));
+        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
 
         this.mockMvc.perform(put(API_PREFIX_V1 +  ADMIN_PREFIX + "/client/testclient/job/Z0001")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -203,7 +204,7 @@ public class RoleTests {
 
     @Test
     public void testWrongRoleEnableClient() throws Exception {
-        token = testUtil.setupToken(List.of(Role.SPONSOR_ROLE));
+        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
 
         this.mockMvc.perform(put(API_PREFIX_V1 +  ADMIN_PREFIX + "/client/" + TEST_PDP_CLIENT + "/enable")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -213,7 +214,7 @@ public class RoleTests {
 
     @Test
     public void testWrongRoleDisableClient() throws Exception {
-        token = testUtil.setupToken(List.of(Role.SPONSOR_ROLE));
+        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
 
         this.mockMvc.perform(put(API_PREFIX_V1 +  ADMIN_PREFIX + "/client/" + TEST_PDP_CLIENT + "/disable")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -223,7 +224,7 @@ public class RoleTests {
 
     @Test
     public void testWrongRoleGetClient() throws Exception {
-        token = testUtil.setupToken(List.of(Role.SPONSOR_ROLE));
+        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
 
         this.mockMvc.perform(get(API_PREFIX_V1 +  ADMIN_PREFIX + "/client/" + TEST_PDP_CLIENT)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -233,7 +234,7 @@ public class RoleTests {
 
     @Test
     public void testWrongRoleIPs() throws Exception {
-        token = testUtil.setupToken(List.of(Role.SPONSOR_ROLE));
+        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
 
         ObjectMapper mapper = new ObjectMapper();
 

@@ -44,6 +44,7 @@ import java.util.Optional;
 import static gov.cms.ab2d.api.controller.JobCompletedResponse.CHECKSUM_STRING;
 import static gov.cms.ab2d.api.controller.JobCompletedResponse.CONTENT_LENGTH_STRING;
 import static gov.cms.ab2d.api.controller.common.ApiText.*;
+import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_PDP_CLIENT;
@@ -101,7 +102,7 @@ public class BulkDataAccessAPIIntegrationTests {
     @BeforeEach
     public void setup() throws JwtVerificationException {
         testUtil.turnMaintenanceModeOff();
-        token = testUtil.setupToken(List.of(Role.SPONSOR_ROLE));
+        token = testUtil.setupToken(List.of(SPONSOR_ROLE));
     }
 
     @AfterEach

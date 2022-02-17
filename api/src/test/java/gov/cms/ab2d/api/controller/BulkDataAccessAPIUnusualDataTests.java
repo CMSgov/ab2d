@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
+import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.*;
@@ -75,7 +76,7 @@ public class BulkDataAccessAPIUnusualDataTests {
     @Test
     void testPatientExportWithNoAttestation() throws Exception {
         // Valid contract number for sponsor, but no attestation
-        String token = testUtil.setupContractWithNoAttestation(List.of(Role.SPONSOR_ROLE));
+        String token = testUtil.setupContractWithNoAttestation(List.of(SPONSOR_ROLE));
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export")
@@ -102,7 +103,7 @@ public class BulkDataAccessAPIUnusualDataTests {
 
     @Test
     public void testPatientExportWithOnlyParentAttestation() throws Exception {
-        String token = testUtil.setupContractSponsorForParentClientData(List.of(Role.SPONSOR_ROLE));
+        String token = testUtil.setupContractSponsorForParentClientData(List.of(SPONSOR_ROLE));
 
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
