@@ -1,6 +1,7 @@
 package gov.cms.ab2d.api.controller.common;
 
 import gov.cms.ab2d.common.service.JobService;
+import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import lombok.AllArgsConstructor;
@@ -31,13 +32,15 @@ import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 public class FileDownloadCommon {
     private final JobService jobService;
     private final LogManager eventLogger;
+    private final PdpClientService pdpClientService;
 
     public ResponseEntity downloadFile(String jobUuid, String filename, HttpServletRequest request, HttpServletResponse response) throws IOException {
         MDC.put(JOB_LOG, jobUuid);
         MDC.put(FILE_LOG, filename);
         log.info("Request submitted to download file");
 
-        Resource downloadResource = jobService.getResourceForJob(jobUuid, filename, "TODO");
+        Resource downloadResource = jobService.getResourceForJob(jobUuid, filename,
+                pdpClientService.getCurrentClient().getOrganization());
 
         log.info("Sending " + filename + " file to client");
 
