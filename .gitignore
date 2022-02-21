@@ -97,3 +97,5 @@ coverage/jacoco/**
 
 ### DevOps website
 Deploy/website-temp
+### Snyk CLI
+.dccache
