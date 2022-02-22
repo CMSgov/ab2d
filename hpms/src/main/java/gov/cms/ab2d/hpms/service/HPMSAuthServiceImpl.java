@@ -23,7 +23,7 @@ import static org.springframework.http.HttpHeaders.COOKIE;
 @Service
 public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuthService {
 
-    @Value("${hpms.base.url}/api/idm/oauth/token")
+    @Value("${hpms.base.url}/api/idm/OAuth/AMMtoken")
     private String authURL;
 
     @Value("${HPMS_AUTH_KEY_ID}")
