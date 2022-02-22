@@ -13,7 +13,6 @@ import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.fhir.FhirVersion;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.Resource;
 import org.springframework.security.core.GrantedAuthority;
@@ -30,20 +29,22 @@ class ApiCommonTest {
 
     private static final String CONTRACT_NUMBER = "X1234";
 
-    PdpClient pdpClient;
+    final PdpClient pdpClient;
 
-    @BeforeEach
-    void startup() {
+    final ApiCommon apiCommon;
+
+    ApiCommonTest() {
         Contract contract = new Contract();
         contract.setContractNumber(CONTRACT_NUMBER);
         PdpClient pdpClientTmp = new PdpClient();
         pdpClientTmp.setContract(contract);
         pdpClient = pdpClientTmp;
+
+        apiCommon = buildApiCommon();
     }
 
     @Test
     void unattestedCheck() {
-        ApiCommon apiCommon = buildApiCommon();
         InvalidContractException ice = assertThrows(InvalidContractException.class, () ->
                 apiCommon.checkValidCreateJob(null, CONTRACT_NUMBER, null,
         "resource_type", "jpg", FhirVersion.STU3));
@@ -54,7 +55,6 @@ class ApiCommonTest {
     @Test
     void contractNumberMismatch() {
         final String bogusContractNumber = "BOGUS";
-        ApiCommon apiCommon = buildApiCommon();
         InvalidContractException ice = assertThrows(InvalidContractException.class, () ->
                 apiCommon.checkValidCreateJob(null, bogusContractNumber, null,
                         "resource_type", "jpg", FhirVersion.STU3));
