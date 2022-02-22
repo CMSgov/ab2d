@@ -1,20 +1,17 @@
 package gov.cms.ab2d.api.controller.common;
 
-import gov.cms.ab2d.common.dto.PdpClientDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.service.InvalidContractException;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.fhir.FhirVersion;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.core.GrantedAuthority;
-
-import javax.servlet.http.HttpServletRequest;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class ApiCommonTest {
 
@@ -58,62 +55,8 @@ class ApiCommonTest {
     }
 
     private PdpClientService buildPdpClientService() {
-        return new PdpClientService() {
-            @Override
-            public List<Contract> getAllEnabledContracts() {
-                return null;
-            }
-
-            // The only element that is needed.
-            @Override
-            public PdpClient getCurrentClient() {
-                return pdpClient;
-            }
-
-            @Override
-            public PdpClient getClientById(String clientId) {
-                return null;
-            }
-
-            @Override
-            public PdpClientDTO createClient(PdpClientDTO pdpClientDTO) {
-                return null;
-            }
-
-            @Override
-            public PdpClientDTO updateClient(PdpClientDTO pdpClientDTO) {
-                return null;
-            }
-
-            @Override
-            public void setupClientImpersonation(String contractNumber, HttpServletRequest request) {
-
-            }
-
-            @Override
-            public void setupClientAndRolesInSecurityContext(PdpClient pdpClient, HttpServletRequest request) {
-
-            }
-
-            @Override
-            public List<GrantedAuthority> getGrantedAuth(PdpClient pdpClient) {
-                return null;
-            }
-
-            @Override
-            public PdpClientDTO enableClient(String contractNumber) {
-                return null;
-            }
-
-            @Override
-            public PdpClientDTO disableClient(String contractNumber) {
-                return null;
-            }
-
-            @Override
-            public PdpClientDTO getClient(String contractNumber) {
-                return null;
-            }
-        };
+        PdpClientService retPdpService = mock(PdpClientService.class);
+        when(retPdpService.getCurrentClient()).thenReturn(pdpClient);
+        return retPdpService;
     }
 }
