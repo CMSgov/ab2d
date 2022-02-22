@@ -1,24 +1,15 @@
 package gov.cms.ab2d.api.controller.common;
 
 import gov.cms.ab2d.common.dto.PdpClientDTO;
-import gov.cms.ab2d.common.dto.PropertiesDTO;
-import gov.cms.ab2d.common.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.PdpClient;
-import gov.cms.ab2d.common.model.Properties;
 import gov.cms.ab2d.common.service.InvalidContractException;
-import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.service.PdpClientService;
-import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.fhir.FhirVersion;
 import org.junit.jupiter.api.Test;
-import org.springframework.core.io.Resource;
 import org.springframework.security.core.GrantedAuthority;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.File;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -63,94 +54,7 @@ class ApiCommonTest {
     }
 
     private ApiCommon buildApiCommon() {
-        return new ApiCommon(buildEventLogger(), buildJobService(), buildPropertiesService(), buildPdpClientService());
-    }
-
-    LogManager buildEventLogger() {
-        return new LogManager(null, null, null);
-    }
-
-    private JobService buildJobService() {
-        return new JobService() {
-            @Override
-            public Job createJob(StartJobDTO startJobDTO) {
-                return null;
-            }
-
-            @Override
-            public void cancelJob(String jobUuid, String organization) {
-
-            }
-
-            @Override
-            public Job getAuthorizedJobByJobUuid(String jobUuid, String organization) {
-                return null;
-            }
-
-            @Override
-            public Job getJobByJobUuid(String jobUuid) {
-                return null;
-            }
-
-            @Override
-            public Job updateJob(Job job) {
-                return null;
-            }
-
-            @Override
-            public Resource getResourceForJob(String jobUuid, String fileName, String organization) {
-                return null;
-            }
-
-            @Override
-            public void deleteFileForJob(File file, String jobUuid) {
-
-            }
-
-            @Override
-            public int activeJobs(String organization) {
-                return 0;
-            }
-
-            @Override
-            public List<String> getActiveJobIds(String organization) {
-                return null;
-            }
-        };
-    }
-
-    private PropertiesService buildPropertiesService() {
-        return new PropertiesService() {
-            @Override
-            public boolean isInMaintenanceMode() {
-                return false;
-            }
-
-            @Override
-            public List<Properties> getAllProperties() {
-                return null;
-            }
-
-            @Override
-            public List<PropertiesDTO> getAllPropertiesDTO() {
-                return null;
-            }
-
-            @Override
-            public Properties getPropertiesByKey(String key) {
-                return null;
-            }
-
-            @Override
-            public List<PropertiesDTO> updateProperties(List<PropertiesDTO> propertiesDTOs) {
-                return null;
-            }
-
-            @Override
-            public boolean isToggleOn(String toggleName) {
-                return false;
-            }
-        };
+        return new ApiCommon(null, null, null, buildPdpClientService());
     }
 
     private PdpClientService buildPdpClientService() {
@@ -160,6 +64,7 @@ class ApiCommonTest {
                 return null;
             }
 
+            // The only element that is needed.
             @Override
             public PdpClient getCurrentClient() {
                 return pdpClient;
