@@ -41,9 +41,6 @@ class JobOutputServiceTest {
     JobRepository jobRepository;
 
     @Autowired
-    PdpClientRepository pdpClientRepository;
-
-    @Autowired
     ContractRepository contractRepository;
 
     @Autowired
@@ -80,7 +77,7 @@ class JobOutputServiceTest {
     void testJobOutputUpdate() {
         Job job = new Job();
         job.setJobUuid("uuid");
-        job.setPdpClient(pdpClientRepository.findByClientId(TEST_PDP_CLIENT));
+        job.setOrganization(TEST_PDP_CLIENT);
         job.setStatus(JobStatus.FAILED);
         job.setCreatedAt(OffsetDateTime.now());
         job.setFhirVersion(STU3);
@@ -112,7 +109,7 @@ class JobOutputServiceTest {
     void testJobOutputRetrieval() {
         Job job = new Job();
         job.setJobUuid("uuid");
-        job.setPdpClient(pdpClientRepository.findByClientId(TEST_PDP_CLIENT));
+        job.setOrganization(TEST_PDP_CLIENT);
         job.setStatus(JobStatus.FAILED);
         job.setCreatedAt(OffsetDateTime.now());
         job.setFhirVersion(STU3);
@@ -139,7 +136,7 @@ class JobOutputServiceTest {
     void testJobOutputRetrievalNotFound() {
         Job job = new Job();
         job.setJobUuid("uuid");
-        job.setPdpClient(pdpClientRepository.findByClientId(TEST_PDP_CLIENT));
+        job.setOrganization(TEST_PDP_CLIENT);
         job.setStatus(JobStatus.FAILED);
         job.setCreatedAt(OffsetDateTime.now());
         job.setFhirVersion(STU3);

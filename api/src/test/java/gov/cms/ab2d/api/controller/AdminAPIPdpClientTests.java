@@ -27,9 +27,12 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
+import java.util.function.Predicate;
 
+import static gov.cms.ab2d.common.model.Role.ATTESTOR_ROLE;
+import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
-import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
+import static gov.cms.ab2d.common.model.Role.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -259,7 +262,8 @@ public class AdminAPIPdpClientTests {
         String header = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
 
         Job job = jobRepository.findByJobUuid(header.substring(header.indexOf("/Job/") + 5, header.indexOf("/$status")));
-        PdpClient jobPdpClient = job.getPdpClient();
+        PdpClient jobPdpClient = pdpClientRepository.findAll().stream()
+                .filter(pdp -> job.getOrganization().equals(pdp.getOrganization())).findFirst().get();
         dataSetup.queueForCleanup(jobPdpClient);
         dataSetup.queueForCleanup(job);
         assertEquals("regularClient", jobPdpClient.getClientId());

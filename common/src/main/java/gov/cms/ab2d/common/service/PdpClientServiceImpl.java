@@ -21,7 +21,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 
-import static gov.cms.ab2d.common.util.Constants.SPONSOR_ROLE;
+import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static java.util.stream.Collectors.toList;
 
 /**

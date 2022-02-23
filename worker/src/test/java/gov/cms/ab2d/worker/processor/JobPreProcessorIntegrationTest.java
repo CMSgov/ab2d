@@ -181,7 +181,7 @@ class JobPreProcessorIntegrationTest {
         oldJob.setJobUuid("AA-BB");
         oldJob.setStatus(JobStatus.SUCCESSFUL);
         oldJob.setStatusMessage("100%");
-        oldJob.setPdpClient(pdpClient);
+        oldJob.setOrganization(pdpClient.getOrganization());
         oldJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         OffsetDateTime oldJobTime = OffsetDateTime.parse("2021-01-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
         oldJob.setCreatedAt(oldJobTime);
@@ -194,7 +194,7 @@ class JobPreProcessorIntegrationTest {
         reallyOldJob.setJobUuid("CC-DD");
         reallyOldJob.setStatus(JobStatus.SUCCESSFUL);
         reallyOldJob.setStatusMessage("100%");
-        reallyOldJob.setPdpClient(pdpClient);
+        reallyOldJob.setOrganization(pdpClient.getOrganization());
         reallyOldJob.setStartedBy(DEVELOPER);
         reallyOldJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         OffsetDateTime reallyOldldJobTime = OffsetDateTime.parse("2020-12-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
@@ -207,7 +207,7 @@ class JobPreProcessorIntegrationTest {
         newJob.setJobUuid("YY-ZZ");
         newJob.setStatus(JobStatus.SUBMITTED);
         newJob.setStatusMessage("0%");
-        newJob.setPdpClient(pdpClient);
+        newJob.setOrganization(pdpClient.getOrganization());
         newJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         newJob.setCreatedAt(OffsetDateTime.now());
         newJob.setFhirVersion(R4);
@@ -230,7 +230,7 @@ class JobPreProcessorIntegrationTest {
         oldJob.setJobUuid("AA-BB");
         oldJob.setStatus(JobStatus.FAILED);
         oldJob.setStatusMessage("100%");
-        oldJob.setPdpClient(pdpClient);
+        oldJob.setOrganization(pdpClient.getOrganization());
         oldJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         OffsetDateTime oldJobTime = OffsetDateTime.parse("2021-01-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
         oldJob.setCreatedAt(oldJobTime);
@@ -242,7 +242,7 @@ class JobPreProcessorIntegrationTest {
         newJob.setJobUuid("YY-ZZ");
         newJob.setStatus(JobStatus.SUBMITTED);
         newJob.setStatusMessage("0%");
-        newJob.setPdpClient(pdpClient);
+        newJob.setOrganization(pdpClient.getOrganization());
         newJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         OffsetDateTime newJobTime = OffsetDateTime.parse("2021-02-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
         newJob.setCreatedAt(newJobTime);
@@ -265,7 +265,7 @@ class JobPreProcessorIntegrationTest {
         oldJob.setJobUuid("AA-BB");
         oldJob.setStatus(JobStatus.SUCCESSFUL);
         oldJob.setStatusMessage("100%");
-        oldJob.setPdpClient(pdpClient);
+        oldJob.setOrganization(pdpClient.getOrganization());
         oldJob.setStartedBy(DEVELOPER);
         oldJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         OffsetDateTime oldJobTime = OffsetDateTime.parse("2021-01-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
@@ -278,7 +278,7 @@ class JobPreProcessorIntegrationTest {
         newJob.setJobUuid("YY-ZZ");
         newJob.setStatus(JobStatus.SUBMITTED);
         newJob.setStatusMessage("0%");
-        newJob.setPdpClient(pdpClient);
+        newJob.setOrganization(pdpClient.getOrganization());
         newJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         newJob.setCreatedAt(OffsetDateTime.now());
         newJob.setFhirVersion(R4);
@@ -301,7 +301,7 @@ class JobPreProcessorIntegrationTest {
         oldJob.setJobUuid("AA-BB");
         oldJob.setStatus(JobStatus.SUCCESSFUL);
         oldJob.setStatusMessage("100%");
-        oldJob.setPdpClient(pdpClient);
+        oldJob.setOrganization(pdpClient.getOrganization());
         oldJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         OffsetDateTime oldJobTime = OffsetDateTime.parse("2021-01-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
         oldJob.setCreatedAt(oldJobTime);
@@ -313,7 +313,7 @@ class JobPreProcessorIntegrationTest {
         newJob.setJobUuid("YY-ZZ");
         newJob.setStatus(JobStatus.SUBMITTED);
         newJob.setStatusMessage("0%");
-        newJob.setPdpClient(pdpClient);
+        newJob.setOrganization(pdpClient.getOrganization());
         newJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         OffsetDateTime suppliedSince = OffsetDateTime.parse("2021-02-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
         newJob.setSince(suppliedSince);
@@ -347,7 +347,7 @@ class JobPreProcessorIntegrationTest {
         job.setJobUuid("S0000");
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage("0%");
-        job.setPdpClient(pdpClient);
+        job.setOrganization(pdpClient.getOrganization());
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
         job.setCreatedAt(OffsetDateTime.now());
         job.setFhirVersion(STU3);

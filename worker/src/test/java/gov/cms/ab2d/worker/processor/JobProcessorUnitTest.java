@@ -20,6 +20,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -218,7 +219,7 @@ class JobProcessorUnitTest {
     @Test
     @DisplayName("When job fails, persistence of progress tracker occurs")
     void whenJobThrowsException_thenProgressIsLogged() {
-        when(contractProcessor.process(any(), any())).thenThrow(RuntimeException.class);
+        when(contractProcessor.process(any())).thenThrow(RuntimeException.class);
 
         var processedJob = cut.process(job.getJobUuid());
 
@@ -262,6 +263,18 @@ class JobProcessorUnitTest {
         jobChannelService.sendUpdate("silly-not-a-real-guid", JobMeasure.EOBS_WRITTEN, -1);
     }
 
+    @Test
+    @DisplayName("Test to see if we match a valid extension")
+    void testValidExtension(@TempDir File tempDir) throws IOException {
+        Files.writeString(Path.of(tempDir.getAbsolutePath(), "file1.ndjson"), "abc");
+        Files.writeString(Path.of(tempDir.getAbsolutePath(), "file2"), "def");
+        Files.writeString(Path.of(tempDir.getAbsolutePath(), "file3_error.ndjson"), "ghi");
+        final File[] files = tempDir.listFiles(cut.getFilenameFilter());
+        assertEquals(2, files.length);
+        assertNotEquals(files[0].getName(), "file2");
+        assertNotEquals(files[1].getName(), "file2");
+    }
+
     private PdpClient createClient() {
         PdpClient pdpClient = new PdpClient();
         pdpClient.setClientId("Harry_Potter");
@@ -284,7 +297,7 @@ class JobProcessorUnitTest {
         job.setJobUuid(jobUuid);
         job.setStatusMessage("0%");
         job.setStatus(JobStatus.IN_PROGRESS);
-        job.setPdpClient(pdpClient);
+        job.setOrganization(pdpClient.getOrganization());
         return job;
     }
 }

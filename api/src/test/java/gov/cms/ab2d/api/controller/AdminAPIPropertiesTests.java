@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
+import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
@@ -24,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static gov.cms.ab2d.common.model.Role.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.Constants.ADMIN_PREFIX;
 import static org.junit.jupiter.api.Assertions.assertEquals;

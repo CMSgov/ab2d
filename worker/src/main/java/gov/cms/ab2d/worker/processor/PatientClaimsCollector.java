@@ -3,6 +3,8 @@ package gov.cms.ab2d.worker.processor;
 import com.newrelic.api.agent.NewRelic;
 import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.EobUtils;
+import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
 import gov.cms.ab2d.filter.FilterEob;
 import gov.cms.ab2d.worker.model.ContractWorkerDto;
@@ -22,7 +24,7 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
  * Collect and filter claims based on AB2D business requirements and allow documenting the results of all actions.
  *
  * Relevant classes influencing filtering and behavior:
- *      - {@link gov.cms.ab2d.common.model.CoverageSummary} dates that beneficiary is a member of the contract and list of MBIs
+ *      - {@link gov.cms.ab2d.coverage.model.CoverageSummary} dates that beneficiary is a member of the contract and list of MBIs
  *      - {@link FilterEob.filter} method filtering out claims from periods when beneficiary was not a member
  *      - {@link ExplanationOfBenefitTrimmer#getBenefit} strip fields that AB2D should not provide based on {@link gov.cms.ab2d.fhir.FhirVersion}
  *      - {@link EobUtils#isPartD} remove claims that are PartD
@@ -73,7 +75,7 @@ public class PatientClaimsCollector {
      *
      * @param bundle response from BFD containing a list of claims for a specific requested patient
      */
-    public void filterAndAddEntries(IBaseBundle bundle) {
+    public void filterAndAddEntries(IBaseBundle bundle, CoverageSummary patient) {
 
         // Skip if bundle is missing for some reason
         if (bundle == null) {
@@ -100,11 +102,11 @@ public class PatientClaimsCollector {
                 // Filter out unnecessary fields
                 .map(resource -> ExplanationOfBenefitTrimmer.getBenefit(resource))
                 // Make sure patients are the same
-                .filter(this::matchingPatient)
+                .filter(resource -> matchingPatient(resource, patient))
                 // Make sure update date is after since date
                 .filter(this::afterSinceDate)
                 // Add MBIs to the claim
-                .peek(eob -> FhirUtils.addMbiIdsToEobs(eob, claimsRequest.getCoverageSummary(), claimsRequest.getVersion()))
+                .peek(eob -> FhirUtils.addMbiIdsToEobs(eob, patient, claimsRequest.getVersion()))
                 // compile the list
                 .forEach(eobs::add);
     }
@@ -137,11 +139,11 @@ public class PatientClaimsCollector {
      * @param benefit  - The benefit to check
      * @return true if this patient is a member of the correct contract
      */
-    private boolean matchingPatient(IBaseResource benefit) {
+    private boolean matchingPatient(IBaseResource benefit, CoverageSummary patient) {
 
         Long patientId = EobUtils.getPatientId(benefit);
-        if (patientId == null || claimsRequest.getCoverageSummary().getIdentifiers().getBeneficiaryId() != patientId) {
-            log.error(patientId + " returned in EOB, but does not match eob of");
+        if (patientId == null || patient.getIdentifiers().getBeneficiaryId() != patientId) {
+            log.error(patientId + " returned in EOB object, but does not match beneficiary id passed to the search");
             return false;
         }
         return true;

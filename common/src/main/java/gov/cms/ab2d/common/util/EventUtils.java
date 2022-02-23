@@ -18,8 +18,11 @@ public class EventUtils {
         return new FileEvent(getOrganization(job), getJobId(job), file, status);
     }
 
-    public static String getOrganization(Job job) {
-        return job != null && job.getPdpClient() != null ? job.getPdpClient().getOrganization() : null;
+    private static String getOrganization(Job job) {
+        if (job == null)
+            return null;
+
+        return job.getOrganization();
     }
 
     private static String getJobId(Job job) {

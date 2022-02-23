@@ -52,6 +52,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
@@ -69,7 +70,7 @@ class FileDeletionServiceTest {
     File tmpDirFolder;
 
     @Autowired
-    private FileDeletionService fileDeletionService;
+    private FileDeletionServiceImpl fileDeletionService;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
@@ -127,7 +128,7 @@ class FileDeletionServiceTest {
         job.setCreatedAt(OffsetDateTime.now().minusDays(5));
         job.setCompletedAt(OffsetDateTime.now().minusDays(4));
         job.setExpiresAt(OffsetDateTime.now().minusDays(1));
-        job.setPdpClient(pdpClient);
+        job.setOrganization(pdpClient.getOrganization());
         job.setFhirVersion(STU3);
         job.setContractNumber(contractNumber);
         jobService.updateJob(job);
@@ -137,7 +138,7 @@ class FileDeletionServiceTest {
         jobInProgress.setStatus(JobStatus.IN_PROGRESS);
         jobInProgress.setJobUuid(UUID.randomUUID().toString());
         jobInProgress.setCreatedAt(OffsetDateTime.now().minusHours(1));
-        jobInProgress.setPdpClient(pdpClient);
+        jobInProgress.setOrganization(pdpClient.getOrganization());
         jobInProgress.setFhirVersion(STU3);
         jobInProgress.setContractNumber(contractNumber);
         jobService.updateJob(jobInProgress);
@@ -149,7 +150,7 @@ class FileDeletionServiceTest {
         jobNotExpiredYet.setCreatedAt(OffsetDateTime.now().minusHours(60));
         jobNotExpiredYet.setCompletedAt(OffsetDateTime.now().minusHours(55));
         jobNotExpiredYet.setExpiresAt(OffsetDateTime.now().plusHours(17));
-        jobNotExpiredYet.setPdpClient(pdpClient);
+        jobNotExpiredYet.setOrganization(pdpClient.getOrganization());
         jobNotExpiredYet.setFhirVersion(STU3);
         jobNotExpiredYet.setContractNumber(contractNumber);
 
@@ -157,7 +158,7 @@ class FileDeletionServiceTest {
         jobCancelled.setStatus(JobStatus.CANCELLED);
         jobCancelled.setJobUuid(UUID.randomUUID().toString());
         jobCancelled.setCreatedAt(OffsetDateTime.now().minusHours(1));
-        jobCancelled.setPdpClient(pdpClient);
+        jobCancelled.setOrganization(pdpClient.getOrganization());
         jobCancelled.setFhirVersion(STU3);
         jobCancelled.setContractNumber(contractNumber);
         jobService.updateJob(jobCancelled);
@@ -166,7 +167,7 @@ class FileDeletionServiceTest {
         jobFailed.setStatus(JobStatus.FAILED);
         jobFailed.setJobUuid(UUID.randomUUID().toString());
         jobFailed.setCreatedAt(OffsetDateTime.now().minusHours(1));
-        jobFailed.setPdpClient(pdpClient);
+        jobFailed.setOrganization(pdpClient.getOrganization());
         jobFailed.setFhirVersion(STU3);
         jobFailed.setContractNumber(contractNumber);
         jobService.updateJob(jobFailed);
@@ -183,13 +184,13 @@ class FileDeletionServiceTest {
 
             if (Files.isDirectory(toDelete) && Files.exists(toDelete)) {
                 FileSystemUtils.deleteRecursively(toDelete);
-            } else if (Files.exists(toDelete)){
+            } else if (Files.exists(toDelete)) {
                 Files.delete(toDelete);
             }
         }
     }
 
-    @DisplayName("Delete unrelated top level ndjson file")
+    @DisplayName("Do not delete unrelated top level ndjson file")
     @Test
     void deleteUnrelatedTopLevelNdjson() throws IOException, URISyntaxException {
 
@@ -205,11 +206,10 @@ class FileDeletionServiceTest {
 
         fileDeletionService.deleteFiles();
 
-        assertTrue(Files.notExists(destination));
+        assertFalse(Files.notExists(destination));
 
         List<LoggableEvent> fileEvents = loggerEventRepository.load(FileEvent.class);
-        FileEvent e1 = (FileEvent) fileEvents.get(0);
-        assertTrue(e1.getFileName().equalsIgnoreCase(destination.toString()));
+        assertEquals(0, fileEvents.size());
 
         checkNoOtherEventsLogged();
     }
@@ -251,12 +251,11 @@ class FileDeletionServiceTest {
 
         fileDeletionService.deleteFiles();
 
-        assertTrue(Files.notExists(nestedFileDestination));
+        assertTrue(Files.exists(nestedFileDestination));
         assertTrue(Files.exists(dirPath));
 
         List<LoggableEvent> fileEvents = loggerEventRepository.load(FileEvent.class);
-        FileEvent e1 = (FileEvent) fileEvents.get(0);
-        assertTrue(e1.getFileName().equalsIgnoreCase(nestedFileDestination.toString()));
+        assertEquals(0, fileEvents.size());
 
         checkNoOtherEventsLogged();
     }
@@ -530,7 +529,7 @@ class FileDeletionServiceTest {
                 arguments("/a", "EFS mount must be at least 5 characters"),
                 arguments("/usr/baddirectory",
                         "EFS mount must not start with a directory that contains important files"),
-                arguments("/opt","EFS mount must be at least 5 characters")
+                arguments("/opt", "EFS mount must be at least 5 characters")
         );
     }
 
@@ -542,5 +541,172 @@ class FileDeletionServiceTest {
 
         // Confirm no exceptions thrown
         fileDeletionService.deleteFiles();
+    }
+
+    @Test
+    void testAggregatorStuff(@TempDir File tmpDir) throws IOException {
+        String miscString = "Hello";
+        String jobId = job.getJobUuid();
+
+        ReflectionTestUtils.setField(fileDeletionService, "efsMount", tmpDir.getAbsolutePath());
+
+        // Create the directories
+        Path jobDir = Files.createDirectory(Path.of(tmpDir.getAbsolutePath(), jobId));
+        Path finishedDir = Files.createDirectory(Path.of(tmpDir.getAbsolutePath(), jobId, "finished"));
+        Path streamDir = Files.createDirectory(Path.of(tmpDir.getAbsolutePath(), jobId, "streaming"));
+
+        // Create the files
+        List<Path> files = new ArrayList<>();
+        files.add(Files.createFile(Path.of(tmpDir.getAbsolutePath(), jobId, "tstfile.ndjson")));
+        files.add(Files.createFile(Path.of(tmpDir.getAbsolutePath(), jobId, "tstfile.txt")));
+        files.add(Files.createFile(Path.of(tmpDir.getAbsolutePath(), jobId, "finished", "tstfile.ndjson")));
+        files.add(Files.createFile(Path.of(tmpDir.getAbsolutePath(), jobId, "streaming", "tstfile.ndjson")));
+        files.add(Files.createFile(Path.of(tmpDir.getAbsolutePath(), jobId, "streaming", "tstfile.txt")));
+
+        // Write data to the files
+        for (Path file : files) {
+            Files.writeString(file, miscString);
+            changeFileCreationDate(file);
+        }
+
+        // Update the creation time of the directories after you add the files because putting files in the dir changes
+        // its time.
+        changeFileCreationDate(jobDir);
+        changeFileCreationDate(finishedDir);
+        changeFileCreationDate(streamDir);
+
+        fileDeletionService.deleteFiles();
+
+        int numExists = 0;
+        for (Path p : files) {
+            if (p.toFile().exists()) {
+                numExists++;
+            }
+        }
+        assertEquals(2, numExists);
+
+        assertTrue(streamDir.toFile().exists());
+        assertFalse(finishedDir.toFile().exists());
+    }
+
+    @Test
+    void testCleanOutDir(@TempDir File tmpDir) throws IOException {
+        ReflectionTestUtils.setField(fileDeletionService, "efsMount", tmpDir.getAbsolutePath());
+        String jobId = job.getJobUuid();
+        String miscString = "Hello";
+
+        // Create the directories
+        List<Path> files = new ArrayList<>();
+
+        Path jobDir = Files.createDirectory(Path.of(tmpDir.getAbsolutePath(), jobId));
+        Path finishedDir = Files.createDirectory(Path.of(tmpDir.getAbsolutePath(), jobId, "finished"));
+        Path streamDir = Files.createDirectory(Path.of(tmpDir.getAbsolutePath(), jobId, "streaming"));
+
+        // Create the files
+        files.add(Files.createFile(Path.of(tmpDir.getAbsolutePath(), jobId, "tstfile.ndjson")));
+        files.add(Files.createFile(Path.of(tmpDir.getAbsolutePath(), jobId, "tstfile.txt")));
+        files.add(Files.createFile(Path.of(tmpDir.getAbsolutePath(), jobId, "finished", "tstfile.ndjson")));
+        files.add(Files.createFile(Path.of(tmpDir.getAbsolutePath(), jobId, "streaming", "tstfile.ndjson")));
+        files.add(Files.createFile(Path.of(tmpDir.getAbsolutePath(), jobId, "streaming", "tstfile.txt")));
+
+        // Write data to the files
+        for (Path file : files) {
+            Files.writeString(file, miscString);
+            changeFileCreationDate(file);
+        }
+
+        files.add(jobDir);
+        files.add(finishedDir);
+        files.add(streamDir);
+
+        fileDeletionService.deleteNdjsonFilesAndDirectory(job, jobDir);
+
+        List<Path> remaining = files.stream().filter(f -> f.toFile().exists()).collect(Collectors.toList());
+        // There should be 4 remaining path - the top job directory, the streaming dir, the top level txt file and the s
+        // streaming txt file
+        assertEquals(4, remaining.size());
+        assertEquals(2, remaining.stream().filter(f -> f.toFile().isDirectory()).count());
+        assertEquals(2, remaining.stream().filter(f -> f.toFile().isFile())
+                .filter(f -> f.toFile().getName().equals("tstfile.txt")).count());
+        remaining.forEach(f -> System.out.println(f));
+    }
+
+    @Test
+    void testDontCleanOutDir(@TempDir File tmpDir) throws IOException {
+        Job newJob = new Job();
+        newJob.setStatus(JobStatus.SUCCESSFUL);
+        newJob.setJobUuid(UUID.randomUUID().toString());
+        newJob.setCreatedAt(OffsetDateTime.now().minusDays(1));
+        newJob.setCompletedAt(OffsetDateTime.now().minusDays(1));
+        newJob.setExpiresAt(OffsetDateTime.now().plusDays(2));
+        newJob.setOrganization(job.getOrganization());
+        newJob.setFhirVersion(STU3);
+        newJob.setContractNumber("11111");
+        jobService.updateJob(newJob);
+        ReflectionTestUtils.setField(fileDeletionService, "efsMount", tmpDir.getAbsolutePath());
+        String jobId = newJob.getJobUuid();
+        String miscString = "Hello";
+
+        // Create the directories
+        List<Path> files = new ArrayList<>();
+
+        Path jobDir = Files.createDirectory(Path.of(tmpDir.getAbsolutePath(), jobId));
+        Path finishedDir = Files.createDirectory(Path.of(tmpDir.getAbsolutePath(), jobId, "finished"));
+        Path streamDir = Files.createDirectory(Path.of(tmpDir.getAbsolutePath(), jobId, "streaming"));
+
+        // Create the files
+        files.add(Files.createFile(Path.of(tmpDir.getAbsolutePath(), jobId, "tstfile.ndjson")));
+        files.add(Files.createFile(Path.of(tmpDir.getAbsolutePath(), jobId, "tstfile.txt")));
+        files.add(Files.createFile(Path.of(tmpDir.getAbsolutePath(), jobId, "finished", "tstfile.ndjson")));
+        files.add(Files.createFile(Path.of(tmpDir.getAbsolutePath(), jobId, "streaming", "tstfile.ndjson")));
+        files.add(Files.createFile(Path.of(tmpDir.getAbsolutePath(), jobId, "streaming", "tstfile.txt")));
+
+        // Write data to the files
+        for (Path file : files) {
+            Files.writeString(file, miscString);
+        }
+
+        files.add(jobDir);
+        files.add(finishedDir);
+        files.add(streamDir);
+
+        fileDeletionService.deleteFiles();
+
+        List<Path> remaining = files.stream().filter(f -> f.toFile().exists()).collect(Collectors.toList());
+        remaining.forEach(f -> System.out.println(f));
+
+        assertEquals(8, remaining.size());
+        assertEquals(3, remaining.stream().filter(f -> f.toFile().isDirectory()).count());
+        assertEquals(2, remaining.stream().filter(f -> f.toFile().isFile())
+                .filter(f -> f.toFile().getName().equals("tstfile.txt")).count());
+    }
+
+    @Test
+    void ignoreNonJobDirs(@TempDir File tmpDir) throws IOException {
+        ReflectionTestUtils.setField(fileDeletionService, "efsMount", tmpDir.getAbsolutePath());
+        String jobId = job.getJobUuid();
+        String miscString = "Hello";
+
+        Path jobDir = Files.createDirectory(Path.of(tmpDir.getAbsolutePath(), jobId));
+        Path bogusDir = Files.createDirectory(Path.of(tmpDir.getAbsolutePath(), "bogusDir"));
+        Files.createFile(Path.of(tmpDir.getAbsolutePath(), "bogusFile.ndjson"));
+        Path finishedDir = Files.createDirectory(Path.of(tmpDir.getAbsolutePath(), jobId, "finished"));
+        Path streamDir = Files.createDirectory(Path.of(tmpDir.getAbsolutePath(), jobId, "streaming"));
+
+        // Create the files
+        Files.createFile(Path.of(tmpDir.getAbsolutePath(), jobId, "tstfile.ndjson"));
+        Files.createFile(Path.of(tmpDir.getAbsolutePath(), jobId, "finished", "tstfile.ndjson"));
+        Files.createFile(Path.of(tmpDir.getAbsolutePath(), jobId, "streaming", "tstfile.ndjson"));
+
+        fileDeletionService.deleteFiles();
+
+        File[] files = new File(tmpDir.getAbsolutePath()).listFiles();
+
+        Stream.of(files).forEach(f -> System.out.println(f));
+
+        assertEquals(2, files.length);
+
+        assertEquals(1, Stream.of(files).filter(f -> f.isDirectory()).count());
+        assertEquals(1, Stream.of(files).filter(f -> f.isFile()).count());
     }
 }

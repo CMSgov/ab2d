@@ -22,7 +22,8 @@ import org.springframework.security.web.authentication.logout.LogoutFilter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import static gov.cms.ab2d.api.util.Constants.ADMIN_ROLE;
+import static gov.cms.ab2d.common.model.Role.ADMIN_ROLE;
+import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.eventlogger.events.SlackEvents.API_AUTHNZ_ERROR;
 

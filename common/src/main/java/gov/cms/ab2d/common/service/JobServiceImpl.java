@@ -1,5 +1,6 @@
 package gov.cms.ab2d.common.service;
 
+import gov.cms.ab2d.common.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.EventUtils;
@@ -7,7 +8,6 @@ import gov.cms.ab2d.common.util.JobUtil;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventSummary;
-import gov.cms.ab2d.fhir.FhirVersion;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
@@ -25,7 +25,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
-import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PROD_LIST;
 import static gov.cms.ab2d.eventlogger.events.SlackEvents.ORG_FIRST;
 
@@ -34,7 +33,6 @@ import static gov.cms.ab2d.eventlogger.events.SlackEvents.ORG_FIRST;
 @Transactional
 public class JobServiceImpl implements JobService {
 
-    private final PdpClientService pdpClientService;
     private final JobRepository jobRepository;
     private final JobOutputService jobOutputService;
     private final LogManager eventLogger;
@@ -43,10 +41,9 @@ public class JobServiceImpl implements JobService {
 
     public static final String INITIAL_JOB_STATUS_MESSAGE = "0%";
 
-    public JobServiceImpl(PdpClientService pdpClientService, JobRepository jobRepository, JobOutputService jobOutputService,
+    public JobServiceImpl(JobRepository jobRepository, JobOutputService jobOutputService,
                           LogManager eventLogger, LoggerEventSummary loggerEventSummary,
                           @Value("${efs.mount}") String fileDownloadPath) {
-        this.pdpClientService = pdpClientService;
         this.jobRepository = jobRepository;
         this.jobOutputService = jobOutputService;
         this.eventLogger = eventLogger;
@@ -55,51 +52,37 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public Job createJob(String resourceTypes, String url, String contractNumber, String outputFormat,
-                         OffsetDateTime since, FhirVersion version) {
+    public Job createJob(StartJobDTO startJobDTO) {
         Job job = new Job();
-        job.setResourceTypes(resourceTypes);
+        job.setResourceTypes(startJobDTO.getResourceTypes());
         job.setJobUuid(UUID.randomUUID().toString());
-        job.setRequestUrl(url);
+        job.setRequestUrl(startJobDTO.getUrl());
         job.setStatusMessage(INITIAL_JOB_STATUS_MESSAGE);
         job.setCreatedAt(OffsetDateTime.now());
-        job.setOutputFormat(outputFormat);
+        job.setOutputFormat(startJobDTO.getOutputFormat());
         job.setProgress(0);
-        job.setSince(since);
-        job.setFhirVersion(version);
-        job.setPdpClient(pdpClientService.getCurrentClient());
+        job.setSince(startJobDTO.getSince());
+        job.setFhirVersion(startJobDTO.getVersion());
+        job.setOrganization(startJobDTO.getOrganization());
 
-        // Check to see if there is any attestation
-        PdpClient pdpClient = pdpClientService.getCurrentClient();
-        Contract contract = pdpClient.getContract();
-        if (contractNumber != null && !contractNumber.equals(contract.getContractNumber())) {
-            String errorMsg = "Specifying contract: " + contractNumber + " not associated with internal id: " + pdpClient.getId();
-            log.error(errorMsg);
-            throw new InvalidContractException(errorMsg);
-        }
 
-        if (!contract.hasAttestation()) {
-            String errorMsg = "Contract: " + contractNumber + " is not attested.";
-            log.error(errorMsg);
-            throw new InvalidContractException(errorMsg);
-        }
 
         eventLogger.log(EventUtils.getJobChangeEvent(job, JobStatus.SUBMITTED, "Job Created"));
 
         // Report client running first job in prod
-        if (clientHasNeverCompletedJob(contract.getContractNumber())) {
+        if (clientHasNeverCompletedJob(startJobDTO.getContractNumber())) {
             String firstJobMessage = String.format(ORG_FIRST + " Organization %s is running their first job for contract %s",
-                    pdpClient.getOrganization(), contract.getContractNumber());
+                    startJobDTO.getOrganization(), startJobDTO.getContractNumber());
             eventLogger.alert(firstJobMessage, PROD_LIST);
         }
-        job.setContractNumber(contract.getContractNumber());
+        job.setContractNumber(startJobDTO.getContractNumber());
         job.setStatus(JobStatus.SUBMITTED);
         return jobRepository.save(job);
     }
 
     @Override
-    public void cancelJob(String jobUuid) {
-        Job job = getAuthorizedJobByJobUuid(jobUuid);
+    public void cancelJob(String jobUuid, String organization) {
+        Job job = getAuthorizedJobByJobUuid(jobUuid, organization);
 
         if (!job.getStatus().isCancellable()) {
             log.error("Job had a status of {} so it was not able to be cancelled", job.getStatus());
@@ -109,11 +92,10 @@ public class JobServiceImpl implements JobService {
         jobRepository.cancelJobByJobUuid(jobUuid);
     }
 
-    private Job getAuthorizedJobByJobUuid(String jobUuid) {
+    public Job getAuthorizedJobByJobUuid(String jobUuid, String organization) {
         Job job = getJobByJobUuid(jobUuid);
 
-        PdpClient pdpClient = pdpClientService.getCurrentClient();
-        if (!pdpClient.equals(job.getPdpClient())) {
+        if (!job.getOrganization().equals(organization)) {
             log.error("Client attempted to download a file where they had a valid UUID, but was not logged in as the " +
                     "client that created the job");
             throw new InvalidJobAccessException("Unauthorized");
@@ -123,25 +105,11 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public Job getAuthorizedJobByJobUuidAndRole(String jobUuid) {
-        PdpClient pdpClient = pdpClientService.getCurrentClient();
-
-        for (Role role : pdpClient.getRoles()) {
-            if (role.getName().equals(ADMIN_ROLE)) {
-                log.info("Admin accessed job {}", jobUuid);
-                return getJobByJobUuid(jobUuid);
-            }
-        }
-
-        return getAuthorizedJobByJobUuid(jobUuid);
-    }
-
-    @Override
     public Job getJobByJobUuid(String jobUuid) {
         Job job = jobRepository.findByJobUuid(jobUuid);
 
         if (job == null) {
-            log.error("Job was searched for and was not found");
+            log.error("Job {} was searched for and was not found", jobUuid);
             throw new ResourceNotFoundException("No job with jobUuid " +  jobUuid + " was found");
         }
 
@@ -154,8 +122,8 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public Resource getResourceForJob(String jobUuid, String fileName) throws MalformedURLException {
-        Job job = getAuthorizedJobByJobUuid(jobUuid);
+    public Resource getResourceForJob(String jobUuid, String fileName, String organization) throws MalformedURLException {
+        Job job = getAuthorizedJobByJobUuid(jobUuid, organization);
 
         // Make sure that there is a path that matches a job output for the job they are requesting
         boolean jobOutputMatchesPath = false;
@@ -210,17 +178,16 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public boolean checkIfCurrentClientCanAddJob() {
-        PdpClient pdpClient = pdpClientService.getCurrentClient();
-        List<Job> jobs = jobRepository.findActiveJobsByClient(pdpClient);
-        return jobs.size() < pdpClient.getMaxParallelJobs();
+    public int activeJobs(String organization) {
+        List<Job> jobs = jobRepository.findActiveJobsByClient(organization);
+        return jobs.size();
     }
 
     @Override
-    public List<String> getActiveJobIds() {
+    public List<String> getActiveJobIds(String organization) {
         //Sorting with stream so we don't affect existing code that uses findActiveJobsByClient.
         //Number of jobs returned should be small
-        return jobRepository.findActiveJobsByClient(pdpClientService.getCurrentClient()).stream()
+        return jobRepository.findActiveJobsByClient(organization).stream()
                 .sorted(Comparator.comparing(Job::getCreatedAt))
                 .map(Job::getJobUuid).collect(Collectors.toList());
     }

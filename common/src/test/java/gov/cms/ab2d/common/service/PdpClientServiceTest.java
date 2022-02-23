@@ -26,8 +26,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
-import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
-import static gov.cms.ab2d.common.util.Constants.SPONSOR_ROLE;
+import static gov.cms.ab2d.common.model.Role.ADMIN_ROLE;
+import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;

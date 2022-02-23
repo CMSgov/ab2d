@@ -1,17 +1,17 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.worker.model.ContractWorkerDto;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
