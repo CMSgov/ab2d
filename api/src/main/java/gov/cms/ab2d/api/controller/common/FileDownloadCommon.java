@@ -1,6 +1,6 @@
 package gov.cms.ab2d.api.controller.common;
 
-import gov.cms.ab2d.common.service.JobService;
+import gov.cms.ab2d.api.remote.JobClient;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
@@ -30,16 +30,16 @@ import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 @AllArgsConstructor
 @Slf4j
 public class FileDownloadCommon {
-    private final JobService jobService;
+    private final JobClient jobClient;
     private final LogManager eventLogger;
     private final PdpClientService pdpClientService;
 
-    public ResponseEntity downloadFile(String jobUuid, String filename, HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public ResponseEntity<String> downloadFile(String jobUuid, String filename, HttpServletRequest request, HttpServletResponse response) throws IOException {
         MDC.put(JOB_LOG, jobUuid);
         MDC.put(FILE_LOG, filename);
         log.info("Request submitted to download file");
 
-        Resource downloadResource = jobService.getResourceForJob(jobUuid, filename,
+        Resource downloadResource = jobClient.getResourceForJob(jobUuid, filename,
                 pdpClientService.getCurrentClient().getOrganization());
 
         log.info("Sending " + filename + " file to client");
@@ -55,7 +55,7 @@ public class FileDownloadCommon {
             eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), jobUuid, HttpStatus.OK, "File Download",
                     "File " + filename + " was downloaded", (String) request.getAttribute(REQUEST_ID)));
 
-            jobService.deleteFileForJob(downloadResource.getFile(), jobUuid);
+            jobClient.deleteFileForJob(downloadResource.getFile(), jobUuid);
 
             return new ResponseEntity<>(null, null, HttpStatus.OK);
         }

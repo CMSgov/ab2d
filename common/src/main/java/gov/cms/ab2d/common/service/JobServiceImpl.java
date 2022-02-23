@@ -1,5 +1,6 @@
 package gov.cms.ab2d.common.service;
 
+import gov.cms.ab2d.common.dto.JobPollResult;
 import gov.cms.ab2d.common.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
@@ -190,6 +191,16 @@ public class JobServiceImpl implements JobService {
         return jobRepository.findActiveJobsByClient(organization).stream()
                 .sorted(Comparator.comparing(Job::getCreatedAt))
                 .map(Job::getJobUuid).collect(Collectors.toList());
+    }
+
+    @Override
+    public JobPollResult poll(boolean admin, String jobUuid, String organization, int delaySeconds) {
+        Job job = (admin) ? getJobByJobUuid(jobUuid) : getAuthorizedJobByJobUuid(jobUuid, organization);
+        job.pollAndUpdateTime(delaySeconds);
+        jobRepository.save(job);
+        String transactionTime = job.getFhirVersion().getFhirTime(job.getCreatedAt());
+        return new JobPollResult(job.getRequestUrl(), job.getStatus(), job.getProgress(), transactionTime,
+                job.getExpiresAt(), job.getJobOutputs());
     }
 
     private boolean clientHasNeverCompletedJob(String contractNumber) {

@@ -1,5 +1,6 @@
 package gov.cms.ab2d.common.service;
 
+import gov.cms.ab2d.common.dto.JobPollResult;
 import gov.cms.ab2d.common.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.Job;
 import org.springframework.core.io.Resource;
@@ -28,4 +29,6 @@ public interface JobService {
     int activeJobs(String organization);
 
     List<String> getActiveJobIds(String organization);
+
+    JobPollResult poll(boolean admin, String jobUuid, String organization, int delaySeconds);
 }
