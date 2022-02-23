@@ -10,7 +10,6 @@ import java.net.MalformedURLException;
 import java.util.List;
 
 public interface JobService {
-    String ZIPFORMAT = "application/zip";
 
     Job createJob(StartJobDTO startJobDTO);
 
