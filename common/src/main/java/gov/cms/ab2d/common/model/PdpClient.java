@@ -38,8 +38,9 @@ public class PdpClient extends TimestampBase implements UserDetails {
     @NotNull
     private Boolean enabled;
 
-    @NotNull
-    private String contractNumber;
+    @ManyToOne
+    @JoinColumn(name = "contract_id")
+    private Contract contract;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

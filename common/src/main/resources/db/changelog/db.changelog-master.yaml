@@ -136,12 +136,11 @@ databaseChangeLog:
   - include:
       file: db/changelog/v2022/contract_coverage.sql
   - include:
-<<<<<<< HEAD
-      file: db/changelog/v2022/pdp_contract_number.sql
-=======
       file: db/changelog/test_only/create-ab2d-analyst.sql
   - include:
       file: db/changelog/v2022/create-analyst-view.sql
   - include:
       file: db/changelog/v2022/job_pdp_client_bus_key.sql
->>>>>>> master
+  - include:
+      file: db/changelog/v2022/pdp_contract_number.sql
+

@@ -3,26 +3,15 @@ package gov.cms.ab2d.worker.processor;
 import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
-import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
+import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.config.SearchConfig;
-import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.mockito.Mock;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.util.ReflectionTestUtils;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-
+import gov.cms.ab2d.worker.model.ContractWorkerDto;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -36,6 +25,17 @@ import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.Future;
+import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mock;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
 
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -96,7 +96,7 @@ class AggregatorJobTest {
         PatientClaimsRequest request = new PatientClaimsRequest(createCoverageSummaries(10, contract),
                 OffsetDateTime.of(2020, 1, 1, 0, 0, 0, 9, ZoneOffset.UTC),
                 OffsetDateTime.of(2020, 1, 1, 0, 0, 0, 9, ZoneOffset.UTC),
-                org, job, contract.getContractNumber(), Contract.ContractType.NORMAL, token, FhirVersion.STU3, tempDir.getAbsolutePath());
+                org, job, contract.getContractNumber(), ContractWorkerDto.ContractType.NORMAL, token, FhirVersion.STU3, tempDir.getAbsolutePath());
         ReflectionTestUtils.setField(processor, "earliestDataDate", "01/01/2020");
 
         Future<ProgressTrackerUpdate> future = processor.process(request);
