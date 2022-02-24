@@ -4,9 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
+import gov.cms.ab2d.api.remote.JobClientMock;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
@@ -57,9 +56,6 @@ public class AdminAPIMaintenanceModeTests {
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Autowired
-    private JobRepository jobRepository;
-
-    @Autowired
     private TestUtil testUtil;
 
     @Autowired
@@ -67,6 +63,9 @@ public class AdminAPIMaintenanceModeTests {
 
     @Autowired
     private DataSetup dataSetup;
+
+    @Autowired
+    JobClientMock jobClientMock;
 
     private static final String PROPERTIES_URL = "/properties";
 
@@ -81,6 +80,7 @@ public class AdminAPIMaintenanceModeTests {
     public void cleanup() {
         dataSetup.cleanup();
         loggerEventRepository.delete();
+        jobClientMock.cleanupAll();
     }
 
     @Test
@@ -105,7 +105,6 @@ public class AdminAPIMaintenanceModeTests {
 
         List<LoggableEvent> apiReqEvents = loggerEventRepository.load(ApiRequestEvent.class);
         assertEquals(2, apiReqEvents.size());
-        ApiRequestEvent requestEvent = (ApiRequestEvent) apiReqEvents.get(0);
 
         List<LoggableEvent> apiResEvents = loggerEventRepository.load(ApiResponseEvent.class);
         assertEquals(1, apiResEvents.size());
@@ -137,8 +136,6 @@ public class AdminAPIMaintenanceModeTests {
         this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(202));
-
-        jobRepository.findAll().forEach(job -> dataSetup.queueForCleanup(job));
     }
 
     @Test
@@ -154,6 +151,8 @@ public class AdminAPIMaintenanceModeTests {
         maintenanceModeDTO.setValue("true");
         propertiesDTOs.add(maintenanceModeDTO);
 
+        String testFile = "test.ndjson";
+        jobClientMock.saveOutputForDownload(testUtil.createJobOutput(testFile));
         ObjectMapper mapper = new ObjectMapper();
 
         this.mockMvc.perform(
@@ -162,12 +161,11 @@ public class AdminAPIMaintenanceModeTests {
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(200));
 
-        String testFile = "test.ndjson";
 
-        Job job = testUtil.createTestJobForDownload(testFile);
-        dataSetup.queueForCleanup(job);
+        String header = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
+        String jobUuid = header.substring(header.indexOf("/Job/") + 5, header.indexOf("/$status"));
 
-        String destinationStr = testUtil.createTestDownloadFile(tmpJobLocation, job, testFile);
+        String destinationStr = testUtil.createTestDownloadFile(tmpJobLocation, jobUuid, testFile);
 
         MvcResult mvcResultStatusCheck = this.mockMvc.perform(get(contentLocationUrl)
                 .header("Authorization", "Bearer " + token))
@@ -183,6 +181,7 @@ public class AdminAPIMaintenanceModeTests {
         assertFalse(Files.exists(Paths.get(destinationStr + File.separator + testFile)));
 
         // Cleanup
+        jobClientMock.clearOutputForDownload();
         propertiesDTOs.clear();
         maintenanceModeDTO.setValue("false");
         propertiesDTOs.add(maintenanceModeDTO);

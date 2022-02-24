@@ -133,14 +133,19 @@ public class TestUtil {
     }
 
     public void addJobOutput(Job job, String testFile) {
+        JobOutput jobOutput = createJobOutput(testFile);
+        jobOutput.setJob(job);
+        job.getJobOutputs().add(jobOutput);
+    }
+
+    public JobOutput createJobOutput(String testFile) {
         JobOutput jobOutput = new JobOutput();
         jobOutput.setFhirResourceType(EOB);
-        jobOutput.setJob(job);
         jobOutput.setFilePath(testFile);
         jobOutput.setError(false);
         jobOutput.setChecksum("testoutput");
         jobOutput.setFileLength(20L);
-        job.getJobOutputs().add(jobOutput);
+        return jobOutput;
     }
 
     public void turnMaintenanceModeOff() {

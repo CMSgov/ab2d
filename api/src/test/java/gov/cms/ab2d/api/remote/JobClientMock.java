@@ -2,8 +2,10 @@ package gov.cms.ab2d.api.remote;
 
 import gov.cms.ab2d.common.dto.JobPollResult;
 import gov.cms.ab2d.common.dto.StartJobDTO;
+import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -15,13 +17,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 @Primary
 @Component
 public class JobClientMock extends JobClient {
 
     private final Map<String, StartJobDTO> createdJobs = new HashMap<>(89);
+
+    private transient JobOutput jobOutput;
+
+    @Value("classpath:test.ndjson")
+    private Resource jobOutputResults;
 
     @Autowired
     public JobClientMock() {
@@ -48,22 +55,31 @@ public class JobClientMock extends JobClient {
     }
 
     public Resource getResourceForJob(String jobGuid, String fileName, String organization) {
-        throw new UnsupportedOperationException();
+        return jobOutputResults;
     }
 
     public void deleteFileForJob(File file, String jobGuid) {
-        throw new UnsupportedOperationException();
     }
 
     public JobPollResult poll(boolean admin, String jobUuid, String organization, int delaySeconds) {
         StartJobDTO startJobDTO = createdJobs.get(jobUuid);
         OffsetDateTime expiresAt = OffsetDateTime.now().plusDays(5);
-        return new JobPollResult(startJobDTO.getUrl(), JobStatus.SUCCESSFUL, 100, "", expiresAt, emptyList());
+        return new JobPollResult(startJobDTO.getUrl(), JobStatus.SUCCESSFUL, 100,
+                "", expiresAt, singletonList(jobOutput));
     }
 
     public void cancelJob(String jobUuid, String organization) {
         throw new UnsupportedOperationException();
     }
+
+    public void saveOutputForDownload(JobOutput jobOutput) {
+        this.jobOutput = jobOutput;
+    }
+
+    public void clearOutputForDownload() {
+        jobOutput = null;
+    }
+
 
     public void cleanup(String jobID) {
         createdJobs.remove(jobID);
