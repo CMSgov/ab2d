@@ -23,7 +23,6 @@ import gov.cms.ab2d.worker.processor.coverage.check.CoveragePeriodsPresentCheck;
 import gov.cms.ab2d.worker.processor.coverage.check.CoveragePresentCheck;
 import gov.cms.ab2d.worker.processor.coverage.check.CoverageStableCheck;
 import gov.cms.ab2d.worker.processor.coverage.check.CoverageUpToDateCheck;
-import gov.cms.ab2d.worker.service.ContractWorkerService;
 import java.time.DayOfWeek;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -76,7 +75,6 @@ public class CoverageDriverImpl implements CoverageDriver {
 
     private final CoverageSearchRepository coverageSearchRepository;
     private final PdpClientService pdpClientService;
-    private final ContractWorkerService contractWorkerService;
 
     private final CoverageService coverageService;
     private final CoverageProcessor coverageProcessor;
@@ -85,11 +83,12 @@ public class CoverageDriverImpl implements CoverageDriver {
     private final ContractToContractCoverageMapping mapping;
 
     public CoverageDriverImpl(CoverageSearchRepository coverageSearchRepository,
-                              PdpClientService pdpClientService, CoverageService coverageService,
-                              PropertiesService propertiesService, CoverageProcessor coverageProcessor,
+                              PdpClientService pdpClientService,
+                              CoverageService coverageService,
+                              PropertiesService propertiesService,
+                              CoverageProcessor coverageProcessor,
                               CoverageLockWrapper coverageLockWrapper,
-                              ContractToContractCoverageMapping mapping,
-                              ContractWorkerService contractWorkerService) {
+                              ContractToContractCoverageMapping mapping) {
         this.coverageSearchRepository = coverageSearchRepository;
         this.pdpClientService = pdpClientService;
         this.coverageService = coverageService;
@@ -97,7 +96,6 @@ public class CoverageDriverImpl implements CoverageDriver {
         this.coverageLockWrapper = coverageLockWrapper;
         this.propertiesService = propertiesService;
         this.mapping = mapping;
-        this.contractWorkerService = contractWorkerService;
     }
 
 

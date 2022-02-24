@@ -182,8 +182,7 @@ public class EndToEndBfdTests {
 
 
         coverageDriver = new CoverageDriverImpl(coverageSearchRepository, pdpClientService, coverageService,
-                propertiesService, coverageProcessor, coverageLockWrapper, contractToContractCoverageMapping,
-                contractWorkerService);
+                propertiesService, coverageProcessor, coverageLockWrapper, contractToContractCoverageMapping);
 
         // Instantiate the job processors
         jobService = new JobServiceImpl(jobRepository, jobOutputService, logManager, logEventSummary, path.getAbsolutePath());

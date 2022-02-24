@@ -8,9 +8,6 @@ import java.time.OffsetDateTime;
 import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-
-import javax.annotation.Nullable;
-import java.time.OffsetDateTime;
 import java.util.List;
 
 /**

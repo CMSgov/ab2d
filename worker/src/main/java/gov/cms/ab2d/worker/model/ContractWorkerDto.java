@@ -22,7 +22,7 @@ import lombok.Setter;
 
 import static gov.cms.ab2d.common.util.DateUtil.getESTOffset;
 
-@Entity(name="contract")
+@Entity(name = "contract")
 @Getter
 @Setter
 @NoArgsConstructor
