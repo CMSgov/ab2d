@@ -857,7 +857,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
         Job job = testUtil.createTestJobForDownload(testFile);
 
-        String destinationStr = testUtil.createTestDownloadFile(tmpJobLocation, job, testFile);
+        String destinationStr = testUtil.createTestDownloadFile(tmpJobLocation, job.getJobUuid(), testFile);
 
         MvcResult mvcResultStatusCall =
                 this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)

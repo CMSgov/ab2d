@@ -2,7 +2,6 @@ package gov.cms.ab2d.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import gov.cms.ab2d.api.SpringBootApp;
-import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
@@ -44,9 +43,6 @@ public class RoleTests {
     LoggerEventRepository loggerEventRepository;
 
     @Autowired
-    private JobRepository jobRepository;
-
-    @Autowired
     private DataSetup dataSetup;
 
     @Container
@@ -61,7 +57,6 @@ public class RoleTests {
 
     @AfterEach
     public void cleanup() {
-        jobRepository.findAll().forEach(job -> dataSetup.queueForCleanup(job));
         dataSetup.cleanup();
         loggerEventRepository.delete();
     }

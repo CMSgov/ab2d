@@ -105,8 +105,8 @@ public class TestUtil {
         return buildTokenStr();
     }
 
-    public String createTestDownloadFile(String tmpJobLocation, Job job, String testFile) throws IOException {
-        Path destination = Paths.get(tmpJobLocation, job.getJobUuid());
+    public String createTestDownloadFile(String tmpJobLocation, String jobUuid, String testFile) throws IOException {
+        Path destination = Paths.get(tmpJobLocation, jobUuid);
         String destinationStr = destination.toString();
         Files.createDirectories(destination);
         InputStream testFileStream = this.getClass().getResourceAsStream("/" + testFile);

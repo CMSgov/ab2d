@@ -3,8 +3,10 @@ package gov.cms.ab2d.api.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
+import gov.cms.ab2d.api.remote.JobClientMock;
 import gov.cms.ab2d.common.dto.PdpClientDTO;
 import gov.cms.ab2d.common.dto.ContractDTO;
+import gov.cms.ab2d.common.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.PdpClient;
@@ -57,14 +59,14 @@ public class AdminAPIPdpClientTests {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    JobClientMock jobClientMock;
+
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
     @Autowired
     private PdpClientRepository pdpClientRepository;
-
-    @Autowired
-    private JobRepository jobRepository;
 
     @Autowired
     private TestUtil testUtil;
@@ -261,11 +263,12 @@ public class AdminAPIPdpClientTests {
 
         String header = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
 
-        Job job = jobRepository.findByJobUuid(header.substring(header.indexOf("/Job/") + 5, header.indexOf("/$status")));
+        String jobId = header.substring(header.indexOf("/Job/") + 5, header.indexOf("/$status"));
+        StartJobDTO startJobDTO = jobClientMock.lookupJob(jobId);
         PdpClient jobPdpClient = pdpClientRepository.findAll().stream()
-                .filter(pdp -> job.getOrganization().equals(pdp.getOrganization())).findFirst().get();
+                .filter(pdp -> startJobDTO.getOrganization().equals(pdp.getOrganization())).findFirst().get();
+        jobClientMock.cleanup(jobId);
         dataSetup.queueForCleanup(jobPdpClient);
-        dataSetup.queueForCleanup(job);
         assertEquals("regularClient", jobPdpClient.getClientId());
     }
 
