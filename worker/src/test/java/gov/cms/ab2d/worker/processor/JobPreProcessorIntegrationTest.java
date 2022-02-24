@@ -1,10 +1,8 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
-import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
@@ -14,11 +12,22 @@ import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
-import gov.cms.ab2d.eventlogger.events.*;
+import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
+import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
+import gov.cms.ab2d.eventlogger.events.ContractSearchEvent;
+import gov.cms.ab2d.eventlogger.events.ErrorEvent;
+import gov.cms.ab2d.eventlogger.events.FileEvent;
+import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
+import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
+import gov.cms.ab2d.worker.model.ContractWorkerDto;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverException;
+import gov.cms.ab2d.worker.repository.ContractWorkerRepository;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -31,9 +40,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
 
 import static gov.cms.ab2d.common.model.JobStartedBy.DEVELOPER;
 import static gov.cms.ab2d.common.model.SinceSource.AB2D;
@@ -42,7 +48,10 @@ import static gov.cms.ab2d.common.model.SinceSource.USER;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -53,7 +62,7 @@ class JobPreProcessorIntegrationTest {
     private JobPreProcessor cut;
 
     @Autowired
-    private ContractRepository contractRepository;
+    private ContractWorkerRepository contractRepository;
 
     @Autowired
     private JobRepository jobRepository;
@@ -93,7 +102,7 @@ class JobPreProcessorIntegrationTest {
 
         cut = new JobPreProcessorImpl(contractRepository, jobRepository, manager, coverageDriver);
 
-        ContractWorkerDto tmpContract = new Contract();
+        ContractWorkerDto tmpContract = new ContractWorkerDto();
         tmpContract.setContractNumber("JPP1234");
         tmpContract.setContractName(tmpContract.getContractNumber());
         contract = contractRepository.save(tmpContract);
@@ -112,7 +121,7 @@ class JobPreProcessorIntegrationTest {
     @Test
     @DisplayName("When a job is in submitted status, it can be put into progress upon starting processing")
     void whenJobIsInSubmittedStatus_ThenJobShouldBePutInProgress() throws InterruptedException {
-        when(coverageDriver.isCoverageAvailable(any(Job.class), any(Contract.class))).thenReturn(true);
+        when(coverageDriver.isCoverageAvailable(any(Job.class), any(ContractWorkerDto.class))).thenReturn(true);
 
         var processedJob = cut.preprocess(job.getJobUuid());
         assertEquals(JobStatus.IN_PROGRESS, processedJob.getStatus());
@@ -136,7 +145,7 @@ class JobPreProcessorIntegrationTest {
     @Test
     @DisplayName("When a job is not already in a submitted status, it cannot be put into progress")
     void whenJobIsNotInSubmittedStatus_ThenJobShouldNotBePutInProgress() throws InterruptedException {
-        when(coverageDriver.isCoverageAvailable(any(Job.class), any(Contract.class))).thenReturn(true);
+        when(coverageDriver.isCoverageAvailable(any(Job.class), any(ContractWorkerDto.class))).thenReturn(true);
 
         job.setStatus(JobStatus.IN_PROGRESS);
 
@@ -152,7 +161,7 @@ class JobPreProcessorIntegrationTest {
     @Test
     @DisplayName("When coverage fails, a job should fail")
     void whenCoverageFails_ThenJobShouldFail() throws InterruptedException {
-        when(coverageDriver.isCoverageAvailable(any(Job.class), any(Contract.class))).thenThrow(new CoverageDriverException("test"));
+        when(coverageDriver.isCoverageAvailable(any(Job.class), any(ContractWorkerDto.class))).thenThrow(new CoverageDriverException("test"));
 
         var processedJob = cut.preprocess(job.getJobUuid());
         assertEquals(JobStatus.FAILED, processedJob.getStatus());

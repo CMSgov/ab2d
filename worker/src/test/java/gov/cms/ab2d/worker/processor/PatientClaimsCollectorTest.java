@@ -1,16 +1,10 @@
 package gov.cms.ab2d.worker.processor;
 
 import com.newrelic.api.agent.Token;
-import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.TestUtil;
-import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
-import org.hl7.fhir.instance.model.api.IBaseBundle;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
-
+import gov.cms.ab2d.worker.model.ContractWorkerDto;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.OffsetDateTime;
@@ -18,11 +12,20 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
+import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
+import org.hl7.fhir.instance.model.api.IBaseBundle;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
+
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class PatientClaimsCollectorTest {
 
@@ -74,17 +77,17 @@ public class PatientClaimsCollectorTest {
         CoverageSummary coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(PATIENT_ID), null, List.of());
 
         PatientClaimsRequest request1 = new PatientClaimsRequest(List.of(coverageSummary), LATER_ATT_DATE, null, "client", "job",
-                "contractNum", Contract.ContractType.CLASSIC_TEST, noOpToken, STU3, null);
+                "contractNum", ContractWorkerDto.ContractType.CLASSIC_TEST, noOpToken, STU3, null);
         PatientClaimsCollector collector1 = new PatientClaimsCollector(request1, EPOCH);
         assertTrue(collector1.afterSinceDate(eob));
 
         PatientClaimsRequest request2 = new PatientClaimsRequest(List.of(coverageSummary), LATER_ATT_DATE, oneMinuteEarlier, "client", "job",
-                "contractNum", Contract.ContractType.CLASSIC_TEST, noOpToken, STU3, null);
+                "contractNum", ContractWorkerDto.ContractType.CLASSIC_TEST, noOpToken, STU3, null);
         PatientClaimsCollector collector2 = new PatientClaimsCollector(request2, EPOCH);
         assertTrue(collector2.afterSinceDate(eob));
 
         PatientClaimsRequest request3 = new PatientClaimsRequest(List.of(coverageSummary), LATER_ATT_DATE, oneMinuteLater, "client", "job",
-                "contractNum", Contract.ContractType.CLASSIC_TEST, noOpToken, STU3, null);
+                "contractNum", ContractWorkerDto.ContractType.CLASSIC_TEST, noOpToken, STU3, null);
         PatientClaimsCollector collector3 = new PatientClaimsCollector(request3, EPOCH);
         assertFalse(collector3.afterSinceDate(eob));
     }
@@ -97,7 +100,7 @@ public class PatientClaimsCollectorTest {
                 null, List.of());
 
         PatientClaimsRequest request = new PatientClaimsRequest(List.of(coverageSummary), LATER_ATT_DATE, null, "client", "job",
-                "contractNum", Contract.ContractType.CLASSIC_TEST, noOpToken, STU3, null);
+                "contractNum", ContractWorkerDto.ContractType.CLASSIC_TEST, noOpToken, STU3, null);
 
         PatientClaimsCollector collector = new PatientClaimsCollector(request, EPOCH);
 
@@ -105,14 +108,14 @@ public class PatientClaimsCollectorTest {
         assertEquals(1, collector.getEobs().size());
 
         request = new PatientClaimsRequest(List.of(coverageSummary), LATER_ATT_DATE, null, "client", "job",
-                "contractNum", Contract.ContractType.SYNTHEA, noOpToken, STU3, null);
+                "contractNum", ContractWorkerDto.ContractType.SYNTHEA, noOpToken, STU3, null);
 
         collector = new PatientClaimsCollector(request, EPOCH);
         collector.filterAndAddEntries(BUNDLE, coverageSummary);
         assertTrue(collector.getEobs().isEmpty());
 
         request = new PatientClaimsRequest(List.of(coverageSummary), LATER_ATT_DATE, null, "client", "job",
-                "contractNum", Contract.ContractType.NORMAL, noOpToken, STU3, null);
+                "contractNum", ContractWorkerDto.ContractType.NORMAL, noOpToken, STU3, null);
 
         collector = new PatientClaimsCollector(request, EPOCH);
         collector.filterAndAddEntries(BUNDLE, coverageSummary);
@@ -127,7 +130,7 @@ public class PatientClaimsCollectorTest {
 
 
         PatientClaimsRequest request = new PatientClaimsRequest(List.of(coverageSummary), LATER_ATT_DATE, null, "client", "job",
-                "contractNum", Contract.ContractType.NORMAL, noOpToken, STU3, null);
+                "contractNum", ContractWorkerDto.ContractType.NORMAL, noOpToken, STU3, null);
 
         PatientClaimsCollector collector = new PatientClaimsCollector(request, EPOCH);
         collector.filterAndAddEntries(BUNDLE, coverageSummary);
@@ -136,7 +139,7 @@ public class PatientClaimsCollectorTest {
         coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(PATIENT_ID),
                 null, List.of(TestUtil.getOpenRange()));
         request = new PatientClaimsRequest(List.of(coverageSummary), LATER_ATT_DATE, null, "client", "job",
-                "contractNum", Contract.ContractType.NORMAL, noOpToken, STU3, null);
+                "contractNum", ContractWorkerDto.ContractType.NORMAL, noOpToken, STU3, null);
 
         collector = new PatientClaimsCollector(request, EPOCH);
         collector.filterAndAddEntries(BUNDLE, coverageSummary);
@@ -151,7 +154,7 @@ public class PatientClaimsCollectorTest {
                 null, List.of(TestUtil.getOpenRange()));
 
         PatientClaimsRequest request = new PatientClaimsRequest(List.of(coverageSummary), EARLY_ATT_DATE, null, "client", "job",
-                "contractNum", Contract.ContractType.NORMAL, noOpToken, STU3, null);
+                "contractNum", ContractWorkerDto.ContractType.NORMAL, noOpToken, STU3, null);
 
         PatientClaimsCollector collector = new PatientClaimsCollector(request, EPOCH);
         collector.filterAndAddEntries(BUNDLE, coverageSummary);
@@ -172,7 +175,7 @@ public class PatientClaimsCollectorTest {
             IBaseBundle oldBundle = EobTestDataUtil.createBundle(eob);
 
             PatientClaimsRequest request = new PatientClaimsRequest(List.of(coverageSummary), OffsetDateTime.now().minusYears(100), null, "client", "job",
-                    "contractNum", Contract.ContractType.NORMAL, noOpToken, STU3, null);
+                    "contractNum", ContractWorkerDto.ContractType.NORMAL, noOpToken, STU3, null);
             PatientClaimsCollector collector = new PatientClaimsCollector(request, EPOCH);
             collector.filterAndAddEntries(oldBundle, coverageSummary);
             assertTrue(collector.getEobs().isEmpty());
@@ -196,7 +199,7 @@ public class PatientClaimsCollectorTest {
             IBaseBundle oldBundle = EobTestDataUtil.createBundle(eob);
 
             PatientClaimsRequest request = new PatientClaimsRequest(List.of(coverageSummary), OffsetDateTime.now().minusYears(100), null, "client", "job",
-                    "contractNum", Contract.ContractType.NORMAL, noOpToken, STU3, null);
+                    "contractNum", ContractWorkerDto.ContractType.NORMAL, noOpToken, STU3, null);
             PatientClaimsCollector collector = new PatientClaimsCollector(request, EPOCH);
             collector.filterAndAddEntries(oldBundle, coverageSummary);
             assertTrue(collector.getEobs().isEmpty());
@@ -220,7 +223,7 @@ public class PatientClaimsCollectorTest {
             IBaseBundle oldBundle = EobTestDataUtil.createBundle(eob);
 
             PatientClaimsRequest request = new PatientClaimsRequest(List.of(coverageSummary), OffsetDateTime.now().minusYears(100), null, "client", "job",
-                    "contractNum", Contract.ContractType.NORMAL, noOpToken, STU3, null);
+                    "contractNum", ContractWorkerDto.ContractType.NORMAL, noOpToken, STU3, null);
             PatientClaimsCollector collector = new PatientClaimsCollector(request, EPOCH);
             collector.filterAndAddEntries(oldBundle, coverageSummary);
             assertEquals(1, collector.getEobs().size());
@@ -244,7 +247,7 @@ public class PatientClaimsCollectorTest {
             IBaseBundle oldBundle = EobTestDataUtil.createBundle(eob);
 
             PatientClaimsRequest request = new PatientClaimsRequest(List.of(coverageSummary), OffsetDateTime.now(), null, "client", "job",
-                    "contractNum", Contract.ContractType.NORMAL, noOpToken, STU3, null);
+                    "contractNum", ContractWorkerDto.ContractType.NORMAL, noOpToken, STU3, null);
             PatientClaimsCollector collector = new PatientClaimsCollector(request, EPOCH);
             collector.filterAndAddEntries(oldBundle, coverageSummary);
             assertTrue(collector.getEobs().isEmpty());
@@ -262,7 +265,7 @@ public class PatientClaimsCollectorTest {
                 null, List.of(TestUtil.getOpenRange()));
 
         PatientClaimsRequest request = new PatientClaimsRequest(List.of(coverageSummary), OffsetDateTime.now(), null, "client", "job",
-                "contractNum", Contract.ContractType.NORMAL, noOpToken, STU3, null);
+                "contractNum", ContractWorkerDto.ContractType.NORMAL, noOpToken, STU3, null);
         PatientClaimsCollector collector = new PatientClaimsCollector(request, EPOCH);
         collector.filterAndAddEntries(null, coverageSummary);
         assertTrue(collector.getEobs().isEmpty());
@@ -283,7 +286,7 @@ public class PatientClaimsCollectorTest {
             ReflectionTestUtils.setField(oldBundle, "entry", null);
 
             PatientClaimsRequest request = new PatientClaimsRequest(List.of(coverageSummary), OffsetDateTime.now(), null, "client", "job",
-                    "contractNum", Contract.ContractType.NORMAL, noOpToken, STU3, null);
+                    "contractNum", ContractWorkerDto.ContractType.NORMAL, noOpToken, STU3, null);
             PatientClaimsCollector collector = new PatientClaimsCollector(request, EPOCH);
             collector.filterAndAddEntries(oldBundle, coverageSummary);
             assertTrue(collector.getEobs().isEmpty());

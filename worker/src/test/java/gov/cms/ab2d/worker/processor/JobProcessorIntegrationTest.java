@@ -1,12 +1,10 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
-import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
@@ -33,7 +31,10 @@ import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.config.SearchConfig;
+import gov.cms.ab2d.worker.model.ContractWorkerDto;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
+import gov.cms.ab2d.worker.repository.ContractWorkerRepository;
+import gov.cms.ab2d.worker.service.ContractWorkerService;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import gov.cms.ab2d.worker.util.HealthCheck;
@@ -117,7 +118,10 @@ class JobProcessorIntegrationTest {
     private PdpClientRepository pdpClientRepository;
 
     @Autowired
-    private ContractRepository contractRepository;
+    private ContractWorkerRepository contractRepository;
+
+    @Autowired
+    private ContractWorkerService contractWorkerService;
 
     @Autowired
     private JobOutputRepository jobOutputRepository;
@@ -188,7 +192,7 @@ class JobProcessorIntegrationTest {
             return EobTestDataUtil.createBundle(copy);
         });
 
-        when(mockCoverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(100);
+        when(mockCoverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractWorkerDto.class))).thenReturn(100);
 
         when(mockCoverageDriver.pageCoverage(any(CoveragePagingRequest.class))).thenReturn(
                 new CoveragePagingResult(loadFauxMetadata(contractForCoverageDTO, 99), null));
@@ -203,7 +207,7 @@ class JobProcessorIntegrationTest {
         pool.initialize();
 
         ContractProcessor contractProcessor = new ContractProcessorImpl(
-                contractRepository,
+                contractWorkerService,
                 jobRepository,
                 mockCoverageDriver,
                 patientClaimsProcessor,
@@ -352,7 +356,7 @@ class JobProcessorIntegrationTest {
     void when_errorCount_is_not_below_threshold_fail_job() {
 
         reset(mockCoverageDriver);
-        when(mockCoverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(40);
+        when(mockCoverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractWorkerDto.class))).thenReturn(40);
         andThenAnswerPatients(mockCoverageDriver, contractForCoverageDTO, 10, 40);
 
         OngoingStubbing<IBaseBundle> stubbing = when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any()));

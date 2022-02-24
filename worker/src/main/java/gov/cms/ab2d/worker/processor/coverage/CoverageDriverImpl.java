@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
 import com.newrelic.api.agent.Trace;
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
@@ -210,13 +211,9 @@ public class CoverageDriverImpl implements CoverageDriver {
 
                 // Iterate through all attested contracts and look for new
                 // coverage periods for each contract
-                List<ContractWorkerDto> enabledContracts = pdpClientService.getAllEnabledContracts()
-                        .stream().map(contractWorkerService::getContractByContractNumber)
-                        .filter(Optional::isPresent)
-                        .map(Optional::get)
-                        .toList();
+                List<Contract> enabledContracts = pdpClientService.getAllEnabledContracts();
 
-                for (ContractWorkerDto contract : enabledContracts) {
+                for (Contract contract : enabledContracts) {
                     discoverCoveragePeriods(mapping.map(contract));
                 }
 
@@ -656,11 +653,9 @@ public class CoverageDriverImpl implements CoverageDriver {
 
         // Only filter contracts that matter
         List<ContractWorkerDto> enabledContracts = pdpClientService.getAllEnabledContracts().stream()
-                .map(contractWorkerService::getContractByContractNumber)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
                 .filter(contract -> !contract.isTestContract())
                 .filter(contract -> contractNotBeingUpdated(issues, contract))
+                .map(mapping::mapWorkerDto)
                 .toList();
 
         // Don't perform other verification checks if coverage for months is outright missing
@@ -696,7 +691,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      * @param contract the contract to check
      * @return true if the contract if not being updated
      */
-    private boolean contractNotBeingUpdated(List<String> issues, ContractWorkerDto contract) {
+    private boolean contractNotBeingUpdated(List<String> issues, Contract contract) {
         List<CoveragePeriod> periods = coverageService.findAssociatedCoveragePeriods(contract.getContractNumber());
 
         boolean contractBeingUpdated  = periods.stream()

@@ -1,31 +1,27 @@
 package gov.cms.ab2d.worker.processor;
 
 import com.newrelic.api.agent.NewRelic;
-import gov.cms.ab2d.fhir.BundleUtils;
-import gov.cms.ab2d.fhir.EobUtils;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
 import gov.cms.ab2d.filter.FilterEob;
 import gov.cms.ab2d.worker.model.ContractWorkerDto;
 import gov.cms.ab2d.worker.util.FhirUtils;
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import gov.cms.ab2d.fhir.BundleUtils;
+import gov.cms.ab2d.fhir.EobUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.IBaseBackboneElement;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IBaseResource;
+
+import java.time.OffsetDateTime;
+import java.util.*;
 
 /**
  * Collect and filter claims based on AB2D business requirements and allow documenting the results of all actions.
  *
  * Relevant classes influencing filtering and behavior:
  *      - {@link gov.cms.ab2d.coverage.model.CoverageSummary} dates that beneficiary is a member of the contract and list of MBIs
- *      - {@link FilterEob.filter} method filtering out claims from periods when beneficiary was not a member
  *      - {@link ExplanationOfBenefitTrimmer#getBenefit} strip fields that AB2D should not provide based on {@link gov.cms.ab2d.fhir.FhirVersion}
  *      - {@link EobUtils#isPartD} remove claims that are PartD
  *      - {@link FhirUtils} add MBIs to a claim
@@ -97,8 +93,8 @@ public class PatientClaimsCollector {
         BundleUtils.getEobResources(bundleEntries).stream()
                 // Filter by date unless contract is an old synthetic data contract, part D or attestation time is null
                 // Filter out data
-                .filter(resource -> FilterEob.filter(resource, claimsRequest.getCoverageSummary().getDateRanges(), earliestDate,
-                            attestationDate, claimsRequest.getContractType() == ContractWorkerDto.ContractType.CLASSIC_TEST).isPresent())
+                .filter(resource -> FilterEob.filter(resource, patient.getDateRanges(), earliestDate,
+                        attestationDate, claimsRequest.getContractType() == ContractWorkerDto.ContractType.valueOf(Contract.ContractType.CLASSIC_TEST.toString())).isPresent())
                 // Filter out unnecessary fields
                 .map(resource -> ExplanationOfBenefitTrimmer.getBenefit(resource))
                 // Make sure patients are the same

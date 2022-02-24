@@ -38,7 +38,7 @@ public class PdpClientServiceImpl implements PdpClientService {
     private final Mapping mapping;
 
     @Override
-    public List<String> getAllEnabledContracts() {
+    public List<Contract> getAllEnabledContracts() {
         return pdpClientRepository.findAllByEnabledTrue().stream()
                 .filter(client -> client.getContract() != null && client.getContract().getAttestedOn() != null)
                 .filter(this::hasSponsorRole)

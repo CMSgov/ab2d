@@ -1,7 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.repository.JobRepository;
@@ -18,7 +17,6 @@ import gov.cms.ab2d.worker.config.SearchConfig;
 import gov.cms.ab2d.worker.model.ContractWorkerDto;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.repository.ContractWorkerRepository;
-import gov.cms.ab2d.worker.repository.StubContractRepository;
 import gov.cms.ab2d.worker.repository.StubJobRepository;
 import gov.cms.ab2d.worker.service.ContractWorkerService;
 import gov.cms.ab2d.worker.service.JobChannelService;
@@ -111,8 +109,10 @@ class ContractProcessorInvalidPatientTest {
 
         ThreadPoolTaskExecutor aggTP = new ThreadPoolTaskExecutor();
         aggTP.initialize();
+
         cut = new ContractProcessorImpl(contractWorkerService, jobRepository, coverageDriver, patientClaimsProcessor, eventLogger,
-                requestQueue, mapping, jobChannelService, jobProgressUpdateService);
+                requestQueue, jobChannelService, jobProgressUpdateService, mapping, aggTP, searchConfig);
+
         ReflectionTestUtils.setField(cut, "eobJobPatientQueueMaxSize", 1);
         ReflectionTestUtils.setField(cut, "eobJobPatientQueuePageSize", 1);
         jobChannelService.sendUpdate(jobId, JobMeasure.FAILURE_THRESHHOLD, 100);

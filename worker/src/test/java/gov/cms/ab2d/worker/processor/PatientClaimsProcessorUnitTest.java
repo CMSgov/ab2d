@@ -3,21 +3,11 @@ package gov.cms.ab2d.worker.processor;
 import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.aggregator.FileOutputType;
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.config.SearchConfig;
-import lombok.extern.slf4j.Slf4j;
-import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.io.TempDir;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
-
+import gov.cms.ab2d.worker.model.ContractWorkerDto;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,11 +20,27 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import lombok.extern.slf4j.Slf4j;
+import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
 
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
@@ -109,7 +115,7 @@ class PatientClaimsProcessorUnitTest {
         coverageSummaries.add(fileSummary);
 
         request = new PatientClaimsRequest(List.of(coverageSummary), LATER_ATT_DATE, null, "client", "job",
-                "contractNum", Contract.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
+                "contractNum", ContractWorkerDto.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
     }
 
     @Test
@@ -146,7 +152,7 @@ class PatientClaimsProcessorUnitTest {
         assertEquals(3, bundle1.getEntry().size());
 
         PatientClaimsRequest request2 = new PatientClaimsRequest(List.of(coverageSummary), LATER_ATT_DATE, LATER_ATT_DATE, "client", "job",
-                "contractNum", Contract.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
+                "contractNum", ContractWorkerDto.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
         when(mockBfdClient.requestEOBFromServer(STU3, patientId, request2.getAttTime())).thenReturn(bundle1);
 
         cut.process(request2).get();
@@ -230,7 +236,7 @@ class PatientClaimsProcessorUnitTest {
         OffsetDateTime sinceDate = EARLY_ATT_DATE.plusDays(1);
 
         request = new PatientClaimsRequest(List.of(coverageSummary), LATER_ATT_DATE, sinceDate, "client", "job",
-                "contractNum", Contract.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
+                "contractNum", ContractWorkerDto.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(STU3, patientId, LATER_ATT_DATE)).thenReturn(bundle1);
@@ -247,7 +253,7 @@ class PatientClaimsProcessorUnitTest {
         coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(patientId), null, List.of(TestUtil.getOpenRange()));
 
         request = new PatientClaimsRequest(List.of(coverageSummary), EARLY_ATT_DATE, null, "client", "job",
-                "contractNum", Contract.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
+                "contractNum", ContractWorkerDto.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(STU3, patientId, null)).thenReturn(bundle1);
@@ -264,7 +270,7 @@ class PatientClaimsProcessorUnitTest {
         coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(patientId), null, List.of(TestUtil.getOpenRange()));
 
         request = new PatientClaimsRequest(List.of(coverageSummary), EARLY_ATT_DATE, EARLY_SINCE_DATE, "client", "job",
-                "contractNum", Contract.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
+                "contractNum", ContractWorkerDto.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(STU3, patientId, null)).thenReturn(bundle1);

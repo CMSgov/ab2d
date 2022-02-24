@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.service;
 
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
@@ -11,7 +12,6 @@ import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.service.InsertionJob;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
-import gov.cms.ab2d.worker.model.ContractWorkerDto;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -81,7 +81,7 @@ class PerformanceTestingCoverageOperations {
 
     @Autowired CoverageSearchRepository coverageSearchRepository;
 
-    private ContractWorkerDto contract;
+    private Contract contract;
     private CoveragePeriod period1;
     private CoveragePeriod period2;
     private CoveragePeriod period3;
@@ -161,7 +161,7 @@ class PerformanceTestingCoverageOperations {
         int pageSize = 5000;
         int pages = dataPoints > pageSize ? dataPoints / pageSize : 1;
 
-        ContractWorkerDto contract2 = dataSetup.setupContract("TST-34", AB2D_EPOCH.toOffsetDateTime());
+        Contract contract2 = dataSetup.setupContract("TST-34", AB2D_EPOCH.toOffsetDateTime());
 
         List<CoveragePeriod> periods = new ArrayList<>();
 
