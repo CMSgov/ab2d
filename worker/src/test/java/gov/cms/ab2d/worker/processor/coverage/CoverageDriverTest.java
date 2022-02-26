@@ -4,14 +4,17 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.dto.PdpClientDTO;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.PdpClient;
+import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Constants;
+import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageJobStatus;
@@ -26,10 +29,7 @@ import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import gov.cms.ab2d.fhir.IdentifierUtils;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
-import gov.cms.ab2d.worker.model.ContractWorkerDto;
-import gov.cms.ab2d.worker.repository.ContractWorkerRepository;
 import gov.cms.ab2d.worker.service.ContractWorkerService;
-import gov.cms.ab2d.worker.util.WorkerDataSetup;
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -88,7 +88,7 @@ class CoverageDriverTest {
     private static final PostgreSQLContainer postgres = new AB2DPostgresqlContainer();
 
     @Autowired
-    private ContractWorkerRepository contractRepo;
+    private ContractRepository contractRepo;
 
     @Autowired
     private ContractWorkerService contractService;
@@ -115,7 +115,7 @@ class CoverageDriverTest {
     private PropertiesService propertiesService;
 
     @Autowired
-    private WorkerDataSetup dataSetup;
+    private DataSetup dataSetup;
 
     @Autowired
     private CoverageDataSetup coverageDataSetup;
@@ -126,8 +126,8 @@ class CoverageDriverTest {
     @Autowired
     private ContractToContractCoverageMapping contractToContractCoverageMapping;
 
-    private ContractWorkerDto contract;
-    private ContractWorkerDto contract1;
+    private Contract contract;
+    private Contract contract1;
     private ContractForCoverageDTO contractForCoverageDTO;
     private ContractForCoverageDTO contractForCoverageDTO1;
     private CoveragePeriod january;
@@ -140,9 +140,11 @@ class CoverageDriverTest {
     private CoverageDriverImpl driver;
     private CoverageProcessorImpl processor;
 
+    private ContractToContractCoverageMapping mapping;
+
     @BeforeEach
     void before() {
-
+        mapping = new ContractToContractCoverageMapping();
         // Set properties values in database
         addPropertiesTableValues();
 
@@ -228,7 +230,7 @@ class CoverageDriverTest {
     @Test
     void discoverCoveragePeriods() {
 
-        ContractWorkerDto attestedAfterEpoch = dataSetup.setupContract("TST-AFTER-EPOCH",
+        Contract attestedAfterEpoch = dataSetup.setupContract("TST-AFTER-EPOCH",
                 AB2D_EPOCH.toOffsetDateTime().plusMonths(3));
         contractRepo.saveAndFlush(attestedAfterEpoch);
 
@@ -236,7 +238,7 @@ class CoverageDriverTest {
         pdpClientService.createClient(attestedAfterClient);
         dataSetup.queueForCleanup(pdpClientService.getClientById("TST-AFTER-EPOCH"));
 
-        ContractWorkerDto attestedBeforeEpoch = dataSetup.setupContract("TST-BEFORE-EPOCH",
+        Contract attestedBeforeEpoch = dataSetup.setupContract("TST-BEFORE-EPOCH",
                 AB2D_EPOCH.toOffsetDateTime().minusNanos(1));
         contractRepo.saveAndFlush(attestedBeforeEpoch);
 
@@ -271,9 +273,9 @@ class CoverageDriverTest {
     @Test
     void discoverCoveragePeriodsIgnoresTestContracts() {
 
-        ContractWorkerDto testContract = dataSetup.setupContract("TST-AFTER-EPOCH",
+        Contract testContract = dataSetup.setupContract("TST-AFTER-EPOCH",
                 AB2D_EPOCH.toOffsetDateTime().plusMonths(3));
-        testContract.setUpdateMode(ContractWorkerDto.UpdateMode.NONE);
+        testContract.setUpdateMode(Contract.UpdateMode.NONE);
 
         contractRepo.saveAndFlush(testContract);
 
@@ -621,7 +623,7 @@ class CoverageDriverTest {
         job.setContractNumber(contract.getContractNumber());
 
         try {
-            boolean noCoverageStatuses = driver.isCoverageAvailable(job, contract);
+            boolean noCoverageStatuses = driver.isCoverageAvailable(job, mapping.mapWorkerDto(contract));
 
             assertFalse(noCoverageStatuses, "eob searches should not run when a" +
                     " coverage period has no information");
@@ -648,7 +650,7 @@ class CoverageDriverTest {
             currentMonth.setStatus(CoverageJobStatus.SUCCESSFUL);
             coveragePeriodRepo.saveAndFlush(currentMonth);
 
-            boolean submittedCoverageStatus = driver.isCoverageAvailable(job, contract);
+            boolean submittedCoverageStatus = driver.isCoverageAvailable(job, mapping.mapWorkerDto(contract));
             assertFalse(submittedCoverageStatus, "eob searches should not run if a " +
                     "coverage period is submitted");
         } catch (InterruptedException | CoverageDriverException exception) {
@@ -675,7 +677,7 @@ class CoverageDriverTest {
             currentMonth.setStatus(CoverageJobStatus.SUCCESSFUL);
             coveragePeriodRepo.saveAndFlush(currentMonth);
 
-            boolean inProgressCoverageStatus = driver.isCoverageAvailable(job, contract);
+            boolean inProgressCoverageStatus = driver.isCoverageAvailable(job, mapping.mapWorkerDto(contract));
             assertFalse(inProgressCoverageStatus, "eob searches should not run when a coverage period is in progress");
         } catch (InterruptedException | CoverageDriverException exception) {
             fail("could not check for available coverage", exception);
@@ -701,7 +703,7 @@ class CoverageDriverTest {
             currentMonth.setStatus(CoverageJobStatus.SUCCESSFUL);
             coveragePeriodRepo.saveAndFlush(currentMonth);
 
-            boolean submittedCoverageStatus = driver.isCoverageAvailable(job, contract);
+            boolean submittedCoverageStatus = driver.isCoverageAvailable(job, mapping.mapWorkerDto(contract));
             assertTrue(submittedCoverageStatus, "eob searches should not run if a " +
                     "coverage period is submitted");
         } catch (InterruptedException | CoverageDriverException exception) {
@@ -720,7 +722,7 @@ class CoverageDriverTest {
         Job job = new Job();
         job.setCreatedAt(OffsetDateTime.now());
 
-        ContractWorkerDto temp = contractRepo.findContractByContractNumber(contractForCoverageDTO.getContractNumber()).get();
+        Contract temp = contractRepo.findContractByContractNumber(contractForCoverageDTO.getContractNumber()).get();
         job.setContractNumber(temp.getContractNumber());
 
         OffsetDateTime since = OffsetDateTime.of(LocalDate.of(2020, 3, 1),
@@ -735,7 +737,7 @@ class CoverageDriverTest {
 
             job.setSince(OffsetDateTime.of(startMonth, startDay, AB2D_ZONE.getRules().getOffset(Instant.now())));
 
-            boolean inProgressBeginningMonth = driver.isCoverageAvailable(job, contract);
+            boolean inProgressBeginningMonth = driver.isCoverageAvailable(job, mapping.mapWorkerDto(contract));
             assertFalse(inProgressBeginningMonth, "eob searches should run when only month after since is successful");
 
             LocalDate endMonth = LocalDate.of(2020, 3, 31);
@@ -743,7 +745,7 @@ class CoverageDriverTest {
 
             job.setSince(OffsetDateTime.of(endMonth, endDay, AB2D_ZONE.getRules().getOffset(Instant.now())));
 
-            boolean inProgressEndMonth = driver.isCoverageAvailable(job, contract);
+            boolean inProgressEndMonth = driver.isCoverageAvailable(job, mapping.mapWorkerDto(contract));
             assertFalse(inProgressEndMonth, "eob searches should run when only month after since is successful");
         } catch (InterruptedException | CoverageDriverException exception) {
             fail("could not check for available coverage", exception);
@@ -761,7 +763,7 @@ class CoverageDriverTest {
 
         CoveragePeriod period = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), contract.getESTAttestationTime().getMonthValue(), contract.getESTAttestationTime().getYear());
 
-        int total = driver.numberOfBeneficiariesToProcess(job, contract);
+        int total = driver.numberOfBeneficiariesToProcess(job, mapping.mapWorkerDto(contract));
         assertEquals(0, total);
 
         CoverageSearchEvent event = new CoverageSearchEvent();
@@ -776,7 +778,7 @@ class CoverageDriverTest {
         members.add(new Identifiers(1, "1234", new LinkedHashSet<>()));
         coverageService.insertCoverage(event.getId(), members);
 
-        total = driver.numberOfBeneficiariesToProcess(job, contract);
+        total = driver.numberOfBeneficiariesToProcess(job, mapping.mapWorkerDto(contract));
         assertEquals(1, total);
     }
 
@@ -837,7 +839,7 @@ class CoverageDriverTest {
         }
     }
 
-    private PdpClientDTO createClient(ContractWorkerDto contract, String clientId, @Nullable String roleName) {
+    private PdpClientDTO createClient(Contract contract, String clientId, @Nullable String roleName) {
         PdpClientDTO client = new PdpClientDTO();
         client.setClientId(clientId);
         client.setOrganization(clientId);
