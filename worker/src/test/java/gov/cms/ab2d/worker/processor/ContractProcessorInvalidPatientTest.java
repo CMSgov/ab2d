@@ -28,6 +28,7 @@ import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,6 +47,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -69,6 +71,7 @@ class ContractProcessorInvalidPatientTest {
 
     private ContractWorkerService contractWorkerService;
 
+    @Mock
     private ContractWorkerRepository contractRepository;
 
     private JobRepository jobRepository;
@@ -91,6 +94,7 @@ class ContractProcessorInvalidPatientTest {
     void setup() {
         contractWorkerService = new ContractWorkerService(contractRepository);
         ContractWorkerDto contract = new ContractWorkerDto();
+        when(contractWorkerService.getContractByContractNumber(anyString())).thenReturn(Optional.of(contract));
 
         SearchConfig searchConfig = new SearchConfig(tmpDirFolder.getAbsolutePath(), STREAMING_DIR,
                 FINISHED_DIR, 0, 0, 1, 2);

@@ -43,7 +43,7 @@ public class ContractToContractCoverageMapping {
         Converter<Contract, ContractWorkerDto> contractToWorkerDto = new AbstractConverter<>() {
             @Override
             protected ContractWorkerDto convert(Contract source) {
-                return new ContractWorkerDto(source.getContractNumber(), source.getContractName(), source.getHpmsParentOrgId(), source.getHpmsParentOrg(), source.getHpmsOrgMarketingName()); //NOSONAR
+                return new ContractWorkerDto(source.getId(), source.getContractNumber(), source.getContractName(), source.getHpmsParentOrgId(), source.getHpmsParentOrg(), source.getHpmsOrgMarketingName(), ContractWorkerDto.UpdateMode.valueOf(source.getUpdateMode().toString()), ContractWorkerDto.ContractType.valueOf(source.getContractType().toString()), source.getAttestedOn()); //NOSONAR
             }
         };
 

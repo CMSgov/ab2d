@@ -238,6 +238,8 @@ class JobProcessorIntegrationTest {
     void cleanup() {
         loggerEventRepository.delete();
         dataSetup.cleanup();
+        pdpClientRepository.deleteAll();
+        contractRepository.deleteAll();
     }
 
     @Test
@@ -312,7 +314,7 @@ class JobProcessorIntegrationTest {
         assertEquals(100, event.getBenesExpected());
         assertEquals(100, event.getBenesSearched());
         assertEquals(CONTRACT_NAME, event.getContractNumber());
-            assertEquals(95, event.getBenesWithEobs());
+        assertEquals(95, event.getBenesWithEobs());
 
         final List<JobOutput> jobOutputs = processedJob.getJobOutputs();
         assertFalse(jobOutputs.isEmpty());

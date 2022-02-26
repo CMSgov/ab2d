@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
@@ -21,6 +22,7 @@ import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
+import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.model.ContractWorkerDto;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverException;
@@ -28,6 +30,7 @@ import gov.cms.ab2d.worker.repository.ContractWorkerRepository;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -102,12 +105,13 @@ class JobPreProcessorIntegrationTest {
 
         cut = new JobPreProcessorImpl(contractRepository, jobRepository, manager, coverageDriver);
 
-        ContractWorkerDto tmpContract = new ContractWorkerDto();
-        tmpContract.setContractNumber("JPP1234");
-        tmpContract.setContractName(tmpContract.getContractNumber());
-        contract = contractRepository.save(tmpContract);
+        Contract tmpContract = new Contract();
+        tmpContract.setContractNumber(UUID.randomUUID().toString());
+        tmpContract.setContractName(UUID.randomUUID().toString());
+        contract = contractRepository.save(new ContractToContractCoverageMapping().mapWorkerDto(tmpContract));
         dataSetup.queueForCleanup(contract);
-        pdpClient = createClient();
+        tmpContract.setId(contract.getId());
+        pdpClient = createClient(tmpContract);
         job = createJob(pdpClient, contract.getContractNumber());
     }
 
@@ -340,11 +344,12 @@ class JobPreProcessorIntegrationTest {
         dataSetup.queueForCleanup(newJob);
     }
 
-    private PdpClient createClient() {
+    private PdpClient createClient(Contract contract) {
         PdpClient pdpClient = new PdpClient();
         pdpClient.setClientId("Harry_Potter");
         pdpClient.setOrganization("Harry_Potter");
         pdpClient.setEnabled(true);
+        pdpClient.setContract(contract);
 
         pdpClient = pdpClientRepository.save(pdpClient);
         dataSetup.queueForCleanup(pdpClient);

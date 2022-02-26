@@ -79,7 +79,7 @@ public class CoverageCheckPredicatesIntegrationTest {
     @BeforeEach
     void setUp() {
 
-        contract = dataSetup.setupContract("TEST", ATTESTATION_TIME.toOffsetDateTime());
+        contract = dataSetup.setupWorkerContract("TEST", ATTESTATION_TIME.toOffsetDateTime());
         contractForCoverageDTO = new ContractForCoverageDTO("TEST", ATTESTATION_TIME.toOffsetDateTime(),ContractForCoverageDTO.ContractType.NORMAL);
     }
 

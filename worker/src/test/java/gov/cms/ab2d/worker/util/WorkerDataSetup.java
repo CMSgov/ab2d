@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.util;
 
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.Role;
@@ -86,6 +87,7 @@ public class WorkerDataSetup {
         contractRepository.flush();
 
         domainObjects.clear();
+        contractRepository.flush();
     }
 
     public static final String TEST_PDP_CLIENT = "EileenCFrierson@example.com";
@@ -103,11 +105,11 @@ public class WorkerDataSetup {
             throw new RuntimeException(sqlException);
         }
     }
-    public ContractWorkerDto setupContract(String contractNumber) {
-        return setupContract(contractNumber, OffsetDateTime.now());
+    public ContractWorkerDto setupWorkerContract(String contractNumber) {
+        return setupWorkerContract(contractNumber, OffsetDateTime.now());
     }
 
-    public ContractWorkerDto setupContract(String contractNumber, OffsetDateTime attestedOn) {
+    public ContractWorkerDto setupWorkerContract(String contractNumber, OffsetDateTime attestedOn) {
         ContractWorkerDto contract = new ContractWorkerDto();
 
         contract.setAttestedOn(attestedOn);
@@ -118,6 +120,16 @@ public class WorkerDataSetup {
         queueForCleanup(contract);
         return contract;
     }
+
+    public Contract setupContract(String contractNumber) {
+        Contract contract = new Contract();
+        contract.setContractName("Test ContractWorkerDto " + contractNumber);
+        contract.setContractNumber(contractNumber);
+
+        queueForCleanup(contract);
+        return contract;
+    }
+
 
     public void setupContractWithNoAttestation(List<String> clientRoles) {
         setupPdpClient(clientRoles);
@@ -141,17 +153,11 @@ public class WorkerDataSetup {
         contractRepository.saveAndFlush(contract);
     }
 
-    public void setupContractSponsorForParentClientData(List<String> clientRoles) {
-        ContractWorkerDto contract = setupContract("ABC123");
-
-        savePdpClient(TEST_PDP_CLIENT, contract, clientRoles);
-    }
-
-    private PdpClient savePdpClient(String clientId, ContractWorkerDto contract, List<String> clientRoles) {
+    private PdpClient savePdpClient(String clientId, Contract contract, List<String> clientRoles) {
         PdpClient pdpClient = new PdpClient();
         pdpClient.setClientId(clientId);
         pdpClient.setOrganization("PDP-" + clientId);
-        pdpClient.setContract(contract.getContractNumber());
+        pdpClient.setContract(contract);
         pdpClient.setEnabled(true);
         pdpClient.setMaxParallelJobs(3);
         for(String clientRole :  clientRoles) {
@@ -166,7 +172,7 @@ public class WorkerDataSetup {
             pdpClient.addRole(role);
         }
 
-        pdpClient =  pdpClientRepository.save(pdpClient);
+        pdpClient =  pdpClientRepository.saveAndFlush(pdpClient);
         queueForCleanup(pdpClient);
         return pdpClient;
     }
@@ -177,7 +183,10 @@ public class WorkerDataSetup {
             return testPdpClient;
         }
 
-        ContractWorkerDto contract = setupContract(VALID_CONTRACT_NUMBER);
+        Contract contract = setupContract(VALID_CONTRACT_NUMBER);
+//        contractRepository.save(new ContractToContractCoverageMapping().mapWorkerDto(contract));
+        queueForCleanup(contract);
+
 
         return savePdpClient(TEST_PDP_CLIENT, contract, clientRoles);
     }
@@ -188,7 +197,7 @@ public class WorkerDataSetup {
             return testPdpClient;
         }
 
-        ContractWorkerDto contract = setupContract(contractNumber);
+        Contract contract = setupContract(contractNumber);
 
         return savePdpClient(clientdId, contract, clientRoles);
     }

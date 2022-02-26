@@ -135,7 +135,7 @@ class CoverageUpdateAndProcessorTest {
         addPropertiesTableValues();
         originalValues.clear();
 
-        contract = dataSetup.setupContract("TST-12", AB2D_EPOCH.toOffsetDateTime());
+        contract = dataSetup.setupWorkerContract("TST-12", AB2D_EPOCH.toOffsetDateTime());
         contractRepo.saveAndFlush(contract);
 
         january = coverageDataSetup.createCoveragePeriod("TST-12", 1, 2020);
@@ -195,7 +195,7 @@ class CoverageUpdateAndProcessorTest {
     @Test
     void discoverCoveragePeriods() throws CoverageDriverException, InterruptedException {
 
-        ContractWorkerDto attestedAfterEpoch = dataSetup.setupContract("TST-AFTER-EPOCH",
+        ContractWorkerDto attestedAfterEpoch = dataSetup.setupWorkerContract("TST-AFTER-EPOCH",
                 AB2D_EPOCH.toOffsetDateTime().plusMonths(3));
         contractRepo.saveAndFlush(attestedAfterEpoch);
 
@@ -203,7 +203,7 @@ class CoverageUpdateAndProcessorTest {
         pdpClientService.createClient(attestedAfterClient);
         dataSetup.queueForCleanup(pdpClientService.getClientById("TST-AFTER-EPOCH"));
 
-        ContractWorkerDto attestedBeforeEpoch = dataSetup.setupContract("TST-BEFORE-EPOCH",
+        ContractWorkerDto attestedBeforeEpoch = dataSetup.setupWorkerContract("TST-BEFORE-EPOCH",
                 AB2D_EPOCH.toOffsetDateTime().minusNanos(1));
         contractRepo.saveAndFlush(attestedBeforeEpoch);
 

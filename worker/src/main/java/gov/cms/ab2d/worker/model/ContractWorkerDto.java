@@ -31,6 +31,18 @@ public class ContractWorkerDto extends TimestampBase {
 
     public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd H:m:s Z");
 
+    public ContractWorkerDto(Long id, String contractNumber, String contractName, Long hpmsParentOrgId, String hpmsParentOrg, String hpmsOrgMarketingName, UpdateMode updateMode, ContractType contractType, OffsetDateTime attestedOn) {
+        this.id = id;
+        this.contractNumber = contractNumber;
+        this.contractName = contractName;
+        this.hpmsParentOrgId = hpmsParentOrgId;
+        this.hpmsParentOrg = hpmsParentOrg;
+        this.hpmsOrgMarketingName = hpmsOrgMarketingName;
+        this.updateMode = updateMode;
+        this.contractType = contractType;
+        this.attestedOn = attestedOn;
+    }
+
     public enum UpdateMode { AUTOMATIC, NONE, MANUAL }
     public enum ContractType {
         NORMAL, CLASSIC_TEST, SYNTHEA;
