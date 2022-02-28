@@ -24,7 +24,6 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 public class ContractWorkerDto extends TimestampBase {
 
     public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd H:m:s Z");
@@ -51,20 +50,11 @@ public class ContractWorkerDto extends TimestampBase {
     @Enumerated(EnumType.STRING)
     private ContractType contractType = ContractType.NORMAL;
 
-    public ContractWorkerDto(@NotNull String contractNumber, String contractName) {
-        this.contractNumber = contractNumber;
-        this.contractName = contractName;
-    }
-
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime attestedOn;
 
     public boolean hasAttestation() {
         return attestedOn != null;
-    }
-
-    public void clearAttestation() {
-        attestedOn = null;
     }
 
     /**
