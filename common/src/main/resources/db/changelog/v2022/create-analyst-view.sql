@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS ab2d_statistics(
 );
 
 INSERT INTO ab2d_statistics(statistic_name, statistic_value)
-VALUES ('total_benes_served', 0);
+VALUES ('total_benes_served', 0) ON CONFLICT DO NOTHING;
 
 -- Create function for calculating total benes served by the AB2D API
 CREATE OR REPLACE PROCEDURE find_benes_served()
