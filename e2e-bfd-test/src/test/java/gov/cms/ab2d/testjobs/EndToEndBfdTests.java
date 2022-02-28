@@ -345,7 +345,7 @@ public class EndToEndBfdTests {
         pdpClient.setClientId(EndToEndBfdTests.CONTRACT_TO_USE_CLIENT_ID);
         pdpClient.setOrganization("Synthea Data");
         pdpClient.setEnabled(true);
-        
+
         Contract contract = new Contract();
         contract.setContractName(contractWorker.getContractName());
         contract.setId(contractWorker.getId());
