@@ -345,11 +345,15 @@ public class EndToEndBfdTests {
         pdpClient.setClientId(EndToEndBfdTests.CONTRACT_TO_USE_CLIENT_ID);
         pdpClient.setOrganization("Synthea Data");
         pdpClient.setEnabled(true);
+        
         Contract contract = new Contract();
         contract.setContractName(contractWorker.getContractName());
+        contract.setId(contractWorker.getId());
         contract.setAttestedOn(contractWorker.getAttestedOn());
+        contract.setContractNumber(contractWorker.getContractNumber());
         contract.setContractType(Contract.ContractType.valueOf(contractWorker.getContractType().toString()));
 
+        contractRepository.saveAndFlush(contractWorker);
         pdpClient.setContract(contract);
         return pdpClientRepository.save(pdpClient);
     }
