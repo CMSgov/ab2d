@@ -6,6 +6,7 @@ import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.remote.JobClientMock;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
+import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
@@ -14,7 +15,6 @@ import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
@@ -25,9 +25,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,9 +45,6 @@ public class AdminAPIMaintenanceModeTests {
 
     @Autowired
     private MockMvc mockMvc;
-
-    @Value("${efs.mount}")
-    private String tmpJobLocation;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
@@ -161,11 +155,9 @@ public class AdminAPIMaintenanceModeTests {
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(200));
 
-
-        String header = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
-        String jobUuid = header.substring(header.indexOf("/Job/") + 5, header.indexOf("/$status"));
-
-        String destinationStr = testUtil.createTestDownloadFile(tmpJobLocation, jobUuid, testFile);
+        JobOutput jobOutput = testUtil.createJobOutput(testFile);
+        jobClientMock.addJobOutputForDownload(jobOutput);
+        jobClientMock.setResultsCreated(true);
 
         MvcResult mvcResultStatusCheck = this.mockMvc.perform(get(contentLocationUrl)
                 .header("Authorization", "Bearer " + token))
@@ -177,8 +169,6 @@ public class AdminAPIMaintenanceModeTests {
                         .header("Authorization", "Bearer " + token)
                         .header("Accept-Encoding", "gzip, deflate, br"))
                         .andExpect(status().is(200));
-
-        assertFalse(Files.exists(Paths.get(destinationStr + File.separator + testFile)));
 
         // Cleanup
         propertiesDTOs.clear();

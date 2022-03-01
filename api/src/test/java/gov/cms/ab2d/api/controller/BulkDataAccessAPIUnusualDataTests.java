@@ -1,9 +1,9 @@
 package gov.cms.ab2d.api.controller;
 
 import gov.cms.ab2d.api.SpringBootApp;
+import gov.cms.ab2d.api.remote.JobClientMock;
+import gov.cms.ab2d.common.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
@@ -15,7 +15,6 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -26,9 +25,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.util.List;
 import java.util.Optional;
 
-import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
 import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
-import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -47,6 +44,9 @@ public class BulkDataAccessAPIUnusualDataTests {
 
     @Autowired
     private PdpClientRepository pdpClientRepository;
+
+    @Autowired
+    JobClientMock jobClientMock;
 
     @Autowired
     private JobRepository jobRepository;
@@ -111,21 +111,19 @@ public class BulkDataAccessAPIUnusualDataTests {
                 get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
                 .andDo(print());
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
+        String jobUuid = jobClientMock.pickAJob();
+        StartJobDTO startJobDTO = jobClientMock.lookupJob(jobUuid);
         String statusUrl =
-                "http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
+                "http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid + "/$status";
 
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string(CONTENT_LOCATION, statusUrl));
 
-        assertEquals(SUBMITTED, job.getStatus());
-        assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
-        assertEquals(Integer.valueOf(0), job.getProgress());
         assertEquals("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export",
-                job.getRequestUrl());
-        assertNull(job.getResourceTypes());
-        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), job.getOrganization());
+                startJobDTO.getUrl());
+        assertNull(startJobDTO.getResourceTypes());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), startJobDTO.getOrganization());
 
     }
 }
