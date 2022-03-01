@@ -21,7 +21,6 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -75,9 +74,6 @@ public class BulkDataAccessAPIIntegrationTests {
     JobClientMock jobClientMock;
 
     @Autowired
-    private JobRepository jobRepository;
-
-    @Autowired
     private PdpClientRepository pdpClientRepository;
 
     @Autowired
@@ -110,7 +106,6 @@ public class BulkDataAccessAPIIntegrationTests {
     @AfterEach
     public void cleanup() {
         jobClientMock.cleanupAll();
-        jobRepository.findAll().forEach(job -> dataSetup.queueForCleanup(job));  // catches implicitly generated jobs
         loggerEventRepository.delete();
         dataSetup.cleanup();
     }
@@ -228,12 +223,6 @@ public class BulkDataAccessAPIIntegrationTests {
     @Test
     void testPatientExportDuplicateSubmissionWithInProgressStatus() throws Exception {
         createMaxJobs();
-
-        List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
-        for(Job job : jobs) {
-            job.setStatus(IN_PROGRESS);
-            jobRepository.saveAndFlush(job);
-        }
 
         this.mockMvc.perform(
                 get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
@@ -1057,12 +1046,6 @@ public class BulkDataAccessAPIIntegrationTests {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         createMaxJobsWithContract(contract);
-
-        List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
-        for(Job job : jobs) {
-            job.setStatus(IN_PROGRESS);
-            jobRepository.saveAndFlush(job);
-        }
 
         this.mockMvc.perform(
                 get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)

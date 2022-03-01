@@ -7,8 +7,6 @@ import com.okta.jwt.impl.DefaultJwt;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
-import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.DataSetup;
 import io.jsonwebtoken.Jwts;
@@ -17,7 +15,6 @@ import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -31,7 +28,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -46,9 +42,6 @@ public class TestUtil {
 
     @Autowired
     private DataSetup dataSetup;
-
-    @Autowired
-    private JobRepository jobRepository;
 
     @Autowired
     private PropertiesService propertiesService;
@@ -116,20 +109,6 @@ public class TestUtil {
         }
 
         return destinationStr;
-    }
-
-    public Job createTestJobForDownload(String testFile) {
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
-        job.setStatus(JobStatus.SUCCESSFUL);
-        job.setProgress(100);
-        OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
-        job.setExpiresAt(expireDate);
-        OffsetDateTime now = OffsetDateTime.now();
-        job.setCompletedAt(now);
-
-        addJobOutput(job, testFile);
-
-        return jobRepository.saveAndFlush(job);
     }
 
     public void addJobOutput(Job job, String testFile) {

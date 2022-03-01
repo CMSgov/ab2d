@@ -49,9 +49,6 @@ public class BulkDataAccessAPIUnusualDataTests {
     JobClientMock jobClientMock;
 
     @Autowired
-    private JobRepository jobRepository;
-
-    @Autowired
     private TestUtil testUtil;
 
     @Autowired
@@ -68,7 +65,6 @@ public class BulkDataAccessAPIUnusualDataTests {
 
     @AfterEach
     public void cleanup() {
-        jobRepository.findAll().forEach(job -> dataSetup.queueForCleanup(job));  // catches implicitly generated jobs
         dataSetup.cleanup();
         loggerEventRepository.delete();
     }
