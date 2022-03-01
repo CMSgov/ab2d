@@ -152,7 +152,7 @@ public class AdminAPIMaintenanceModeTests {
         propertiesDTOs.add(maintenanceModeDTO);
 
         String testFile = "test.ndjson";
-        jobClientMock.saveOutputForDownload(testUtil.createJobOutput(testFile));
+        jobClientMock.addJobOutputForDownload(testUtil.createJobOutput(testFile));
         ObjectMapper mapper = new ObjectMapper();
 
         this.mockMvc.perform(
@@ -181,7 +181,6 @@ public class AdminAPIMaintenanceModeTests {
         assertFalse(Files.exists(Paths.get(destinationStr + File.separator + testFile)));
 
         // Cleanup
-        jobClientMock.clearOutputForDownload();
         propertiesDTOs.clear();
         maintenanceModeDTO.setValue("false");
         propertiesDTOs.add(maintenanceModeDTO);
