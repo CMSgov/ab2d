@@ -2,11 +2,10 @@ package gov.cms.ab2d.api.controller;
 
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
+import gov.cms.ab2d.api.remote.JobClientMock;
+import gov.cms.ab2d.common.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
@@ -17,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -28,7 +26,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.util.List;
 import java.util.Optional;
 
-import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
@@ -52,7 +49,7 @@ public class BulkDataAccessAPIV2IntegrationTests {
     private MockMvc mockMvc;
 
     @Autowired
-    private JobRepository jobRepository;
+    JobClientMock jobClientMock;
 
     @Autowired
     private PdpClientRepository pdpClientRepository;
@@ -84,9 +81,9 @@ public class BulkDataAccessAPIV2IntegrationTests {
 
     @AfterEach
     public void cleanup() {
-        jobRepository.findAll().forEach(job -> dataSetup.queueForCleanup(job));  // catches implicitly generated jobs
         loggerEventRepository.delete();
         dataSetup.cleanup();
+        jobClientMock.cleanupAll();
     }
 
     @Test
@@ -95,21 +92,19 @@ public class BulkDataAccessAPIV2IntegrationTests {
                 get(API_PREFIX_V2 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token)
                         .header("X-Forwarded-Proto", "https"));
-        // .andDo(print());
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
+        String jobUuid = jobClientMock.pickAJob();
+        StartJobDTO startJobDTO = jobClientMock.lookupJob(jobUuid);
         String statusUrl =
-                "https://localhost" + API_PREFIX_V2 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
+                "https://localhost" + API_PREFIX_V2 + FHIR_PREFIX + "/Job/" + jobUuid + "/$status";
 
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string(CONTENT_LOCATION, statusUrl));
 
-        assertEquals(JobStatus.SUBMITTED, job.getStatus());
-        assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
-        assertEquals(Integer.valueOf(0), job.getProgress());
-        assertEquals("https://localhost" + API_PREFIX_V2 + FHIR_PREFIX + PATIENT_EXPORT_PATH, job.getRequestUrl());
-        assertEquals(EOB, job.getResourceTypes());
-        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), job.getOrganization());
+
+        assertEquals("https://localhost" + API_PREFIX_V2 + FHIR_PREFIX + PATIENT_EXPORT_PATH, startJobDTO.getUrl());
+        assertEquals(EOB, startJobDTO.getResourceTypes());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), startJobDTO.getOrganization());
     }
 
     @Test
@@ -120,21 +115,18 @@ public class BulkDataAccessAPIV2IntegrationTests {
                 get(API_PREFIX_V2 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token)
                         .header("X-Forwarded-Proto", "https"));
-        // .andDo(print());
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
+        String jobUuid = jobClientMock.pickAJob();
+        StartJobDTO startJobDTO = jobClientMock.lookupJob(jobUuid);
         String statusUrl =
-                "https://localhost" + API_PREFIX_V2 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
+                "https://localhost" + API_PREFIX_V2 + FHIR_PREFIX + "/Job/" + jobUuid + "/$status";
         assertNotNull(statusUrl);
 
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string(CONTENT_LOCATION, statusUrl));
 
-        assertEquals(JobStatus.SUBMITTED, job.getStatus());
-        assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
-        assertEquals(Integer.valueOf(0), job.getProgress());
-        assertEquals("https://localhost" + API_PREFIX_V2 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export", job.getRequestUrl());
-        assertNull(job.getResourceTypes());
-        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), job.getOrganization());
+        assertEquals("https://localhost" + API_PREFIX_V2 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export", startJobDTO.getUrl());
+        assertNull(startJobDTO.getResourceTypes());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), startJobDTO.getOrganization());
     }
 }
