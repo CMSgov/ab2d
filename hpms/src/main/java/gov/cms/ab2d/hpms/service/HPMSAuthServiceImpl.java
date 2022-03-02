@@ -79,7 +79,7 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
 
         // Cough up blood if we can't get an Auth response in a minute.
         HPMSAuthResponse authResponse = orgInfoFlux.blockFirst(Duration.ofMinutes(1));
-        if (authResponse == null) {
+        if (authResponse == null || authResponse.getAccessToken() == null) {
             throw new RuntimeException("Failed to procure Auth Token");
         }
 
