@@ -18,6 +18,7 @@ import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -174,10 +175,10 @@ public class CoverageCheckPredicatesUnitTest {
         contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
 
         ZonedDateTime nonDecAttestationTime;
-        if(ATTESTATION_TIME.getMonth().getValue() == 12)
+        if (ATTESTATION_TIME.getMonth().getValue() == 12)
             nonDecAttestationTime = ATTESTATION_TIME.plusMonths(1);
         else
-            nonDecAttestationTime=ATTESTATION_TIME;
+            nonDecAttestationTime = ATTESTATION_TIME;
 
         List<CoverageCount> fakeCounts = List.of(
                 new CoverageCount("TEST", nonDecAttestationTime.plusMonths(0).getYear(),

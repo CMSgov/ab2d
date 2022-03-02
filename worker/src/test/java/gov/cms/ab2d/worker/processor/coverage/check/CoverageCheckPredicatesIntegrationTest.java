@@ -79,7 +79,7 @@ public class CoverageCheckPredicatesIntegrationTest {
     @BeforeEach
     void setUp() {
         contract = dataSetup.setupContract("TEST", ATTESTATION_TIME.toOffsetDateTime());
-        contractForCoverageDTO = new ContractForCoverageDTO("TEST", ATTESTATION_TIME.toOffsetDateTime(),ContractForCoverageDTO.ContractType.NORMAL);
+        contractForCoverageDTO = new ContractForCoverageDTO("TEST", ATTESTATION_TIME.toOffsetDateTime(), ContractForCoverageDTO.ContractType.NORMAL);
     }
 
     @AfterEach
@@ -282,13 +282,11 @@ public class CoverageCheckPredicatesIntegrationTest {
     void whenCoverageSmallPercentage_passCoverageStableCheck() {
 
         //Won't work in March due to dec attestation.
-        if(ATTESTATION_TIME.getMonth().getValue() == 12)
-        {
+        if (ATTESTATION_TIME.getMonth().getValue() == 12)
             createCoveragePeriods(ATTESTATION_TIME.plusMonths(1));
-        }
-        else{
+        else
             createCoveragePeriods();
-        }
+
 
         Set<Identifiers> hundredK = new LinkedHashSet<>();
         for (long idx = 0; idx < 100_000; idx++) {
@@ -437,11 +435,11 @@ public class CoverageCheckPredicatesIntegrationTest {
     }
 
     private void createCoveragePeriods() {
-       createCoveragePeriods(ATTESTATION_TIME);
+        createCoveragePeriods(ATTESTATION_TIME);
     }
 
     private void createCoveragePeriods(ZonedDateTime zonedDateTime) {
-        attestationMonth = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), zonedDateTime.getMonthValue(),  zonedDateTime.getYear());
+        attestationMonth = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), zonedDateTime.getMonthValue(), zonedDateTime.getYear());
         attestationMonthPlus1 = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), zonedDateTime.plusMonths(1).getMonthValue(),
                 zonedDateTime.plusMonths(1).getYear());
         attestationMonthPlus2 = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), zonedDateTime.plusMonths(2).getMonthValue(),
