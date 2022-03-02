@@ -23,7 +23,7 @@ import static org.springframework.http.HttpHeaders.COOKIE;
 @Service
 public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuthService {
 
-    @Value("${hpms.base.url}/api/idm/oauth/token")
+    @Value("${hpms.base.url}/api/idm/OAuth/AMMtoken")
     private String authURL;
 
     @Value("${HPMS_AUTH_KEY_ID}")
@@ -79,7 +79,7 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
 
         // Cough up blood if we can't get an Auth response in a minute.
         HPMSAuthResponse authResponse = orgInfoFlux.blockFirst(Duration.ofMinutes(1));
-        if (authResponse == null) {
+        if (authResponse == null || authResponse.getAccessToken() == null) {
             throw new RuntimeException("Failed to procure Auth Token");
         }
 

@@ -22,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 
+
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -39,7 +40,7 @@ public class CoverageCheckPredicatesUnitTest {
     private CoverageService coverageService;
 
     private static final ZonedDateTime CURRENT_TIME = OffsetDateTime.now().atZoneSameInstant(AB2D_ZONE);
-    private static final ZonedDateTime ATTESTATION_TIME = CURRENT_TIME.minusMonths(3);
+    private static ZonedDateTime ATTESTATION_TIME = CURRENT_TIME.minusMonths(3);
 
     @AfterEach
     void tearDown() {
@@ -172,7 +173,6 @@ public class CoverageCheckPredicatesUnitTest {
     @DisplayName("Coverage changes are limited to 10% between months fails when changes are large")
     @Test
     void whenCoverageUnstable_failCoverageStabilityCheck() {
-
         Map<String, List<CoverageCount>> coverageCounts = new HashMap<>();
         List<String> issues = new ArrayList<>();
         CoverageStableCheck stableCheck =
@@ -182,20 +182,26 @@ public class CoverageCheckPredicatesUnitTest {
         contract.setContractNumber("TEST");
         contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
 
+        ZonedDateTime nonDecAttestationTime;
+        if (ATTESTATION_TIME.getMonth().getValue() == 12)
+            nonDecAttestationTime = ATTESTATION_TIME.plusMonths(1);
+        else
+            nonDecAttestationTime = ATTESTATION_TIME;
+
         List<CoverageCount> fakeCounts = List.of(
-                new CoverageCount("TEST", ATTESTATION_TIME.plusMonths(0).getYear(),
-                        ATTESTATION_TIME.plusMonths(0).getMonthValue(), 1, 1, 10000),
-                new CoverageCount("TEST", ATTESTATION_TIME.plusMonths(1).getYear(),
-                        ATTESTATION_TIME.plusMonths(1).getMonthValue(), 1, 1, 12000),
-                new CoverageCount("TEST", ATTESTATION_TIME.plusMonths(2).getYear(),
-                        ATTESTATION_TIME.plusMonths(2).getMonthValue(), 1, 1, 10000)
+                new CoverageCount("TEST", nonDecAttestationTime.plusMonths(0).getYear(),
+                        nonDecAttestationTime.plusMonths(0).getMonthValue(), 1, 1, 10000),
+                new CoverageCount("TEST", nonDecAttestationTime.plusMonths(1).getYear(),
+                        nonDecAttestationTime.plusMonths(1).getMonthValue(), 1, 1, 12000),
+                new CoverageCount("TEST", nonDecAttestationTime.plusMonths(2).getYear(),
+                        nonDecAttestationTime.plusMonths(2).getMonthValue(), 1, 1, 10000)
         );
         coverageCounts.put("TEST", fakeCounts);
 
         assertFalse(stableCheck.test(contract));
 
-        int expectedIssues = ATTESTATION_TIME.getMonthValue() == 12 || ATTESTATION_TIME.plusMonths(1).getMonthValue() == 12
-                || ATTESTATION_TIME.plusMonths(2).getMonthValue() == 12 ? 1 : 2;
+        int expectedIssues = (nonDecAttestationTime.getMonthValue() == 12 || nonDecAttestationTime.plusMonths(1).getMonthValue() == 12
+                || nonDecAttestationTime.plusMonths(2).getMonthValue() == 12) && nonDecAttestationTime.getMonthValue() != 0 ? 1 : 2;
 
         assertEquals(expectedIssues, issues.size());
         issues.forEach(issue -> assertTrue(issue.contains("enrollment changed")));
