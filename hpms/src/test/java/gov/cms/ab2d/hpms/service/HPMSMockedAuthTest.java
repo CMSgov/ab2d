@@ -17,7 +17,9 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.http.HttpHeaders.COOKIE;
 
@@ -50,6 +52,14 @@ class HPMSMockedAuthTest {
             authService.buildAuthHeaders(headers);
             assertNotNull(headers.get(COOKIE));
             assertTrue(headers.get(COOKIE).stream().anyMatch(cookie -> cookie.contains("test")));
+        }
+    }
+
+    @Test
+    void authNoKey() {
+        try (MockedStatic<WebClient> webClientStatic = Mockito.mockStatic(WebClient.class)) {
+            client.authRequest(mockedWebClient, webClientStatic, new HPMSAuthResponse());
+            assertThrows(RuntimeException.class, () -> authService.buildAuthHeaders(new HttpHeaders()));
         }
     }
 
