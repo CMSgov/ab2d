@@ -42,8 +42,10 @@ class HPMSMockedAuthTest {
 
     @Test
     void auth() {
+        HPMSAuthResponse hpmsAuthResponse = new HPMSAuthResponse();
+        hpmsAuthResponse.setAccessToken("TOKEN");
         try (MockedStatic<WebClient> webClientStatic = Mockito.mockStatic(WebClient.class)) {
-            client.authRequest(mockedWebClient, webClientStatic, new HPMSAuthResponse());
+            client.authRequest(mockedWebClient, webClientStatic, hpmsAuthResponse);
             HttpHeaders headers = new HttpHeaders();
             authService.buildAuthHeaders(headers);
             assertNotNull(headers.get(COOKIE));

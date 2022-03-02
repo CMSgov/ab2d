@@ -234,7 +234,7 @@ public class CoverageCheckPredicatesIntegrationTest {
         issues.forEach(issue -> assertTrue(issue.contains("enrollment changed")));
 
         //won't work in March
-        if(attestationMonth.getMonth() != 12)
+        if (attestationMonth.getMonth() != 12)
             assertTrue(issues.get(0).contains("20%"));
     }
 
