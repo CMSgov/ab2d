@@ -233,7 +233,8 @@ public class CoverageCheckPredicatesIntegrationTest {
         assertEquals(expectedIssues, issues.size());
         issues.forEach(issue -> assertTrue(issue.contains("enrollment changed")));
 
-        //won't work in March
+        //Won't work in month March. Date range begins in December which causes testing errors.
+        //So we check if the date range begins in December to see if this test is valid. 
         if (attestationMonth.getMonth() != 12)
             assertTrue(issues.get(0).contains("20%"));
     }
