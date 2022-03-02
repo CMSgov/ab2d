@@ -232,10 +232,10 @@ public class CoverageCheckPredicatesIntegrationTest {
 
         assertEquals(expectedIssues, issues.size());
         issues.forEach(issue -> assertTrue(issue.contains("enrollment changed")));
+
         //won't work in March
-        if(attestationMonth.getMonth() != 12){
+        if(attestationMonth.getMonth() != 12)
             assertTrue(issues.get(0).contains("20%"));
-        }
     }
 
     @DisplayName("Coverage changes are limited to 10% between months passes when changes are 1000 benes or less")
