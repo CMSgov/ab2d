@@ -67,6 +67,7 @@ public class BulkDataAccessAPIUnusualDataTests {
     public void cleanup() {
         dataSetup.cleanup();
         loggerEventRepository.delete();
+        jobClientMock.cleanupAll();
     }
 
     @Test

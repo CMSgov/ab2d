@@ -94,6 +94,7 @@ public class AdminAPIPdpClientTests {
         dataSetup.queueForCleanup(pdpClientRepository.findByClientId(TEST_CLIENT));
         dataSetup.cleanup();
         loggerEventRepository.delete();
+        jobClientMock.cleanupAll();
     }
 
     @Test
