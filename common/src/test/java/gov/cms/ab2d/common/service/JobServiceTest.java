@@ -1,6 +1,7 @@
 package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.SpringBootApp;
+import gov.cms.ab2d.common.dto.JobPollResult;
 import gov.cms.ab2d.common.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.ContractRepository;
@@ -49,7 +50,7 @@ import java.util.List;
 import java.util.Set;
 
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
-import static gov.cms.ab2d.common.service.JobServiceImpl.ZIPFORMAT;
+import static gov.cms.ab2d.common.util.Constants.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
@@ -209,6 +210,10 @@ class JobServiceTest {
 
         // Verify it actually got persisted in the DB
         assertEquals(job, jobRepository.findById(job.getId()).get());
+
+        JobPollResult jobPollResult = jobService.poll(false, job.getJobUuid(), job.getOrganization(), 0);
+        assertNotNull(jobPollResult);
+        assertEquals(JobStatus.SUBMITTED, jobPollResult.getStatus());
     }
 
     @Test

@@ -93,4 +93,15 @@ public class Job {
     public boolean hasJobBeenCancelled() {
         return CANCELLED == status;
     }
+
+    public void pollAndUpdateTime(int delaySeconds) {
+        if (pollingTooMuch(delaySeconds)) {
+            throw new TooFrequentInvocations("polling too frequently");
+        }
+        lastPollTime = OffsetDateTime.now();
+    }
+
+    private boolean pollingTooMuch(int delaySeconds) {
+        return lastPollTime != null && lastPollTime.plusSeconds(delaySeconds).isAfter(OffsetDateTime.now());
+    }
 }

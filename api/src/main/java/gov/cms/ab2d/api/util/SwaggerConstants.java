@@ -1,6 +1,6 @@
 package gov.cms.ab2d.api.util;
 
-import static gov.cms.ab2d.common.service.JobServiceImpl.ZIPFORMAT;
+import static gov.cms.ab2d.common.util.Constants.ZIPFORMAT;
 
 public final class SwaggerConstants {
     public static final String MAIN = "This API Provides Part A (Hospital Insurance) & B " +
