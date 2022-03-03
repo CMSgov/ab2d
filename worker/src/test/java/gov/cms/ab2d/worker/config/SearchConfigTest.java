@@ -2,14 +2,14 @@ package gov.cms.ab2d.worker.config;
 
 import org.junit.jupiter.api.Test;
 
-import static java.io.File.separatorChar;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class SearchConfigTest {
-    static final String EFS_MOUNT = separatorChar + "tmp" + separatorChar + "abc";
-    static final String EXPECTED_STREAM = EFS_MOUNT + separatorChar + "jobid" + separatorChar + "stream";
-    static final String FINISHED_STREAM = EFS_MOUNT + separatorChar + "jobid" + separatorChar + "finish";
+    static final String EFS_MOUNT = Path.of("tmp", "abc").toString();
+    static final String EXPECTED_STREAM = Path.of(EFS_MOUNT,"jobid", "stream").toString();
+    static final String FINISHED_STREAM = Path.of(EFS_MOUNT,"jobid", "finish").toString();
 
     @Test
     void testSearchConfig() {
