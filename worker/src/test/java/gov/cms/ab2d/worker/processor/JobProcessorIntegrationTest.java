@@ -34,7 +34,7 @@ import gov.cms.ab2d.worker.config.SearchConfig;
 import gov.cms.ab2d.worker.model.ContractWorkerDto;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.repository.ContractWorkerRepository;
-import gov.cms.ab2d.worker.service.ContractWorkerService;
+import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import gov.cms.ab2d.worker.util.HealthCheck;
@@ -121,7 +121,7 @@ class JobProcessorIntegrationTest {
     private ContractWorkerRepository contractRepository;
 
     @Autowired
-    private ContractWorkerService contractWorkerService;
+    private ContractWorkerClient contractWorkerClient;
 
     @Autowired
     private JobOutputRepository jobOutputRepository;
@@ -207,7 +207,7 @@ class JobProcessorIntegrationTest {
         pool.initialize();
 
         ContractProcessor contractProcessor = new ContractProcessorImpl(
-                contractWorkerService,
+                contractWorkerClient,
                 jobRepository,
                 mockCoverageDriver,
                 patientClaimsProcessor,

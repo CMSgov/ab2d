@@ -29,7 +29,7 @@ import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import gov.cms.ab2d.fhir.IdentifierUtils;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
-import gov.cms.ab2d.worker.service.ContractWorkerService;
+import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -91,7 +91,7 @@ class CoverageDriverTest {
     private ContractRepository contractRepo;
 
     @Autowired
-    private ContractWorkerService contractService;
+    private ContractWorkerClient contractService;
 
     @Autowired
     private CoveragePeriodRepository coveragePeriodRepo;

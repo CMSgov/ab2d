@@ -22,7 +22,7 @@ import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.model.ContractWorkerDto;
 import gov.cms.ab2d.worker.repository.ContractWorkerRepository;
-import gov.cms.ab2d.worker.service.ContractWorkerService;
+import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.util.WorkerDataSetup;
 import java.time.DayOfWeek;
 import java.time.OffsetDateTime;
@@ -84,7 +84,7 @@ class CoverageUpdateAndProcessorTest {
     private ContractWorkerRepository contractRepo;
 
     @Autowired
-    private ContractWorkerService contractService;
+    private ContractWorkerClient contractService;
 
     @Autowired
     private CoveragePeriodRepository coveragePeriodRepo;

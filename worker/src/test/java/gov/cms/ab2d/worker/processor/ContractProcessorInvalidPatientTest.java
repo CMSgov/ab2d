@@ -18,7 +18,8 @@ import gov.cms.ab2d.worker.model.ContractWorkerDto;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.repository.ContractWorkerRepository;
 import gov.cms.ab2d.worker.repository.StubJobRepository;
-import gov.cms.ab2d.worker.service.ContractWorkerService;
+import gov.cms.ab2d.worker.service.ContractWorkerClient;
+import gov.cms.ab2d.worker.service.ContractWorkerServiceImpl;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import gov.cms.ab2d.worker.service.JobChannelStubServiceImpl;
 import java.io.File;
@@ -28,7 +29,6 @@ import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -69,7 +69,8 @@ class ContractProcessorInvalidPatientTest {
     @Mock
     private ContractToContractCoverageMapping mapping;
 
-    private ContractWorkerService contractWorkerService;
+    private ContractWorkerClient contractWorkerClient;
+
 
     @Mock
     private ContractWorkerRepository contractRepository;
@@ -92,9 +93,9 @@ class ContractProcessorInvalidPatientTest {
 
     @BeforeEach
     void setup() {
-        contractWorkerService = new ContractWorkerService(contractRepository);
+        contractWorkerClient = new ContractWorkerClient(new ContractWorkerServiceImpl(contractRepository));
         ContractWorkerDto contract = new ContractWorkerDto();
-        when(contractWorkerService.getContractByContractNumber(anyString())).thenReturn(Optional.of(contract));
+        when(contractWorkerClient.getContractByContractNumber(anyString())).thenReturn(contract);
 
         SearchConfig searchConfig = new SearchConfig(tmpDirFolder.getAbsolutePath(), STREAMING_DIR,
                 FINISHED_DIR, 0, 0, 1, 2);
@@ -114,7 +115,7 @@ class ContractProcessorInvalidPatientTest {
         ThreadPoolTaskExecutor aggTP = new ThreadPoolTaskExecutor();
         aggTP.initialize();
 
-        cut = new ContractProcessorImpl(contractWorkerService, jobRepository, coverageDriver, patientClaimsProcessor, eventLogger,
+        cut = new ContractProcessorImpl(contractWorkerClient, jobRepository, coverageDriver, patientClaimsProcessor, eventLogger,
                 requestQueue, jobChannelService, jobProgressUpdateService, mapping, aggTP, searchConfig);
 
         ReflectionTestUtils.setField(cut, "eobJobPatientQueueMaxSize", 1);

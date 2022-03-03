@@ -20,7 +20,8 @@ import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.stub.PatientClaimsProcessorStub;
 import gov.cms.ab2d.worker.repository.StubContractRepository;
 import gov.cms.ab2d.worker.repository.StubJobRepository;
-import gov.cms.ab2d.worker.service.ContractWorkerService;
+import gov.cms.ab2d.worker.service.ContractWorkerClient;
+import gov.cms.ab2d.worker.service.ContractWorkerServiceImpl;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import gov.cms.ab2d.worker.service.JobChannelStubServiceImpl;
 import java.io.IOException;
@@ -112,9 +113,9 @@ class ContractProcessorUnitTest {
         SearchConfig searchConfig = new SearchConfig(efsMountTmpDir.toFile().getAbsolutePath(),
                 STREAMING, FINISHED, 0, 0, 2, 1);
 
-        ContractWorkerService contractWorkerService = new ContractWorkerService(new StubContractRepository(contract));
+        ContractWorkerClient contractWorkerClient = new ContractWorkerClient(new ContractWorkerServiceImpl(new StubContractRepository(contract)));
         cut = new ContractProcessorImpl(
-                contractWorkerService,
+                contractWorkerClient,
                 jobRepository,
                 coverageDriver,
                 patientClaimsProcessor,

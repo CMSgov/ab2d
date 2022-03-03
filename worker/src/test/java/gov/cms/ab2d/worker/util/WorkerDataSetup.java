@@ -134,9 +134,7 @@ public class WorkerDataSetup {
     public void setupContractWithNoAttestation(List<String> clientRoles) {
         setupPdpClient(clientRoles);
 
-        Optional<ContractWorkerDto> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
-        @SuppressWarnings("OptionalGetWithoutIsPresent")
-        ContractWorkerDto contract = contractOptional.get();
+        ContractWorkerDto contract = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         contract.setAttestedOn(null);
 
         contractRepository.saveAndFlush(contract);
@@ -145,9 +143,7 @@ public class WorkerDataSetup {
     public void setupContractWithNoAttestation(String clientId, String contractNumber, List<String> clientRoles) {
         setupNonStandardClient(clientId, contractNumber, clientRoles);
 
-        Optional<ContractWorkerDto> contractOptional = contractRepository.findContractByContractNumber(contractNumber);
-        @SuppressWarnings("OptionalGetWithoutIsPresent")
-        ContractWorkerDto contract = contractOptional.get();
+        ContractWorkerDto contract = contractRepository.findContractByContractNumber(contractNumber);
         contract.setAttestedOn(null);
 
         contractRepository.saveAndFlush(contract);

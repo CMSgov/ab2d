@@ -6,12 +6,11 @@ import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.model.ContractWorkerDto;
-import gov.cms.ab2d.worker.service.ContractWorkerService;
+import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -74,7 +73,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     private final ThreadPoolTaskExecutor executor;
     private final int maxAttempts;
 
-    private final ContractWorkerService contractWorkerService;
+    private final ContractWorkerClient contractWorkerClient;
 
     private final List<CoverageMappingCallable> inProgressMappings = new ArrayList<>();
 
@@ -97,12 +96,12 @@ public class CoverageProcessorImpl implements CoverageProcessor {
     public CoverageProcessorImpl(CoverageService coverageService, BFDClient bfdClient,
                                  @Qualifier("patientCoverageThreadPool") ThreadPoolTaskExecutor executor,
                                  @Value("${coverage.update.max.attempts}") int maxAttempts,
-                                 ContractWorkerService contractWorkerService) {
+                                 ContractWorkerClient contractWorkerClient) {
         this.coverageService = coverageService;
         this.bfdClient = bfdClient;
         this.executor = executor;
         this.maxAttempts = maxAttempts;
-        this.contractWorkerService = contractWorkerService;
+        this.contractWorkerClient = contractWorkerClient;
     }
 
     @Override
@@ -145,8 +144,8 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                 log.warn("cannot start job because service has been shutdown");
                 return false;
             }
-            Optional<ContractWorkerDto> contractOptional = contractWorkerService.getContractByContractNumber(mapping.getContractNumber());
-            if (contractOptional.isEmpty()) {
+            ContractWorkerDto contract = contractWorkerClient.getContractByContractNumber(mapping.getContractNumber());
+            if (contract != null) {
                 log.warn("cannot grab contract using contract number {}", mapping.getContractNumber());
                 return false;
             }
@@ -155,7 +154,6 @@ public class CoverageProcessorImpl implements CoverageProcessor {
             log.info("starting search for {} during {}-{}", mapping.getContractNumber(),
                     mapping.getPeriod().getMonth(), mapping.getPeriod().getYear());
 
-            ContractWorkerDto contract = contractOptional.get();
 
             // Currently, we are using the STU3 version to get patient mappings
             CoverageMappingCallable callable = new CoverageMappingCallable(STU3, mapping, bfdClient, contractCoverageMapping.map(contract).getCorrectedYear(mapping.getPeriod().getYear()));

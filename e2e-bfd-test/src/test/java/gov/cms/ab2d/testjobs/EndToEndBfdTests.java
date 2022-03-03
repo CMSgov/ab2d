@@ -44,7 +44,7 @@ import gov.cms.ab2d.worker.processor.coverage.CoverageLockWrapper;
 import gov.cms.ab2d.worker.processor.coverage.CoverageProcessor;
 import gov.cms.ab2d.worker.processor.coverage.CoverageProcessorImpl;
 import gov.cms.ab2d.worker.repository.ContractWorkerRepository;
-import gov.cms.ab2d.worker.service.ContractWorkerService;
+import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.service.FileServiceImpl;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import java.io.File;
@@ -149,7 +149,7 @@ public class EndToEndBfdTests {
     @Autowired
     private ContractToContractCoverageMapping contractToContractCoverageMapping;
     @Autowired
-    ContractWorkerService contractWorkerService;
+    ContractWorkerClient contractWorkerClient;
 
     @TempDir
     File path;
@@ -337,7 +337,7 @@ public class EndToEndBfdTests {
     }
 
     private ContractWorkerDto getContract() {
-        return contractRepository.findContractByContractNumber(EndToEndBfdTests.CONTRACT_TO_USE).orElse(null);
+        return contractRepository.findContractByContractNumber(EndToEndBfdTests.CONTRACT_TO_USE);
     }
 
     private PdpClient setupClient(ContractWorkerDto contractWorker) {

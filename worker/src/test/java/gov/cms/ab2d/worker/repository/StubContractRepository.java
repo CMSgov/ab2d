@@ -19,8 +19,8 @@ public class StubContractRepository implements ContractWorkerRepository {
     }
 
     @Override
-    public Optional<ContractWorkerDto> findContractByContractNumber(String contractNumber) {
-        return Optional.of(contract);
+    public ContractWorkerDto findContractByContractNumber(String contractNumber) {
+        return contract;
     }
 
     @Override

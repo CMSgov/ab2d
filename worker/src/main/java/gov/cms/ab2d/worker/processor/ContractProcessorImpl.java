@@ -20,7 +20,7 @@ import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.model.ContractWorkerDto;
 import gov.cms.ab2d.worker.config.SearchConfig;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
-import gov.cms.ab2d.worker.service.ContractWorkerService;
+import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.service.JobChannelService;
 
 import java.io.File;
@@ -66,7 +66,7 @@ public class ContractProcessorImpl implements ContractProcessor {
 
     private ContractToContractCoverageMapping mapping;
 
-    private final ContractWorkerService contractWorkerService;
+    private final ContractWorkerClient contractWorkerClient;
     private final JobRepository jobRepository;
     private final CoverageDriver coverageDriver;
     private final PatientClaimsProcessor patientClaimsProcessor;
@@ -78,7 +78,7 @@ public class ContractProcessorImpl implements ContractProcessor {
     private final SearchConfig searchConfig;
 
     @SuppressWarnings("checkstyle:ParameterNumber") // TODO - refactor to eliminate the ridiculous number of args
-    public ContractProcessorImpl(ContractWorkerService contractWorkerService,
+    public ContractProcessorImpl(ContractWorkerClient contractWorkerClient,
                                  JobRepository jobRepository,
                                  CoverageDriver coverageDriver,
                                  PatientClaimsProcessor patientClaimsProcessor,
@@ -99,7 +99,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         this.mapping = mapping;
         this.aggregatorThreadPool = aggregatorThreadPool;
         this.searchConfig = searchConfig;
-        this.contractWorkerService = contractWorkerService;
+        this.contractWorkerClient = contractWorkerClient;
         }
 
     /**
@@ -132,7 +132,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contractNumber));
 
         //noinspection OptionalGetWithoutIsPresent
-        ContractWorkerDto contract = contractWorkerService.getContractByContractNumber(contractNumber).get();
+        ContractWorkerDto contract = contractWorkerClient.getContractByContractNumber(contractNumber);
         int numBenes = coverageDriver.numberOfBeneficiariesToProcess(job, contract);
         jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENTS_EXPECTED, numBenes);
         log.info("Contract [{}] has [{}] Patients", contractNumber, numBenes);
