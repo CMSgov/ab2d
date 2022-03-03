@@ -525,6 +525,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(200))
                 .andExpect(header().string(EXPIRES, DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC)))
+                // TODO - assumes exact timestamps to the second.  Subject to timing failures at inopportune times.
                 .andExpect(jsonPath("$.transactionTime",
                         Is.is(new org.hl7.fhir.dstu3.model.DateTimeType(OffsetDateTime.now().toString()).toHumanDisplay())))
                 .andExpect(jsonPath("$.request", Is.is(startJobDTO.getUrl())))
@@ -576,6 +577,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(200))
                 .andExpect(header().string(EXPIRES, DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC)))
+                // TODO - assumes exact timestamps to the second.  Subject to timing failures at inopportune times.
                 .andExpect(jsonPath("$.transactionTime",
                         Is.is(new org.hl7.fhir.dstu3.model.DateTimeType(OffsetDateTime.now().toString()).toHumanDisplay())))
                 .andExpect(jsonPath("$.request", Is.is(startJobDTO.getUrl())))
