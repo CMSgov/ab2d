@@ -4,10 +4,11 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
 
+import static java.io.File.separatorChar;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class SearchConfigTest {
-    static final String EFS_MOUNT = Path.of("tmp", "abc").toString();
+    static final String EFS_MOUNT = separatorChar + Path.of("tmp", "abc").toString();
     static final String EXPECTED_STREAM = Path.of(EFS_MOUNT,"jobid", "stream").toString();
     static final String FINISHED_STREAM = Path.of(EFS_MOUNT,"jobid", "finish").toString();
 
