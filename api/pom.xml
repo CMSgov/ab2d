@@ -14,6 +14,7 @@
         <project.root>${basedir}/..</project.root>
         <springfox.version>3.0.0</springfox.version>
         <okta-jwt.version>0.5.1</okta-jwt.version>
+        <sonar.coverage.exclusions>**/JobClient.java</sonar.coverage.exclusions>
     </properties>
 
     <dependencies>
