@@ -6,20 +6,14 @@ import gov.cms.ab2d.common.util.DateUtil;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
+import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Entity(name = "contract")
+@Data
 @Getter
 @Setter
 @NoArgsConstructor
@@ -33,24 +27,18 @@ public class ContractWorkerDto extends TimestampBase {
         NORMAL, CLASSIC_TEST, SYNTHEA;
     }
 
-    @Id
-    @GeneratedValue
-    @EqualsAndHashCode.Include
+    @NotNull
     private Long id;
 
-    @Column(unique = true)
     @NotNull
     private String contractNumber;
 
     private String contractName;
 
-    @Enumerated(EnumType.STRING)
     private UpdateMode updateMode = UpdateMode.AUTOMATIC;
 
-    @Enumerated(EnumType.STRING)
     private ContractType contractType = ContractType.NORMAL;
 
-    @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime attestedOn;
 
     public boolean hasAttestation() {
