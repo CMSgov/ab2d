@@ -110,7 +110,6 @@ class JobPreProcessorIntegrationTest {
         tmpContract.setContractNumber(UUID.randomUUID().toString());
         tmpContract.setContractName(UUID.randomUUID().toString());
         contract = contractRepository.save((ContractWorkerEntity) new ContractToContractCoverageMapping().mapWorkerDto(tmpContract));
-        dataSetup.queueForCleanup(contract);
         tmpContract.setId(contract.getId());
         pdpClient = createClient(tmpContract);
         job = createJob(pdpClient, contract.getContractNumber());
@@ -121,6 +120,7 @@ class JobPreProcessorIntegrationTest {
 
         loggerEventRepository.delete();
         dataSetup.cleanup();
+        contractRepository.flush();
     }
 
     @Test

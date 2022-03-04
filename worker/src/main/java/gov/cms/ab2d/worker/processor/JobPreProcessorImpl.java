@@ -67,7 +67,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
         }
 
         ContractWorker contract = contractRepository.findContractByContractNumber(job.getContractNumber());
-        if (contract != null) {
+        if (contract == null) {
             throw new IllegalArgumentException("A job must always have a contract.");
         }
         Optional<OffsetDateTime> sinceValue = Optional.ofNullable(job.getSince());

@@ -91,7 +91,7 @@ class CoverageDriverTest {
     private ContractRepository contractRepo;
 
     @Autowired
-    private ContractWorkerClient contractService;
+    private ContractWorkerClient contractWorkerClient;
 
     @Autowired
     private CoveragePeriodRepository coveragePeriodRepo;
@@ -184,7 +184,7 @@ class CoverageDriverTest {
         taskExecutor.setCorePoolSize(3);
         taskExecutor.initialize();
 
-        processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS, contractService);
+        processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS, contractWorkerClient);
         driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesService, processor, searchLock, contractToContractCoverageMapping);
     }
 

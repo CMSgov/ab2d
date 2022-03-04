@@ -145,7 +145,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                 return false;
             }
             ContractWorker contract = contractWorkerClient.getContractByContractNumber(mapping.getContractNumber());
-            if (contract != null) {
+            if (contract == null) {
                 log.warn("cannot grab contract using contract number {}", mapping.getContractNumber());
                 return false;
             }
