@@ -31,7 +31,8 @@ import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.config.SearchConfig;
-import gov.cms.ab2d.worker.model.ContractWorkerDto;
+import gov.cms.ab2d.worker.model.ContractWorker;
+import gov.cms.ab2d.worker.model.ContractWorkerEntity;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.repository.ContractWorkerRepository;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
@@ -162,7 +163,7 @@ class JobProcessorIntegrationTest {
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
     private static final ExplanationOfBenefit EOB = (ExplanationOfBenefit) EobTestDataUtil.createEOB();
 
-    private ContractWorkerDto contract;
+    private ContractWorker contract;
     private ContractForCoverageDTO contractForCoverageDTO;
     private RuntimeException fail;
 
@@ -192,7 +193,7 @@ class JobProcessorIntegrationTest {
             return EobTestDataUtil.createBundle(copy);
         });
 
-        when(mockCoverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractWorkerDto.class))).thenReturn(100);
+        when(mockCoverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractWorker.class))).thenReturn(100);
 
         when(mockCoverageDriver.pageCoverage(any(CoveragePagingRequest.class))).thenReturn(
                 new CoveragePagingResult(loadFauxMetadata(contractForCoverageDTO, 99), null));
@@ -358,7 +359,7 @@ class JobProcessorIntegrationTest {
     void when_errorCount_is_not_below_threshold_fail_job() {
 
         reset(mockCoverageDriver);
-        when(mockCoverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractWorkerDto.class))).thenReturn(40);
+        when(mockCoverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractWorker.class))).thenReturn(40);
         andThenAnswerPatients(mockCoverageDriver, contractForCoverageDTO, 10, 40);
 
         OngoingStubbing<IBaseBundle> stubbing = when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any()));
@@ -414,8 +415,8 @@ class JobProcessorIntegrationTest {
         return pdpClient;
     }
 
-    private ContractWorkerDto createContract() {
-        ContractWorkerDto contract = new ContractWorkerDto();
+    private ContractWorker createContract() {
+        ContractWorkerEntity contract = new ContractWorkerEntity();
         contract.setContractName(CONTRACT_NAME);
         contract.setContractNumber(CONTRACT_NUMBER);
         contract.setAttestedOn(OffsetDateTime.now().minusDays(10));

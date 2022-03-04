@@ -3,7 +3,7 @@ package gov.cms.ab2d.worker.processor;
 import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.fhir.FhirVersion;
-import gov.cms.ab2d.worker.model.ContractWorkerDto;
+import gov.cms.ab2d.worker.model.ContractWorker;
 import java.time.OffsetDateTime;
 import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
@@ -54,7 +54,7 @@ public class PatientClaimsRequest {
     /**
      * Dictates how date filtering is done in {@link PatientClaimsCollector} for real vs test contracts.
      */
-    private final ContractWorkerDto.ContractType contractType;
+    private final ContractWorker.ContractType contractType;
 
     /**
      * NR token corresponding to transaction. Calls are sampled to profile performance.

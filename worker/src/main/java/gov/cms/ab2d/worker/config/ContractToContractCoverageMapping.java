@@ -2,7 +2,8 @@ package gov.cms.ab2d.worker.config;
 
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
-import gov.cms.ab2d.worker.model.ContractWorkerDto;
+import gov.cms.ab2d.worker.model.ContractWorker;
+import gov.cms.ab2d.worker.model.ContractWorkerEntity;
 import javax.annotation.PostConstruct;
 import org.modelmapper.AbstractConverter;
 import org.modelmapper.Converter;
@@ -24,10 +25,10 @@ public class ContractToContractCoverageMapping {
         modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setSkipNullEnabled(true);
 
-        Converter<ContractWorkerDto, ContractForCoverageDTO> coverageContractDTOConverter = new AbstractConverter<>() {
+        Converter<ContractWorker, ContractForCoverageDTO> coverageContractDTOConverter = new AbstractConverter<>() {
 
             @Override
-            protected ContractForCoverageDTO convert(ContractWorkerDto source) {
+            protected ContractForCoverageDTO convert(ContractWorker source) {
                 return new ContractForCoverageDTO(source.getContractNumber(), source.getAttestedOn(), ContractForCoverageDTO.ContractType.valueOf(source.getContractType().toString())); //NOSONAR
             }
         };
@@ -40,10 +41,10 @@ public class ContractToContractCoverageMapping {
             }
         };
 
-        Converter<Contract, ContractWorkerDto> contractToWorkerDto = new AbstractConverter<>() {
+        Converter<Contract, ContractWorker> contractToWorkerDto = new AbstractConverter<>() {
             @Override
-            protected ContractWorkerDto convert(Contract source) {
-                return new ContractWorkerDto(source.getId(), source.getContractNumber(), source.getContractName(), ContractWorkerDto.UpdateMode.valueOf(source.getUpdateMode().toString()), ContractWorkerDto.ContractType.valueOf(source.getContractType().toString()), source.getAttestedOn()); //NOSONAR
+            protected ContractWorker convert(Contract source) {
+                return new ContractWorkerEntity(source.getId(), source.getContractNumber(), source.getContractName(), ContractWorker.UpdateMode.valueOf(source.getUpdateMode().toString()), ContractWorker.ContractType.valueOf(source.getContractType().toString()), source.getAttestedOn()); //NOSONAR
             }
         };
 
@@ -55,7 +56,7 @@ public class ContractToContractCoverageMapping {
 
     }
 
-    public ContractForCoverageDTO map(ContractWorkerDto contract) {
+    public ContractForCoverageDTO map(ContractWorker contract) {
         return modelMapper.map(contract, ContractForCoverageDTO.class);
     }
 
@@ -63,7 +64,7 @@ public class ContractToContractCoverageMapping {
         return modelMapper.map(contract, ContractForCoverageDTO.class);
     }
 
-    public ContractWorkerDto mapWorkerDto(Contract contract) {
-        return modelMapper.map(contract, ContractWorkerDto.class);
+    public ContractWorker mapWorkerDto(Contract contract) {
+        return modelMapper.map(contract, ContractWorker.class);
     }
 }

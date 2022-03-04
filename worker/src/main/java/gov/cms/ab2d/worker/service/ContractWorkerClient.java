@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.service;
 
-import gov.cms.ab2d.worker.model.ContractWorkerDto;
+import gov.cms.ab2d.worker.model.ContractWorker;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,7 +14,7 @@ public class ContractWorkerClient {
         this.contractWorkerService = contractWorkerService;
     }
 
-    public ContractWorkerDto getContractByContractNumber(String contractNumber) {
+    public ContractWorker getContractByContractNumber(String contractNumber) {
         return contractWorkerService.getContractByContractNumber(contractNumber);
     }
 }

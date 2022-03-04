@@ -20,7 +20,8 @@ import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
-import gov.cms.ab2d.worker.model.ContractWorkerDto;
+import gov.cms.ab2d.worker.model.ContractWorker;
+import gov.cms.ab2d.worker.model.ContractWorkerEntity;
 import gov.cms.ab2d.worker.repository.ContractWorkerRepository;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.util.WorkerDataSetup;
@@ -116,7 +117,7 @@ class CoverageUpdateAndProcessorTest {
     @Autowired
     private ContractToContractCoverageMapping mapping;
 
-    private ContractWorkerDto contract;
+    private ContractWorkerEntity contract;
     private CoveragePeriod january;
     private CoveragePeriod february;
     private CoveragePeriod march;
@@ -195,7 +196,7 @@ class CoverageUpdateAndProcessorTest {
     @Test
     void discoverCoveragePeriods() throws CoverageDriverException, InterruptedException {
 
-        ContractWorkerDto attestedAfterEpoch = dataSetup.setupWorkerContract("TST-AFTER-EPOCH",
+        ContractWorkerEntity attestedAfterEpoch = dataSetup.setupWorkerContract("TST-AFTER-EPOCH",
                 AB2D_EPOCH.toOffsetDateTime().plusMonths(3));
         contractRepo.saveAndFlush(attestedAfterEpoch);
 
@@ -203,7 +204,7 @@ class CoverageUpdateAndProcessorTest {
         pdpClientService.createClient(attestedAfterClient);
         dataSetup.queueForCleanup(pdpClientService.getClientById("TST-AFTER-EPOCH"));
 
-        ContractWorkerDto attestedBeforeEpoch = dataSetup.setupWorkerContract("TST-BEFORE-EPOCH",
+        ContractWorkerEntity attestedBeforeEpoch = dataSetup.setupWorkerContract("TST-BEFORE-EPOCH",
                 AB2D_EPOCH.toOffsetDateTime().minusNanos(1));
         contractRepo.saveAndFlush(attestedBeforeEpoch);
 
@@ -709,7 +710,7 @@ class CoverageUpdateAndProcessorTest {
     }
 
 
-    private PdpClientDTO createClient(ContractWorkerDto contract, String clientId, @Nullable String roleName) {
+    private PdpClientDTO createClient(ContractWorker contract, String clientId, @Nullable String roleName) {
         PdpClientDTO client = new PdpClientDTO();
         client.setClientId(clientId);
         client.setOrganization(clientId);

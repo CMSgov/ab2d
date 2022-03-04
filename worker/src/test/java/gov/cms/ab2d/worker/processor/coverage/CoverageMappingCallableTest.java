@@ -8,7 +8,8 @@ import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
-import gov.cms.ab2d.worker.model.ContractWorkerDto;
+import gov.cms.ab2d.worker.model.ContractWorker;
+import gov.cms.ab2d.worker.model.ContractWorkerEntity;
 import java.util.Collections;
 import java.util.Map;
 import org.hl7.fhir.dstu3.model.Coding;
@@ -65,7 +66,7 @@ class CoverageMappingCallableTest {
         when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
 
-        ContractWorkerDto contract = new ContractWorkerDto();
+        ContractWorker contract = new ContractWorkerEntity();
         contract.setContractNumber("TESTING");
         contract.setContractName("TESTING");
 
@@ -99,7 +100,7 @@ class CoverageMappingCallableTest {
     @DisplayName("Test to see if it returns the correct year for test contracts")
     @Test
     void testTestContractYears() {
-        ContractWorkerDto contract =new ContractWorkerDto();
+        ContractWorker contract =new ContractWorkerEntity();
         contract.setContractNumber("contractNum");
         contract.setContractName("TESTING");
 
@@ -115,7 +116,7 @@ class CoverageMappingCallableTest {
         search.setPeriod(period);
 
         // First test that the corrected year modification works
-        contract.setContractType(ContractWorkerDto.ContractType.CLASSIC_TEST);
+        contract.setContractType(ContractWorker.ContractType.CLASSIC_TEST);
         CoverageMapping mapping = new CoverageMapping(cse, search);
 
         ContractToContractCoverageMapping contractToContractCoverageMapping = new ContractToContractCoverageMapping();
@@ -143,7 +144,7 @@ class CoverageMappingCallableTest {
         when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
-        ContractWorkerDto contract =new ContractWorkerDto();
+        ContractWorker contract =new ContractWorkerEntity();
         contract.setContractNumber("TESTING");
         contract.setContractName("TESTING");
 
@@ -195,7 +196,7 @@ class CoverageMappingCallableTest {
         when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
-        ContractWorkerDto contract =new ContractWorkerDto();
+        ContractWorker contract =new ContractWorkerEntity();
         contract.setContractNumber("TESTING");
         contract.setContractName("TESTING");
 
@@ -243,7 +244,7 @@ class CoverageMappingCallableTest {
         when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
-        ContractWorkerDto contract =new ContractWorkerDto();
+        ContractWorker contract =new ContractWorkerEntity();
         contract.setContractNumber("TESTING");
         contract.setContractName("TESTING");
 
@@ -295,7 +296,7 @@ class CoverageMappingCallableTest {
         when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
-        ContractWorkerDto contract =new ContractWorkerDto();
+        ContractWorker contract =new ContractWorkerEntity();
         contract.setContractNumber("TESTING");
         contract.setContractName("TESTING");
 
@@ -345,7 +346,7 @@ class CoverageMappingCallableTest {
         when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
 
-        ContractWorkerDto contract =new ContractWorkerDto();
+        ContractWorker contract =new ContractWorkerEntity();
         contract.setContractNumber("TESTING");
         contract.setContractName("TESTING");
 
@@ -385,7 +386,7 @@ class CoverageMappingCallableTest {
 
         when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt())).thenThrow(new RuntimeException("exception"));
 
-        ContractWorkerDto contract =new ContractWorkerDto();
+        ContractWorker contract =new ContractWorkerEntity();
         contract.setContractNumber("TESTING");
         contract.setContractName("TESTING");
 
@@ -415,7 +416,7 @@ class CoverageMappingCallableTest {
 
     @Test
     void testNullMbi() {
-        ContractWorkerDto contract =new ContractWorkerDto();
+        ContractWorker contract =new ContractWorkerEntity();
         contract.setContractNumber("TESTING");
         contract.setContractName("TESTING");
 

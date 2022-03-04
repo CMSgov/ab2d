@@ -2,7 +2,7 @@ package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.fhir.FhirVersion;
-import gov.cms.ab2d.worker.model.ContractWorkerDto;
+import gov.cms.ab2d.worker.model.ContractWorker;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -16,7 +16,7 @@ import java.util.concurrent.Future;
 @Getter
 public class ContractData {
 
-    private final ContractWorkerDto contract;
+    private final ContractWorker contract;
     private final Job job;
     private final List<Future<ProgressTrackerUpdate>> eobRequestHandles = new LinkedList<>();
     private Future<Integer> aggregatorHandle;

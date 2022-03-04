@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.service;
 
-import gov.cms.ab2d.worker.model.ContractWorkerDto;
+import gov.cms.ab2d.worker.model.ContractWorker;
 import gov.cms.ab2d.worker.repository.ContractWorkerRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +17,7 @@ public class ContractWorkerServiceImpl implements ContractWorkerService {
     }
 
     @Override
-    public ContractWorkerDto getContractByContractNumber(String contractNumber) {
+    public ContractWorker getContractByContractNumber(String contractNumber) {
         return contractRepository.findContractByContractNumber(contractNumber);
     }
 }

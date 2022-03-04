@@ -7,7 +7,8 @@ import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.repository.RoleRepository;
-import gov.cms.ab2d.worker.model.ContractWorkerDto;
+import gov.cms.ab2d.worker.model.ContractWorker;
+import gov.cms.ab2d.worker.model.ContractWorkerEntity;
 import gov.cms.ab2d.worker.repository.ContractWorkerRepository;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -81,8 +82,8 @@ public class WorkerDataSetup {
             }
         });
 
-        List<ContractWorkerDto> contractsToDelete = domainObjects.stream().filter(object -> object instanceof ContractWorkerDto)
-                .map(object -> (ContractWorkerDto) object).collect(toList());
+        List<ContractWorkerEntity> contractsToDelete = domainObjects.stream().filter(object -> object instanceof ContractWorkerEntity)
+                .map(object -> (ContractWorkerEntity) object).collect(toList());
         contractRepository.deleteAll(contractsToDelete);
         contractRepository.flush();
 
@@ -105,12 +106,12 @@ public class WorkerDataSetup {
             throw new RuntimeException(sqlException);
         }
     }
-    public ContractWorkerDto setupWorkerContract(String contractNumber) {
+    public ContractWorker setupWorkerContract(String contractNumber) {
         return setupWorkerContract(contractNumber, OffsetDateTime.now());
     }
 
-    public ContractWorkerDto setupWorkerContract(String contractNumber, OffsetDateTime attestedOn) {
-        ContractWorkerDto contract = new ContractWorkerDto();
+    public ContractWorkerEntity setupWorkerContract(String contractNumber, OffsetDateTime attestedOn) {
+        ContractWorkerEntity contract = new ContractWorkerEntity();
 
         contract.setAttestedOn(attestedOn);
         contract.setContractName("Test ContractWorkerDto " + contractNumber);
@@ -134,7 +135,7 @@ public class WorkerDataSetup {
     public void setupContractWithNoAttestation(List<String> clientRoles) {
         setupPdpClient(clientRoles);
 
-        ContractWorkerDto contract = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+        ContractWorkerEntity contract = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         contract.setAttestedOn(null);
 
         contractRepository.saveAndFlush(contract);
@@ -143,7 +144,7 @@ public class WorkerDataSetup {
     public void setupContractWithNoAttestation(String clientId, String contractNumber, List<String> clientRoles) {
         setupNonStandardClient(clientId, contractNumber, clientRoles);
 
-        ContractWorkerDto contract = contractRepository.findContractByContractNumber(contractNumber);
+        ContractWorkerEntity contract = contractRepository.findContractByContractNumber(contractNumber);
         contract.setAttestedOn(null);
 
         contractRepository.saveAndFlush(contract);

@@ -13,7 +13,7 @@ import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
-import gov.cms.ab2d.worker.model.ContractWorkerDto;
+import gov.cms.ab2d.worker.model.ContractWorker;
 import gov.cms.ab2d.worker.util.WorkerDataSetup;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
@@ -69,7 +69,7 @@ public class CoverageCheckPredicatesIntegrationTest {
     private static final ZonedDateTime CURRENT_TIME = OffsetDateTime.now().atZoneSameInstant(AB2D_ZONE);
     private static final ZonedDateTime ATTESTATION_TIME = CURRENT_TIME.minusMonths(3);
 
-    private ContractWorkerDto contract;
+    private ContractWorker contract;
     private ContractForCoverageDTO contractForCoverageDTO;
     private CoveragePeriod attestationMonth;
     private CoveragePeriod attestationMonthPlus1;

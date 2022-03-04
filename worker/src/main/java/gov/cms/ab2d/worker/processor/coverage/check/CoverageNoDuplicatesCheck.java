@@ -2,7 +2,7 @@ package gov.cms.ab2d.worker.processor.coverage.check;
 
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.service.CoverageService;
-import gov.cms.ab2d.worker.model.ContractWorkerDto;
+import gov.cms.ab2d.worker.model.ContractWorker;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,7 @@ public class CoverageNoDuplicatesCheck extends CoverageCheckPredicate {
     }
 
     @Override
-    public boolean test(ContractWorkerDto contract) {
+    public boolean test(ContractWorker contract) {
 
         // Not this checks responsibility if a contract is completely missing enrollment
         if (!coverageCounts.containsKey(contract.getContractNumber())) {

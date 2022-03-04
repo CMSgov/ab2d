@@ -7,7 +7,7 @@ import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
-import gov.cms.ab2d.worker.model.ContractWorkerDto;
+import gov.cms.ab2d.worker.model.ContractWorker;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,17 +46,17 @@ public class CoverageDriverStub implements CoverageDriver {
     }
 
     @Override
-    public boolean isCoverageAvailable(Job job, ContractWorkerDto contract) {
+    public boolean isCoverageAvailable(Job job, ContractWorker contract) {
         return false;
     }
 
     @Override
-    public int numberOfBeneficiariesToProcess(Job job, ContractWorkerDto contract) {
+    public int numberOfBeneficiariesToProcess(Job job, ContractWorker contract) {
         return totalRecords;
     }
 
     @Override
-    public CoveragePagingResult pageCoverage(Job job, ContractWorkerDto contract) {
+    public CoveragePagingResult pageCoverage(Job job, ContractWorker contract) {
 
         CoveragePagingRequest nextRequest = getNextRequest(null, job, mapping.map(contract));
         List<CoverageSummary> results = getSummaries(null);

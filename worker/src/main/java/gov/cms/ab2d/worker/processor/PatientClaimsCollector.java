@@ -5,7 +5,7 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
 import gov.cms.ab2d.filter.FilterEob;
-import gov.cms.ab2d.worker.model.ContractWorkerDto;
+import gov.cms.ab2d.worker.model.ContractWorker;
 import gov.cms.ab2d.worker.util.FhirUtils;
 import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.EobUtils;
@@ -94,7 +94,7 @@ public class PatientClaimsCollector {
                 // Filter by date unless contract is an old synthetic data contract, part D or attestation time is null
                 // Filter out data
                 .filter(resource -> FilterEob.filter(resource, patient.getDateRanges(), earliestDate,
-                        attestationDate, claimsRequest.getContractType() == ContractWorkerDto.ContractType.valueOf(Contract.ContractType.CLASSIC_TEST.toString())).isPresent())
+                        attestationDate, claimsRequest.getContractType() == ContractWorker.ContractType.valueOf(Contract.ContractType.CLASSIC_TEST.toString())).isPresent())
                 // Filter out unnecessary fields
                 .map(resource -> ExplanationOfBenefitTrimmer.getBenefit(resource))
                 // Make sure patients are the same

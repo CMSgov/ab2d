@@ -5,7 +5,7 @@ import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
-import gov.cms.ab2d.worker.model.ContractWorkerDto;
+import gov.cms.ab2d.worker.model.ContractWorker;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -144,7 +144,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                 log.warn("cannot start job because service has been shutdown");
                 return false;
             }
-            ContractWorkerDto contract = contractWorkerClient.getContractByContractNumber(mapping.getContractNumber());
+            ContractWorker contract = contractWorkerClient.getContractByContractNumber(mapping.getContractNumber());
             if (contract != null) {
                 log.warn("cannot grab contract using contract number {}", mapping.getContractNumber());
                 return false;

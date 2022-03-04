@@ -1,12 +1,12 @@
 package gov.cms.ab2d.worker.processor;
 
+import com.newrelic.api.agent.NewRelic;
+import com.newrelic.api.agent.Token;
+import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.aggregator.AggregatorCallable;
 import gov.cms.ab2d.aggregator.FileOutputType;
 import gov.cms.ab2d.aggregator.FileUtils;
 import gov.cms.ab2d.aggregator.JobHelper;
-import com.newrelic.api.agent.NewRelic;
-import com.newrelic.api.agent.Token;
-import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.repository.JobRepository;
@@ -17,12 +17,11 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
-import gov.cms.ab2d.worker.model.ContractWorkerDto;
 import gov.cms.ab2d.worker.config.SearchConfig;
+import gov.cms.ab2d.worker.model.ContractWorker;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.service.JobChannelService;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -36,15 +35,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import static gov.cms.ab2d.aggregator.FileOutputType.DATA;
 import static gov.cms.ab2d.aggregator.FileOutputType.ERROR;
-
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
@@ -132,7 +130,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contractNumber));
 
         //noinspection OptionalGetWithoutIsPresent
-        ContractWorkerDto contract = contractWorkerClient.getContractByContractNumber(contractNumber);
+        ContractWorker contract = contractWorkerClient.getContractByContractNumber(contractNumber);
         int numBenes = coverageDriver.numberOfBeneficiariesToProcess(job, contract);
         jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENTS_EXPECTED, numBenes);
         log.info("Contract [{}] has [{}] Patients", contractNumber, numBenes);
@@ -214,7 +212,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      */
     private void loadEobRequests(ContractData contractData) throws InterruptedException {
         String jobUuid = contractData.getJob().getJobUuid();
-        ContractWorkerDto contract = contractData.getContract();
+        ContractWorker contract = contractData.getContract();
 
         // Handle first page of beneficiaries and then enter loop
         CoveragePagingResult current = coverageDriver.pageCoverage(new CoveragePagingRequest(eobJobPatientQueuePageSize,

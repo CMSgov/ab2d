@@ -30,7 +30,8 @@ import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.fhir.IdentifierUtils;
 import gov.cms.ab2d.fhir.PatientIdentifier;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
-import gov.cms.ab2d.worker.model.ContractWorkerDto;
+import gov.cms.ab2d.worker.model.ContractWorker;
+import gov.cms.ab2d.worker.model.ContractWorkerEntity;
 import gov.cms.ab2d.worker.processor.ContractProcessor;
 import gov.cms.ab2d.worker.processor.JobPreProcessor;
 import gov.cms.ab2d.worker.processor.JobPreProcessorImpl;
@@ -208,7 +209,7 @@ public class EndToEndBfdTests {
     @Test
     void runJobs() throws InterruptedException {
         ContractToContractCoverageMapping mapping = new ContractToContractCoverageMapping();
-        PdpClient pdpClient = setupClient(getContract());
+        PdpClient pdpClient = setupClient((ContractWorkerEntity) getContract());
 
         final String path = System.getProperty("java.io.tmpdir");
 
@@ -336,11 +337,11 @@ public class EndToEndBfdTests {
         return queue.size();
     }
 
-    private ContractWorkerDto getContract() {
+    private ContractWorker getContract() {
         return contractRepository.findContractByContractNumber(EndToEndBfdTests.CONTRACT_TO_USE);
     }
 
-    private PdpClient setupClient(ContractWorkerDto contractWorker) {
+    private PdpClient setupClient(ContractWorkerEntity contractWorker) {
         PdpClient pdpClient = new PdpClient();
         pdpClient.setClientId(EndToEndBfdTests.CONTRACT_TO_USE_CLIENT_ID);
         pdpClient.setOrganization("Synthea Data");

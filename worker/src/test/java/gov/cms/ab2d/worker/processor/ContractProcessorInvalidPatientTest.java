@@ -14,7 +14,8 @@ import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.config.SearchConfig;
-import gov.cms.ab2d.worker.model.ContractWorkerDto;
+import gov.cms.ab2d.worker.model.ContractWorker;
+import gov.cms.ab2d.worker.model.ContractWorkerEntity;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.repository.ContractWorkerRepository;
 import gov.cms.ab2d.worker.repository.StubJobRepository;
@@ -84,7 +85,7 @@ class ContractProcessorInvalidPatientTest {
     File tmpDirFolder;
 
     private ContractProcessor cut;
-    private final ContractWorkerDto contract = new ContractWorkerDto();
+    private final ContractWorker contract = new ContractWorkerEntity();
     private final Job job = new Job();
     private static final String jobId = "1234";
     private final String contractId = "ABC";
@@ -94,7 +95,7 @@ class ContractProcessorInvalidPatientTest {
     @BeforeEach
     void setup() {
         contractWorkerClient = new ContractWorkerClient(new ContractWorkerServiceImpl(contractRepository));
-        ContractWorkerDto contract = new ContractWorkerDto();
+        ContractWorker contract = new ContractWorkerEntity();
         when(contractWorkerClient.getContractByContractNumber(anyString())).thenReturn(contract);
 
         SearchConfig searchConfig = new SearchConfig(tmpDirFolder.getAbsolutePath(), STREAMING_DIR,
@@ -127,7 +128,7 @@ class ContractProcessorInvalidPatientTest {
 
     @Test
     void testInvalidBenes() throws IOException {
-        when(mapping.map(any(ContractWorkerDto.class))).thenReturn(new ContractForCoverageDTO(contract.getContractNumber(), contract.getAttestedOn(), ContractForCoverageDTO.ContractType.NORMAL));
+        when(mapping.map(any(ContractWorker.class))).thenReturn(new ContractForCoverageDTO(contract.getContractNumber(), contract.getAttestedOn(), ContractForCoverageDTO.ContractType.NORMAL));
         org.hl7.fhir.dstu3.model.Bundle b1 = BundleUtils.createBundle(createBundleEntry("1"));
         org.hl7.fhir.dstu3.model.Bundle b2 = BundleUtils.createBundle(createBundleEntry("2"));
         org.hl7.fhir.dstu3.model.Bundle b4 = BundleUtils.createBundle(createBundleEntry("4"));
@@ -135,7 +136,7 @@ class ContractProcessorInvalidPatientTest {
         when(bfdClient.requestEOBFromServer(eq(STU3), eq(2L), any())).thenReturn(b2);
         when(bfdClient.requestEOBFromServer(eq(STU3), eq(3L), any())).thenReturn(b4);
 
-        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractWorkerDto.class))).thenReturn(3);
+        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractWorker.class))).thenReturn(3);
 
         List<FilterOutByDate.DateRange> dates = singletonList(TestUtil.getOpenRange());
         List<CoverageSummary> summaries = List.of(new CoverageSummary(createIdentifierWithoutMbi(1L), null, dates),

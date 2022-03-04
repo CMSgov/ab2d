@@ -7,7 +7,7 @@ import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.util.Coverage;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
-import gov.cms.ab2d.worker.model.ContractWorkerDto;
+import gov.cms.ab2d.worker.model.ContractWorker;
 import gov.cms.ab2d.worker.repository.ContractWorkerRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
@@ -63,7 +63,7 @@ class CoverageProcessorIntTest {
     void integrationTest() {
 
 
-        ContractWorkerDto contract = contractRepo.findContractByContractNumber("Z0010");
+        ContractWorker contract = contractRepo.findContractByContractNumber("Z0010");
         CoveragePeriod january = dataSetup.createCoveragePeriod(contract.getContractNumber(), 1, 2000);
         CoveragePeriod february = dataSetup.createCoveragePeriod(contract.getContractNumber(), 2, 2000);
         CoveragePeriod march = dataSetup.createCoveragePeriod(contract.getContractNumber(), 3, 2000);

@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.service;
 
-import gov.cms.ab2d.worker.model.ContractWorkerDto;
+import gov.cms.ab2d.worker.model.ContractWorker;
 
 public interface ContractWorkerService {
-    ContractWorkerDto getContractByContractNumber(String contractNumber);
+    ContractWorker getContractByContractNumber(String contractNumber);
 }

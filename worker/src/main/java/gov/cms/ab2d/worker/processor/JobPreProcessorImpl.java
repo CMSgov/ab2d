@@ -7,7 +7,7 @@ import gov.cms.ab2d.common.model.SinceSource;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.worker.model.ContractWorkerDto;
+import gov.cms.ab2d.worker.model.ContractWorker;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverException;
 import gov.cms.ab2d.worker.repository.ContractWorkerRepository;
@@ -66,7 +66,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
             throw new IllegalArgumentException(errMsg);
         }
 
-        ContractWorkerDto contract = contractRepository.findContractByContractNumber(job.getContractNumber());
+        ContractWorker contract = contractRepository.findContractByContractNumber(job.getContractNumber());
         if (contract != null) {
             throw new IllegalArgumentException("A job must always have a contract.");
         }
@@ -118,7 +118,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
      * @param job - The job object to update (although not save)
      * @return - the job with the updated since date and auto since source
      */
-    Job updateSinceTime(Job job, ContractWorkerDto contract) {
+    Job updateSinceTime(Job job, ContractWorker contract) {
         List<Job> successfulJobs = jobRepository.findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(
                 contract.getContractNumber(), List.of(SUCCESSFUL), JobStartedBy.PDP);
 

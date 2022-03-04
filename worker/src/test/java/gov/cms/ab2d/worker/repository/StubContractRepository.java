@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.repository;
 
-import gov.cms.ab2d.worker.model.ContractWorkerDto;
+import gov.cms.ab2d.worker.model.ContractWorkerEntity;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -12,34 +12,34 @@ import org.springframework.data.repository.query.FluentQuery;
 
 @SuppressWarnings("all")
 public class StubContractRepository implements ContractWorkerRepository {
-    private final ContractWorkerDto contract;
+    private final ContractWorkerEntity contract;
 
-    public StubContractRepository(ContractWorkerDto contract) {
+    public StubContractRepository(ContractWorkerEntity contract) {
         this.contract = contract;
     }
 
     @Override
-    public ContractWorkerDto findContractByContractNumber(String contractNumber) {
+    public ContractWorkerEntity findContractByContractNumber(String contractNumber) {
         return contract;
     }
 
     @Override
-    public List<ContractWorkerDto> findAll() {
+    public List<ContractWorkerEntity> findAll() {
         return null;
     }
 
     @Override
-    public List<ContractWorkerDto> findAll(Sort sort) {
+    public List<ContractWorkerEntity> findAll(Sort sort) {
         return null;
     }
 
     @Override
-    public Page<ContractWorkerDto> findAll(Pageable pageable) {
+    public Page<ContractWorkerEntity> findAll(Pageable pageable) {
         return null;
     }
 
     @Override
-    public List<ContractWorkerDto> findAllById(Iterable<Long> longs) {
+    public List<ContractWorkerEntity> findAllById(Iterable<Long> longs) {
         return null;
     }
 
@@ -54,7 +54,7 @@ public class StubContractRepository implements ContractWorkerRepository {
     }
 
     @Override
-    public void delete(ContractWorkerDto entity) {
+    public void delete(ContractWorkerEntity entity) {
 
     }
 
@@ -64,7 +64,7 @@ public class StubContractRepository implements ContractWorkerRepository {
     }
 
     @Override
-    public void deleteAll(Iterable<? extends ContractWorkerDto> entities) {
+    public void deleteAll(Iterable<? extends ContractWorkerEntity> entities) {
 
     }
 
@@ -74,17 +74,17 @@ public class StubContractRepository implements ContractWorkerRepository {
     }
 
     @Override
-    public <S extends ContractWorkerDto> S save(S entity) {
+    public <S extends ContractWorkerEntity> S save(S entity) {
         return null;
     }
 
     @Override
-    public <S extends ContractWorkerDto> List<S> saveAll(Iterable<S> entities) {
+    public <S extends ContractWorkerEntity> List<S> saveAll(Iterable<S> entities) {
         return null;
     }
 
     @Override
-    public Optional<ContractWorkerDto> findById(Long aLong) {
+    public Optional<ContractWorkerEntity> findById(Long aLong) {
         return Optional.empty();
     }
 
@@ -99,17 +99,17 @@ public class StubContractRepository implements ContractWorkerRepository {
     }
 
     @Override
-    public <S extends ContractWorkerDto> S saveAndFlush(S entity) {
+    public <S extends ContractWorkerEntity> S saveAndFlush(S entity) {
         return null;
     }
 
     @Override
-    public <S extends ContractWorkerDto> List<S> saveAllAndFlush(Iterable<S> entities) {
+    public <S extends ContractWorkerEntity> List<S> saveAllAndFlush(Iterable<S> entities) {
         return null;
     }
 
     @Override
-    public void deleteAllInBatch(Iterable<ContractWorkerDto> entities) {
+    public void deleteAllInBatch(Iterable<ContractWorkerEntity> entities) {
 
     }
 
@@ -124,47 +124,47 @@ public class StubContractRepository implements ContractWorkerRepository {
     }
 
     @Override
-    public ContractWorkerDto getOne(Long aLong) {
+    public ContractWorkerEntity getOne(Long aLong) {
         return null;
     }
 
     @Override
-    public ContractWorkerDto getById(Long aLong) {
+    public ContractWorkerEntity getById(Long aLong) {
         return null;
     }
 
     @Override
-    public <S extends ContractWorkerDto> Optional<S> findOne(Example<S> example) {
+    public <S extends ContractWorkerEntity> Optional<S> findOne(Example<S> example) {
         return Optional.empty();
     }
 
     @Override
-    public <S extends ContractWorkerDto> List<S> findAll(Example<S> example) {
+    public <S extends ContractWorkerEntity> List<S> findAll(Example<S> example) {
         return null;
     }
 
     @Override
-    public <S extends ContractWorkerDto> List<S> findAll(Example<S> example, Sort sort) {
+    public <S extends ContractWorkerEntity> List<S> findAll(Example<S> example, Sort sort) {
         return null;
     }
 
     @Override
-    public <S extends ContractWorkerDto> Page<S> findAll(Example<S> example, Pageable pageable) {
+    public <S extends ContractWorkerEntity> Page<S> findAll(Example<S> example, Pageable pageable) {
         return null;
     }
 
     @Override
-    public <S extends ContractWorkerDto> long count(Example<S> example) {
+    public <S extends ContractWorkerEntity> long count(Example<S> example) {
         return 0;
     }
 
     @Override
-    public <S extends ContractWorkerDto> boolean exists(Example<S> example) {
+    public <S extends ContractWorkerEntity> boolean exists(Example<S> example) {
         return false;
     }
 
     @Override
-    public <S extends ContractWorkerDto, R> R findBy(Example<S> example, Function<FluentQuery.FetchableFluentQuery<S>, R> queryFunction) {
+    public <S extends ContractWorkerEntity, R> R findBy(Example<S> example, Function<FluentQuery.FetchableFluentQuery<S>, R> queryFunction) {
         return null;
     }
 }

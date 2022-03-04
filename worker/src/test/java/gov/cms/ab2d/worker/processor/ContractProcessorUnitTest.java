@@ -15,7 +15,8 @@ import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.config.SearchConfig;
-import gov.cms.ab2d.worker.model.ContractWorkerDto;
+import gov.cms.ab2d.worker.model.ContractWorker;
+import gov.cms.ab2d.worker.model.ContractWorkerEntity;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.stub.PatientClaimsProcessorStub;
 import gov.cms.ab2d.worker.repository.StubContractRepository;
@@ -81,7 +82,7 @@ class ContractProcessorUnitTest {
     private PatientClaimsProcessor patientClaimsProcessor;
     private JobChannelService jobChannelService;
 
-    private ContractWorkerDto contract;
+    private ContractWorker contract;
     private ContractForCoverageDTO contractForCoverageDTO;
     private ContractToContractCoverageMapping mapping;
     private Job job;
@@ -96,7 +97,7 @@ class ContractProcessorUnitTest {
         patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
 
         mapping = new ContractToContractCoverageMapping();
-        contract = createContractWorker();
+        contract = createContractWorkerEntity();
         contractForCoverageDTO = mapping.map(contract);
         PdpClient pdpClient = createClient();
         job = createJob(pdpClient);
@@ -113,7 +114,7 @@ class ContractProcessorUnitTest {
         SearchConfig searchConfig = new SearchConfig(efsMountTmpDir.toFile().getAbsolutePath(),
                 STREAMING, FINISHED, 0, 0, 2, 1);
 
-        ContractWorkerClient contractWorkerClient = new ContractWorkerClient(new ContractWorkerServiceImpl(new StubContractRepository(contract)));
+        ContractWorkerClient contractWorkerClient = new ContractWorkerClient(new ContractWorkerServiceImpl(new StubContractRepository((ContractWorkerEntity) contract)));
         cut = new ContractProcessorImpl(
                 contractWorkerClient,
                 jobRepository,
@@ -167,7 +168,7 @@ class ContractProcessorUnitTest {
                         new CoveragePagingRequest(2, null, contractForCoverageDTO, OffsetDateTime.now())))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contractForCoverageDTO, 2), null));
 
-        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractWorkerDto.class))).thenReturn(3);
+        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractWorker.class))).thenReturn(3);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
 
         job.setStatus(JobStatus.CANCELLED);
@@ -182,7 +183,7 @@ class ContractProcessorUnitTest {
     @Test
     @DisplayName("When many patientId are present, 'PercentageCompleted' should be updated many times")
     void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() {
-        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractWorkerDto.class))).thenReturn(18);
+        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractWorker.class))).thenReturn(18);
         when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contractForCoverageDTO, 2),
                         new CoveragePagingRequest(2, null, contractForCoverageDTO, OffsetDateTime.now())))
@@ -216,7 +217,7 @@ class ContractProcessorUnitTest {
     void whenExpectedPatientsNotMatchActualPatientsFail() {
         when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contractForCoverageDTO, 1), null));
-        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractWorkerDto.class))).thenReturn(3);
+        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractWorker.class))).thenReturn(3);
 
         ContractProcessingException exception = assertThrows(ContractProcessingException.class, () -> cut.process(job));
 
@@ -301,8 +302,8 @@ class ContractProcessorUnitTest {
         return pdpClient;
     }
 
-    private ContractWorkerDto createContractWorker() {
-        ContractWorkerDto contract = new ContractWorkerDto();
+    private ContractWorker createContractWorkerEntity() {
+        ContractWorker contract = new ContractWorkerEntity();
         contract.setContractName("CONTRACT_NM_00000");
         contract.setContractNumber("CONTRACT_00000");
         contract.setAttestedOn(OffsetDateTime.now().minusDays(10));

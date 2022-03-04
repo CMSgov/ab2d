@@ -17,7 +17,7 @@ import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
-import gov.cms.ab2d.worker.model.ContractWorkerDto;
+import gov.cms.ab2d.worker.model.ContractWorker;
 import gov.cms.ab2d.worker.processor.coverage.check.CoverageNoDuplicatesCheck;
 import gov.cms.ab2d.worker.processor.coverage.check.CoveragePeriodsPresentCheck;
 import gov.cms.ab2d.worker.processor.coverage.check.CoveragePresentCheck;
@@ -437,7 +437,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      */
     @Trace(metricName = "EnrollmentIsAvailable", dispatcher = true)
     @Override
-    public boolean isCoverageAvailable(Job job, ContractWorkerDto contract) throws InterruptedException {
+    public boolean isCoverageAvailable(Job job, ContractWorker contract) throws InterruptedException {
 
         String contractNumber = job.getContractNumber();
         assert contractNumber.equals(contract.getContractNumber());
@@ -512,7 +512,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      */
     @Trace(metricName = "EnrollmentCount", dispatcher = true)
     @Override
-    public int numberOfBeneficiariesToProcess(Job job, ContractWorkerDto contract) {
+    public int numberOfBeneficiariesToProcess(Job job, ContractWorker contract) {
 
         ZonedDateTime now = getEndDateTime();
 
@@ -543,7 +543,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      */
     @Trace(metricName = "EnrollmentLoadFromDB", dispatcher = true)
     @Override
-    public CoveragePagingResult pageCoverage(Job job, ContractWorkerDto contract) {
+    public CoveragePagingResult pageCoverage(Job job, ContractWorker contract) {
         ZonedDateTime now = getEndDateTime();
 
         if (contract == null) {
@@ -580,7 +580,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      * @throws CoverageDriverException if somehow start time is in the future like the attestation time being
      *  in the future
      */
-    ZonedDateTime getStartDateTime(ContractWorkerDto contract) {
+    ZonedDateTime getStartDateTime(ContractWorker contract) {
         // Attestation time should never be null for a job making it to this point
         ZonedDateTime startDateTime = contract.getESTAttestationTime();
 
@@ -650,14 +650,14 @@ public class CoverageDriverImpl implements CoverageDriver {
         List<String> issues = new ArrayList<>();
 
         // Only filter contracts that matter
-        List<ContractWorkerDto> enabledContracts = pdpClientService.getAllEnabledContracts().stream()
+        List<ContractWorker> enabledContracts = pdpClientService.getAllEnabledContracts().stream()
                 .filter(contract -> !contract.isTestContract())
                 .filter(contract -> contractNotBeingUpdated(issues, contract))
                 .map(mapping::mapWorkerDto)
                 .toList();
 
         // Don't perform other verification checks if coverage for months is outright missing
-        List<ContractWorkerDto> filteredContracts = enabledContracts.stream()
+        List<ContractWorker> filteredContracts = enabledContracts.stream()
                 .filter(new CoveragePeriodsPresentCheck(coverageService, null, issues))
                 .toList();
 
