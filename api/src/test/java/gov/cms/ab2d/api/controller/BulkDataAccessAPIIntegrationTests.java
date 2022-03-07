@@ -23,17 +23,16 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.ResultMatcher;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -41,6 +40,7 @@ import java.util.Optional;
 import static gov.cms.ab2d.api.controller.JobCompletedResponse.CHECKSUM_STRING;
 import static gov.cms.ab2d.api.controller.JobCompletedResponse.CONTENT_LENGTH_STRING;
 import static gov.cms.ab2d.api.controller.common.ApiText.*;
+import static gov.cms.ab2d.api.remote.JobClientMock.EXPIRES_IN_DAYS;
 import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
 import static gov.cms.ab2d.common.model.JobStatus.FAILED;
 import static gov.cms.ab2d.common.model.JobStatus.IN_PROGRESS;
@@ -54,6 +54,8 @@ import static gov.cms.ab2d.eventlogger.events.ErrorEvent.ErrorType.FILE_ALREADY_
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
+import static java.time.ZoneOffset.UTC;
+import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 import static org.springframework.http.HttpHeaders.EXPIRES;
@@ -519,13 +521,10 @@ public class BulkDataAccessAPIIntegrationTests {
         errorJobOutput.setFileLength(20L);
         jobClientMock.addJobOutputForDownload(errorJobOutput);
 
-        final ZonedDateTime jobExpiresUTC =
-                ZonedDateTime.ofInstant(OffsetDateTime.now().plusDays(100).toInstant(), ZoneId.of("UTC"));
         this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(200))
-                .andExpect(header().string(EXPIRES, DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC)))
-                // TODO - assumes exact timestamps to the second.  Subject to timing failures at inopportune times.
+                .andExpect(buildExpiresMatcher())
                 .andExpect(jsonPath("$.transactionTime",
                         Is.is(new org.hl7.fhir.dstu3.model.DateTimeType(OffsetDateTime.now().toString()).toHumanDisplay())))
                 .andExpect(jsonPath("$.request", Is.is(startJobDTO.getUrl())))
@@ -570,14 +569,10 @@ public class BulkDataAccessAPIIntegrationTests {
         String jobUuid = jobClientMock.pickAJob();
         StartJobDTO startJobDTO = jobClientMock.lookupJob(jobUuid);
 
-        OffsetDateTime expiresAt = OffsetDateTime.now().plusDays(100);
-        final ZonedDateTime jobExpiresUTC =
-                ZonedDateTime.ofInstant(expiresAt.toInstant(), ZoneId.of("UTC"));
         this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(200))
-                .andExpect(header().string(EXPIRES, DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC)))
-                // TODO - assumes exact timestamps to the second.  Subject to timing failures at inopportune times.
+                .andExpect(buildExpiresMatcher())
                 .andExpect(jsonPath("$.transactionTime",
                         Is.is(new org.hl7.fhir.dstu3.model.DateTimeType(OffsetDateTime.now().toString()).toHumanDisplay())))
                 .andExpect(jsonPath("$.request", Is.is(startJobDTO.getUrl())))
@@ -1133,5 +1128,23 @@ public class BulkDataAccessAPIIntegrationTests {
 
         assertEquals(body, STU3.getJsonParser().encodeResourceToString(
                 CapabilityStatementSTU3.populateCS("https://localhost:8443" + API_PREFIX_V1 + FHIR_PREFIX)));
+    }
+
+    private ResultMatcher buildExpiresMatcher() {
+        return result -> {
+            MockHttpServletResponse response = result.getResponse();
+            String headerValue = response.getHeader(EXPIRES);
+            assertNotNull(headerValue, "Response does not contain header '" + EXPIRES + "'");
+            OffsetDateTime actual = OffsetDateTime.parse(headerValue, RFC_1123_DATE_TIME.withZone(UTC));
+            OffsetDateTime expected = OffsetDateTime.now().plusDays(EXPIRES_IN_DAYS);
+            assertTrue(actual.isBefore(expected), "Sanity check that now() is larger than when this was processed");
+            /*
+             * 7 is the fudge factor for the tests, passing tests on my laptop.  The build environment occasionally
+             * would exceed a one-second difference.
+             */
+            OffsetDateTime minExpected = expected.minusSeconds(7);
+            assertTrue(actual.isAfter(minExpected), "Expire header time mismatch: actual - " + actual +
+                    " should be greater than expected - " + minExpected);
+        };
     }
 }
