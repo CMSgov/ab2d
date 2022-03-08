@@ -33,13 +33,15 @@ import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
 @Component
 public class JobClientMock extends JobClient {
 
+    public static final int EXPIRES_IN_DAYS = 100;
+
     private final Map<String, StartJobDTO> createdJobs = new HashMap<>(89);
     private final Map<String, OffsetDateTime> pollTimes = new HashMap<>(89);
 
     private final List<JobOutput> jobOutputList = new ArrayList<>();
     private JobStatus expectedStatus = JobStatus.SUCCESSFUL;
     private int progress = 100;
-    private OffsetDateTime expiresAt = OffsetDateTime.now().plusDays(100);
+    private OffsetDateTime expiresAt = OffsetDateTime.now().plusDays(EXPIRES_IN_DAYS);
     private boolean resultsCreated;
 
     @Value("classpath:test.ndjson")
@@ -194,7 +196,7 @@ public class JobClientMock extends JobClient {
         expectedStatus = JobStatus.SUCCESSFUL;
         progress = 100;
         pollTimes.clear();
-        expiresAt = OffsetDateTime.now().plusDays(100);
+        expiresAt = OffsetDateTime.now().plusDays(EXPIRES_IN_DAYS);
         resultsCreated = false;
     }
 
