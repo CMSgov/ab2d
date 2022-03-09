@@ -34,8 +34,4 @@ public class ContractDTO {
     public boolean hasDateIssue() {
         return Contract.ContractType.CLASSIC_TEST == contractType;
     }
-
-    public OffsetDateTime getAttestedOnAsDateTime() {
-        return OffsetDateTime.parse(attestedOn);
-    }
 }
