@@ -236,7 +236,7 @@ class PdpClientServiceTest {
         client.setOrganization(clientId);
         client.setEnabled(true);
         ContractDTO contractDTO = new ContractDTO(contract.getContractNumber(), contract.getContractName(),
-                contract.getAttestedOn().toString());
+                contract.getAttestedOn().toString(), contract.getContractType());
         client.setContract(contractDTO);
         client.setRole(roleName);
 

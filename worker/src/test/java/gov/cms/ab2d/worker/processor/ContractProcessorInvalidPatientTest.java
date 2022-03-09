@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.repository.JobRepository;
@@ -14,15 +15,11 @@ import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.config.SearchConfig;
-import gov.cms.ab2d.worker.model.ContractWorker;
-import gov.cms.ab2d.worker.model.ContractWorkerEntity;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
-import gov.cms.ab2d.worker.repository.ContractWorkerRepository;
 import gov.cms.ab2d.worker.repository.StubJobRepository;
-import gov.cms.ab2d.worker.service.ContractWorkerClient;
-import gov.cms.ab2d.worker.service.ContractWorkerServiceImpl;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import gov.cms.ab2d.worker.service.JobChannelStubServiceImpl;
+import gov.cms.ab2d.worker.util.ContractWorkerClientMock;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -70,13 +67,7 @@ class ContractProcessorInvalidPatientTest {
     @Mock
     private ContractToContractCoverageMapping mapping;
 
-    private ContractWorkerClient contractWorkerClient;
-
-
-    @Mock
-    private ContractWorkerRepository contractRepository;
-
-    private JobRepository jobRepository;
+    private ContractWorkerClientMock contractWorkerClient;
 
     @Mock
     private RoundRobinBlockingQueue<PatientClaimsRequest> requestQueue;
@@ -85,7 +76,7 @@ class ContractProcessorInvalidPatientTest {
     File tmpDirFolder;
 
     private ContractProcessor cut;
-    private final ContractWorker contract = new ContractWorkerEntity();
+    private final ContractDTO contract = new ContractDTO();
     private final Job job = new Job();
     private static final String jobId = "1234";
     private final String contractId = "ABC";
@@ -94,15 +85,15 @@ class ContractProcessorInvalidPatientTest {
 
     @BeforeEach
     void setup() {
-        contractWorkerClient = new ContractWorkerClient(new ContractWorkerServiceImpl(contractRepository));
-        ContractWorker contract = new ContractWorkerEntity();
+        contractWorkerClient = new ContractWorkerClientMock();
+        ContractDTO contract = new ContractDTO();
         when(contractWorkerClient.getContractByContractNumber(anyString())).thenReturn(contract);
 
         SearchConfig searchConfig = new SearchConfig(tmpDirFolder.getAbsolutePath(), STREAMING_DIR,
                 FINISHED_DIR, 0, 0, 1, 2);
 
         contract.setContractNumber(contractId);
-        contract.setAttestedOn(OffsetDateTime.now().minusYears(50));
+        contract.setAttestedOn(OffsetDateTime.now().minusYears(50).toString());
 
         job.setJobUuid(jobId);
         job.setContractNumber(contract.getContractNumber());
@@ -128,7 +119,7 @@ class ContractProcessorInvalidPatientTest {
 
     @Test
     void testInvalidBenes() throws IOException {
-        when(mapping.map(any(ContractWorker.class))).thenReturn(new ContractForCoverageDTO(contract.getContractNumber(), contract.getAttestedOn(), ContractForCoverageDTO.ContractType.NORMAL));
+        when(mapping.map(any(ContractDTO.class))).thenReturn(new ContractForCoverageDTO(contract.getContractNumber(), OffsetDateTime.parse(contract.getAttestedOn()), ContractForCoverageDTO.ContractType.NORMAL));
         org.hl7.fhir.dstu3.model.Bundle b1 = BundleUtils.createBundle(createBundleEntry("1"));
         org.hl7.fhir.dstu3.model.Bundle b2 = BundleUtils.createBundle(createBundleEntry("2"));
         org.hl7.fhir.dstu3.model.Bundle b4 = BundleUtils.createBundle(createBundleEntry("4"));
@@ -136,7 +127,7 @@ class ContractProcessorInvalidPatientTest {
         when(bfdClient.requestEOBFromServer(eq(STU3), eq(2L), any())).thenReturn(b2);
         when(bfdClient.requestEOBFromServer(eq(STU3), eq(3L), any())).thenReturn(b4);
 
-        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractWorker.class))).thenReturn(3);
+        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractDTO.class))).thenReturn(3);
 
         List<FilterOutByDate.DateRange> dates = singletonList(TestUtil.getOpenRange());
         List<CoverageSummary> summaries = List.of(new CoverageSummary(createIdentifierWithoutMbi(1L), null, dates),

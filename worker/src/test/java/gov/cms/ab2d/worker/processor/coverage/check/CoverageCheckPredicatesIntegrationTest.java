@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor.coverage.check;
 
+import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
@@ -13,7 +14,6 @@ import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
-import gov.cms.ab2d.worker.model.ContractWorker;
 import gov.cms.ab2d.worker.util.WorkerDataSetup;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
@@ -40,6 +40,8 @@ import static java.util.stream.Collectors.groupingBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+;
 
 @SpringBootTest(properties = "coverage.update.initial.delay=1000000")
 @Testcontainers
@@ -69,7 +71,7 @@ public class CoverageCheckPredicatesIntegrationTest {
     private static final ZonedDateTime CURRENT_TIME = OffsetDateTime.now().atZoneSameInstant(AB2D_ZONE);
     private static final ZonedDateTime ATTESTATION_TIME = CURRENT_TIME.minusMonths(3);
 
-    private ContractWorker contract;
+    private ContractDTO contract;
     private ContractForCoverageDTO contractForCoverageDTO;
     private CoveragePeriod attestationMonth;
     private CoveragePeriod attestationMonthPlus1;

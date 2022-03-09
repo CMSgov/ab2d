@@ -1,6 +1,7 @@
 package gov.cms.ab2d.testjobs;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
@@ -8,6 +9,7 @@ import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.SinceSource;
+import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
@@ -30,8 +32,6 @@ import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.fhir.IdentifierUtils;
 import gov.cms.ab2d.fhir.PatientIdentifier;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
-import gov.cms.ab2d.worker.model.ContractWorker;
-import gov.cms.ab2d.worker.model.ContractWorkerEntity;
 import gov.cms.ab2d.worker.processor.ContractProcessor;
 import gov.cms.ab2d.worker.processor.JobPreProcessor;
 import gov.cms.ab2d.worker.processor.JobPreProcessorImpl;
@@ -44,7 +44,6 @@ import gov.cms.ab2d.worker.processor.coverage.CoverageDriverImpl;
 import gov.cms.ab2d.worker.processor.coverage.CoverageLockWrapper;
 import gov.cms.ab2d.worker.processor.coverage.CoverageProcessor;
 import gov.cms.ab2d.worker.processor.coverage.CoverageProcessorImpl;
-import gov.cms.ab2d.worker.repository.ContractWorkerRepository;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.service.FileServiceImpl;
 import gov.cms.ab2d.worker.service.JobChannelService;
@@ -118,7 +117,7 @@ public class EndToEndBfdTests {
     @Autowired
     private JobRepository jobRepository;
     @Autowired
-    private ContractWorkerRepository contractRepository;
+    private ContractRepository contractRepository;
     @Autowired
     private JobChannelService jobChannelService;
     @Autowired
@@ -187,7 +186,7 @@ public class EndToEndBfdTests {
 
         // Instantiate the job processors
         jobService = new JobServiceImpl(jobRepository, jobOutputService, logManager, logEventSummary, path.getAbsolutePath());
-        jobPreProcessor = new JobPreProcessorImpl(contractRepository, jobRepository, logManager, coverageDriver);
+        jobPreProcessor = new JobPreProcessorImpl(contractWorkerClient, jobRepository, logManager, coverageDriver);
 
         jobProcessor = new JobProcessorImpl(new FileServiceImpl(), jobChannelService, jobProgressService, jobProgressUpdateService,
                 jobRepository, jobOutputRepository, contractProcessor, logManager);
@@ -209,7 +208,7 @@ public class EndToEndBfdTests {
     @Test
     void runJobs() throws InterruptedException {
         ContractToContractCoverageMapping mapping = new ContractToContractCoverageMapping();
-        PdpClient pdpClient = setupClient((ContractWorkerEntity) getContract());
+        PdpClient pdpClient = setupClient((ContractDTO) getContract());
 
         final String path = System.getProperty("java.io.tmpdir");
 
@@ -337,24 +336,23 @@ public class EndToEndBfdTests {
         return queue.size();
     }
 
-    private ContractWorker getContract() {
-        return contractRepository.findContractByContractNumber(EndToEndBfdTests.CONTRACT_TO_USE);
+    private ContractDTO getContract() {
+        return contractRepository.findContractByContractNumber(EndToEndBfdTests.CONTRACT_TO_USE).get().toDTO();
     }
 
-    private PdpClient setupClient(ContractWorkerEntity contractWorker) {
+    private PdpClient setupClient(ContractDTO contractDTO) {
         PdpClient pdpClient = new PdpClient();
         pdpClient.setClientId(EndToEndBfdTests.CONTRACT_TO_USE_CLIENT_ID);
         pdpClient.setOrganization("Synthea Data");
         pdpClient.setEnabled(true);
 
         Contract contract = new Contract();
-        contract.setContractName(contractWorker.getContractName());
-        contract.setId(contractWorker.getId());
-        contract.setAttestedOn(contractWorker.getAttestedOn());
-        contract.setContractNumber(contractWorker.getContractNumber());
-        contract.setContractType(Contract.ContractType.valueOf(contractWorker.getContractType().toString()));
+        contract.setContractName(contractDTO.getContractName());
+        contract.setAttestedOn(OffsetDateTime.parse(contractDTO.getAttestedOn()));
+        contract.setContractNumber(contractDTO.getContractNumber());
+        contract.setContractType(Contract.ContractType.valueOf(contractDTO.getContractType().toString()));
 
-        contractRepository.saveAndFlush(contractWorker);
+        contractRepository.saveAndFlush(contract);
         pdpClient.setContract(contract);
         return pdpClientRepository.save(pdpClient);
     }

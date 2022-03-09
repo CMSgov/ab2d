@@ -1,9 +1,9 @@
 package gov.cms.ab2d.worker.processor.coverage.check;
 
+import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
-import gov.cms.ab2d.worker.model.ContractWorker;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +30,7 @@ public class CoveragePresentCheck extends CoverageCheckPredicate {
     }
 
     @Override
-    public boolean test(ContractWorker contract) {
+    public boolean test(ContractDTO contract) {
         String contractNumber = contract.getContractNumber();
         if (!coverageCounts.containsKey(contractNumber)) {
             String issue = contractNumber + " has no enrollment";
@@ -45,7 +45,7 @@ public class CoveragePresentCheck extends CoverageCheckPredicate {
         return noEnrollmentIssues.isEmpty();
     }
 
-    private List<String> listCoveragePeriodsMissingEnrollment(ContractWorker contract, List<CoverageCount> coverageCounts) {
+    private List<String> listCoveragePeriodsMissingEnrollment(ContractDTO contract, List<CoverageCount> coverageCounts) {
 
         List<String> noEnrollment = new ArrayList<>();
 
@@ -75,7 +75,7 @@ public class CoveragePresentCheck extends CoverageCheckPredicate {
         return noEnrollment;
     }
 
-    private void logIssue(ContractWorker contract, int year, int month, List<String> noEnrollment) {
+    private void logIssue(ContractDTO contract, int year, int month, List<String> noEnrollment) {
         String issue = String.format("%s-%d-%d no enrollment found", contract.getContractNumber(), year, month);
         log.warn(issue);
         noEnrollment.add(issue);

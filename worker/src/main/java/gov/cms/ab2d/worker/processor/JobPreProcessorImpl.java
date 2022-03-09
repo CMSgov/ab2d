@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
+import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStartedBy;
@@ -7,10 +8,9 @@ import gov.cms.ab2d.common.model.SinceSource;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.worker.model.ContractWorker;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverException;
-import gov.cms.ab2d.worker.repository.ContractWorkerRepository;
+import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import java.time.OffsetDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -36,14 +36,14 @@ import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_STARTED;
 @SuppressWarnings("java:S2142") //java:S2142: "InterruptedException" should not be ignored
 public class JobPreProcessorImpl implements JobPreProcessor {
 
-    private final ContractWorkerRepository contractRepository;
+    private final ContractWorkerClient contractWorkerClient;
     private final JobRepository jobRepository;
     private final LogManager eventLogger;
     private final CoverageDriver coverageDriver;
 
-    public JobPreProcessorImpl(ContractWorkerRepository contractRepository, JobRepository jobRepository, LogManager logManager,
-                        CoverageDriver coverageDriver) {
-        this.contractRepository = contractRepository;
+    public JobPreProcessorImpl(ContractWorkerClient contractWorkerClient, JobRepository jobRepository, LogManager logManager,
+                               CoverageDriver coverageDriver) {
+        this.contractWorkerClient = contractWorkerClient;
         this.jobRepository = jobRepository;
         this.eventLogger = logManager;
         this.coverageDriver = coverageDriver;
@@ -66,7 +66,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
             throw new IllegalArgumentException(errMsg);
         }
 
-        ContractWorker contract = contractRepository.findContractByContractNumber(job.getContractNumber());
+        ContractDTO contract = contractWorkerClient.getContractByContractNumber(job.getContractNumber());
         if (contract == null) {
             throw new IllegalArgumentException("A job must always have a contract.");
         }
@@ -118,7 +118,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
      * @param job - The job object to update (although not save)
      * @return - the job with the updated since date and auto since source
      */
-    Job updateSinceTime(Job job, ContractWorker contract) {
+    Job updateSinceTime(Job job, ContractDTO contract) {
         List<Job> successfulJobs = jobRepository.findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(
                 contract.getContractNumber(), List.of(SUCCESSFUL), JobStartedBy.PDP);
 

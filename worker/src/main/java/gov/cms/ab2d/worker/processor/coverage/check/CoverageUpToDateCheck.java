@@ -1,9 +1,9 @@
 package gov.cms.ab2d.worker.processor.coverage.check;
 
+import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.service.CoverageService;
-import gov.cms.ab2d.worker.model.ContractWorker;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -21,7 +21,7 @@ public class CoverageUpToDateCheck extends CoverageCheckPredicate {
     }
 
     @Override
-    public boolean test(ContractWorker contract) {
+    public boolean test(ContractDTO contract) {
 
         // Do not refactor, want to report all issues for coverage not first one found for contract
         // No successful searches found for coverage service so some precondition has been violated anyway

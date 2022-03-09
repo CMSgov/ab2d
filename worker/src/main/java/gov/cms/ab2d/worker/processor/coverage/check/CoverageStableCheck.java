@@ -1,8 +1,8 @@
 package gov.cms.ab2d.worker.processor.coverage.check;
 
+import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.service.CoverageService;
-import gov.cms.ab2d.worker.model.ContractWorker;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +23,7 @@ public class CoverageStableCheck extends CoverageCheckPredicate {
     }
 
     @Override
-    public boolean test(ContractWorker contract) {
+    public boolean test(ContractDTO contract) {
         List<String> enrollmentChangeIssues = listCoveragePeriodsWithChangedEnrollment(coverageCounts.get(contract.getContractNumber()));
         issues.addAll(enrollmentChangeIssues);
 

@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

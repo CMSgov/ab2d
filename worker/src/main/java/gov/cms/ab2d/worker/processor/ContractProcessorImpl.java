@@ -7,6 +7,7 @@ import gov.cms.ab2d.aggregator.AggregatorCallable;
 import gov.cms.ab2d.aggregator.FileOutputType;
 import gov.cms.ab2d.aggregator.FileUtils;
 import gov.cms.ab2d.aggregator.JobHelper;
+import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.repository.JobRepository;
@@ -18,7 +19,6 @@ import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.config.SearchConfig;
-import gov.cms.ab2d.worker.model.ContractWorker;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.service.JobChannelService;
@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -130,7 +131,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contractNumber));
 
         //noinspection OptionalGetWithoutIsPresent
-        ContractWorker contract = contractWorkerClient.getContractByContractNumber(contractNumber);
+        ContractDTO contract = contractWorkerClient.getContractByContractNumber(contractNumber);
         int numBenes = coverageDriver.numberOfBeneficiariesToProcess(job, contract);
         jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENTS_EXPECTED, numBenes);
         log.info("Contract [{}] has [{}] Patients", contractNumber, numBenes);
@@ -212,7 +213,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      */
     private void loadEobRequests(ContractData contractData) throws InterruptedException {
         String jobUuid = contractData.getJob().getJobUuid();
-        ContractWorker contract = contractData.getContract();
+        ContractDTO contract = contractData.getContract();
 
         // Handle first page of beneficiaries and then enter loop
         CoveragePagingResult current = coverageDriver.pageCoverage(new CoveragePagingRequest(eobJobPatientQueuePageSize,
@@ -328,7 +329,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         RoundRobinBlockingQueue.CATEGORY_HOLDER.set(jobUuid);
         try {
             var patientClaimsRequest = new PatientClaimsRequest(patient,
-                    contractData.getContract().getAttestedOn(),
+                    OffsetDateTime.parse(contractData.getContract().getAttestedOn()),
                     job.getSince(),
                     job.getOrganization(),
                     jobUuid,

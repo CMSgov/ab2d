@@ -1,6 +1,7 @@
 package gov.cms.ab2d.common.model;
 
 
+import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.util.DateUtil;
 
 import java.util.Objects;
@@ -140,7 +141,9 @@ public class Contract extends TimestampBase {
         return updateMode == UpdateMode.AUTOMATIC;
     }
 
-    public boolean hasDateIssue() {
-        return ContractType.CLASSIC_TEST == contractType;
+
+    public ContractDTO toDTO() {
+        return new ContractDTO(getContractNumber(), getContractName(),
+            getAttestedOn().toString(), getContractType());
     }
 }

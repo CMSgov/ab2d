@@ -1,15 +1,14 @@
 package gov.cms.ab2d.worker.util;
 
+import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.Role;
+import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.repository.RoleRepository;
-import gov.cms.ab2d.worker.model.ContractWorker;
-import gov.cms.ab2d.worker.model.ContractWorkerEntity;
-import gov.cms.ab2d.worker.repository.ContractWorkerRepository;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -26,6 +25,9 @@ import org.springframework.stereotype.Component;
 
 import static java.util.stream.Collectors.toList;
 
+;
+;
+
 @Component
 public class WorkerDataSetup {
 
@@ -33,7 +35,10 @@ public class WorkerDataSetup {
     private DataSource dataSource;
 
     @Autowired
-    private ContractWorkerRepository contractRepository;
+    private ContractWorkerClientMock contractWorkerClient;
+
+    @Autowired
+    private ContractRepository contractRepository;
 
     @Autowired
     private PdpClientRepository pdpClientRepository;
@@ -82,8 +87,8 @@ public class WorkerDataSetup {
             }
         });
 
-        List<ContractWorkerEntity> contractsToDelete = domainObjects.stream().filter(object -> object instanceof ContractWorkerEntity)
-                .map(object -> (ContractWorkerEntity) object).collect(toList());
+        List<Contract> contractsToDelete = domainObjects.stream().filter(object -> object instanceof Contract)
+                .map(object -> (Contract) object).collect(toList());
         contractRepository.deleteAll(contractsToDelete);
         contractRepository.flush();
 
@@ -106,49 +111,52 @@ public class WorkerDataSetup {
             throw new RuntimeException(sqlException);
         }
     }
-    public ContractWorker setupWorkerContract(String contractNumber) {
+    public ContractDTO setupWorkerContract(String contractNumber) {
         return setupWorkerContract(contractNumber, OffsetDateTime.now());
     }
 
-    public ContractWorkerEntity setupWorkerContract(String contractNumber, OffsetDateTime attestedOn) {
-        ContractWorkerEntity contract = new ContractWorkerEntity();
+    public ContractDTO setupWorkerContract(String contractNumber, OffsetDateTime attestedOn) {
+        ContractDTO contract = new ContractDTO();
 
-        contract.setAttestedOn(attestedOn);
+        contract.setAttestedOn(attestedOn.toString());
         contract.setContractName("Test ContractWorkerDto " + contractNumber);
         contract.setContractNumber(contractNumber);
 
-        contract =  contractRepository.save(contract);
         queueForCleanup(contract);
         return contract;
     }
 
     public Contract setupContract(String contractNumber) {
+        return setupContract(contractNumber, OffsetDateTime.now());
+    }
+
+    public Contract setupContract(String contractNumber, OffsetDateTime attestedOn) {
         Contract contract = new Contract();
         contract.setContractName("Test ContractWorkerDto " + contractNumber);
         contract.setContractNumber(contractNumber);
-
+        contract.setAttestedOn(attestedOn);
         queueForCleanup(contract);
         return contract;
     }
 
 
-    public void setupContractWithNoAttestation(List<String> clientRoles) {
-        setupPdpClient(clientRoles);
-
-        ContractWorkerEntity contract = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
-        contract.setAttestedOn(null);
-
-        contractRepository.saveAndFlush(contract);
-    }
-
-    public void setupContractWithNoAttestation(String clientId, String contractNumber, List<String> clientRoles) {
-        setupNonStandardClient(clientId, contractNumber, clientRoles);
-
-        ContractWorkerEntity contract = contractRepository.findContractByContractNumber(contractNumber);
-        contract.setAttestedOn(null);
-
-        contractRepository.saveAndFlush(contract);
-    }
+//    public void setupContractWithNoAttestation(List<String> clientRoles) {
+//        setupPdpClient(clientRoles);
+//
+//        ContractDTO contract = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+//        contract.setAttestedOn(null);
+//
+//        contractRepository.saveAndFlush(contract);
+//    }
+//
+//    public void setupContractWithNoAttestation(String clientId, String contractNumber, List<String> clientRoles) {
+//        setupNonStandardClient(clientId, contractNumber, clientRoles);
+//
+//        ContractDTO contract = contractRepository.findContractByContractNumber(contractNumber);
+//        contract.setAttestedOn(null);
+//
+//        contractRepository.saveAndFlush(contract);
+//    }
 
     private PdpClient savePdpClient(String clientId, Contract contract, List<String> clientRoles) {
         PdpClient pdpClient = new PdpClient();

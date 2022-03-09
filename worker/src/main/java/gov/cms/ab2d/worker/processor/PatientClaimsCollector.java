@@ -3,19 +3,21 @@ package gov.cms.ab2d.worker.processor;
 import com.newrelic.api.agent.NewRelic;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
-import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
-import gov.cms.ab2d.filter.FilterEob;
-import gov.cms.ab2d.worker.model.ContractWorker;
-import gov.cms.ab2d.worker.util.FhirUtils;
 import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.EobUtils;
+import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmer;
+import gov.cms.ab2d.filter.FilterEob;
+import gov.cms.ab2d.worker.util.FhirUtils;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.IBaseBackboneElement;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IBaseResource;
-
-import java.time.OffsetDateTime;
-import java.util.*;
 
 /**
  * Collect and filter claims based on AB2D business requirements and allow documenting the results of all actions.
@@ -94,7 +96,7 @@ public class PatientClaimsCollector {
                 // Filter by date unless contract is an old synthetic data contract, part D or attestation time is null
                 // Filter out data
                 .filter(resource -> FilterEob.filter(resource, patient.getDateRanges(), earliestDate,
-                        attestationDate, claimsRequest.getContractType() == ContractWorker.ContractType.valueOf(Contract.ContractType.CLASSIC_TEST.toString())).isPresent())
+                        attestationDate, claimsRequest.getContractType() == Contract.ContractType.valueOf(Contract.ContractType.CLASSIC_TEST.toString())).isPresent())
                 // Filter out unnecessary fields
                 .map(resource -> ExplanationOfBenefitTrimmer.getBenefit(resource))
                 // Make sure patients are the same

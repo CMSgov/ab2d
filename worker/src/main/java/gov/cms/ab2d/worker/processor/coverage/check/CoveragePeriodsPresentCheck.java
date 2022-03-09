@@ -1,10 +1,10 @@
 package gov.cms.ab2d.worker.processor.coverage.check;
 
+import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
-import gov.cms.ab2d.worker.model.ContractWorker;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +27,7 @@ public class CoveragePeriodsPresentCheck extends CoverageCheckPredicate {
     }
 
     @Override
-    public boolean test(ContractWorker contract) {
+    public boolean test(ContractDTO contract) {
         ContractToContractCoverageMapping mapping = new ContractToContractCoverageMapping();
         List<String> missingPeriods = listMissingCoveragePeriods(this.coverageService, mapping.map(contract));
         this.issues.addAll(missingPeriods);

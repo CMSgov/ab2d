@@ -1,11 +1,13 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
 import com.newrelic.api.agent.Trace;
+import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.Constants;
+import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.model.CoverageJobStatus;
@@ -17,7 +19,6 @@ import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
-import gov.cms.ab2d.worker.model.ContractWorker;
 import gov.cms.ab2d.worker.processor.coverage.check.CoverageNoDuplicatesCheck;
 import gov.cms.ab2d.worker.processor.coverage.check.CoveragePeriodsPresentCheck;
 import gov.cms.ab2d.worker.processor.coverage.check.CoveragePresentCheck;
@@ -437,7 +438,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      */
     @Trace(metricName = "EnrollmentIsAvailable", dispatcher = true)
     @Override
-    public boolean isCoverageAvailable(Job job, ContractWorker contract) throws InterruptedException {
+    public boolean isCoverageAvailable(Job job, ContractDTO contract) throws InterruptedException {
 
         String contractNumber = job.getContractNumber();
         assert contractNumber.equals(contract.getContractNumber());
@@ -512,7 +513,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      */
     @Trace(metricName = "EnrollmentCount", dispatcher = true)
     @Override
-    public int numberOfBeneficiariesToProcess(Job job, ContractWorker contract) {
+    public int numberOfBeneficiariesToProcess(Job job, ContractDTO contract) {
 
         ZonedDateTime now = getEndDateTime();
 
@@ -543,7 +544,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      */
     @Trace(metricName = "EnrollmentLoadFromDB", dispatcher = true)
     @Override
-    public CoveragePagingResult pageCoverage(Job job, ContractWorker contract) {
+    public CoveragePagingResult pageCoverage(Job job, ContractDTO contract) {
         ZonedDateTime now = getEndDateTime();
 
         if (contract == null) {
@@ -580,9 +581,10 @@ public class CoverageDriverImpl implements CoverageDriver {
      * @throws CoverageDriverException if somehow start time is in the future like the attestation time being
      *  in the future
      */
-    ZonedDateTime getStartDateTime(ContractWorker contract) {
+    ZonedDateTime getStartDateTime(ContractDTO contract) {
         // Attestation time should never be null for a job making it to this point
-        ZonedDateTime startDateTime = contract.getESTAttestationTime();
+        ZonedDateTime startDateTime = OffsetDateTime.parse(contract.getAttestedOn()).atZoneSameInstant(DateUtil.AB2D_ZONE);
+
 
         // Do not allow in any case for someone to pull data before the AB2D API officially supports.
         // Do not remove this without extreme consideration
@@ -650,14 +652,14 @@ public class CoverageDriverImpl implements CoverageDriver {
         List<String> issues = new ArrayList<>();
 
         // Only filter contracts that matter
-        List<ContractWorker> enabledContracts = pdpClientService.getAllEnabledContracts().stream()
+        List<ContractDTO> enabledContracts = pdpClientService.getAllEnabledContracts().stream()
                 .filter(contract -> !contract.isTestContract())
                 .filter(contract -> contractNotBeingUpdated(issues, contract))
                 .map(mapping::mapWorkerDto)
                 .toList();
 
         // Don't perform other verification checks if coverage for months is outright missing
-        List<ContractWorker> filteredContracts = enabledContracts.stream()
+        List<ContractDTO> filteredContracts = enabledContracts.stream()
                 .filter(new CoveragePeriodsPresentCheck(coverageService, null, issues))
                 .toList();
 

@@ -1,14 +1,14 @@
 package gov.cms.ab2d.worker.processor;
 
 import com.newrelic.api.agent.Token;
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.fhir.FhirVersion;
-import gov.cms.ab2d.worker.model.ContractWorker;
 import java.time.OffsetDateTime;
+import java.util.List;
 import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import java.util.List;
 
 /**
  * Request to BFD for a single patient's claims matching the provided parameters and requirements.
@@ -54,7 +54,7 @@ public class PatientClaimsRequest {
     /**
      * Dictates how date filtering is done in {@link PatientClaimsCollector} for real vs test contracts.
      */
-    private final ContractWorker.ContractType contractType;
+    private final Contract.ContractType contractType;
 
     /**
      * NR token corresponding to transaction. Calls are sampled to profile performance.

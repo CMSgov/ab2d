@@ -1,5 +1,7 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
+import gov.cms.ab2d.common.dto.ContractDTO;
+import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.repository.CoveragePeriodRepository;
@@ -7,8 +9,6 @@ import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.util.Coverage;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
-import gov.cms.ab2d.worker.model.ContractWorker;
-import gov.cms.ab2d.worker.repository.ContractWorkerRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -32,7 +32,7 @@ class CoverageProcessorIntTest {
     private static final PostgreSQLContainer postgres = new AB2DPostgresqlContainer();
 
     @Autowired
-    private ContractWorkerRepository contractRepo;
+    private ContractRepository contractRepo;
 
     @Autowired
     private CoveragePeriodRepository coveragePeriodRepo;
@@ -63,7 +63,7 @@ class CoverageProcessorIntTest {
     void integrationTest() {
 
 
-        ContractWorker contract = contractRepo.findContractByContractNumber("Z0010");
+        ContractDTO contract = contractRepo.findContractByContractNumber("Z0010").get().toDTO();
         CoveragePeriod january = dataSetup.createCoveragePeriod(contract.getContractNumber(), 1, 2000);
         CoveragePeriod february = dataSetup.createCoveragePeriod(contract.getContractNumber(), 2, 2000);
         CoveragePeriod march = dataSetup.createCoveragePeriod(contract.getContractNumber(), 3, 2000);

@@ -1,10 +1,13 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.dto.ContractDTO;
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
+import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
@@ -31,10 +34,7 @@ import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.config.SearchConfig;
-import gov.cms.ab2d.worker.model.ContractWorker;
-import gov.cms.ab2d.worker.model.ContractWorkerEntity;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
-import gov.cms.ab2d.worker.repository.ContractWorkerRepository;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.service.JobChannelService;
@@ -119,7 +119,7 @@ class JobProcessorIntegrationTest {
     private PdpClientRepository pdpClientRepository;
 
     @Autowired
-    private ContractWorkerRepository contractRepository;
+    private ContractRepository contractRepository;
 
     @Autowired
     private ContractWorkerClient contractWorkerClient;
@@ -163,7 +163,7 @@ class JobProcessorIntegrationTest {
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
     private static final ExplanationOfBenefit EOB = (ExplanationOfBenefit) EobTestDataUtil.createEOB();
 
-    private ContractWorker contract;
+    private Contract contract;
     private ContractForCoverageDTO contractForCoverageDTO;
     private RuntimeException fail;
 
@@ -193,7 +193,7 @@ class JobProcessorIntegrationTest {
             return EobTestDataUtil.createBundle(copy);
         });
 
-        when(mockCoverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractWorker.class))).thenReturn(100);
+        when(mockCoverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractDTO.class))).thenReturn(100);
 
         when(mockCoverageDriver.pageCoverage(any(CoveragePagingRequest.class))).thenReturn(
                 new CoveragePagingResult(loadFauxMetadata(contractForCoverageDTO, 99), null));
@@ -359,7 +359,7 @@ class JobProcessorIntegrationTest {
     void when_errorCount_is_not_below_threshold_fail_job() {
 
         reset(mockCoverageDriver);
-        when(mockCoverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractWorker.class))).thenReturn(40);
+        when(mockCoverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractDTO.class))).thenReturn(40);
         andThenAnswerPatients(mockCoverageDriver, contractForCoverageDTO, 10, 40);
 
         OngoingStubbing<IBaseBundle> stubbing = when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any()));
@@ -415,8 +415,8 @@ class JobProcessorIntegrationTest {
         return pdpClient;
     }
 
-    private ContractWorker createContract() {
-        ContractWorkerEntity contract = new ContractWorkerEntity();
+    private Contract createContract() {
+        Contract contract = new Contract();
         contract.setContractName(CONTRACT_NAME);
         contract.setContractNumber(CONTRACT_NUMBER);
         contract.setAttestedOn(OffsetDateTime.now().minusDays(10));

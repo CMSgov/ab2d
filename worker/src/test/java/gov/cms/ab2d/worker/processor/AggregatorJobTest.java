@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.processor;
 import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
@@ -11,7 +12,6 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.config.SearchConfig;
-import gov.cms.ab2d.worker.model.ContractWorker;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -96,7 +96,7 @@ class AggregatorJobTest {
         PatientClaimsRequest request = new PatientClaimsRequest(createCoverageSummaries(10, contract),
                 OffsetDateTime.of(2020, 1, 1, 0, 0, 0, 9, ZoneOffset.UTC),
                 OffsetDateTime.of(2020, 1, 1, 0, 0, 0, 9, ZoneOffset.UTC),
-                org, job, contract.getContractNumber(), ContractWorker.ContractType.NORMAL, token, FhirVersion.STU3, tempDir.getAbsolutePath());
+                org, job, contract.getContractNumber(), Contract.ContractType.NORMAL, token, FhirVersion.STU3, tempDir.getAbsolutePath());
         ReflectionTestUtils.setField(processor, "earliestDataDate", "01/01/2020");
 
         Future<ProgressTrackerUpdate> future = processor.process(request);
