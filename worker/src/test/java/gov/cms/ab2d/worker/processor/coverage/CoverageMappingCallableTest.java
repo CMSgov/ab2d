@@ -10,6 +10,7 @@ import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
+import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.Map;
 import org.hl7.fhir.dstu3.model.Coding;
@@ -103,6 +104,7 @@ class CoverageMappingCallableTest {
         ContractDTO contract =new ContractDTO();
         contract.setContractNumber("contractNum");
         contract.setContractName("TESTING");
+        contract.setAttestedOn(OffsetDateTime.now());
 
         CoveragePeriod period = new CoveragePeriod();
         period.setContractNumber(contract.getContractNumber());

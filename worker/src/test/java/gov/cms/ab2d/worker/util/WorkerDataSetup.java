@@ -121,6 +121,7 @@ public class WorkerDataSetup {
         contract.setAttestedOn(attestedOn.toString());
         contract.setContractName("Test ContractWorkerDto " + contractNumber);
         contract.setContractNumber(contractNumber);
+        contract.setContractType(Contract.ContractType.NORMAL);
 
         queueForCleanup(contract);
         return contract;

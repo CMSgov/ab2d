@@ -24,7 +24,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
 
 
 import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
@@ -52,8 +51,8 @@ class JobPreProcessorUnitTest {
 
     private static final String JOB_UUID = "6d08bf08-f926-4e19-8d89-ad67ef89f17e";
 
-    @Autowired
-    private ContractWorkerClientMock contractWorkerClient;
+    private final ContractWorkerClientMock contractWorkerClient = new ContractWorkerClientMock();
+
     @Mock
     private JobRepository jobRepository;
     @Mock
@@ -66,10 +65,9 @@ class JobPreProcessorUnitTest {
 
     @BeforeEach
     void setUp() {
-        ContractDTO tmpContract = new ContractDTO();
-        tmpContract.setContractNumber("JPP5678");
-        tmpContract.setContractName(tmpContract.getContractNumber());
-        contract = tmpContract;
+        contract = new ContractDTO();
+        contract.setContractNumber("JPP5678");
+        contract.setContractName(contract.getContractNumber());
         cut = new JobPreProcessorImpl(contractWorkerClient, jobRepository, eventLogger, coverageDriver);
         job = createJob();
     }
@@ -376,6 +374,7 @@ class JobPreProcessorUnitTest {
         job.setFhirVersion(version);
         job.setStatus(status);
         job.setCreatedAt(created);
+        job.setContractNumber(contract.getContractNumber());
 
         return job;
 
