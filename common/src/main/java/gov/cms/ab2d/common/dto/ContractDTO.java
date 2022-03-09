@@ -1,8 +1,11 @@
 package gov.cms.ab2d.common.dto;
 
-import lombok.*;
-
+import gov.cms.ab2d.common.model.Contract;
 import javax.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
@@ -17,4 +20,6 @@ public class ContractDTO {
 
     @EqualsAndHashCode.Exclude  // contractNumber is sufficient, breaks on Windows due sub-seconds not matching
     private String attestedOn;
+
+    private Contract.ContractType contractType;
 }
