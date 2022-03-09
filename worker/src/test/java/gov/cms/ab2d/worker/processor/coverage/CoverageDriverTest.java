@@ -623,7 +623,7 @@ class CoverageDriverTest {
         job.setContractNumber(contract.getContractNumber());
 
         try {
-            boolean noCoverageStatuses = driver.isCoverageAvailable(job, mapping.mapWorkerDto(contract));
+            boolean noCoverageStatuses = driver.isCoverageAvailable(job, contract.toDTO());
 
             assertFalse(noCoverageStatuses, "eob searches should not run when a" +
                     " coverage period has no information");
@@ -650,7 +650,7 @@ class CoverageDriverTest {
             currentMonth.setStatus(CoverageJobStatus.SUCCESSFUL);
             coveragePeriodRepo.saveAndFlush(currentMonth);
 
-            boolean submittedCoverageStatus = driver.isCoverageAvailable(job, mapping.mapWorkerDto(contract));
+            boolean submittedCoverageStatus = driver.isCoverageAvailable(job, contract.toDTO());
             assertFalse(submittedCoverageStatus, "eob searches should not run if a " +
                     "coverage period is submitted");
         } catch (InterruptedException | CoverageDriverException exception) {
@@ -677,7 +677,7 @@ class CoverageDriverTest {
             currentMonth.setStatus(CoverageJobStatus.SUCCESSFUL);
             coveragePeriodRepo.saveAndFlush(currentMonth);
 
-            boolean inProgressCoverageStatus = driver.isCoverageAvailable(job, mapping.mapWorkerDto(contract));
+            boolean inProgressCoverageStatus = driver.isCoverageAvailable(job, contract.toDTO());
             assertFalse(inProgressCoverageStatus, "eob searches should not run when a coverage period is in progress");
         } catch (InterruptedException | CoverageDriverException exception) {
             fail("could not check for available coverage", exception);
@@ -703,7 +703,7 @@ class CoverageDriverTest {
             currentMonth.setStatus(CoverageJobStatus.SUCCESSFUL);
             coveragePeriodRepo.saveAndFlush(currentMonth);
 
-            boolean submittedCoverageStatus = driver.isCoverageAvailable(job, mapping.mapWorkerDto(contract));
+            boolean submittedCoverageStatus = driver.isCoverageAvailable(job, contract.toDTO());
             assertTrue(submittedCoverageStatus, "eob searches should not run if a " +
                     "coverage period is submitted");
         } catch (InterruptedException | CoverageDriverException exception) {
@@ -737,7 +737,7 @@ class CoverageDriverTest {
 
             job.setSince(OffsetDateTime.of(startMonth, startDay, AB2D_ZONE.getRules().getOffset(Instant.now())));
 
-            boolean inProgressBeginningMonth = driver.isCoverageAvailable(job, mapping.mapWorkerDto(contract));
+            boolean inProgressBeginningMonth = driver.isCoverageAvailable(job, contract.toDTO());
             assertFalse(inProgressBeginningMonth, "eob searches should run when only month after since is successful");
 
             LocalDate endMonth = LocalDate.of(2020, 3, 31);
@@ -745,7 +745,7 @@ class CoverageDriverTest {
 
             job.setSince(OffsetDateTime.of(endMonth, endDay, AB2D_ZONE.getRules().getOffset(Instant.now())));
 
-            boolean inProgressEndMonth = driver.isCoverageAvailable(job, mapping.mapWorkerDto(contract));
+            boolean inProgressEndMonth = driver.isCoverageAvailable(job, contract.toDTO());
             assertFalse(inProgressEndMonth, "eob searches should run when only month after since is successful");
         } catch (InterruptedException | CoverageDriverException exception) {
             fail("could not check for available coverage", exception);
@@ -763,7 +763,7 @@ class CoverageDriverTest {
 
         CoveragePeriod period = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), contract.getESTAttestationTime().getMonthValue(), contract.getESTAttestationTime().getYear());
 
-        int total = driver.numberOfBeneficiariesToProcess(job, mapping.mapWorkerDto(contract));
+        int total = driver.numberOfBeneficiariesToProcess(job, contract.toDTO());
         assertEquals(0, total);
 
         CoverageSearchEvent event = new CoverageSearchEvent();
@@ -778,7 +778,7 @@ class CoverageDriverTest {
         members.add(new Identifiers(1, "1234", new LinkedHashSet<>()));
         coverageService.insertCoverage(event.getId(), members);
 
-        total = driver.numberOfBeneficiariesToProcess(job, mapping.mapWorkerDto(contract));
+        total = driver.numberOfBeneficiariesToProcess(job, contract.toDTO());
         assertEquals(1, total);
     }
 

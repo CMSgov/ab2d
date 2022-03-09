@@ -45,7 +45,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -76,7 +75,7 @@ class ContractProcessorInvalidPatientTest {
     File tmpDirFolder;
 
     private ContractProcessor cut;
-    private final ContractDTO contract = new ContractDTO();
+    private ContractDTO contract;
     private final Job job = new Job();
     private static final String jobId = "1234";
     private final String contractId = "ABC";
@@ -86,8 +85,7 @@ class ContractProcessorInvalidPatientTest {
     @BeforeEach
     void setup() {
         contractWorkerClient = new ContractWorkerClientMock();
-        ContractDTO contract = new ContractDTO();
-        when(contractWorkerClient.getContractByContractNumber(anyString())).thenReturn(contract);
+        contract = new ContractDTO();
 
         SearchConfig searchConfig = new SearchConfig(tmpDirFolder.getAbsolutePath(), STREAMING_DIR,
                 FINISHED_DIR, 0, 0, 1, 2);

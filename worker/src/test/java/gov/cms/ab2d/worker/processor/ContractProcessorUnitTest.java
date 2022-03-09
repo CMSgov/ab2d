@@ -98,7 +98,7 @@ class ContractProcessorUnitTest {
         patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
 
         mapping = new ContractToContractCoverageMapping();
-        contract = createContractWorkerEntity();
+        contract = createContractDTO();
         contractForCoverageDTO = mapping.map(contract);
         PdpClient pdpClient = createClient();
         job = createJob(pdpClient);
@@ -303,10 +303,11 @@ class ContractProcessorUnitTest {
         return pdpClient;
     }
 
-    private ContractDTO createContractWorkerEntity() {
+    private ContractDTO createContractDTO() {
         ContractDTO contract = new ContractDTO();
         contract.setContractName("CONTRACT_NM_00000");
         contract.setContractNumber("CONTRACT_00000");
+        contract.setContractType(Contract.ContractType.NORMAL);
         contract.setAttestedOn(OffsetDateTime.now().minusDays(10).toString());
 
         return contract;

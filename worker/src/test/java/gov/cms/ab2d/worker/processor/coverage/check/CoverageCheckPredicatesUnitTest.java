@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.processor.coverage.check;
 
 import gov.cms.ab2d.common.dto.ContractDTO;
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
@@ -57,7 +58,9 @@ public class CoverageCheckPredicatesUnitTest {
 
         ContractDTO contract = new ContractDTO();
         contract.setContractNumber("TEST");
-        contract.setAttestedOn(ATTESTATION_TIME.toString());
+        contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime().toString());
+        contract.setContractType(Contract.ContractType.NORMAL);
+
 
         assertFalse(presentCheck.test(contract));
 
@@ -71,7 +74,8 @@ public class CoverageCheckPredicatesUnitTest {
 
         ContractDTO contract = new ContractDTO();
         contract.setContractNumber("TEST");
-        contract.setAttestedOn(ATTESTATION_TIME.toString());
+        contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime().toString());
+        contract.setContractType(Contract.ContractType.NORMAL);
 
         // Just reuse, check assumes getCoveragePeriod works
         CoveragePeriod coveragePeriod = new CoveragePeriod();
@@ -101,7 +105,8 @@ public class CoverageCheckPredicatesUnitTest {
 
         ContractDTO contract = new ContractDTO();
         contract.setContractNumber("TEST");
-        contract.setAttestedOn(ATTESTATION_TIME.toString());
+        contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime().toString());
+        contract.setContractType(Contract.ContractType.NORMAL);
 
         // Fail when no coverage is present
         assertFalse(presentCheck.test(contract));
@@ -152,7 +157,8 @@ public class CoverageCheckPredicatesUnitTest {
 
         ContractDTO contract = new ContractDTO();
         contract.setContractNumber("TEST");
-        contract.setAttestedOn(ATTESTATION_TIME.toString());
+        contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime().toString());
+        contract.setContractType(Contract.ContractType.NORMAL);
 
         List<CoverageCount> fakeCounts = List.of(
                 new CoverageCount("TEST", ATTESTATION_TIME.plusMonths(0).getYear(),

@@ -655,7 +655,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         List<ContractDTO> enabledContracts = pdpClientService.getAllEnabledContracts().stream()
                 .filter(contract -> !contract.isTestContract())
                 .filter(contract -> contractNotBeingUpdated(issues, contract))
-                .map(mapping::mapWorkerDto)
+                .map(Contract::toDTO)
                 .toList();
 
         // Don't perform other verification checks if coverage for months is outright missing
