@@ -1,11 +1,13 @@
 package gov.cms.ab2d.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
+import gov.cms.ab2d.api.remote.JobClientMock;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.dto.PdpClientDTO;
-import gov.cms.ab2d.api.remote.JobClientMock;
 import gov.cms.ab2d.common.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
@@ -109,7 +111,9 @@ public class AdminAPIPdpClientTests {
         Role role = roleService.findRoleByName(ADMIN_ROLE);
         pdpClientDTO.setRole(role.getName());
 
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = JsonMapper.builder()
+                .addModule(new JavaTimeModule())
+                .build();
 
         MvcResult mvcResult = this.mockMvc.perform(
                         post(API_PREFIX_V1 + ADMIN_PREFIX + CLIENT_URL)
@@ -138,7 +142,9 @@ public class AdminAPIPdpClientTests {
         Role role = roleService.findRoleByName(ATTESTOR_ROLE);
         pdpClientDTO.setRole(role.getName());
 
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = JsonMapper.builder()
+                .addModule(new JavaTimeModule())
+                .build();
 
         MvcResult mvcResult = this.mockMvc.perform(
                         post(API_PREFIX_V1 + ADMIN_PREFIX + CLIENT_URL)
@@ -167,7 +173,9 @@ public class AdminAPIPdpClientTests {
         Role role = roleService.findRoleByName(ADMIN_ROLE);
         pdpClientDTO.setRole(role.getName());
 
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = JsonMapper.builder()
+                .addModule(new JavaTimeModule())
+                .build();
 
         this.mockMvc.perform(
                 post(API_PREFIX_V1 + ADMIN_PREFIX + CLIENT_URL)
@@ -197,7 +205,9 @@ public class AdminAPIPdpClientTests {
         pdpClientDTO.setContract(buildContractDTO());
         pdpClientDTO.setRole(ADMIN_ROLE);
 
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = JsonMapper.builder()
+                .addModule(new JavaTimeModule())
+                .build();
 
         MvcResult mvcResult = this.mockMvc.perform(
                         post(API_PREFIX_V1 + ADMIN_PREFIX + CLIENT_URL)
@@ -232,7 +242,9 @@ public class AdminAPIPdpClientTests {
     public void testUpdateNonExistentClient() throws Exception {
         PdpClientDTO pdpClientDTO = createClient();
 
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = JsonMapper.builder()
+                .addModule(new JavaTimeModule())
+                .build();
 
         this.mockMvc.perform(
                         put(API_PREFIX_V1 + ADMIN_PREFIX + CLIENT_URL)
@@ -287,7 +299,9 @@ public class AdminAPIPdpClientTests {
 
         assertEquals(200, mvcResult.getResponse().getStatus());
 
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = JsonMapper.builder()
+                .addModule(new JavaTimeModule())
+                .build();
 
         String updateResult = mvcResult.getResponse().getContentAsString();
         PdpClientDTO updatedPdpClientDTO = mapper.readValue(updateResult, PdpClientDTO.class);
@@ -317,7 +331,9 @@ public class AdminAPIPdpClientTests {
 
         assertEquals(200, mvcResult.getResponse().getStatus());
 
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = JsonMapper.builder()
+                .addModule(new JavaTimeModule())
+                .build();
 
         String updateResult = mvcResult.getResponse().getContentAsString();
         PdpClientDTO updatedPdpClientDTO = mapper.readValue(updateResult, PdpClientDTO.class);
@@ -347,7 +363,9 @@ public class AdminAPIPdpClientTests {
 
         assertEquals(200, mvcResult.getResponse().getStatus());
 
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = JsonMapper.builder()
+                .addModule(new JavaTimeModule())
+                .build();
 
         String getResult = mvcResult.getResponse().getContentAsString();
         PdpClientDTO pdpClientDTO = mapper.readValue(getResult, PdpClientDTO.class);
