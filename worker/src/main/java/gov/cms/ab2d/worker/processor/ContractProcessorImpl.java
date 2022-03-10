@@ -99,7 +99,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         this.aggregatorThreadPool = aggregatorThreadPool;
         this.searchConfig = searchConfig;
         this.contractWorkerClient = contractWorkerClient;
-        }
+    }
 
     /**
      * Process the contract - execute an entire {@link Job} from start to finish. Under the hood beneficiaries are
@@ -184,7 +184,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      * Look through the job output file and create JobOutput objects with them
      *
      * @param jobId - the job id
-     * @param type - the file type
+     * @param type  - the file type
      * @return the list of outputs
      */
     List<JobOutput> getOutputs(String jobId, FileOutputType type) {
@@ -478,9 +478,8 @@ public class ContractProcessorImpl implements ContractProcessor {
      * Checks to make sure thread isn't hanging, kills it if it is.
      *
      * @param aggregatorThread - the thread to check and cancel if some reason we're stuck
-     * @param jobId - the job ID so we can check the directory
-     * @param jobDone - If the worker is done sending to the streaming directory
-     *
+     * @param jobId            - the job ID so we can check the directory
+     * @param jobDone          - If the worker is done sending to the streaming directory
      * @return true if the job is actually done, false otherwise.
      */
     boolean isDone(Future<Integer> aggregatorThread, String jobId, boolean jobDone) {
