@@ -51,7 +51,7 @@ public class Mapping {
 
         Converter<Contract, ContractDTO> contractContractDTOConverter = context ->
                 new ContractDTO(context.getSource().getContractNumber(), context.getSource().getContractName(),
-                                context.getSource().getAttestedOn(), context.getDestination().getContractType());
+                                context.getSource().getAttestedOn(), context.getSource().getContractType());
         Converter<ContractDTO, Contract> sponsorDTOSponsorConverter = new AbstractConverter<>() {
             protected Contract convert(ContractDTO source) {
                 //noinspection OptionalGetWithoutIsPresent

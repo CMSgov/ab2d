@@ -104,7 +104,7 @@ class PdpClientServiceTest {
             pdpClientService.createClient(client);
         });
         assertEquals("could not execute statement; SQL [n/a]; constraint [uc_user_account_username]; " +
-                "nested exception is org.hibernate.exception.ConstraintViolationException: could not execute statement",
+                        "nested exception is org.hibernate.exception.ConstraintViolationException: could not execute statement",
                 exceptionThrown.getMessage());
     }
 
@@ -223,7 +223,7 @@ class PdpClientServiceTest {
     }
 
     private ContractDTO buildContractDTO(Contract contract) {
-        return new ContractDTO(contract.getContractName(),contract.getContractNumber(), contract.getAttestedOn(), null );
+        return contract.toDTO();
     }
 
     private PdpClientDTO createClient(Contract contract, String clientId, @Nullable String roleName) {
@@ -231,9 +231,7 @@ class PdpClientServiceTest {
         client.setClientId(clientId);
         client.setOrganization(clientId);
         client.setEnabled(true);
-        ContractDTO contractDTO = new ContractDTO(contract.getContractNumber(), contract.getContractName(),
-                contract.getAttestedOn(), contract.getContractType());
-        client.setContract(contractDTO);
+        client.setContract(contract.toDTO());
         client.setRole(roleName);
 
         return client;
