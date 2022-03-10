@@ -583,7 +583,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      */
     ZonedDateTime getStartDateTime(ContractDTO contract) {
         // Attestation time should never be null for a job making it to this point
-        ZonedDateTime startDateTime = OffsetDateTime.parse(contract.getAttestedOn()).atZoneSameInstant(DateUtil.AB2D_ZONE);
+        ZonedDateTime startDateTime = contract.getAttestedOn().atZoneSameInstant(DateUtil.AB2D_ZONE);
 
 
         // Do not allow in any case for someone to pull data before the AB2D API officially supports.

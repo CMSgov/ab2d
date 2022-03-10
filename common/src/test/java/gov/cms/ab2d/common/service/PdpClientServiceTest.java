@@ -223,11 +223,7 @@ class PdpClientServiceTest {
     }
 
     private ContractDTO buildContractDTO(Contract contract) {
-        ContractDTO contractDTO = new ContractDTO();
-        contractDTO.setContractName(contract.getContractName());
-        contractDTO.setContractNumber(contract.getContractNumber());
-        contractDTO.setAttestedOn(contract.getAttestedOn().toString());
-        return contractDTO;
+        return new ContractDTO(contract.getContractName(),contract.getContractNumber(), contract.getAttestedOn(), null );
     }
 
     private PdpClientDTO createClient(Contract contract, String clientId, @Nullable String roleName) {
@@ -236,7 +232,7 @@ class PdpClientServiceTest {
         client.setOrganization(clientId);
         client.setEnabled(true);
         ContractDTO contractDTO = new ContractDTO(contract.getContractNumber(), contract.getContractName(),
-                contract.getAttestedOn().toString(), contract.getContractType());
+                contract.getAttestedOn(), contract.getContractType());
         client.setContract(contractDTO);
         client.setRole(roleName);
 

@@ -12,7 +12,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ContractDTO {
-
     @NotNull
     private String contractNumber;
 
@@ -20,14 +19,7 @@ public class ContractDTO {
     private String contractName;
 
     @EqualsAndHashCode.Exclude  // contractNumber is sufficient, breaks on Windows due sub-seconds not matching
-    private String attestedOn;
-
-    public void setAttestedOn(String offsetDateTime) {
-        attestedOn = offsetDateTime;
-    }
-    public void setAttestedOn(OffsetDateTime offsetDateTime) {
-        attestedOn = offsetDateTime.toString();
-    }
+    private OffsetDateTime attestedOn;
 
     private Contract.ContractType contractType;
 

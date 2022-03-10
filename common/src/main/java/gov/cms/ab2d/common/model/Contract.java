@@ -144,6 +144,6 @@ public class Contract extends TimestampBase {
 
     public ContractDTO toDTO() {
         return new ContractDTO(getContractNumber(), getContractName(),
-            getAttestedOn().toString(), getContractType());
+            getAttestedOn(), getContractType());
     }
 }

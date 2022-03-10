@@ -384,10 +384,6 @@ public class AdminAPIPdpClientTests {
     }
 
     private ContractDTO buildContractDTO() {
-
-        ContractDTO contractDTO = new ContractDTO();
-        contractDTO.setContractNumber(VALID_CONTRACT_NUMBER);
-        contractDTO.setContractName("Test Contract " + VALID_CONTRACT_NUMBER);
-        return contractDTO;
+        return new ContractDTO(VALID_CONTRACT_NUMBER, "Test Contract " + VALID_CONTRACT_NUMBER, null, null);
     }
 }

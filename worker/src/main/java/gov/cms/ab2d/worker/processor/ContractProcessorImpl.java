@@ -26,7 +26,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -329,7 +328,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         RoundRobinBlockingQueue.CATEGORY_HOLDER.set(jobUuid);
         try {
             var patientClaimsRequest = new PatientClaimsRequest(patient,
-                    OffsetDateTime.parse(contractData.getContract().getAttestedOn()),
+                    contractData.getContract().getAttestedOn(),
                     job.getSince(),
                     job.getOrganization(),
                     jobUuid,

@@ -85,13 +85,10 @@ class ContractProcessorInvalidPatientTest {
     @BeforeEach
     void setup() {
         contractWorkerClient = new ContractWorkerClientMock();
-        contract = new ContractDTO();
+        contract = new ContractDTO(contractId, contractId, OffsetDateTime.now().minusYears(50), null);
 
         SearchConfig searchConfig = new SearchConfig(tmpDirFolder.getAbsolutePath(), STREAMING_DIR,
                 FINISHED_DIR, 0, 0, 1, 2);
-
-        contract.setContractNumber(contractId);
-        contract.setAttestedOn(OffsetDateTime.now().minusYears(50).toString());
 
         job.setJobUuid(jobId);
         job.setContractNumber(contract.getContractNumber());
@@ -117,7 +114,7 @@ class ContractProcessorInvalidPatientTest {
 
     @Test
     void testInvalidBenes() throws IOException {
-        when(mapping.map(any(ContractDTO.class))).thenReturn(new ContractForCoverageDTO(contract.getContractNumber(), OffsetDateTime.parse(contract.getAttestedOn()), ContractForCoverageDTO.ContractType.NORMAL));
+        when(mapping.map(any(ContractDTO.class))).thenReturn(new ContractForCoverageDTO(contract.getContractNumber(), contract.getAttestedOn(), ContractForCoverageDTO.ContractType.NORMAL));
         org.hl7.fhir.dstu3.model.Bundle b1 = BundleUtils.createBundle(createBundleEntry("1"));
         org.hl7.fhir.dstu3.model.Bundle b2 = BundleUtils.createBundle(createBundleEntry("2"));
         org.hl7.fhir.dstu3.model.Bundle b4 = BundleUtils.createBundle(createBundleEntry("4"));

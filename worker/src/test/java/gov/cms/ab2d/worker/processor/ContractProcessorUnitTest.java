@@ -301,13 +301,7 @@ class ContractProcessorUnitTest {
     }
 
     private ContractDTO createContractDTO() {
-        ContractDTO contract = new ContractDTO();
-        contract.setContractName("CONTRACT_NM_00000");
-        contract.setContractNumber("CONTRACT_00000");
-        contract.setContractType(Contract.ContractType.NORMAL);
-        contract.setAttestedOn(OffsetDateTime.now().minusDays(10).toString());
-
-        return contract;
+        return new ContractDTO("CONTRACT_NM_00000", "CONTRACT_00000", OffsetDateTime.now().minusDays(10), Contract.ContractType.NORMAL);
     }
 
     private Contract createContract() {

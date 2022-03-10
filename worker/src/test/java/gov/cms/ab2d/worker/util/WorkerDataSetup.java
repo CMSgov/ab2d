@@ -9,16 +9,11 @@ import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.repository.RoleRepository;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -30,12 +25,6 @@ import static java.util.stream.Collectors.toList;
 
 @Component
 public class WorkerDataSetup {
-
-    @Autowired
-    private DataSource dataSource;
-
-    @Autowired
-    private ContractWorkerClientMock contractWorkerClient;
 
     @Autowired
     private ContractRepository contractRepository;
@@ -100,28 +89,8 @@ public class WorkerDataSetup {
 
     public static final String VALID_CONTRACT_NUMBER = "ABC123";
 
-    public int countCoverage() {
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*) FROM COVERAGE")) {
-            ResultSet rs = statement.executeQuery();
-
-            rs.next();
-            return rs.getInt(1);
-        } catch (SQLException sqlException) {
-            throw new RuntimeException(sqlException);
-        }
-    }
-    public ContractDTO setupWorkerContract(String contractNumber) {
-        return setupWorkerContract(contractNumber, OffsetDateTime.now());
-    }
-
     public ContractDTO setupWorkerContract(String contractNumber, OffsetDateTime attestedOn) {
-        ContractDTO contract = new ContractDTO();
-
-        contract.setAttestedOn(attestedOn.toString());
-        contract.setContractName("Test ContractWorkerDto " + contractNumber);
-        contract.setContractNumber(contractNumber);
-        contract.setContractType(Contract.ContractType.NORMAL);
+        ContractDTO contract = new ContractDTO(contractNumber, "Test ContractWorkerDto " + contractNumber, attestedOn, Contract.ContractType.NORMAL);
 
         queueForCleanup(contract);
         return contract;
@@ -139,25 +108,6 @@ public class WorkerDataSetup {
         queueForCleanup(contract);
         return contract;
     }
-
-
-//    public void setupContractWithNoAttestation(List<String> clientRoles) {
-//        setupPdpClient(clientRoles);
-//
-//        ContractDTO contract = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
-//        contract.setAttestedOn(null);
-//
-//        contractRepository.saveAndFlush(contract);
-//    }
-//
-//    public void setupContractWithNoAttestation(String clientId, String contractNumber, List<String> clientRoles) {
-//        setupNonStandardClient(clientId, contractNumber, clientRoles);
-//
-//        ContractDTO contract = contractRepository.findContractByContractNumber(contractNumber);
-//        contract.setAttestedOn(null);
-//
-//        contractRepository.saveAndFlush(contract);
-//    }
 
     private PdpClient savePdpClient(String clientId, Contract contract, List<String> clientRoles) {
         PdpClient pdpClient = new PdpClient();
@@ -181,30 +131,5 @@ public class WorkerDataSetup {
         pdpClient =  pdpClientRepository.saveAndFlush(pdpClient);
         queueForCleanup(pdpClient);
         return pdpClient;
-    }
-
-    public PdpClient setupPdpClient(List<String> clientRoles) {
-        PdpClient testPdpClient = pdpClientRepository.findByClientId(TEST_PDP_CLIENT);
-        if (testPdpClient != null) {
-            return testPdpClient;
-        }
-
-        Contract contract = setupContract(VALID_CONTRACT_NUMBER);
-//        contractRepository.save(new ContractToContractCoverageMapping().mapWorkerDto(contract));
-        queueForCleanup(contract);
-
-
-        return savePdpClient(TEST_PDP_CLIENT, contract, clientRoles);
-    }
-
-    public PdpClient setupNonStandardClient(String clientdId, String contractNumber, List<String> clientRoles) {
-        PdpClient testPdpClient = pdpClientRepository.findByClientId(clientdId);
-        if (testPdpClient != null) {
-            return testPdpClient;
-        }
-
-        Contract contract = setupContract(contractNumber);
-
-        return savePdpClient(clientdId, contract, clientRoles);
     }
 }

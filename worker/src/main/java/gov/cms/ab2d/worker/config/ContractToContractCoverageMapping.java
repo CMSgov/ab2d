@@ -3,7 +3,6 @@ package gov.cms.ab2d.worker.config;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
-import java.time.OffsetDateTime;
 import javax.annotation.PostConstruct;
 import org.modelmapper.AbstractConverter;
 import org.modelmapper.Converter;
@@ -29,7 +28,7 @@ public class ContractToContractCoverageMapping {
 
             @Override
             protected ContractForCoverageDTO convert(ContractDTO source) {
-                return new ContractForCoverageDTO(source.getContractNumber(), OffsetDateTime.parse(source.getAttestedOn()), ContractForCoverageDTO.ContractType.valueOf(source.getContractType().toString())); //NOSONAR
+                return new ContractForCoverageDTO(source.getContractNumber(), source.getAttestedOn(), ContractForCoverageDTO.ContractType.valueOf(source.getContractType().toString())); //NOSONAR
             }
         };
 
