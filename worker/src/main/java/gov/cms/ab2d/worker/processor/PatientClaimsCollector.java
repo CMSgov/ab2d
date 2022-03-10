@@ -96,7 +96,7 @@ public class PatientClaimsCollector {
                 // Filter by date unless contract is an old synthetic data contract, part D or attestation time is null
                 // Filter out data
                 .filter(resource -> FilterEob.filter(resource, patient.getDateRanges(), earliestDate,
-                        attestationDate, claimsRequest.getContractType() == Contract.ContractType.valueOf(Contract.ContractType.CLASSIC_TEST.toString())).isPresent())
+                        attestationDate, claimsRequest.getContractType() == Contract.ContractType.CLASSIC_TEST).isPresent())
                 // Filter out unnecessary fields
                 .map(resource -> ExplanationOfBenefitTrimmer.getBenefit(resource))
                 // Make sure patients are the same
