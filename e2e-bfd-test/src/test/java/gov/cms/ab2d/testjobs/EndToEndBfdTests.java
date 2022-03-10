@@ -1,7 +1,7 @@
 package gov.cms.ab2d.testjobs;
 
+import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
@@ -10,21 +10,20 @@ import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.SinceSource;
 import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.coverage.model.CoverageMapping;
+import gov.cms.ab2d.coverage.model.CoverageSearch;
+import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
+import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.common.service.InvalidContractException;
 import gov.cms.ab2d.common.service.JobOutputService;
 import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.service.JobServiceImpl;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Constants;
-import gov.cms.ab2d.coverage.model.CoverageMapping;
-import gov.cms.ab2d.coverage.model.CoverageSearch;
-import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
-import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventSummary;
 import gov.cms.ab2d.fhir.BundleUtils;
@@ -47,17 +46,6 @@ import gov.cms.ab2d.worker.processor.coverage.CoverageProcessorImpl;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.service.FileServiceImpl;
 import gov.cms.ab2d.worker.service.JobChannelService;
-import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IDomainResource;
@@ -80,6 +68,17 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.BlockingQueue;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
@@ -119,6 +118,8 @@ public class EndToEndBfdTests {
     @Autowired
     private ContractRepository contractRepository;
     @Autowired
+    private ContractWorkerClient contractWorkerClient;
+    @Autowired
     private JobChannelService jobChannelService;
     @Autowired
     private JobProgressService jobProgressService;
@@ -148,8 +149,6 @@ public class EndToEndBfdTests {
     private LoggerEventSummary logEventSummary;
     @Autowired
     private ContractToContractCoverageMapping contractToContractCoverageMapping;
-    @Autowired
-    ContractWorkerClient contractWorkerClient;
 
     @TempDir
     File path;
@@ -180,7 +179,6 @@ public class EndToEndBfdTests {
 
         propertiesService.updateProperties(List.of(coreClaimsPool, maxClaimsPool, scaleToMaxTime));
 
-
         coverageDriver = new CoverageDriverImpl(coverageSearchRepository, pdpClientService, coverageService,
                 propertiesService, coverageProcessor, coverageLockWrapper, contractToContractCoverageMapping);
 
@@ -207,8 +205,7 @@ public class EndToEndBfdTests {
      */
     @Test
     void runJobs() throws InterruptedException {
-        ContractToContractCoverageMapping mapping = new ContractToContractCoverageMapping();
-        PdpClient pdpClient = setupClient((ContractDTO) getContract());
+        PdpClient pdpClient = setupClient(getContract());
 
         final String path = System.getProperty("java.io.tmpdir");
 
@@ -336,23 +333,15 @@ public class EndToEndBfdTests {
         return queue.size();
     }
 
-    private ContractDTO getContract() {
-        return contractRepository.findContractByContractNumber(EndToEndBfdTests.CONTRACT_TO_USE).get().toDTO();
+    private Contract getContract() {
+        return contractRepository.findContractByContractNumber(EndToEndBfdTests.CONTRACT_TO_USE).orElse(null);
     }
 
-    private PdpClient setupClient(ContractDTO contractDTO) {
+    private PdpClient setupClient(Contract contract) {
         PdpClient pdpClient = new PdpClient();
         pdpClient.setClientId(EndToEndBfdTests.CONTRACT_TO_USE_CLIENT_ID);
         pdpClient.setOrganization("Synthea Data");
         pdpClient.setEnabled(true);
-
-        Contract contract = new Contract();
-        contract.setContractName(contractDTO.getContractName());
-        contract.setAttestedOn(OffsetDateTime.parse(contractDTO.getAttestedOn()));
-        contract.setContractNumber(contractDTO.getContractNumber());
-        contract.setContractType(Contract.ContractType.valueOf(contractDTO.getContractType().toString()));
-
-        contractRepository.saveAndFlush(contract);
         pdpClient.setContract(contract);
         return pdpClientRepository.save(pdpClient);
     }
