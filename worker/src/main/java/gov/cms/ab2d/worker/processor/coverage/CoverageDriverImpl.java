@@ -49,7 +49,6 @@ import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getAttestationTime;
 import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getEndDateTime;
 import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.toList;
 
 /**
  * Handle high level actions related to updating and querying enrollment for contracts.
@@ -202,7 +201,7 @@ public class CoverageDriverImpl implements CoverageDriver {
 
         try {
 
-            // We run this job once a day so we really need to grab this lock
+            // We run this job once a day, so we really need to grab this lock
             locked = lock.tryLock(TEN_MINUTES, TimeUnit.MINUTES);
 
             if (locked) {
@@ -312,7 +311,7 @@ public class CoverageDriverImpl implements CoverageDriver {
             /*
              * If override is set, update every qualifying coverage period that is not currently being updated.
              *
-             * Otherwise update only if coverage has not been updated during the current week.
+             * Otherwise, update only if coverage has not been updated during the current week.
              */
             if (config.isOverride()) {
                 // Only add coverage periods that are not running already
@@ -467,7 +466,7 @@ public class CoverageDriverImpl implements CoverageDriver {
              * search
              */
             List<CoveragePeriod> neverSearched = coverageService.coveragePeriodNeverSearchedSuccessfully().stream()
-                    .filter(period -> Objects.equals(contract.getContractNumber(), period.getContractNumber())).collect(toList());
+                    .filter(period -> Objects.equals(contract.getContractNumber(), period.getContractNumber())).toList();
             if (!neverSearched.isEmpty()) {
                 // Check that we've not submitted and failed these jobs
                 neverSearched.forEach(period -> checkCoveragePeriodValidity(job, period));
@@ -689,7 +688,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      * for contracts not currently being updated
      * @param issues list of already discovered issues to append new issues to
      * @param contract the contract to check
-     * @return true if the contract if not being updated
+     * @return true if the contract is not being updated
      */
     private boolean contractNotBeingUpdated(List<String> issues, Contract contract) {
         List<CoveragePeriod> periods = coverageService.findAssociatedCoveragePeriods(contract.getContractNumber());
