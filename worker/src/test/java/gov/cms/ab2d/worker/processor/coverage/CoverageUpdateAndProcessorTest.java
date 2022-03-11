@@ -8,12 +8,10 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.Properties;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Constants;
-import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.coverage.model.CoverageJobStatus;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
@@ -24,6 +22,8 @@ import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
+import gov.cms.ab2d.worker.service.ContractWorkerClient;
+import gov.cms.ab2d.worker.util.WorkerDataSetup;
 import java.time.DayOfWeek;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
@@ -84,7 +84,7 @@ class CoverageUpdateAndProcessorTest {
     private ContractRepository contractRepo;
 
     @Autowired
-    private ContractService contractService;
+    private ContractWorkerClient contractWorkerClient;
 
     @Autowired
     private CoveragePeriodRepository coveragePeriodRepo;
@@ -105,7 +105,7 @@ class CoverageUpdateAndProcessorTest {
     private PropertiesService propertiesService;
 
     @Autowired
-    private DataSetup dataSetup;
+    private WorkerDataSetup dataSetup;
 
     @Autowired
     private CoverageDataSetup coverageDataSetup;
@@ -142,7 +142,7 @@ class CoverageUpdateAndProcessorTest {
         february = coverageDataSetup.createCoveragePeriod("TST-12", 2, 2020);
         march = coverageDataSetup.createCoveragePeriod("TST-12", 3, 2020);
 
-        PdpClientDTO contractPdpClient = createClient(contract, "TST-12", SPONSOR_ROLE);
+        PdpClientDTO contractPdpClient = createClient(contract.toDTO(), "TST-12", SPONSOR_ROLE);
         pdpClientService.createClient(contractPdpClient);
         dataSetup.queueForCleanup(pdpClientService.getClientById("TST-12"));
 
@@ -153,7 +153,7 @@ class CoverageUpdateAndProcessorTest {
         taskExecutor.setCorePoolSize(3);
         taskExecutor.initialize();
 
-        processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS, contractService);
+        processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS, contractWorkerClient);
         driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesService, processor, searchLock, mapping);
     }
 
@@ -199,7 +199,7 @@ class CoverageUpdateAndProcessorTest {
                 AB2D_EPOCH.toOffsetDateTime().plusMonths(3));
         contractRepo.saveAndFlush(attestedAfterEpoch);
 
-        PdpClientDTO attestedAfterClient = createClient(attestedAfterEpoch, "TST-AFTER-EPOCH", SPONSOR_ROLE);
+        PdpClientDTO attestedAfterClient = createClient(attestedAfterEpoch.toDTO(), "TST-AFTER-EPOCH", SPONSOR_ROLE);
         pdpClientService.createClient(attestedAfterClient);
         dataSetup.queueForCleanup(pdpClientService.getClientById("TST-AFTER-EPOCH"));
 
@@ -207,7 +207,7 @@ class CoverageUpdateAndProcessorTest {
                 AB2D_EPOCH.toOffsetDateTime().minusNanos(1));
         contractRepo.saveAndFlush(attestedBeforeEpoch);
 
-        PdpClientDTO attestedBeforeClient = createClient(attestedBeforeEpoch, "TST-BEFORE-EPOCH", SPONSOR_ROLE);
+        PdpClientDTO attestedBeforeClient = createClient(attestedBeforeEpoch.toDTO(), "TST-BEFORE-EPOCH", SPONSOR_ROLE);
         pdpClientService.createClient(attestedBeforeClient);
         dataSetup.queueForCleanup(pdpClientService.getClientById("TST-BEFORE-EPOCH"));
 
@@ -643,7 +643,7 @@ class CoverageUpdateAndProcessorTest {
         coveragePeriodRepo.saveAndFlush(february);
 
         try{
-            driver.isCoverageAvailable(job, contract);
+            driver.isCoverageAvailable(job, contract.toDTO());
         }
         catch (CoverageDriverException coverageDriverException) {
             //passed
@@ -709,14 +709,12 @@ class CoverageUpdateAndProcessorTest {
     }
 
 
-    private PdpClientDTO createClient(Contract contract, String clientId, @Nullable String roleName) {
+    private PdpClientDTO createClient(ContractDTO contract, String clientId, @Nullable String roleName) {
         PdpClientDTO client = new PdpClientDTO();
         client.setClientId(clientId);
         client.setOrganization(clientId);
         client.setEnabled(true);
-        ContractDTO contractDTO = new ContractDTO(contract.getContractNumber(), contract.getContractName(),
-                contract.getAttestedOn().toString());
-        client.setContract(contractDTO);
+        client.setContract(contract);
         client.setRole(roleName);
 
         return client;

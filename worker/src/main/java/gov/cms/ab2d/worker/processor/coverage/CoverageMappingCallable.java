@@ -107,7 +107,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
         final Set<Identifiers> patientIds = new HashSet<>();
         int bundleNo = 1;
         try {
-            log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}",
+            log.info("retrieving contract membership for ContractWorkerDto {}-{}-{} bundle #{}",
                     contractNumber, this.year, month, bundleNo);
 
             BFDClient.BFD_BULK_JOB_ID.set(coverageMapping.getJobId());
@@ -116,11 +116,11 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
             patientIds.addAll(extractAndFilter(bundle));
 
             String availableLinks = BundleUtils.getAvailableLinks(bundle);
-            log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}, available links {}",
+            log.info("retrieving contract membership for ContractWorkerDto {}-{}-{} bundle #{}, available links {}",
                     contractNumber, this.year, month, bundleNo, availableLinks);
 
             if (BundleUtils.getNextLink(bundle) == null) {
-                log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}, does not have a next link",
+                log.info("retrieving contract membership for ContractWorkerDto {}-{}-{} bundle #{}, does not have a next link",
                         contractNumber, this.year, month, bundleNo);
             }
 
@@ -128,25 +128,25 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
 
                 bundleNo += 1;
 
-                log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}",
+                log.info("retrieving contract membership for ContractWorkerDto {}-{}-{} bundle #{}",
                         contractNumber, this.year, month, bundleNo);
 
                 bundle = bfdClient.requestNextBundleFromServer(version, bundle);
 
                 availableLinks = BundleUtils.getAvailableLinksPretty(bundle);
 
-                log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}, available links {}",
+                log.info("retrieving contract membership for ContractWorkerDto {}-{}-{} bundle #{}, available links {}",
                         contractNumber, this.year, month, bundleNo, availableLinks);
 
                 if (BundleUtils.getNextLink(bundle) == null) {
-                    log.info("retrieving contract membership for Contract {}-{}-{} bundle #{}, does not have a next link",
+                    log.info("retrieving contract membership for ContractWorkerDto {}-{}-{} bundle #{}, does not have a next link",
                             contractNumber, this.year, month, bundleNo);
                 }
 
                 patientIds.addAll(extractAndFilter(bundle));
             }
 
-            log.info("retrieving contract membership for Contract {}-{}-{}, #{} bundles received.",
+            log.info("retrieving contract membership for ContractWorkerDto {}-{}-{}, #{} bundles received.",
                     contractNumber, this.year, month, bundleNo);
 
             coverageMapping.addBeneficiaries(patientIds);

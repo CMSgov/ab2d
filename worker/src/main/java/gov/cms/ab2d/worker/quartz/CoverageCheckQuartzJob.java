@@ -29,7 +29,7 @@ import static gov.cms.ab2d.eventlogger.events.SlackEvents.COVERAGE_VERIFICATION_
  * The business requirements include:
  *
  *      - Contracts must have non-zero enrollment for every month except the current month
- *      - Contract must only have one copy of enrollment in the database (only results of one BFD search at a time)
+ *      - ContractWorkerDto must only have one copy of enrollment in the database (only results of one BFD search at a time)
  *      - For each month and year the contract is active, the enrollment associated with that month and year
  *          should be from the latest BFD search and not older searches
  *      - Contracts should not have drastic changes in enrollment numbers month to month, except for the months of

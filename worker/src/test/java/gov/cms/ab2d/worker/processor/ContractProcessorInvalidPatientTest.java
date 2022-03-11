@@ -1,24 +1,32 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.model.*;
-import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.common.dto.ContractDTO;
+import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
-import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.config.SearchConfig;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
-import gov.cms.ab2d.worker.repository.StubContractRepository;
 import gov.cms.ab2d.worker.repository.StubJobRepository;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import gov.cms.ab2d.worker.service.JobChannelStubServiceImpl;
+import gov.cms.ab2d.worker.util.ContractWorkerClientMock;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.OffsetDateTime;
+import java.util.Date;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,18 +36,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.OffsetDateTime;
-import java.util.Date;
-import java.util.List;
 
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
 import static java.util.Collections.singletonList;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -62,6 +66,8 @@ class ContractProcessorInvalidPatientTest {
     @Mock
     private ContractToContractCoverageMapping mapping;
 
+    private ContractWorkerClientMock contractWorkerClient;
+
     @Mock
     private RoundRobinBlockingQueue<PatientClaimsRequest> requestQueue;
 
@@ -69,7 +75,7 @@ class ContractProcessorInvalidPatientTest {
     File tmpDirFolder;
 
     private ContractProcessor cut;
-    private final Contract contract = new Contract();
+    private ContractDTO contract;
     private final Job job = new Job();
     private static final String jobId = "1234";
     private final String contractId = "ABC";
@@ -78,14 +84,11 @@ class ContractProcessorInvalidPatientTest {
 
     @BeforeEach
     void setup() {
+        contractWorkerClient = new ContractWorkerClientMock();
+        contract = new ContractDTO(contractId, contractId, OffsetDateTime.now().minusYears(50), null);
 
         SearchConfig searchConfig = new SearchConfig(tmpDirFolder.getAbsolutePath(), STREAMING_DIR,
                 FINISHED_DIR, 0, 0, 1, 2);
-
-        Contract contract = new Contract();
-        contract.setContractNumber(contractId);
-        contract.setAttestedOn(OffsetDateTime.now().minusYears(50));
-        ContractRepository contractRepository = new StubContractRepository(contract);
 
         job.setJobUuid(jobId);
         job.setContractNumber(contract.getContractNumber());
@@ -98,8 +101,10 @@ class ContractProcessorInvalidPatientTest {
 
         ThreadPoolTaskExecutor aggTP = new ThreadPoolTaskExecutor();
         aggTP.initialize();
-        cut = new ContractProcessorImpl(contractRepository, jobRepository, coverageDriver, patientClaimsProcessor, eventLogger,
+
+        cut = new ContractProcessorImpl(contractWorkerClient, jobRepository, coverageDriver, patientClaimsProcessor, eventLogger,
                 requestQueue, jobChannelService, jobProgressUpdateService, mapping, aggTP, searchConfig);
+
         ReflectionTestUtils.setField(cut, "eobJobPatientQueueMaxSize", 1);
         ReflectionTestUtils.setField(cut, "eobJobPatientQueuePageSize", 1);
         jobChannelService.sendUpdate(jobId, JobMeasure.FAILURE_THRESHHOLD, 100);
@@ -109,7 +114,7 @@ class ContractProcessorInvalidPatientTest {
 
     @Test
     void testInvalidBenes() throws IOException {
-        when(mapping.map(any(Contract.class))).thenReturn(new ContractForCoverageDTO(contract.getContractNumber(), contract.getAttestedOn(), ContractForCoverageDTO.ContractType.NORMAL));
+        when(mapping.map(any(ContractDTO.class))).thenReturn(new ContractForCoverageDTO(contract.getContractNumber(), contract.getAttestedOn(), ContractForCoverageDTO.ContractType.NORMAL));
         org.hl7.fhir.dstu3.model.Bundle b1 = BundleUtils.createBundle(createBundleEntry("1"));
         org.hl7.fhir.dstu3.model.Bundle b2 = BundleUtils.createBundle(createBundleEntry("2"));
         org.hl7.fhir.dstu3.model.Bundle b4 = BundleUtils.createBundle(createBundleEntry("4"));
@@ -117,7 +122,7 @@ class ContractProcessorInvalidPatientTest {
         when(bfdClient.requestEOBFromServer(eq(STU3), eq(2L), any())).thenReturn(b2);
         when(bfdClient.requestEOBFromServer(eq(STU3), eq(3L), any())).thenReturn(b4);
 
-        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(3);
+        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractDTO.class))).thenReturn(3);
 
         List<FilterOutByDate.DateRange> dates = singletonList(TestUtil.getOpenRange());
         List<CoverageSummary> summaries = List.of(new CoverageSummary(createIdentifierWithoutMbi(1L), null, dates),

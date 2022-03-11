@@ -49,9 +49,6 @@ public class Mapping {
             }
         };
 
-        Converter<Contract, ContractDTO> contractContractDTOConverter = context ->
-                new ContractDTO(context.getSource().getContractNumber(), context.getSource().getContractName(),
-                                context.getSource().getAttestedOn().toString());
         Converter<ContractDTO, Contract> sponsorDTOSponsorConverter = new AbstractConverter<>() {
             protected Contract convert(ContractDTO source) {
                 //noinspection OptionalGetWithoutIsPresent
@@ -61,7 +58,7 @@ public class Mapping {
 
         modelMapper.addConverter(sponsorDTOSponsorConverter);
         modelMapper.createTypeMap(PdpClient.class, PdpClientDTO.class)
-                .addMappings(mapper -> mapper.using(contractContractDTOConverter).map(PdpClient::getContract, PdpClientDTO::setContract))
+                .addMappings(mapper -> mapper.map(pdpClient -> pdpClient.getContract().toDTO(), PdpClientDTO::setContract))
                 .addMappings(mapper -> mapper.using(roleToRoleDTOConverter).map(PdpClient::getRoles, PdpClientDTO::setRole))
                 .addMappings(mapper -> mapper.map(PdpClient::getContract, PdpClientDTO::setContract));
         modelMapper.createTypeMap(PdpClientDTO.class, PdpClient.class)

@@ -1,16 +1,15 @@
 package gov.cms.ab2d.worker.processor;
 
+import com.newrelic.api.agent.NewRelic;
+import com.newrelic.api.agent.Token;
+import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.aggregator.AggregatorCallable;
 import gov.cms.ab2d.aggregator.FileOutputType;
 import gov.cms.ab2d.aggregator.FileUtils;
 import gov.cms.ab2d.aggregator.JobHelper;
-import com.newrelic.api.agent.NewRelic;
-import com.newrelic.api.agent.Token;
-import com.newrelic.api.agent.Trace;
-import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
-import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
@@ -21,8 +20,8 @@ import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.config.SearchConfig;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
+import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.service.JobChannelService;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -36,15 +35,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import static gov.cms.ab2d.aggregator.FileOutputType.DATA;
 import static gov.cms.ab2d.aggregator.FileOutputType.ERROR;
-
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
@@ -64,8 +62,9 @@ public class ContractProcessorImpl implements ContractProcessor {
     @Value("${eob.job.patient.queue.page.size}")
     private int eobJobPatientQueuePageSize;
 
-    private final ContractToContractCoverageMapping mapping;
-    private final ContractRepository contractRepository;
+    private ContractToContractCoverageMapping mapping;
+
+    private final ContractWorkerClient contractWorkerClient;
     private final JobRepository jobRepository;
     private final CoverageDriver coverageDriver;
     private final PatientClaimsProcessor patientClaimsProcessor;
@@ -77,7 +76,7 @@ public class ContractProcessorImpl implements ContractProcessor {
     private final SearchConfig searchConfig;
 
     @SuppressWarnings("checkstyle:ParameterNumber") // TODO - refactor to eliminate the ridiculous number of args
-    public ContractProcessorImpl(ContractRepository contractRepository,
+    public ContractProcessorImpl(ContractWorkerClient contractWorkerClient,
                                  JobRepository jobRepository,
                                  CoverageDriver coverageDriver,
                                  PatientClaimsProcessor patientClaimsProcessor,
@@ -88,7 +87,6 @@ public class ContractProcessorImpl implements ContractProcessor {
                                  ContractToContractCoverageMapping mapping,
                                  @Qualifier("aggregatorThreadPool") ThreadPoolTaskExecutor aggregatorThreadPool,
                                  SearchConfig searchConfig) {
-        this.contractRepository = contractRepository;
         this.jobRepository = jobRepository;
         this.coverageDriver = coverageDriver;
         this.patientClaimsProcessor = patientClaimsProcessor;
@@ -99,6 +97,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         this.mapping = mapping;
         this.aggregatorThreadPool = aggregatorThreadPool;
         this.searchConfig = searchConfig;
+        this.contractWorkerClient = contractWorkerClient;
     }
 
     /**
@@ -131,7 +130,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contractNumber));
 
         //noinspection OptionalGetWithoutIsPresent
-        Contract contract = contractRepository.findContractByContractNumber(contractNumber).get();
+        ContractDTO contract = contractWorkerClient.getContractByContractNumber(contractNumber);
         int numBenes = coverageDriver.numberOfBeneficiariesToProcess(job, contract);
         jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENTS_EXPECTED, numBenes);
         log.info("Contract [{}] has [{}] Patients", contractNumber, numBenes);
@@ -184,7 +183,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      * Look through the job output file and create JobOutput objects with them
      *
      * @param jobId - the job id
-     * @param type - the file type
+     * @param type  - the file type
      * @return the list of outputs
      */
     List<JobOutput> getOutputs(String jobId, FileOutputType type) {
@@ -213,7 +212,7 @@ public class ContractProcessorImpl implements ContractProcessor {
      */
     private void loadEobRequests(ContractData contractData) throws InterruptedException {
         String jobUuid = contractData.getJob().getJobUuid();
-        Contract contract = contractData.getContract();
+        ContractDTO contract = contractData.getContract();
 
         // Handle first page of beneficiaries and then enter loop
         CoveragePagingResult current = coverageDriver.pageCoverage(new CoveragePagingRequest(eobJobPatientQueuePageSize,
@@ -478,9 +477,8 @@ public class ContractProcessorImpl implements ContractProcessor {
      * Checks to make sure thread isn't hanging, kills it if it is.
      *
      * @param aggregatorThread - the thread to check and cancel if some reason we're stuck
-     * @param jobId - the job ID so we can check the directory
-     * @param jobDone - If the worker is done sending to the streaming directory
-     *
+     * @param jobId            - the job ID so we can check the directory
+     * @param jobDone          - If the worker is done sending to the streaming directory
      * @return true if the job is actually done, false otherwise.
      */
     boolean isDone(Future<Integer> aggregatorThread, String jobId, boolean jobDone) {

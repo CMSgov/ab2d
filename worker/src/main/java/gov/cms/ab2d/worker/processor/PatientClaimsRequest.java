@@ -4,12 +4,11 @@ import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.fhir.FhirVersion;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-
-import javax.annotation.Nullable;
 import java.time.OffsetDateTime;
 import java.util.List;
+import javax.annotation.Nullable;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 /**
  * Request to BFD for a single patient's claims matching the provided parameters and requirements.

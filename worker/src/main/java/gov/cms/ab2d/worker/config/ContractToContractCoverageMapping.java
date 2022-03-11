@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.config;
 
+import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import javax.annotation.PostConstruct;
@@ -23,7 +24,15 @@ public class ContractToContractCoverageMapping {
         modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setSkipNullEnabled(true);
 
-        Converter<Contract, ContractForCoverageDTO> coverageContractDTOConverter = new AbstractConverter<>() {
+        Converter<ContractDTO, ContractForCoverageDTO> coverageContractDTOConverter = new AbstractConverter<>() {
+
+            @Override
+            protected ContractForCoverageDTO convert(ContractDTO source) {
+                return new ContractForCoverageDTO(source.getContractNumber(), source.getAttestedOn(), ContractForCoverageDTO.ContractType.valueOf(source.getContractType().toString())); //NOSONAR
+            }
+        };
+
+        Converter<Contract, ContractForCoverageDTO> contractToConverageDto = new AbstractConverter<>() {
 
             @Override
             protected ContractForCoverageDTO convert(Contract source) {
@@ -32,6 +41,11 @@ public class ContractToContractCoverageMapping {
         };
 
         modelMapper.addConverter(coverageContractDTOConverter);
+        modelMapper.addConverter(contractToConverageDto);
+    }
+
+    public ContractForCoverageDTO map(ContractDTO contract) {
+        return modelMapper.map(contract, ContractForCoverageDTO.class);
     }
 
     public ContractForCoverageDTO map(Contract contract) {
