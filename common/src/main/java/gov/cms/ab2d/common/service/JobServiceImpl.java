@@ -210,7 +210,7 @@ public class JobServiceImpl implements JobService {
     public List<StaleJob> checkForExpiration(List<String> jobUuids, int ttl) {
         return jobRepository.findByJobUuidIn(jobUuids).stream()
                 .filter(job -> job.getStatus().isFinished())
-                .filter(job -> job.getCompletedAt() == null)
+                .filter(job -> job.getCompletedAt() != null)
                 .filter(job -> completedBeforeTTL(job.getCompletedAt(), ttl))
                 .map(job -> new StaleJob(job.getJobUuid(), job.getOrganization()))
                 .toList();
