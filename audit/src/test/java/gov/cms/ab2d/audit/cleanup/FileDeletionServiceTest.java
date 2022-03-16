@@ -119,7 +119,6 @@ class FileDeletionServiceTest {
 
     @BeforeEach
     public void init() {
-        final String contractNumber = "FileJob123";
         pathsToDelete = new ArrayList<>();
 
         PdpClient pdpClient = dataSetup.setupPdpClient(List.of());
@@ -132,20 +131,20 @@ class FileDeletionServiceTest {
         // Connected to a job, but in progress
         jobInProgress = new AuditMockJob(new StaleJob(UUID.randomUUID().toString(), pdpClient.getOrganization()),
                 IN_PROGRESS, null);
-        jobAuditClientMock.update(job);
+        jobAuditClientMock.update(jobInProgress);
 
         // Connected to a job that is finished where the file has yet to expire
         jobNotExpiredYet = new AuditMockJob(new StaleJob(UUID.randomUUID().toString(), pdpClient.getOrganization()),
                 SUCCESSFUL, OffsetDateTime.now().minusHours(55));
-        jobAuditClientMock.update(job);
+        jobAuditClientMock.update(jobNotExpiredYet);
 
         jobCancelled = new AuditMockJob(new StaleJob(UUID.randomUUID().toString(), pdpClient.getOrganization()),
                 CANCELLED, null);
-        jobAuditClientMock.update(job);
+        jobAuditClientMock.update(jobCancelled);
 
         jobFailed = new AuditMockJob(new StaleJob(UUID.randomUUID().toString(), pdpClient.getOrganization()),
                 FAILED, null);
-        jobAuditClientMock.update(job);
+        jobAuditClientMock.update(jobFailed);
 
         efsMount = tmpDirFolder.toPath().toString();
         ReflectionTestUtils.setField(fileDeletionService, "efsMount", efsMount);
@@ -175,8 +174,7 @@ class FileDeletionServiceTest {
         Path destination = Paths.get(efsMount, TEST_FILE);
         pathsToDelete.add(destination);
 
-        URL url = this.getClass().getResource(File.separator + TEST_FILE);
-        Path source = Paths.get(url.toURI());
+        Path source = getSourcePath(TEST_FILE);
         Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
 
         changeFileCreationDate(destination);
@@ -198,8 +196,7 @@ class FileDeletionServiceTest {
         Path destinationNotDeleted = Paths.get(efsMount, TEST_FILE_NOT_DELETED);
         pathsToDelete.add(destinationNotDeleted);
 
-        URL urlNotDeletedFile = this.getClass().getResource(File.separator + TEST_FILE_NOT_DELETED);
-        Path sourceNotDeleted = Paths.get(urlNotDeletedFile.toURI());
+        Path sourceNotDeleted = getSourcePath(TEST_FILE_NOT_DELETED);
         Files.copy(sourceNotDeleted, destinationNotDeleted, StandardCopyOption.REPLACE_EXISTING);
 
         fileDeletionService.deleteFiles();
@@ -220,8 +217,7 @@ class FileDeletionServiceTest {
 
         // Not connected to a job
         Path nestedFileDestination = Paths.get(efsMount, TEST_FILE_NESTED);
-        URL nestedFileUrl = this.getClass().getResource(File.separator + TEST_FILE_NESTED);
-        Path nestedFileSource = Paths.get(nestedFileUrl.toURI());
+        Path nestedFileSource = getSourcePath(TEST_FILE_NESTED);
         Files.copy(nestedFileSource, nestedFileDestination, StandardCopyOption.REPLACE_EXISTING);
 
         changeFileCreationDate(nestedFileDestination);
@@ -244,8 +240,7 @@ class FileDeletionServiceTest {
         Path regularFileDestination = Paths.get(efsMount, REGULAR_FILE);
         pathsToDelete.add(regularFileDestination);
 
-        URL regularFileUrl = this.getClass().getResource(File.separator + REGULAR_FILE);
-        Path regularFileSource = Paths.get(regularFileUrl.toURI());
+        Path regularFileSource = getSourcePath(REGULAR_FILE);
         Files.copy(regularFileSource, regularFileDestination, StandardCopyOption.REPLACE_EXISTING);
 
         changeFileCreationDate(regularFileDestination);
@@ -264,8 +259,7 @@ class FileDeletionServiceTest {
         Path regularFolder = Paths.get(efsMount, TEST_DIRECTORY);
         pathsToDelete.add(regularFolder);
 
-        URL regularFileUrl = this.getClass().getResource(File.separator + REGULAR_FILE);
-        Path regularFileSource = Paths.get(regularFileUrl.toURI());
+        Path regularFileSource = getSourcePath(REGULAR_FILE);
         Files.copy(regularFileSource, regularFolder, StandardCopyOption.REPLACE_EXISTING);
 
         changeFileCreationDate(regularFolder);
@@ -288,8 +282,7 @@ class FileDeletionServiceTest {
         if (!noPermissionsDir.exists()) noPermissionsDir.mkdirs();
 
         Path noPermissionsFileDestination = Paths.get(efsMount, TEST_FILE_NO_PERMISSIONS);
-        URL noPermissionsFileUrl = this.getClass().getResource(File.separator + TEST_FILE_NO_PERMISSIONS);
-        Path noPermissionsFileSource = Paths.get(noPermissionsFileUrl.toURI());
+        Path noPermissionsFileSource = getSourcePath(TEST_FILE_NO_PERMISSIONS);
         Files.copy(noPermissionsFileSource, noPermissionsFileDestination, StandardCopyOption.REPLACE_EXISTING);
 
         changeFileCreationDate(noPermissionsFileDestination);
@@ -334,8 +327,7 @@ class FileDeletionServiceTest {
         pathsToDelete.add(jobPath);
 
         Path destinationJobConnection = Paths.get(jobPath.toString(), "S0000_0001.ndjson");
-        URL urlJobConnection = this.getClass().getResource(File.separator + TEST_FILE);
-        Path sourceJobConnection = Paths.get(urlJobConnection.toURI());
+        Path sourceJobConnection = getSourcePath(TEST_FILE);
         Files.copy(sourceJobConnection, destinationJobConnection, StandardCopyOption.REPLACE_EXISTING);
 
         changeFileCreationDate(destinationJobConnection);
@@ -362,8 +354,7 @@ class FileDeletionServiceTest {
         pathsToDelete.add(jobPath);
 
         Path destinationJobConnection = Paths.get(jobPath.toString(), "S0000_0001.ndjson");
-        URL urlJobConnection = this.getClass().getResource(File.separator + TEST_FILE);
-        Path sourceJobConnection = Paths.get(urlJobConnection.toURI());
+        Path sourceJobConnection = getSourcePath(TEST_FILE);
         Files.copy(sourceJobConnection, destinationJobConnection, StandardCopyOption.REPLACE_EXISTING);
 
         changeFileCreationDate(destinationJobConnection);
@@ -390,8 +381,7 @@ class FileDeletionServiceTest {
         pathsToDelete.add(jobPath);
 
         Path destinationJobConnection = Paths.get(jobPath.toString(), "S0000_0001.ndjson");
-        URL urlJobConnection = this.getClass().getResource(File.separator + TEST_FILE);
-        Path sourceJobConnection = Paths.get(urlJobConnection.toURI());
+        Path sourceJobConnection = getSourcePath(TEST_FILE);
         Files.copy(sourceJobConnection, destinationJobConnection, StandardCopyOption.REPLACE_EXISTING);
 
         changeFileCreationDate(destinationJobConnection);
@@ -418,8 +408,7 @@ class FileDeletionServiceTest {
 
         if (!jobInProgressDir.exists()) jobInProgressDir.mkdirs();
         Path destinationJobInProgressConnection = Paths.get(jobInProgressPath.toString(), "S0000_0001.ndjson");
-        URL urlJobInProgressConnection = this.getClass().getResource(File.separator + TEST_FILE);
-        Path sourceJobInProgressConnection = Paths.get(urlJobInProgressConnection.toURI());
+        Path sourceJobInProgressConnection = getSourcePath(TEST_FILE);
         Files.copy(sourceJobInProgressConnection, destinationJobInProgressConnection, StandardCopyOption.REPLACE_EXISTING);
 
         assertTrue(Files.exists(destinationJobInProgressConnection));
@@ -463,8 +452,7 @@ class FileDeletionServiceTest {
         pathsToDelete.add(jobNotExpiredYetPath);
 
         Path destinationJobNotExpiredYetConnection = Paths.get(jobNotExpiredYetPath.toString(), "S0000_0001.ndjson");
-        URL urlJobNotExpiredYetConnection = this.getClass().getResource(File.separator + TEST_FILE);
-        Path sourceJobNotExpiredYetConnection = Paths.get(urlJobNotExpiredYetConnection.toURI());
+        Path sourceJobNotExpiredYetConnection = getSourcePath(TEST_FILE);
         Files.copy(sourceJobNotExpiredYetConnection, destinationJobNotExpiredYetConnection, StandardCopyOption.REPLACE_EXISTING);
 
         fileDeletionService.deleteFiles();
@@ -673,5 +661,15 @@ class FileDeletionServiceTest {
 
         assertEquals(1, Stream.of(files).filter(File::isDirectory).count());
         assertEquals(1, Stream.of(files).filter(File::isFile).count());
+    }
+
+    private Path getSourcePath(String testFile) {
+        // The slash is a resource separator, not a file separator
+        URL urlJobConnection = this.getClass().getResource('/' + testFile);
+        try {
+            return Paths.get(urlJobConnection.toURI());
+        } catch (URISyntaxException use) {
+            throw new RuntimeException(use);
+        }
     }
 }

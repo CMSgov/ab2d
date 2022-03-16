@@ -28,7 +28,7 @@ public class JobAuditClientMock extends JobAuditClient {
         //noinspection ConstantConditions
         return jobMap.values().stream()
                 .filter(job -> job.getStatus().isFinished())
-                .filter(job -> job.getCompletedAt() == null)
+                .filter(job -> job.getCompletedAt() != null)
                 .filter(job -> completedBeforeTTL(job.getCompletedAt(), ttl))
                 .map(AuditMockJob::getStaleJob)
                 .toList();

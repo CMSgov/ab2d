@@ -124,7 +124,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
      * validates the EFS mount.
      */
     private void validateEfsMount() {
-        if (!efsMount.startsWith(File.separator)) {
+        if (!efsMount.startsWith(File.separator) && improperRoot()) {
             throw new EFSMountFormatException("EFS Mount must start with a " + File.separator);
         }
 
@@ -137,6 +137,15 @@ public class FileDeletionServiceImpl implements FileDeletionService {
                 throw new EFSMountFormatException("EFS mount must not start with a directory that contains important files");
             }
         }
+    }
+
+    private boolean improperRoot() {
+        for (File root : File.listRoots()) {
+            if (efsMount.startsWith(root.getAbsolutePath())) {
+                return false;   // proper root match
+            }
+        }
+        return true;
     }
 
     private void deleteFile(Path path, StaleJob staleJob) throws IOException {
