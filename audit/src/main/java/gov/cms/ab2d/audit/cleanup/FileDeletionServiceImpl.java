@@ -1,11 +1,10 @@
 package gov.cms.ab2d.audit.cleanup;
 
+import gov.cms.ab2d.audit.remote.JobAuditClient;
 import gov.cms.ab2d.common.dto.StaleJob;
-import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
-import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventSummary;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -28,19 +27,17 @@ public class FileDeletionServiceImpl implements FileDeletionService {
     @Value("${audit.files.ttl.hours}")
     private int auditFilesTTLHours;
 
-    private final JobService jobService;
+    private final JobAuditClient jobAuditClient;
     private final LogManager eventLogger;
-    private final LoggerEventSummary loggerEventSummary;
 
     private static final String FILE_EXTENSION = ".ndjson";
 
     private static final Set<String> DISALLOWED_DIRECTORIES = Set.of("/bin", "/boot", "/dev", "/etc", "/home", "/lib",
             "/opt", "/root", "/sbin", "/sys", "/usr", "/Applications", "/Library", "/Network", "/System", "/Users", "/Volumes");
 
-    public FileDeletionServiceImpl(JobService jobService, LogManager eventLogger, LoggerEventSummary loggerEventSummary) {
-        this.jobService = jobService;
+    public FileDeletionServiceImpl(JobAuditClient jobAuditClient, LogManager eventLogger) {
+        this.jobAuditClient = jobAuditClient;
         this.eventLogger = eventLogger;
-        this.loggerEventSummary = loggerEventSummary;
     }
 
     /**
@@ -58,7 +55,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         }
 
         List<String> jobIds = Stream.of(files).map(File::getName).toList();
-        List<StaleJob> jobsToDelete = jobService.checkForExpiration(jobIds, auditFilesTTLHours);
+        List<StaleJob> jobsToDelete = jobAuditClient.checkForExpiration(jobIds, auditFilesTTLHours);
         jobsToDelete.forEach(this::deleteJobDirectory);
     }
 
@@ -76,7 +73,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
     }
 
     /**
-     * Recursively delete NDJON files and sub directories
+     * Recursively delete NDJSON files and subdirectories
      *
      * @param staleJob - the job
      * @param jobDir - the top level directory
