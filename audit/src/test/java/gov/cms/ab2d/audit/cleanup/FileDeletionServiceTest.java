@@ -1,6 +1,7 @@
 package gov.cms.ab2d.audit.cleanup;
 
 import gov.cms.ab2d.audit.SpringBootApp;
+import gov.cms.ab2d.common.dto.StaleJob;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
@@ -619,7 +620,7 @@ class FileDeletionServiceTest {
         files.add(finishedDir);
         files.add(streamDir);
 
-        fileDeletionService.deleteNdjsonFilesAndDirectory(job, jobDir);
+        fileDeletionService.deleteNdjsonFilesAndDirectory(new StaleJob(job.getJobUuid(), job.getOrganization()), jobDir);
 
         List<Path> remaining = files.stream().filter(f -> f.toFile().exists()).collect(Collectors.toList());
         // There should be 4 remaining path - the top job directory, the streaming dir, the top level txt file and the s
