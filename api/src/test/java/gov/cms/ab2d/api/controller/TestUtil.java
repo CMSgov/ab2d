@@ -5,7 +5,6 @@ import com.okta.jwt.Jwt;
 import com.okta.jwt.JwtVerificationException;
 import com.okta.jwt.impl.DefaultJwt;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
-import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.DataSetup;
@@ -109,12 +108,6 @@ public class TestUtil {
         }
 
         return destinationStr;
-    }
-
-    public void addJobOutput(Job job, String testFile) {
-        JobOutput jobOutput = createJobOutput(testFile);
-        jobOutput.setJob(job);
-        job.getJobOutputs().add(jobOutput);
     }
 
     public JobOutput createJobOutput(String testFile) {
