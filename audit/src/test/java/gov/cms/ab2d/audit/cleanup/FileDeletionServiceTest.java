@@ -675,12 +675,14 @@ class FileDeletionServiceTest {
     }
 
     @Test
-    void bogusEfsMountRootFromFileUtil() {
-        ReflectionTestUtils.setField(fileDeletionService, "roots", new File[0]);
+    void validEfsMount() {
+        File[] roots = File.listRoots();
+        assertTrue(roots.length > 0);
+        ReflectionTestUtils.setField(fileDeletionService, "efsMount",
+                roots[0].getPath() + "enoughCharsToMakeValid");
 
-        assertThrowsExactly(EFSMountFormatException.class, () -> fileDeletionService.deleteFiles());
-
-        ReflectionTestUtils.setField(fileDeletionService, "roots", File.listRoots());
+        // Should run clean.
+        fileDeletionService.deleteFiles();
     }
 
     private Path getSourcePath(String testFile) {
