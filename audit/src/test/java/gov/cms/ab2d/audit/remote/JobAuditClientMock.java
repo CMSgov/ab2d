@@ -1,9 +1,7 @@
 package gov.cms.ab2d.audit.remote;
 
-import com.amazonaws.services.s3control.model.transform.JobDescriptorStaxUnmarshaller;
 import gov.cms.ab2d.audit.dto.AuditMockJob;
 import gov.cms.ab2d.common.dto.StaleJob;
-import gov.cms.ab2d.common.model.JobStatus;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
