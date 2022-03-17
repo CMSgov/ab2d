@@ -32,5 +32,5 @@ public interface JobService {
 
     JobPollResult poll(boolean admin, String jobUuid, String organization, int delaySeconds);
 
-    List<StaleJob> checkForExpiration(List<String> jobUuids, int ttl);
+    List<StaleJob> checkForExpiration(List<String> jobUuids, int ttlHours);
 }

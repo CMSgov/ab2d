@@ -22,4 +22,8 @@ public class AuditMockJob {
     public String getOrganization() {
         return staleJob.getOrganization();
     }
+
+    public boolean isExpired(int ttlHours) {
+        return status.isExpired(completedAt, ttlHours);
+    }
 }

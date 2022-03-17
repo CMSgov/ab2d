@@ -205,9 +205,9 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public List<StaleJob> checkForExpiration(List<String> jobUuids, int ttl) {
+    public List<StaleJob> checkForExpiration(List<String> jobUuids, int ttlHours) {
         return jobRepository.findByJobUuidIn(jobUuids).stream()
-                .filter(job -> job.getStatus().isExpired(job.getCompletedAt(), ttl))
+                .filter(job -> job.isExpired(ttlHours))
                 .map(job -> new StaleJob(job.getJobUuid(), job.getOrganization()))
                 .toList();
     }

@@ -11,36 +11,36 @@ public enum JobStatus {
 
     SUBMITTED(true, false) {
         @Override
-        public boolean isExpired(OffsetDateTime completedAt, int ttl) {
+        public boolean isExpired(OffsetDateTime completedAt, int ttlHours) {
             return false;
         }
     },
     IN_PROGRESS(true, false) {
         @Override
-        public boolean isExpired(OffsetDateTime completedAt, int ttl) {
+        public boolean isExpired(OffsetDateTime completedAt, int ttlHours) {
             return false;
         }
     },
     FAILED(false, true) {
         @Override
-        public boolean isExpired(OffsetDateTime completedAt, int ttl) {
+        public boolean isExpired(OffsetDateTime completedAt, int ttlHours) {
             return true;
         }
     },
     SUCCESSFUL(false, true) {
         @Override
-        public boolean isExpired(OffsetDateTime completedAt, int ttl) {
+        public boolean isExpired(OffsetDateTime completedAt, int ttlHours) {
             // This really should be an assert as if a job is successful, it should have a completion timestamp.
             if (completedAt == null) {
                 return false;
             }
-            Instant deleteBoundary = Instant.now().minus(ttl, ChronoUnit.HOURS);
+            Instant deleteBoundary = Instant.now().minus(ttlHours, ChronoUnit.HOURS);
             return completedAt.toInstant().isBefore(deleteBoundary);
         }
     },
     CANCELLED(false, true) {
         @Override
-        public boolean isExpired(OffsetDateTime completedAt, int ttl) {
+        public boolean isExpired(OffsetDateTime completedAt, int ttlHours) {
             return true;
         }
     };
@@ -54,5 +54,5 @@ public enum JobStatus {
         this.isFinished = isFinished;
     }
 
-    public abstract boolean isExpired(OffsetDateTime completedAt, int ttl);
+    public abstract boolean isExpired(OffsetDateTime completedAt, int ttlHours);
 }
