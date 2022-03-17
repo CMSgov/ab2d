@@ -50,9 +50,7 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -678,14 +676,11 @@ class FileDeletionServiceTest {
 
     @Test
     void bogusEfsMountRootFromFileUtil() {
-        Optional<File> rootOptional = Arrays.stream(File.listRoots()).findAny();
-        assertTrue(rootOptional.isPresent());
-        String rootPath = rootOptional.get().getPath();
-        assertFalse(rootPath.isEmpty());
-        String finalPath = new StringBuilder(rootPath).insert(1, "bogusRoot").toString();
-        ReflectionTestUtils.setField(fileDeletionService, "efsMount", finalPath);
+        ReflectionTestUtils.setField(fileDeletionService, "roots", new File[0]);
 
         assertThrowsExactly(EFSMountFormatException.class, () -> fileDeletionService.deleteFiles());
+
+        ReflectionTestUtils.setField(fileDeletionService, "roots", File.listRoots());
     }
 
     private Path getSourcePath(String testFile) {

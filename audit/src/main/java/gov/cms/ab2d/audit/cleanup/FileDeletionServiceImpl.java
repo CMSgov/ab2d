@@ -27,6 +27,8 @@ public class FileDeletionServiceImpl implements FileDeletionService {
     @Value("${audit.files.ttl.hours}")
     private int auditFilesTTLHours;
 
+    private File[] roots = File.listRoots();
+
     private final JobAuditClient jobAuditClient;
     private final LogManager eventLogger;
 
@@ -140,7 +142,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
     }
 
     private boolean improperRoot() {
-        for (File root : File.listRoots()) {
+        for (File root : roots) {
             if (efsMount.startsWith(root.getAbsolutePath())) {
                 return false;   // proper root match
             }
