@@ -20,10 +20,10 @@ public class JobAuditClientMock extends JobAuditClient {
     }
 
     @Override
-    public List<StaleJob> checkForExpiration(List<String> jobUuids, int ttl) {
+    public List<StaleJob> checkForExpiration(List<String> jobUuids, int ttlHours) {
         return jobMap.values().stream()
                 .filter(job -> jobUuids.contains(job.getJobUuid()))
-                .filter(job -> job.getStatus().isExpired(job.getCompletedAt(), ttl))
+                .filter(job -> job.isExpired(ttlHours))
                 .map(AuditMockJob::getStaleJob)
                 .toList();
     }

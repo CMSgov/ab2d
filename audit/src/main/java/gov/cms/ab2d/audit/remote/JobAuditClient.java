@@ -16,7 +16,7 @@ public class JobAuditClient {
         this.jobService = jobService;
     }
 
-    public List<StaleJob> checkForExpiration(List<String> jobUuids, int ttl) {
-        return jobService.checkForExpiration(jobUuids, ttl);
+    public List<StaleJob> checkForExpiration(List<String> jobUuids, int ttlHours) {
+        return jobService.checkForExpiration(jobUuids, ttlHours);
     }
 }
