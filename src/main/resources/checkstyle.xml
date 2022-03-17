@@ -152,4 +152,9 @@
 
     </module>
 
+    <module name="SuppressionSingleFilter">
+        <property name="checks" value="VisibilityModifier"/>
+        <property name="files" value="StaleJob.java"/>
+    </module>
+
 </module>

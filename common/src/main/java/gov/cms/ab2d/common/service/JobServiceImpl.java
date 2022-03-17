@@ -1,6 +1,7 @@
 package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.dto.JobPollResult;
+import gov.cms.ab2d.common.dto.StaleJob;
 import gov.cms.ab2d.common.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
@@ -201,6 +202,14 @@ public class JobServiceImpl implements JobService {
         String transactionTime = job.getFhirVersion().getFhirTime(job.getCreatedAt());
         return new JobPollResult(job.getRequestUrl(), job.getStatus(), job.getProgress(), transactionTime,
                 job.getExpiresAt(), job.getJobOutputs());
+    }
+
+    @Override
+    public List<StaleJob> checkForExpiration(List<String> jobUuids, int ttl) {
+        return jobRepository.findByJobUuidIn(jobUuids).stream()
+                .filter(job -> job.getStatus().isExpired(job.getCompletedAt(), ttl))
+                .map(job -> new StaleJob(job.getJobUuid(), job.getOrganization()))
+                .toList();
     }
 
     private boolean clientHasNeverCompletedJob(String contractNumber) {
