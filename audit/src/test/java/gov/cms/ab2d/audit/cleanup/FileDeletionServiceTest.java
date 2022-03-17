@@ -643,7 +643,11 @@ class FileDeletionServiceTest {
         ReflectionTestUtils.setField(fileDeletionService, "efsMount", tmpDir.getAbsolutePath());
         String jobId = job.getJobUuid();
 
+        Path jobDir = Files.createDirectory(Path.of(tmpDir.getAbsolutePath(), jobId));
+        Path bogusDir = Files.createDirectory(Path.of(tmpDir.getAbsolutePath(), "bogusDir"));
         Files.createFile(Path.of(tmpDir.getAbsolutePath(), "bogusFile.ndjson"));
+        Path finishedDir = Files.createDirectory(Path.of(tmpDir.getAbsolutePath(), jobId, "finished"));
+        Path streamDir = Files.createDirectory(Path.of(tmpDir.getAbsolutePath(), jobId, "streaming"));
 
         // Create the files
         Files.createFile(Path.of(tmpDir.getAbsolutePath(), jobId, "tstfile.ndjson"));
