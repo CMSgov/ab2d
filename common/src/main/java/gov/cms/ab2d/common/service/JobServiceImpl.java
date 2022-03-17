@@ -14,9 +14,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -209,16 +207,9 @@ public class JobServiceImpl implements JobService {
     @Override
     public List<StaleJob> checkForExpiration(List<String> jobUuids, int ttl) {
         return jobRepository.findByJobUuidIn(jobUuids).stream()
-                .filter(job -> job.getStatus().isFinished())
-                .filter(job -> job.getCompletedAt() != null)
-                .filter(job -> completedBeforeTTL(job.getCompletedAt(), ttl))
+                .filter(job -> job.getStatus().isExpired(job.getCompletedAt(), ttl))
                 .map(job -> new StaleJob(job.getJobUuid(), job.getOrganization()))
                 .toList();
-    }
-
-    private boolean completedBeforeTTL(OffsetDateTime completedAt, int ttl) {
-        final Instant deleteBoundary = Instant.now().minus(ttl, ChronoUnit.HOURS);
-        return completedAt.toInstant().isBefore(deleteBoundary);
     }
 
     private boolean clientHasNeverCompletedJob(String contractNumber) {
