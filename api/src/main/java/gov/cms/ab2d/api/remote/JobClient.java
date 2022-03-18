@@ -44,10 +44,6 @@ public class JobClient {
         }
     }
 
-    public void deleteFileForJob(File file, String jobGuid) {
-        jobService.deleteFileForJob(file, jobGuid);
-    }
-
     public JobPollResult poll(boolean admin, String jobUuid, String organization, int delaySeconds) {
         return jobService.poll(admin, jobUuid, organization, delaySeconds);
     }

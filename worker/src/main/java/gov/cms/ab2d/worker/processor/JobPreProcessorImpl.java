@@ -170,7 +170,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
                 // Remove any error files from the consideration
                 .filter(o -> !o.getError())
                 // Remove any that has been downloaded
-                .filter(o -> !o.getDownloaded())
+                .filter(o -> o.getDownloaded() > 0)
                 // Determine if there are any left
                 .findAny().isEmpty();
     }

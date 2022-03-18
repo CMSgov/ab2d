@@ -11,6 +11,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.validation.constraints.NotNull;
+import java.time.OffsetDateTime;
 
 @Entity
 @Getter
@@ -38,11 +39,13 @@ public class JobOutput {
     private Boolean error;
 
     @NotNull
-    private Boolean downloaded = false;
+    private int downloaded = 0;
 
     @NotNull
     private String checksum;
 
     @NotNull
     private Long fileLength;
+
+    private OffsetDateTime lastDownloadAt;
 }

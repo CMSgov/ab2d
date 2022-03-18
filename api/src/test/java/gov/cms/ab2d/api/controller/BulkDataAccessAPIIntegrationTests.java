@@ -793,7 +793,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("The file is not present as there was an error. Please resubmit the job.")));
+                        Is.is("The file is not present as it has already been downloaded. Please resubmit the job.")));
         List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(apiRequestEvents.size() - 1);
 
@@ -858,7 +858,7 @@ public class BulkDataAccessAPIIntegrationTests {
         jobOutput.setError(false);
         jobOutput.setChecksum("testoutput");
         jobOutput.setFileLength(20L);
-        jobOutput.setDownloaded(true);
+        jobOutput.setDownloaded(1);
         jobClientMock.addJobOutputForDownload(jobOutput);
 
         MvcResult mvcResultStatusCall =

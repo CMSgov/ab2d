@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
+import static gov.cms.ab2d.common.util.Constants.MAX_DOWNLOADS;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PROD_LIST;
 import static gov.cms.ab2d.eventlogger.events.SlackEvents.ORG_FIRST;
 
@@ -39,17 +40,20 @@ public class JobServiceImpl implements JobService {
     private final LogManager eventLogger;
     private final LoggerEventSummary loggerEventSummary;
     private final String fileDownloadPath;
+    private final PropertiesService propertiesService;
 
     public static final String INITIAL_JOB_STATUS_MESSAGE = "0%";
 
     public JobServiceImpl(JobRepository jobRepository, JobOutputService jobOutputService,
                           LogManager eventLogger, LoggerEventSummary loggerEventSummary,
-                          @Value("${efs.mount}") String fileDownloadPath) {
+                          @Value("${efs.mount}") String fileDownloadPath,
+                          PropertiesService propertiesService) {
         this.jobRepository = jobRepository;
         this.jobOutputService = jobOutputService;
         this.eventLogger = eventLogger;
         this.loggerEventSummary = loggerEventSummary;
         this.fileDownloadPath = fileDownloadPath;
+        this.propertiesService = propertiesService;
     }
 
     @Override
@@ -147,8 +151,8 @@ public class JobServiceImpl implements JobService {
 
         if (!resource.exists()) {
             String errorMsg;
-            if (foundJobOutput.getDownloaded()) {
-                errorMsg = "The file is not present as it has already been downloaded. Please resubmit the job.";
+            if (foundJobOutput.getDownloaded() >= Integer.parseInt(propertiesService.getPropertiesByKey(MAX_DOWNLOADS).getValue())) {
+                errorMsg = "The file has already been download the maximum number of times.";
             } else if (job.getExpiresAt().isBefore(OffsetDateTime.now())) {
                 errorMsg = "The file is not present as it has expired. Please resubmit the job.";
             } else {
@@ -166,7 +170,7 @@ public class JobServiceImpl implements JobService {
         String fileName = file.getName();
         Job job = jobRepository.findByJobUuid(jobUuid);
         JobOutput jobOutput = jobOutputService.findByFilePathAndJob(fileName, job);
-        jobOutput.setDownloaded(true);
+        jobOutput.setDownloaded(1);
         jobOutputService.updateJobOutput(jobOutput);
         eventLogger.log(EventUtils.getFileEvent(job, file, FileEvent.FileStatus.DELETE));
         if (JobUtil.isJobDone(job)) {

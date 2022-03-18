@@ -29,29 +29,29 @@ class JobUtilTest {
         assertTrue(JobUtil.isJobDone(job));
         job = createBasicJob(JobStatus.FAILED, null, true);
         assertTrue(JobUtil.isJobDone(job));
-        job = createBasicJob(JobStatus.IN_PROGRESS, new boolean[] {true, true}, true);
+        job = createBasicJob(JobStatus.IN_PROGRESS, new int[] {1, 1}, true);
         assertFalse(JobUtil.isJobDone(job));
-        job = createBasicJob(JobStatus.SUBMITTED, new boolean[] {true, true}, true);
+        job = createBasicJob(JobStatus.SUBMITTED, new int[] {1, 1}, true);
         assertFalse(JobUtil.isJobDone(job));
-        job = createBasicJob(JobStatus.SUCCESSFUL, new boolean[] {true, true}, false);
+        job = createBasicJob(JobStatus.SUCCESSFUL, new int[] {1, 1}, false);
         assertTrue(JobUtil.isJobDone(job));
-        job = createBasicJob(JobStatus.SUCCESSFUL, new boolean[] {false, true}, false);
+        job = createBasicJob(JobStatus.SUCCESSFUL, new int[] {0, 1}, false);
         assertFalse(JobUtil.isJobDone(job));
-        job = createBasicJob(JobStatus.SUCCESSFUL, new boolean[] {false, true}, true);
+        job = createBasicJob(JobStatus.SUCCESSFUL, new int[] {0, 1}, true);
         assertTrue(JobUtil.isJobDone(job));
-        job = createBasicJob(JobStatus.SUCCESSFUL, new boolean[] {true, true}, true);
+        job = createBasicJob(JobStatus.SUCCESSFUL, new int[] {1, 1}, true);
         assertTrue(JobUtil.isJobDone(job));
         job = createBasicJob(JobStatus.SUCCESSFUL, null, true);
         assertTrue(JobUtil.isJobDone(job));
         job = createBasicJob(JobStatus.SUCCESSFUL, null, false);
         assertFalse(JobUtil.isJobDone(job));
-        job = createBasicJob(JobStatus.SUCCESSFUL, new boolean[] {false, true}, false);
-        JobOutput error = job.getJobOutputs().stream().filter(c -> c.getDownloaded() == false).findFirst().orElse(null);
+        job = createBasicJob(JobStatus.SUCCESSFUL, new int[] {0, 1}, false);
+        JobOutput error = job.getJobOutputs().stream().filter(c -> c.getDownloaded() == 0).findFirst().orElse(null);
         error.setError(true);
         assertTrue(JobUtil.isJobDone(job));
     }
 
-    private Job createBasicJob(JobStatus status, boolean[] outputsDownloaded, boolean isExpired) {
+    private Job createBasicJob(JobStatus status, int[] outputsDownloaded, boolean isExpired) {
         Job job = new Job();
         job.setId(1L);
         job.setJobUuid("JOB");

@@ -43,9 +43,11 @@ public class JobClientMock extends JobClient {
     private int progress = 100;
     private OffsetDateTime expiresAt = OffsetDateTime.now().plusDays(EXPIRES_IN_DAYS);
     private boolean resultsCreated;
+    private int maxDownloads = 10;
 
     @Value("classpath:test.ndjson")
     private Resource jobOutputResults;
+
 
     private final LogManager eventLogger;
 
@@ -113,8 +115,8 @@ public class JobClientMock extends JobClient {
             if (jobOutputList.isEmpty()) {
                 throw new ResourceNotFoundException("No Job Output with the file name " + fileName + " exists in our records");
             }
-            if (jobOutputList.get(0).getDownloaded()) {
-                String errorMsg = "The file is not present as it has already been downloaded. Please resubmit the job.";
+            if (jobOutputList.get(0).getDownloaded() >= maxDownloads) {
+                String errorMsg = "The file has reached the maximum number of downloads.";
                 throw new JobOutputMissingException(errorMsg);
             }
 

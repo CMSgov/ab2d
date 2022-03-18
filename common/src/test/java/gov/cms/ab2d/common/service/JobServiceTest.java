@@ -102,6 +102,9 @@ class JobServiceTest {
     @Autowired
     private SqlEventLogger sqlEventLogger;
 
+    @Autowired
+    private PropertiesService propertiesService;
+
     @Mock
     private KinesisEventLogger kinesisEventLogger;
 
@@ -120,7 +123,7 @@ class JobServiceTest {
     public void setup() {
         MockitoAnnotations.openMocks(this);
         LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
-        jobService = new JobServiceImpl(jobRepository, jobOutputService, logManager, loggerEventSummary, tmpJobLocation);
+        jobService = new JobServiceImpl(jobRepository, jobOutputService, logManager, loggerEventSummary, tmpJobLocation, propertiesService);
         ReflectionTestUtils.setField(jobService, "fileDownloadPath", tmpJobLocation);
 
         dataSetup.setupNonStandardClient(CLIENTID, CONTRACT_NUMBER, List.of());
@@ -555,7 +558,7 @@ class JobServiceTest {
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
         JobOutput jobOutput = job.getJobOutputs().iterator().next();
-        jobOutput.setDownloaded(true);
+        jobOutput.setDownloaded(1);
         jobOutputRepository.save(jobOutput);
 
         var exception = assertThrows(JobOutputMissingException.class,
