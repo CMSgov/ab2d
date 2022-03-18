@@ -1,5 +1,6 @@
 package gov.cms.ab2d.common.util;
 
+import gov.cms.ab2d.common.dto.StaleJob;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
@@ -16,6 +17,10 @@ public class EventUtils {
 
     public static FileEvent getFileEvent(Job job, File file, FileEvent.FileStatus status) {
         return new FileEvent(getOrganization(job), getJobId(job), file, status);
+    }
+
+    public static FileEvent getStaleFileEvent(StaleJob staleJob, File file, FileEvent.FileStatus status) {
+        return new FileEvent(staleJob.getOrganization(), staleJob.getJobUuid(), file, status);
     }
 
     private static String getOrganization(Job job) {

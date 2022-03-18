@@ -13,6 +13,7 @@
 
     <properties>
         <project.root>${basedir}/..</project.root>
+        <sonar.coverage.exclusions>**/JobAuditClient.java</sonar.coverage.exclusions>
     </properties>
 
     <dependencies>

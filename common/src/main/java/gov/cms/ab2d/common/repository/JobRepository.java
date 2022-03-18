@@ -44,4 +44,6 @@ public interface JobRepository extends JpaRepository<Job, Long> {
 
     @Query("SELECT COUNT(j) FROM Job j WHERE j.contractNumber = :contractNumber AND j.status IN :statuses")
     int countJobByContractNumberAndStatus(String contractNumber, List<JobStatus> statuses);
+
+    List<Job> findByJobUuidIn(List<String> jobUuids);
 }

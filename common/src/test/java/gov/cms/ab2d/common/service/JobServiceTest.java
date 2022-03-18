@@ -2,6 +2,7 @@ package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.SpringBootApp;
 import gov.cms.ab2d.common.dto.JobPollResult;
+import gov.cms.ab2d.common.dto.StaleJob;
 import gov.cms.ab2d.common.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.ContractRepository;
@@ -46,15 +47,18 @@ import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import static gov.cms.ab2d.common.model.JobStatus.FAILED;
 import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.common.util.Constants.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
+import static java.util.List.of;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -126,7 +130,7 @@ class JobServiceTest {
         jobService = new JobServiceImpl(jobRepository, jobOutputService, logManager, loggerEventSummary, tmpJobLocation, propertiesService);
         ReflectionTestUtils.setField(jobService, "fileDownloadPath", tmpJobLocation);
 
-        dataSetup.setupNonStandardClient(CLIENTID, CONTRACT_NUMBER, List.of());
+        dataSetup.setupNonStandardClient(CLIENTID, CONTRACT_NUMBER, of());
 
         setupRegularClientSecurityContext();
     }
@@ -358,7 +362,7 @@ class JobServiceTest {
     void testJobInFailedState() {
         Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
 
-        job.setStatus(JobStatus.FAILED);
+        job.setStatus(FAILED);
         jobRepository.saveAndFlush(job);
 
         assertThrows(InvalidJobStateTransition.class, () -> jobService.cancelJob(job.getJobUuid(),
@@ -398,7 +402,7 @@ class JobServiceTest {
         errorJobOutput.setFileLength(22L);
         errorJobOutput.setJob(job);
 
-        List<JobOutput> output = List.of(jobOutput, errorJobOutput);
+        List<JobOutput> output = of(jobOutput, errorJobOutput);
         job.setJobOutputs(output);
 
         Job updatedJob = jobService.updateJob(job);
@@ -524,7 +528,7 @@ class JobServiceTest {
         errorJobOutput.setFileLength(22L);
         errorJobOutput.setJob(job);
 
-        List<JobOutput> output = List.of(jobOutput, errorJobOutput);
+        List<JobOutput> output = of(jobOutput, errorJobOutput);
         job.setJobOutputs(output);
 
         return jobService.updateJob(job);
@@ -621,5 +625,20 @@ class JobServiceTest {
         Job job = jobService.createJob(buildStartJobOutputFormat(outputFormat));
         dataSetup.queueForCleanup(job);
         return job;
+    }
+
+    @Test
+    void checkForExpirations() {
+        Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
+        job.setStatus(FAILED);
+        jobRepository.save(job);
+        dataSetup.queueForCleanup(job);
+
+        List<StaleJob> staleJobs = jobService.checkForExpiration(of(job.getJobUuid()), 1);
+        assertFalse(staleJobs.isEmpty());
+        assertEquals(1, staleJobs.size());
+
+        staleJobs = jobService.checkForExpiration(Collections.emptyList(), 1);
+        assertTrue(staleJobs.isEmpty());
     }
 }

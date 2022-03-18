@@ -101,6 +101,10 @@ public class Job {
         lastPollTime = OffsetDateTime.now();
     }
 
+    public boolean isExpired(int ttlHours) {
+        return status.isExpired(completedAt, ttlHours);
+    }
+
     private boolean pollingTooMuch(int delaySeconds) {
         return lastPollTime != null && lastPollTime.plusSeconds(delaySeconds).isAfter(OffsetDateTime.now());
     }

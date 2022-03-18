@@ -1,13 +1,10 @@
 package gov.cms.ab2d.audit.cleanup;
 
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.service.JobService;
-import gov.cms.ab2d.common.service.ResourceNotFoundException;
+import gov.cms.ab2d.audit.remote.JobAuditClient;
+import gov.cms.ab2d.common.dto.StaleJob;
 import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
-import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventSummary;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -16,9 +13,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -33,19 +27,17 @@ public class FileDeletionServiceImpl implements FileDeletionService {
     @Value("${audit.files.ttl.hours}")
     private int auditFilesTTLHours;
 
-    private final JobService jobService;
+    private final JobAuditClient jobAuditClient;
     private final LogManager eventLogger;
-    private final LoggerEventSummary loggerEventSummary;
 
     private static final String FILE_EXTENSION = ".ndjson";
 
     private static final Set<String> DISALLOWED_DIRECTORIES = Set.of("/bin", "/boot", "/dev", "/etc", "/home", "/lib",
             "/opt", "/root", "/sbin", "/sys", "/usr", "/Applications", "/Library", "/Network", "/System", "/Users", "/Volumes");
 
-    public FileDeletionServiceImpl(JobService jobService, LogManager eventLogger, LoggerEventSummary loggerEventSummary) {
-        this.jobService = jobService;
+    public FileDeletionServiceImpl(JobAuditClient jobAuditClient, LogManager eventLogger) {
+        this.jobAuditClient = jobAuditClient;
         this.eventLogger = eventLogger;
-        this.loggerEventSummary = loggerEventSummary;
     }
 
     /**
@@ -63,22 +55,13 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         }
 
         List<String> jobIds = Stream.of(files).map(File::getName).toList();
-        for (String jobId : jobIds) {
-            Job job = findJob(jobId);
-            if (job == null) {
-                log.trace("No job connected to id {}", jobId); // Put a log statement here to make PMD happy
-                continue;
-            }
-            boolean jobExpired = shouldJobFilesBeDeleted(job);
-            if (jobExpired) {
-                deleteJobDirectory(job);
-            }
-        }
+        List<StaleJob> jobsToDelete = jobAuditClient.checkForExpiration(jobIds, auditFilesTTLHours);
+        jobsToDelete.forEach(this::deleteJobDirectory);
     }
 
-    void deleteJobDirectory(Job job) {
-        Path jobTopLevelDir = Path.of(efsMount, job.getJobUuid());
-        deleteNdjsonFilesAndDirectory(job, jobTopLevelDir);
+    void deleteJobDirectory(StaleJob staleJob) {
+        Path jobTopLevelDir = Path.of(efsMount, staleJob.getJobUuid());
+        deleteNdjsonFilesAndDirectory(staleJob, jobTopLevelDir);
         try {
             if (isEmptyDirectory(jobTopLevelDir)) {
                 Files.deleteIfExists(jobTopLevelDir);
@@ -90,22 +73,22 @@ public class FileDeletionServiceImpl implements FileDeletionService {
     }
 
     /**
-     * Recursively delete NDJON files and sub directories
+     * Recursively delete NDJSON files and subdirectories
      *
-     * @param job - the job
+     * @param staleJob - the job
      * @param jobDir - the top level directory
      */
-    void deleteNdjsonFilesAndDirectory(Job job, Path jobDir) {
+    void deleteNdjsonFilesAndDirectory(StaleJob staleJob, Path jobDir) {
         for (File file : jobDir.toFile().listFiles()) {
             Path filePath = Path.of(file.getAbsolutePath());
             if (file.exists() && Files.isRegularFile(filePath) && matchesFilenameExtension(filePath)) {
                 try {
-                    deleteFile(filePath, job);
+                    deleteFile(filePath, staleJob);
                 } catch (Exception ex) {
                     log.error("Unable to delete file " + file.getAbsolutePath(), ex);
                 }
             } else if (file.isDirectory()) {
-                deleteNdjsonFilesAndDirectory(job, filePath);
+                deleteNdjsonFilesAndDirectory(staleJob, filePath);
                 try (Stream<Path> children =  Files.list(filePath)) {
                     if (children.findAny().isEmpty()) {
                         Files.deleteIfExists(filePath);
@@ -122,25 +105,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         }
     }
 
-    boolean shouldJobFilesBeDeleted(Job job) {
-        // If job is currently running ignore this file for now
-        if (!job.getStatus().isFinished()) {
-            return false;
-        }
 
-        if (job.getStatus() == JobStatus.CANCELLED || job.getStatus() == JobStatus.FAILED) {
-            return true;
-        }
-
-        // If it is completed, check the age
-        OffsetDateTime completedTime = job.getCompletedAt();
-        if (completedTime == null) {
-            return false;
-        }
-
-        final Instant deleteBoundary = calculateOldestDeletableTime();
-        return completedTime.toInstant().isBefore(deleteBoundary);
-    }
 
     /**
      * Check whether directory contains any files
@@ -159,7 +124,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
      * validates the EFS mount.
      */
     private void validateEfsMount() {
-        if (!efsMount.startsWith(File.separator)) {
+        if (!efsMount.startsWith(File.separator) && improperRoot()) {
             throw new EFSMountFormatException("EFS Mount must start with a " + File.separator);
         }
 
@@ -174,8 +139,17 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         }
     }
 
-    private void deleteFile(Path path, Job job) throws IOException {
-        FileEvent fileEvent = EventUtils.getFileEvent(job, new File(path.toUri()), FileEvent.FileStatus.DELETE);
+    private boolean improperRoot() {
+        for (File root : File.listRoots()) {
+            if (efsMount.startsWith(root.getAbsolutePath())) {
+                return false;   // proper root match
+            }
+        }
+        return true;
+    }
+
+    private void deleteFile(Path path, StaleJob staleJob) throws IOException {
+        FileEvent fileEvent = EventUtils.getStaleFileEvent(staleJob, new File(path.toUri()), FileEvent.FileStatus.DELETE);
 
         if (path.toFile().exists()) {
             Files.delete(path);
@@ -184,29 +158,6 @@ public class FileDeletionServiceImpl implements FileDeletionService {
 
         // If we reach this point then file was deleted without an exception so log it to Kinesis and SQL
         eventLogger.log(fileEvent);
-    }
-
-    /**
-     * Given a jobUuid, finds the job
-     *
-     * @param jobUuid - the job id
-     * @return the Job object
-     */
-    private Job findJob(String jobUuid) {
-        try {
-            return jobService.getJobByJobUuid(jobUuid);
-        } catch (ResourceNotFoundException ex) {
-            return null;
-        }
-    }
-
-    /**
-     * Calculates the oldest deletable dateTime given the time to live for the audit files.
-     *
-     * @return oldest deletable time
-     */
-    private Instant calculateOldestDeletableTime() {
-        return Instant.now().minus(auditFilesTTLHours, ChronoUnit.HOURS);
     }
 
     /**
