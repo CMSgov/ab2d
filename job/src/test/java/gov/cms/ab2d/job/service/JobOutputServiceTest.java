@@ -1,12 +1,14 @@
-package gov.cms.ab2d.common.service;
+package gov.cms.ab2d.job.service;
 
 import gov.cms.ab2d.common.SpringBootApp;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.*;
+import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.job.JobTestSpringBootApp;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,8 +31,7 @@ import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SpringBootTest(classes = SpringBootApp.class)
-@TestPropertySource(locations = "/application.common.properties")
+@SpringBootTest(classes = JobTestSpringBootApp.class)
 @Testcontainers
 class JobOutputServiceTest {
 
