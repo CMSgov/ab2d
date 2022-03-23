@@ -26,8 +26,6 @@ public interface JobService {
 
     void incrementDownloadCount(File file, String jobUuid);
 
-    void deleteFileForJob(File file, String jobUuid);
-
     int activeJobs(String organization);
 
     List<String> getActiveJobIds(String organization);

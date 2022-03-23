@@ -557,18 +557,18 @@ class JobServiceTest {
     }
 
     @Test
-    void getFileDownloadAlreadyDownloaded() {
+    void getFileDownloadAlreadyDownloadedMaxTimes() {
         String testFile = "test.ndjson";
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
         JobOutput jobOutput = job.getJobOutputs().iterator().next();
-        jobOutput.setDownloaded(1);
+        jobOutput.setDownloaded(30);
         jobOutputRepository.save(jobOutput);
 
         var exception = assertThrows(JobOutputMissingException.class,
                 () -> jobService.getResourceForJob(job.getJobUuid(), "test.ndjson",
                         pdpClientService.getCurrentClient().getOrganization()));
-        assertEquals("The file is not present as it has already been downloaded. Please resubmit the job.",
+        assertEquals("The file has already been download the maximum number of allowed times.",
                 exception.getMessage());
     }
 
@@ -614,11 +614,11 @@ class JobServiceTest {
     }
 
     @Test
-    void deleteFileForJobTest() {
+    void incrementDownload() {
         String testFile = "test.ndjson";
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
-        jobService.deleteFileForJob(new File(testFile), job.getJobUuid());
+        jobService.incrementDownloadCount(new File(testFile), job.getJobUuid());
     }
 
     private Job createJobAllContracts(String outputFormat) {

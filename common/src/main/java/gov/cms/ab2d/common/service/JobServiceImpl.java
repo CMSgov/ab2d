@@ -8,9 +8,7 @@ import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.EventUtils;
-import gov.cms.ab2d.common.util.JobUtil;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventSummary;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -175,23 +173,6 @@ public class JobServiceImpl implements JobService {
         jobOutput.setDownloaded(jobOutput.getDownloaded() + 1);
         jobOutput.setLastDownloadAt(OffsetDateTime.now());
         jobOutputService.updateJobOutput(jobOutput);
-    }
-
-    @Override
-    public void deleteFileForJob(File file, String jobUuid) {
-        String fileName = file.getName();
-        Job job = jobRepository.findByJobUuid(jobUuid);
-        JobOutput jobOutput = jobOutputService.findByFilePathAndJob(fileName, job);
-        jobOutput.setDownloaded(1);
-        jobOutputService.updateJobOutput(jobOutput);
-        eventLogger.log(EventUtils.getFileEvent(job, file, FileEvent.FileStatus.DELETE));
-        if (JobUtil.isJobDone(job, Integer.parseInt(propertiesService.getPropertiesByKey(MAX_DOWNLOADS).getValue()))) {
-            eventLogger.log(LogManager.LogType.KINESIS, loggerEventSummary.getSummary(job.getJobUuid()));
-        }
-        boolean deleted = file.delete();
-        if (!deleted) {
-            log.error("Was not able to delete the file {}", file.getName());
-        }
     }
 
     @Override
