@@ -87,6 +87,7 @@ public class AdminAPIPropertiesTests {
             put(COVERAGE_SEARCH_UPDATE_MONTHS, 1);
             put(COVERAGE_SEARCH_STUCK_HOURS, 24);
             put(COVERAGE_SEARCH_OVERRIDE, "false");
+            put(MAX_DOWNLOADS, 30);
         }};
 
         MvcResult mvcResult = this.mockMvc.perform(
@@ -101,7 +102,7 @@ public class AdminAPIPropertiesTests {
         ObjectMapper mapper = new ObjectMapper();
         List<PropertiesDTO> propertiesDTOs = mapper.readValue(result, new TypeReference<>() {} );
 
-        assertEquals(12, propertiesDTOs.size());
+        assertEquals(13, propertiesDTOs.size());
         for(PropertiesDTO propertiesDTO : propertiesDTOs) {
             Object value = propertyMap.get(propertiesDTO.getKey());
 

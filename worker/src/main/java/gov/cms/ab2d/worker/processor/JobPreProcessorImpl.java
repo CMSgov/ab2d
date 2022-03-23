@@ -6,6 +6,7 @@ import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStartedBy;
 import gov.cms.ab2d.common.model.SinceSource;
 import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
@@ -27,6 +28,7 @@ import static gov.cms.ab2d.common.model.JobStatus.FAILED;
 import static gov.cms.ab2d.common.model.JobStatus.IN_PROGRESS;
 import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
+import static gov.cms.ab2d.common.util.Constants.MAX_DOWNLOADS;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
 import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_COVERAGE_ISSUE;
 import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_STARTED;
@@ -170,7 +172,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
                 // Remove any error files from the consideration
                 .filter(o -> !o.getError())
                 // Remove any that has been downloaded
-                .filter(o -> o.getDownloaded() > 0)
+                .filter(o -> o.getDownloaded() == 0)
                 // Determine if there are any left
                 .findAny().isEmpty();
     }

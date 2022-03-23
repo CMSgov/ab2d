@@ -11,14 +11,18 @@ import java.util.List;
 @Slf4j
 public class JobUtil {
 
+    //make sonar happy
+    private JobUtil(){}
+
     /**
      * A job is done if the status is either CANCELLED or FAILED
      * If a job status is SUCCESSFUL, it is done if all files have been downloaded or they have expired
      *
-     * @param job
-     * @return
+     * @param job Data extraction job
+     * @param maxDownloads Maximum times a file can be downloaded
+     * @return Job is either done or it's not
      */
-    public static boolean isJobDone(Job job) {
+    public static boolean isJobDone(Job job, int maxDownloads) {
         try {
             // Job is still in progress
             if (job == null || job.getStatus() == null || job.getStatus() == JobStatus.IN_PROGRESS || job.getStatus() == JobStatus.SUBMITTED) {
@@ -44,7 +48,7 @@ public class JobUtil {
             }
             JobOutput aRemaining = jobOutputs.stream()
                     .filter(c -> c.getError() == null || !c.getError())
-                    .filter(c -> c.getDownloaded()==0).findAny().orElse(null);
+                    .filter(c -> c.getDownloaded()>=maxDownloads).findAny().orElse(null);
 
             return aRemaining == null;
         } catch (Exception ex) {

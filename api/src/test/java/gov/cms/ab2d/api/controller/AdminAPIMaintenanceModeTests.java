@@ -7,6 +7,7 @@ import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.remote.JobClientMock;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.JobOutput;
+import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -69,6 +71,9 @@ public class AdminAPIMaintenanceModeTests {
     public void setup() throws JwtVerificationException {
         token = testUtil.setupToken(List.of(SPONSOR_ROLE, ADMIN_ROLE));
     }
+
+    @MockBean
+    private JobService jobService;
 
     @AfterEach
     public void cleanup() {

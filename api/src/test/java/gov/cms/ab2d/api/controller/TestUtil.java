@@ -5,6 +5,7 @@ import com.okta.jwt.Jwt;
 import com.okta.jwt.JwtVerificationException;
 import com.okta.jwt.impl.DefaultJwt;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
+import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.DataSetup;
@@ -112,6 +113,8 @@ public class TestUtil {
 
     public JobOutput createJobOutput(String testFile) {
         JobOutput jobOutput = new JobOutput();
+        Job job = new Job();
+        jobOutput.setJob(job);
         jobOutput.setFhirResourceType(EOB);
         jobOutput.setFilePath(testFile);
         jobOutput.setError(false);
@@ -130,7 +133,7 @@ public class TestUtil {
     }
 
     private String buildTokenStr() {
-        if(jwtStr != null) {
+        if (jwtStr != null) {
             return jwtStr;
         }
 

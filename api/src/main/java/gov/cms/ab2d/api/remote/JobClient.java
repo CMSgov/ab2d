@@ -44,6 +44,10 @@ public class JobClient {
         }
     }
 
+    public void incrementDownloads(File file, String jobUUID) {
+        jobService.incrementDownloadCount(file, jobUUID);
+    }
+
     public JobPollResult poll(boolean admin, String jobUuid, String organization, int delaySeconds) {
         return jobService.poll(admin, jobUuid, organization, delaySeconds);
     }

@@ -9,6 +9,7 @@ import gov.cms.ab2d.api.remote.JobClientMock;
 import gov.cms.ab2d.common.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
+import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
@@ -18,9 +19,11 @@ import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.apache.commons.lang3.StringUtils;
 import org.hamcrest.core.Is;
 import org.junit.jupiter.api.*;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -68,6 +71,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Testcontainers
 /* When checking in, comment out print statements. They are very helpful, but fill up the logs */
 public class BulkDataAccessAPIIntegrationTests {
+
+    private static String EXPECTED_ERROR = "The file is not present as there was an error. Please resubmit the job.";
 
     @Autowired
     private MockMvc mockMvc;
@@ -738,7 +743,6 @@ public class BulkDataAccessAPIIntegrationTests {
         assertNotNull(statusUrl);
 
         String testFile = "test.ndjson";
-
         JobOutput jobOutput = testUtil.createJobOutput(testFile);
         jobClientMock.addJobOutputForDownload(jobOutput);
         jobClientMock.setResultsCreated(true);
@@ -793,7 +797,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("The file is not present as it has already been downloaded. Please resubmit the job.")));
+                        Is.is(EXPECTED_ERROR)));
         List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(apiRequestEvents.size() - 1);
 
@@ -858,7 +862,7 @@ public class BulkDataAccessAPIIntegrationTests {
         jobOutput.setError(false);
         jobOutput.setChecksum("testoutput");
         jobOutput.setFileLength(20L);
-        jobOutput.setDownloaded(1);
+        jobOutput.setDownloaded(2);
         jobClientMock.addJobOutputForDownload(jobOutput);
 
         MvcResult mvcResultStatusCall =
@@ -874,7 +878,7 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("The file is not present as it has already been downloaded. Please resubmit the job.")));
+                        Is.is(EXPECTED_ERROR)));
     }
 
     @Test

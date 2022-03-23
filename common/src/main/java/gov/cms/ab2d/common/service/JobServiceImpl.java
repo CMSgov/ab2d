@@ -10,15 +10,19 @@ import gov.cms.ab2d.common.util.JobUtil;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventSummary;
+
 import java.io.File;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -72,7 +76,6 @@ public class JobServiceImpl implements JobService {
         job.setOrganization(startJobDTO.getOrganization());
 
 
-
         eventLogger.log(EventUtils.getJobChangeEvent(job, JobStatus.SUBMITTED, "Job Created"));
 
         // Report client running first job in prod
@@ -116,7 +119,7 @@ public class JobServiceImpl implements JobService {
 
         if (job == null) {
             log.error("Job {} was searched for and was not found", jobUuid);
-            throw new ResourceNotFoundException("No job with jobUuid " +  jobUuid + " was found");
+            throw new ResourceNotFoundException("No job with jobUuid " + jobUuid + " was found");
         }
 
         return job;
@@ -149,12 +152,12 @@ public class JobServiceImpl implements JobService {
 
         Path file = Paths.get(fileDownloadPath, job.getJobUuid(), fileName);
         Resource resource = new UrlResource(file.toUri());
-
+        if (foundJobOutput.getDownloaded() >= Integer.parseInt(propertiesService.getPropertiesByKey(MAX_DOWNLOADS).getValue())) {
+            throw new JobOutputMissingException("The file has already been download the maximum number of allowed times.");
+        }
         if (!resource.exists()) {
             String errorMsg;
-            if (foundJobOutput.getDownloaded() >= Integer.parseInt(propertiesService.getPropertiesByKey(MAX_DOWNLOADS).getValue())) {
-                errorMsg = "The file has already been download the maximum number of times.";
-            } else if (job.getExpiresAt().isBefore(OffsetDateTime.now())) {
+            if (job.getExpiresAt().isBefore(OffsetDateTime.now())) {
                 errorMsg = "The file is not present as it has expired. Please resubmit the job.";
             } else {
                 errorMsg = "The file is not present as there was an error. Please resubmit the job.";
@@ -166,6 +169,16 @@ public class JobServiceImpl implements JobService {
         return resource;
     }
 
+
+    @Override
+    public void incrementDownloadCount(File file, String jobUuid) {
+        Job job = jobRepository.findByJobUuid(jobUuid);
+        JobOutput jobOutput = jobOutputService.findByFilePathAndJob(file.getName(), job);
+        jobOutput.setDownloaded(jobOutput.getDownloaded() + 1);
+        jobOutput.setLastDownloadAt(OffsetDateTime.now());
+        jobOutputService.updateJobOutput(jobOutput);
+    }
+
     @Override
     public void deleteFileForJob(File file, String jobUuid) {
         String fileName = file.getName();
@@ -174,7 +187,7 @@ public class JobServiceImpl implements JobService {
         jobOutput.setDownloaded(1);
         jobOutputService.updateJobOutput(jobOutput);
         eventLogger.log(EventUtils.getFileEvent(job, file, FileEvent.FileStatus.DELETE));
-        if (JobUtil.isJobDone(job)) {
+        if (JobUtil.isJobDone(job, Integer.parseInt(propertiesService.getPropertiesByKey(MAX_DOWNLOADS).getValue()))) {
             eventLogger.log(LogManager.LogType.KINESIS, loggerEventSummary.getSummary(job.getJobUuid()));
         }
         boolean deleted = file.delete();
