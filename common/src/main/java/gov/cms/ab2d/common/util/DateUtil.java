@@ -32,14 +32,4 @@ public final class DateUtil {
         return String.format("%tz", Instant.now().atZone(AB2D_ZONE));
     }
 
-
-    /**
-     * checks if lastOccurrence + interval is before now.
-     * @param interval Amount of time in minutes
-     * @param lastOccurrence Timestamp of an event
-     * @return Returns true if lastOccurrence + interval < now
-     **/
-    public static boolean intervalElapsedSince(int interval, OffsetDateTime lastOccurrence) {
-        return lastOccurrence.toLocalDateTime().plusMinutes(interval).isBefore(ChronoLocalDateTime.from(Instant.now()));
-    }
 }
