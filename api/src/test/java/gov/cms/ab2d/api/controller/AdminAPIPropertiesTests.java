@@ -87,7 +87,8 @@ public class AdminAPIPropertiesTests {
             put(COVERAGE_SEARCH_UPDATE_MONTHS, 1);
             put(COVERAGE_SEARCH_STUCK_HOURS, 24);
             put(COVERAGE_SEARCH_OVERRIDE, "false");
-            put(MAX_DOWNLOADS, 30);
+            put(MAX_DOWNLOADS, 5);
+            put(RE_DOWNLOAD_MAX_INTERVAL_MINUTES, 30);
         }};
 
         MvcResult mvcResult = this.mockMvc.perform(
