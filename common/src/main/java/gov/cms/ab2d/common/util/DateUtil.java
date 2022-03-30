@@ -1,6 +1,8 @@
 package gov.cms.ab2d.common.util;
 
+import java.sql.Timestamp;
 import java.time.*;
+import java.time.chrono.ChronoLocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
@@ -29,5 +31,16 @@ public final class DateUtil {
 
     public static String getESTOffset() {
         return String.format("%tz", Instant.now().atZone(AB2D_ZONE));
+    }
+
+
+    /**
+     * checks if lastOccurrence + interval is before now.
+     * @param interval Amount of time in minutes
+     * @param lastOccurrence Timestamp of an event
+     * @return Returns true if lastOccurrence + interval < now
+     **/
+    public static boolean intervalElapsedSince(int interval, OffsetDateTime lastOccurrence) {
+        return lastOccurrence.toLocalDateTime().plusMinutes(interval).isBefore(ChronoLocalDateTime.from(Instant.now()));
     }
 }

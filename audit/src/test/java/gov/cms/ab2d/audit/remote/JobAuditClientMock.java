@@ -1,7 +1,10 @@
-package gov.cms.ab2d.audit.remote;
+    package gov.cms.ab2d.audit.remote;
 
 import gov.cms.ab2d.audit.dto.AuditMockJob;
 import gov.cms.ab2d.common.dto.StaleJob;
+import gov.cms.ab2d.common.service.JobOutputService;
+import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
@@ -14,9 +17,11 @@ import java.util.Map;
 public class JobAuditClientMock extends JobAuditClient {
 
     private final Map<String, AuditMockJob> jobMap = new HashMap<>(89);
+    private final JobOutputService jobOutputService;
 
-    public JobAuditClientMock() {
-        super(null);
+    public JobAuditClientMock(JobOutputService jobOutputService) {
+        super(null, jobOutputService);
+        this.jobOutputService = jobOutputService;
     }
 
     @Override
@@ -26,6 +31,10 @@ public class JobAuditClientMock extends JobAuditClient {
                 .filter(job -> job.isExpired(ttlHours))
                 .map(AuditMockJob::getStaleJob)
                 .toList();
+    }
+    @Override
+    public Map<StaleJob, List<String>> checkForOutputExpiration(int interval) {
+        return jobOutputService.expiredDownloadableFiles(interval);
     }
 
     public void update(AuditMockJob job) {

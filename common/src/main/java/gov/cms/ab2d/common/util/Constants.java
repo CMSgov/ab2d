@@ -72,6 +72,8 @@ public final class Constants {
 
     public static final String MAX_DOWNLOADS = "file.download.count.max";
 
+    public static final String RE_DOWNLOAD_MAX_INTERVAL_MINUTES = "file.download.max.interval.minutes";
+
     public static final Set<String> ALLOWED_PROPERTY_NAMES = Set.of(PCP_CORE_POOL_SIZE, PCP_MAX_POOL_SIZE,
             PCP_SCALE_TO_MAX_TIME, MAINTENANCE_MODE, ZIP_SUPPORT_ON,
             WORKER_ENGAGEMENT, HPMS_INGESTION_ENGAGEMENT, COVERAGE_SEARCH_DISCOVERY, COVERAGE_SEARCH_QUEUEING,

@@ -2,6 +2,7 @@ package gov.cms.ab2d.audit.cleanup;
 
 import gov.cms.ab2d.audit.remote.JobAuditClient;
 import gov.cms.ab2d.common.dto.StaleJob;
+import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
@@ -14,8 +15,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
+
+import static gov.cms.ab2d.common.util.Constants.RE_DOWNLOAD_MAX_INTERVAL_MINUTES;
 
 @Slf4j
 @Component
@@ -35,9 +39,13 @@ public class FileDeletionServiceImpl implements FileDeletionService {
     private static final Set<String> DISALLOWED_DIRECTORIES = Set.of("/bin", "/boot", "/dev", "/etc", "/home", "/lib",
             "/opt", "/root", "/sbin", "/sys", "/usr", "/Applications", "/Library", "/Network", "/System", "/Users", "/Volumes");
 
-    public FileDeletionServiceImpl(JobAuditClient jobAuditClient, LogManager eventLogger) {
+
+    private final PropertiesService propertiesService;
+
+    public FileDeletionServiceImpl(JobAuditClient jobAuditClient, LogManager eventLogger, PropertiesService propertiesService) {
         this.jobAuditClient = jobAuditClient;
         this.eventLogger = eventLogger;
+        this.propertiesService = propertiesService;
     }
 
     /**
@@ -51,12 +59,15 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         File[] files = new File(efsMount).listFiles();
 
         if (files == null || files.length == 0) {
+            deleteDownloadIntervalExpiredFiles();
             return;
         }
 
         List<String> jobIds = Stream.of(files).map(File::getName).toList();
         List<StaleJob> jobsToDelete = jobAuditClient.checkForExpiration(jobIds, auditFilesTTLHours);
         jobsToDelete.forEach(this::deleteJobDirectory);
+        deleteDownloadIntervalExpiredFiles();
+
     }
 
     void deleteJobDirectory(StaleJob staleJob) {
@@ -76,7 +87,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
      * Recursively delete NDJSON files and subdirectories
      *
      * @param staleJob - the job
-     * @param jobDir - the top level directory
+     * @param jobDir   - the top level directory
      */
     void deleteNdjsonFilesAndDirectory(StaleJob staleJob, Path jobDir) {
         for (File file : jobDir.toFile().listFiles()) {
@@ -89,33 +100,37 @@ public class FileDeletionServiceImpl implements FileDeletionService {
                 }
             } else if (file.isDirectory()) {
                 deleteNdjsonFilesAndDirectory(staleJob, filePath);
-                try (Stream<Path> children =  Files.list(filePath)) {
-                    if (children.findAny().isEmpty()) {
-                        Files.deleteIfExists(filePath);
-                        log.info("Deleted directory {}", filePath);
-                    } else {
-                        logFolderNotEligibleForDeletion(filePath);
-                    }
-                } catch (Exception ex) {
-                    log.error("Unable to list files in directory" + file.getAbsolutePath(), ex);
-                }
+                deleteDirectory(filePath, file);
             } else {
                 logFileNotEligibleForDeletion(filePath);
             }
         }
     }
 
+    private void deleteDirectory(Path filePath, File file) {
+        try (Stream<Path> children = Files.list(filePath)) {
+            if (children.findAny().isEmpty()) {
+                Files.deleteIfExists(filePath);
+                log.info("Deleted directory {}", filePath);
+            } else {
+                logFolderNotEligibleForDeletion(filePath);
+            }
+        } catch (Exception ex) {
+            log.error("Unable to list files in directory" + file.getAbsolutePath(), ex);
+        }
+    }
 
 
     /**
      * Check whether directory contains any files
+     *
      * @param directory directory to check which must exist
      * @return true if a file is found in directory
      * @throws IOException on failure to read directory
      */
     private boolean isEmptyDirectory(Path directory) throws IOException {
         // Lazily look for first child
-        try (Stream<Path> children =  Files.list(directory)) {
+        try (Stream<Path> children = Files.list(directory)) {
             return children.findAny().isEmpty();
         }
     }
@@ -158,6 +173,29 @@ public class FileDeletionServiceImpl implements FileDeletionService {
 
         // If we reach this point then file was deleted without an exception so log it to Kinesis and SQL
         eventLogger.log(fileEvent);
+    }
+
+
+    // Ideally we would have a way to filter out files that have already been deleted but that's not possible currently
+    // We might need to further constrain the query, so it ignores files that expired x time ago
+    // since the stale job deleter will delete any files that somehow fall through the cracks
+    @Override
+    public void deleteDownloadIntervalExpiredFiles() {
+        int interval = Integer.parseInt(propertiesService.getPropertiesByKey(RE_DOWNLOAD_MAX_INTERVAL_MINUTES).getValue());
+        jobAuditClient.checkForOutputExpiration(interval)
+                .forEach((staleJob, files) -> files
+                        .forEach(file -> {
+                            Path filePath = Path.of(efsMount, staleJob.getJobUuid(), file);
+                            if (filePath.toAbsolutePath().toFile().exists()
+                                    && Files.isRegularFile(filePath)
+                                    && matchesFilenameExtension(filePath)) {
+                                try {
+                                    deleteFile(Path.of(efsMount, staleJob.getJobUuid(), file), staleJob);
+                                } catch (IOException e) {
+                                    log.error("Unable to delete file {}", file);
+                                }
+                            }
+                        }));
     }
 
     /**
