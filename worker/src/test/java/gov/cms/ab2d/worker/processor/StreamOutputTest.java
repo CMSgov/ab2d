@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class StreamOutputTest {
     @Test
-    void testStreamOutput() throws IOException {
+    void testStreamOutput(@TempDir File tmpDir) throws IOException {
         Path tmpFile = Path.of(tmpDir.getAbsolutePath(), "test.ndjson");
         Files.writeString(tmpFile, "abc");
 
