@@ -77,7 +77,8 @@ public final class Constants {
     public static final Set<String> ALLOWED_PROPERTY_NAMES = Set.of(PCP_CORE_POOL_SIZE, PCP_MAX_POOL_SIZE,
             PCP_SCALE_TO_MAX_TIME, MAINTENANCE_MODE, ZIP_SUPPORT_ON,
             WORKER_ENGAGEMENT, HPMS_INGESTION_ENGAGEMENT, COVERAGE_SEARCH_DISCOVERY, COVERAGE_SEARCH_QUEUEING,
-            COVERAGE_SEARCH_STUCK_HOURS, COVERAGE_SEARCH_UPDATE_MONTHS, COVERAGE_SEARCH_OVERRIDE, MAX_DOWNLOADS);
+            COVERAGE_SEARCH_STUCK_HOURS, COVERAGE_SEARCH_UPDATE_MONTHS, COVERAGE_SEARCH_OVERRIDE, MAX_DOWNLOADS,
+            RE_DOWNLOAD_MAX_INTERVAL_MINUTES);
 
     // This is the earliest time the _since filter is valid - probably should be in the properties file but I
     // wanted to include it in the swagger documentation and for the swagger annotation, the value has to be
