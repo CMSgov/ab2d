@@ -7,13 +7,11 @@ import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.TooFrequentInvocations;
 import gov.cms.ab2d.common.service.InvalidJobStateTransition;
 import gov.cms.ab2d.common.service.JobOutputMissingException;
-import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -21,15 +19,10 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.io.IOException;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
-import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
-import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
-import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
+import static gov.cms.ab2d.common.model.JobStatus.*;
+import static gov.cms.ab2d.common.util.Constants.MAX_DOWNLOADS;
 
 @Primary
 @Component
@@ -52,8 +45,8 @@ public class JobClientMock extends JobClient {
     private final LogManager eventLogger;
 
     @Autowired
-    public JobClientMock(LogManager eventLogger, JobService jobService) {
-        super(jobService);
+    public JobClientMock(LogManager eventLogger) {
+        super(null);
         this.eventLogger = eventLogger;
     }
 
@@ -115,8 +108,7 @@ public class JobClientMock extends JobClient {
             if (jobOutputList.isEmpty()) {
                 throw new ResourceNotFoundException("No Job Output with the file name " + fileName + " exists in our records");
             }
-            int maxDownloads = 10;
-            if (jobOutputList.get(0).getDownloaded() >= maxDownloads) {
+            if (jobOutputList.get(0).getDownloaded() >= MAX_DOWNLOADS) {
                 String errorMsg = "The file has reached the maximum number of downloads. Please resubmit the job.";
                 throw new JobOutputMissingException(errorMsg);
             }

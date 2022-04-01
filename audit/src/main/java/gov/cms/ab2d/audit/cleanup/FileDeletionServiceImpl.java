@@ -1,6 +1,7 @@
 package gov.cms.ab2d.audit.cleanup;
 
 import gov.cms.ab2d.audit.remote.JobAuditClient;
+import gov.cms.ab2d.audit.remote.JobOutputAuditClient;
 import gov.cms.ab2d.common.dto.StaleJob;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.EventUtils;
@@ -31,6 +32,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
     private int auditFilesTTLHours;
 
     private final JobAuditClient jobAuditClient;
+    private final JobOutputAuditClient jobOutputAuditClient;
     private final LogManager eventLogger;
 
     private static final String FILE_EXTENSION = ".ndjson";
@@ -41,8 +43,9 @@ public class FileDeletionServiceImpl implements FileDeletionService {
 
     private final PropertiesService propertiesService;
 
-    public FileDeletionServiceImpl(JobAuditClient jobAuditClient, LogManager eventLogger, PropertiesService propertiesService) {
+    public FileDeletionServiceImpl(JobAuditClient jobAuditClient, JobOutputAuditClient jobOutputAuditClient, LogManager eventLogger, PropertiesService propertiesService) {
         this.jobAuditClient = jobAuditClient;
+        this.jobOutputAuditClient = jobOutputAuditClient;
         this.eventLogger = eventLogger;
         this.propertiesService = propertiesService;
     }
@@ -180,8 +183,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
     // since the stale job deleter will delete any files that somehow fall through the cracks
     @Override
     public void deleteDownloadIntervalExpiredFiles() {
-        int interval = Integer.parseInt(propertiesService.getPropertiesByKey(RE_DOWNLOAD_MAX_INTERVAL_MINUTES).getValue());
-        jobAuditClient.checkForOutputExpiration(interval)
+        jobOutputAuditClient.checkForDownloadedExpiredFiles(RE_DOWNLOAD_MAX_INTERVAL_MINUTES)
                 .forEach((staleJob, files) -> files
                         .forEach(file -> {
                             Path filePath = Path.of(efsMount, staleJob.getJobUuid(), file);

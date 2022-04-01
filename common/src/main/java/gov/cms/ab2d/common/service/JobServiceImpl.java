@@ -148,7 +148,7 @@ public class JobServiceImpl implements JobService {
 
         Path file = Paths.get(fileDownloadPath, job.getJobUuid(), fileName);
         Resource resource = new UrlResource(file.toUri());
-        if (foundJobOutput.getDownloaded() >= Integer.parseInt(propertiesService.getPropertiesByKey(MAX_DOWNLOADS).getValue())) {
+        if (foundJobOutput.getDownloaded() >= MAX_DOWNLOADS) {
             throw new JobOutputMissingException("The file has already been download the maximum number of allowed times.");
         }
         if (!resource.exists()) {
@@ -170,6 +170,9 @@ public class JobServiceImpl implements JobService {
     public void incrementDownloadCount(File file, String jobUuid) {
         Job job = jobRepository.findByJobUuid(jobUuid);
         JobOutput jobOutput = jobOutputService.findByFilePathAndJob(file.getName(), job);
+        // Incrementing downloaded in this way is likely not concurrency safe.
+        // If multiple users (aka threads) download the same file at the same time the count won't record every download
+        // This would result in the file being downloaded more than the allowed number of time.
         jobOutput.setDownloaded(jobOutput.getDownloaded() + 1);
         jobOutput.setLastDownloadAt(OffsetDateTime.now());
         jobOutputService.updateJobOutput(jobOutput);

@@ -12,43 +12,43 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static gov.cms.ab2d.common.util.Constants.MAX_DOWNLOADS;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.junit.jupiter.api.Assertions.*;
 
 class JobUtilTest {
     @Test
     void isJobDone() {
-        int maxDownloads = 10;
-        assertFalse(JobUtil.isJobDone(null, maxDownloads));
-        assertFalse(JobUtil.isJobDone(new Job(), maxDownloads));
+        assertFalse(JobUtil.isJobDone(null, MAX_DOWNLOADS));
+        assertFalse(JobUtil.isJobDone(new Job(), MAX_DOWNLOADS));
         Job job = createBasicJob(JobStatus.CANCELLED, null, false);
-        assertTrue(JobUtil.isJobDone(job, maxDownloads));
+        assertTrue(JobUtil.isJobDone(job, MAX_DOWNLOADS));
         job = createBasicJob(JobStatus.CANCELLED, null, true);
-        assertTrue(JobUtil.isJobDone(job, maxDownloads));
+        assertTrue(JobUtil.isJobDone(job, MAX_DOWNLOADS));
         job = createBasicJob(JobStatus.FAILED, null, false);
-        assertTrue(JobUtil.isJobDone(job, maxDownloads));
+        assertTrue(JobUtil.isJobDone(job, MAX_DOWNLOADS));
         job = createBasicJob(JobStatus.FAILED, null, true);
-        assertTrue(JobUtil.isJobDone(job, maxDownloads));
+        assertTrue(JobUtil.isJobDone(job, MAX_DOWNLOADS));
         job = createBasicJob(JobStatus.IN_PROGRESS, new int[]{1, 1}, true);
-        assertFalse(JobUtil.isJobDone(job, maxDownloads));
+        assertFalse(JobUtil.isJobDone(job, MAX_DOWNLOADS));
         job = createBasicJob(JobStatus.SUBMITTED, new int[]{1, 1}, true);
-        assertFalse(JobUtil.isJobDone(job, maxDownloads));
+        assertFalse(JobUtil.isJobDone(job, MAX_DOWNLOADS));
         job = createBasicJob(JobStatus.SUCCESSFUL, new int[]{1, 1}, false);
-        assertTrue(JobUtil.isJobDone(job, maxDownloads));
+        assertTrue(JobUtil.isJobDone(job, MAX_DOWNLOADS));
         job = createBasicJob(JobStatus.SUCCESSFUL, new int[]{0, 11}, false);
-        assertFalse(JobUtil.isJobDone(job, maxDownloads));
+        assertFalse(JobUtil.isJobDone(job, MAX_DOWNLOADS));
         job = createBasicJob(JobStatus.SUCCESSFUL, new int[]{0, 1}, true);
-        assertTrue(JobUtil.isJobDone(job, maxDownloads));
+        assertTrue(JobUtil.isJobDone(job, MAX_DOWNLOADS));
         job = createBasicJob(JobStatus.SUCCESSFUL, new int[]{1, 1}, true);
-        assertTrue(JobUtil.isJobDone(job, maxDownloads));
+        assertTrue(JobUtil.isJobDone(job, MAX_DOWNLOADS));
         job = createBasicJob(JobStatus.SUCCESSFUL, null, true);
-        assertTrue(JobUtil.isJobDone(job, maxDownloads));
+        assertTrue(JobUtil.isJobDone(job, MAX_DOWNLOADS));
         job = createBasicJob(JobStatus.SUCCESSFUL, null, false);
-        assertFalse(JobUtil.isJobDone(job, maxDownloads));
+        assertFalse(JobUtil.isJobDone(job, MAX_DOWNLOADS));
         job = createBasicJob(JobStatus.SUCCESSFUL, new int[]{0, 1}, false);
         JobOutput error = job.getJobOutputs().stream().filter(c -> c.getDownloaded() == 0).findFirst().orElse(null);
         error.setError(true);
-        assertTrue(JobUtil.isJobDone(job, maxDownloads));
+        assertTrue(JobUtil.isJobDone(job, MAX_DOWNLOADS));
     }
 
     private Job createBasicJob(JobStatus status, int[] outputsDownloaded, boolean isExpired) {

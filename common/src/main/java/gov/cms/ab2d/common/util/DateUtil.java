@@ -30,5 +30,4 @@ public final class DateUtil {
     public static String getESTOffset() {
         return String.format("%tz", Instant.now().atZone(AB2D_ZONE));
     }
-
 }
