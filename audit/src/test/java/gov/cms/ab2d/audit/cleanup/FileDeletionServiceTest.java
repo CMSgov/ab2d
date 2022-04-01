@@ -17,7 +17,6 @@ import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -68,7 +67,6 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 @SpringBootTest(classes = SpringBootApp.class)
 @TestPropertySource(locations = "/application.audit.properties")
 @Testcontainers
-@Slf4j
 class FileDeletionServiceTest {
 
     @TempDir
@@ -395,8 +393,6 @@ class FileDeletionServiceTest {
 
         List<LoggableEvent> fileEvents = loggerEventRepository.load(FileEvent.class);
         FileEvent e1 = (FileEvent) fileEvents.get(0);
-        log.info(e1.toString());
-        log.info(destinationJobConnection.toString());
         assertTrue(e1.getFileName().equalsIgnoreCase(destinationJobConnection.toString()));
 
         checkNoOtherEventsLogged();

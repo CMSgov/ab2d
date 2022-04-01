@@ -4,7 +4,9 @@ import gov.cms.ab2d.audit.SpringBootApp;
 import gov.cms.ab2d.audit.remote.JobOutputAuditClientMock;
 import gov.cms.ab2d.common.dto.StaleJob;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,6 +51,9 @@ class FileDeleteDownloadExpiredTest {
 
     @Autowired
     private JobOutputAuditClientMock jobOutputAuditClientMock;
+
+    @Autowired
+    private LoggerEventRepository loggerEventRepository;
 
     @Autowired
     private FileDeletionServiceImpl fileDeletionService;
@@ -113,6 +118,11 @@ class FileDeleteDownloadExpiredTest {
         }
         jobOutputAuditClientMock.update(jobFiles);
         return jobFiles;
+    }
+
+    @AfterEach
+    void cleanUp() throws IOException {
+        loggerEventRepository.delete();
     }
 
     private void assertDeleted(Map<StaleJob, List<String>> jobFiles) {
