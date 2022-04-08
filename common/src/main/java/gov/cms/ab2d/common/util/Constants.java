@@ -70,7 +70,7 @@ public final class Constants {
 
     public static final String ZIP_SUPPORT_ON = "ZipSupportOn";
 
-    public static final int MAX_DOWNLOADS = 5;
+    public static final int MAX_DOWNLOADS = 3;
 
     public static final int RE_DOWNLOAD_MAX_INTERVAL_MINUTES = 30;
 
