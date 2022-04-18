@@ -2,7 +2,6 @@ package gov.cms.ab2d.api.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import gov.cms.ab2d.api.SpringBootApp;
-import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
@@ -21,6 +20,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.io.InputStream;
 import java.util.List;
 
+import static gov.cms.ab2d.common.model.Role.ADMIN_ROLE;
+import static gov.cms.ab2d.common.model.Role.ATTESTOR_ROLE;
+import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_PDP_CLIENT;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -41,9 +43,6 @@ public class RoleTests {
     LoggerEventRepository loggerEventRepository;
 
     @Autowired
-    private JobRepository jobRepository;
-
-    @Autowired
     private DataSetup dataSetup;
 
     @Container
@@ -58,7 +57,6 @@ public class RoleTests {
 
     @AfterEach
     public void cleanup() {
-        jobRepository.findAll().forEach(job -> dataSetup.queueForCleanup(job));
         dataSetup.cleanup();
         loggerEventRepository.delete();
     }

@@ -1,16 +1,16 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
-import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.worker.TestUtil;
-
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import java.util.ArrayList;
 import java.util.List;
+
 
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifier;
 
@@ -46,17 +46,17 @@ public class CoverageDriverStub implements CoverageDriver {
     }
 
     @Override
-    public boolean isCoverageAvailable(Job job, Contract contract) {
+    public boolean isCoverageAvailable(Job job, ContractDTO contract) {
         return false;
     }
 
     @Override
-    public int numberOfBeneficiariesToProcess(Job job, Contract contract) {
+    public int numberOfBeneficiariesToProcess(Job job, ContractDTO contract) {
         return totalRecords;
     }
 
     @Override
-    public CoveragePagingResult pageCoverage(Job job, Contract contract) {
+    public CoveragePagingResult pageCoverage(Job job, ContractDTO contract) {
 
         CoveragePagingRequest nextRequest = getNextRequest(null, job, mapping.map(contract));
         List<CoverageSummary> results = getSummaries(null);

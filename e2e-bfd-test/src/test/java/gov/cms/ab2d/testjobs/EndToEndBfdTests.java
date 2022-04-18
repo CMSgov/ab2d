@@ -43,6 +43,7 @@ import gov.cms.ab2d.worker.processor.coverage.CoverageDriverImpl;
 import gov.cms.ab2d.worker.processor.coverage.CoverageLockWrapper;
 import gov.cms.ab2d.worker.processor.coverage.CoverageProcessor;
 import gov.cms.ab2d.worker.processor.coverage.CoverageProcessorImpl;
+import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.service.FileServiceImpl;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import lombok.extern.slf4j.Slf4j;
@@ -117,6 +118,8 @@ public class EndToEndBfdTests {
     @Autowired
     private ContractRepository contractRepository;
     @Autowired
+    private ContractWorkerClient contractWorkerClient;
+    @Autowired
     private JobChannelService jobChannelService;
     @Autowired
     private JobProgressService jobProgressService;
@@ -180,8 +183,8 @@ public class EndToEndBfdTests {
                 propertiesService, coverageProcessor, coverageLockWrapper, contractToContractCoverageMapping);
 
         // Instantiate the job processors
-        jobService = new JobServiceImpl(pdpClientService, jobRepository, jobOutputService, logManager, logEventSummary, path.getAbsolutePath());
-        jobPreProcessor = new JobPreProcessorImpl(contractRepository, jobRepository, logManager, coverageDriver);
+        jobService = new JobServiceImpl(jobRepository, jobOutputService, logManager, logEventSummary, path.getAbsolutePath());
+        jobPreProcessor = new JobPreProcessorImpl(contractWorkerClient, jobRepository, logManager, coverageDriver);
 
         jobProcessor = new JobProcessorImpl(new FileServiceImpl(), jobChannelService, jobProgressService, jobProgressUpdateService,
                 jobRepository, jobOutputRepository, contractProcessor, logManager);
@@ -362,7 +365,7 @@ public class EndToEndBfdTests {
         job.setProgress(0);
         job.setSince(since);
         job.setFhirVersion(version);
-        job.setPdpClient(pdpClient);
+        job.setOrganization(pdpClient.getOrganization());
 
         // Check to see if there is any attestation
         Contract contract = pdpClient.getContract();

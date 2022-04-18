@@ -1,18 +1,18 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
-import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.Properties;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
+import gov.cms.ab2d.coverage.model.CoverageJobStatus;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
-import gov.cms.ab2d.coverage.model.CoverageJobStatus;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import java.time.OffsetDateTime;
@@ -168,8 +168,7 @@ class CoverageDriverUnitTest {
     void failPagingRequestWhenStartDateAfterNow() {
 
         Job job = new Job();
-        Contract contract = new Contract();
-        contract.setAttestedOn(OffsetDateTime.now().plusHours(1));
+        ContractDTO contract = new ContractDTO(null, null, OffsetDateTime.now().plusHours(1), null);
 
         CoverageDriverException startDateInFuture = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(job, contract));
         assertEquals("contract attestation time is after current time," +
@@ -209,20 +208,19 @@ class CoverageDriverUnitTest {
         });
 
         Job job = new Job();
-        Contract contract = new Contract();
-        contract.setContractNumber("contract-0");
-        contract.setAttestedOn(OffsetDateTime.now().plusHours(1));
-        when(mapping.map(any(Contract.class))).thenReturn(new ContractForCoverageDTO(contract.getContractNumber(),contract.getAttestedOn(),ContractForCoverageDTO.ContractType.NORMAL));
+        ContractDTO contract =new ContractDTO("contract-0", null, OffsetDateTime.now().plusHours(1), null);
+        when(mapping.map(any(ContractDTO.class))).thenReturn(new ContractForCoverageDTO(contract.getContractNumber(), contract.getAttestedOn(), ContractForCoverageDTO.ContractType.NORMAL));
 
 
         CoverageDriverException startDateInFuture = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(job, contract));
         assertEquals("contract attestation time is after current time," +
                 " cannot find metadata for coverage periods in the future", startDateInFuture.getMessage());
 
-        contract.setAttestedOn(AB2D_EPOCH.toOffsetDateTime());
+        ContractDTO secondContract =new ContractDTO("contract-0", null, AB2D_EPOCH.toOffsetDateTime(), null);
+
         job.setSince(OffsetDateTime.now().plusHours(1));
 
-        CoveragePagingResult result = driver.pageCoverage(job, contract);
+        CoveragePagingResult result = driver.pageCoverage(job, secondContract);
         assertNotNull(result);
     }
 
@@ -233,8 +231,7 @@ class CoverageDriverUnitTest {
         when(coverageService.getCoveragePeriod(any(), anyInt(), anyInt())).thenThrow(new EntityNotFoundException());
 
         Job job = new Job();
-        Contract contract = new Contract();
-        contract.setAttestedOn(AB2D_EPOCH.toOffsetDateTime());
+        ContractDTO contract =new ContractDTO(null, null, AB2D_EPOCH.toOffsetDateTime(), null);
 
         CoverageDriverException startDateInFuture = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(job, contract));
         assertEquals(EntityNotFoundException.class, startDateInFuture.getCause().getClass());
@@ -273,11 +270,10 @@ class CoverageDriverUnitTest {
         });
 
         Job job = new Job();
-        Contract contract = new Contract();
-        contract.setContractNumber("Contract-0");
-        contract.setAttestedOn(AB2D_EPOCH.toOffsetDateTime());
+        ContractDTO contract = new ContractDTO("Contract-0", null, AB2D_EPOCH.toOffsetDateTime(), null);
 
-        when(mapping.map(any(Contract.class))).thenReturn(new ContractForCoverageDTO("Contract-0",contract.getAttestedOn(),ContractForCoverageDTO.ContractType.NORMAL));
+
+        when(mapping.map(any(ContractDTO.class))).thenReturn(new ContractForCoverageDTO("Contract-0", contract.getAttestedOn(), ContractForCoverageDTO.ContractType.NORMAL));
 
 
         CoveragePagingResult firstCall = driver.pageCoverage(job, contract);
@@ -350,8 +346,8 @@ class CoverageDriverUnitTest {
         when(propertiesService.getPropertiesByKey(eq(Constants.COVERAGE_SEARCH_OVERRIDE)))
                 .thenReturn(overrideProp);
 
-        Contract contract = new Contract();
-        contract.setContractNumber("contractNum");
+        ContractDTO contract = new ContractDTO("contractNum", null, null, null);
+
         Job job = new Job();
         job.setContractNumber(contract.getContractNumber());
 
@@ -372,8 +368,7 @@ class CoverageDriverUnitTest {
 
         CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, null, null, lockWrapper,null);
 
-        Contract contract = new Contract();
-        contract.setContractNumber("contractNum");
+        ContractDTO contract = new ContractDTO("contractNum", null, null, null);
         Job job = new Job();
         job.setContractNumber(contract.getContractNumber());
 
@@ -430,9 +425,7 @@ class CoverageDriverUnitTest {
             fail("no search found should fail quietly", exception);
         }
 
-        Contract contract = new Contract();
-        contract.setContractNumber("contractNum");
-
+        ContractDTO contract = new ContractDTO("contractNum", null, null, null);
         CoveragePeriod coveragePeriod = new CoveragePeriod();
         coveragePeriod.setId(100);
         coveragePeriod.setMonth(1);
@@ -469,10 +462,7 @@ class CoverageDriverUnitTest {
     @Test
     void startDateForcedToMinAB2DEpoch() {
 
-        Contract contract = new Contract();
-        contract.setContractNumber("contractNum");
-        contract.setAttestedOn(OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC));
-
+        ContractDTO contract = new ContractDTO("contractNum", null, OffsetDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC), null);
         CoveragePeriod coveragePeriod = new CoveragePeriod();
         coveragePeriod.setId(100);
         coveragePeriod.setMonth(1);
@@ -488,8 +478,7 @@ class CoverageDriverUnitTest {
     void periodUpdateFailsThenThrowException() {
 
         CoverageDriverException exception = assertThrows(CoverageDriverException.class, () -> {
-            Contract contract = new Contract();
-            contract.setContractNumber("contractNum");
+            ContractDTO contract = new ContractDTO("contractNum", null, null, null);
 
             CoveragePeriod coveragePeriod = new CoveragePeriod();
             coveragePeriod.setContractNumber(contract.getContractNumber());

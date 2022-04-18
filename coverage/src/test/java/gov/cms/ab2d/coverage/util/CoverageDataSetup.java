@@ -79,7 +79,6 @@ public class CoverageDataSetup {
         }
     }
 
-
     public CoveragePeriod createCoveragePeriod(String contractNumber, int month, int year) {
         CoveragePeriod coveragePeriod = new CoveragePeriod();
         coveragePeriod.setContractNumber(contractNumber);
@@ -127,6 +126,4 @@ public class CoverageDataSetup {
     public ContractForCoverageDTO setupContractDTO(String contractNumber, OffsetDateTime attestedOn) {
         return new ContractForCoverageDTO(contractNumber, attestedOn, ContractForCoverageDTO.ContractType.NORMAL);
     }
-
-
 }

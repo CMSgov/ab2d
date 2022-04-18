@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
+import gov.cms.ab2d.api.remote.JobClientMock;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.repository.*;
+import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
@@ -15,7 +15,6 @@ import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
@@ -26,14 +25,12 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
 import static gov.cms.ab2d.api.controller.BulkDataAccessAPIIntegrationTests.PATIENT_EXPORT_PATH;
-import static gov.cms.ab2d.api.util.Constants.ADMIN_ROLE;
+import static gov.cms.ab2d.common.model.Role.ADMIN_ROLE;
+import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
@@ -49,14 +46,8 @@ public class AdminAPIMaintenanceModeTests {
     @Autowired
     private MockMvc mockMvc;
 
-    @Value("${efs.mount}")
-    private String tmpJobLocation;
-
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
-
-    @Autowired
-    private JobRepository jobRepository;
 
     @Autowired
     private TestUtil testUtil;
@@ -66,6 +57,9 @@ public class AdminAPIMaintenanceModeTests {
 
     @Autowired
     private DataSetup dataSetup;
+
+    @Autowired
+    JobClientMock jobClientMock;
 
     private static final String PROPERTIES_URL = "/properties";
 
@@ -80,6 +74,7 @@ public class AdminAPIMaintenanceModeTests {
     public void cleanup() {
         dataSetup.cleanup();
         loggerEventRepository.delete();
+        jobClientMock.cleanupAll();
     }
 
     @Test
@@ -104,7 +99,6 @@ public class AdminAPIMaintenanceModeTests {
 
         List<LoggableEvent> apiReqEvents = loggerEventRepository.load(ApiRequestEvent.class);
         assertEquals(2, apiReqEvents.size());
-        ApiRequestEvent requestEvent = (ApiRequestEvent) apiReqEvents.get(0);
 
         List<LoggableEvent> apiResEvents = loggerEventRepository.load(ApiResponseEvent.class);
         assertEquals(1, apiResEvents.size());
@@ -136,8 +130,6 @@ public class AdminAPIMaintenanceModeTests {
         this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(202));
-
-        jobRepository.findAll().forEach(job -> dataSetup.queueForCleanup(job));
     }
 
     @Test
@@ -153,6 +145,8 @@ public class AdminAPIMaintenanceModeTests {
         maintenanceModeDTO.setValue("true");
         propertiesDTOs.add(maintenanceModeDTO);
 
+        String testFile = "test.ndjson";
+        jobClientMock.addJobOutputForDownload(testUtil.createJobOutput(testFile));
         ObjectMapper mapper = new ObjectMapper();
 
         this.mockMvc.perform(
@@ -161,12 +155,9 @@ public class AdminAPIMaintenanceModeTests {
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(200));
 
-        String testFile = "test.ndjson";
-
-        Job job = testUtil.createTestJobForDownload(testFile);
-        dataSetup.queueForCleanup(job);
-
-        String destinationStr = testUtil.createTestDownloadFile(tmpJobLocation, job, testFile);
+        JobOutput jobOutput = testUtil.createJobOutput(testFile);
+        jobClientMock.addJobOutputForDownload(jobOutput);
+        jobClientMock.setResultsCreated(true);
 
         MvcResult mvcResultStatusCheck = this.mockMvc.perform(get(contentLocationUrl)
                 .header("Authorization", "Bearer " + token))
@@ -178,8 +169,6 @@ public class AdminAPIMaintenanceModeTests {
                         .header("Authorization", "Bearer " + token)
                         .header("Accept-Encoding", "gzip, deflate, br"))
                         .andExpect(status().is(200));
-
-        assertFalse(Files.exists(Paths.get(destinationStr + File.separator + testFile)));
 
         // Cleanup
         propertiesDTOs.clear();

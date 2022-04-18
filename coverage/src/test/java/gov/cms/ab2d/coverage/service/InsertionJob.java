@@ -19,7 +19,6 @@ import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import javax.sql.DataSource;
 
-
 import static java.util.stream.Collectors.joining;
 
 /**
@@ -140,5 +139,4 @@ public class InsertionJob implements Callable<CoverageSearchEvent> {
             exception.printStackTrace();
         }
     }
-
 }

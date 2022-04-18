@@ -32,10 +32,8 @@ public class Job {
     @NotNull
     private String jobUuid;
 
-    @ManyToOne
     @NotNull
-    @JoinColumn(name = "user_account_id")
-    private PdpClient pdpClient;
+    private String organization;
 
     @OneToMany(
             mappedBy = "job",
@@ -94,5 +92,20 @@ public class Job {
 
     public boolean hasJobBeenCancelled() {
         return CANCELLED == status;
+    }
+
+    public void pollAndUpdateTime(int delaySeconds) {
+        if (pollingTooMuch(delaySeconds)) {
+            throw new TooFrequentInvocations("polling too frequently");
+        }
+        lastPollTime = OffsetDateTime.now();
+    }
+
+    public boolean isExpired(int ttlHours) {
+        return status.isExpired(completedAt, ttlHours);
+    }
+
+    private boolean pollingTooMuch(int delaySeconds) {
+        return lastPollTime != null && lastPollTime.plusSeconds(delaySeconds).isAfter(OffsetDateTime.now());
     }
 }

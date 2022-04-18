@@ -26,8 +26,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
-import static gov.cms.ab2d.common.util.Constants.ADMIN_ROLE;
-import static gov.cms.ab2d.common.util.Constants.SPONSOR_ROLE;
+import static gov.cms.ab2d.common.model.Role.ADMIN_ROLE;
+import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -104,7 +104,7 @@ class PdpClientServiceTest {
             pdpClientService.createClient(client);
         });
         assertEquals("could not execute statement; SQL [n/a]; constraint [uc_user_account_username]; " +
-                "nested exception is org.hibernate.exception.ConstraintViolationException: could not execute statement",
+                        "nested exception is org.hibernate.exception.ConstraintViolationException: could not execute statement",
                 exceptionThrown.getMessage());
     }
 
@@ -223,11 +223,7 @@ class PdpClientServiceTest {
     }
 
     private ContractDTO buildContractDTO(Contract contract) {
-        ContractDTO contractDTO = new ContractDTO();
-        contractDTO.setContractName(contract.getContractName());
-        contractDTO.setContractNumber(contract.getContractNumber());
-        contractDTO.setAttestedOn(contract.getAttestedOn().toString());
-        return contractDTO;
+        return contract.toDTO();
     }
 
     private PdpClientDTO createClient(Contract contract, String clientId, @Nullable String roleName) {
@@ -235,9 +231,7 @@ class PdpClientServiceTest {
         client.setClientId(clientId);
         client.setOrganization(clientId);
         client.setEnabled(true);
-        ContractDTO contractDTO = new ContractDTO(contract.getContractNumber(), contract.getContractName(),
-                contract.getAttestedOn().toString());
-        client.setContract(contractDTO);
+        client.setContract(contract.toDTO());
         client.setRole(roleName);
 
         return client;

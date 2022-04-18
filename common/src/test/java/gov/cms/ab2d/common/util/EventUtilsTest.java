@@ -1,5 +1,6 @@
 package gov.cms.ab2d.common.util;
 
+import gov.cms.ab2d.common.dto.StaleJob;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
@@ -32,7 +33,7 @@ class EventUtilsTest {
         job = new Job();
         job.setStatus(JobStatus.IN_PROGRESS);
         job.setJobUuid(jobId);
-        job.setPdpClient(pdpClient);
+        job.setOrganization(ORGANIZATION);
         job.setFhirVersion(STU3);
     }
 
@@ -83,5 +84,15 @@ class EventUtilsTest {
                 f.delete();
             }
         }
+    }
+
+    /*
+     * A trivial test to get Sonar happy.
+     */
+    @Test
+    void buildStaleFileEvent() {
+        StaleJob staleJob = new StaleJob("job_uuid", "bogus incorporated");
+        FileEvent fileEvent = EventUtils.getStaleFileEvent(staleJob, null, null);
+        assertNotNull(fileEvent);
     }
 }

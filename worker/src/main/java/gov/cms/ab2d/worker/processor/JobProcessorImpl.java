@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
+import gov.cms.ab2d.aggregator.FileOutputType;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
@@ -30,15 +31,13 @@ import java.util.concurrent.ExecutionException;
 
 import static gov.cms.ab2d.common.model.JobStatus.FAILED;
 import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
-import static gov.cms.ab2d.common.util.EventUtils.getOrganization;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PROD_LIST;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
+
 import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_COMPLETED;
 import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_CALL_FAILURE;
 import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_FAILURE;
 import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_QUEUE_MISMATCH;
-import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.NDJSON;
-import static gov.cms.ab2d.worker.processor.StreamHelperImpl.FileOutputType.ZIP;
 
 @Slf4j
 @Service
@@ -136,7 +135,7 @@ public class JobProcessorImpl implements JobProcessor {
 
         try {
             // Retrieve the contract beneficiaries
-            var jobOutputs = contractProcessor.process(outputDirPath, job);
+            var jobOutputs = contractProcessor.process(job);
 
             // For each job output, add to the job and save the result
             jobOutputs.forEach(job::addJobOutput);
@@ -196,7 +195,7 @@ public class JobProcessorImpl implements JobProcessor {
                 : job.getJobOutputs().size() - 1;
 
         // Regardless of whether we pass or fail the basic
-        eventLogger.log(new ContractSearchEvent(getOrganization(job),
+        eventLogger.log(new ContractSearchEvent(job.getOrganization(),
                 job.getJobUuid(),
                 job.getContractNumber(),
                 progressTracker.getPatientsExpected(),
@@ -288,12 +287,15 @@ public class JobProcessorImpl implements JobProcessor {
     /**
      * @return a Filename filter for ndjson and zip files
      */
-    private FilenameFilter getFilenameFilter() {
+    FilenameFilter getFilenameFilter() {
         return (dir, name) -> {
             final String filename = name.toLowerCase();
-            final String ndjson = NDJSON.getSuffix();
-            final String zip = ZIP.getSuffix();
-            return filename.endsWith(ndjson) || filename.endsWith(zip);
+            for (FileOutputType type : FileOutputType.values()) {
+                if (type != FileOutputType.UNKNOWN && filename.endsWith(type.getSuffix())) {
+                    return true;
+                }
+            }
+            return false;
         };
     }
 
@@ -314,7 +316,7 @@ public class JobProcessorImpl implements JobProcessor {
      */
     private void completeJob(Job job) {
         ProgressTracker progressTracker = jobProgressService.getStatus(job.getJobUuid());
-        String jobFinishedMessage = String.format(EOB_JOB_COMPLETED + " Contract %s processed " +
+        String jobFinishedMessage = String.format(EOB_JOB_COMPLETED + " ContractWorkerDto %s processed " +
                 "%d patients generating %d eobs and %d files (including the error file if any)",
                 job.getContractNumber(), progressTracker.getPatientRequestProcessedCount(),
                 progressTracker.getEobsProcessedCount(),

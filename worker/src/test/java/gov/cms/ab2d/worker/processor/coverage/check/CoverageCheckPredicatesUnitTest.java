@@ -1,11 +1,20 @@
 package gov.cms.ab2d.worker.processor.coverage.check;
 
+import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
-import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageCount;
+import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.service.CoverageService;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import javax.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,16 +22,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import javax.persistence.EntityNotFoundException;
-import java.time.OffsetDateTime;
-import java.time.ZonedDateTime;
-import java.util.*;
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class CoverageCheckPredicatesUnitTest {
@@ -31,7 +40,7 @@ public class CoverageCheckPredicatesUnitTest {
     private CoverageService coverageService;
 
     private static final ZonedDateTime CURRENT_TIME = OffsetDateTime.now().atZoneSameInstant(AB2D_ZONE);
-    private static final ZonedDateTime ATTESTATION_TIME = CURRENT_TIME.minusMonths(3);
+    private static ZonedDateTime ATTESTATION_TIME = CURRENT_TIME.minusMonths(3);
 
     @AfterEach
     void tearDown() {
@@ -47,9 +56,7 @@ public class CoverageCheckPredicatesUnitTest {
         List<String> issues = new ArrayList<>();
         CoveragePeriodsPresentCheck presentCheck = new CoveragePeriodsPresentCheck(coverageService, null, issues);
 
-        Contract contract = new Contract();
-        contract.setContractNumber("TEST");
-        contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
+        ContractDTO contract = getContractDTO();
 
         assertFalse(presentCheck.test(contract));
 
@@ -57,14 +64,16 @@ public class CoverageCheckPredicatesUnitTest {
         issues.forEach(issue -> assertTrue(issue.contains("coverage period missing")));
     }
 
+
+    private ContractDTO getContractDTO() {
+        return new ContractDTO("TEST", null, ATTESTATION_TIME.toOffsetDateTime(), Contract.ContractType.NORMAL);
+    }
+
     @DisplayName("Coverage periods all present for contract check passes")
     @Test
     void whenCoveragePeriodsPresent_passPresentCheck() {
 
-        Contract contract = new Contract();
-        contract.setId(1L);
-        contract.setContractNumber("TEST");
-        contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
+        ContractDTO contract = getContractDTO();
 
         // Just reuse, check assumes getCoveragePeriod works
         CoveragePeriod coveragePeriod = new CoveragePeriod();
@@ -92,9 +101,7 @@ public class CoverageCheckPredicatesUnitTest {
         CoveragePresentCheck presentCheck =
                 new CoveragePresentCheck(coverageService, coverageCounts, issues);
 
-        Contract contract = new Contract();
-        contract.setContractNumber("TEST");
-        contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
+        ContractDTO contract = getContractDTO();
 
         // Fail when no coverage is present
         assertFalse(presentCheck.test(contract));
@@ -143,9 +150,7 @@ public class CoverageCheckPredicatesUnitTest {
         CoveragePresentCheck presentCheck =
                 new CoveragePresentCheck(coverageService, coverageCounts, issues);
 
-        Contract contract = new Contract();
-        contract.setContractNumber("TEST");
-        contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
+        ContractDTO contract = getContractDTO();
 
         List<CoverageCount> fakeCounts = List.of(
                 new CoverageCount("TEST", ATTESTATION_TIME.plusMonths(0).getYear(),
@@ -164,30 +169,33 @@ public class CoverageCheckPredicatesUnitTest {
     @DisplayName("Coverage changes are limited to 10% between months fails when changes are large")
     @Test
     void whenCoverageUnstable_failCoverageStabilityCheck() {
-
         Map<String, List<CoverageCount>> coverageCounts = new HashMap<>();
         List<String> issues = new ArrayList<>();
         CoverageStableCheck stableCheck =
                 new CoverageStableCheck(coverageService, coverageCounts, issues);
 
-        Contract contract = new Contract();
-        contract.setContractNumber("TEST");
-        contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
+        ContractDTO contract = getContractDTO();
+
+        ZonedDateTime nonDecAttestationTime;
+        if (ATTESTATION_TIME.getMonth().getValue() == 12)
+            nonDecAttestationTime = ATTESTATION_TIME.plusMonths(1);
+        else
+            nonDecAttestationTime = ATTESTATION_TIME;
 
         List<CoverageCount> fakeCounts = List.of(
-                new CoverageCount("TEST", ATTESTATION_TIME.plusMonths(0).getYear(),
-                        ATTESTATION_TIME.plusMonths(0).getMonthValue(), 1, 1, 10000),
-                new CoverageCount("TEST", ATTESTATION_TIME.plusMonths(1).getYear(),
-                        ATTESTATION_TIME.plusMonths(1).getMonthValue(), 1, 1, 12000),
-                new CoverageCount("TEST", ATTESTATION_TIME.plusMonths(2).getYear(),
-                        ATTESTATION_TIME.plusMonths(2).getMonthValue(), 1, 1, 10000)
+                new CoverageCount("TEST", nonDecAttestationTime.plusMonths(0).getYear(),
+                        nonDecAttestationTime.plusMonths(0).getMonthValue(), 1, 1, 10000),
+                new CoverageCount("TEST", nonDecAttestationTime.plusMonths(1).getYear(),
+                        nonDecAttestationTime.plusMonths(1).getMonthValue(), 1, 1, 12000),
+                new CoverageCount("TEST", nonDecAttestationTime.plusMonths(2).getYear(),
+                        nonDecAttestationTime.plusMonths(2).getMonthValue(), 1, 1, 10000)
         );
         coverageCounts.put("TEST", fakeCounts);
 
         assertFalse(stableCheck.test(contract));
 
-        int expectedIssues = ATTESTATION_TIME.getMonthValue() == 12 || ATTESTATION_TIME.plusMonths(1).getMonthValue() == 12
-                || ATTESTATION_TIME.plusMonths(2).getMonthValue() == 12 ? 1 : 2;
+        int expectedIssues = (nonDecAttestationTime.getMonthValue() == 12 || nonDecAttestationTime.plusMonths(1).getMonthValue() == 12
+                || nonDecAttestationTime.plusMonths(2).getMonthValue() == 12) && nonDecAttestationTime.getMonthValue() != 0 ? 1 : 2;
 
         assertEquals(expectedIssues, issues.size());
         issues.forEach(issue -> assertTrue(issue.contains("enrollment changed")));
@@ -203,9 +211,7 @@ public class CoverageCheckPredicatesUnitTest {
         CoverageStableCheck stableCheck =
                 new CoverageStableCheck(coverageService, coverageCounts, issues);
 
-        Contract contract = new Contract();
-        contract.setContractNumber("TEST");
-        contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
+        ContractDTO contract = getContractDTO();
 
         List<CoverageCount> fakeCounts = List.of(
                 new CoverageCount("TEST", ATTESTATION_TIME.plusMonths(0).getYear(),
@@ -243,9 +249,7 @@ public class CoverageCheckPredicatesUnitTest {
         CoverageNoDuplicatesCheck duplicatesCheck =
                 new CoverageNoDuplicatesCheck(coverageService, coverageCounts, issues);
 
-        Contract contract = new Contract();
-        contract.setContractNumber("TEST");
-        contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
+        ContractDTO contract = getContractDTO();
 
         List<CoverageCount> fakeCounts = List.of(
                 new CoverageCount("TEST", ATTESTATION_TIME.plusMonths(0).getYear(),
@@ -278,9 +282,7 @@ public class CoverageCheckPredicatesUnitTest {
         CoverageNoDuplicatesCheck duplicatesCheck =
                 new CoverageNoDuplicatesCheck(coverageService, coverageCounts, issues);
 
-        Contract contract = new Contract();
-        contract.setContractNumber("TEST");
-        contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
+        ContractDTO contract = getContractDTO();
 
         List<CoverageCount> fakeCounts = List.of(
                 new CoverageCount("TEST", ATTESTATION_TIME.plusMonths(0).getYear(),
@@ -305,9 +307,7 @@ public class CoverageCheckPredicatesUnitTest {
         CoverageUpToDateCheck upToDateCheck =
                 new CoverageUpToDateCheck(coverageService, coverageCounts, issues);
 
-        Contract contract = new Contract();
-        contract.setContractNumber("TEST");
-        contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
+        ContractDTO contract = getContractDTO();
 
         CoverageSearchEvent event1 = new CoverageSearchEvent();
         event1.setId(1L);
@@ -350,9 +350,7 @@ public class CoverageCheckPredicatesUnitTest {
         CoverageUpToDateCheck upToDateCheck =
                 new CoverageUpToDateCheck(coverageService, coverageCounts, issues);
 
-        Contract contract = new Contract();
-        contract.setContractNumber("TEST");
-        contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
+        ContractDTO contract = getContractDTO();
 
         CoverageSearchEvent event1 = new CoverageSearchEvent();
         event1.setId(1L);

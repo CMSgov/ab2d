@@ -5,6 +5,8 @@ import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.controller.v1.CapabilityStatementSTU3;
 import gov.cms.ab2d.api.controller.v2.CapabilityStatementR4;
+import gov.cms.ab2d.api.remote.JobClientMock;
+import gov.cms.ab2d.common.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
@@ -17,26 +19,20 @@ import org.apache.commons.lang3.StringUtils;
 import org.hamcrest.core.Is;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.ResultMatcher;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -44,7 +40,13 @@ import java.util.Optional;
 import static gov.cms.ab2d.api.controller.JobCompletedResponse.CHECKSUM_STRING;
 import static gov.cms.ab2d.api.controller.JobCompletedResponse.CONTENT_LENGTH_STRING;
 import static gov.cms.ab2d.api.controller.common.ApiText.*;
-import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
+import static gov.cms.ab2d.api.remote.JobClientMock.EXPIRES_IN_DAYS;
+import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
+import static gov.cms.ab2d.common.model.JobStatus.FAILED;
+import static gov.cms.ab2d.common.model.JobStatus.IN_PROGRESS;
+import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
+import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
+import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_PDP_CLIENT;
 import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
@@ -52,6 +54,8 @@ import static gov.cms.ab2d.eventlogger.events.ErrorEvent.ErrorType.FILE_ALREADY_
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
+import static java.time.ZoneOffset.UTC;
+import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 import static org.springframework.http.HttpHeaders.EXPIRES;
@@ -69,16 +73,13 @@ public class BulkDataAccessAPIIntegrationTests {
     private MockMvc mockMvc;
 
     @Autowired
-    private JobRepository jobRepository;
+    JobClientMock jobClientMock;
 
     @Autowired
     private PdpClientRepository pdpClientRepository;
 
     @Autowired
     private ContractRepository contractRepository;
-
-    @Value("${efs.mount}")
-    private String tmpJobLocation;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
@@ -106,7 +107,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
     @AfterEach
     public void cleanup() {
-        jobRepository.findAll().forEach(job -> dataSetup.queueForCleanup(job));  // catches implicitly generated jobs
+        jobClientMock.cleanupAll();
         loggerEventRepository.delete();
         dataSetup.cleanup();
     }
@@ -125,7 +126,6 @@ public class BulkDataAccessAPIIntegrationTests {
         ResultActions resultActions = this.mockMvc.perform(
                 get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token));
-                // .andDo(print());
         List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
         assertEquals(1, apiRequestEvents.size());
@@ -139,7 +139,7 @@ public class BulkDataAccessAPIIntegrationTests {
         List<LoggableEvent> jobEvents = loggerEventRepository.load(JobStatusChangeEvent.class);
         assertEquals(1, jobEvents.size());
         JobStatusChangeEvent jobEvent = (JobStatusChangeEvent) jobEvents.get(0);
-        assertEquals(JobStatus.SUBMITTED.name(), jobEvent.getNewStatus());
+        assertEquals(SUBMITTED.name(), jobEvent.getNewStatus());
         assertNull(jobEvent.getOldStatus());
 
         assertTrue(UtilMethods.allEmpty(
@@ -148,22 +148,19 @@ public class BulkDataAccessAPIIntegrationTests {
                 loggerEventRepository.load(ErrorEvent.class),
                 loggerEventRepository.load(FileEvent.class)));
 
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
-
-        assertEquals(job.getJobUuid(), responseEvent.getJobId());
+        String jobUuid = jobClientMock.pickAJob();
+        assertEquals(jobUuid, responseEvent.getJobId());
 
         String statusUrl =
-                "http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
+                "http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid + "/$status";
 
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string(CONTENT_LOCATION, statusUrl));
 
-        assertEquals(JobStatus.SUBMITTED, job.getStatus());
-        assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
-        assertEquals(Integer.valueOf(0), job.getProgress());
-        assertEquals("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH, job.getRequestUrl());
-        assertEquals(EOB, job.getResourceTypes());
-        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
+        StartJobDTO startJobDTO = jobClientMock.lookupJob(jobUuid);
+        assertEquals("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH, startJobDTO.getUrl());
+        assertEquals(EOB, startJobDTO.getResourceTypes());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), startJobDTO.getOrganization());
     }
 
     @Test
@@ -172,25 +169,22 @@ public class BulkDataAccessAPIIntegrationTests {
                 get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token)
                         .header("X-Forwarded-Proto", "https"));
-                // .andDo(print());
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
+        String jobUuid = jobClientMock.pickAJob();
+        StartJobDTO startJobDTO = jobClientMock.lookupJob(jobUuid);
         String statusUrl =
-                "https://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
+                "https://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid + "/$status";
 
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string(CONTENT_LOCATION, statusUrl));
 
-        assertEquals(JobStatus.SUBMITTED, job.getStatus());
-        assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
-        assertEquals(Integer.valueOf(0), job.getProgress());
-        assertEquals("https://localhost" + API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH, job.getRequestUrl());
-        assertEquals(EOB, job.getResourceTypes());
-        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
+        assertEquals("https://localhost" + API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH, startJobDTO.getUrl());
+        assertEquals(EOB, startJobDTO.getResourceTypes());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), startJobDTO.getOrganization());
     }
 
     @Test
-    public void testPatientExportDuplicateSubmission() throws Exception {
+    void testPatientExportDuplicateSubmission() throws Exception {
         createMaxJobs();
 
         MvcResult mvcResult = this.mockMvc.perform(
@@ -202,7 +196,6 @@ public class BulkDataAccessAPIIntegrationTests {
                         .andReturn();
         List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
         assertEquals(MAX_JOBS_PER_CLIENT + 1, apiRequestEvents.size());
-        ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
 
         List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
         assertEquals(MAX_JOBS_PER_CLIENT + 1, apiResponseEvents.size());
@@ -215,9 +208,9 @@ public class BulkDataAccessAPIIntegrationTests {
 
         List<LoggableEvent> jobEvents = loggerEventRepository.load(JobStatusChangeEvent.class);
         assertEquals(MAX_JOBS_PER_CLIENT, jobEvents.size());
-        jobEvents.forEach(e -> assertEquals(JobStatus.SUBMITTED.name(), ((JobStatusChangeEvent) e).getNewStatus()));
+        jobEvents.forEach(e -> assertEquals(SUBMITTED.name(), ((JobStatusChangeEvent) e).getNewStatus()));
         JobStatusChangeEvent jobEvent = (JobStatusChangeEvent) jobEvents.get(0);
-        assertEquals(JobStatus.SUBMITTED.name(), jobEvent.getNewStatus());
+        assertEquals(SUBMITTED.name(), jobEvent.getNewStatus());
         assertNull(jobEvent.getOldStatus());
 
         assertTrue(UtilMethods.allEmpty(
@@ -230,30 +223,8 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testPatientExportDuplicateSubmissionWithCancelledStatus() throws Exception {
+    void testPatientExportDuplicateSubmissionWithInProgressStatus() throws Exception {
         createMaxJobs();
-
-        List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
-        for(Job job : jobs) {
-            job.setStatus(JobStatus.CANCELLED);
-            jobRepository.saveAndFlush(job);
-        }
-
-        this.mockMvc.perform(
-                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(202));
-    }
-
-    @Test
-    public void testPatientExportDuplicateSubmissionWithInProgressStatus() throws Exception {
-        createMaxJobs();
-
-        List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
-        for(Job job : jobs) {
-            job.setStatus(JobStatus.IN_PROGRESS);
-            jobRepository.saveAndFlush(job);
-        }
 
         this.mockMvc.perform(
                 get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
@@ -262,34 +233,8 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(header().string("Retry-After", "30"))
                 .andExpect(header().doesNotExist(X_PROG))
                 .andExpect(header().exists(CONTENT_LOCATION));
-        ;
     }
 
-    @Test
-    void testPatientExportDuplicateSubmissionWithDifferentClient() throws Exception {
-        createMaxJobs();
-
-        List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
-        PdpClient pdpClient = new PdpClient();
-        Contract contract = dataSetup.setupContract("Test");
-        pdpClient.setContract(contract);
-        pdpClient.setEnabled(true);
-        pdpClient.setClientId("test");
-        pdpClient.setOrganization("test-org");
-        pdpClientRepository.saveAndFlush(pdpClient);
-        dataSetup.queueForCleanup(pdpClient);
-
-        for(Job job : jobs) {
-            job.setPdpClient(pdpClient);
-            jobRepository.saveAndFlush(job);
-            dataSetup.queueForCleanup(job);
-        }
-
-        this.mockMvc.perform(
-                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(202));
-    }
 
     @Test
     void testPatientExportWithParameters() throws Exception {
@@ -299,21 +244,18 @@ public class BulkDataAccessAPIIntegrationTests {
                 this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON));
-                    // .andDo(print());
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
+        String jobUuid = jobClientMock.pickAJob();
+        StartJobDTO startJobDTO = jobClientMock.lookupJob(jobUuid);
         String statusUrl =
-                "http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
+                "http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid + "/$status";
 
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string(CONTENT_LOCATION, statusUrl));
 
-        assertEquals(JobStatus.SUBMITTED, job.getStatus());
-        assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
-        assertEquals(Integer.valueOf(0), job.getProgress());
-        assertEquals("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + typeParams, job.getRequestUrl());
-        assertEquals(EOB, job.getResourceTypes());
-        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
+        assertEquals("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + typeParams, startJobDTO.getUrl());
+        assertEquals(EOB, startJobDTO.getResourceTypes());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), startJobDTO.getOrganization());
     }
 
     @Test
@@ -400,14 +342,12 @@ public class BulkDataAccessAPIIntegrationTests {
                 get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH)
                     .contentType(MediaType.APPLICATION_JSON)
                     .header("Authorization", "Bearer " + token));
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
-        this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status")
+        jobClientMock.setExpectedStatus(SUBMITTED);
+        this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobClientMock.pickAJob() + "/$status")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(202))
                 .andExpect(content().string(StringUtils.EMPTY));
-
-        Job cancelledJob = jobRepository.findByJobUuid(job.getJobUuid());
 
         List<LoggableEvent> jobStatusChange = loggerEventRepository.load(JobStatusChangeEvent.class);
         assertEquals(2, jobStatusChange.size());
@@ -417,7 +357,6 @@ public class BulkDataAccessAPIIntegrationTests {
         JobStatusChangeEvent event2 = (JobStatusChangeEvent) jobStatusChange.get(1);
         assertEquals("SUBMITTED", event2.getOldStatus());
         assertEquals("CANCELLED", event2.getNewStatus());
-        assertEquals(JobStatus.CANCELLED, cancelledJob.getStatus());
     }
 
     @Test
@@ -457,45 +396,42 @@ public class BulkDataAccessAPIIntegrationTests {
                 get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token)
         );
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
-        job.setStatus(JobStatus.FAILED);
-        jobRepository.saveAndFlush(job);
+        jobClientMock.setExpectedStatus(FAILED);
+        String jobUuid = jobClientMock.pickAJob();
 
-        this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status")
+        this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid + "/$status")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("Job has a status of " + job.getStatus() +
+                        Is.is("Job has a status of " + FAILED.name() +
                                 ", so it cannot be cancelled")));
 
-        job.setStatus(JobStatus.CANCELLED);
-        jobRepository.saveAndFlush(job);
+        jobClientMock.setExpectedStatus(CANCELLED);
 
-        this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status")
+        this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid + "/$status")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("Job has a status of " + job.getStatus() +
+                        Is.is("Job has a status of " + CANCELLED.name() +
                                 ", so it cannot be cancelled")));
 
-        job.setStatus(JobStatus.SUCCESSFUL);
-        jobRepository.saveAndFlush(job);
+        jobClientMock.setExpectedStatus(SUCCESSFUL);
 
-        this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status")
+        this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid + "/$status")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("Job has a status of " + job.getStatus() +
+                        Is.is("Job has a status of " + SUCCESSFUL.name() +
                                 ", so it cannot be cancelled")));
     }
 
@@ -508,6 +444,7 @@ public class BulkDataAccessAPIIntegrationTests {
 
         String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
+        jobClientMock.setExpectedStatusAndProgress(SUBMITTED, 0);
 
         this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
@@ -526,7 +463,7 @@ public class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    public void testGetStatusWhileInProgress() throws Exception {
+    void testGetStatusWhileInProgress() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
                 get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
@@ -535,11 +472,7 @@ public class BulkDataAccessAPIIntegrationTests {
         String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
-
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
-        job.setProgress(30);
-        job.setStatus(JobStatus.IN_PROGRESS);
-        jobRepository.save(job);
+        jobClientMock.setExpectedStatusAndProgress(IN_PROGRESS, 30);
 
         this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
@@ -555,7 +488,6 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(header().string("Retry-After", "30"))
                 .andExpect(header().doesNotExist("X-Progress"))
                 .andExpect(header().doesNotExist(CONTENT_LOCATION));
-        ;
     }
 
     @Test
@@ -570,51 +502,40 @@ public class BulkDataAccessAPIIntegrationTests {
         String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
-        job.setStatus(JobStatus.SUCCESSFUL);
-        job.setProgress(100);
-        OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
-        job.setExpiresAt(expireDate);
-        OffsetDateTime now = OffsetDateTime.now();
-        job.setCompletedAt(now);
+        String jobUuid = jobClientMock.pickAJob();
+        StartJobDTO startJobDTO = jobClientMock.lookupJob(jobUuid);
 
         JobOutput jobOutput = new JobOutput();
         jobOutput.setFhirResourceType(EOB);
-        jobOutput.setJob(job);
         jobOutput.setFilePath("file.ndjson");
         jobOutput.setError(false);
         jobOutput.setChecksum("ABCD");
         jobOutput.setFileLength(10L);
-        job.getJobOutputs().add(jobOutput);
+        jobClientMock.addJobOutputForDownload(jobOutput);
 
         JobOutput errorJobOutput = new JobOutput();
         errorJobOutput.setFhirResourceType(OPERATION_OUTCOME);
-        errorJobOutput.setJob(job);
         errorJobOutput.setFilePath("error.ndjson");
         errorJobOutput.setError(true);
         errorJobOutput.setChecksum("1010F");
         errorJobOutput.setFileLength(20L);
-        job.getJobOutputs().add(errorJobOutput);
+        jobClientMock.addJobOutputForDownload(errorJobOutput);
 
-        jobRepository.saveAndFlush(job);
-
-        final ZonedDateTime jobExpiresUTC =
-                ZonedDateTime.ofInstant(job.getExpiresAt().toInstant(), ZoneId.of("UTC"));
         this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(200))
-                .andExpect(header().string(EXPIRES, DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC)))
+                .andExpect(buildExpiresMatcher())
                 .andExpect(jsonPath("$.transactionTime",
-                        Is.is(new org.hl7.fhir.dstu3.model.DateTimeType(job.getCreatedAt().toString()).toHumanDisplay())))
-                .andExpect(jsonPath("$.request", Is.is(job.getRequestUrl())))
+                        Is.is(new org.hl7.fhir.dstu3.model.DateTimeType(OffsetDateTime.now().toString()).toHumanDisplay())))
+                .andExpect(jsonPath("$.request", Is.is(startJobDTO.getUrl())))
                 .andExpect(jsonPath("$.requiresAccessToken", Is.is(true)))
                 .andExpect(jsonPath("$.output[0].type", Is.is(EOB)))
                 .andExpect(jsonPath("$.output[0].url",
-                        Is.is("https://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() +
+                        Is.is("https://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid +
                                 "/file/file.ndjson")))
                 .andExpect(jsonPath("$.error[0].type", Is.is(OPERATION_OUTCOME)))
                 .andExpect(jsonPath("$.error[0].url",
-                        Is.is("https://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() +
+                        Is.is("https://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid +
                                 "/file/error.ndjson")));
     }
 
@@ -629,47 +550,36 @@ public class BulkDataAccessAPIIntegrationTests {
         String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
-        job.setStatus(JobStatus.SUCCESSFUL);
-        job.setProgress(100);
-        OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
-        job.setExpiresAt(expireDate);
-        OffsetDateTime now = OffsetDateTime.now();
-        job.setCompletedAt(now);
-
         JobOutput jobOutput = new JobOutput();
         jobOutput.setFhirResourceType(EOB);
-        jobOutput.setJob(job);
         jobOutput.setFilePath("file.ndjson");
         jobOutput.setError(false);
         jobOutput.setFileLength(5000L);
         jobOutput.setChecksum("file");
-        job.getJobOutputs().add(jobOutput);
+        jobClientMock.addJobOutputForDownload(jobOutput);
 
         JobOutput errorJobOutput = new JobOutput();
         errorJobOutput.setFhirResourceType(OPERATION_OUTCOME);
-        errorJobOutput.setJob(job);
         errorJobOutput.setFilePath("error.ndjson");
         errorJobOutput.setFileLength(6000L);
         errorJobOutput.setChecksum("error");
         errorJobOutput.setError(true);
-        job.getJobOutputs().add(errorJobOutput);
+        jobClientMock.addJobOutputForDownload(errorJobOutput);
 
-        jobRepository.saveAndFlush(job);
+        String jobUuid = jobClientMock.pickAJob();
+        StartJobDTO startJobDTO = jobClientMock.lookupJob(jobUuid);
 
-        final ZonedDateTime jobExpiresUTC =
-                ZonedDateTime.ofInstant(job.getExpiresAt().toInstant(), ZoneId.of("UTC"));
         this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(200))
-                .andExpect(header().string(EXPIRES, DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC)))
+                .andExpect(buildExpiresMatcher())
                 .andExpect(jsonPath("$.transactionTime",
-                        Is.is(new org.hl7.fhir.dstu3.model.DateTimeType(job.getCreatedAt().toString()).toHumanDisplay())))
-                .andExpect(jsonPath("$.request", Is.is(job.getRequestUrl())))
+                        Is.is(new org.hl7.fhir.dstu3.model.DateTimeType(OffsetDateTime.now().toString()).toHumanDisplay())))
+                .andExpect(jsonPath("$.request", Is.is(startJobDTO.getUrl())))
                 .andExpect(jsonPath("$.requiresAccessToken", Is.is(true)))
                 .andExpect(jsonPath("$.output[0].type", Is.is(EOB)))
                 .andExpect(jsonPath("$.output[0].url",
-                        Is.is("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() +
+                        Is.is("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid +
                                 "/file/file.ndjson")))
                 .andExpect(jsonPath("$.output[0].extension[0].url",
                         Is.is(CHECKSUM_STRING)))
@@ -681,7 +591,7 @@ public class BulkDataAccessAPIIntegrationTests {
                         Is.is(5000)))
                 .andExpect(jsonPath("$.error[0].type", Is.is(OPERATION_OUTCOME)))
                 .andExpect(jsonPath("$.error[0].url",
-                        Is.is("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() +
+                        Is.is("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid +
                                 "/file/error.ndjson")))
                 .andExpect(jsonPath("$.error[0].extension[0].url",
                         Is.is(CHECKSUM_STRING)))
@@ -699,20 +609,20 @@ public class BulkDataAccessAPIIntegrationTests {
         if (requestEvent.getUrl().contains("export")) {
             assertNull(requestEvent.getJobId());
         } else {
-            assertEquals(job.getJobUuid(), requestEvent.getJobId());
+            assertEquals(jobUuid, requestEvent.getJobId());
         }
         if (requestEvent2.getUrl().contains("export")) {
             assertNull(requestEvent2.getJobId());
         } else {
-            assertEquals(job.getJobUuid(), requestEvent2.getJobId());
+            assertEquals(jobUuid, requestEvent2.getJobId());
         }
 
         List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
         assertEquals(2, apiResponseEvents.size());
         ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
         ApiResponseEvent responseEvent2 = (ApiResponseEvent) apiResponseEvents.get(1);
-        assertEquals(job.getJobUuid(), responseEvent.getJobId());
-        assertEquals(job.getJobUuid(), responseEvent2.getJobId());
+        assertEquals(jobUuid, responseEvent.getJobId());
+        assertEquals(jobUuid, responseEvent2.getJobId());
         assertEquals(200, responseEvent2.getResponseCode());
 
         assertTrue(requestEvent.getRequestId().equals(responseEvent.getRequestId()) ||
@@ -743,13 +653,7 @@ public class BulkDataAccessAPIIntegrationTests {
         String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
-        job.setStatus(JobStatus.FAILED);
-        OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
-        job.setExpiresAt(expireDate);
-
-        jobRepository.saveAndFlush(job);
-
+        jobClientMock.setExpectedStatus(FAILED);
         this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(500))
@@ -779,13 +683,6 @@ public class BulkDataAccessAPIIntegrationTests {
                 .header("Authorization", "Bearer " + token))
                 .andReturn();
 
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
-        job.setStatus(JobStatus.FAILED);
-        OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
-        job.setExpiresAt(expireDate);
-
-        jobRepository.saveAndFlush(job);
-
         this.mockMvc.perform(get("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/BadId/$status")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
@@ -804,13 +701,6 @@ public class BulkDataAccessAPIIntegrationTests {
                 .contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
 
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
-        job.setStatus(JobStatus.FAILED);
-        OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
-        job.setExpiresAt(expireDate);
-
-        jobRepository.saveAndFlush(job);
-
         this.mockMvc.perform(get("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/ /$status")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
@@ -828,13 +718,6 @@ public class BulkDataAccessAPIIntegrationTests {
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andReturn();
-
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
-        job.setStatus(JobStatus.FAILED);
-        OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
-        job.setExpiresAt(expireDate);
-
-        jobRepository.saveAndFlush(job);
 
         this.mockMvc.perform(get("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/$status")
                 .header("Authorization", "Bearer " + token)
@@ -856,9 +739,9 @@ public class BulkDataAccessAPIIntegrationTests {
 
         String testFile = "test.ndjson";
 
-        Job job = testUtil.createTestJobForDownload(testFile);
-
-        String destinationStr = testUtil.createTestDownloadFile(tmpJobLocation, job, testFile);
+        JobOutput jobOutput = testUtil.createJobOutput(testFile);
+        jobClientMock.addJobOutputForDownload(jobOutput);
+        jobClientMock.setResultsCreated(true);
 
         MvcResult mvcResultStatusCall =
                 this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
@@ -872,14 +755,7 @@ public class BulkDataAccessAPIIntegrationTests {
                         .header("Accept-Encoding", "gzip, deflate, br"))
                         .andExpect(status().is(200))
                         .andExpect(content().contentType(NDJSON_FIRE_CONTENT_TYPE))
-                        // .andDo(MockMvcResultHandlers.print())
                         .andReturn();
-        List<LoggableEvent> fileEvents = loggerEventRepository.load(FileEvent.class);
-        assertEquals(1, fileEvents.size());
-        FileEvent fileEvent = (FileEvent) fileEvents.get(0);
-        assertEquals(FileEvent.FileStatus.DELETE, fileEvent.getStatus());
-        assertEquals(destinationStr + File.separator + testFile, fileEvent.getFileName());
-        assertNotNull(fileEvent.getFileHash());
 
         String downloadedFile = downloadFileCall.getResponse().getContentAsString();
         String testValue = JsonPath.read(downloadedFile, "$.test");
@@ -888,8 +764,6 @@ public class BulkDataAccessAPIIntegrationTests {
         assertEquals("val1", arrValue1);
         String arrValue2 = JsonPath.read(downloadedFile, "$.array[1]");
         assertEquals("val2", arrValue2);
-
-        assertFalse(Files.exists(Paths.get(destinationStr + File.separator + testFile)));
     }
 
     @Test
@@ -903,17 +777,8 @@ public class BulkDataAccessAPIIntegrationTests {
         String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
-        job.setStatus(JobStatus.SUCCESSFUL);
-        job.setProgress(100);
-        OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
-        job.setExpiresAt(expireDate);
-        OffsetDateTime now = OffsetDateTime.now();
-        job.setCompletedAt(now);
-
-        testUtil.addJobOutput(job, "test.ndjson");
-
-        jobRepository.saveAndFlush(job);
+        JobOutput jobOutput = testUtil.createJobOutput("test.ndjson");
+        jobClientMock.addJobOutputForDownload(jobOutput);
 
         MvcResult mvcResultStatusCall =
                 this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
@@ -958,18 +823,7 @@ public class BulkDataAccessAPIIntegrationTests {
         String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
-        job.setStatus(JobStatus.SUCCESSFUL);
-        job.setProgress(100);
-        OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
-        job.setExpiresAt(expireDate);
-        OffsetDateTime now = OffsetDateTime.now();
-        job.setCompletedAt(now);
-
-        testUtil.addJobOutput(job, "test.ndjson");
-
-        jobRepository.saveAndFlush(job);
-        dataSetup.queueForCleanup(job);
+        jobClientMock.addJobOutputForDownload(testUtil.createJobOutput("test.ndjson"));
 
         MvcResult mvcResultStatusCall =
                 this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
@@ -998,25 +852,14 @@ public class BulkDataAccessAPIIntegrationTests {
         String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
-        job.setStatus(JobStatus.SUCCESSFUL);
-        job.setProgress(100);
-        OffsetDateTime expireDate = OffsetDateTime.now().plusDays(100);
-        job.setExpiresAt(expireDate);
-        OffsetDateTime now = OffsetDateTime.now();
-        job.setCompletedAt(now);
-
         JobOutput jobOutput = new JobOutput();
         jobOutput.setFhirResourceType(EOB);
-        jobOutput.setJob(job);
         jobOutput.setFilePath("test.ndjson");
         jobOutput.setError(false);
         jobOutput.setChecksum("testoutput");
         jobOutput.setFileLength(20L);
         jobOutput.setDownloaded(true);
-        job.getJobOutputs().add(jobOutput);
-
-        jobRepository.saveAndFlush(job);
+        jobClientMock.addJobOutputForDownload(jobOutput);
 
         MvcResult mvcResultStatusCall =
                 this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
@@ -1045,17 +888,10 @@ public class BulkDataAccessAPIIntegrationTests {
         String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
         assertNotNull(statusUrl);
 
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
-        job.setStatus(JobStatus.SUCCESSFUL);
-        job.setProgress(100);
         OffsetDateTime expireDate = OffsetDateTime.now().minusDays(2);
-        job.setExpiresAt(expireDate);
-        OffsetDateTime now = OffsetDateTime.now();
-        job.setCompletedAt(now);
-
-        testUtil.addJobOutput(job, "test.ndjson");
-
-        jobRepository.saveAndFlush(job);
+        jobClientMock.setExpiresAt(expireDate);
+        JobOutput jobOutput = testUtil.createJobOutput("test.ndjson");
+        jobClientMock.addJobOutputForDownload(jobOutput);
 
         MvcResult mvcResultStatusCall =
                 this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
@@ -1081,22 +917,21 @@ public class BulkDataAccessAPIIntegrationTests {
                 get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token)
                         .header("X-Forwarded-Proto", "https"));
-                // .andDo(print());
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+
+        String jobUuid = jobClientMock.pickAJob();
+        StartJobDTO startJobDTO = jobClientMock.lookupJob(jobUuid);
 
         String statusUrl =
-                "https://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
+                "https://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid + "/$status";
         assertNotNull(statusUrl);
 
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string(CONTENT_LOCATION, statusUrl));
 
-        assertEquals(JobStatus.SUBMITTED, job.getStatus());
-        assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
-        assertEquals(Integer.valueOf(0), job.getProgress());
-        assertEquals("https://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export", job.getRequestUrl());
-        assertNull(job.getResourceTypes());
-        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
+        assertEquals("https://localhost" + API_PREFIX_V1 + FHIR_PREFIX +
+                "/Group/" + contract.getContractNumber() + "/$export", startJobDTO.getUrl());
+        assertNull(startJobDTO.getResourceTypes());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), startJobDTO.getOrganization());
     }
 
     @Test
@@ -1106,22 +941,19 @@ public class BulkDataAccessAPIIntegrationTests {
         ResultActions resultActions = this.mockMvc.perform(
                 get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token));
-                // .andDo(print());
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
+        String jobUuid = jobClientMock.pickAJob();
+        StartJobDTO startJobDTO = jobClientMock.lookupJob(jobUuid);
         String statusUrl =
-                "http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
+                "http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid + "/$status";
 
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string(CONTENT_LOCATION, statusUrl));
 
-        assertEquals(JobStatus.SUBMITTED, job.getStatus());
-        assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
-        assertEquals(Integer.valueOf(0), job.getProgress());
         assertEquals("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export",
-                job.getRequestUrl());
-        assertNull(job.getResourceTypes());
-        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
+                startJobDTO.getUrl());
+        assertNull(startJobDTO.getResourceTypes());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), startJobDTO.getOrganization());
     }
 
     @Test
@@ -1134,22 +966,19 @@ public class BulkDataAccessAPIIntegrationTests {
                 this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams)
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON));
-                // .andDo(print());
-        Job job = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
+        String jobUuid = jobClientMock.pickAJob();
+        StartJobDTO startJobDTO = jobClientMock.lookupJob(jobUuid);
         String statusUrl =
-                "http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/$status";
+                "http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid + "/$status";
 
         resultActions.andExpect(status().isAccepted())
                 .andExpect(header().string(CONTENT_LOCATION, statusUrl));
 
-        assertEquals(JobStatus.SUBMITTED, job.getStatus());
-        assertEquals(INITIAL_JOB_STATUS_MESSAGE, job.getStatusMessage());
-        assertEquals(Integer.valueOf(0), job.getProgress());
         assertEquals("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams,
-                job.getRequestUrl());
-        assertEquals(EOB, job.getResourceTypes());
-        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT), job.getPdpClient());
+                startJobDTO.getUrl());
+        assertEquals(EOB, startJobDTO.getResourceTypes());
+        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), startJobDTO.getOrganization());
     }
 
     @Test
@@ -1215,12 +1044,6 @@ public class BulkDataAccessAPIIntegrationTests {
         Contract contract = contractOptional.get();
         createMaxJobsWithContract(contract);
 
-        List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
-        for(Job job : jobs) {
-            job.setStatus(JobStatus.IN_PROGRESS);
-            jobRepository.saveAndFlush(job);
-        }
-
         this.mockMvc.perform(
                 get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token))
@@ -1229,28 +1052,6 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(header().doesNotExist("X-Progress"))
                 .andExpect(header().exists(CONTENT_LOCATION));
 
-    }
-
-    @Test
-    void testPatientExportWithContractDuplicateSubmissionCancelled() throws Exception {
-        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
-        Contract contract = contractOptional.get();
-        createMaxJobsWithContract(contract);
-
-        this.mockMvc.perform(
-                get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token));
-
-        List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
-        for(Job job : jobs) {
-            job.setStatus(JobStatus.CANCELLED);
-            jobRepository.saveAndFlush(job);
-        }
-
-        this.mockMvc.perform(
-                get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(202));
     }
 
     @Test
@@ -1285,20 +1086,7 @@ public class BulkDataAccessAPIIntegrationTests {
         Contract contract = contractOptional.get();
         createMaxJobsWithContract(contract);
 
-        PdpClient pdpClient = new PdpClient();
-        pdpClient.setContract(contract);
-        pdpClient.setEnabled(true);
-        pdpClient.setClientId("test");
-        pdpClient.setOrganization("test-org");
-        pdpClientRepository.saveAndFlush(pdpClient);
-        dataSetup.queueForCleanup(pdpClient);
-
-        List<Job> jobs = jobRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
-        for(Job job : jobs) {
-            job.setPdpClient(pdpClient);
-            jobRepository.saveAndFlush(job);
-            dataSetup.queueForCleanup(job);
-        }
+        jobClientMock.switchAllJobsToNewOrganization("test-org");
 
         this.mockMvc.perform(
                 get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
@@ -1340,5 +1128,23 @@ public class BulkDataAccessAPIIntegrationTests {
 
         assertEquals(body, STU3.getJsonParser().encodeResourceToString(
                 CapabilityStatementSTU3.populateCS("https://localhost:8443" + API_PREFIX_V1 + FHIR_PREFIX)));
+    }
+
+    private ResultMatcher buildExpiresMatcher() {
+        return result -> {
+            MockHttpServletResponse response = result.getResponse();
+            String headerValue = response.getHeader(EXPIRES);
+            assertNotNull(headerValue, "Response does not contain header '" + EXPIRES + "'");
+            OffsetDateTime actual = OffsetDateTime.parse(headerValue, RFC_1123_DATE_TIME.withZone(UTC));
+            OffsetDateTime expected = OffsetDateTime.now().plusDays(EXPIRES_IN_DAYS);
+            assertTrue(actual.isBefore(expected), "Sanity check that now() is larger than when this was processed");
+            /*
+             * 7 is the fudge factor for the tests, passing tests on my laptop.  The build environment occasionally
+             * would exceed a one-second difference.
+             */
+            OffsetDateTime minExpected = expected.minusSeconds(7);
+            assertTrue(actual.isAfter(minExpected), "Expire header time mismatch: actual - " + actual +
+                    " should be greater than expected - " + minExpected);
+        };
     }
 }

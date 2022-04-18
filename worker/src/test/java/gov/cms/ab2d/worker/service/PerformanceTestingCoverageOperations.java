@@ -221,9 +221,9 @@ class PerformanceTestingCoverageOperations {
         periods.add(coverageDataSetup.createCoveragePeriod(contract2.getContractNumber(), 12, 2021));
 
 
-//        Contract contract3 = dataSetup.setupContract("TST-56");
-//        Contract contract4 = dataSetup.setupContract("TST-78");
-//        Contract contract5 = dataSetup.setupContract("TST-90");
+//        ContractWorkerDto contract3 = dataSetup.setupContract("TST-56");
+//        ContractWorkerDto contract4 = dataSetup.setupContract("TST-78");
+//        ContractWorkerDto contract5 = dataSetup.setupContract("TST-90");
 
 //        periods.add(dataSetup.createCoveragePeriod(contract2, 1, 2020));
 //        periods.add(dataSetup.createCoveragePeriod(contract2, 2, 2020));

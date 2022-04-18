@@ -3,9 +3,12 @@ package gov.cms.ab2d.api.controller.common;
 import gov.cms.ab2d.api.controller.JobCompletedResponse;
 import gov.cms.ab2d.api.controller.JobProcessingException;
 import gov.cms.ab2d.api.controller.TooManyRequestsException;
-import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.api.remote.JobClient;
+import gov.cms.ab2d.common.dto.JobPollResult;
 import gov.cms.ab2d.common.model.JobOutput;
-import gov.cms.ab2d.common.service.JobService;
+import gov.cms.ab2d.common.model.PdpClient;
+import gov.cms.ab2d.common.model.TooFrequentInvocations;
+import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import lombok.extern.slf4j.Slf4j;
@@ -18,13 +21,11 @@ import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
 
-import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.api.controller.common.ApiText.X_PROG;
 import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
@@ -37,90 +38,88 @@ import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 @Service
 @Slf4j
 public class StatusCommon {
-    private final JobService jobService;
+    private final PdpClientService pdpClientService;
+    private final JobClient jobClient;
     private final LogManager eventLogger;
     private final int retryAfterDelay;
 
-    StatusCommon(JobService jobService, LogManager eventLogger, @Value("${api.retry-after.delay}") int retryAfterDelay) {
-        this.jobService = jobService;
+    StatusCommon(PdpClientService pdpClientService, JobClient jobClient,
+                 LogManager eventLogger, @Value("${api.retry-after.delay}") int retryAfterDelay) {
+        this.pdpClientService = pdpClientService;
+        this.jobClient = jobClient;
         this.eventLogger = eventLogger;
         this.retryAfterDelay = retryAfterDelay;
     }
 
-    public ResponseEntity throwFailedResponse(String msg) {
+    public void throwFailedResponse(String msg) {
         log.error(msg);
         throw new JobProcessingException(msg);
     }
 
-    public ResponseEntity<JobCompletedResponse> doStatus(String jobUuid, HttpServletRequest request, String apiPrefix) {
+    public ResponseEntity doStatus(String jobUuid, HttpServletRequest request, String apiPrefix) {
         MDC.put(JOB_LOG, jobUuid);
         log.info("Request submitted to get job status");
 
-        Job job = jobService.getAuthorizedJobByJobUuidAndRole(jobUuid);
-
-        if (pollingTooMuch(job)) {
+        PdpClient pdpClient = pdpClientService.getCurrentClient();
+        JobPollResult jobPollResult;
+        try {
+            jobPollResult = jobClient.poll(pdpClient.isAdmin(), jobUuid, pdpClient.getOrganization(), retryAfterDelay);
+        } catch (TooFrequentInvocations tfi) {
             log.error("Client was polling too frequently");
             throw new TooManyRequestsException("You are polling too frequently");
         }
 
-        updateLastPollTime(job);
-
         HttpHeaders responseHeaders = new HttpHeaders();
-        switch (job.getStatus()) {
+        switch (jobPollResult.getStatus()) {
             case SUCCESSFUL:
-                return getSuccessResponse(job, request, apiPrefix);
+                return getSuccessResponse(jobPollResult, jobUuid, request, apiPrefix);
             case SUBMITTED:
             case IN_PROGRESS:
-                responseHeaders.add(X_PROG, job.getProgress() + "% complete");
+                responseHeaders.add(X_PROG, jobPollResult.getProgress() + "% complete");
                 responseHeaders.add(RETRY_AFTER, Integer.toString(retryAfterDelay));
-                eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), job.getJobUuid(), HttpStatus.ACCEPTED,
-                        "Job in progress", job.getProgress() + "% complete",
+                eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), jobUuid, HttpStatus.ACCEPTED,
+                        "Job in progress", jobPollResult.getProgress() + "% complete",
                         (String) request.getAttribute(REQUEST_ID)));
                 return new ResponseEntity<>(null, responseHeaders, HttpStatus.ACCEPTED);
             case FAILED:
                 throwFailedResponse("Job failed while processing");
+                break;
             default:
                 throwFailedResponse("Unknown status of job");
         }
         throw new JobProcessingException("Unknown error");
     }
 
-    private boolean pollingTooMuch(Job job) {
-        return job.getLastPollTime() != null && job.getLastPollTime().plusSeconds(retryAfterDelay).isAfter(OffsetDateTime.now());
-    }
-
-    private void updateLastPollTime(Job job) {
-        job.setLastPollTime(OffsetDateTime.now());
-        jobService.updateJob(job);
-    }
-
-    private JobCompletedResponse getJobCompletedResonse(Job job, HttpServletRequest request, String apiPrefix) {
+    private JobCompletedResponse getJobCompletedResponse(JobPollResult jobPollResult, String jobUuid,
+                                                         HttpServletRequest request, String apiPrefix) {
 
         final JobCompletedResponse resp = new JobCompletedResponse();
 
-        final String jobStartedAt = job.getFhirVersion().getFhirTime(job.getCreatedAt());
+        final String jobStartedAt = jobPollResult.getTransactionTime();
         resp.setTransactionTime(jobStartedAt);
 
-        resp.setRequest(job.getRequestUrl());
+        resp.setRequest(jobPollResult.getRequestUrl());
 
         resp.setRequiresAccessToken(true);
 
-        resp.setOutput(job.getJobOutputs().stream().filter(o ->
-                !o .getError()).map(o -> {
+        resp.setOutput(jobPollResult.getJobOutputs().stream().filter(o ->
+                !o.getError()).map(o -> {
             List<JobCompletedResponse.FileMetadata> valueOutputs = generateValueOutputs(o);
-            return new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath(), request, apiPrefix), valueOutputs);
-        }).collect(Collectors.toList()));
+            return new JobCompletedResponse.Output(o.getFhirResourceType(),
+                    getUrlPath(jobUuid, o.getFilePath(), request, apiPrefix), valueOutputs);
+        }).toList());
 
-        resp.setError(job.getJobOutputs().stream().filter(o ->
-                o.getError()).map(o -> {
+        resp.setError(jobPollResult.getJobOutputs().stream().filter(JobOutput::getError).map(o -> {
             List<JobCompletedResponse.FileMetadata> valueOutputs = generateValueOutputs(o);
-            return new JobCompletedResponse.Output(o.getFhirResourceType(), getUrlPath(job, o.getFilePath(), request, apiPrefix), valueOutputs);
-        }).collect(Collectors.toList()));
+            return new JobCompletedResponse.Output(o.getFhirResourceType(),
+                    getUrlPath(jobUuid, o.getFilePath(), request, apiPrefix), valueOutputs);
+        }).toList());
 
         return resp;
     }
-    private String getUrlPath(Job job, String filePath, HttpServletRequest request, String apiPrefix) {
-        return Common.getUrl(apiPrefix + FHIR_PREFIX + "/Job/" + job.getJobUuid() + "/file/" + filePath, request);
+
+    private String getUrlPath(String jobUuid, String filePath, HttpServletRequest request, String apiPrefix) {
+        return Common.getUrl(apiPrefix + FHIR_PREFIX + "/Job/" + jobUuid + "/file/" + filePath, request);
     }
 
     private List<JobCompletedResponse.FileMetadata> generateValueOutputs(JobOutput o) {
@@ -130,13 +129,15 @@ public class StatusCommon {
         return valueOutputs;
     }
 
-    public ResponseEntity getSuccessResponse(Job job, HttpServletRequest request, String apiPrefix) {
+    private ResponseEntity getSuccessResponse(JobPollResult jobPollResult, String jobUuid,
+                                              HttpServletRequest request, String apiPrefix) {
         HttpHeaders responseHeaders = new HttpHeaders();
-        final ZonedDateTime jobExpiresUTC = ZonedDateTime.ofInstant(job.getExpiresAt().toInstant(), ZoneId.of("UTC"));
+        final ZonedDateTime jobExpiresUTC =
+                ZonedDateTime.ofInstant(jobPollResult.getExpiresAt().toInstant(), ZoneId.of("UTC"));
         responseHeaders.add(EXPIRES, DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC));
-        final JobCompletedResponse resp = getJobCompletedResonse(job, request, apiPrefix);
+        final JobCompletedResponse resp = getJobCompletedResponse(jobPollResult, jobUuid, request, apiPrefix);
         log.info("Job status completed successfully");
-        eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), job.getJobUuid(), HttpStatus.OK,
+        eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), jobUuid, HttpStatus.OK,
                 "Job completed", null, (String) request.getAttribute(REQUEST_ID)));
         return new ResponseEntity<>(resp, responseHeaders, HttpStatus.OK);
     }
@@ -145,7 +146,7 @@ public class StatusCommon {
         MDC.put(JOB_LOG, jobUuid);
         log.info("Request submitted to cancel job");
 
-        jobService.cancelJob(jobUuid);
+        jobClient.cancelJob(jobUuid, pdpClientService.getCurrentClient().getOrganization());
 
         log.info("Job successfully cancelled");
 

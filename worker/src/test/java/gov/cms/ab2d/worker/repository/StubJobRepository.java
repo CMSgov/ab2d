@@ -3,7 +3,6 @@ package gov.cms.ab2d.worker.repository;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStartedBy;
 import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.JobRepository;
 import lombok.Getter;
 import org.springframework.data.domain.Example;
@@ -13,6 +12,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.repository.query.FluentQuery;
 
 import java.time.OffsetDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -40,17 +40,12 @@ public class StubJobRepository implements JobRepository {
     }
 
     @Override
-    public List<Job> findActiveJobsByClient(PdpClient pdpClient) {
+    public List<Job> findActiveJobsByClient(String organization) {
         return null;
     }
 
     @Override
     public List<Job> findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(String contractNumber, List<JobStatus> statuses, JobStartedBy startedBy) {
-        return null;
-    }
-
-    @Override
-    public JobStatus findJobStatus(String jobUuid) {
         return null;
     }
 
@@ -218,5 +213,10 @@ public class StubJobRepository implements JobRepository {
     @Override
     public <S extends Job, R> R findBy(Example<S> example, Function<FluentQuery.FetchableFluentQuery<S>, R> queryFunction) {
         return null;
+    }
+
+    @Override
+    public List<Job> findByJobUuidIn(List<String> jobUuids) {
+     return Collections.emptyList();
     }
 }

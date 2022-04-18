@@ -14,6 +14,7 @@
         <project.root>${basedir}/..</project.root>
         <springfox.version>3.0.0</springfox.version>
         <okta-jwt.version>0.5.1</okta-jwt.version>
+        <sonar.coverage.exclusions>**/JobClient.java</sonar.coverage.exclusions>
     </properties>
 
     <dependencies>
@@ -84,7 +85,7 @@
         <dependency>
             <groupId>dev.akkinoc.spring.boot</groupId>
             <artifactId>logback-access-spring-boot-starter</artifactId>
-            <version>3.2.1</version>
+            <version>3.2.5</version>
         </dependency>
 
         <dependency>
@@ -107,7 +108,7 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-ui</artifactId>
-            <version>1.6.4</version>
+            <version>1.6.6</version>
         </dependency>
     </dependencies>
 
@@ -152,7 +153,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>3.3.0</version>
                 <executions>
                     <execution>
                         <id>unpack-newrelic</id>

@@ -1,10 +1,11 @@
 package gov.cms.ab2d.worker.processor;
 
+import gov.cms.ab2d.aggregator.AggregatorCallable;
+import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
-import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
@@ -14,24 +15,24 @@ import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
+import gov.cms.ab2d.worker.config.SearchConfig;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.stub.PatientClaimsProcessorStub;
-import gov.cms.ab2d.worker.repository.StubContractRepository;
 import gov.cms.ab2d.worker.repository.StubJobRepository;
+import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import gov.cms.ab2d.worker.service.JobChannelStubServiceImpl;
+import gov.cms.ab2d.worker.util.ContractWorkerClientMock;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
-import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.IntStream;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,6 +43,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.util.ReflectionTestUtils;
 
 
@@ -78,11 +80,13 @@ class ContractProcessorUnitTest {
     private PatientClaimsProcessor patientClaimsProcessor;
     private JobChannelService jobChannelService;
 
-    private Path outputDir;
-    private Contract contract;
+    private ContractDTO contract;
     private ContractForCoverageDTO contractForCoverageDTO;
     private ContractToContractCoverageMapping mapping;
     private Job job;
+
+    private static final String STREAMING = "streaming";
+    private static final String FINISHED = "finished";
 
     @BeforeEach
     void setUp() throws Exception {
@@ -91,7 +95,7 @@ class ContractProcessorUnitTest {
         patientClaimsProcessor = spy(PatientClaimsProcessorStub.class);
 
         mapping = new ContractToContractCoverageMapping();
-        contract = createContract();
+        contract = createContractDTO();
         contractForCoverageDTO = mapping.map(contract);
         PdpClient pdpClient = createClient();
         job = createJob(pdpClient);
@@ -102,10 +106,15 @@ class ContractProcessorUnitTest {
         ReflectionTestUtils.setField(jobProgressImpl, "reportProgressDbFrequency", 2);
         ReflectionTestUtils.setField(jobProgressImpl, "reportProgressLogFrequency", 3);
         jobChannelService = new JobChannelStubServiceImpl(jobProgressImpl);
+        ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
+        pool.initialize();
 
-        ContractRepository contractRepository = new StubContractRepository(contract);
+        SearchConfig searchConfig = new SearchConfig(efsMountTmpDir.toFile().getAbsolutePath(),
+                STREAMING, FINISHED, 0, 0, 2, 1);
+
+        ContractWorkerClient contractWorkerClient = new ContractWorkerClientMock();
         cut = new ContractProcessorImpl(
-                contractRepository,
+                contractWorkerClient,
                 jobRepository,
                 coverageDriver,
                 patientClaimsProcessor,
@@ -113,12 +122,40 @@ class ContractProcessorUnitTest {
                 requestQueue,
                 jobChannelService,
                 jobProgressImpl,
-                mapping);
-        ReflectionTestUtils.setField(cut, "tryLockTimeout", 30);
+                mapping,
+                pool,
+                searchConfig);
 
+        //ReflectionTestUtils.setField(cut, "numberPatientRequestsPerThread", 2);
 
         var outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
-        outputDir = Files.createDirectories(outputDirPath);
+        Files.createDirectories(outputDirPath);
+    }
+
+    @Test
+    void testIsDone() throws IOException {
+        String job = "job1";
+        AggregatorCallable callable = new AggregatorCallable(efsMountTmpDir.toFile().getAbsolutePath(), job, "contract1", 200, STREAMING, FINISHED, 3);
+        ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
+        pool.initialize();
+        Future<Integer> aggThread = pool.submit(callable);
+        ContractProcessorImpl impl = (ContractProcessorImpl) cut;
+        assertFalse(impl.isDone(aggThread, job, false));
+        Path testFile = Path.of(efsMountTmpDir.toFile().getAbsolutePath(), job, FINISHED, "tst.ndjson");
+        Path testFinishedDir = Path.of(efsMountTmpDir.toFile().getAbsolutePath(), job, FINISHED);
+        Files.createDirectories(testFinishedDir);
+        Files.createFile(testFile);
+        Files.writeString(testFile, "abc");
+        assertFalse(impl.isDone(aggThread, job, true));
+        Files.delete(testFile);
+        assertTrue(impl.isDone(aggThread, job, true));
+        assertFalse(Files.exists(testFinishedDir));
+
+        AggregatorCallable callable2 = new AggregatorCallable(efsMountTmpDir.toFile().getAbsolutePath(), job, "contract1", 200, STREAMING, FINISHED, 3);
+        Future<Integer> aggThread2 = pool.submit(callable2);
+        assertFalse(impl.isDone(aggThread2, job, false));
+        aggThread2.cancel(true);
+        assertTrue(impl.isDone(aggThread2, job, false));
     }
 
     @Test
@@ -129,13 +166,13 @@ class ContractProcessorUnitTest {
                         new CoveragePagingRequest(2, null, contractForCoverageDTO, OffsetDateTime.now())))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contractForCoverageDTO, 2), null));
 
-        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(3);
+        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractDTO.class))).thenReturn(3);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
 
         job.setStatus(JobStatus.CANCELLED);
 
         var exceptionThrown = assertThrows(JobCancelledException.class,
-                () -> cut.process(outputDir, job));
+                () -> cut.process(job));
 
         assertTrue(exceptionThrown.getMessage().startsWith("Job was cancelled while it was being processed"));
         verify(patientClaimsProcessor, atLeast(1)).process(any());
@@ -144,7 +181,7 @@ class ContractProcessorUnitTest {
     @Test
     @DisplayName("When many patientId are present, 'PercentageCompleted' should be updated many times")
     void whenManyPatientIdsAreProcessed_shouldUpdatePercentageCompletedMultipleTimes() {
-        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(18);
+        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractDTO.class))).thenReturn(18);
         when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contractForCoverageDTO, 2),
                         new CoveragePagingRequest(2, null, contractForCoverageDTO, OffsetDateTime.now())))
@@ -167,10 +204,9 @@ class ContractProcessorUnitTest {
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENTS_EXPECTED, 18);
         jobChannelService.sendUpdate(jobUuid, JobMeasure.FAILURE_THRESHHOLD, 10);
 
-        var jobOutputs = cut.process(outputDir, job);
+        var jobOutputs = cut.process(job);
 
-        assertFalse(jobOutputs.isEmpty());
-        assertEquals(8, jobRepository.getUpdatePercentageCompletedCount());
+        assertEquals(6, jobRepository.getUpdatePercentageCompletedCount());
         verify(patientClaimsProcessor, atLeast(1)).process(any());
     }
 
@@ -179,9 +215,9 @@ class ContractProcessorUnitTest {
     void whenExpectedPatientsNotMatchActualPatientsFail() {
         when(coverageDriver.pageCoverage(any(CoveragePagingRequest.class)))
                 .thenReturn(new CoveragePagingResult(createPatientsByContractResponse(contractForCoverageDTO, 1), null));
-        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(Contract.class))).thenReturn(3);
+        when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractDTO.class))).thenReturn(3);
 
-        ContractProcessingException exception = assertThrows(ContractProcessingException.class, () -> cut.process(outputDir, job));
+        ContractProcessingException exception = assertThrows(ContractProcessingException.class, () -> cut.process(job));
 
         assertTrue(exception.getMessage().contains("from database but retrieved"));
     }
@@ -190,8 +226,8 @@ class ContractProcessorUnitTest {
     @DisplayName("When a job has remaining requests, those remaining requests are waited on before finishing")
     void whenRemainingRequestHandlesThenAttemptToProcess() {
 
-        try (StreamHelper helper = new TextStreamHelperImpl(outputDir, contract.getContractNumber(), 200_000, 30, eventLogger, job)) {
-            ContractData contractData = new ContractData(contract, job, helper);
+        try {
+            ContractData contractData = new ContractData(contract, job);
 
             jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.FAILURE_THRESHHOLD, 20);
             jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENTS_EXPECTED, 20);
@@ -213,15 +249,15 @@ class ContractProcessorUnitTest {
                 }
 
                 @Override
-                public EobSearchResult get() throws InterruptedException, ExecutionException {
-                    return new EobSearchResult(job.getJobUuid(), contract.getContractNumber(), Collections.emptyList());
+                public ProgressTrackerUpdate get() {
+                    return new ProgressTrackerUpdate();
                 }
 
                 @Override
-                public EobSearchResult get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-                    return null;
+                public ProgressTrackerUpdate get(long timeout, @NotNull TimeUnit unit) {
+                    return new ProgressTrackerUpdate();
                 }
-            });
+            }, 1);
 
             ReflectionTestUtils.invokeMethod(cut, "processRemainingRequests", contractData);
 
@@ -245,7 +281,7 @@ class ContractProcessorUnitTest {
 
         ExecutorService singleThreadedExecutor = Executors.newSingleThreadExecutor();
 
-        Runnable testRunnable = () -> cut.process(outputDir, job);
+        Runnable testRunnable = () -> cut.process(job);
 
         Future<?> future = singleThreadedExecutor.submit(testRunnable);
 
@@ -264,6 +300,10 @@ class ContractProcessorUnitTest {
         return pdpClient;
     }
 
+    private ContractDTO createContractDTO() {
+        return new ContractDTO("CONTRACT_NM_00000", "CONTRACT_00000", OffsetDateTime.now().minusDays(10), Contract.ContractType.NORMAL);
+    }
+
     private Contract createContract() {
         Contract contract = new Contract();
         contract.setContractName("CONTRACT_NM_00000");
@@ -278,7 +318,7 @@ class ContractProcessorUnitTest {
         job.setJobUuid(jobUuid);
         job.setStatusMessage("0%");
         job.setStatus(JobStatus.IN_PROGRESS);
-        job.setPdpClient(pdpClient);
+        job.setOrganization(pdpClient.getOrganization());
         job.setFhirVersion(STU3);
         return job;
     }

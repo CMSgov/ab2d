@@ -1,6 +1,9 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -9,6 +12,14 @@ import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import gov.cms.ab2d.worker.service.JobChannelStubServiceImpl;
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.OffsetDateTime;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,18 +31,21 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.OffsetDateTime;
-import java.util.List;
 
 import static java.lang.Boolean.TRUE;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class JobProcessorUnitTest {
@@ -218,7 +232,7 @@ class JobProcessorUnitTest {
     @Test
     @DisplayName("When job fails, persistence of progress tracker occurs")
     void whenJobThrowsException_thenProgressIsLogged() {
-        when(contractProcessor.process(any(), any())).thenThrow(RuntimeException.class);
+        when(contractProcessor.process(any())).thenThrow(RuntimeException.class);
 
         var processedJob = cut.process(job.getJobUuid());
 
@@ -262,6 +276,18 @@ class JobProcessorUnitTest {
         jobChannelService.sendUpdate("silly-not-a-real-guid", JobMeasure.EOBS_WRITTEN, -1);
     }
 
+    @Test
+    @DisplayName("Test to see if we match a valid extension")
+    void testValidExtension(@TempDir File tempDir) throws IOException {
+        Files.writeString(Path.of(tempDir.getAbsolutePath(), "file1.ndjson"), "abc");
+        Files.writeString(Path.of(tempDir.getAbsolutePath(), "file2"), "def");
+        Files.writeString(Path.of(tempDir.getAbsolutePath(), "file3_error.ndjson"), "ghi");
+        final File[] files = tempDir.listFiles(cut.getFilenameFilter());
+        assertEquals(2, files.length);
+        assertNotEquals(files[0].getName(), "file2");
+        assertNotEquals(files[1].getName(), "file2");
+    }
+
     private PdpClient createClient() {
         PdpClient pdpClient = new PdpClient();
         pdpClient.setClientId("Harry_Potter");
@@ -284,7 +310,7 @@ class JobProcessorUnitTest {
         job.setJobUuid(jobUuid);
         job.setStatusMessage("0%");
         job.setStatus(JobStatus.IN_PROGRESS);
-        job.setPdpClient(pdpClient);
+        job.setOrganization(pdpClient.getOrganization());
         return job;
     }
 }

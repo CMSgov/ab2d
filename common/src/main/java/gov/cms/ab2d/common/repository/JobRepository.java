@@ -2,7 +2,6 @@ package gov.cms.ab2d.common.repository;
 
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStartedBy;
-import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.JobStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -25,14 +24,11 @@ public interface JobRepository extends JpaRepository<Job, Long> {
 
     Job findByJobUuid(String jobUuid);
 
-    @Query("select j from Job j where j.pdpClient = :pdpClient and (j.status = 'IN_PROGRESS' or j.status = 'SUBMITTED')")
-    List<Job> findActiveJobsByClient(PdpClient pdpClient);
+    @Query("select j from Job j where j.organization = :organization and (j.status = 'IN_PROGRESS' or j.status = 'SUBMITTED')")
+    List<Job> findActiveJobsByClient(String organization);
 
     List<Job> findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(
             String contractNumber, List<JobStatus> statuses, JobStartedBy startedBy);
-
-    @Query("SELECT j.status FROM Job j WHERE j.jobUuid = :jobUuid ")
-    JobStatus findJobStatus(String jobUuid);
 
     @Query("FROM Job j WHERE j.createdAt < :createdAt AND j.status = 'IN_PROGRESS' AND j.completedAt IS NULL ")
     List<Job> findStuckJobs(OffsetDateTime createdAt);
@@ -48,4 +44,6 @@ public interface JobRepository extends JpaRepository<Job, Long> {
 
     @Query("SELECT COUNT(j) FROM Job j WHERE j.contractNumber = :contractNumber AND j.status IN :statuses")
     int countJobByContractNumberAndStatus(String contractNumber, List<JobStatus> statuses);
+
+    List<Job> findByJobUuidIn(List<String> jobUuids);
 }

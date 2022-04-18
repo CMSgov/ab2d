@@ -1,8 +1,8 @@
 package gov.cms.ab2d.api.controller.v1;
 
 import gov.cms.ab2d.api.controller.common.ApiCommon;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.service.JobService;
+import gov.cms.ab2d.common.dto.StartJobDTO;
+import gov.cms.ab2d.api.remote.JobClient;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -66,11 +66,11 @@ import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 @RestController
 @RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX, produces = {APPLICATION_JSON})
 public class BulkDataAccessAPIV1 {
-    private final JobService jobService;
+    private final JobClient jobClient;
     private final ApiCommon apiCommon;
 
-    public BulkDataAccessAPIV1(JobService jobService, ApiCommon apiCommon) {
-        this.jobService = jobService;
+    public BulkDataAccessAPIV1(JobClient jobClient, ApiCommon apiCommon) {
+        this.jobClient = jobClient;
         this.apiCommon = apiCommon;
     }
 
@@ -110,10 +110,10 @@ public class BulkDataAccessAPIV1 {
                 OffsetDateTime since) {
 
         log.info("Received request to export");
-        apiCommon.checkValidCreateJob(since, resourceTypes, outputFormat);
-        Job job = jobService.createJob(resourceTypes, apiCommon.getCurrentUrl(request), null, outputFormat, since, STU3);
-        apiCommon.logSuccessfulJobCreation(job);
-        return apiCommon.returnStatusForJobCreation(job, API_PREFIX_V1, (String) request.getAttribute(REQUEST_ID), request);
+        StartJobDTO startJobDTO = apiCommon.checkValidCreateJob(request, null, since, resourceTypes, outputFormat, STU3);
+        String jobGuid = jobClient.createJob(startJobDTO);
+        apiCommon.logSuccessfulJobCreation(jobGuid);
+        return apiCommon.returnStatusForJobCreation(jobGuid, API_PREFIX_V1, (String) request.getAttribute(REQUEST_ID), request);
     }
 
     @Deprecated
@@ -158,9 +158,10 @@ public class BulkDataAccessAPIV1 {
 
         MDC.put(CONTRACT_LOG, contractNumber);
         log.info("Received request to export by contractNumber");
-        apiCommon.checkValidCreateJob(since, resourceTypes, outputFormat);
-        Job job = jobService.createJob(resourceTypes, apiCommon.getCurrentUrl(request), contractNumber, outputFormat, since, STU3);
-        apiCommon.logSuccessfulJobCreation(job);
-        return apiCommon.returnStatusForJobCreation(job, API_PREFIX_V1, (String) request.getAttribute(REQUEST_ID), request);
+        StartJobDTO startJobDTO = apiCommon.checkValidCreateJob(request, contractNumber, since, resourceTypes,
+                outputFormat, STU3);
+        String jobGuid = jobClient.createJob(startJobDTO);
+        apiCommon.logSuccessfulJobCreation(jobGuid);
+        return apiCommon.returnStatusForJobCreation(jobGuid, API_PREFIX_V1, (String) request.getAttribute(REQUEST_ID), request);
     }
 }
