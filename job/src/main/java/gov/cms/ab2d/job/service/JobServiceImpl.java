@@ -1,14 +1,17 @@
-package gov.cms.ab2d.common.service;
+package gov.cms.ab2d.job.service;
 
 import gov.cms.ab2d.common.dto.JobPollResult;
 import gov.cms.ab2d.common.dto.StaleJob;
 import gov.cms.ab2d.common.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.common.util.JobUtil;
+import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
+import gov.cms.ab2d.eventlogger.events.SlackEvents;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventSummary;
 import java.io.File;
 import java.net.MalformedURLException;
@@ -25,10 +28,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-
-import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PROD_LIST;
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.ORG_FIRST;
 
 @Slf4j
 @Service
@@ -73,9 +72,9 @@ public class JobServiceImpl implements JobService {
 
         // Report client running first job in prod
         if (clientHasNeverCompletedJob(startJobDTO.getContractNumber())) {
-            String firstJobMessage = String.format(ORG_FIRST + " Organization %s is running their first job for contract %s",
+            String firstJobMessage = String.format(SlackEvents.ORG_FIRST + " Organization %s is running their first job for contract %s",
                     startJobDTO.getOrganization(), startJobDTO.getContractNumber());
-            eventLogger.alert(firstJobMessage, PROD_LIST);
+            eventLogger.alert(firstJobMessage, Ab2dEnvironment.PROD_LIST);
         }
         job.setContractNumber(startJobDTO.getContractNumber());
         job.setStatus(JobStatus.SUBMITTED);

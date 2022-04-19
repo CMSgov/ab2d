@@ -25,6 +25,11 @@
         </dependency>
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
+            <artifactId>job</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>gov.cms.ab2d</groupId>
             <artifactId>hpms</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>

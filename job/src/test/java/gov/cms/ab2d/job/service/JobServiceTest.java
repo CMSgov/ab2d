@@ -1,4 +1,4 @@
-package gov.cms.ab2d.common.service;
+package gov.cms.ab2d.job.service;
 
 import gov.cms.ab2d.common.SpringBootApp;
 import gov.cms.ab2d.common.dto.JobPollResult;
@@ -9,6 +9,9 @@ import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
 import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
+import gov.cms.ab2d.common.service.PdpClientService;
+import gov.cms.ab2d.common.service.ResourceNotFoundException;
+import gov.cms.ab2d.common.service.RoleService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -16,6 +19,7 @@ import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventSummary;
+import gov.cms.ab2d.job.JobTestSpringBootApp;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,12 +56,12 @@ import java.util.List;
 import java.util.Set;
 
 import static gov.cms.ab2d.common.model.JobStatus.FAILED;
-import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.common.util.Constants.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
+import static gov.cms.ab2d.job.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static java.util.List.of;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -65,8 +69,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-@SpringBootTest(classes = SpringBootApp.class)
-@TestPropertySource(locations = "/application.common.properties")
+@SpringBootTest(classes = JobTestSpringBootApp.class)
 @Testcontainers
 class JobServiceTest {
 

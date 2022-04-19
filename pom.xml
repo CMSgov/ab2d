@@ -6,6 +6,7 @@
     <modules>
         <module>eventlogger</module>
         <module>common</module>
+        <module>job</module>
         <module>coverage</module>
         <module>api</module>
         <module>worker</module>

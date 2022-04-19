@@ -6,7 +6,8 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-@SpringBootApplication(scanBasePackages = {"gov.cms.ab2d.common", "gov.cms.ab2d.audit", "gov.cms.ab2d.eventlogger"})
+@SpringBootApplication(scanBasePackages = {"gov.cms.ab2d.common", "gov.cms.ab2d.job", "gov.cms.ab2d.audit",
+        "gov.cms.ab2d.eventlogger"})
 @EntityScan(basePackages = {"gov.cms.ab2d.common.model"})
 @EnableJpaRepositories("gov.cms.ab2d.common.repository")
 @PropertySource("classpath:application.common.properties")
