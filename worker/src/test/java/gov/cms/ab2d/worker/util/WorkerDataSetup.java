@@ -85,19 +85,11 @@ public class WorkerDataSetup {
         contractRepository.flush();
     }
 
-    public static final String TEST_PDP_CLIENT = "EileenCFrierson@example.com";
-
-    public static final String VALID_CONTRACT_NUMBER = "ABC123";
-
     public ContractDTO setupWorkerContract(String contractNumber, OffsetDateTime attestedOn) {
         ContractDTO contract = new ContractDTO(contractNumber, "Test ContractWorkerDto " + contractNumber, attestedOn, Contract.ContractType.NORMAL);
 
         queueForCleanup(contract);
         return contract;
-    }
-
-    public Contract setupContract(String contractNumber) {
-        return setupContract(contractNumber, OffsetDateTime.now());
     }
 
     public Contract setupContract(String contractNumber, OffsetDateTime attestedOn) {
@@ -107,29 +99,5 @@ public class WorkerDataSetup {
         contract.setAttestedOn(attestedOn);
         queueForCleanup(contract);
         return contract;
-    }
-
-    private PdpClient savePdpClient(String clientId, Contract contract, List<String> clientRoles) {
-        PdpClient pdpClient = new PdpClient();
-        pdpClient.setClientId(clientId);
-        pdpClient.setOrganization("PDP-" + clientId);
-        pdpClient.setContract(contract);
-        pdpClient.setEnabled(true);
-        pdpClient.setMaxParallelJobs(3);
-        for(String clientRole :  clientRoles) {
-            // Use existing role or create a new one for the client
-            Role role = roleRepository.findRoleByName(clientRole).orElseGet(() -> {
-                Role newRole = new Role();
-                newRole.setName(clientRole);
-                queueForCleanup(clientRole);
-                return roleRepository.save(newRole);
-            });
-
-            pdpClient.addRole(role);
-        }
-
-        pdpClient =  pdpClientRepository.saveAndFlush(pdpClient);
-        queueForCleanup(pdpClient);
-        return pdpClient;
     }
 }
