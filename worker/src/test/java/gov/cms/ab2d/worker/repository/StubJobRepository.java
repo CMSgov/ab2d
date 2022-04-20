@@ -3,7 +3,7 @@ package gov.cms.ab2d.worker.repository;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStartedBy;
 import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.job.repository.JobRepository;
 import lombok.Getter;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;

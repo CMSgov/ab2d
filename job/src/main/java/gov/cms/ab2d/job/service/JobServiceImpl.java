@@ -4,7 +4,7 @@ import gov.cms.ab2d.common.dto.JobPollResult;
 import gov.cms.ab2d.common.dto.StaleJob;
 import gov.cms.ab2d.common.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.*;
-import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.common.util.JobUtil;

@@ -12,7 +12,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @SpringBootApplication(scanBasePackages = {"gov.cms.ab2d.common", "gov.cms.ab2d.job", "gov.cms.ab2d.api",
         "gov.cms.ab2d.hpms", "gov.cms.ab2d.eventlogger"})
 @EntityScan(basePackages = {"gov.cms.ab2d.common.model"})
-@EnableJpaRepositories("gov.cms.ab2d.common.repository")
+@EnableJpaRepositories({"gov.cms.ab2d.common.repository", "gov.cms.ab2d.job.repository"})
 @PropertySource("classpath:application.common.properties")
 @Import({HPMSIngestQuartzSetup.class})
 public class SpringBootApp {
