@@ -4,7 +4,8 @@ import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
-import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.job.repository.JobRepository;
+import gov.cms.ab2d.job.service.JobCleanup;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.common.service.PropertiesService;
@@ -41,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 @SpringBootTest
 @Testcontainers
-class WorkerServiceDisengagementTest {
+class WorkerServiceDisengagementTest extends JobCleanup {
     private final Random random = new Random();
 
     @Autowired private DataSetup dataSetup;
@@ -67,7 +68,7 @@ class WorkerServiceDisengagementTest {
     }
 
     @AfterEach
-    public void cleanup() {
+    public void jobCleanup() {
         ReflectionTestUtils.setField(jobHandler, "workerService", workerServiceImpl);
         setEngagement(FeatureEngagement.IN_GEAR);
 
@@ -152,7 +153,7 @@ class WorkerServiceDisengagementTest {
         job.setFhirVersion(STU3);
 
         job = jobRepository.save(job);
-        dataSetup.queueForCleanup(job);
+        addJobForCleanup(job);
         return job;
     }
 

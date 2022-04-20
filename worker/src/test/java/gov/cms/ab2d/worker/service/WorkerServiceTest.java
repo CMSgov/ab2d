@@ -3,11 +3,12 @@ package gov.cms.ab2d.worker.service;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
-import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.job.service.JobCleanup;
 import gov.cms.ab2d.job.service.JobService;
 import gov.cms.ab2d.worker.config.JobHandler;
 import java.time.OffsetDateTime;
@@ -35,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 @SpringBootTest
 @Testcontainers
-class WorkerServiceTest {
+class WorkerServiceTest extends JobCleanup {
     private final Random random = new Random();
 
     @Autowired private DataSetup dataSetup;
@@ -60,7 +61,7 @@ class WorkerServiceTest {
     }
 
     @AfterEach
-    public void cleanup() {
+    public void jobCleanup() {
         ReflectionTestUtils.setField(jobHandler, "workerService", workerServiceImpl);
 
         dataSetup.cleanup();
@@ -106,7 +107,7 @@ class WorkerServiceTest {
         job.setFhirVersion(STU3);
 
         job = jobRepository.save(job);
-        dataSetup.queueForCleanup(job);
+        addJobForCleanup(job);
         return job;
     }
 
