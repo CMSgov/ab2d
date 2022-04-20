@@ -1,5 +1,7 @@
 package gov.cms.ab2d.common.model;
 
+import gov.cms.ab2d.eventlogger.events.FileEvent;
+import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -8,6 +10,7 @@ import lombok.Setter;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
+import java.io.File;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -107,5 +110,14 @@ public class Job {
 
     private boolean pollingTooMuch(int delaySeconds) {
         return lastPollTime != null && lastPollTime.plusSeconds(delaySeconds).isAfter(OffsetDateTime.now());
+    }
+
+    public JobStatusChangeEvent buildJobStatusChangeEvent(JobStatus newStatus, String statusMessage) {
+        final String oldStatus = (status == null) ? null : status.name();
+        return new JobStatusChangeEvent(organization, jobUuid, oldStatus, newStatus.name(), statusMessage);
+    }
+
+    public FileEvent buildFileEvent(File file, FileEvent.FileStatus status) {
+        return new FileEvent(organization, jobUuid, file, status);
     }
 }

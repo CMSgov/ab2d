@@ -2,7 +2,6 @@ package gov.cms.ab2d.worker.stuckjob;
 
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.job.repository.JobRepository;
-import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,7 +42,7 @@ public class CancelStuckJobsProcessorImpl implements CancelStuckJobsProcessor {
         for (Job stuckJob : stuckJobs) {
             log.warn("Cancelling job - uuid:{} - created at:{} - status :{} - completed_at {}",
                             stuckJob.getJobUuid(), stuckJob.getCreatedAt(), stuckJob.getStatus(), stuckJob.getCompletedAt());
-            eventLogger.logAndAlert(EventUtils.getJobChangeEvent(stuckJob, CANCELLED, EOB_JOB_CANCELLED + " Cancelling stuck job"),
+            eventLogger.logAndAlert(stuckJob.buildJobStatusChangeEvent(CANCELLED, EOB_JOB_CANCELLED + " Cancelling stuck job"),
                     PUBLIC_LIST);
             stuckJob.setStatus(CANCELLED);
             jobRepository.save(stuckJob);

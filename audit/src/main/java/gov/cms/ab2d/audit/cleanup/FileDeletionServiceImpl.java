@@ -2,7 +2,6 @@ package gov.cms.ab2d.audit.cleanup;
 
 import gov.cms.ab2d.audit.remote.JobAuditClient;
 import gov.cms.ab2d.common.dto.StaleJob;
-import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
 import lombok.extern.slf4j.Slf4j;
@@ -149,7 +148,8 @@ public class FileDeletionServiceImpl implements FileDeletionService {
     }
 
     private void deleteFile(Path path, StaleJob staleJob) throws IOException {
-        FileEvent fileEvent = EventUtils.getStaleFileEvent(staleJob, new File(path.toUri()), FileEvent.FileStatus.DELETE);
+        FileEvent fileEvent = new FileEvent(staleJob.getOrganization(), staleJob.getJobUuid(),
+                new File(path.toUri()), FileEvent.FileStatus.DELETE);
 
         if (path.toFile().exists()) {
             Files.delete(path);

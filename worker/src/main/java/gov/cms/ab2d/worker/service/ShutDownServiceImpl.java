@@ -2,7 +2,6 @@ package gov.cms.ab2d.worker.service;
 
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.job.repository.JobRepository;
-import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,8 +29,9 @@ public class ShutDownServiceImpl implements ShutDownService {
         try {
             for (String jobString : activeJobs) {
                 Job job = jobRepository.findByJobUuid(jobString);
-                eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, SUBMITTED, EOB_JOB_RESUBMITTED + " Job status reset to SUBMITTED on shutdown"),
-                        PUBLIC_LIST);
+                eventLogger.logAndAlert(job.buildJobStatusChangeEvent(SUBMITTED,
+                                EOB_JOB_RESUBMITTED + " Job status reset to SUBMITTED on shutdown"),
+                                            PUBLIC_LIST);
             }
 
             jobRepository.resetJobsToSubmittedStatus(activeJobs);
