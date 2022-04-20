@@ -6,7 +6,7 @@ import gov.cms.ab2d.common.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
-import gov.cms.ab2d.common.util.JobUtil;
+import gov.cms.ab2d.job.util.JobUtil;
 import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
