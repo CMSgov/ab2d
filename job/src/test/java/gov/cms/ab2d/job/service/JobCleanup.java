@@ -21,17 +21,9 @@ public abstract class JobCleanup {
     protected void jobCleanup() {
         jobsToCleanup.forEach(job -> {
             Job foundJob = jobRepository.findByJobUuid(job.getJobUuid());
-            if (foundJob == null) {
-                foo();
-            }
             jobRepository.delete(foundJob);
         });
         jobRepository.flush();
         jobsToCleanup.clear();
-    }
-
-    private void foo() {
-        int idx = 0;
-        idx++;
     }
 }
