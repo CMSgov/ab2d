@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.service;
 
-import gov.cms.ab2d.common.model.Job;
+import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import lombok.RequiredArgsConstructor;
@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
+import static gov.cms.ab2d.job.model.JobStatus.SUBMITTED;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
 import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_RESUBMITTED;
 

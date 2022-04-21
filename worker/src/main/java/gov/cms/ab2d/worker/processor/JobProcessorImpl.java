@@ -1,8 +1,8 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.aggregator.FileOutputType;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.repository.JobOutputRepository;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.repository.JobOutputRepository;
 import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ContractSearchEvent;
@@ -28,8 +28,8 @@ import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.concurrent.ExecutionException;
 
-import static gov.cms.ab2d.common.model.JobStatus.FAILED;
-import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
+import static gov.cms.ab2d.job.model.JobStatus.FAILED;
+import static gov.cms.ab2d.job.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PROD_LIST;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
 

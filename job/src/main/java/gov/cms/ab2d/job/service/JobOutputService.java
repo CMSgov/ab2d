@@ -1,7 +1,7 @@
 package gov.cms.ab2d.job.service;
 
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobOutput;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobOutput;
 
 public interface JobOutputService {
 

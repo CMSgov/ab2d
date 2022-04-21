@@ -1,9 +1,9 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.dto.ContractDTO;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobOutput;
-import gov.cms.ab2d.common.model.JobStartedBy;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobOutput;
+import gov.cms.ab2d.job.model.JobStartedBy;
 import gov.cms.ab2d.common.model.SinceSource;
 import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -22,10 +22,10 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 
-import static gov.cms.ab2d.common.model.JobStatus.FAILED;
-import static gov.cms.ab2d.common.model.JobStatus.IN_PROGRESS;
-import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
-import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
+import static gov.cms.ab2d.job.model.JobStatus.FAILED;
+import static gov.cms.ab2d.job.model.JobStatus.IN_PROGRESS;
+import static gov.cms.ab2d.job.model.JobStatus.SUBMITTED;
+import static gov.cms.ab2d.job.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
 import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_COVERAGE_ISSUE;
 import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_STARTED;

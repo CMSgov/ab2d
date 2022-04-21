@@ -1,9 +1,9 @@
 package gov.cms.ab2d.audit.cleanup;
 
 import gov.cms.ab2d.audit.remote.JobAuditClient;
-import gov.cms.ab2d.common.dto.StaleJob;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
+import gov.cms.ab2d.job.dto.StaleJob;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;

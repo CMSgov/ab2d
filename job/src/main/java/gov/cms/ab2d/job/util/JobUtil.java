@@ -1,8 +1,8 @@
 package gov.cms.ab2d.job.util;
 
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobOutput;
-import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobOutput;
+import gov.cms.ab2d.job.model.JobStatus;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.OffsetDateTime;

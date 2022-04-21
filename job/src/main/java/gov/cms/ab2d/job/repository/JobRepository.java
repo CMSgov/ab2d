@@ -1,8 +1,8 @@
 package gov.cms.ab2d.job.repository;
 
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobStartedBy;
-import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobStartedBy;
+import gov.cms.ab2d.job.model.JobStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -19,7 +19,7 @@ public interface JobRepository extends JpaRepository<Job, Long> {
 
     @Modifying
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    @Query("update Job j set j.status = gov.cms.ab2d.common.model.JobStatus.CANCELLED where j.jobUuid = :jobUuid")
+    @Query("update Job j set j.status = gov.cms.ab2d.job.model.JobStatus.CANCELLED where j.jobUuid = :jobUuid")
     void cancelJobByJobUuid(@Param("jobUuid") String jobUuid);
 
     Job findByJobUuid(String jobUuid);
@@ -40,7 +40,7 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     @Modifying
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Query("UPDATE Job j SET j.progress = :percentageCompleted WHERE j.jobUuid = :jobUuid ")
-    int updatePercentageCompleted(String jobUuid, int percentageCompleted);
+    void updatePercentageCompleted(String jobUuid, int percentageCompleted);
 
     @Query("SELECT COUNT(j) FROM Job j WHERE j.contractNumber = :contractNumber AND j.status IN :statuses")
     int countJobByContractNumberAndStatus(String contractNumber, List<JobStatus> statuses);

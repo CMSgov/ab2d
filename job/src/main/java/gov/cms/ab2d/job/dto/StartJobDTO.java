@@ -1,4 +1,4 @@
-package gov.cms.ab2d.common.dto;
+package gov.cms.ab2d.job.dto;
 
 import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.AllArgsConstructor;

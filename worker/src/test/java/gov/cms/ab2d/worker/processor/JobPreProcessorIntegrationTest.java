@@ -2,8 +2,8 @@ package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.job.repository.JobRepository;
@@ -45,7 +45,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 
-import static gov.cms.ab2d.common.model.JobStartedBy.DEVELOPER;
+import static gov.cms.ab2d.job.model.JobStartedBy.DEVELOPER;
 import static gov.cms.ab2d.common.model.SinceSource.AB2D;
 import static gov.cms.ab2d.common.model.SinceSource.FIRST_RUN;
 import static gov.cms.ab2d.common.model.SinceSource.USER;

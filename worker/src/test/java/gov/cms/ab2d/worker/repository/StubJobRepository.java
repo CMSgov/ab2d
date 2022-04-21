@@ -1,8 +1,8 @@
 package gov.cms.ab2d.worker.repository;
 
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobStartedBy;
-import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobStartedBy;
+import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.job.repository.JobRepository;
 import lombok.Getter;
 import org.springframework.data.domain.Example;
@@ -60,9 +60,8 @@ public class StubJobRepository implements JobRepository {
     }
 
     @Override
-    public int updatePercentageCompleted(String jobUuid, int percentageCompleted) {
+    public void updatePercentageCompleted(String jobUuid, int percentageCompleted) {
         updatePercentageCompletedCount++;
-        return 0;
     }
 
     @Override

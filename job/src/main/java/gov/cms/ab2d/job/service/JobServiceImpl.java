@@ -1,9 +1,11 @@
 package gov.cms.ab2d.job.service;
 
-import gov.cms.ab2d.common.dto.JobPollResult;
-import gov.cms.ab2d.common.dto.StaleJob;
-import gov.cms.ab2d.common.dto.StartJobDTO;
-import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.job.dto.JobPollResult;
+import gov.cms.ab2d.job.dto.StaleJob;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobOutput;
+import gov.cms.ab2d.job.model.JobStatus;
+import gov.cms.ab2d.job.dto.StartJobDTO;
 import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.job.util.JobUtil;
