@@ -12,6 +12,7 @@
 
     <properties>
         <project.root>${basedir}/..</project.root>
+        <sonar.coverage.exclusions>**/dto/*,**/JobOutput.java,**/JobStatus.java</sonar.coverage.exclusions>
     </properties>
 
     <dependencies>
