@@ -10,12 +10,15 @@ public class AB2DPostgresqlContainer extends PostgreSQLContainer<AB2DPostgresqlC
 
     public AB2DPostgresqlContainer() {
         super(IMAGE_VERSION);
+        withDatabaseName("event");
+
     }
 
     @Override
     public void start() {
         super.withTmpFs(Collections.singletonMap("/var/lib/postgresql/data", "rw"));
         super.start();
+        System.out.println("lol: " +this.getJdbcUrl() + this.getUsername() + this.getPassword());
         System.setProperty("DB_URL", this.getJdbcUrl());
         System.setProperty("DB_USERNAME", this.getUsername());
         System.setProperty("DB_PASSWORD", this.getPassword());
