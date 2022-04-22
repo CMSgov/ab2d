@@ -1,7 +1,7 @@
-package gov.cms.ab2d.common.dto;
+package gov.cms.ab2d.job.dto;
 
-import gov.cms.ab2d.common.model.JobOutput;
-import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.job.model.JobOutput;
+import gov.cms.ab2d.job.model.JobStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

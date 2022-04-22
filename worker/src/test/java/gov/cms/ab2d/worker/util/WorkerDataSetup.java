@@ -2,10 +2,10 @@ package gov.cms.ab2d.worker.util;
 
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.repository.RoleRepository;
@@ -19,9 +19,6 @@ import org.springframework.stereotype.Component;
 
 
 import static java.util.stream.Collectors.toList;
-
-;
-;
 
 @Component
 public class WorkerDataSetup {

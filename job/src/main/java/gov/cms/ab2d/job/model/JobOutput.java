@@ -1,4 +1,4 @@
-package gov.cms.ab2d.common.model;
+package gov.cms.ab2d.job.model;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

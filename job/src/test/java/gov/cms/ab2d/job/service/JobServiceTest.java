@@ -1,11 +1,15 @@
 package gov.cms.ab2d.job.service;
 
-import gov.cms.ab2d.common.dto.JobPollResult;
-import gov.cms.ab2d.common.dto.StaleJob;
-import gov.cms.ab2d.common.dto.StartJobDTO;
+import gov.cms.ab2d.job.dto.StaleJob;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.dto.JobPollResult;
+import gov.cms.ab2d.job.model.JobOutput;
+import gov.cms.ab2d.job.model.JobStartedBy;
+import gov.cms.ab2d.job.model.JobStatus;
+import gov.cms.ab2d.job.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.common.repository.JobOutputRepository;
+import gov.cms.ab2d.job.repository.JobOutputRepository;
 import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.service.PdpClientService;
@@ -53,7 +57,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import static gov.cms.ab2d.common.model.JobStatus.FAILED;
+import static gov.cms.ab2d.job.model.JobStatus.FAILED;
 import static gov.cms.ab2d.common.util.Constants.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;

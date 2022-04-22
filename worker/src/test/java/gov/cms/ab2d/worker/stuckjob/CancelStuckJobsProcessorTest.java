@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.stuckjob;
 
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import org.junit.jupiter.api.BeforeEach;
@@ -70,9 +70,7 @@ class CancelStuckJobsProcessorTest {
         final List<Job> capturedJobs = captor.getAllValues();
 
         assertEquals(3, capturedJobs.size());
-        capturedJobs.forEach( job -> {
-                assertEquals(JobStatus.CANCELLED, job.getStatus());
-        });
+        capturedJobs.forEach( job -> assertEquals(JobStatus.CANCELLED, job.getStatus()));
 
     }
 

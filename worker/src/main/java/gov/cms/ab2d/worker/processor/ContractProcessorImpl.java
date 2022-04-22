@@ -8,8 +8,8 @@ import gov.cms.ab2d.aggregator.FileOutputType;
 import gov.cms.ab2d.aggregator.FileUtils;
 import gov.cms.ab2d.aggregator.JobHelper;
 import gov.cms.ab2d.common.dto.ContractDTO;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobOutput;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobOutput;
 import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
@@ -129,7 +129,6 @@ public class ContractProcessorImpl implements ContractProcessor {
         var contractNumber = job.getContractNumber();
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contractNumber));
 
-        //noinspection OptionalGetWithoutIsPresent
         ContractDTO contract = contractWorkerClient.getContractByContractNumber(contractNumber);
         int numBenes = coverageDriver.numberOfBeneficiariesToProcess(job, contract);
         jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENTS_EXPECTED, numBenes);
@@ -221,7 +220,6 @@ public class ContractProcessorImpl implements ContractProcessor {
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUEST_QUEUED, current.size());
 
         // Do not replace with for each, continue is meant to force patients to wait to be queued
-        //noinspection WhileLoopReplaceableByForEach
         while (current.getNextRequest().isPresent()) {
 
             if (eobClaimRequestsQueue.size(jobUuid) > eobJobPatientQueueMaxSize) {

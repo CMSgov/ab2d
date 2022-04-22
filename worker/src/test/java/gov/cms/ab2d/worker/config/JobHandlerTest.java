@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.config;
 
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.worker.service.WorkerService;
 import org.junit.jupiter.api.*;
