@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.service;
 
+import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.job.model.Job;
@@ -7,6 +8,7 @@ import gov.cms.ab2d.job.model.JobStartedBy;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.job.repository.JobRepository;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,8 +24,18 @@ import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ShutdownServiceTest {
+
+    @Test
+    void testEmptyReset() {
+        List<String> activeJobs = Collections.emptyList();
+        ShutDownService sds = new ShutDownServiceImpl(new MockJobRepository(), new MockEventLogger());
+        sds.resetInProgressJobs(activeJobs);
+        //noinspection ConstantConditions
+        assertTrue(activeJobs.isEmpty());
+    }
 
     @Test
     void testResetInProgress() {
@@ -50,11 +62,15 @@ class ShutdownServiceTest {
         }
 
         @Override
-        public void log(LoggableEvent event) {
-
+        public void logAndAlert(LoggableEvent event, List<Ab2dEnvironment> environments) {
         }
     }
 
+    /*
+     * TODO - definitely not pretty and the only implemented method that we care about is findByJobUuid.
+     *
+     * The use of a mock library could reduce this to just the override method.
+     */
     @SuppressWarnings("all")
     static class MockJobRepository implements JobRepository {
         @Override
@@ -66,6 +82,7 @@ class ShutdownServiceTest {
         public Job findByJobUuid(String jobUuid) {
             Job retJob = new Job();
             retJob.setJobUuid(jobUuid);
+            retJob.setStatus(JobStatus.SUBMITTED);
             return retJob;
         }
 
