@@ -15,8 +15,8 @@ public class JobUtil {
      * A job is done if the status is either CANCELLED or FAILED
      * If a job status is SUCCESSFUL, it is done if all files have been downloaded or they have expired
      *
-     * @param job
-     * @return
+     * @param job - job to check
+     * @return - true/false
      */
     public static boolean isJobDone(Job job) {
         // Job is still in progress
