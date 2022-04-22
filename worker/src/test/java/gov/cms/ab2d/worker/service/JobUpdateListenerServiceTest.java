@@ -10,8 +10,6 @@ import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.worker.dto.JobUpdate;
 import gov.cms.ab2d.worker.processor.JobMeasure;
@@ -55,30 +53,32 @@ class JobUpdateListenerServiceTest {
     @Autowired
     private JobProgressService jobProgressService;
 
-    private static final int PORT = new Random()
+    private static final int INTERNAL_PORT = new Random()
             .ints(6000, 7000)
             .findFirst().orElse(6500);
 
+    private static final int EXTERNAL_PORT = LocalStackContainer.EnabledService.named("SQS").getPort();
+
+
     static {
-        System.setProperty("localstack", "127.0.0.1:" + PORT); //pass the localstack url to the awsSQS beans
+        System.setProperty("localstack", "127.0.0.1:" + INTERNAL_PORT); //pass the localstack url to the awsSQS beans
         System.setProperty("cloud.aws.region.static", Regions.US_EAST_1.getName());
         System.setProperty("com.amazonaws.sdk.disableCertChecking", "");
         //Although we're using @EnableSqs we had to override a few beans. Spring doesn't like that normally.
         System.setProperty("spring.main.allow-bean-definition-overriding", "true");
-
     }
 
     @Container
     public static LocalStackContainer localstack = new LocalStackContainer(DockerImageName.parse("localstack/localstack:latest"))
             .withServices(SQS)
             .withEnv("DEFAULT_REGION", Regions.US_EAST_1.getName())
-            .withExposedPorts(4566)
+            .withExposedPorts(EXTERNAL_PORT)
             .withCommand("awslocal", "sqs", "create-queue", "--queue-name", "ab2d-job-tracking")
             .withCommand("awslocal sqs create-queue --queue-name ab2d-job-tracking")
             .withCreateContainerCmdModifier(cmd -> cmd.withHostConfig(
                     new HostConfig()
                             .withPortBindings(new PortBinding(Ports.Binding
-                                    .bindPort(PORT), new ExposedPort(4566)))
+                                    .bindPort(INTERNAL_PORT), new ExposedPort(EXTERNAL_PORT)))
 
             ));
     ;
@@ -93,7 +93,8 @@ class JobUpdateListenerServiceTest {
 
 
     @Test
-    void jobUpdateQueue() throws JsonProcessingException, InterruptedException {
+    void jobUpdateQueue() throws JsonProcessingException {
+
         final AmazonSQS sqs = AmazonSQSClient
                 .builder()
                 .withEndpointConfiguration(localstack.getEndpointConfiguration(SQS))

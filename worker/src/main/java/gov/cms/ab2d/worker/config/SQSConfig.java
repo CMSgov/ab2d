@@ -71,6 +71,7 @@ public class SQSConfig {
         return converter;
     }
 
+    // Until localstack is built out more, create the queue here when running locally
     private AmazonSQS createQueue(AmazonSQS amazonSQS) {
         amazonSQS.createQueue("ab2d-job-tracking");
         return amazonSQS;
