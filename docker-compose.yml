@@ -108,6 +108,15 @@ services:
         condition: service_healthy
     volumes:
       - tmp-volume:/opt/ab2d
+  localstack:
+    image: localstack/localstack:latest
+    profiles: ["local"]
+    environment:
+        - AWS_DEFAULT_REGION=us-east-1
+        - EDGE_PORT=4566
+        - SERVICES=sqs,sns
+    ports:
+        - '4566:4566'
 
 # This needs a shared volume so that both the API and worker module can access the ndjson files being generated
 volumes:
