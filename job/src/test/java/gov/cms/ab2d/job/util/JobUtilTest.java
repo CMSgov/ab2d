@@ -1,8 +1,8 @@
-package gov.cms.ab2d.common.util;
+package gov.cms.ab2d.job.util;
 
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobOutput;
-import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobOutput;
+import gov.cms.ab2d.job.model.JobStatus;
 import org.junit.jupiter.api.Test;
 
 import java.time.OffsetDateTime;

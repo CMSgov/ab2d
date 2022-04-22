@@ -1,7 +1,7 @@
-package gov.cms.ab2d.common.repository;
+package gov.cms.ab2d.job.repository;
 
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobOutput;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobOutput;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

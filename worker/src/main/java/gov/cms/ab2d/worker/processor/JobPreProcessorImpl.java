@@ -1,12 +1,11 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.dto.ContractDTO;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobOutput;
-import gov.cms.ab2d.common.model.JobStartedBy;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobOutput;
+import gov.cms.ab2d.job.model.JobStartedBy;
 import gov.cms.ab2d.common.model.SinceSource;
 import gov.cms.ab2d.job.repository.JobRepository;
-import gov.cms.ab2d.common.util.EventUtils;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverException;
@@ -23,10 +22,10 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 
-import static gov.cms.ab2d.common.model.JobStatus.FAILED;
-import static gov.cms.ab2d.common.model.JobStatus.IN_PROGRESS;
-import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
-import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
+import static gov.cms.ab2d.job.model.JobStatus.FAILED;
+import static gov.cms.ab2d.job.model.JobStatus.IN_PROGRESS;
+import static gov.cms.ab2d.job.model.JobStatus.SUBMITTED;
+import static gov.cms.ab2d.job.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
 import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_COVERAGE_ISSUE;
 import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_STARTED;
@@ -87,7 +86,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
                 return job;
             }
 
-            eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, IN_PROGRESS, EOB_JOB_STARTED + " for "
+            eventLogger.logAndAlert(job.buildJobStatusChangeEvent(IN_PROGRESS, EOB_JOB_STARTED + " for "
                     + contract.getContractNumber() + " in progress"), PUBLIC_LIST);
 
             job.setStatus(IN_PROGRESS);
@@ -96,7 +95,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
             job = jobRepository.save(job);
 
         } catch (CoverageDriverException coverageDriverException) {
-            eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, FAILED, EOB_JOB_COVERAGE_ISSUE + " Job for "
+            eventLogger.logAndAlert(job.buildJobStatusChangeEvent(FAILED, EOB_JOB_COVERAGE_ISSUE + " Job for "
                     + contract.getContractNumber() + " in progress"), PUBLIC_LIST);
 
             job.setStatus(FAILED);

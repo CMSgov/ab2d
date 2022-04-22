@@ -1,13 +1,14 @@
 package gov.cms.ab2d.job.service;
 
-import gov.cms.ab2d.common.dto.JobPollResult;
-import gov.cms.ab2d.common.dto.StaleJob;
-import gov.cms.ab2d.common.dto.StartJobDTO;
-import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.job.dto.JobPollResult;
+import gov.cms.ab2d.job.dto.StaleJob;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobOutput;
+import gov.cms.ab2d.job.model.JobStatus;
+import gov.cms.ab2d.job.dto.StartJobDTO;
 import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
-import gov.cms.ab2d.common.util.EventUtils;
-import gov.cms.ab2d.common.util.JobUtil;
+import gov.cms.ab2d.job.util.JobUtil;
 import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
@@ -68,7 +69,7 @@ public class JobServiceImpl implements JobService {
 
 
 
-        eventLogger.log(EventUtils.getJobChangeEvent(job, JobStatus.SUBMITTED, "Job Created"));
+        eventLogger.log(job.buildJobStatusChangeEvent(JobStatus.SUBMITTED, "Job Created"));
 
         // Report client running first job in prod
         if (clientHasNeverCompletedJob(startJobDTO.getContractNumber())) {
@@ -89,7 +90,7 @@ public class JobServiceImpl implements JobService {
             log.error("Job had a status of {} so it was not able to be cancelled", job.getStatus());
             throw new InvalidJobStateTransition("Job has a status of " + job.getStatus() + ", so it cannot be cancelled");
         }
-        eventLogger.log(EventUtils.getJobChangeEvent(job, JobStatus.CANCELLED, "Job Cancelled"));
+        eventLogger.log(job.buildJobStatusChangeEvent(JobStatus.CANCELLED, "Job Cancelled"));
         jobRepository.cancelJobByJobUuid(jobUuid);
     }
 
@@ -168,7 +169,7 @@ public class JobServiceImpl implements JobService {
         JobOutput jobOutput = jobOutputService.findByFilePathAndJob(fileName, job);
         jobOutput.setDownloaded(true);
         jobOutputService.updateJobOutput(jobOutput);
-        eventLogger.log(EventUtils.getFileEvent(job, file, FileEvent.FileStatus.DELETE));
+        eventLogger.log(job.buildFileEvent(file, FileEvent.FileStatus.DELETE));
         if (JobUtil.isJobDone(job)) {
             eventLogger.log(LogManager.LogType.KINESIS, loggerEventSummary.getSummary(job.getJobUuid()));
         }
