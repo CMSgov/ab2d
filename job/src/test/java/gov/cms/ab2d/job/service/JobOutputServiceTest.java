@@ -1,12 +1,14 @@
-package gov.cms.ab2d.common.service;
+package gov.cms.ab2d.job.service;
 
-import gov.cms.ab2d.common.SpringBootApp;
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.repository.*;
+import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.job.JobTestSpringBootApp;
+import gov.cms.ab2d.job.repository.JobRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -29,10 +30,9 @@ import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SpringBootTest(classes = SpringBootApp.class)
-@TestPropertySource(locations = "/application.common.properties")
+@SpringBootTest(classes = JobTestSpringBootApp.class)
 @Testcontainers
-class JobOutputServiceTest {
+class JobOutputServiceTest extends JobCleanup {
 
     @Autowired
     JobService jobService;
@@ -70,6 +70,7 @@ class JobOutputServiceTest {
 
     @AfterEach
     public void tearDown() {
+        jobCleanup();
         dataSetup.cleanup();
     }
 
@@ -83,7 +84,7 @@ class JobOutputServiceTest {
         job.setFhirVersion(STU3);
         job.setContractNumber(JOB_OUTPUT_CONTRACT_NUMBER);
         Job savedJob = jobRepository.save(job);
-        dataSetup.queueForCleanup(savedJob);
+        addJobForCleanup(savedJob);
 
         JobOutput jobOutput = new JobOutput();
         jobOutput.setDownloaded(false);
@@ -115,7 +116,7 @@ class JobOutputServiceTest {
         job.setFhirVersion(STU3);
         job.setContractNumber(JOB_OUTPUT_CONTRACT_NUMBER);
         Job savedJob = jobRepository.save(job);
-        dataSetup.queueForCleanup(savedJob);
+        addJobForCleanup(savedJob);
 
         JobOutput jobOutput = new JobOutput();
         jobOutput.setDownloaded(false);
@@ -142,7 +143,7 @@ class JobOutputServiceTest {
         job.setFhirVersion(STU3);
         job.setContractNumber(JOB_OUTPUT_CONTRACT_NUMBER);
         Job savedJob = jobRepository.save(job);
-        dataSetup.queueForCleanup(savedJob);
+        addJobForCleanup(savedJob);
 
         JobOutput jobOutput = new JobOutput();
         jobOutput.setDownloaded(false);

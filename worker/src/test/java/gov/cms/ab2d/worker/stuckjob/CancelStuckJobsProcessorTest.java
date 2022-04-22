@@ -2,7 +2,7 @@ package gov.cms.ab2d.worker.stuckjob;
 
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
-import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

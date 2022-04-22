@@ -1,14 +1,16 @@
-package gov.cms.ab2d.common.service;
+package gov.cms.ab2d.job.service;
 
-import gov.cms.ab2d.common.SpringBootApp;
 import gov.cms.ab2d.common.dto.JobPollResult;
 import gov.cms.ab2d.common.dto.StaleJob;
 import gov.cms.ab2d.common.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.*;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
-import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
+import gov.cms.ab2d.common.service.PdpClientService;
+import gov.cms.ab2d.common.service.ResourceNotFoundException;
+import gov.cms.ab2d.common.service.RoleService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -16,6 +18,7 @@ import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventSummary;
+import gov.cms.ab2d.job.JobTestSpringBootApp;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,7 +32,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.TransactionSystemException;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -52,12 +54,12 @@ import java.util.List;
 import java.util.Set;
 
 import static gov.cms.ab2d.common.model.JobStatus.FAILED;
-import static gov.cms.ab2d.common.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static gov.cms.ab2d.common.util.Constants.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
+import static gov.cms.ab2d.job.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static java.util.List.of;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -65,10 +67,9 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-@SpringBootTest(classes = SpringBootApp.class)
-@TestPropertySource(locations = "/application.common.properties")
+@SpringBootTest(classes = JobTestSpringBootApp.class)
 @Testcontainers
-class JobServiceTest {
+class JobServiceTest extends JobCleanup {
 
     public static final String CLIENTID = "douglas.adams@towels.com";
     public static final String CONTRACT_NUMBER = "S0000";
@@ -134,6 +135,7 @@ class JobServiceTest {
 
     @AfterEach
     public void cleanup() {
+        jobCleanup();
         dataSetup.cleanup();
     }
 
@@ -190,7 +192,7 @@ class JobServiceTest {
         Contract contract = contractRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
         Job job = jobService.createJob(buildStartJobContract(contract.getContractNumber()));
-        dataSetup.queueForCleanup(job);
+        addJobForCleanup(job);
 
         assertNotNull(job);
         assertNotNull(job.getId());
@@ -225,21 +227,21 @@ class JobServiceTest {
         Contract contract = contractRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
 
         Job job1 = jobService.createJob(buildStartJobContract(contract.getContractNumber()));
-        dataSetup.queueForCleanup(job1);
+        addJobForCleanup(job1);
         verify(slackLogger, times(1)).logAlert(anyString(), any());
 
         job1.setStatus(JobStatus.CANCELLED);
         jobRepository.saveAndFlush(job1);
 
         Job job2 = jobService.createJob(buildStartJobContract(contract.getContractNumber()));
-        dataSetup.queueForCleanup(job2);
+        addJobForCleanup(job2);
         verify(slackLogger, times(2)).logAlert(anyString(), any());
 
         job2.setStatus(JobStatus.SUCCESSFUL);
         jobRepository.saveAndFlush(job2);
 
         Job job3 = jobService.createJob(buildStartJobContract(contract.getContractNumber()));
-        dataSetup.queueForCleanup(job3);
+        addJobForCleanup(job3);
         verify(slackLogger, times(2)).logAlert(anyString(), any());
     }
 
@@ -620,7 +622,7 @@ class JobServiceTest {
 
     private Job createJobAllContracts(String outputFormat) {
         Job job = jobService.createJob(buildStartJobOutputFormat(outputFormat));
-        dataSetup.queueForCleanup(job);
+        addJobForCleanup(job);
         return job;
     }
 
@@ -629,7 +631,6 @@ class JobServiceTest {
         Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
         job.setStatus(FAILED);
         jobRepository.save(job);
-        dataSetup.queueForCleanup(job);
 
         List<StaleJob> staleJobs = jobService.checkForExpiration(of(job.getJobUuid()), 1);
         assertFalse(staleJobs.isEmpty());

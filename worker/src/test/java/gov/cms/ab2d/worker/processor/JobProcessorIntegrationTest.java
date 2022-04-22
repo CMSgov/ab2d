@@ -9,7 +9,7 @@ import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.JobOutputRepository;
-import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
@@ -31,6 +31,7 @@ import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
+import gov.cms.ab2d.job.service.JobCleanup;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.config.SearchConfig;
@@ -84,7 +85,7 @@ import static org.mockito.Mockito.when;
 @SpringBootTest
 @Testcontainers
 @SpringIntegrationTest(noAutoStartup = {"inboundChannelAdapter", "*Source*"})
-class JobProcessorIntegrationTest {
+class JobProcessorIntegrationTest extends JobCleanup {
 
     private static final String CONTRACT_NAME = "CONTRACT_0000";
     private static final String CONTRACT_NUMBER = "CONTRACT_0000";
@@ -237,6 +238,7 @@ class JobProcessorIntegrationTest {
 
     @AfterEach
     void cleanup() {
+        jobCleanup();
         loggerEventRepository.delete();
         dataSetup.cleanup();
         pdpClientRepository.deleteAll();
@@ -438,7 +440,7 @@ class JobProcessorIntegrationTest {
         job.setContractNumber(contract.getContractNumber());
 
         job = jobRepository.saveAndFlush(job);
-        dataSetup.queueForCleanup(job);
+        addJobForCleanup(job);
         return job;
     }
 

@@ -6,7 +6,7 @@ import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
@@ -24,6 +24,7 @@ import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.eventlogger.events.ReloadEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
+import gov.cms.ab2d.job.service.JobCleanup;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverException;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
@@ -60,7 +61,7 @@ import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @Testcontainers
-class JobPreProcessorIntegrationTest {
+class JobPreProcessorIntegrationTest extends JobCleanup {
 
     private JobPreProcessor cut;
 
@@ -118,7 +119,7 @@ class JobPreProcessorIntegrationTest {
 
     @AfterEach
     void clear() {
-
+        jobCleanup();
         loggerEventRepository.delete();
         dataSetup.cleanup();
         contractRepository.flush();
@@ -233,9 +234,9 @@ class JobPreProcessorIntegrationTest {
         assertEquals(oldJobTime.getNano(), processedJob.getSince().getNano());
         assertEquals(AB2D, processedJob.getSinceSource());
 
-        dataSetup.queueForCleanup(oldJob);
-        dataSetup.queueForCleanup(reallyOldJob);
-        dataSetup.queueForCleanup(newJob);
+        addJobForCleanup(oldJob);
+        addJobForCleanup(reallyOldJob);
+        addJobForCleanup(newJob);
     }
 
     @Test
@@ -269,8 +270,8 @@ class JobPreProcessorIntegrationTest {
         assertNull(processedJob.getSince());
         assertEquals(FIRST_RUN, processedJob.getSinceSource());
 
-        dataSetup.queueForCleanup(oldJob);
-        dataSetup.queueForCleanup(newJob);
+        addJobForCleanup(oldJob);
+        addJobForCleanup(newJob);
     }
 
     @Test
@@ -305,8 +306,8 @@ class JobPreProcessorIntegrationTest {
         assertNull(processedJob.getSince());
         assertEquals(FIRST_RUN, processedJob.getSinceSource());
 
-        dataSetup.queueForCleanup(oldJob);
-        dataSetup.queueForCleanup(newJob);
+        addJobForCleanup(oldJob);
+        addJobForCleanup(newJob);
     }
 
     @Test
@@ -342,8 +343,8 @@ class JobPreProcessorIntegrationTest {
         assertEquals(suppliedSince.getNano(), processedJob.getSince().getNano());
         assertEquals(USER, processedJob.getSinceSource());
 
-        dataSetup.queueForCleanup(oldJob);
-        dataSetup.queueForCleanup(newJob);
+        addJobForCleanup(oldJob);
+        addJobForCleanup(newJob);
     }
 
     private PdpClient createClient(Contract contract) {
@@ -370,7 +371,7 @@ class JobPreProcessorIntegrationTest {
         job.setContractNumber(contractNumber);
 
         job = jobRepository.save(job);
-        dataSetup.queueForCleanup(job);
+        addJobForCleanup(job);
         return job;
     }
 }

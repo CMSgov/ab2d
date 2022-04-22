@@ -1,4 +1,4 @@
-package gov.cms.ab2d.common.service;
+package gov.cms.ab2d.job.service;
 
 import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.JobOutput;
