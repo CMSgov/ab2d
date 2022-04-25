@@ -39,6 +39,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.cloud.aws.messaging.listener.SimpleMessageListenerContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -93,6 +95,10 @@ class JobPreProcessorIntegrationTest {
 
     @Mock
     private SlackLogger slackLogger;
+
+    //disable sqs
+    @MockBean
+    private SimpleMessageListenerContainer messageListenerContainer;
 
     private PdpClient pdpClient;
     private Job job;

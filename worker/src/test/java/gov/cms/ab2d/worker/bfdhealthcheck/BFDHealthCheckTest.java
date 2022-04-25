@@ -14,6 +14,8 @@ import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.cloud.aws.messaging.listener.SimpleMessageListenerContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -43,6 +45,10 @@ public class BFDHealthCheckTest {
 
     @Autowired
     private PropertiesService propertiesService;
+
+    //disable sqs
+    @MockBean
+    private SimpleMessageListenerContainer messageListenerContainer;
 
     @Value("${bfd.health.check.consecutive.failures}")
     private int consecutiveFailuresToTakeDown;

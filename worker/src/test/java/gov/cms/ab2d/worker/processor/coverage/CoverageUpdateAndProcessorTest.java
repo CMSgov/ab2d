@@ -40,6 +40,8 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.cloud.aws.messaging.listener.SimpleMessageListenerContainer;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -115,6 +117,10 @@ class CoverageUpdateAndProcessorTest {
 
     @Autowired
     private ContractToContractCoverageMapping mapping;
+
+    //disable sqs
+    @MockBean
+    private SimpleMessageListenerContainer messageListenerContainer;
 
     private Contract contract;
     private CoveragePeriod january;

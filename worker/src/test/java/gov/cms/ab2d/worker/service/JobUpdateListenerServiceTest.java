@@ -15,6 +15,7 @@ import gov.cms.ab2d.worker.dto.JobUpdate;
 import gov.cms.ab2d.worker.processor.JobMeasure;
 import gov.cms.ab2d.worker.processor.JobProgressService;
 import gov.cms.ab2d.worker.processor.JobProgressUpdateService;
+import gov.cms.ab2d.worker.util.AB2DLocalstackContainer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -39,7 +40,6 @@ import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 @SpringBootTest
 @Testcontainers
-@EnableSqs
 class JobUpdateListenerServiceTest {
     @Autowired
     private ObjectMapper mapper;
@@ -53,44 +53,12 @@ class JobUpdateListenerServiceTest {
     @Autowired
     private JobProgressService jobProgressService;
 
-    private static final int INTERNAL_PORT = new Random()
-            .ints(6000, 7000)
-            .findFirst().orElse(6500);
-
-    private static final int EXTERNAL_PORT = LocalStackContainer.EnabledService.named("SQS").getPort();
-
-
-    static {
-        System.setProperty("localstack", "127.0.0.1:" + INTERNAL_PORT); //pass the localstack url to the awsSQS beans
-        System.setProperty("cloud.aws.region.static", Regions.US_EAST_1.getName());
-        System.setProperty("com.amazonaws.sdk.disableCertChecking", "");
-        //Although we're using @EnableSqs we had to override a few beans. Spring doesn't like that normally.
-        System.setProperty("spring.main.allow-bean-definition-overriding", "true");
-    }
-
-    @Container
-    public static LocalStackContainer localstack = new LocalStackContainer(DockerImageName.parse("localstack/localstack:latest"))
-            .withServices(SQS)
-            .withEnv("DEFAULT_REGION", Regions.US_EAST_1.getName())
-            .withExposedPorts(EXTERNAL_PORT)
-            .withCommand("awslocal", "sqs", "create-queue", "--queue-name", "ab2d-job-tracking")
-            .withCommand("awslocal sqs create-queue --queue-name ab2d-job-tracking")
-            .withCreateContainerCmdModifier(cmd -> cmd.withHostConfig(
-                    new HostConfig()
-                            .withPortBindings(new PortBinding(Ports.Binding
-                                    .bindPort(INTERNAL_PORT), new ExposedPort(EXTERNAL_PORT)))
-
-            ));
-    ;
-
-    @AfterAll
-    static void cleanup() {
-        localstack.stop();
-    }
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
+    @Container
+    public static LocalStackContainer localstack = new AB2DLocalstackContainer();
 
     @Test
     void jobUpdateQueue() throws JsonProcessingException {

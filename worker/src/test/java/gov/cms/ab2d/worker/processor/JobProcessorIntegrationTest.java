@@ -1,5 +1,10 @@
 package gov.cms.ab2d.worker.processor;
 
+import com.amazonaws.regions.Regions;
+import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.HostConfig;
+import com.github.dockerjava.api.model.PortBinding;
+import com.github.dockerjava.api.model.Ports;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Contract;
@@ -38,10 +43,12 @@ import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.service.JobChannelService;
+import gov.cms.ab2d.worker.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.worker.util.HealthCheck;
 import java.io.File;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.LongStream;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
@@ -55,12 +62,16 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.OngoingStubbing;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.cloud.aws.messaging.listener.SimpleMessageListenerContainer;
 import org.springframework.integration.test.context.SpringIntegrationTest;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.containers.localstack.LocalStackContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
@@ -80,6 +91,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
+import static org.testcontainers.containers.localstack.LocalStackContainer.Service.SQS;
 
 @SpringBootTest
 @Testcontainers
@@ -94,6 +106,10 @@ class JobProcessorIntegrationTest {
     public static final String STREAMING_DIR = "streaming";
     public static final int NUMBER_PATIENT_REQUESTS_PER_THREAD = 5;
     public static final int MULTIPLIER = 2;
+    private static final int INTERNAL_PORT = new Random()
+            .ints(6000, 7000)
+            .findFirst().orElse(6500);
+    private static final int EXTERNAL_PORT = LocalStackContainer.EnabledService.named("SQS").getPort();
 
     private JobProcessor cut;       // class under test
 
@@ -161,11 +177,16 @@ class JobProcessorIntegrationTest {
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
+
+    @Container
+    public static LocalStackContainer localstack = new AB2DLocalstackContainer();
+
     private static final ExplanationOfBenefit EOB = (ExplanationOfBenefit) EobTestDataUtil.createEOB();
 
     private Contract contract;
     private ContractForCoverageDTO contractForCoverageDTO;
     private RuntimeException fail;
+
 
     @BeforeEach
     void setUp() {
