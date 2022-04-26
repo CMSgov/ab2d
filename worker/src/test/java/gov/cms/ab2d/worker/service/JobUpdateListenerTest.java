@@ -22,6 +22,7 @@ import org.testcontainers.containers.localstack.LocalStackContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -33,7 +34,7 @@ import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 @SpringBootTest
 @Testcontainers
 @Slf4j
-class JobUpdateListenerServiceTest {
+class JobUpdateListenerTest {
     @Autowired
     private ObjectMapper mapper;
 
@@ -56,38 +57,44 @@ class JobUpdateListenerServiceTest {
     @Test
     void jobUpdateQueue() throws JsonProcessingException {
 
+        final int oldThreshold = new Random().nextInt();
+        final int newThreshold = new Random().nextInt();
+        final String uuid = UUID.randomUUID().toString();
+        log.info("uuid: {}old: {} new:{}", uuid, oldThreshold, newThreshold);
         final AmazonSQS sqs = AmazonSQSClient
                 .builder()
                 .withEndpointConfiguration(localstack.getEndpointConfiguration(SQS))
                 .withCredentials(localstack.getDefaultCredentialsProvider()).build();
-        String uuid = UUID.randomUUID().toString();
         log.info("Job uuid {}", uuid);
         jobProgressUpdateService.initJob(uuid);
-        jobProgressUpdateService.addMeasure(uuid, JobMeasure.FAILURE_THRESHHOLD, 10);
+        jobProgressUpdateService.addMeasure(uuid, JobMeasure.FAILURE_THRESHHOLD, oldThreshold);
         String mainQueueURL = sqs.getQueueUrl("ab2d-job-tracking").getQueueUrl();
         assertTrue(sqs.listQueues().getQueueUrls().contains(mainQueueURL));
-        String update = mapper.writeValueAsString(createJobUpdate(uuid));
+        String update = mapper.writeValueAsString(createJobUpdate(uuid, newThreshold));
         log.info("Sending update {}", update);
         SendMessageResult messageResult = sqs.sendMessage(mainQueueURL, update);
         log.info("jobUpdateQueue test sending to ab2d-job-tracking {}", messageResult);
         await().atMost(30, TimeUnit.SECONDS)
-                .until(() -> 100 == jobProgressService.getStatus(uuid).getFailureThreshold());
+                .until(() -> newThreshold == jobProgressService.getStatus(uuid).getFailureThreshold());
     }
 
     @Test
     void jobUpdateDirectly() {
+        final int oldThreshold = new Random().nextInt();
+        final int newThreshold = new Random().nextInt();
         String uuid = UUID.randomUUID().toString();
+        log.info("uuid: {}old: {} new:{}", uuid, oldThreshold, newThreshold);
         jobProgressUpdateService.initJob(uuid);
-        jobProgressUpdateService.addMeasure(uuid, JobMeasure.FAILURE_THRESHHOLD, 10);
-        listener.processJobProgressUpdate(createJobUpdate(uuid), Mockito.mock(Acknowledgment.class));
-        assertEquals(100, jobProgressService.getStatus(uuid).getFailureThreshold());
+        jobProgressUpdateService.addMeasure(uuid, JobMeasure.FAILURE_THRESHHOLD, oldThreshold);
+        listener.processJobProgressUpdate(createJobUpdate(uuid, newThreshold), Mockito.mock(Acknowledgment.class));
+        assertEquals(newThreshold, jobProgressService.getStatus(uuid).getFailureThreshold());
     }
 
-    private JobUpdate createJobUpdate(String uuid) {
+    private JobUpdate createJobUpdate(String uuid, int threshold) {
         return JobUpdate.builder()
                 .jobUUID(uuid)
                 .measure(JobMeasure.FAILURE_THRESHHOLD.toString())
-                .value(100)
+                .value(threshold)
                 .build();
     }
 
