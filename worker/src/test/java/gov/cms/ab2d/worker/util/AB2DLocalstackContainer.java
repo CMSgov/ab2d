@@ -3,11 +3,8 @@ package gov.cms.ab2d.worker.util;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import lombok.extern.slf4j.Slf4j;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.localstack.LocalStackContainer;
 import org.testcontainers.utility.DockerImageName;
-
-import java.util.Collections;
 
 import static org.testcontainers.containers.localstack.LocalStackContainer.Service.SQS;
 
