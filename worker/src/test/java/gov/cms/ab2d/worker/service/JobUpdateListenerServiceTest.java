@@ -1,15 +1,10 @@
 package gov.cms.ab2d.worker.service;
 
-import com.amazonaws.regions.Regions;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.services.sqs.model.SendMessageResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.dockerjava.api.model.ExposedPort;
-import com.github.dockerjava.api.model.HostConfig;
-import com.github.dockerjava.api.model.PortBinding;
-import com.github.dockerjava.api.model.Ports;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.worker.dto.JobUpdate;
 import gov.cms.ab2d.worker.processor.JobMeasure;
@@ -17,21 +12,16 @@ import gov.cms.ab2d.worker.processor.JobProgressService;
 import gov.cms.ab2d.worker.processor.JobProgressUpdateService;
 import gov.cms.ab2d.worker.util.AB2DLocalstackContainer;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.cloud.aws.messaging.config.annotation.EnableSqs;
 import org.springframework.cloud.aws.messaging.listener.Acknowledgment;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.localstack.LocalStackContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
-import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -71,13 +61,15 @@ class JobUpdateListenerServiceTest {
                 .withEndpointConfiguration(localstack.getEndpointConfiguration(SQS))
                 .withCredentials(localstack.getDefaultCredentialsProvider()).build();
         String uuid = UUID.randomUUID().toString();
+        log.info("Job uuid {}", uuid);
         jobProgressUpdateService.initJob(uuid);
         jobProgressUpdateService.addMeasure(uuid, JobMeasure.FAILURE_THRESHHOLD, 10);
-
         String mainQueueURL = sqs.getQueueUrl("ab2d-job-tracking").getQueueUrl();
         assertTrue(sqs.listQueues().getQueueUrls().contains(mainQueueURL));
-        SendMessageResult a = sqs.sendMessage(mainQueueURL, mapper.writeValueAsString(createJobUpdate(uuid)));
-        log.info("jobUpdateQueue test sending to ab2d-job-tracking");
+        String update = mapper.writeValueAsString(createJobUpdate(uuid));
+        log.info("Sending update {}", update);
+        SendMessageResult messageResult = sqs.sendMessage(mainQueueURL, update);
+        log.info("jobUpdateQueue test sending to ab2d-job-tracking {}", messageResult);
         await().atMost(30, TimeUnit.SECONDS)
                 .until(() -> 100 == jobProgressService.getStatus(uuid).getFailureThreshold());
     }

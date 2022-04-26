@@ -45,7 +45,7 @@ public class JobChannelServiceImpl implements JobChannelService {
     }
 
     private void updateJobThroughQueue(String jobUuid, JobMeasure measure, long value) {
-        log.info("Sending message to SQS from JobChannelService");
+        log.info("Sending message {} to SQS from JobChannelService", jobUuid);
 
         String queueUrl = amazonSQS.getQueueUrl("ab2d-job-tracking").getQueueUrl();
 
@@ -57,6 +57,7 @@ public class JobChannelServiceImpl implements JobChannelService {
     }
 
     private void updateJobDirectly(String jobUuid, JobMeasure measure, long value) {
+        log.info("Updating job {} directly", jobUuid);
         jobProgressUpdateService.addMeasure(jobUuid, measure, value);
     }
 
