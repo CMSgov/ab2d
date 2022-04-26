@@ -14,6 +14,7 @@ $$
 
         if not exists(SELECT * FROM pg_user WHERE usename = 'cmsadmin') THEN
             --- login for cms admin
+            Create Role cmsadmin noinherit login password 'ab2d';
         end if;
     end
 $$;
@@ -21,7 +22,7 @@ $$;
 CREATE SCHEMA IF NOT EXISTS event;
 -- Table: event_api_request
 -- DROP TABLE IF EXISTS event_api_request;
-CREATE TABLE IF NOT EXISTS event_api_request
+CREATE TABLE IF NOT EXISTS event.event_api_request
 (
     id SERIAL,
     time_of_event timestamp with time zone,
@@ -36,16 +37,16 @@ CREATE TABLE IF NOT EXISTS event_api_request
     CONSTRAINT pk_api_request_event PRIMARY KEY (id)
 );
 
-ALTER TABLE IF EXISTS event_api_request
+ALTER TABLE IF EXISTS event.event_api_request
     OWNER to cmsadmin;
-GRANT SELECT ON TABLE event_api_request TO ab2d_analyst;
-GRANT ALL ON TABLE event_api_request TO cmsadmin;
+GRANT SELECT ON TABLE event.event_api_request TO ab2d_analyst;
+GRANT ALL ON TABLE event.event_api_request TO cmsadmin;
 
 
 
 -- Table: event_api_response
 -- DROP TABLE IF EXISTS event_api_response
-CREATE TABLE IF NOT EXISTS event_api_response
+CREATE TABLE IF NOT EXISTS event.event_api_response
 (
     id SERIAL,
     time_of_event timestamp with time zone,
@@ -60,17 +61,17 @@ CREATE TABLE IF NOT EXISTS event_api_response
     CONSTRAINT pk_api_response_event PRIMARY KEY (id)
 );
 
-ALTER TABLE IF EXISTS event_api_response
+ALTER TABLE IF EXISTS event.event_api_response
     OWNER to cmsadmin;
-GRANT SELECT ON TABLE event_api_response TO ab2d_analyst;
-GRANT ALL ON TABLE event_api_response TO cmsadmin;
+GRANT SELECT ON TABLE event.event_api_response TO ab2d_analyst;
+GRANT ALL ON TABLE event.event_api_response TO cmsadmin;
 
 
 
 
 -- Table: event_bene_coverage_search_status_change
 -- DROP TABLE IF EXISTS event_bene_coverage_search_status_change;
-CREATE TABLE IF NOT EXISTS event_bene_coverage_search_status_change
+CREATE TABLE IF NOT EXISTS event.event_bene_coverage_search_status_change
 (
     id SERIAL,
     bene_coverage_period_id integer NOT NULL,
@@ -81,22 +82,22 @@ CREATE TABLE IF NOT EXISTS event_bene_coverage_search_status_change
     description text,
     CONSTRAINT pk_event_bene_coverage_search PRIMARY KEY (id));
 
-ALTER TABLE IF EXISTS event_bene_coverage_search_status_change
+ALTER TABLE IF EXISTS event.event_bene_coverage_search_status_change
     OWNER to cmsadmin;
-GRANT SELECT ON TABLE event_bene_coverage_search_status_change TO ab2d_analyst;
-GRANT ALL ON TABLE event_bene_coverage_search_status_change TO cmsadmin;
+GRANT SELECT ON TABLE event.event_bene_coverage_search_status_change TO ab2d_analyst;
+GRANT ALL ON TABLE event.event_bene_coverage_search_status_change TO cmsadmin;
 
 -- Index: ix_bene_coverage_search_status_job_id
 -- DROP INDEX IF EXISTS ix_bene_coverage_search_status_job_id;
 CREATE INDEX IF NOT EXISTS ix_bene_coverage_search_status_job_id
-    ON event_bene_coverage_search_status_change USING btree
+    ON event.event_bene_coverage_search_status_change USING btree
         (bene_coverage_period_id ASC NULLS LAST);
 
 
 
 -- Table: event_bene_reload
 -- DROP TABLE IF EXISTS event_bene_reload;
-CREATE TABLE IF NOT EXISTS event_bene_reload
+CREATE TABLE IF NOT EXISTS event.event_bene_reload
 (
     id SERIAL,
     time_of_event timestamp with time zone,
@@ -110,10 +111,10 @@ CREATE TABLE IF NOT EXISTS event_bene_reload
     CONSTRAINT pk_bene_reload_event PRIMARY KEY (id)
 );
 
-ALTER TABLE IF EXISTS event_bene_reload
+ALTER TABLE IF EXISTS event.event_bene_reload
     OWNER to cmsadmin;
-GRANT SELECT ON TABLE event_bene_reload TO ab2d_analyst;
-GRANT ALL ON TABLE event_bene_reload TO cmsadmin;
+GRANT SELECT ON TABLE event.event_bene_reload TO ab2d_analyst;
+GRANT ALL ON TABLE event.event_bene_reload TO cmsadmin;
 
 
 
@@ -121,7 +122,7 @@ GRANT ALL ON TABLE event_bene_reload TO cmsadmin;
 
 -- Table: event_bene_search
 -- DROP TABLE IF EXISTS event_bene_search;
-CREATE TABLE IF NOT EXISTS event_bene_search
+CREATE TABLE IF NOT EXISTS event.event_bene_search
 (
     id SERIAL,
     time_of_event timestamp with time zone,
@@ -142,22 +143,22 @@ CREATE TABLE IF NOT EXISTS event_bene_search
     CONSTRAINT pk_bene_search_event PRIMARY KEY (id)
 );
 
-ALTER TABLE IF EXISTS event_bene_search
+ALTER TABLE IF EXISTS event.event_bene_search
     OWNER to cmsadmin;
-GRANT SELECT ON TABLE event_bene_search TO ab2d_analyst;
-GRANT ALL ON TABLE event_bene_search TO cmsadmin;
+GRANT SELECT ON TABLE event.event_bene_search TO ab2d_analyst;
+GRANT ALL ON TABLE event.event_bene_search TO cmsadmin;
 -- Index: ix_bene_search_job_id
 -- DROP INDEX IF EXISTS ix_bene_search_job_id;
 
 CREATE INDEX IF NOT EXISTS ix_bene_search_job_id
-    ON event_bene_search USING btree
+    ON event.event_bene_search USING btree
         (job_id ASC NULLS LAST);
 
 
 
 -- Table: event_error
 -- DROP TABLE IF EXISTS event_error;
-CREATE TABLE IF NOT EXISTS event_error
+CREATE TABLE IF NOT EXISTS event.event_error
 (
     id SERIAL,
     time_of_event timestamp with time zone,
@@ -170,17 +171,17 @@ CREATE TABLE IF NOT EXISTS event_error
     CONSTRAINT pk_error_event PRIMARY KEY (id)
 );
 
-ALTER TABLE IF EXISTS event_error
+ALTER TABLE IF EXISTS event.event_error
     OWNER to cmsadmin;
-GRANT SELECT ON TABLE event_error TO ab2d_analyst;
-GRANT ALL ON TABLE event_error TO cmsadmin;
+GRANT SELECT ON TABLE event.event_error TO ab2d_analyst;
+GRANT ALL ON TABLE event.event_error TO cmsadmin;
 
 
 
 
 -- Table: event_file
 -- DROP TABLE IF EXISTS event_file;
-CREATE TABLE IF NOT EXISTS event_file
+CREATE TABLE IF NOT EXISTS event.event_file
 (
     id SERIAL,
     time_of_event timestamp with time zone,
@@ -195,15 +196,15 @@ CREATE TABLE IF NOT EXISTS event_file
     CONSTRAINT pk_file_event PRIMARY KEY (id)
 );
 
-ALTER TABLE IF EXISTS event_file
+ALTER TABLE IF EXISTS event.event_file
     OWNER to cmsadmin;
-GRANT SELECT ON TABLE event_file TO ab2d_analyst;
-GRANT ALL ON TABLE event_file TO cmsadmin;
+GRANT SELECT ON TABLE event.event_file TO ab2d_analyst;
+GRANT ALL ON TABLE event.event_file TO cmsadmin;
 
 -- Index: ix_file_event_job_id
 -- DROP INDEX IF EXISTS ix_file_event_job_id;
 CREATE INDEX IF NOT EXISTS ix_file_event_job_id
-    ON event_file USING btree
+    ON event.event_file USING btree
         (job_id ASC NULLS LAST);
 
 
@@ -212,7 +213,7 @@ CREATE INDEX IF NOT EXISTS ix_file_event_job_id
 
 -- Table: event_job_status_change
 -- DROP TABLE IF EXISTS event_job_status_change;
-CREATE TABLE IF NOT EXISTS event_job_status_change
+CREATE TABLE IF NOT EXISTS event.event_job_status_change
 (
     id SERIAL,
     time_of_event timestamp with time zone,
@@ -226,23 +227,23 @@ CREATE TABLE IF NOT EXISTS event_job_status_change
     CONSTRAINT pk_job_status_change_event PRIMARY KEY (id)
 );
 
-ALTER TABLE IF EXISTS event_job_status_change
+ALTER TABLE IF EXISTS event.event_job_status_change
     OWNER to cmsadmin;
 
-GRANT SELECT ON TABLE event_job_status_change TO ab2d_analyst;
+GRANT SELECT ON TABLE event.event_job_status_change TO ab2d_analyst;
 
-GRANT ALL ON TABLE event_job_status_change TO cmsadmin;
+GRANT ALL ON TABLE event.event_job_status_change TO cmsadmin;
 -- Index: ix_job_status_job_id
 -- DROP INDEX IF EXISTS ix_job_status_job_id;
 CREATE INDEX IF NOT EXISTS ix_job_status_job_id
-    ON event_job_status_change USING btree
+    ON event.event_job_status_change USING btree
         (job_id ASC NULLS LAST);
 
-GRANT SELECT ON event_api_response TO ab2d_analyst;
-GRANT SELECT ON event_api_request TO ab2d_analyst;
-GRANT SELECT ON event_bene_coverage_search_status_change TO ab2d_analyst;
-GRANT SELECT ON event_bene_reload TO ab2d_analyst;
-GRANT SELECT ON event_bene_search TO ab2d_analyst;
-GRANT SELECT ON event_error TO ab2d_analyst;
-GRANT SELECT ON event_file TO ab2d_analyst;
-GRANT SELECT ON event_job_status_change TO ab2d_analyst;
+GRANT SELECT ON event.event_api_response TO ab2d_analyst;
+GRANT SELECT ON event.event_api_request TO ab2d_analyst;
+GRANT SELECT ON event.event_bene_coverage_search_status_change TO ab2d_analyst;
+GRANT SELECT ON event.event_bene_reload TO ab2d_analyst;
+GRANT SELECT ON event.event_bene_search TO ab2d_analyst;
+GRANT SELECT ON event.event_error TO ab2d_analyst;
+GRANT SELECT ON event.event_file TO ab2d_analyst;
+GRANT SELECT ON event.event_job_status_change TO ab2d_analyst;

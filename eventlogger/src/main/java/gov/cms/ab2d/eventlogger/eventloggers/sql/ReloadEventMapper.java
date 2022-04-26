@@ -26,7 +26,7 @@ public class ReloadEventMapper extends SqlEventMapper {
         ReloadEvent be = (ReloadEvent) event;
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
-        String query = "insert into event_bene_reload " +
+        String query = "insert into event.event_bene_reload " +
                 " (time_of_event, organization, job_id, file_type, file_name, number_loaded, aws_id, environment) " +
                 " values (:time, :organization, :job, :fileType, :fileName, :numLoaded, :awsId, :environment)";
 
