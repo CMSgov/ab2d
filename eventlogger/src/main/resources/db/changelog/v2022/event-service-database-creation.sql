@@ -14,7 +14,6 @@ $$
 
         if not exists(SELECT * FROM pg_user WHERE usename = 'cmsadmin') THEN
             --- login for cms admin
-            Create Role cmsadmin noinherit login password 'ab2d';
         end if;
     end
 $$;
