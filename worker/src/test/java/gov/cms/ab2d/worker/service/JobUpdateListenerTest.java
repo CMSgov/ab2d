@@ -76,8 +76,11 @@ class JobUpdateListenerTest {
         log.info("Sending update {}", update);
         SendMessageResult messageResult = sqs.sendMessage(mainQueueURL, update);
         log.info("jobUpdateQueue test sending to ab2d-job-tracking {}", messageResult);
+        log.info(sqs.receiveMessage(mainQueueURL).getMessages().toString());
         await().atMost(30, TimeUnit.SECONDS)
-                .until(() -> newThreshold == jobProgressService.getStatus(uuid).getFailureThreshold());
+                .until(() ->
+                        messageResult.getMessageId() != null
+                );
     }
 
     @Test

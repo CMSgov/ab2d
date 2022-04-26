@@ -23,7 +23,6 @@ public class AB2DLocalstackContainer extends LocalStackContainer {
     @Override
     public void start() {
         System.setProperty("com.amazonaws.sdk.disableCertChecking", "");
-        super.withTmpFs(Collections.singletonMap("/var/lib/postgresql/data", "rw"));
         super.withServices(SQS);
         super.start();
         System.setProperty("localstack",

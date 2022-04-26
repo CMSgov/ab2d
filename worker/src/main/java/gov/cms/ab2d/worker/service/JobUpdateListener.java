@@ -20,7 +20,7 @@ public class JobUpdateListener {
     }
 
     // TODO - Add a mapper so that this method can be directly invoked with a JSONObject.
-    @SqsListener(value = "ab2d-job-tracking", deletionPolicy = SqsMessageDeletionPolicy.NEVER)
+    //@SqsListener(value = "ab2d-job-tracking", deletionPolicy = SqsMessageDeletionPolicy.NEVER)
     public void processJobProgressUpdate(JobUpdate jobUpdate, Acknowledgment ack) {
         log.info("JobUpdateListener: Processing message from SQS: " + jobUpdate);
         log.info("JobUpdateListener: Done parsing: " + jobUpdate);
