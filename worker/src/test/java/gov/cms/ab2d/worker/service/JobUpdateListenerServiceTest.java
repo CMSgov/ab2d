@@ -16,6 +16,7 @@ import gov.cms.ab2d.worker.processor.JobMeasure;
 import gov.cms.ab2d.worker.processor.JobProgressService;
 import gov.cms.ab2d.worker.processor.JobProgressUpdateService;
 import gov.cms.ab2d.worker.util.AB2DLocalstackContainer;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -41,6 +42,7 @@ import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 @SpringBootTest
 @Testcontainers
+@Slf4j
 class JobUpdateListenerServiceTest {
     @Autowired
     private ObjectMapper mapper;
@@ -75,8 +77,8 @@ class JobUpdateListenerServiceTest {
         String mainQueueURL = sqs.getQueueUrl("ab2d-job-tracking").getQueueUrl();
         assertTrue(sqs.listQueues().getQueueUrls().contains(mainQueueURL));
         SendMessageResult a = sqs.sendMessage(mainQueueURL, mapper.writeValueAsString(createJobUpdate(uuid)));
-        System.out.println(a.getMD5OfMessageBody());
-        await().atMost(10, TimeUnit.SECONDS)
+        log.info("jobUpdateQueue test sending to ab2d-job-tracking");
+        await().atMost(30, TimeUnit.SECONDS)
                 .until(() -> 100 == jobProgressService.getStatus(uuid).getFailureThreshold());
     }
 
