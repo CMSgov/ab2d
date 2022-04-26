@@ -78,8 +78,14 @@ public class SQSConfig {
     // Until localstack is built out more, create the queue here when running locally
     private AmazonSQS createQueue(AmazonSQS amazonSQS) {
         String jobTrackingQueue = "ab2d-job-tracking";
-        amazonSQS.createQueue(jobTrackingQueue);
-        log.info(jobTrackingQueue + " created");
+        try {
+            amazonSQS.getQueueUrl(jobTrackingQueue);
+            log.info(jobTrackingQueue + " already exists");
+        } catch (Exception ignored) {
+            amazonSQS.createQueue(jobTrackingQueue);
+            log.info(jobTrackingQueue + " created");
+
+        }
         return amazonSQS;
     }
 
