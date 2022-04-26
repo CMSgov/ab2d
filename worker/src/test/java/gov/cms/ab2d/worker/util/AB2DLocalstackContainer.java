@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.util;
 
+import lombok.extern.slf4j.Slf4j;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.localstack.LocalStackContainer;
 import org.testcontainers.utility.DockerImageName;
@@ -22,6 +23,7 @@ public class AB2DLocalstackContainer extends LocalStackContainer {
         super.withTmpFs(Collections.singletonMap("/var/lib/postgresql/data", "rw"));
         super.withServices(SQS);
         super.start();
+        super.
         System.setProperty("localstack",
                 "localhost:" + this.getMappedPort(LocalStackContainer.EnabledService.named("SQS").getPort()));
     }

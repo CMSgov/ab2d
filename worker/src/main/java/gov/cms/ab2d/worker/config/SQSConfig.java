@@ -8,6 +8,7 @@ import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSAsync;
 import com.amazonaws.services.sqs.AmazonSQSAsyncClientBuilder;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.aws.messaging.config.QueueMessageHandlerFactory;
 import org.springframework.cloud.aws.messaging.support.NotificationMessageArgumentResolver;
 import org.springframework.context.annotation.Bean;
@@ -19,6 +20,7 @@ import org.springframework.messaging.converter.MessageConverter;
 import java.util.List;
 
 @Configuration
+@Slf4j
 public class SQSConfig {
 
     private final AWSStaticCredentialsProvider credentials =
@@ -28,6 +30,7 @@ public class SQSConfig {
     @Bean
     public AmazonSQSAsync amazonSQSAsync() {
         String localstackURl = System.getProperty("localstack");
+        log.info("Locakstack url" + localstackURl);
         if (null != localstackURl) {
             return (AmazonSQSAsync) createQueue(AmazonSQSAsyncClientBuilder
                     .standard()
@@ -44,6 +47,7 @@ public class SQSConfig {
     @Bean
     public AmazonSQS amazonSQS() {
         String localstackURl = System.getProperty("localstack");
+        log.info("Locakstack url" + localstackURl);
         if (null != localstackURl) {
             return createQueue(AmazonSQSClientBuilder
                     .standard()
@@ -73,7 +77,9 @@ public class SQSConfig {
 
     // Until localstack is built out more, create the queue here when running locally
     private AmazonSQS createQueue(AmazonSQS amazonSQS) {
-        amazonSQS.createQueue("ab2d-job-tracking");
+        String jobTrackingQueue = "ab2d-job-tracking";
+        amazonSQS.createQueue(jobTrackingQueue);
+        log.info(jobTrackingQueue + " created");
         return amazonSQS;
     }
 

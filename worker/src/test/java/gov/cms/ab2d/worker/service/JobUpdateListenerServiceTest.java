@@ -58,7 +58,7 @@ class JobUpdateListenerServiceTest {
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Container
-    public static LocalStackContainer localstack = new AB2DLocalstackContainer();
+    public static final LocalStackContainer localstack = new AB2DLocalstackContainer();
 
     @Test
     void jobUpdateQueue() throws JsonProcessingException {
