@@ -60,7 +60,7 @@ class JobUpdateListenerTest {
         final int oldThreshold = new Random().nextInt();
         final int newThreshold = new Random().nextInt();
         final String uuid = UUID.randomUUID().toString();
-        log.info("uuid: {}old: {} new:{}", uuid, oldThreshold, newThreshold);
+        log.info("sending queue uuid: {} old: {} new: {}", uuid, oldThreshold, newThreshold);
         final AmazonSQS sqs = AmazonSQSClient
                 .builder()
                 .withEndpointConfiguration(localstack.getEndpointConfiguration(SQS))
@@ -83,7 +83,7 @@ class JobUpdateListenerTest {
         final int oldThreshold = new Random().nextInt();
         final int newThreshold = new Random().nextInt();
         String uuid = UUID.randomUUID().toString();
-        log.info("uuid: {}old: {} new:{}", uuid, oldThreshold, newThreshold);
+        log.info("sending directly uuid: {} old: {} new: {}", uuid, oldThreshold, newThreshold);
         jobProgressUpdateService.initJob(uuid);
         jobProgressUpdateService.addMeasure(uuid, JobMeasure.FAILURE_THRESHHOLD, oldThreshold);
         listener.processJobProgressUpdate(createJobUpdate(uuid, newThreshold), Mockito.mock(Acknowledgment.class));
