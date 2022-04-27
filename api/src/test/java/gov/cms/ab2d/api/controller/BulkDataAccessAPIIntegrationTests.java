@@ -1149,6 +1149,9 @@ public class BulkDataAccessAPIIntegrationTests {
         };
     }
 
+    /*
+     * Be more accepting of a one-second difference in timestamps when running a test.
+     */
     private ResultMatcher buildTxTimeMatcher() {
         return result -> {
             OffsetDateTime buildTime = OffsetDateTime.now();
