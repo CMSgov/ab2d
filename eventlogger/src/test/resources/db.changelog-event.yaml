@@ -1,5 +1,0 @@
-databaseChangeLog:
-  - include:
-      file: db/changelog/test_only/create-ab2d-test-users.sql
-  - include:
-      file: db/changelog/test_only/event-service-database-creation.sql

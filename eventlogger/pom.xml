@@ -78,6 +78,7 @@
         <dependency>
             <groupId>org.liquibase</groupId>
             <artifactId>liquibase-core</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.amazonaws</groupId>
@@ -151,10 +152,10 @@
                         <configuration>
                             <outputDirectory>${project.root}/eventlogger/target/test-classes/db</outputDirectory>   <!-- output directory -->
                             <resources>
-<!--                                <resource>-->
-<!--                                    <directory>${project.root}/common/src/main/resources/db</directory>         &lt;!&ndash; source directory &ndash;&gt;-->
-<!--                                    <filtering>true</filtering>-->
-<!--                                </resource>-->
+                                <resource>
+                                    <directory>${project.root}/common/src/main/resources/db</directory>         <!-- source directory -->
+                                    <filtering>true</filtering>
+                                </resource>
                             </resources>
                         </configuration>
                     </execution>

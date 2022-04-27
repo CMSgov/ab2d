@@ -1,3 +1,0 @@
-databaseChangeLog:
-  - include:
-      file: db/changelog/v2022/event-service-database-migration.sql
