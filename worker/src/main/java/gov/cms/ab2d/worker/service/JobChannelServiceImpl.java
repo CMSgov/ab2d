@@ -13,12 +13,14 @@ import gov.cms.ab2d.worker.processor.JobMeasure;
 import gov.cms.ab2d.worker.processor.JobProgressUpdateService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.aws.messaging.config.annotation.EnableSqs;
 import org.springframework.stereotype.Service;
 
 import static gov.cms.ab2d.common.service.FeatureEngagement.IN_GEAR;
 
 @Slf4j
 @Service
+@EnableSqs
 public class JobChannelServiceImpl implements JobChannelService {
 
     private final AmazonSQS amazonSQS;

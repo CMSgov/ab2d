@@ -1,5 +1,7 @@
 package gov.cms.ab2d.testjobs;
 
+import com.amazonaws.services.sqs.AmazonSQS;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
@@ -61,6 +63,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.cloud.aws.messaging.listener.SimpleMessageListenerContainer;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -150,6 +154,18 @@ public class EndToEndBfdTests {
     @Autowired
     private ContractToContractCoverageMapping contractToContractCoverageMapping;
 
+    //disable sqs
+    @MockBean
+    private SimpleMessageListenerContainer messageListenerContainer;
+    //disable sqs
+    @MockBean
+    private AmazonSQS amazonSQS;
+
+    static {
+        System.setProperty("cloud.aws.stack.auto","false");
+        System.setProperty("cloud.aws.region.static","us-east-1");
+    }
+
     @TempDir
     File path;
 
@@ -177,7 +193,11 @@ public class EndToEndBfdTests {
         scaleToMaxTime.setKey(Constants.PCP_SCALE_TO_MAX_TIME);
         scaleToMaxTime.setValue("10");
 
-        propertiesService.updateProperties(List.of(coreClaimsPool, maxClaimsPool, scaleToMaxTime));
+        PropertiesDTO sqsEngagement = new PropertiesDTO();
+        sqsEngagement.setKey(Constants.SQS_JOB_UPDATE_ENGAGEMENT);
+        sqsEngagement.setValue("false");
+
+        propertiesService.updateProperties(List.of(coreClaimsPool, maxClaimsPool, scaleToMaxTime, sqsEngagement));
 
         coverageDriver = new CoverageDriverImpl(coverageSearchRepository, pdpClientService, coverageService,
                 propertiesService, coverageProcessor, coverageLockWrapper, contractToContractCoverageMapping);

@@ -10,12 +10,13 @@ import gov.cms.ab2d.worker.dto.JobUpdate;
 import gov.cms.ab2d.worker.processor.JobMeasure;
 import gov.cms.ab2d.worker.processor.JobProgressService;
 import gov.cms.ab2d.worker.processor.JobProgressUpdateService;
-import gov.cms.ab2d.worker.util.AB2DLocalstackContainer;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cloud.aws.messaging.config.annotation.EnableSqs;
 import org.springframework.cloud.aws.messaging.listener.Acknowledgment;
 import org.springframework.test.annotation.DirtiesContext;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -35,7 +36,7 @@ import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 @SpringBootTest
 @Testcontainers
 @Slf4j
-@DirtiesContext
+@EnableSqs
 class JobUpdateListenerTest {
     @Autowired
     private ObjectMapper mapper;
@@ -77,9 +78,11 @@ class JobUpdateListenerTest {
         SendMessageResult messageResult = sqs.sendMessage(mainQueueURL, update);
         log.info("jobUpdateQueue test sending to ab2d-job-tracking {}", messageResult);
         log.info(sqs.receiveMessage(mainQueueURL).getMessages().toString());
-        await().atMost(30, TimeUnit.SECONDS)
+        await().atMost(60, TimeUnit.SECONDS)
                 .until(() ->
                         messageResult.getMessageId() != null
+                                && jobProgressService.getStatus(uuid).getFailureThreshold() == newThreshold
+
                 );
     }
 

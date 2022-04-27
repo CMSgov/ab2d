@@ -1,5 +1,6 @@
 package gov.cms.ab2d.testjobs;
 
+import com.amazonaws.services.sqs.AmazonSQS;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.fhir.FhirVersion;
@@ -7,6 +8,8 @@ import org.hl7.fhir.instance.model.api.IBaseConformance;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.cloud.aws.messaging.listener.SimpleMessageListenerContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -21,6 +24,18 @@ public class CapabilityTest {
 
     @Container
     private static final PostgreSQLContainer postgres = new AB2DPostgresqlContainer();
+
+    //disable sqs
+    @MockBean
+    private SimpleMessageListenerContainer messageListenerContainer;
+    //disable sqs
+    @MockBean
+    private AmazonSQS amazonSQS;
+
+    static {
+        System.setProperty("cloud.aws.stack.auto","false");
+        System.setProperty("cloud.aws.region.static","us-east-1");
+    }
 
     @Test
     void testCapabilityStatement() {

@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker.util;
+package gov.cms.ab2d.common.util;
 
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.testcontainers.containers.localstack.LocalStackContainer;
 import org.testcontainers.utility.DockerImageName;
 
-import static org.testcontainers.containers.localstack.LocalStackContainer.Service.SQS;
 
 @Slf4j
 public class AB2DLocalstackContainer extends LocalStackContainer {
@@ -19,8 +18,10 @@ public class AB2DLocalstackContainer extends LocalStackContainer {
 
     @Override
     public void start() {
+        System.setProperty("cloud.aws.stack.auto","false");
+        System.setProperty("cloud.aws.region.static","us-east-1");
         System.setProperty("com.amazonaws.sdk.disableCertChecking", "");
-        super.withServices(SQS);
+        super.withServices(Service.SQS);
         super.start();
         System.setProperty("localstack",
                 "localhost:" + this.getMappedPort(LocalStackContainer.EnabledService.named("SQS").getPort()));
@@ -35,7 +36,7 @@ public class AB2DLocalstackContainer extends LocalStackContainer {
     private void createQueue() {
         final AmazonSQS sqs = AmazonSQSClient
                 .builder()
-                .withEndpointConfiguration(super.getEndpointConfiguration(SQS))
+                .withEndpointConfiguration(super.getEndpointConfiguration(Service.SQS))
                 .withCredentials(super.getDefaultCredentialsProvider()).build();
         String jobTrackingQueue = "ab2d-job-tracking";
         try {
