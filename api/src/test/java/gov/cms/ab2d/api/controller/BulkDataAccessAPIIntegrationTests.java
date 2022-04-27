@@ -70,7 +70,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Testcontainers
 /* When checking in, comment out print statements. They are very helpful, but fill up the logs */
-public class BulkDataAccessAPIIntegrationTests {
+class BulkDataAccessAPIIntegrationTests {
 
     @Autowired
     private MockMvc mockMvc;
@@ -1156,12 +1156,12 @@ public class BulkDataAccessAPIIntegrationTests {
         return result -> {
             OffsetDateTime buildTime = OffsetDateTime.now();
             String buildTimeStr = new org.hl7.fhir.dstu3.model.DateTimeType(buildTime.toString()).toHumanDisplay();
-            String buildPlusOneStr = new org.hl7.fhir.dstu3.model.DateTimeType(buildTime.plusSeconds(1).toString()).toHumanDisplay();
+            String buildPlusOneStr = new org.hl7.fhir.dstu3.model.DateTimeType(buildTime.minusSeconds(1).toString()).toHumanDisplay();
             List<String> elementsToMatch = new ArrayList<>();
             elementsToMatch.add(buildTimeStr);
             elementsToMatch.add(buildPlusOneStr);
 
-            jsonPath("$.transactionTime", IsIn.in(elementsToMatch));
+            jsonPath("$.transactionTime", IsIn.in(elementsToMatch)).match(result);
         };
     }
 }
