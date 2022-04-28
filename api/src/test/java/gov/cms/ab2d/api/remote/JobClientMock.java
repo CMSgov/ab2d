@@ -1,13 +1,13 @@
 package gov.cms.ab2d.api.remote;
 
-import gov.cms.ab2d.common.dto.JobPollResult;
-import gov.cms.ab2d.common.dto.StartJobDTO;
-import gov.cms.ab2d.common.model.JobOutput;
-import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.job.dto.JobPollResult;
+import gov.cms.ab2d.job.dto.StartJobDTO;
+import gov.cms.ab2d.job.model.JobOutput;
+import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.model.TooFrequentInvocations;
-import gov.cms.ab2d.common.service.InvalidJobStateTransition;
-import gov.cms.ab2d.common.service.JobOutputMissingException;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
+import gov.cms.ab2d.job.service.InvalidJobStateTransition;
+import gov.cms.ab2d.job.service.JobOutputMissingException;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +21,10 @@ import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.*;
 
-import static gov.cms.ab2d.common.model.JobStatus.*;
 import static gov.cms.ab2d.common.util.Constants.MAX_DOWNLOADS;
+import static gov.cms.ab2d.job.model.JobStatus.CANCELLED;
+import static gov.cms.ab2d.job.model.JobStatus.SUBMITTED;
+import static gov.cms.ab2d.job.model.JobStatus.SUCCESSFUL;
 
 @Primary
 @Component

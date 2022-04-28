@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobOutput;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobOutput;
 
 import java.util.List;
 

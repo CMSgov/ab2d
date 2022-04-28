@@ -4,23 +4,20 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobOutput;
-import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobOutput;
+import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.SinceSource;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
-import gov.cms.ab2d.common.repository.JobOutputRepository;
-import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.job.repository.JobOutputRepository;
+import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.common.service.InvalidContractException;
-import gov.cms.ab2d.common.service.JobOutputService;
-import gov.cms.ab2d.common.service.JobService;
-import gov.cms.ab2d.common.service.JobServiceImpl;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.Constants;
@@ -30,6 +27,9 @@ import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.fhir.IdentifierUtils;
 import gov.cms.ab2d.fhir.PatientIdentifier;
+import gov.cms.ab2d.job.service.JobOutputService;
+import gov.cms.ab2d.job.service.JobService;
+import gov.cms.ab2d.job.service.JobServiceImpl;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.processor.ContractProcessor;
 import gov.cms.ab2d.worker.processor.JobPreProcessor;
@@ -183,7 +183,7 @@ public class EndToEndBfdTests {
                 propertiesService, coverageProcessor, coverageLockWrapper, contractToContractCoverageMapping);
 
         // Instantiate the job processors
-        jobService = new JobServiceImpl(jobRepository, jobOutputService, logManager, logEventSummary, path.getAbsolutePath(), propertiesService);
+        jobService = new JobServiceImpl(jobRepository, jobOutputService, logManager, logEventSummary, path.getAbsolutePath());
         jobPreProcessor = new JobPreProcessorImpl(contractWorkerClient, jobRepository, logManager, coverageDriver);
 
         jobProcessor = new JobProcessorImpl(new FileServiceImpl(), jobChannelService, jobProgressService, jobProgressUpdateService,
@@ -436,9 +436,6 @@ public class EndToEndBfdTests {
 
     private static boolean v2Enabled() {
         String v2Enabled = System.getenv("AB2D_V2_ENABLED");
-        if (v2Enabled != null && v2Enabled.equalsIgnoreCase("true")) {
-            return true;
-        }
-        return false;
+        return v2Enabled != null && v2Enabled.equalsIgnoreCase("true");
     }
 }

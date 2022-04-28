@@ -2,7 +2,7 @@ package gov.cms.ab2d.api.controller;
 
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.remote.JobClientMock;
-import gov.cms.ab2d.common.dto.StartJobDTO;
+import gov.cms.ab2d.job.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;

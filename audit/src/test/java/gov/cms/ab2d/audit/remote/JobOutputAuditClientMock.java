@@ -1,6 +1,6 @@
 package gov.cms.ab2d.audit.remote;
 
-import gov.cms.ab2d.common.dto.StaleJob;
+import gov.cms.ab2d.job.dto.StaleJob;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 

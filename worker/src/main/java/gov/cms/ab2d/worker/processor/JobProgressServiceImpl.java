@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.job.repository.JobRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

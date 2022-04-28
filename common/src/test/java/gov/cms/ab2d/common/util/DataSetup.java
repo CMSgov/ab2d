@@ -1,11 +1,9 @@
 package gov.cms.ab2d.common.util;
 
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.common.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.repository.RoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,9 +32,6 @@ public class DataSetup {
     private PdpClientRepository pdpClientRepository;
 
     @Autowired
-    private JobRepository jobRepository;
-
-    @Autowired
     private RoleRepository roleRepository;
 
     private final Set<Object> domainObjects = new HashSet<>();
@@ -46,14 +41,6 @@ public class DataSetup {
     }
 
     public void cleanup() {
-
-        List<Job> jobsToDelete = domainObjects.stream().filter(object -> object instanceof Job)
-                .map(object -> (Job) object).collect(toList());
-        jobsToDelete.forEach(job -> {
-            job = jobRepository.findByJobUuid(job.getJobUuid());
-            jobRepository.delete(job);
-            jobRepository.flush();
-        });
 
         List<PdpClient> clientsToDelete = domainObjects.stream().filter(object -> object instanceof PdpClient)
                 .map(object -> (PdpClient) object).collect(toList());
@@ -120,17 +107,6 @@ public class DataSetup {
         setupPdpClient(clientRoles);
 
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
-        @SuppressWarnings("OptionalGetWithoutIsPresent")
-        Contract contract = contractOptional.get();
-        contract.setAttestedOn(null);
-
-        contractRepository.saveAndFlush(contract);
-    }
-
-    public void setupContractWithNoAttestation(String clientId, String contractNumber, List<String> clientRoles) {
-        setupNonStandardClient(clientId, contractNumber, clientRoles);
-
-        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(contractNumber);
         @SuppressWarnings("OptionalGetWithoutIsPresent")
         Contract contract = contractOptional.get();
         contract.setAttestedOn(null);

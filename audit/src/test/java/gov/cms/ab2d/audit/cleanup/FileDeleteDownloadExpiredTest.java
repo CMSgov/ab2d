@@ -2,9 +2,9 @@ package gov.cms.ab2d.audit.cleanup;
 
 import gov.cms.ab2d.audit.SpringBootApp;
 import gov.cms.ab2d.audit.remote.JobOutputAuditClientMock;
-import gov.cms.ab2d.common.dto.StaleJob;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
+import gov.cms.ab2d.job.dto.StaleJob;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,9 +28,13 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 
 @SpringBootTest(classes = SpringBootApp.class)
