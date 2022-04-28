@@ -3,7 +3,7 @@ package gov.cms.ab2d.api.controller.v2;
 import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.api.remote.JobClient;
 import gov.cms.ab2d.api.util.SwaggerConstants;
-import gov.cms.ab2d.common.dto.StartJobDTO;
+import gov.cms.ab2d.job.dto.StartJobDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;

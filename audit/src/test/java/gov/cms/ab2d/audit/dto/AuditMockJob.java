@@ -1,7 +1,7 @@
 package gov.cms.ab2d.audit.dto;
 
-import gov.cms.ab2d.common.dto.StaleJob;
-import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.job.dto.StaleJob;
+import gov.cms.ab2d.job.model.JobStatus;
 import lombok.Value;
 
 import javax.validation.constraints.NotNull;

@@ -1,9 +1,9 @@
 package gov.cms.ab2d.api.remote;
 
-import gov.cms.ab2d.common.dto.JobPollResult;
-import gov.cms.ab2d.common.dto.StartJobDTO;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.service.JobService;
+import gov.cms.ab2d.job.dto.JobPollResult;
+import gov.cms.ab2d.job.dto.StartJobDTO;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.service.JobService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;

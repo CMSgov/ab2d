@@ -1,8 +1,7 @@
 package gov.cms.ab2d.worker.service;
 
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.util.EventUtils;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
+import static gov.cms.ab2d.job.model.JobStatus.SUBMITTED;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
 import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_RESUBMITTED;
 
@@ -30,8 +29,9 @@ public class ShutDownServiceImpl implements ShutDownService {
         try {
             for (String jobString : activeJobs) {
                 Job job = jobRepository.findByJobUuid(jobString);
-                eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, SUBMITTED, EOB_JOB_RESUBMITTED + " Job status reset to SUBMITTED on shutdown"),
-                        PUBLIC_LIST);
+                eventLogger.logAndAlert(job.buildJobStatusChangeEvent(SUBMITTED,
+                                EOB_JOB_RESUBMITTED + " Job status reset to SUBMITTED on shutdown"),
+                                            PUBLIC_LIST);
             }
 
             jobRepository.resetJobsToSubmittedStatus(activeJobs);

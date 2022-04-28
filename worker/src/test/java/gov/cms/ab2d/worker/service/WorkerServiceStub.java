@@ -1,16 +1,16 @@
 package gov.cms.ab2d.worker.service;
 
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.service.FeatureEngagement;
-import gov.cms.ab2d.common.service.JobService;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.Constants;
+import gov.cms.ab2d.job.service.JobService;
 
 public class WorkerServiceStub implements WorkerService {
 
-    private JobService jobService;
-    private PropertiesService propertiesService;
+    private final JobService jobService;
+    private final PropertiesService propertiesService;
     public int processingCalls = 0;
 
     public WorkerServiceStub(JobService jobService, PropertiesService propertiesService) {

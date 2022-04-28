@@ -5,10 +5,11 @@ import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.dto.PdpClientDTO;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.common.repository.JobRepository;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobStatus;
+import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
@@ -28,6 +29,7 @@ import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import gov.cms.ab2d.fhir.IdentifierUtils;
+import gov.cms.ab2d.job.service.JobCleanup;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import java.time.DayOfWeek;
@@ -79,7 +81,7 @@ import static org.mockito.Mockito.when;
 // Never run internal coverage processor so this coverage processor runs unimpeded
 @SpringBootTest(properties = "coverage.update.initial.delay=1000000")
 @Testcontainers
-class CoverageDriverTest {
+class CoverageDriverTest extends JobCleanup {
 
     private static final int PAST_MONTHS = 3;
     private static final int STALE_DAYS = 3;
@@ -177,11 +179,11 @@ class CoverageDriverTest {
         job.setContractNumber(contract.getContractNumber());
         job.setJobUuid("unique");
         job.setOrganization(pdpClient.getOrganization());
-        job.setStatus(gov.cms.ab2d.common.model.JobStatus.SUBMITTED);
+        job.setStatus(JobStatus.SUBMITTED);
         job.setCreatedAt(OffsetDateTime.now());
         job.setFhirVersion(STU3);
         jobRepo.saveAndFlush(job);
-        dataSetup.queueForCleanup(job);
+        addJobForCleanup(job);
 
         bfdClient = mock(BFDClient.class);
 
@@ -196,6 +198,7 @@ class CoverageDriverTest {
 
     @AfterEach
     void cleanup() {
+        jobCleanup();
         processor.shutdown();
 
         coverageDataSetup.cleanup();
