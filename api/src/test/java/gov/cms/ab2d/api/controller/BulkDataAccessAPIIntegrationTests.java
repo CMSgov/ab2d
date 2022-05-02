@@ -19,6 +19,7 @@ import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.job.dto.StartJobDTO;
 import gov.cms.ab2d.job.model.JobOutput;
 import org.apache.commons.lang3.StringUtils;
+import org.hamcrest.collection.IsIn;
 import org.hamcrest.core.Is;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,6 +39,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -528,8 +530,7 @@ class BulkDataAccessAPIIntegrationTests {
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(200))
                 .andExpect(buildExpiresMatcher())
-                .andExpect(jsonPath("$.transactionTime",
-                        Is.is(new org.hl7.fhir.dstu3.model.DateTimeType(OffsetDateTime.now().toString()).toHumanDisplay())))
+                .andExpect(buildTxTimeMatcher())
                 .andExpect(jsonPath("$.request", Is.is(startJobDTO.getUrl())))
                 .andExpect(jsonPath("$.requiresAccessToken", Is.is(true)))
                 .andExpect(jsonPath("$.output[0].type", Is.is(EOB)))
@@ -576,8 +577,7 @@ class BulkDataAccessAPIIntegrationTests {
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(200))
                 .andExpect(buildExpiresMatcher())
-                .andExpect(jsonPath("$.transactionTime",
-                        Is.is(new org.hl7.fhir.dstu3.model.DateTimeType(OffsetDateTime.now().toString()).toHumanDisplay())))
+                .andExpect(buildTxTimeMatcher())
                 .andExpect(jsonPath("$.request", Is.is(startJobDTO.getUrl())))
                 .andExpect(jsonPath("$.requiresAccessToken", Is.is(true)))
                 .andExpect(jsonPath("$.output[0].type", Is.is(EOB)))
@@ -1185,6 +1185,22 @@ class BulkDataAccessAPIIntegrationTests {
             OffsetDateTime minExpected = expected.minusSeconds(7);
             assertTrue(actual.isAfter(minExpected), "Expire header time mismatch: actual - " + actual +
                     " should be greater than expected - " + minExpected);
+        };
+    }
+
+    /*
+     * Be more accepting of a one-second difference in timestamps when running a test.
+     */
+    private ResultMatcher buildTxTimeMatcher() {
+        return result -> {
+            OffsetDateTime buildTime = OffsetDateTime.now();
+            String buildTimeStr = new org.hl7.fhir.dstu3.model.DateTimeType(buildTime.toString()).toHumanDisplay();
+            String buildPlusOneStr = new org.hl7.fhir.dstu3.model.DateTimeType(buildTime.minusSeconds(1).toString()).toHumanDisplay();
+            List<String> elementsToMatch = new ArrayList<>();
+            elementsToMatch.add(buildTimeStr);
+            elementsToMatch.add(buildPlusOneStr);
+
+            jsonPath("$.transactionTime", IsIn.in(elementsToMatch)).match(result);
         };
     }
 }

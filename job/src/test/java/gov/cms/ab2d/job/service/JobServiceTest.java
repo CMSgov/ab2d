@@ -145,7 +145,7 @@ class JobServiceTest extends JobCleanup {
         dataSetup.cleanup();
     }
 
-    private void setupRegularClientSecurityContext() {
+    static void setupRegularClientSecurityContext() {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(
                         new org.springframework.security.core.userdetails.User(CLIENTID,

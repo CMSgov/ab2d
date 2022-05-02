@@ -10,6 +10,7 @@ import gov.cms.ab2d.job.model.JobOutput;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.job.repository.JobOutputRepository;
 import gov.cms.ab2d.job.repository.JobRepository;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,7 +22,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.shaded.org.apache.commons.lang.RandomStringUtils;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
