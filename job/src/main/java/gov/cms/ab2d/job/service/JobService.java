@@ -24,7 +24,7 @@ public interface JobService {
 
     Resource getResourceForJob(String jobUuid, String fileName, String organization) throws MalformedURLException;
 
-    void incrementDownloadCount(File file, String jobUuid);
+    void incrementDownloadCountConditionallyDeleteFile(File file, String jobUuid);
 
     int activeJobs(String organization);
 

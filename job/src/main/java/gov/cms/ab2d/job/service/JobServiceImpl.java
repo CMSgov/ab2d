@@ -164,9 +164,17 @@ public class JobServiceImpl implements JobService {
     }
 
 
-    @Override
-    public void incrementDownloadCount(File file, String jobUuid) {
+    public void incrementDownloadCountConditionallyDeleteFile(File file, String jobUuid) {
         Job job = jobRepository.findByJobUuid(jobUuid);
+        incrementDownloadCount(file, job);
+        if (JobUtil.isJobDone(job, MAX_DOWNLOADS)) {
+            deleteFile(file);
+            eventLogger.log(job.buildFileEvent(file, FileEvent.FileStatus.DELETE));
+            eventLogger.log(LogManager.LogType.KINESIS, loggerEventSummary.getSummary(job.getJobUuid()));
+        }
+    }
+
+    private void incrementDownloadCount(File file, Job job) {
         JobOutput jobOutput = jobOutputService.findByFilePathAndJob(file.getName(), job);
         // Incrementing downloaded in this way is likely not concurrency safe.
         // If multiple users (aka threads) download the same file at the same time the count won't record every download
@@ -174,10 +182,9 @@ public class JobServiceImpl implements JobService {
         jobOutput.setDownloaded(jobOutput.getDownloaded() + 1);
         jobOutput.setLastDownloadAt(OffsetDateTime.now());
         jobOutputService.updateJobOutput(jobOutput);
-        eventLogger.log(job.buildFileEvent(file, FileEvent.FileStatus.DELETE));
-        if (JobUtil.isJobDone(job, MAX_DOWNLOADS)) {
-            eventLogger.log(LogManager.LogType.KINESIS, loggerEventSummary.getSummary(job.getJobUuid()));
-        }
+    }
+
+    private void deleteFile(File file) {
         boolean deleted = file.delete();
         if (!deleted) {
             log.error("Was not able to delete the file {}", file.getName());

@@ -68,9 +68,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Testcontainers
 /* When checking in, comment out print statements. They are very helpful, but fill up the logs */
-public class BulkDataAccessAPIIntegrationTests {
+class BulkDataAccessAPIIntegrationTests {
 
-    private static String EXPECTED_ERROR = "The file is not present as there was an error. Please resubmit the job.";
+    private static final String EXPECTED_ERROR = "The file is not present as there was an error. Please resubmit the job.";
 
     @Autowired
     private MockMvc mockMvc;
@@ -877,6 +877,44 @@ public class BulkDataAccessAPIIntegrationTests {
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
                         Is.is(EXPECTED_ERROR)));
+    }
+
+
+
+    @Test
+    void testDownloadCountExceed() throws Exception {
+        MvcResult mvcResult = this.mockMvc.perform(
+                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token))
+                .andReturn();
+
+        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
+        assertNotNull(statusUrl);
+
+        JobOutput jobOutput = new JobOutput();
+        jobOutput.setFhirResourceType(EOB);
+        jobOutput.setFilePath("test.ndjson");
+        jobOutput.setError(false);
+        jobOutput.setChecksum("testoutput");
+        jobOutput.setFileLength(20L);
+        jobOutput.setDownloaded(3);
+        jobClientMock.addJobOutputForDownload(jobOutput);
+
+        MvcResult mvcResultStatusCall =
+                this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token))
+                        .andReturn();
+        String downloadUrl = JsonPath.read(mvcResultStatusCall.getResponse().getContentAsString(),
+                "$.output[0].url");
+        this.mockMvc.perform(get(downloadUrl).contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(500))
+                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+                .andExpect(jsonPath("$.issue[0].details.text",
+                        Is.is("The file has reached the maximum number of downloads. Please resubmit the job.")));
     }
 
     @Test

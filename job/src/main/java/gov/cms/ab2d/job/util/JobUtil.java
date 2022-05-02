@@ -43,7 +43,7 @@ public class JobUtil {
         }
         JobOutput aRemaining = jobOutputs.stream()
                 .filter(c -> c.getError() == null || !c.getError())
-                .filter(c -> c.getDownloaded() >= maxDownloads).findAny().orElse(null);
+                .filter(c -> c.getDownloaded() < maxDownloads).findAny().orElse(null);
 
         return aRemaining == null;
     }

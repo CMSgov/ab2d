@@ -1,16 +1,9 @@
 package gov.cms.ab2d.job.service;
 
-import gov.cms.ab2d.job.dto.StaleJob;
-import gov.cms.ab2d.job.model.Job;
-import gov.cms.ab2d.job.dto.JobPollResult;
-import gov.cms.ab2d.job.model.JobOutput;
-import gov.cms.ab2d.job.model.JobStartedBy;
-import gov.cms.ab2d.job.model.JobStatus;
-import gov.cms.ab2d.job.dto.StartJobDTO;
-import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.model.PdpClient;
+import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.job.repository.JobOutputRepository;
-import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
@@ -23,6 +16,15 @@ import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventSummary;
 import gov.cms.ab2d.job.JobTestSpringBootApp;
+import gov.cms.ab2d.job.dto.JobPollResult;
+import gov.cms.ab2d.job.dto.StaleJob;
+import gov.cms.ab2d.job.dto.StartJobDTO;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobOutput;
+import gov.cms.ab2d.job.model.JobStartedBy;
+import gov.cms.ab2d.job.model.JobStatus;
+import gov.cms.ab2d.job.repository.JobOutputRepository;
+import gov.cms.ab2d.job.repository.JobRepository;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -57,12 +59,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import static gov.cms.ab2d.job.model.JobStatus.FAILED;
-import static gov.cms.ab2d.common.util.Constants.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
+import static gov.cms.ab2d.job.model.JobStatus.FAILED;
+import static gov.cms.ab2d.job.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.job.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static java.util.List.of;
 import static org.junit.jupiter.api.Assertions.*;
@@ -149,7 +151,7 @@ class JobServiceTest extends JobCleanup {
                         new org.springframework.security.core.userdetails.User(CLIENTID,
                                 "test", new ArrayList<>()), "pass"));
     }
-    
+
     private StartJobDTO buildStartJobContract(String contractNumber) {
         return buildStartJob(contractNumber, EOB, NDJSON_FIRE_CONTENT_TYPE);
     }
@@ -163,7 +165,7 @@ class JobServiceTest extends JobCleanup {
                 resourceTypes, NDJSON_FIRE_CONTENT_TYPE);
     }
 
-    private StartJobDTO buildStartJob(String contractNumber,  String resourceTypes, String outputFormat) {
+    private StartJobDTO buildStartJob(String contractNumber, String resourceTypes, String outputFormat) {
         String organization = pdpClientService.getCurrentClient().getOrganization();
         return new StartJobDTO(contractNumber, organization, resourceTypes, LOCAL_HOST, outputFormat, null, STU3);
     }
@@ -241,7 +243,7 @@ class JobServiceTest extends JobCleanup {
         addJobForCleanup(job2);
         verify(slackLogger, times(2)).logAlert(anyString(), any());
 
-        job2.setStatus(JobStatus.SUCCESSFUL);
+        job2.setStatus(SUCCESSFUL);
         jobRepository.saveAndFlush(job2);
 
         Job job3 = jobService.createJob(buildStartJobContract(contract.getContractNumber()));
@@ -342,7 +344,7 @@ class JobServiceTest extends JobCleanup {
     void testJobInSuccessfulState() {
         Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
 
-        job.setStatus(JobStatus.SUCCESSFUL);
+        job.setStatus(SUCCESSFUL);
         jobRepository.saveAndFlush(job);
 
         assertThrows(InvalidJobStateTransition.class, () -> jobService.cancelJob(job.getJobUuid(),
@@ -621,7 +623,56 @@ class JobServiceTest extends JobCleanup {
         String testFile = "test.ndjson";
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
-        jobService.incrementDownloadCount(new File(testFile), job.getJobUuid());
+        jobService.incrementDownloadCountConditionallyDeleteFile(new File(testFile), job.getJobUuid());
+        assertEquals(1, jobOutputService.findByFilePathAndJob(testFile, job).getDownloaded());
+    }
+
+    @Test
+    void incrementDownloadUntilDeleted() throws IOException {
+        String testFile = "test.ndjson";
+        createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
+        OffsetDateTime now = OffsetDateTime.now();
+        OffsetDateTime localDateTime = OffsetDateTime.now();
+        Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
+        job.setProgress(100);
+        job.setLastPollTime(now);
+        job.setStatus(JobStatus.IN_PROGRESS);
+        job.setCreatedAt(localDateTime);
+        job.setCompletedAt(localDateTime);
+        job.setResourceTypes(EOB);
+        job.setRequestUrl("http://localhost");
+        job.setStatusMessage("Pending");
+        job.setExpiresAt(now.plus(1, ChronoUnit.HOURS));
+        job.setOrganization(pdpClientService.getCurrentClient().getOrganization());
+
+        JobOutput jobOutput = new JobOutput();
+        jobOutput.setError(false);
+        jobOutput.setFhirResourceType(EOB);
+        jobOutput.setFilePath(testFile);
+        jobOutput.setChecksum("testoutput");
+        jobOutput.setFileLength(20L);
+        jobOutput.setJob(job);
+
+        List<JobOutput> output = of(jobOutput);
+        job.setJobOutputs(output);
+
+        jobService.updateJob(job);
+        Job jobFromRepo = jobRepository.findByJobUuid(job.getJobUuid());
+        Path destination = Paths.get(tmpJobLocation, jobFromRepo.getJobUuid());
+        String destinationStr = destination.toString();
+        Files.createDirectories(destination);
+        createNDJSONFile(testFile, destinationStr);
+        File file = Path.of(destinationStr, testFile).toFile();
+        int downloaded = 0;
+        jobFromRepo.setStatus(SUCCESSFUL);
+        jobRepository.save(jobFromRepo);
+        while (downloaded++ < (MAX_DOWNLOADS + MAX_DOWNLOADS)) {
+            jobService.incrementDownloadCountConditionallyDeleteFile(file, jobFromRepo.getJobUuid());
+            if (!file.exists()) {
+                break;
+            }
+        }
+        assertEquals(MAX_DOWNLOADS + 1, downloaded);
     }
 
     private Job createJobAllContracts(String outputFormat) {
