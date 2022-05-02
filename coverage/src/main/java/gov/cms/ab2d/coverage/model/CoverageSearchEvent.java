@@ -10,6 +10,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -21,7 +22,8 @@ import lombok.ToString;
  * For IN_PROGRESS searches these events are related via foreign key to actual
  * Coverage information.
  */
-@Entity(name = "event_bene_coverage_search_status_change")
+@Entity
+@Table(name = "event_bene_coverage_search_status_change", schema = "event")
 @Getter
 @Setter
 @ToString

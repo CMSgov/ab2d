@@ -11,6 +11,8 @@ INSERT INTO event.event_api_response (SELECT * FROM public.event_api_response);
 CREATE TABLE IF NOT EXISTS event.event_bene_coverage_search_status_change (like public.event_bene_coverage_search_status_change including all);
 INSERT INTO event.event_bene_coverage_search_status_change (SELECT * FROM public.event_bene_coverage_search_status_change);
 
+ALTER TABLE public.coverage DROP CONSTRAINT fk_coverage_to_bene_coverage_search_event;
+
 -- Index: ix_bene_coverage_search_status_job_id
 -- DROP INDEX IF EXISTS ix_bene_coverage_search_status_job_id;
 CREATE INDEX IF NOT EXISTS ix_bene_coverage_search_status_job_id
