@@ -666,13 +666,14 @@ class JobServiceTest extends JobCleanup {
         int downloaded = 0;
         jobFromRepo.setStatus(SUCCESSFUL);
         jobRepository.save(jobFromRepo);
-        while (downloaded++ < (MAX_DOWNLOADS + MAX_DOWNLOADS)) {
+        while (downloaded < (MAX_DOWNLOADS + MAX_DOWNLOADS)) {
             jobService.incrementDownloadCountConditionallyDeleteFile(file, jobFromRepo.getJobUuid());
             if (!file.exists()) {
                 break;
             }
+            downloaded++;
         }
-        assertEquals(MAX_DOWNLOADS + 1, downloaded);
+        assertEquals(MAX_DOWNLOADS, downloaded);
     }
 
     private Job createJobAllContracts(String outputFormat) {
