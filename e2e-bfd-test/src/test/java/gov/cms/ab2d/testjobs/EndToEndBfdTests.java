@@ -1,50 +1,39 @@
 package gov.cms.ab2d.testjobs;
 
-import com.amazonaws.services.sqs.AmazonSQS;
-import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
-import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.job.model.Job;
-import gov.cms.ab2d.job.model.JobOutput;
-import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.SinceSource;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.coverage.model.CoverageMapping;
-import gov.cms.ab2d.coverage.model.CoverageSearch;
-import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
-import gov.cms.ab2d.job.repository.JobOutputRepository;
-import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
-import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.common.service.InvalidContractException;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
+import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Constants;
+import gov.cms.ab2d.coverage.model.CoverageMapping;
+import gov.cms.ab2d.coverage.model.CoverageSearch;
+import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
+import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventSummary;
 import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.fhir.IdentifierUtils;
 import gov.cms.ab2d.fhir.PatientIdentifier;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobOutput;
+import gov.cms.ab2d.job.model.JobStatus;
+import gov.cms.ab2d.job.repository.JobOutputRepository;
+import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.job.service.JobOutputService;
 import gov.cms.ab2d.job.service.JobService;
 import gov.cms.ab2d.job.service.JobServiceImpl;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
-import gov.cms.ab2d.worker.processor.ContractProcessor;
-import gov.cms.ab2d.worker.processor.JobPreProcessor;
-import gov.cms.ab2d.worker.processor.JobPreProcessorImpl;
-import gov.cms.ab2d.worker.processor.JobProcessor;
-import gov.cms.ab2d.worker.processor.JobProcessorImpl;
-import gov.cms.ab2d.worker.processor.JobProgressService;
-import gov.cms.ab2d.worker.processor.JobProgressUpdateService;
-import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
-import gov.cms.ab2d.worker.processor.coverage.CoverageDriverImpl;
-import gov.cms.ab2d.worker.processor.coverage.CoverageLockWrapper;
-import gov.cms.ab2d.worker.processor.coverage.CoverageProcessor;
-import gov.cms.ab2d.worker.processor.coverage.CoverageProcessorImpl;
+import gov.cms.ab2d.worker.processor.*;
+import gov.cms.ab2d.worker.processor.coverage.*;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.service.FileServiceImpl;
 import gov.cms.ab2d.worker.service.JobChannelService;
@@ -63,8 +52,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.cloud.aws.messaging.listener.SimpleMessageListenerContainer;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -88,10 +75,7 @@ import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static java.util.stream.Collectors.toList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 /**
@@ -110,6 +94,9 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 public class EndToEndBfdTests {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
+
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     // We don't care about logging here
     @Mock
@@ -154,13 +141,6 @@ public class EndToEndBfdTests {
     @Autowired
     private ContractToContractCoverageMapping contractToContractCoverageMapping;
 
-    //disable sqs
-    @MockBean
-    private SimpleMessageListenerContainer messageListenerContainer;
-    //disable sqs
-    @MockBean
-    private AmazonSQS amazonSQS;
-
     static {
         System.setProperty("cloud.aws.stack.auto","false");
         System.setProperty("cloud.aws.region.static","us-east-1");
@@ -193,11 +173,7 @@ public class EndToEndBfdTests {
         scaleToMaxTime.setKey(Constants.PCP_SCALE_TO_MAX_TIME);
         scaleToMaxTime.setValue("10");
 
-        PropertiesDTO sqsEngagement = new PropertiesDTO();
-        sqsEngagement.setKey(Constants.SQS_JOB_UPDATE_ENGAGEMENT);
-        sqsEngagement.setValue("false");
-
-        propertiesService.updateProperties(List.of(coreClaimsPool, maxClaimsPool, scaleToMaxTime, sqsEngagement));
+        propertiesService.updateProperties(List.of(coreClaimsPool, maxClaimsPool, scaleToMaxTime));
 
         coverageDriver = new CoverageDriverImpl(coverageSearchRepository, pdpClientService, coverageService,
                 propertiesService, coverageProcessor, coverageLockWrapper, contractToContractCoverageMapping);

@@ -143,3 +143,6 @@ databaseChangeLog:
       file: db/changelog/v2022/job_pdp_client_bus_key.sql
   - include:
       file: db/changelog/v2022/add_missing_job_view_grant.sql
+  - include:
+      file: db/changelog/v2022/lob_listener_deature_flag.sql
+
