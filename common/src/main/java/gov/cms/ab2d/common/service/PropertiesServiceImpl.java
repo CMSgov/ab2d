@@ -28,11 +28,12 @@ public class PropertiesServiceImpl implements PropertiesService {
 
     private final PropertiesRepository propertiesRepository;
 
+    @SuppressWarnings("UnstableApiUsage")
     private final Type propertiesListType = new TypeToken<List<PropertiesDTO>>() { } .getType();
 
     @Override
     public boolean isInMaintenanceMode() {
-        return Boolean.valueOf(getPropertiesByKey(MAINTENANCE_MODE).getValue());
+        return Boolean.parseBoolean(getPropertiesByKey(MAINTENANCE_MODE).getValue());
     }
 
     @Override
@@ -68,67 +69,51 @@ public class PropertiesServiceImpl implements PropertiesService {
     private void validateProperty(List<PropertiesDTO> propertiesDTOsReturn, PropertiesDTO propertiesDTO, String key) {
         // If this becomes more extensive, consider having a table that contains a mapping of keys to validation expressions
         switch (key) {
-        case PCP_CORE_POOL_SIZE:
-            validateInt(key, propertiesDTO, 1, 100);
-            addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
-            break;
-
-        case PCP_MAX_POOL_SIZE:
-            validateInt(key, propertiesDTO, 1, 500);
-            addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
-            break;
-
-        case PCP_SCALE_TO_MAX_TIME:
-            validateInt(key, propertiesDTO, 1, 3600);
-            addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
-            break;
-
-        case MAINTENANCE_MODE:
-        case ZIP_SUPPORT_ON:
-        case COVERAGE_SEARCH_OVERRIDE:
-            validateBoolean(key, propertiesDTO);
-            addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
-            break;
-
-        case WORKER_ENGAGEMENT:
-        case HPMS_INGESTION_ENGAGEMENT:
-        case COVERAGE_SEARCH_DISCOVERY:
-        case COVERAGE_SEARCH_QUEUEING:
-            validateString(key, propertiesDTO);
-            addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
-            break;
-        // The maximums for these values are arbitrary and may need to be changed
-        case COVERAGE_SEARCH_UPDATE_MONTHS:
-            validateInt(key, propertiesDTO, 0, 12);
-            addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
-            break;
-        case COVERAGE_SEARCH_STUCK_HOURS:
-            validateInt(key, propertiesDTO, 12, 168);
-            addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
-            break;
-        default:
-            break;
+            case PCP_CORE_POOL_SIZE -> {
+                validateInt(key, propertiesDTO, 1, 100);
+                addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
+            }
+            case PCP_MAX_POOL_SIZE -> {
+                validateInt(key, propertiesDTO, 1, 500);
+                addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
+            }
+            case PCP_SCALE_TO_MAX_TIME -> {
+                validateInt(key, propertiesDTO, 1, 3600);
+                addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
+            }
+            case MAINTENANCE_MODE, ZIP_SUPPORT_ON, COVERAGE_SEARCH_OVERRIDE -> {
+                validateBoolean(key, propertiesDTO);
+                addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
+            }
+            case WORKER_ENGAGEMENT, HPMS_INGESTION_ENGAGEMENT, COVERAGE_SEARCH_DISCOVERY, COVERAGE_SEARCH_QUEUEING -> {
+                addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
+            }
+            // The maximums for these values are arbitrary and may need to be changed
+            case COVERAGE_SEARCH_UPDATE_MONTHS -> {
+                validateInt(key, propertiesDTO, 0, 12);
+                addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
+            }
+            case COVERAGE_SEARCH_STUCK_HOURS -> {
+                validateInt(key, propertiesDTO, 12, 168);
+                addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
+            }
+            default -> {
+                logErrorAndThrowException(key, null);
+            }
         }
     }
 
-    // Seems wrong to validate the specific values of the enum in a common class, so just do a null check
-    private void validateString(String key, PropertiesDTO property) {
-        if (property.getValue() == null) {
-            logErrorAndThrowException(key, property.getValue());
+    void validateInt(String key, PropertiesDTO property, int min, int max) {
+        int val = Integer.parseInt(property.getValue());
+        if (val < min || val > max) {
+            logErrorAndThrowException(key, val);
         }
     }
 
-    void validateInt(String var, PropertiesDTO property, int min, int max) {
-        Integer val = Integer.valueOf(property.getValue());
-        if (property == null || val < min || val > max) {
-            logErrorAndThrowException(var, val);
-        }
-    }
-
-    void validateBoolean(String var, PropertiesDTO property) {
+    void validateBoolean(String key, PropertiesDTO property) {
         String val = property.getValue();
-        if (property == null || !(val.equalsIgnoreCase("true") || val.equalsIgnoreCase("false"))) {
-            logErrorAndThrowException(var, val);
+        if (!(val.equalsIgnoreCase("true") || val.equalsIgnoreCase("false"))) {
+            logErrorAndThrowException(key, val);
         }
     }
 
@@ -161,7 +146,6 @@ public class PropertiesServiceImpl implements PropertiesService {
                 .map(Properties::getValue)
                 .map(StringUtils::trim)
                 .map(Boolean::valueOf)
-                .orElse(FALSE)
-                .booleanValue();
+                .orElse(FALSE);
     }
 }
