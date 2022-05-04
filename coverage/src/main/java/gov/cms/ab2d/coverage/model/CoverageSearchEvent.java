@@ -22,8 +22,7 @@ import lombok.ToString;
  * For IN_PROGRESS searches these events are related via foreign key to actual
  * Coverage information.
  */
-@Entity
-@Table(name = "event_bene_coverage_search_status_change", schema = "event")
+@Entity(name = "event_bene_coverage_search_status_change")
 @Getter
 @Setter
 @ToString

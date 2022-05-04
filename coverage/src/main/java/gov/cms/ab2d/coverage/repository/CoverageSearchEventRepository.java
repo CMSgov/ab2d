@@ -16,7 +16,7 @@ public interface CoverageSearchEventRepository extends JpaRepository<CoverageSea
      * @param limit number of events in the past to find
      * @return all events associated with coverage period
      */
-    @Query(value = "SELECT * FROM event.event_bene_coverage_search_status_change as ebc " +
+    @Query(value = "SELECT * FROM event_bene_coverage_search_status_change as ebc " +
             "   WHERE ebc.bene_coverage_period_id = :periodId" +
             "   ORDER BY ebc.created DESC LIMIT :limit",
             nativeQuery = true)
@@ -34,7 +34,7 @@ public interface CoverageSearchEventRepository extends JpaRepository<CoverageSea
      */
     @Query(value = "SELECT * FROM ( " +
             "                  SELECT DISTINCT ON (cov_event.bene_coverage_period_id) cov_event.* " +
-            "                  FROM event.event_bene_coverage_search_status_change cov_event " +
+            "                  FROM event_bene_coverage_search_status_change cov_event " +
             "                  ORDER BY cov_event.bene_coverage_period_id, cov_event.created DESC " +
             "              ) as latest " +
             "       WHERE latest.new_status = :status AND latest.created < :since ", nativeQuery = true)
