@@ -25,7 +25,7 @@ public class ContractSearchEventMapper extends SqlEventMapper {
         ContractSearchEvent be = (ContractSearchEvent) event;
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
-        String query = "insert into event_bene_search " +
+        String query = "insert into event.event_bene_search " +
                 " (time_of_event, organization, job_id, contract_number, benes_expected, benes_queued, benes_searched, " +
                 "  benes_errored, benes_with_eobs, eobs_fetched, eobs_written, eob_files, aws_id, environment) " +
                 " values (:time, :organization, :job, :contractNum, :benes_expected, :benes_queued, :benes_searched, " +

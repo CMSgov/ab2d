@@ -26,7 +26,7 @@ public class ApiResponseEventMapper extends SqlEventMapper {
         ApiResponseEvent be = (ApiResponseEvent) event;
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
-        String query = "insert into event_api_response " +
+        String query = "insert into event.event_api_response " +
                 " (time_of_event, organization, job_id, response_code, response_string, description, request_id, aws_id, environment) " +
                 " values (:time, :organization, :job, :responseCode, :responseString, :description, :requestId, :awsId, :environment)";
 
