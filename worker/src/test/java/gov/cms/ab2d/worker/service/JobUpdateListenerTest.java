@@ -5,7 +5,10 @@ import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.services.sqs.model.SendMessageResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import gov.cms.ab2d.common.dto.PropertiesDTO;
+import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.worker.dto.JobUpdate;
 import gov.cms.ab2d.worker.processor.JobMeasure;
 import gov.cms.ab2d.worker.processor.JobProgressService;
@@ -24,6 +27,7 @@ import org.testcontainers.containers.localstack.LocalStackContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -45,6 +49,9 @@ class JobUpdateListenerTest {
     private JobUpdateListener listener;
 
     @Autowired
+    private PropertiesService propertiesService;
+
+    @Autowired
     private JobProgressUpdateService jobProgressUpdateService;
 
     @Autowired
@@ -59,7 +66,11 @@ class JobUpdateListenerTest {
 
     @Test
     void jobUpdateQueue() throws JsonProcessingException {
+        PropertiesDTO sqsEngage = new PropertiesDTO();
+        sqsEngage.setKey(Constants.SQS_JOB_UPDATE_ENGAGEMENT);
+        sqsEngage.setValue("engaged");
 
+        propertiesService.updateProperties(List.of(sqsEngage));
         final int oldThreshold = new Random().nextInt();
         final int newThreshold = new Random().nextInt();
         final String uuid = UUID.randomUUID().toString();

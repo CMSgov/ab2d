@@ -73,7 +73,7 @@ public class AdminAPIPropertiesTests {
 
     @Test
     @Order(1)
-    public void testRetrieveProperties() throws Exception {
+    void testRetrieveProperties() throws Exception {
         Map<String, Object> propertyMap = new HashMap<>(){{
             put(PCP_CORE_POOL_SIZE, 10);
             put(PCP_MAX_POOL_SIZE, 150);
@@ -87,6 +87,7 @@ public class AdminAPIPropertiesTests {
             put(COVERAGE_SEARCH_UPDATE_MONTHS, 1);
             put(COVERAGE_SEARCH_STUCK_HOURS, 24);
             put(COVERAGE_SEARCH_OVERRIDE, "false");
+            put(SQS_JOB_UPDATE_ENGAGEMENT, "idle");
         }};
 
         MvcResult mvcResult = this.mockMvc.perform(
@@ -101,7 +102,7 @@ public class AdminAPIPropertiesTests {
         ObjectMapper mapper = new ObjectMapper();
         List<PropertiesDTO> propertiesDTOs = mapper.readValue(result, new TypeReference<>() {} );
 
-        assertEquals(12, propertiesDTOs.size());
+        assertEquals(13, propertiesDTOs.size());
         for(PropertiesDTO propertiesDTO : propertiesDTOs) {
             Object value = propertyMap.get(propertiesDTO.getKey());
 
