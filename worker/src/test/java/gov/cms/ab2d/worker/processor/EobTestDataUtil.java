@@ -59,8 +59,20 @@ public final class EobTestDataUtil {
         return bundle;
     }
 
+    public static org.hl7.fhir.r4.model.Bundle createBundle(org.hl7.fhir.r4.model.Resource resource) {
+        final org.hl7.fhir.r4.model.Bundle bundle = new org.hl7.fhir.r4.model.Bundle();
+        bundle.addEntry(addEntry(resource));
+        return bundle;
+    }
+
     private static org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent addEntry(org.hl7.fhir.dstu3.model.Resource resource) {
         final org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent bundleEntryComponent = new org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent();
+        bundleEntryComponent.setResource(resource);
+        return bundleEntryComponent;
+    }
+
+    private static org.hl7.fhir.r4.model.Bundle.BundleEntryComponent addEntry(org.hl7.fhir.r4.model.Resource resource) {
+        final org.hl7.fhir.r4.model.Bundle.BundleEntryComponent bundleEntryComponent = new org.hl7.fhir.r4.model.Bundle.BundleEntryComponent();
         bundleEntryComponent.setResource(resource);
         return bundleEntryComponent;
     }
