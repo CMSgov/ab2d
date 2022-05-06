@@ -1,7 +1,7 @@
 package gov.cms.ab2d.api.controller.v1;
 
 import gov.cms.ab2d.api.controller.common.ApiCommon;
-import gov.cms.ab2d.common.dto.StartJobDTO;
+import gov.cms.ab2d.job.dto.StartJobDTO;
 import gov.cms.ab2d.api.remote.JobClient;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

@@ -19,7 +19,7 @@ import org.springframework.retry.annotation.EnableRetry;
         "gov.cms.ab2d.audit",
         "gov.cms.ab2d.eventlogger"
 })
-@EntityScan(basePackages = {"gov.cms.ab2d.common.model", "gov.cms.ab2d.coverage.model"})
+@EntityScan(basePackages = {"gov.cms.ab2d.common.model", "gov.cms.ab2d.job.model", "gov.cms.ab2d.coverage.model"})
 @EnableJpaRepositories(basePackages = {"gov.cms.ab2d.common.repository", "gov.cms.ab2d.job.repository",
         "gov.cms.ab2d.coverage.repository"})
 @EnableRetry

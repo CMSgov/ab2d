@@ -1,9 +1,9 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.common.dto.ContractDTO;
-import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
+import gov.cms.ab2d.job.model.Job;
 
 /**
  * Provide an interface for executing high level actions concerning enrollment.

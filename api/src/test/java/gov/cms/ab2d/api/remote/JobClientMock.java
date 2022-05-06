@@ -1,9 +1,9 @@
 package gov.cms.ab2d.api.remote;
 
-import gov.cms.ab2d.common.dto.JobPollResult;
-import gov.cms.ab2d.common.dto.StartJobDTO;
-import gov.cms.ab2d.common.model.JobOutput;
-import gov.cms.ab2d.common.model.JobStatus;
+import gov.cms.ab2d.job.dto.JobPollResult;
+import gov.cms.ab2d.job.dto.StartJobDTO;
+import gov.cms.ab2d.job.model.JobOutput;
+import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.model.TooFrequentInvocations;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.job.service.InvalidJobStateTransition;
@@ -25,9 +25,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static gov.cms.ab2d.common.model.JobStatus.CANCELLED;
-import static gov.cms.ab2d.common.model.JobStatus.SUBMITTED;
-import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
+import static gov.cms.ab2d.job.model.JobStatus.CANCELLED;
+import static gov.cms.ab2d.job.model.JobStatus.SUBMITTED;
+import static gov.cms.ab2d.job.model.JobStatus.SUCCESSFUL;
 
 @Primary
 @Component

@@ -3,7 +3,7 @@ package gov.cms.ab2d.api.controller.common;
 import gov.cms.ab2d.api.controller.InMaintenanceModeException;
 import gov.cms.ab2d.api.controller.TooManyRequestsException;
 import gov.cms.ab2d.api.remote.JobClient;
-import gov.cms.ab2d.common.dto.StartJobDTO;
+import gov.cms.ab2d.job.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.service.InvalidClientInputException;
