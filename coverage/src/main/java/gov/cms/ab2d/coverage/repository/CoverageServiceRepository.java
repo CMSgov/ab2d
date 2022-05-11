@@ -28,6 +28,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.sql.DataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -92,8 +93,16 @@ public class CoverageServiceRepository {
      * Return a count of all beneficiaries associated with an {@link CoveragePeriod}
      * from any event.
      */
-    private static final String SELECT_DISTINCT_COVERAGE_BY_PERIOD_COUNT = "SELECT COUNT(DISTINCT beneficiary_id) FROM coverage" +
-            " WHERE bene_coverage_period_id IN(:ids) AND contract = :contract AND year IN (:years)";
+    private static final String SELECT_DISTINCT_COVERAGE_BY_PERIOD_COUNT = """
+            select COUNT(beneficiary_id ) from(
+            SELECT DISTINCT beneficiary_id
+            FROM coverage
+            WHERE bene_coverage_period_id = ANY(ARRAY[ :ids ])
+            AND contract = :contract
+            AND year = ANY(ARRAY[ :years ] )
+                ) as temp""";
+
+
 
     /**
      * Delete all coverage associated with a single update from BFD {@link CoverageSearchEvent}
@@ -284,10 +293,9 @@ public class CoverageServiceRepository {
                 .addValue("years", YEARS);
 
         NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
-
         return template.queryForList(SELECT_DISTINCT_COVERAGE_BY_PERIOD_COUNT, parameters, Integer.class)
                 .stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for any " +
-                                "of the coverage periods provided"));
+                        "of the coverage periods provided"));
     }
 
     /**
