@@ -97,9 +97,9 @@ public class CoverageServiceRepository {
             select COUNT(beneficiary_id ) from(
             SELECT DISTINCT beneficiary_id
             FROM coverage
-            WHERE bene_coverage_period_id = ANY(ARRAY[ :ids ])
+            WHERE bene_coverage_period_id IN ( :ids )
             AND contract = :contract
-            AND year = ANY(ARRAY[ :years ] )
+            AND year IN ( :years )
                 ) as temp""";
 
 
