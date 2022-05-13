@@ -50,13 +50,13 @@ public class SqlMapperConfig {
         mapperMapping.put(FileEvent.class, new FileEventMapper(jdbcTemplate));
         mapperMapping.put(JobStatusChangeEvent.class, new JobStatusChangeEventMapper(jdbcTemplate));
 
-        tableMapping.put(ApiRequestEvent.class, "event_api_request");
-        tableMapping.put(ApiResponseEvent.class, "event_api_response");
-        tableMapping.put(ReloadEvent.class, "event_bene_reload");
-        tableMapping.put(ContractSearchEvent.class, "event_bene_search");
-        tableMapping.put(ErrorEvent.class, "event_error");
-        tableMapping.put(FileEvent.class, "event_file");
-        tableMapping.put(JobStatusChangeEvent.class, "event_job_status_change");
+        tableMapping.put(ApiRequestEvent.class, "event.event_api_request");
+        tableMapping.put(ApiResponseEvent.class, "event.event_api_response");
+        tableMapping.put(ReloadEvent.class, "event.event_bene_reload");
+        tableMapping.put(ContractSearchEvent.class, "event.event_bene_search");
+        tableMapping.put(ErrorEvent.class, "event.event_error");
+        tableMapping.put(FileEvent.class, "event.event_file");
+        tableMapping.put(JobStatusChangeEvent.class, "event.event_job_status_change");
     }
 
     public Set<Class<? extends LoggableEvent>> getClasses() {

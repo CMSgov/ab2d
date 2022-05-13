@@ -145,3 +145,5 @@ databaseChangeLog:
       file: db/changelog/v2022/add_missing_job_view_grant.sql
   - include:
       file: db/changelog/v2022/downloaded_count.sql
+  - include:
+      file: db/changelog/v2022/event-service-database-migration.sql

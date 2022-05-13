@@ -28,11 +28,12 @@ public class PropertiesServiceImpl implements PropertiesService {
 
     private final PropertiesRepository propertiesRepository;
 
+    @SuppressWarnings("UnstableApiUsage")
     private final Type propertiesListType = new TypeToken<List<PropertiesDTO>>() { } .getType();
 
     @Override
     public boolean isInMaintenanceMode() {
-        return Boolean.valueOf(getPropertiesByKey(MAINTENANCE_MODE).getValue());
+        return Boolean.parseBoolean(getPropertiesByKey(MAINTENANCE_MODE).getValue());
     }
 
     @Override
@@ -94,7 +95,6 @@ public class PropertiesServiceImpl implements PropertiesService {
         case HPMS_INGESTION_ENGAGEMENT:
         case COVERAGE_SEARCH_DISCOVERY:
         case COVERAGE_SEARCH_QUEUEING:
-            validateString(key, propertiesDTO);
             addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
             break;
         // The maximums for these values are arbitrary and may need to be changed
@@ -111,24 +111,17 @@ public class PropertiesServiceImpl implements PropertiesService {
         }
     }
 
-    // Seems wrong to validate the specific values of the enum in a common class, so just do a null check
-    private void validateString(String key, PropertiesDTO property) {
-        if (property.getValue() == null) {
-            logErrorAndThrowException(key, property.getValue());
+    void validateInt(String key, PropertiesDTO property, int min, int max) {
+        int val = Integer.parseInt(property.getValue());
+        if (val < min || val > max) {
+            logErrorAndThrowException(key, val);
         }
     }
 
-    void validateInt(String var, PropertiesDTO property, int min, int max) {
-        Integer val = Integer.valueOf(property.getValue());
-        if (property == null || val < min || val > max) {
-            logErrorAndThrowException(var, val);
-        }
-    }
-
-    void validateBoolean(String var, PropertiesDTO property) {
+    void validateBoolean(String key, PropertiesDTO property) {
         String val = property.getValue();
-        if (property == null || !(val.equalsIgnoreCase("true") || val.equalsIgnoreCase("false"))) {
-            logErrorAndThrowException(var, val);
+        if (!(val.equalsIgnoreCase("true") || val.equalsIgnoreCase("false"))) {
+            logErrorAndThrowException(key, val);
         }
     }
 
@@ -161,7 +154,6 @@ public class PropertiesServiceImpl implements PropertiesService {
                 .map(Properties::getValue)
                 .map(StringUtils::trim)
                 .map(Boolean::valueOf)
-                .orElse(FALSE)
-                .booleanValue();
+                .orElse(FALSE);
     }
 }
