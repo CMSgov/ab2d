@@ -257,7 +257,7 @@ public class EndToEndBfdTests {
      */
     private void disableContractWeDontNeed() {
         List<PdpClient> clients = pdpClientRepository.findAllByEnabledTrue().stream()
-                .filter(client -> client.getContract().getAttestedOn() != null)
+                .filter(client -> client.getContract() != null && client.getContract().getAttestedOn() != null)
                 .collect(toList());
         for (PdpClient pdp : clients) {
             if (!pdp.getContract().getContractNumber().equals(CONTRACT_TO_USE)) {
