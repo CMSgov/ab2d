@@ -623,57 +623,8 @@ class JobServiceTest extends JobCleanup {
         String testFile = "test.ndjson";
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
-        jobService.incrementDownloadCountConditionallyDeleteFile(new File(testFile), job.getJobUuid());
+        jobService.incrementDownload(new File(testFile), job.getJobUuid());
         assertEquals(1, jobOutputService.findByFilePathAndJob(testFile, job).getDownloaded());
-    }
-
-    @Test
-    void incrementDownloadUntilDeleted() throws IOException {
-        String testFile = "test.ndjson";
-        createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
-        OffsetDateTime now = OffsetDateTime.now();
-        OffsetDateTime localDateTime = OffsetDateTime.now();
-        Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
-        job.setProgress(100);
-        job.setLastPollTime(now);
-        job.setStatus(JobStatus.IN_PROGRESS);
-        job.setCreatedAt(localDateTime);
-        job.setCompletedAt(localDateTime);
-        job.setResourceTypes(EOB);
-        job.setRequestUrl("http://localhost");
-        job.setStatusMessage("Pending");
-        job.setExpiresAt(now.plus(1, ChronoUnit.HOURS));
-        job.setOrganization(pdpClientService.getCurrentClient().getOrganization());
-
-        JobOutput jobOutput = new JobOutput();
-        jobOutput.setError(false);
-        jobOutput.setFhirResourceType(EOB);
-        jobOutput.setFilePath(testFile);
-        jobOutput.setChecksum("testoutput");
-        jobOutput.setFileLength(20L);
-        jobOutput.setJob(job);
-
-        List<JobOutput> output = of(jobOutput);
-        job.setJobOutputs(output);
-
-        jobService.updateJob(job);
-        Job jobFromRepo = jobRepository.findByJobUuid(job.getJobUuid());
-        Path destination = Paths.get(tmpJobLocation, jobFromRepo.getJobUuid());
-        String destinationStr = destination.toString();
-        Files.createDirectories(destination);
-        createNDJSONFile(testFile, destinationStr);
-        File file = Path.of(destinationStr, testFile).toFile();
-        int downloaded = 0;
-        jobFromRepo.setStatus(SUCCESSFUL);
-        jobRepository.save(jobFromRepo);
-        while (downloaded < (MAX_DOWNLOADS + MAX_DOWNLOADS)) {
-            jobService.incrementDownloadCountConditionallyDeleteFile(file, jobFromRepo.getJobUuid());
-            if (!file.exists()) {
-                break;
-            }
-            downloaded++;
-        }
-        assertEquals(MAX_DOWNLOADS, downloaded);
     }
 
     private Job createJobAllContracts(String outputFormat) {

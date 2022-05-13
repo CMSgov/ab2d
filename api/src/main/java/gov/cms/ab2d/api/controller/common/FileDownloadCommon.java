@@ -54,7 +54,7 @@ public class FileDownloadCommon {
 
             eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), jobUuid, HttpStatus.OK, "File Download",
                     "File " + filename + " was downloaded", (String) request.getAttribute(REQUEST_ID)));
-            jobClient.incrementDownloadCountOrDeleteFile(downloadResource.getFile(), jobUuid);
+            jobClient.incrementDownload(downloadResource.getFile(), jobUuid);
             return new ResponseEntity<>(null, null, HttpStatus.OK);
         }
     }

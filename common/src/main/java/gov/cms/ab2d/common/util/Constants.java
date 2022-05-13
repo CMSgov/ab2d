@@ -70,9 +70,7 @@ public final class Constants {
 
     public static final String ZIP_SUPPORT_ON = "ZipSupportOn";
 
-    public static final int MAX_DOWNLOADS = 3;
-
-    public static final int RE_DOWNLOAD_MAX_INTERVAL_MINUTES = 30;
+    public static final int MAX_DOWNLOADS = 6;
 
     public static final Set<String> ALLOWED_PROPERTY_NAMES = Set.of(PCP_CORE_POOL_SIZE, PCP_MAX_POOL_SIZE,
             PCP_SCALE_TO_MAX_TIME, MAINTENANCE_MODE, ZIP_SUPPORT_ON,

@@ -69,10 +69,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
 @Testcontainers
-/* When checking in, comment out print statements. They are very helpful, but fill up the logs */
+        /* When checking in, comment out print statements. They are very helpful, but fill up the logs */
 class BulkDataAccessAPIIntegrationTests {
 
-    private static final String EXPECTED_ERROR = "The file is not present as there was an error. Please resubmit the job.";
+    private static final String FILE_NOT_PRESENT_ERROR = "The file is not present as there was an error. Please resubmit the job.";
+    private static final String MAX_DOWNLOAD_EXCEDED_ERROR = "The file has reached the maximum number of downloads. Please resubmit the job.";
+
 
     @Autowired
     private MockMvc mockMvc;
@@ -87,7 +89,7 @@ class BulkDataAccessAPIIntegrationTests {
     private ContractRepository contractRepository;
 
     @Container
-    private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
+    private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Autowired
     private TestUtil testUtil;
@@ -118,10 +120,10 @@ class BulkDataAccessAPIIntegrationTests {
     }
 
     private void createMaxJobs() throws Exception {
-        for(int i = 0; i < MAX_JOBS_PER_CLIENT; i++) {
+        for (int i = 0; i < MAX_JOBS_PER_CLIENT; i++) {
             this.mockMvc.perform(
-                    get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
-                            .header("Authorization", "Bearer " + token))
+                            get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+                                    .header("Authorization", "Bearer " + token))
                     .andExpect(status().is(202));
         }
     }
@@ -130,7 +132,7 @@ class BulkDataAccessAPIIntegrationTests {
     void testBasicPatientExport() throws Exception {
         ResultActions resultActions = this.mockMvc.perform(
                 get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token));
+                        .header("Authorization", "Bearer " + token));
         List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
         assertEquals(1, apiRequestEvents.size());
@@ -193,12 +195,12 @@ class BulkDataAccessAPIIntegrationTests {
         createMaxJobs();
 
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
-                        .andExpect(status().is(429))
-                        .andExpect(header().string("Retry-After", "30"))
-                        .andExpect(header().doesNotExist(X_PROG))
-                        .andReturn();
+                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token))
+                .andExpect(status().is(429))
+                .andExpect(header().string("Retry-After", "30"))
+                .andExpect(header().doesNotExist(X_PROG))
+                .andReturn();
         List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
         assertEquals(MAX_JOBS_PER_CLIENT + 1, apiRequestEvents.size());
 
@@ -232,8 +234,8 @@ class BulkDataAccessAPIIntegrationTests {
         createMaxJobs();
 
         this.mockMvc.perform(
-                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
+                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(429))
                 .andExpect(header().string("Retry-After", "30"))
                 .andExpect(header().doesNotExist(X_PROG))
@@ -266,9 +268,9 @@ class BulkDataAccessAPIIntegrationTests {
     @Test
     void testPatientExportWithInvalidType() throws Exception {
         final String typeParams = "?_type=PatientInvalid,ExplanationOfBenefit";
-        this.mockMvc.perform(get(API_PREFIX_V1 +  FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
+        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
@@ -299,8 +301,8 @@ class BulkDataAccessAPIIntegrationTests {
     void testPatientExportWithInvalidOutputFormat() throws Exception {
         final String typeParams = "?_outputFormat=Invalid";
         this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
@@ -331,8 +333,8 @@ class BulkDataAccessAPIIntegrationTests {
     void testPatientExportWithZipOutputFormat() throws Exception {
         final String typeParams = "?_outputFormat=application/zip";
         this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
@@ -345,12 +347,12 @@ class BulkDataAccessAPIIntegrationTests {
     void testDeleteJob() throws Exception {
         this.mockMvc.perform(
                 get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .header("Authorization", "Bearer " + token));
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token));
 
         jobClientMock.setExpectedStatus(SUBMITTED);
         this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobClientMock.pickAJob() + "/$status")
-                .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(202))
                 .andExpect(content().string(StringUtils.EMPTY));
 
@@ -367,7 +369,7 @@ class BulkDataAccessAPIIntegrationTests {
     @Test
     void testDeleteNonExistentJob() throws Exception {
         this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/NonExistentJob/$status")
-                .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(404))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
@@ -399,14 +401,14 @@ class BulkDataAccessAPIIntegrationTests {
     void testDeleteJobsInInvalidState() throws Exception {
         this.mockMvc.perform(
                 get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token)
+                        .header("Authorization", "Bearer " + token)
         );
 
         jobClientMock.setExpectedStatus(FAILED);
         String jobUuid = jobClientMock.pickAJob();
 
         this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid + "/$status")
-                .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
@@ -418,7 +420,7 @@ class BulkDataAccessAPIIntegrationTests {
         jobClientMock.setExpectedStatus(CANCELLED);
 
         this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid + "/$status")
-                .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
@@ -430,7 +432,7 @@ class BulkDataAccessAPIIntegrationTests {
         jobClientMock.setExpectedStatus(SUCCESSFUL);
 
         this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid + "/$status")
-                .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
@@ -443,8 +445,8 @@ class BulkDataAccessAPIIntegrationTests {
     @Test
     void testGetStatusWhileSubmitted() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
+                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token))
                 .andReturn();
 
         String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
@@ -452,15 +454,15 @@ class BulkDataAccessAPIIntegrationTests {
         jobClientMock.setExpectedStatusAndProgress(SUBMITTED, 0);
 
         this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(202))
                 .andExpect(header().string("X-Progress", "0% complete"))
                 .andExpect(header().string("Retry-After", "30"));
 
         // Immediate repeat of status check should produce 429.
         this.mockMvc.perform(get(statusUrl)
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(429))
                 .andExpect(header().string("Retry-After", "30"))
                 .andExpect(header().doesNotExist("X-Progress"))
@@ -470,8 +472,8 @@ class BulkDataAccessAPIIntegrationTests {
     @Test
     void testGetStatusWhileInProgress() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
+                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token))
                 .andReturn();
 
         String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
@@ -480,15 +482,15 @@ class BulkDataAccessAPIIntegrationTests {
         jobClientMock.setExpectedStatusAndProgress(IN_PROGRESS, 30);
 
         this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(202))
                 .andExpect(header().string("X-Progress", "30% complete"))
                 .andExpect(header().string("Retry-After", "30"));
 
         // Immediate repeat of status check should produce 429.
         this.mockMvc.perform(get(statusUrl)
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(429))
                 .andExpect(header().string("Retry-After", "30"))
                 .andExpect(header().doesNotExist("X-Progress"))
@@ -498,10 +500,10 @@ class BulkDataAccessAPIIntegrationTests {
     @Test
     void testGetStatusWhileFinishedHttps() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
-                        .header("Authorization", "Bearer " + token)
-                        .header("X-Forwarded-Proto", "https")
-                        .contentType(MediaType.APPLICATION_JSON))
+                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+                                .header("Authorization", "Bearer " + token)
+                                .header("X-Forwarded-Proto", "https")
+                                .contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
 
         String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
@@ -527,7 +529,7 @@ class BulkDataAccessAPIIntegrationTests {
         jobClientMock.addJobOutputForDownload(errorJobOutput);
 
         this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(200))
                 .andExpect(buildExpiresMatcher())
                 .andExpect(buildTxTimeMatcher())
@@ -546,9 +548,9 @@ class BulkDataAccessAPIIntegrationTests {
     @Test
     void testGetStatusWhileFinished() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
-                .header("Authorization", "Bearer " + token)
-                .contentType(MediaType.APPLICATION_JSON))
+                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
 
         String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
@@ -574,7 +576,7 @@ class BulkDataAccessAPIIntegrationTests {
         StartJobDTO startJobDTO = jobClientMock.lookupJob(jobUuid);
 
         this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(200))
                 .andExpect(buildExpiresMatcher())
                 .andExpect(buildTxTimeMatcher())
@@ -648,9 +650,9 @@ class BulkDataAccessAPIIntegrationTests {
     @Test
     void testGetStatusWhileFailed() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
+                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token))
                 .andReturn();
 
         String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
@@ -658,7 +660,7 @@ class BulkDataAccessAPIIntegrationTests {
 
         jobClientMock.setExpectedStatus(FAILED);
         this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(500))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
@@ -682,31 +684,31 @@ class BulkDataAccessAPIIntegrationTests {
     @Test
     void testGetStatusWithJobNotFound() throws Exception {
         this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
                 .andReturn();
 
         this.mockMvc.perform(get("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/BadId/$status")
-                .header("Authorization", "Bearer " + token)
-                .contentType(MediaType.APPLICATION_JSON))
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(404))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
                         Is.is("No job with jobUuid BadId was found")));
-     }
+    }
 
     @Test
     void testGetStatusWithSpaceUrl() throws Exception {
         this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
-                .header("Authorization", "Bearer " + token)
-                .contentType(MediaType.APPLICATION_JSON))
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andReturn();
 
         this.mockMvc.perform(get("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/ /$status")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(404))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
@@ -718,13 +720,13 @@ class BulkDataAccessAPIIntegrationTests {
     @Test
     void testGetStatusWithBadUrl() throws Exception {
         this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
                 .andReturn();
 
         this.mockMvc.perform(get("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/$status")
-                .header("Authorization", "Bearer " + token)
-                .contentType(MediaType.APPLICATION_JSON))
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(404));
     }
 
@@ -732,9 +734,9 @@ class BulkDataAccessAPIIntegrationTests {
     @Test
     void testDownloadFile() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
+                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token))
                 .andReturn();
 
         String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
@@ -747,14 +749,14 @@ class BulkDataAccessAPIIntegrationTests {
 
         MvcResult mvcResultStatusCall =
                 this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
+                                .header("Authorization", "Bearer " + token))
                         .andReturn();
         String downloadUrl = JsonPath.read(mvcResultStatusCall.getResponse().getContentAsString(),
                 "$.output[0].url");
         MvcResult downloadFileCall =
                 this.mockMvc.perform(get(downloadUrl).contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token)
-                        .header("Accept-Encoding", "gzip, deflate, br"))
+                                .header("Authorization", "Bearer " + token)
+                                .header("Accept-Encoding", "gzip, deflate, br"))
                         .andExpect(status().is(200))
                         .andExpect(content().contentType(NDJSON_FIRE_CONTENT_TYPE))
                         .andReturn();
@@ -771,9 +773,9 @@ class BulkDataAccessAPIIntegrationTests {
     @Test
     void testDownloadMissingFileGenericError() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
+                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token))
                 .andReturn();
 
         String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
@@ -784,18 +786,18 @@ class BulkDataAccessAPIIntegrationTests {
 
         MvcResult mvcResultStatusCall =
                 this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
+                                .header("Authorization", "Bearer " + token))
                         .andReturn();
         String downloadUrl = JsonPath.read(mvcResultStatusCall.getResponse().getContentAsString(),
                 "$.output[0].url");
         this.mockMvc.perform(get(downloadUrl).contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(500))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
                 .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
                 .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is(EXPECTED_ERROR)));
+                        Is.is(FILE_NOT_PRESENT_ERROR)));
         List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
         ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(apiRequestEvents.size() - 1);
 
@@ -817,9 +819,9 @@ class BulkDataAccessAPIIntegrationTests {
     @Test
     void testDownloadBadParameterFile() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
+                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token))
                 .andReturn();
 
         String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
@@ -829,12 +831,12 @@ class BulkDataAccessAPIIntegrationTests {
 
         MvcResult mvcResultStatusCall =
                 this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
+                                .header("Authorization", "Bearer " + token))
                         .andReturn();
         String downloadUrl = JsonPath.read(mvcResultStatusCall.getResponse().getContentAsString(),
                 "$.output[0].url") + "badfilename";
         this.mockMvc.perform(get(downloadUrl).contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(404))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
@@ -846,9 +848,9 @@ class BulkDataAccessAPIIntegrationTests {
     @Test
     void testDownloadFileAlreadyDownloaded() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
+                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token))
                 .andReturn();
 
         String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
@@ -860,25 +862,23 @@ class BulkDataAccessAPIIntegrationTests {
         jobOutput.setError(false);
         jobOutput.setChecksum("testoutput");
         jobOutput.setFileLength(20L);
-        jobOutput.setDownloaded(2);
+        jobOutput.setDownloaded(MAX_DOWNLOADS - 1);
+        jobClientMock.setResultsCreated(true);
         jobClientMock.addJobOutputForDownload(jobOutput);
 
         MvcResult mvcResultStatusCall =
                 this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
+                                .header("Authorization", "Bearer " + token))
                         .andReturn();
         String downloadUrl = JsonPath.read(mvcResultStatusCall.getResponse().getContentAsString(),
                 "$.output[0].url");
         this.mockMvc.perform(get(downloadUrl).contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(500))
-                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
-                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
-                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is(EXPECTED_ERROR)));
+                        .header("Authorization", "Bearer " + token)
+                        .header("Accept-Encoding", "gzip, deflate, br"))
+                .andExpect(status().is(200))
+                .andExpect(content().contentType(NDJSON_FIRE_CONTENT_TYPE))
+                .andReturn();
     }
-
 
 
     @Test
@@ -898,7 +898,7 @@ class BulkDataAccessAPIIntegrationTests {
         jobOutput.setError(false);
         jobOutput.setChecksum("testoutput");
         jobOutput.setFileLength(20L);
-        jobOutput.setDownloaded(3);
+        jobOutput.setDownloaded(MAX_DOWNLOADS);
         jobClientMock.addJobOutputForDownload(jobOutput);
 
         MvcResult mvcResultStatusCall =
@@ -920,9 +920,9 @@ class BulkDataAccessAPIIntegrationTests {
     @Test
     void testDownloadFileExpired() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
-                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
+                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token))
                 .andReturn();
 
         String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
@@ -935,12 +935,12 @@ class BulkDataAccessAPIIntegrationTests {
 
         MvcResult mvcResultStatusCall =
                 this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
+                                .header("Authorization", "Bearer " + token))
                         .andReturn();
         String downloadUrl = JsonPath.read(mvcResultStatusCall.getResponse().getContentAsString(),
                 "$.output[0].url");
         this.mockMvc.perform(get(downloadUrl).contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(500))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
@@ -1026,9 +1026,9 @@ class BulkDataAccessAPIIntegrationTests {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         final String typeParams = "?_type=PatientInvalid,ExplanationOfBenefit";
-        this.mockMvc.perform(get(API_PREFIX_V1 +  FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams)
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
+        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
@@ -1043,8 +1043,8 @@ class BulkDataAccessAPIIntegrationTests {
         Contract contract = contractOptional.get();
         final String typeParams = "?_outputFormat=Invalid";
         this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams)
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(400))
                 .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
                 .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
@@ -1055,11 +1055,11 @@ class BulkDataAccessAPIIntegrationTests {
     }
 
     private void createMaxJobsWithContract(Contract contract) throws Exception {
-        for(int i = 0; i < MAX_JOBS_PER_CLIENT; i++) {
+        for (int i = 0; i < MAX_JOBS_PER_CLIENT; i++) {
             this.mockMvc.perform(
-                    get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
-                            .header("Authorization", "Bearer " + token))
-                            .andExpect(status().is(202));
+                            get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                                    .header("Authorization", "Bearer " + token))
+                    .andExpect(status().is(202));
         }
     }
 
@@ -1070,8 +1070,8 @@ class BulkDataAccessAPIIntegrationTests {
         createMaxJobsWithContract(contract);
 
         this.mockMvc.perform(
-                get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
+                        get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(429))
                 .andExpect(header().string("Retry-After", "30"))
                 .andExpect(header().doesNotExist("X-Progress"))
@@ -1085,8 +1085,8 @@ class BulkDataAccessAPIIntegrationTests {
         createMaxJobsWithContract(contract);
 
         this.mockMvc.perform(
-                get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
+                        get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(429))
                 .andExpect(header().string("Retry-After", "30"))
                 .andExpect(header().doesNotExist("X-Progress"))
@@ -1099,10 +1099,10 @@ class BulkDataAccessAPIIntegrationTests {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
 
-        for(int i = 0; i < MAX_JOBS_PER_CLIENT - 1; i++) {
+        for (int i = 0; i < MAX_JOBS_PER_CLIENT - 1; i++) {
             this.mockMvc.perform(
-                    get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
-                            .header("Authorization", "Bearer " + token))
+                            get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                                    .header("Authorization", "Bearer " + token))
                     .andExpect(status().is(202));
         }
 
@@ -1115,8 +1115,8 @@ class BulkDataAccessAPIIntegrationTests {
         Contract contractNew = dataSetup.setupContract("New Contract");
 
         this.mockMvc.perform(
-                get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contractNew.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
+                        get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contractNew.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
     }
 
@@ -1129,8 +1129,8 @@ class BulkDataAccessAPIIntegrationTests {
         jobClientMock.switchAllJobsToNewOrganization("test-org");
 
         this.mockMvc.perform(
-                get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
+                        get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(202));
     }
 

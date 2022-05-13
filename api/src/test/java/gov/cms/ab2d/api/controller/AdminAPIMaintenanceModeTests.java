@@ -75,9 +75,6 @@ public class AdminAPIMaintenanceModeTests {
         token = testUtil.setupToken(List.of(SPONSOR_ROLE, ADMIN_ROLE));
     }
 
-    @MockBean
-    private JobService jobService;
-
     @AfterEach
     public void cleanup() {
         dataSetup.cleanup();

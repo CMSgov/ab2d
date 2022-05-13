@@ -127,7 +127,7 @@ public class JobClientMock extends JobClient {
     }
 
 
-    public void incrementDownloadCountOrDeleteFile(File file, String jobGuid) {
+    public void incrementDownload(File file, String jobGuid) {
         // mock api tests aren't set up to test this
     }
 
