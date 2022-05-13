@@ -28,7 +28,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import javax.sql.DataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -101,8 +100,6 @@ public class CoverageServiceRepository {
             AND contract = :contract
             AND year IN ( :years )
                 ) as temp""";
-
-
 
     /**
      * Delete all coverage associated with a single update from BFD {@link CoverageSearchEvent}
@@ -293,9 +290,10 @@ public class CoverageServiceRepository {
                 .addValue("years", YEARS);
 
         NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
+
         return template.queryForList(SELECT_DISTINCT_COVERAGE_BY_PERIOD_COUNT, parameters, Integer.class)
                 .stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for any " +
-                        "of the coverage periods provided"));
+                                "of the coverage periods provided"));
     }
 
     /**
