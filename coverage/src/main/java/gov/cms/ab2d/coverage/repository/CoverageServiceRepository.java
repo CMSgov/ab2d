@@ -92,14 +92,13 @@ public class CoverageServiceRepository {
      * Return a count of all beneficiaries associated with an {@link CoveragePeriod}
      * from any event.
      */
-    private static final String SELECT_DISTINCT_COVERAGE_BY_PERIOD_COUNT = """
-            select COUNT(beneficiary_id ) from(
-            SELECT DISTINCT beneficiary_id
-            FROM coverage
-            WHERE bene_coverage_period_id IN ( :ids )
-            AND contract = :contract
-            AND year IN ( :years )
-                ) as temp""";
+    private static final String SELECT_DISTINCT_COVERAGE_BY_PERIOD_COUNT = "select COUNT(beneficiary_id ) from( " +
+                                                                           "SELECT DISTINCT beneficiary_id " +
+                                                                           "FROM coverage " +
+                                                                           "WHERE bene_coverage_period_id IN ( :ids ) " +
+                                                                           "AND contract = :contract " +
+                                                                           "AND year IN ( :years ) " +
+                                                                           "    ) as temp";
 
     /**
      * Delete all coverage associated with a single update from BFD {@link CoverageSearchEvent}
