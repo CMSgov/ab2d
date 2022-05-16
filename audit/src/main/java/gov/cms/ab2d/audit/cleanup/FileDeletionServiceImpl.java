@@ -52,6 +52,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         if (files == null || files.length == 0) {
             return;
         }
+
         List<String> jobIds = Stream.of(files).map(File::getName).toList();
         List<StaleJob> jobsToDelete = jobAuditClient.checkForExpiration(jobIds, auditFilesTTLHours);
         jobsToDelete.forEach(this::deleteJobDirectory);
@@ -74,7 +75,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
      * Recursively delete NDJSON files and subdirectories
      *
      * @param staleJob - the job
-     * @param jobDir   - the top level directory
+     * @param jobDir - the top level directory
      */
     void deleteNdjsonFilesAndDirectory(StaleJob staleJob, Path jobDir) {
         for (File file : jobDir.toFile().listFiles()) {
@@ -110,14 +111,13 @@ public class FileDeletionServiceImpl implements FileDeletionService {
 
     /**
      * Check whether directory contains any files
-     *
      * @param directory directory to check which must exist
      * @return true if a file is found in directory
      * @throws IOException on failure to read directory
      */
     private boolean isEmptyDirectory(Path directory) throws IOException {
         // Lazily look for first child
-        try (Stream<Path> children = Files.list(directory)) {
+        try (Stream<Path> children =  Files.list(directory)) {
             return children.findAny().isEmpty();
         }
     }
@@ -162,7 +162,6 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         // If we reach this point then file was deleted without an exception so log it to Kinesis and SQL
         eventLogger.log(fileEvent);
     }
-
 
     /**
      * Returns true if the file has the proper file extension
