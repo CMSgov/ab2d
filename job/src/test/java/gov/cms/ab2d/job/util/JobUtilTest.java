@@ -33,7 +33,7 @@ class JobUtilTest {
         assertFalse(JobUtil.isJobDone(job, MAX_DOWNLOADS));
         job = createBasicJob(JobStatus.SUBMITTED, new int[]{1, 1}, true);
         assertFalse(JobUtil.isJobDone(job, MAX_DOWNLOADS));
-        job = createBasicJob(JobStatus.SUCCESSFUL, new int[]{1, 1}, false);
+        job = createBasicJob(JobStatus.SUCCESSFUL, new int[]{MAX_DOWNLOADS, MAX_DOWNLOADS}, false);
         assertTrue(JobUtil.isJobDone(job, MAX_DOWNLOADS));
         job = createBasicJob(JobStatus.SUCCESSFUL, new int[]{0, 11}, false);
         assertFalse(JobUtil.isJobDone(job, MAX_DOWNLOADS));
@@ -45,7 +45,7 @@ class JobUtilTest {
         assertTrue(JobUtil.isJobDone(job, MAX_DOWNLOADS));
         job = createBasicJob(JobStatus.SUCCESSFUL, null, false);
         assertFalse(JobUtil.isJobDone(job, MAX_DOWNLOADS));
-        job = createBasicJob(JobStatus.SUCCESSFUL, new int[]{0, 1}, false);
+        job = createBasicJob(JobStatus.SUCCESSFUL, new int[]{0, MAX_DOWNLOADS}, false);
         JobOutput error = job.getJobOutputs().stream().filter(c -> c.getDownloaded() == 0).findFirst().orElse(null);
         error.setError(true);
         assertTrue(JobUtil.isJobDone(job, MAX_DOWNLOADS));
