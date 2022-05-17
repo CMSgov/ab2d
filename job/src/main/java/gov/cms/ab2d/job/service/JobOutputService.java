@@ -12,6 +12,4 @@ public interface JobOutputService {
     JobOutput updateJobOutput(JobOutput jobOutput);
 
     JobOutput findByFilePathAndJob(String filePath, Job job);
-
-    Map<StaleJob, List<String>>  expiredDownloadableFiles(int minutesInterval);
 }

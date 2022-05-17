@@ -35,13 +35,4 @@ public class JobOutputServiceImpl implements JobOutputService {
         });
     }
 
-    @Override
-    public Map<StaleJob, List<String>> expiredDownloadableFiles(int minutesInterval) {
-        return jobOutputRepository.findByDownloadExpiredAndJobExpired(minutesInterval).orElse(new ArrayList<>())
-                .stream()
-                .collect(Collectors.groupingBy(output ->
-                                new StaleJob(output.getJob().getJobUuid(), output.getJob().getOrganization()),
-                        Collectors.mapping(JobOutput::getFilePath, Collectors.toList())));
-    }
-
 }
