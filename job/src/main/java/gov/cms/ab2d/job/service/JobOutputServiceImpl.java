@@ -1,6 +1,5 @@
 package gov.cms.ab2d.job.service;
 
-import gov.cms.ab2d.job.dto.StaleJob;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobOutput;
 import gov.cms.ab2d.job.repository.JobOutputRepository;
@@ -9,11 +8,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Slf4j
@@ -34,5 +28,4 @@ public class JobOutputServiceImpl implements JobOutputService {
                     " for job " + job.getJobUuid());
         });
     }
-
 }
