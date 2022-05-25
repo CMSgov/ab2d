@@ -25,18 +25,6 @@ public class CapabilityTest {
     @Container
     private static final PostgreSQLContainer postgres = new AB2DPostgresqlContainer();
 
-    //disable sqs
-    @MockBean
-    private SimpleMessageListenerContainer messageListenerContainer;
-    //disable sqs
-    @MockBean
-    private AmazonSQS amazonSQS;
-
-    static {
-        System.setProperty("cloud.aws.stack.auto","false");
-        System.setProperty("cloud.aws.region.static","us-east-1");
-    }
-
     @Test
     void testCapabilityStatement() {
         IBaseConformance capabilityStatement = null;

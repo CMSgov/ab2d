@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
+import com.amazonaws.services.sns.AmazonSNS;
 import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.bfd.client.BFDClient;
@@ -25,6 +26,8 @@ import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.Future;
+
+import gov.cms.ab2d.worker.sns.ProgressUpdater;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -64,9 +67,11 @@ class AggregatorJobTest {
     @Mock
     private LogManager logManager;
 
-    //disable sqs
+    //disable sns
     @MockBean
-    private SimpleMessageListenerContainer messageListenerContainer;
+    private AmazonSNS amazonSNS;
+    @MockBean
+    private ProgressUpdater progressUpdater;
 
     private static final String STREAMING = "streaming";
     private static final String FINISHED = "finished";

@@ -1,13 +1,17 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
+import com.amazonaws.services.sns.AmazonSNS;
 import gov.cms.ab2d.coverage.util.AB2DCoveragePostgressqlContainer;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+
+import gov.cms.ab2d.worker.sns.ProgressUpdater;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -25,6 +29,12 @@ class CoverageLockWrapperTest {
 
     @Autowired
     private CoverageLockWrapper coverageLockWrapper;
+
+    //disable sns
+    @MockBean
+    private AmazonSNS amazonSNS;
+    @MockBean
+    private ProgressUpdater progressUpdater;
 
     /**
      * The only way to trigger a lock error is if different threads are trying to use the lock at

@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.service;
 
+import com.amazonaws.services.sns.AmazonSNS;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
@@ -19,12 +20,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
+
+import gov.cms.ab2d.worker.sns.ProgressUpdater;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -53,6 +57,12 @@ class WorkerServiceDisengagementTest extends JobCleanup {
 
     @Autowired private WorkerServiceImpl workerServiceImpl;
     @Autowired private JobHandler jobHandler;
+
+    //disable sns
+    @MockBean
+    private AmazonSNS amazonSNS;
+    @MockBean
+    private ProgressUpdater progressUpdater;
 
     private WorkerServiceStub workerServiceStub;
 

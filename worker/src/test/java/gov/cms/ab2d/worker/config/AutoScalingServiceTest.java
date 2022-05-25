@@ -1,9 +1,25 @@
 package gov.cms.ab2d.worker.config;
 
 
+import com.amazonaws.services.sns.AmazonSNS;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.coverage.util.AB2DCoveragePostgressqlContainer;
+import gov.cms.ab2d.worker.sns.ProgressUpdater;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayDeque;
@@ -11,25 +27,10 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.Future;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.cloud.aws.messaging.listener.SimpleMessageListenerContainer;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static gov.cms.ab2d.common.util.Constants.MAINTENANCE_MODE;
 import static gov.cms.ab2d.common.util.Constants.PCP_MAX_POOL_SIZE;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 // Set property.change.detection to false, otherwise the values from the database will override the values that are being hardcoded here.
 @SpringBootTest(properties = {"pcp.core.pool.size=3", "pcp.max.pool.size=20", "pcp.scaleToMax.time=20", "property.change.detection=false"})
@@ -50,12 +51,14 @@ public class AutoScalingServiceTest {
     @Autowired
     private PropertiesService propertiesService;
 
-    //disable sqs
-    @MockBean
-    private SimpleMessageListenerContainer messageListenerContainer;
-
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DCoveragePostgressqlContainer();
+
+    //disable sns
+    @MockBean
+    private AmazonSNS amazonSNS;
+    @MockBean
+    private ProgressUpdater progressUpdater;
 
     private int originalMaxPoolSize;
 

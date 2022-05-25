@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
-import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
@@ -87,7 +86,7 @@ public class AdminAPIPropertiesTests {
             put(COVERAGE_SEARCH_UPDATE_MONTHS, 1);
             put(COVERAGE_SEARCH_STUCK_HOURS, 24);
             put(COVERAGE_SEARCH_OVERRIDE, "false");
-            put(SQS_JOB_UPDATE_ENGAGEMENT, "idle");
+            put(SNS_JOB_UPDATE_ENGAGEMENT, "idle");
         }};
 
         MvcResult mvcResult = this.mockMvc.perform(

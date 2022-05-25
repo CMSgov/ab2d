@@ -4,6 +4,8 @@ package gov.cms.ab2d.worker.processor;
  * Write only interface for the channel implementation to update jobs.
  */
 public interface JobProgressUpdateService {
+    boolean hasJob(String jobUuid);
+
     boolean addMeasure(String jobUuid, JobMeasure measure, long value);
 
     /*

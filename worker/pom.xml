@@ -172,7 +172,7 @@
                                 <exclude>**/gov/cms/ab2d/worker/SpringBootApp.class</exclude>
                                 <!-- exclude the bluebutton package from coverage as it only has a stub -->
                                 <exclude>**/gov/cms/ab2d/worker/adapter/bluebutton/**</exclude>
-                                <exclude>**/gov/cms/ab2d/worker/config/SQSConfig.class</exclude>
+                                <exclude>**/gov/cms/ab2d/worker/config/SNSConfig.class</exclude>
                                 <exclude>**/gov/cms/ab2d/worker/config/JobUpdate.class</exclude>
                             </excludes>
                         </configuration>

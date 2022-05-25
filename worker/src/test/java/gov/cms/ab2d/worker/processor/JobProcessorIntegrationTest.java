@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
+import com.amazonaws.services.sns.AmazonSNS;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Contract;
@@ -40,6 +41,7 @@ import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
+import gov.cms.ab2d.worker.sns.ProgressUpdater;
 import gov.cms.ab2d.worker.util.HealthCheck;
 import java.io.File;
 import java.time.OffsetDateTime;
@@ -58,6 +60,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.OngoingStubbing;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.integration.test.context.SpringIntegrationTest;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -101,7 +104,6 @@ class JobProcessorIntegrationTest extends JobCleanup {
     private static final int INTERNAL_PORT = new Random()
             .ints(6000, 7000)
             .findFirst().orElse(6500);
-    private static final int EXTERNAL_PORT = LocalStackContainer.EnabledService.named("SQS").getPort();
 
     private JobProcessor cut;       // class under test
 
@@ -161,6 +163,12 @@ class JobProcessorIntegrationTest extends JobCleanup {
 
     @Mock
     private BFDClient mockBfdClient;
+
+    //disable sns
+    @MockBean
+    private AmazonSNS amazonSNS;
+    @MockBean
+    private ProgressUpdater progressUpdater;
 
     @TempDir
     File tmpEfsMountDir;

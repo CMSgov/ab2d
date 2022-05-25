@@ -32,6 +32,11 @@ public class JobProgressServiceImpl implements JobProgressService, JobProgressUp
     }
 
     @Override
+    public boolean hasJob(String jobUuid) {
+        return progressTrackerMap.containsKey(jobUuid);
+    }
+
+    @Override
     public boolean addMeasure(String jobId, JobMeasure measure, long value) {
         ProgressTracker progressTracker = progressTrackerMap.get(jobId);
         // Most likely being tracked by another instance in the cluster.  Less likely a very stale message and the

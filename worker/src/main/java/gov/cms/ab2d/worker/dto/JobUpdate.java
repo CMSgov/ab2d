@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class JobUpdate {
-    private String jobUUID;
     private String measure;
     private long value;
 }

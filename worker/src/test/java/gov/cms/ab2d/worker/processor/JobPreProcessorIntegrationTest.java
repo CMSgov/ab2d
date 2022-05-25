@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
+import com.amazonaws.services.sns.AmazonSNS;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.job.model.Job;
@@ -32,6 +33,8 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
+
+import gov.cms.ab2d.worker.sns.ProgressUpdater;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -97,13 +100,15 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
     @Mock
     private SlackLogger slackLogger;
 
-    //disable sqs
-    @MockBean
-    private SimpleMessageListenerContainer messageListenerContainer;
-
     private PdpClient pdpClient;
     private Job job;
     private Contract contract;
+
+    //disable sns
+    @MockBean
+    private AmazonSNS amazonSNS;
+    @MockBean
+    private ProgressUpdater progressUpdater;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();

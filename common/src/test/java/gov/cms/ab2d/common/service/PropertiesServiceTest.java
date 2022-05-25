@@ -51,7 +51,7 @@ class PropertiesServiceTest {
             put(COVERAGE_SEARCH_UPDATE_MONTHS, "1");
             put(COVERAGE_SEARCH_STUCK_HOURS, "24");
             put(COVERAGE_SEARCH_OVERRIDE, "false");
-            put(SQS_JOB_UPDATE_ENGAGEMENT, "idle");
+            put(SNS_JOB_UPDATE_ENGAGEMENT, "idle");
         }};
 
         List<Properties> propertyListBeforeInsert = propertiesService.getAllProperties();

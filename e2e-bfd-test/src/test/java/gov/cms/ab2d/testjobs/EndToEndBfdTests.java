@@ -141,11 +141,6 @@ public class EndToEndBfdTests {
     @Autowired
     private ContractToContractCoverageMapping contractToContractCoverageMapping;
 
-    static {
-        System.setProperty("cloud.aws.stack.auto","false");
-        System.setProperty("cloud.aws.region.static","us-east-1");
-    }
-
     @TempDir
     File path;
 

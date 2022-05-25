@@ -1,11 +1,13 @@
 package gov.cms.ab2d.worker.bfdhealthcheck;
 
+import com.amazonaws.services.sns.AmazonSNS;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Properties;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.SpringBootApp;
+import gov.cms.ab2d.worker.sns.ProgressUpdater;
 import org.hl7.fhir.dstu3.model.CapabilityStatement;
 import org.hl7.fhir.dstu3.model.Enumerations;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,15 +42,17 @@ public class BFDHealthCheckTest {
     @Mock
     private BFDClient bfdClient;
 
+    //disable sns
+    @MockBean
+    private AmazonSNS amazonSNS;
+    @MockBean
+    private ProgressUpdater progressUpdater;
+
     @Autowired
     private LogManager logManager;
 
     @Autowired
     private PropertiesService propertiesService;
-
-    //disable sqs
-    @MockBean
-    private SimpleMessageListenerContainer messageListenerContainer;
 
     @Value("${bfd.health.check.consecutive.failures}")
     private int consecutiveFailuresToTakeDown;

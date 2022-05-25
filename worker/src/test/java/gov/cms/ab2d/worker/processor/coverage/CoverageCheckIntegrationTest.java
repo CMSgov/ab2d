@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
+import com.amazonaws.services.sns.AmazonSNS;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.ContractRepository;
@@ -22,6 +23,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import gov.cms.ab2d.worker.sns.ProgressUpdater;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -75,9 +78,11 @@ public class CoverageCheckIntegrationTest {
     @Autowired
     private CoverageDataSetup coverageDataSetup;
 
-    //disable sqs
+    //disable sns
     @MockBean
-    private SimpleMessageListenerContainer messageListenerContainer;
+    private AmazonSNS amazonSNS;
+    @MockBean
+    private ProgressUpdater progressUpdater;
 
     private static final ZonedDateTime CURRENT_TIME = OffsetDateTime.now().atZoneSameInstant(AB2D_ZONE);
     private static final ZonedDateTime ATTESTATION_TIME = CURRENT_TIME.minusMonths(3);

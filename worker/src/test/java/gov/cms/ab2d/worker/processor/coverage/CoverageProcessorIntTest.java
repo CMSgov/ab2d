@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
+import com.amazonaws.services.sns.AmazonSNS;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
@@ -9,6 +10,7 @@ import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.util.Coverage;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
+import gov.cms.ab2d.worker.sns.ProgressUpdater;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -32,9 +34,6 @@ class CoverageProcessorIntTest {
 
     @Container
     private static final PostgreSQLContainer postgres = new AB2DPostgresqlContainer();
-    //disable sqs
-    @MockBean
-    private SimpleMessageListenerContainer messageListenerContainer;
 
     @Autowired
     private ContractRepository contractRepo;
@@ -54,6 +53,12 @@ class CoverageProcessorIntTest {
     @Autowired
     @Qualifier(value = "patientCoverageThreadPool")
     private ThreadPoolTaskExecutor taskExecutor;
+
+    //disable sns
+    @MockBean
+    private AmazonSNS amazonSNS;
+    @MockBean
+    private ProgressUpdater progressUpdater;
 
     @Autowired
     private CoverageProcessor processor;

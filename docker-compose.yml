@@ -112,13 +112,18 @@ services:
 # When we update docker-compose to a version that supports profiles commenting this out will no longer be needed
 #  localstack:
 #    image: localstack/localstack:latest
+#    entrypoint: ["/tmp/setup/localstack_setup.sh" ,"docker-entrypoint.sh"]
 #    profiles: ["local"]
 #    environment:
 #        - AWS_DEFAULT_REGION=us-east-1
 #        - EDGE_PORT=4566
 #        - SERVICES=sqs,sns
+#        - LS_LOG=trace
 #    ports:
-#        - '4566:4566'
+#        - '4566-4597:4566-4597'
+#        - '8080:8081'
+#    volumes:
+#        - ./:/tmp/setup
 
 # This needs a shared volume so that both the API and worker module can access the ndjson files being generated
 volumes:

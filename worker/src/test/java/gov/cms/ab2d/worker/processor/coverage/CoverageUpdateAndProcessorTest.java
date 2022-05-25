@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
+import com.amazonaws.services.sns.AmazonSNS;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.dto.PdpClientDTO;
@@ -23,6 +24,7 @@ import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
+import gov.cms.ab2d.worker.sns.ProgressUpdater;
 import gov.cms.ab2d.worker.util.WorkerDataSetup;
 import java.time.DayOfWeek;
 import java.time.OffsetDateTime;
@@ -118,9 +120,11 @@ class CoverageUpdateAndProcessorTest {
     @Autowired
     private ContractToContractCoverageMapping mapping;
 
-    //disable sqs
+    //disable sns
     @MockBean
-    private SimpleMessageListenerContainer messageListenerContainer;
+    private AmazonSNS amazonSNS;
+    @MockBean
+    private ProgressUpdater progressUpdater;
 
     private Contract contract;
     private CoveragePeriod january;

@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
+import com.amazonaws.services.sns.AmazonSNS;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.dto.PdpClientDTO;
@@ -47,6 +48,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
+
+import gov.cms.ab2d.worker.sns.ProgressUpdater;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -130,9 +133,11 @@ class CoverageDriverTest extends JobCleanup {
     @Autowired
     private ContractToContractCoverageMapping contractToContractCoverageMapping;
 
-    //disable sqs
+    //disable sns
     @MockBean
-    private SimpleMessageListenerContainer messageListenerContainer;
+    private AmazonSNS amazonSNS;
+    @MockBean
+    private ProgressUpdater progressUpdater;
 
     private Contract contract;
     private Contract contract1;
