@@ -21,7 +21,9 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
@@ -32,16 +34,8 @@ import static gov.cms.ab2d.fhir.FhirVersion.R4;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.job.model.JobStatus.SUBMITTED;
 import static gov.cms.ab2d.job.model.JobStatus.SUCCESSFUL;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
@@ -92,6 +86,26 @@ class JobPreProcessorUnitTest {
                 () -> cut.preprocess(job.getJobUuid()));
 
         assertEquals(String.format("Job %s is not in SUBMITTED status", JOB_UUID), exceptionThrown.getMessage());
+    }
+
+    @Test
+    @DisplayName("Test to see if the status string is properly formatted for the slack alert")
+    void checkStatusString() {
+        JobPreProcessorImpl impl = (JobPreProcessorImpl) cut;
+        String val = impl.getStatusString(job);
+        assertEquals("EOB_JOB_STARTED for JPP5678 in progress", val);
+        OffsetDateTime tm = OffsetDateTime.of(2022, 7, 11, 1, 2, 3, 0, ZoneOffset.UTC);
+        job.setSince(tm);
+        val = impl.getStatusString(job);
+        assertEquals("EOB_JOB_STARTED for JPP5678 in progress (since date: 2022-07-11T01:02:03Z)", val);
+        ZoneId zoneId = ZoneId.of("Pacific/Honolulu");
+        tm = OffsetDateTime.of(2022, 7, 11, 1, 2, 3, 0, ZonedDateTime.now(zoneId).getOffset());
+        job.setSince(tm);
+        val = impl.getStatusString(job);
+        assertEquals("EOB_JOB_STARTED for JPP5678 in progress (since date: 2022-07-11T01:02:03-10:00)", val);
+        assertEquals("", impl.getStatusString(null));
+        job.setContractNumber(null);
+        assertEquals("EOB_JOB_STARTED for (unknown) in progress (since date: 2022-07-11T01:02:03-10:00)", impl.getStatusString(job));
     }
 
     @Test

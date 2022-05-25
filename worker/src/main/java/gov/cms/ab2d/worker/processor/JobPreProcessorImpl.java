@@ -10,6 +10,7 @@ import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverException;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Isolation;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -86,8 +88,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
                 return job;
             }
 
-            eventLogger.logAndAlert(job.buildJobStatusChangeEvent(IN_PROGRESS, EOB_JOB_STARTED + " for "
-                    + contract.getContractNumber() + " in progress"), PUBLIC_LIST);
+            eventLogger.logAndAlert(job.buildJobStatusChangeEvent(IN_PROGRESS, getStatusString(job)), PUBLIC_LIST);
 
             job.setStatus(IN_PROGRESS);
             job.setStatusMessage(null);
@@ -107,6 +108,19 @@ public class JobPreProcessorImpl implements JobPreProcessor {
         }
 
         return job;
+    }
+
+    String getStatusString(Job job) {
+        if (job == null) {
+            return "";
+        }
+        String contractNum = job.getContractNumber() == null ? "(unknown)" : job.getContractNumber();
+        String statusString = String.format("%s for %s in progress", EOB_JOB_STARTED, contractNum);
+        if (job.getSince() != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
+            statusString += " (since date: " + job.getSince().format(formatter) + ")";
+        }
+        return statusString;
     }
 
     /**
