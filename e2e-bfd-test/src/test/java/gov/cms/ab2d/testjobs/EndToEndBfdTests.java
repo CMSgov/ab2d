@@ -1,5 +1,6 @@
 package gov.cms.ab2d.testjobs;
 
+import com.amazonaws.services.sns.AmazonSNS;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.Contract;
@@ -37,6 +38,7 @@ import gov.cms.ab2d.worker.processor.coverage.*;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.service.FileServiceImpl;
 import gov.cms.ab2d.worker.service.JobChannelService;
+import gov.cms.ab2d.worker.sns.ProgressUpdater;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IDomainResource;
@@ -52,6 +54,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -140,6 +143,13 @@ public class EndToEndBfdTests {
     private LoggerEventSummary logEventSummary;
     @Autowired
     private ContractToContractCoverageMapping contractToContractCoverageMapping;
+
+    // Disable SNS
+    @MockBean
+    AmazonSNS amazonSns;
+
+    @MockBean
+    private ProgressUpdater progressUpdater;
 
     @TempDir
     File path;

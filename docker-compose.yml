@@ -121,9 +121,10 @@ services:
 #        - LS_LOG=trace
 #    ports:
 #        - '4566-4597:4566-4597'
-#        - '8080:8081'
 #    volumes:
 #        - ./:/tmp/setup
+#    extra_hosts:
+#      - "host.docker.internal:host-gateway"
 
 # This needs a shared volume so that both the API and worker module can access the ndjson files being generated
 volumes:

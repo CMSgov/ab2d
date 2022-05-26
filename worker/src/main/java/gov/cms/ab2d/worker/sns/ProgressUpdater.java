@@ -27,26 +27,24 @@ import javax.annotation.PreDestroy;
 @RequestMapping("/ab2d-job-tracking")
 public class ProgressUpdater {
 
-    @Value("${ab2d.sns.base.address:http://host.docker.internal:8081}")
+    @Value("${ab2d.sns.base.address:http://host.docker.internal:8080}")
     private String snsBaseAddress;
     private final JobProgressUpdateService jobProgressUpdateService;
 
     private final AmazonSNS amazonSns;
     private final ObjectMapper mapper;
-    private final JobProgressUpdateService jobProgressService;
 
-    public ProgressUpdater(JobProgressUpdateService jobProgressUpdateService, AmazonSNS amazonSns, ObjectMapper mapper, JobProgressUpdateService jobProgressService) {
+    public ProgressUpdater(JobProgressUpdateService jobProgressUpdateService, AmazonSNS amazonSns, ObjectMapper mapper) {
         this.jobProgressUpdateService = jobProgressUpdateService;
         this.amazonSns = amazonSns;
         this.mapper = mapper;
-        this.jobProgressService = jobProgressService;
     }
 
     @PostConstruct
     public void setup() {
         String arn = amazonSns.createTopic("ab2d-job-tracking").getTopicArn();
-        SubscribeResult s = amazonSns.subscribe(arn, "http", snsBaseAddress + "/ab2d-job-tracking");
-        log.info(s.getSubscriptionArn());
+        SubscribeResult subscribeResult = amazonSns.subscribe(arn, "http", snsBaseAddress + "/ab2d-job-tracking");
+        log.info(subscribeResult.getSubscriptionArn());
     }
 
     @PreDestroy
@@ -65,7 +63,7 @@ public class ProgressUpdater {
     @NotificationMessageMapping
     public void receiveNotification(@NotificationMessage String message,
                                     @NotificationSubject String subject) throws JsonProcessingException {
-        if (jobProgressService.hasJob(subject)) { //Ignore untracked job messages
+        if (jobProgressUpdateService.hasJob(subject)) { //Ignore untracked job messages
             JobUpdate jobUpdate = mapper.readValue(message, JobUpdate.class);
             log.info("JobUpdateListener: Processing message from SNS: " + jobUpdate);
             log.info("JobUpdateListener: Done parsing: " + jobUpdate);
