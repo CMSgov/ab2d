@@ -25,13 +25,15 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import javax.annotation.PostConstruct;
 import java.util.List;
 
+import static gov.cms.ab2d.common.service.FeatureEngagement.IN_GEAR;
+import static gov.cms.ab2d.common.service.FeatureEngagement.NEUTRAL;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.anyString;
 
 @Testcontainers
 @Slf4j
 @SpringBootTest
-public class JobChannelServiceTest {
+class JobChannelServiceTest {
 
     @TestConfiguration
     public static class EarlyConfiguration {
@@ -41,16 +43,17 @@ public class JobChannelServiceTest {
         @PostConstruct
         public void initMock() {
             CreateTopicResult result = new CreateTopicResult();
-            result.setTopicArn("");
+            result.setTopicArn("test");
             Mockito.when(amazonSns.createTopic(anyString())).thenReturn(result);
             Mockito.when(amazonSns.subscribe(anyString(), anyString(), anyString())).thenReturn(new SubscribeResult());
         }
     }
-    @Autowired
-    private ObjectMapper mapper;
 
     @Autowired
-    private JobChannelService jobChannelService;
+    private JobChannelServiceImpl jobChannelService;
+
+    @Autowired
+    private AmazonSNS amazonSns;
 
     @Autowired
     private PropertiesService propertiesService;
@@ -64,6 +67,9 @@ public class JobChannelServiceTest {
         PropertiesDTO snsState = new PropertiesDTO();
         snsState.setKey(Constants.SNS_JOB_UPDATE_ENGAGEMENT);
         snsState.setValue(state);
+        CreateTopicResult result = new CreateTopicResult();
+        result.setTopicArn("test");
+        Mockito.when(amazonSns.createTopic(anyString())).thenReturn(result);
         propertiesService.updateProperties(List.of(snsState));
         assertDoesNotThrow(() -> {
             jobChannelService.sendUpdate("test", JobMeasure.FAILURE_THRESHHOLD, 1);

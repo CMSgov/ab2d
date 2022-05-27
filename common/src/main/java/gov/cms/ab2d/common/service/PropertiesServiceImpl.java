@@ -92,9 +92,11 @@ public class PropertiesServiceImpl implements PropertiesService {
             break;
 
         case WORKER_ENGAGEMENT:
+        case SNS_JOB_UPDATE_ENGAGEMENT:
         case HPMS_INGESTION_ENGAGEMENT:
         case COVERAGE_SEARCH_DISCOVERY:
         case COVERAGE_SEARCH_QUEUEING:
+
             addUpdatedPropertiesToList(propertiesDTOsReturn, propertiesDTO);
             break;
         // The maximums for these values are arbitrary and may need to be changed
