@@ -49,7 +49,7 @@ public class ProgressUpdater {
     @PreDestroy
     public void destroy() {
         amazonSns.unsubscribe(snsBaseAddress + "/ab2d-job-tracking");
-        System.out.println("Shutdown - Unsubscribed from ab2d-job-tracking");
+        log.info("Shutdown - Unsubscribed from ab2d-job-tracking");
     }
 
     @NotificationUnsubscribeConfirmationMapping

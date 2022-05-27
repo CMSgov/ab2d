@@ -19,7 +19,6 @@ import org.springframework.context.annotation.Primary;
 public class SNSConfig {
 
 
-
     private final AWSStaticCredentialsProvider credentials =
             new AWSStaticCredentialsProvider(new BasicAWSCredentials("a", ""));
     private final String region = Regions.US_EAST_1.getName();
@@ -43,7 +42,7 @@ public class SNSConfig {
         return new NotificationMessagingTemplate(amazonSNS);
     }
 
-    private AmazonSNS getSns(AwsClientBuilder builder) {
+    private AmazonSNS getSns(AwsClientBuilder<?, ?> builder) {
         String localstackURl = System.getProperty("localstack");
         log.info("Locakstack url" + localstackURl);
         if (null != localstackURl) {
@@ -55,8 +54,6 @@ public class SNSConfig {
         return (AmazonSNS) builder
                 .build();
     }
-
-
 
 
     private AwsClientBuilder.EndpointConfiguration getEndpointConfig(String localstackURl) {

@@ -125,6 +125,8 @@ services:
 #        - ./:/tmp/setup
 #    extra_hosts:
 #      - "host.docker.internal:host-gateway"
+#    depends_on:
+#      - db
 
 # This needs a shared volume so that both the API and worker module can access the ndjson files being generated
 volumes:
