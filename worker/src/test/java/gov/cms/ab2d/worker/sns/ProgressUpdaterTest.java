@@ -1,40 +1,31 @@
-package gov.cms.ab2d.worker.service;
+package gov.cms.ab2d.worker.sns;
 
 import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.model.CreateTopicResult;
 import com.amazonaws.services.sns.model.SubscribeResult;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import gov.cms.ab2d.common.dto.PropertiesDTO;
-import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import gov.cms.ab2d.common.util.Constants;
-import gov.cms.ab2d.worker.processor.JobMeasure;
 import gov.cms.ab2d.worker.util.SnsMockUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.cloud.aws.messaging.endpoint.NotificationStatus;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.annotation.PostConstruct;
-import java.util.List;
 
-import static gov.cms.ab2d.common.service.FeatureEngagement.IN_GEAR;
-import static gov.cms.ab2d.common.service.FeatureEngagement.NEUTRAL;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.anyString;
 
 @Testcontainers
 @Slf4j
 @SpringBootTest
-class JobChannelServiceTest {
+public class ProgressUpdaterTest {
 
     @TestConfiguration
     public static class EarlyConfiguration {
@@ -47,28 +38,27 @@ class JobChannelServiceTest {
         }
     }
 
+    // Disable SNS
     @Autowired
-    private JobChannelServiceImpl jobChannelService;
-
-    @Autowired
-    private AmazonSNS amazonSns;
-
-    @Autowired
-    private PropertiesService propertiesService;
+    AmazonSNS amazonSns;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
-    @ParameterizedTest
-    @ValueSource(strings = {"idle", "engaged"})
-    void sendUpdate(String state) {
-        PropertiesDTO snsState = new PropertiesDTO();
-        snsState.setKey(Constants.SNS_JOB_UPDATE_ENGAGEMENT);
-        snsState.setValue(state);
-        SnsMockUtil.mockSns(amazonSns);
-        propertiesService.updateProperties(List.of(snsState));
+    @Autowired
+    private ProgressUpdater progressUpdater;
+
+    @Test
+    void snsSubscribe() {
         assertDoesNotThrow(() -> {
-            jobChannelService.sendUpdate("test", JobMeasure.FAILURE_THRESHHOLD, 1);
+            progressUpdater.confirmSubscriptionMessage(Mockito.mock(NotificationStatus.class));
+        });
+    }
+
+    @Test
+    void snsUnsubscribe() {
+        assertDoesNotThrow(() -> {
+            progressUpdater.confirmUnsubscribeMessage(Mockito.mock(NotificationStatus.class));
         });
     }
 

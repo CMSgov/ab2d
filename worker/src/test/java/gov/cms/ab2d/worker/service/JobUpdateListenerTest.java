@@ -11,6 +11,7 @@ import gov.cms.ab2d.worker.processor.JobMeasure;
 import gov.cms.ab2d.worker.processor.JobProgressService;
 import gov.cms.ab2d.worker.processor.JobProgressUpdateService;
 import gov.cms.ab2d.worker.sns.ProgressUpdater;
+import gov.cms.ab2d.worker.util.SnsMockUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,9 @@ import javax.annotation.PostConstruct;
 import java.util.Random;
 import java.util.UUID;
 
+import static gov.cms.ab2d.worker.processor.JobMeasure.FAILURE_THRESHHOLD;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.anyString;
 
 @Testcontainers
@@ -49,10 +52,7 @@ class JobUpdateListenerTest {
 
         @PostConstruct
         public void initMock() {
-            CreateTopicResult result = new CreateTopicResult();
-            result.setTopicArn("");
-            Mockito.when(amazonSns.createTopic(anyString())).thenReturn(result);
-            Mockito.when(amazonSns.subscribe(anyString(), anyString(), anyString())).thenReturn(new SubscribeResult());
+            SnsMockUtil.mockSns(amazonSns);
         }
     }
 
@@ -79,17 +79,32 @@ class JobUpdateListenerTest {
         String uuid = UUID.randomUUID().toString();
         log.info("sending directly uuid: {} old: {} new: {}", uuid, oldThreshold, newThreshold);
         jobProgressUpdateService.initJob(uuid);
-        jobProgressUpdateService.addMeasure(uuid, JobMeasure.FAILURE_THRESHHOLD, oldThreshold);
-        progressUpdater.receiveNotification(createJobUpdate(newThreshold), uuid);
+        jobProgressUpdateService.addMeasure(uuid, FAILURE_THRESHHOLD, oldThreshold);
+        progressUpdater.receiveNotification(mapper.writeValueAsString(createJobUpdate(newThreshold)), uuid);
         assertEquals(newThreshold, jobProgressService.getStatus(uuid).getFailureThreshold());
     }
 
-    private String createJobUpdate(int threshold) throws JsonProcessingException {
-        return mapper.writeValueAsString(
-                JobUpdate.builder()
-                        .measure(JobMeasure.FAILURE_THRESHHOLD.toString())
-                        .value(threshold)
-                        .build());
+    @Test
+    @DisplayName("Update job progress by calling SNS handler method")
+    void jobUpdateDirectlyUnknown() throws JsonProcessingException {
+        jobProgressUpdateService.addMeasure("invalid", FAILURE_THRESHHOLD, 1);
+        progressUpdater.receiveNotification(mapper.writeValueAsString(createJobUpdate(2)), "invalid");
+        assertNull(jobProgressService.getStatus("invalid"));
+    }
+
+    @Test
+    @DisplayName("JobMeasure Test")
+    void jobMeasure() throws JsonProcessingException {
+        JobUpdate jobUpdate = createJobUpdate(10);
+        assertEquals(10, jobUpdate.getValue());
+        assertEquals(FAILURE_THRESHHOLD.toString(), jobUpdate.getMeasure());
+    }
+
+    private JobUpdate createJobUpdate(int threshold) throws JsonProcessingException {
+        return JobUpdate.builder()
+                .measure(FAILURE_THRESHHOLD.toString())
+                .value(threshold)
+                .build();
     }
 
 }
