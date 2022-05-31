@@ -47,8 +47,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import static gov.cms.ab2d.common.util.Constants.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
@@ -219,34 +217,6 @@ class TestRunner {
         //uploadAttestationReport();
     }
 
-    /*private HttpResponse<String> uploadOrgStructureReport() throws IOException, InterruptedException {
-        HttpRequest uploadRequest = HttpRequest.newBuilder()
-                .uri(URI.create(AB2D_ADMIN_URL + "uploadOrgStructureReport"))
-                .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT))
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + jwtStr)
-                .POST(HttpRequest.BodyPublishers.ofInputStream(() -> {
-                    return getClass().getResourceAsStream("/parent_org_and_legal_entity_20191031_111812.xls");
-                }))
-                .build();
-
-        return httpClient.send(uploadRequest, HttpResponse.BodyHandlers.ofString());
-    }
-
-    private HttpResponse<String> uploadAttestationReport() throws IOException, InterruptedException {
-        HttpRequest uploadRequest = HttpRequest.newBuilder()
-                .uri(URI.create(AB2D_ADMIN_URL + "uploadAttestationReport"))
-                .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT))
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + jwtStr)
-                .POST(HttpRequest.BodyPublishers.ofInputStream(() -> {
-                    return getClass().getResourceAsStream("/Attestation_Report_Sample.xlsx");
-                }))
-                .build();
-
-        return httpClient.send(uploadRequest, HttpResponse.BodyHandlers.ofString());
-    }*/
-
     private HttpResponse<String> pollForStatusResponse(String statusUrl) throws InterruptedException, IOException {
         HttpResponse<String> statusResponse = null;
         long start = System.currentTimeMillis();
@@ -317,7 +287,7 @@ class TestRunner {
         return Pair.of(url, extension);
     }
 
-    private void verifyJsonFromfileDownload(String fileContent, JSONArray extension, OffsetDateTime since) throws JSONException {
+    private void verifyJsonFromfileDownload(String fileContent, JSONArray extension, OffsetDateTime since, FhirVersion version) throws JSONException {
         // Some of the data that is returned will be variable and will change from request to request, so not every
         // JSON object can be verified
         String[] jsonLines = fileContent.split("\n");
@@ -355,7 +325,7 @@ class TestRunner {
             checkStandardEOBFields(jsonObject);
 
             // Check whether extensions are correct
-            checkEOBExtensions(jsonObject);
+            checkEOBExtensions(jsonObject, version);
 
             // Check correctness of metadata
             checkMetadata(since, jsonObject);
@@ -416,7 +386,20 @@ class TestRunner {
         }
     }
 
-    private void checkEOBExtensions(JSONObject jsonObject) throws JSONException {
+    private void checkEOBExtensions(JSONObject jsonObject, FhirVersion version) throws JSONException {
+        switch (version) {
+            case STU3:
+                checkEOBExtensionsSTU3(jsonObject);
+                break;
+            case R4:
+                checkEOBExtensionsR4(jsonObject);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void checkEOBExtensionsSTU3(JSONObject jsonObject) throws JSONException {
 
         final JSONArray extensions = jsonObject.getJSONArray("extension");
         assertNotNull(extensions);
@@ -451,10 +434,16 @@ class TestRunner {
         assertEquals("current", valueCoding.getString("code"));
     }
 
+    private void checkEOBExtensionsR4(JSONObject jsonObject) throws JSONException {
+        final JSONArray extensions = jsonObject.getJSONArray("extension");
+        assertNotNull(extensions);
+        assertTrue(extensions.length() == 1 || extensions.length() == 2);
+    }
+
     private boolean validFields(JSONObject jsonObject) {
         Set<String> allowedFields = Set.of("identifier", "status", "item", "meta", "patient", "billablePeriod", "diagnosis",
                 "provider", "id", "type", "precedence", "resourceType", "organization", "facility", "careTeam",
-                "procedure", "extension");
+                "procedure", "extension", "supportingInfo");
 
         Set<String> disallowedFields = Set.of("patientTarget", "created", "enterer",
                 "entererTarget", "insurer", "insurerTarget", "providerTarget", "organizationTarget", "referral",
@@ -484,7 +473,7 @@ class TestRunner {
         return true;
     }
 
-    private void downloadFile(Pair<String, JSONArray> downloadDetails, OffsetDateTime since) throws IOException, InterruptedException, JSONException {
+    private void downloadFile(Pair<String, JSONArray> downloadDetails, OffsetDateTime since, FhirVersion version) throws IOException, InterruptedException, JSONException {
         HttpResponse<InputStream> downloadResponse = apiClient.fileDownloadRequest(downloadDetails.getFirst());
 
         assertEquals(200, downloadResponse.statusCode());
@@ -496,30 +485,7 @@ class TestRunner {
             downloadString = IOUtils.toString(gzipInputStream, Charset.defaultCharset());
         }
 
-        verifyJsonFromfileDownload(downloadString, downloadDetails.getSecond(), since);
-    }
-
-    private void downloadZipFile(String url, JSONArray extension, OffsetDateTime since) throws IOException, InterruptedException, JSONException {
-        HttpResponse<InputStream> downloadResponse = apiClient.fileDownloadRequest(url);
-        ZipInputStream zipIn = new ZipInputStream(downloadResponse.body());
-        ZipEntry entry = zipIn.getNextEntry();
-        StringBuilder downloadString = new StringBuilder();
-        while (entry != null) {
-            downloadString.append(extractZipFileData(entry, zipIn));
-            zipIn.closeEntry();
-            entry = zipIn.getNextEntry();
-        }
-        verifyJsonFromfileDownload(downloadString.toString(), extension, since);
-    }
-
-    public static String extractZipFileData(ZipEntry entry, ZipInputStream zipIn) throws IOException {
-        StringBuilder result = new StringBuilder();
-        int read;
-        while ((read = zipIn.read()) != -1) {
-            result.append((char) read);
-        }
-        log.info("    Entry " + entry.getName() + " - size: " + result.length());
-        return result.toString();
+        verifyJsonFromfileDownload(downloadString, downloadDetails.getSecond(), since, version);
     }
 
     private Pair<String, JSONArray> performStatusRequests(List<String> contentLocationList, boolean isContract,
@@ -563,7 +529,7 @@ class TestRunner {
 
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, contract, version);
         assertNotNull(downloadDetails);
-        downloadFile(downloadDetails, null);
+        downloadFile(downloadDetails, null, version);
     }
 
     @ParameterizedTest
@@ -579,7 +545,7 @@ class TestRunner {
 
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, contract, version);
         assertNotNull(downloadDetails);
-        downloadFile(downloadDetails, earliest);
+        downloadFile(downloadDetails, earliest, version);
     }
 
     @ParameterizedTest
@@ -621,7 +587,7 @@ class TestRunner {
 
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, true, contract, version);
         assertNotNull(downloadDetails);
-        downloadFile(downloadDetails, null);
+        downloadFile(downloadDetails, null, version);
     }
 
     @ParameterizedTest
@@ -861,7 +827,7 @@ class TestRunner {
      */
     private Stream<Arguments> getVersionAndContract() {
         if (v2Enabled()) {
-            return Stream.of(arguments(STU3, testContractV1),arguments(R4, testContractV2));
+            return Stream.of(arguments(STU3, testContractV1), arguments(R4, testContractV2));
         } else {
             return Stream.of(arguments(STU3, testContractV1));
         }

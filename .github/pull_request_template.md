@@ -16,6 +16,8 @@
 
 ### Database Changes
 
+- [ ] All QuickSight impacts have been identified
+
 ### Limitations
 
 ### Security Implications
