@@ -9,7 +9,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
 import java.net.URI;
@@ -67,20 +67,23 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
     private void refreshToken(long currentTimestamp) {
         authToken = null;
 
-        Flux<HPMSAuthResponse> orgInfoFlux = webClient
+        Mono<HPMSAuthResponse> orgInfoMono = webClient
                 .post().uri(fullAuthURI)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(retrieveAuthRequestPayload())
                 .accept(MediaType.APPLICATION_JSON)
-                .exchangeToFlux(response -> {
+                .exchangeToMono(response -> {
                     cookies = extractCookies(response.cookies());
-                    return response.bodyToFlux(HPMSAuthResponse.class);
+                    return response.bodyToMono(HPMSAuthResponse.class);
                 });
 
         // Cough up blood if we can't get an Auth response in a minute.
-        HPMSAuthResponse authResponse = orgInfoFlux.blockFirst(Duration.ofMinutes(1));
+        long curTime = System.currentTimeMillis();
+        HPMSAuthResponse authResponse = orgInfoMono.block(Duration.ofMinutes(1));
         if (authResponse == null || authResponse.getAccessToken() == null) {
-            throw new RuntimeException("Failed to procure Auth Token");
+            long elapsedTime = System.currentTimeMillis() - curTime;
+            throw new RuntimeException("Failed to procure Auth Token, response: " + authResponse +
+                    "waited for " + (elapsedTime / 1000) + " seconds.");
         }
 
         // Convert seconds to millis at a 90% level to pad refreshing of a token so that we are not in the middle of
