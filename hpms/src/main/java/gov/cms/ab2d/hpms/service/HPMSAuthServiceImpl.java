@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
+import org.springframework.remoting.RemoteTimeoutException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -82,8 +83,8 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
         HPMSAuthResponse authResponse = orgInfoMono.block(Duration.ofMinutes(1));
         if (authResponse == null || authResponse.getAccessToken() == null) {
             long elapsedTime = System.currentTimeMillis() - curTime;
-            throw new RuntimeException("Failed to procure Auth Token, response: " + authResponse +
-                    "waited for " + (elapsedTime / 1000) + " seconds."); //NOSONAR
+            throw new RemoteTimeoutException("Failed to procure Auth Token, response: " + authResponse +
+                    "waited for " + (elapsedTime / 1000) + " seconds.");
         }
 
         // Convert seconds to millis at a 90% level to pad refreshing of a token so that we are not in the middle of
