@@ -83,7 +83,7 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
         if (authResponse == null || authResponse.getAccessToken() == null) {
             long elapsedTime = System.currentTimeMillis() - curTime;
             throw new RuntimeException("Failed to procure Auth Token, response: " + authResponse +
-                    "waited for " + (elapsedTime / 1000) + " seconds.");
+                    "waited for " + (elapsedTime / 1000) + " seconds."); //NOSONAR
         }
 
         // Convert seconds to millis at a 90% level to pad refreshing of a token so that we are not in the middle of
