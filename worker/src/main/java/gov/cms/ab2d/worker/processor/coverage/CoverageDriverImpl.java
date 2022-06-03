@@ -39,6 +39,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -291,6 +293,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         Set<CoveragePeriod> stalePeriods = new LinkedHashSet<>();
         long monthsInPast = 0;
         OffsetDateTime dateTime = OffsetDateTime.now(AB2D_ZONE);
+        log.info("Current time computed as {}", dateTime);
 
         OffsetDateTime lastSunday;
         if (dateTime.getDayOfWeek() == DayOfWeek.SUNDAY) {
@@ -300,6 +303,8 @@ public class CoverageDriverImpl implements CoverageDriver {
             lastSunday = dateTime.with(TemporalAdjusters.previous(DayOfWeek.SUNDAY))
                     .truncatedTo(ChronoUnit.DAYS);
         }
+
+        log.info("Last Sunday computed as {}", lastSunday);
 
         /* Check coverage periods up to {@link CoverageUpdateConfig#getPastMonthsToUpdate()} */
         do {
@@ -315,12 +320,18 @@ public class CoverageDriverImpl implements CoverageDriver {
              */
             if (config.isOverride()) {
                 // Only add coverage periods that are not running already
+                log.info("In override, get all periods");
                 List<CoveragePeriod> periods = coverageService.getCoveragePeriods(month, year);
-                periods.stream().filter(period -> period.getStatus() != CoverageJobStatus.SUBMITTED
+                List<CoveragePeriod> notRunning = periods.stream().filter(period -> period.getStatus() != CoverageJobStatus.SUBMITTED
                         && period.getStatus() != CoverageJobStatus.IN_PROGRESS)
-                        .forEach(stalePeriods::add);
+                        .collect(Collectors.toList());
+                notRunning.forEach(c -> log.info("    Contract: {}, id: {}, last successful {}", c.getContractNumber(), c.getId(), c.getLastSuccessfulJob()));
+                stalePeriods.addAll(notRunning);
             } else {
-                stalePeriods.addAll(coverageService.coveragePeriodNotUpdatedSince(month, year, lastSunday));
+                log.info("Looking for periods not updated for {}/{} since {}", month, year, lastSunday);
+                List<CoveragePeriod> found = coverageService.coveragePeriodNotUpdatedSince(month, year, lastSunday);
+                found.forEach(c -> log.info("    Contract: {}, id: {}, last successful {}", c.getContractNumber(), c.getId(), c.getLastSuccessfulJob()));
+                stalePeriods.addAll(found);
             }
 
             monthsInPast++;
