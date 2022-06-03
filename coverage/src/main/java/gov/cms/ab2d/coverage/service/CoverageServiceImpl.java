@@ -266,6 +266,9 @@ public class CoverageServiceImpl implements CoverageService {
 
     @Override
     public List<CoveragePeriod> coveragePeriodNotUpdatedSince(int month, int year, OffsetDateTime lastSuccessful) {
+
+        log.info("Looking for coverage periods in {}/{} not updated since {}", month, year, lastSuccessful);
+
         return coveragePeriodRepo.findAllByMonthAndYearAndLastSuccessfulJobLessThanEqual(month, year, lastSuccessful);
     }
 
