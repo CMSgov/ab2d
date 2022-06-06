@@ -9,6 +9,7 @@ import com.amazonaws.services.sns.AmazonSNSAsync;
 import com.amazonaws.services.sns.AmazonSNSAsyncClientBuilder;
 import com.amazonaws.services.sns.AmazonSNSClientBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.aws.messaging.core.NotificationMessagingTemplate;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +19,8 @@ import org.springframework.context.annotation.Primary;
 @Slf4j
 public class SNSConfig {
 
+    @Value("${LOCALSTACK_URL}")
+    private String localstackURl;
 
     private final AWSStaticCredentialsProvider credentials =
             new AWSStaticCredentialsProvider(new BasicAWSCredentials("a", ""));
@@ -43,8 +46,7 @@ public class SNSConfig {
     }
 
     private AmazonSNS getSns(AwsClientBuilder<?, ?> builder) {
-        String localstackURl = System.getProperty("localstack");
-        log.info("Locakstack url" + localstackURl);
+        log.info("LOCALSTACK_URL: " + localstackURl);
         if (null != localstackURl) {
             builder
                     .withEndpointConfiguration(getEndpointConfig(localstackURl))

@@ -32,7 +32,7 @@ public class AB2DLocalstackContainer extends LocalStackContainer {
         super.withExtraHost("host.docker.internal","172.17.0.1");
         super.start();
         // This is used in the SNS/SQS beans so bypass the normal AWS settings
-        System.setProperty("localstack",
+        System.setProperty("LOCALSTACK_URL",
                 "localhost:" + this.getMappedPort(LocalStackContainer.EnabledService.named("SNS").getPort()));
     }
 

@@ -53,6 +53,8 @@ services:
       # LOCAL always to shut off Kinesis logging
       - AB2D_EXECUTION_ENV=${AB2D_EXECUTION_ENV:-local}
       - AB2D_V2_ENABLED=${AB2D_V2_ENABLED}
+      - LOCALSTACK_URL=${LOCALSTACK_URL}
+      - JVM_OPTS=${JVM_OPTS}
     ports:
       # Set port as an environment variable
       # The e2e-test forcefully sets this itself otherwise set via command line
@@ -101,6 +103,7 @@ services:
       - "COVERAGE_UPDATE_MONITORING_INTERVAL=0/1 * * * * ?"
       # Disable verification during e2e tests
       - "COVERAGE_VERIFY_SCHEDULE=0 0 0 1 * ? 2099"
+      - JAVA_OPTS=${JAVA_OPTS}
     depends_on:
       db:
         condition: service_healthy
@@ -110,23 +113,24 @@ services:
       - tmp-volume:/opt/ab2d
 # Uncomment this when running locally to start up localstack
 # When we update docker-compose to a version that supports profiles commenting this out will no longer be needed
-#  localstack:
-#    image: localstack/localstack:latest
-#    entrypoint: ["/tmp/setup/localstack_setup.sh" ,"docker-entrypoint.sh"]
-#    profiles: ["local"]
-#    environment:
-#        - AWS_DEFAULT_REGION=us-east-1
-#        - EDGE_PORT=4566
-#        - SERVICES=sqs,sns
-#        - LS_LOG=trace
-#    ports:
-#        - '4566-4597:4566-4597'
-#    volumes:
-#        - ./:/tmp/setup
-#    extra_hosts:
-#      - "host.docker.internal:host-gateway"
-#    depends_on:
-#      - db
+  localstack:
+    image: localstack/localstack:latest
+    entrypoint: ["/tmp/setup/localstack_setup.sh" ,"docker-entrypoint.sh"]
+    profiles: ["local"]
+    environment:
+        - AWS_DEFAULT_REGION=us-east-1
+        - EDGE_PORT=4566
+        - SERVICES=sqs,sns
+        - LS_LOG=trace
+        - DATA_DIR="/tmp/localstack"
+    ports:
+        - '4566:4566'
+    volumes:
+        - ./:/tmp/setup
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - db
 
 # This needs a shared volume so that both the API and worker module can access the ndjson files being generated
 volumes:

@@ -42,7 +42,7 @@ Worker Setup
 6. Uncomment the localstack service in docker-compose.tml
    1. docker compose up localstack
 7. Set these VM options
-   1.  -Dlocalstack=127.0.0.1:4566 to the VM options of worker
+   1.  -DLOCALSTACK_URL=127.0.0.1:4566 to the VM options of worker
        -Dcloud.aws.region.static=us-east-1
        -Dcom.amazonaws.sdk.disableCertChecking
 8. Run the configuration
