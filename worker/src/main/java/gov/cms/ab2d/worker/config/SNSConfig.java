@@ -19,9 +19,6 @@ import org.springframework.context.annotation.Primary;
 @Slf4j
 public class SNSConfig {
 
-    @Value("${LOCALSTACK_URL}")
-    private String localstackURl;
-
     private final AWSStaticCredentialsProvider credentials =
             new AWSStaticCredentialsProvider(new BasicAWSCredentials("a", ""));
     private final String region = Regions.US_EAST_1.getName();
@@ -46,10 +43,11 @@ public class SNSConfig {
     }
 
     private AmazonSNS getSns(AwsClientBuilder<?, ?> builder) {
-        log.info("LOCALSTACK_URL: " + localstackURl);
-        if (null != localstackURl) {
+        String localstackUrl = System.getProperty("LOCALSTACK_URL");
+        log.info("LOCALSTACK_URL: " + localstackUrl);
+        if (null != localstackUrl) {
             builder
-                    .withEndpointConfiguration(getEndpointConfig(localstackURl))
+                    .withEndpointConfiguration(getEndpointConfig(localstackUrl))
                     .withCredentials(credentials);
         }
 
