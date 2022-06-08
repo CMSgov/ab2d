@@ -84,7 +84,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
         try {
             if (!coverageDriver.isCoverageAvailable(job, contract)) {
                 log.info("coverage metadata is not up to date so job will not be started");
-              // return job;
+                return job;
             }
 
             eventLogger.logAndAlert(job.buildJobStatusChangeEvent(IN_PROGRESS, getStatusString(job)), PUBLIC_LIST);
