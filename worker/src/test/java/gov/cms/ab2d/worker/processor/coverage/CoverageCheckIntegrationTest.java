@@ -1,22 +1,28 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
-import com.amazonaws.services.sns.AmazonSNS;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.service.PdpClientService;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
-import gov.cms.ab2d.coverage.model.CoverageJobStatus;
-import gov.cms.ab2d.coverage.model.CoveragePeriod;
-import gov.cms.ab2d.coverage.model.CoverageSearch;
-import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
-import gov.cms.ab2d.coverage.model.Identifiers;
+import gov.cms.ab2d.coverage.model.*;
 import gov.cms.ab2d.coverage.repository.CoveragePeriodRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.LinkedHashSet;
@@ -24,25 +30,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import gov.cms.ab2d.worker.sns.ProgressUpdater;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.cloud.aws.messaging.listener.SimpleMessageListenerContainer;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-
-
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(properties = "coverage.update.initial.delay=1000000")
 @Testcontainers
@@ -78,11 +67,9 @@ public class CoverageCheckIntegrationTest {
     @Autowired
     private CoverageDataSetup coverageDataSetup;
 
-    //disable sns
-    @MockBean
-    private AmazonSNS amazonSNS;
-    @MockBean
-    private ProgressUpdater progressUpdater;
+
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     private static final ZonedDateTime CURRENT_TIME = OffsetDateTime.now().atZoneSameInstant(AB2D_ZONE);
     private static final ZonedDateTime ATTESTATION_TIME = CURRENT_TIME.minusMonths(3);

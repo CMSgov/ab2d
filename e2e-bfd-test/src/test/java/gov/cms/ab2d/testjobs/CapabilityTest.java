@@ -1,10 +1,11 @@
 package gov.cms.ab2d.testjobs;
 
 import com.amazonaws.services.sns.AmazonSNS;
+import com.amazonaws.services.sqs.AmazonSQS;
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.fhir.FhirVersion;
-import gov.cms.ab2d.worker.sns.ProgressUpdater;
 import org.hl7.fhir.instance.model.api.IBaseConformance;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,12 +23,10 @@ public class CapabilityTest {
     @Autowired
     private BFDClient bfdClient;
 
-    // Disable SNS
-    @MockBean
-    AmazonSNS amazonSns;
 
-    @MockBean
-    private ProgressUpdater progressUpdater;
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
+
 
     @Container
     private static final PostgreSQLContainer postgres = new AB2DPostgresqlContainer();

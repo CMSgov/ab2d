@@ -116,6 +116,6 @@ public class ProgressTracker {
     }
 
     public boolean isErrorThresholdExceeded() {
-        return (patientFailureCount * 100) / getTotalCount() >= failureThreshold;
+        return (patientFailureCount * 100) / (getTotalCount() == 0 ? 1 : getTotalCount()) >= failureThreshold;
     }
 }

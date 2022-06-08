@@ -1,9 +1,9 @@
 package gov.cms.ab2d.worker.stuckjob;
 
+import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.job.repository.JobRepository;
-import gov.cms.ab2d.eventlogger.LogManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,9 +20,7 @@ import java.util.List;
 
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class CancelStuckJobsProcessorTest {

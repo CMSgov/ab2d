@@ -1,8 +1,5 @@
 package gov.cms.ab2d.e2etest;
 
-import gov.cms.ab2d.common.model.Properties;
-import gov.cms.ab2d.common.repository.PropertiesRepository;
-import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.fhir.FhirVersion;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -25,21 +22,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.util.Pair;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.yaml.snakeyaml.Yaml;
 
+import javax.annotation.PostConstruct;
 import javax.crypto.SecretKey;
-import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 import java.io.File;
 import java.io.FileInputStream;
@@ -126,6 +117,11 @@ class TestRunner {
     private DataSource dataSource;
     private NamedParameterJdbcTemplate jdbcTemplate;
 
+    @PostConstruct
+    private void setup(){
+        jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
+    }
+
     // Get all methods annotated with @Test and run them. This will only be called from TestLaucher when running against
     // an external environment, the regular tests that run as part of a build will be called like they normally would
     // during a build.
@@ -203,9 +199,9 @@ class TestRunner {
                  * understandable by {@link gov.cms.ab2d.eventlogger.Ab2dEnvironment#fromName(String)} method
                  */
                 .withEnv("AB2D_EXECUTION_ENV", environment.getAb2dEnvironment().getName())
-                .withEnv("JAVA_OPTS", " -Dtest.test.test=test -Dcloud.aws.stack.auto=false " +
+                .withEnv("JAVA_OPTS", " -Dcloud.aws.stack.auto=false " +
                         "-Dcloud.aws.region.static=us-east-1 -Dcom.amazonaws.sdk.disableCertChecking " +
-                        " -Dcloud.aws.instance.data.enabled=false -DLOCALSTACK_URL=localstack:4566")
+                        " -Dcloud.aws.instance.data.enabled=false -DLOCALSTACK_URL=localstack:4566 " )
                 .withLocalCompose(true)
                 .withScaledService("worker", 2)
                 .withScaledService("api", 1)
@@ -568,11 +564,15 @@ class TestRunner {
     }
 
     private String updateSnsProperty(String value) {
-        jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
         MapSqlParameterSource sqlParameterSource = new MapSqlParameterSource();
         sqlParameterSource.addValue("key", SNS_JOB_UPDATE_ENGAGEMENT);
-        String old = jdbcTemplate.query("select * from properties where key = :key", sqlParameterSource,(r,s)-> r.getString("value")).stream().findFirst().orElse(String.valueOf(NEUTRAL));
-
+        String old = jdbcTemplate.query("select * from properties where key = :key",
+                        sqlParameterSource, (r, s) -> r.getString("value"))
+                .stream()
+                .findFirst()
+                .orElse(String.valueOf(NEUTRAL));
+        sqlParameterSource.addValue("value", value);
+        jdbcTemplate.update("update properties set value = :value where key = :key", sqlParameterSource);
         return old;
     }
 

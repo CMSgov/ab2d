@@ -1,20 +1,17 @@
 package gov.cms.ab2d.worker.config;
 
 
-import com.amazonaws.services.sns.AmazonSNS;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.coverage.util.AB2DCoveragePostgressqlContainer;
-import gov.cms.ab2d.worker.sns.ProgressUpdater;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -54,11 +51,8 @@ public class AutoScalingServiceTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DCoveragePostgressqlContainer();
 
-    //disable sns
-    @MockBean
-    private AmazonSNS amazonSNS;
-    @MockBean
-    private ProgressUpdater progressUpdater;
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     private int originalMaxPoolSize;
 

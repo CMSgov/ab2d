@@ -1,8 +1,8 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
-import com.amazonaws.services.sns.AmazonSNS;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.repository.CoveragePeriodRepository;
@@ -10,20 +10,16 @@ import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.util.Coverage;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
-import gov.cms.ab2d.worker.sns.ProgressUpdater;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.cloud.aws.messaging.listener.SimpleMessageListenerContainer;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-
 
 import static java.util.stream.Collectors.toSet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -54,11 +50,9 @@ class CoverageProcessorIntTest {
     @Qualifier(value = "patientCoverageThreadPool")
     private ThreadPoolTaskExecutor taskExecutor;
 
-    //disable sns
-    @MockBean
-    private AmazonSNS amazonSNS;
-    @MockBean
-    private ProgressUpdater progressUpdater;
+
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     @Autowired
     private CoverageProcessor processor;

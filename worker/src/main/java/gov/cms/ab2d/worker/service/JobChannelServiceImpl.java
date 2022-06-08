@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import static gov.cms.ab2d.common.service.FeatureEngagement.IN_GEAR;
+import static gov.cms.ab2d.common.util.Constants.SNS_QUEUE;
 
 @Slf4j
 @Service
@@ -47,7 +48,7 @@ public class JobChannelServiceImpl implements JobChannelService {
 
     private void updateJobThroughSns(String jobUuid, JobMeasure measure, long value) {
         log.info("Sending message {} to SNS from JobChannelService", jobUuid);
-        String arn = amazonSNS.createTopic("ab2d-job-tracking").getTopicArn();
+        String arn = amazonSNS.createTopic(SNS_QUEUE).getTopicArn();
         amazonSNS.publish(arn, buildPayload(measure, value), jobUuid);
         log.info("JobChannelService sendUpdate is done");
     }

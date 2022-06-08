@@ -1,8 +1,8 @@
 package gov.cms.ab2d.worker.processor;
 
+import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmerSTU3;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.dstu3.model.PositiveIntType;
-import gov.cms.ab2d.filter.ExplanationOfBenefitTrimmerSTU3;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

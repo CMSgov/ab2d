@@ -1,17 +1,12 @@
 package gov.cms.ab2d.worker.processor;
 
-import com.amazonaws.services.sns.AmazonSNS;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.job.model.Job;
-import gov.cms.ab2d.job.model.JobOutput;
-import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.job.repository.JobOutputRepository;
-import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
@@ -23,15 +18,14 @@ import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
-import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
-import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
-import gov.cms.ab2d.eventlogger.events.ContractSearchEvent;
-import gov.cms.ab2d.eventlogger.events.ErrorEvent;
-import gov.cms.ab2d.eventlogger.events.FileEvent;
-import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
-import gov.cms.ab2d.eventlogger.events.ReloadEvent;
+import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobOutput;
+import gov.cms.ab2d.job.model.JobStatus;
+import gov.cms.ab2d.job.repository.JobOutputRepository;
+import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.job.service.JobCleanup;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
@@ -40,14 +34,7 @@ import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.service.JobChannelService;
-import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
-import gov.cms.ab2d.worker.sns.ProgressUpdater;
 import gov.cms.ab2d.worker.util.HealthCheck;
-import java.io.File;
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Random;
-import java.util.stream.LongStream;
 import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.junit.jupiter.api.AfterEach;
@@ -60,7 +47,6 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.OngoingStubbing;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.integration.test.context.SpringIntegrationTest;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -69,6 +55,11 @@ import org.testcontainers.containers.localstack.LocalStackContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.io.File;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Random;
+import java.util.stream.LongStream;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.eventlogger.events.ErrorEvent.ErrorType.TOO_MANY_SEARCH_ERRORS;
@@ -77,14 +68,8 @@ import static gov.cms.ab2d.worker.TestUtil.getOpenRange;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
 import static java.lang.Boolean.TRUE;
 import static java.util.stream.Collectors.toList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
@@ -164,11 +149,9 @@ class JobProcessorIntegrationTest extends JobCleanup {
     @Mock
     private BFDClient mockBfdClient;
 
-    //disable sns
-    @MockBean
-    private AmazonSNS amazonSNS;
-    @MockBean
-    private ProgressUpdater progressUpdater;
+
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     @TempDir
     File tmpEfsMountDir;

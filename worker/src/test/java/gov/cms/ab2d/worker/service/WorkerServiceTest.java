@@ -1,33 +1,31 @@
 package gov.cms.ab2d.worker.service;
 
-import com.amazonaws.services.sns.AmazonSNS;
-import gov.cms.ab2d.job.model.Job;
-import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
-import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobStatus;
+import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.job.service.JobCleanup;
 import gov.cms.ab2d.job.service.JobService;
 import gov.cms.ab2d.worker.config.JobHandler;
-import java.time.OffsetDateTime;
-import java.util.Random;
-import java.util.UUID;
-
-import gov.cms.ab2d.worker.sns.ProgressUpdater;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.time.OffsetDateTime;
+import java.util.Random;
+import java.util.UUID;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
@@ -52,11 +50,9 @@ class WorkerServiceTest extends JobCleanup {
     @Autowired private WorkerServiceImpl workerServiceImpl;
     @Autowired private JobHandler jobHandler;
 
-    //disable sns
-    @MockBean
-    private AmazonSNS amazonSNS;
-    @MockBean
-    private ProgressUpdater progressUpdater;
+
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();

@@ -1,13 +1,12 @@
 package gov.cms.ab2d.worker.bfdhealthcheck;
 
-import com.amazonaws.services.sns.AmazonSNS;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Properties;
 import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.SpringBootApp;
-import gov.cms.ab2d.worker.sns.ProgressUpdater;
 import org.hl7.fhir.dstu3.model.CapabilityStatement;
 import org.hl7.fhir.dstu3.model.Enumerations;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,8 +15,6 @@ import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.cloud.aws.messaging.listener.SimpleMessageListenerContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -42,11 +39,9 @@ public class BFDHealthCheckTest {
     @Mock
     private BFDClient bfdClient;
 
-    //disable sns
-    @MockBean
-    private AmazonSNS amazonSNS;
-    @MockBean
-    private ProgressUpdater progressUpdater;
+
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     @Autowired
     private LogManager logManager;

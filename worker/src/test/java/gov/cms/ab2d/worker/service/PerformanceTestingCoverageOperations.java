@@ -12,6 +12,13 @@ import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.service.InsertionJob;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
+
+import javax.sql.DataSource;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -20,17 +27,6 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import javax.sql.DataSource;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
-
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static org.junit.jupiter.api.Assertions.assertEquals;

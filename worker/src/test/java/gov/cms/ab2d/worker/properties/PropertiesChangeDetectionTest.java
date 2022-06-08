@@ -1,15 +1,13 @@
 package gov.cms.ab2d.worker.properties;
 
-import com.amazonaws.services.sns.AmazonSNS;
 import gov.cms.ab2d.common.model.Properties;
 import gov.cms.ab2d.common.repository.PropertiesRepository;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.worker.config.AutoScalingService;
-import gov.cms.ab2d.worker.sns.ProgressUpdater;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -34,11 +32,9 @@ public class PropertiesChangeDetectionTest {
     @Autowired
     private AutoScalingService autoScalingService;
 
-    //disable sns
-    @MockBean
-    private AmazonSNS amazonSNS;
-    @MockBean
-    private ProgressUpdater progressUpdater;
+
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();

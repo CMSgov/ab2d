@@ -9,6 +9,14 @@ import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.TestUtil;
+import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
+import org.hl7.fhir.instance.model.api.IBaseBundle;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,24 +30,11 @@ import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
-import org.hl7.fhir.instance.model.api.IBaseBundle;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.core.io.DefaultResourceLoader;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.test.util.ReflectionTestUtils;
-
-
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class PatientClaimsCollectorTest {
 

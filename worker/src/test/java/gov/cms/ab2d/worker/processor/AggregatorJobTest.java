@@ -1,10 +1,10 @@
 package gov.cms.ab2d.worker.processor;
 
-import com.amazonaws.services.sns.AmazonSNS;
 import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
@@ -13,6 +13,17 @@ import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import gov.cms.ab2d.worker.config.SearchConfig;
+import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mock;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -27,25 +38,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.Future;
 
-import gov.cms.ab2d.worker.sns.ProgressUpdater;
-import org.hl7.fhir.dstu3.model.ExplanationOfBenefit;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.mockito.Mock;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.cloud.aws.messaging.listener.SimpleMessageListenerContainer;
-import org.springframework.test.util.ReflectionTestUtils;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-
-
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -67,11 +61,9 @@ class AggregatorJobTest {
     @Mock
     private LogManager logManager;
 
-    //disable sns
-    @MockBean
-    private AmazonSNS amazonSNS;
-    @MockBean
-    private ProgressUpdater progressUpdater;
+
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     private static final String STREAMING = "streaming";
     private static final String FINISHED = "finished";

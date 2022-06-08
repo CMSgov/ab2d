@@ -3,16 +3,8 @@ package gov.cms.ab2d.worker.processor.coverage;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
-import gov.cms.ab2d.coverage.model.CoverageMapping;
-import gov.cms.ab2d.coverage.model.CoveragePeriod;
-import gov.cms.ab2d.coverage.model.CoverageSearch;
-import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
-import gov.cms.ab2d.coverage.model.Identifiers;
+import gov.cms.ab2d.coverage.model.*;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
-import java.time.OffsetDateTime;
-import java.util.Collections;
-import java.util.Map;
 import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.Extension;
 import org.hl7.fhir.dstu3.model.Identifier;
@@ -23,6 +15,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.OffsetDateTime;
+import java.util.Collections;
+import java.util.Map;
 
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.fhir.IdentifierUtils.BENEFICIARY_ID;
@@ -32,16 +27,8 @@ import static gov.cms.ab2d.worker.processor.BundleUtils.createPatient;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createPatientWithMultipleMbis;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
 class CoverageMappingCallableTest {

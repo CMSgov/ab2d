@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
-import com.amazonaws.services.sns.AmazonSNS;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.dto.PdpClientDTO;
@@ -8,76 +7,47 @@ import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.job.model.Job;
-import gov.cms.ab2d.job.model.JobStatus;
-import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import gov.cms.ab2d.common.util.Constants;
-import gov.cms.ab2d.common.util.DataSetup;
-import gov.cms.ab2d.common.util.DateUtil;
-import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
-import gov.cms.ab2d.coverage.model.CoverageJobStatus;
-import gov.cms.ab2d.coverage.model.CoveragePeriod;
-import gov.cms.ab2d.coverage.model.CoverageSearch;
-import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
-import gov.cms.ab2d.coverage.model.Identifiers;
+import gov.cms.ab2d.common.util.*;
+import gov.cms.ab2d.coverage.model.*;
 import gov.cms.ab2d.coverage.repository.CoveragePeriodRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import gov.cms.ab2d.fhir.IdentifierUtils;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobStatus;
+import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.job.service.JobCleanup;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
-import java.time.DayOfWeek;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.OffsetDateTime;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAdjusters;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import javax.annotation.Nullable;
-
-import gov.cms.ab2d.worker.sns.ProgressUpdater;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.cloud.aws.messaging.listener.SimpleMessageListenerContainer;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import javax.annotation.Nullable;
+import java.time.*;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
+import java.util.*;
 
 import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static java.util.Collections.singletonList;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -133,11 +103,9 @@ class CoverageDriverTest extends JobCleanup {
     @Autowired
     private ContractToContractCoverageMapping contractToContractCoverageMapping;
 
-    //disable sns
-    @MockBean
-    private AmazonSNS amazonSNS;
-    @MockBean
-    private ProgressUpdater progressUpdater;
+
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     private Contract contract;
     private Contract contract1;

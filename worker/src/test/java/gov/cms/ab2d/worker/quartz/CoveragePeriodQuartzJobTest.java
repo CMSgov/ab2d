@@ -6,7 +6,6 @@ import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverStub;
-import gov.cms.ab2d.worker.processor.coverage.CoverageProcessor;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

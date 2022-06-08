@@ -1,14 +1,11 @@
 package gov.cms.ab2d.worker.processor;
 
-import com.amazonaws.services.sns.AmazonSNS;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.job.model.Job;
-import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -16,25 +13,16 @@ import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
-import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
-import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
-import gov.cms.ab2d.eventlogger.events.ContractSearchEvent;
-import gov.cms.ab2d.eventlogger.events.ErrorEvent;
-import gov.cms.ab2d.eventlogger.events.FileEvent;
-import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
-import gov.cms.ab2d.eventlogger.events.ReloadEvent;
+import gov.cms.ab2d.eventlogger.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobStatus;
+import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.job.service.JobCleanup;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverException;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.UUID;
-
-import gov.cms.ab2d.worker.sns.ProgressUpdater;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -43,24 +31,21 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.cloud.aws.messaging.listener.SimpleMessageListenerContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.UUID;
 
-import static gov.cms.ab2d.job.model.JobStartedBy.DEVELOPER;
-import static gov.cms.ab2d.common.model.SinceSource.AB2D;
-import static gov.cms.ab2d.common.model.SinceSource.FIRST_RUN;
-import static gov.cms.ab2d.common.model.SinceSource.USER;
+import static gov.cms.ab2d.common.model.SinceSource.*;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static gov.cms.ab2d.job.model.JobStartedBy.DEVELOPER;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -104,11 +89,8 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
     private Job job;
     private Contract contract;
 
-    //disable sns
-    @MockBean
-    private AmazonSNS amazonSNS;
-    @MockBean
-    private ProgressUpdater progressUpdater;
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();

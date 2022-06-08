@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
-import com.amazonaws.services.sns.AmazonSNS;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.dto.PdpClientDTO;
@@ -10,6 +9,7 @@ import gov.cms.ab2d.common.model.Properties;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.common.util.DateUtil;
@@ -24,16 +24,7 @@ import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
-import gov.cms.ab2d.worker.sns.ProgressUpdater;
 import gov.cms.ab2d.worker.util.WorkerDataSetup;
-import java.time.DayOfWeek;
-import java.time.OffsetDateTime;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAdjusters;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import javax.annotation.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -42,31 +33,29 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.cloud.aws.messaging.listener.SimpleMessageListenerContainer;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import javax.annotation.Nullable;
+import java.time.DayOfWeek;
+import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.fhir.IdentifierUtils.BENEFICIARY_ID;
 import static java.util.stream.Collectors.toList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 // Never run internal coverage processor so this coverage processor runs unimpeded
 @SpringBootTest(properties = "coverage.update.initial.delay=1000000")
@@ -120,11 +109,9 @@ class CoverageUpdateAndProcessorTest {
     @Autowired
     private ContractToContractCoverageMapping mapping;
 
-    //disable sns
-    @MockBean
-    private AmazonSNS amazonSNS;
-    @MockBean
-    private ProgressUpdater progressUpdater;
+
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     private Contract contract;
     private CoveragePeriod january;
