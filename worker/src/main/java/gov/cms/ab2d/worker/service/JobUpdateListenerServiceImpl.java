@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import gov.cms.ab2d.worker.dto.JobUpdate;
 import gov.cms.ab2d.worker.dto.SNSMessage;
 import gov.cms.ab2d.worker.processor.JobMeasure;
+import gov.cms.ab2d.worker.processor.JobProgressService;
 import gov.cms.ab2d.worker.processor.JobProgressUpdateService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.security.SecureRandom;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -26,6 +28,7 @@ import static gov.cms.ab2d.common.util.Constants.SNS_QUEUE;
 @Service
 public class JobUpdateListenerServiceImpl implements SqsService {
 
+    private final int RANDOM_CHAR_COUNT = 5;
     private final AmazonSQS amazonSqs;
 
     private final AmazonSNS amazonSNS;
@@ -48,7 +51,9 @@ public class JobUpdateListenerServiceImpl implements SqsService {
 
     @PostConstruct
     private void initiate() {
-        queueName = BASE_SQS_QUEUE + "-" + RandomStringUtils.randomAlphanumeric(5);
+        String randomChars = RandomStringUtils.random(RANDOM_CHAR_COUNT, 0, 0, true, true, null, new SecureRandom());
+
+        queueName = BASE_SQS_QUEUE + "-" + randomChars;
         queueUrl = amazonSqs.createQueue(queueName).getQueueUrl();
         log.info("Queue {} has been created", queueName);
         Topics.subscribeQueue(amazonSNS, amazonSqs,
@@ -64,11 +69,11 @@ public class JobUpdateListenerServiceImpl implements SqsService {
     }
 
     private void startSqsListenerThread() {
-        executor.scheduleWithFixedDelay(this::processSqs, 0, 500, TimeUnit.MILLISECONDS);
+        executor.scheduleWithFixedDelay(this::pollJobUpdateSqs, 0, 500, TimeUnit.MILLISECONDS);
     }
 
     @Override
-    public void processSqs() {
+    public void pollJobUpdateSqs() {
         ReceiveMessageRequest request = new ReceiveMessageRequest(queueUrl);
         request.setWaitTimeSeconds(5);
         amazonSqs.receiveMessage(new ReceiveMessageRequest(queueUrl))
@@ -77,16 +82,21 @@ public class JobUpdateListenerServiceImpl implements SqsService {
                     try {
                         SNSMessage snsMessage = mapper.readValue(message.getBody(), SNSMessage.class);
                         JobUpdate update = mapper.readValue(snsMessage.getMessage(), JobUpdate.class);
-                        if (jobProgressUpdateService.hasJob(snsMessage.getSubject())) {
-                            jobProgressUpdateService.addMeasure(snsMessage.getSubject(), JobMeasure.valueOf(update.getMeasure()), update.getValue());
-                        }
-                        log.info("Measure updated");
+                        processMessage(snsMessage, update);
                     } catch (Exception e) {
                         log.info("Message sent to " + queueName + " failed to deserialize. {}", message, e);
                     } finally {
                         amazonSqs.deleteMessage(queueUrl, message.getReceiptHandle());
                     }
                 });
+    }
+
+    public void processMessage(SNSMessage snsMessage, JobUpdate update) {
+        if (jobProgressUpdateService.hasJob(snsMessage.getSubject())) {
+            jobProgressUpdateService.addMeasure(snsMessage.getSubject(), JobMeasure.valueOf(update.getMeasure()), update.getValue());
+            log.info("Measure updated");
+        }
+
     }
 
 }
