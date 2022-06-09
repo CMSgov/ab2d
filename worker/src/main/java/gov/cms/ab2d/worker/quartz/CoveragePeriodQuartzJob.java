@@ -79,7 +79,7 @@ public class CoveragePeriodQuartzJob extends QuartzJobBean {
                 // Start this job every day on Tuesday at midnight
                 // or override and force start
                 OffsetDateTime now = OffsetDateTime.now(AB2D_ZONE);
-                if ((now.getDayOfWeek() == DayOfWeek.TUESDAY && now.getHour() == 0) || override) {
+                if ((now.getDayOfWeek() == DayOfWeek.TUESDAY) || override) {
                     driver.queueStaleCoveragePeriods();
                 }
 
