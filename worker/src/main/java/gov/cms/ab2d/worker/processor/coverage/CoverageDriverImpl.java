@@ -293,7 +293,6 @@ public class CoverageDriverImpl implements CoverageDriver {
         Set<CoveragePeriod> stalePeriods = new LinkedHashSet<>();
         long monthsInPast = 0;
         OffsetDateTime dateTime = OffsetDateTime.now(AB2D_ZONE);
-        log.info("Current time computed as {}", dateTime);
 
         OffsetDateTime lastSunday;
         if (dateTime.getDayOfWeek() == DayOfWeek.SUNDAY) {
