@@ -111,7 +111,7 @@ services:
       - tmp-volume:/opt/ab2d
 
   localstack:
-    image: localstack/localstack:latest
+    image: localstack/localstack:0.14.3
     entrypoint: ["/tmp/setup/localstack_setup.sh" ,"docker-entrypoint.sh"]
     environment:
         - AWS_DEFAULT_REGION=us-east-1

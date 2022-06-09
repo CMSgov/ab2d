@@ -51,7 +51,6 @@ public class JobUpdateListenerServiceImpl implements SqsService {
     @PostConstruct
     private void initiate() {
         String randomChars = RandomStringUtils.random(randomCharCount, 0, 0, true, true, null, new SecureRandom());
-
         queueName = BASE_SQS_QUEUE + "-" + randomChars;
         queueUrl = amazonSqs.createQueue(queueName).getQueueUrl();
         log.info("Queue {} has been created", queueName);

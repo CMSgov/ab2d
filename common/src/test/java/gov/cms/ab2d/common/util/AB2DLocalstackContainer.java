@@ -9,7 +9,7 @@ import org.testcontainers.utility.DockerImageName;
 @Slf4j
 public class AB2DLocalstackContainer extends LocalStackContainer {
 
-    private static final DockerImageName IMAGE_VERSION = DockerImageName.parse("localstack/localstack:latest");
+    private static final DockerImageName IMAGE_VERSION = DockerImageName.parse("localstack/localstack:0.14.3");
 
     public AB2DLocalstackContainer() {
         super(IMAGE_VERSION);
@@ -25,6 +25,8 @@ public class AB2DLocalstackContainer extends LocalStackContainer {
 
         super.withServices(Service.SQS, Service.SNS);
         super.addEnv("LS_LOG", "trace");
+        // this is buggy. Re-enable when it's fixed
+        super.addEnv("SKIP_SSL_CERT_DOWNLOAD", "1");
         super.start();
         System.setProperty("LOCALSTACK_URL",
                 "localhost:" + this.getMappedPort(LocalStackContainer.EnabledService.named("SNS").getPort()));
