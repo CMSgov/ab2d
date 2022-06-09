@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import gov.cms.ab2d.worker.dto.JobUpdate;
 import gov.cms.ab2d.worker.dto.SNSMessage;
 import gov.cms.ab2d.worker.processor.JobMeasure;
-import gov.cms.ab2d.worker.processor.JobProgressService;
 import gov.cms.ab2d.worker.processor.JobProgressUpdateService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -28,7 +27,7 @@ import static gov.cms.ab2d.common.util.Constants.SNS_QUEUE;
 @Service
 public class JobUpdateListenerServiceImpl implements SqsService {
 
-    private final int RANDOM_CHAR_COUNT = 5;
+    private final int randomCharCount = 5;
     private final AmazonSQS amazonSqs;
 
     private final AmazonSNS amazonSNS;
@@ -51,7 +50,7 @@ public class JobUpdateListenerServiceImpl implements SqsService {
 
     @PostConstruct
     private void initiate() {
-        String randomChars = RandomStringUtils.random(RANDOM_CHAR_COUNT, 0, 0, true, true, null, new SecureRandom());
+        String randomChars = RandomStringUtils.random(randomCharCount, 0, 0, true, true, null, new SecureRandom());
 
         queueName = BASE_SQS_QUEUE + "-" + randomChars;
         queueUrl = amazonSqs.createQueue(queueName).getQueueUrl();
