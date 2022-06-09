@@ -123,8 +123,6 @@ services:
         - '4566:4566'
     volumes:
         - ./:/tmp/setup
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     depends_on:
       - db
 
