@@ -17,11 +17,7 @@ import org.springframework.context.annotation.Primary;
 @Configuration
 @Slf4j
 public class SNSConfig {
-
-    private final AWSStaticCredentialsProvider credentials =
-            new AWSStaticCredentialsProvider(new BasicAWSCredentials("a", ""));
-    private final String region = Regions.US_EAST_1.getName();
-
+    
     @Bean
     public AmazonSNSAsync amazonSNSAsync() {
         return (AmazonSNSAsync) getSns(AmazonSNSAsyncClientBuilder
@@ -47,7 +43,7 @@ public class SNSConfig {
         if (null != localstackUrl) {
             builder
                     .withEndpointConfiguration(getEndpointConfig(localstackUrl))
-                    .withCredentials(credentials);
+                    .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("a", "")));
         }
 
         return (AmazonSNS) builder
@@ -56,7 +52,7 @@ public class SNSConfig {
 
 
     private AwsClientBuilder.EndpointConfiguration getEndpointConfig(String localstackURl) {
-        return new AwsClientBuilder.EndpointConfiguration(localstackURl, region);
+        return new AwsClientBuilder.EndpointConfiguration(localstackURl, Regions.US_EAST_1.getName());
     }
 
 }

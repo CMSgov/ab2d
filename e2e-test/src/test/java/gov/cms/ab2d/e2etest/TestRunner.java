@@ -20,18 +20,12 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.util.Pair;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.yaml.snakeyaml.Yaml;
 
-import javax.annotation.PostConstruct;
 import javax.crypto.SecretKey;
-import javax.sql.DataSource;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -54,9 +48,8 @@ import java.util.*;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
-import static gov.cms.ab2d.common.service.FeatureEngagement.IN_GEAR;
-import static gov.cms.ab2d.common.service.FeatureEngagement.NEUTRAL;
-import static gov.cms.ab2d.common.util.Constants.*;
+import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
+import static gov.cms.ab2d.common.util.Constants.ZIPFORMAT;
 import static gov.cms.ab2d.e2etest.APIClient.PATIENT_EXPORT_PATH;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
@@ -70,7 +63,6 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 @ExtendWith(TestRunnerParameterResolver.class)
 @Slf4j
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-@SpringBootTest
 class TestRunner {
 
     private static final Logger apiLogger = LoggerFactory.getLogger("gov.cms.ab2d.api");
@@ -106,21 +98,6 @@ class TestRunner {
     private String testContractV1 = "Z0000";
     private String testContractV2 = "Z0000";
 
-    static {
-        System.setProperty("DB_USERNAME", "ab2d");
-        System.setProperty("DB_PASSWORD", "ab2d");
-        System.setProperty("DB_URL", "jdbc:postgresql://localhost:5432/ab2d");
-        System.setProperty("spring.datasource.driver-class-name", "org.postgresql.Driver");
-    }
-
-    @Autowired
-    private DataSource dataSource;
-    private NamedParameterJdbcTemplate jdbcTemplate;
-
-    @PostConstruct
-    private void setup(){
-        jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
-    }
 
     // Get all methods annotated with @Test and run them. This will only be called from TestLaucher when running against
     // an external environment, the regular tests that run as part of a build will be called like they normally would
@@ -551,7 +528,6 @@ class TestRunner {
     @MethodSource("getVersionAndContract")
     @Order(1)
     void runSystemWideExport(FhirVersion version, String contract) throws IOException, InterruptedException, JSONException {
-        String oldSetting = updateSnsProperty(String.valueOf(IN_GEAR));
         log.info("Starting test 1 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null, version);
         assertEquals(202, exportResponse.statusCode());
@@ -560,21 +536,8 @@ class TestRunner {
         Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, contract, version);
         assertNotNull(downloadDetails);
         downloadFile(downloadDetails, null, version);
-        updateSnsProperty(oldSetting);
     }
 
-    private String updateSnsProperty(String value) {
-        MapSqlParameterSource sqlParameterSource = new MapSqlParameterSource();
-        sqlParameterSource.addValue("key", SNS_JOB_UPDATE_ENGAGEMENT);
-        String old = jdbcTemplate.query("select * from properties where key = :key",
-                        sqlParameterSource, (r, s) -> r.getString("value"))
-                .stream()
-                .findFirst()
-                .orElse(String.valueOf(NEUTRAL));
-        sqlParameterSource.addValue("value", value);
-        jdbcTemplate.update("update properties set value = :value where key = :key", sqlParameterSource);
-        return old;
-    }
 
     @ParameterizedTest
     @MethodSource("getVersionAndContract")

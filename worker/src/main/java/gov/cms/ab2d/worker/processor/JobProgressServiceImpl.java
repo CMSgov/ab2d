@@ -37,18 +37,17 @@ public class JobProgressServiceImpl implements JobProgressService, JobProgressUp
     }
 
     @Override
-    public boolean addMeasure(String jobId, JobMeasure measure, long value) {
+    public void addMeasure(String jobId, JobMeasure measure, long value) {
         ProgressTracker progressTracker = progressTrackerMap.get(jobId);
         // Most likely being tracked by another instance in the cluster.  Less likely a very stale message and the
         // progressTracker has been aged out.
         if (progressTracker == null) {
-            return false;
+            return;
         }
         measure.update(progressTracker, value);
 
         // update the progress in the DB & logs periodically
         trackProgress(progressTracker);
-        return true;
     }
 
     @Override

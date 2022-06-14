@@ -23,10 +23,6 @@ import java.util.List;
 @Slf4j
 public class SQSConfig {
 
-    private final AWSStaticCredentialsProvider credentials =
-            new AWSStaticCredentialsProvider(new BasicAWSCredentials("a", ""));
-    private final String region = Regions.US_EAST_1.getName();
-
     @Bean
     public AmazonSQSAsync amazonSQSAsync() {
         return (AmazonSQSAsync) getSQs(AmazonSQSAsyncClientBuilder.standard());
@@ -43,7 +39,7 @@ public class SQSConfig {
         log.info("LOCALSTACK_URL: " + localstackUrl);
         if (null != localstackUrl) {
             builder.withEndpointConfiguration(getEndpointConfig(localstackUrl))
-                    .withCredentials(credentials);
+                    .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("a", "")));
         }
         return (AmazonSQS) builder.build();
     }
@@ -64,7 +60,7 @@ public class SQSConfig {
     }
 
     private AwsClientBuilder.EndpointConfiguration getEndpointConfig(String localstackURl) {
-        return new AwsClientBuilder.EndpointConfiguration(localstackURl, region);
+        return new AwsClientBuilder.EndpointConfiguration(localstackURl,  Regions.US_EAST_1.getName());
     }
 
 }

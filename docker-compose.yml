@@ -109,7 +109,10 @@ services:
         condition: service_healthy
     volumes:
       - tmp-volume:/opt/ab2d
-
+  # To run worker locally in docker you will need to export localstack config
+  # export JAVA_OPTS="-Dcloud.aws.stack.auto=false -Dcloud.aws.region.static=us-east-1 -Dcom.amazonaws.sdk.disableCertChecking -Dcloud.aws.instance.data.enabled=false -DLOCALSTACK_URL=localstack:4566"
+  # Also start localstack, wait for it to stabilize then start the worker.
+  # This can likely be automated through docker at some point
   localstack:
     image: localstack/localstack:0.14.3
     entrypoint: ["/tmp/setup/localstack_setup.sh" ,"docker-entrypoint.sh"]

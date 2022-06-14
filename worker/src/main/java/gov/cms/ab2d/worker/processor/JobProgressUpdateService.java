@@ -6,7 +6,7 @@ package gov.cms.ab2d.worker.processor;
 public interface JobProgressUpdateService {
     boolean hasJob(String jobUuid);
 
-    boolean addMeasure(String jobUuid, JobMeasure measure, long value);
+    void addMeasure(String jobUuid, JobMeasure measure, long value);
 
     /*
      * A hack to prime the implementation with a jobguid in order to avoid dealing with distributed computing issues.
