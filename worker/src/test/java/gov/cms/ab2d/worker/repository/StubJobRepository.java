@@ -180,6 +180,11 @@ public class StubJobRepository implements JobRepository {
     }
 
     @Override
+    public Job getReferenceById(Long aLong) {
+        return null;
+    }
+
+    @Override
     public <S extends Job> Optional<S> findOne(Example<S> example) {
         return Optional.empty();
     }
