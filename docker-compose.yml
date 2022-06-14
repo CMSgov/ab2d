@@ -102,6 +102,7 @@ services:
       # Disable verification during e2e tests
       - "COVERAGE_VERIFY_SCHEDULE=0 0 0 1 * ? 2099"
       - JAVA_OPTS=${JAVA_OPTS}
+  #JAVA_OPTS is used to pass commandline arguments when running against localstack
     depends_on:
       db:
         condition: service_healthy

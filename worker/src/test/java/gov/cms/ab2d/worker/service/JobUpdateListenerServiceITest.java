@@ -59,7 +59,6 @@ public class JobUpdateListenerServiceITest {
     @Container
     private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
-
     @Test
     @DisplayName("SQS queue delete")
     void sqsCleanup() {

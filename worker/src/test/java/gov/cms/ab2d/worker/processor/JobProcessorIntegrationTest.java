@@ -149,7 +149,6 @@ class JobProcessorIntegrationTest extends JobCleanup {
     @Mock
     private BFDClient mockBfdClient;
 
-
     @Container
     private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 

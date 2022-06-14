@@ -55,7 +55,6 @@ public class CoverageCheckPredicatesIntegrationTest {
     @Autowired
     private WorkerDataSetup dataSetup;
 
-
     @Container
     private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 

@@ -103,7 +103,6 @@ class CoverageDriverTest extends JobCleanup {
     @Autowired
     private ContractToContractCoverageMapping contractToContractCoverageMapping;
 
-
     @Container
     private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 

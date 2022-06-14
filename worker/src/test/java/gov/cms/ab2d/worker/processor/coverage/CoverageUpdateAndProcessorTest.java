@@ -109,7 +109,6 @@ class CoverageUpdateAndProcessorTest {
     @Autowired
     private ContractToContractCoverageMapping mapping;
 
-
     @Container
     private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 

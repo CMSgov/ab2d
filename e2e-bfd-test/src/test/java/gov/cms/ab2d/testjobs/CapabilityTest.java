@@ -23,10 +23,8 @@ public class CapabilityTest {
     @Autowired
     private BFDClient bfdClient;
 
-
     @Container
     private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
-
 
     @Container
     private static final PostgreSQLContainer postgres = new AB2DPostgresqlContainer();

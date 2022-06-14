@@ -32,7 +32,6 @@ public class PropertiesChangeDetectionTest {
     @Autowired
     private AutoScalingService autoScalingService;
 
-
     @Container
     private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 

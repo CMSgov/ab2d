@@ -17,7 +17,7 @@ import org.springframework.context.annotation.Primary;
 @Configuration
 @Slf4j
 public class SNSConfig {
-    
+
     @Bean
     public AmazonSNSAsync amazonSNSAsync() {
         return (AmazonSNSAsync) getSns(AmazonSNSAsyncClientBuilder
@@ -49,7 +49,6 @@ public class SNSConfig {
         return (AmazonSNS) builder
                 .build();
     }
-
 
     private AwsClientBuilder.EndpointConfiguration getEndpointConfig(String localstackURl) {
         return new AwsClientBuilder.EndpointConfiguration(localstackURl, Regions.US_EAST_1.getName());

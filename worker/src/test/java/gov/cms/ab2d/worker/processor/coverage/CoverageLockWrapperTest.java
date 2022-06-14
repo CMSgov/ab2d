@@ -27,7 +27,6 @@ class CoverageLockWrapperTest {
     @Autowired
     private CoverageLockWrapper coverageLockWrapper;
 
-
     @Container
     private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 

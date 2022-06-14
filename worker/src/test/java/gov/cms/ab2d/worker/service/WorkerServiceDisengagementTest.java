@@ -55,7 +55,6 @@ class WorkerServiceDisengagementTest extends JobCleanup {
     @Autowired private WorkerServiceImpl workerServiceImpl;
     @Autowired private JobHandler jobHandler;
 
-
     @Container
     private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 

@@ -8,9 +8,9 @@ import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
-
 import java.util.ArrayList;
 import java.util.List;
+
 
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifier;
 

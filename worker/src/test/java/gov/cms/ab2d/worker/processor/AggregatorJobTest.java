@@ -61,7 +61,6 @@ class AggregatorJobTest {
     @Mock
     private LogManager logManager;
 
-
     @Container
     private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
