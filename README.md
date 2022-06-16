@@ -40,12 +40,12 @@ Worker Setup
 4. In Main Class select gov.cms.ab2d.worker.SpringBootApp
 5. Go to 1Password and search for 'AB2D Local Env Variables'. Use the configs in the note for the Environment Variables field
 6. Run this command 
-7. docker-compose up localstack
-8. Set these VM options
+   1. docker-compose up localstack
+7. Set these VM options
    1.  -DLOCALSTACK_URL=localhost:4566 to the VM options of worker
        -Dcloud.aws.region.static=us-east-1
        -Dcom.amazonaws.sdk.disableCertChecking
-9. Run the configuration
+8. Run the configuration
 
 
 API Setup

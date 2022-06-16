@@ -1,7 +1,5 @@
 package gov.cms.ab2d.testjobs;
 
-import com.amazonaws.services.sns.AmazonSNS;
-import com.amazonaws.services.sqs.AmazonSQS;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
@@ -10,7 +8,6 @@ import org.hl7.fhir.instance.model.api.IBaseConformance;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;

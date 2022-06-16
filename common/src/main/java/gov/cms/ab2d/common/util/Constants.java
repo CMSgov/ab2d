@@ -85,7 +85,7 @@ public final class Constants {
 
     public static final String ZIPFORMAT = "application/zip";
 
-    public static final String SNS_QUEUE = "ab2d-job-tracking";
+    public static final String SNS_TOPIC_AB2D_JOB_TRACKING = "ab2d-job-tracking";
 
-    public static final String BASE_SQS_QUEUE = "ab2d-job-tracking";
+    public static final String SQS_QUEUE_AB2D_JOB_TRACKING = "ab2d-job-tracking";
 }
