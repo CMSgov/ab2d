@@ -28,7 +28,6 @@ import static gov.cms.ab2d.common.util.Constants.SQS_QUEUE_AB2D_JOB_TRACKING;
 @Service
 public class JobUpdateListenerServiceImpl implements SqsService {
 
-    private final int randomCharCount = 5;
     private final AmazonSQS amazonSqs;
 
     private final AmazonSNS amazonSNS;
@@ -39,6 +38,8 @@ public class JobUpdateListenerServiceImpl implements SqsService {
     private String queueName;
 
     private String queueUrl;
+
+    String subscriptionArn;
 
     private final JobProgressUpdateService jobProgressUpdateService;
 
@@ -51,11 +52,12 @@ public class JobUpdateListenerServiceImpl implements SqsService {
 
     @PostConstruct
     private void initiate() {
+        int randomCharCount = 5;
         String randomChars = RandomStringUtils.random(randomCharCount, 0, 0, true, true, null, new SecureRandom());
         queueName = SQS_QUEUE_AB2D_JOB_TRACKING + "-" + randomChars;
         queueUrl = amazonSqs.createQueue(queueName).getQueueUrl();
         log.info("Queue {} has been created", queueName);
-        Topics.subscribeQueue(amazonSNS, amazonSqs,
+        subscriptionArn = Topics.subscribeQueue(amazonSNS, amazonSqs,
                 amazonSNS.createTopic(SNS_TOPIC_AB2D_JOB_TRACKING).getTopicArn(), queueUrl);
         log.info("Queue {} has subscribed to {} SNS queue", queueName, SNS_TOPIC_AB2D_JOB_TRACKING);
         startSqsListenerThread();
@@ -63,6 +65,7 @@ public class JobUpdateListenerServiceImpl implements SqsService {
 
     @PreDestroy
     private void cleanup() {
+        amazonSNS.unsubscribe(subscriptionArn);
         amazonSqs.deleteQueue(queueName);
         log.info("Queue {} has been deleted", queueName);
     }
