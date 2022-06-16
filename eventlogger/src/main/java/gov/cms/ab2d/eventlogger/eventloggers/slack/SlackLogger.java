@@ -13,8 +13,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.UUID;
+import java.time.LocalDateTime;
+import java.util.*;
 
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
@@ -22,6 +22,8 @@ import static java.util.stream.Collectors.toList;
 @Slf4j
 @Service
 public class SlackLogger {
+
+    private final Set<String> suppressedMessages = new HashSet<>();
 
     private final Slack slack;
 
@@ -53,7 +55,10 @@ public class SlackLogger {
      * @return true if client successfully logged message
      */
     public boolean logAlert(String message, List<Ab2dEnvironment> ab2dEnvironments) {
-        return validateAndLog(message, ab2dEnvironments, slackAlertWebhooks);
+        if(!suppressedMessages.contains(message)){
+            return validateAndLog(message, ab2dEnvironments, slackAlertWebhooks);
+        }
+        return suppressedMessages.add(message);
     }
 
     public boolean logAlert(LoggableEvent event, List<Ab2dEnvironment> ab2dEnvironments) {

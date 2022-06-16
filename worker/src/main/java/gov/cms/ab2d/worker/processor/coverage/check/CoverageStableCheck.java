@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 
 /**
  * Check to make sure that month to month enrollment changes are within acceptable bounds. If enrollment goes from
@@ -42,6 +44,12 @@ public class CoverageStableCheck extends CoverageCheckPredicate {
                 continue;
             }
 
+            // January to February changes can also be significant.
+            // Stop sending this notification once February ends.
+            if(LocalDate.now().getMonthOfYear() > 2 &&  previousMonth.getMonth() == 1 ){
+                continue;
+            }
+
             CoverageCount nextMonth = coverageCounts.get(idx);
 
             // Change could be anomaly for smaller contracts, ignore
@@ -49,6 +57,7 @@ public class CoverageStableCheck extends CoverageCheckPredicate {
             if (change < CHANGE_THRESHOLD) {
                 continue;
             }
+
 
             double changePercent = 100.0 * change / previousMonth.getBeneficiaryCount();
             if (CHANGE_PERCENT_THRESHOLD < changePercent) {
