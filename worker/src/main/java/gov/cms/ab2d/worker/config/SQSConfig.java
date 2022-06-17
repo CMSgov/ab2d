@@ -9,6 +9,7 @@ import com.amazonaws.services.sqs.AmazonSQSAsync;
 import com.amazonaws.services.sqs.AmazonSQSAsyncClientBuilder;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.aws.messaging.config.QueueMessageHandlerFactory;
 import org.springframework.cloud.aws.messaging.support.NotificationMessageArgumentResolver;
 import org.springframework.context.annotation.Bean;
@@ -21,6 +22,7 @@ import java.util.List;
 
 @Configuration
 @Slf4j
+@ConditionalOnProperty(name = "LOCALSTACK_URL")
 public class SQSConfig {
 
     @Bean

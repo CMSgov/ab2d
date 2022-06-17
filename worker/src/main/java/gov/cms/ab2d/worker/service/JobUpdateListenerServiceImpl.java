@@ -39,7 +39,7 @@ public class JobUpdateListenerServiceImpl implements SqsService {
 
     private String queueUrl;
 
-    String subscriptionArn;
+    private String subscriptionArn;
 
     private final JobProgressUpdateService jobProgressUpdateService;
 

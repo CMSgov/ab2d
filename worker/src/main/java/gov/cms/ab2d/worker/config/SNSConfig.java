@@ -9,6 +9,7 @@ import com.amazonaws.services.sns.AmazonSNSAsync;
 import com.amazonaws.services.sns.AmazonSNSAsyncClientBuilder;
 import com.amazonaws.services.sns.AmazonSNSClientBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.aws.messaging.core.NotificationMessagingTemplate;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,6 +17,7 @@ import org.springframework.context.annotation.Primary;
 
 @Configuration
 @Slf4j
+@ConditionalOnProperty(name = "LOCALSTACK_URL")
 public class SNSConfig {
 
     @Bean
