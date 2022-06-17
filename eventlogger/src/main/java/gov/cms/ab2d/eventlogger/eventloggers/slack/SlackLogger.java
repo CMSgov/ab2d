@@ -13,8 +13,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
@@ -47,7 +49,7 @@ public class SlackLogger {
     /**
      * Log a message to slack. You can use markdown format in the message. See:
      * https://api.slack.com/reference/surfaces/formatting for a reference.
-     *
+     * <p>
      * Alerts are meant for the entire team and indicate an event that needs
      * to be tracked or handled immediately.
      *
@@ -55,10 +57,7 @@ public class SlackLogger {
      * @return true if client successfully logged message
      */
     public boolean logAlert(String message, List<Ab2dEnvironment> ab2dEnvironments) {
-        if(!suppressedMessages.contains(message)){
-            return validateAndLog(message, ab2dEnvironments, slackAlertWebhooks);
-        }
-        return suppressedMessages.add(message);
+        return validateAndLog(message, ab2dEnvironments, slackAlertWebhooks);
     }
 
     public boolean logAlert(LoggableEvent event, List<Ab2dEnvironment> ab2dEnvironments) {
@@ -74,7 +73,7 @@ public class SlackLogger {
     /**
      * Log a message to slack. You can use markdown format in the message. See:
      * https://api.slack.com/reference/surfaces/formatting for a reference.
-     *
+     * <p>
      * Traces are meant for developers.
      *
      * @param message trace to log
@@ -95,6 +94,11 @@ public class SlackLogger {
     }
 
     private boolean validateAndLog(String message, List<Ab2dEnvironment> ab2dEnvironments, List<String> slackWebhooks) {
+
+        if (suppressedMessages.contains(message)) {
+            return false;
+        }
+
         if (StringUtils.isBlank(message)) {
             log.error("cannot build slack message using a null or empty string");
             return false;
@@ -106,6 +110,7 @@ public class SlackLogger {
         }
 
         if (ab2dEnvironments.contains(ab2dEnvironment)) {
+            suppressedMessages.add(message);
             return log(message, slack, ab2dEnvironment, slackWebhooks);
         }
 
