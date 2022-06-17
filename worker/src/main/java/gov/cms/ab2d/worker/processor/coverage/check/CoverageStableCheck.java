@@ -47,7 +47,6 @@ public class CoverageStableCheck extends CoverageCheckPredicate {
 
             // January to February changes can also be significant.
             // Stop sending this notification once February ends.
-            System.out.println("Month" + LocalDate.now().getMonthOfYear());
             if (LocalDate.now().getMonthOfYear() > 2 && previousMonth.getMonth() == 1) {
                 continue;
             }
