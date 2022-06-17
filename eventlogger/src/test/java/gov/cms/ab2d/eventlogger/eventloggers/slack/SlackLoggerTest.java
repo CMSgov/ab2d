@@ -4,7 +4,7 @@ import com.slack.api.Slack;
 import com.slack.api.webhook.Payload;
 import com.slack.api.webhook.WebhookResponse;
 import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
-import org.apache.commons.lang3.RandomStringUtils;
+import gov.cms.ab2d.eventlogger.LoggableEvent;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,21 +13,11 @@ import org.mockito.stubbing.Answer;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
-import java.util.stream.IntStream;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 public class SlackLoggerTest {
 
@@ -159,26 +149,5 @@ public class SlackLoggerTest {
 
         assertFalse(slackLogger.logAlert("oops", Ab2dEnvironment.ALL));
         assertFalse(slackLogger.logTrace("oops", Ab2dEnvironment.ALL));
-    }
-
-    @DisplayName("SlackLogger Doesn't send duplicate alerts")
-    @Test
-    void slackLoggerIgnoreDuplicateAlerts() throws IOException {
-        String alertWebhook = "A";
-        SlackLogger slackLogger = new SlackLogger(slack, List.of(alertWebhook, "B"), List.of("C", "D"), Ab2dEnvironment.LOCAL);
-        when(slack.send(anyString(), any(Payload.class)))
-                .thenReturn(WebhookResponse.builder().code(400).build());
-        String repeatAlert = RandomStringUtils.randomAlphanumeric(100);
-        String uniqueAlert = RandomStringUtils.randomAlphanumeric(100);
-        slackLogger.logAlert(repeatAlert, Ab2dEnvironment.ALL);
-        slackLogger.logAlert(repeatAlert, Ab2dEnvironment.ALL);
-        slackLogger.logAlert(uniqueAlert, Ab2dEnvironment.ALL);
-        try {
-            verify(slack, times(2)).send(eq(alertWebhook), any(Payload.class));
-        } catch (IOException e) {
-            fail(e);
-        }
-
-
     }
 }

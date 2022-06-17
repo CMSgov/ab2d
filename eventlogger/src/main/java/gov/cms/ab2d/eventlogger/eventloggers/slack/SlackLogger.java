@@ -13,9 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 import static java.util.Collections.singletonList;
@@ -24,8 +22,6 @@ import static java.util.stream.Collectors.toList;
 @Slf4j
 @Service
 public class SlackLogger {
-
-    private final Set<String> suppressedMessages = new HashSet<>();
 
     private final Slack slack;
 
@@ -94,11 +90,6 @@ public class SlackLogger {
     }
 
     private boolean validateAndLog(String message, List<Ab2dEnvironment> ab2dEnvironments, List<String> slackWebhooks) {
-
-        if (suppressedMessages.contains(message)) {
-            return false;
-        }
-
         if (StringUtils.isBlank(message)) {
             log.error("cannot build slack message using a null or empty string");
             return false;
@@ -110,7 +101,6 @@ public class SlackLogger {
         }
 
         if (ab2dEnvironments.contains(ab2dEnvironment)) {
-            suppressedMessages.add(message);
             return log(message, slack, ab2dEnvironment, slackWebhooks);
         }
 
