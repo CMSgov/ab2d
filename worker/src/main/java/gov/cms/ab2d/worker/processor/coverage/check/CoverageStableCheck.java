@@ -40,25 +40,12 @@ public class CoverageStableCheck extends CoverageCheckPredicate {
         for (int idx = 1; idx < coverageCounts.size(); idx++) {
             CoverageCount previousMonth = coverageCounts.get(idx - 1);
 
-            // Don't check December to January because changes can be 200% or more
-            if (previousMonth.getMonth() == 12) {
-                continue;
-            }
-
-            // January to February changes can also be significant.
-            // Stop sending this notification once February ends.
-            if (LocalDate.now().getMonthOfYear() > 2 && previousMonth.getMonth() == 1) {
-                continue;
-            }
-
             CoverageCount nextMonth = coverageCounts.get(idx);
-
-            // Change could be anomaly for smaller contracts, ignore
             int change = Math.abs(previousMonth.getBeneficiaryCount() - nextMonth.getBeneficiaryCount());
-            if (change < CHANGE_THRESHOLD) {
+
+            if (skipCheck(previousMonth, change)) {
                 continue;
             }
-
 
             double changePercent = 100.0 * change / previousMonth.getBeneficiaryCount();
             if (CHANGE_PERCENT_THRESHOLD < changePercent) {
@@ -72,5 +59,24 @@ public class CoverageStableCheck extends CoverageCheckPredicate {
         }
 
         return coveragePeriodsChanged;
+    }
+
+    //Moved the skip check conditions to a method to make sonar happy
+    private boolean skipCheck(CoverageCount previousMonth, int change) {
+
+        // Don't check December to January because changes can be 200% or more
+        boolean skip = previousMonth.getMonth() == 12;
+
+        // January to February changes can also be significant.
+        // Stop sending this notification once February ends.
+        if (LocalDate.now().getMonthOfYear() > 2 && previousMonth.getMonth() == 1) {
+            skip = true;
+        }
+
+        // Change could be anomaly for smaller contracts, ignore
+        if (change < CHANGE_THRESHOLD) {
+            skip = true;
+        }
+        return skip;
     }
 }
