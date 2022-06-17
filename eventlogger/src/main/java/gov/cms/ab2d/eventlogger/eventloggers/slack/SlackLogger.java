@@ -49,7 +49,7 @@ public class SlackLogger {
     /**
      * Log a message to slack. You can use markdown format in the message. See:
      * https://api.slack.com/reference/surfaces/formatting for a reference.
-     * <p>
+     *
      * Alerts are meant for the entire team and indicate an event that needs
      * to be tracked or handled immediately.
      *
@@ -73,7 +73,7 @@ public class SlackLogger {
     /**
      * Log a message to slack. You can use markdown format in the message. See:
      * https://api.slack.com/reference/surfaces/formatting for a reference.
-     * <p>
+     *
      * Traces are meant for developers.
      *
      * @param message trace to log
