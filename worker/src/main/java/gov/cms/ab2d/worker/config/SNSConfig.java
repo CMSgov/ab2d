@@ -2,7 +2,7 @@ package gov.cms.ab2d.worker.config;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.auth.InstanceProfileCredentialsProvider;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.sns.AmazonSNS;
@@ -45,9 +45,11 @@ public class SNSConfig {
             builder
                     .withEndpointConfiguration(getEndpointConfig(localstackUrl))
                     .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("a", "")));
+        }else{
+            builder.withCredentials(new DefaultAWSCredentialsProviderChain());
         }
 
-        return (AmazonSNS) builder.withCredentials(InstanceProfileCredentialsProvider.getInstance()).build();
+        return (AmazonSNS) builder.build();
     }
 
     private AwsClientBuilder.EndpointConfiguration getEndpointConfig(String localstackURl) {

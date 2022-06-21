@@ -2,9 +2,10 @@ package gov.cms.ab2d.worker.config;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.auth.InstanceProfileCredentialsProvider;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.regions.Regions;
+import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSAsync;
 import com.amazonaws.services.sqs.AmazonSQSAsyncClientBuilder;
@@ -41,8 +42,11 @@ public class SQSConfig {
         if (null != localstackUrl) {
             builder.withEndpointConfiguration(getEndpointConfig(localstackUrl))
                     .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("a", "")));
+        }else{
+            builder.withCredentials(new DefaultAWSCredentialsProviderChain());
         }
-        return (AmazonSQS) builder.withCredentials(InstanceProfileCredentialsProvider.getInstance()).build();
+
+        return (AmazonSQS) builder.build();
     }
 
     @Bean
