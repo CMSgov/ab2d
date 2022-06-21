@@ -2,14 +2,16 @@ package gov.cms.ab2d.worker.config;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.AmazonSNSAsync;
 import com.amazonaws.services.sns.AmazonSNSAsyncClientBuilder;
 import com.amazonaws.services.sns.AmazonSNSClientBuilder;
+import com.amazonaws.services.sqs.AmazonSQS;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.aws.messaging.core.NotificationMessagingTemplate;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,7 +19,6 @@ import org.springframework.context.annotation.Primary;
 
 @Configuration
 @Slf4j
-@ConditionalOnProperty(name = "LOCALSTACK_URL")
 public class SNSConfig {
 
     @Bean
@@ -48,8 +49,7 @@ public class SNSConfig {
                     .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("a", "")));
         }
 
-        return (AmazonSNS) builder
-                .build();
+        return (AmazonSNS) builder.withCredentials(InstanceProfileCredentialsProvider.getInstance()).build();
     }
 
     private AwsClientBuilder.EndpointConfiguration getEndpointConfig(String localstackURl) {
