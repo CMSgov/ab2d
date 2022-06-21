@@ -45,7 +45,7 @@ public class SNSConfig {
             builder
                     .withEndpointConfiguration(getEndpointConfig(localstackUrl))
                     .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("a", "")));
-        }else{
+        } else {
             builder.withCredentials(new DefaultAWSCredentialsProviderChain());
         }
 
