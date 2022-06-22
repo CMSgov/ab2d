@@ -13,7 +13,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
@@ -54,9 +53,9 @@ public class MockWebClient {
         LinkedMultiValueMap<String, ResponseCookie> cookies = new LinkedMultiValueMap<>();
         cookies.add("test", ResponseCookie.fromClientResponse("test", "test").build());
         Mockito.when(response.cookies()).thenReturn(cookies);
-        Mockito.when(response.bodyToFlux(HPMSAuthResponse.class)).thenReturn(Flux.just(body));
-        ArgumentCaptor<Function<ClientResponse, ? extends Flux<HPMSAuthResponse>>> argument = ArgumentCaptor.forClass(Function.class);
-        when(headersSpec.exchangeToFlux(argument.capture())).thenAnswer(x -> argument.getValue().apply(response));
+        Mockito.when(response.bodyToMono(HPMSAuthResponse.class)).thenReturn(Mono.just(body));
+        ArgumentCaptor<Function<ClientResponse, ? extends Mono<HPMSAuthResponse>>> argument = ArgumentCaptor.forClass(Function.class);
+        when(headersSpec.exchangeToMono(argument.capture())).thenAnswer(x -> argument.getValue().apply(response));
 
     }
 
