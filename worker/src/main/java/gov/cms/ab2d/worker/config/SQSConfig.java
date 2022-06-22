@@ -1,8 +1,5 @@
 package gov.cms.ab2d.worker.config;
 
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.sqs.AmazonSQS;
@@ -20,6 +17,8 @@ import org.springframework.messaging.converter.MessageConverter;
 
 import java.util.List;
 
+import static gov.cms.ab2d.worker.config.LocalstackConfig.configureBuilder;
+
 @Configuration
 @Slf4j
 public class SQSConfig {
@@ -36,16 +35,7 @@ public class SQSConfig {
     }
 
     private AmazonSQS getSQs(AwsClientBuilder<?, ?> builder) {
-        String localstackUrl = System.getProperty("LOCALSTACK_URL");
-        log.info("LOCALSTACK_URL: " + localstackUrl);
-        if (null != localstackUrl) {
-            builder.withEndpointConfiguration(getEndpointConfig(localstackUrl))
-                    .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("a", "")));
-        } else {
-            builder.withCredentials(new DefaultAWSCredentialsProviderChain());
-        }
-
-        return (AmazonSQS) builder.build();
+        return (AmazonSQS) configureBuilder(builder);
     }
 
     @Bean
@@ -61,10 +51,6 @@ public class SQSConfig {
         converter.setSerializedPayloadClass(String.class);
         converter.setStrictContentTypeMatch(false);
         return converter;
-    }
-
-    private AwsClientBuilder.EndpointConfiguration getEndpointConfig(String localstackURl) {
-        return new AwsClientBuilder.EndpointConfiguration(localstackURl, Regions.US_EAST_1.getName());
     }
 
 }
