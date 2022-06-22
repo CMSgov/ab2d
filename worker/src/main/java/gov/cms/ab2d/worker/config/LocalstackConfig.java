@@ -7,6 +7,10 @@ import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.regions.Regions;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
+
 @Slf4j
 public class LocalstackConfig {
 
@@ -20,7 +24,6 @@ public class LocalstackConfig {
                     .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials("a", "")));
         } else {
             // Property name is incorrect
-            System.setProperty("AWS_CONTAINER_CREDENTIALS_FULL_URI", System.getProperty("ECS_CONTAINER_METADATA_URI_V4"));
             builder.withCredentials(new DefaultAWSCredentialsProviderChain());
         }
         return builder;
