@@ -1,10 +1,9 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.aggregator.FileOutputType;
-import gov.cms.ab2d.common.model.Job;
-import gov.cms.ab2d.common.repository.JobOutputRepository;
-import gov.cms.ab2d.common.repository.JobRepository;
-import gov.cms.ab2d.common.util.EventUtils;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.repository.JobOutputRepository;
+import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ContractSearchEvent;
 import gov.cms.ab2d.eventlogger.events.FileEvent;
@@ -29,8 +28,8 @@ import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.concurrent.ExecutionException;
 
-import static gov.cms.ab2d.common.model.JobStatus.FAILED;
-import static gov.cms.ab2d.common.model.JobStatus.SUCCESSFUL;
+import static gov.cms.ab2d.job.model.JobStatus.FAILED;
+import static gov.cms.ab2d.job.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PROD_LIST;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
 
@@ -107,7 +106,7 @@ public class JobProcessorImpl implements JobProcessor {
             }
 
             // Log exception to relevant loggers
-            eventLogger.logAndAlert(EventUtils.getJobChangeEvent(job, FAILED, EOB_JOB_FAILURE + " " + message), PUBLIC_LIST);
+            eventLogger.logAndAlert(job.buildJobStatusChangeEvent(FAILED, EOB_JOB_FAILURE + " " + message), PUBLIC_LIST);
             log.error("Unexpected exception executing job {}", e.getMessage());
 
             // Update database status
@@ -276,7 +275,7 @@ public class JobProcessorImpl implements JobProcessor {
             }
 
             if (Files.isRegularFile(filePath)) {
-                eventLogger.log(EventUtils.getFileEvent(job, filePath.toFile(), FileEvent.FileStatus.DELETE));
+                eventLogger.log(job.buildFileEvent(filePath.toFile(), FileEvent.FileStatus.DELETE));
                 doDelete(filePath);
             }
         }
@@ -324,7 +323,7 @@ public class JobProcessorImpl implements JobProcessor {
 
         // In all environments log to database and or Kinesis
         // In prod additionally log to Slack as an alert
-        JobStatusChangeEvent statusEvent = EventUtils.getJobChangeEvent(job, SUCCESSFUL, jobFinishedMessage);
+        JobStatusChangeEvent statusEvent = job.buildJobStatusChangeEvent(SUCCESSFUL, jobFinishedMessage);
         eventLogger.logAndAlert(statusEvent, PROD_LIST);
 
         job.setStatus(SUCCESSFUL);

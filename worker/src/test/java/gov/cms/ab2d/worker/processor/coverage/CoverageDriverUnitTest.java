@@ -1,7 +1,6 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.common.dto.ContractDTO;
-import gov.cms.ab2d.common.model.Job;
 import gov.cms.ab2d.common.model.Properties;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.Constants;
@@ -14,6 +13,7 @@ import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.service.CoverageService;
+import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
