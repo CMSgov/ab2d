@@ -44,7 +44,7 @@ public class SQSConfig {
     }
 
     private AmazonSQS getSQs(AwsClientBuilder<?, ?> builder) {
-        return (AmazonSQS) configureBuilder(builder);
+        return (AmazonSQS) (configureBuilder(builder).build());
     }
 
     @Bean
