@@ -7,10 +7,6 @@ import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.regions.Regions;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Stream;
-
 @Slf4j
 public class LocalstackConfig {
 
