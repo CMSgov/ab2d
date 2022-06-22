@@ -1,4 +1,4 @@
-FROM openjdk:17
+FROM openjdk:19
 WORKDIR /usr/src/ab2d-worker
 ADD target/worker-*-SNAPSHOT-exe.jar /usr/src/ab2d-worker/worker.jar
 ADD target/newrelic/newrelic.jar /usr/src/ab2d-worker/newrelic/newrelic.jar

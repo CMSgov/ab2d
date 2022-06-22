@@ -163,7 +163,7 @@ class CoveragePeriodQuartzJobTest {
 
             OffsetDateTime date = OffsetDateTime.now(AB2D_ZONE);
 
-            if (date.getDayOfWeek() == DayOfWeek.TUESDAY && date.getHour() == 0) {
+            if (date.getDayOfWeek() == DayOfWeek.TUESDAY) {
                 assertTrue(coverageDriverStub.queueingCalled);
             } else {
                 assertFalse(coverageDriverStub.queueingCalled);
