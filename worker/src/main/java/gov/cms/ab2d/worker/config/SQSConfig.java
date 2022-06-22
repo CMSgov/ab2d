@@ -15,8 +15,6 @@ import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.converter.MessageConverter;
 
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Stream;
 
 import static gov.cms.ab2d.worker.config.LocalstackConfig.configureBuilder;
 
@@ -24,14 +22,6 @@ import static gov.cms.ab2d.worker.config.LocalstackConfig.configureBuilder;
 @Slf4j
 public class SQSConfig {
 
-    static {
-        System.setProperty("AWS_CONTAINER_CREDENTIALS_FULL_URI",
-                Stream.of("ECS_CONTAINER_METADATA_URI_V4", "ECS_CONTAINER_METADATA_URI")
-                        .map(System::getProperty)
-                        .filter(Objects::nonNull)
-                        .findFirst()
-                        .orElse("http://169.254.169.254/get-credentials"));
-    }
     @Bean
     public AmazonSQSAsync amazonSQSAsync() {
         return (AmazonSQSAsync) getSQs(AmazonSQSAsyncClientBuilder.standard());
