@@ -3,6 +3,8 @@ package gov.cms.ab2d.worker.service;
 import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.util.Topics;
 import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.model.CreateQueueResult;
+import com.amazonaws.services.sqs.model.ListQueuesResult;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -55,8 +57,11 @@ public class JobUpdateListenerServiceImpl implements SqsService {
         int randomCharCount = 5;
         String randomChars = RandomStringUtils.random(randomCharCount, 0, 0, true, true, null, new SecureRandom());
         queueName = SQS_QUEUE_AB2D_JOB_TRACKING + "-" + randomChars;
-        queueUrl = amazonSqs.createQueue(queueName).getQueueUrl();
-        log.info("Queue {} has been created", queueName);
+        ListQueuesResult queues = amazonSqs.listQueues();
+        queues.getQueueUrls().forEach(log::info); //test sqs connection
+        CreateQueueResult queueCreateResponse = amazonSqs.createQueue(queueName);
+        queueUrl = queueCreateResponse.getQueueUrl();
+        log.info("Queue {} has been created at url {}", queueName, queueUrl);
         subscriptionArn = Topics.subscribeQueue(amazonSNS, amazonSqs,
                 amazonSNS.createTopic(SNS_TOPIC_AB2D_JOB_TRACKING).getTopicArn(), queueUrl);
         log.info("Queue {} has subscribed to {} SNS queue", queueName, SNS_TOPIC_AB2D_JOB_TRACKING);
