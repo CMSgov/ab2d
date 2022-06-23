@@ -117,6 +117,9 @@ public class ProgressTracker {
 
     public boolean isErrorThresholdExceeded() {
         //SNS/SQS adds a delay so there's a chance this gets called when total is still 0 resulting in divide by zero
-        return (patientFailureCount * 100) / (getTotalCount() == 0 ? -1 : getTotalCount()) >= failureThreshold;
+        if (getTotalCount() == 0) {
+            return false;
+        }
+        return (patientFailureCount * 100) / getTotalCount() >= failureThreshold;
     }
 }
