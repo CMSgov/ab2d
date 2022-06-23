@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.service;
 
-import gov.cms.ab2d.common.dto.PropertiesDTO;
+import gov.cms.ab2d.properties.dto.PropertiesDTO;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
@@ -8,9 +8,8 @@ import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.job.service.JobCleanup;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.service.FeatureEngagement;
-import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.job.service.JobService;
 import gov.cms.ab2d.worker.config.JobHandler;
@@ -34,6 +33,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
+import static gov.cms.ab2d.properties.util.Constants.WORKER_ENGAGEMENT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
@@ -48,7 +48,7 @@ class WorkerServiceDisengagementTest extends JobCleanup {
     @Autowired private DataSetup dataSetup;
     @Autowired private JobRepository jobRepository;
     @Autowired private PdpClientRepository pdpClientRepository;
-    @Autowired private PropertiesService propertiesService;
+    @Autowired private PropertiesAPIService propertiesApiService;
     @Autowired private JobService jobService;
 
     @Autowired private WorkerServiceImpl workerServiceImpl;
@@ -62,7 +62,7 @@ class WorkerServiceDisengagementTest extends JobCleanup {
 
     @BeforeEach
     public void init() {
-        workerServiceStub = new WorkerServiceStub(jobService, propertiesService);
+        workerServiceStub = new WorkerServiceStub(jobService, propertiesApiService);
 
         ReflectionTestUtils.setField(jobHandler, "workerService", workerServiceStub);
     }
@@ -76,15 +76,13 @@ class WorkerServiceDisengagementTest extends JobCleanup {
     }
 
     private void setEngagement(FeatureEngagement drive) {
-        List<PropertiesDTO> propertiesDTOS = propertiesService.getAllPropertiesDTO();
-        Optional<PropertiesDTO> dto = propertiesDTOS.stream()
-                .filter(tmpDto -> tmpDto.getKey().equals(Constants.WORKER_ENGAGEMENT))
-                .findAny();
-        if (dto.isEmpty()) {
-            throw new IllegalStateException(Constants.WORKER_ENGAGEMENT + " must be set.");
+        try {
+            String engagement = propertiesApiService.getProperty(WORKER_ENGAGEMENT);
+        } catch (Exception ex) {
+            throw new IllegalStateException(WORKER_ENGAGEMENT + " must be set.");
         }
-        dto.get().setValue(drive.getSerialValue());
-        propertiesService.updateProperties(propertiesDTOS);
+
+        propertiesApiService.updateProperty(WORKER_ENGAGEMENT, drive.getSerialValue());
     }
 
     @Test

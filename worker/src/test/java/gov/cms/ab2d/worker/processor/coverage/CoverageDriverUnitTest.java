@@ -1,9 +1,8 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.common.dto.ContractDTO;
-import gov.cms.ab2d.common.model.Properties;
-import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.common.util.Constants;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
+import gov.cms.ab2d.properties.util.Constants;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageJobStatus;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
@@ -71,7 +70,7 @@ class CoverageDriverUnitTest {
     private CoverageProcessor coverageProcessor;
 
     @Mock
-    private PropertiesService propertiesService;
+    private PropertiesAPIService propertiesApiService;
 
     @Mock
     private ContractToContractCoverageMapping mapping;
@@ -151,7 +150,7 @@ class CoverageDriverUnitTest {
 
     @AfterEach
     void after() {
-        reset(coverageService, lockWrapper, propertiesService, coverageProcessor);
+        reset(coverageService, lockWrapper, propertiesApiService, coverageProcessor);
     }
 
     @DisplayName("Paging coverage fails when ")
@@ -298,31 +297,17 @@ class CoverageDriverUnitTest {
     void failureToLockCausesExceptions() {
 
         when(lockWrapper.getCoverageLock()).thenReturn(tryLockFalse);
+        when(propertiesApiService.getProperty(eq(Constants.COVERAGE_SEARCH_UPDATE_MONTHS))).thenReturn("3");
+        when(propertiesApiService.getProperty(eq(Constants.COVERAGE_SEARCH_STUCK_HOURS))).thenReturn("72");
+        when(propertiesApiService.getProperty(eq(Constants.COVERAGE_SEARCH_OVERRIDE))).thenReturn("false");
 
-        Properties monthsProp = new Properties();
-        monthsProp.setValue("3");
-        when(propertiesService.getPropertiesByKey(eq(Constants.COVERAGE_SEARCH_UPDATE_MONTHS)))
-                .thenReturn(monthsProp);
-
-        Properties stuckProp = new Properties();
-        stuckProp.setValue("72");
-        when(propertiesService.getPropertiesByKey(eq(Constants.COVERAGE_SEARCH_STUCK_HOURS)))
-                .thenReturn(stuckProp);
-
-        Properties overrideProp = new Properties();
-        overrideProp.setValue("false");
-        when(propertiesService.getPropertiesByKey(eq(Constants.COVERAGE_SEARCH_OVERRIDE)))
-                .thenReturn(overrideProp);
-
-        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, propertiesService, null, lockWrapper,null);
+        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, propertiesApiService, null, lockWrapper,null);
 
         CoverageDriverException exception = assertThrows(CoverageDriverException.class, driver::discoverCoveragePeriods);
         assertTrue(exception.getMessage().contains("could not retrieve lock"));
 
         exception = assertThrows(CoverageDriverException.class, driver::queueStaleCoveragePeriods);
         assertTrue(exception.getMessage().contains("could not retrieve lock"));
-
-
     }
 
     @DisplayName("When locking is interrupted propagate exception")
@@ -331,27 +316,16 @@ class CoverageDriverUnitTest {
 
         when(lockWrapper.getCoverageLock()).thenReturn(tryLockInterrupt);
 
-        Properties monthsProp = new Properties();
-        monthsProp.setValue("3");
-        when(propertiesService.getPropertiesByKey(eq(Constants.COVERAGE_SEARCH_UPDATE_MONTHS)))
-                .thenReturn(monthsProp);
-
-        Properties stuckProp = new Properties();
-        stuckProp.setValue("72");
-        when(propertiesService.getPropertiesByKey(eq(Constants.COVERAGE_SEARCH_STUCK_HOURS)))
-                .thenReturn(stuckProp);
-
-        Properties overrideProp = new Properties();
-        overrideProp.setValue("false");
-        when(propertiesService.getPropertiesByKey(eq(Constants.COVERAGE_SEARCH_OVERRIDE)))
-                .thenReturn(overrideProp);
+        when(propertiesApiService.getProperty(eq(Constants.COVERAGE_SEARCH_UPDATE_MONTHS))).thenReturn("3");
+        when(propertiesApiService.getProperty(eq(Constants.COVERAGE_SEARCH_STUCK_HOURS))).thenReturn("72");
+        when(propertiesApiService.getProperty(eq(Constants.COVERAGE_SEARCH_OVERRIDE))).thenReturn("false");
 
         ContractDTO contract = new ContractDTO("contractNum", null, null, null);
 
         Job job = new Job();
         job.setContractNumber(contract.getContractNumber());
 
-        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, propertiesService, null, lockWrapper,null);
+        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, propertiesApiService, null, lockWrapper,null);
 
         assertThrows(InterruptedException.class, driver::discoverCoveragePeriods);
         assertThrows(InterruptedException.class, driver::queueStaleCoveragePeriods);
@@ -399,17 +373,17 @@ class CoverageDriverUnitTest {
 
 
         CoverageDriverImpl driver = spy(new CoverageDriverImpl(null, null,
-                coverageService, propertiesService, coverageProcessor, lockWrapper,null)
+                coverageService, propertiesApiService, coverageProcessor, lockWrapper,null)
         );
 
-        doReturn(true).when(propertiesService).isInMaintenanceMode();
+        doReturn(true).when(propertiesApiService).isInMaintenanceMode();
         try {
             driver.loadMappingJob();
         } catch (Exception exception) {
             fail("maintenance mode should cause job to fail quietly", exception);
         }
 
-        doReturn(false).when(propertiesService).isInMaintenanceMode();
+        doReturn(false).when(propertiesApiService).isInMaintenanceMode();
         doReturn(true).when(coverageProcessor).isProcessorBusy();
         try {
             driver.loadMappingJob();

@@ -9,7 +9,7 @@ import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.service.InvalidClientInputException;
 import gov.cms.ab2d.common.service.InvalidContractException;
 import gov.cms.ab2d.common.service.PdpClientService;
-import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import gov.cms.ab2d.fhir.FhirVersion;
@@ -42,7 +42,7 @@ import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 public class ApiCommon {
     private final LogManager eventLogger;
     private final JobClient jobClient;
-    private final PropertiesService propertiesService;
+    private final PropertiesAPIService propertiesApiService;
     private final PdpClientService pdpClientService;
 
     // Since this is used in an annotation, it can't be derived from the Set, otherwise it will be an error
@@ -51,11 +51,11 @@ public class ApiCommon {
     public static final Set<String> ALLOWABLE_OUTPUT_FORMAT_SET = Set.of(ALLOWABLE_OUTPUT_FORMATS.split(","));
     public static final String JOB_CANCELLED_MSG = "Job canceled";
 
-    public ApiCommon(LogManager eventLogger, JobClient jobClient, PropertiesService propertiesService,
+    public ApiCommon(LogManager eventLogger, JobClient jobClient, PropertiesAPIService propertiesApiService,
                      PdpClientService pdpClientService) {
         this.eventLogger = eventLogger;
         this.jobClient = jobClient;
-        this.propertiesService = propertiesService;
+        this.propertiesApiService = propertiesApiService;
         this.pdpClientService = pdpClientService;
     }
 
@@ -94,7 +94,7 @@ public class ApiCommon {
     }
 
     public void checkIfInMaintenanceMode() {
-        if (propertiesService.isInMaintenanceMode()) {
+        if (propertiesApiService.isInMaintenanceMode()) {
             throw new InMaintenanceModeException("The system is currently in maintenance mode. Please try the request again later.");
         }
     }
@@ -132,7 +132,7 @@ public class ApiCommon {
             throw new InvalidClientInputException(errMsg);
         }
 
-        final boolean zipSupportOn = propertiesService.isToggleOn(ZIP_SUPPORT_ON);
+        final boolean zipSupportOn = propertiesApiService.isToggleOn(ZIP_SUPPORT_ON);
         if (!zipSupportOn && ZIPFORMAT.equalsIgnoreCase(outputFormat)) {
             throw new InvalidClientInputException(errMsg);
         }

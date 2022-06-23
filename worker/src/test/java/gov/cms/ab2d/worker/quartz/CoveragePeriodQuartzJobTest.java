@@ -1,8 +1,6 @@
 package gov.cms.ab2d.worker.quartz;
 
-import gov.cms.ab2d.common.model.Properties;
-import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.common.util.Constants;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverStub;
@@ -18,8 +16,10 @@ import org.quartz.JobExecutionException;
 import java.time.DayOfWeek;
 import java.time.OffsetDateTime;
 
-import static gov.cms.ab2d.common.util.Constants.COVERAGE_SEARCH_OVERRIDE;
+import static gov.cms.ab2d.properties.util.Constants.COVERAGE_SEARCH_DISCOVERY;
+import static gov.cms.ab2d.properties.util.Constants.COVERAGE_SEARCH_OVERRIDE;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
+import static gov.cms.ab2d.properties.util.Constants.COVERAGE_SEARCH_QUEUEING;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -28,7 +28,7 @@ import static org.mockito.Mockito.*;
 class CoveragePeriodQuartzJobTest {
 
     @Mock
-    private PropertiesService propertiesService;
+    private PropertiesAPIService propertiesApiService;
 
     @Mock
     private CoverageDriver coverageDriverMock;
@@ -38,7 +38,7 @@ class CoveragePeriodQuartzJobTest {
 
     @AfterEach
     void tearDown() {
-        reset(propertiesService);
+        reset(propertiesApiService);
         reset(logManager);
     }
 
@@ -46,30 +46,13 @@ class CoveragePeriodQuartzJobTest {
     @Test
     void disengageSearchWorks() {
 
-        when(propertiesService.getPropertiesByKey(eq(Constants.COVERAGE_SEARCH_DISCOVERY))).thenAnswer((arg) -> {
-            Properties engaged = new Properties();
-            engaged.setKey(Constants.COVERAGE_SEARCH_DISCOVERY);
-            engaged.setValue("idle");
-            return engaged;
-        });
-
-        when(propertiesService.getPropertiesByKey(eq(Constants.COVERAGE_SEARCH_QUEUEING))).thenAnswer((arg) -> {
-            Properties engaged = new Properties();
-            engaged.setKey(Constants.COVERAGE_SEARCH_QUEUEING);
-            engaged.setValue("idle");
-            return engaged;
-        });
-
-        when(propertiesService.getPropertiesByKey(eq(COVERAGE_SEARCH_OVERRIDE))).thenAnswer((arg) -> {
-            Properties override = new Properties();
-            override.setKey(COVERAGE_SEARCH_OVERRIDE);
-            override.setValue("true");
-            return override;
-        });
+        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_DISCOVERY))).thenAnswer((arg) -> "idle");
+        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_QUEUEING))).thenAnswer((arg) -> "idle");
+        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_OVERRIDE))).thenAnswer((arg) -> "true");
 
         CoverageDriverStub coverageDriverStub = new CoverageDriverStub();
 
-        CoveragePeriodQuartzJob quartzJob = new CoveragePeriodQuartzJob(coverageDriverStub, propertiesService, logManager);
+        CoveragePeriodQuartzJob quartzJob = new CoveragePeriodQuartzJob(coverageDriverStub, propertiesApiService, logManager);
 
         try {
             quartzJob.executeInternal(null);
@@ -86,34 +69,16 @@ class CoveragePeriodQuartzJobTest {
     @Test
     void engageSearchWorks() {
 
-        PropertiesService propertiesService = mock(PropertiesService.class);
+        PropertiesAPIService propertiesApiService = mock(PropertiesAPIService.class);
 
-        when(propertiesService.getPropertiesByKey(eq(Constants.COVERAGE_SEARCH_DISCOVERY))).thenAnswer((arg) -> {
-            Properties engaged = new Properties();
-            engaged.setKey(Constants.COVERAGE_SEARCH_DISCOVERY);
-            engaged.setValue("engaged");
-            return engaged;
-        });
-
-        when(propertiesService.getPropertiesByKey(eq(Constants.COVERAGE_SEARCH_QUEUEING))).thenAnswer((arg) -> {
-            Properties engaged = new Properties();
-            engaged.setKey(Constants.COVERAGE_SEARCH_QUEUEING);
-            engaged.setValue("engaged");
-            return engaged;
-        });
-
-        when(propertiesService.getPropertiesByKey(eq(COVERAGE_SEARCH_OVERRIDE))).thenAnswer((arg) -> {
-            Properties override = new Properties();
-            override.setKey(COVERAGE_SEARCH_OVERRIDE);
-            override.setValue("true");
-            return override;
-        });
+        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_DISCOVERY))).thenAnswer((arg) -> "engaged");
+        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_QUEUEING))).thenAnswer((arg) -> "engaged");
+        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_OVERRIDE))).thenAnswer((arg) -> "true");
 
         CoverageDriverStub coverageDriverStub = new CoverageDriverStub();
-        CoveragePeriodQuartzJob quartzJob = new CoveragePeriodQuartzJob(coverageDriverStub, propertiesService, logManager);
+        CoveragePeriodQuartzJob quartzJob = new CoveragePeriodQuartzJob(coverageDriverStub, propertiesApiService, logManager);
 
         try {
-
             quartzJob.executeInternal(null);
 
             assertTrue(coverageDriverStub.discoveryCalled);
@@ -128,38 +93,19 @@ class CoveragePeriodQuartzJobTest {
     @Test
     void engagedSearchNotTuesdayAtMidnightDoesNotFire() {
 
-        PropertiesService propertiesService = mock(PropertiesService.class);
+        PropertiesAPIService propertiesApiService = mock(PropertiesAPIService.class);
 
-        when(propertiesService.getPropertiesByKey(eq(Constants.COVERAGE_SEARCH_DISCOVERY))).thenAnswer((arg) -> {
-            Properties engaged = new Properties();
-            engaged.setKey(Constants.COVERAGE_SEARCH_DISCOVERY);
-            engaged.setValue("engaged");
-            return engaged;
-        });
-
-        when(propertiesService.getPropertiesByKey(eq(Constants.COVERAGE_SEARCH_QUEUEING))).thenAnswer((arg) -> {
-            Properties engaged = new Properties();
-            engaged.setKey(Constants.COVERAGE_SEARCH_QUEUEING);
-            engaged.setValue("engaged");
-            return engaged;
-        });
-
-        when(propertiesService.getPropertiesByKey(eq(COVERAGE_SEARCH_OVERRIDE))).thenAnswer((arg) -> {
-            Properties override = new Properties();
-            override.setKey(COVERAGE_SEARCH_OVERRIDE);
-            override.setValue("false");
-            return override;
-        });
+        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_DISCOVERY))).thenAnswer((arg) -> "engaged");
+        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_QUEUEING))).thenAnswer((arg) -> "engaged");
+        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_OVERRIDE))).thenAnswer((arg) -> "false");
 
         CoverageDriverStub coverageDriverStub = new CoverageDriverStub();
-        CoveragePeriodQuartzJob quartzJob = new CoveragePeriodQuartzJob(coverageDriverStub, propertiesService, logManager);
+        CoveragePeriodQuartzJob quartzJob = new CoveragePeriodQuartzJob(coverageDriverStub, propertiesApiService, logManager);
 
         try {
-
             quartzJob.executeInternal(null);
 
             assertTrue(coverageDriverStub.discoveryCalled);
-
 
             OffsetDateTime date = OffsetDateTime.now(AB2D_ZONE);
 
@@ -179,26 +125,13 @@ class CoveragePeriodQuartzJobTest {
     @Test
     void failingSearchesTriggerAlerts() {
 
-        PropertiesService propertiesService = mock(PropertiesService.class);
+        PropertiesAPIService propertiesApiService = mock(PropertiesAPIService.class);
 
-        when(propertiesService.getPropertiesByKey(eq(Constants.COVERAGE_SEARCH_DISCOVERY))).thenAnswer((arg) -> {
-            Properties engaged = new Properties();
-            engaged.setKey(Constants.COVERAGE_SEARCH_DISCOVERY);
-            engaged.setValue("engaged");
-            return engaged;
-        });
-
-        when(propertiesService.getPropertiesByKey(eq(COVERAGE_SEARCH_OVERRIDE))).thenAnswer((arg) -> {
-            Properties override = new Properties();
-            override.setKey(COVERAGE_SEARCH_OVERRIDE);
-            override.setValue("true");
-            return override;
-        });
-
-
+        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_DISCOVERY))).thenAnswer((arg) -> "engaged");
+        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_OVERRIDE))).thenAnswer((arg) -> "true");
         try {
             doThrow(new RuntimeException("testing123")).when(coverageDriverMock).discoverCoveragePeriods();
-            CoveragePeriodQuartzJob quartzJob = new CoveragePeriodQuartzJob(coverageDriverMock, propertiesService, logManager);
+            CoveragePeriodQuartzJob quartzJob = new CoveragePeriodQuartzJob(coverageDriverMock, propertiesApiService, logManager);
 
             JobExecutionException exception =
                     assertThrows(JobExecutionException.class, () -> quartzJob.executeInternal(null));

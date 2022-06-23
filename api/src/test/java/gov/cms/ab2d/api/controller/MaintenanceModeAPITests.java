@@ -1,8 +1,8 @@
 package gov.cms.ab2d.api.controller;
 
 import gov.cms.ab2d.api.SpringBootApp;
-import gov.cms.ab2d.common.dto.PropertiesDTO;
-import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.properties.dto.PropertiesDTO;
+import gov.cms.ab2d.properties.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import org.hamcrest.core.Is;
@@ -19,7 +19,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.util.Collections;
 import java.util.List;
 
-import static gov.cms.ab2d.common.util.Constants.*;
+import static gov.cms.ab2d.common.util.Constants.STATUS_ENDPOINT;
+import static gov.cms.ab2d.properties.util.Constants.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;

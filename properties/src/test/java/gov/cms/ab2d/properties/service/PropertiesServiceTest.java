@@ -1,14 +1,14 @@
-package gov.cms.ab2d.common.service;
+package gov.cms.ab2d.properties.service;
 
-import gov.cms.ab2d.common.SpringBootApp;
-import gov.cms.ab2d.common.dto.PropertiesDTO;
-import gov.cms.ab2d.common.model.Properties;
-import gov.cms.ab2d.common.repository.PropertiesRepository;
-import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.properties.SpringBootApp;
+import gov.cms.ab2d.properties.dto.PropertiesDTO;
+import gov.cms.ab2d.properties.model.Properties;
+import gov.cms.ab2d.properties.repository.PropertiesRepository;
+import gov.cms.ab2d.properties.util.AB2DPostgresqlContainer;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -17,12 +17,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
-import static gov.cms.ab2d.common.util.Constants.*;
+import static gov.cms.ab2d.properties.util.Constants.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = SpringBootApp.class)
-@TestPropertySource(locations = "/application.common.properties")
 @Testcontainers
 class PropertiesServiceTest {
 
@@ -33,15 +33,17 @@ class PropertiesServiceTest {
     private PropertiesService propertiesService;
 
     @Container
-    private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
+    private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer("data-postgres.sql");
+
+    private static final String BOGUS_PARAMETER = "abc";
 
     @Test
     void testCreationAndRetrieval() {
         Map<String, Object> propertyMap = new HashMap<>(){{
-            put("abc", "val");
+            put(BOGUS_PARAMETER, "val");
             put(PCP_CORE_POOL_SIZE, 10);
             put(PCP_MAX_POOL_SIZE, 150);
-            put(PCP_SCALE_TO_MAX_TIME, 900);
+            put(PCP_SCALE_TO_MAX_TIME, 800);
             put(MAINTENANCE_MODE, "false");
             put(ZIP_SUPPORT_ON, "false");
             put(WORKER_ENGAGEMENT, "engaged");
@@ -57,7 +59,7 @@ class PropertiesServiceTest {
         int beforeCount = propertyListBeforeInsert.size();
 
         Properties properties = new Properties();
-        properties.setKey("abc");
+        properties.setKey(BOGUS_PARAMETER);
         properties.setValue("val");
 
         propertiesRepository.save(properties);
@@ -66,11 +68,16 @@ class PropertiesServiceTest {
 
         assertEquals(propertiesList.size(), beforeCount + 1);
 
-        for(Properties propertiesToCheck : propertiesList) {
+        for (Properties propertiesToCheck : propertiesList) {
             Object propertyValue = propertyMap.get(propertiesToCheck.getKey());
 
             assertNotNull(propertyValue);
-            assertEquals(propertyValue.toString(), propertiesToCheck.getValue());
+            Assertions.assertEquals(propertyValue.toString(), propertiesToCheck.getValue());
+        }
+
+        Optional<Properties> prop = propertiesRepository.findByKey(BOGUS_PARAMETER);
+        if (prop.isPresent()) {
+            propertiesRepository.delete(prop.get());
         }
     }
 
@@ -126,17 +133,17 @@ class PropertiesServiceTest {
         for(PropertiesDTO propertiesDTO : updatedPropertiesDTOs) {
             switch (propertiesDTO.getKey()) {
                 case PCP_CORE_POOL_SIZE:
-                    assertEquals("15", propertiesDTO.getValue());
+                    Assertions.assertEquals("15", propertiesDTO.getValue());
                     break;
                 case PCP_MAX_POOL_SIZE:
-                    assertEquals("350", propertiesDTO.getValue());
+                    Assertions.assertEquals("350", propertiesDTO.getValue());
                     break;
                 case PCP_SCALE_TO_MAX_TIME:
-                    assertEquals("400", propertiesDTO.getValue());
+                    Assertions.assertEquals("400", propertiesDTO.getValue());
                     break;
                 case MAINTENANCE_MODE:
                 case ZIP_SUPPORT_ON:
-                    assertEquals("true", propertiesDTO.getValue());
+                    Assertions.assertEquals("true", propertiesDTO.getValue());
                     break;
                 default:
                     fail("Received unknown key");
@@ -225,5 +232,19 @@ class PropertiesServiceTest {
                 () -> propertiesService.getPropertiesByKey("badKey"));
 
         assertEquals("No entry was found for key badKey", exceptionThrown.getMessage());
+    }
+
+    @Test
+    void testCreateNew() {
+        String newPropName = "new_one";
+        String newPropVal = "new_val";
+
+        assertFalse(propertiesService.insertProperty(null, newPropVal));
+        assertThrows(ResourceNotFoundException.class, () -> propertiesService.getPropertiesByKey(newPropName));
+        assertTrue(propertiesService.insertProperty(newPropName, newPropVal));
+        assertFalse(propertiesService.insertProperty(newPropName, newPropVal));
+        assertEquals(newPropVal, propertiesService.getPropertiesByKey(newPropName).getValue());
+        assertTrue(propertiesService.deleteProperty(newPropName));
+        assertThrows(ResourceNotFoundException.class, () -> propertiesService.getPropertiesByKey(newPropName));
     }
 }
