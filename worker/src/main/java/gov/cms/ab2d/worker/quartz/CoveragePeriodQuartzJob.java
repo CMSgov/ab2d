@@ -1,10 +1,10 @@
 package gov.cms.ab2d.worker.quartz;
 
-import gov.cms.ab2d.common.dto.PropertiesDTO;
+import gov.cms.ab2d.properties.dto.PropertiesDTO;
 import gov.cms.ab2d.common.service.FeatureEngagement;
-import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.common.util.Constants;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.properties.util.Constants;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +17,7 @@ import java.time.DayOfWeek;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-import static gov.cms.ab2d.common.util.Constants.COVERAGE_SEARCH_OVERRIDE;
+import static gov.cms.ab2d.properties.util.Constants.COVERAGE_SEARCH_OVERRIDE;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PRODUCTION;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.SANDBOX;
@@ -46,22 +46,19 @@ import static gov.cms.ab2d.eventlogger.events.SlackEvents.COVERAGE_UPDATES_FAILE
 @RequiredArgsConstructor
 @DisallowConcurrentExecution
 public class CoveragePeriodQuartzJob extends QuartzJobBean {
-
     private final CoverageDriver driver;
-    private final PropertiesService propertiesService;
+    private final PropertiesAPIService propertiesApiService;
     private final LogManager logManager;
-
     @Override
     protected void executeInternal(JobExecutionContext jobExecutionContext) throws JobExecutionException {
 
         log.info("running coverage period quartz job by first looking for new coverage periods and then queueing new" +
                 " and stale coverage periods");
-        boolean override = Boolean.parseBoolean(propertiesService
-                .getPropertiesByKey(COVERAGE_SEARCH_OVERRIDE).getValue());
+        boolean override = Boolean.parseBoolean(propertiesApiService.getProperty(COVERAGE_SEARCH_OVERRIDE));
 
         try {
 
-            String discoveryEngagement = propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_DISCOVERY).getValue();
+            String discoveryEngagement = propertiesApiService.getProperty(Constants.COVERAGE_SEARCH_DISCOVERY);
             FeatureEngagement disvoeryState = FeatureEngagement.fromString(discoveryEngagement);
 
             if (disvoeryState == FeatureEngagement.IN_GEAR) {
@@ -69,7 +66,7 @@ public class CoveragePeriodQuartzJob extends QuartzJobBean {
                 driver.discoverCoveragePeriods();
             }
 
-            String queueEngagement = propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_QUEUEING).getValue();
+            String queueEngagement = propertiesApiService.getProperty(Constants.COVERAGE_SEARCH_QUEUEING);
             FeatureEngagement queueState = FeatureEngagement.fromString(queueEngagement);
 
             if (queueState == FeatureEngagement.IN_GEAR) {
@@ -96,7 +93,7 @@ public class CoveragePeriodQuartzJob extends QuartzJobBean {
                 PropertiesDTO overrideUpdate = new PropertiesDTO();
                 overrideUpdate.setKey(COVERAGE_SEARCH_OVERRIDE);
                 overrideUpdate.setValue("false");
-                propertiesService.updateProperties(List.of(overrideUpdate));
+                propertiesApiService.updateProperties(List.of(overrideUpdate));
             }
         }
     }

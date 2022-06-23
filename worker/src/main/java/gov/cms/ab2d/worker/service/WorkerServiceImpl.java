@@ -2,9 +2,9 @@ package gov.cms.ab2d.worker.service;
 
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
-import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.common.service.FeatureEngagement;
-import gov.cms.ab2d.common.util.Constants;
+import gov.cms.ab2d.properties.util.Constants;
 import gov.cms.ab2d.worker.processor.JobPreProcessor;
 import gov.cms.ab2d.worker.processor.JobProcessor;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,7 @@ public class WorkerServiceImpl implements WorkerService {
     private final JobPreProcessor jobPreprocessor;
     private final JobProcessor jobProcessor;
     private final ShutDownService shutDownService;
-    private final PropertiesService propertiesService;
+    private final PropertiesAPIService propertiesApiService;
 
     private final List<String> activeJobs = Collections.synchronizedList(new ArrayList<>());
 
@@ -62,7 +62,7 @@ public class WorkerServiceImpl implements WorkerService {
 
     @Override
     public FeatureEngagement getEngagement() {
-        return FeatureEngagement.fromString(propertiesService.getPropertiesByKey(Constants.WORKER_ENGAGEMENT).getValue());
+        return FeatureEngagement.fromString(propertiesApiService.getProperty(Constants.WORKER_ENGAGEMENT));
     }
 
     @PreDestroy

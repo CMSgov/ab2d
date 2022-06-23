@@ -5,7 +5,7 @@ import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
-import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.job.service.JobCleanup;
@@ -43,8 +43,7 @@ class WorkerServiceTest extends JobCleanup {
     @Autowired private JobRepository jobRepository;
     @Autowired private PdpClientRepository pdpClientRepository;
     @Autowired private JobService jobService;
-    @Autowired private PropertiesService propertiesService;
-
+    @Autowired private PropertiesAPIService propertiesApiService;
     @Autowired private WorkerServiceImpl workerServiceImpl;
     @Autowired private JobHandler jobHandler;
 
@@ -55,7 +54,7 @@ class WorkerServiceTest extends JobCleanup {
 
     @BeforeEach
     public void init() {
-        workerServiceStub = new WorkerServiceStub(jobService, propertiesService);
+        workerServiceStub = new WorkerServiceStub(jobService, propertiesApiService);
 
         ReflectionTestUtils.setField(jobHandler, "workerService", workerServiceStub);
     }

@@ -26,6 +26,11 @@
         </dependency>
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
+            <artifactId>properties</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>gov.cms.ab2d</groupId>
             <artifactId>worker</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>

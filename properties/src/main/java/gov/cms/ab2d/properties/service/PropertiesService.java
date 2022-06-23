@@ -1,7 +1,7 @@
-package gov.cms.ab2d.common.service;
+package gov.cms.ab2d.properties.service;
 
-import gov.cms.ab2d.common.dto.PropertiesDTO;
-import gov.cms.ab2d.common.model.Properties;
+import gov.cms.ab2d.properties.dto.PropertiesDTO;
+import gov.cms.ab2d.properties.model.Properties;
 
 import java.util.List;
 
@@ -18,4 +18,8 @@ public interface PropertiesService {
     List<PropertiesDTO> updateProperties(List<PropertiesDTO> propertiesDTOs);
 
     boolean isToggleOn(String toggleName);
+
+    boolean insertProperty(String key, String value);
+
+    boolean deleteProperty(String key);
 }

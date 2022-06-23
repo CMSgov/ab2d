@@ -1,8 +1,8 @@
 package gov.cms.ab2d.worker.bfdhealthcheck;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.model.Properties;
-import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.properties.model.Properties;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.SpringBootApp;
@@ -20,7 +20,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.IOException;
 
-import static gov.cms.ab2d.common.util.Constants.MAINTENANCE_MODE;
+import static gov.cms.ab2d.properties.util.Constants.MAINTENANCE_MODE;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
@@ -42,7 +42,7 @@ public class BFDHealthCheckTest {
     private LogManager logManager;
 
     @Autowired
-    private PropertiesService propertiesService;
+    private PropertiesAPIService propertiesApiService;
 
     @Value("${bfd.health.check.consecutive.failures}")
     private int consecutiveFailuresToTakeDown;
@@ -56,7 +56,7 @@ public class BFDHealthCheckTest {
 
     @BeforeEach
     public void setUp() {
-        bfdHealthCheck = new BFDHealthCheck(logManager, propertiesService, bfdClient,
+        bfdHealthCheck = new BFDHealthCheck(logManager, propertiesApiService, bfdClient,
                 consecutiveSuccessesToBringUp, consecutiveFailuresToTakeDown);
     }
 
@@ -64,15 +64,15 @@ public class BFDHealthCheckTest {
     public void testBfdGoingDown() {
         when(bfdClient.capabilityStatement(eq(STU3))).thenThrow(new RuntimeException());
 
-        Properties maintenanceProperties = propertiesService.getPropertiesByKey(MAINTENANCE_MODE);
-        assertEquals("false", maintenanceProperties.getValue());
+        String maintenanceProperties = propertiesApiService.getProperty(MAINTENANCE_MODE);
+        assertEquals("false", maintenanceProperties);
 
         for(int i = 0; i < consecutiveFailuresToTakeDown; i++) {
             bfdHealthCheck.checkBFDHealth();
         }
 
-        maintenanceProperties = propertiesService.getPropertiesByKey(MAINTENANCE_MODE);
-        assertEquals("true", maintenanceProperties.getValue());
+        maintenanceProperties = propertiesApiService.getProperty(MAINTENANCE_MODE);
+        assertEquals("true", maintenanceProperties);
 
         // test bfd coming back up
         when(bfdClient.capabilityStatement(eq(STU3))).thenReturn(statement);
@@ -80,12 +80,12 @@ public class BFDHealthCheckTest {
             bfdHealthCheck.checkBFDHealth();
         }
 
-        maintenanceProperties = propertiesService.getPropertiesByKey(MAINTENANCE_MODE);
-        assertEquals("false", maintenanceProperties.getValue());
+        maintenanceProperties = propertiesApiService.getProperty(MAINTENANCE_MODE);
+        assertEquals("false", maintenanceProperties);
     }
 
     @Test
-    public void testBfdGoingUpAndDown() throws IOException {
+    public void testBfdGoingUpAndDown() {
         when(bfdClient.capabilityStatement(eq(STU3))).thenThrow(new RuntimeException());
 
         for(int i = 0; i < consecutiveFailuresToTakeDown - 1; i++) {
@@ -102,15 +102,15 @@ public class BFDHealthCheckTest {
 
         bfdHealthCheck.checkBFDHealth();
 
-        Properties maintenanceProperties = propertiesService.getPropertiesByKey(MAINTENANCE_MODE);
-        assertEquals("false", maintenanceProperties.getValue());
+        String maintenanceProperties = propertiesApiService.getProperty(MAINTENANCE_MODE);
+        assertEquals("false", maintenanceProperties);
 
         for(int i = 0; i < consecutiveFailuresToTakeDown - 1; i++) {
             bfdHealthCheck.checkBFDHealth();
         }
 
-        maintenanceProperties = propertiesService.getPropertiesByKey(MAINTENANCE_MODE);
-        assertEquals("true", maintenanceProperties.getValue());
+        maintenanceProperties = propertiesApiService.getProperty(MAINTENANCE_MODE);
+        assertEquals("true", maintenanceProperties);
 
         // Cleanup
         when(bfdClient.capabilityStatement(eq(STU3))).thenReturn(statement);
@@ -127,8 +127,8 @@ public class BFDHealthCheckTest {
             bfdHealthCheck.checkBFDHealth();
         }
 
-        Properties maintenanceProperties = propertiesService.getPropertiesByKey(MAINTENANCE_MODE);
-        assertEquals("true", maintenanceProperties.getValue());
+        String maintenanceProperties = propertiesApiService.getProperty(MAINTENANCE_MODE);
+        assertEquals("true", maintenanceProperties);
 
         when(bfdClient.capabilityStatement(eq(STU3))).thenReturn(statement);
 
@@ -136,8 +136,8 @@ public class BFDHealthCheckTest {
             bfdHealthCheck.checkBFDHealth();
         }
 
-        maintenanceProperties = propertiesService.getPropertiesByKey(MAINTENANCE_MODE);
-        assertEquals("false", maintenanceProperties.getValue());
+        maintenanceProperties = propertiesApiService.getProperty(MAINTENANCE_MODE);
+        assertEquals("false", maintenanceProperties);
     }
 }
 
