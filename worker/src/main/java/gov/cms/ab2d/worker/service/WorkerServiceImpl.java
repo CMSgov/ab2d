@@ -4,7 +4,6 @@ import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.common.service.FeatureEngagement;
-import gov.cms.ab2d.properties.util.Constants;
 import gov.cms.ab2d.worker.processor.JobPreProcessor;
 import gov.cms.ab2d.worker.processor.JobProcessor;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +14,8 @@ import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static gov.cms.ab2d.common.util.PropertyConstants.WORKER_ENGAGEMENT;
 
 /**
  * This class is responsible for actually processing the job and preparing bulk downloads for clients.
@@ -62,7 +63,7 @@ public class WorkerServiceImpl implements WorkerService {
 
     @Override
     public FeatureEngagement getEngagement() {
-        return FeatureEngagement.fromString(propertiesApiService.getProperty(Constants.WORKER_ENGAGEMENT));
+        return FeatureEngagement.fromString(propertiesApiService.getProperty(WORKER_ENGAGEMENT));
     }
 
     @PreDestroy

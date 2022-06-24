@@ -4,7 +4,7 @@ import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.properties.service.PropertiesAPIService;
-import gov.cms.ab2d.properties.util.Constants;
+import gov.cms.ab2d.common.util.PropertyConstants;
 import gov.cms.ab2d.job.service.JobService;
 
 public class WorkerServiceStub implements WorkerService {
@@ -29,6 +29,6 @@ public class WorkerServiceStub implements WorkerService {
 
     @Override
     public FeatureEngagement getEngagement() {
-        return FeatureEngagement.fromString(propertiesApiService.getProperty(Constants.WORKER_ENGAGEMENT));
+        return FeatureEngagement.fromString(propertiesApiService.getProperty(PropertyConstants.WORKER_ENGAGEMENT));
     }
 }

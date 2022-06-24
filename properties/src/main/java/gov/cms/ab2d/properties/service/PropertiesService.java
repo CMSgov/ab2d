@@ -7,15 +7,13 @@ import java.util.List;
 
 public interface PropertiesService {
 
-    boolean isInMaintenanceMode();
-
     List<Properties> getAllProperties();
 
     List<PropertiesDTO> getAllPropertiesDTO();
 
     Properties getPropertiesByKey(String key);
 
-    List<PropertiesDTO> updateProperties(List<PropertiesDTO> propertiesDTOs);
+    boolean updateProperty(PropertiesDTO propertiesDTO);
 
     boolean isToggleOn(String toggleName);
 
