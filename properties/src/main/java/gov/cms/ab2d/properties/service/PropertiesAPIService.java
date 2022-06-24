@@ -38,7 +38,7 @@ public interface PropertiesAPIService {
      * @param toggleName - the property key
      * @return true if the value is true, false otherwise
      */
-    boolean isToggleOn(final String toggleName);
+    boolean isToggleOn(String toggleName);
 
     /**
      * Create a new property

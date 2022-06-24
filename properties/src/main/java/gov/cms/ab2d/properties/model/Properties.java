@@ -19,7 +19,7 @@ import java.time.OffsetDateTime;
 @Table(name = "properties", schema = "property")
 public class Properties {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator="property.property_sequence")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "property.property_sequence")
     private Long id;
 
     @NotNull
