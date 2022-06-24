@@ -300,9 +300,9 @@ class CoverageDriverUnitTest {
     void failureToLockCausesExceptions() {
 
         when(lockWrapper.getCoverageLock()).thenReturn(tryLockFalse);
-        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_UPDATE_MONTHS))).thenReturn("3");
-        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_STUCK_HOURS))).thenReturn("72");
-        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_OVERRIDE))).thenReturn("false");
+        when(propertiesApiService.getProperty(COVERAGE_SEARCH_UPDATE_MONTHS)).thenReturn("3");
+        when(propertiesApiService.getProperty(COVERAGE_SEARCH_STUCK_HOURS)).thenReturn("72");
+        when(propertiesApiService.getProperty(COVERAGE_SEARCH_OVERRIDE)).thenReturn("false");
 
         CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, propertiesApiService, null, lockWrapper,null);
 
@@ -319,9 +319,9 @@ class CoverageDriverUnitTest {
 
         when(lockWrapper.getCoverageLock()).thenReturn(tryLockInterrupt);
 
-        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_UPDATE_MONTHS))).thenReturn("3");
-        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_STUCK_HOURS))).thenReturn("72");
-        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_OVERRIDE))).thenReturn("false");
+        when(propertiesApiService.getProperty(COVERAGE_SEARCH_UPDATE_MONTHS)).thenReturn("3");
+        when(propertiesApiService.getProperty(COVERAGE_SEARCH_STUCK_HOURS)).thenReturn("72");
+        when(propertiesApiService.getProperty(COVERAGE_SEARCH_OVERRIDE)).thenReturn("false");
 
         ContractDTO contract = new ContractDTO("contractNum", null, null, null);
 

@@ -71,17 +71,6 @@ public class PropertiesServiceImpl implements PropertiesService {
         return found.get();
     }
 
-    private void addUpdatedPropertiesToList(List<PropertiesDTO> propertiesDTOsReturn, PropertiesDTO propertiesDTO) {
-        Properties properties = getPropertiesByKey(propertiesDTO.getKey());
-        Properties mappedProperties = mapper.map(propertiesDTO, Properties.class);
-        mappedProperties.setId(properties.getId());
-        Properties updatedProperties = propertiesRepository.save(mappedProperties);
-
-        log.info("Updated property {} with value {}", updatedProperties.getKey(), updatedProperties.getValue());
-
-        propertiesDTOsReturn.add(mapper.map(updatedProperties, PropertiesDTO.class));
-    }
-
     public boolean isToggleOn(final String toggleName) {
         return propertiesRepository.findByKey(toggleName)
                 .map(Properties::getValue)

@@ -80,8 +80,6 @@ class PropertiesServiceTest {
 
     @Test
     void testMisc() {
-        PropertiesDTO val = new PropertiesDTO();
-        val.setKey(MAINT_MODE);
         assertFalse(propertiesService.isToggleOn(MAINT_MODE));
         List<PropertiesDTO> currentProperties = propertiesService.getAllPropertiesDTO();
         currentProperties.stream().filter(c -> c.getKey().equalsIgnoreCase(MAINT_MODE)).findFirst().get().setValue("true");
@@ -96,27 +94,15 @@ class PropertiesServiceTest {
 
     @Test
     void testUpdateProperties() {
-        PropertiesDTO propertiesDTOPoolSize = new PropertiesDTO();
-        propertiesDTOPoolSize.setKey("pcp.core.pool.size");
-        String origValue = propertiesService.getPropertiesByKey(propertiesDTOPoolSize.getKey()).getValue();
-        propertiesDTOPoolSize.setValue("15");
+        String propKey = "pcp.core.pool.size";
+        String origValue = propertiesService.getPropertiesByKey(propKey).getValue();
+        PropertiesDTO propertiesDTOPoolSize = new PropertiesDTO(propKey, "15");
         propertiesService.updateProperty(propertiesDTOPoolSize);
-        assertEquals("15", propertiesService.getPropertiesByKey("pcp.core.pool.size").getValue());
+        assertEquals("15", propertiesService.getPropertiesByKey(propKey).getValue());
         propertiesDTOPoolSize.setValue(origValue);
         propertiesService.updateProperty(propertiesDTOPoolSize);
     }
 
-
-    private void validateInvalidPropertyValues(String key, String value) {
-        PropertiesDTO propertiesDTO = new PropertiesDTO();
-        propertiesDTO.setKey(key);
-        propertiesDTO.setValue(value);
-
-        var exceptionThrown = assertThrows(InvalidPropertiesException.class,
-                () -> propertiesService.updateProperty(propertiesDTO));
-
-        assertEquals(String.format("Incorrect value for %s of %s", key, value), exceptionThrown.getMessage());
-    }
 
     @Test
     void testUpdatePropertiesInvalidKey() {

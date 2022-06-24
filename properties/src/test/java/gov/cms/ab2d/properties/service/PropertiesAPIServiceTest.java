@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @Testcontainers
-public class PropertiesAPIServiceTest {
+class PropertiesAPIServiceTest {
     private static String MAINT_MODE = "maintenance.mode";
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer("data-postgres.sql");
