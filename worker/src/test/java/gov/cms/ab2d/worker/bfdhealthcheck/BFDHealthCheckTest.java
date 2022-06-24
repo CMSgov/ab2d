@@ -59,7 +59,7 @@ public class BFDHealthCheckTest {
 
     @Test
     void testBfdGoingDown() {
-        when(bfdClient.capabilityStatement(STU3)).thenThrow(new RuntimeException());
+        when(bfdClient.capabilityStatement(eq(STU3))).thenThrow(new RuntimeException());
 
         String maintenanceProperties = propertiesApiService.getProperty(MAINTENANCE_MODE);
         assertEquals("false", maintenanceProperties);
@@ -72,7 +72,7 @@ public class BFDHealthCheckTest {
         assertEquals("true", maintenanceProperties);
 
         // test bfd coming back up
-        when(bfdClient.capabilityStatement(STU3)).thenReturn(statement);
+        when(bfdClient.capabilityStatement(eq(STU3))).thenReturn(statement);
         for (int i = 0; i < consecutiveSuccessesToBringUp; i++) {
             bfdHealthCheck.checkBFDHealth();
         }
@@ -83,19 +83,19 @@ public class BFDHealthCheckTest {
 
     @Test
     void testBfdGoingUpAndDown() {
-        when(bfdClient.capabilityStatement(STU3)).thenThrow(new RuntimeException());
+        when(bfdClient.capabilityStatement(eq(STU3))).thenThrow(new RuntimeException());
 
         for(int i = 0; i < consecutiveFailuresToTakeDown - 1; i++) {
             bfdHealthCheck.checkBFDHealth();
         }
 
-        when(bfdClient.capabilityStatement(STU3)).thenReturn(statement);
+        when(bfdClient.capabilityStatement(eq(STU3))).thenReturn(statement);
 
         for(int i = 0; i < consecutiveSuccessesToBringUp - 1; i++) {
             bfdHealthCheck.checkBFDHealth();
         }
 
-        when(bfdClient.capabilityStatement(STU3)).thenThrow(new RuntimeException());
+        when(bfdClient.capabilityStatement(eq(STU3))).thenThrow(new RuntimeException());
 
         bfdHealthCheck.checkBFDHealth();
 
@@ -110,7 +110,7 @@ public class BFDHealthCheckTest {
         assertEquals("true", maintenanceProperties);
 
         // Cleanup
-        when(bfdClient.capabilityStatement(STU3)).thenReturn(statement);
+        when(bfdClient.capabilityStatement(eq(STU3))).thenReturn(statement);
         for(int i = 0; i < consecutiveSuccessesToBringUp; i++) {
             bfdHealthCheck.checkBFDHealth();
         }
@@ -118,7 +118,7 @@ public class BFDHealthCheckTest {
 
     @Test
     void testBfdGoingDownPastLimitAndComingBackUp() {
-        when(bfdClient.capabilityStatement(STU3)).thenThrow(new RuntimeException());
+        when(bfdClient.capabilityStatement(eq(STU3))).thenThrow(new RuntimeException());
 
         for(int i = 0; i < consecutiveFailuresToTakeDown + 1; i++) {
             bfdHealthCheck.checkBFDHealth();
@@ -127,7 +127,7 @@ public class BFDHealthCheckTest {
         String maintenanceProperties = propertiesApiService.getProperty(MAINTENANCE_MODE);
         assertEquals("true", maintenanceProperties);
 
-        when(bfdClient.capabilityStatement(STU3)).thenReturn(statement);
+        when(bfdClient.capabilityStatement(eq(STU3))).thenReturn(statement);
 
         for(int i = 0; i < consecutiveSuccessesToBringUp; i++) {
             bfdHealthCheck.checkBFDHealth();
