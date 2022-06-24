@@ -34,10 +34,10 @@ public class PropertiesAPIServiceImpl implements PropertiesAPIService {
 
     @Override
     public boolean isToggleOn(final String toggleName) {
-        String val = getProperty(toggleName);
-        if (val == null) {
+        if (StringUtils.isEmpty(toggleName)) {
             return false;
         }
+        String val = getProperty(toggleName);
         return Boolean.valueOf(val.trim());
     }
 

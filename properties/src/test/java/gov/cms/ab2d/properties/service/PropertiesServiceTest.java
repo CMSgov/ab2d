@@ -4,7 +4,7 @@ import gov.cms.ab2d.properties.SpringBootApp;
 import gov.cms.ab2d.properties.dto.PropertiesDTO;
 import gov.cms.ab2d.properties.model.Properties;
 import gov.cms.ab2d.properties.repository.PropertiesRepository;
-import gov.cms.ab2d.properties.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.properties.utils.AB2DPostgresqlContainer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,6 +62,12 @@ class PropertiesServiceTest {
         properties.setValue("val");
 
         propertiesRepository.save(properties);
+        Properties newprop = propertiesService.getPropertiesByKey(BOGUS_PARAMETER);
+        assertNotNull(newprop.getCreated());
+        assertNotNull(newprop.getModified());
+        assertNotNull(newprop.getKey());
+        assertNotNull(newprop.getValue());
+        assertTrue(newprop.getId() != 0);
 
         List<Properties> propertiesList = propertiesService.getAllProperties();
 
@@ -136,5 +142,12 @@ class PropertiesServiceTest {
         assertEquals(newPropVal, propertiesService.getPropertiesByKey(newPropName).getValue());
         assertTrue(propertiesService.deleteProperty(newPropName));
         assertThrows(ResourceNotFoundException.class, () -> propertiesService.getPropertiesByKey(newPropName));
+    }
+
+    @Test
+    void testDelete() {
+        assertFalse(propertiesService.deleteProperty(null));
+        assertFalse(propertiesService.deleteProperty(""));
+        assertThrows(ResourceNotFoundException.class, () -> assertFalse(propertiesService.deleteProperty("DOESNT_EXIST")));
     }
 }
