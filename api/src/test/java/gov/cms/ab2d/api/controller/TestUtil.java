@@ -29,7 +29,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-import static gov.cms.ab2d.properties.util.Constants.MAINTENANCE_MODE;
+import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_PDP_CLIENT;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static org.mockito.ArgumentMatchers.anyString;

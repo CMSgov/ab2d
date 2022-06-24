@@ -1,10 +1,11 @@
-package gov.cms.ab2d.properties.util;
+package gov.cms.ab2d.common.util;
 
-import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 
-public final class Constants {
+@Slf4j
+public final class PropertyConstants {
 
-    private Constants() { }
+    private PropertyConstants() { }
 
     // Properties that are allowed to be modified. When adding a new one, add it to a constant, and the Set below
     public static final String PCP_CORE_POOL_SIZE = "pcp.core.pool.size";
@@ -35,11 +36,4 @@ public final class Constants {
 
     // Force a coverage update to run even when not scheduled
     public static final String COVERAGE_SEARCH_OVERRIDE = "coverage.update.override";
-
-    public static final String ZIP_SUPPORT_ON = "ZipSupportOn";
-
-    public static final Set<String> ALLOWED_PROPERTY_NAMES = Set.of(PCP_CORE_POOL_SIZE, PCP_MAX_POOL_SIZE,
-            PCP_SCALE_TO_MAX_TIME, MAINTENANCE_MODE, ZIP_SUPPORT_ON,
-            WORKER_ENGAGEMENT, HPMS_INGESTION_ENGAGEMENT, COVERAGE_SEARCH_DISCOVERY, COVERAGE_SEARCH_QUEUEING,
-            COVERAGE_SEARCH_STUCK_HOURS, COVERAGE_SEARCH_UPDATE_MONTHS, COVERAGE_SEARCH_OVERRIDE);
 }

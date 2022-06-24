@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.service;
 
-import gov.cms.ab2d.properties.dto.PropertiesDTO;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
@@ -14,8 +13,6 @@ import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.job.service.JobService;
 import gov.cms.ab2d.worker.config.JobHandler;
 import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -33,7 +30,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
-import static gov.cms.ab2d.properties.util.Constants.WORKER_ENGAGEMENT;
+import static gov.cms.ab2d.common.util.PropertyConstants.WORKER_ENGAGEMENT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 

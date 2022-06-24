@@ -12,7 +12,9 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import static gov.cms.ab2d.properties.util.Constants.*;
+import static gov.cms.ab2d.common.util.PropertyConstants.PCP_CORE_POOL_SIZE;
+import static gov.cms.ab2d.common.util.PropertyConstants.PCP_MAX_POOL_SIZE;
+import static gov.cms.ab2d.common.util.PropertyConstants.PCP_SCALE_TO_MAX_TIME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest

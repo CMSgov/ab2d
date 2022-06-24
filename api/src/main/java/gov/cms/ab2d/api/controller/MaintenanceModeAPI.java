@@ -1,5 +1,6 @@
 package gov.cms.ab2d.api.controller;
 
+import gov.cms.ab2d.common.util.PropertyConstants;
 import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +24,7 @@ public class MaintenanceModeAPI {
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @GetMapping(STATUS_ENDPOINT)
     public ResponseEntity<MaintenanceModeResponse> getMaintenanceMode() {
-        MaintenanceModeResponse maintenanceModeResponse = new MaintenanceModeResponse(String.valueOf(propertiesApiService.isInMaintenanceMode()));
+        MaintenanceModeResponse maintenanceModeResponse = new MaintenanceModeResponse(String.valueOf(propertiesApiService.isToggleOn(PropertyConstants.MAINTENANCE_MODE)));
         return new ResponseEntity<>(maintenanceModeResponse, null, HttpStatus.OK);
     }
 }

@@ -28,28 +28,12 @@ public class PropertiesAPIServiceImpl implements PropertiesAPIService {
         propertiesDTO.setKey(property);
         propertiesDTO.setValue(value);
 
-        List<PropertiesDTO> savedProps = propertiesService.updateProperties(Collections.singletonList(propertiesDTO));
-        try {
-            return (savedProps.size() == 1 && savedProps.get(0).getValue().equals(value));
-        } catch (Exception ex) {
-            log.error("Unable to save property", ex);
-            return false;
-        }
-    }
-
-    @Override
-    public boolean isInMaintenanceMode() {
-        return propertiesService.isInMaintenanceMode();
+        return propertiesService.updateProperty(propertiesDTO);
     }
 
     @Override
     public List<PropertiesDTO> getAllProperties() {
         return propertiesService.getAllPropertiesDTO();
-    }
-
-    @Override
-    public List<PropertiesDTO> updateProperties(List<PropertiesDTO> properties) {
-        return propertiesService.updateProperties(properties);
     }
 
     @Override

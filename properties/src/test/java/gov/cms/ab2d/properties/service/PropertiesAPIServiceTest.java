@@ -14,8 +14,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
 
-import static gov.cms.ab2d.properties.util.Constants.MAINTENANCE_MODE;
-import static gov.cms.ab2d.properties.util.Constants.PCP_SCALE_TO_MAX_TIME;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -25,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @SpringBootTest(classes = SpringBootApp.class)
 @Testcontainers
 public class PropertiesAPIServiceTest {
+    private static String MAINT_MODE = "maintenance.mode";
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer("data-postgres.sql");
 
@@ -33,7 +32,7 @@ public class PropertiesAPIServiceTest {
 
     @AfterEach
     void reset() {
-        assertTrue(apiService.updateProperty(PCP_SCALE_TO_MAX_TIME, "800"));
+        assertTrue(apiService.updateProperty("pcp.scaleToMax.time", "800"));
     }
 
     @Test
@@ -43,7 +42,7 @@ public class PropertiesAPIServiceTest {
 
     @Test
     void testGetProperty() {
-        String value = apiService.getProperty(PCP_SCALE_TO_MAX_TIME);
+        String value = apiService.getProperty("pcp.scaleToMax.time");
         assertNotNull(value);
         assertEquals("800", value);
     }
@@ -57,25 +56,12 @@ public class PropertiesAPIServiceTest {
 
     @Test
     void testInMaintMode() {
-        String prevValue = apiService.getProperty(MAINTENANCE_MODE);
+        String prevValue = apiService.getProperty(MAINT_MODE);
         Boolean boolVal = Boolean.parseBoolean(prevValue);
-        assertEquals(boolVal, apiService.isInMaintenanceMode());
         Boolean newVal = !boolVal;
-        PropertiesDTO propertiesDTO = new PropertiesDTO(MAINTENANCE_MODE, "" + newVal);
-        apiService.updateProperties(List.of(propertiesDTO));
-        assertEquals(newVal, apiService.isInMaintenanceMode());
-        apiService.updateProperty(MAINTENANCE_MODE, prevValue);
-        assertEquals(prevValue, "" + apiService.isToggleOn(MAINTENANCE_MODE));
-        assertEquals(prevValue, "" + apiService.isInMaintenanceMode());
-    }
-
-    @Test
-    void testUpdateProperty() {
-        assertTrue(apiService.updateProperty(PCP_SCALE_TO_MAX_TIME, "400"));
-        assertThrows(InvalidPropertiesException.class, () -> apiService.updateProperty(MAINTENANCE_MODE, "400"));
-        String value = apiService.getProperty(PCP_SCALE_TO_MAX_TIME);
-        assertEquals("400", value);
-        assertThrows(InvalidPropertiesException.class, () -> apiService.updateProperty("BOGUS", "true"));
+        apiService.updateProperty(MAINT_MODE, "" + newVal);
+        apiService.updateProperty(MAINT_MODE, prevValue);
+        assertEquals(prevValue, "" + apiService.isToggleOn(MAINT_MODE));
     }
 
     @Test
