@@ -2,7 +2,7 @@ package gov.cms.ab2d.properties.utils;
 
 import org.apache.commons.lang3.StringUtils;
 
-public class Validation {
+public final class Validation {
     private Validation() { }
 
     public static boolean validInteger(String val) {
