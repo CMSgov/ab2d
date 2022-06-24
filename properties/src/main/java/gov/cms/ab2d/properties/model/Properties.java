@@ -9,6 +9,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 import java.time.OffsetDateTime;
@@ -19,7 +20,10 @@ import java.time.OffsetDateTime;
 @Table(name = "properties", schema = "property")
 public class Properties {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "property.property_sequence")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "propertiesSequenceGenerator")
+    @SequenceGenerator(name = "propertiesSequenceGenerator",
+            sequenceName = "property.property_sequence",
+            allocationSize = 1)
     private Long id;
 
     @NotNull
