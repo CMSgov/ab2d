@@ -2,7 +2,7 @@ package gov.cms.ab2d.properties.service;
 
 import gov.cms.ab2d.properties.SpringBootApp;
 import gov.cms.ab2d.properties.dto.PropertiesDTO;
-import gov.cms.ab2d.properties.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.properties.utils.AB2DPostgresqlContainer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -62,6 +62,13 @@ class PropertiesAPIServiceTest {
         apiService.updateProperty(MAINT_MODE, "" + newVal);
         apiService.updateProperty(MAINT_MODE, prevValue);
         assertEquals(prevValue, "" + apiService.isToggleOn(MAINT_MODE));
+    }
+
+    @Test
+    void testIsToggleOn() {
+        assertFalse(apiService.isToggleOn(null));
+        assertThrows(ResourceNotFoundException.class, () -> apiService.isToggleOn(" "));
+        assertThrows(ResourceNotFoundException.class, () -> apiService.isToggleOn("DOESNT_EXIST"));
     }
 
     @Test

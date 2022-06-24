@@ -1,4 +1,4 @@
-package gov.cms.ab2d.properties.util;
+package gov.cms.ab2d.properties.utils;
 
 import org.testcontainers.containers.PostgreSQLContainer;
 

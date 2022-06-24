@@ -104,9 +104,6 @@ public class PropertiesServiceImpl implements PropertiesService {
             return false;
         }
         Properties prop = getPropertiesByKey(key);
-        if (prop.getId() == 0) {
-            return false;
-        }
         propertiesRepository.deleteById(prop.getId());
         return true;
     }
