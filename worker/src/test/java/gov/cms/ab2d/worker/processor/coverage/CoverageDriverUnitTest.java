@@ -2,7 +2,6 @@ package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.properties.service.PropertiesAPIService;
-import gov.cms.ab2d.properties.util.Constants;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageJobStatus;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
@@ -37,6 +36,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
+import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_OVERRIDE;
+import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_STUCK_HOURS;
+import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_UPDATE_MONTHS;
+import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -297,9 +300,9 @@ class CoverageDriverUnitTest {
     void failureToLockCausesExceptions() {
 
         when(lockWrapper.getCoverageLock()).thenReturn(tryLockFalse);
-        when(propertiesApiService.getProperty(eq(Constants.COVERAGE_SEARCH_UPDATE_MONTHS))).thenReturn("3");
-        when(propertiesApiService.getProperty(eq(Constants.COVERAGE_SEARCH_STUCK_HOURS))).thenReturn("72");
-        when(propertiesApiService.getProperty(eq(Constants.COVERAGE_SEARCH_OVERRIDE))).thenReturn("false");
+        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_UPDATE_MONTHS))).thenReturn("3");
+        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_STUCK_HOURS))).thenReturn("72");
+        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_OVERRIDE))).thenReturn("false");
 
         CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, propertiesApiService, null, lockWrapper,null);
 
@@ -316,9 +319,9 @@ class CoverageDriverUnitTest {
 
         when(lockWrapper.getCoverageLock()).thenReturn(tryLockInterrupt);
 
-        when(propertiesApiService.getProperty(eq(Constants.COVERAGE_SEARCH_UPDATE_MONTHS))).thenReturn("3");
-        when(propertiesApiService.getProperty(eq(Constants.COVERAGE_SEARCH_STUCK_HOURS))).thenReturn("72");
-        when(propertiesApiService.getProperty(eq(Constants.COVERAGE_SEARCH_OVERRIDE))).thenReturn("false");
+        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_UPDATE_MONTHS))).thenReturn("3");
+        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_STUCK_HOURS))).thenReturn("72");
+        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_OVERRIDE))).thenReturn("false");
 
         ContractDTO contract = new ContractDTO("contractNum", null, null, null);
 
@@ -376,14 +379,14 @@ class CoverageDriverUnitTest {
                 coverageService, propertiesApiService, coverageProcessor, lockWrapper,null)
         );
 
-        doReturn(true).when(propertiesApiService).isInMaintenanceMode();
+        doReturn(true).when(propertiesApiService).isToggleOn(MAINTENANCE_MODE);
         try {
             driver.loadMappingJob();
         } catch (Exception exception) {
             fail("maintenance mode should cause job to fail quietly", exception);
         }
 
-        doReturn(false).when(propertiesApiService).isInMaintenanceMode();
+        doReturn(false).when(propertiesApiService).isToggleOn(MAINTENANCE_MODE);
         doReturn(true).when(coverageProcessor).isProcessorBusy();
         try {
             driver.loadMappingJob();

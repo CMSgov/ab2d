@@ -13,6 +13,7 @@ import org.springframework.scheduling.quartz.QuartzJobBean;
 
 import java.util.List;
 
+import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
 import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PRODUCTION;
 import static gov.cms.ab2d.eventlogger.events.SlackEvents.COVERAGE_VERIFICATION_ABORTED;
 import static gov.cms.ab2d.eventlogger.events.SlackEvents.COVERAGE_VERIFICATION_FAILURE;
@@ -50,7 +51,7 @@ public class CoverageCheckQuartzJob extends QuartzJobBean {
     @Override
     protected void executeInternal(JobExecutionContext jobExecutionContext) throws JobExecutionException {
 
-        if (propertiesApiService.isInMaintenanceMode()) {
+        if (propertiesApiService.isToggleOn(MAINTENANCE_MODE)) {
             log.info("Skipping enrollment verification because AB2D is already in maintenance mode");
         }
 

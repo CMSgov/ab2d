@@ -13,7 +13,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.Executor;
 
-import static gov.cms.ab2d.properties.util.Constants.*;
+import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
+import static gov.cms.ab2d.common.util.PropertyConstants.PCP_CORE_POOL_SIZE;
+import static gov.cms.ab2d.common.util.PropertyConstants.PCP_MAX_POOL_SIZE;
+import static gov.cms.ab2d.common.util.PropertyConstants.PCP_SCALE_TO_MAX_TIME;
 import static gov.cms.ab2d.worker.config.AutoScalingServiceImpl.Mode.RESET;
 import static gov.cms.ab2d.worker.config.AutoScalingServiceImpl.Mode.SCALING_UP;
 
@@ -89,7 +92,7 @@ public class AutoScalingServiceImpl implements AutoScalingService, ApplicationLi
 
         // If in maintenance mode immediately scale down because new work won't be processed.
         // If no new work is present immediately scale down.
-        if (propertiesApiService.isInMaintenanceMode() || eobClaimRequestsQueue.isEmpty()) {
+        if (propertiesApiService.isToggleOn(MAINTENANCE_MODE) || eobClaimRequestsQueue.isEmpty()) {
             // No busy threads -- no active jobs. We can scale back to minimums immediately;
             // no need to do so gradually.
             scaleBackToMin();

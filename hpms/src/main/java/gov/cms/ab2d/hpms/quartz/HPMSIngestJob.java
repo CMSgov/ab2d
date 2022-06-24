@@ -2,12 +2,13 @@ package gov.cms.ab2d.hpms.quartz;
 
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.properties.service.PropertiesAPIService;
-import gov.cms.ab2d.properties.util.Constants;
 import gov.cms.ab2d.hpms.service.AttestationUpdaterService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
 import org.springframework.scheduling.quartz.QuartzJobBean;
+
+import static gov.cms.ab2d.common.util.PropertyConstants.HPMS_INGESTION_ENGAGEMENT;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -28,6 +29,6 @@ public class HPMSIngestJob extends QuartzJobBean {
     }
 
     public FeatureEngagement getEngagement() {
-        return FeatureEngagement.fromString(propertiesApiService.getProperty(Constants.HPMS_INGESTION_ENGAGEMENT));
+        return FeatureEngagement.fromString(propertiesApiService.getProperty(HPMS_INGESTION_ENGAGEMENT));
     }
 }

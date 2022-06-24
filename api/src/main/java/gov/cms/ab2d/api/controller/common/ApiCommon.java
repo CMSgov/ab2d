@@ -3,6 +3,7 @@ package gov.cms.ab2d.api.controller.common;
 import gov.cms.ab2d.api.controller.InMaintenanceModeException;
 import gov.cms.ab2d.api.controller.TooManyRequestsException;
 import gov.cms.ab2d.api.remote.JobClient;
+import gov.cms.ab2d.common.util.PropertyConstants;
 import gov.cms.ab2d.job.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
@@ -94,7 +95,7 @@ public class ApiCommon {
     }
 
     public void checkIfInMaintenanceMode() {
-        if (propertiesApiService.isInMaintenanceMode()) {
+        if (propertiesApiService.isToggleOn(PropertyConstants.MAINTENANCE_MODE)) {
             throw new InMaintenanceModeException("The system is currently in maintenance mode. Please try the request again later.");
         }
     }
