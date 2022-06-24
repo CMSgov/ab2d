@@ -1,7 +1,6 @@
 package gov.cms.ab2d.worker.bfdhealthcheck;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.properties.model.Properties;
 import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LogManager;
@@ -18,9 +17,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.io.IOException;
-
-import static gov.cms.ab2d.properties.util.Constants.MAINTENANCE_MODE;
+import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;

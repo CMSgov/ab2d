@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-import static gov.cms.ab2d.properties.util.Constants.MAINTENANCE_MODE;
+import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
 import static gov.cms.ab2d.eventlogger.events.SlackEvents.MAINT_MODE;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.bfdhealthcheck.HealthCheckData.Status;
