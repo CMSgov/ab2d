@@ -1,10 +1,8 @@
 package gov.cms.ab2d.worker.quartz;
 
-import gov.cms.ab2d.properties.dto.PropertiesDTO;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.common.util.PropertyConstants;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,17 +27,17 @@ import static gov.cms.ab2d.eventlogger.events.SlackEvents.COVERAGE_UPDATES_FAILE
  * Periodically update enrollment cached in the database by pulling enrollment from BFD.
  *
  * Typically this runs every Tuesday at midnight eastern time; however, you can override the schedule if enrollment arrives
- * at an unexpected time by setting {@link PropertyConstants#COVERAGE_SEARCH_OVERRIDE}.
+ * at an unexpected time by setting {@link gov.cms.ab2d.common.util.PropertyConstants#COVERAGE_SEARCH_OVERRIDE}.
  *
  * Outside of production this feature will be disabled in most environments. To configure to run weekly,
  * set the following properties in the database:
  *
- *      - {@link PropertyConstants#COVERAGE_SEARCH_DISCOVERY} for all active contracts, find if those contracts are missing coverage periods
+ *      - {@link gov.cms.ab2d.common.util.PropertyConstants#COVERAGE_SEARCH_DISCOVERY} for all active contracts, find if those contracts are missing coverage periods
  *         and create those missing coverage periods
  *          and loaded for the first time
- *      - {@link PropertyConstants#COVERAGE_SEARCH_QUEUEING} find all coverage periods missing enrollment or needing
+ *      - {@link gov.cms.ab2d.common.util.PropertyConstants#COVERAGE_SEARCH_QUEUEING} find all coverage periods missing enrollment or needing
  *          enrollment updated, trigger those updates
- *      - {@link PropertyConstants#COVERAGE_SEARCH_OVERRIDE} normally this job only runs once a week, set this property to
+ *      - {@link gov.cms.ab2d.common.util.PropertyConstants#COVERAGE_SEARCH_OVERRIDE} normally this job only runs once a week, set this property to
  *          override that configuration and force an update to enrollment.
  *
  * This only needs to run as often as BFD receives updated enrollment.
