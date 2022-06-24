@@ -23,10 +23,7 @@ public class PropertiesAPIServiceImpl implements PropertiesAPIService {
 
     @Override
     public boolean updateProperty(String property, String value) {
-        PropertiesDTO propertiesDTO = new PropertiesDTO();
-        propertiesDTO.setKey(property);
-        propertiesDTO.setValue(value);
-
+        PropertiesDTO propertiesDTO = new PropertiesDTO(property, value);
         return propertiesService.updateProperty(propertiesDTO);
     }
 

@@ -3,6 +3,8 @@ package gov.cms.ab2d.properties.utils;
 import org.apache.commons.lang3.StringUtils;
 
 public class Validation {
+    private Validation() { }
+
     public static boolean validInteger(String val) {
         try {
             Long.parseLong(val);
@@ -16,10 +18,7 @@ public class Validation {
         if (StringUtils.isEmpty(val)) {
             return false;
         }
-        if (val.equalsIgnoreCase("true") || val.equalsIgnoreCase("false")) {
-            return true;
-        }
-        return false;
+        return val.equalsIgnoreCase("true") || val.equalsIgnoreCase("false");
     }
 
     public static boolean validFloat(String val) {

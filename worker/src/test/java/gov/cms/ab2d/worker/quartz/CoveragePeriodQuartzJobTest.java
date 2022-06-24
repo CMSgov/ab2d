@@ -45,9 +45,9 @@ class CoveragePeriodQuartzJobTest {
     @Test
     void disengageSearchWorks() {
 
-        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_DISCOVERY))).thenAnswer((arg) -> "idle");
-        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_QUEUEING))).thenAnswer((arg) -> "idle");
-        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_OVERRIDE))).thenAnswer((arg) -> "true");
+        when(propertiesApiService.getProperty(COVERAGE_SEARCH_DISCOVERY)).thenAnswer((arg) -> "idle");
+        when(propertiesApiService.getProperty(COVERAGE_SEARCH_QUEUEING)).thenAnswer((arg) -> "idle");
+        when(propertiesApiService.getProperty(COVERAGE_SEARCH_OVERRIDE)).thenAnswer((arg) -> "true");
 
         CoverageDriverStub coverageDriverStub = new CoverageDriverStub();
 
@@ -70,9 +70,9 @@ class CoveragePeriodQuartzJobTest {
 
         PropertiesAPIService propertiesApiService = mock(PropertiesAPIService.class);
 
-        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_DISCOVERY))).thenAnswer((arg) -> "engaged");
-        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_QUEUEING))).thenAnswer((arg) -> "engaged");
-        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_OVERRIDE))).thenAnswer((arg) -> "true");
+        when(propertiesApiService.getProperty(COVERAGE_SEARCH_DISCOVERY)).thenAnswer((arg) -> "engaged");
+        when(propertiesApiService.getProperty(COVERAGE_SEARCH_QUEUEING)).thenAnswer((arg) -> "engaged");
+        when(propertiesApiService.getProperty(COVERAGE_SEARCH_OVERRIDE)).thenAnswer((arg) -> "true");
 
         CoverageDriverStub coverageDriverStub = new CoverageDriverStub();
         CoveragePeriodQuartzJob quartzJob = new CoveragePeriodQuartzJob(coverageDriverStub, propertiesApiService, logManager);
@@ -94,9 +94,9 @@ class CoveragePeriodQuartzJobTest {
 
         PropertiesAPIService propertiesApiService = mock(PropertiesAPIService.class);
 
-        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_DISCOVERY))).thenAnswer((arg) -> "engaged");
-        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_QUEUEING))).thenAnswer((arg) -> "engaged");
-        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_OVERRIDE))).thenAnswer((arg) -> "false");
+        when(propertiesApiService.getProperty(COVERAGE_SEARCH_DISCOVERY)).thenAnswer((arg) -> "engaged");
+        when(propertiesApiService.getProperty(COVERAGE_SEARCH_QUEUEING)).thenAnswer((arg) -> "engaged");
+        when(propertiesApiService.getProperty(COVERAGE_SEARCH_OVERRIDE)).thenAnswer((arg) -> "false");
 
         CoverageDriverStub coverageDriverStub = new CoverageDriverStub();
         CoveragePeriodQuartzJob quartzJob = new CoveragePeriodQuartzJob(coverageDriverStub, propertiesApiService, logManager);
@@ -126,8 +126,8 @@ class CoveragePeriodQuartzJobTest {
 
         PropertiesAPIService propertiesApiService = mock(PropertiesAPIService.class);
 
-        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_DISCOVERY))).thenAnswer((arg) -> "engaged");
-        when(propertiesApiService.getProperty(eq(COVERAGE_SEARCH_OVERRIDE))).thenAnswer((arg) -> "true");
+        when(propertiesApiService.getProperty(COVERAGE_SEARCH_DISCOVERY)).thenAnswer((arg) -> "engaged");
+        when(propertiesApiService.getProperty(COVERAGE_SEARCH_OVERRIDE)).thenAnswer((arg) -> "true");
         try {
             doThrow(new RuntimeException("testing123")).when(coverageDriverMock).discoverCoveragePeriods();
             CoveragePeriodQuartzJob quartzJob = new CoveragePeriodQuartzJob(coverageDriverMock, propertiesApiService, logManager);

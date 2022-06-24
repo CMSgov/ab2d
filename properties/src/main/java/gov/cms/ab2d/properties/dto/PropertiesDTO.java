@@ -8,7 +8,9 @@ import javax.validation.constraints.NotNull;
 @Data
 @AllArgsConstructor
 public class PropertiesDTO {
-    public PropertiesDTO() { }
+    public PropertiesDTO() {
+        // Empty constructor still needed, even with all args constructor
+    }
 
     @NotNull
     private String key;
