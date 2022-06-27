@@ -81,11 +81,15 @@ public class JobUpdateListenerServiceImpl implements SqsService {
 
     @Override
     public void pollJobUpdateSqs() {
-        ReceiveMessageRequest request = new ReceiveMessageRequest(queueUrl);
-        request.setWaitTimeSeconds(5);
-        amazonSqs.receiveMessage(new ReceiveMessageRequest(queueUrl))
-                .getMessages()
-                .forEach(this::processMessage);
+        try {
+            ReceiveMessageRequest request = new ReceiveMessageRequest(queueUrl);
+            request.setWaitTimeSeconds(5);
+            amazonSqs.receiveMessage(new ReceiveMessageRequest(queueUrl))
+                    .getMessages()
+                    .forEach(this::processMessage);
+        }catch (Exception e){
+            log.info("Exception throw inside Job Update SQS poller {}", e.getMessage(), e);
+        }
     }
 
     public void processMessage(Message message) {
