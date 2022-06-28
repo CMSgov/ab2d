@@ -87,7 +87,7 @@ public class JobUpdateListenerServiceImpl implements SqsService {
             amazonSqs.receiveMessage(new ReceiveMessageRequest(queueUrl))
                     .getMessages()
                     .forEach(this::processMessage);
-        }catch (Exception e){
+        } catch (Exception e) {
             log.info("Exception throw inside Job Update SQS poller {}", e.getMessage(), e);
         }
     }
