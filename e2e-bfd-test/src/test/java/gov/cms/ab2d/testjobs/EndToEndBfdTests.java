@@ -246,7 +246,7 @@ public class EndToEndBfdTests {
         try {
             Path file = Paths.get(path, jobUuid, filename);
             Resource resource = new UrlResource(file.toUri());
-            jobService.deleteFileForJob(resource.getFile(), jobUuid);
+            //delete is handled by the audit module
         } catch (Exception ex) {
             throw new RuntimeException("Unable to delete file " + filename, ex);
         }

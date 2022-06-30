@@ -44,8 +44,8 @@ public class JobClient {
         }
     }
 
-    public void deleteFileForJob(File file, String jobGuid) {
-        jobService.deleteFileForJob(file, jobGuid);
+    public void incrementDownload(File file, String jobUUID) {
+        jobService.incrementDownload(file, jobUUID);
     }
 
     public JobPollResult poll(boolean admin, String jobUuid, String organization, int delaySeconds) {
