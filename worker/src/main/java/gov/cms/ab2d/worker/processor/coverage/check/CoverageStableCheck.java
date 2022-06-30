@@ -3,10 +3,13 @@ package gov.cms.ab2d.worker.processor.coverage.check;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.service.CoverageService;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 import lombok.extern.slf4j.Slf4j;
+import org.joda.time.LocalDate;
 
 /**
  * Check to make sure that month to month enrollment changes are within acceptable bounds. If enrollment goes from
@@ -37,16 +40,10 @@ public class CoverageStableCheck extends CoverageCheckPredicate {
         for (int idx = 1; idx < coverageCounts.size(); idx++) {
             CoverageCount previousMonth = coverageCounts.get(idx - 1);
 
-            // Don't check December to January because changes can be 200% or more
-            if (previousMonth.getMonth() == 12) {
-                continue;
-            }
-
             CoverageCount nextMonth = coverageCounts.get(idx);
-
-            // Change could be anomaly for smaller contracts, ignore
             int change = Math.abs(previousMonth.getBeneficiaryCount() - nextMonth.getBeneficiaryCount());
-            if (change < CHANGE_THRESHOLD) {
+
+            if (skipCheck(previousMonth, change)) {
                 continue;
             }
 
@@ -62,5 +59,24 @@ public class CoverageStableCheck extends CoverageCheckPredicate {
         }
 
         return coveragePeriodsChanged;
+    }
+
+    //Moved the skip check conditions to a method to make sonar happy
+    private boolean skipCheck(CoverageCount previousMonth, int change) {
+
+        // Don't check December to January because changes can be 200% or more
+        boolean skip = previousMonth.getMonth() == 12;
+
+        // January to February changes can also be significant.
+        // Stop sending this notification once February ends.
+        if (LocalDate.now().getMonthOfYear() > 2 && previousMonth.getMonth() == 1) {
+            skip = true;
+        }
+
+        // Change could be anomaly for smaller contracts, ignore
+        if (change < CHANGE_THRESHOLD) {
+            skip = true;
+        }
+        return skip;
     }
 }

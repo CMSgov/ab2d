@@ -146,4 +146,6 @@ databaseChangeLog:
   - include:
       file: db/changelog/v2022/event-service-database-migration.sql
   - include:
+      file: db/changelog/v2022/downloaded_count.sql
+  - include:
       file: db/changelog/v2022/job_listener_feature_flag.sql

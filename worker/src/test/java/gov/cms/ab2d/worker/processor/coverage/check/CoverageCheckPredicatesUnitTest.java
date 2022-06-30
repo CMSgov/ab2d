@@ -7,6 +7,17 @@ import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.service.CoverageService;
+import org.joda.time.LocalDate;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import javax.persistence.EntityNotFoundException;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -14,14 +25,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.persistence.EntityNotFoundException;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -376,4 +379,59 @@ public class CoverageCheckPredicatesUnitTest {
         assertTrue(upToDateCheck.test(contract));
         assertTrue(issues.isEmpty());
     }
+
+    @DisplayName("Coverage issues for January->February fails in February")
+    @Test
+    void whenCoverageAfterFebruary_ThrowsIssueJanuaryCheck() {
+        LocalDate currentLocalDate = LocalDate.parse( LocalDate.now().getYear() + "-02-01");
+        //override LocalDate.now() to avoid the test pass/failing depending on current date
+        try (MockedStatic<LocalDate> topDateTimeUtilMock = Mockito.mockStatic(LocalDate.class)) {
+            topDateTimeUtilMock.when(LocalDate::now).thenReturn(currentLocalDate);
+
+            ContractDTO contract = getContractDTO();
+            List<CoverageCount> fakeCounts = List.of(
+                    new CoverageCount("TEST", 2022,
+                            1, 1, 1, 500),
+                    new CoverageCount("TEST", 2022,
+                            2, 1, 2, 32151),
+                    new CoverageCount("TEST", 2022,
+                            3, 1, 3, 32100)
+            );
+            Map<String, List<CoverageCount>> coverageCounts = new HashMap<>();
+            List<String> issues = new ArrayList<>();
+            coverageCounts.put("TEST", fakeCounts);
+            CoverageStableCheck stableCheck =
+                    new CoverageStableCheck(coverageService, coverageCounts, issues);
+            assertFalse(stableCheck.test(contract));
+            assertFalse(issues.isEmpty());
+        }
+    }
+
+    @DisplayName("Coverage issues for January->February passes in March")
+    @Test
+    void whenCoverageAfterFebruary_IgnoreIssueJanuaryCheck() {
+        LocalDate currentLocalDate = LocalDate.parse( LocalDate.now().getYear() + "-03-01");
+        //override LocalDate.now() to avoid the test pass/failing depending on current date
+        try (MockedStatic<LocalDate> topDateTimeUtilMock = Mockito.mockStatic(LocalDate.class)) {
+            topDateTimeUtilMock.when(LocalDate::now).thenReturn(currentLocalDate);
+
+            ContractDTO contract = getContractDTO();
+            List<CoverageCount> fakeCounts = List.of(
+                    new CoverageCount("TEST", 2022,
+                            1, 1, 1, 500),
+                    new CoverageCount("TEST", 2022,
+                            2, 1, 2, 32151),
+                    new CoverageCount("TEST", 2022,
+                            3, 1, 3, 32100)
+            );
+            Map<String, List<CoverageCount>> coverageCounts = new HashMap<>();
+            List<String> issues = new ArrayList<>();
+            coverageCounts.put("TEST", fakeCounts);
+            CoverageStableCheck stableCheck =
+                    new CoverageStableCheck(coverageService, coverageCounts, issues);
+            assertTrue(stableCheck.test(contract));
+            assertTrue(issues.isEmpty());
+        }
+    }
+
 }
