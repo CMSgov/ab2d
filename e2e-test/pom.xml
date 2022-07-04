@@ -68,7 +68,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.4.0</version>
                 <configuration>
                     <descriptors>
                         <descriptor>${project.basedir}/src/test/assembly/src.xml</descriptor>
