@@ -110,7 +110,7 @@
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>ab2d-events-client</artifactId>
-            <version>1.0</version>
+            <version>1.2</version>
         </dependency>
     </dependencies>
 
