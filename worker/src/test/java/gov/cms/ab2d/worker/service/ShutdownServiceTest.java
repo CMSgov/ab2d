@@ -1,8 +1,8 @@
 package gov.cms.ab2d.worker.service;
 
-import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
+import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
+import gov.cms.ab2d.eventclient.events.LoggableEvent;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.job.repository.JobRepository;

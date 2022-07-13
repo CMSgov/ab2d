@@ -6,7 +6,7 @@ import com.amazonaws.services.kinesisfirehose.model.PutRecordRequest;
 import com.amazonaws.services.kinesisfirehose.model.PutRecordResult;
 import com.amazonaws.services.kinesisfirehose.model.Record;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import gov.cms.ab2d.eventlogger.LoggableEvent;
+import gov.cms.ab2d.eventclient.events.LoggableEvent;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;

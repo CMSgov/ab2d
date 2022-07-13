@@ -115,6 +115,11 @@
             <artifactId>springdoc-openapi-ui</artifactId>
             <version>1.6.9</version>
         </dependency>
+        <dependency>
+            <groupId>gov.cms.ab2d</groupId>
+            <artifactId>ab2d-events-client</artifactId>
+            <version>1.0</version>
+        </dependency>
     </dependencies>
 
     <build>

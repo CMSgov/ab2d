@@ -1,6 +1,6 @@
 package gov.cms.ab2d.eventlogger.utils;
 
-import gov.cms.ab2d.eventlogger.LoggableEvent;
+import gov.cms.ab2d.eventclient.events.LoggableEvent;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;

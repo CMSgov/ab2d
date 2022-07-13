@@ -1,9 +1,11 @@
 package gov.cms.ab2d.eventlogger;
 
+import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
+import gov.cms.ab2d.eventclient.events.LoggableEvent;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
-import gov.cms.ab2d.eventlogger.events.ErrorEvent;
+import gov.cms.ab2d.eventclient.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

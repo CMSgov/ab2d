@@ -1,9 +1,9 @@
 package gov.cms.ab2d.job.service;
 
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
-import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
+import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.events.SlackEvents;
+import gov.cms.ab2d.eventclient.events.SlackEvents;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventSummary;
 import gov.cms.ab2d.job.dto.JobPollResult;
 import gov.cms.ab2d.job.dto.StaleJob;

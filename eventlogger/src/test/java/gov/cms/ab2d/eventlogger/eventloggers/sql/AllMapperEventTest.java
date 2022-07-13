@@ -1,10 +1,18 @@
 package gov.cms.ab2d.eventlogger.eventloggers.sql;
 
+import gov.cms.ab2d.eventclient.events.ApiRequestEvent;
+import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
+import gov.cms.ab2d.eventclient.events.BeneficiarySearchEvent;
+import gov.cms.ab2d.eventclient.events.ContractSearchEvent;
+import gov.cms.ab2d.eventclient.events.ErrorEvent;
+import gov.cms.ab2d.eventclient.events.FileEvent;
+import gov.cms.ab2d.eventclient.events.JobStatusChangeEvent;
+import gov.cms.ab2d.eventclient.events.LoggableEvent;
+import gov.cms.ab2d.eventclient.events.ReloadEvent;
 import gov.cms.ab2d.eventlogger.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.EventLoggingException;
-import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.SpringBootApp;
-import gov.cms.ab2d.eventlogger.events.*;
+import gov.cms.ab2d.eventclient.events.*;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;

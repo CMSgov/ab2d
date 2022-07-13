@@ -1,5 +1,7 @@
 package gov.cms.ab2d.eventlogger;
 
+import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
+import gov.cms.ab2d.eventclient.events.LoggableEvent;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
@@ -14,6 +16,14 @@ public class LogManager {
     private final SqlEventLogger sqlEventLogger;
     private final KinesisEventLogger kinesisEventLogger;
     private final SlackLogger slackLogger;
+//    private final boolean enabled;
+
+//    public LogManager(SqlEventLogger sqlEventLogger, KinesisEventLogger kinesisEventLogger, SlackLogger slackLogger, @Value("${feature.sqs.enabled:false}") boolean enabled) {
+//        this.sqlEventLogger = sqlEventLogger;
+//        this.kinesisEventLogger = kinesisEventLogger;
+//        this.slackLogger = slackLogger;
+//        this.enabled = !enabled;
+//    }
 
     public LogManager(SqlEventLogger sqlEventLogger, KinesisEventLogger kinesisEventLogger, SlackLogger slackLogger) {
         this.sqlEventLogger = sqlEventLogger;
@@ -28,6 +38,7 @@ public class LogManager {
 
     /**
      * Log an event to all available event loggers without alerting
+     *
      * @param event the event to log
      */
     public void log(LoggableEvent event) {
@@ -44,7 +55,8 @@ public class LogManager {
 
     /**
      * Alert only AB2D team via relevant loggers with a high priority alert
-     * @param message message to provide
+     *
+     * @param message      message to provide
      * @param environments AB2D environments to alert on
      */
     public void alert(String message, List<Ab2dEnvironment> environments) {
@@ -53,7 +65,8 @@ public class LogManager {
 
     /**
      * Alert only AB2D team via relevant loggers with a low priority alert
-     * @param message message to provide
+     *
+     * @param message      message to provide
      * @param environments AB2D environments to alert on
      */
     public void trace(String message, List<Ab2dEnvironment> environments) {
@@ -62,10 +75,10 @@ public class LogManager {
 
     /**
      * Log the event and alert to relevant alert loggers only in the provided execution environments.
-     *
+     * <p>
      * The message published will be built using {@link LoggableEvent#asMessage()}
      *
-     * @param event event to log an alert for.
+     * @param event        event to log an alert for.
      * @param environments environments to log an alert for
      */
     public void logAndAlert(LoggableEvent event, List<Ab2dEnvironment> environments) {
@@ -76,10 +89,10 @@ public class LogManager {
 
     /**
      * Log the event and provided traces to relevant trace loggers only in the provided execution environments.
-     *
+     * <p>
      * The message published will be built using {@link LoggableEvent#asMessage()}
      *
-     * @param event event to log an alert for.
+     * @param event        event to log an alert for.
      * @param environments environments to log an alert for
      */
     public void logAndTrace(LoggableEvent event, List<Ab2dEnvironment> environments) {
@@ -90,7 +103,8 @@ public class LogManager {
 
     /**
      * Log an event without alerting
-     * @param type type of event logger to use
+     *
+     * @param type  type of event logger to use
      * @param event event to log
      */
     public void log(LogType type, LoggableEvent event) {
