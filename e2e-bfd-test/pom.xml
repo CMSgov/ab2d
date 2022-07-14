@@ -46,5 +46,10 @@
             <artifactId>localstack</artifactId>
             <version>1.17.2</version>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-aws-messaging</artifactId>
+            <version>2.2.6.RELEASE</version>
+        </dependency>
     </dependencies>
 </project>

@@ -9,6 +9,7 @@ import gov.cms.ab2d.eventclient.events.FileEvent;
 import gov.cms.ab2d.eventclient.events.JobStatusChangeEvent;
 import gov.cms.ab2d.eventclient.events.LoggableEvent;
 import gov.cms.ab2d.eventclient.events.ReloadEvent;
+import gov.cms.ab2d.eventlogger.AB2DLocalstackContainer;
 import gov.cms.ab2d.eventlogger.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.EventLoggingException;
 import gov.cms.ab2d.eventlogger.SpringBootApp;
@@ -49,6 +50,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @Testcontainers
 public class AllMapperEventTest {
     public static final int ONE_MillSEC_IN_NANO = 1000000;
+
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
