@@ -1,5 +1,6 @@
 package gov.cms.ab2d.eventlogger;
 
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
 import gov.cms.ab2d.eventclient.events.LoggableEvent;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
@@ -29,6 +30,9 @@ class LogManagerTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer  = new AB2DLocalstackContainer();
+
     private LogManager logManager;
 
     @Mock
@@ -43,6 +47,9 @@ class LogManagerTest {
     @Autowired
     private LoggerEventRepository loggerEventRepository;
 
+    @Autowired
+    private SQSEventClient sqsEventClient;
+
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
@@ -56,7 +63,7 @@ class LogManagerTest {
 
     @Test
     void log() {
-        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
+        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger, sqsEventClient, false);
         ErrorEvent event = new ErrorEvent("user", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
                 "File Deleted");
         doAnswer(invocation -> {
@@ -78,7 +85,7 @@ class LogManagerTest {
 
     @Test
     void logAndAlert() {
-        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
+        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger, sqsEventClient, false);
         ErrorEvent event = new ErrorEvent("user", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
                 "File Deleted");
         doAnswer(invocation -> {
@@ -102,7 +109,7 @@ class LogManagerTest {
 
     @Test
     void logAndTrace() {
-        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
+        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger, sqsEventClient, false);
         ErrorEvent event = new ErrorEvent("user", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
                 "File Deleted");
         doAnswer(invocation -> {
@@ -126,7 +133,7 @@ class LogManagerTest {
 
     @Test
     void testOnlySql() {
-        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
+        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger, sqsEventClient, false);
         ErrorEvent event = new ErrorEvent("organization", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
                 "File Deleted");
         logManager.log(LogManager.LogType.SQL, event);
@@ -144,7 +151,7 @@ class LogManagerTest {
     void testOnlyKin() {
         ErrorEvent event = new ErrorEvent("user", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
                 "File Deleted");
-        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
+        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger, sqsEventClient, false);
 
         doAnswer(invocation -> {
             Object[] args = invocation.getArguments();
@@ -163,7 +170,7 @@ class LogManagerTest {
 
     @Test
     void testAlert() {
-        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
+        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger, sqsEventClient, false);
         ErrorEvent event = new ErrorEvent("user", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
                 "File Deleted");
         doAnswer(invocation -> {
@@ -179,7 +186,7 @@ class LogManagerTest {
 
     @Test
     void testTrace() {
-        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
+        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger, sqsEventClient, false);
         ErrorEvent event = new ErrorEvent("user", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
                 "File Deleted");
         doAnswer(invocation -> {
