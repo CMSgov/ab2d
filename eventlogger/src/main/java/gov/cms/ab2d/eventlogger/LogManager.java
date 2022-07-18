@@ -1,11 +1,14 @@
 package gov.cms.ab2d.eventlogger;
 
+
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
 import gov.cms.ab2d.eventclient.events.LoggableEvent;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,19 +19,15 @@ public class LogManager {
     private final SqlEventLogger sqlEventLogger;
     private final KinesisEventLogger kinesisEventLogger;
     private final SlackLogger slackLogger;
-//    private final boolean enabled;
+    private final SQSEventClient eventClient;
+    private final boolean sqsEnabled;
 
-//    public LogManager(SqlEventLogger sqlEventLogger, KinesisEventLogger kinesisEventLogger, SlackLogger slackLogger, @Value("${feature.sqs.enabled:false}") boolean enabled) {
-//        this.sqlEventLogger = sqlEventLogger;
-//        this.kinesisEventLogger = kinesisEventLogger;
-//        this.slackLogger = slackLogger;
-//        this.enabled = !enabled;
-//    }
-
-    public LogManager(SqlEventLogger sqlEventLogger, KinesisEventLogger kinesisEventLogger, SlackLogger slackLogger) {
+    public LogManager(SqlEventLogger sqlEventLogger, KinesisEventLogger kinesisEventLogger, SlackLogger slackLogger, SQSEventClient eventClient, @Value("${feature.sqs.enabled:false}") boolean sqsEnabled) {
         this.sqlEventLogger = sqlEventLogger;
         this.kinesisEventLogger = kinesisEventLogger;
         this.slackLogger = slackLogger;
+        this.eventClient = eventClient;
+        this.sqsEnabled = sqsEnabled;
     }
 
     public enum LogType {
@@ -42,15 +41,20 @@ public class LogManager {
      * @param event the event to log
      */
     public void log(LoggableEvent event) {
-        // Save to the database
-        sqlEventLogger.log(event);
+        if (sqsEnabled) {
+            //send to sqs
+            eventClient.sendLogs(event);
+        } else {
+            // Save to the database
+            sqlEventLogger.log(event);
 
-        // This event will contain the db id, block so we can get the
-        // aws id.
-        kinesisEventLogger.log(event, true);
+            // This event will contain the db id, block so we can get the
+            // aws id.
+            kinesisEventLogger.log(event, true);
 
-        // This event will not contain the AWS Id, update event in the DB
-        sqlEventLogger.updateAwsId(event.getAwsId(), event);
+            // This event will not contain the AWS Id, update event in the DB
+            sqlEventLogger.updateAwsId(event.getAwsId(), event);
+        }
     }
 
     /**
