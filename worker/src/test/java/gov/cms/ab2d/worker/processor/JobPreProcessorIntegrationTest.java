@@ -2,6 +2,7 @@ package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ApiRequestEvent;
 import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
 import gov.cms.ab2d.eventclient.events.ContractSearchEvent;
@@ -77,6 +78,9 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
     @Autowired
     private PdpClientRepository pdpClientRepository;
 
+    @Mock
+    private SQSEventClient sqsEventClient;
+
     @Autowired
     private LoggerEventRepository loggerEventRepository;
 
@@ -105,7 +109,7 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        LogManager manager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
+        LogManager manager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger, sqsEventClient, false);
 
         cut = new JobPreProcessorImpl(contractWorkerClient, jobRepository, manager, coverageDriver);
 

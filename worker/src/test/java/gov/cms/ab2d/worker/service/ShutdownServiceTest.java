@@ -51,7 +51,7 @@ class ShutdownServiceTest {
     static class MockEventLogger extends LogManager {
 
         public MockEventLogger() {
-            super(null, null, null);
+            super(null, null, null, null, false);
         }
 
         @Override

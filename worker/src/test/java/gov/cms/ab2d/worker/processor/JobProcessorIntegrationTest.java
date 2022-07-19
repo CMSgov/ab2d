@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.processor;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.LoggableEvent;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobOutput;
@@ -140,6 +141,10 @@ class JobProcessorIntegrationTest extends JobCleanup {
     @Autowired
     private DataSetup dataSetup;
 
+    @Mock
+    private SQSEventClient sqsEventClient;
+
+
     @Autowired
     private ContractToContractCoverageMapping mapping;
 
@@ -171,7 +176,7 @@ class JobProcessorIntegrationTest extends JobCleanup {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
+        LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger, sqsEventClient, false);
         PdpClient pdpClient = createClient();
 
         contract = createContract();
