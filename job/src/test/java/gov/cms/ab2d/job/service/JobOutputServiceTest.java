@@ -2,6 +2,7 @@ package gov.cms.ab2d.job.service;
 
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.job.JobTestSpringBootApp;
@@ -55,6 +56,9 @@ class JobOutputServiceTest extends JobCleanup {
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
+
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer  = new AB2DLocalstackContainer();
 
     private static final String JOB_OUTPUT_CONTRACT_NUMBER = "JJ112233";
 
