@@ -52,8 +52,8 @@ public class ContractToContractCoverageMapping {
     }
 
     public ContractForCoverageDTO map(Contract contract) {
-        ContractForCoverageDTO a = modelMapper.map(contract, ContractForCoverageDTO.class);
-        log.info("Attested from DB {} VS mapped {}", contract.getAttestedOn() , a.getAttestedOn());
-        return a;
+        ContractForCoverageDTO contractForCoverageDTO = modelMapper.map(contract, ContractForCoverageDTO.class);
+        log.info("Attested from DB {} VS mapped {}", contract.getAttestedOn(), contractForCoverageDTO.getAttestedOn());
+        return contractForCoverageDTO;
     }
 }
