@@ -58,7 +58,6 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>${postgress.version}</version>
-
         </dependency>
     </dependencies>
 
