@@ -3,6 +3,7 @@ package gov.cms.ab2d.audit.cleanup;
 import gov.cms.ab2d.audit.SpringBootApp;
 import gov.cms.ab2d.audit.dto.AuditMockJob;
 import gov.cms.ab2d.audit.remote.JobAuditClientMock;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.util.DataSetup;
@@ -77,6 +78,9 @@ class FileDeletionServiceTest {
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
+
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     @Autowired
     private JobAuditClientMock jobAuditClientMock;

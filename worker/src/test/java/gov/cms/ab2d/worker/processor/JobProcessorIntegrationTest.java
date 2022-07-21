@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.processor;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.LoggableEvent;
 import gov.cms.ab2d.job.model.Job;
@@ -167,6 +168,9 @@ class JobProcessorIntegrationTest extends JobCleanup {
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
+
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
     private static final ExplanationOfBenefit EOB = (ExplanationOfBenefit) EobTestDataUtil.createEOB();
 
     private Contract contract;
