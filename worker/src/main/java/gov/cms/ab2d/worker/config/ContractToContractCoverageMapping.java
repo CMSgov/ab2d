@@ -5,14 +5,12 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import javax.annotation.PostConstruct;
 
-import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.AbstractConverter;
 import org.modelmapper.Converter;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
 @Component
-@Slf4j
 public class ContractToContractCoverageMapping {
 
     private static ModelMapper modelMapper;
