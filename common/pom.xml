@@ -54,6 +54,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
+            <version>${postgress.version}</version>
         </dependency>
         <dependency>
             <groupId>org.liquibase</groupId>
