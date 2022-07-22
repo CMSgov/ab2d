@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.bfdhealthcheck;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Properties;
 import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.SpringBootApp;
@@ -32,6 +33,9 @@ public class BFDHealthCheckTest {
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
+
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     private BFDHealthCheck bfdHealthCheck;
 
