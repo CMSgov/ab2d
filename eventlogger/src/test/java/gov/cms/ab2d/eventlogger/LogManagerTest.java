@@ -1,5 +1,6 @@
 package gov.cms.ab2d.eventlogger;
 
+import com.amazonaws.services.sqs.AmazonSQS;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
 import gov.cms.ab2d.eventclient.events.LoggableEvent;
@@ -15,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -47,8 +49,9 @@ class LogManagerTest {
     @Autowired
     private LoggerEventRepository loggerEventRepository;
 
-    @Autowired
+    @Mock
     private SQSEventClient sqsEventClient;
+
 
     @BeforeEach
     public void setUp() {
@@ -198,5 +201,15 @@ class LogManagerTest {
         logManager.trace(event.getDescription(), Ab2dEnvironment.ALL);
 
         verify(slackLogger, times(1)).logTrace(any(String.class), any());
+    }
+
+    @Test
+    void logWithSQS() {
+        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger, sqsEventClient, true);
+        ErrorEvent event = new ErrorEvent("user", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
+                "File Deleted");
+
+        logManager.log(event);
+        verify(sqsEventClient, times(1)).sendLogs(any(LoggableEvent.class));
     }
 }
