@@ -46,11 +46,7 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.projectreactor</groupId>
-            <artifactId>reactor-spring</artifactId>
-            <version>1.0.1.RELEASE</version>
-        </dependency>
+
         <!-- used by mockito to mock static methods -->
         <dependency>
             <groupId>org.mockito</groupId>
@@ -61,6 +57,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
+            <version>${postgres.version}</version>
         </dependency>
     </dependencies>
 
