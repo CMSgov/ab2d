@@ -31,7 +31,7 @@ services:
     volumes:
       - tmp-volume:/opt/ab2d
     healthcheck:
-      test: awslocal sns list-topics && awslocal sqs list-queues
+      test: awslocal sqs list-queues
       interval: 10s
       timeout: 5s
       retries: 40
