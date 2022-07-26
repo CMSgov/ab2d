@@ -13,8 +13,6 @@ services:
   build:
     user: "${JENKINS_UID}:${JENKINS_GID}"
 
-  localstack:
-    user: "${JENKINS_UID}:${JENKINS_GID}"
   api:
     user: "${JENKINS_UID}:${JENKINS_GID}"
 

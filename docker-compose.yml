@@ -34,7 +34,7 @@ services:
       test: awslocal sns list-topics && awslocal sqs list-queues
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 40
   build:
     image: maven:3-openjdk-17
     working_dir: /usr/src/mymaven
