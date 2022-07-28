@@ -13,10 +13,9 @@ import org.springframework.context.annotation.Primary;
 
 @Configuration
 public class TestConfig {
-
     @Bean
     @Primary
-    public ObjectMapper test() {
+    public ObjectMapper objectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
