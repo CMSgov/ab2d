@@ -81,17 +81,17 @@ pipeline {
             }
         }
 
-//        stage('Run unit and integration tests') {
-//
-//            steps {
-//                withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
-//                    sh '''
-//                        export AB2D_EFS_MOUNT="${AB2D_HOME}"
-//                        mvn --settings settings.xml -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD} test -pl eventlogger,common,job,coverage,api,worker,audit,hpms
-//                    '''
-//                }
-//            }
-//        }
+        stage('Run unit and integration tests') {
+
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
+                    sh '''
+                        export AB2D_EFS_MOUNT="${AB2D_HOME}"
+                        mvn --settings settings.xml -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD} test -pl eventlogger,common,job,coverage,api,worker,audit,hpms
+                    '''
+                }
+            }
+        }
 
         stage('Run e2e-bfd-test') {
 
@@ -119,30 +119,30 @@ pipeline {
                 }
             }
         }
-//	    stage('SonarQube Analysis') {
-//            steps {
-//                withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
-//                    git branch: 'master', credentialsId: 'GITHUB_AB2D_JENKINS_PAT', url: env.GIT_URL
-//                    git branch: env.BRANCH_NAME, credentialsId: 'GITHUB_AB2D_JENKINS_PAT', url: env.GIT_URL
-//                    // Automatically saves the an id for the SonarQube build
-//                    withSonarQubeEnv('CMSSonar') {
-//                        sh '''mvn --settings settings.xml sonar:sonar -Dsonar.projectKey=ab2d-project -DskipTests -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD}'''
-//                    }
-//                }
-//            }
-//        }
-//
-//	  //New Way in declarative pipeline
-//        stage("Quality Gate") {
-//           options {
-//                timeout(time: 10, unit: 'MINUTES')
-//            }
-//            steps {
-//                // Parameter indicates whether to set pipeline to UNSTABLE if Quality Gate fails
-//                // true = set pipeline to UNSTABLE, false = don't
-//                waitForQualityGate abortPipeline: true
-//            }
-//        }
+	    stage('SonarQube Analysis') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
+                    git branch: 'master', credentialsId: 'GITHUB_AB2D_JENKINS_PAT', url: env.GIT_URL
+                    git branch: env.BRANCH_NAME, credentialsId: 'GITHUB_AB2D_JENKINS_PAT', url: env.GIT_URL
+                    // Automatically saves the an id for the SonarQube build
+                    withSonarQubeEnv('CMSSonar') {
+                        sh '''mvn --settings settings.xml sonar:sonar -Dsonar.projectKey=ab2d-project -DskipTests -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD}'''
+                    }
+                }
+            }
+        }
+
+	  //New Way in declarative pipeline
+        stage("Quality Gate") {
+           options {
+                timeout(time: 10, unit: 'MINUTES')
+            }
+            steps {
+                // Parameter indicates whether to set pipeline to UNSTABLE if Quality Gate fails
+                // true = set pipeline to UNSTABLE, false = don't
+                waitForQualityGate abortPipeline: true
+            }
+        }
 
 
         stage('Run e2e-test') {
