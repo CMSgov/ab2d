@@ -144,7 +144,7 @@ class JobProcessorIntegrationTest extends JobCleanup {
 
     @Mock
     private SQSEventClient sqsEventClient;
-    
+
     @Autowired
     private ContractToContractCoverageMapping mapping;
 
