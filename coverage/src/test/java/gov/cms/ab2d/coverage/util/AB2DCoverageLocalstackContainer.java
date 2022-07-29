@@ -8,7 +8,7 @@ import org.testcontainers.utility.DockerImageName;
 @Slf4j
 public class AB2DCoverageLocalstackContainer extends LocalStackContainer {
 
-    private static final DockerImageName IMAGE_VERSION = DockerImageName.parse("localstack/localstack:latest");
+    private static final DockerImageName IMAGE_VERSION = DockerImageName.parse("localstack/localstack:1.17.2");
 
     public AB2DCoverageLocalstackContainer() {
         super(IMAGE_VERSION);
