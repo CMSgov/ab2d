@@ -21,7 +21,7 @@ import java.time.Duration;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static gov.cms.ab2d.common.util.Constants.HPMS_AUTHORIZATION;
+import static gov.cms.ab2d.common.util.Constants.HPMS_ORGANIZATION;
 import static gov.cms.ab2d.eventlogger.events.ErrorEvent.ErrorType.HpMS_AUTH_ERROR;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpHeaders.COOKIE;
@@ -150,7 +150,7 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
     }
 
     private void logErrors(String errorMessage, long curTime) {
-        eventLogger.log(new ErrorEvent(HPMS_AUTHORIZATION, "", HpMS_AUTH_ERROR, errorMessage));
+        eventLogger.log(new ErrorEvent(HPMS_ORGANIZATION, "", HpMS_AUTH_ERROR, errorMessage));
         long elapsedTime = System.currentTimeMillis() - curTime;
         throw new RemoteTimeoutException("Failed to procure Auth Token, response: " + errorMessage +
                 " waited for " + (elapsedTime / 1000) + " seconds.");
@@ -159,16 +159,15 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
     private String prepareErrorMessage(WebClientResponseException exception) {
         String explication;
         switch (exception.getStatusCode().value()) {
-            case (403) -> {
+            case (403):
                 explication = "HPMS auth key/secret have expired and must be updated";
-            }
-            case (500) -> {
+                break;
+            case (500):
                 explication = "HPMS auth key/secret are invalid or HPMS is down";
-            }
-            default -> {
+                break;
+            default:
                 explication = "HPMS returned an unknown error" + ": "
                         + exception.getResponseBodyAsString();
-            }
         }
 
         return explication;
