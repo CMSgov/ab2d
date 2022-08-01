@@ -3,8 +3,10 @@ package gov.cms.ab2d.hpms.service;
 import gov.cms.ab2d.hpms.hmsapi.HPMSAttestation;
 import gov.cms.ab2d.hpms.hmsapi.HPMSAuthResponse;
 import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizationInfo;
+import org.jetbrains.annotations.NotNull;
 import org.mockito.*;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -13,15 +15,20 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.CoreSubscriber;
 import reactor.core.publisher.Mono;
+import reactor.util.annotation.NonNullApi;
 
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.http.HttpStatus.OK;
 
 @Service
 public class MockWebClient {
@@ -48,15 +55,16 @@ public class MockWebClient {
     ClientResponse response;
 
 
-    public void authRequest(WebClient mockedWebClient, MockedStatic<WebClient> webClientStatic, HPMSAuthResponse body) {
+    public void authRequest(WebClient mockedWebClient, MockedStatic<WebClient> webClientStatic, HttpStatus status, HPMSAuthResponse body) {
         mock(mockedWebClient, webClientStatic);
         LinkedMultiValueMap<String, ResponseCookie> cookies = new LinkedMultiValueMap<>();
         cookies.add("test", ResponseCookie.fromClientResponse("test", "test").build());
         Mockito.when(response.cookies()).thenReturn(cookies);
         Mockito.when(response.bodyToMono(HPMSAuthResponse.class)).thenReturn(Mono.just(body));
+        Mockito.when(response.statusCode()).thenReturn(status);
+        Mockito.when(response.createException()).thenReturn(Mono.error(new WebClientResponseException(500, "error", null, new byte[100], Charset.defaultCharset())));
         ArgumentCaptor<Function<ClientResponse, ? extends Mono<HPMSAuthResponse>>> argument = ArgumentCaptor.forClass(Function.class);
         when(headersSpec.exchangeToMono(argument.capture())).thenAnswer(x -> argument.getValue().apply(response));
-
     }
 
     public void orgRequest(WebClient mockedWebClient, MockedStatic<WebClient> webClientStatic, List<HPMSOrganizationInfo> body) {
