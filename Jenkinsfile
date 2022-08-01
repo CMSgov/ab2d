@@ -76,7 +76,7 @@ pipeline {
         stage('Package without tests') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
-                    sh 'mvn package --settings settings.xml -DskipTests -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD}'
+                    sh 'mvn -U clean package --settings settings.xml -DskipTests -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD}'
                 }
             }
         }
