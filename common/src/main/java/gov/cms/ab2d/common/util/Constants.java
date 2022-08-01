@@ -84,5 +84,5 @@ public final class Constants {
 
     public static final String ZIPFORMAT = "application/zip";
 
-    public static final String HPMS_AUTHORIZATION = "HPMS_AUTHORIZATION";
+    public static final String HPMS_AUTHORIZATION = "HPMS_AUTH";
 }
