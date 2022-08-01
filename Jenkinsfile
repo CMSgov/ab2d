@@ -144,7 +144,6 @@ pipeline {
             }
         }
 
-
         stage('Run e2e-test') {
 
             steps {
