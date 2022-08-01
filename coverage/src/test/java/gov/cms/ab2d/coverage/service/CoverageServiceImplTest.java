@@ -77,7 +77,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Testcontainers
 @TestPropertySource(locations = "/application.coverage.properties")
 class CoverageServiceImplTest {
-
     private static final int YEAR = 2020;
     private static final int JANUARY = 1;
     private static final int FEBRUARY = 2;
