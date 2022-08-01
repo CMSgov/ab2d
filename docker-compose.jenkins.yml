@@ -19,6 +19,7 @@ services:
   worker:
     user: "${JENKINS_UID}:${JENKINS_GID}"
 
+
 # Override directory on machine which is the main volume mapped into each containers
 volumes:
   tmp-volume:
