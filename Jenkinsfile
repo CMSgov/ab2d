@@ -68,7 +68,7 @@ pipeline {
 
                     echo $WORKSPACE
 
-                    mvn -U -X clean
+                    mvn clean
                 '''
             }
         }
