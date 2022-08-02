@@ -70,7 +70,7 @@ pipeline {
 
                     mvn clean
                     
-                    mvn -U clean install --settings settings.xml -DskipTests
+                    mvn -e -U clean install --settings settings.xml -DskipTests
                 '''
             }
         }
