@@ -24,9 +24,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_COVERAGE_ISSUE;
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_STARTED;
+
+import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PUBLIC_LIST;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_COVERAGE_ISSUE;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_STARTED;
 import static gov.cms.ab2d.job.model.JobStatus.FAILED;
 import static gov.cms.ab2d.job.model.JobStatus.IN_PROGRESS;
 import static gov.cms.ab2d.job.model.JobStatus.SUBMITTED;

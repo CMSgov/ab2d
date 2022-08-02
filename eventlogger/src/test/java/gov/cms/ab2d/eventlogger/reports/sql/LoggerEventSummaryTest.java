@@ -1,10 +1,9 @@
 package gov.cms.ab2d.eventlogger.reports.sql;
 
 import gov.cms.ab2d.eventlogger.AB2DPostgresqlContainer;
-import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.SpringBootApp;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
-import gov.cms.ab2d.eventlogger.events.*;
+import gov.cms.ab2d.eventclient.events.*;
 import java.io.File;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;

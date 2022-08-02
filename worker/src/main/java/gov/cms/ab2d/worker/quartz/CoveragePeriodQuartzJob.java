@@ -19,9 +19,9 @@ import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.COVERAGE_SEARCH_OVERRIDE;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
-import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PRODUCTION;
-import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.SANDBOX;
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.COVERAGE_UPDATES_FAILED;
+import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PRODUCTION;
+import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.SANDBOX;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.COVERAGE_UPDATES_FAILED;
 
 /**
  * Periodically update enrollment cached in the database by pulling enrollment from BFD.

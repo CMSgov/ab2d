@@ -1,9 +1,12 @@
 package gov.cms.ab2d.eventlogger;
 
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
+import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
+import gov.cms.ab2d.eventclient.events.LoggableEvent;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
-import gov.cms.ab2d.eventlogger.events.ErrorEvent;
+import gov.cms.ab2d.eventclient.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +30,9 @@ class LogManagerTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer  = new AB2DLocalstackContainer();
+
     private LogManager logManager;
 
     @Mock
@@ -41,6 +47,10 @@ class LogManagerTest {
     @Autowired
     private LoggerEventRepository loggerEventRepository;
 
+    @Mock
+    private SQSEventClient sqsEventClient;
+
+
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
@@ -54,7 +64,7 @@ class LogManagerTest {
 
     @Test
     void log() {
-        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
+        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger, sqsEventClient, false);
         ErrorEvent event = new ErrorEvent("user", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
                 "File Deleted");
         doAnswer(invocation -> {
@@ -76,7 +86,7 @@ class LogManagerTest {
 
     @Test
     void logAndAlert() {
-        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
+        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger, sqsEventClient, false);
         ErrorEvent event = new ErrorEvent("user", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
                 "File Deleted");
         doAnswer(invocation -> {
@@ -100,7 +110,7 @@ class LogManagerTest {
 
     @Test
     void logAndTrace() {
-        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
+        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger, sqsEventClient, false);
         ErrorEvent event = new ErrorEvent("user", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
                 "File Deleted");
         doAnswer(invocation -> {
@@ -124,7 +134,7 @@ class LogManagerTest {
 
     @Test
     void testOnlySql() {
-        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
+        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger, sqsEventClient, false);
         ErrorEvent event = new ErrorEvent("organization", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
                 "File Deleted");
         logManager.log(LogManager.LogType.SQL, event);
@@ -142,7 +152,7 @@ class LogManagerTest {
     void testOnlyKin() {
         ErrorEvent event = new ErrorEvent("user", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
                 "File Deleted");
-        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
+        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger, sqsEventClient, false);
 
         doAnswer(invocation -> {
             Object[] args = invocation.getArguments();
@@ -161,7 +171,7 @@ class LogManagerTest {
 
     @Test
     void testAlert() {
-        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
+        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger, sqsEventClient, false);
         ErrorEvent event = new ErrorEvent("user", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
                 "File Deleted");
         doAnswer(invocation -> {
@@ -177,7 +187,7 @@ class LogManagerTest {
 
     @Test
     void testTrace() {
-        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
+        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger, sqsEventClient, false);
         ErrorEvent event = new ErrorEvent("user", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
                 "File Deleted");
         doAnswer(invocation -> {
@@ -189,5 +199,15 @@ class LogManagerTest {
         logManager.trace(event.getDescription(), Ab2dEnvironment.ALL);
 
         verify(slackLogger, times(1)).logTrace(any(String.class), any());
+    }
+
+    @Test
+    void logWithSQS() {
+        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger, sqsEventClient, true);
+        ErrorEvent event = new ErrorEvent("user", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
+                "File Deleted");
+
+        logManager.log(event);
+        verify(sqsEventClient, times(1)).sendLogs(any(LoggableEvent.class));
     }
 }

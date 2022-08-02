@@ -6,11 +6,11 @@ import com.amazonaws.services.kinesisfirehose.model.PutRecordResult;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
+import gov.cms.ab2d.eventlogger.AB2DLocalstackContainer;
 import gov.cms.ab2d.eventlogger.AB2DPostgresqlContainer;
-import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
-import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.SpringBootApp;
-import gov.cms.ab2d.eventlogger.events.*;
+import gov.cms.ab2d.eventclient.events.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,6 +42,9 @@ import static org.mockito.Mockito.doReturn;
 class KinesisEventLoggerTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
+
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     @Autowired
     private Ab2dEnvironment environment;

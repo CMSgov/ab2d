@@ -2,6 +2,7 @@ package gov.cms.ab2d.worker.properties;
 
 import gov.cms.ab2d.common.model.Properties;
 import gov.cms.ab2d.common.repository.PropertiesRepository;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.worker.config.AutoScalingService;
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,9 @@ public class PropertiesChangeDetectionTest {
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
+
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     @Test
     public void testChangeInProperties() {

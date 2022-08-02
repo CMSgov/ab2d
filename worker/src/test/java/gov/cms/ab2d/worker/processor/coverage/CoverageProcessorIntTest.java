@@ -2,6 +2,7 @@ package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.repository.CoveragePeriodRepository;
@@ -30,6 +31,9 @@ class CoverageProcessorIntTest {
 
     @Container
     private static final PostgreSQLContainer postgres = new AB2DPostgresqlContainer();
+
+    @Container
+    private static final AB2DLocalstackContainer LOCALSTACK_CONTAINER = new AB2DLocalstackContainer();
 
     @Autowired
     private ContractRepository contractRepo;

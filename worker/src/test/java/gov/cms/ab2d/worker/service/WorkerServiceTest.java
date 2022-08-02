@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.service;
 
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
@@ -50,6 +51,9 @@ class WorkerServiceTest extends JobCleanup {
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
+
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     private WorkerServiceStub workerServiceStub;
 

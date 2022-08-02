@@ -4,11 +4,12 @@ import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.*;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
-import gov.cms.ab2d.eventlogger.LoggableEvent;
-import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
-import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
+import gov.cms.ab2d.eventclient.events.ApiRequestEvent;
+import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
+import gov.cms.ab2d.eventclient.events.LoggableEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +54,9 @@ public class AuthenticationTests {
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
+
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     private String token;
 

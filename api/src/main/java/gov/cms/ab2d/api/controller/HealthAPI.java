@@ -1,8 +1,8 @@
 package gov.cms.ab2d.api.controller;
 
 import gov.cms.ab2d.api.util.HealthCheck;
+import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import lombok.AllArgsConstructor;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;

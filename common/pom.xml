@@ -101,6 +101,12 @@
             <artifactId>newrelic-api</artifactId>
             <version>${newrelic.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>gov.cms.ab2d</groupId>
+            <artifactId>ab2d-events-client</artifactId>
+            <version>${events-client.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

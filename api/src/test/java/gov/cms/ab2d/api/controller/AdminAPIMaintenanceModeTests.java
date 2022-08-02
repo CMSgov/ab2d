@@ -6,10 +6,17 @@ import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.remote.JobClientMock;
 import gov.cms.ab2d.common.dto.PropertiesDTO;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
-import gov.cms.ab2d.eventlogger.LoggableEvent;
-import gov.cms.ab2d.eventlogger.events.*;
+import gov.cms.ab2d.eventclient.events.ApiRequestEvent;
+import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
+import gov.cms.ab2d.eventclient.events.ContractSearchEvent;
+import gov.cms.ab2d.eventclient.events.ErrorEvent;
+import gov.cms.ab2d.eventclient.events.FileEvent;
+import gov.cms.ab2d.eventclient.events.JobStatusChangeEvent;
+import gov.cms.ab2d.eventclient.events.LoggableEvent;
+import gov.cms.ab2d.eventclient.events.ReloadEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.job.model.JobOutput;
@@ -48,6 +55,9 @@ public class AdminAPIMaintenanceModeTests {
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
+
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     @Autowired
     private TestUtil testUtil;

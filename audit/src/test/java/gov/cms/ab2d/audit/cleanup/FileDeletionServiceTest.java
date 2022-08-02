@@ -3,17 +3,18 @@ package gov.cms.ab2d.audit.cleanup;
 import gov.cms.ab2d.audit.SpringBootApp;
 import gov.cms.ab2d.audit.dto.AuditMockJob;
 import gov.cms.ab2d.audit.remote.JobAuditClientMock;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.util.DataSetup;
-import gov.cms.ab2d.eventlogger.LoggableEvent;
-import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
-import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
-import gov.cms.ab2d.eventlogger.events.ContractSearchEvent;
-import gov.cms.ab2d.eventlogger.events.ErrorEvent;
-import gov.cms.ab2d.eventlogger.events.FileEvent;
-import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
-import gov.cms.ab2d.eventlogger.events.ReloadEvent;
+import gov.cms.ab2d.eventclient.events.ApiRequestEvent;
+import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
+import gov.cms.ab2d.eventclient.events.ContractSearchEvent;
+import gov.cms.ab2d.eventclient.events.ErrorEvent;
+import gov.cms.ab2d.eventclient.events.FileEvent;
+import gov.cms.ab2d.eventclient.events.JobStatusChangeEvent;
+import gov.cms.ab2d.eventclient.events.LoggableEvent;
+import gov.cms.ab2d.eventclient.events.ReloadEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.job.dto.StaleJob;
@@ -77,6 +78,9 @@ class FileDeletionServiceTest {
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
+
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     @Autowired
     private JobAuditClientMock jobAuditClientMock;

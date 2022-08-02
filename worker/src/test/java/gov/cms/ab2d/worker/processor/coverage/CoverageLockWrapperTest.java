@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.coverage.util.AB2DCoveragePostgressqlContainer;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -22,6 +23,9 @@ class CoverageLockWrapperTest {
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DCoveragePostgressqlContainer();
+
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     @Autowired
     private CoverageLockWrapper coverageLockWrapper;
