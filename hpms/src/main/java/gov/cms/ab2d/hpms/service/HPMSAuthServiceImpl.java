@@ -92,21 +92,24 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
                     }
                 });
 
-        // Cough up blood if we can't get an Auth response in a minute.
         long curTime = System.currentTimeMillis();
         HPMSAuthResponse authResponse;
         try {
+            // Cough up blood if we can't get an Auth response in a minute.
             authResponse = orgInfoMono.block(Duration.ofMinutes(1));
-            if (authResponse == null) {
-                logErrors("HPMS auth call failed with no response", curTime);
-                return;
-            }
             // Convert seconds to millis at a 90% level to pad refreshing of a token so that we are not in the middle of
             // a significant operation when the token expires.
             tokenExpires = currentTimestamp + authResponse.getExpires() * 900L;
             authToken = authResponse.getAccessToken();
         } catch (WebClientResponseException exception) {
-            logErrors(prepareErrorMessage(exception), curTime);
+            eventLogger.log(LogManager.LogType.SQL,
+                    new ErrorEvent(HPMS_ORGANIZATION, "", HpMS_AUTH_ERROR, prepareErrorMessage(exception, curTime)));
+            throw exception;
+        } catch (IllegalStateException | NullPointerException exception) {
+            String message = "HPMS auth call failed with no response waited for " + (curTime / 1000) + " seconds.";
+            eventLogger.log(LogManager.LogType.SQL,
+                    new ErrorEvent(HPMS_ORGANIZATION, "", HpMS_AUTH_ERROR, message));
+            throw new RemoteTimeoutException(message);
         }
     }
 
@@ -149,24 +152,17 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
         authToken = null;
     }
 
-    private void logErrors(String errorMessage, long curTime) {
-        eventLogger.log(new ErrorEvent(HPMS_ORGANIZATION, "", HpMS_AUTH_ERROR, errorMessage));
-        long elapsedTime = System.currentTimeMillis() - curTime;
-        throw new RemoteTimeoutException("Failed to procure Auth Token, response: " + errorMessage +
-                " waited for " + (elapsedTime / 1000) + " seconds.");
-    }
-
-    private String prepareErrorMessage(WebClientResponseException exception) {
-        String explication;
+    private String prepareErrorMessage(WebClientResponseException exception, long curTime) {
+        String explication = "After waiting " + (curTime / 1000) + " seconds ";
         switch (exception.getStatusCode().value()) {
             case (403):
-                explication = "HPMS auth key/secret have expired and must be updated";
+                explication += "HPMS auth key/secret have expired and must be updated";
                 break;
             case (500):
-                explication = "HPMS auth key/secret are invalid or HPMS is down";
+                explication += "HPMS auth key/secret are invalid or HPMS is down";
                 break;
             default:
-                explication = "HPMS returned an unknown error" + ": "
+                explication += "HPMS returned an unknown error: "
                         + exception.getResponseBodyAsString();
         }
 

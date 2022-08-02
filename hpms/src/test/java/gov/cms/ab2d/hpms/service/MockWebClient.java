@@ -3,8 +3,8 @@ package gov.cms.ab2d.hpms.service;
 import gov.cms.ab2d.hpms.hmsapi.HPMSAttestation;
 import gov.cms.ab2d.hpms.hmsapi.HPMSAuthResponse;
 import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizationInfo;
-import org.jetbrains.annotations.NotNull;
 import org.mockito.*;
+import org.mockito.stubbing.OngoingStubbing;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -16,9 +16,7 @@ import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import reactor.core.CoreSubscriber;
 import reactor.core.publisher.Mono;
-import reactor.util.annotation.NonNullApi;
 
 import java.net.URI;
 import java.nio.charset.Charset;
@@ -28,7 +26,7 @@ import java.util.function.Function;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.HttpStatus.I_AM_A_TEAPOT;
 
 @Service
 public class MockWebClient {
@@ -64,8 +62,17 @@ public class MockWebClient {
         Mockito.when(response.statusCode()).thenReturn(status);
         Mockito.when(response.createException()).thenReturn(Mono.error(new WebClientResponseException(500, "error", null, new byte[100], Charset.defaultCharset())));
         ArgumentCaptor<Function<ClientResponse, ? extends Mono<HPMSAuthResponse>>> argument = ArgumentCaptor.forClass(Function.class);
-        when(headersSpec.exchangeToMono(argument.capture())).thenAnswer(x -> argument.getValue().apply(response));
+        when(headersSpec.exchangeToMono(argument.capture())).thenAnswer(x -> argument.getValue().apply(response))
+                .then(x -> {
+                            OngoingStubbing<HPMSAuthResponse> mock = when(argument.capture().apply(response).block(any()));
+                            if (status == I_AM_A_TEAPOT) {
+                                mock.thenThrow(new IllegalStateException());
+                            }
+                            return mock;
+                        }
+                );
     }
+
 
     public void orgRequest(WebClient mockedWebClient, MockedStatic<WebClient> webClientStatic, List<HPMSOrganizationInfo> body) {
         mock(mockedWebClient, webClientStatic);

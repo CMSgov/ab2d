@@ -7,30 +7,34 @@ import gov.cms.ab2d.hpms.SpringBootTestApp;
 import gov.cms.ab2d.hpms.hmsapi.HPMSAuthResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.remoting.RemoteTimeoutException;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.http.HttpHeaders.COOKIE;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.GATEWAY_TIMEOUT;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import static org.springframework.http.HttpStatus.I_AM_A_TEAPOT;
+import static org.springframework.http.HttpStatus.NOT_ACCEPTABLE;
 import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.http.HttpStatus.REQUEST_TIMEOUT;
 
@@ -70,29 +74,31 @@ class HPMSMockedAuthTest {
     }
 
     @Test
-    void authNoKey() {
-        try (MockedStatic<WebClient> webClientStatic = Mockito.mockStatic(WebClient.class)) {
-            client.authRequest(mockedWebClient, webClientStatic, INTERNAL_SERVER_ERROR, new HPMSAuthResponse());
-            assertThrows(RemoteTimeoutException.class, () -> authService.buildAuthHeaders(new HttpHeaders()));
-            verify(eventLogger, times(1)).log(any(LoggableEvent.class));
-        }
+    void authInvalidKey() {
+        clientTest(INTERNAL_SERVER_ERROR);
     }
 
     @Test
-    void authInvalidKey() {
-        try (MockedStatic<WebClient> webClientStatic = Mockito.mockStatic(WebClient.class)) {
-            client.authRequest(mockedWebClient, webClientStatic, FORBIDDEN, new HPMSAuthResponse());
-            assertThrows(RemoteTimeoutException.class, () -> authService.buildAuthHeaders(new HttpHeaders()));
-            verify(eventLogger, times(1)).log(any(LoggableEvent.class));
-        }
+    void authExpiredKey() {
+        clientTest(FORBIDDEN);
     }
 
     @Test
     void authUnknownError() {
+        clientTest(REQUEST_TIMEOUT);
+    }
+
+    @Test
+    void authTimeoutException() {
+        // This is to test when HMPS is completely down so we don't get any response.
+        clientTest(I_AM_A_TEAPOT);
+    }
+
+    private void clientTest(HttpStatus httpStatus) {
         try (MockedStatic<WebClient> webClientStatic = Mockito.mockStatic(WebClient.class)) {
-            client.authRequest(mockedWebClient, webClientStatic, REQUEST_TIMEOUT, new HPMSAuthResponse());
-            assertThrows(RemoteTimeoutException.class, () -> authService.buildAuthHeaders(new HttpHeaders()));
-            verify(eventLogger, times(1)).log(any(LoggableEvent.class));
+            client.authRequest(mockedWebClient, webClientStatic, httpStatus, new HPMSAuthResponse());
+            assertThrows(WebClientResponseException.class, () -> authService.buildAuthHeaders(new HttpHeaders()));
+            verify(eventLogger, times(1)).log(eq(LogManager.LogType.SQL), any(LoggableEvent.class));
         }
     }
 
