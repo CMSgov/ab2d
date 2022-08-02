@@ -59,6 +59,7 @@ public class LogManager {
 
     /**
      * Alert only AB2D team via relevant loggers with a high priority alert
+     *
      * @param message      message to provide
      * @param environments AB2D environments to alert on
      */
@@ -80,7 +81,7 @@ public class LogManager {
      * Log the event and alert to relevant alert loggers only in the provided execution environments.
      * The message published will be built using {@link LoggableEvent#asMessage()}
      *
-     * @param event event to log an alert for.
+     * @param event        event to log an alert for.
      * @param environments environments to log an alert for
      */
     public void logAndAlert(LoggableEvent event, List<Ab2dEnvironment> environments) {
@@ -93,7 +94,7 @@ public class LogManager {
      * Log the event and provided traces to relevant trace loggers only in the provided execution environments.
      * The message published will be built using {@link LoggableEvent#asMessage()}
      *
-     * @param event event to log an alert for.
+     * @param event        event to log an alert for.
      * @param environments environments to log an alert for
      */
     public void logAndTrace(LoggableEvent event, List<Ab2dEnvironment> environments) {
@@ -104,6 +105,7 @@ public class LogManager {
 
     /**
      * Log an event without alerting
+     *
      * @param type  type of event logger to use
      * @param event event to log
      */
