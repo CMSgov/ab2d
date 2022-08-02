@@ -9,6 +9,7 @@ import gov.cms.ab2d.common.model.Properties;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.common.util.DateUtil;
@@ -76,6 +77,9 @@ class CoverageUpdateAndProcessorTest {
 
     @Container
     private static final PostgreSQLContainer postgres = new AB2DPostgresqlContainer();
+
+    @Container
+    private static final AB2DLocalstackContainer LOCALSTACK_CONTAINER = new AB2DLocalstackContainer();
 
     @Value("${coverage.update.max.attempts}")
     private int maxRetries;
