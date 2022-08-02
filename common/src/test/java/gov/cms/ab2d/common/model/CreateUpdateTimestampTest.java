@@ -1,7 +1,6 @@
 package gov.cms.ab2d.common.model;
 
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import org.junit.jupiter.api.AfterEach;
@@ -25,9 +24,6 @@ class CreateUpdateTimestampTest {
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
-
-    @Container
-    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     @Autowired
     private DataSetup dataSetup;
