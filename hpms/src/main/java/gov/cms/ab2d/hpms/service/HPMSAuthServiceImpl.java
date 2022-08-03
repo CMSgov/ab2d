@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static gov.cms.ab2d.common.util.Constants.HPMS_ORGANIZATION;
-import static gov.cms.ab2d.eventlogger.events.ErrorEvent.ErrorType.HpMS_AUTH_ERROR;
+import static gov.cms.ab2d.eventlogger.events.ErrorEvent.ErrorType.HPMS_AUTH_ERROR;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpHeaders.COOKIE;
 import static org.springframework.http.HttpStatus.OK;
@@ -103,12 +103,12 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
             authToken = authResponse.getAccessToken();
         } catch (WebClientResponseException exception) {
             eventLogger.log(LogManager.LogType.SQL,
-                    new ErrorEvent(HPMS_ORGANIZATION, "", HpMS_AUTH_ERROR, prepareErrorMessage(exception, curTime)));
+                    new ErrorEvent(HPMS_ORGANIZATION, "", HPMS_AUTH_ERROR, prepareErrorMessage(exception, curTime)));
             throw exception;
         } catch (IllegalStateException | NullPointerException exception) {
             String message = "HPMS auth call failed with no response waited for " + (curTime / 1000) + " seconds.";
             eventLogger.log(LogManager.LogType.SQL,
-                    new ErrorEvent(HPMS_ORGANIZATION, "", HpMS_AUTH_ERROR, message));
+                    new ErrorEvent(HPMS_ORGANIZATION, "", HPMS_AUTH_ERROR, message));
             throw new RemoteTimeoutException(message);
         }
     }
