@@ -16,11 +16,9 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @PropertySource("classpath:application.common.properties")
 @Import({HPMSIngestQuartzSetup.class})
 public class SpringBootApp {
-
     public static void main(String[] args) {
         SpringApplication.run(SpringBootApp.class, args);
     }
-
     @Bean
     public FilterRegistrationBean<MDCFilter> registerRequestLogFilter(MDCFilter filter) {
         FilterRegistrationBean<MDCFilter> reg = new FilterRegistrationBean<>(filter);
