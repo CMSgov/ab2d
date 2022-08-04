@@ -20,13 +20,13 @@ import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.nio.charset.Charset;
+import java.time.Duration;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.http.HttpStatus.I_AM_A_TEAPOT;
 
 @Service
 public class MockWebClient {
@@ -52,25 +52,33 @@ public class MockWebClient {
     @Mock
     ClientResponse response;
 
+    public void authRequestError(WebClient mockedWebClient, MockedStatic<WebClient> webClientStatic, HttpStatus status, HPMSAuthResponse body) {
+        mock(mockedWebClient, webClientStatic);
+        LinkedMultiValueMap<String, ResponseCookie> cookies = new LinkedMultiValueMap<>();
+        cookies.add("test", ResponseCookie.fromClientResponse("test", "test").build());
+        Mockito.when(response.bodyToMono(HPMSAuthResponse.class)).thenReturn(Mono.just(body));
+        Mockito.when(response.cookies()).thenReturn(cookies);
+        Mockito.when(response.statusCode()).thenReturn(status);
+        Mockito.when(response.createException()).thenReturn(Mono.error(new WebClientResponseException(500, "error", null, new byte[100], Charset.defaultCharset())));
+        ArgumentCaptor<Function<ClientResponse, ? extends Mono<HPMSAuthResponse>>> argument = ArgumentCaptor.forClass(Function.class);
+        when(headersSpec.exchangeToMono(argument.capture())).thenAnswer(x -> argument.getValue().apply(response));
 
-    public void authRequest(WebClient mockedWebClient, MockedStatic<WebClient> webClientStatic, HttpStatus status, HPMSAuthResponse body) {
+    }
+
+    public void authRequestTimeout(WebClient mockedWebClient, MockedStatic<WebClient> webClientStatic, boolean nullBody) {
         mock(mockedWebClient, webClientStatic);
         LinkedMultiValueMap<String, ResponseCookie> cookies = new LinkedMultiValueMap<>();
         cookies.add("test", ResponseCookie.fromClientResponse("test", "test").build());
         Mockito.when(response.cookies()).thenReturn(cookies);
-        Mockito.when(response.bodyToMono(HPMSAuthResponse.class)).thenReturn(Mono.just(body));
-        Mockito.when(response.statusCode()).thenReturn(status);
-        Mockito.when(response.createException()).thenReturn(Mono.error(new WebClientResponseException(500, "error", null, new byte[100], Charset.defaultCharset())));
         ArgumentCaptor<Function<ClientResponse, ? extends Mono<HPMSAuthResponse>>> argument = ArgumentCaptor.forClass(Function.class);
-        when(headersSpec.exchangeToMono(argument.capture())).thenAnswer(x -> argument.getValue().apply(response))
-                .then(x -> {
-                            OngoingStubbing<HPMSAuthResponse> mock = when(argument.capture().apply(response).block(any()));
-                            if (status == I_AM_A_TEAPOT) {
-                                mock.thenThrow(new IllegalStateException());
-                            }
-                            return mock;
-                        }
-                );
+        Mono<HPMSAuthResponse> mono = Mockito.mock(Mono.class);
+        when(headersSpec.exchangeToMono(argument.capture())).thenReturn(mono);
+        OngoingStubbing<HPMSAuthResponse> mock = when(mono.block(any(Duration.class)));
+        if (nullBody) {
+            mock.thenThrow(new IllegalStateException());
+        } else {
+            mock.thenReturn(null);
+        }
     }
 
 

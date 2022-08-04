@@ -31,10 +31,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.http.HttpHeaders.COOKIE;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
-import static org.springframework.http.HttpStatus.GATEWAY_TIMEOUT;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.I_AM_A_TEAPOT;
-import static org.springframework.http.HttpStatus.NOT_ACCEPTABLE;
 import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.http.HttpStatus.REQUEST_TIMEOUT;
 
@@ -65,7 +63,7 @@ class HPMSMockedAuthTest {
         HPMSAuthResponse hpmsAuthResponse = new HPMSAuthResponse();
         hpmsAuthResponse.setAccessToken("TOKEN");
         try (MockedStatic<WebClient> webClientStatic = Mockito.mockStatic(WebClient.class)) {
-            client.authRequest(mockedWebClient, webClientStatic, OK, hpmsAuthResponse);
+            client.authRequestError(mockedWebClient, webClientStatic, OK, new HPMSAuthResponse());
             HttpHeaders headers = new HttpHeaders();
             authService.buildAuthHeaders(headers);
             assertNotNull(headers.get(COOKIE));
@@ -90,14 +88,28 @@ class HPMSMockedAuthTest {
 
     @Test
     void authTimeoutException() {
+        serviceDownTest(false);
+    }
+
+    @Test
+    void authReturnsNull() {
+        serviceDownTest(true);
+    }
+
+    private void serviceDownTest(boolean nullBody) {
+        HttpHeaders headers = new HttpHeaders();
         // This is to test when HMPS is completely down so we don't get any response.
-        clientTest(I_AM_A_TEAPOT);
+        try (MockedStatic<WebClient> webClientStatic = Mockito.mockStatic(WebClient.class)) {
+            client.authRequestTimeout(mockedWebClient, webClientStatic, nullBody);
+            assertThrows(RemoteTimeoutException.class, () -> authService.buildAuthHeaders(headers));
+        }
     }
 
     private void clientTest(HttpStatus httpStatus) {
+        HttpHeaders headers = new HttpHeaders();
         try (MockedStatic<WebClient> webClientStatic = Mockito.mockStatic(WebClient.class)) {
-            client.authRequest(mockedWebClient, webClientStatic, httpStatus, new HPMSAuthResponse());
-            assertThrows(WebClientResponseException.class, () -> authService.buildAuthHeaders(new HttpHeaders()));
+            client.authRequestError(mockedWebClient, webClientStatic, httpStatus, new HPMSAuthResponse());
+            assertThrows(WebClientResponseException.class, () -> authService.buildAuthHeaders(headers));
             verify(eventLogger, times(1)).log(eq(LogManager.LogType.SQL), any(LoggableEvent.class));
         }
     }
