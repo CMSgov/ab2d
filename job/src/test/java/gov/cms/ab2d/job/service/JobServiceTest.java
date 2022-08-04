@@ -138,9 +138,6 @@ class JobServiceTest extends JobCleanup {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
-    @Container
-    private static final AB2DLocalstackContainer localstackContainer  = new AB2DLocalstackContainer();
-
     // Be safe and make sure nothing from another test will impact current test
     @BeforeEach
     public void setup() {
