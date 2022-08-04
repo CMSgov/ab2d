@@ -31,7 +31,7 @@ public class AB2DSQSMockConfig {
     return mock(QueueMessageHandler.class);
   }
 
-  @Bean
+  @Bean("mockAmazonSQS")
   public AmazonSQSAsync amazonSQSAsync() {
     return mock(AmazonSQSAsync.class);
   }
