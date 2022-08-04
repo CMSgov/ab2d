@@ -76,7 +76,6 @@ public class TLSTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
-
     @AfterEach
     public void cleanup() {
         dataSetup.cleanup();

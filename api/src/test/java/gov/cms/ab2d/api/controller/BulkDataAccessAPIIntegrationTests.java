@@ -102,7 +102,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
-//@EnableAutoConfiguration(exclude= AB2DSQSMockConfig.class)
 @AutoConfigureMockMvc
 @Testcontainers
         /* When checking in, comment out print statements. They are very helpful, but fill up the logs */

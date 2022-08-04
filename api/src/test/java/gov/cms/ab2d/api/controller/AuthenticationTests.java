@@ -42,7 +42,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Testcontainers
 @Import(AB2DSQSMockConfig.class)
 public class AuthenticationTests {
-
     @Autowired
     private MockMvc mockMvc;
 
@@ -62,10 +61,8 @@ public class AuthenticationTests {
     @Qualifier("mockAmazonSQS")
     AmazonSQS amazonSqs;
 
-
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
-
 
     private String token;
 
