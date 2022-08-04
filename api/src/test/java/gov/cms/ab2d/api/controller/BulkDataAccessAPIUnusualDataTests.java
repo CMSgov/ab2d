@@ -72,7 +72,7 @@ public class BulkDataAccessAPIUnusualDataTests {
 
     @Container
     private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
-    
+
     @AfterEach
     public void cleanup() {
         dataSetup.cleanup();
