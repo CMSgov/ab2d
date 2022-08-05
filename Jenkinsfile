@@ -70,7 +70,7 @@ pipeline {
 
                     mvn clean
                     
-                    mvn -e -U clean install --settings settings.xml -DskipTests
+                    mvn clean install --settings settings.xml -DskipTests
                 '''
             }
         }
@@ -78,7 +78,7 @@ pipeline {
         stage('Package without tests') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
-                    sh 'mvn -U -X clean package --settings settings.xml -DskipTests -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD}'
+                    sh 'mvn clean package --settings settings.xml -DskipTests -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD}'
                 }
             }
         }
