@@ -18,10 +18,10 @@ import reactor.core.publisher.Mono;
 import javax.annotation.PostConstruct;
 import java.net.URI;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static gov.cms.ab2d.common.util.Constants.HPMS_ORGANIZATION;
 import static gov.cms.ab2d.eventlogger.events.ErrorEvent.ErrorType.HPMS_AUTH_ERROR;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpHeaders.COOKIE;
@@ -29,6 +29,8 @@ import static org.springframework.http.HttpStatus.OK;
 
 @Service
 public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuthService {
+
+    private static final String HPMS_ORGANIZATION = "HPMS_AUTH";
 
     @Value("${hpms.base.url}/api/idm/OAuth/AMMtoken")
     private String authURL;
@@ -84,24 +86,21 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
                 .bodyValue(retrieveAuthRequestPayload())
                 .accept(MediaType.APPLICATION_JSON)
                 .exchangeToMono(response -> {
-                    if (response.statusCode().equals(OK)) {
-                        cookies = extractCookies(response.cookies());
-                        return response.bodyToMono(HPMSAuthResponse.class);
-                    } else {
-                        return response.createException().flatMap(Mono::error);
-                    }
+                    cookies = extractCookies(response.cookies());
+                    return response.statusCode().equals(OK)
+                            ? response.bodyToMono(HPMSAuthResponse.class)
+                            : response.createException().flatMap(Mono::error);
                 });
 
         long curTime = System.currentTimeMillis();
         HPMSAuthResponse authResponse;
         try {
             // Cough up blood if we can't get an Auth response in a minute.
-            authResponse = orgInfoMono.block(Duration.ofMinutes(1));
+            authResponse = Optional.ofNullable(orgInfoMono.block(Duration.ofMinutes(1)))
+                    .orElseThrow(IllegalStateException::new);
+
             // Convert seconds to millis at a 90% level to pad refreshing of a token so that we are not in the middle of
             // a significant operation when the token expires.
-            if (authResponse == null) {
-                throw new IllegalStateException();
-            }
             tokenExpires = currentTimestamp + authResponse.getExpires() * 900L;
             authToken = authResponse.getAccessToken();
         } catch (WebClientResponseException exception) {
@@ -158,6 +157,7 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
     private String prepareErrorMessage(WebClientResponseException exception, long curTime) {
         String explication = "After waiting " + (curTime / 1000) + " seconds ";
         switch (exception.getStatusCode().value()) {
+            //TODO Replace status code numbers with HttpStatus emums
             case (403):
                 explication += "HPMS auth key/secret have expired and must be updated";
                 break;
