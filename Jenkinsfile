@@ -69,8 +69,6 @@ pipeline {
                     echo $WORKSPACE
 
                     mvn clean
-                    
-                    mvn clean install --settings settings.xml -DskipTests
                 '''
             }
         }
