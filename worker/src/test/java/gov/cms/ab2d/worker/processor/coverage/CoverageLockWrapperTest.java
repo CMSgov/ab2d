@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
+import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.coverage.util.AB2DCoveragePostgressqlContainer;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -9,6 +10,7 @@ import java.util.concurrent.Future;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -19,13 +21,11 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 @SpringBootTest
 @Testcontainers
+@Import(AB2DSQSMockConfig.class)
 class CoverageLockWrapperTest {
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DCoveragePostgressqlContainer();
-
-    @Container
-    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     @Autowired
     private CoverageLockWrapper coverageLockWrapper;

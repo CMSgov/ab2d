@@ -57,9 +57,6 @@ class JobOutputServiceTest extends JobCleanup {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
-    @Container
-    private static final AB2DLocalstackContainer localstackContainer  = new AB2DLocalstackContainer();
-
     private static final String JOB_OUTPUT_CONTRACT_NUMBER = "JJ112233";
 
     // Be safe and make sure nothing from another test will impact current test

@@ -4,10 +4,12 @@ import gov.cms.ab2d.common.model.Properties;
 import gov.cms.ab2d.common.repository.PropertiesRepository;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.worker.config.AutoScalingService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -18,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
 @Testcontainers
+@Import(AB2DSQSMockConfig.class)
 public class PropertiesChangeDetectionTest {
 
     @Autowired
@@ -34,9 +37,6 @@ public class PropertiesChangeDetectionTest {
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
-
-    @Container
-    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     @Test
     public void testChangeInProperties() {

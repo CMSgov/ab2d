@@ -1,6 +1,7 @@
 package gov.cms.ab2d.eventlogger.reports.sql;
 
 import gov.cms.ab2d.eventlogger.AB2DPostgresqlContainer;
+import gov.cms.ab2d.eventlogger.AB2DSQSMockConfig;
 import gov.cms.ab2d.eventlogger.SpringBootApp;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventclient.events.*;
@@ -11,6 +12,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -21,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @Testcontainers
+@Import(AB2DSQSMockConfig.class)
 class LoggerEventSummaryTest {
     public static final int ONE_MillSEC_IN_NANO = 1000000;
 

@@ -5,12 +5,14 @@ import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import org.hamcrest.core.Is;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -29,13 +31,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Testcontainers
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@Import(AB2DSQSMockConfig.class)
 public class MaintenanceModeAPITests {
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
-
-    @Container
-    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     @Autowired
     private MockMvc mockMvc;

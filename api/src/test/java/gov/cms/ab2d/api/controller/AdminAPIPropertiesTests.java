@@ -57,9 +57,6 @@ public class AdminAPIPropertiesTests {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
-    @Container
-    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
-
     private static final String PROPERTIES_URL = "/properties";
 
     private String token;

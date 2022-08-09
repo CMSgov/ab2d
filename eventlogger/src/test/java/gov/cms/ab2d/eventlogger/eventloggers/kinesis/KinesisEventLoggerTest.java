@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
 import gov.cms.ab2d.eventlogger.AB2DLocalstackContainer;
 import gov.cms.ab2d.eventlogger.AB2DPostgresqlContainer;
+import gov.cms.ab2d.eventlogger.AB2DSQSMockConfig;
 import gov.cms.ab2d.eventlogger.SpringBootApp;
 import gov.cms.ab2d.eventclient.events.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +20,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -39,12 +41,10 @@ import static org.mockito.Mockito.doReturn;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @Testcontainers
+@Import(AB2DSQSMockConfig.class)
 class KinesisEventLoggerTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
-
-    @Container
-    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     @Autowired
     private Ab2dEnvironment environment;

@@ -8,6 +8,7 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
+import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.job.repository.JobRepository;
@@ -54,6 +55,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -80,6 +82,7 @@ import static org.mockito.Mockito.when;
 // Never run internal coverage processor so this coverage processor runs unimpeded
 @SpringBootTest(properties = "coverage.update.initial.delay=1000000")
 @Testcontainers
+@Import(AB2DSQSMockConfig.class)
 class CoverageDriverTest extends JobCleanup {
 
     private static final int PAST_MONTHS = 3;
@@ -89,9 +92,6 @@ class CoverageDriverTest extends JobCleanup {
 
     @Container
     private static final PostgreSQLContainer postgres = new AB2DPostgresqlContainer();
-
-    @Container
-    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     @Autowired
     private ContractRepository contractRepo;

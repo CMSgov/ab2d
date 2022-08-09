@@ -39,9 +39,6 @@ public class AttestationUpdaterServiceTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
-    @Container
-    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
-
     @Qualifier("for_testing")
     @Autowired
     private AttestationUpdaterServiceImpl aus;
