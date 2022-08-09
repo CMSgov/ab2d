@@ -75,7 +75,7 @@ public class ContractProcessorImpl implements ContractProcessor {
     private final ThreadPoolTaskExecutor aggregatorThreadPool;
     private final SearchConfig searchConfig;
 
-    @SuppressWarnings("checkstyle:ParameterNumber") // TODO - refactor to eliminate the ridiculous number of args
+    @SuppressWarnings({"checkstyle:ParameterNumber", "java:S3655"}) // TODO - refactor to eliminate the ridiculous number of args
     public ContractProcessorImpl(ContractWorkerClient contractWorkerClient,
                                  JobRepository jobRepository,
                                  CoverageDriver coverageDriver,

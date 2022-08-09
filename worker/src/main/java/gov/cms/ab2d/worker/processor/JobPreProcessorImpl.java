@@ -35,7 +35,7 @@ import static gov.cms.ab2d.job.model.JobStatus.SUCCESSFUL;
 
 @Slf4j
 @Component
-@SuppressWarnings("java:S2142") //java:S2142: "InterruptedException" should not be ignored
+@SuppressWarnings({"java:S2142", "java:S2583"}) //java:S2142: "InterruptedException" should not be ignored
 public class JobPreProcessorImpl implements JobPreProcessor {
 
     private final ContractWorkerClient contractWorkerClient;
