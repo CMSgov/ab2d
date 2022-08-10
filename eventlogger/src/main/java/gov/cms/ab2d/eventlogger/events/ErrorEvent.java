@@ -17,7 +17,8 @@ public class ErrorEvent extends LoggableEvent {
         CONTRACT_NOT_FOUND,
         UNAUTHORIZED_CONTRACT,
         TOO_MANY_STATUS_REQUESTS,
-        TOO_MANY_SEARCH_ERRORS
+        TOO_MANY_SEARCH_ERRORS,
+        HPMS_AUTH_ERROR
     }
     // The type of error we're reporting
     private ErrorType errorType;
