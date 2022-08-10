@@ -1,9 +1,8 @@
 package gov.cms.ab2d.hpms.service;
 
-import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.eventclient.events.LoggableEvent;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.hpms.SpringBootTestApp;
 import gov.cms.ab2d.hpms.hmsapi.HPMSAuthResponse;
 import org.junit.jupiter.api.AfterEach;
@@ -33,7 +32,6 @@ import static org.mockito.Mockito.verify;
 import static org.springframework.http.HttpHeaders.COOKIE;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
-import static org.springframework.http.HttpStatus.I_AM_A_TEAPOT;
 import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.http.HttpStatus.REQUEST_TIMEOUT;
 
