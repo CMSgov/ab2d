@@ -17,6 +17,11 @@ import static org.mockito.Mockito.mock;
 @TestConfiguration
 @EnableAutoConfiguration(exclude = {MessagingAutoConfiguration.class, ContextStackAutoConfiguration.class})
 public class AB2DSQSMockConfig {
+
+  static {
+    System.setProperty("feature.sqs.enabled", "false");
+  }
+
   @MockBean
   AmazonSQSAsync amazonSQSAsync;
 
