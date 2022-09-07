@@ -1,7 +1,7 @@
 package gov.cms.ab2d.eventlogger;
 
 import com.amazonaws.services.sqs.AmazonSQSAsync;
-import gov.cms.ab2d.eventclient.clients.SQSConfig;
+import gov.cms.ab2d.eventclient.clients.EventClient;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
 import gov.cms.ab2d.eventclient.events.LoggableEvent;
@@ -17,7 +17,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -143,7 +142,7 @@ class LogManagerTest {
         logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger, sqsEventClient, false);
         ErrorEvent event = new ErrorEvent("organization", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
                 "File Deleted");
-        logManager.log(LogManager.LogType.SQL, event);
+        logManager.log(EventClient.LogType.SQL, event);
         assertNull(event.getAwsId());
         assertTrue(event.getId() > 0);
 
@@ -166,7 +165,7 @@ class LogManagerTest {
             return null; // void method, so return null
         }).when(kinesisEventLogger).log(event);
 
-        logManager.log(LogManager.LogType.KINESIS, event);
+        logManager.log(EventClient.LogType.KINESIS, event);
         assertEquals("aws1111", event.getAwsId());
         List<LoggableEvent> events = loggerEventRepository.load(ErrorEvent.class);
 
