@@ -214,7 +214,8 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
             return true;
         }
 
-        if (requestUri.startsWith(HEALTH_ENDPOINT) || requestUri.startsWith(STATUS_ENDPOINT)) {
+        if (requestUri.startsWith(HEALTH_ENDPOINT) || requestUri.startsWith(STATUS_ENDPOINT)
+                || requestUri.startsWith(HEALTH_METRICS_ENDPOINT)) {
             log.debug("Health or maintenance requested");
             return true;
         }

@@ -40,7 +40,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final String[] authExceptions = new String[]{"/swagger-ui/**", "/configuration/**",
             "/swagger-resources/**", "/v3/api-docs/**", "/webjars/**",
-            AKAMAI_TEST_OBJECT, "/favicon.ico", "/error", HEALTH_ENDPOINT, STATUS_ENDPOINT};
+            AKAMAI_TEST_OBJECT, "/favicon.ico", "/error", HEALTH_ENDPOINT, STATUS_ENDPOINT, HEALTH_METRICS_ENDPOINT};
 
     @Override
     protected void configure(HttpSecurity security) throws Exception {

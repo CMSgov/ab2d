@@ -40,4 +40,16 @@ public class HealthCheck {
                 // We can log
                 LoggingAvailable.canLog();
     }
+
+    public boolean dbHealth() {
+        return DatabaseAvailable.isDbAvailable(dataSource);
+    }
+
+    public boolean efsHealth() {
+        return FileSystemCheck.canWriteFile(efsMount, true);
+    }
+
+    public boolean memoryHealth() {
+        return !MemoryUtilization.outOfMemory(memory);
+    }
 }

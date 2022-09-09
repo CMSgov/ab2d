@@ -32,6 +32,8 @@ public final class Constants {
 
     public static final String HEALTH_ENDPOINT = "/health";
 
+    public static final String HEALTH_METRICS_ENDPOINT = HEALTH_ENDPOINT + "/metrics";
+
     public static final String VALIDATE_BFD_ENDPOINT = "/validate/bfd";
 
     public static final String VALIDATE_SLACK_ENDPOINT = "/validate/slack";
