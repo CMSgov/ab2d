@@ -8,14 +8,10 @@ import gov.cms.ab2d.eventclient.events.LoggableEvent;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-
-
-import static gov.cms.ab2d.eventclient.clients.EventClient.LogType.SQL;
 
 @Slf4j
 @Service
