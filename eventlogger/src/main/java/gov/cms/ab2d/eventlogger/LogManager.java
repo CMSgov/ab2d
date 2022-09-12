@@ -14,6 +14,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+
+import static gov.cms.ab2d.eventclient.clients.EventClient.LogType.SQL;
+
 @Slf4j
 @Service
 public class LogManager {
@@ -30,11 +33,6 @@ public class LogManager {
         this.eventClient = eventClient;
         this.sqsEnabled = sqsEnabled;
     }
-
-//    public enum LogType {
-//        SQL,
-//        KINESIS
-//    }
 
     /**
      * Log an event to all available event loggers without alerting
