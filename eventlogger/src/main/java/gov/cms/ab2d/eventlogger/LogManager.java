@@ -14,9 +14,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-
-import static gov.cms.ab2d.eventclient.clients.EventClient.LogType.SQL;
-
 @Slf4j
 @Service
 public class LogManager {
