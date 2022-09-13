@@ -10,6 +10,7 @@ import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventclient.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
+import java.util.ArrayList;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -212,7 +213,21 @@ class LogManagerTest {
         ErrorEvent event = new ErrorEvent("user", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
                 "File Deleted");
 
+        ArrayList<Ab2dEnvironment> enviroments = new ArrayList<>();
+        enviroments.add(Ab2dEnvironment.LOCAL);
         logManager.log(event);
+        logManager.trace(event.getDescription(), enviroments);
+        logManager.alert(event.getDescription(), enviroments);
+        logManager.log(EventClient.LogType.SQL, event);
+        logManager.log(EventClient.LogType.KINESIS, event);
+        logManager.logAndAlert(event, enviroments);
+        logManager.logAndTrace(event, enviroments);
+
         verify(sqsEventClient, times(1)).sendLogs(any(LoggableEvent.class));
+        verify(sqsEventClient, times(1)).trace(anyString(), any(ArrayList.class));
+        verify(sqsEventClient, times(1)).alert(anyString(), any(ArrayList.class));
+        verify(sqsEventClient, times(2)).log(any(EventClient.LogType.class), any(LoggableEvent.class));
+        verify(sqsEventClient, times(1)).logAndAlert(any(LoggableEvent.class), any(ArrayList.class));
+        verify(sqsEventClient, times(1)).logAndTrace(any(LoggableEvent.class), any(ArrayList.class));
     }
 }
