@@ -24,6 +24,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
 
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -34,7 +35,7 @@ class LogManagerTest {
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Container
-    private static final AB2DLocalstackContainer localstackContainer  = new AB2DLocalstackContainer();
+    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     private LogManager logManager;
 
@@ -75,7 +76,7 @@ class LogManagerTest {
                 "File Deleted");
         doAnswer(invocation -> {
             Object[] args = invocation.getArguments();
-            ((ErrorEvent)args[0]).setAwsId("aws1111");
+            ((ErrorEvent) args[0]).setAwsId("aws1111");
             return null; // void method, so return null
         }).when(kinesisEventLogger).log(event, true);
 
@@ -97,7 +98,7 @@ class LogManagerTest {
                 "File Deleted");
         doAnswer(invocation -> {
             Object[] args = invocation.getArguments();
-            ((ErrorEvent)args[0]).setAwsId("aws1111");
+            ((ErrorEvent) args[0]).setAwsId("aws1111");
             return null; // void method, so return null
         }).when(kinesisEventLogger).log(event, true);
 
@@ -121,7 +122,7 @@ class LogManagerTest {
                 "File Deleted");
         doAnswer(invocation -> {
             Object[] args = invocation.getArguments();
-            ((ErrorEvent)args[0]).setAwsId("aws1111");
+            ((ErrorEvent) args[0]).setAwsId("aws1111");
             return null; // void method, so return null
         }).when(kinesisEventLogger).log(event, true);
 
@@ -162,7 +163,7 @@ class LogManagerTest {
 
         doAnswer(invocation -> {
             Object[] args = invocation.getArguments();
-            ((ErrorEvent)args[0]).setAwsId("aws1111");
+            ((ErrorEvent) args[0]).setAwsId("aws1111");
             return null; // void method, so return null
         }).when(kinesisEventLogger).log(event);
 
@@ -182,7 +183,7 @@ class LogManagerTest {
                 "File Deleted");
         doAnswer(invocation -> {
             Object[] args = invocation.getArguments();
-            ((ErrorEvent)args[0]).setAwsId("aws1111");
+            ((ErrorEvent) args[0]).setAwsId("aws1111");
             return null; // void method, so return null
         }).when(kinesisEventLogger).log(event, true);
 
@@ -198,7 +199,7 @@ class LogManagerTest {
                 "File Deleted");
         doAnswer(invocation -> {
             Object[] args = invocation.getArguments();
-            ((ErrorEvent)args[0]).setAwsId("aws1111");
+            ((ErrorEvent) args[0]).setAwsId("aws1111");
             return null; // void method, so return null
         }).when(kinesisEventLogger).log(event, true);
 
