@@ -35,7 +35,9 @@ import static gov.cms.ab2d.job.model.JobStatus.SUCCESSFUL;
 
 @Slf4j
 @Component
-@SuppressWarnings({"java:S2142", "java:S2583"}) //java:S2142: "InterruptedException" should not be ignored
+//java:S2142: "InterruptedException" should not be ignored
+//java:S3655: False flag. Complaining about not checking for Optional#isPresent() when it is checked
+@SuppressWarnings({"java:S2142", "java:S2583"})
 public class JobPreProcessorImpl implements JobPreProcessor {
 
     private final ContractWorkerClient contractWorkerClient;

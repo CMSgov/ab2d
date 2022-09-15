@@ -49,6 +49,8 @@ import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 @Slf4j
 @Service
+//java:S2142: "InterruptedException" should not be ignored
+//java:S3655: False flag. Complaining about not checking for Optional#isPresent() when it is checked
 @SuppressWarnings({"java:S2142", "java:S3655"}) //java:S2142: "InterruptedException" should not be ignored
 public class ContractProcessorImpl implements ContractProcessor {
     private static final int SLEEP_DURATION = 250;
