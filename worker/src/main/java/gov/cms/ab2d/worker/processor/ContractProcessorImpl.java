@@ -49,7 +49,7 @@ import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 @Slf4j
 @Service
-@SuppressWarnings("java:S2142") //java:S2142: "InterruptedException" should not be ignored
+@SuppressWarnings({"java:S2142", "java:S3655"}) //java:S2142: "InterruptedException" should not be ignored
 public class ContractProcessorImpl implements ContractProcessor {
     private static final int SLEEP_DURATION = 250;
 
