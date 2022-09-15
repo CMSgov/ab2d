@@ -1,7 +1,7 @@
 package gov.cms.ab2d.hpms.service;
 
+import gov.cms.ab2d.eventclient.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.hpms.hmsapi.HPMSAuthResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,7 +22,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static gov.cms.ab2d.eventlogger.events.ErrorEvent.ErrorType.HPMS_AUTH_ERROR;
+
+import static gov.cms.ab2d.eventclient.events.ErrorEvent.ErrorType.HPMS_AUTH_ERROR;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpHeaders.COOKIE;
 import static org.springframework.http.HttpStatus.OK;
