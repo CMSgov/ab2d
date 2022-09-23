@@ -39,6 +39,8 @@ public final class Constants {
     // Properties that are allowed to be modified. When adding a new one, add it to a constant, and the Set below
     public static final String ZIP_SUPPORT_ON = "ZipSupportOn";
 
+    public static final int MAX_DOWNLOADS = 6;
+
     // This is the earliest time the _since filter is valid - probably should be in the properties file but I
     // wanted to include it in the swagger documentation and for the swagger annotation, the value has to be
     // constant at compile time so I put it here.

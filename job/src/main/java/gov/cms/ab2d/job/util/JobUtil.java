@@ -18,7 +18,7 @@ public class JobUtil {
      * @param job - job to check
      * @return - true/false
      */
-    public static boolean isJobDone(Job job) {
+    public static boolean isJobDone(Job job, int maxDownloads) {
         // Job is still in progress
         if (job == null || job.getStatus() == null || job.getStatus() == JobStatus.IN_PROGRESS || job.getStatus() == JobStatus.SUBMITTED) {
             return false;
@@ -43,7 +43,7 @@ public class JobUtil {
         }
         JobOutput aRemaining = jobOutputs.stream()
                 .filter(c -> c.getError() == null || !c.getError())
-                .filter(c -> !c.getDownloaded()).findAny().orElse(null);
+                .filter(c -> c.getDownloaded() < maxDownloads).findAny().orElse(null);
 
         return aRemaining == null;
     }

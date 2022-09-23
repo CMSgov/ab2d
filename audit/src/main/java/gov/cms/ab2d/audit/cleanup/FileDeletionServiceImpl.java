@@ -88,22 +88,25 @@ public class FileDeletionServiceImpl implements FileDeletionService {
                 }
             } else if (file.isDirectory()) {
                 deleteNdjsonFilesAndDirectory(staleJob, filePath);
-                try (Stream<Path> children =  Files.list(filePath)) {
-                    if (children.findAny().isEmpty()) {
-                        Files.deleteIfExists(filePath);
-                        log.info("Deleted directory {}", filePath);
-                    } else {
-                        logFolderNotEligibleForDeletion(filePath);
-                    }
-                } catch (Exception ex) {
-                    log.error("Unable to list files in directory" + file.getAbsolutePath(), ex);
-                }
+                deleteDirectory(filePath, file);
             } else {
                 logFileNotEligibleForDeletion(filePath);
             }
         }
     }
 
+    private void deleteDirectory(Path filePath, File file) {
+        try (Stream<Path> children = Files.list(filePath)) {
+            if (children.findAny().isEmpty()) {
+                Files.deleteIfExists(filePath);
+                log.info("Deleted directory {}", filePath);
+            } else {
+                logFolderNotEligibleForDeletion(filePath);
+            }
+        } catch (Exception ex) {
+            log.error("Unable to list files in directory" + file.getAbsolutePath(), ex);
+        }
+    }
 
 
     /**

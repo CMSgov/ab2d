@@ -1,15 +1,15 @@
 package gov.cms.ab2d.api.remote;
 
+import gov.cms.ab2d.common.model.TooFrequentInvocations;
+import gov.cms.ab2d.common.service.ResourceNotFoundException;
+import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.job.dto.JobPollResult;
 import gov.cms.ab2d.job.dto.StartJobDTO;
 import gov.cms.ab2d.job.model.JobOutput;
 import gov.cms.ab2d.job.model.JobStatus;
-import gov.cms.ab2d.common.model.TooFrequentInvocations;
-import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.job.service.InvalidJobStateTransition;
 import gov.cms.ab2d.job.service.JobOutputMissingException;
-import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static gov.cms.ab2d.common.util.Constants.MAX_DOWNLOADS;
 import static gov.cms.ab2d.job.model.JobStatus.CANCELLED;
 import static gov.cms.ab2d.job.model.JobStatus.SUBMITTED;
 import static gov.cms.ab2d.job.model.JobStatus.SUCCESSFUL;
@@ -113,8 +114,8 @@ public class JobClientMock extends JobClient {
             if (jobOutputList.isEmpty()) {
                 throw new ResourceNotFoundException("No Job Output with the file name " + fileName + " exists in our records");
             }
-            if (jobOutputList.get(0).getDownloaded()) {
-                String errorMsg = "The file is not present as it has already been downloaded. Please resubmit the job.";
+            if (jobOutputList.get(0).getDownloaded() >= MAX_DOWNLOADS) {
+                String errorMsg = "The file has reached the maximum number of downloads. Please resubmit the job.";
                 throw new JobOutputMissingException(errorMsg);
             }
 
@@ -129,7 +130,9 @@ public class JobClientMock extends JobClient {
         throw new ResourceNotFoundException("No Job Output with the file name " + fileName + " exists in our records");
     }
 
-    public void deleteFileForJob(File file, String jobGuid) {
+
+    public void incrementDownload(File file, String jobGuid) {
+        // mock api tests aren't set up to test this
     }
 
     public JobPollResult poll(boolean admin, String jobUuid, String organization, int delaySeconds) {
