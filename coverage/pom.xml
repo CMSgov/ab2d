@@ -62,7 +62,7 @@
         <dependency>
             <groupId>com.newrelic.agent.java</groupId>
             <artifactId>newrelic-api</artifactId>
-            <version>7.9.0</version>
+            <version>${newrelic.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -129,7 +129,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.2.2</version>
+                <version>3.3.0</version>
                 <executions>
                     <execution>
                         <goals>
