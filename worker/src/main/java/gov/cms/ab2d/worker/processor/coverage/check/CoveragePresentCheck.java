@@ -58,8 +58,6 @@ public class CoveragePresentCheck extends CoverageCheckPredicate {
             int year = attestationTime.getYear();
             int month = attestationTime.getMonthValue();
 
-
-
             // If nothing in the iterator
             if (!countIterator.hasNext()) {
                 logIssue(contract, year, month, noEnrollment);
@@ -91,7 +89,6 @@ public class CoveragePresentCheck extends CoverageCheckPredicate {
      * Block alert for S3147-2021-12 as it is expected to always fail
      * */
     private boolean ignoreMissing(@NotNull String contractNumber, int year, int month) {
-        log.info("{},{},{}", contractNumber, year, month);
         return contractNumber.equals("S3147") && year == 2021 && month == 12;
     }
 }
