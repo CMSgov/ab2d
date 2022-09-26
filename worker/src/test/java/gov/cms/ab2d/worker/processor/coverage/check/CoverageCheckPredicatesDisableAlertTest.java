@@ -49,7 +49,7 @@ class CoverageCheckPredicatesDisableAlertTest {
                 .findFirst()
                 .orElse(null);
         method.setAccessible(true);
-        assertSame(ReflectionUtils.invokeMethod(method, check, "S3147", 2021, 12), Boolean.TRUE);
+        assertTrue((Boolean) ReflectionUtils.invokeMethod(method, check, "S3147", 2021, 12));
     }
 
     @DisplayName("Coverage ignored")
