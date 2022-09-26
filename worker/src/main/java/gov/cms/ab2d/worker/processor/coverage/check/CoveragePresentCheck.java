@@ -80,7 +80,6 @@ public class CoveragePresentCheck extends CoverageCheckPredicate {
 
     private void logIssue(ContractDTO contract, int year, int month, List<String> noEnrollment) {
         if (ignoreMissing(contract.getContractNumber(), year, month)) {
-            // the check for this combination of contract/year/month is expected to fail and should be ignored
             return;
         }
         String issue = String.format("%s-%d-%d no enrollment found", contract.getContractNumber(), year, month);
