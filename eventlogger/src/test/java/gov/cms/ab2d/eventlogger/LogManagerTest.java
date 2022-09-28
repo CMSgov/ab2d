@@ -1,7 +1,7 @@
 package gov.cms.ab2d.eventlogger;
 
 import com.amazonaws.services.sqs.AmazonSQSAsync;
-import gov.cms.ab2d.eventclient.clients.SQSConfig;
+import gov.cms.ab2d.eventclient.clients.EventClient;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
 import gov.cms.ab2d.eventclient.events.LoggableEvent;
@@ -10,6 +10,7 @@ import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventclient.events.ErrorEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
+import java.util.ArrayList;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -144,7 +144,7 @@ class LogManagerTest {
         logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger, sqsEventClient, false);
         ErrorEvent event = new ErrorEvent("organization", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
                 "File Deleted");
-        logManager.log(LogManager.LogType.SQL, event);
+        logManager.log(EventClient.LogType.SQL, event);
         assertNull(event.getAwsId());
         assertTrue(event.getId() > 0);
 
@@ -167,7 +167,7 @@ class LogManagerTest {
             return null; // void method, so return null
         }).when(kinesisEventLogger).log(event);
 
-        logManager.log(LogManager.LogType.KINESIS, event);
+        logManager.log(EventClient.LogType.KINESIS, event);
         assertEquals("aws1111", event.getAwsId());
         List<LoggableEvent> events = loggerEventRepository.load(ErrorEvent.class);
 
@@ -214,7 +214,21 @@ class LogManagerTest {
         ErrorEvent event = new ErrorEvent("user", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
                 "File Deleted");
 
+        ArrayList<Ab2dEnvironment> enviroments = new ArrayList<>();
+        enviroments.add(Ab2dEnvironment.LOCAL);
         logManager.log(event);
+        logManager.trace(event.getDescription(), enviroments);
+        logManager.alert(event.getDescription(), enviroments);
+        logManager.log(EventClient.LogType.SQL, event);
+        logManager.log(EventClient.LogType.KINESIS, event);
+        logManager.logAndAlert(event, enviroments);
+        logManager.logAndTrace(event, enviroments);
+
         verify(sqsEventClient, times(1)).sendLogs(any(LoggableEvent.class));
+        verify(sqsEventClient, times(1)).trace(anyString(), any(ArrayList.class));
+        verify(sqsEventClient, times(1)).alert(anyString(), any(ArrayList.class));
+        verify(sqsEventClient, times(2)).log(any(EventClient.LogType.class), any(LoggableEvent.class));
+        verify(sqsEventClient, times(1)).logAndAlert(any(LoggableEvent.class), any(ArrayList.class));
+        verify(sqsEventClient, times(1)).logAndTrace(any(LoggableEvent.class), any(ArrayList.class));
     }
 }

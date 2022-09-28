@@ -1,6 +1,7 @@
 package gov.cms.ab2d.hpms.service;
 
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.eventclient.clients.EventClient;
 import gov.cms.ab2d.eventclient.events.LoggableEvent;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.hpms.SpringBootTestApp;
@@ -109,7 +110,7 @@ class HPMSMockedAuthTest {
         try (MockedStatic<WebClient> webClientStatic = Mockito.mockStatic(WebClient.class)) {
             client.authRequestError(mockedWebClient, webClientStatic, httpStatus, new HPMSAuthResponse());
             assertThrows(WebClientResponseException.class, () -> authService.buildAuthHeaders(headers));
-            verify(eventLogger, times(1)).log(eq(LogManager.LogType.SQL), any(LoggableEvent.class));
+            verify(eventLogger, times(1)).log(eq(EventClient.LogType.SQL), any(LoggableEvent.class));
         }
     }
 

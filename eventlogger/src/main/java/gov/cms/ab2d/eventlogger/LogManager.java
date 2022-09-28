@@ -1,17 +1,17 @@
 package gov.cms.ab2d.eventlogger;
 
 
+import gov.cms.ab2d.eventclient.clients.EventClient;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
 import gov.cms.ab2d.eventclient.events.LoggableEvent;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Slf4j
 @Service
@@ -28,11 +28,6 @@ public class LogManager {
         this.slackLogger = slackLogger;
         this.eventClient = eventClient;
         this.sqsEnabled = sqsEnabled;
-    }
-
-    public enum LogType {
-        SQL,
-        KINESIS
     }
 
     /**
@@ -64,7 +59,12 @@ public class LogManager {
      * @param environments AB2D environments to alert on
      */
     public void alert(String message, List<Ab2dEnvironment> environments) {
-        slackLogger.logAlert(message, environments);
+        if (sqsEnabled) {
+            eventClient.alert(message, environments);
+        } else {
+            slackLogger.logAlert(message, environments);
+        }
+
     }
 
     /**
@@ -74,7 +74,11 @@ public class LogManager {
      * @param environments AB2D environments to alert on
      */
     public void trace(String message, List<Ab2dEnvironment> environments) {
-        slackLogger.logTrace(message, environments);
+        if (sqsEnabled) {
+            eventClient.trace(message, environments);
+        } else {
+            slackLogger.logTrace(message, environments);
+        }
     }
 
     /**
@@ -85,9 +89,13 @@ public class LogManager {
      * @param environments environments to log an alert for
      */
     public void logAndAlert(LoggableEvent event, List<Ab2dEnvironment> environments) {
-        log(event);
 
-        slackLogger.logAlert(event, environments);
+        if (sqsEnabled) {
+            eventClient.logAndAlert(event, environments);
+        } else {
+            log(event);
+            slackLogger.logAlert(event, environments);
+        }
     }
 
     /**
@@ -98,9 +106,12 @@ public class LogManager {
      * @param environments environments to log an alert for
      */
     public void logAndTrace(LoggableEvent event, List<Ab2dEnvironment> environments) {
-        log(event);
-
-        slackLogger.logTrace(event, environments);
+        if (sqsEnabled) {
+            eventClient.logAndTrace(event, environments);
+        } else {
+            log(event);
+            slackLogger.logTrace(event, environments);
+        }
     }
 
     /**
@@ -109,16 +120,16 @@ public class LogManager {
      * @param type  type of event logger to use
      * @param event event to log
      */
-    public void log(LogType type, LoggableEvent event) {
-        switch (type) {
-            case SQL:
-                sqlEventLogger.log(event);
-                break;
-            case KINESIS:
-                kinesisEventLogger.log(event);
-                break;
-            default:
-                break;
+    public void log(EventClient.LogType type, LoggableEvent event) {
+        if (sqsEnabled) {
+            eventClient.log(type, event);
+        } else {
+            switch (type) {
+                case SQL -> sqlEventLogger.log(event);
+                case KINESIS -> kinesisEventLogger.log(event);
+                default -> {
+                }
+            }
         }
     }
 }
