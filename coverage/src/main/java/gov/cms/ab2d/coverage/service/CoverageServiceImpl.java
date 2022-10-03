@@ -34,9 +34,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH_YEAR;
-import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.COVERAGE_DELETE_FAILED;
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.COVERAGE_UPDATE_FAILED;
+import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PUBLIC_LIST;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.COVERAGE_DELETE_FAILED;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.COVERAGE_UPDATE_FAILED;
 import static java.util.stream.Collectors.toList;
 
 /**

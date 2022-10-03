@@ -163,7 +163,6 @@ class CoverageMappingCallableTest {
             callable.call();
 
             for (Identifiers patient : mapping.getBeneficiaryIds()) {
-                assertNotNull(patient.getBeneficiaryId());
 
                 assertNotNull(patient.getCurrentMbi());
                 assertEquals(2, patient.getHistoricMbis().size());
@@ -214,7 +213,6 @@ class CoverageMappingCallableTest {
             callable.call();
 
             for (Identifiers patient : mapping.getBeneficiaryIds()) {
-                assertNotNull(patient.getBeneficiaryId());
 
                 assertNotNull(patient.getCurrentMbi());
                 assertTrue(patient.getCurrentMbi().endsWith("mbi-0"));

@@ -9,7 +9,7 @@ import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.TooFrequentInvocations;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
+import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
 import gov.cms.ab2d.job.model.JobOutput;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;

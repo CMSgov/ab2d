@@ -2,8 +2,8 @@ package gov.cms.ab2d.job.model;
 
 import gov.cms.ab2d.common.model.SinceSource;
 import gov.cms.ab2d.common.model.TooFrequentInvocations;
-import gov.cms.ab2d.eventlogger.events.FileEvent;
-import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
+import gov.cms.ab2d.eventclient.events.FileEvent;
+import gov.cms.ab2d.eventclient.events.JobStatusChangeEvent;
 import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
