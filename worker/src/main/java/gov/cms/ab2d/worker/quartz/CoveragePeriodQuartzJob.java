@@ -19,9 +19,9 @@ import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_DISCOVE
 import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_OVERRIDE;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_QUEUEING;
-import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PRODUCTION;
-import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.SANDBOX;
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.COVERAGE_UPDATES_FAILED;
+import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PRODUCTION;
+import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.SANDBOX;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.COVERAGE_UPDATES_FAILED;
 
 /**
  * Periodically update enrollment cached in the database by pulling enrollment from BFD.

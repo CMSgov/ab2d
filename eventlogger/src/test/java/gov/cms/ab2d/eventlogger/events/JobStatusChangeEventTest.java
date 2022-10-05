@@ -1,5 +1,6 @@
 package gov.cms.ab2d.eventlogger.events;
 
+import gov.cms.ab2d.eventclient.events.JobStatusChangeEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

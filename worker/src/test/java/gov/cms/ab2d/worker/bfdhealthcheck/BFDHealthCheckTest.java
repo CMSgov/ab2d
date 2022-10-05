@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.bfdhealthcheck;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.SpringBootApp;
 import org.hl7.fhir.dstu3.model.CapabilityStatement;
@@ -13,6 +14,7 @@ import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -25,6 +27,7 @@ import static org.mockito.Mockito.when;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @Testcontainers
+@Import(AB2DSQSMockConfig.class)
 public class BFDHealthCheckTest {
 
     @Container

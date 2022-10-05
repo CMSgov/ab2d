@@ -38,7 +38,6 @@ class MockedFetchTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
-
     @Mock
     private WebClient mockedWebClient;
 

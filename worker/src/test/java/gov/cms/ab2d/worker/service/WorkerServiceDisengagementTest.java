@@ -1,5 +1,6 @@
 package gov.cms.ab2d.worker.service;
 
+import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
@@ -21,11 +22,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
@@ -33,12 +34,12 @@ import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.common.util.PropertyConstants.WORKER_ENGAGEMENT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-
 /**
  * Generic Tests to make sure that the worker gets triggered upon submitting a job into the Job table.
  */
 @SpringBootTest
 @Testcontainers
+@Import(AB2DSQSMockConfig.class)
 class WorkerServiceDisengagementTest extends JobCleanup {
     private final Random random = new Random();
 

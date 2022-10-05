@@ -1,5 +1,6 @@
 package gov.cms.ab2d.testjobs;
 
+import gov.cms.ab2d.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
@@ -107,6 +108,9 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 public class EndToEndBfdTests {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
+
+    @Container
+    private static final AB2DLocalstackContainer LOCALSTACK_CONTAINER = new AB2DLocalstackContainer();
 
     // We don't care about logging here
     @Mock

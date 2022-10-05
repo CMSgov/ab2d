@@ -1,6 +1,6 @@
 package gov.cms.ab2d.eventlogger.eventloggers.sql;
 
-import gov.cms.ab2d.eventlogger.LoggableEvent;
+import gov.cms.ab2d.eventclient.events.LoggableEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;

@@ -11,8 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 import static gov.cms.ab2d.job.model.JobStatus.SUBMITTED;
-import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_RESUBMITTED;
+import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PUBLIC_LIST;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_RESUBMITTED;
 
 @Slf4j
 @Service

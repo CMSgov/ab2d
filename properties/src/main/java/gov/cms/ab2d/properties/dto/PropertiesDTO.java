@@ -2,15 +2,14 @@ package gov.cms.ab2d.properties.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
 
 @Data
+@NoArgsConstructor
 @AllArgsConstructor
 public class PropertiesDTO {
-    public PropertiesDTO() {
-        // Empty constructor still needed, even with all args constructor
-    }
 
     @NotNull
     private String key;

@@ -1,6 +1,8 @@
 package gov.cms.ab2d.worker.config;
 
 import gov.cms.ab2d.properties.service.PropertiesAPIService;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
+import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.coverage.util.AB2DCoveragePostgressqlContainer;
 import java.time.Duration;
 import java.time.Instant;
@@ -16,6 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -31,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest(properties = {"pcp.core.pool.size=3", "pcp.max.pool.size=20", "pcp.scaleToMax.time=20", "property.change.detection=false"})
 @Testcontainers
 @Slf4j
+@Import(AB2DSQSMockConfig.class)
 public class AutoScalingServiceTest {
 
     public static final int QUEUE_SIZE = 25;

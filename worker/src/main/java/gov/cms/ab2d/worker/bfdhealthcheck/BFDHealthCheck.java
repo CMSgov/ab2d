@@ -2,7 +2,7 @@ package gov.cms.ab2d.worker.bfdhealthcheck;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.properties.service.PropertiesAPIService;
-import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
+import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
 import gov.cms.ab2d.eventlogger.LogManager;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.IBaseConformance;
@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.MAINT_MODE;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.MAINT_MODE;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.bfdhealthcheck.HealthCheckData.Status;
 

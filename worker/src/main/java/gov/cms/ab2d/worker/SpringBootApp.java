@@ -18,6 +18,7 @@ import org.springframework.retry.annotation.EnableRetry;
         "gov.cms.ab2d.bfd.client",
         "gov.cms.ab2d.audit",
         "gov.cms.ab2d.eventlogger",
+        "gov.cms.ab2d.eventclient.clients",
         "gov.cms.ab2d.properties"
 })
 @EntityScan(basePackages = {"gov.cms.ab2d.common.model", "gov.cms.ab2d.job.model", "gov.cms.ab2d.coverage.model", "gov.cms.ab2d.properties.model"})

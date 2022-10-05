@@ -8,8 +8,10 @@ import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.common.service.RoleService;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
@@ -120,6 +122,9 @@ class JobServiceTest extends JobCleanup {
     @Autowired
     private SqlEventLogger sqlEventLogger;
 
+    @Autowired
+    private SQSEventClient sqsEventClient;
+
     @Mock
     private KinesisEventLogger kinesisEventLogger;
 
@@ -137,7 +142,7 @@ class JobServiceTest extends JobCleanup {
     @BeforeEach
     public void setup() {
         MockitoAnnotations.openMocks(this);
-        LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
+        LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger, sqsEventClient, false);
         jobService = new JobServiceImpl(jobRepository, jobOutputService, logManager, loggerEventSummary, tmpJobLocation);
         ReflectionTestUtils.setField(jobService, "fileDownloadPath", tmpJobLocation);
 

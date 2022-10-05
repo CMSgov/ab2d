@@ -14,9 +14,10 @@ import org.springframework.scheduling.quartz.QuartzJobBean;
 import java.util.List;
 
 import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
-import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PRODUCTION;
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.COVERAGE_VERIFICATION_ABORTED;
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.COVERAGE_VERIFICATION_FAILURE;
+import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PRODUCTION;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.COVERAGE_VERIFICATION_ABORTED;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.COVERAGE_VERIFICATION_FAILURE;
+
 
 /**
  * Verify that all coverage/enrollment cached in database meets the expected structure and business requirements.

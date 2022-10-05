@@ -2,9 +2,9 @@ package gov.cms.ab2d.api.security;
 
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.service.PdpClientService;
-import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
+import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
+import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -24,7 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 import static gov.cms.ab2d.common.model.Role.ADMIN_ROLE;
 import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.API_AUTHNZ_ERROR;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.API_AUTHNZ_ERROR;
 
 @Slf4j
 @AllArgsConstructor

@@ -1,7 +1,6 @@
 package gov.cms.ab2d.e2etest;
 
-import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
-
+import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
