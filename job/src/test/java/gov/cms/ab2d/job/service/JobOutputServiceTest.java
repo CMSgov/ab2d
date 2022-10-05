@@ -2,6 +2,7 @@ package gov.cms.ab2d.job.service;
 
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.job.JobTestSpringBootApp;
