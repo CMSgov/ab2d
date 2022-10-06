@@ -1,9 +1,9 @@
 package gov.cms.ab2d.eventlogger.eventloggers.kinesis;
 
 import com.amazonaws.services.kinesisfirehose.AmazonKinesisFirehose;
-import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
+import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
+import gov.cms.ab2d.eventclient.events.LoggableEvent;
 import gov.cms.ab2d.eventlogger.EventLogger;
-import gov.cms.ab2d.eventlogger.LoggableEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;

@@ -6,9 +6,10 @@ import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.aggregator.ClaimsStream;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
+import gov.cms.ab2d.eventclient.clients.EventClient;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.events.BeneficiarySearchEvent;
-import gov.cms.ab2d.eventlogger.events.FileEvent;
+import gov.cms.ab2d.eventclient.events.BeneficiarySearchEvent;
+import gov.cms.ab2d.eventclient.events.FileEvent;
 import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.worker.config.SearchConfig;
@@ -233,7 +234,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     }
 
     private void logSuccessful(PatientClaimsRequest request, long beneficiaryId, OffsetDateTime start) {
-        logManager.log(LogManager.LogType.KINESIS,
+        logManager.log(EventClient.LogType.KINESIS,
                 new BeneficiarySearchEvent(request.getOrganization(), request.getJob(), request.getContractNum(),
                         start, OffsetDateTime.now(),
                         beneficiaryId,
@@ -241,7 +242,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     }
 
     private void logError(PatientClaimsRequest request, long beneficiaryId, OffsetDateTime start, Exception ex) {
-        logManager.log(LogManager.LogType.KINESIS,
+        logManager.log(EventClient.LogType.KINESIS,
                 new BeneficiarySearchEvent(request.getOrganization(), request.getJob(), request.getContractNum(),
                         start, OffsetDateTime.now(),
                         beneficiaryId,

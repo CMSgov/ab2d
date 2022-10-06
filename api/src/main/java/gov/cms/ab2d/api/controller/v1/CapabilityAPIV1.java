@@ -2,8 +2,8 @@ package gov.cms.ab2d.api.controller.v1;
 
 import ca.uhn.fhir.parser.IParser;
 import gov.cms.ab2d.api.controller.common.ApiCommon;
+import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

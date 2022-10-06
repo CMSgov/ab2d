@@ -4,13 +4,14 @@ import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
+import lombok.extern.slf4j.Slf4j;
+
+import javax.validation.constraints.NotNull;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import lombok.extern.slf4j.Slf4j;
-
 
 import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getAttestationTime;
 import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getEndDateTime;
@@ -76,8 +77,18 @@ public class CoveragePresentCheck extends CoverageCheckPredicate {
     }
 
     private void logIssue(ContractDTO contract, int year, int month, List<String> noEnrollment) {
+        if (ignoreMissing(contract.getContractNumber(), year, month)) {
+            return;
+        }
         String issue = String.format("%s-%d-%d no enrollment found", contract.getContractNumber(), year, month);
         log.warn(issue);
         noEnrollment.add(issue);
+    }
+
+    /*
+     * Block alert for S3147-2021-12 as it is expected to always fail
+     * */
+    private boolean ignoreMissing(@NotNull String contractNumber, int year, int month) {
+        return contractNumber.equals("S3147") && year == 2021 && month == 12;
     }
 }

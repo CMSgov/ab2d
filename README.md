@@ -28,10 +28,10 @@
       ports:
       - "5432:5432"
    ```
-2. Run postgress locally using Docker
+2. Run postgress and localstack locally using Docker
 
    ```ShellSession
-   $ docker-compose up db
+   $ docker-compose up db localstack
    ```
 
 Worker Setup
