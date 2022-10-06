@@ -1,3 +1,4 @@
+#AWS Corretto and AL2
 FROM amazoncorretto:17-al2-jdk
 WORKDIR /usr/src/ab2d-worker
 ADD target/worker-*-SNAPSHOT-exe.jar /usr/src/ab2d-worker/worker.jar
