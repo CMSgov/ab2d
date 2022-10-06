@@ -1,4 +1,4 @@
-FROM amazoncorretto:17-alpine-jdk
+FROM amazoncorretto:17-al2-jdk
 WORKDIR /usr/src/ab2d-worker
 ADD target/worker-*-SNAPSHOT-exe.jar /usr/src/ab2d-worker/worker.jar
 ADD target/newrelic/newrelic.jar /usr/src/ab2d-worker/newrelic/newrelic.jar
