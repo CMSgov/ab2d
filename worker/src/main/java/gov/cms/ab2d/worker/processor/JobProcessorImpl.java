@@ -5,9 +5,9 @@ import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.repository.JobOutputRepository;
 import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.events.ContractSearchEvent;
-import gov.cms.ab2d.eventlogger.events.FileEvent;
-import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
+import gov.cms.ab2d.eventclient.events.ContractSearchEvent;
+import gov.cms.ab2d.eventclient.events.FileEvent;
+import gov.cms.ab2d.eventclient.events.JobStatusChangeEvent;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import lombok.RequiredArgsConstructor;
@@ -30,13 +30,13 @@ import java.util.concurrent.ExecutionException;
 
 import static gov.cms.ab2d.job.model.JobStatus.FAILED;
 import static gov.cms.ab2d.job.model.JobStatus.SUCCESSFUL;
-import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PROD_LIST;
-import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
+import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PROD_LIST;
+import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PUBLIC_LIST;
 
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_COMPLETED;
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_CALL_FAILURE;
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_FAILURE;
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_QUEUE_MISMATCH;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_COMPLETED;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_CALL_FAILURE;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_FAILURE;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_QUEUE_MISMATCH;
 
 @Slf4j
 @Service

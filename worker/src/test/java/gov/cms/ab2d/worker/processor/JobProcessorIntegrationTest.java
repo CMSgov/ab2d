@@ -3,6 +3,9 @@ package gov.cms.ab2d.worker.processor;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
+import gov.cms.ab2d.eventclient.events.LoggableEvent;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobOutput;
 import gov.cms.ab2d.job.model.JobStatus;
@@ -18,17 +21,16 @@ import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.LoggableEvent;
 import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
 import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
-import gov.cms.ab2d.eventlogger.events.ApiRequestEvent;
-import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
-import gov.cms.ab2d.eventlogger.events.ContractSearchEvent;
-import gov.cms.ab2d.eventlogger.events.ErrorEvent;
-import gov.cms.ab2d.eventlogger.events.FileEvent;
-import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
-import gov.cms.ab2d.eventlogger.events.ReloadEvent;
+import gov.cms.ab2d.eventclient.events.ApiRequestEvent;
+import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
+import gov.cms.ab2d.eventclient.events.ContractSearchEvent;
+import gov.cms.ab2d.eventclient.events.ErrorEvent;
+import gov.cms.ab2d.eventclient.events.FileEvent;
+import gov.cms.ab2d.eventclient.events.JobStatusChangeEvent;
+import gov.cms.ab2d.eventclient.events.ReloadEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.job.service.JobCleanup;
@@ -65,7 +67,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
-import static gov.cms.ab2d.eventlogger.events.ErrorEvent.ErrorType.TOO_MANY_SEARCH_ERRORS;
+import static gov.cms.ab2d.eventclient.events.ErrorEvent.ErrorType.TOO_MANY_SEARCH_ERRORS;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.TestUtil.getOpenRange;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
@@ -140,6 +142,9 @@ class JobProcessorIntegrationTest extends JobCleanup {
     @Autowired
     private DataSetup dataSetup;
 
+    @Mock
+    private SQSEventClient sqsEventClient;
+
     @Autowired
     private ContractToContractCoverageMapping mapping;
 
@@ -162,6 +167,9 @@ class JobProcessorIntegrationTest extends JobCleanup {
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
+
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
     private static final ExplanationOfBenefit EOB = (ExplanationOfBenefit) EobTestDataUtil.createEOB();
 
     private Contract contract;
@@ -171,7 +179,7 @@ class JobProcessorIntegrationTest extends JobCleanup {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
+        LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger, sqsEventClient, false);
         PdpClient pdpClient = createClient();
 
         contract = createContract();

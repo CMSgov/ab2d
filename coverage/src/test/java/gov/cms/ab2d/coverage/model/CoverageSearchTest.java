@@ -1,6 +1,7 @@
 package gov.cms.ab2d.coverage.model;
 
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
+import gov.cms.ab2d.coverage.util.AB2DCoverageLocalstackContainer;
 import gov.cms.ab2d.coverage.util.AB2DCoveragePostgressqlContainer;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import java.time.OffsetDateTime;
@@ -28,6 +29,9 @@ class CoverageSearchTest {
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DCoveragePostgressqlContainer();
+
+    @Container
+    private static final AB2DCoverageLocalstackContainer localstackContainer = new AB2DCoverageLocalstackContainer();
 
     @Autowired
     private CoverageSearchRepository coverageSearchRepository;

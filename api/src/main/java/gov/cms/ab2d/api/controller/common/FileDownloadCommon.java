@@ -2,8 +2,8 @@ package gov.cms.ab2d.api.controller.common;
 
 import gov.cms.ab2d.api.remote.JobClient;
 import gov.cms.ab2d.common.service.PdpClientService;
+import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;

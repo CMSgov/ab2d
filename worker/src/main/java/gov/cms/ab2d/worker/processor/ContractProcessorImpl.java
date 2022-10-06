@@ -8,6 +8,7 @@ import gov.cms.ab2d.aggregator.FileOutputType;
 import gov.cms.ab2d.aggregator.FileUtils;
 import gov.cms.ab2d.aggregator.JobHelper;
 import gov.cms.ab2d.common.dto.ContractDTO;
+import gov.cms.ab2d.eventclient.events.ErrorEvent;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobOutput;
 import gov.cms.ab2d.job.repository.JobRepository;
@@ -15,7 +16,6 @@ import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.events.ErrorEvent;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.config.SearchConfig;
@@ -49,7 +49,9 @@ import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 @Slf4j
 @Service
-@SuppressWarnings("java:S2142") //java:S2142: "InterruptedException" should not be ignored
+//java:S2142: "InterruptedException" should not be ignored
+//java:S3655: False flag. Complaining about not checking for Optional#isPresent() when it is checked
+@SuppressWarnings({"java:S2142", "java:S3655"}) //java:S2142: "InterruptedException" should not be ignored
 public class ContractProcessorImpl implements ContractProcessor {
     private static final int SLEEP_DURATION = 250;
 
