@@ -1,13 +1,10 @@
 package gov.cms.ab2d.api.controller;
 
 import com.amazonaws.services.sqs.AmazonSQS;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.remote.JobClientMock;
-import gov.cms.ab2d.common.dto.PropertiesDTO;
-import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.common.util.DataSetup;
@@ -36,7 +33,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static gov.cms.ab2d.api.controller.BulkDataAccessAPIIntegrationTests.PATIENT_EXPORT_PATH;
@@ -45,7 +41,6 @@ import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -77,8 +72,6 @@ public class AdminAPIMaintenanceModeTests {
     @Autowired
     JobClientMock jobClientMock;
 
-    private static final String PROPERTIES_URL = "/properties";
-
     private String token;
 
     @BeforeEach
@@ -95,26 +88,14 @@ public class AdminAPIMaintenanceModeTests {
 
     @Test
     public void testSwitchMaintenanceModeOnAndOff() throws Exception {
-        List<PropertiesDTO> propertiesDTOs = new ArrayList<>();
-        PropertiesDTO maintenanceModeDTO = new PropertiesDTO();
-        maintenanceModeDTO.setKey(MAINTENANCE_MODE);
-        maintenanceModeDTO.setValue("true");
-        propertiesDTOs.add(maintenanceModeDTO);
-
-        ObjectMapper mapper = new ObjectMapper();
-
-        this.mockMvc.perform(
-                put(API_PREFIX_V1 + ADMIN_PREFIX + PROPERTIES_URL)
-                        .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(propertiesDTOs))
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(200));
+        testUtil.turnMaintenanceModeOn();
 
         this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(HttpStatus.SERVICE_UNAVAILABLE.value()));
 
         List<LoggableEvent> apiReqEvents = loggerEventRepository.load(ApiRequestEvent.class);
-        assertEquals(2, apiReqEvents.size());
+        assertEquals(1, apiReqEvents.size());
 
         List<LoggableEvent> apiResEvents = loggerEventRepository.load(ApiResponseEvent.class);
         assertEquals(1, apiResEvents.size());
@@ -122,9 +103,7 @@ public class AdminAPIMaintenanceModeTests {
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE.value(), responseEvent.getResponseCode());
 
         List<LoggableEvent> reloadEvents = loggerEventRepository.load(ReloadEvent.class);
-        assertEquals(1, reloadEvents.size());
-        ReloadEvent reloadEvent = (ReloadEvent) reloadEvents.get(0);
-        assertEquals(ReloadEvent.FileType.PROPERTIES, reloadEvent.getFileType());
+        assertEquals(0, reloadEvents.size());
 
         assertTrue(UtilMethods.allEmpty(
                 loggerEventRepository.load(ContractSearchEvent.class),
@@ -133,15 +112,7 @@ public class AdminAPIMaintenanceModeTests {
                 loggerEventRepository.load(JobStatusChangeEvent.class)
         ));
 
-        propertiesDTOs.clear();
-        maintenanceModeDTO.setValue("false");
-        propertiesDTOs.add(maintenanceModeDTO);
-
-        this.mockMvc.perform(
-                put(API_PREFIX_V1 + ADMIN_PREFIX + PROPERTIES_URL)
-                        .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(propertiesDTOs))
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(200));
+        testUtil.turnMaintenanceModeOff();
 
         this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
@@ -150,26 +121,17 @@ public class AdminAPIMaintenanceModeTests {
 
     @Test
     public void testJobsCanStillBeDownloadedWhileInMaintenanceMode() throws Exception {
+        testUtil.turnMaintenanceModeOff();
+
         MvcResult mvcResult = this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(202)).andReturn();
         String contentLocationUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
 
-        List<PropertiesDTO> propertiesDTOs = new ArrayList<>();
-        PropertiesDTO maintenanceModeDTO = new PropertiesDTO();
-        maintenanceModeDTO.setKey(MAINTENANCE_MODE);
-        maintenanceModeDTO.setValue("true");
-        propertiesDTOs.add(maintenanceModeDTO);
-
         String testFile = "test.ndjson";
         jobClientMock.addJobOutputForDownload(testUtil.createJobOutput(testFile));
-        ObjectMapper mapper = new ObjectMapper();
 
-        this.mockMvc.perform(
-                put(API_PREFIX_V1 + ADMIN_PREFIX + PROPERTIES_URL)
-                        .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(propertiesDTOs))
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(200));
+        testUtil.turnMaintenanceModeOn();
 
         JobOutput jobOutput = testUtil.createJobOutput(testFile);
         jobClientMock.addJobOutputForDownload(jobOutput);
@@ -187,14 +149,6 @@ public class AdminAPIMaintenanceModeTests {
                         .andExpect(status().is(200));
 
         // Cleanup
-        propertiesDTOs.clear();
-        maintenanceModeDTO.setValue("false");
-        propertiesDTOs.add(maintenanceModeDTO);
-
-        this.mockMvc.perform(
-                put(API_PREFIX_V1 + ADMIN_PREFIX + PROPERTIES_URL)
-                        .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(propertiesDTOs))
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(200));
+        testUtil.turnMaintenanceModeOff();
     }
 }

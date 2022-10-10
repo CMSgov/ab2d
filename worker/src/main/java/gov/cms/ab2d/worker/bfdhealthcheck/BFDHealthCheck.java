@@ -1,8 +1,7 @@
 package gov.cms.ab2d.worker.bfdhealthcheck;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.dto.PropertiesDTO;
-import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
 import gov.cms.ab2d.eventlogger.LogManager;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +12,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-import static gov.cms.ab2d.common.util.Constants.MAINTENANCE_MODE;
+import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
 import static gov.cms.ab2d.eventclient.events.SlackEvents.MAINT_MODE;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.bfdhealthcheck.HealthCheckData.Status;
@@ -23,17 +22,17 @@ import static gov.cms.ab2d.worker.bfdhealthcheck.HealthCheckData.Status;
 class BFDHealthCheck {
 
     private final LogManager logManager;
-    private final PropertiesService propertiesService;
+    private final PropertiesAPIService propertiesApiService;
     private final BFDClient bfdClient;
     private final int consecutiveSuccessesToBringUp;
     private final int consecutiveFailuresToTakeDown;
     private final List<HealthCheckData> healthCheckData = new ArrayList<>();
 
-    BFDHealthCheck(LogManager logManager, PropertiesService propertiesService, BFDClient bfdClient,
+    BFDHealthCheck(LogManager logManager, PropertiesAPIService propertiesApiService, BFDClient bfdClient,
                           @Value("${bfd.health.check.consecutive.successes}") int consecutiveSuccessesToBringUp,
                           @Value("${bfd.health.check.consecutive.failures}") int consecutiveFailuresToTakeDown) {
         this.logManager = logManager;
-        this.propertiesService = propertiesService;
+        this.propertiesApiService = propertiesApiService;
         this.bfdClient = bfdClient;
         this.consecutiveSuccessesToBringUp = consecutiveSuccessesToBringUp;
         this.consecutiveFailuresToTakeDown = consecutiveFailuresToTakeDown;
@@ -83,14 +82,11 @@ class BFDHealthCheck {
     private void updateMaintenanceStatus(HealthCheckData data, Status status, String statusString) {
         data.setStatus(status);
         data.setConsecutiveFailures(0);
-        PropertiesDTO propertiesDTO = new PropertiesDTO();
-        propertiesDTO.setKey(MAINTENANCE_MODE);
-        propertiesDTO.setValue(statusString);
 
         // Slack alert that we are going into maintenance mode
         logManager.alert(MAINT_MODE + " Maintenance Mode status for " + data.getVersion() +
                 " is: " + statusString, Ab2dEnvironment.ALL);
-        propertiesService.updateProperties(List.of(propertiesDTO));
+        propertiesApiService.updateProperty(MAINTENANCE_MODE, statusString);
         log.info("Updated the {} property to {}", MAINTENANCE_MODE, statusString);
     }
 

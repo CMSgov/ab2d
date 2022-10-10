@@ -1,6 +1,7 @@
 package gov.cms.ab2d.api.controller;
 
-import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.common.util.PropertyConstants;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -16,14 +17,14 @@ import static gov.cms.ab2d.common.util.Constants.*;
 @RequestMapping(produces = APPLICATION_JSON)
 public class MaintenanceModeAPI {
 
-    private final PropertiesService propertiesService;
+    private final PropertiesAPIService propertiesApiService;
 
     // This API endpoint does not have authentication, an exception was made in SecurityConfig.java and JWTAuthenticationFilter.java
     @CrossOrigin // test server for the sandbox runs from port 4000
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @GetMapping(STATUS_ENDPOINT)
     public ResponseEntity<MaintenanceModeResponse> getMaintenanceMode() {
-        MaintenanceModeResponse maintenanceModeResponse = new MaintenanceModeResponse(String.valueOf(propertiesService.isInMaintenanceMode()));
+        MaintenanceModeResponse maintenanceModeResponse = new MaintenanceModeResponse(String.valueOf(propertiesApiService.isToggleOn(PropertyConstants.MAINTENANCE_MODE)));
         return new ResponseEntity<>(maintenanceModeResponse, null, HttpStatus.OK);
     }
 }

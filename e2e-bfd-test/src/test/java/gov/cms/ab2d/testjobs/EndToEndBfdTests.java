@@ -3,7 +3,6 @@ package gov.cms.ab2d.testjobs;
 import gov.cms.ab2d.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobOutput;
@@ -20,8 +19,7 @@ import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.common.service.InvalidContractException;
 import gov.cms.ab2d.common.service.PdpClientService;
-import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.common.util.Constants;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventSummary;
 import gov.cms.ab2d.fhir.BundleUtils;
@@ -85,6 +83,9 @@ import java.util.stream.Stream;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
+import static gov.cms.ab2d.common.util.PropertyConstants.PCP_CORE_POOL_SIZE;
+import static gov.cms.ab2d.common.util.PropertyConstants.PCP_MAX_POOL_SIZE;
+import static gov.cms.ab2d.common.util.PropertyConstants.PCP_SCALE_TO_MAX_TIME;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -145,7 +146,7 @@ public class EndToEndBfdTests {
     @Autowired
     private CoverageLockWrapper coverageLockWrapper;
     @Autowired
-    private PropertiesService propertiesService;
+    private PropertiesAPIService propertiesApiService;
     @Autowired
     private PdpClientRepository pdpClientRepository;
     @Autowired
@@ -170,22 +171,12 @@ public class EndToEndBfdTests {
     void setUp() {
 
         /* These properties are set to improve performance of this test */
-        PropertiesDTO coreClaimsPool = new PropertiesDTO();
-        coreClaimsPool.setKey(Constants.PCP_CORE_POOL_SIZE);
-        coreClaimsPool.setValue("20");
-
-        PropertiesDTO maxClaimsPool = new PropertiesDTO();
-        maxClaimsPool.setKey(Constants.PCP_MAX_POOL_SIZE);
-        maxClaimsPool.setValue("30");
-
-        PropertiesDTO scaleToMaxTime = new PropertiesDTO();
-        scaleToMaxTime.setKey(Constants.PCP_SCALE_TO_MAX_TIME);
-        scaleToMaxTime.setValue("10");
-
-        propertiesService.updateProperties(List.of(coreClaimsPool, maxClaimsPool, scaleToMaxTime));
+        propertiesApiService.updateProperty(PCP_CORE_POOL_SIZE, "20");
+        propertiesApiService.updateProperty(PCP_MAX_POOL_SIZE, "30");
+        propertiesApiService.updateProperty(PCP_SCALE_TO_MAX_TIME, "10");
 
         coverageDriver = new CoverageDriverImpl(coverageSearchRepository, pdpClientService, coverageService,
-                propertiesService, coverageProcessor, coverageLockWrapper, contractToContractCoverageMapping);
+                propertiesApiService, coverageProcessor, coverageLockWrapper, contractToContractCoverageMapping);
 
         // Instantiate the job processors
         jobService = new JobServiceImpl(jobRepository, jobOutputService, logManager, logEventSummary, path.getAbsolutePath());

@@ -1,6 +1,6 @@
-package gov.cms.ab2d.common.repository;
+package gov.cms.ab2d.properties.repository;
 
-import gov.cms.ab2d.common.model.Properties;
+import gov.cms.ab2d.properties.model.Properties;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
