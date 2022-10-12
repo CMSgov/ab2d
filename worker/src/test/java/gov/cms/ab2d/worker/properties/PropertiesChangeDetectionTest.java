@@ -1,8 +1,7 @@
 package gov.cms.ab2d.worker.properties;
 
-import gov.cms.ab2d.common.model.Properties;
-import gov.cms.ab2d.common.repository.PropertiesRepository;
-import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
+import gov.cms.ab2d.properties.model.Properties;
+import gov.cms.ab2d.properties.repository.PropertiesRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.worker.config.AutoScalingService;
@@ -15,7 +14,9 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import static gov.cms.ab2d.common.util.Constants.*;
+import static gov.cms.ab2d.common.util.PropertyConstants.PCP_CORE_POOL_SIZE;
+import static gov.cms.ab2d.common.util.PropertyConstants.PCP_MAX_POOL_SIZE;
+import static gov.cms.ab2d.common.util.PropertyConstants.PCP_SCALE_TO_MAX_TIME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
