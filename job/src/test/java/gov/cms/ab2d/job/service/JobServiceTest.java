@@ -235,21 +235,21 @@ class JobServiceTest extends JobCleanup {
 
         Job job1 = jobService.createJob(buildStartJobContract(contract.getContractNumber()));
         addJobForCleanup(job1);
-        verify(slackLogger, times(1)).logAlert(anyString(), any());
+        verify(sqsEventClient, times(1)).logAndAlert(any(), any());
 
         job1.setStatus(JobStatus.CANCELLED);
         jobRepository.saveAndFlush(job1);
 
         Job job2 = jobService.createJob(buildStartJobContract(contract.getContractNumber()));
         addJobForCleanup(job2);
-        verify(slackLogger, times(2)).logAlert(anyString(), any());
+        verify(sqsEventClient, times(1)).logAndAlert(any(), any());
 
         job2.setStatus(SUCCESSFUL);
         jobRepository.saveAndFlush(job2);
 
         Job job3 = jobService.createJob(buildStartJobContract(contract.getContractNumber()));
         addJobForCleanup(job3);
-        verify(slackLogger, times(2)).logAlert(anyString(), any());
+        verify(sqsEventClient, times(1)).logAndAlert(any(), any());
     }
 
     @Test
