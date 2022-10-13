@@ -17,7 +17,7 @@ import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
-import gov.cms.ab2d.eventlogger.utils.UtilMethods;
+import gov.cms.ab2d.common.util.UtilMethods;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;

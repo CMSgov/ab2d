@@ -4,7 +4,6 @@ import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventclient.events.SlackEvents;
-import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventSummary;
 import gov.cms.ab2d.job.dto.JobPollResult;
 import gov.cms.ab2d.job.dto.StaleJob;
 import gov.cms.ab2d.job.dto.StartJobDTO;
@@ -39,18 +38,16 @@ public class JobServiceImpl implements JobService {
     private final JobRepository jobRepository;
     private final JobOutputService jobOutputService;
     private final LogManager eventLogger;
-    private final LoggerEventSummary loggerEventSummary;
     private final String fileDownloadPath;
 
     public static final String INITIAL_JOB_STATUS_MESSAGE = "0%";
 
     public JobServiceImpl(JobRepository jobRepository, JobOutputService jobOutputService,
-                          LogManager eventLogger, LoggerEventSummary loggerEventSummary,
+                          LogManager eventLogger,
                           @Value("${efs.mount}") String fileDownloadPath) {
         this.jobRepository = jobRepository;
         this.jobOutputService = jobOutputService;
         this.eventLogger = eventLogger;
-        this.loggerEventSummary = loggerEventSummary;
         this.fileDownloadPath = fileDownloadPath;
     }
 

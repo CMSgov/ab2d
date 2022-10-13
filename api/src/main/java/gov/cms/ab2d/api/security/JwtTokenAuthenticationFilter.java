@@ -9,7 +9,7 @@ import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventclient.events.ApiRequestEvent;
-import gov.cms.ab2d.eventlogger.utils.UtilMethods;
+import gov.cms.ab2d.common.util.UtilMethods;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.MDC;

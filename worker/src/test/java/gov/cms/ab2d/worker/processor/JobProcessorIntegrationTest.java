@@ -4,6 +4,7 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
+import gov.cms.ab2d.common.util.UtilMethods;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.LoggableEvent;
 import gov.cms.ab2d.job.model.Job;
@@ -21,9 +22,6 @@ import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
-import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
-import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventclient.events.ApiRequestEvent;
 import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
 import gov.cms.ab2d.eventclient.events.ContractSearchEvent;
@@ -32,7 +30,6 @@ import gov.cms.ab2d.eventclient.events.FileEvent;
 import gov.cms.ab2d.eventclient.events.JobStatusChangeEvent;
 import gov.cms.ab2d.eventclient.events.ReloadEvent;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
-import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.job.service.JobCleanup;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
@@ -134,9 +131,6 @@ class JobProcessorIntegrationTest extends JobCleanup {
     private RoundRobinBlockingQueue<PatientClaimsRequest> eobClaimRequestsQueue;
 
     @Autowired
-    private SqlEventLogger sqlEventLogger;
-
-    @Autowired
     private HealthCheck healthCheck;
 
     @Autowired
@@ -150,12 +144,6 @@ class JobProcessorIntegrationTest extends JobCleanup {
 
     @Mock
     private CoverageDriver mockCoverageDriver;
-
-    @Mock
-    private KinesisEventLogger kinesisEventLogger;
-
-    @Mock
-    private SlackLogger slackLogger;
 
     @Mock
     private BFDClient mockBfdClient;
@@ -179,7 +167,7 @@ class JobProcessorIntegrationTest extends JobCleanup {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger, sqsEventClient, false);
+        LogManager logManager = new LogManager(sqsEventClient);
         PdpClient pdpClient = createClient();
 
         contract = createContract();

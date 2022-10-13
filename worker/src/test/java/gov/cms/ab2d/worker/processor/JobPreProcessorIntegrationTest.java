@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.processor;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
+import gov.cms.ab2d.common.util.UtilMethods;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ApiRequestEvent;
 import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
@@ -21,11 +22,7 @@ import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
-import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
-import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
-import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.job.service.JobCleanup;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverException;
@@ -85,20 +82,12 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
     @Autowired
     private LoggerEventRepository loggerEventRepository;
 
-    @Autowired
-    private SqlEventLogger sqlEventLogger;
 
     @Autowired
     private DataSetup dataSetup;
 
     @Mock
     private CoverageDriver coverageDriver;
-
-    @Mock
-    private KinesisEventLogger kinesisEventLogger;
-
-    @Mock
-    private SlackLogger slackLogger;
 
     private PdpClient pdpClient;
     private Job job;
@@ -113,7 +102,7 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        LogManager manager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger, sqsEventClient, false);
+        LogManager manager = new LogManager(sqsEventClient);
 
         cut = new JobPreProcessorImpl(contractWorkerClient, jobRepository, manager, coverageDriver);
 

@@ -19,7 +19,7 @@ import gov.cms.ab2d.common.service.InvalidPropertiesException;
 import gov.cms.ab2d.job.service.JobOutputMissingException;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.utils.UtilMethods;
+import gov.cms.ab2d.common.util.UtilMethods;
 import gov.cms.ab2d.fhir.FhirVersion;
 import java.io.IOException;
 import java.net.URISyntaxException;

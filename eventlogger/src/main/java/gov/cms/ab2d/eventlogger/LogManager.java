@@ -5,29 +5,17 @@ import gov.cms.ab2d.eventclient.clients.EventClient;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
 import gov.cms.ab2d.eventclient.events.LoggableEvent;
-import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
-import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
-import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
 public class LogManager {
-    private final SqlEventLogger sqlEventLogger;
-    private final KinesisEventLogger kinesisEventLogger;
-    private final SlackLogger slackLogger;
     private final SQSEventClient eventClient;
-    private final boolean sqsEnabled;
 
-    public LogManager(SqlEventLogger sqlEventLogger, KinesisEventLogger kinesisEventLogger, SlackLogger slackLogger, SQSEventClient eventClient, @Value("${feature.sqs.enabled:false}") boolean sqsEnabled) {
-        this.sqlEventLogger = sqlEventLogger;
-        this.kinesisEventLogger = kinesisEventLogger;
-        this.slackLogger = slackLogger;
+    public LogManager(SQSEventClient eventClient) {
         this.eventClient = eventClient;
-        this.sqsEnabled = sqsEnabled;
     }
 
     /**
@@ -36,20 +24,8 @@ public class LogManager {
      * @param event the event to log
      */
     public void log(LoggableEvent event) {
-        if (sqsEnabled) {
-            //send to sqs
-            eventClient.sendLogs(event);
-        } else {
-            // Save to the database
-            sqlEventLogger.log(event);
-
-            // This event will contain the db id, block so we can get the
-            // aws id.
-            kinesisEventLogger.log(event, true);
-
-            // This event will not contain the AWS Id, update event in the DB
-            sqlEventLogger.updateAwsId(event.getAwsId(), event);
-        }
+        //send to sqs
+        eventClient.sendLogs(event);
     }
 
     /**
@@ -59,12 +35,7 @@ public class LogManager {
      * @param environments AB2D environments to alert on
      */
     public void alert(String message, List<Ab2dEnvironment> environments) {
-        if (sqsEnabled) {
-            eventClient.alert(message, environments);
-        } else {
-            slackLogger.logAlert(message, environments);
-        }
-
+        eventClient.alert(message, environments);
     }
 
     /**
@@ -74,11 +45,7 @@ public class LogManager {
      * @param environments AB2D environments to alert on
      */
     public void trace(String message, List<Ab2dEnvironment> environments) {
-        if (sqsEnabled) {
-            eventClient.trace(message, environments);
-        } else {
-            slackLogger.logTrace(message, environments);
-        }
+        eventClient.trace(message, environments);
     }
 
     /**
@@ -89,13 +56,7 @@ public class LogManager {
      * @param environments environments to log an alert for
      */
     public void logAndAlert(LoggableEvent event, List<Ab2dEnvironment> environments) {
-
-        if (sqsEnabled) {
-            eventClient.logAndAlert(event, environments);
-        } else {
-            log(event);
-            slackLogger.logAlert(event, environments);
-        }
+        eventClient.logAndAlert(event, environments);
     }
 
     /**
@@ -106,12 +67,7 @@ public class LogManager {
      * @param environments environments to log an alert for
      */
     public void logAndTrace(LoggableEvent event, List<Ab2dEnvironment> environments) {
-        if (sqsEnabled) {
-            eventClient.logAndTrace(event, environments);
-        } else {
-            log(event);
-            slackLogger.logTrace(event, environments);
-        }
+        eventClient.logAndTrace(event, environments);
     }
 
     /**
@@ -121,15 +77,6 @@ public class LogManager {
      * @param event event to log
      */
     public void log(EventClient.LogType type, LoggableEvent event) {
-        if (sqsEnabled) {
-            eventClient.log(type, event);
-        } else {
-            switch (type) {
-                case SQL -> sqlEventLogger.log(event);
-                case KINESIS -> kinesisEventLogger.log(event);
-                default -> {
-                }
-            }
-        }
+        eventClient.log(type, event);
     }
 }

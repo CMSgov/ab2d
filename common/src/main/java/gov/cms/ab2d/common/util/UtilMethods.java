@@ -1,4 +1,4 @@
-package gov.cms.ab2d.eventlogger.utils;
+package gov.cms.ab2d.common.util;
 
 import gov.cms.ab2d.eventclient.events.LoggableEvent;
 import org.apache.commons.codec.binary.Hex;

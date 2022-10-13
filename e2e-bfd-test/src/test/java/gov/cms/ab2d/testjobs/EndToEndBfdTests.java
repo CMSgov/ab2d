@@ -188,7 +188,7 @@ public class EndToEndBfdTests {
                 propertiesService, coverageProcessor, coverageLockWrapper, contractToContractCoverageMapping);
 
         // Instantiate the job processors
-        jobService = new JobServiceImpl(jobRepository, jobOutputService, logManager, logEventSummary, path.getAbsolutePath());
+        jobService = new JobServiceImpl(jobRepository, jobOutputService, logManager, path.getAbsolutePath());
         jobPreProcessor = new JobPreProcessorImpl(contractWorkerClient, jobRepository, logManager, coverageDriver);
 
         jobProcessor = new JobProcessorImpl(new FileServiceImpl(), jobChannelService, jobProgressService, jobProgressUpdateService,
