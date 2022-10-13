@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.config;
 
-import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.worker.properties.PropertiesInit;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,8 +12,8 @@ public class PropertyConfig {
 
     @Bean
     public PropertiesInit propertiesInit(ConfigurableEnvironment configurableEnvironment,
-                                         PropertiesService propertiesService) {
-        PropertiesInit propertiesInit = new PropertiesInit(propertiesService, configurableEnvironment);
+                                         PropertiesAPIService propertiesApiService) {
+        PropertiesInit propertiesInit = new PropertiesInit(propertiesApiService, configurableEnvironment);
         propertiesInit.updatePropertiesFromDatabase();
         return propertiesInit;
     }

@@ -1,9 +1,7 @@
 package gov.cms.ab2d.api.controller;
 
 import gov.cms.ab2d.api.SpringBootApp;
-import gov.cms.ab2d.common.dto.PropertiesDTO;
-import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
@@ -19,10 +17,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.Collections;
-import java.util.List;
-
-import static gov.cms.ab2d.common.util.Constants.*;
+import static gov.cms.ab2d.common.util.Constants.STATUS_ENDPOINT;
+import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -41,28 +37,21 @@ public class MaintenanceModeAPITests {
     private MockMvc mockMvc;
 
     @Autowired
-    private PropertiesService propertiesService;
+    private PropertiesAPIService propertiesApiService;
 
     @Autowired
     LoggerEventRepository loggerEventRepository;
 
     @AfterEach
     void tearDown() {
-        PropertiesDTO propertiesDTO = new PropertiesDTO();
-        propertiesDTO.setKey(MAINTENANCE_MODE);
-        propertiesDTO.setValue("false");
-
-        propertiesService.updateProperties(Collections.singletonList(propertiesDTO));
-
+        propertiesApiService.updateProperty(MAINTENANCE_MODE, "false");
         loggerEventRepository.delete();
     }
 
     @Test
     @Order(1)
     public void testMaintenanceModeOff() throws Exception {
-        PropertiesDTO propertiesDTO = new PropertiesDTO();
-        propertiesDTO.setKey(MAINTENANCE_MODE);
-        propertiesDTO.setValue("false");
+        propertiesApiService.updateProperty(MAINTENANCE_MODE, "false");
         this.mockMvc.perform(get(STATUS_ENDPOINT)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(200))
@@ -72,10 +61,7 @@ public class MaintenanceModeAPITests {
     @Test
     @Order(2)
     public void testMaintenanceModeOn() throws Exception {
-        PropertiesDTO propertiesDTO = new PropertiesDTO();
-        propertiesDTO.setKey(MAINTENANCE_MODE);
-        propertiesDTO.setValue("true");
-        propertiesService.updateProperties(List.of(propertiesDTO));
+        propertiesApiService.updateProperty(MAINTENANCE_MODE, "true");
 
         this.mockMvc.perform(get(STATUS_ENDPOINT)
                 .contentType(MediaType.APPLICATION_JSON))

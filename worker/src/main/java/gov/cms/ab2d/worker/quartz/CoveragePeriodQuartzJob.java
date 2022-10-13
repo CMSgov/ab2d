@@ -1,9 +1,7 @@
 package gov.cms.ab2d.worker.quartz;
 
-import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.service.FeatureEngagement;
-import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.common.util.Constants;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +15,10 @@ import java.time.DayOfWeek;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-import static gov.cms.ab2d.common.util.Constants.COVERAGE_SEARCH_OVERRIDE;
+import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_DISCOVERY;
+import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_OVERRIDE;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
+import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_QUEUEING;
 import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PRODUCTION;
 import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.SANDBOX;
 import static gov.cms.ab2d.eventclient.events.SlackEvents.COVERAGE_UPDATES_FAILED;
@@ -27,17 +27,17 @@ import static gov.cms.ab2d.eventclient.events.SlackEvents.COVERAGE_UPDATES_FAILE
  * Periodically update enrollment cached in the database by pulling enrollment from BFD.
  *
  * Typically this runs every Tuesday at midnight eastern time; however, you can override the schedule if enrollment arrives
- * at an unexpected time by setting {@link Constants#COVERAGE_SEARCH_OVERRIDE}.
+ * at an unexpected time by setting {@link gov.cms.ab2d.common.util.PropertyConstants#COVERAGE_SEARCH_OVERRIDE}.
  *
  * Outside of production this feature will be disabled in most environments. To configure to run weekly,
  * set the following properties in the database:
  *
- *      - {@link Constants#COVERAGE_SEARCH_DISCOVERY} for all active contracts, find if those contracts are missing coverage periods
+ *      - {@link gov.cms.ab2d.common.util.PropertyConstants#COVERAGE_SEARCH_DISCOVERY} for all active contracts, find if those contracts are missing coverage periods
  *         and create those missing coverage periods
  *          and loaded for the first time
- *      - {@link Constants#COVERAGE_SEARCH_QUEUEING} find all coverage periods missing enrollment or needing
+ *      - {@link gov.cms.ab2d.common.util.PropertyConstants#COVERAGE_SEARCH_QUEUEING} find all coverage periods missing enrollment or needing
  *          enrollment updated, trigger those updates
- *      - {@link Constants#COVERAGE_SEARCH_OVERRIDE} normally this job only runs once a week, set this property to
+ *      - {@link gov.cms.ab2d.common.util.PropertyConstants#COVERAGE_SEARCH_OVERRIDE} normally this job only runs once a week, set this property to
  *          override that configuration and force an update to enrollment.
  *
  * This only needs to run as often as BFD receives updated enrollment.
@@ -46,22 +46,19 @@ import static gov.cms.ab2d.eventclient.events.SlackEvents.COVERAGE_UPDATES_FAILE
 @RequiredArgsConstructor
 @DisallowConcurrentExecution
 public class CoveragePeriodQuartzJob extends QuartzJobBean {
-
     private final CoverageDriver driver;
-    private final PropertiesService propertiesService;
+    private final PropertiesAPIService propertiesApiService;
     private final LogManager logManager;
-
     @Override
     protected void executeInternal(JobExecutionContext jobExecutionContext) throws JobExecutionException {
 
         log.info("running coverage period quartz job by first looking for new coverage periods and then queueing new" +
                 " and stale coverage periods");
-        boolean override = Boolean.parseBoolean(propertiesService
-                .getPropertiesByKey(COVERAGE_SEARCH_OVERRIDE).getValue());
+        boolean override = Boolean.parseBoolean(propertiesApiService.getProperty(COVERAGE_SEARCH_OVERRIDE));
 
         try {
 
-            String discoveryEngagement = propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_DISCOVERY).getValue();
+            String discoveryEngagement = propertiesApiService.getProperty(COVERAGE_SEARCH_DISCOVERY);
             FeatureEngagement disvoeryState = FeatureEngagement.fromString(discoveryEngagement);
 
             if (disvoeryState == FeatureEngagement.IN_GEAR) {
@@ -69,7 +66,7 @@ public class CoveragePeriodQuartzJob extends QuartzJobBean {
                 driver.discoverCoveragePeriods();
             }
 
-            String queueEngagement = propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_QUEUEING).getValue();
+            String queueEngagement = propertiesApiService.getProperty(COVERAGE_SEARCH_QUEUEING);
             FeatureEngagement queueState = FeatureEngagement.fromString(queueEngagement);
 
             if (queueState == FeatureEngagement.IN_GEAR) {
@@ -93,10 +90,7 @@ public class CoveragePeriodQuartzJob extends QuartzJobBean {
             // override forces reload for all enabled contracts for last three months.
             // We don't want to be doing that over and over again.
             if (override) {
-                PropertiesDTO overrideUpdate = new PropertiesDTO();
-                overrideUpdate.setKey(COVERAGE_SEARCH_OVERRIDE);
-                overrideUpdate.setValue("false");
-                propertiesService.updateProperties(List.of(overrideUpdate));
+                propertiesApiService.updateProperty(COVERAGE_SEARCH_OVERRIDE, "false");
             }
         }
     }

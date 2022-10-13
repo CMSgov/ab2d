@@ -3,7 +3,6 @@ package gov.cms.ab2d.worker.processor.coverage;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.dto.PdpClientDTO;
-import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.ContractRepository;
@@ -14,9 +13,8 @@ import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.common.service.PdpClientService;
-import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
@@ -42,7 +40,6 @@ import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -63,9 +60,14 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 
 import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
+import static gov.cms.ab2d.common.service.FeatureEngagement.IN_GEAR;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
+import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_OVERRIDE;
+import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_STUCK_HOURS;
+import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_UPDATE_MONTHS;
+import static gov.cms.ab2d.common.util.PropertyConstants.WORKER_ENGAGEMENT;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -118,7 +120,7 @@ class CoverageDriverTest extends JobCleanup {
     private PdpClientService pdpClientService;
 
     @Autowired
-    private PropertiesService propertiesService;
+    private PropertiesAPIService propertiesApiService;
 
     @Autowired
     private DataSetup dataSetup;
@@ -191,7 +193,7 @@ class CoverageDriverTest extends JobCleanup {
         taskExecutor.initialize();
 
         processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS, contractWorkerClient);
-        driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesService, processor, searchLock, contractToContractCoverageMapping);
+        driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesApiService, processor, searchLock, contractToContractCoverageMapping);
     }
 
     @AfterEach
@@ -202,35 +204,14 @@ class CoverageDriverTest extends JobCleanup {
         coverageDataSetup.cleanup();
         dataSetup.cleanup();
 
-        PropertiesDTO engagement = new PropertiesDTO();
-        engagement.setKey(Constants.WORKER_ENGAGEMENT);
-        engagement.setValue(FeatureEngagement.IN_GEAR.getSerialValue());
-
-        PropertiesDTO override = new PropertiesDTO();
-        override.setKey(Constants.COVERAGE_SEARCH_OVERRIDE);
-        override.setValue("false");
-        propertiesService.updateProperties(List.of(engagement, override));
+        propertiesApiService.updateProperty(WORKER_ENGAGEMENT, IN_GEAR.getSerialValue());
+        propertiesApiService.updateProperty(COVERAGE_SEARCH_OVERRIDE, "false");
     }
 
     private void addPropertiesTableValues() {
-        List<PropertiesDTO> propertiesDTOS = new ArrayList<>();
-
-        PropertiesDTO workerEngagement = new PropertiesDTO();
-        workerEngagement.setKey(Constants.WORKER_ENGAGEMENT);
-        workerEngagement.setValue(FeatureEngagement.NEUTRAL.getSerialValue());
-        propertiesDTOS.add(workerEngagement);
-
-        PropertiesDTO pastMonths = new PropertiesDTO();
-        pastMonths.setKey(Constants.COVERAGE_SEARCH_UPDATE_MONTHS);
-        pastMonths.setValue("" + PAST_MONTHS);
-        propertiesDTOS.add(pastMonths);
-
-        PropertiesDTO stuckHours = new PropertiesDTO();
-        stuckHours.setKey(Constants.COVERAGE_SEARCH_STUCK_HOURS);
-        stuckHours.setValue("" + STUCK_HOURS);
-        propertiesDTOS.add(stuckHours);
-
-        propertiesService.updateProperties(propertiesDTOS);
+        propertiesApiService.updateProperty(WORKER_ENGAGEMENT, FeatureEngagement.NEUTRAL.getSerialValue());
+        propertiesApiService.updateProperty(COVERAGE_SEARCH_UPDATE_MONTHS, "" + PAST_MONTHS);
+        propertiesApiService.updateProperty(COVERAGE_SEARCH_STUCK_HOURS, "" + STUCK_HOURS);
     }
 
     @DisplayName("Loading coverage periods")
@@ -395,10 +376,7 @@ class CoverageDriverTest extends JobCleanup {
 
         coveragePeriodRepo.deleteAll();
 
-        PropertiesDTO override = new PropertiesDTO();
-        override.setKey(Constants.COVERAGE_SEARCH_OVERRIDE);
-        override.setValue("true");
-        propertiesService.updateProperties(singletonList(override));
+        propertiesApiService.updateProperty(COVERAGE_SEARCH_OVERRIDE, "true");
 
         OffsetDateTime currentDate = OffsetDateTime.now(DateUtil.AB2D_ZONE);
         OffsetDateTime previousSunday = currentDate

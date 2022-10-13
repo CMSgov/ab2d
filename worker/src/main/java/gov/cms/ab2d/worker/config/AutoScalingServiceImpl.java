@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.config;
 
-import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.worker.properties.PropertiesChangedEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,7 +13,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.Executor;
 
-import static gov.cms.ab2d.common.util.Constants.*;
+import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
+import static gov.cms.ab2d.common.util.PropertyConstants.PCP_CORE_POOL_SIZE;
+import static gov.cms.ab2d.common.util.PropertyConstants.PCP_MAX_POOL_SIZE;
+import static gov.cms.ab2d.common.util.PropertyConstants.PCP_SCALE_TO_MAX_TIME;
 import static gov.cms.ab2d.worker.config.AutoScalingServiceImpl.Mode.RESET;
 import static gov.cms.ab2d.worker.config.AutoScalingServiceImpl.Mode.SCALING_UP;
 
@@ -36,7 +39,7 @@ public class AutoScalingServiceImpl implements AutoScalingService, ApplicationLi
 
     private final ThreadPoolTaskExecutor executor;
     private final RoundRobinBlockingQueue eobClaimRequestsQueue;
-    private final PropertiesService propertiesService;
+    private final PropertiesAPIService propertiesApiService;
 
     // Can be modified by changing values in properties table
     // in the shared Postgres database
@@ -55,13 +58,13 @@ public class AutoScalingServiceImpl implements AutoScalingService, ApplicationLi
      */
     public AutoScalingServiceImpl(Executor patientProcessorThreadPool,
                                   RoundRobinBlockingQueue eobClaimRequestsQueue,
-                                  PropertiesService propertiesService,
+                                  PropertiesAPIService propertiesApiService,
                                   @Value("${pcp.core.pool.size}") int corePoolSize,
                                   @Value("${pcp.max.pool.size}") int maxPoolSize,
                                   @Value("${pcp.scaleToMax.time}") int scaleToMaxTime) {
         this.executor = (ThreadPoolTaskExecutor) patientProcessorThreadPool;
         this.eobClaimRequestsQueue = eobClaimRequestsQueue;
-        this.propertiesService = propertiesService;
+        this.propertiesApiService = propertiesApiService;
         this.corePoolSize = corePoolSize;
         this.maxPoolSize = maxPoolSize;
         this.scaleToMaxTime = scaleToMaxTime;
@@ -89,7 +92,7 @@ public class AutoScalingServiceImpl implements AutoScalingService, ApplicationLi
 
         // If in maintenance mode immediately scale down because new work won't be processed.
         // If no new work is present immediately scale down.
-        if (propertiesService.isInMaintenanceMode() || eobClaimRequestsQueue.isEmpty()) {
+        if (propertiesApiService.isToggleOn(MAINTENANCE_MODE) || eobClaimRequestsQueue.isEmpty()) {
             // No busy threads -- no active jobs. We can scale back to minimums immediately;
             // no need to do so gradually.
             scaleBackToMin();
