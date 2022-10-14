@@ -1,8 +1,13 @@
 package gov.cms.ab2d.api.controller;
 
+import com.amazonaws.services.mediaconnect.model.Messages;
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.model.Message;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.remote.JobClientMock;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
+import gov.cms.ab2d.eventclient.clients.SQSConfig;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ApiRequestEvent;
 import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
 import gov.cms.ab2d.eventclient.events.ContractSearchEvent;
@@ -18,7 +23,11 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import gov.cms.ab2d.common.util.UtilMethods;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.*;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -36,6 +45,8 @@ import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -65,7 +76,14 @@ public class BulkDataAccessAPIUnusualDataTests {
     private DataSetup dataSetup;
 
     @Autowired
-    private LoggerEventRepository loggerEventRepository;
+    SQSEventClient sqsEventClient;
+
+    @Autowired
+    AmazonSQS amazonSQS;
+
+
+    @Captor
+    private ArgumentCaptor<LoggableEvent> captor;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
@@ -76,7 +94,6 @@ public class BulkDataAccessAPIUnusualDataTests {
     @AfterEach
     public void cleanup() {
         dataSetup.cleanup();
-        loggerEventRepository.delete();
         jobClientMock.cleanupAll();
     }
 
@@ -90,22 +107,14 @@ public class BulkDataAccessAPIUnusualDataTests {
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
-        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
-        ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
+        
+        String requestEvent = amazonSQS.receiveMessage(System.getProperty("sqs.queue-name")).getMessages().get(0).toString();
+        String errorEvent = amazonSQS.receiveMessage(System.getProperty("sqs.queue-name")).getMessages().get(0).toString();
+        String responseEvent = amazonSQS.receiveMessage(System.getProperty("sqs.queue-name")).getMessages().get(0).toString();
 
-        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
-        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
-        assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
+        assertEquals(StringUtils.substringBetween(requestEvent, "requestId", "}"), StringUtils.substringBetween(responseEvent, "requestId", "}"));
 
-        List<LoggableEvent> errorEvents = loggerEventRepository.load(ErrorEvent.class);
-        ErrorEvent errorEvent = (ErrorEvent) errorEvents.get(0);
-
-        assertEquals(ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT, errorEvent.getErrorType());
-        assertTrue(UtilMethods.allEmpty(
-                loggerEventRepository.load(ReloadEvent.class),
-                loggerEventRepository.load(ContractSearchEvent.class),
-                loggerEventRepository.load(JobStatusChangeEvent.class),
-                loggerEventRepository.load(FileEvent.class)));
+        assertTrue(errorEvent.contains(ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT.toString()));
     }
 
     @Test

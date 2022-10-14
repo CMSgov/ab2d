@@ -15,7 +15,7 @@ public class LogManager {
     private final SQSEventClient eventClient;
 
     public LogManager(SQSEventClient eventClient) {
-        this.eventClient = eventClient;
+         this.eventClient = eventClient;
     }
 
     /**

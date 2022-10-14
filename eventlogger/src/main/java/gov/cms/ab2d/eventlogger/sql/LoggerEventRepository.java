@@ -1,4 +1,4 @@
-package gov.cms.ab2d.eventlogger.sql;//package gov.cms.ab2d.eventlogger.reports.sql;
+//package gov.cms.ab2d.eventlogger.sql;//package gov.cms.ab2d.eventlogger.reports.sql;
 //
 //import gov.cms.ab2d.eventclient.events.LoggableEvent;
 //import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlMapperConfig;
