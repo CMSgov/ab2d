@@ -33,6 +33,8 @@ import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_PDP_CLIENT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -154,13 +156,17 @@ public class AuthenticationTests {
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(403));
-        verify(sqsEventClient, times(2)).sendLogs(captor.capture());
-        List<LoggableEvent> loggableEvents = captor.getAllValues();
-        ApiRequestEvent requestEvent = (ApiRequestEvent) loggableEvents.get(0);
-        ApiResponseEvent responseEvent = (ApiResponseEvent) loggableEvents.get(1);
+
+        verify(sqsEventClient, timeout(10000).times(1)).sendLogs(captor.capture());
+        ApiRequestEvent requestEvent = (ApiRequestEvent)captor.getValue();
+
+        verify(sqsEventClient, timeout(10000).times(1)).logAndAlert(captor.capture(), any());
+        ApiResponseEvent responseEvent = (ApiResponseEvent) captor.getValue();
+
         assertEquals(HttpStatus.FORBIDDEN.value(), responseEvent.getResponseCode());
         assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
     }
+
 
     @Test
     public void testSwaggerUrlWorks() throws Exception {
