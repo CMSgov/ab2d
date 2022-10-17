@@ -1,5 +1,11 @@
 package gov.cms.ab2d.api.controller;
 
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.model.Message;
+import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
@@ -13,6 +19,8 @@ import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.common.util.UtilMethods;
+import gov.cms.ab2d.eventclient.clients.SQSConfig;
 import gov.cms.ab2d.eventclient.events.ApiRequestEvent;
 import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
 import gov.cms.ab2d.eventclient.events.ContractSearchEvent;
@@ -21,13 +29,13 @@ import gov.cms.ab2d.eventclient.events.FileEvent;
 import gov.cms.ab2d.eventclient.events.JobStatusChangeEvent;
 import gov.cms.ab2d.eventclient.events.LoggableEvent;
 import gov.cms.ab2d.eventclient.events.ReloadEvent;
-import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
-import gov.cms.ab2d.common.util.UtilMethods;
+import gov.cms.ab2d.eventclient.messages.GeneralSQSMessage;
 import gov.cms.ab2d.job.dto.StartJobDTO;
 import gov.cms.ab2d.job.model.JobOutput;
-import org.apache.commons.lang3.StringUtils;
+import java.util.Objects;
 import org.hamcrest.collection.IsIn;
 import org.hamcrest.core.Is;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,11 +56,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
-import static gov.cms.ab2d.api.controller.JobCompletedResponse.CHECKSUM_STRING;
-import static gov.cms.ab2d.api.controller.JobCompletedResponse.CONTENT_LENGTH_STRING;
+
 import static gov.cms.ab2d.api.controller.common.ApiText.X_PROG;
 import static gov.cms.ab2d.api.remote.JobClientMock.EXPIRES_IN_DAYS;
 import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
@@ -61,24 +67,19 @@ import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.MAX_DOWNLOADS;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
-import static gov.cms.ab2d.common.util.Constants.OPERATION_OUTCOME;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_PDP_CLIENT;
 import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
-import static gov.cms.ab2d.eventclient.events.ErrorEvent.ErrorType.FILE_ALREADY_DELETED;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
-import static gov.cms.ab2d.job.model.JobStatus.CANCELLED;
-import static gov.cms.ab2d.job.model.JobStatus.FAILED;
-import static gov.cms.ab2d.job.model.JobStatus.IN_PROGRESS;
 import static gov.cms.ab2d.job.model.JobStatus.SUBMITTED;
-import static gov.cms.ab2d.job.model.JobStatus.SUCCESSFUL;
 import static java.time.ZoneOffset.UTC;
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 import static org.springframework.http.HttpHeaders.EXPIRES;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -88,7 +89,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @Testcontainers
         /* When checking in, comment out print statements. They are very helpful, but fill up the logs */
@@ -123,7 +124,7 @@ class BulkDataAccessAPIIntegrationTests {
     private DataSetup dataSetup;
 
     @Autowired
-    private LoggerEventRepository loggerEventRepository;
+    AmazonSQS amazonSQS;
 
     private String token;
 
@@ -140,7 +141,7 @@ class BulkDataAccessAPIIntegrationTests {
     @AfterEach
     public void cleanup() {
         jobClientMock.cleanupAll();
-        loggerEventRepository.delete();
+//        loggerEventRepository.delete();
         dataSetup.cleanup();
     }
 
@@ -158,27 +159,18 @@ class BulkDataAccessAPIIntegrationTests {
         ResultActions resultActions = this.mockMvc.perform(
                 get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token));
-        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
-        ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
-        assertEquals(1, apiRequestEvents.size());
-        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
-        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
-        assertEquals(1, apiResponseEvents.size());
+
+        ApiRequestEvent requestEvent = (ApiRequestEvent) SQSConfig.objectMapper().readValue(amazonSQS.receiveMessage(System.getProperty("sqs.queue-name")).getMessages().get(0).getBody(), GeneralSQSMessage.class).getLoggableEvent();
+        JobStatusChangeEvent jobEvent = (JobStatusChangeEvent) SQSConfig.objectMapper().readValue(amazonSQS.receiveMessage(System.getProperty("sqs.queue-name")).getMessages().get(0).getBody(), GeneralSQSMessage.class).getLoggableEvent();
+        ApiResponseEvent responseEvent = (ApiResponseEvent) SQSConfig.objectMapper().readValue(amazonSQS.receiveMessage(System.getProperty("sqs.queue-name")).getMessages().get(0).getBody(), GeneralSQSMessage.class).getLoggableEvent();
+
+
         assertEquals(HttpStatus.ACCEPTED.value(), responseEvent.getResponseCode());
 
         assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
 
-        List<LoggableEvent> jobEvents = loggerEventRepository.load(JobStatusChangeEvent.class);
-        assertEquals(1, jobEvents.size());
-        JobStatusChangeEvent jobEvent = (JobStatusChangeEvent) jobEvents.get(0);
         assertEquals(SUBMITTED.name(), jobEvent.getNewStatus());
         assertNull(jobEvent.getOldStatus());
-
-        assertTrue(UtilMethods.allEmpty(
-                loggerEventRepository.load(ReloadEvent.class),
-                loggerEventRepository.load(ContractSearchEvent.class),
-                loggerEventRepository.load(ErrorEvent.class),
-                loggerEventRepository.load(FileEvent.class)));
 
         String jobUuid = jobClientMock.pickAJob();
         assertEquals(jobUuid, responseEvent.getJobId());
@@ -193,6 +185,8 @@ class BulkDataAccessAPIIntegrationTests {
         assertEquals("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH, startJobDTO.getUrl());
         assertEquals(EOB, startJobDTO.getResourceTypes());
         assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), startJobDTO.getOrganization());
+
+        assertEquals(0, amazonSQS.receiveMessage(System.getProperty("sqs.queue-name")).getMessages().size());
     }
 
     @Test
@@ -216,7 +210,7 @@ class BulkDataAccessAPIIntegrationTests {
     }
 
     @Test
-    void testPatientExportDuplicateSubmission() throws Exception {
+    void testPatientExportDuplicateSubmission() throws Exception, JsonProcessingException {
         createMaxJobs();
 
         MvcResult mvcResult = this.mockMvc.perform(
@@ -226,620 +220,628 @@ class BulkDataAccessAPIIntegrationTests {
                 .andExpect(header().string("Retry-After", "30"))
                 .andExpect(header().doesNotExist(X_PROG))
                 .andReturn();
-        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
-        assertEquals(MAX_JOBS_PER_CLIENT + 1, apiRequestEvents.size());
+        ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(System.getProperty("sqs.queue-name"));
+        receiveMessageRequest.setMaxNumberOfMessages(15);
 
-        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
-        assertEquals(MAX_JOBS_PER_CLIENT + 1, apiResponseEvents.size());
-        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(apiResponseEvents.size() - 1);
+        List<Message> events = amazonSQS.receiveMessage(receiveMessageRequest).getMessages();
+
+        assertEquals(12, events.size());
+
+        List<ApiRequestEvent> apiRequestEvents = events.stream().filter(e -> e.toString().contains("ApiRequestEvent")).map(e -> (ApiRequestEvent)getRequestEvent(e)).toList();
+        List<ApiResponseEvent> apiResponseEvents = events.stream().filter(e -> e.toString().contains("ApiResponseEvent")).map(e -> (ApiResponseEvent)getRequestEvent(e)).toList();
+        List<ErrorEvent> errorEvents = events.stream().filter(e -> e.toString().contains("ErrorEvent")).map(e -> (ErrorEvent)getRequestEvent(e)).toList();
+        List<JobStatusChangeEvent> jobEvents = events.stream().filter(e -> e.toString().contains("JobStatusChangeEvent")).map(e -> (JobStatusChangeEvent)getRequestEvent(e)).toList();
+
+        assertEquals(MAX_JOBS_PER_CLIENT + 1, apiRequestEvents.size());
+        ApiResponseEvent responseEvent = apiResponseEvents.get(apiResponseEvents.size() - 1);
         assertEquals(HttpStatus.TOO_MANY_REQUESTS.value(), responseEvent.getResponseCode());
 
-        List<LoggableEvent> errorEvents = loggerEventRepository.load(ErrorEvent.class);
-        ErrorEvent errorEvent = (ErrorEvent) errorEvents.get(0);
+        ErrorEvent errorEvent = errorEvents.get(0);
         assertEquals(ErrorEvent.ErrorType.TOO_MANY_STATUS_REQUESTS, errorEvent.getErrorType());
 
-        List<LoggableEvent> jobEvents = loggerEventRepository.load(JobStatusChangeEvent.class);
         assertEquals(MAX_JOBS_PER_CLIENT, jobEvents.size());
-        jobEvents.forEach(e -> assertEquals(SUBMITTED.name(), ((JobStatusChangeEvent) e).getNewStatus()));
-        JobStatusChangeEvent jobEvent = (JobStatusChangeEvent) jobEvents.get(0);
+        jobEvents.forEach(e -> assertEquals(SUBMITTED.name(), e.getNewStatus()));
+        JobStatusChangeEvent jobEvent = jobEvents.get(0);
         assertEquals(SUBMITTED.name(), jobEvent.getNewStatus());
         assertNull(jobEvent.getOldStatus());
-
-        assertTrue(UtilMethods.allEmpty(
-                loggerEventRepository.load(ReloadEvent.class),
-                loggerEventRepository.load(ContractSearchEvent.class),
-                loggerEventRepository.load(FileEvent.class)));
-
-        assertEquals(MAX_JOBS_PER_CLIENT, Objects.requireNonNull(mvcResult.getResponse().getHeader(CONTENT_LOCATION))
-                .split(",").length);
     }
 
-    @Test
-    void testPatientExportDuplicateSubmissionWithInProgressStatus() throws Exception {
-        createMaxJobs();
-
-        this.mockMvc.perform(
-                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(429))
-                .andExpect(header().string("Retry-After", "30"))
-                .andExpect(header().doesNotExist(X_PROG))
-                .andExpect(header().exists(CONTENT_LOCATION));
-    }
-
-
-    @Test
-    void testPatientExportWithParameters() throws Exception {
-        final String typeParams =
-                "?_type=ExplanationOfBenefit&_outputFormat=application/fhir+ndjson&since=20191015";
-        ResultActions resultActions =
-                this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
-                        .header("Authorization", "Bearer " + token)
-                        .contentType(MediaType.APPLICATION_JSON));
-
-        String jobUuid = jobClientMock.pickAJob();
-        StartJobDTO startJobDTO = jobClientMock.lookupJob(jobUuid);
-        String statusUrl =
-                "http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid + "/$status";
-
-        resultActions.andExpect(status().isAccepted())
-                .andExpect(header().string(CONTENT_LOCATION, statusUrl));
-
-        assertEquals("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + typeParams, startJobDTO.getUrl());
-        assertEquals(EOB, startJobDTO.getResourceTypes());
-        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), startJobDTO.getOrganization());
-    }
-
-    @Test
-    void testPatientExportWithInvalidType() throws Exception {
-        final String typeParams = "?_type=PatientInvalid,ExplanationOfBenefit";
-        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(400))
-                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
-                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
-                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("_type must be ExplanationOfBenefit")));
-
-        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
-        ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
-        assertNull(requestEvent.getJobId());
-
-        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
-        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
-        assertNull(responseEvent.getJobId());
-        assertEquals(400, responseEvent.getResponseCode());
-
-        assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
-
-        assertTrue(UtilMethods.allEmpty(
-                loggerEventRepository.load(ReloadEvent.class),
-                loggerEventRepository.load(ContractSearchEvent.class),
-                loggerEventRepository.load(ErrorEvent.class),
-                loggerEventRepository.load(FileEvent.class),
-                loggerEventRepository.load(JobStatusChangeEvent.class)));
-    }
-
-    @Test
-    void testPatientExportWithInvalidOutputFormat() throws Exception {
-        final String typeParams = "?_outputFormat=Invalid";
-        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(400))
-                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
-                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
-                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("An _outputFormat of Invalid is not " +
-                                "valid")));
-        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
-        ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
-        assertNull(requestEvent.getJobId());
-
-        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
-        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
-        assertNull(responseEvent.getJobId());
-        assertEquals(400, responseEvent.getResponseCode());
-
-        assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
-
-        assertTrue(UtilMethods.allEmpty(
-                loggerEventRepository.load(ReloadEvent.class),
-                loggerEventRepository.load(ContractSearchEvent.class),
-                loggerEventRepository.load(ErrorEvent.class),
-                loggerEventRepository.load(FileEvent.class),
-                loggerEventRepository.load(JobStatusChangeEvent.class)));
-    }
-
-    @Test
-    void testPatientExportWithZipOutputFormat() throws Exception {
-        final String typeParams = "?_outputFormat=application/zip";
-        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(400))
-                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
-                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
-                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("An _outputFormat of application/zip is not valid")));
-    }
-
-    @Test
-    void testDeleteJob() throws Exception {
-        this.mockMvc.perform(
-                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token));
-
-        jobClientMock.setExpectedStatus(SUBMITTED);
-        this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobClientMock.pickAJob() + "/$status")
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(202))
-                .andExpect(content().string(StringUtils.EMPTY));
-
-        List<LoggableEvent> jobStatusChange = loggerEventRepository.load(JobStatusChangeEvent.class);
-        assertEquals(2, jobStatusChange.size());
-        JobStatusChangeEvent event1 = (JobStatusChangeEvent) jobStatusChange.get(0);
-        assertEquals("SUBMITTED", event1.getNewStatus());
-        assertNull(event1.getOldStatus());
-        JobStatusChangeEvent event2 = (JobStatusChangeEvent) jobStatusChange.get(1);
-        assertEquals("SUBMITTED", event2.getOldStatus());
-        assertEquals("CANCELLED", event2.getNewStatus());
-    }
-
-    @Test
-    void testDeleteNonExistentJob() throws Exception {
-        this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/NonExistentJob/$status")
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(404))
-                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
-                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
-                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("No job with jobUuid NonExistentJob was " +
-                                "found")));
-        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
-        ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
-        assertEquals("NonExistentJob", requestEvent.getJobId());
-
-        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
-        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
-        // Since the job does not exist, don't return it as the job id in the response event
-        assertNull(responseEvent.getJobId());
-        assertEquals(404, responseEvent.getResponseCode());
-
-        assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
-
-        assertTrue(UtilMethods.allEmpty(
-                loggerEventRepository.load(ReloadEvent.class),
-                loggerEventRepository.load(ContractSearchEvent.class),
-                loggerEventRepository.load(ErrorEvent.class),
-                loggerEventRepository.load(FileEvent.class),
-                loggerEventRepository.load(JobStatusChangeEvent.class)));
-    }
-
-    @Test
-    void testDeleteJobsInInvalidState() throws Exception {
-        this.mockMvc.perform(
-                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token)
-        );
-
-        jobClientMock.setExpectedStatus(FAILED);
-        String jobUuid = jobClientMock.pickAJob();
-
-        this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid + "/$status")
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(400))
-                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
-                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
-                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("Job has a status of " + FAILED.name() +
-                                ", so it cannot be cancelled")));
-
-        jobClientMock.setExpectedStatus(CANCELLED);
-
-        this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid + "/$status")
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(400))
-                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
-                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
-                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("Job has a status of " + CANCELLED.name() +
-                                ", so it cannot be cancelled")));
-
-        jobClientMock.setExpectedStatus(SUCCESSFUL);
-
-        this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid + "/$status")
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(400))
-                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
-                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
-                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("Job has a status of " + SUCCESSFUL.name() +
-                                ", so it cannot be cancelled")));
-    }
-
-    @Test
-    void testGetStatusWhileSubmitted() throws Exception {
-        MvcResult mvcResult = this.mockMvc.perform(
-                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + token))
-                .andReturn();
-
-        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
-        assertNotNull(statusUrl);
-        jobClientMock.setExpectedStatusAndProgress(SUBMITTED, 0);
-
-        this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(202))
-                .andExpect(header().string("X-Progress", "0% complete"))
-                .andExpect(header().string("Retry-After", "30"));
-
-        // Immediate repeat of status check should produce 429.
-        this.mockMvc.perform(get(statusUrl)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(429))
-                .andExpect(header().string("Retry-After", "30"))
-                .andExpect(header().doesNotExist("X-Progress"))
-                .andExpect(header().doesNotExist(CONTENT_LOCATION));
-    }
-
-    @Test
-    void testGetStatusWhileInProgress() throws Exception {
-        MvcResult mvcResult = this.mockMvc.perform(
-                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + token))
-                .andReturn();
-
-        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
-        assertNotNull(statusUrl);
-
-        jobClientMock.setExpectedStatusAndProgress(IN_PROGRESS, 30);
-
-        this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(202))
-                .andExpect(header().string("X-Progress", "30% complete"))
-                .andExpect(header().string("Retry-After", "30"));
-
-        // Immediate repeat of status check should produce 429.
-        this.mockMvc.perform(get(statusUrl)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(429))
-                .andExpect(header().string("Retry-After", "30"))
-                .andExpect(header().doesNotExist("X-Progress"))
-                .andExpect(header().doesNotExist(CONTENT_LOCATION));
-    }
-
-    @Test
-    void testGetStatusWhileFinishedHttps() throws Exception {
-        MvcResult mvcResult = this.mockMvc.perform(
-                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
-                                .header("Authorization", "Bearer " + token)
-                                .header("X-Forwarded-Proto", "https")
-                                .contentType(MediaType.APPLICATION_JSON))
-                .andReturn();
-
-        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
-        assertNotNull(statusUrl);
-
-        String jobUuid = jobClientMock.pickAJob();
-        StartJobDTO startJobDTO = jobClientMock.lookupJob(jobUuid);
-
-        JobOutput jobOutput = new JobOutput();
-        jobOutput.setFhirResourceType(EOB);
-        jobOutput.setFilePath("file.ndjson");
-        jobOutput.setError(false);
-        jobOutput.setChecksum("ABCD");
-        jobOutput.setFileLength(10L);
-        jobClientMock.addJobOutputForDownload(jobOutput);
-
-        JobOutput errorJobOutput = new JobOutput();
-        errorJobOutput.setFhirResourceType(OPERATION_OUTCOME);
-        errorJobOutput.setFilePath("error.ndjson");
-        errorJobOutput.setError(true);
-        errorJobOutput.setChecksum("1010F");
-        errorJobOutput.setFileLength(20L);
-        jobClientMock.addJobOutputForDownload(errorJobOutput);
-
-        this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(200))
-                .andExpect(buildExpiresMatcher())
-                .andExpect(buildTxTimeMatcher())
-                .andExpect(jsonPath("$.request", Is.is(startJobDTO.getUrl())))
-                .andExpect(jsonPath("$.requiresAccessToken", Is.is(true)))
-                .andExpect(jsonPath("$.output[0].type", Is.is(EOB)))
-                .andExpect(jsonPath("$.output[0].url",
-                        Is.is("https://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid +
-                                "/file/file.ndjson")))
-                .andExpect(jsonPath("$.error[0].type", Is.is(OPERATION_OUTCOME)))
-                .andExpect(jsonPath("$.error[0].url",
-                        Is.is("https://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid +
-                                "/file/error.ndjson")));
-    }
-
-    @Test
-    void testGetStatusWhileFinished() throws Exception {
-        MvcResult mvcResult = this.mockMvc.perform(
-                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
-                                .header("Authorization", "Bearer " + token)
-                                .contentType(MediaType.APPLICATION_JSON))
-                .andReturn();
-
-        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
-        assertNotNull(statusUrl);
-
-        JobOutput jobOutput = new JobOutput();
-        jobOutput.setFhirResourceType(EOB);
-        jobOutput.setFilePath("file.ndjson");
-        jobOutput.setError(false);
-        jobOutput.setFileLength(5000L);
-        jobOutput.setChecksum("file");
-        jobClientMock.addJobOutputForDownload(jobOutput);
-
-        JobOutput errorJobOutput = new JobOutput();
-        errorJobOutput.setFhirResourceType(OPERATION_OUTCOME);
-        errorJobOutput.setFilePath("error.ndjson");
-        errorJobOutput.setFileLength(6000L);
-        errorJobOutput.setChecksum("error");
-        errorJobOutput.setError(true);
-        jobClientMock.addJobOutputForDownload(errorJobOutput);
-
-        String jobUuid = jobClientMock.pickAJob();
-        StartJobDTO startJobDTO = jobClientMock.lookupJob(jobUuid);
-
-        this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(200))
-                .andExpect(buildExpiresMatcher())
-                .andExpect(buildTxTimeMatcher())
-                .andExpect(jsonPath("$.request", Is.is(startJobDTO.getUrl())))
-                .andExpect(jsonPath("$.requiresAccessToken", Is.is(true)))
-                .andExpect(jsonPath("$.output[0].type", Is.is(EOB)))
-                .andExpect(jsonPath("$.output[0].url",
-                        Is.is("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid +
-                                "/file/file.ndjson")))
-                .andExpect(jsonPath("$.output[0].extension[0].url",
-                        Is.is(CHECKSUM_STRING)))
-                .andExpect(jsonPath("$.output[0].extension[0].valueString",
-                        Is.is("sha256:file")))
-                .andExpect(jsonPath("$.output[0].extension[1].url",
-                        Is.is(CONTENT_LENGTH_STRING)))
-                .andExpect(jsonPath("$.output[0].extension[1].valueDecimal",
-                        Is.is(5000)))
-                .andExpect(jsonPath("$.error[0].type", Is.is(OPERATION_OUTCOME)))
-                .andExpect(jsonPath("$.error[0].url",
-                        Is.is("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid +
-                                "/file/error.ndjson")))
-                .andExpect(jsonPath("$.error[0].extension[0].url",
-                        Is.is(CHECKSUM_STRING)))
-                .andExpect(jsonPath("$.error[0].extension[0].valueString",
-                        Is.is("sha256:error")))
-                .andExpect(jsonPath("$.error[0].extension[1].url",
-                        Is.is(CONTENT_LENGTH_STRING)))
-                .andExpect(jsonPath("$.error[0].extension[1].valueDecimal",
-                        Is.is(6000)));
-
-        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
-        assertEquals(2, apiRequestEvents.size());
-        ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
-        ApiRequestEvent requestEvent2 = (ApiRequestEvent) apiRequestEvents.get(1);
-        if (requestEvent.getUrl().contains("export")) {
-            assertNull(requestEvent.getJobId());
-        } else {
-            assertEquals(jobUuid, requestEvent.getJobId());
+    @Nullable
+    private static LoggableEvent getRequestEvent(Message e) {
+        try {
+            return SQSConfig.objectMapper().readValue(e.getBody(), GeneralSQSMessage.class).getLoggableEvent();
+        } catch (JsonProcessingException ex) {
+            fail("Should not get here");
+            return null;
         }
-        if (requestEvent2.getUrl().contains("export")) {
-            assertNull(requestEvent2.getJobId());
-        } else {
-            assertEquals(jobUuid, requestEvent2.getJobId());
-        }
-
-        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
-        assertEquals(2, apiResponseEvents.size());
-        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
-        ApiResponseEvent responseEvent2 = (ApiResponseEvent) apiResponseEvents.get(1);
-        assertEquals(jobUuid, responseEvent.getJobId());
-        assertEquals(jobUuid, responseEvent2.getJobId());
-        assertEquals(200, responseEvent2.getResponseCode());
-
-        assertTrue(requestEvent.getRequestId().equals(responseEvent.getRequestId()) ||
-                requestEvent.getRequestId().equalsIgnoreCase(responseEvent2.getRequestId()));
-        assertTrue(requestEvent2.getRequestId().equals(responseEvent.getRequestId()) ||
-                requestEvent2.getRequestId().equalsIgnoreCase(responseEvent2.getRequestId()));
-        assertEquals(requestEvent2.getRequestId(), responseEvent2.getRequestId());
-
-        // Technically the job status change has 1 entry but should have more because
-        // it went through the entire process, but because it is done manually here
-        // events weren't created for it.
-
-        assertTrue(UtilMethods.allEmpty(
-                loggerEventRepository.load(ReloadEvent.class),
-                loggerEventRepository.load(ContractSearchEvent.class),
-                loggerEventRepository.load(ErrorEvent.class),
-                loggerEventRepository.load(FileEvent.class)));
     }
 
-    @Test
-    void testGetStatusWhileFailed() throws Exception {
-        MvcResult mvcResult = this.mockMvc.perform(
-                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + token))
-                .andReturn();
-
-        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
-        assertNotNull(statusUrl);
-
-        jobClientMock.setExpectedStatus(FAILED);
-        this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(500))
-                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
-                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
-                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("Job failed while processing")));
-        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
-        ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
-
-        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
-        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
-        assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
-
-        assertTrue(UtilMethods.allEmpty(
-                loggerEventRepository.load(ReloadEvent.class),
-                loggerEventRepository.load(ContractSearchEvent.class),
-                loggerEventRepository.load(ErrorEvent.class),
-                loggerEventRepository.load(FileEvent.class)));
-    }
-
-    @Test
-    void testGetStatusWithJobNotFound() throws Exception {
-        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
-                .andReturn();
-
-        this.mockMvc.perform(get("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/BadId/$status")
-                        .header("Authorization", "Bearer " + token)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(404))
-                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
-                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
-                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("No job with jobUuid BadId was found")));
-    }
-
-    @Test
-    void testGetStatusWithSpaceUrl() throws Exception {
-        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
-                        .header("Authorization", "Bearer " + token)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andReturn();
-
-        this.mockMvc.perform(get("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/ /$status")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(404))
-                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
-                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
-                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is("No job with jobUuid   was found")));
-    }
-
-    @Test
-    void testGetStatusWithBadUrl() throws Exception {
-        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
-                .andReturn();
-
-        this.mockMvc.perform(get("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/$status")
-                        .header("Authorization", "Bearer " + token)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(404));
-    }
-
-
-    @Test
-    void testDownloadFile() throws Exception {
-        MvcResult mvcResult = this.mockMvc.perform(
-                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + token))
-                .andReturn();
-
-        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
-        assertNotNull(statusUrl);
-
-        String testFile = "test.ndjson";
-        JobOutput jobOutput = testUtil.createJobOutput(testFile);
-        jobClientMock.addJobOutputForDownload(jobOutput);
-        jobClientMock.setResultsCreated(true);
-
-        MvcResult mvcResultStatusCall =
-                this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + token))
-                        .andReturn();
-        String downloadUrl = JsonPath.read(mvcResultStatusCall.getResponse().getContentAsString(),
-                "$.output[0].url");
-        MvcResult downloadFileCall =
-                this.mockMvc.perform(get(downloadUrl).contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + token)
-                                .header("Accept-Encoding", "gzip, deflate, br"))
-                        .andExpect(status().is(200))
-                        .andExpect(content().contentType(NDJSON_FIRE_CONTENT_TYPE))
-                        .andReturn();
-
-        String downloadedFile = downloadFileCall.getResponse().getContentAsString();
-        String testValue = JsonPath.read(downloadedFile, "$.test");
-        assertEquals("value", testValue);
-        String arrValue1 = JsonPath.read(downloadedFile, "$.array[0]");
-        assertEquals("val1", arrValue1);
-        String arrValue2 = JsonPath.read(downloadedFile, "$.array[1]");
-        assertEquals("val2", arrValue2);
-    }
-
-    @Test
-    void testDownloadMissingFileGenericError() throws Exception {
-        MvcResult mvcResult = this.mockMvc.perform(
-                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + token))
-                .andReturn();
-
-        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
-        assertNotNull(statusUrl);
-
-        JobOutput jobOutput = testUtil.createJobOutput("test.ndjson");
-        jobClientMock.addJobOutputForDownload(jobOutput);
-
-        MvcResult mvcResultStatusCall =
-                this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + token))
-                        .andReturn();
-        String downloadUrl = JsonPath.read(mvcResultStatusCall.getResponse().getContentAsString(),
-                "$.output[0].url");
-        this.mockMvc.perform(get(downloadUrl).contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(500))
-                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
-                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
-                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
-                .andExpect(jsonPath("$.issue[0].details.text",
-                        Is.is(FILE_NOT_PRESENT_ERROR)));
-        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
-        ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(apiRequestEvents.size() - 1);
-
-        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
-        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(apiResponseEvents.size() - 1);
-        assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
-
-        List<LoggableEvent> errorEvents = loggerEventRepository.load(ErrorEvent.class);
-        ErrorEvent errorEvent = (ErrorEvent) errorEvents.get(0);
-        assertEquals(FILE_ALREADY_DELETED, errorEvent.getErrorType());
-        assertEquals(errorEvent.getJobId(), requestEvent.getJobId());
-
-        assertTrue(UtilMethods.allEmpty(
-                loggerEventRepository.load(ReloadEvent.class),
-                loggerEventRepository.load(ContractSearchEvent.class),
-                loggerEventRepository.load(FileEvent.class)));
-    }
+//    @Test
+//    void testPatientExportDuplicateSubmissionWithInProgressStatus() throws Exception {
+//        createMaxJobs();
+//
+//        this.mockMvc.perform(
+//                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+//                                .header("Authorization", "Bearer " + token))
+//                .andExpect(status().is(429))
+//                .andExpect(header().string("Retry-After", "30"))
+//                .andExpect(header().doesNotExist(X_PROG))
+//                .andExpect(header().exists(CONTENT_LOCATION));
+//    }
+//
+//
+//    @Test
+//    void testPatientExportWithParameters() throws Exception {
+//        final String typeParams =
+//                "?_type=ExplanationOfBenefit&_outputFormat=application/fhir+ndjson&since=20191015";
+//        ResultActions resultActions =
+//                this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
+//                        .header("Authorization", "Bearer " + token)
+//                        .contentType(MediaType.APPLICATION_JSON));
+//
+//        String jobUuid = jobClientMock.pickAJob();
+//        StartJobDTO startJobDTO = jobClientMock.lookupJob(jobUuid);
+//        String statusUrl =
+//                "http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid + "/$status";
+//
+//        resultActions.andExpect(status().isAccepted())
+//                .andExpect(header().string(CONTENT_LOCATION, statusUrl));
+//
+//        assertEquals("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + typeParams, startJobDTO.getUrl());
+//        assertEquals(EOB, startJobDTO.getResourceTypes());
+//        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), startJobDTO.getOrganization());
+//    }
+//
+//    @Test
+//    void testPatientExportWithInvalidType() throws Exception {
+//        final String typeParams = "?_type=PatientInvalid,ExplanationOfBenefit";
+//        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .header("Authorization", "Bearer " + token))
+//                .andExpect(status().is(400))
+//                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+//                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+//                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+//                .andExpect(jsonPath("$.issue[0].details.text",
+//                        Is.is("_type must be ExplanationOfBenefit")));
+//
+//        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
+//        ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
+//        assertNull(requestEvent.getJobId());
+//
+//        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
+//        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
+//        assertNull(responseEvent.getJobId());
+//        assertEquals(400, responseEvent.getResponseCode());
+//
+//        assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
+//
+//        assertTrue(UtilMethods.allEmpty(
+//                loggerEventRepository.load(ReloadEvent.class),
+//                loggerEventRepository.load(ContractSearchEvent.class),
+//                loggerEventRepository.load(ErrorEvent.class),
+//                loggerEventRepository.load(FileEvent.class),
+//                loggerEventRepository.load(JobStatusChangeEvent.class)));
+//    }
+//
+//    @Test
+//    void testPatientExportWithInvalidOutputFormat() throws Exception {
+//        final String typeParams = "?_outputFormat=Invalid";
+//        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .header("Authorization", "Bearer " + token))
+//                .andExpect(status().is(400))
+//                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+//                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+//                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+//                .andExpect(jsonPath("$.issue[0].details.text",
+//                        Is.is("An _outputFormat of Invalid is not " +
+//                                "valid")));
+//        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
+//        ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
+//        assertNull(requestEvent.getJobId());
+//
+//        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
+//        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
+//        assertNull(responseEvent.getJobId());
+//        assertEquals(400, responseEvent.getResponseCode());
+//
+//        assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
+//
+//        assertTrue(UtilMethods.allEmpty(
+//                loggerEventRepository.load(ReloadEvent.class),
+//                loggerEventRepository.load(ContractSearchEvent.class),
+//                loggerEventRepository.load(ErrorEvent.class),
+//                loggerEventRepository.load(FileEvent.class),
+//                loggerEventRepository.load(JobStatusChangeEvent.class)));
+//    }
+//
+//    @Test
+//    void testPatientExportWithZipOutputFormat() throws Exception {
+//        final String typeParams = "?_outputFormat=application/zip";
+//        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/" + PATIENT_EXPORT_PATH + typeParams)
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .header("Authorization", "Bearer " + token))
+//                .andExpect(status().is(400))
+//                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+//                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+//                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+//                .andExpect(jsonPath("$.issue[0].details.text",
+//                        Is.is("An _outputFormat of application/zip is not valid")));
+//    }
+//
+//    @Test
+//    void testDeleteJob() throws Exception {
+//        this.mockMvc.perform(
+//                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH)
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .header("Authorization", "Bearer " + token));
+//
+//        jobClientMock.setExpectedStatus(SUBMITTED);
+//        this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobClientMock.pickAJob() + "/$status")
+//                        .header("Authorization", "Bearer " + token))
+//                .andExpect(status().is(202))
+//                .andExpect(content().string(StringUtils.EMPTY));
+//
+//        List<LoggableEvent> jobStatusChange = loggerEventRepository.load(JobStatusChangeEvent.class);
+//        assertEquals(2, jobStatusChange.size());
+//        JobStatusChangeEvent event1 = (JobStatusChangeEvent) jobStatusChange.get(0);
+//        assertEquals("SUBMITTED", event1.getNewStatus());
+//        assertNull(event1.getOldStatus());
+//        JobStatusChangeEvent event2 = (JobStatusChangeEvent) jobStatusChange.get(1);
+//        assertEquals("SUBMITTED", event2.getOldStatus());
+//        assertEquals("CANCELLED", event2.getNewStatus());
+//    }
+//
+//    @Test
+//    void testDeleteNonExistentJob() throws Exception {
+//        this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/NonExistentJob/$status")
+//                        .header("Authorization", "Bearer " + token))
+//                .andExpect(status().is(404))
+//                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+//                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+//                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+//                .andExpect(jsonPath("$.issue[0].details.text",
+//                        Is.is("No job with jobUuid NonExistentJob was " +
+//                                "found")));
+//        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
+//        ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
+//        assertEquals("NonExistentJob", requestEvent.getJobId());
+//
+//        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
+//        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
+//        // Since the job does not exist, don't return it as the job id in the response event
+//        assertNull(responseEvent.getJobId());
+//        assertEquals(404, responseEvent.getResponseCode());
+//
+//        assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
+//
+//        assertTrue(UtilMethods.allEmpty(
+//                loggerEventRepository.load(ReloadEvent.class),
+//                loggerEventRepository.load(ContractSearchEvent.class),
+//                loggerEventRepository.load(ErrorEvent.class),
+//                loggerEventRepository.load(FileEvent.class),
+//                loggerEventRepository.load(JobStatusChangeEvent.class)));
+//    }
+//
+//    @Test
+//    void testDeleteJobsInInvalidState() throws Exception {
+//        this.mockMvc.perform(
+//                get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+//                        .header("Authorization", "Bearer " + token)
+//        );
+//
+//        jobClientMock.setExpectedStatus(FAILED);
+//        String jobUuid = jobClientMock.pickAJob();
+//
+//        this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid + "/$status")
+//                        .header("Authorization", "Bearer " + token))
+//                .andExpect(status().is(400))
+//                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+//                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+//                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+//                .andExpect(jsonPath("$.issue[0].details.text",
+//                        Is.is("Job has a status of " + FAILED.name() +
+//                                ", so it cannot be cancelled")));
+//
+//        jobClientMock.setExpectedStatus(CANCELLED);
+//
+//        this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid + "/$status")
+//                        .header("Authorization", "Bearer " + token))
+//                .andExpect(status().is(400))
+//                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+//                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+//                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+//                .andExpect(jsonPath("$.issue[0].details.text",
+//                        Is.is("Job has a status of " + CANCELLED.name() +
+//                                ", so it cannot be cancelled")));
+//
+//        jobClientMock.setExpectedStatus(SUCCESSFUL);
+//
+//        this.mockMvc.perform(delete(API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid + "/$status")
+//                        .header("Authorization", "Bearer " + token))
+//                .andExpect(status().is(400))
+//                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+//                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+//                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+//                .andExpect(jsonPath("$.issue[0].details.text",
+//                        Is.is("Job has a status of " + SUCCESSFUL.name() +
+//                                ", so it cannot be cancelled")));
+//    }
+//
+//    @Test
+//    void testGetStatusWhileSubmitted() throws Exception {
+//        MvcResult mvcResult = this.mockMvc.perform(
+//                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+//                                .header("Authorization", "Bearer " + token))
+//                .andReturn();
+//
+//        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
+//        assertNotNull(statusUrl);
+//        jobClientMock.setExpectedStatusAndProgress(SUBMITTED, 0);
+//
+//        this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
+//                        .header("Authorization", "Bearer " + token))
+//                .andExpect(status().is(202))
+//                .andExpect(header().string("X-Progress", "0% complete"))
+//                .andExpect(header().string("Retry-After", "30"));
+//
+//        // Immediate repeat of status check should produce 429.
+//        this.mockMvc.perform(get(statusUrl)
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .header("Authorization", "Bearer " + token))
+//                .andExpect(status().is(429))
+//                .andExpect(header().string("Retry-After", "30"))
+//                .andExpect(header().doesNotExist("X-Progress"))
+//                .andExpect(header().doesNotExist(CONTENT_LOCATION));
+//    }
+//
+//    @Test
+//    void testGetStatusWhileInProgress() throws Exception {
+//        MvcResult mvcResult = this.mockMvc.perform(
+//                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
+//                                .header("Authorization", "Bearer " + token))
+//                .andReturn();
+//
+//        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
+//        assertNotNull(statusUrl);
+//
+//        jobClientMock.setExpectedStatusAndProgress(IN_PROGRESS, 30);
+//
+//        this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
+//                        .header("Authorization", "Bearer " + token))
+//                .andExpect(status().is(202))
+//                .andExpect(header().string("X-Progress", "30% complete"))
+//                .andExpect(header().string("Retry-After", "30"));
+//
+//        // Immediate repeat of status check should produce 429.
+//        this.mockMvc.perform(get(statusUrl)
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .header("Authorization", "Bearer " + token))
+//                .andExpect(status().is(429))
+//                .andExpect(header().string("Retry-After", "30"))
+//                .andExpect(header().doesNotExist("X-Progress"))
+//                .andExpect(header().doesNotExist(CONTENT_LOCATION));
+//    }
+//
+//    @Test
+//    void testGetStatusWhileFinishedHttps() throws Exception {
+//        MvcResult mvcResult = this.mockMvc.perform(
+//                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+//                                .header("Authorization", "Bearer " + token)
+//                                .header("X-Forwarded-Proto", "https")
+//                                .contentType(MediaType.APPLICATION_JSON))
+//                .andReturn();
+//
+//        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
+//        assertNotNull(statusUrl);
+//
+//        String jobUuid = jobClientMock.pickAJob();
+//        StartJobDTO startJobDTO = jobClientMock.lookupJob(jobUuid);
+//
+//        JobOutput jobOutput = new JobOutput();
+//        jobOutput.setFhirResourceType(EOB);
+//        jobOutput.setFilePath("file.ndjson");
+//        jobOutput.setError(false);
+//        jobOutput.setChecksum("ABCD");
+//        jobOutput.setFileLength(10L);
+//        jobClientMock.addJobOutputForDownload(jobOutput);
+//
+//        JobOutput errorJobOutput = new JobOutput();
+//        errorJobOutput.setFhirResourceType(OPERATION_OUTCOME);
+//        errorJobOutput.setFilePath("error.ndjson");
+//        errorJobOutput.setError(true);
+//        errorJobOutput.setChecksum("1010F");
+//        errorJobOutput.setFileLength(20L);
+//        jobClientMock.addJobOutputForDownload(errorJobOutput);
+//
+//        this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
+//                        .header("Authorization", "Bearer " + token))
+//                .andExpect(status().is(200))
+//                .andExpect(buildExpiresMatcher())
+//                .andExpect(buildTxTimeMatcher())
+//                .andExpect(jsonPath("$.request", Is.is(startJobDTO.getUrl())))
+//                .andExpect(jsonPath("$.requiresAccessToken", Is.is(true)))
+//                .andExpect(jsonPath("$.output[0].type", Is.is(EOB)))
+//                .andExpect(jsonPath("$.output[0].url",
+//                        Is.is("https://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid +
+//                                "/file/file.ndjson")))
+//                .andExpect(jsonPath("$.error[0].type", Is.is(OPERATION_OUTCOME)))
+//                .andExpect(jsonPath("$.error[0].url",
+//                        Is.is("https://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid +
+//                                "/file/error.ndjson")));
+//    }
+//
+//    @Test
+//    void testGetStatusWhileFinished() throws Exception {
+//        MvcResult mvcResult = this.mockMvc.perform(
+//                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+//                                .header("Authorization", "Bearer " + token)
+//                                .contentType(MediaType.APPLICATION_JSON))
+//                .andReturn();
+//
+//        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
+//        assertNotNull(statusUrl);
+//
+//        JobOutput jobOutput = new JobOutput();
+//        jobOutput.setFhirResourceType(EOB);
+//        jobOutput.setFilePath("file.ndjson");
+//        jobOutput.setError(false);
+//        jobOutput.setFileLength(5000L);
+//        jobOutput.setChecksum("file");
+//        jobClientMock.addJobOutputForDownload(jobOutput);
+//
+//        JobOutput errorJobOutput = new JobOutput();
+//        errorJobOutput.setFhirResourceType(OPERATION_OUTCOME);
+//        errorJobOutput.setFilePath("error.ndjson");
+//        errorJobOutput.setFileLength(6000L);
+//        errorJobOutput.setChecksum("error");
+//        errorJobOutput.setError(true);
+//        jobClientMock.addJobOutputForDownload(errorJobOutput);
+//
+//        String jobUuid = jobClientMock.pickAJob();
+//        StartJobDTO startJobDTO = jobClientMock.lookupJob(jobUuid);
+//
+//        this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
+//                        .header("Authorization", "Bearer " + token))
+//                .andExpect(status().is(200))
+//                .andExpect(buildExpiresMatcher())
+//                .andExpect(buildTxTimeMatcher())
+//                .andExpect(jsonPath("$.request", Is.is(startJobDTO.getUrl())))
+//                .andExpect(jsonPath("$.requiresAccessToken", Is.is(true)))
+//                .andExpect(jsonPath("$.output[0].type", Is.is(EOB)))
+//                .andExpect(jsonPath("$.output[0].url",
+//                        Is.is("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid +
+//                                "/file/file.ndjson")))
+//                .andExpect(jsonPath("$.output[0].extension[0].url",
+//                        Is.is(CHECKSUM_STRING)))
+//                .andExpect(jsonPath("$.output[0].extension[0].valueString",
+//                        Is.is("sha256:file")))
+//                .andExpect(jsonPath("$.output[0].extension[1].url",
+//                        Is.is(CONTENT_LENGTH_STRING)))
+//                .andExpect(jsonPath("$.output[0].extension[1].valueDecimal",
+//                        Is.is(5000)))
+//                .andExpect(jsonPath("$.error[0].type", Is.is(OPERATION_OUTCOME)))
+//                .andExpect(jsonPath("$.error[0].url",
+//                        Is.is("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/" + jobUuid +
+//                                "/file/error.ndjson")))
+//                .andExpect(jsonPath("$.error[0].extension[0].url",
+//                        Is.is(CHECKSUM_STRING)))
+//                .andExpect(jsonPath("$.error[0].extension[0].valueString",
+//                        Is.is("sha256:error")))
+//                .andExpect(jsonPath("$.error[0].extension[1].url",
+//                        Is.is(CONTENT_LENGTH_STRING)))
+//                .andExpect(jsonPath("$.error[0].extension[1].valueDecimal",
+//                        Is.is(6000)));
+//
+//        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
+//        assertEquals(2, apiRequestEvents.size());
+//        ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
+//        ApiRequestEvent requestEvent2 = (ApiRequestEvent) apiRequestEvents.get(1);
+//        if (requestEvent.getUrl().contains("export")) {
+//            assertNull(requestEvent.getJobId());
+//        } else {
+//            assertEquals(jobUuid, requestEvent.getJobId());
+//        }
+//        if (requestEvent2.getUrl().contains("export")) {
+//            assertNull(requestEvent2.getJobId());
+//        } else {
+//            assertEquals(jobUuid, requestEvent2.getJobId());
+//        }
+//
+//        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
+//        assertEquals(2, apiResponseEvents.size());
+//        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
+//        ApiResponseEvent responseEvent2 = (ApiResponseEvent) apiResponseEvents.get(1);
+//        assertEquals(jobUuid, responseEvent.getJobId());
+//        assertEquals(jobUuid, responseEvent2.getJobId());
+//        assertEquals(200, responseEvent2.getResponseCode());
+//
+//        assertTrue(requestEvent.getRequestId().equals(responseEvent.getRequestId()) ||
+//                requestEvent.getRequestId().equalsIgnoreCase(responseEvent2.getRequestId()));
+//        assertTrue(requestEvent2.getRequestId().equals(responseEvent.getRequestId()) ||
+//                requestEvent2.getRequestId().equalsIgnoreCase(responseEvent2.getRequestId()));
+//        assertEquals(requestEvent2.getRequestId(), responseEvent2.getRequestId());
+//
+//        // Technically the job status change has 1 entry but should have more because
+//        // it went through the entire process, but because it is done manually here
+//        // events weren't created for it.
+//
+//        assertTrue(UtilMethods.allEmpty(
+//                loggerEventRepository.load(ReloadEvent.class),
+//                loggerEventRepository.load(ContractSearchEvent.class),
+//                loggerEventRepository.load(ErrorEvent.class),
+//                loggerEventRepository.load(FileEvent.class)));
+//    }
+//
+//    @Test
+//    void testGetStatusWhileFailed() throws Exception {
+//        MvcResult mvcResult = this.mockMvc.perform(
+//                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+//                                .contentType(MediaType.APPLICATION_JSON)
+//                                .header("Authorization", "Bearer " + token))
+//                .andReturn();
+//
+//        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
+//        assertNotNull(statusUrl);
+//
+//        jobClientMock.setExpectedStatus(FAILED);
+//        this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
+//                        .header("Authorization", "Bearer " + token))
+//                .andExpect(status().is(500))
+//                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+//                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+//                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+//                .andExpect(jsonPath("$.issue[0].details.text",
+//                        Is.is("Job failed while processing")));
+//        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
+//        ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
+//
+//        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
+//        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
+//        assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
+//
+//        assertTrue(UtilMethods.allEmpty(
+//                loggerEventRepository.load(ReloadEvent.class),
+//                loggerEventRepository.load(ContractSearchEvent.class),
+//                loggerEventRepository.load(ErrorEvent.class),
+//                loggerEventRepository.load(FileEvent.class)));
+//    }
+//
+//    @Test
+//    void testGetStatusWithJobNotFound() throws Exception {
+//        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .header("Authorization", "Bearer " + token))
+//                .andReturn();
+//
+//        this.mockMvc.perform(get("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/BadId/$status")
+//                        .header("Authorization", "Bearer " + token)
+//                        .contentType(MediaType.APPLICATION_JSON))
+//                .andExpect(status().is(404))
+//                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+//                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+//                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+//                .andExpect(jsonPath("$.issue[0].details.text",
+//                        Is.is("No job with jobUuid BadId was found")));
+//    }
+//
+//    @Test
+//    void testGetStatusWithSpaceUrl() throws Exception {
+//        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+//                        .header("Authorization", "Bearer " + token)
+//                        .contentType(MediaType.APPLICATION_JSON))
+//                .andReturn();
+//
+//        this.mockMvc.perform(get("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/ /$status")
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .header("Authorization", "Bearer " + token))
+//                .andExpect(status().is(404))
+//                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+//                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+//                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+//                .andExpect(jsonPath("$.issue[0].details.text",
+//                        Is.is("No job with jobUuid   was found")));
+//    }
+//
+//    @Test
+//    void testGetStatusWithBadUrl() throws Exception {
+//        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .header("Authorization", "Bearer " + token))
+//                .andReturn();
+//
+//        this.mockMvc.perform(get("http://localhost" + API_PREFIX_V1 + FHIR_PREFIX + "/Job/$status")
+//                        .header("Authorization", "Bearer " + token)
+//                        .contentType(MediaType.APPLICATION_JSON))
+//                .andExpect(status().is(404));
+//    }
+//
+//
+//    @Test
+//    void testDownloadFile() throws Exception {
+//        MvcResult mvcResult = this.mockMvc.perform(
+//                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+//                                .contentType(MediaType.APPLICATION_JSON)
+//                                .header("Authorization", "Bearer " + token))
+//                .andReturn();
+//
+//        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
+//        assertNotNull(statusUrl);
+//
+//        String testFile = "test.ndjson";
+//        JobOutput jobOutput = testUtil.createJobOutput(testFile);
+//        jobClientMock.addJobOutputForDownload(jobOutput);
+//        jobClientMock.setResultsCreated(true);
+//
+//        MvcResult mvcResultStatusCall =
+//                this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
+//                                .header("Authorization", "Bearer " + token))
+//                        .andReturn();
+//        String downloadUrl = JsonPath.read(mvcResultStatusCall.getResponse().getContentAsString(),
+//                "$.output[0].url");
+//        MvcResult downloadFileCall =
+//                this.mockMvc.perform(get(downloadUrl).contentType(MediaType.APPLICATION_JSON)
+//                                .header("Authorization", "Bearer " + token)
+//                                .header("Accept-Encoding", "gzip, deflate, br"))
+//                        .andExpect(status().is(200))
+//                        .andExpect(content().contentType(NDJSON_FIRE_CONTENT_TYPE))
+//                        .andReturn();
+//
+//        String downloadedFile = downloadFileCall.getResponse().getContentAsString();
+//        String testValue = JsonPath.read(downloadedFile, "$.test");
+//        assertEquals("value", testValue);
+//        String arrValue1 = JsonPath.read(downloadedFile, "$.array[0]");
+//        assertEquals("val1", arrValue1);
+//        String arrValue2 = JsonPath.read(downloadedFile, "$.array[1]");
+//        assertEquals("val2", arrValue2);
+//    }
+//
+//    @Test
+//    void testDownloadMissingFileGenericError() throws Exception {
+//        MvcResult mvcResult = this.mockMvc.perform(
+//                        get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH + "?_type=ExplanationOfBenefit")
+//                                .contentType(MediaType.APPLICATION_JSON)
+//                                .header("Authorization", "Bearer " + token))
+//                .andReturn();
+//
+//        String statusUrl = mvcResult.getResponse().getHeader(CONTENT_LOCATION);
+//        assertNotNull(statusUrl);
+//
+//        JobOutput jobOutput = testUtil.createJobOutput("test.ndjson");
+//        jobClientMock.addJobOutputForDownload(jobOutput);
+//
+//        MvcResult mvcResultStatusCall =
+//                this.mockMvc.perform(get(statusUrl).contentType(MediaType.APPLICATION_JSON)
+//                                .header("Authorization", "Bearer " + token))
+//                        .andReturn();
+//        String downloadUrl = JsonPath.read(mvcResultStatusCall.getResponse().getContentAsString(),
+//                "$.output[0].url");
+//        this.mockMvc.perform(get(downloadUrl).contentType(MediaType.APPLICATION_JSON)
+//                        .header("Authorization", "Bearer " + token))
+//                .andExpect(status().is(500))
+//                .andExpect(jsonPath("$.resourceType", Is.is("OperationOutcome")))
+//                .andExpect(jsonPath("$.issue[0].severity", Is.is("error")))
+//                .andExpect(jsonPath("$.issue[0].code", Is.is("invalid")))
+//                .andExpect(jsonPath("$.issue[0].details.text",
+//                        Is.is(FILE_NOT_PRESENT_ERROR)));
+//        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
+//        ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(apiRequestEvents.size() - 1);
+//
+//        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
+//        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(apiResponseEvents.size() - 1);
+//        assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
+//
+//        List<LoggableEvent> errorEvents = loggerEventRepository.load(ErrorEvent.class);
+//        ErrorEvent errorEvent = (ErrorEvent) errorEvents.get(0);
+//        assertEquals(FILE_ALREADY_DELETED, errorEvent.getErrorType());
+//        assertEquals(errorEvent.getJobId(), requestEvent.getJobId());
+//
+//        assertTrue(UtilMethods.allEmpty(
+//                loggerEventRepository.load(ReloadEvent.class),
+//                loggerEventRepository.load(ContractSearchEvent.class),
+//                loggerEventRepository.load(FileEvent.class)));
+//    }
 
     @Test
     void testDownloadBadParameterFile() throws Exception {

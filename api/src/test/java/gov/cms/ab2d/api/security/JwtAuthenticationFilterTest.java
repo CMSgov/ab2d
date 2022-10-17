@@ -1,5 +1,8 @@
 package gov.cms.ab2d.api.security;
 
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.model.Message;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.controller.TestUtil;
@@ -7,11 +10,15 @@ import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.eventclient.clients.SQSConfig;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ApiRequestEvent;
 import gov.cms.ab2d.eventclient.events.LoggableEvent;
-import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
+import gov.cms.ab2d.eventclient.messages.GeneralSQSMessage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,6 +37,11 @@ import static gov.cms.ab2d.common.model.Role.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atMostOnce;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -38,7 +50,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * The default uri filters for the JwtTokenAuthenticationFilter are repeatedly modified
  * which could cause unexpected behavior in other tests.
  */
-@SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @Testcontainers
 @Import(AB2DSQSMockConfig.class)
@@ -57,20 +69,22 @@ class JwtAuthenticationFilterTest {
     @Autowired
     DataSetup dataSetup;
 
-    @Autowired
-    private LoggerEventRepository loggerEventRepository;
-
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
+
+    @Container
+    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
+
+    @Autowired
+    SQSEventClient sqsEventClient;
 
     @AfterEach
     public void cleanup() {
         dataSetup.cleanup();
-        loggerEventRepository.delete();
     }
 
     @Test
-    void testDefaultMatchesHealthOnly() {
+    void testDefaultMatchesHealthOnly() throws JsonProcessingException {
 
         rebuildFilters("^/health$");
 
@@ -84,9 +98,7 @@ class JwtAuthenticationFilterTest {
             fail("could not perform basic health check", exception);
         }
 
-        List<LoggableEvent> currentEvents = loggerEventRepository.load(ApiRequestEvent.class);
-
-        assertEquals(1, currentEvents.size(), "healthy should still be logged");
+        verify(sqsEventClient, times(1)).sendLogs(any());
     }
 
     @Test
@@ -104,8 +116,7 @@ class JwtAuthenticationFilterTest {
             fail("could not perform basic health check", exception);
         }
 
-        List<LoggableEvent> currentEvents = loggerEventRepository.load(ApiRequestEvent.class);
-        assertEquals(0, currentEvents.size(), "no events should be logged");
+        verify(sqsEventClient, never()).sendLogs(any());
     }
 
     @Test
@@ -120,9 +131,7 @@ class JwtAuthenticationFilterTest {
             fail("could not perform akamai test call", exception);
         }
 
-        List<LoggableEvent> currentEvents = loggerEventRepository.load(ApiRequestEvent.class);
-        assertEquals(0, currentEvents.size(), "no events should be logged");
-
+        verify(sqsEventClient, never()).sendLogs(any());
     }
 
     @Test
@@ -138,8 +147,7 @@ class JwtAuthenticationFilterTest {
             fail("could not perform basic health check", exception);
         }
 
-        List<LoggableEvent> currentEvents = loggerEventRepository.load(ApiRequestEvent.class);
-        assertEquals(0, currentEvents.size(), "health endpoint should match regex");
+        verify(sqsEventClient, never()).sendLogs(any());
     }
 
     @Test
@@ -157,8 +165,7 @@ class JwtAuthenticationFilterTest {
             fail("mock mvc call to pull swagger-ui returned unexpected status code", exception);
         }
 
-        List<LoggableEvent> currentEvents = loggerEventRepository.load(ApiRequestEvent.class);
-        assertEquals(1, currentEvents.size(), "request for swagger docs not logged");
+        verify(sqsEventClient, atMostOnce()).sendLogs(any());
     }
 
     @Test
@@ -176,8 +183,7 @@ class JwtAuthenticationFilterTest {
                             .header("Authorization", "Bearer " + token))
                     .andReturn();
 
-            List<LoggableEvent> currentEvents = loggerEventRepository.load(ApiRequestEvent.class);
-            assertEquals(1, currentEvents.size(), "request for client not logged");
+            verify(sqsEventClient, times(2)).sendLogs(any());
         } catch (JwtVerificationException exception) {
             fail("jwt token for test could not be retrieved");
         } catch (Exception exception) {
@@ -197,8 +203,7 @@ class JwtAuthenticationFilterTest {
             mockMvc.perform(get("/swagger-ui"))
                     .andExpect(status().is(404));
 
-            List<LoggableEvent> currentEvents = loggerEventRepository.load(ApiRequestEvent.class);
-            assertEquals(1, currentEvents.size(), "request for client not logged");
+            verify(sqsEventClient, atMostOnce()).sendLogs(any());
         } catch (JwtVerificationException exception) {
             fail("jwt token for test could not be retrieved");
         } catch (Exception exception) {
@@ -219,8 +224,7 @@ class JwtAuthenticationFilterTest {
             mockMvc.perform(get("/swagger-ui"))
                     .andExpect(status().is(404));
 
-            List<LoggableEvent> currentEvents = loggerEventRepository.load(ApiRequestEvent.class);
-            assertEquals(1, currentEvents.size(), "request for client not logged");
+            verify(sqsEventClient, atMostOnce()).sendLogs(any());
         } catch (JwtVerificationException exception) {
             fail("jwt token for test could not be retrieved");
         } catch (Exception exception) {
@@ -240,8 +244,7 @@ class JwtAuthenticationFilterTest {
             mockMvc.perform(get("/swagger-ui"))
                     .andExpect(status().is(404));
 
-            List<LoggableEvent> currentEvents = loggerEventRepository.load(ApiRequestEvent.class);
-            assertEquals(1, currentEvents.size(), "request for client not logged");
+            verify(sqsEventClient, atMostOnce()).sendLogs(any());
         } catch (JwtVerificationException exception) {
             fail("jwt token for test could not be retrieved");
         } catch (Exception exception) {
@@ -265,8 +268,7 @@ class JwtAuthenticationFilterTest {
             mockMvc.perform(get("/swagger-ui"))
                     .andExpect(status().is(404));
 
-            List<LoggableEvent> currentEvents = loggerEventRepository.load(ApiRequestEvent.class);
-            assertEquals(1, currentEvents.size(), "health endpoint should be blocked and swagger endpoint allowed");
+            verify(sqsEventClient, atMostOnce()).sendLogs(any());
         } catch (JwtVerificationException exception) {
             fail("jwt token for test could not be retrieved");
         } catch (Exception exception) {

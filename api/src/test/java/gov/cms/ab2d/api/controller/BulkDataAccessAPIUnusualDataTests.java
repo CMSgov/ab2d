@@ -33,6 +33,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureWebMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -44,6 +45,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.util.List;
 import java.util.Optional;
 
+
 import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.*;
@@ -53,7 +55,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @Testcontainers
 public class BulkDataAccessAPIUnusualDataTests {
@@ -82,12 +84,8 @@ public class BulkDataAccessAPIUnusualDataTests {
     @Autowired
     AmazonSQS amazonSQS;
 
-
-    @Captor
-    private ArgumentCaptor<LoggableEvent> captor;
-
     @Container
-    private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
+    private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Container
     private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
@@ -105,11 +103,11 @@ public class BulkDataAccessAPIUnusualDataTests {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
 
-        ApiRequestEvent requestEvent = (ApiRequestEvent)SQSConfig.objectMapper().readValue(amazonSQS.receiveMessage(System.getProperty("sqs.queue-name")).getMessages().get(0).getBody(), GeneralSQSMessage.class).getLoggableEvent();
+        ApiRequestEvent requestEvent = (ApiRequestEvent) SQSConfig.objectMapper().readValue(amazonSQS.receiveMessage(System.getProperty("sqs.queue-name")).getMessages().get(0).getBody(), GeneralSQSMessage.class).getLoggableEvent();
         ErrorEvent errorEvent = (ErrorEvent) SQSConfig.objectMapper().readValue(amazonSQS.receiveMessage(System.getProperty("sqs.queue-name")).getMessages().get(0).getBody(), GeneralSQSMessage.class).getLoggableEvent();
         ApiResponseEvent responseEvent = (ApiResponseEvent) SQSConfig.objectMapper().readValue(amazonSQS.receiveMessage(System.getProperty("sqs.queue-name")).getMessages().get(0).getBody(), TraceAndAlertSQSMessage.class).getLoggableEvent();
 
@@ -117,7 +115,7 @@ public class BulkDataAccessAPIUnusualDataTests {
         assertEquals(ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT, errorEvent.getErrorType());
 
         // expect no more messages
-        assertEquals(0, amazonSQS.receiveMessage(System.getProperty("sqs.queue-name")).getMessages().size(),0);
+        assertEquals(0, amazonSQS.receiveMessage(System.getProperty("sqs.queue-name")).getMessages().size(), 0);
     }
 
     @Test
@@ -127,8 +125,8 @@ public class BulkDataAccessAPIUnusualDataTests {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         ResultActions resultActions = this.mockMvc.perform(
-                get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
+                        get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token))
                 .andDo(print());
 
         String jobUuid = jobClientMock.pickAJob();
