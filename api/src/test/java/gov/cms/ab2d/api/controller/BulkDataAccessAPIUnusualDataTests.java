@@ -16,6 +16,9 @@ import gov.cms.ab2d.eventclient.events.FileEvent;
 import gov.cms.ab2d.eventclient.events.JobStatusChangeEvent;
 import gov.cms.ab2d.eventclient.events.LoggableEvent;
 import gov.cms.ab2d.eventclient.events.ReloadEvent;
+import gov.cms.ab2d.eventclient.messages.GeneralSQSMessage;
+import gov.cms.ab2d.eventclient.messages.SQSMessages;
+import gov.cms.ab2d.eventclient.messages.TraceAndAlertSQSMessage;
 import gov.cms.ab2d.job.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.*;
@@ -45,8 +48,6 @@ import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.*;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -107,14 +108,16 @@ public class BulkDataAccessAPIUnusualDataTests {
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
-        
-        String requestEvent = amazonSQS.receiveMessage(System.getProperty("sqs.queue-name")).getMessages().get(0).toString();
-        String errorEvent = amazonSQS.receiveMessage(System.getProperty("sqs.queue-name")).getMessages().get(0).toString();
-        String responseEvent = amazonSQS.receiveMessage(System.getProperty("sqs.queue-name")).getMessages().get(0).toString();
 
-        assertEquals(StringUtils.substringBetween(requestEvent, "requestId", "}"), StringUtils.substringBetween(responseEvent, "requestId", "}"));
+        ApiRequestEvent requestEvent = (ApiRequestEvent)SQSConfig.objectMapper().readValue(amazonSQS.receiveMessage(System.getProperty("sqs.queue-name")).getMessages().get(0).getBody(), GeneralSQSMessage.class).getLoggableEvent();
+        ErrorEvent errorEvent = (ErrorEvent) SQSConfig.objectMapper().readValue(amazonSQS.receiveMessage(System.getProperty("sqs.queue-name")).getMessages().get(0).getBody(), GeneralSQSMessage.class).getLoggableEvent();
+        ApiResponseEvent responseEvent = (ApiResponseEvent) SQSConfig.objectMapper().readValue(amazonSQS.receiveMessage(System.getProperty("sqs.queue-name")).getMessages().get(0).getBody(), TraceAndAlertSQSMessage.class).getLoggableEvent();
 
-        assertTrue(errorEvent.contains(ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT.toString()));
+        assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
+        assertEquals(ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT, errorEvent.getErrorType());
+
+        // expect no more messages
+        assertEquals(0, amazonSQS.receiveMessage(System.getProperty("sqs.queue-name")).getMessages().size(),0);
     }
 
     @Test
@@ -140,6 +143,5 @@ public class BulkDataAccessAPIUnusualDataTests {
                 startJobDTO.getUrl());
         assertNull(startJobDTO.getResourceTypes());
         assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), startJobDTO.getOrganization());
-
     }
 }
