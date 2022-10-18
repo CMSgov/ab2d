@@ -37,6 +37,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.TransactionSystemException;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -81,6 +82,7 @@ import static org.mockito.Mockito.verify;
 
 @SpringBootTest(classes = JobTestSpringBootApp.class)
 @Testcontainers
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class JobServiceTest extends JobCleanup {
 
     public static final String CLIENTID = "douglas.adams@towels.com";
@@ -235,21 +237,21 @@ class JobServiceTest extends JobCleanup {
 
         Job job1 = jobService.createJob(buildStartJobContract(contract.getContractNumber()));
         addJobForCleanup(job1);
-        verify(sqsEventClient, times(1)).logAndAlert(any(), any());
+        verify(sqsEventClient, times(1)).sendLogs(any());
 
         job1.setStatus(JobStatus.CANCELLED);
         jobRepository.saveAndFlush(job1);
 
         Job job2 = jobService.createJob(buildStartJobContract(contract.getContractNumber()));
         addJobForCleanup(job2);
-        verify(sqsEventClient, times(1)).logAndAlert(any(), any());
+        verify(sqsEventClient, times(2)).sendLogs(any());
 
         job2.setStatus(SUCCESSFUL);
         jobRepository.saveAndFlush(job2);
 
         Job job3 = jobService.createJob(buildStartJobContract(contract.getContractNumber()));
         addJobForCleanup(job3);
-        verify(sqsEventClient, times(1)).logAndAlert(any(), any());
+        verify(sqsEventClient, times(3)).sendLogs(any());
     }
 
     @Test
