@@ -5,8 +5,10 @@ import gov.cms.ab2d.audit.dto.AuditMockJob;
 import gov.cms.ab2d.audit.remote.JobAuditClientMock;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.model.PdpClient;
+import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.UtilMethods;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ApiRequestEvent;
 import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
 import gov.cms.ab2d.eventclient.events.ContractSearchEvent;
@@ -27,8 +29,11 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.FileSystemUtils;
@@ -63,10 +68,15 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @TestPropertySource(locations = "/application.audit.properties")
 @Testcontainers
+@Import(AB2DSQSMockConfig.class)
 class FileDeletionServiceTest {
 
     @TempDir
@@ -85,7 +95,10 @@ class FileDeletionServiceTest {
     private DataSetup dataSetup;
 
     @Autowired
-    private LoggerEventRepository loggerEventRepository;
+    SQSEventClient sqsEventClient;
+
+    @Captor
+    private ArgumentCaptor<LoggableEvent> captor;
 
     private static final String TEST_FILE = "testFile.ndjson";
 
@@ -152,8 +165,6 @@ class FileDeletionServiceTest {
 
     @AfterEach
     void cleanUp() throws IOException {
-        loggerEventRepository.delete();
-
         for (Path toDelete : pathsToDelete) {
 
             if (Files.isDirectory(toDelete) && Files.exists(toDelete)) {
@@ -183,10 +194,7 @@ class FileDeletionServiceTest {
 
         assertFalse(Files.notExists(destination));
 
-        List<LoggableEvent> fileEvents = loggerEventRepository.load(FileEvent.class);
-        assertEquals(0, fileEvents.size());
-
-        checkNoOtherEventsLogged();
+        verify(sqsEventClient, never()).sendLogs(any());
     }
 
     @DisplayName("Ignore unrelated ndjson file that was just created")
@@ -203,7 +211,7 @@ class FileDeletionServiceTest {
 
         assertTrue(Files.exists(destinationNotDeleted));
 
-        checkNoOtherEventsLogged();
+        verify(sqsEventClient, never()).sendLogs(any());
     }
 
     @DisplayName("Delete nested ndjson file not attached to a job")
@@ -227,10 +235,7 @@ class FileDeletionServiceTest {
         assertTrue(Files.exists(nestedFileDestination));
         assertTrue(Files.exists(dirPath));
 
-        List<LoggableEvent> fileEvents = loggerEventRepository.load(FileEvent.class);
-        assertEquals(0, fileEvents.size());
-
-        checkNoOtherEventsLogged();
+        verify(sqsEventClient, never()).sendLogs(any());
     }
 
     @DisplayName("Ignore regular files without ndjson extension")
@@ -249,7 +254,7 @@ class FileDeletionServiceTest {
 
         assertTrue(Files.exists(regularFileDestination));
 
-        checkNoOtherEventsLogged();
+        verify(sqsEventClient, never()).sendLogs(any());
     }
 
     @DisplayName("Ignore empty directories not associated with a job")
@@ -268,7 +273,7 @@ class FileDeletionServiceTest {
 
         assertTrue(Files.exists(regularFolder));
 
-        checkNoOtherEventsLogged();
+        verify(sqsEventClient, never()).sendLogs(any());
     }
 
     @DisplayName("Ignore directory if no permissions")
@@ -295,7 +300,7 @@ class FileDeletionServiceTest {
 
         noPermissionsDir.setWritable(true);
 
-        checkNoOtherEventsLogged();
+        verify(sqsEventClient, never()).sendLogs(any());
     }
 
     @DisplayName("Delete empty folder after job files are deleted")
@@ -314,7 +319,7 @@ class FileDeletionServiceTest {
 
         assertTrue(Files.notExists(jobPath));
 
-        checkNoOtherEventsLogged();
+        verify(sqsEventClient, never()).sendLogs(any());
     }
 
     @DisplayName("Delete job files for successful jobs after they have expired")
@@ -337,11 +342,10 @@ class FileDeletionServiceTest {
         assertTrue(Files.notExists(jobPath));
         assertTrue(Files.notExists(destinationJobConnection));
 
-        List<LoggableEvent> fileEvents = loggerEventRepository.load(FileEvent.class);
-        FileEvent e1 = (FileEvent) fileEvents.get(0);
-        assertTrue(e1.getFileName().equalsIgnoreCase(destinationJobConnection.toString()));
+        verify(sqsEventClient, times(1)).sendLogs(captor.capture());
 
-        checkNoOtherEventsLogged();
+        FileEvent e1 = (FileEvent) captor.getValue();
+        assertTrue(e1.getFileName().equalsIgnoreCase(destinationJobConnection.toString()));
     }
 
     @DisplayName("Delete job files for cancelled jobs immediately")
@@ -364,11 +368,9 @@ class FileDeletionServiceTest {
         assertTrue(Files.notExists(jobPath));
         assertTrue(Files.notExists(destinationJobConnection));
 
-        List<LoggableEvent> fileEvents = loggerEventRepository.load(FileEvent.class);
-        FileEvent e1 = (FileEvent) fileEvents.get(0);
+        verify(sqsEventClient, times(1)).sendLogs(captor.capture());
+        FileEvent e1 = (FileEvent) captor.getValue();
         assertTrue(e1.getFileName().equalsIgnoreCase(destinationJobConnection.toString()));
-
-        checkNoOtherEventsLogged();
     }
 
     @DisplayName("Delete job files for failed jobs immediately")
@@ -391,11 +393,9 @@ class FileDeletionServiceTest {
         assertTrue(Files.notExists(jobPath));
         assertTrue(Files.notExists(destinationJobConnection));
 
-        List<LoggableEvent> fileEvents = loggerEventRepository.load(FileEvent.class);
-        FileEvent e1 = (FileEvent) fileEvents.get(0);
+        verify(sqsEventClient, times(1)).sendLogs(captor.capture());
+        FileEvent e1 = (FileEvent) captor.getValue();
         assertTrue(e1.getFileName().equalsIgnoreCase(destinationJobConnection.toString()));
-
-        checkNoOtherEventsLogged();
     }
 
     @DisplayName("Ignore in progress job files")
@@ -412,8 +412,7 @@ class FileDeletionServiceTest {
         Files.copy(sourceJobInProgressConnection, destinationJobInProgressConnection, StandardCopyOption.REPLACE_EXISTING);
 
         assertTrue(Files.exists(destinationJobInProgressConnection));
-
-        checkNoOtherEventsLogged();
+        verify(sqsEventClient, never()).sendLogs(any());
     }
 
     @DisplayName("Ignore in progress job files")
@@ -429,17 +428,7 @@ class FileDeletionServiceTest {
 
         assertTrue(Files.exists(jobInProgressPath));
 
-        checkNoOtherEventsLogged();
-    }
-
-    private void checkNoOtherEventsLogged() {
-        assertTrue(UtilMethods.allEmpty(
-                loggerEventRepository.load(ApiRequestEvent.class),
-                loggerEventRepository.load(ApiResponseEvent.class),
-                loggerEventRepository.load(ReloadEvent.class),
-                loggerEventRepository.load(ContractSearchEvent.class),
-                loggerEventRepository.load(ErrorEvent.class),
-                loggerEventRepository.load(JobStatusChangeEvent.class)));
+        verify(sqsEventClient, never()).sendLogs(any());
     }
 
     @DisplayName("Ignore recently completed job files")
