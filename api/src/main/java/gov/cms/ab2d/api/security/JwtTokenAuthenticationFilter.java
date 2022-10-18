@@ -164,7 +164,6 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
         ApiRequestEvent requestEvent = new ApiRequestEvent(organization, jobId, url, UtilMethods.getIpAddress(request),
                 token, uniqueId);
         eventLogger.log(requestEvent);
-
         request.setAttribute(REQUEST_ID, uniqueId);
     }
 

@@ -3,6 +3,7 @@ package gov.cms.ab2d.api.controller;
 import com.amazonaws.services.mediaconnect.model.Messages;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.Message;
+import com.amazonaws.services.sqs.model.PurgeQueueRequest;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.remote.JobClientMock;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
@@ -36,6 +37,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureWebMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -58,6 +60,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @Testcontainers
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 public class BulkDataAccessAPIUnusualDataTests {
 
     @Autowired
@@ -94,6 +97,7 @@ public class BulkDataAccessAPIUnusualDataTests {
     public void cleanup() {
         dataSetup.cleanup();
         jobClientMock.cleanupAll();
+        amazonSQS.purgeQueue(new PurgeQueueRequest(System.getProperty("sqs.queue-name")));
     }
 
     @Test

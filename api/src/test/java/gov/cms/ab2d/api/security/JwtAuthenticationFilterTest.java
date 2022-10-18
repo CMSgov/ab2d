@@ -2,6 +2,7 @@ package gov.cms.ab2d.api.security;
 
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.Message;
+import com.amazonaws.services.sqs.model.PurgeQueueRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;

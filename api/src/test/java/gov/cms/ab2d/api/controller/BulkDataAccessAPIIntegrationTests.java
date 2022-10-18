@@ -2,6 +2,7 @@ package gov.cms.ab2d.api.controller;
 
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.Message;
+import com.amazonaws.services.sqs.model.PurgeQueueRequest;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -21,6 +22,7 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.UtilMethods;
 import gov.cms.ab2d.eventclient.clients.SQSConfig;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ApiRequestEvent;
 import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
 import gov.cms.ab2d.eventclient.events.ContractSearchEvent;
@@ -45,6 +47,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
@@ -59,6 +62,7 @@ import java.util.List;
 import java.util.Optional;
 
 
+import static com.amazonaws.auth.policy.Principal.WebIdentityProviders.Amazon;
 import static gov.cms.ab2d.api.controller.common.ApiText.X_PROG;
 import static gov.cms.ab2d.api.remote.JobClientMock.EXPIRES_IN_DAYS;
 import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
@@ -92,12 +96,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @Testcontainers
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
         /* When checking in, comment out print statements. They are very helpful, but fill up the logs */
 class BulkDataAccessAPIIntegrationTests {
 
     private static final String FILE_NOT_PRESENT_ERROR = "The file is not present as there was an error. Please resubmit the job.";
     private static final String MAX_DOWNLOAD_EXCEDED_ERROR = "The file has reached the maximum number of downloads. Please resubmit the job.";
-
 
     @Autowired
     private MockMvc mockMvc;
@@ -126,6 +130,9 @@ class BulkDataAccessAPIIntegrationTests {
     @Autowired
     AmazonSQS amazonSQS;
 
+    @Autowired
+    SQSEventClient sqsEventClient;
+
     private String token;
 
     public static final String PATIENT_EXPORT_PATH = "/Patient/$export";
@@ -134,15 +141,15 @@ class BulkDataAccessAPIIntegrationTests {
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
-        testUtil.turnMaintenanceModeOff();
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
+        testUtil.turnMaintenanceModeOff();
     }
 
     @AfterEach
     public void cleanup() {
         jobClientMock.cleanupAll();
-//        loggerEventRepository.delete();
         dataSetup.cleanup();
+        amazonSQS.purgeQueue(new PurgeQueueRequest(System.getProperty("sqs.queue-name")));
     }
 
     private void createMaxJobs() throws Exception {
