@@ -5,7 +5,6 @@
     <modelVersion>4.0.0</modelVersion>
     <modules>
         <module>properties</module>
-        <module>eventlogger</module>
         <module>common</module>
         <module>job</module>
         <module>coverage</module>
