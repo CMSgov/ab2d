@@ -41,7 +41,6 @@ import static org.springframework.http.HttpStatus.REQUEST_TIMEOUT;
 @TestPropertySource(locations = "/application.hpms.properties")
 @Testcontainers
 class HPMSMockedAuthTest {
-
     private final MockWebClient client = new MockWebClient();
 
     @SuppressWarnings({"rawtypes", "unused"})
@@ -50,10 +49,11 @@ class HPMSMockedAuthTest {
 
     @Autowired
     HPMSAuthServiceImpl authService;
+
     @Autowired
     MockWebClient mockWebClient;
 
-    @MockBean
+    @Autowired
     private SQSEventClient eventLogger;
 
     @MockBean
