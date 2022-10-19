@@ -35,6 +35,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +58,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
@@ -80,14 +84,13 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
     private SQSEventClient sqsEventClient;
 
     @Autowired
-    private LoggerEventRepository loggerEventRepository;
-
-
-    @Autowired
     private DataSetup dataSetup;
 
     @Mock
     private CoverageDriver coverageDriver;
+
+    @Captor
+    private ArgumentCaptor<LoggableEvent> captor;
 
     private PdpClient pdpClient;
     private Job job;
@@ -117,7 +120,6 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
     @AfterEach
     void clear() {
         jobCleanup();
-        loggerEventRepository.delete();
         dataSetup.cleanup();
         contractRepository.flush();
     }
@@ -130,20 +132,13 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
         var processedJob = cut.preprocess(job.getJobUuid());
         assertEquals(JobStatus.IN_PROGRESS, processedJob.getStatus());
 
-        List<LoggableEvent> jobStatusChange = loggerEventRepository.load(JobStatusChangeEvent.class);
+        verify(sqsEventClient, times(1)).logAndAlert(captor.capture(), any());
+        List<LoggableEvent> jobStatusChange = captor.getAllValues();
+
         assertEquals(1, jobStatusChange.size());
         JobStatusChangeEvent event = (JobStatusChangeEvent) jobStatusChange.get(0);
         assertEquals("SUBMITTED", event.getOldStatus());
         assertEquals("IN_PROGRESS", event.getNewStatus());
-
-        assertTrue(UtilMethods.allEmpty(
-                loggerEventRepository.load(ApiRequestEvent.class),
-                loggerEventRepository.load(ApiResponseEvent.class),
-                loggerEventRepository.load(ReloadEvent.class),
-                loggerEventRepository.load(ContractSearchEvent.class),
-                loggerEventRepository.load(ErrorEvent.class),
-                loggerEventRepository.load(FileEvent.class)));
-        loggerEventRepository.delete();
     }
 
     @Test
@@ -170,20 +165,14 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
         var processedJob = cut.preprocess(job.getJobUuid());
         assertEquals(JobStatus.FAILED, processedJob.getStatus());
 
-        List<LoggableEvent> jobStatusChange = loggerEventRepository.load(JobStatusChangeEvent.class);
+        verify(sqsEventClient, times(1)).logAndAlert(captor.capture(), any());
+        List<LoggableEvent> jobStatusChange = captor.getAllValues();
+
         assertEquals(1, jobStatusChange.size());
         JobStatusChangeEvent event = (JobStatusChangeEvent) jobStatusChange.get(0);
         assertEquals("SUBMITTED", event.getOldStatus());
         assertEquals("FAILED", event.getNewStatus());
 
-        assertTrue(UtilMethods.allEmpty(
-                loggerEventRepository.load(ApiRequestEvent.class),
-                loggerEventRepository.load(ApiResponseEvent.class),
-                loggerEventRepository.load(ReloadEvent.class),
-                loggerEventRepository.load(ContractSearchEvent.class),
-                loggerEventRepository.load(ErrorEvent.class),
-                loggerEventRepository.load(FileEvent.class)));
-        loggerEventRepository.delete();
     }
 
     @Test
