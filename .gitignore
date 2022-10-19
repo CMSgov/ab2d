@@ -90,6 +90,7 @@ build/
 
 common/jacoco/**
 coverage/jacoco/**
+properties/jacoco/**
 
 ### .DS_Store in "src/test" ###
 ### This is needed due to this .gitignore entry: "!**/src/test/**" ###
