@@ -37,7 +37,7 @@
 //    @Container
 //    private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 //
-//    private LogManager logManager;
+//    private SQSEventClient logManager;
 //
 //    @Autowired
 //    AmazonSQSAsync amazonSQSAsync;
@@ -80,7 +80,7 @@
 //            return null; // void method, so return null
 //        }).when(kinesisEventLogger).log(event, true);
 //
-//        logManager.log(event);
+//        logManager.sendLogs(event);
 //        assertEquals("aws1111", event.getAwsId());
 //        assertTrue(event.getId() > 0);
 //
@@ -126,7 +126,7 @@
 //            return null; // void method, so return null
 //        }).when(kinesisEventLogger).log(event, true);
 //
-//        logManager.logAndTrace(event, Ab2dEnvironment.ALL);
+//        logManager.sendLogsAndTrace(event, Ab2dEnvironment.ALL);
 //        assertEquals("aws1111", event.getAwsId());
 //        assertTrue(event.getId() > 0);
 //
@@ -144,7 +144,7 @@
 //        logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger, sqsEventClient, false);
 //        ErrorEvent event = new ErrorEvent("organization", "jobId", ErrorEvent.ErrorType.FILE_ALREADY_DELETED,
 //                "File Deleted");
-//        logManager.log(EventClient.LogType.SQL, event);
+//        logManager.sendLogs(EventClient.LogType.SQL, event);
 //        assertNull(event.getAwsId());
 //        assertTrue(event.getId() > 0);
 //
@@ -167,7 +167,7 @@
 //            return null; // void method, so return null
 //        }).when(kinesisEventLogger).log(event);
 //
-//        logManager.log(EventClient.LogType.KINESIS, event);
+//        logManager.sendLogs(EventClient.LogType.KINESIS, event);
 //        assertEquals("aws1111", event.getAwsId());
 //        List<LoggableEvent> events = loggerEventRepository.load(ErrorEvent.class);
 //
@@ -216,13 +216,13 @@
 //
 //        ArrayList<Ab2dEnvironment> enviroments = new ArrayList<>();
 //        enviroments.add(Ab2dEnvironment.LOCAL);
-//        logManager.log(event);
+//        logManager.sendLogs(event);
 //        logManager.trace(event.getDescription(), enviroments);
 //        logManager.alert(event.getDescription(), enviroments);
-//        logManager.log(EventClient.LogType.SQL, event);
-//        logManager.log(EventClient.LogType.KINESIS, event);
+//        logManager.sendLogs(EventClient.LogType.SQL, event);
+//        logManager.sendLogs(EventClient.LogType.KINESIS, event);
 //        logManager.logAndAlert(event, enviroments);
-//        logManager.logAndTrace(event, enviroments);
+//        logManager.sendLogsAndTrace(event, enviroments);
 //
 //        verify(sqsEventClient, times(1)).sendLogs(any(LoggableEvent.class));
 //        verify(sqsEventClient, times(1)).trace(anyString(), any(ArrayList.class));

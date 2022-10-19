@@ -1,13 +1,9 @@
 package gov.cms.ab2d.audit.cleanup;
 
 import gov.cms.ab2d.audit.remote.JobAuditClient;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.FileEvent;
-import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.job.dto.StaleJob;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,6 +11,9 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
@@ -27,14 +26,14 @@ public class FileDeletionServiceImpl implements FileDeletionService {
     private int auditFilesTTLHours;
 
     private final JobAuditClient jobAuditClient;
-    private final LogManager eventLogger;
+    private final SQSEventClient eventLogger;
 
     private static final String FILE_EXTENSION = ".ndjson";
 
     private static final Set<String> DISALLOWED_DIRECTORIES = Set.of("/bin", "/boot", "/dev", "/etc", "/home", "/lib",
             "/opt", "/root", "/sbin", "/sys", "/usr", "/Applications", "/Library", "/Network", "/System", "/Users", "/Volumes");
 
-    public FileDeletionServiceImpl(JobAuditClient jobAuditClient, LogManager eventLogger) {
+    public FileDeletionServiceImpl(JobAuditClient jobAuditClient, SQSEventClient eventLogger) {
         this.jobAuditClient = jobAuditClient;
         this.eventLogger = eventLogger;
     }
@@ -160,7 +159,7 @@ public class FileDeletionServiceImpl implements FileDeletionService {
         }
 
         // If we reach this point then file was deleted without an exception so log it to Kinesis and SQL
-        eventLogger.log(fileEvent);
+        eventLogger.sendLogs(fileEvent);
     }
 
     /**

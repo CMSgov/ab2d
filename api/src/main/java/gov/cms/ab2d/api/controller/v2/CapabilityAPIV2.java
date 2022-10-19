@@ -2,12 +2,13 @@ package gov.cms.ab2d.api.controller.v2;
 
 import ca.uhn.fhir.parser.IParser;
 import gov.cms.ab2d.api.controller.common.ApiCommon;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
-import gov.cms.ab2d.eventlogger.LogManager;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import javax.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.r4.model.CapabilityStatement;
@@ -20,17 +21,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.HttpServletRequest;
 
+import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
 import static gov.cms.ab2d.api.controller.common.ApiText.CAP_API;
 import static gov.cms.ab2d.api.controller.common.ApiText.CAP_DESC;
 import static gov.cms.ab2d.api.controller.common.ApiText.CAP_REQ;
 import static gov.cms.ab2d.api.controller.common.ApiText.CAP_RET;
 import static gov.cms.ab2d.api.controller.common.ApiText.CAP_STMT;
-import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
-import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
+import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
 
@@ -45,7 +45,7 @@ import static gov.cms.ab2d.fhir.FhirVersion.R4;
 @RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = APPLICATION_JSON)
 public class CapabilityAPIV2 {
 
-    private final LogManager eventLogger;
+    private final SQSEventClient eventLogger;
     private final ApiCommon common;
 
     @Operation(summary = CAP_REQ)
@@ -56,7 +56,7 @@ public class CapabilityAPIV2 {
 
         IParser parser = R4.getJsonParser();
 
-        eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), null, HttpStatus.OK,
+        eventLogger.sendLogs(new ApiResponseEvent(MDC.get(ORGANIZATION), null, HttpStatus.OK,
                 CAP_STMT, CAP_RET, (String) request.getAttribute(REQUEST_ID)));
 
         String server = common.getCurrentUrl(request).replace("/metadata", "");

@@ -11,7 +11,6 @@ import gov.cms.ab2d.common.service.RoleService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
-import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.job.JobTestSpringBootApp;
 import gov.cms.ab2d.job.dto.JobPollResult;
 import gov.cms.ab2d.job.dto.StaleJob;
@@ -125,8 +124,7 @@ class JobServiceTest extends JobCleanup {
     @BeforeEach
     public void setup() {
         MockitoAnnotations.openMocks(this);
-        LogManager logManager = new LogManager(sqsEventClient);
-        jobService = new JobServiceImpl(jobRepository, jobOutputService, logManager, tmpJobLocation);
+        jobService = new JobServiceImpl(jobRepository, jobOutputService, sqsEventClient, tmpJobLocation);
         ReflectionTestUtils.setField(jobService, "fileDownloadPath", tmpJobLocation);
 
         dataSetup.setupNonStandardClient(CLIENTID, CONTRACT_NUMBER, of());

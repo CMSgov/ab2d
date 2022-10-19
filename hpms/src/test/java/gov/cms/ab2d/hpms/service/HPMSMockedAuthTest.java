@@ -2,8 +2,8 @@ package gov.cms.ab2d.hpms.service;
 
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventclient.clients.EventClient;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.LoggableEvent;
-import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.hpms.SpringBootTestApp;
 import gov.cms.ab2d.hpms.hmsapi.HPMSAuthResponse;
 import org.junit.jupiter.api.AfterEach;
@@ -22,6 +22,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -53,7 +54,7 @@ class HPMSMockedAuthTest {
     MockWebClient mockWebClient;
 
     @MockBean
-    private LogManager eventLogger;
+    private SQSEventClient eventLogger;
 
     @MockBean
     private WebClient mockedWebClient;

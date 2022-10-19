@@ -2,9 +2,11 @@ package gov.cms.ab2d.api.security;
 
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.service.PdpClientService;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
-import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -18,12 +20,17 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import static gov.cms.ab2d.common.model.Role.ADMIN_ROLE;
 import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
-import static gov.cms.ab2d.common.util.Constants.*;
+import static gov.cms.ab2d.common.util.Constants.ADMIN_PREFIX;
+import static gov.cms.ab2d.common.util.Constants.AKAMAI_TEST_OBJECT;
+import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
+import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
+import static gov.cms.ab2d.common.util.Constants.HEALTH_ENDPOINT;
+import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
+import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
+import static gov.cms.ab2d.common.util.Constants.STATUS_ENDPOINT;
 import static gov.cms.ab2d.eventclient.events.SlackEvents.API_AUTHNZ_ERROR;
 
 @Slf4j
@@ -35,7 +42,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private final FilterChainExceptionHandler filterChainExceptionHandler;
     private final JwtTokenAuthenticationFilter jwtTokenAuthenticationFilter;
     private final CustomUserDetailsService customUserDetailsService;
-    private final LogManager eventLogger;
+    private final SQSEventClient eventLogger;
     private final PdpClientService pdpClientService;
 
     private final String[] authExceptions = new String[]{"/swagger-ui/**", "/configuration/**",

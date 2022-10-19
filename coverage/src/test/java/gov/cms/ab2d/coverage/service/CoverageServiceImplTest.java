@@ -23,7 +23,7 @@ import gov.cms.ab2d.coverage.util.AB2DCoverageLocalstackContainer;
 import gov.cms.ab2d.coverage.util.AB2DCoveragePostgressqlContainer;
 import gov.cms.ab2d.coverage.util.Coverage;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
-import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -125,7 +125,7 @@ class CoverageServiceImplTest {
     CoverageService coverageService;
 
     @SpyBean
-    LogManager eventLogger;
+    SQSEventClient eventLogger;
 
     @Autowired
     CoverageDataSetup dataSetup;

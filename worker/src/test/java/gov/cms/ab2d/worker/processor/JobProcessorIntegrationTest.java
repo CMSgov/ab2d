@@ -19,7 +19,6 @@ import gov.cms.ab2d.eventclient.events.ErrorEvent;
 import gov.cms.ab2d.eventclient.events.FileEvent;
 import gov.cms.ab2d.eventclient.events.JobStatusChangeEvent;
 import gov.cms.ab2d.eventclient.events.LoggableEvent;
-import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobOutput;
 import gov.cms.ab2d.job.model.JobStatus;
@@ -168,7 +167,6 @@ class JobProcessorIntegrationTest extends JobCleanup {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        LogManager logManager = new LogManager(sqsEventClient);
         PdpClient pdpClient = createClient();
 
         contract = createContract();
@@ -199,7 +197,7 @@ class JobProcessorIntegrationTest extends JobCleanup {
         SearchConfig searchConfig = new SearchConfig(tmpEfsMountDir.getAbsolutePath(),
                 STREAMING_DIR, FINISHED_DIR, 0, 0, MULTIPLIER, NUMBER_PATIENT_REQUESTS_PER_THREAD);
 
-        PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, logManager, searchConfig);
+        PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, sqsEventClient, searchConfig);
         ReflectionTestUtils.setField(patientClaimsProcessor, "earliestDataDate", "01/01/1900");
 
         ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
@@ -210,7 +208,7 @@ class JobProcessorIntegrationTest extends JobCleanup {
                 jobRepository,
                 mockCoverageDriver,
                 patientClaimsProcessor,
-                logManager,
+                sqsEventClient,
                 eobClaimRequestsQueue,
                 jobChannelService,
                 jobProgressService,
@@ -226,7 +224,7 @@ class JobProcessorIntegrationTest extends JobCleanup {
                 jobRepository,
                 jobOutputRepository,
                 contractProcessor,
-                logManager
+                sqsEventClient
         );
 
         ReflectionTestUtils.setField(cut, "efsMount", tmpEfsMountDir.toString());

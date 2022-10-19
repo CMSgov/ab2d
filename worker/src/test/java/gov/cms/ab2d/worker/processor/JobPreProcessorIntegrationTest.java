@@ -11,7 +11,6 @@ import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.JobStatusChangeEvent;
 import gov.cms.ab2d.eventclient.events.LoggableEvent;
-import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.job.repository.JobRepository;
@@ -96,9 +95,8 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        LogManager manager = new LogManager(sqsEventClient);
 
-        cut = new JobPreProcessorImpl(contractWorkerClient, jobRepository, manager, coverageDriver);
+        cut = new JobPreProcessorImpl(contractWorkerClient, jobRepository, sqsEventClient, coverageDriver);
 
         Contract tmpContract = new Contract();
         tmpContract.setContractNumber(UUID.randomUUID().toString());

@@ -1,8 +1,8 @@
 package gov.cms.ab2d.job.service;
 
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
-import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.eventclient.events.SlackEvents;
 import gov.cms.ab2d.job.dto.JobPollResult;
 import gov.cms.ab2d.job.dto.StaleJob;
@@ -11,13 +11,6 @@ import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobOutput;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.job.repository.JobRepository;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.io.File;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
@@ -27,6 +20,13 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 
 import static gov.cms.ab2d.common.util.Constants.MAX_DOWNLOADS;
 
@@ -37,13 +37,13 @@ public class JobServiceImpl implements JobService {
 
     private final JobRepository jobRepository;
     private final JobOutputService jobOutputService;
-    private final LogManager eventLogger;
+    private final SQSEventClient eventLogger;
     private final String fileDownloadPath;
 
     public static final String INITIAL_JOB_STATUS_MESSAGE = "0%";
 
     public JobServiceImpl(JobRepository jobRepository, JobOutputService jobOutputService,
-                          LogManager eventLogger,
+                          SQSEventClient eventLogger,
                           @Value("${efs.mount}") String fileDownloadPath) {
         this.jobRepository = jobRepository;
         this.jobOutputService = jobOutputService;
@@ -65,7 +65,7 @@ public class JobServiceImpl implements JobService {
         job.setFhirVersion(startJobDTO.getVersion());
         job.setOrganization(startJobDTO.getOrganization());
 
-        eventLogger.log(job.buildJobStatusChangeEvent(JobStatus.SUBMITTED, "Job Created"));
+        eventLogger.sendLogs(job.buildJobStatusChangeEvent(JobStatus.SUBMITTED, "Job Created"));
 
         // Report client running first job in prod
         if (clientHasNeverCompletedJob(startJobDTO.getContractNumber())) {
@@ -86,7 +86,7 @@ public class JobServiceImpl implements JobService {
             log.error("Job had a status of {} so it was not able to be cancelled", job.getStatus());
             throw new InvalidJobStateTransition("Job has a status of " + job.getStatus() + ", so it cannot be cancelled");
         }
-        eventLogger.log(job.buildJobStatusChangeEvent(JobStatus.CANCELLED, "Job Cancelled"));
+        eventLogger.sendLogs(job.buildJobStatusChangeEvent(JobStatus.CANCELLED, "Job Cancelled"));
         jobRepository.cancelJobByJobUuid(jobUuid);
     }
 

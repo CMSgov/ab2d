@@ -5,11 +5,22 @@ import com.okta.jwt.AccessTokenVerifier;
 import com.okta.jwt.Jwt;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.common.model.PdpClient;
-import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.common.service.PdpClientService;
-import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventclient.events.ApiRequestEvent;
+import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.common.util.UtilMethods;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
+import gov.cms.ab2d.eventclient.events.ApiRequestEvent;
+import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.MDC;
@@ -17,19 +28,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import javax.annotation.PostConstruct;
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.List;
-import java.util.UUID;
-import java.util.function.Predicate;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
-import static gov.cms.ab2d.common.util.Constants.*;
+
+import static gov.cms.ab2d.common.util.Constants.AKAMAI_TEST_OBJECT;
+import static gov.cms.ab2d.common.util.Constants.HEALTH_ENDPOINT;
+import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
+import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
+import static gov.cms.ab2d.common.util.Constants.STATUS_ENDPOINT;
 
 @Slf4j
 @Component
@@ -43,7 +48,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
     private final AccessTokenVerifier accessTokenVerifier;
     private final PdpClientService pdpClientService;
     private final JwtConfig jwtConfig;
-    private final LogManager eventLogger;
+    private final SQSEventClient eventLogger;
 
     // Filters for public URIs
     private final String uriFilters;
@@ -54,7 +59,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
     private Predicate<String> uriFilter;
 
     public JwtTokenAuthenticationFilter(AccessTokenVerifier accessTokenVerifier, PdpClientService pdpClientService,
-                                        JwtConfig jwtConfig, LogManager eventLogger,
+                                        JwtConfig jwtConfig, SQSEventClient eventLogger,
                                         @Value("${api.requestlogging.filter:#{null}}") String uriFilters) {
         this.accessTokenVerifier = accessTokenVerifier;
         this.pdpClientService = pdpClientService;
@@ -163,7 +168,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
         String uniqueId = UUID.randomUUID().toString();
         ApiRequestEvent requestEvent = new ApiRequestEvent(organization, jobId, url, UtilMethods.getIpAddress(request),
                 token, uniqueId);
-        eventLogger.log(requestEvent);
+        eventLogger.sendLogs(requestEvent);
         request.setAttribute(REQUEST_ID, uniqueId);
     }
 
