@@ -1,4 +1,4 @@
-package gov.cms.ab2d.common.util;
+package gov.cms.ab2d.api.util;
 
 import javax.servlet.http.HttpServletRequest;
 

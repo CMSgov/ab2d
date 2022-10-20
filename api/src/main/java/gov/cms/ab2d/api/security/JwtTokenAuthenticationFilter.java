@@ -7,7 +7,7 @@ import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
-import gov.cms.ab2d.common.util.UtilMethods;
+import gov.cms.ab2d.api.util.UtilMethods;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ApiRequestEvent;
 import java.io.IOException;
