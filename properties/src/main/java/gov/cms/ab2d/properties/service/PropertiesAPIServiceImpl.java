@@ -1,13 +1,16 @@
 package gov.cms.ab2d.properties.service;
 
+import gov.cms.ab2d.properties.client.PropertiesClient;
+import gov.cms.ab2d.properties.client.Property;
 import gov.cms.ab2d.properties.dto.PropertiesDTO;
 import gov.cms.ab2d.properties.model.Properties;
-import gov.cms.ab2d.properties.client.PropertiesClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import gov.cms.ab2d.properties.client.PropertiesClientImpl;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -15,14 +18,12 @@ import java.util.List;
 public class PropertiesAPIServiceImpl implements PropertiesAPIService {
     private PropertiesService propertiesService;
     private boolean usePropertyService;
-    private String propertyServiceUrl;
     private PropertiesClient propertiesClient;
 
     PropertiesAPIServiceImpl(@Value("${feature.property.service.enabled}") boolean usePropertyService, PropertiesService service,
                              @Value("${property.service.url}") String propertyServiceUrl) {
         this.propertiesService = service;
         this.usePropertyService = usePropertyService;
-        this.propertyServiceUrl = propertyServiceUrl;
         this.propertiesClient = new PropertiesClientImpl(propertyServiceUrl);
     }
 
@@ -30,7 +31,10 @@ public class PropertiesAPIServiceImpl implements PropertiesAPIService {
     public String getProperty(String property) {
         if (usePropertyService) {
             try {
-                return propertiesClient.getProperty(property);
+                Property prop = propertiesClient.getProperty(property);
+                if (prop != null) {
+                    return prop.getValue();
+                }
             } catch (Exception ex) {
                 return null;
             }
@@ -56,7 +60,15 @@ public class PropertiesAPIServiceImpl implements PropertiesAPIService {
     @Override
     public List<PropertiesDTO> getAllProperties() {
         if (usePropertyService) {
-            return propertiesClient.getAllProperties();
+            List<Property> properties = propertiesClient.getAllProperties();
+            if (properties != null && !properties.isEmpty()) {
+                return properties.stream().map(p -> {
+                    PropertiesDTO dto = new PropertiesDTO(p.getKey(), p.getValue());
+                    return dto;
+                }).toList();
+            } else {
+                return new ArrayList<>();
+            }
         }
         return propertiesService.getAllPropertiesDTO();
     }
