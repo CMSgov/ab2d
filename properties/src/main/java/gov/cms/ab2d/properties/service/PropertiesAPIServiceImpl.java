@@ -20,7 +20,7 @@ public class PropertiesAPIServiceImpl implements PropertiesAPIService {
     private boolean usePropertyService;
     private PropertiesClient propertiesClient;
 
-    PropertiesAPIServiceImpl(@Value("${feature.property.service.enabled}") boolean usePropertyService, PropertiesService service,
+    PropertiesAPIServiceImpl(@Value("${feature.property.service.enabled:false}") boolean usePropertyService, PropertiesService service,
                              @Value("${property.service.url}") String propertyServiceUrl) {
         this.propertiesService = service;
         this.usePropertyService = usePropertyService;
