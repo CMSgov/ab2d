@@ -1,16 +1,16 @@
 package gov.cms.ab2d.worker.bfdhealthcheck;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.properties.service.PropertiesAPIService;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
-import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.IBaseConformance;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
 
 import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
 import static gov.cms.ab2d.eventclient.events.SlackEvents.MAINT_MODE;
@@ -21,14 +21,14 @@ import static gov.cms.ab2d.worker.bfdhealthcheck.HealthCheckData.Status;
 @Slf4j
 class BFDHealthCheck {
 
-    private final LogManager logManager;
+    private final SQSEventClient logManager;
     private final PropertiesAPIService propertiesApiService;
     private final BFDClient bfdClient;
     private final int consecutiveSuccessesToBringUp;
     private final int consecutiveFailuresToTakeDown;
     private final List<HealthCheckData> healthCheckData = new ArrayList<>();
 
-    BFDHealthCheck(LogManager logManager, PropertiesAPIService propertiesApiService, BFDClient bfdClient,
+    BFDHealthCheck(SQSEventClient logManager, PropertiesAPIService propertiesApiService, BFDClient bfdClient,
                           @Value("${bfd.health.check.consecutive.successes}") int consecutiveSuccessesToBringUp,
                           @Value("${bfd.health.check.consecutive.failures}") int consecutiveFailuresToTakeDown) {
         this.logManager = logManager;

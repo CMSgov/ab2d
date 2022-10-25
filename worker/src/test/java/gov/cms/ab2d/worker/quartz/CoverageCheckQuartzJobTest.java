@@ -1,9 +1,10 @@
 package gov.cms.ab2d.worker.quartz;
 
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.properties.service.PropertiesAPIService;
-import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageVerificationException;
+import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,11 +13,19 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.quartz.JobExecutionException;
 
-import java.util.List;
 
 import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.anyList;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.contains;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class CoverageCheckQuartzJobTest {
@@ -28,7 +37,7 @@ public class CoverageCheckQuartzJobTest {
     private CoverageDriver coverageDriver;
 
     @Mock
-    private LogManager logManager;
+    private SQSEventClient logManager;
 
     @AfterEach
     void tearDown() {

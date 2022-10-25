@@ -5,7 +5,6 @@
     <modelVersion>4.0.0</modelVersion>
     <modules>
         <module>properties</module>
-        <module>eventlogger</module>
         <module>common</module>
         <module>job</module>
         <module>coverage</module>
@@ -34,8 +33,6 @@
         <java.version>17</java.version>
         <hapi.version>6.1.2</hapi.version>
         <mockito.inline.version>4.8.0</mockito.inline.version>
-        <!-- eventlogger is imported first by all other modules, if that changes then
-         okhttp3 must be imported first anywhere the slack client is used-->
         <okhttp3.version>4.10.0</okhttp3.version>
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
         <logback-encoder.version>7.2</logback-encoder.version>
@@ -47,7 +44,7 @@
         <jacoco.version>0.8.8</jacoco.version>
         <maven.resources.plugin.version>3.3.0</maven.resources.plugin.version>
         <maven.assembly.plugin.version>2.3</maven.assembly.plugin.version>
-        <events-client.version>1.8</events-client.version>
+        <events-client.version>1.9</events-client.version>
     </properties>
 
     <dependencies>

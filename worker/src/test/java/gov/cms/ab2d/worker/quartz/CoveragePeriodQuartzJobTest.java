@@ -1,9 +1,11 @@
 package gov.cms.ab2d.worker.quartz;
 
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.properties.service.PropertiesAPIService;
-import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverStub;
+import java.time.DayOfWeek;
+import java.time.OffsetDateTime;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,16 +14,23 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.quartz.JobExecutionException;
 
-import java.time.DayOfWeek;
-import java.time.OffsetDateTime;
 
+import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_DISCOVERY;
 import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_OVERRIDE;
-import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_QUEUEING;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.anyList;
+import static org.mockito.Mockito.contains;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class CoveragePeriodQuartzJobTest {
@@ -33,7 +42,7 @@ class CoveragePeriodQuartzJobTest {
     private CoverageDriver coverageDriverMock;
 
     @Mock
-    private LogManager logManager;
+    private SQSEventClient logManager;
 
     @AfterEach
     void tearDown() {

@@ -17,7 +17,7 @@ import gov.cms.ab2d.coverage.repository.CoveragePeriodRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;
-import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
@@ -80,7 +80,7 @@ public class CoverageServiceImpl implements CoverageService {
 
     private final CoverageDeltaRepository coverageDeltaRepository;
 
-    private final LogManager eventLogger;
+    private final SQSEventClient eventLogger;
 
     @Override
     public CoveragePeriod getCoveragePeriod(ContractForCoverageDTO contract, int month, int year) {

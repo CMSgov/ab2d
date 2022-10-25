@@ -2,30 +2,18 @@ package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
-import gov.cms.ab2d.eventclient.clients.SQSEventClient;
-import gov.cms.ab2d.eventclient.events.ApiRequestEvent;
-import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
-import gov.cms.ab2d.eventclient.events.ContractSearchEvent;
-import gov.cms.ab2d.eventclient.events.ErrorEvent;
-import gov.cms.ab2d.eventclient.events.FileEvent;
-import gov.cms.ab2d.eventclient.events.JobStatusChangeEvent;
-import gov.cms.ab2d.eventclient.events.LoggableEvent;
-import gov.cms.ab2d.eventclient.events.ReloadEvent;
-import gov.cms.ab2d.job.model.Job;
-import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
-import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
-import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
-import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
-import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
-import gov.cms.ab2d.eventlogger.utils.UtilMethods;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
+import gov.cms.ab2d.eventclient.events.JobStatusChangeEvent;
+import gov.cms.ab2d.eventclient.events.LoggableEvent;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobStatus;
+import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.job.service.JobCleanup;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverException;
@@ -38,6 +26,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,18 +37,19 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 
-import static gov.cms.ab2d.job.model.JobStartedBy.DEVELOPER;
 import static gov.cms.ab2d.common.model.SinceSource.AB2D;
 import static gov.cms.ab2d.common.model.SinceSource.FIRST_RUN;
 import static gov.cms.ab2d.common.model.SinceSource.USER;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
+import static gov.cms.ab2d.job.model.JobStartedBy.DEVELOPER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
@@ -83,22 +74,13 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
     private SQSEventClient sqsEventClient;
 
     @Autowired
-    private LoggerEventRepository loggerEventRepository;
-
-    @Autowired
-    private SqlEventLogger sqlEventLogger;
-
-    @Autowired
     private DataSetup dataSetup;
 
     @Mock
     private CoverageDriver coverageDriver;
 
-    @Mock
-    private KinesisEventLogger kinesisEventLogger;
-
-    @Mock
-    private SlackLogger slackLogger;
+    @Captor
+    private ArgumentCaptor<LoggableEvent> captor;
 
     private PdpClient pdpClient;
     private Job job;
@@ -113,9 +95,8 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        LogManager manager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger, sqsEventClient, false);
 
-        cut = new JobPreProcessorImpl(contractWorkerClient, jobRepository, manager, coverageDriver);
+        cut = new JobPreProcessorImpl(contractWorkerClient, jobRepository, sqsEventClient, coverageDriver);
 
         Contract tmpContract = new Contract();
         tmpContract.setContractNumber(UUID.randomUUID().toString());
@@ -128,7 +109,6 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
     @AfterEach
     void clear() {
         jobCleanup();
-        loggerEventRepository.delete();
         dataSetup.cleanup();
         contractRepository.flush();
     }
@@ -141,20 +121,13 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
         var processedJob = cut.preprocess(job.getJobUuid());
         assertEquals(JobStatus.IN_PROGRESS, processedJob.getStatus());
 
-        List<LoggableEvent> jobStatusChange = loggerEventRepository.load(JobStatusChangeEvent.class);
+        verify(sqsEventClient, times(1)).logAndAlert(captor.capture(), any());
+        List<LoggableEvent> jobStatusChange = captor.getAllValues();
+
         assertEquals(1, jobStatusChange.size());
         JobStatusChangeEvent event = (JobStatusChangeEvent) jobStatusChange.get(0);
         assertEquals("SUBMITTED", event.getOldStatus());
         assertEquals("IN_PROGRESS", event.getNewStatus());
-
-        assertTrue(UtilMethods.allEmpty(
-                loggerEventRepository.load(ApiRequestEvent.class),
-                loggerEventRepository.load(ApiResponseEvent.class),
-                loggerEventRepository.load(ReloadEvent.class),
-                loggerEventRepository.load(ContractSearchEvent.class),
-                loggerEventRepository.load(ErrorEvent.class),
-                loggerEventRepository.load(FileEvent.class)));
-        loggerEventRepository.delete();
     }
 
     @Test
@@ -181,20 +154,14 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
         var processedJob = cut.preprocess(job.getJobUuid());
         assertEquals(JobStatus.FAILED, processedJob.getStatus());
 
-        List<LoggableEvent> jobStatusChange = loggerEventRepository.load(JobStatusChangeEvent.class);
+        verify(sqsEventClient, times(1)).logAndAlert(captor.capture(), any());
+        List<LoggableEvent> jobStatusChange = captor.getAllValues();
+
         assertEquals(1, jobStatusChange.size());
         JobStatusChangeEvent event = (JobStatusChangeEvent) jobStatusChange.get(0);
         assertEquals("SUBMITTED", event.getOldStatus());
         assertEquals("FAILED", event.getNewStatus());
 
-        assertTrue(UtilMethods.allEmpty(
-                loggerEventRepository.load(ApiRequestEvent.class),
-                loggerEventRepository.load(ApiResponseEvent.class),
-                loggerEventRepository.load(ReloadEvent.class),
-                loggerEventRepository.load(ContractSearchEvent.class),
-                loggerEventRepository.load(ErrorEvent.class),
-                loggerEventRepository.load(FileEvent.class)));
-        loggerEventRepository.delete();
     }
 
     @Test

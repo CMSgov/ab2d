@@ -5,7 +5,7 @@ import gov.cms.ab2d.aggregator.FileOutputType;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
-import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.config.SearchConfig;
 import java.io.File;
@@ -49,7 +49,7 @@ class PatientClaimsProcessorUnitTest {
     private PatientClaimsProcessorImpl cut;
 
     @Mock private BFDClient mockBfdClient;
-    @Mock private LogManager eventLogger;
+    @Mock private SQSEventClient eventLogger;
 
     @TempDir
     File tmpEfsMountDir;

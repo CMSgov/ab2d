@@ -10,7 +10,7 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
-@ComponentScan(basePackages = {"gov.cms.ab2d.common", "gov.cms.ab2d.hpms", "gov.cms.ab2d.eventlogger", "gov.cms.ab2d.eventclient.clients"})
+@ComponentScan(basePackages = {"gov.cms.ab2d.common", "gov.cms.ab2d.hpms", "gov.cms.ab2d.eventclient.clients"})
 @EntityScan(basePackages = {"gov.cms.ab2d.common.model"})
 @EnableJpaRepositories("gov.cms.ab2d.common.repository")
 @PropertySource("classpath:application.common.properties")

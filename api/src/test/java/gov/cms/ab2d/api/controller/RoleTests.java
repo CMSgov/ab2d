@@ -5,7 +5,6 @@ import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.common.util.DataSetup;
-import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -43,9 +42,6 @@ public class RoleTests {
     private TestUtil testUtil;
 
     @Autowired
-    LoggerEventRepository loggerEventRepository;
-
-    @Autowired
     private DataSetup dataSetup;
 
     @Container
@@ -61,7 +57,6 @@ public class RoleTests {
     @AfterEach
     public void cleanup() {
         dataSetup.cleanup();
-        loggerEventRepository.delete();
     }
 
     // This will test the API using a role that should not be able to access sponsor URLs

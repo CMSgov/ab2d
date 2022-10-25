@@ -1,4 +1,4 @@
-package gov.cms.ab2d.eventlogger.utils;
+package gov.cms.ab2d.api.util;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;

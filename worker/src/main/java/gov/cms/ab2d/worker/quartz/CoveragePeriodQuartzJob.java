@@ -1,9 +1,12 @@
 package gov.cms.ab2d.worker.quartz;
 
 import gov.cms.ab2d.common.service.FeatureEngagement;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.properties.service.PropertiesAPIService;
-import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
+import java.time.DayOfWeek;
+import java.time.OffsetDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.DisallowConcurrentExecution;
@@ -11,13 +14,10 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.springframework.scheduling.quartz.QuartzJobBean;
 
-import java.time.DayOfWeek;
-import java.time.OffsetDateTime;
-import java.util.List;
 
+import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_DISCOVERY;
 import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_OVERRIDE;
-import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_QUEUEING;
 import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PRODUCTION;
 import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.SANDBOX;
@@ -48,7 +48,7 @@ import static gov.cms.ab2d.eventclient.events.SlackEvents.COVERAGE_UPDATES_FAILE
 public class CoveragePeriodQuartzJob extends QuartzJobBean {
     private final CoverageDriver driver;
     private final PropertiesAPIService propertiesApiService;
-    private final LogManager logManager;
+    private final SQSEventClient logManager;
     @Override
     protected void executeInternal(JobExecutionContext jobExecutionContext) throws JobExecutionException {
 

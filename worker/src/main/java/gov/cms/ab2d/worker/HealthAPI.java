@@ -1,7 +1,6 @@
 package gov.cms.ab2d.worker;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.health.SlackAvailable;
 import gov.cms.ab2d.worker.util.HealthCheck;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +20,6 @@ public class HealthAPI {
 
     private final HealthCheck healthCheck;
     private final BFDClient bfdClient;
-    private final SlackAvailable slackAvailable;
 
     @GetMapping(HEALTH_ENDPOINT)
     public ResponseEntity<Void> getHealth() {
@@ -29,15 +27,6 @@ public class HealthAPI {
             return new ResponseEntity<>(HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping(VALIDATE_SLACK_ENDPOINT)
-    public ResponseEntity<Void> sendMessageToSlack() {
-        if (slackAvailable.slackAvailable("Test Message from Worker API")) {
-            return new ResponseEntity<>(HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
 

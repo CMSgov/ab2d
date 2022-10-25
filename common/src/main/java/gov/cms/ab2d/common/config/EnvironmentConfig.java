@@ -1,4 +1,4 @@
-package gov.cms.ab2d.eventlogger;
+package gov.cms.ab2d.common.config;
 
 import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
 import org.springframework.beans.factory.annotation.Value;

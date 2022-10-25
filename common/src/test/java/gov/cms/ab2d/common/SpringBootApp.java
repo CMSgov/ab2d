@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
 
-@SpringBootApplication(scanBasePackages = {"gov.cms.ab2d.eventlogger", "gov.cms.ab2d.common", "gov.cms.ab2d.eventclient.clients"})
+@SpringBootApplication(scanBasePackages = {"gov.cms.ab2d.common", "gov.cms.ab2d.eventclient.clients"})
 @PropertySource("classpath:application.common.properties")
 @Import(AB2DSQSMockConfig.class)
 public class SpringBootApp {
