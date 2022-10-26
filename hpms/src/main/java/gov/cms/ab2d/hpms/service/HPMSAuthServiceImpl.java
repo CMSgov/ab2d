@@ -3,13 +3,8 @@ package gov.cms.ab2d.hpms.service;
 import gov.cms.ab2d.eventclient.clients.EventClient;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ErrorEvent;
+import gov.cms.ab2d.eventclient.events.MetricsEvent;
 import gov.cms.ab2d.hpms.hmsapi.HPMSAuthResponse;
-import java.net.URI;
-import java.time.Duration;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -22,6 +17,13 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
+import javax.annotation.PostConstruct;
+import java.net.URI;
+import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static gov.cms.ab2d.eventclient.events.ErrorEvent.ErrorType.HPMS_AUTH_ERROR;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -105,15 +107,24 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
             tokenExpires = currentTimestamp + authResponse.getExpires() * 900L;
             authToken = authResponse.getAccessToken();
         } catch (WebClientResponseException exception) {
-            eventLogger.log(EventClient.LogType.SQL,
-                    new ErrorEvent(HPMS_ORGANIZATION, "", HPMS_AUTH_ERROR, prepareErrorMessage(exception, curTime)));
+            logEvents(prepareErrorMessage(exception, curTime));
             throw exception;
         } catch (IllegalStateException | NullPointerException exception) {
-            String message = "HPMS auth call failed with no response waited for " + (curTime / 1000) + " seconds.";
-            eventLogger.log(EventClient.LogType.SQL,
-                    new ErrorEvent(HPMS_ORGANIZATION, "", HPMS_AUTH_ERROR, message));
-            throw new RemoteTimeoutException(message);
+            String error = "HPMS auth call failed with no response waited for " + (curTime / 1000) + " seconds.";
+            logEvents(error);
+            throw new RemoteTimeoutException(error);
         }
+    }
+
+    private void logEvents(String error) {
+        eventLogger.sendLogs(MetricsEvent.builder()
+                .service("HPMS")
+                .timeOfEvent(OffsetDateTime.now())
+                .eventDescription(String.format(error))
+                .stateType(MetricsEvent.State.CONTINUE)
+                .build());
+        eventLogger.log(EventClient.LogType.SQL,
+                new ErrorEvent(HPMS_ORGANIZATION, "", HPMS_AUTH_ERROR, error));
     }
 
     private String extractCookies(MultiValueMap<String, ResponseCookie> entries) {
