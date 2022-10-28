@@ -3,14 +3,12 @@ package gov.cms.ab2d.properties.service;
 import gov.cms.ab2d.properties.client.PropertiesClient;
 import gov.cms.ab2d.properties.client.Property;
 import gov.cms.ab2d.properties.dto.PropertiesDTO;
-import gov.cms.ab2d.properties.model.Properties;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import gov.cms.ab2d.properties.client.PropertiesClientImpl;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -29,18 +27,25 @@ public class PropertiesAPIServiceImpl implements PropertiesAPIService {
 
     @Override
     public String getProperty(String property) {
+        String value;
         if (usePropertyService) {
             try {
                 Property prop = propertiesClient.getProperty(property);
                 if (prop != null) {
-                    return prop.getValue();
+                    value = prop.getValue();
+                    log.info("Getting value for: " + property + " from properties service, value: " + value);
+                } else {
+                    log.error("Cannot access properties service, using default database value");
+                    value = propertiesService.getPropertiesByKey(property).getValue();
                 }
             } catch (Exception ex) {
-                return null;
+                log.error("Cannot access properties service, using default database value", ex);
+                value = propertiesService.getPropertiesByKey(property).getValue();
             }
+        } else {
+            value = propertiesService.getPropertiesByKey(property).getValue();
         }
-        Properties properties = propertiesService.getPropertiesByKey(property);
-        return properties.getValue();
+        return value;
     }
 
     @Override
@@ -50,7 +55,9 @@ public class PropertiesAPIServiceImpl implements PropertiesAPIService {
                 propertiesClient.setProperty(property, value);
                 return true;
             } catch (Exception ex) {
-                return false;
+                log.error("Cannot access properties service, using default database value", ex);
+                PropertiesDTO propertiesDTO = new PropertiesDTO(property, value);
+                return propertiesService.updateProperty(propertiesDTO);
             }
         }
         PropertiesDTO propertiesDTO = new PropertiesDTO(property, value);
@@ -67,7 +74,8 @@ public class PropertiesAPIServiceImpl implements PropertiesAPIService {
                     return dto;
                 }).toList();
             } else {
-                return new ArrayList<>();
+                log.error("Cannot access properties service, using default database value");
+                return propertiesService.getAllPropertiesDTO();
             }
         }
         return propertiesService.getAllPropertiesDTO();
@@ -95,7 +103,8 @@ public class PropertiesAPIServiceImpl implements PropertiesAPIService {
                 propertiesClient.setProperty(key, value);
                 return true;
             } catch (Exception ex) {
-                return false;
+                log.error("Cannot access properties service, using default database value", ex);
+                return propertiesService.insertProperty(key, value);
             }
         }
         return propertiesService.insertProperty(key, value);
@@ -111,7 +120,8 @@ public class PropertiesAPIServiceImpl implements PropertiesAPIService {
                 propertiesClient.deleteProperty(key);
                 return true;
             } catch (Exception ex) {
-                return false;
+                log.error("Cannot access properties service, using default database value", ex);
+                return propertiesService.deleteProperty(key);
             }
         }
         return propertiesService.deleteProperty(key);
