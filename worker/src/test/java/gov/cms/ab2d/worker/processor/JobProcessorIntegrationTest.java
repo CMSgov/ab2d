@@ -80,6 +80,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
@@ -191,12 +192,12 @@ class JobProcessorIntegrationTest extends JobCleanup {
         job.setStatus(JobStatus.IN_PROGRESS);
         jobRepository.saveAndFlush(job);
 
-        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong())).thenAnswer((args) -> {
+        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), anyString())).thenAnswer((args) -> {
             ExplanationOfBenefit copy = EOB.copy();
             copy.getPatient().setReference("Patient/" + args.getArgument(1));
             return EobTestDataUtil.createBundle(copy);
         });
-        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any())).thenAnswer((args) -> {
+        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any(), anyString())).thenAnswer((args) -> {
             ExplanationOfBenefit copy = EOB.copy();
             copy.getPatient().setReference("Patient/" + args.getArgument(1));
             return EobTestDataUtil.createBundle(copy);
@@ -303,7 +304,7 @@ class JobProcessorIntegrationTest extends JobCleanup {
     @DisplayName("When bene has no eobs then do not count bene toward statistic")
     void when_beneHasNoEobs_notCounted() {
         reset(mockBfdClient);
-        OngoingStubbing<IBaseBundle> stubbing = when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any()));
+        OngoingStubbing<IBaseBundle> stubbing = when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any(), anyString()));
         stubbing = andThenAnswerEobs(stubbing, 0, 95);
         stubbing.thenReturn(BundleUtils.createBundle())
                 .thenReturn(BundleUtils.createBundle())
@@ -335,7 +336,7 @@ class JobProcessorIntegrationTest extends JobCleanup {
     @DisplayName("When the error count is below threshold, job does not fail")
     void when_errorCount_is_below_threshold_do_not_fail_job() {
         reset(mockBfdClient);
-        OngoingStubbing<IBaseBundle> stubbing = when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any()));
+        OngoingStubbing<IBaseBundle> stubbing = when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any(), anyString()));
         stubbing = andThenAnswerEobs(stubbing, 0, 95);
         stubbing.thenThrow(fail, fail, fail, fail, fail);
 
@@ -372,7 +373,7 @@ class JobProcessorIntegrationTest extends JobCleanup {
         when(mockCoverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractDTO.class))).thenReturn(40);
         andThenAnswerPatients(mockCoverageDriver, contractForCoverageDTO, 10, 40);
 
-        OngoingStubbing<IBaseBundle> stubbing = when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any()));
+        OngoingStubbing<IBaseBundle> stubbing = when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any(), anyString()));
         stubbing = andThenAnswerEobs(stubbing, 0, 20);
         stubbing = stubbing.thenThrow(fail, fail, fail, fail, fail, fail, fail, fail, fail, fail);
         andThenAnswerEobs(stubbing, 30, 10);

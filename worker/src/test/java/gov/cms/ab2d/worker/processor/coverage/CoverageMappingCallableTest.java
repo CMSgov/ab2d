@@ -64,7 +64,7 @@ class CoverageMappingCallableTest {
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20, 2020);
 
         when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class), anyString())).thenReturn(bundle2);
 
 
         ContractDTO contract = new ContractDTO("TESTING", "TESTING", null, null);
@@ -140,7 +140,7 @@ class CoverageMappingCallableTest {
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20, 3,2020);
 
         when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class), anyString())).thenReturn(bundle2);
 
         ContractDTO contract = new ContractDTO("TESTING", "TESTING", null, null);
 
@@ -190,7 +190,7 @@ class CoverageMappingCallableTest {
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20, 3,2020);
 
         when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class), anyString())).thenReturn(bundle2);
 
         ContractDTO contract = new ContractDTO("TESTING", "TESTING", null, null);
 
@@ -236,7 +236,7 @@ class CoverageMappingCallableTest {
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20, 2019);
 
         when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class), anyString())).thenReturn(bundle2);
 
         ContractDTO contract = new ContractDTO("TESTING", "TESTING", null, null);
 
@@ -287,7 +287,7 @@ class CoverageMappingCallableTest {
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20, 2019);
 
         when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class), anyString())).thenReturn(bundle2);
 
         ContractDTO contract = new ContractDTO("TESTING", "TESTING", null, null);
 
@@ -335,7 +335,7 @@ class CoverageMappingCallableTest {
         });
 
         when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class), anyString())).thenReturn(bundle2);
 
         ContractDTO contract = new ContractDTO("TESTING", "TESTING", null, null);
 
