@@ -1,9 +1,15 @@
 package gov.cms.ab2d.hpms.service;
 
-import gov.cms.ab2d.eventclient.events.ErrorEvent;
 import gov.cms.ab2d.eventclient.clients.EventClient;
-import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
+import gov.cms.ab2d.eventclient.events.ErrorEvent;
 import gov.cms.ab2d.hpms.hmsapi.HPMSAuthResponse;
+import java.net.URI;
+import java.time.Duration;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -15,13 +21,6 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
-
-import javax.annotation.PostConstruct;
-import java.net.URI;
-import java.time.Duration;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 
 import static gov.cms.ab2d.eventclient.events.ErrorEvent.ErrorType.HPMS_AUTH_ERROR;
@@ -47,7 +46,7 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
     private WebClient webClient;
 
     @Autowired
-    private LogManager eventLogger;
+    private SQSEventClient eventLogger;
 
     private URI fullAuthURI;
 

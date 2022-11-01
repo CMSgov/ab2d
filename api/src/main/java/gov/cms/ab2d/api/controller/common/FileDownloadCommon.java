@@ -2,8 +2,13 @@ package gov.cms.ab2d.api.controller.common;
 
 import gov.cms.ab2d.api.remote.JobClient;
 import gov.cms.ab2d.common.service.PdpClientService;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
-import gov.cms.ab2d.eventlogger.LogManager;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -14,16 +19,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 
-import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
 import static gov.cms.ab2d.common.util.Constants.FILE_LOG;
 import static gov.cms.ab2d.common.util.Constants.JOB_LOG;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
+import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 
 @Service
@@ -31,7 +31,7 @@ import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 @Slf4j
 public class FileDownloadCommon {
     private final JobClient jobClient;
-    private final LogManager eventLogger;
+    private final SQSEventClient eventLogger;
     private final PdpClientService pdpClientService;
 
     public ResponseEntity<String> downloadFile(String jobUuid, String filename, HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -52,7 +52,7 @@ public class FileDownloadCommon {
         try (OutputStream out = response.getOutputStream(); FileInputStream in = new FileInputStream(downloadResource.getFile())) {
             IOUtils.copy(in, out);
 
-            eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), jobUuid, HttpStatus.OK, "File Download",
+            eventLogger.sendLogs(new ApiResponseEvent(MDC.get(ORGANIZATION), jobUuid, HttpStatus.OK, "File Download",
                     "File " + filename + " was downloaded", (String) request.getAttribute(REQUEST_ID)));
             jobClient.incrementDownload(downloadResource.getFile(), jobUuid);
             return new ResponseEntity<>(null, null, HttpStatus.OK);

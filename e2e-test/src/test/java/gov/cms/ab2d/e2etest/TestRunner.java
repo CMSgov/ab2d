@@ -171,7 +171,7 @@ class TestRunner {
                 .withEnv("API_PORT", "" + apiPort)
                 /**
                  * Convert environment back to string that is
-                 * understandable by {@link gov.cms.ab2d.eventlogger.Ab2dEnvironment#fromName(String)} method
+                 * understandable by {@link gov.cms.ab2d.eventclient.clients.Ab2dEnvironment#fromName(String)} method
                  */
                 .withEnv("AB2D_EXECUTION_ENV", environment.getAb2dEnvironment().getName())
                 .withLocalCompose(true)

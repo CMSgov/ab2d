@@ -2,7 +2,7 @@ package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.SinceSource;
-import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobOutput;
 import gov.cms.ab2d.job.model.JobStartedBy;
@@ -10,19 +10,17 @@ import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverException;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
-
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 
 import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PUBLIC_LIST;
@@ -42,10 +40,10 @@ public class JobPreProcessorImpl implements JobPreProcessor {
 
     private final ContractWorkerClient contractWorkerClient;
     private final JobRepository jobRepository;
-    private final LogManager eventLogger;
+    private final SQSEventClient eventLogger;
     private final CoverageDriver coverageDriver;
 
-    public JobPreProcessorImpl(ContractWorkerClient contractWorkerClient, JobRepository jobRepository, LogManager logManager,
+    public JobPreProcessorImpl(ContractWorkerClient contractWorkerClient, JobRepository jobRepository, SQSEventClient logManager,
                                CoverageDriver coverageDriver) {
         this.contractWorkerClient = contractWorkerClient;
         this.jobRepository = jobRepository;

@@ -3,36 +3,27 @@ package gov.cms.ab2d.worker.processor;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
-import gov.cms.ab2d.eventclient.clients.SQSEventClient;
-import gov.cms.ab2d.eventclient.events.LoggableEvent;
-import gov.cms.ab2d.job.model.Job;
-import gov.cms.ab2d.job.model.JobOutput;
-import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.job.repository.JobOutputRepository;
-import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
-import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
-import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
-import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
-import gov.cms.ab2d.eventclient.events.ApiRequestEvent;
-import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ContractSearchEvent;
 import gov.cms.ab2d.eventclient.events.ErrorEvent;
 import gov.cms.ab2d.eventclient.events.FileEvent;
 import gov.cms.ab2d.eventclient.events.JobStatusChangeEvent;
-import gov.cms.ab2d.eventclient.events.ReloadEvent;
-import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
-import gov.cms.ab2d.eventlogger.utils.UtilMethods;
+import gov.cms.ab2d.eventclient.events.LoggableEvent;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobOutput;
+import gov.cms.ab2d.job.model.JobStatus;
+import gov.cms.ab2d.job.repository.JobOutputRepository;
+import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.job.service.JobCleanup;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
@@ -53,6 +44,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.OngoingStubbing;
@@ -76,13 +69,17 @@ import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest
@@ -103,9 +100,6 @@ class JobProcessorIntegrationTest extends JobCleanup {
 
     @Autowired
     private FileService fileService;
-
-    @Autowired
-    private LoggerEventRepository loggerEventRepository;
 
     @Autowired
     private JobRepository jobRepository;
@@ -135,9 +129,6 @@ class JobProcessorIntegrationTest extends JobCleanup {
     private RoundRobinBlockingQueue<PatientClaimsRequest> eobClaimRequestsQueue;
 
     @Autowired
-    private SqlEventLogger sqlEventLogger;
-
-    @Autowired
     private HealthCheck healthCheck;
 
     @Autowired
@@ -153,16 +144,13 @@ class JobProcessorIntegrationTest extends JobCleanup {
     private CoverageDriver mockCoverageDriver;
 
     @Mock
-    private KinesisEventLogger kinesisEventLogger;
-
-    @Mock
-    private SlackLogger slackLogger;
-
-    @Mock
     private BFDClient mockBfdClient;
 
     @TempDir
     File tmpEfsMountDir;
+
+    @Captor
+    private ArgumentCaptor<LoggableEvent> captor;
 
     private Job job;
 
@@ -180,7 +168,6 @@ class JobProcessorIntegrationTest extends JobCleanup {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger, sqsEventClient, false);
         PdpClient pdpClient = createClient();
 
         contract = createContract();
@@ -211,7 +198,7 @@ class JobProcessorIntegrationTest extends JobCleanup {
         SearchConfig searchConfig = new SearchConfig(tmpEfsMountDir.getAbsolutePath(),
                 STREAMING_DIR, FINISHED_DIR, 0, 0, MULTIPLIER, NUMBER_PATIENT_REQUESTS_PER_THREAD);
 
-        PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, logManager, searchConfig);
+        PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, sqsEventClient, searchConfig);
         ReflectionTestUtils.setField(patientClaimsProcessor, "earliestDataDate", "01/01/1900");
 
         ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
@@ -222,7 +209,7 @@ class JobProcessorIntegrationTest extends JobCleanup {
                 jobRepository,
                 mockCoverageDriver,
                 patientClaimsProcessor,
-                logManager,
+                sqsEventClient,
                 eobClaimRequestsQueue,
                 jobChannelService,
                 jobProgressService,
@@ -238,7 +225,7 @@ class JobProcessorIntegrationTest extends JobCleanup {
                 jobRepository,
                 jobOutputRepository,
                 contractProcessor,
-                logManager
+                sqsEventClient
         );
 
         ReflectionTestUtils.setField(cut, "efsMount", tmpEfsMountDir.toString());
@@ -248,7 +235,6 @@ class JobProcessorIntegrationTest extends JobCleanup {
     @AfterEach
     void cleanup() {
         jobCleanup();
-        loggerEventRepository.delete();
         dataSetup.cleanup();
         pdpClientRepository.deleteAll();
         contractRepository.deleteAll();
@@ -259,7 +245,9 @@ class JobProcessorIntegrationTest extends JobCleanup {
     void processJob() {
         var processedJob = cut.process(job.getJobUuid());
 
-        List<LoggableEvent> jobStatusChange = loggerEventRepository.load(JobStatusChangeEvent.class);
+        verify(sqsEventClient, times(1)).logAndAlert(captor.capture(), any());
+        List<LoggableEvent> jobStatusChange = captor.getAllValues();
+
         assertEquals(1, jobStatusChange.size());
         JobStatusChangeEvent jobEvent = (JobStatusChangeEvent) jobStatusChange.get(0);
         assertEquals(JobStatus.SUCCESSFUL.name(), jobEvent.getNewStatus());
@@ -279,8 +267,9 @@ class JobProcessorIntegrationTest extends JobCleanup {
         final List<JobOutput> jobOutputs = processedJob.getJobOutputs();
         assertFalse(jobOutputs.isEmpty());
 
-        // Always generate a contract search event
-        assertFalse(loggerEventRepository.load(ContractSearchEvent.class).isEmpty());
+        verify(sqsEventClient, times(1)).logAndAlert(captor.capture(), any());
+        List<LoggableEvent> events = captor.getAllValues();
+        assertNotSame(events.get(0).getClass(), ContractSearchEvent.class);
     }
 
     @Test
@@ -297,7 +286,9 @@ class JobProcessorIntegrationTest extends JobCleanup {
         assertFalse(jobOutputs.isEmpty());
 
         // Always generate a contract search event
-        assertFalse(loggerEventRepository.load(ContractSearchEvent.class).isEmpty());
+        verify(sqsEventClient, times(1)).logAndAlert(captor.capture(), any());
+        List<LoggableEvent> events = captor.getAllValues();
+        assertNotSame(events.get(0).getClass(), ContractSearchEvent.class);
     }
 
     @Test
@@ -319,7 +310,9 @@ class JobProcessorIntegrationTest extends JobCleanup {
         assertNotNull(processedJob.getExpiresAt());
         assertNotNull(processedJob.getCompletedAt());
 
-        List<LoggableEvent> beneSearchEvents = loggerEventRepository.load(ContractSearchEvent.class);
+        verify(sqsEventClient, atLeastOnce()).sendLogs(captor.capture());
+        List<LoggableEvent> beneSearchEvents = captor.getAllValues().stream().filter(e->e.getClass() == ContractSearchEvent.class).toList();
+
         assertEquals(1, beneSearchEvents.size());
         ContractSearchEvent event = (ContractSearchEvent) beneSearchEvents.get(0);
         assertEquals(JOB_UUID, event.getJobId());
@@ -347,7 +340,8 @@ class JobProcessorIntegrationTest extends JobCleanup {
         assertNotNull(processedJob.getExpiresAt());
         assertNotNull(processedJob.getCompletedAt());
 
-        List<LoggableEvent> beneSearchEvents = loggerEventRepository.load(ContractSearchEvent.class);
+        verify(sqsEventClient, atLeastOnce()).sendLogs(captor.capture());
+        List<LoggableEvent> beneSearchEvents = captor.getAllValues().stream().filter(e->e.getClass() == ContractSearchEvent.class).toList();
         assertEquals(1, beneSearchEvents.size());
         ContractSearchEvent event = (ContractSearchEvent) beneSearchEvents.get(0);
         assertEquals(JOB_UUID, event.getJobId());
@@ -380,18 +374,26 @@ class JobProcessorIntegrationTest extends JobCleanup {
 
         var processedJob = cut.process(job.getJobUuid());
 
-        List<LoggableEvent> errorEvents = loggerEventRepository.load(ErrorEvent.class);
+        verify(sqsEventClient, atLeastOnce()).sendLogs(captor.capture());
+        List<LoggableEvent> events = captor.getAllValues();
+        List<LoggableEvent> errorEvents = events.stream().filter(e->e.getClass() == ErrorEvent.class).toList();
+
+        List<LoggableEvent> contractSearchEvents = captor.getAllValues().stream().filter(e->e.getClass() == ContractSearchEvent.class).toList();
+
         assertEquals(1, errorEvents.size());
         ErrorEvent errorEvent = (ErrorEvent) errorEvents.get(0);
         assertEquals(TOO_MANY_SEARCH_ERRORS, errorEvent.getErrorType());
 
-        List<LoggableEvent> jobEvents = loggerEventRepository.load(JobStatusChangeEvent.class);
+        verify(sqsEventClient, atLeastOnce()).logAndAlert(captor.capture(), any());
+        events = captor.getAllValues();
+
+        List<LoggableEvent> jobEvents = events.stream().filter(e->e.getClass() == JobStatusChangeEvent.class).toList();
         assertEquals(1, jobEvents.size());
         JobStatusChangeEvent jobEvent = (JobStatusChangeEvent) jobEvents.get(0);
         assertEquals("IN_PROGRESS", jobEvent.getOldStatus());
         assertEquals("FAILED", jobEvent.getNewStatus());
 
-        List<LoggableEvent> fileEvents = loggerEventRepository.load(FileEvent.class);
+        List<LoggableEvent> fileEvents = events.stream().filter(e->e.getClass() == FileEvent.class).toList();
         // Since the max size of the file is not set here (so it's 0), every second write creates a new file since
         // the file is no longer empty after the first write. This means, there were 20 files created so 40 events
         assertEquals(0, fileEvents.size() % 2);
@@ -399,20 +401,13 @@ class JobProcessorIntegrationTest extends JobCleanup {
         assertEquals(fileEvents.size() / 2, fileEvents.stream().filter(e -> ((FileEvent) e).getStatus() == FileEvent.FileStatus.CLOSE).count());
         assertEquals(fileEvents.size() / 2, fileEvents.stream().filter(e -> ((FileEvent) e).getFileHash().length() > 0).count());
 
-        assertTrue(UtilMethods.allEmpty(loggerEventRepository.load(ApiRequestEvent.class),
-                loggerEventRepository.load(ApiResponseEvent.class),
-                loggerEventRepository.load(ReloadEvent.class)
-        ));
-
         // Even though a job has failed, expect an event to be generated with the progress
-        assertFalse(loggerEventRepository.load(ContractSearchEvent.class).isEmpty());
 
         assertEquals(JobStatus.FAILED, processedJob.getStatus());
         assertEquals("Too many patient records in the job had failures", processedJob.getStatusMessage());
         assertNull(processedJob.getExpiresAt());
         assertNotNull(processedJob.getCompletedAt());
 
-        List<LoggableEvent> contractSearchEvents = loggerEventRepository.load(ContractSearchEvent.class);
         assertEquals(1, contractSearchEvents.size());
     }
 

@@ -1,28 +1,28 @@
 package gov.cms.ab2d.api.controller;
 
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.model.PurgeQueueRequest;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.remote.JobClientMock;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
+import gov.cms.ab2d.eventclient.clients.SQSConfig;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ApiRequestEvent;
 import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
-import gov.cms.ab2d.eventclient.events.ContractSearchEvent;
 import gov.cms.ab2d.eventclient.events.ErrorEvent;
-import gov.cms.ab2d.eventclient.events.FileEvent;
-import gov.cms.ab2d.eventclient.events.JobStatusChangeEvent;
-import gov.cms.ab2d.eventclient.events.LoggableEvent;
-import gov.cms.ab2d.eventclient.events.ReloadEvent;
+import gov.cms.ab2d.eventclient.messages.GeneralSQSMessage;
+import gov.cms.ab2d.eventclient.messages.TraceAndAlertSQSMessage;
 import gov.cms.ab2d.job.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
-import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
-import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -31,6 +31,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
 import java.util.Optional;
+
 
 import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
@@ -41,9 +42,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @Testcontainers
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 public class BulkDataAccessAPIUnusualDataTests {
 
     @Autowired
@@ -65,10 +67,13 @@ public class BulkDataAccessAPIUnusualDataTests {
     private DataSetup dataSetup;
 
     @Autowired
-    private LoggerEventRepository loggerEventRepository;
+    SQSEventClient sqsEventClient;
+
+    @Autowired
+    AmazonSQS amazonSQS;
 
     @Container
-    private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
+    private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Container
     private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
@@ -76,8 +81,8 @@ public class BulkDataAccessAPIUnusualDataTests {
     @AfterEach
     public void cleanup() {
         dataSetup.cleanup();
-        loggerEventRepository.delete();
         jobClientMock.cleanupAll();
+        amazonSQS.purgeQueue(new PurgeQueueRequest(System.getProperty("sqs.queue-name")));
     }
 
     @Test
@@ -87,25 +92,19 @@ public class BulkDataAccessAPIUnusualDataTests {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(403));
-        List<LoggableEvent> apiRequestEvents = loggerEventRepository.load(ApiRequestEvent.class);
-        ApiRequestEvent requestEvent = (ApiRequestEvent) apiRequestEvents.get(0);
 
-        List<LoggableEvent> apiResponseEvents = loggerEventRepository.load(ApiResponseEvent.class);
-        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResponseEvents.get(0);
+        ApiRequestEvent requestEvent = (ApiRequestEvent) SQSConfig.objectMapper().readValue(amazonSQS.receiveMessage(System.getProperty("sqs.queue-name")).getMessages().get(0).getBody(), GeneralSQSMessage.class).getLoggableEvent();
+        ErrorEvent errorEvent = (ErrorEvent) SQSConfig.objectMapper().readValue(amazonSQS.receiveMessage(System.getProperty("sqs.queue-name")).getMessages().get(0).getBody(), GeneralSQSMessage.class).getLoggableEvent();
+        ApiResponseEvent responseEvent = (ApiResponseEvent) SQSConfig.objectMapper().readValue(amazonSQS.receiveMessage(System.getProperty("sqs.queue-name")).getMessages().get(0).getBody(), TraceAndAlertSQSMessage.class).getLoggableEvent();
+
         assertEquals(requestEvent.getRequestId(), responseEvent.getRequestId());
-
-        List<LoggableEvent> errorEvents = loggerEventRepository.load(ErrorEvent.class);
-        ErrorEvent errorEvent = (ErrorEvent) errorEvents.get(0);
-
         assertEquals(ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT, errorEvent.getErrorType());
-        assertTrue(UtilMethods.allEmpty(
-                loggerEventRepository.load(ReloadEvent.class),
-                loggerEventRepository.load(ContractSearchEvent.class),
-                loggerEventRepository.load(JobStatusChangeEvent.class),
-                loggerEventRepository.load(FileEvent.class)));
+
+        // expect no more messages
+        assertEquals(0, amazonSQS.receiveMessage(System.getProperty("sqs.queue-name")).getMessages().size(), 0);
     }
 
     @Test
@@ -115,8 +114,8 @@ public class BulkDataAccessAPIUnusualDataTests {
         Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         ResultActions resultActions = this.mockMvc.perform(
-                get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token))
+                        get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token))
                 .andDo(print());
 
         String jobUuid = jobClientMock.pickAJob();
@@ -131,6 +130,5 @@ public class BulkDataAccessAPIUnusualDataTests {
                 startJobDTO.getUrl());
         assertNull(startJobDTO.getResourceTypes());
         assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), startJobDTO.getOrganization());
-
     }
 }

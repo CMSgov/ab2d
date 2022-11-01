@@ -3,11 +3,16 @@ package gov.cms.ab2d.api.controller;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
-import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.common.util.DataSetup;
-import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.util.List;
+import javax.net.ssl.SSLContext;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -33,17 +38,10 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import javax.net.ssl.SSLContext;
-import java.io.IOException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.util.List;
 
+import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
-import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -67,9 +65,6 @@ public class TLSTest {
     DataSetup dataSetup;
 
     @Autowired
-    private LoggerEventRepository loggerEventRepository;
-
-    @Autowired
     @Qualifier("mockAmazonSQS")
     AmazonSQS amazonSqs;
 
@@ -79,7 +74,6 @@ public class TLSTest {
     @AfterEach
     public void cleanup() {
         dataSetup.cleanup();
-        loggerEventRepository.delete();
     }
 
     @Test

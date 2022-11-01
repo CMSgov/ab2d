@@ -1,12 +1,15 @@
 package gov.cms.ab2d.api.controller;
 
 import gov.cms.ab2d.api.SpringBootApp;
-import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
-import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import org.hamcrest.core.Is;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
 
 import static gov.cms.ab2d.common.util.Constants.STATUS_ENDPOINT;
 import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
@@ -39,13 +43,9 @@ public class MaintenanceModeAPITests {
     @Autowired
     private PropertiesAPIService propertiesApiService;
 
-    @Autowired
-    LoggerEventRepository loggerEventRepository;
-
     @AfterEach
     void tearDown() {
         propertiesApiService.updateProperty(MAINTENANCE_MODE, "false");
-        loggerEventRepository.delete();
     }
 
     @Test

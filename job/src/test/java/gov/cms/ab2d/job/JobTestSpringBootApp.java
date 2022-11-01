@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
 
-@SpringBootApplication(scanBasePackages = {"gov.cms.ab2d.eventlogger", "gov.cms.ab2d.job", "gov.cms.ab2d.common"})
+@SpringBootApplication(scanBasePackages = {"gov.cms.ab2d.job", "gov.cms.ab2d.common"})
 @PropertySource("classpath:job-test.properties")
 @Import(AB2DSQSMockConfig.class)
 public class JobTestSpringBootApp {

@@ -1,16 +1,16 @@
 package gov.cms.ab2d.worker.service;
 
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
 import gov.cms.ab2d.eventclient.events.LoggableEvent;
-import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.job.repository.JobRepository;
-import org.junit.jupiter.api.Test;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import org.junit.jupiter.api.Test;
+
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -48,10 +48,10 @@ class ShutdownServiceTest {
         assertFalse(activeJobs.isEmpty());
     }
 
-    static class MockEventLogger extends LogManager {
+    static class MockEventLogger extends SQSEventClient {
 
         public MockEventLogger() {
-            super(null, null, null, null, false);
+            super(null, null, null);
         }
 
         @Override

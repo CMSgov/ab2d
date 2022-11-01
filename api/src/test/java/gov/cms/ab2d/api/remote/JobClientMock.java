@@ -2,20 +2,14 @@ package gov.cms.ab2d.api.remote;
 
 import gov.cms.ab2d.common.model.TooFrequentInvocations;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.JobStatusChangeEvent;
-import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.job.dto.JobPollResult;
 import gov.cms.ab2d.job.dto.StartJobDTO;
 import gov.cms.ab2d.job.model.JobOutput;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.job.service.InvalidJobStateTransition;
 import gov.cms.ab2d.job.service.JobOutputMissingException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Primary;
-import org.springframework.core.io.Resource;
-import org.springframework.stereotype.Component;
-
 import java.io.File;
 import java.io.IOException;
 import java.time.OffsetDateTime;
@@ -24,6 +18,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Primary;
+import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Component;
+
 
 import static gov.cms.ab2d.common.util.Constants.MAX_DOWNLOADS;
 import static gov.cms.ab2d.job.model.JobStatus.CANCELLED;
@@ -48,10 +48,10 @@ public class JobClientMock extends JobClient {
     @Value("classpath:test.ndjson")
     private Resource jobOutputResults;
 
-    private final LogManager eventLogger;
+    private final SQSEventClient eventLogger;
 
     @Autowired
-    public JobClientMock(LogManager eventLogger) {
+    public JobClientMock(SQSEventClient eventLogger) {
         super(null);
         this.eventLogger = eventLogger;
     }
@@ -62,7 +62,7 @@ public class JobClientMock extends JobClient {
         createdJobs.put(jobId, startJobDTO);
         JobStatusChangeEvent jobStatusChangeEvent = new JobStatusChangeEvent(startJobDTO.getOrganization(),
                 jobId, null, SUBMITTED.name(), "Job Created");
-        eventLogger.log(jobStatusChangeEvent);
+        eventLogger.sendLogs(jobStatusChangeEvent);
         return jobId;
     }
 
@@ -163,7 +163,7 @@ public class JobClientMock extends JobClient {
         }
         JobStatusChangeEvent jobStatusChangeEvent = new JobStatusChangeEvent(createdJobs.get(jobUuid).getOrganization(),
                 jobUuid, expectedStatus.name(), CANCELLED.name(), "Job Cancelled");
-        eventLogger.log(jobStatusChangeEvent);
+        eventLogger.sendLogs(jobStatusChangeEvent);
 
     }
 

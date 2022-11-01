@@ -8,18 +8,16 @@ import gov.cms.ab2d.api.remote.JobClientMock;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.common.util.DataSetup;
-import gov.cms.ab2d.eventclient.events.ApiRequestEvent;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
-import gov.cms.ab2d.eventclient.events.ContractSearchEvent;
-import gov.cms.ab2d.eventclient.events.ErrorEvent;
-import gov.cms.ab2d.eventclient.events.FileEvent;
-import gov.cms.ab2d.eventclient.events.JobStatusChangeEvent;
 import gov.cms.ab2d.eventclient.events.LoggableEvent;
-import gov.cms.ab2d.eventclient.events.ReloadEvent;
-import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
-import gov.cms.ab2d.eventlogger.utils.UtilMethods;
 import gov.cms.ab2d.job.model.JobOutput;
-import org.junit.jupiter.api.*;
+import java.util.List;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -33,13 +31,15 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.List;
 
 import static gov.cms.ab2d.api.controller.BulkDataAccessAPIIntegrationTests.PATIENT_EXPORT_PATH;
 import static gov.cms.ab2d.common.model.Role.ADMIN_ROLE;
 import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
-import static gov.cms.ab2d.common.util.Constants.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
+import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -64,13 +64,16 @@ public class AdminAPIMaintenanceModeTests {
     private TestUtil testUtil;
 
     @Autowired
-    private LoggerEventRepository loggerEventRepository;
-
-    @Autowired
     private DataSetup dataSetup;
 
     @Autowired
     JobClientMock jobClientMock;
+
+    @Autowired
+    SQSEventClient sqsEventClient;
+
+    @Captor
+    private ArgumentCaptor<LoggableEvent> captor;
 
     private String token;
 
@@ -82,7 +85,6 @@ public class AdminAPIMaintenanceModeTests {
     @AfterEach
     public void cleanup() {
         dataSetup.cleanup();
-        loggerEventRepository.delete();
         jobClientMock.cleanupAll();
     }
 
@@ -94,23 +96,14 @@ public class AdminAPIMaintenanceModeTests {
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().is(HttpStatus.SERVICE_UNAVAILABLE.value()));
 
-        List<LoggableEvent> apiReqEvents = loggerEventRepository.load(ApiRequestEvent.class);
-        assertEquals(1, apiReqEvents.size());
 
-        List<LoggableEvent> apiResEvents = loggerEventRepository.load(ApiResponseEvent.class);
-        assertEquals(1, apiResEvents.size());
-        ApiResponseEvent responseEvent = (ApiResponseEvent) apiResEvents.get(0);
+        verify(sqsEventClient, timeout(1000).times(2)).sendLogs(captor.capture());
+
+        List<LoggableEvent> events = captor.getAllValues();
+        assertEquals(2, events.size());
+
+        ApiResponseEvent responseEvent = (ApiResponseEvent) events.get(1);
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE.value(), responseEvent.getResponseCode());
-
-        List<LoggableEvent> reloadEvents = loggerEventRepository.load(ReloadEvent.class);
-        assertEquals(0, reloadEvents.size());
-
-        assertTrue(UtilMethods.allEmpty(
-                loggerEventRepository.load(ContractSearchEvent.class),
-                loggerEventRepository.load(ErrorEvent.class),
-                loggerEventRepository.load(FileEvent.class),
-                loggerEventRepository.load(JobStatusChangeEvent.class)
-        ));
 
         testUtil.turnMaintenanceModeOff();
 
