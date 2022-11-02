@@ -10,6 +10,7 @@ import gov.cms.ab2d.eventclient.clients.EventClient;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.BeneficiarySearchEvent;
 import gov.cms.ab2d.eventclient.events.FileEvent;
+import gov.cms.ab2d.eventclient.events.MetricsEvent;
 import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.worker.config.SearchConfig;
@@ -50,6 +51,9 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     @Value("${bfd.earliest.data.date:01/01/2020}")
     private String earliestDataDate;
+
+    @Value("${bfd.retry.backoffDelay:250}")
+    private int bfdTimeout;
 
     private static final OffsetDateTime START_CHECK = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
 
@@ -180,7 +184,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             BFDClient.BFD_BULK_JOB_ID.set(request.getJob());
 
             // Make first request and begin looping over remaining pages
-            eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patient.getIdentifiers().getBeneficiaryId(), sinceTime);
+            eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patient.getIdentifiers()
+                    .getBeneficiaryId(), sinceTime);
             collector.filterAndAddEntries(eobBundle, patient);
 
             while (BundleUtils.getNextLink(eobBundle) != null) {
@@ -194,6 +199,15 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
             return collector.getEobs();
         } catch (Exception ex) {
+            //When bfd call fails (excluding 404s) send a metrics event
+            if (RuntimeException.class.equals(ex.getClass())) {
+                logManager.sendLogs(MetricsEvent.builder()
+                        .service("BFD")
+                        .timeOfEvent(OffsetDateTime.now())
+                        .eventDescription(String.format("BFD request failed after retyping %d times", bfdTimeout))
+                        .stateType(MetricsEvent.State.CONTINUE)
+                        .build());
+            }
             logError(request, beneficiaryId, requestStartTime, ex);
             throw ex;
         } finally {

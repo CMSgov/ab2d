@@ -111,7 +111,6 @@ class HPMSMockedAuthTest {
         try (MockedStatic<WebClient> webClientStatic = Mockito.mockStatic(WebClient.class)) {
             client.authRequestError(mockedWebClient, webClientStatic, httpStatus, new HPMSAuthResponse());
             assertThrows(WebClientResponseException.class, () -> authService.buildAuthHeaders(headers));
-            verify(eventLogger, times(1)).log(eq(EventClient.LogType.SQL), any(LoggableEvent.class));
         }
     }
 
