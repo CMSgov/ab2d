@@ -57,9 +57,12 @@ public class PropertiesMicroServiceTest {
         createMockServerExpectation("/properties/bogus", "GET", HttpStatus.SC_NOT_FOUND,
                 "{ \"key\": \"null\", \"value\": \"null\"}");
         createMockServerExpectation("/properties", "POST", HttpStatus.SC_OK,
-                "{ \"key\": \"new\", \"value\": \"one\"}",
+                "{ \"key\": \"newone\", \"value\": \"one\"}",
                 List.of(Parameter.param("key", NEW_ONE), Parameter.param("value", "one")));
         createMockServerExpectation("/properties/newone", "DELETE", HttpStatus.SC_OK, "true");
+        createMockServerExpectation("/properties", "POST", HttpStatus.SC_NOT_FOUND,
+                "",
+                List.of(Parameter.param("key", "second"), Parameter.param("value", "two")));
     }
 
     @Test
@@ -79,6 +82,7 @@ public class PropertiesMicroServiceTest {
         assertTrue(propertiesAPIService.deleteProperty(NEW_ONE));
         assertTrue(propertiesAPIService.deleteProperty("pcp.core.pool.size"));
         assertTrue(propertiesAPIService.updateProperty(NEW_ONE, "two"));
+        assertTrue(propertiesAPIService.createProperty("second", "two"));
     }
 
     static void createMockServerExpectation(String path, String verb, int respCode, String payload) {

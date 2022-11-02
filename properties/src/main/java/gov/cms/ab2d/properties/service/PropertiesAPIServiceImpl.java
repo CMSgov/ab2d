@@ -91,9 +91,6 @@ public class PropertiesAPIServiceImpl implements PropertiesAPIService {
             return false;
         }
         String val = getProperty(toggleName);
-        if (val == null) {
-            return false;
-        }
         return Boolean.valueOf(val.trim());
     }
 
@@ -104,8 +101,13 @@ public class PropertiesAPIServiceImpl implements PropertiesAPIService {
         }
         if (usePropertyService) {
             try {
-                propertiesClient.setProperty(key, value);
-                return true;
+                Property prop = propertiesClient.setProperty(key, value);
+                if (prop != null) {
+                    return true;
+                } else {
+                    log.error(ERROR_MESSAGE);
+                    return propertiesService.insertProperty(key, value);
+                }
             } catch (Exception ex) {
                 log.error(ERROR_MESSAGE, ex);
                 return propertiesService.insertProperty(key, value);
