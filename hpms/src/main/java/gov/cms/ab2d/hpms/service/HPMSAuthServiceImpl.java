@@ -1,8 +1,6 @@
 package gov.cms.ab2d.hpms.service;
 
-import gov.cms.ab2d.eventclient.clients.EventClient;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
-import gov.cms.ab2d.eventclient.events.ErrorEvent;
 import gov.cms.ab2d.eventclient.events.MetricsEvent;
 import gov.cms.ab2d.hpms.hmsapi.HPMSAuthResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,15 +23,12 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static gov.cms.ab2d.eventclient.events.ErrorEvent.ErrorType.HPMS_AUTH_ERROR;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpHeaders.COOKIE;
 import static org.springframework.http.HttpStatus.OK;
 
 @Service
 public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuthService {
-
-    private static final String HPMS_ORGANIZATION = "HPMS_AUTH";
 
     @Value("${hpms.base.url}/api/idm/OAuth/AMMtoken")
     private String authURL;
@@ -107,24 +102,22 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
             tokenExpires = currentTimestamp + authResponse.getExpires() * 900L;
             authToken = authResponse.getAccessToken();
         } catch (WebClientResponseException exception) {
-            logEvents(prepareErrorMessage(exception, curTime));
+            sendEvent(prepareErrorMessage(exception, curTime));
             throw exception;
         } catch (IllegalStateException | NullPointerException exception) {
-            String error = "HPMS auth call failed with no response waited for " + (curTime / 1000) + " seconds.";
-            logEvents(error);
+            String error = "HPMS auth call failed with no response after waited for " + (curTime / 1000) + " seconds.";
+            sendEvent(error);
             throw new RemoteTimeoutException(error);
         }
     }
 
-    private void logEvents(String error) {
+    private void sendEvent(String error) {
         eventLogger.sendLogs(MetricsEvent.builder()
                 .service("HPMS")
                 .timeOfEvent(OffsetDateTime.now())
                 .eventDescription(String.format(error))
                 .stateType(MetricsEvent.State.CONTINUE)
                 .build());
-        eventLogger.log(EventClient.LogType.SQL,
-                new ErrorEvent(HPMS_ORGANIZATION, "", HPMS_AUTH_ERROR, error));
     }
 
     private String extractCookies(MultiValueMap<String, ResponseCookie> entries) {
