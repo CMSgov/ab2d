@@ -32,13 +32,8 @@ public class PropertiesAPIServiceImpl implements PropertiesAPIService {
         if (usePropertyService) {
             try {
                 Property prop = propertiesClient.getProperty(property);
-                if (prop != null) {
-                    value = prop.getValue();
-                    log.info("Getting value for: " + property + " from properties service, value: " + value);
-                } else {
-                    log.error(ERROR_MESSAGE);
-                    value = propertiesService.getPropertiesByKey(property).getValue();
-                }
+                value = prop.getValue();
+                log.info("Getting value for: " + property + " from properties service, value: " + value);
             } catch (Exception ex) {
                 log.error(ERROR_MESSAGE, ex);
                 try {
@@ -55,17 +50,19 @@ public class PropertiesAPIServiceImpl implements PropertiesAPIService {
 
     @Override
     public boolean updateProperty(String property, String value) {
+        PropertiesDTO propertiesDTO = new PropertiesDTO(property, value);
         if (usePropertyService) {
             try {
-                propertiesClient.setProperty(property, value);
+                Property prop = propertiesClient.setProperty(property, value);
+                if (prop == null) {
+                    return propertiesService.updateProperty(propertiesDTO);
+                }
                 return true;
             } catch (Exception ex) {
                 log.error(ERROR_MESSAGE, ex);
-                PropertiesDTO propertiesDTO = new PropertiesDTO(property, value);
-                return propertiesService.updateProperty(propertiesDTO);
+                return false;
             }
         }
-        PropertiesDTO propertiesDTO = new PropertiesDTO(property, value);
         return propertiesService.updateProperty(propertiesDTO);
     }
 
