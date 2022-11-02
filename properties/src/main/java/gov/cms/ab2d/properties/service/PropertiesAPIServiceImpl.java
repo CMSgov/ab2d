@@ -31,8 +31,7 @@ public class PropertiesAPIServiceImpl implements PropertiesAPIService {
         String value;
         if (usePropertyService) {
             try {
-                Property prop = propertiesClient.getProperty(property);
-                value = prop.getValue();
+                value = propertiesClient.getProperty(property).getValue();
                 log.info("Getting value for: " + property + " from properties service, value: " + value);
             } catch (Exception ex) {
                 log.error(ERROR_MESSAGE, ex);
