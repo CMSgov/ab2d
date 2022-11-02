@@ -17,6 +17,7 @@ public class PropertiesAPIServiceImpl implements PropertiesAPIService {
     private PropertiesService propertiesService;
     private boolean usePropertyService;
     private PropertiesClient propertiesClient;
+    private static final String ERROR_MESSAGE = "Cannot access properties service, using default database value";
 
     PropertiesAPIServiceImpl(@Value("${feature.property.service.enabled:false}") boolean usePropertyService, PropertiesService service,
                              @Value("${property.service.url}") String propertyServiceUrl) {
@@ -35,12 +36,16 @@ public class PropertiesAPIServiceImpl implements PropertiesAPIService {
                     value = prop.getValue();
                     log.info("Getting value for: " + property + " from properties service, value: " + value);
                 } else {
-                    log.error("Cannot access properties service, using default database value");
+                    log.error(ERROR_MESSAGE);
                     value = propertiesService.getPropertiesByKey(property).getValue();
                 }
             } catch (Exception ex) {
-                log.error("Cannot access properties service, using default database value", ex);
-                value = propertiesService.getPropertiesByKey(property).getValue();
+                log.error(ERROR_MESSAGE, ex);
+                try {
+                    value = propertiesService.getPropertiesByKey(property).getValue();
+                } catch (Exception ex2) {
+                    value = null;
+                }
             }
         } else {
             value = propertiesService.getPropertiesByKey(property).getValue();
@@ -55,7 +60,7 @@ public class PropertiesAPIServiceImpl implements PropertiesAPIService {
                 propertiesClient.setProperty(property, value);
                 return true;
             } catch (Exception ex) {
-                log.error("Cannot access properties service, using default database value", ex);
+                log.error(ERROR_MESSAGE, ex);
                 PropertiesDTO propertiesDTO = new PropertiesDTO(property, value);
                 return propertiesService.updateProperty(propertiesDTO);
             }
@@ -70,11 +75,10 @@ public class PropertiesAPIServiceImpl implements PropertiesAPIService {
             List<Property> properties = propertiesClient.getAllProperties();
             if (properties != null && !properties.isEmpty()) {
                 return properties.stream().map(p -> {
-                    PropertiesDTO dto = new PropertiesDTO(p.getKey(), p.getValue());
-                    return dto;
+                    return new PropertiesDTO(p.getKey(), p.getValue());
                 }).toList();
             } else {
-                log.error("Cannot access properties service, using default database value");
+                log.error(ERROR_MESSAGE);
                 return propertiesService.getAllPropertiesDTO();
             }
         }
@@ -103,7 +107,7 @@ public class PropertiesAPIServiceImpl implements PropertiesAPIService {
                 propertiesClient.setProperty(key, value);
                 return true;
             } catch (Exception ex) {
-                log.error("Cannot access properties service, using default database value", ex);
+                log.error(ERROR_MESSAGE, ex);
                 return propertiesService.insertProperty(key, value);
             }
         }
@@ -120,7 +124,7 @@ public class PropertiesAPIServiceImpl implements PropertiesAPIService {
                 propertiesClient.deleteProperty(key);
                 return true;
             } catch (Exception ex) {
-                log.error("Cannot access properties service, using default database value", ex);
+                log.error(ERROR_MESSAGE, ex);
                 return propertiesService.deleteProperty(key);
             }
         }
