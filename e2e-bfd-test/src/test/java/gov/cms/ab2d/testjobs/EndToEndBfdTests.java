@@ -252,10 +252,10 @@ public class EndToEndBfdTests {
      */
     private void disableContractWeDontNeed() {
         List<PdpClient> clients = pdpClientRepository.findAllByEnabledTrue().stream()
-                .filter(client -> client.getContract() != null && client.getContract().getAttestedOn() != null)
+                .filter(client -> client.getContractId() != null && contractRepository.findById(client.getContractId()).get().getAttestedOn() != null)
                 .collect(toList());
         for (PdpClient pdp : clients) {
-            if (!pdp.getContract().getContractNumber().equals(CONTRACT_TO_USE)) {
+            if (!contractRepository.findById(pdp.getContractId()).get().getContractNumber().equals(CONTRACT_TO_USE)) {
                 pdp.setEnabled(false);
                 pdpClientRepository.save(pdp);
             }
@@ -337,7 +337,7 @@ public class EndToEndBfdTests {
         pdpClient.setClientId(EndToEndBfdTests.CONTRACT_TO_USE_CLIENT_ID);
         pdpClient.setOrganization("Synthea Data");
         pdpClient.setEnabled(true);
-        pdpClient.setContract(contract);
+        pdpClient.setContractId(contract.getId());
         return pdpClientRepository.save(pdpClient);
     }
 
@@ -363,7 +363,7 @@ public class EndToEndBfdTests {
         job.setOrganization(pdpClient.getOrganization());
 
         // Check to see if there is any attestation
-        Contract contract = pdpClient.getContract();
+        Contract contract = contractRepository.findById(pdpClient.getId()).orElse(null);
         if (contractNumber != null && !contractNumber.equals(contract.getContractNumber())) {
             String errorMsg = "Specifying contract: " + contractNumber + " not associated with internal id: " + pdpClient.getId();
             throw new InvalidContractException(errorMsg);

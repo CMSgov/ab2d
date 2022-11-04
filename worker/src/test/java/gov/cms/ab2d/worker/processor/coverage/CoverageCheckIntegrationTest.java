@@ -93,7 +93,7 @@ public class CoverageCheckIntegrationTest {
         enabledContracts.forEach(contract -> pdpClientService.disableClient(contract.getContractNumber()));
 
         PdpClient client = dataSetup.setupNonStandardClient("special", "TEST", List.of("SPONSOR"));
-        contract = client.getContract();
+        contract = dataSetup.setupContract("TEST");
         contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
         contractRepo.saveAndFlush(contract);
 
@@ -157,7 +157,7 @@ public class CoverageCheckIntegrationTest {
     void verifyCoverage_whenZContractIgnore() {
 
         PdpClient client = dataSetup.setupNonStandardClient("special2", "Z5555", List.of("SPONSOR"));
-        Contract contract = client.getContract();
+        contract = dataSetup.setupContract("Z5555");
         contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
         contract.setUpdateMode(Contract.UpdateMode.NONE);
         contract.setContractType(Contract.ContractType.CLASSIC_TEST);

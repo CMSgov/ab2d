@@ -296,21 +296,12 @@ class ContractProcessorUnitTest {
         PdpClient pdpClient = new PdpClient();
         pdpClient.setClientId("Harry_Potter");
         pdpClient.setEnabled(TRUE);
-        pdpClient.setContract(createContract());
+        pdpClient.setContractId(1000L);
         return pdpClient;
     }
 
     private ContractDTO createContractDTO() {
         return new ContractDTO("CONTRACT_NM_00000", "CONTRACT_00000", OffsetDateTime.now().minusDays(10), Contract.ContractType.NORMAL);
-    }
-
-    private Contract createContract() {
-        Contract contract = new Contract();
-        contract.setContractName("CONTRACT_NM_00000");
-        contract.setContractNumber("CONTRACT_00000");
-        contract.setAttestedOn(OffsetDateTime.now().minusDays(10));
-
-        return contract;
     }
 
     private Job createJob(PdpClient pdpClient) {

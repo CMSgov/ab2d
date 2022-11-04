@@ -5,6 +5,7 @@ import gov.cms.ab2d.api.controller.TooManyRequestsException;
 import gov.cms.ab2d.api.remote.JobClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
+import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.InvalidClientInputException;
 import gov.cms.ab2d.common.service.InvalidContractException;
 import gov.cms.ab2d.common.service.PdpClientService;
@@ -51,12 +52,15 @@ public class ApiCommon {
     public static final Set<String> ALLOWABLE_OUTPUT_FORMAT_SET = Set.of(ALLOWABLE_OUTPUT_FORMATS.split(","));
     public static final String JOB_CANCELLED_MSG = "Job canceled";
 
+    private ContractService contractService;
+
     public ApiCommon(SQSEventClient eventLogger, JobClient jobClient, PropertiesAPIService propertiesApiService,
-                     PdpClientService pdpClientService) {
+                     PdpClientService pdpClientService, ContractService contractService) {
         this.eventLogger = eventLogger;
         this.jobClient = jobClient;
         this.propertiesApiService = propertiesApiService;
         this.pdpClientService = pdpClientService;
+        this.contractService = contractService;
     }
 
     public boolean shouldReplaceWithHttps(HttpServletRequest request) {
@@ -146,7 +150,7 @@ public class ApiCommon {
     public StartJobDTO checkValidCreateJob(HttpServletRequest request, String contractNumber, OffsetDateTime since,
                                            String resourceTypes, String outputFormat, FhirVersion version) {
         PdpClient pdpClient = pdpClientService.getCurrentClient();
-        contractNumber = checkIfContractAttested(pdpClient.getContract(), contractNumber);
+        contractNumber = checkIfContractAttested(contractService.getContractByContractId(pdpClient.getContractId()), contractNumber);
         checkIfInMaintenanceMode();
         checkIfCurrentClientCanAddJob();
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);

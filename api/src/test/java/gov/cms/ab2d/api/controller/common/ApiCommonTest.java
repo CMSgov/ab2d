@@ -25,7 +25,7 @@ class ApiCommonTest {
         Contract contract = new Contract();
         contract.setContractNumber(CONTRACT_NUMBER);
         PdpClient pdpClientTmp = new PdpClient();
-        pdpClientTmp.setContract(contract);
+        pdpClientTmp.setContractId(contract.getId());
         pdpClient = pdpClientTmp;
 
         apiCommon = buildApiCommon();
@@ -51,7 +51,7 @@ class ApiCommonTest {
     }
 
     private ApiCommon buildApiCommon() {
-        return new ApiCommon(null, null, null, buildPdpClientService());
+        return new ApiCommon(null, null, null, buildPdpClientService(), null);
     }
 
     private PdpClientService buildPdpClientService() {

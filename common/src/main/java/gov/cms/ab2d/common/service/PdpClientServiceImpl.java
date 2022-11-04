@@ -6,6 +6,10 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import javax.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,9 +21,6 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.List;
 
 import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static java.util.stream.Collectors.toList;
@@ -37,12 +38,16 @@ public class PdpClientServiceImpl implements PdpClientService {
 
     private final Mapping mapping;
 
+    private final ContractService contractService;
+
     @Override
     public List<Contract> getAllEnabledContracts() {
         return pdpClientRepository.findAllByEnabledTrue().stream()
-                .filter(client -> client.getContract() != null && client.getContract().getAttestedOn() != null)
+                .filter(client -> client.getContractId() != null)
                 .filter(this::hasSponsorRole)
-                .map(PdpClient::getContract).collect(toList());
+                .map(pdpClient -> contractService.getContractByContractId(pdpClient.getContractId()))
+                .filter(contract -> contract.getAttestedOn() != null)
+                .collect(toList());
     }
 
     private boolean hasSponsorRole(PdpClient client) {
@@ -68,6 +73,7 @@ public class PdpClientServiceImpl implements PdpClientService {
 
     /**
      * The username used for Spring's authentication is actually {@link PdpClient#getClientId()}
+     *
      * @param clientId client id authorized for the system
      * @return {@link PdpClient}
      */
@@ -108,11 +114,16 @@ public class PdpClientServiceImpl implements PdpClientService {
     }
 
     private PdpClient getClientByContract(String contractNumber) {
-        // May be more than one client mapping to a contract
-        // since we removed the constraint
-        List<PdpClient> pdpClients = pdpClientRepository.findByContract(contractNumber);
+        Optional<Contract> contractOptional = contractService.getContractByContractNumber(contractNumber);
 
-        if (pdpClients.isEmpty()) {
+        List<PdpClient> pdpClients = null;
+        if (contractOptional.isPresent()) {
+            // May be more than one client mapping to a contract
+            // since we removed the constraint
+            pdpClients = pdpClientRepository.findByContract(contractOptional.get().getId());
+        }
+
+        if (pdpClients == null || pdpClients.isEmpty()) {
             String clientNotPresentMsg = "Client is not present in our database";
             log.error(clientNotPresentMsg);
             throw new ResourceNotFoundException(clientNotPresentMsg);

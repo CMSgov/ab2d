@@ -1134,7 +1134,7 @@ class BulkDataAccessAPIIntegrationTests {
 
         PdpClient pdpClient = pdpClientRepository.findByClientId(TEST_PDP_CLIENT);
         assertNotNull(pdpClient);
-        pdpClient.setContract(contract1);
+        pdpClient.setContractId(contract1.getId());
         pdpClientRepository.saveAndFlush(pdpClient);
         Contract contractNew = dataSetup.setupContract("New Contract");
 

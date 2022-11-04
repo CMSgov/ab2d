@@ -58,9 +58,9 @@ public class Mapping {
 
         modelMapper.addConverter(sponsorDTOSponsorConverter);
         modelMapper.createTypeMap(PdpClient.class, PdpClientDTO.class)
-                .addMappings(mapper -> mapper.map(pdpClient -> pdpClient.getContract().toDTO(), PdpClientDTO::setContract))
+                .addMappings(mapper -> mapper.map(pdpClient -> contractService.getContractByContractId(pdpClient.getContractId()), PdpClientDTO::setContract))
                 .addMappings(mapper -> mapper.using(roleToRoleDTOConverter).map(PdpClient::getRoles, PdpClientDTO::setRole))
-                .addMappings(mapper -> mapper.map(PdpClient::getContract, PdpClientDTO::setContract));
+                .addMappings(mapper -> mapper.map(pdpClient -> contractService.getContractByContractId(pdpClient.getContractId()), PdpClientDTO::setContract));
         modelMapper.createTypeMap(PdpClientDTO.class, PdpClient.class)
                 .addMappings(mapper -> mapper.using(roleDTOToRoleConverter).map(PdpClientDTO::getRole, PdpClient::addRole))
                 .addMappings(mapper -> mapper.map(PdpClientDTO::getClientId, PdpClient::setClientId));
