@@ -83,16 +83,16 @@ class AggregatorJobTest {
         String org = "org1";
         final Token token = NewRelic.getAgent().getTransaction().getToken();
 
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq(1L), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(1)));
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq(2L), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(2)));
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq(3L), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(3)));
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq(4L), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(4)));
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq(5L), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(5)));
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq(6L), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(6)));
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq(7L), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(7)));
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq(8L), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(8)));
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq(9L), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(9)));
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq(10L), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(10)));
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(1L), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(1)));
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(2L), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(2)));
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(3L), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(3)));
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(4L), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(4)));
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(5L), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(5)));
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(6L), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(6)));
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(7L), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(7)));
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(8L), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(8)));
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(9L), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(9)));
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(10L), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(10)));
 
         ContractForCoverageDTO contract = createContract(contractNo);
 

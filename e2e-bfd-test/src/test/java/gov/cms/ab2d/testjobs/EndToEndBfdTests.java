@@ -396,7 +396,7 @@ public class EndToEndBfdTests {
 
         while (BundleUtils.getNextLink(bundle) != null) {
             log.info(String.format("Do Next Request for %s for %02d/%04d", contract, month, year));
-            bundle = client.requestNextBundleFromServer(version, bundle);
+            bundle = client.requestNextBundleFromServer(version, bundle, contract);
             numberOfBenes += BundleUtils.getEntries(bundle).size();
             log.info("Found: " + numberOfBenes + " benes");
             patientIds.addAll(extractIds(bundle, version));
