@@ -35,6 +35,6 @@
 
 ### Submitter Checklist
 
-- [ ] This PR includes any required documentation changes, (`README`, changelog / release notes, website).
+- [ ] This PR includes any required documentation changes, (`README`, changelog / release notes, website - see [confluence](https://confluence.cms.gov/display/AB2D/Public+Facing+Documentation) for full list).
 - [ ] All tech debt and/or shortcomings introduced by this PR are detailed in `TODO` and/or `FIXME` comments.
 - [ ] Code checked for PHI/PII exposure
