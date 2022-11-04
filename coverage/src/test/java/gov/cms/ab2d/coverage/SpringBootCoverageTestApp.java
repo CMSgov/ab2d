@@ -7,7 +7,7 @@ import org.springframework.context.annotation.PropertySource;
 @SpringBootApplication(scanBasePackages = {
         "gov.cms.ab2d.common",
         "gov.cms.ab2d.coverage",
-        "gov.cms.ab2d.eventlogger"
+        "gov.cms.ab2d.eventclient.clients"
 })
 @PropertySource("classpath:application.coverage.properties")
 public class SpringBootCoverageTestApp {

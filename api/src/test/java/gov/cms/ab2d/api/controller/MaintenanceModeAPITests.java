@@ -1,25 +1,28 @@
 package gov.cms.ab2d.api.controller;
 
 import gov.cms.ab2d.api.SpringBootApp;
-import gov.cms.ab2d.common.dto.PropertiesDTO;
-import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
+import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import org.hamcrest.core.Is;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.Collections;
-import java.util.List;
 
-import static gov.cms.ab2d.common.util.Constants.*;
+import static gov.cms.ab2d.common.util.Constants.STATUS_ENDPOINT;
+import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -28,6 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Testcontainers
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@Import(AB2DSQSMockConfig.class)
 public class MaintenanceModeAPITests {
 
     @Container
@@ -37,28 +41,17 @@ public class MaintenanceModeAPITests {
     private MockMvc mockMvc;
 
     @Autowired
-    private PropertiesService propertiesService;
-
-    @Autowired
-    LoggerEventRepository loggerEventRepository;
+    private PropertiesAPIService propertiesApiService;
 
     @AfterEach
     void tearDown() {
-        PropertiesDTO propertiesDTO = new PropertiesDTO();
-        propertiesDTO.setKey(MAINTENANCE_MODE);
-        propertiesDTO.setValue("false");
-
-        propertiesService.updateProperties(Collections.singletonList(propertiesDTO));
-
-        loggerEventRepository.delete();
+        propertiesApiService.updateProperty(MAINTENANCE_MODE, "false");
     }
 
     @Test
     @Order(1)
     public void testMaintenanceModeOff() throws Exception {
-        PropertiesDTO propertiesDTO = new PropertiesDTO();
-        propertiesDTO.setKey(MAINTENANCE_MODE);
-        propertiesDTO.setValue("false");
+        propertiesApiService.updateProperty(MAINTENANCE_MODE, "false");
         this.mockMvc.perform(get(STATUS_ENDPOINT)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(200))
@@ -68,10 +61,7 @@ public class MaintenanceModeAPITests {
     @Test
     @Order(2)
     public void testMaintenanceModeOn() throws Exception {
-        PropertiesDTO propertiesDTO = new PropertiesDTO();
-        propertiesDTO.setKey(MAINTENANCE_MODE);
-        propertiesDTO.setValue("true");
-        propertiesService.updateProperties(List.of(propertiesDTO));
+        propertiesApiService.updateProperty(MAINTENANCE_MODE, "true");
 
         this.mockMvc.perform(get(STATUS_ENDPOINT)
                 .contentType(MediaType.APPLICATION_JSON))

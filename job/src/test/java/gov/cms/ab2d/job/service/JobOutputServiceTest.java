@@ -1,14 +1,15 @@
 package gov.cms.ab2d.job.service;
 
-import gov.cms.ab2d.job.model.Job;
-import gov.cms.ab2d.job.model.JobOutput;
-import gov.cms.ab2d.job.repository.JobOutputRepository;
-import gov.cms.ab2d.job.model.JobStatus;
-import gov.cms.ab2d.common.repository.*;
+import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.job.JobTestSpringBootApp;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobOutput;
+import gov.cms.ab2d.job.model.JobStatus;
+import gov.cms.ab2d.job.repository.JobOutputRepository;
 import gov.cms.ab2d.job.repository.JobRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -88,7 +89,7 @@ class JobOutputServiceTest extends JobCleanup {
         addJobForCleanup(savedJob);
 
         JobOutput jobOutput = new JobOutput();
-        jobOutput.setDownloaded(false);
+        jobOutput.setDownloaded(0);
         jobOutput.setError(true);
         jobOutput.setFhirResourceType(EOB);
         jobOutput.setFilePath("file.ndjson");
@@ -96,7 +97,7 @@ class JobOutputServiceTest extends JobCleanup {
         jobOutput.setChecksum("testoutput");
         jobOutput.setFileLength(20L);
         JobOutput savedJobOutput = jobOutputRepository.save(jobOutput);
-        savedJobOutput.setDownloaded(true);
+        savedJobOutput.setDownloaded(0);
         savedJobOutput.setError(false);
         savedJobOutput.setFilePath("newpath.ndjson");
         savedJobOutput.setFhirResourceType("newtype");
@@ -120,7 +121,7 @@ class JobOutputServiceTest extends JobCleanup {
         addJobForCleanup(savedJob);
 
         JobOutput jobOutput = new JobOutput();
-        jobOutput.setDownloaded(false);
+        jobOutput.setDownloaded(0);
         jobOutput.setError(true);
         jobOutput.setFhirResourceType(EOB);
         jobOutput.setChecksum("testoutput");
@@ -147,7 +148,7 @@ class JobOutputServiceTest extends JobCleanup {
         addJobForCleanup(savedJob);
 
         JobOutput jobOutput = new JobOutput();
-        jobOutput.setDownloaded(false);
+        jobOutput.setDownloaded(0);
         jobOutput.setError(true);
         jobOutput.setFhirResourceType(EOB);
         jobOutput.setFilePath("file.ndjson");
@@ -161,4 +162,5 @@ class JobOutputServiceTest extends JobCleanup {
         assertEquals("JobOutput with fileName  was not able to be found" +
                 " for job " + job.getJobUuid(), exception.getMessage());
     }
+
 }

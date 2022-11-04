@@ -3,19 +3,19 @@ package gov.cms.ab2d.worker.service;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.service.FeatureEngagement;
-import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.common.util.Constants;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
+import gov.cms.ab2d.common.util.PropertyConstants;
 import gov.cms.ab2d.job.service.JobService;
 
 public class WorkerServiceStub implements WorkerService {
 
     private final JobService jobService;
-    private final PropertiesService propertiesService;
+    private final PropertiesAPIService propertiesApiService;
     public int processingCalls = 0;
 
-    public WorkerServiceStub(JobService jobService, PropertiesService propertiesService) {
+    public WorkerServiceStub(JobService jobService, PropertiesAPIService propertiesApiService) {
         this.jobService = jobService;
-        this.propertiesService = propertiesService;
+        this.propertiesApiService = propertiesApiService;
     }
 
     @Override
@@ -29,6 +29,6 @@ public class WorkerServiceStub implements WorkerService {
 
     @Override
     public FeatureEngagement getEngagement() {
-        return FeatureEngagement.fromString(propertiesService.getPropertiesByKey(Constants.WORKER_ENGAGEMENT).getValue());
+        return FeatureEngagement.fromString(propertiesApiService.getProperty(PropertyConstants.WORKER_ENGAGEMENT));
     }
 }

@@ -2,19 +2,25 @@ package gov.cms.ab2d.hpms.service;
 
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
-import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
+import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
+import gov.cms.ab2d.eventclient.events.SlackEvents;
 import gov.cms.ab2d.hpms.hmsapi.HPMSAttestation;
 import gov.cms.ab2d.hpms.hmsapi.HPMSOrganizationInfo;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
-import java.util.stream.Collectors;
 
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.CONTRACT_ADDED;
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.CONTRACT_CHANGED;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.CONTRACT_CHANGED;
+
 
 @Primary
 @Service
@@ -26,12 +32,12 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
 
     private final ContractRepository contractRepository;
 
-    private final LogManager eventLogger;
+    private final SQSEventClient eventLogger;
 
     @Autowired
     public AttestationUpdaterServiceImpl(ContractRepository contractRepository,
                                          HPMSFetcher hpmsFetcher,
-                                         LogManager eventLogger) {
+                                         SQSEventClient eventLogger) {
         this.contractRepository = contractRepository;
         this.hpmsFetcher = hpmsFetcher;
         this.eventLogger = eventLogger;
@@ -126,7 +132,7 @@ public class AttestationUpdaterServiceImpl implements AttestationUpdaterService 
             return new ArrayList<>();
         }
         newContracts.forEach(c -> {
-                String msg = CONTRACT_ADDED + " *New Contract*\n\nId: " + c.getContractId() + "\n"
+                String msg = SlackEvents.CONTRACT_ADDED + " *New Contract*\n\nId: " + c.getContractId() + "\n"
                         + "Name: " + c.getContractName() + "\n"
                         + "Id: " + c.getContractId() + "\n"
                         + "Org: " + c.getOrgMarketingName() + "\n";

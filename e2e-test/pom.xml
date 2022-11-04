@@ -30,7 +30,7 @@
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
-            <version>1.30</version>
+            <version>1.33</version>
         </dependency>
 
         <dependency>
@@ -50,6 +50,11 @@
             <version>0.11.5</version>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>gov.cms.ab2d</groupId>
+            <artifactId>ab2d-events-client</artifactId>
+            <version>${events-client.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -57,7 +62,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.2.2</version>
+                <version>3.3.0</version>
                 <executions>
                     <execution>
                         <goals>
@@ -68,7 +73,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.4.2</version>
                 <configuration>
                     <descriptors>
                         <descriptor>${project.basedir}/src/test/assembly/src.xml</descriptor>

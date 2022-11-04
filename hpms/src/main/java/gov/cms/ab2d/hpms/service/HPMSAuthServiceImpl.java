@@ -1,5 +1,7 @@
 package gov.cms.ab2d.hpms.service;
 
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
+import gov.cms.ab2d.eventclient.events.MetricsEvent;
 import gov.cms.ab2d.hpms.hmsapi.HPMSAuthResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,16 +12,20 @@ import org.springframework.remoting.RemoteTimeoutException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
 import java.net.URI;
 import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpHeaders.COOKIE;
+import static org.springframework.http.HttpStatus.OK;
 
 @Service
 public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuthService {
@@ -35,6 +41,9 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
 
     @Autowired
     private WebClient webClient;
+
+    @Autowired
+    private SQSEventClient eventLogger;
 
     private URI fullAuthURI;
 
@@ -59,6 +68,7 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
     private String retrieveAuthToken() {
         final long currentTimestamp = System.currentTimeMillis();
         if (authToken == null || currentTimestamp >= tokenExpires) {
+
             refreshToken(currentTimestamp);
         }
 
@@ -75,22 +85,39 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
                 .accept(MediaType.APPLICATION_JSON)
                 .exchangeToMono(response -> {
                     cookies = extractCookies(response.cookies());
-                    return response.bodyToMono(HPMSAuthResponse.class);
+                    return response.statusCode().equals(OK)
+                            ? response.bodyToMono(HPMSAuthResponse.class)
+                            : response.createException().flatMap(Mono::error);
                 });
 
-        // Cough up blood if we can't get an Auth response in a minute.
         long curTime = System.currentTimeMillis();
-        HPMSAuthResponse authResponse = orgInfoMono.block(Duration.ofMinutes(1));
-        if (authResponse == null || authResponse.getAccessToken() == null) {
-            long elapsedTime = System.currentTimeMillis() - curTime;
-            throw new RemoteTimeoutException("Failed to procure Auth Token, response: " + authResponse +
-                    "waited for " + (elapsedTime / 1000) + " seconds.");
-        }
+        HPMSAuthResponse authResponse;
+        try {
+            // Cough up blood if we can't get an Auth response in a minute.
+            authResponse = Optional.ofNullable(orgInfoMono.block(Duration.ofMinutes(1)))
+                    .orElseThrow(IllegalStateException::new);
 
-        // Convert seconds to millis at a 90% level to pad refreshing of a token so that we are not in the middle of
-        // a significant operation when the token expires.
-        tokenExpires = currentTimestamp + authResponse.getExpires() * 900;
-        authToken = authResponse.getAccessToken();
+            // Convert seconds to millis at a 90% level to pad refreshing of a token so that we are not in the middle of
+            // a significant operation when the token expires.
+            tokenExpires = currentTimestamp + authResponse.getExpires() * 900L;
+            authToken = authResponse.getAccessToken();
+        } catch (WebClientResponseException exception) {
+            sendEvent(prepareErrorMessage(exception, curTime));
+            throw exception;
+        } catch (IllegalStateException | NullPointerException exception) {
+            String error = "HPMS auth call failed with no response after waited for " + (curTime / 1000) + " seconds.";
+            sendEvent(error);
+            throw new RemoteTimeoutException(error);
+        }
+    }
+
+    private void sendEvent(String error) {
+        eventLogger.sendLogs(MetricsEvent.builder()
+                .service("HPMS")
+                .timeOfEvent(OffsetDateTime.now())
+                .eventDescription(String.format(error))
+                .stateType(MetricsEvent.State.CONTINUE)
+                .build());
     }
 
     private String extractCookies(MultiValueMap<String, ResponseCookie> entries) {
@@ -130,5 +157,23 @@ public class HPMSAuthServiceImpl extends AbstractHPMSService implements HPMSAuth
     void cleanup() {
         clearTokenExpires();
         authToken = null;
+    }
+
+    private String prepareErrorMessage(WebClientResponseException exception, long curTime) {
+        String explication = "After waiting " + (curTime / 1000) + " seconds ";
+        switch (exception.getStatusCode().value()) {
+            //TODO Replace status code numbers with HttpStatus emums
+            case (403):
+                explication += "HPMS auth key/secret have expired and must be updated";
+                break;
+            case (500):
+                explication += "HPMS auth key/secret are invalid or HPMS is down";
+                break;
+            default:
+                explication += "HPMS returned an unknown error: "
+                        + exception.getResponseBodyAsString();
+        }
+
+        return explication;
     }
 }

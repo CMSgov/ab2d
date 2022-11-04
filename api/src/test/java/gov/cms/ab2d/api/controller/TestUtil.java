@@ -4,8 +4,7 @@ import com.okta.jwt.AccessTokenVerifier;
 import com.okta.jwt.Jwt;
 import com.okta.jwt.JwtVerificationException;
 import com.okta.jwt.impl.DefaultJwt;
-import gov.cms.ab2d.common.dto.PropertiesDTO;
-import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.job.model.JobOutput;
 import io.jsonwebtoken.Jwts;
@@ -30,7 +29,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-import static gov.cms.ab2d.common.util.Constants.MAINTENANCE_MODE;
+import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_PDP_CLIENT;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -43,7 +42,7 @@ public class TestUtil {
     private DataSetup dataSetup;
 
     @Autowired
-    private PropertiesService propertiesService;
+    private PropertiesAPIService propertiesApiService;
 
     @MockBean
     AccessTokenVerifier mockAccessTokenVerifier;
@@ -121,12 +120,11 @@ public class TestUtil {
     }
 
     public void turnMaintenanceModeOff() {
-        PropertiesDTO propertiesDTO = new PropertiesDTO();
-        propertiesDTO.setKey(MAINTENANCE_MODE);
-        propertiesDTO.setValue("false");
-        List<PropertiesDTO> propertiesDTOs = new ArrayList<>();
-        propertiesDTOs.add(propertiesDTO);
-        propertiesService.updateProperties(propertiesDTOs);
+        propertiesApiService.updateProperty(MAINTENANCE_MODE, "false");
+    }
+
+    public void turnMaintenanceModeOn() {
+        propertiesApiService.updateProperty(MAINTENANCE_MODE, "true");
     }
 
     private String buildTokenStr() {

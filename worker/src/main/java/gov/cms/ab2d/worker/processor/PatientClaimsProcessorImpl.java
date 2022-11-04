@@ -6,22 +6,14 @@ import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.aggregator.ClaimsStream;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
-import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.events.BeneficiarySearchEvent;
-import gov.cms.ab2d.eventlogger.events.FileEvent;
+import gov.cms.ab2d.eventclient.clients.EventClient;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
+import gov.cms.ab2d.eventclient.events.BeneficiarySearchEvent;
+import gov.cms.ab2d.eventclient.events.FileEvent;
+import gov.cms.ab2d.eventclient.events.MetricsEvent;
 import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.worker.config.SearchConfig;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.hl7.fhir.instance.model.api.IBaseBundle;
-import org.hl7.fhir.instance.model.api.IBaseResource;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.AsyncResult;
-import org.springframework.stereotype.Component;
-
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
@@ -32,6 +24,16 @@ import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Future;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.hl7.fhir.instance.model.api.IBaseBundle;
+import org.hl7.fhir.instance.model.api.IBaseResource;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.AsyncResult;
+import org.springframework.stereotype.Component;
+
 
 import static gov.cms.ab2d.aggregator.FileOutputType.DATA;
 import static gov.cms.ab2d.aggregator.FileOutputType.ERROR;
@@ -44,11 +46,14 @@ import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     private final BFDClient bfdClient;
-    private final LogManager logManager;
+    private final SQSEventClient logManager;
     private final SearchConfig searchConfig;
 
     @Value("${bfd.earliest.data.date:01/01/2020}")
     private String earliestDataDate;
+
+    @Value("${bfd.retry.backoffDelay:250}")
+    private int bfdTimeout;
 
     private static final OffsetDateTime START_CHECK = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
 
@@ -81,14 +86,14 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         try (ClaimsStream stream = new ClaimsStream(request.getJob(), request.getEfsMount(), DATA,
                 searchConfig.getStreamingDir(), searchConfig.getFinishedDir(), searchConfig.getBufferSize())) {
             file = stream.getFile();
-            logManager.log(new FileEvent(request.getOrganization(), request.getJob(), stream.getFile(), FileEvent.FileStatus.OPEN));
+            logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), stream.getFile(), FileEvent.FileStatus.OPEN));
             for (CoverageSummary patient : request.getCoverageSummary()) {
                 List<IBaseResource> eobs = getEobBundleResources(request, patient);
                 anyErrors = writeOutResource(fhirVersion, update, eobs, stream);
                 update.incPatientProcessCount();
             }
         } finally {
-            logManager.log(new FileEvent(request.getOrganization(), request.getJob(), file, FileEvent.FileStatus.CLOSE));
+            logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), file, FileEvent.FileStatus.CLOSE));
         }
         return anyErrors;
     }
@@ -98,12 +103,12 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         try (ClaimsStream stream = new ClaimsStream(request.getJob(), request.getEfsMount(), ERROR,
                 searchConfig.getStreamingDir(), searchConfig.getFinishedDir(), searchConfig.getBufferSize())) {
             errorFile = stream.getFile();
-            logManager.log(new FileEvent(request.getOrganization(), request.getJob(), stream.getFile(), FileEvent.FileStatus.OPEN));
+            logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), stream.getFile(), FileEvent.FileStatus.OPEN));
             stream.write(anyErrors);
         } catch (IOException e) {
             log.error("Cannot log error to error file");
         } finally {
-            logManager.log(new FileEvent(request.getOrganization(), request.getJob(), errorFile, FileEvent.FileStatus.CLOSE));
+            logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), errorFile, FileEvent.FileStatus.CLOSE));
         }
     }
 
@@ -179,11 +184,11 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             BFDClient.BFD_BULK_JOB_ID.set(request.getJob());
 
             // Make first request and begin looping over remaining pages
-            eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patient.getIdentifiers().getBeneficiaryId(), sinceTime);
+            eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patient.getIdentifiers().getBeneficiaryId(), sinceTime, request.getContractNum());
             collector.filterAndAddEntries(eobBundle, patient);
 
             while (BundleUtils.getNextLink(eobBundle) != null) {
-                eobBundle = bfdClient.requestNextBundleFromServer(request.getVersion(), eobBundle);
+                eobBundle = bfdClient.requestNextBundleFromServer(request.getVersion(), eobBundle, request.getContractNum());
                 collector.filterAndAddEntries(eobBundle, patient);
             }
 
@@ -193,6 +198,15 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
             return collector.getEobs();
         } catch (Exception ex) {
+            //When bfd call fails (excluding 404s) send a metrics event
+            if (RuntimeException.class.equals(ex.getClass())) {
+                logManager.sendLogs(MetricsEvent.builder()
+                        .service("BFD")
+                        .timeOfEvent(OffsetDateTime.now())
+                        .eventDescription(String.format("BFD request failed after retyping %d times", bfdTimeout))
+                        .stateType(MetricsEvent.State.CONTINUE)
+                        .build());
+            }
             logError(request, beneficiaryId, requestStartTime, ex);
             throw ex;
         } finally {
@@ -233,7 +247,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     }
 
     private void logSuccessful(PatientClaimsRequest request, long beneficiaryId, OffsetDateTime start) {
-        logManager.log(LogManager.LogType.KINESIS,
+        logManager.log(EventClient.LogType.KINESIS,
                 new BeneficiarySearchEvent(request.getOrganization(), request.getJob(), request.getContractNum(),
                         start, OffsetDateTime.now(),
                         beneficiaryId,
@@ -241,7 +255,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     }
 
     private void logError(PatientClaimsRequest request, long beneficiaryId, OffsetDateTime start, Exception ex) {
-        logManager.log(LogManager.LogType.KINESIS,
+        logManager.log(EventClient.LogType.KINESIS,
                 new BeneficiarySearchEvent(request.getOrganization(), request.getJob(), request.getContractNum(),
                         start, OffsetDateTime.now(),
                         beneficiaryId,

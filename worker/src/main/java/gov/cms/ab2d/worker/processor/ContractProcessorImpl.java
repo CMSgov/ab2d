@@ -8,14 +8,14 @@ import gov.cms.ab2d.aggregator.FileOutputType;
 import gov.cms.ab2d.aggregator.FileUtils;
 import gov.cms.ab2d.aggregator.JobHelper;
 import gov.cms.ab2d.common.dto.ContractDTO;
-import gov.cms.ab2d.job.model.Job;
-import gov.cms.ab2d.job.model.JobOutput;
-import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
-import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.events.ErrorEvent;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
+import gov.cms.ab2d.eventclient.events.ErrorEvent;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobOutput;
+import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.config.SearchConfig;
@@ -49,7 +49,9 @@ import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 @Slf4j
 @Service
-@SuppressWarnings("java:S2142") //java:S2142: "InterruptedException" should not be ignored
+//java:S2142: "InterruptedException" should not be ignored
+//java:S3655: False flag. Complaining about not checking for Optional#isPresent() when it is checked
+@SuppressWarnings({"java:S2142", "java:S3655"}) //java:S2142: "InterruptedException" should not be ignored
 public class ContractProcessorImpl implements ContractProcessor {
     private static final int SLEEP_DURATION = 250;
 
@@ -68,7 +70,7 @@ public class ContractProcessorImpl implements ContractProcessor {
     private final JobRepository jobRepository;
     private final CoverageDriver coverageDriver;
     private final PatientClaimsProcessor patientClaimsProcessor;
-    private final LogManager eventLogger;
+    private final SQSEventClient eventLogger;
     private final RoundRobinBlockingQueue<PatientClaimsRequest> eobClaimRequestsQueue;
     private final JobChannelService jobChannelService;
     private final JobProgressService jobProgressService;
@@ -80,7 +82,7 @@ public class ContractProcessorImpl implements ContractProcessor {
                                  JobRepository jobRepository,
                                  CoverageDriver coverageDriver,
                                  PatientClaimsProcessor patientClaimsProcessor,
-                                 LogManager eventLogger,
+                                 SQSEventClient eventLogger,
                                  RoundRobinBlockingQueue<PatientClaimsRequest> eobClaimRequestsQueue,
                                  JobChannelService jobChannelService,
                                  JobProgressService jobProgressService,
@@ -435,7 +437,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             cancelFuturesInQueue(contractData);
             contractData.getAggregatorHandle().cancel(true);
             String description = progressTracker.getPatientFailureCount() + " out of " + progressTracker.getTotalCount() + " records failed. Stopping job";
-            eventLogger.log(new ErrorEvent(null, progressTracker.getJobUuid(),
+            eventLogger.sendLogs(new ErrorEvent(null, progressTracker.getJobUuid(),
                     ErrorEvent.ErrorType.TOO_MANY_SEARCH_ERRORS, description));
             log.error("{} out of {} records failed. Stopping job", progressTracker.getPatientFailureCount(), progressTracker.getTotalCount());
             throw new RuntimeException("Too many patient records in the job had failures");

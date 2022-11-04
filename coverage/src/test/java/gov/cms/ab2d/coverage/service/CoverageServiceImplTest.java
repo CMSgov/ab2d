@@ -19,10 +19,11 @@ import gov.cms.ab2d.coverage.repository.CoveragePeriodRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;
+import gov.cms.ab2d.coverage.util.AB2DCoverageLocalstackContainer;
 import gov.cms.ab2d.coverage.util.AB2DCoveragePostgressqlContainer;
 import gov.cms.ab2d.coverage.util.Coverage;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
-import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.filter.FilterOutByDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -76,7 +77,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Testcontainers
 @TestPropertySource(locations = "/application.coverage.properties")
 class CoverageServiceImplTest {
-
     private static final int YEAR = 2020;
     private static final int JANUARY = 1;
     private static final int FEBRUARY = 2;
@@ -100,6 +100,9 @@ class CoverageServiceImplTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DCoveragePostgressqlContainer();
 
+    @Container
+    private static final AB2DCoverageLocalstackContainer localstackContainer = new AB2DCoverageLocalstackContainer();
+
     @Autowired
     CoveragePeriodRepository coveragePeriodRepo;
 
@@ -122,7 +125,7 @@ class CoverageServiceImplTest {
     CoverageService coverageService;
 
     @SpyBean
-    LogManager eventLogger;
+    SQSEventClient eventLogger;
 
     @Autowired
     CoverageDataSetup dataSetup;

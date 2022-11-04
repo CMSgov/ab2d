@@ -1,8 +1,8 @@
 package gov.cms.ab2d.worker.config;
 
-
-import gov.cms.ab2d.common.dto.PropertiesDTO;
-import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
+import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.coverage.util.AB2DCoveragePostgressqlContainer;
 import java.time.Duration;
 import java.time.Instant;
@@ -18,13 +18,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import static gov.cms.ab2d.common.util.Constants.MAINTENANCE_MODE;
-import static gov.cms.ab2d.common.util.Constants.PCP_MAX_POOL_SIZE;
+import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
+import static gov.cms.ab2d.common.util.PropertyConstants.PCP_MAX_POOL_SIZE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -33,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest(properties = {"pcp.core.pool.size=3", "pcp.max.pool.size=20", "pcp.scaleToMax.time=20", "property.change.detection=false"})
 @Testcontainers
 @Slf4j
+@Import(AB2DSQSMockConfig.class)
 public class AutoScalingServiceTest {
 
     public static final int QUEUE_SIZE = 25;
@@ -46,7 +48,7 @@ public class AutoScalingServiceTest {
     private AutoScalingService autoScalingService;
 
     @Autowired
-    private PropertiesService propertiesService;
+    private PropertiesAPIService propertiesApiService;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DCoveragePostgressqlContainer();
@@ -62,16 +64,8 @@ public class AutoScalingServiceTest {
     @AfterEach
     public void cleanup() {
         patientProcessorThreadPool.getThreadPoolExecutor().getQueue().clear();
-
-        PropertiesDTO maintenance = new PropertiesDTO();
-        maintenance.setKey(MAINTENANCE_MODE);
-        maintenance.setValue("false");
-
-        PropertiesDTO max = new PropertiesDTO();
-        max.setKey(PCP_MAX_POOL_SIZE);
-        max.setValue("" + originalMaxPoolSize);
-        propertiesService.updateProperties(List.of(maintenance, max));
-
+        propertiesApiService.updateProperty(MAINTENANCE_MODE, "false");
+        propertiesApiService.updateProperty(PCP_MAX_POOL_SIZE, "" + originalMaxPoolSize);
     }
 
     @Test
@@ -91,19 +85,13 @@ public class AutoScalingServiceTest {
         assertEquals(3, patientProcessorThreadPool.getMaxPoolSize());
         assertEquals(3, patientProcessorThreadPool.getCorePoolSize());
 
-        PropertiesDTO max = new PropertiesDTO();
-        max.setKey(PCP_MAX_POOL_SIZE);
-        max.setValue("" + 4);
-        propertiesService.updateProperties(List.of(max));
+        propertiesApiService.updateProperty(PCP_MAX_POOL_SIZE, "4");
 
         Thread.sleep(10000);
 
         assertNotEquals(3, patientProcessorThreadPool.getMaxPoolSize());
 
-        PropertiesDTO dto = new PropertiesDTO();
-        dto.setKey(MAINTENANCE_MODE);
-        dto.setValue("true");
-        propertiesService.updateProperties(List.of(dto));
+        propertiesApiService.updateProperty(MAINTENANCE_MODE, "true");
 
         Thread.sleep(6000);
 
@@ -197,5 +185,4 @@ public class AutoScalingServiceTest {
             }
         };
     }
-
 }

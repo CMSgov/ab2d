@@ -10,17 +10,17 @@ import gov.cms.ab2d.api.security.InvalidAuthHeaderException;
 import gov.cms.ab2d.api.security.MissingTokenException;
 import gov.cms.ab2d.common.service.InvalidClientInputException;
 import gov.cms.ab2d.common.service.InvalidContractException;
+import gov.cms.ab2d.api.util.UtilMethods;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
+import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
+import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
+import gov.cms.ab2d.eventclient.events.ErrorEvent;
+import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.service.InvalidJobAccessException;
 import gov.cms.ab2d.job.service.InvalidJobStateTransition;
-import gov.cms.ab2d.common.service.InvalidPropertiesException;
 import gov.cms.ab2d.job.service.JobOutputMissingException;
-import gov.cms.ab2d.common.service.ResourceNotFoundException;
-import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
-import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
-import gov.cms.ab2d.eventlogger.events.ErrorEvent;
-import gov.cms.ab2d.eventlogger.utils.UtilMethods;
-import gov.cms.ab2d.fhir.FhirVersion;
+import gov.cms.ab2d.properties.service.InvalidPropertiesException;
+import gov.cms.ab2d.properties.service.ResourceNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -46,7 +46,7 @@ import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.API_INVALID_CONTRACT;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.API_INVALID_CONTRACT;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 
@@ -60,7 +60,7 @@ import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 @Slf4j
 public class ErrorHandler extends ResponseEntityExceptionHandler {
 
-    private final LogManager eventLogger;
+    private final SQSEventClient eventLogger;
     private final int retryAfterDelay;
     private final ApiCommon apiCommon;
 
@@ -79,6 +79,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
             RESPONSE_MAP.put(InvalidContractException.class, HttpStatus.FORBIDDEN);
             RESPONSE_MAP.put(InvalidJobAccessException.class, HttpStatus.FORBIDDEN);
             RESPONSE_MAP.put(ResourceNotFoundException.class, HttpStatus.NOT_FOUND);
+            RESPONSE_MAP.put(gov.cms.ab2d.common.service.ResourceNotFoundException.class, HttpStatus.NOT_FOUND);
             RESPONSE_MAP.put(TooManyRequestsException.class, HttpStatus.TOO_MANY_REQUESTS);
             RESPONSE_MAP.put(InMaintenanceModeException.class, HttpStatus.SERVICE_UNAVAILABLE);
             RESPONSE_MAP.put(URISyntaxException.class, HttpStatus.SERVICE_UNAVAILABLE);
@@ -87,7 +88,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
             RESPONSE_MAP.put(DataIntegrityViolationException.class, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-    public ErrorHandler(LogManager eventLogger, @Value("${api.retry-after.delay}") int retryAfterDelay, ApiCommon apiCommon) {
+    public ErrorHandler(SQSEventClient eventLogger, @Value("${api.retry-after.delay}") int retryAfterDelay, ApiCommon apiCommon) {
         this.eventLogger = eventLogger;
         this.retryAfterDelay = retryAfterDelay;
         this.apiCommon = apiCommon;
@@ -120,7 +121,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler({JobOutputMissingException.class})
     public ResponseEntity<JsonNode> handleJobOutputMissing(Exception e, HttpServletRequest request) throws IOException {
-        eventLogger.log(new ErrorEvent(MDC.get(ORGANIZATION), UtilMethods.parseJobId(request.getRequestURI()),
+        eventLogger.sendLogs(new ErrorEvent(MDC.get(ORGANIZATION), UtilMethods.parseJobId(request.getRequestURI()),
                 ErrorEvent.ErrorType.FILE_ALREADY_DELETED, getRootCause(e)));
         return generateFHIRError(e, request);
     }
@@ -130,7 +131,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         HttpStatus status = getErrorResponse(ex.getClass());
         String description = API_INVALID_CONTRACT + " " + getRootCause(ex);
 
-        eventLogger.log(new ErrorEvent(MDC.get(ORGANIZATION), null,
+        eventLogger.sendLogs(new ErrorEvent(MDC.get(ORGANIZATION), null,
                 ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT, description));
 
         ApiResponseEvent responseEvent = new ApiResponseEvent(MDC.get(ORGANIZATION), null, status,
@@ -160,7 +161,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         // Then log to other destinations
         ApiResponseEvent responseEvent = new ApiResponseEvent(MDC.get(ORGANIZATION), null, status,
                 "API Error", description, (String) request.getAttribute(REQUEST_ID));
-        eventLogger.log(responseEvent);
+        eventLogger.sendLogs(responseEvent);
 
         return new ResponseEntity<>(null, null, status);
     }
@@ -173,7 +174,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         log.warn("Maintenance mode blocked API request " + request.getAttribute(REQUEST_ID));
 
         // Then log to other destinations
-        eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), null, status,
+        eventLogger.sendLogs(new ApiResponseEvent(MDC.get(ORGANIZATION), null, status,
                 "API Error", ex.getClass().getSimpleName(), (String) request.getAttribute(REQUEST_ID)));
         eventLogger.trace("API_MAINT_BLOCKED Maintenance mode blocked API request " + request.getAttribute(REQUEST_ID), Ab2dEnvironment.PROD_LIST);
 
@@ -187,7 +188,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         if (e.getJobIds() != null) {
             generateContentLocation(e, request, httpHeaders);
         }
-        eventLogger.log(new ErrorEvent(MDC.get(ORGANIZATION), UtilMethods.parseJobId(request.getRequestURI()),
+        eventLogger.sendLogs(new ErrorEvent(MDC.get(ORGANIZATION), UtilMethods.parseJobId(request.getRequestURI()),
                 ErrorEvent.ErrorType.TOO_MANY_STATUS_REQUESTS, "Too many requests performed in too short a time"));
         return generateFHIRError(e, httpHeaders, request);
     }
@@ -223,7 +224,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         // Log so that Splunk can pick this up and alert
         log.warn("{} {}", ExceptionUtils.getRootCause(e).getClass(), msg);
 
-        eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), null,
+        eventLogger.sendLogs(new ApiResponseEvent(MDC.get(ORGANIZATION), null,
                 ErrorHandler.getErrorResponse(e.getClass()),
                 "FHIR Error", msg, (String) request.getAttribute(REQUEST_ID)));
 

@@ -1,23 +1,15 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.aggregator.FileOutputType;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
+import gov.cms.ab2d.eventclient.events.ContractSearchEvent;
+import gov.cms.ab2d.eventclient.events.FileEvent;
+import gov.cms.ab2d.eventclient.events.JobStatusChangeEvent;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.repository.JobOutputRepository;
 import gov.cms.ab2d.job.repository.JobRepository;
-import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.events.ContractSearchEvent;
-import gov.cms.ab2d.eventlogger.events.FileEvent;
-import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.service.JobChannelService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.postgresql.util.PSQLException;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -27,16 +19,23 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.concurrent.ExecutionException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.postgresql.util.PSQLException;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
+
+import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PROD_LIST;
+import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PUBLIC_LIST;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_CALL_FAILURE;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_COMPLETED;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_FAILURE;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_QUEUE_MISMATCH;
 import static gov.cms.ab2d.job.model.JobStatus.FAILED;
 import static gov.cms.ab2d.job.model.JobStatus.SUCCESSFUL;
-import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PROD_LIST;
-import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
-
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_COMPLETED;
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_CALL_FAILURE;
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_FAILURE;
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_QUEUE_MISMATCH;
 
 @Slf4j
 @Service
@@ -64,7 +63,7 @@ public class JobProcessorImpl implements JobProcessor {
     private final JobRepository jobRepository;
     private final JobOutputRepository jobOutputRepository;
     private final ContractProcessor contractProcessor;
-    private final LogManager eventLogger;
+    private final SQSEventClient eventLogger;
 
     /**
      * Load the job and process it
@@ -194,7 +193,7 @@ public class JobProcessorImpl implements JobProcessor {
                 : job.getJobOutputs().size() - 1;
 
         // Regardless of whether we pass or fail the basic
-        eventLogger.log(new ContractSearchEvent(job.getOrganization(),
+        eventLogger.sendLogs(new ContractSearchEvent(job.getOrganization(),
                 job.getJobUuid(),
                 job.getContractNumber(),
                 progressTracker.getPatientsExpected(),
@@ -275,7 +274,7 @@ public class JobProcessorImpl implements JobProcessor {
             }
 
             if (Files.isRegularFile(filePath)) {
-                eventLogger.log(job.buildFileEvent(filePath.toFile(), FileEvent.FileStatus.DELETE));
+                eventLogger.sendLogs(job.buildFileEvent(filePath.toFile(), FileEvent.FileStatus.DELETE));
                 doDelete(filePath);
             }
         }

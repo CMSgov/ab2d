@@ -3,14 +3,12 @@ package gov.cms.ab2d.worker.processor.coverage;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.dto.PdpClientDTO;
-import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.common.model.Properties;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.service.PdpClientService;
-import gov.cms.ab2d.common.service.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import gov.cms.ab2d.common.util.Constants;
+import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.coverage.model.CoverageJobStatus;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
@@ -28,9 +26,10 @@ import java.time.DayOfWeek;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,6 +39,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -51,7 +51,8 @@ import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.fhir.IdentifierUtils.BENEFICIARY_ID;
-import static java.util.stream.Collectors.toList;
+import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_STUCK_HOURS;
+import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_UPDATE_MONTHS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -67,6 +68,7 @@ import static org.mockito.Mockito.when;
 // Never run internal coverage processor so this coverage processor runs unimpeded
 @SpringBootTest(properties = "coverage.update.initial.delay=1000000")
 @Testcontainers
+@Import(AB2DSQSMockConfig.class)
 class CoverageUpdateAndProcessorTest {
 
     private static final int PAST_MONTHS = 3;
@@ -102,7 +104,7 @@ class CoverageUpdateAndProcessorTest {
     private CoverageService coverageService;
 
     @Autowired
-    private PropertiesService propertiesService;
+    private PropertiesAPIService propertiesApiService;
 
     @Autowired
     private WorkerDataSetup dataSetup;
@@ -126,7 +128,7 @@ class CoverageUpdateAndProcessorTest {
     private CoverageDriverImpl driver;
     private CoverageProcessorImpl processor;
 
-    private List<Properties> originalValues = new ArrayList<>();
+    private final Map<String, String> originalValues = new HashMap<>();
 
     @BeforeEach
     void before() {
@@ -154,7 +156,7 @@ class CoverageUpdateAndProcessorTest {
         taskExecutor.initialize();
 
         processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS, contractWorkerClient);
-        driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesService, processor, searchLock, mapping);
+        driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesApiService, processor, searchLock, mapping);
     }
 
     @AfterEach
@@ -164,31 +166,15 @@ class CoverageUpdateAndProcessorTest {
         dataSetup.cleanup();
         coverageDataSetup.cleanup();
 
-        propertiesService.updateProperties(originalValues.stream().map(properties -> {
-            PropertiesDTO dto = new PropertiesDTO();
-            dto.setKey(properties.getKey());
-            dto.setValue(properties.getValue());
-            return dto;
-        }).collect(toList()));
+        originalValues.entrySet().stream().forEach(c -> propertiesApiService.updateProperty(c.getKey(), c.getValue()));
     }
 
     private void addPropertiesTableValues() {
-        List<PropertiesDTO> propertiesDTOS = new ArrayList<>();
+        originalValues.put(COVERAGE_SEARCH_UPDATE_MONTHS, propertiesApiService.getProperty(COVERAGE_SEARCH_UPDATE_MONTHS));
+        originalValues.put(COVERAGE_SEARCH_STUCK_HOURS, propertiesApiService.getProperty(COVERAGE_SEARCH_STUCK_HOURS));
 
-        PropertiesDTO pastMonths = new PropertiesDTO();
-        pastMonths.setKey(Constants.COVERAGE_SEARCH_UPDATE_MONTHS);
-        pastMonths.setValue("" + PAST_MONTHS);
-        propertiesDTOS.add(pastMonths);
-
-        PropertiesDTO stuckHours = new PropertiesDTO();
-        stuckHours.setKey(Constants.COVERAGE_SEARCH_STUCK_HOURS);
-        stuckHours.setValue("" + STUCK_HOURS);
-        propertiesDTOS.add(stuckHours);
-
-        originalValues.add(propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_UPDATE_MONTHS));
-        originalValues.add(propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_STUCK_HOURS));
-
-        propertiesService.updateProperties(propertiesDTOS);
+        propertiesApiService.updateProperty(COVERAGE_SEARCH_UPDATE_MONTHS, "" + PAST_MONTHS);
+        propertiesApiService.updateProperty(COVERAGE_SEARCH_STUCK_HOURS, "" + STUCK_HOURS);
     }
 
     @DisplayName("Loading coverage periods")
@@ -455,7 +441,7 @@ class CoverageUpdateAndProcessorTest {
 
     @DisplayName("Normal workflow functions")
     @Test
-    void normalExecution() throws CoverageDriverException, InterruptedException {
+    void normalExecution() throws CoverageDriverException {
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = buildBundle(0, 10);
         bundle1.setLink(Collections.singletonList(new org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent().setRelation(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT)));
@@ -463,7 +449,7 @@ class CoverageUpdateAndProcessorTest {
         org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20);
 
         when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class), anyString())).thenReturn(bundle2);
 
         processor.queueCoveragePeriod(january, false);
         CoverageJobStatus status = coverageService.getSearchStatus(january.getId());
@@ -515,7 +501,7 @@ class CoverageUpdateAndProcessorTest {
 
         Mockito.clearInvocations();
         when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class), anyString())).thenReturn(bundle2);
 
         driver.loadMappingJob();
 
@@ -561,7 +547,7 @@ class CoverageUpdateAndProcessorTest {
 
         Mockito.clearInvocations();
         when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class))).thenReturn(bundle2);
+        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class), anyString())).thenReturn(bundle2);
 
         ThreadPoolTaskExecutor twoThreads = new ThreadPoolTaskExecutor();
         twoThreads.setMaxPoolSize(2);

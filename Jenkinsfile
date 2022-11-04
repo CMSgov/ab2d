@@ -87,7 +87,7 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
                     sh '''
                         export AB2D_EFS_MOUNT="${AB2D_HOME}"
-                        mvn --settings settings.xml -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD} test -pl eventlogger,common,job,coverage,api,worker,audit,hpms
+                        mvn --settings settings.xml -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD} test -pl common,job,coverage,api,worker,audit,hpms,properties
                     '''
                 }
             }
@@ -98,8 +98,8 @@ pipeline {
             steps {
 
                 withCredentials([file(credentialsId: 'SANDBOX_BFD_KEYSTORE', variable: 'SANDBOX_BFD_KEYSTORE'),
-                            string(credentialsId: 'SANDBOX_BFD_KEYSTORE_PASSWORD', variable: 'AB2D_BFD_KEYSTORE_PASSWORD'),
-                            usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
+                                 string(credentialsId: 'SANDBOX_BFD_KEYSTORE_PASSWORD', variable: 'AB2D_BFD_KEYSTORE_PASSWORD'),
+                                 usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
 
                     sh '''
                         export AB2D_BFD_KEYSTORE_LOCATION="$WORKSPACE/opt/ab2d/ab2d_bfd_keystore"
@@ -119,7 +119,7 @@ pipeline {
                 }
             }
         }
-	    stage('SonarQube Analysis') {
+        stage('SonarQube Analysis') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
                     git branch: 'master', credentialsId: 'GITHUB_AB2D_JENKINS_PAT', url: env.GIT_URL
@@ -132,9 +132,9 @@ pipeline {
             }
         }
 
-	  //New Way in declarative pipeline
+        // New Way in declarative pipeline
         stage("Quality Gate") {
-           options {
+            options {
                 timeout(time: 10, unit: 'MINUTES')
             }
             steps {
@@ -150,8 +150,8 @@ pipeline {
             steps {
 
                 withCredentials([file(credentialsId: 'SANDBOX_BFD_KEYSTORE', variable: 'SANDBOX_BFD_KEYSTORE'),
-                            string(credentialsId: 'SANDBOX_BFD_KEYSTORE_PASSWORD', variable: 'AB2D_BFD_KEYSTORE_PASSWORD'),
-                            usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
+                                 string(credentialsId: 'SANDBOX_BFD_KEYSTORE_PASSWORD', variable: 'AB2D_BFD_KEYSTORE_PASSWORD'),
+                                 usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
 
                     sh '''
                         export AB2D_BFD_KEYSTORE_LOCATION="/opt/ab2d/ab2d_bfd_keystore"
@@ -253,7 +253,7 @@ pipeline {
 
     post {
         always {
-	    script {
+            script {
                 sh '''
                   rm -rf "$WORKSPACE/opt/ab2d" 2> /dev/null
                   rm -rf "$WORKSPACE/.m2/repository/gov/cms/ab2d" 2> /dev/null

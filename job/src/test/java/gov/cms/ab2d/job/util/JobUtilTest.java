@@ -12,46 +12,48 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static gov.cms.ab2d.common.util.Constants.MAX_DOWNLOADS;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JobUtilTest {
-
     @Test
     void isJobDone() {
-        assertFalse(JobUtil.isJobDone(null));
-        assertFalse(JobUtil.isJobDone(new Job()));
+        assertFalse(JobUtil.isJobDone(null, MAX_DOWNLOADS));
+        assertFalse(JobUtil.isJobDone(new Job(), MAX_DOWNLOADS));
         Job job = createBasicJob(JobStatus.CANCELLED, null, false);
-        assertTrue(JobUtil.isJobDone(job));
+        assertTrue(JobUtil.isJobDone(job, MAX_DOWNLOADS));
         job = createBasicJob(JobStatus.CANCELLED, null, true);
-        assertTrue(JobUtil.isJobDone(job));
+        assertTrue(JobUtil.isJobDone(job, MAX_DOWNLOADS));
         job = createBasicJob(JobStatus.FAILED, null, false);
-        assertTrue(JobUtil.isJobDone(job));
+        assertTrue(JobUtil.isJobDone(job, MAX_DOWNLOADS));
         job = createBasicJob(JobStatus.FAILED, null, true);
-        assertTrue(JobUtil.isJobDone(job));
-        job = createBasicJob(JobStatus.IN_PROGRESS, new boolean[] {true, true}, true);
-        assertFalse(JobUtil.isJobDone(job));
-        job = createBasicJob(JobStatus.SUBMITTED, new boolean[] {true, true}, true);
-        assertFalse(JobUtil.isJobDone(job));
-        job = createBasicJob(JobStatus.SUCCESSFUL, new boolean[] {true, true}, false);
-        assertTrue(JobUtil.isJobDone(job));
-        job = createBasicJob(JobStatus.SUCCESSFUL, new boolean[] {false, true}, false);
-        assertFalse(JobUtil.isJobDone(job));
-        job = createBasicJob(JobStatus.SUCCESSFUL, new boolean[] {false, true}, true);
-        assertTrue(JobUtil.isJobDone(job));
-        job = createBasicJob(JobStatus.SUCCESSFUL, new boolean[] {true, true}, true);
-        assertTrue(JobUtil.isJobDone(job));
+        assertTrue(JobUtil.isJobDone(job, MAX_DOWNLOADS));
+        job = createBasicJob(JobStatus.IN_PROGRESS, new int[]{1, 1}, true);
+        assertFalse(JobUtil.isJobDone(job, MAX_DOWNLOADS));
+        job = createBasicJob(JobStatus.SUBMITTED, new int[]{1, 1}, true);
+        assertFalse(JobUtil.isJobDone(job, MAX_DOWNLOADS));
+        job = createBasicJob(JobStatus.SUCCESSFUL, new int[]{MAX_DOWNLOADS, MAX_DOWNLOADS}, false);
+        assertTrue(JobUtil.isJobDone(job, MAX_DOWNLOADS));
+        job = createBasicJob(JobStatus.SUCCESSFUL, new int[]{0, 11}, false);
+        assertFalse(JobUtil.isJobDone(job, MAX_DOWNLOADS));
+        job = createBasicJob(JobStatus.SUCCESSFUL, new int[]{0, 1}, true);
+        assertTrue(JobUtil.isJobDone(job, MAX_DOWNLOADS));
+        job = createBasicJob(JobStatus.SUCCESSFUL, new int[]{1, 1}, true);
+        assertTrue(JobUtil.isJobDone(job, MAX_DOWNLOADS));
         job = createBasicJob(JobStatus.SUCCESSFUL, null, true);
-        assertTrue(JobUtil.isJobDone(job));
+        assertTrue(JobUtil.isJobDone(job, MAX_DOWNLOADS));
         job = createBasicJob(JobStatus.SUCCESSFUL, null, false);
-        assertFalse(JobUtil.isJobDone(job));
-        job = createBasicJob(JobStatus.SUCCESSFUL, new boolean[] {false, true}, false);
-        JobOutput error = job.getJobOutputs().stream().filter(c -> c.getDownloaded() == false).findFirst().orElse(null);
+        assertFalse(JobUtil.isJobDone(job, MAX_DOWNLOADS));
+        job = createBasicJob(JobStatus.SUCCESSFUL, new int[]{0, MAX_DOWNLOADS}, false);
+        JobOutput error = job.getJobOutputs().stream().filter(c -> c.getDownloaded() == 0).findFirst().orElse(null);
         error.setError(true);
-        assertTrue(JobUtil.isJobDone(job));
+        assertTrue(JobUtil.isJobDone(job, MAX_DOWNLOADS));
     }
 
-    private Job createBasicJob(JobStatus status, boolean[] outputsDownloaded, boolean isExpired) {
+    private Job createBasicJob(JobStatus status, int[] outputsDownloaded, boolean isExpired) {
         Job job = new Job();
         job.setId(1L);
         job.setJobUuid("JOB");

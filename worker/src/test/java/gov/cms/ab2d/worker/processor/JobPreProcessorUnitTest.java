@@ -2,13 +2,13 @@ package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.model.SinceSource;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
+import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobOutput;
 import gov.cms.ab2d.job.model.JobStatus;
-import gov.cms.ab2d.common.model.SinceSource;
 import gov.cms.ab2d.job.repository.JobRepository;
-import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.util.ContractWorkerClientMock;
 import java.time.OffsetDateTime;
@@ -18,7 +18,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
-
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,12 +28,12 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 
-import static gov.cms.ab2d.job.model.JobStatus.SUBMITTED;
-import static gov.cms.ab2d.job.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.common.model.SinceSource.AB2D;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
+import static gov.cms.ab2d.job.model.JobStatus.SUBMITTED;
+import static gov.cms.ab2d.job.model.JobStatus.SUCCESSFUL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -59,7 +58,7 @@ class JobPreProcessorUnitTest {
     @Mock
     private JobRepository jobRepository;
     @Mock
-    private LogManager eventLogger;
+    private SQSEventClient eventLogger;
     @Mock
     private CoverageDriver coverageDriver;
 
@@ -273,26 +272,26 @@ class JobPreProcessorUnitTest {
     void testGetLatestFullySuccessfulJob() {
         // This job has successfully downloaded data files but not error file
         Job job1 = createJob("A", R4, SUCCESSFUL, OffsetDateTime.of(2020, 5, 1, 1, 0, 0, 0, ZoneOffset.UTC));
-        job1.addJobOutput(createJobOutput(job1, false, true));
-        job1.addJobOutput(createJobOutput(job1, true, false));
+        job1.addJobOutput(createJobOutput(job1, false, 1));
+        job1.addJobOutput(createJobOutput(job1, true, 0));
 
         // This job has successfully downloaded data all files
         Job job2 = createJob("B", R4, SUCCESSFUL, OffsetDateTime.of(2020, 5, 2, 1, 0, 0, 0, ZoneOffset.UTC));
-        job2.addJobOutput(createJobOutput(job2, false, true));
-        job2.addJobOutput(createJobOutput(job2, true, true));
+        job2.addJobOutput(createJobOutput(job2, false, 1));
+        job2.addJobOutput(createJobOutput(job2, true, 1));
 
         // This job has not successfully downloaded data files
         Job job3 = createJob("C", R4, SUCCESSFUL, OffsetDateTime.of(2020, 5, 3, 1, 0, 0, 0, ZoneOffset.UTC));
-        job3.addJobOutput(createJobOutput(job3, false, false));
-        job3.addJobOutput(createJobOutput(job3, true, true));
+        job3.addJobOutput(createJobOutput(job3, false, 0));
+        job3.addJobOutput(createJobOutput(job3, true, 1));
 
         // Job has no data files
         Job job4 = createJob("D", R4, SUCCESSFUL, OffsetDateTime.of(2020, 5, 4, 1, 0, 0, 0, ZoneOffset.UTC));
 
         // This job also has successfully downloaded data files but not error file
         Job job5 = createJob("E", R4, SUCCESSFUL, OffsetDateTime.of(2020, 5, 5, 1, 0, 0, 0, ZoneOffset.UTC));
-        job5.addJobOutput(createJobOutput(job5, false, true));
-        job5.addJobOutput(createJobOutput(job5, true, false));
+        job5.addJobOutput(createJobOutput(job5, false, 1));
+        job5.addJobOutput(createJobOutput(job5, true, 0));
 
         Job newJob = createJob("Z", R4, SUBMITTED, OffsetDateTime.of(2020, 7, 1, 1, 0, 0, 0, ZoneOffset.UTC));
 
@@ -315,25 +314,25 @@ class JobPreProcessorUnitTest {
     void testGetLatestSuccessfulJobWithMany() {
         // This job has successfully downloaded data files but not error file
         Job job1 = createJob("A", R4, SUCCESSFUL, OffsetDateTime.of(2020, 5, 1, 1, 0, 0, 0, ZoneOffset.UTC));
-        job1.addJobOutput(createJobOutput(job1, true, true));
+        job1.addJobOutput(createJobOutput(job1, true, 1));
 
         // This job has successfully downloaded data all files
         Job job2 = createJob("B", R4, SUCCESSFUL, OffsetDateTime.of(2020, 5, 2, 1, 0, 0, 0, ZoneOffset.UTC));
-        job2.addJobOutput(createJobOutput(job2, false, true));
-        job2.addJobOutput(createJobOutput(job2, true, true));
+        job2.addJobOutput(createJobOutput(job2, false, 1));
+        job2.addJobOutput(createJobOutput(job2, true, 1));
 
         // This job has not successfully downloaded data files
         Job job3 = createJob("C", R4, SUCCESSFUL, OffsetDateTime.of(2020, 5, 3, 1, 0, 0, 0, ZoneOffset.UTC));
-        job3.addJobOutput(createJobOutput(job3, false, true));
-        job3.addJobOutput(createJobOutput(job3, true, false));
+        job3.addJobOutput(createJobOutput(job3, false, 1));
+        job3.addJobOutput(createJobOutput(job3, true, 0));
 
         // Job has no data files
         Job job4 = createJob("D", R4, SUCCESSFUL, OffsetDateTime.of(2020, 5, 4, 1, 0, 0, 0, ZoneOffset.UTC));
 
         // This job also has successfully downloaded data files but not error file
         Job job5 = createJob("E", R4, SUCCESSFUL, OffsetDateTime.of(2020, 5, 5, 1, 0, 0, 0, ZoneOffset.UTC));
-        job5.addJobOutput(createJobOutput(job5, false, true));
-        job5.addJobOutput(createJobOutput(job5, true, false));
+        job5.addJobOutput(createJobOutput(job5, false, 1));
+        job5.addJobOutput(createJobOutput(job5, true, 0));
 
         Job newJob = createJob("Z", R4, SUBMITTED, OffsetDateTime.of(2020, 7, 1, 1, 0, 0, 0, ZoneOffset.UTC));
 
@@ -348,13 +347,13 @@ class JobPreProcessorUnitTest {
     void testDownloadedAll() {
         Job job = new Job();
         // Error file that was downloaded
-        JobOutput jo1 = createJobOutput(job, true, true);
+        JobOutput jo1 = createJobOutput(job, true, 1);
         // Error file that was not downloaded
-        JobOutput jo2 = createJobOutput(job, true, false);
+        JobOutput jo2 = createJobOutput(job, true, 0);
         // Data file that was downloaded
-        JobOutput jo3 = createJobOutput(job, false, true);
+        JobOutput jo3 = createJobOutput(job, false, 1);
         // Data file that was not downloaded - anything that includes this should return false
-        JobOutput jo4 = createJobOutput(job, false, false);
+        JobOutput jo4 = createJobOutput(job, false, 0);
 
         JobPreProcessorImpl impl = (JobPreProcessorImpl) cut;
         // Start with null or empty results
@@ -374,7 +373,7 @@ class JobPreProcessorUnitTest {
         assertFalse(impl.downloadedAll(List.of(jo2, jo3, jo4)));
     }
 
-    private JobOutput createJobOutput(Job job, boolean error, boolean downloaded) {
+    private JobOutput createJobOutput(Job job, boolean error, int downloaded) {
         JobOutput output = new JobOutput();
         output.setError(error);
         output.setFilePath("/tmp/" + job.getJobUuid() + (int) (Math.random() * 1000));

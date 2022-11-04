@@ -1,19 +1,16 @@
 package gov.cms.ab2d.job.service;
 
+import gov.cms.ab2d.common.service.ResourceNotFoundException;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
+import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
+import gov.cms.ab2d.eventclient.events.SlackEvents;
 import gov.cms.ab2d.job.dto.JobPollResult;
 import gov.cms.ab2d.job.dto.StaleJob;
+import gov.cms.ab2d.job.dto.StartJobDTO;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobOutput;
 import gov.cms.ab2d.job.model.JobStatus;
-import gov.cms.ab2d.job.dto.StartJobDTO;
 import gov.cms.ab2d.job.repository.JobRepository;
-import gov.cms.ab2d.common.service.ResourceNotFoundException;
-import gov.cms.ab2d.job.util.JobUtil;
-import gov.cms.ab2d.eventlogger.Ab2dEnvironment;
-import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.events.FileEvent;
-import gov.cms.ab2d.eventlogger.events.SlackEvents;
-import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventSummary;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
@@ -30,6 +27,9 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+
+import static gov.cms.ab2d.common.util.Constants.MAX_DOWNLOADS;
+
 @Slf4j
 @Service
 @Transactional
@@ -37,19 +37,17 @@ public class JobServiceImpl implements JobService {
 
     private final JobRepository jobRepository;
     private final JobOutputService jobOutputService;
-    private final LogManager eventLogger;
-    private final LoggerEventSummary loggerEventSummary;
+    private final SQSEventClient eventLogger;
     private final String fileDownloadPath;
 
     public static final String INITIAL_JOB_STATUS_MESSAGE = "0%";
 
     public JobServiceImpl(JobRepository jobRepository, JobOutputService jobOutputService,
-                          LogManager eventLogger, LoggerEventSummary loggerEventSummary,
+                          SQSEventClient eventLogger,
                           @Value("${efs.mount}") String fileDownloadPath) {
         this.jobRepository = jobRepository;
         this.jobOutputService = jobOutputService;
         this.eventLogger = eventLogger;
-        this.loggerEventSummary = loggerEventSummary;
         this.fileDownloadPath = fileDownloadPath;
     }
 
@@ -67,9 +65,7 @@ public class JobServiceImpl implements JobService {
         job.setFhirVersion(startJobDTO.getVersion());
         job.setOrganization(startJobDTO.getOrganization());
 
-
-
-        eventLogger.log(job.buildJobStatusChangeEvent(JobStatus.SUBMITTED, "Job Created"));
+        eventLogger.sendLogs(job.buildJobStatusChangeEvent(JobStatus.SUBMITTED, "Job Created"));
 
         // Report client running first job in prod
         if (clientHasNeverCompletedJob(startJobDTO.getContractNumber())) {
@@ -90,7 +86,7 @@ public class JobServiceImpl implements JobService {
             log.error("Job had a status of {} so it was not able to be cancelled", job.getStatus());
             throw new InvalidJobStateTransition("Job has a status of " + job.getStatus() + ", so it cannot be cancelled");
         }
-        eventLogger.log(job.buildJobStatusChangeEvent(JobStatus.CANCELLED, "Job Cancelled"));
+        eventLogger.sendLogs(job.buildJobStatusChangeEvent(JobStatus.CANCELLED, "Job Cancelled"));
         jobRepository.cancelJobByJobUuid(jobUuid);
     }
 
@@ -112,7 +108,7 @@ public class JobServiceImpl implements JobService {
 
         if (job == null) {
             log.error("Job {} was searched for and was not found", jobUuid);
-            throw new ResourceNotFoundException("No job with jobUuid " +  jobUuid + " was found");
+            throw new ResourceNotFoundException("No job with jobUuid " + jobUuid + " was found");
         }
 
         return job;
@@ -145,12 +141,12 @@ public class JobServiceImpl implements JobService {
 
         Path file = Paths.get(fileDownloadPath, job.getJobUuid(), fileName);
         Resource resource = new UrlResource(file.toUri());
-
+        if (foundJobOutput.getDownloaded() >= MAX_DOWNLOADS) {
+            throw new JobOutputMissingException("The file has already been download the maximum number of allowed times.");
+        }
         if (!resource.exists()) {
             String errorMsg;
-            if (foundJobOutput.getDownloaded()) {
-                errorMsg = "The file is not present as it has already been downloaded. Please resubmit the job.";
-            } else if (job.getExpiresAt().isBefore(OffsetDateTime.now())) {
+            if (job.getExpiresAt().isBefore(OffsetDateTime.now())) {
                 errorMsg = "The file is not present as it has expired. Please resubmit the job.";
             } else {
                 errorMsg = "The file is not present as there was an error. Please resubmit the job.";
@@ -162,21 +158,16 @@ public class JobServiceImpl implements JobService {
         return resource;
     }
 
-    @Override
-    public void deleteFileForJob(File file, String jobUuid) {
-        String fileName = file.getName();
+
+    public void incrementDownload(File file, String jobUuid) {
         Job job = jobRepository.findByJobUuid(jobUuid);
-        JobOutput jobOutput = jobOutputService.findByFilePathAndJob(fileName, job);
-        jobOutput.setDownloaded(true);
+        JobOutput jobOutput = jobOutputService.findByFilePathAndJob(file.getName(), job);
+        // Incrementing downloaded in this way is likely not concurrency safe.
+        // If multiple users (aka threads) download the same file at the same time the count won't record every download
+        // This would result in the file being downloaded more than the allowed number of time.
+        jobOutput.setDownloaded(jobOutput.getDownloaded() + 1);
+        jobOutput.setLastDownloadAt(OffsetDateTime.now());
         jobOutputService.updateJobOutput(jobOutput);
-        eventLogger.log(job.buildFileEvent(file, FileEvent.FileStatus.DELETE));
-        if (JobUtil.isJobDone(job)) {
-            eventLogger.log(LogManager.LogType.KINESIS, loggerEventSummary.getSummary(job.getJobUuid()));
-        }
-        boolean deleted = file.delete();
-        if (!deleted) {
-            log.error("Was not able to delete the file {}", file.getName());
-        }
     }
 
     @Override

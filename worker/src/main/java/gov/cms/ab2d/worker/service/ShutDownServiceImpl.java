@@ -1,18 +1,18 @@
 package gov.cms.ab2d.worker.service;
 
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.repository.JobRepository;
-import gov.cms.ab2d.eventlogger.LogManager;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 
+import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PUBLIC_LIST;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_RESUBMITTED;
 import static gov.cms.ab2d.job.model.JobStatus.SUBMITTED;
-import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_RESUBMITTED;
 
 @Slf4j
 @Service
@@ -20,7 +20,7 @@ import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_RESUBMITTED;
 public class ShutDownServiceImpl implements ShutDownService {
 
     private final JobRepository jobRepository;
-    private final LogManager eventLogger;
+    private final SQSEventClient eventLogger;
 
     @Override
     @Transactional

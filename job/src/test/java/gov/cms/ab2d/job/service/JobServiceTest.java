@@ -1,47 +1,26 @@
 package gov.cms.ab2d.job.service;
 
-import gov.cms.ab2d.job.dto.StaleJob;
-import gov.cms.ab2d.job.model.Job;
-import gov.cms.ab2d.job.dto.JobPollResult;
-import gov.cms.ab2d.job.model.JobOutput;
-import gov.cms.ab2d.job.model.JobStartedBy;
-import gov.cms.ab2d.job.model.JobStatus;
-import gov.cms.ab2d.job.dto.StartJobDTO;
-import gov.cms.ab2d.common.model.*;
+import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.model.PdpClient;
+import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.job.repository.JobOutputRepository;
-import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.common.service.RoleService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
-import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.eventloggers.kinesis.KinesisEventLogger;
-import gov.cms.ab2d.eventlogger.eventloggers.slack.SlackLogger;
-import gov.cms.ab2d.eventlogger.eventloggers.sql.SqlEventLogger;
-import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventSummary;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.job.JobTestSpringBootApp;
-import org.apache.commons.io.IOUtils;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.io.Resource;
-import org.springframework.data.domain.Sort;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.transaction.TransactionSystemException;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-
+import gov.cms.ab2d.job.dto.JobPollResult;
+import gov.cms.ab2d.job.dto.StaleJob;
+import gov.cms.ab2d.job.dto.StartJobDTO;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobOutput;
+import gov.cms.ab2d.job.model.JobStartedBy;
+import gov.cms.ab2d.job.model.JobStatus;
+import gov.cms.ab2d.job.repository.JobOutputRepository;
+import gov.cms.ab2d.job.repository.JobRepository;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -56,23 +35,49 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import org.apache.commons.io.IOUtils;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.TransactionSystemException;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
-import static gov.cms.ab2d.job.model.JobStatus.FAILED;
+
+import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
+import static gov.cms.ab2d.common.util.Constants.OPERATION_OUTCOME;
 import static gov.cms.ab2d.common.util.Constants.ZIPFORMAT;
-import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
+import static gov.cms.ab2d.job.model.JobStatus.FAILED;
+import static gov.cms.ab2d.job.model.JobStatus.SUCCESSFUL;
 import static gov.cms.ab2d.job.service.JobServiceImpl.INITIAL_JOB_STATUS_MESSAGE;
 import static java.util.List.of;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @SpringBootTest(classes = JobTestSpringBootApp.class)
 @Testcontainers
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class JobServiceTest extends JobCleanup {
 
     public static final String CLIENTID = "douglas.adams@towels.com";
@@ -109,16 +114,7 @@ class JobServiceTest extends JobCleanup {
     private JobOutputService jobOutputService;
 
     @Autowired
-    private SqlEventLogger sqlEventLogger;
-
-    @Mock
-    private KinesisEventLogger kinesisEventLogger;
-
-    @Mock
-    private LoggerEventSummary loggerEventSummary;
-
-    @Mock
-    private SlackLogger slackLogger;
+    private SQSEventClient sqsEventClient;
 
     @SuppressWarnings({"rawtypes", "unused"})
     @Container
@@ -128,8 +124,7 @@ class JobServiceTest extends JobCleanup {
     @BeforeEach
     public void setup() {
         MockitoAnnotations.openMocks(this);
-        LogManager logManager = new LogManager(sqlEventLogger, kinesisEventLogger, slackLogger);
-        jobService = new JobServiceImpl(jobRepository, jobOutputService, logManager, loggerEventSummary, tmpJobLocation);
+        jobService = new JobServiceImpl(jobRepository, jobOutputService, sqsEventClient, tmpJobLocation);
         ReflectionTestUtils.setField(jobService, "fileDownloadPath", tmpJobLocation);
 
         dataSetup.setupNonStandardClient(CLIENTID, CONTRACT_NUMBER, of());
@@ -149,7 +144,7 @@ class JobServiceTest extends JobCleanup {
                         new org.springframework.security.core.userdetails.User(CLIENTID,
                                 "test", new ArrayList<>()), "pass"));
     }
-    
+
     private StartJobDTO buildStartJobContract(String contractNumber) {
         return buildStartJob(contractNumber, EOB, NDJSON_FIRE_CONTENT_TYPE);
     }
@@ -163,7 +158,7 @@ class JobServiceTest extends JobCleanup {
                 resourceTypes, NDJSON_FIRE_CONTENT_TYPE);
     }
 
-    private StartJobDTO buildStartJob(String contractNumber,  String resourceTypes, String outputFormat) {
+    private StartJobDTO buildStartJob(String contractNumber, String resourceTypes, String outputFormat) {
         String organization = pdpClientService.getCurrentClient().getOrganization();
         return new StartJobDTO(contractNumber, organization, resourceTypes, LOCAL_HOST, outputFormat, null, STU3);
     }
@@ -232,21 +227,21 @@ class JobServiceTest extends JobCleanup {
 
         Job job1 = jobService.createJob(buildStartJobContract(contract.getContractNumber()));
         addJobForCleanup(job1);
-        verify(slackLogger, times(1)).logAlert(anyString(), any());
+        verify(sqsEventClient, times(1)).sendLogs(any());
 
         job1.setStatus(JobStatus.CANCELLED);
         jobRepository.saveAndFlush(job1);
 
         Job job2 = jobService.createJob(buildStartJobContract(contract.getContractNumber()));
         addJobForCleanup(job2);
-        verify(slackLogger, times(2)).logAlert(anyString(), any());
+        verify(sqsEventClient, times(2)).sendLogs(any());
 
-        job2.setStatus(JobStatus.SUCCESSFUL);
+        job2.setStatus(SUCCESSFUL);
         jobRepository.saveAndFlush(job2);
 
         Job job3 = jobService.createJob(buildStartJobContract(contract.getContractNumber()));
         addJobForCleanup(job3);
-        verify(slackLogger, times(2)).logAlert(anyString(), any());
+        verify(sqsEventClient, times(3)).sendLogs(any());
     }
 
     @Test
@@ -342,7 +337,7 @@ class JobServiceTest extends JobCleanup {
     void testJobInSuccessfulState() {
         Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
 
-        job.setStatus(JobStatus.SUCCESSFUL);
+        job.setStatus(SUCCESSFUL);
         jobRepository.saveAndFlush(job);
 
         assertThrows(InvalidJobStateTransition.class, () -> jobService.cancelJob(job.getJobUuid(),
@@ -560,18 +555,18 @@ class JobServiceTest extends JobCleanup {
     }
 
     @Test
-    void getFileDownloadAlreadyDownloaded() {
+    void getFileDownloadAlreadyDownloadedMaxTimes() {
         String testFile = "test.ndjson";
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
         JobOutput jobOutput = job.getJobOutputs().iterator().next();
-        jobOutput.setDownloaded(true);
+        jobOutput.setDownloaded(30);
         jobOutputRepository.save(jobOutput);
 
         var exception = assertThrows(JobOutputMissingException.class,
                 () -> jobService.getResourceForJob(job.getJobUuid(), "test.ndjson",
                         pdpClientService.getCurrentClient().getOrganization()));
-        assertEquals("The file is not present as it has already been downloaded. Please resubmit the job.",
+        assertEquals("The file has already been download the maximum number of allowed times.",
                 exception.getMessage());
     }
 
@@ -617,11 +612,12 @@ class JobServiceTest extends JobCleanup {
     }
 
     @Test
-    void deleteFileForJobTest() {
+    void incrementDownload() {
         String testFile = "test.ndjson";
         String errorFile = "error.ndjson";
         Job job = createJobForFileDownloads(testFile, errorFile);
-        jobService.deleteFileForJob(new File(testFile), job.getJobUuid());
+        jobService.incrementDownload(new File(testFile), job.getJobUuid());
+        assertEquals(1, jobOutputService.findByFilePathAndJob(testFile, job).getDownloaded());
     }
 
     private Job createJobAllContracts(String outputFormat) {

@@ -1,14 +1,14 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.model.PdpClient;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
+import gov.cms.ab2d.eventclient.events.ContractSearchEvent;
+import gov.cms.ab2d.eventclient.events.JobStatusChangeEvent;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
-import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.job.repository.JobOutputRepository;
 import gov.cms.ab2d.job.repository.JobRepository;
-import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.events.ContractSearchEvent;
-import gov.cms.ab2d.eventlogger.events.JobStatusChangeEvent;
 import gov.cms.ab2d.worker.service.FileService;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import gov.cms.ab2d.worker.service.JobChannelStubServiceImpl;
@@ -60,7 +60,7 @@ class JobProcessorUnitTest {
     @Mock private JobRepository jobRepository;
     @Mock private JobOutputRepository jobOutputRepository;
     @Mock private ContractProcessor contractProcessor;
-    @Mock private LogManager eventLogger;
+    @Mock private SQSEventClient eventLogger;
 
     private JobProgressService jobProgressService;
     private JobChannelService jobChannelService;
@@ -252,7 +252,7 @@ class JobProcessorUnitTest {
 
         verify(cut, times(1)).verifyTrackedJobProgress(any());
         verify(cut, times(1)).persistTrackedJobProgress(any());
-        verify(eventLogger, times(1)).log(any(ContractSearchEvent.class));
+        verify(eventLogger, times(1)).sendLogs(any(ContractSearchEvent.class));
 
         // Status is pulled after finishing loading benes
         // Status is also pulled when job succeeds

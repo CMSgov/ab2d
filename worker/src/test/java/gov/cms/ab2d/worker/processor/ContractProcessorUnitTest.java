@@ -3,15 +3,15 @@ package gov.cms.ab2d.worker.processor;
 import gov.cms.ab2d.aggregator.AggregatorCallable;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.job.model.Job;
-import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
-import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.filter.FilterOutByDate;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
@@ -75,7 +75,7 @@ class ContractProcessorUnitTest {
 
     private StubJobRepository jobRepository;
     @Mock private CoverageDriver coverageDriver;
-    @Mock private LogManager eventLogger;
+    @Mock private SQSEventClient eventLogger;
     @Mock private RoundRobinBlockingQueue<PatientClaimsRequest> requestQueue;
     private PatientClaimsProcessor patientClaimsProcessor;
     private JobChannelService jobChannelService;

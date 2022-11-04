@@ -3,16 +3,20 @@ package gov.cms.ab2d.api.controller.common;
 import gov.cms.ab2d.api.controller.InMaintenanceModeException;
 import gov.cms.ab2d.api.controller.TooManyRequestsException;
 import gov.cms.ab2d.api.remote.JobClient;
-import gov.cms.ab2d.job.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.service.InvalidClientInputException;
 import gov.cms.ab2d.common.service.InvalidContractException;
 import gov.cms.ab2d.common.service.PdpClientService;
-import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
+import gov.cms.ab2d.common.util.PropertyConstants;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
+import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
 import gov.cms.ab2d.fhir.FhirVersion;
+import gov.cms.ab2d.job.dto.StartJobDTO;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
+import java.time.OffsetDateTime;
+import java.util.Set;
+import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.http.HttpHeaders;
@@ -21,17 +25,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import javax.servlet.http.HttpServletRequest;
 
-import java.time.OffsetDateTime;
-import java.util.Set;
-
-import static gov.cms.ab2d.common.util.Constants.ZIPFORMAT;
-import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
-import static gov.cms.ab2d.common.util.Constants.ZIP_SUPPORT_ON;
 import static gov.cms.ab2d.common.util.Constants.JOB_LOG;
+import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
+import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
+import static gov.cms.ab2d.common.util.Constants.ZIPFORMAT;
+import static gov.cms.ab2d.common.util.Constants.ZIP_SUPPORT_ON;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
@@ -40,9 +40,9 @@ import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 @Service
 @Slf4j
 public class ApiCommon {
-    private final LogManager eventLogger;
+    private final SQSEventClient eventLogger;
     private final JobClient jobClient;
-    private final PropertiesService propertiesService;
+    private final PropertiesAPIService propertiesApiService;
     private final PdpClientService pdpClientService;
 
     // Since this is used in an annotation, it can't be derived from the Set, otherwise it will be an error
@@ -51,11 +51,11 @@ public class ApiCommon {
     public static final Set<String> ALLOWABLE_OUTPUT_FORMAT_SET = Set.of(ALLOWABLE_OUTPUT_FORMATS.split(","));
     public static final String JOB_CANCELLED_MSG = "Job canceled";
 
-    public ApiCommon(LogManager eventLogger, JobClient jobClient, PropertiesService propertiesService,
+    public ApiCommon(SQSEventClient eventLogger, JobClient jobClient, PropertiesAPIService propertiesApiService,
                      PdpClientService pdpClientService) {
         this.eventLogger = eventLogger;
         this.jobClient = jobClient;
-        this.propertiesService = propertiesService;
+        this.propertiesApiService = propertiesApiService;
         this.pdpClientService = pdpClientService;
     }
 
@@ -94,7 +94,7 @@ public class ApiCommon {
     }
 
     public void checkIfInMaintenanceMode() {
-        if (propertiesService.isInMaintenanceMode()) {
+        if (propertiesApiService.isToggleOn(PropertyConstants.MAINTENANCE_MODE)) {
             throw new InMaintenanceModeException("The system is currently in maintenance mode. Please try the request again later.");
         }
     }
@@ -113,7 +113,7 @@ public class ApiCommon {
         String statusURL = getUrl(apiPrefix + FHIR_PREFIX + "/Job/" + jobGuid + "/$status", request);
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.add(CONTENT_LOCATION, statusURL);
-        eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), jobGuid, HttpStatus.ACCEPTED, "Job Created",
+        eventLogger.sendLogs(new ApiResponseEvent(MDC.get(ORGANIZATION), jobGuid, HttpStatus.ACCEPTED, "Job Created",
                 "Job " + jobGuid + " was created", requestId));
         return new ResponseEntity<>(null, responseHeaders,
                 HttpStatus.ACCEPTED);
@@ -132,7 +132,7 @@ public class ApiCommon {
             throw new InvalidClientInputException(errMsg);
         }
 
-        final boolean zipSupportOn = propertiesService.isToggleOn(ZIP_SUPPORT_ON);
+        final boolean zipSupportOn = propertiesApiService.isToggleOn(ZIP_SUPPORT_ON);
         if (!zipSupportOn && ZIPFORMAT.equalsIgnoreCase(outputFormat)) {
             throw new InvalidClientInputException(errMsg);
         }

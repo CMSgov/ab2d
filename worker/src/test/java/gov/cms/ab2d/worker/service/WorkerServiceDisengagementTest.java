@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.service;
 
-import gov.cms.ab2d.common.dto.PropertiesDTO;
+import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
@@ -8,15 +8,12 @@ import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.job.service.JobCleanup;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.service.FeatureEngagement;
-import gov.cms.ab2d.common.service.PropertiesService;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.job.service.JobService;
 import gov.cms.ab2d.worker.config.JobHandler;
 import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -25,30 +22,31 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
+import static gov.cms.ab2d.common.util.PropertyConstants.WORKER_ENGAGEMENT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
 
 /**
  * Generic Tests to make sure that the worker gets triggered upon submitting a job into the Job table.
  */
 @SpringBootTest
 @Testcontainers
+@Import(AB2DSQSMockConfig.class)
 class WorkerServiceDisengagementTest extends JobCleanup {
     private final Random random = new Random();
 
     @Autowired private DataSetup dataSetup;
     @Autowired private JobRepository jobRepository;
     @Autowired private PdpClientRepository pdpClientRepository;
-    @Autowired private PropertiesService propertiesService;
+    @Autowired private PropertiesAPIService propertiesApiService;
     @Autowired private JobService jobService;
 
     @Autowired private WorkerServiceImpl workerServiceImpl;
@@ -62,7 +60,7 @@ class WorkerServiceDisengagementTest extends JobCleanup {
 
     @BeforeEach
     public void init() {
-        workerServiceStub = new WorkerServiceStub(jobService, propertiesService);
+        workerServiceStub = new WorkerServiceStub(jobService, propertiesApiService);
 
         ReflectionTestUtils.setField(jobHandler, "workerService", workerServiceStub);
     }
@@ -76,15 +74,13 @@ class WorkerServiceDisengagementTest extends JobCleanup {
     }
 
     private void setEngagement(FeatureEngagement drive) {
-        List<PropertiesDTO> propertiesDTOS = propertiesService.getAllPropertiesDTO();
-        Optional<PropertiesDTO> dto = propertiesDTOS.stream()
-                .filter(tmpDto -> tmpDto.getKey().equals(Constants.WORKER_ENGAGEMENT))
-                .findAny();
-        if (dto.isEmpty()) {
-            throw new IllegalStateException(Constants.WORKER_ENGAGEMENT + " must be set.");
+        try {
+            String engagement = propertiesApiService.getProperty(WORKER_ENGAGEMENT);
+        } catch (Exception ex) {
+            throw new IllegalStateException(WORKER_ENGAGEMENT + " must be set.");
         }
-        dto.get().setValue(drive.getSerialValue());
-        propertiesService.updateProperties(propertiesDTOS);
+
+        propertiesApiService.updateProperty(WORKER_ENGAGEMENT, drive.getSerialValue());
     }
 
     @Test

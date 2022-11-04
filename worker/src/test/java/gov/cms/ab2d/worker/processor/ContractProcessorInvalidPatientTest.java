@@ -2,15 +2,15 @@ package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.ContractDTO;
-import gov.cms.ab2d.job.model.Job;
-import gov.cms.ab2d.job.model.JobOutput;
-import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
-import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.filter.FilterOutByDate;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobOutput;
+import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
@@ -58,7 +58,7 @@ class ContractProcessorInvalidPatientTest {
     private PatientClaimsProcessor patientClaimsProcessor;
 
     @Mock
-    private LogManager eventLogger;
+    private SQSEventClient eventLogger;
 
     @Mock
     private BFDClient bfdClient;
@@ -118,9 +118,9 @@ class ContractProcessorInvalidPatientTest {
         org.hl7.fhir.dstu3.model.Bundle b1 = BundleUtils.createBundle(createBundleEntry("1"));
         org.hl7.fhir.dstu3.model.Bundle b2 = BundleUtils.createBundle(createBundleEntry("2"));
         org.hl7.fhir.dstu3.model.Bundle b4 = BundleUtils.createBundle(createBundleEntry("4"));
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq(1L), any())).thenReturn(b1);
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq(2L), any())).thenReturn(b2);
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq(3L), any())).thenReturn(b4);
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(1L), any(), any())).thenReturn(b1);
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(2L), any(), any())).thenReturn(b2);
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(3L), any(), any())).thenReturn(b4);
 
         when(coverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractDTO.class))).thenReturn(3);
 

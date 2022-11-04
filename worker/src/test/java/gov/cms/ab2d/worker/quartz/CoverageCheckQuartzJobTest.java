@@ -1,9 +1,10 @@
 package gov.cms.ab2d.worker.quartz;
 
-import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageVerificationException;
+import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,27 +13,35 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.quartz.JobExecutionException;
 
-import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.anyList;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.contains;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class CoverageCheckQuartzJobTest {
 
     @Mock
-    private PropertiesService propertiesService;
+    private PropertiesAPIService propertiesApiService;
 
     @Mock
     private CoverageDriver coverageDriver;
 
     @Mock
-    private LogManager logManager;
-
+    private SQSEventClient logManager;
 
     @AfterEach
     void tearDown() {
-        reset(propertiesService);
+        reset(propertiesApiService);
         reset(coverageDriver);
         reset(logManager);
     }
@@ -41,9 +50,9 @@ public class CoverageCheckQuartzJobTest {
     @Test
     void whenMaintenanceMode_skipJob() {
 
-        when(propertiesService.isInMaintenanceMode()).thenReturn(true);
+        when(propertiesApiService.isToggleOn(MAINTENANCE_MODE)).thenReturn(true);
 
-        CoverageCheckQuartzJob job = new CoverageCheckQuartzJob(logManager, coverageDriver, propertiesService);
+        CoverageCheckQuartzJob job = new CoverageCheckQuartzJob(logManager, coverageDriver, propertiesApiService);
 
         try {
             job.executeInternal(null);
@@ -51,16 +60,16 @@ public class CoverageCheckQuartzJobTest {
             fail("job should not execute in maintenance mode");
         }
 
-        verify(propertiesService, times(1)).isInMaintenanceMode();
+        verify(propertiesApiService, times(1)).isToggleOn(MAINTENANCE_MODE);
     }
 
     @DisplayName("Execute normally when not in maintenance mode")
     @Test
     void whenNotMaintenanceMode_executeJob() {
 
-        when(propertiesService.isInMaintenanceMode()).thenReturn(false);
+        when(propertiesApiService.isToggleOn(MAINTENANCE_MODE)).thenReturn(false);
 
-        CoverageCheckQuartzJob job = new CoverageCheckQuartzJob(logManager, coverageDriver, propertiesService);
+        CoverageCheckQuartzJob job = new CoverageCheckQuartzJob(logManager, coverageDriver, propertiesApiService);
 
         try {
             job.executeInternal(null);
@@ -68,7 +77,7 @@ public class CoverageCheckQuartzJobTest {
             fail("job should execute successfully if no exception thrown");
         }
 
-        verify(propertiesService, times(1)).isInMaintenanceMode();
+        verify(propertiesApiService, times(1)).isToggleOn(MAINTENANCE_MODE);
         verify(coverageDriver, times(1)).verifyCoverage();
     }
 
@@ -76,17 +85,17 @@ public class CoverageCheckQuartzJobTest {
     @Test
     void whenVerificationException_alertWithIssues() {
 
-        when(propertiesService.isInMaintenanceMode()).thenReturn(false);
+        when(propertiesApiService.isToggleOn(MAINTENANCE_MODE)).thenReturn(false);
 
         doThrow(new CoverageVerificationException("testing123", List.of("alertalert")))
                 .when(coverageDriver).verifyCoverage();
 
-        CoverageCheckQuartzJob job = new CoverageCheckQuartzJob(logManager, coverageDriver, propertiesService);
+        CoverageCheckQuartzJob job = new CoverageCheckQuartzJob(logManager, coverageDriver, propertiesApiService);
 
         JobExecutionException exception = assertThrows(JobExecutionException.class, () -> job.executeInternal(null));
         assertTrue(exception.getMessage().contains("testing123"));
 
-        verify(propertiesService, times(1)).isInMaintenanceMode();
+        verify(propertiesApiService, times(1)).isToggleOn(MAINTENANCE_MODE);
         verify(coverageDriver, times(1)).verifyCoverage();
         verify(logManager, times(1)).alert(
                 argThat(alert -> alert.contains("alertalert") && alert.contains("Coverage verification failed")), anyList());
@@ -96,17 +105,17 @@ public class CoverageCheckQuartzJobTest {
     @Test
     void whenVerificationFailsToRun_alert() {
 
-        when(propertiesService.isInMaintenanceMode()).thenReturn(false);
+        when(propertiesApiService.isToggleOn(MAINTENANCE_MODE)).thenReturn(false);
 
         doThrow(new RuntimeException("testing123"))
                 .when(coverageDriver).verifyCoverage();
 
-        CoverageCheckQuartzJob job = new CoverageCheckQuartzJob(logManager, coverageDriver, propertiesService);
+        CoverageCheckQuartzJob job = new CoverageCheckQuartzJob(logManager, coverageDriver, propertiesApiService);
 
         JobExecutionException exception = assertThrows(JobExecutionException.class, () -> job.executeInternal(null));
         assertTrue(exception.getMessage().contains("testing123"));
 
-        verify(propertiesService, times(1)).isInMaintenanceMode();
+        verify(propertiesApiService, times(1)).isToggleOn(MAINTENANCE_MODE);
         verify(coverageDriver, times(1)).verifyCoverage();
         verify(logManager, times(1)).alert(contains("could not verify coverage due"), anyList());
     }

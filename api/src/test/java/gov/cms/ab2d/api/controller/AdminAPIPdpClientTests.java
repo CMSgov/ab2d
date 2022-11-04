@@ -8,15 +8,15 @@ import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.remote.JobClientMock;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.dto.PdpClientDTO;
-import gov.cms.ab2d.job.dto.StartJobDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.service.RoleService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.common.util.DataSetup;
-import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventRepository;
+import gov.cms.ab2d.job.dto.StartJobDTO;
 import java.util.List;
 import org.hamcrest.core.Is;
 import org.junit.jupiter.api.AfterEach;
@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -51,6 +52,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
 @Testcontainers
+@Import(AB2DSQSMockConfig.class)
 public class AdminAPIPdpClientTests {
 
     public static final String TEST_CLIENT = "test@test.com";
@@ -78,9 +80,6 @@ public class AdminAPIPdpClientTests {
     private DataSetup dataSetup;
 
     @Autowired
-    private LoggerEventRepository loggerEventRepository;
-
-    @Autowired
     private RoleService roleService;
 
     private String token;
@@ -96,7 +95,6 @@ public class AdminAPIPdpClientTests {
     public void cleanup() {
         dataSetup.queueForCleanup(pdpClientRepository.findByClientId(TEST_CLIENT));
         dataSetup.cleanup();
-        loggerEventRepository.delete();
         jobClientMock.cleanupAll();
     }
 

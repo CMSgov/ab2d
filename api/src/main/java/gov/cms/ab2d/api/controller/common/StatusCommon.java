@@ -4,13 +4,19 @@ import gov.cms.ab2d.api.controller.JobCompletedResponse;
 import gov.cms.ab2d.api.controller.JobProcessingException;
 import gov.cms.ab2d.api.controller.TooManyRequestsException;
 import gov.cms.ab2d.api.remote.JobClient;
-import gov.cms.ab2d.job.dto.JobPollResult;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.TooFrequentInvocations;
 import gov.cms.ab2d.common.service.PdpClientService;
-import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.events.ApiResponseEvent;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
+import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
+import gov.cms.ab2d.job.dto.JobPollResult;
 import gov.cms.ab2d.job.model.JobOutput;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,19 +25,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.http.HttpServletRequest;
-
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
 
 import static gov.cms.ab2d.api.controller.common.ApiText.X_PROG;
-import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
-import static gov.cms.ab2d.common.util.Constants.JOB_LOG;
-import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
+import static gov.cms.ab2d.common.util.Constants.JOB_LOG;
+import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
+import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 import static org.springframework.http.HttpHeaders.EXPIRES;
 import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 
@@ -40,11 +39,11 @@ import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 public class StatusCommon {
     private final PdpClientService pdpClientService;
     private final JobClient jobClient;
-    private final LogManager eventLogger;
+    private final SQSEventClient eventLogger;
     private final int retryAfterDelay;
 
     StatusCommon(PdpClientService pdpClientService, JobClient jobClient,
-                 LogManager eventLogger, @Value("${api.retry-after.delay}") int retryAfterDelay) {
+                 SQSEventClient eventLogger, @Value("${api.retry-after.delay}") int retryAfterDelay) {
         this.pdpClientService = pdpClientService;
         this.jobClient = jobClient;
         this.eventLogger = eventLogger;
@@ -77,7 +76,7 @@ public class StatusCommon {
             case IN_PROGRESS:
                 responseHeaders.add(X_PROG, jobPollResult.getProgress() + "% complete");
                 responseHeaders.add(RETRY_AFTER, Integer.toString(retryAfterDelay));
-                eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), jobUuid, HttpStatus.ACCEPTED,
+                eventLogger.sendLogs(new ApiResponseEvent(MDC.get(ORGANIZATION), jobUuid, HttpStatus.ACCEPTED,
                         "Job in progress", jobPollResult.getProgress() + "% complete",
                         (String) request.getAttribute(REQUEST_ID)));
                 return new ResponseEntity<>(null, responseHeaders, HttpStatus.ACCEPTED);
@@ -137,7 +136,7 @@ public class StatusCommon {
         responseHeaders.add(EXPIRES, DateTimeFormatter.RFC_1123_DATE_TIME.format(jobExpiresUTC));
         final JobCompletedResponse resp = getJobCompletedResponse(jobPollResult, jobUuid, request, apiPrefix);
         log.info("Job status completed successfully");
-        eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), jobUuid, HttpStatus.OK,
+        eventLogger.sendLogs(new ApiResponseEvent(MDC.get(ORGANIZATION), jobUuid, HttpStatus.OK,
                 "Job completed", null, (String) request.getAttribute(REQUEST_ID)));
         return new ResponseEntity<>(resp, responseHeaders, HttpStatus.OK);
     }
@@ -150,7 +149,7 @@ public class StatusCommon {
 
         log.info("Job successfully cancelled");
 
-        eventLogger.log(new ApiResponseEvent(MDC.get(ORGANIZATION), jobUuid, HttpStatus.ACCEPTED,
+        eventLogger.sendLogs(new ApiResponseEvent(MDC.get(ORGANIZATION), jobUuid, HttpStatus.ACCEPTED,
                 "Job cancelled", null, (String) request.getAttribute(REQUEST_ID)));
 
         return new ResponseEntity<>(null, null,

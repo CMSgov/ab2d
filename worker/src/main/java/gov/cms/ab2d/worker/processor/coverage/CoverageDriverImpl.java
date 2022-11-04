@@ -4,8 +4,7 @@ import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.service.PdpClientService;
-import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.common.util.Constants;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
@@ -39,7 +38,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
-import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -48,6 +46,10 @@ import org.springframework.stereotype.Service;
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
+import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_OVERRIDE;
+import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_STUCK_HOURS;
+import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_UPDATE_MONTHS;
+import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
 import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getAttestationTime;
 import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getEndDateTime;
 import static java.util.stream.Collectors.groupingBy;
@@ -81,13 +83,13 @@ public class CoverageDriverImpl implements CoverageDriver {
     private final CoverageService coverageService;
     private final CoverageProcessor coverageProcessor;
     private final CoverageLockWrapper coverageLockWrapper;
-    private final PropertiesService propertiesService;
+    private final PropertiesAPIService propertiesApiService;
     private final ContractToContractCoverageMapping mapping;
 
     public CoverageDriverImpl(CoverageSearchRepository coverageSearchRepository,
                               PdpClientService pdpClientService,
                               CoverageService coverageService,
-                              PropertiesService propertiesService,
+                              PropertiesAPIService propertiesApiService,
                               CoverageProcessor coverageProcessor,
                               CoverageLockWrapper coverageLockWrapper,
                               ContractToContractCoverageMapping mapping) {
@@ -96,7 +98,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         this.coverageService = coverageService;
         this.coverageProcessor = coverageProcessor;
         this.coverageLockWrapper = coverageLockWrapper;
-        this.propertiesService = propertiesService;
+        this.propertiesApiService = propertiesApiService;
         this.mapping = mapping;
     }
 
@@ -112,9 +114,9 @@ public class CoverageDriverImpl implements CoverageDriver {
      * @return the current meaningful coverage update configuration
      */
     private CoverageUpdateConfig retrieveConfig() {
-        String updateMonths = propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_UPDATE_MONTHS).getValue();
-        String stuckHours = propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_STUCK_HOURS).getValue();
-        String override = propertiesService.getPropertiesByKey(Constants.COVERAGE_SEARCH_OVERRIDE).getValue();
+        String updateMonths = propertiesApiService.getProperty(COVERAGE_SEARCH_UPDATE_MONTHS);
+        String stuckHours = propertiesApiService.getProperty(COVERAGE_SEARCH_STUCK_HOURS);
+        String override = propertiesApiService.getProperty(COVERAGE_SEARCH_OVERRIDE);
 
         return new CoverageUpdateConfig(Integer.parseInt(updateMonths), Integer.parseInt(stuckHours), Boolean.parseBoolean(override));
     }
@@ -322,8 +324,7 @@ public class CoverageDriverImpl implements CoverageDriver {
                 log.info("In override, get all periods");
                 List<CoveragePeriod> periods = coverageService.getCoveragePeriods(month, year);
                 List<CoveragePeriod> notRunning = periods.stream().filter(period -> period.getStatus() != CoverageJobStatus.SUBMITTED
-                        && period.getStatus() != CoverageJobStatus.IN_PROGRESS)
-                        .collect(Collectors.toList());
+                        && period.getStatus() != CoverageJobStatus.IN_PROGRESS).toList();
                 notRunning.forEach(c -> log.info("    Contract: {}, id: {}, last successful {}", c.getContractNumber(), c.getId(), c.getLastSuccessfulJob()));
                 stalePeriods.addAll(notRunning);
             } else {
@@ -351,7 +352,7 @@ public class CoverageDriverImpl implements CoverageDriver {
     @Scheduled(cron = "${coverage.update.load.schedule}")
     public void loadMappingJob() {
 
-        if (propertiesService.isInMaintenanceMode()) {
+        if (propertiesApiService.isToggleOn(MAINTENANCE_MODE)) {
             log.info("waiting to execute queued coverage searches because api is in maintenance mode");
             return;
         }

@@ -1,12 +1,12 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.common.dto.ContractDTO;
+import gov.cms.ab2d.common.model.SinceSource;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobOutput;
 import gov.cms.ab2d.job.model.JobStartedBy;
-import gov.cms.ab2d.common.model.SinceSource;
 import gov.cms.ab2d.job.repository.JobRepository;
-import gov.cms.ab2d.eventlogger.LogManager;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriverException;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
@@ -23,25 +23,27 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 
+import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PUBLIC_LIST;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_COVERAGE_ISSUE;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_STARTED;
 import static gov.cms.ab2d.job.model.JobStatus.FAILED;
 import static gov.cms.ab2d.job.model.JobStatus.IN_PROGRESS;
 import static gov.cms.ab2d.job.model.JobStatus.SUBMITTED;
 import static gov.cms.ab2d.job.model.JobStatus.SUCCESSFUL;
-import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PUBLIC_LIST;
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_COVERAGE_ISSUE;
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.EOB_JOB_STARTED;
 
 @Slf4j
 @Component
-@SuppressWarnings("java:S2142") //java:S2142: "InterruptedException" should not be ignored
+//java:S2142: "InterruptedException" should not be ignored
+//java:S3655: False flag. Complaining about not checking for Optional#isPresent() when it is checked
+@SuppressWarnings({"java:S2142", "java:S2583"})
 public class JobPreProcessorImpl implements JobPreProcessor {
 
     private final ContractWorkerClient contractWorkerClient;
     private final JobRepository jobRepository;
-    private final LogManager eventLogger;
+    private final SQSEventClient eventLogger;
     private final CoverageDriver coverageDriver;
 
-    public JobPreProcessorImpl(ContractWorkerClient contractWorkerClient, JobRepository jobRepository, LogManager logManager,
+    public JobPreProcessorImpl(ContractWorkerClient contractWorkerClient, JobRepository jobRepository, SQSEventClient logManager,
                                CoverageDriver coverageDriver) {
         this.contractWorkerClient = contractWorkerClient;
         this.jobRepository = jobRepository;
@@ -182,7 +184,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
                 // Remove any error files from the consideration
                 .filter(o -> !o.getError())
                 // Remove any that has been downloaded
-                .filter(o -> !o.getDownloaded())
+                .filter(o -> o.getDownloaded() == 0)
                 // Determine if there are any left
                 .findAny().isEmpty();
     }

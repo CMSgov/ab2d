@@ -1,35 +1,33 @@
 package gov.cms.ab2d.testjobs;
 
-import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.AB2DLocalstackContainer;
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.dto.PropertiesDTO;
 import gov.cms.ab2d.common.model.Contract;
-import gov.cms.ab2d.job.model.Job;
-import gov.cms.ab2d.job.model.JobOutput;
-import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.SinceSource;
 import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.common.repository.PdpClientRepository;
+import gov.cms.ab2d.common.service.InvalidContractException;
+import gov.cms.ab2d.common.service.PdpClientService;
+import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
-import gov.cms.ab2d.job.repository.JobOutputRepository;
-import gov.cms.ab2d.job.repository.JobRepository;
-import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
-import gov.cms.ab2d.common.service.InvalidContractException;
-import gov.cms.ab2d.common.service.PdpClientService;
-import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.common.util.Constants;
-import gov.cms.ab2d.eventlogger.LogManager;
-import gov.cms.ab2d.eventlogger.reports.sql.LoggerEventSummary;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.fhir.IdentifierUtils;
 import gov.cms.ab2d.fhir.PatientIdentifier;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobOutput;
+import gov.cms.ab2d.job.model.JobStatus;
+import gov.cms.ab2d.job.repository.JobOutputRepository;
+import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.job.service.JobOutputService;
 import gov.cms.ab2d.job.service.JobService;
 import gov.cms.ab2d.job.service.JobServiceImpl;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.processor.ContractProcessor;
 import gov.cms.ab2d.worker.processor.JobPreProcessor;
@@ -46,6 +44,17 @@ import gov.cms.ab2d.worker.processor.coverage.CoverageProcessorImpl;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.service.FileServiceImpl;
 import gov.cms.ab2d.worker.service.JobChannelService;
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.BlockingQueue;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IDomainResource;
@@ -63,23 +72,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
+import static gov.cms.ab2d.common.util.PropertyConstants.PCP_CORE_POOL_SIZE;
+import static gov.cms.ab2d.common.util.PropertyConstants.PCP_MAX_POOL_SIZE;
+import static gov.cms.ab2d.common.util.PropertyConstants.PCP_SCALE_TO_MAX_TIME;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
@@ -103,13 +105,17 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 @Testcontainers
 @Slf4j
 @ExtendWith(MockitoExtension.class)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 public class EndToEndBfdTests {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
+    @Container
+    private static final AB2DLocalstackContainer LOCALSTACK_CONTAINER = new AB2DLocalstackContainer();
+
     // We don't care about logging here
     @Mock
-    LogManager logManager;
+    SQSEventClient logManager;
 
     @Autowired
     private BFDClient client;
@@ -140,13 +146,12 @@ public class EndToEndBfdTests {
     @Autowired
     private CoverageLockWrapper coverageLockWrapper;
     @Autowired
-    private PropertiesService propertiesService;
+    private PropertiesAPIService propertiesApiService;
     @Autowired
     private PdpClientRepository pdpClientRepository;
     @Autowired
     private JobOutputService jobOutputService;
-    @Autowired
-    private LoggerEventSummary logEventSummary;
+
     @Autowired
     private ContractToContractCoverageMapping contractToContractCoverageMapping;
 
@@ -165,25 +170,15 @@ public class EndToEndBfdTests {
     void setUp() {
 
         /* These properties are set to improve performance of this test */
-        PropertiesDTO coreClaimsPool = new PropertiesDTO();
-        coreClaimsPool.setKey(Constants.PCP_CORE_POOL_SIZE);
-        coreClaimsPool.setValue("20");
-
-        PropertiesDTO maxClaimsPool = new PropertiesDTO();
-        maxClaimsPool.setKey(Constants.PCP_MAX_POOL_SIZE);
-        maxClaimsPool.setValue("30");
-
-        PropertiesDTO scaleToMaxTime = new PropertiesDTO();
-        scaleToMaxTime.setKey(Constants.PCP_SCALE_TO_MAX_TIME);
-        scaleToMaxTime.setValue("10");
-
-        propertiesService.updateProperties(List.of(coreClaimsPool, maxClaimsPool, scaleToMaxTime));
+        propertiesApiService.updateProperty(PCP_CORE_POOL_SIZE, "20");
+        propertiesApiService.updateProperty(PCP_MAX_POOL_SIZE, "30");
+        propertiesApiService.updateProperty(PCP_SCALE_TO_MAX_TIME, "10");
 
         coverageDriver = new CoverageDriverImpl(coverageSearchRepository, pdpClientService, coverageService,
-                propertiesService, coverageProcessor, coverageLockWrapper, contractToContractCoverageMapping);
+                propertiesApiService, coverageProcessor, coverageLockWrapper, contractToContractCoverageMapping);
 
         // Instantiate the job processors
-        jobService = new JobServiceImpl(jobRepository, jobOutputService, logManager, logEventSummary, path.getAbsolutePath());
+        jobService = new JobServiceImpl(jobRepository, jobOutputService, logManager, path.getAbsolutePath());
         jobPreProcessor = new JobPreProcessorImpl(contractWorkerClient, jobRepository, logManager, coverageDriver);
 
         jobProcessor = new JobProcessorImpl(new FileServiceImpl(), jobChannelService, jobProgressService, jobProgressUpdateService,
@@ -246,7 +241,7 @@ public class EndToEndBfdTests {
         try {
             Path file = Paths.get(path, jobUuid, filename);
             Resource resource = new UrlResource(file.toUri());
-            jobService.deleteFileForJob(resource.getFile(), jobUuid);
+            //delete is handled by the audit module
         } catch (Exception ex) {
             throw new RuntimeException("Unable to delete file " + filename, ex);
         }
@@ -401,7 +396,7 @@ public class EndToEndBfdTests {
 
         while (BundleUtils.getNextLink(bundle) != null) {
             log.info(String.format("Do Next Request for %s for %02d/%04d", contract, month, year));
-            bundle = client.requestNextBundleFromServer(version, bundle);
+            bundle = client.requestNextBundleFromServer(version, bundle, contract);
             numberOfBenes += BundleUtils.getEntries(bundle).size();
             log.info("Found: " + numberOfBenes + " benes");
             patientIds.addAll(extractIds(bundle, version));

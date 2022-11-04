@@ -1,9 +1,10 @@
 package gov.cms.ab2d.worker.quartz;
 
-import gov.cms.ab2d.common.service.PropertiesService;
-import gov.cms.ab2d.eventlogger.LogManager;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageVerificationException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.DisallowConcurrentExecution;
@@ -11,11 +12,12 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.springframework.scheduling.quartz.QuartzJobBean;
 
-import java.util.List;
 
-import static gov.cms.ab2d.eventlogger.Ab2dEnvironment.PRODUCTION;
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.COVERAGE_VERIFICATION_ABORTED;
-import static gov.cms.ab2d.eventlogger.events.SlackEvents.COVERAGE_VERIFICATION_FAILURE;
+import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
+import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PRODUCTION;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.COVERAGE_VERIFICATION_ABORTED;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.COVERAGE_VERIFICATION_FAILURE;
+
 
 /**
  * Verify that all coverage/enrollment cached in database meets the expected structure and business requirements.
@@ -43,14 +45,14 @@ import static gov.cms.ab2d.eventlogger.events.SlackEvents.COVERAGE_VERIFICATION_
 @DisallowConcurrentExecution
 public class CoverageCheckQuartzJob extends QuartzJobBean {
 
-    private final LogManager logManager;
+    private final SQSEventClient logManager;
     private final CoverageDriver driver;
-    private final PropertiesService propertiesService;
+    private final PropertiesAPIService propertiesApiService;
 
     @Override
     protected void executeInternal(JobExecutionContext jobExecutionContext) throws JobExecutionException {
 
-        if (propertiesService.isInMaintenanceMode()) {
+        if (propertiesApiService.isToggleOn(MAINTENANCE_MODE)) {
             log.info("Skipping enrollment verification because AB2D is already in maintenance mode");
         }
 
