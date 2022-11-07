@@ -68,7 +68,7 @@ public class Mapping {
 
     private ContractDTO getContractDTO(PdpClient pdpClient) {
         Contract contract = contractService.getContractByContractId(pdpClient.getContractId());
-        if(contract != null)
+        if (contract != null)
             return contract.toDTO();
         else
             return null;
