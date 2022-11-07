@@ -19,3 +19,5 @@ DROP TABLE contract_tmp;
 
 -- Let Quicksight query this table if it ever wants to
 GRANT SELECT ON contract.contract TO ab2d_analyst;
+
+ALTER TABLE public.user_account DROP CONSTRAINT fk_user_to_contract;

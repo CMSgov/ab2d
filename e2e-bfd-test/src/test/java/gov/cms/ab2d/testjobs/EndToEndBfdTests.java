@@ -338,6 +338,7 @@ public class EndToEndBfdTests {
         pdpClient.setOrganization("Synthea Data");
         pdpClient.setEnabled(true);
         pdpClient.setContractId(contract.getId());
+        contractRepository.save(contract);
         return pdpClientRepository.save(pdpClient);
     }
 
@@ -363,7 +364,7 @@ public class EndToEndBfdTests {
         job.setOrganization(pdpClient.getOrganization());
 
         // Check to see if there is any attestation
-        Contract contract = contractRepository.findById(pdpClient.getId()).orElse(null);
+        Contract contract = contractRepository.findById(pdpClient.getContractId()).orElse(null);
         if (contractNumber != null && !contractNumber.equals(contract.getContractNumber())) {
             String errorMsg = "Specifying contract: " + contractNumber + " not associated with internal id: " + pdpClient.getId();
             throw new InvalidContractException(errorMsg);
