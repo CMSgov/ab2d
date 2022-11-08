@@ -98,7 +98,7 @@ public class CoverageCheckIntegrationTest {
 
         PdpClient client = dataSetup.setupNonStandardClient("special", "TEST", List.of("SPONSOR"));
         contract = contractService.getContractByContractNumber("TEST").get();
-//        contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
+        contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
         contractRepo.saveAndFlush(contract);
 
     }
