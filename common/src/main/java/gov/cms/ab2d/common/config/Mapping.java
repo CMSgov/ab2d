@@ -67,7 +67,7 @@ public class Mapping {
 
         Converter<Long, ContractDTO> contractIDtoContractDTOConverter = mappingContext -> {
 
-            if(mappingContext.getSource() != null) {
+            if (mappingContext.getSource() != null) {
                 return contractService.getContractByContractId(mappingContext.getSource()).toDTO();
             }
             return null;
