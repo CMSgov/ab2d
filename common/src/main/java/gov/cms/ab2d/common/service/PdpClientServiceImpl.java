@@ -101,6 +101,7 @@ public class PdpClientServiceImpl implements PdpClientService {
         // When updating there needs to be verification that the client exists
         PdpClient pdpClient = getClientById(pdpClientDTO.getClientId());
         pdpClientDTO.setId(pdpClient.getId());
+        contractService.updateContract(mapping.getModelMapper().map(pdpClientDTO.getContract(), Contract.class));
         PdpClient mappedPdpClient = mapping.getModelMapper().map(pdpClientDTO, PdpClient.class);
         PdpClient updatedPdpClient = pdpClientRepository.saveAndFlush(mappedPdpClient);
         return mapping.getModelMapper().map(updatedPdpClient, PdpClientDTO.class);
