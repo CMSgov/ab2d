@@ -16,14 +16,17 @@ public class HealthCheck {
     private final String efsMount;
     private final int memory;
     private final List<String> urls;
+    private final PropertiesServiceAvailable propertiesServiceAvailable;
 
     public HealthCheck(DataSource dataSource, @Value("${efs.mount}") String efsMount,
                        @Value("${health.requiredSpareMemoryInMB}") int memory,
-                       @Value("#{'${health.urlsToCheck}'.split(',')}") List<String> urls) {
+                       @Value("#{'${health.urlsToCheck}'.split(',')}") List<String> urls,
+                       PropertiesServiceAvailable propertiesServiceAvailable) {
         this.dataSource = dataSource;
         this.efsMount = efsMount;
         this.memory = memory;
         this.urls = urls;
+        this.propertiesServiceAvailable = propertiesServiceAvailable;
     }
 
     public boolean healthy() {
@@ -38,6 +41,8 @@ public class HealthCheck {
                 // Internet is accessible
                 UrlAvailable.isAnyAvailable(urls) &&
                 // We can log
-                LoggingAvailable.canLog();
+                LoggingAvailable.canLog() &&
+                // The properties service is available
+                propertiesServiceAvailable.isAvailable();
     }
 }

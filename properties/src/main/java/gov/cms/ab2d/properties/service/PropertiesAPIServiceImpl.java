@@ -19,8 +19,8 @@ public class PropertiesAPIServiceImpl implements PropertiesAPIService {
     private PropertiesClient propertiesClient;
     private static final String ERROR_MESSAGE = "Cannot access properties service, using default database value";
 
-    PropertiesAPIServiceImpl(@Value("${feature.property.service.enabled:false}") boolean usePropertyService, PropertiesService service,
-                             @Value("${property.service.url}") String propertyServiceUrl) {
+    public PropertiesAPIServiceImpl(@Value("${feature.property.service.enabled:false}") boolean usePropertyService, PropertiesService service,
+                                    @Value("${property.service.url}") String propertyServiceUrl) {
         this.propertiesService = service;
         this.usePropertyService = usePropertyService;
         this.propertiesClient = new PropertiesClientImpl(propertyServiceUrl);
