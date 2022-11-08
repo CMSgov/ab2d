@@ -49,6 +49,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -72,8 +73,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 @SpringBootTest
-@EntityScan(basePackages = {"gov.cms.ab2d.common.model", "gov.cms.ab2d.coverage.model"})
-@EnableJpaRepositories({"gov.cms.ab2d.common.repository", "gov.cms.ab2d.coverage.repository"})
+@ComponentScan({ "gov.cms.ab2d.properties", "gov.cms.ab2d.common", "gov.cms.ab2d.coverage" })
+@EntityScan(basePackages = {"gov.cms.ab2d.properties.model", "gov.cms.ab2d.common.model", "gov.cms.ab2d.coverage.model"})
+@EnableJpaRepositories({"gov.cms.ab2d.properties.repository", "gov.cms.ab2d.common.repository", "gov.cms.ab2d.coverage.repository"})
 @Testcontainers
 @TestPropertySource(locations = "/application.coverage.properties")
 class CoverageServiceImplTest {
