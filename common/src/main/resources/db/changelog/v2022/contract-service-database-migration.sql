@@ -40,9 +40,18 @@ SELECT con.contract_number,
 FROM contract.contract con
          LEFT JOIN user_account u ON con.id = u.contract_id;
 
-ALTER TABLE public.contract_view
-    OWNER TO cmsadmin;
+DO
+$$
+BEGIN
+    --- Needed for tests that dont have cmsadmin
+    IF EXISTS ( SELECT FROM pg_roles WHERE  rolname = 'cmsadmin') THEN
+        ALTER TABLE public.contract_view OWNER TO cmsadmin;
+        GRANT ALL ON TABLE public.contract_view TO cmsadmin;
+    END IF;
+END
+$$;
 
 GRANT SELECT ON TABLE public.contract_view TO ab2d_analyst;
-GRANT ALL ON TABLE public.contract_view TO cmsadmin;
+
+
 
