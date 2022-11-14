@@ -22,3 +22,27 @@ DROP TABLE contract_tmp;
 GRANT SELECT ON contract.contract TO ab2d_analyst;
 
 ALTER TABLE public.user_account DROP CONSTRAINT fk_user_to_contract;
+
+-- View: public.contract_view
+-- DROP VIEW public.contract_view;
+CREATE OR REPLACE VIEW public.contract_view
+ AS
+SELECT con.contract_number,
+       con.contract_name,
+       con.attested_on,
+       con.created,
+       con.modified,
+       con.hpms_parent_org_name,
+       con.hpms_org_marketing_name,
+       con.update_mode,
+       con.contract_type,
+       u.enabled
+FROM contract.contract con
+         LEFT JOIN user_account u ON con.id = u.contract_id;
+
+ALTER TABLE public.contract_view
+    OWNER TO cmsadmin;
+
+GRANT SELECT ON TABLE public.contract_view TO ab2d_analyst;
+GRANT ALL ON TABLE public.contract_view TO cmsadmin;
+
