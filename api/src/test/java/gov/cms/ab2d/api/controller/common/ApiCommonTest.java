@@ -2,6 +2,7 @@ package gov.cms.ab2d.api.controller.common;
 
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
+import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.InvalidContractException;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.fhir.FhirVersion;
@@ -10,12 +11,14 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class ApiCommonTest {
 
     private static final String CONTRACT_NUMBER = "X1234";
+    private static final Long CONTRACT_ID = 100L;
 
     final PdpClient pdpClient;
 
@@ -24,11 +27,14 @@ class ApiCommonTest {
     ApiCommonTest() {
         Contract contract = new Contract();
         contract.setContractNumber(CONTRACT_NUMBER);
+        contract.setId(CONTRACT_ID);
         PdpClient pdpClientTmp = new PdpClient();
-        pdpClientTmp.setContract(contract);
+        pdpClientTmp.setContractId(contract.getId());
         pdpClient = pdpClientTmp;
+        ContractService contractService = mock(ContractService.class);
+        when(contractService.getContractByContractId(anyLong())).thenReturn(contract);
 
-        apiCommon = buildApiCommon();
+        apiCommon = buildApiCommon(contractService);
     }
 
     @Test
@@ -50,8 +56,8 @@ class ApiCommonTest {
         assertTrue(ice.getMessage().contains(bogusContractNumber + " not associated with internal id"));
     }
 
-    private ApiCommon buildApiCommon() {
-        return new ApiCommon(null, null, null, buildPdpClientService());
+    private ApiCommon buildApiCommon(ContractService contractService) {
+        return new ApiCommon(null, null, null, buildPdpClientService(), contractService);
     }
 
     private PdpClientService buildPdpClientService() {

@@ -292,7 +292,7 @@ class JobProcessorUnitTest {
         PdpClient pdpClient = new PdpClient();
         pdpClient.setClientId("Harry_Potter");
         pdpClient.setEnabled(TRUE);
-        pdpClient.setContract(createContract());
+        pdpClient.setContractId(new Contract().getId());
         return pdpClient;
     }
 

@@ -3,7 +3,9 @@ package gov.cms.ab2d.common.model;
 
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.util.DateUtil;
-
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -11,10 +13,8 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
-import java.time.OffsetDateTime;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,6 +28,7 @@ import static gov.cms.ab2d.common.util.DateUtil.getESTOffset;
 @Setter
 @NoArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
+@Table(name = "contract", schema = "contract")
 public class Contract extends TimestampBase {
 
     public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd H:m:s Z");

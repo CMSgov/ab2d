@@ -7,6 +7,7 @@ import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.RoleService;
+import java.util.Optional;
 import org.modelmapper.AbstractConverter;
 import org.modelmapper.Converter;
 import org.modelmapper.ModelMapper;
@@ -52,18 +53,32 @@ public class Mapping {
         Converter<ContractDTO, Contract> sponsorDTOSponsorConverter = new AbstractConverter<>() {
             protected Contract convert(ContractDTO source) {
                 //noinspection OptionalGetWithoutIsPresent
-                return contractService.getContractByContractNumber(source.getContractNumber()).get(); //NOSONAR
+                if (source != null) {
+                    return contractService.getContractByContractNumber(source.getContractNumber()).get(); //NOSONAR
+                }
+                return null;
             }
+        };
+
+        Converter<ContractDTO, Long> contractDTOtoContractIDConverter = pdpContractDTO -> {
+            Optional<Contract> optionalContract = contractService.getContractByContractNumber(pdpContractDTO.getSource().getContractNumber());
+            return optionalContract.map(Contract::getId).orElse(null);
+        };
+
+        Converter<Long, ContractDTO> contractIDtoContractDTOConverter = mappingContext -> {
+            if (mappingContext.getSource() != null) {
+                return contractService.getContractByContractId(mappingContext.getSource()).toDTO();
+            }
+            return null;
         };
 
         modelMapper.addConverter(sponsorDTOSponsorConverter);
         modelMapper.createTypeMap(PdpClient.class, PdpClientDTO.class)
-                .addMappings(mapper -> mapper.map(pdpClient -> pdpClient.getContract().toDTO(), PdpClientDTO::setContract))
                 .addMappings(mapper -> mapper.using(roleToRoleDTOConverter).map(PdpClient::getRoles, PdpClientDTO::setRole))
-                .addMappings(mapper -> mapper.map(PdpClient::getContract, PdpClientDTO::setContract));
+                .addMappings(mapper -> mapper.using(contractIDtoContractDTOConverter).map(PdpClient::getContractId, PdpClientDTO::setContract));
         modelMapper.createTypeMap(PdpClientDTO.class, PdpClient.class)
                 .addMappings(mapper -> mapper.using(roleDTOToRoleConverter).map(PdpClientDTO::getRole, PdpClient::addRole))
-                .addMappings(mapper -> mapper.map(PdpClientDTO::getClientId, PdpClient::setClientId));
+                .addMappings(mapper -> mapper.using(contractDTOtoContractIDConverter).map(PdpClientDTO::getContract, PdpClient::setContractId));
     }
 
     public ModelMapper getModelMapper() {
