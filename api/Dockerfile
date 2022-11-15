@@ -8,6 +8,10 @@ ENV JVM_INITIAL_RAM=40.0
 ENV JVM_MIN_RAM=20.0
 ENV JVM_MAX_RAM=80.0
 
+#Update Packages
+RUN yum update -y --security
+
+#JAVA Commands
 CMD java \
     -XX:+UseContainerSupport \
     -XX:InitialRAMPercentage=${JVM_INITIAL_RAM} \
