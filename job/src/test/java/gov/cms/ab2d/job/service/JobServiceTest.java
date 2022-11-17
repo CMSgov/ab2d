@@ -5,6 +5,7 @@ import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
+import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.common.service.RoleService;
@@ -114,6 +115,9 @@ class JobServiceTest extends JobCleanup {
     private JobOutputService jobOutputService;
 
     @Autowired
+    private ContractService contractService;
+
+    @Autowired
     private SQSEventClient sqsEventClient;
 
     @SuppressWarnings({"rawtypes", "unused"})
@@ -150,11 +154,11 @@ class JobServiceTest extends JobCleanup {
     }
 
     private StartJobDTO buildStartJobOutputFormat(String outputFormat) {
-        return buildStartJob(pdpClientService.getCurrentClient().getContract().getContractNumber(), EOB, outputFormat);
+        return buildStartJob(contractService.getContractByContractId(pdpClientService.getCurrentClient().getContractId()).getContractNumber(), EOB, outputFormat);
     }
 
     private StartJobDTO buildStartJobResourceTypes(String resourceTypes) {
-        return buildStartJob(pdpClientService.getCurrentClient().getContract().getContractNumber(),
+        return buildStartJob(contractService.getContractByContractId(pdpClientService.getCurrentClient().getContractId()).getContractNumber(),
                 resourceTypes, NDJSON_FIRE_CONTENT_TYPE);
     }
 
@@ -315,7 +319,7 @@ class JobServiceTest extends JobCleanup {
         pdpClient.addRole(role);
 
         Contract contract = dataSetup.setupContract("Y0000", AB2D_EPOCH.toOffsetDateTime());
-        pdpClient.setContract(contract);
+        pdpClient.setContractId(contract.getId());
 
         pdpClient = pdpClientRepository.saveAndFlush(pdpClient);
         dataSetup.queueForCleanup(pdpClient);
@@ -471,7 +475,7 @@ class JobServiceTest extends JobCleanup {
         dataSetup.queueForCleanup(pdpClient);
 
         Contract contract = dataSetup.setupContract("New Contract", AB2D_EPOCH.toOffsetDateTime());
-        pdpClient.setContract(contract);
+        pdpClient.setContractId(contract.getId());
         PdpClient savedPdpClient = pdpClientRepository.save(pdpClient);
 
         SecurityContextHolder.getContext().setAuthentication(

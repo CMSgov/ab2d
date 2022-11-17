@@ -327,7 +327,7 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
         pdpClient.setClientId("Harry_Potter");
         pdpClient.setOrganization("Harry_Potter");
         pdpClient.setEnabled(true);
-        pdpClient.setContract(contract);
+        pdpClient.setContractId(contract.getId());
 
         pdpClient = pdpClientRepository.save(pdpClient);
         dataSetup.queueForCleanup(pdpClient);
