@@ -12,4 +12,6 @@ public interface ContractService {
     Optional<Contract> getContractByContractNumber(String contractNumber);
 
     void updateContract(Contract contract);
+
+    Contract getContractByContractId(Long contractId);
 }

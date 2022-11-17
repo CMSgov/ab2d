@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.processor.coverage;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
@@ -77,6 +78,9 @@ public class CoverageCheckIntegrationTest {
     @Autowired
     private CoverageDataSetup coverageDataSetup;
 
+    @Autowired
+    private ContractService contractService;
+
     private static final ZonedDateTime CURRENT_TIME = OffsetDateTime.now().atZoneSameInstant(AB2D_ZONE);
     private static final ZonedDateTime ATTESTATION_TIME = CURRENT_TIME.minusMonths(3);
 
@@ -93,7 +97,7 @@ public class CoverageCheckIntegrationTest {
         enabledContracts.forEach(contract -> pdpClientService.disableClient(contract.getContractNumber()));
 
         PdpClient client = dataSetup.setupNonStandardClient("special", "TEST", List.of("SPONSOR"));
-        contract = client.getContract();
+        contract = contractService.getContractByContractNumber("TEST").get();
         contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
         contractRepo.saveAndFlush(contract);
 
@@ -157,7 +161,7 @@ public class CoverageCheckIntegrationTest {
     void verifyCoverage_whenZContractIgnore() {
 
         PdpClient client = dataSetup.setupNonStandardClient("special2", "Z5555", List.of("SPONSOR"));
-        Contract contract = client.getContract();
+        contract = contractService.getContractByContractNumber("Z5555").get();
         contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
         contract.setUpdateMode(Contract.UpdateMode.NONE);
         contract.setContractType(Contract.ContractType.CLASSIC_TEST);
