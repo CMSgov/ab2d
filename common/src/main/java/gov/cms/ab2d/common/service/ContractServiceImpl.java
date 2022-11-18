@@ -33,4 +33,11 @@ public class ContractServiceImpl implements ContractService {
     public void updateContract(Contract contract) {
         contractRepository.save(contract);
     }
+
+    @Override
+    public Contract getContractByContractId(Long contractId) {
+        Optional<Contract> optionalContract = contractRepository.findById(contractId);
+        return optionalContract.orElse(null);
+    }
+
 }

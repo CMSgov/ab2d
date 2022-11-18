@@ -12,6 +12,7 @@ import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
+import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.RoleService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
@@ -81,6 +82,7 @@ public class AdminAPIPdpClientTests {
 
     @Autowired
     private RoleService roleService;
+
 
     private String token;
 
@@ -383,7 +385,7 @@ public class AdminAPIPdpClientTests {
         pdpClient.setClientId(clientId);
         pdpClient.setOrganization(TEST_ORG);
         pdpClient.setEnabled(enabled);
-        pdpClient.setContract(contract);
+        pdpClient.setContractId(contract.getId());
 
         PdpClient savedPdpClient = pdpClientRepository.save(pdpClient);
         dataSetup.queueForCleanup(savedPdpClient);

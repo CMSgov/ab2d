@@ -1,17 +1,18 @@
 package gov.cms.ab2d.worker.service;
 
-import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
-import gov.cms.ab2d.job.model.Job;
-import gov.cms.ab2d.job.model.JobStatus;
+import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
-import gov.cms.ab2d.job.repository.JobRepository;
-import gov.cms.ab2d.job.service.JobCleanup;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.service.FeatureEngagement;
-import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobStatus;
+import gov.cms.ab2d.job.repository.JobRepository;
+import gov.cms.ab2d.job.service.JobCleanup;
 import gov.cms.ab2d.job.service.JobService;
+import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.worker.config.JobHandler;
 import java.time.OffsetDateTime;
 import java.util.Random;
@@ -28,10 +29,11 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
+import static gov.cms.ab2d.common.util.PropertyConstants.WORKER_ENGAGEMENT;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
-import static gov.cms.ab2d.common.util.PropertyConstants.WORKER_ENGAGEMENT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
@@ -98,8 +100,9 @@ class WorkerServiceDisengagementTest extends JobCleanup {
 
         setEngagement(FeatureEngagement.NEUTRAL);
 
-        final PdpClient pdpClient = createClient();
-        createJob(pdpClient);
+        Contract contract = dataSetup.setupContract("TST-12");
+        final PdpClient pdpClient = createClient(contract);
+        createJob(pdpClient, contract);
 
         Thread.sleep(6000L);
 
@@ -118,8 +121,11 @@ class WorkerServiceDisengagementTest extends JobCleanup {
 
         setEngagement(FeatureEngagement.NEUTRAL);
 
-        createJob(createClient());
-        createJob(createClient2());
+        Contract contract = dataSetup.setupContract("TST-12");
+        Contract contract1 = dataSetup.setupContract("TST-34");
+
+        createJob(createClient(contract), contract);
+        createJob(createClient2(contract1), contract1);
 
         // There is a 5 second sleep in the WorkerService.
         // So if the result for two jobs comes before 10 seconds, it implies they were not processed sequentially
@@ -135,7 +141,7 @@ class WorkerServiceDisengagementTest extends JobCleanup {
         assertEquals(2, workerServiceStub.processingCalls);
     }
 
-    private Job createJob(final PdpClient pdpClient) {
+    private Job createJob(final PdpClient pdpClient, Contract contract) {
         Job job = new Job();
         job.setId((long) getIntRandom());
         job.setJobUuid(UUID.randomUUID().toString());
@@ -145,7 +151,7 @@ class WorkerServiceDisengagementTest extends JobCleanup {
         job.setCreatedAt(OffsetDateTime.now());
         job.setOrganization(pdpClient.getOrganization());
         job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
-        job.setContractNumber(pdpClient.getContract().getContractNumber());
+        job.setContractNumber(contract.getContractNumber());
         job.setFhirVersion(STU3);
 
         job = jobRepository.save(job);
@@ -153,28 +159,28 @@ class WorkerServiceDisengagementTest extends JobCleanup {
         return job;
     }
 
-    private PdpClient createClient() {
+    private PdpClient createClient(Contract contract) {
         PdpClient pdpClient = new PdpClient();
         int clientNum = getIntRandom();
         pdpClient.setId((long) clientNum);
         pdpClient.setClientId("testclient" + clientNum);
         pdpClient.setOrganization("testclient" + clientNum);
         pdpClient.setEnabled(true);
-        pdpClient.setContract(dataSetup.setupContract("TST-12"));
+        pdpClient.setContractId(contract.getId());
 
         pdpClient = pdpClientRepository.save(pdpClient);
         dataSetup.queueForCleanup(pdpClient);
         return pdpClient;
     }
 
-    private PdpClient createClient2() {
+    private PdpClient createClient2(Contract contract) {
         PdpClient pdpClient = new PdpClient();
         int clientNum = getIntRandom();
         pdpClient.setId((long) clientNum);
         pdpClient.setClientId("testclient2" + clientNum);
         pdpClient.setOrganization("testclient2" + clientNum);
         pdpClient.setEnabled(true);
-        pdpClient.setContract(dataSetup.setupContract("TST-34"));
+        pdpClient.setContractId(contract.getId());
 
         pdpClient =  pdpClientRepository.save(pdpClient);
         dataSetup.queueForCleanup(pdpClient);
