@@ -257,7 +257,6 @@ pipeline {
                 sh '''
                   rm -rf "$WORKSPACE/opt/ab2d" 2> /dev/null
                   rm -rf "$WORKSPACE/.m2/repository/gov/cms/ab2d" 2> /dev/null
-                  rm -rf target **/target 2> /dev/null
                 '''
             }
         }
