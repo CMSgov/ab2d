@@ -73,7 +73,7 @@ pipeline {
             }
         }
 
-        stage('Package without tests') {
+        stage('Package without tests - Create SBOM') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
                     sh 'mvn package --settings settings.xml -DskipTests -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD}'
@@ -257,7 +257,6 @@ pipeline {
                 sh '''
                   rm -rf "$WORKSPACE/opt/ab2d" 2> /dev/null
                   rm -rf "$WORKSPACE/.m2/repository/gov/cms/ab2d" 2> /dev/null
-                  rm -rf target **/target 2> /dev/null
                 '''
             }
         }

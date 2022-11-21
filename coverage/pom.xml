@@ -50,7 +50,7 @@
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>ab2d-filters</artifactId>
-            <version>1.6.2</version>
+            <version>${filters-lib.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

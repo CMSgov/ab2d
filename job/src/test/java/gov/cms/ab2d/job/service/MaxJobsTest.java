@@ -10,6 +10,7 @@ import gov.cms.ab2d.job.dto.StartJobDTO;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.job.repository.JobRepository;
+import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,7 +21,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.List;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;

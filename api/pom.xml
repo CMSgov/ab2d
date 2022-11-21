@@ -98,13 +98,13 @@
             <artifactId>jackson-module-jaxb-annotations</artifactId>
         </dependency>
 
-	    <dependency>
+        <dependency>
             <groupId>com.newrelic.agent.java</groupId>
             <artifactId>newrelic-java</artifactId>
             <version>${newrelic.version}</version>
             <scope>provided</scope>
             <type>zip</type>
-	    </dependency>
+        </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
@@ -184,7 +184,6 @@
                     </execution>
                 </executions>
             </plugin>
-       
         </plugins>
     </build>
 </project>

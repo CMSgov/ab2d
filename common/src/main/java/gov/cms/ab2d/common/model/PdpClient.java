@@ -1,15 +1,26 @@
 package gov.cms.ab2d.common.model;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
-import java.util.*;
 
 /**
  * Represents a PDP organization which possesses a single set of credentials for
@@ -38,9 +49,7 @@ public class PdpClient extends TimestampBase implements UserDetails {
     @NotNull
     private Boolean enabled;
 
-    @ManyToOne
-    @JoinColumn(name = "contract_id")
-    private Contract contract;
+    private Long contractId;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
