@@ -37,7 +37,7 @@
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
         <logback-encoder.version>7.2</logback-encoder.version>
         <testcontainers.version>1.17.5</testcontainers.version>
-        <newrelic.version>7.11.0</newrelic.version>
+        <newrelic.version>7.11.1</newrelic.version>
         <postgres.version>42.5.0</postgres.version>
 
         <!-- Maven plugin versions -->
