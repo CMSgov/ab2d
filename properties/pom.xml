@@ -48,7 +48,7 @@
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>ab2d-properties-client</artifactId>
-            <version>1.1.2</version>
+            <version>${properties-client.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
