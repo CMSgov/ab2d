@@ -12,7 +12,8 @@ import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.job.service.JobCleanup;
 import gov.cms.ab2d.job.service.JobService;
-import gov.cms.ab2d.properties.service.PropertiesAPIService;
+import gov.cms.ab2d.common.properties.PropertiesService;
+import gov.cms.ab2d.worker.PropertyServiceStub;
 import gov.cms.ab2d.worker.config.JobHandler;
 import java.time.OffsetDateTime;
 import java.util.Random;
@@ -28,7 +29,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.common.util.PropertyConstants.WORKER_ENGAGEMENT;
@@ -48,7 +48,7 @@ class WorkerServiceDisengagementTest extends JobCleanup {
     @Autowired private DataSetup dataSetup;
     @Autowired private JobRepository jobRepository;
     @Autowired private PdpClientRepository pdpClientRepository;
-    @Autowired private PropertiesAPIService propertiesApiService;
+    private PropertiesService propertiesService = new PropertyServiceStub();
     @Autowired private JobService jobService;
 
     @Autowired private WorkerServiceImpl workerServiceImpl;
@@ -62,9 +62,9 @@ class WorkerServiceDisengagementTest extends JobCleanup {
 
     @BeforeEach
     public void init() {
-        workerServiceStub = new WorkerServiceStub(jobService, propertiesApiService);
-
+        workerServiceStub = new WorkerServiceStub(jobService, propertiesService);
         ReflectionTestUtils.setField(jobHandler, "workerService", workerServiceStub);
+        ReflectionTestUtils.setField(workerServiceImpl, "propertiesService", propertiesService);
     }
 
     @AfterEach
@@ -76,13 +76,7 @@ class WorkerServiceDisengagementTest extends JobCleanup {
     }
 
     private void setEngagement(FeatureEngagement drive) {
-        try {
-            String engagement = propertiesApiService.getProperty(WORKER_ENGAGEMENT);
-        } catch (Exception ex) {
-            throw new IllegalStateException(WORKER_ENGAGEMENT + " must be set.");
-        }
-
-        propertiesApiService.updateProperty(WORKER_ENGAGEMENT, drive.getSerialValue());
+        propertiesService.updateProperty(WORKER_ENGAGEMENT, drive.getSerialValue());
     }
 
     @Test

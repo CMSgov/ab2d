@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Import;
 import org.springframework.integration.config.EnableIntegration;
 import org.springframework.integration.jdbc.lock.DefaultLockRepository;
@@ -33,7 +32,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 @EnableScheduling
 @Import(BFDClientConfiguration.class)
 // Use @DependsOn to control the loading order so that properties are set before they are used
-@DependsOn("propertiesInit")
 public class WorkerConfig {
 
     private final int pcpCorePoolSize;

@@ -1,7 +1,8 @@
 package gov.cms.ab2d.worker.quartz;
 
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
-import gov.cms.ab2d.properties.service.PropertiesAPIService;
+import gov.cms.ab2d.common.properties.PropertiesService;
+import gov.cms.ab2d.worker.PropertyServiceStub;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageVerificationException;
 import java.util.List;
@@ -25,13 +26,11 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class CoverageCheckQuartzJobTest {
 
-    @Mock
-    private PropertiesAPIService propertiesApiService;
+    private PropertiesService propertiesService = new PropertyServiceStub();
 
     @Mock
     private CoverageDriver coverageDriver;
@@ -41,7 +40,7 @@ public class CoverageCheckQuartzJobTest {
 
     @AfterEach
     void tearDown() {
-        reset(propertiesApiService);
+        ((PropertyServiceStub) propertiesService).reset();
         reset(coverageDriver);
         reset(logManager);
     }
@@ -50,26 +49,24 @@ public class CoverageCheckQuartzJobTest {
     @Test
     void whenMaintenanceMode_skipJob() {
 
-        when(propertiesApiService.isToggleOn(MAINTENANCE_MODE)).thenReturn(true);
+        propertiesService.updateProperty(MAINTENANCE_MODE, "true");
 
-        CoverageCheckQuartzJob job = new CoverageCheckQuartzJob(logManager, coverageDriver, propertiesApiService);
+        CoverageCheckQuartzJob job = new CoverageCheckQuartzJob(logManager, coverageDriver, propertiesService);
 
         try {
             job.executeInternal(null);
         } catch (JobExecutionException executionException) {
             fail("job should not execute in maintenance mode");
         }
-
-        verify(propertiesApiService, times(1)).isToggleOn(MAINTENANCE_MODE);
     }
 
     @DisplayName("Execute normally when not in maintenance mode")
     @Test
     void whenNotMaintenanceMode_executeJob() {
 
-        when(propertiesApiService.isToggleOn(MAINTENANCE_MODE)).thenReturn(false);
+        propertiesService.updateProperty(MAINTENANCE_MODE, "false");
 
-        CoverageCheckQuartzJob job = new CoverageCheckQuartzJob(logManager, coverageDriver, propertiesApiService);
+        CoverageCheckQuartzJob job = new CoverageCheckQuartzJob(logManager, coverageDriver, propertiesService);
 
         try {
             job.executeInternal(null);
@@ -77,7 +74,6 @@ public class CoverageCheckQuartzJobTest {
             fail("job should execute successfully if no exception thrown");
         }
 
-        verify(propertiesApiService, times(1)).isToggleOn(MAINTENANCE_MODE);
         verify(coverageDriver, times(1)).verifyCoverage();
     }
 
@@ -85,17 +81,16 @@ public class CoverageCheckQuartzJobTest {
     @Test
     void whenVerificationException_alertWithIssues() {
 
-        when(propertiesApiService.isToggleOn(MAINTENANCE_MODE)).thenReturn(false);
+        propertiesService.updateProperty(MAINTENANCE_MODE, "false");
 
         doThrow(new CoverageVerificationException("testing123", List.of("alertalert")))
                 .when(coverageDriver).verifyCoverage();
 
-        CoverageCheckQuartzJob job = new CoverageCheckQuartzJob(logManager, coverageDriver, propertiesApiService);
+        CoverageCheckQuartzJob job = new CoverageCheckQuartzJob(logManager, coverageDriver, propertiesService);
 
         JobExecutionException exception = assertThrows(JobExecutionException.class, () -> job.executeInternal(null));
         assertTrue(exception.getMessage().contains("testing123"));
 
-        verify(propertiesApiService, times(1)).isToggleOn(MAINTENANCE_MODE);
         verify(coverageDriver, times(1)).verifyCoverage();
         verify(logManager, times(1)).alert(
                 argThat(alert -> alert.contains("alertalert") && alert.contains("Coverage verification failed")), anyList());
@@ -105,17 +100,16 @@ public class CoverageCheckQuartzJobTest {
     @Test
     void whenVerificationFailsToRun_alert() {
 
-        when(propertiesApiService.isToggleOn(MAINTENANCE_MODE)).thenReturn(false);
+        propertiesService.updateProperty(MAINTENANCE_MODE, "false");
 
         doThrow(new RuntimeException("testing123"))
                 .when(coverageDriver).verifyCoverage();
 
-        CoverageCheckQuartzJob job = new CoverageCheckQuartzJob(logManager, coverageDriver, propertiesApiService);
+        CoverageCheckQuartzJob job = new CoverageCheckQuartzJob(logManager, coverageDriver, propertiesService);
 
         JobExecutionException exception = assertThrows(JobExecutionException.class, () -> job.executeInternal(null));
         assertTrue(exception.getMessage().contains("testing123"));
 
-        verify(propertiesApiService, times(1)).isToggleOn(MAINTENANCE_MODE);
         verify(coverageDriver, times(1)).verifyCoverage();
         verify(logManager, times(1)).alert(contains("could not verify coverage due"), anyList());
     }

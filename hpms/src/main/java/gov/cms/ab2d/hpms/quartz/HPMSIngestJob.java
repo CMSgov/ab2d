@@ -1,7 +1,7 @@
 package gov.cms.ab2d.hpms.quartz;
 
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.service.FeatureEngagement;
-import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.hpms.service.AttestationUpdaterService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +16,7 @@ import static gov.cms.ab2d.common.util.PropertyConstants.HPMS_INGESTION_ENGAGEME
 public class HPMSIngestJob extends QuartzJobBean {
 
     private final AttestationUpdaterService aus;
-    private final PropertiesAPIService propertiesApiService;
+    private final PropertiesService propertiesService;
 
     @SuppressWarnings("NullableProblems")
     @Override
@@ -29,6 +29,6 @@ public class HPMSIngestJob extends QuartzJobBean {
     }
 
     public FeatureEngagement getEngagement() {
-        return FeatureEngagement.fromString(propertiesApiService.getProperty(HPMS_INGESTION_ENGAGEMENT));
+        return FeatureEngagement.fromString(propertiesService.getProperty(HPMS_INGESTION_ENGAGEMENT, "engaged"));
     }
 }

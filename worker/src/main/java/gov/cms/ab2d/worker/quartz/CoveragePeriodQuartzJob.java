@@ -2,7 +2,7 @@ package gov.cms.ab2d.worker.quartz;
 
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
-import gov.cms.ab2d.properties.service.PropertiesAPIService;
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import java.time.DayOfWeek;
 import java.time.OffsetDateTime;
@@ -47,18 +47,18 @@ import static gov.cms.ab2d.eventclient.events.SlackEvents.COVERAGE_UPDATES_FAILE
 @DisallowConcurrentExecution
 public class CoveragePeriodQuartzJob extends QuartzJobBean {
     private final CoverageDriver driver;
-    private final PropertiesAPIService propertiesApiService;
+    private final PropertiesService propertiesService;
     private final SQSEventClient logManager;
     @Override
     protected void executeInternal(JobExecutionContext jobExecutionContext) throws JobExecutionException {
 
         log.info("running coverage period quartz job by first looking for new coverage periods and then queueing new" +
                 " and stale coverage periods");
-        boolean override = Boolean.parseBoolean(propertiesApiService.getProperty(COVERAGE_SEARCH_OVERRIDE));
+        boolean override = Boolean.parseBoolean(propertiesService.getProperty(COVERAGE_SEARCH_OVERRIDE, "false"));
 
         try {
 
-            String discoveryEngagement = propertiesApiService.getProperty(COVERAGE_SEARCH_DISCOVERY);
+            String discoveryEngagement = propertiesService.getProperty(COVERAGE_SEARCH_DISCOVERY, FeatureEngagement.IN_GEAR.getSerialValue());
             FeatureEngagement disvoeryState = FeatureEngagement.fromString(discoveryEngagement);
 
             if (disvoeryState == FeatureEngagement.IN_GEAR) {
@@ -66,7 +66,7 @@ public class CoveragePeriodQuartzJob extends QuartzJobBean {
                 driver.discoverCoveragePeriods();
             }
 
-            String queueEngagement = propertiesApiService.getProperty(COVERAGE_SEARCH_QUEUEING);
+            String queueEngagement = propertiesService.getProperty(COVERAGE_SEARCH_QUEUEING, FeatureEngagement.IN_GEAR.getSerialValue());
             FeatureEngagement queueState = FeatureEngagement.fromString(queueEngagement);
 
             if (queueState == FeatureEngagement.IN_GEAR) {
@@ -90,7 +90,7 @@ public class CoveragePeriodQuartzJob extends QuartzJobBean {
             // override forces reload for all enabled contracts for last three months.
             // We don't want to be doing that over and over again.
             if (override) {
-                propertiesApiService.updateProperty(COVERAGE_SEARCH_OVERRIDE, "false");
+                propertiesService.updateProperty(COVERAGE_SEARCH_OVERRIDE, "false");
             }
         }
     }

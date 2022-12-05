@@ -19,8 +19,6 @@ import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.service.InvalidJobAccessException;
 import gov.cms.ab2d.job.service.InvalidJobStateTransition;
 import gov.cms.ab2d.job.service.JobOutputMissingException;
-import gov.cms.ab2d.properties.service.InvalidPropertiesException;
-import gov.cms.ab2d.properties.service.ResourceNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -69,7 +67,6 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
             RESPONSE_MAP = new HashMap<>();
             RESPONSE_MAP.put(InvalidClientInputException.class, HttpStatus.BAD_REQUEST);
             RESPONSE_MAP.put(InvalidJobStateTransition.class, HttpStatus.BAD_REQUEST);
-            RESPONSE_MAP.put(InvalidPropertiesException.class, HttpStatus.BAD_REQUEST);
             RESPONSE_MAP.put(MissingTokenException.class, HttpStatus.UNAUTHORIZED);
             RESPONSE_MAP.put(InvalidAuthHeaderException.class, HttpStatus.UNAUTHORIZED);
             RESPONSE_MAP.put(BadJWTTokenException.class, HttpStatus.FORBIDDEN);
@@ -78,7 +75,6 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
             RESPONSE_MAP.put(JwtVerificationException.class, HttpStatus.FORBIDDEN);
             RESPONSE_MAP.put(InvalidContractException.class, HttpStatus.FORBIDDEN);
             RESPONSE_MAP.put(InvalidJobAccessException.class, HttpStatus.FORBIDDEN);
-            RESPONSE_MAP.put(ResourceNotFoundException.class, HttpStatus.NOT_FOUND);
             RESPONSE_MAP.put(gov.cms.ab2d.common.service.ResourceNotFoundException.class, HttpStatus.NOT_FOUND);
             RESPONSE_MAP.put(TooManyRequestsException.class, HttpStatus.TOO_MANY_REQUESTS);
             RESPONSE_MAP.put(InMaintenanceModeException.class, HttpStatus.SERVICE_UNAVAILABLE);
@@ -111,9 +107,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler({InvalidClientInputException.class,
             InvalidJobStateTransition.class,
-            InvalidPropertiesException.class,
-            JobProcessingException.class,
-            ResourceNotFoundException.class
+            JobProcessingException.class
     })
     public ResponseEntity<JsonNode> assertionException(final Exception e, HttpServletRequest request) throws IOException {
         return generateFHIRError(e, request);

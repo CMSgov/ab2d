@@ -1,9 +1,9 @@
 package gov.cms.ab2d.api.controller;
 
 import gov.cms.ab2d.api.SpringBootApp;
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
-import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import org.hamcrest.core.Is;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.MethodOrderer;
@@ -41,17 +41,17 @@ public class MaintenanceModeAPITests {
     private MockMvc mockMvc;
 
     @Autowired
-    private PropertiesAPIService propertiesApiService;
+    private PropertiesService propertiesService;
 
     @AfterEach
     void tearDown() {
-        propertiesApiService.updateProperty(MAINTENANCE_MODE, "false");
+        propertiesService.updateProperty(MAINTENANCE_MODE, "false");
     }
 
     @Test
     @Order(1)
     public void testMaintenanceModeOff() throws Exception {
-        propertiesApiService.updateProperty(MAINTENANCE_MODE, "false");
+        propertiesService.updateProperty(MAINTENANCE_MODE, "false");
         this.mockMvc.perform(get(STATUS_ENDPOINT)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(200))
@@ -61,7 +61,7 @@ public class MaintenanceModeAPITests {
     @Test
     @Order(2)
     public void testMaintenanceModeOn() throws Exception {
-        propertiesApiService.updateProperty(MAINTENANCE_MODE, "true");
+        propertiesService.updateProperty(MAINTENANCE_MODE, "true");
 
         this.mockMvc.perform(get(STATUS_ENDPOINT)
                 .contentType(MediaType.APPLICATION_JSON))

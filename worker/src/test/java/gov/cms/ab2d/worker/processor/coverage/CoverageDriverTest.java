@@ -11,9 +11,9 @@ import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.job.repository.JobRepository;
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.common.service.PdpClientService;
-import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.common.util.DateUtil;
@@ -30,6 +30,7 @@ import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import gov.cms.ab2d.fhir.IdentifierUtils;
 import gov.cms.ab2d.job.service.JobCleanup;
+import gov.cms.ab2d.worker.PropertyServiceStub;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import java.time.DayOfWeek;
@@ -119,8 +120,7 @@ class CoverageDriverTest extends JobCleanup {
     @Autowired
     private PdpClientService pdpClientService;
 
-    @Autowired
-    private PropertiesAPIService propertiesApiService;
+    private PropertiesService propertiesService = new PropertyServiceStub();
 
     @Autowired
     private DataSetup dataSetup;
@@ -193,7 +193,7 @@ class CoverageDriverTest extends JobCleanup {
         taskExecutor.initialize();
 
         processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS, contractWorkerClient);
-        driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesApiService, processor, searchLock, contractToContractCoverageMapping);
+        driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesService, processor, searchLock, contractToContractCoverageMapping);
     }
 
     @AfterEach
@@ -204,14 +204,14 @@ class CoverageDriverTest extends JobCleanup {
         coverageDataSetup.cleanup();
         dataSetup.cleanup();
 
-        propertiesApiService.updateProperty(WORKER_ENGAGEMENT, IN_GEAR.getSerialValue());
-        propertiesApiService.updateProperty(COVERAGE_SEARCH_OVERRIDE, "false");
+        propertiesService.updateProperty(WORKER_ENGAGEMENT, IN_GEAR.getSerialValue());
+        propertiesService.updateProperty(COVERAGE_SEARCH_OVERRIDE, "false");
     }
 
     private void addPropertiesTableValues() {
-        propertiesApiService.updateProperty(WORKER_ENGAGEMENT, FeatureEngagement.NEUTRAL.getSerialValue());
-        propertiesApiService.updateProperty(COVERAGE_SEARCH_UPDATE_MONTHS, "" + PAST_MONTHS);
-        propertiesApiService.updateProperty(COVERAGE_SEARCH_STUCK_HOURS, "" + STUCK_HOURS);
+        propertiesService.updateProperty(WORKER_ENGAGEMENT, FeatureEngagement.NEUTRAL.getSerialValue());
+        propertiesService.updateProperty(COVERAGE_SEARCH_UPDATE_MONTHS, "" + PAST_MONTHS);
+        propertiesService.updateProperty(COVERAGE_SEARCH_STUCK_HOURS, "" + STUCK_HOURS);
     }
 
     @DisplayName("Loading coverage periods")
@@ -376,7 +376,7 @@ class CoverageDriverTest extends JobCleanup {
 
         coveragePeriodRepo.deleteAll();
 
-        propertiesApiService.updateProperty(COVERAGE_SEARCH_OVERRIDE, "true");
+        propertiesService.updateProperty(COVERAGE_SEARCH_OVERRIDE, "true");
 
         OffsetDateTime currentDate = OffsetDateTime.now(DateUtil.AB2D_ZONE);
         OffsetDateTime previousSunday = currentDate

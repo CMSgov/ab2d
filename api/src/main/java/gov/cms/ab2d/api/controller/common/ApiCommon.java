@@ -5,6 +5,7 @@ import gov.cms.ab2d.api.controller.TooManyRequestsException;
 import gov.cms.ab2d.api.remote.JobClient;
 import gov.cms.ab2d.common.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.InvalidClientInputException;
 import gov.cms.ab2d.common.service.InvalidContractException;
@@ -14,7 +15,6 @@ import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.dto.StartJobDTO;
-import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import java.time.OffsetDateTime;
 import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
@@ -43,7 +43,7 @@ import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 public class ApiCommon {
     private final SQSEventClient eventLogger;
     private final JobClient jobClient;
-    private final PropertiesAPIService propertiesApiService;
+    private final PropertiesService propertiesService;
     private final PdpClientService pdpClientService;
 
     // Since this is used in an annotation, it can't be derived from the Set, otherwise it will be an error
@@ -54,11 +54,11 @@ public class ApiCommon {
 
     private ContractService contractService;
 
-    public ApiCommon(SQSEventClient eventLogger, JobClient jobClient, PropertiesAPIService propertiesApiService,
+    public ApiCommon(SQSEventClient eventLogger, JobClient jobClient, PropertiesService propertiesService,
                      PdpClientService pdpClientService, ContractService contractService) {
         this.eventLogger = eventLogger;
         this.jobClient = jobClient;
-        this.propertiesApiService = propertiesApiService;
+        this.propertiesService = propertiesService;
         this.pdpClientService = pdpClientService;
         this.contractService = contractService;
     }
@@ -98,7 +98,7 @@ public class ApiCommon {
     }
 
     public void checkIfInMaintenanceMode() {
-        if (propertiesApiService.isToggleOn(PropertyConstants.MAINTENANCE_MODE)) {
+        if (propertiesService.isToggleOn(PropertyConstants.MAINTENANCE_MODE, true)) {
             throw new InMaintenanceModeException("The system is currently in maintenance mode. Please try the request again later.");
         }
     }
@@ -136,7 +136,7 @@ public class ApiCommon {
             throw new InvalidClientInputException(errMsg);
         }
 
-        final boolean zipSupportOn = propertiesApiService.isToggleOn(ZIP_SUPPORT_ON);
+        final boolean zipSupportOn = propertiesService.isToggleOn(ZIP_SUPPORT_ON, false);
         if (!zipSupportOn && ZIPFORMAT.equalsIgnoreCase(outputFormat)) {
             throw new InvalidClientInputException(errMsg);
         }

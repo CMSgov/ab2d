@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.common.dto.ContractDTO;
-import gov.cms.ab2d.properties.service.PropertiesAPIService;
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageJobStatus;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
@@ -12,6 +12,7 @@ import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.worker.PropertyServiceStub;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -72,8 +73,7 @@ class CoverageDriverUnitTest {
     @Mock
     private CoverageProcessor coverageProcessor;
 
-    @Mock
-    private PropertiesAPIService propertiesApiService;
+    private PropertiesService propertiesService = new PropertyServiceStub();
 
     @Mock
     private ContractToContractCoverageMapping mapping;
@@ -153,7 +153,8 @@ class CoverageDriverUnitTest {
 
     @AfterEach
     void after() {
-        reset(coverageService, lockWrapper, propertiesApiService, coverageProcessor);
+        reset(coverageService, lockWrapper, coverageProcessor);
+        ((PropertyServiceStub) propertiesService).reset();
     }
 
     @DisplayName("Paging coverage fails when ")
@@ -300,11 +301,8 @@ class CoverageDriverUnitTest {
     void failureToLockCausesExceptions() {
 
         when(lockWrapper.getCoverageLock()).thenReturn(tryLockFalse);
-        when(propertiesApiService.getProperty(COVERAGE_SEARCH_UPDATE_MONTHS)).thenReturn("3");
-        when(propertiesApiService.getProperty(COVERAGE_SEARCH_STUCK_HOURS)).thenReturn("72");
-        when(propertiesApiService.getProperty(COVERAGE_SEARCH_OVERRIDE)).thenReturn("false");
 
-        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, propertiesApiService, null, lockWrapper,null);
+        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, propertiesService, null, lockWrapper,null);
 
         CoverageDriverException exception = assertThrows(CoverageDriverException.class, driver::discoverCoveragePeriods);
         assertTrue(exception.getMessage().contains("could not retrieve lock"));
@@ -319,16 +317,12 @@ class CoverageDriverUnitTest {
 
         when(lockWrapper.getCoverageLock()).thenReturn(tryLockInterrupt);
 
-        when(propertiesApiService.getProperty(COVERAGE_SEARCH_UPDATE_MONTHS)).thenReturn("3");
-        when(propertiesApiService.getProperty(COVERAGE_SEARCH_STUCK_HOURS)).thenReturn("72");
-        when(propertiesApiService.getProperty(COVERAGE_SEARCH_OVERRIDE)).thenReturn("false");
-
         ContractDTO contract = new ContractDTO("contractNum", null, null, null);
 
         Job job = new Job();
         job.setContractNumber(contract.getContractNumber());
 
-        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, propertiesApiService, null, lockWrapper,null);
+        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, propertiesService, null, lockWrapper,null);
 
         assertThrows(InterruptedException.class, driver::discoverCoveragePeriods);
         assertThrows(InterruptedException.class, driver::queueStaleCoveragePeriods);
@@ -373,20 +367,18 @@ class CoverageDriverUnitTest {
     @DisplayName("When loading a mapping job exit early if conditions not met")
     @Test
     void loadMappingFailsQuietly() {
-
-
         CoverageDriverImpl driver = spy(new CoverageDriverImpl(null, null,
-                coverageService, propertiesApiService, coverageProcessor, lockWrapper,null)
+                coverageService, propertiesService, coverageProcessor, lockWrapper,null)
         );
 
-        doReturn(true).when(propertiesApiService).isToggleOn(MAINTENANCE_MODE);
+        propertiesService.updateProperty(MAINTENANCE_MODE, "true");
         try {
             driver.loadMappingJob();
         } catch (Exception exception) {
             fail("maintenance mode should cause job to fail quietly", exception);
         }
 
-        doReturn(false).when(propertiesApiService).isToggleOn(MAINTENANCE_MODE);
+        propertiesService.updateProperty(MAINTENANCE_MODE, "false");
         doReturn(true).when(coverageProcessor).isProcessorBusy();
         try {
             driver.loadMappingJob();

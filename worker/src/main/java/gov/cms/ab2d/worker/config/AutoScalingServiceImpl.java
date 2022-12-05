@@ -1,10 +1,8 @@
 package gov.cms.ab2d.worker.config;
 
-import gov.cms.ab2d.properties.service.PropertiesAPIService;
-import gov.cms.ab2d.worker.properties.PropertiesChangedEvent;
+import gov.cms.ab2d.common.properties.PropertiesService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
@@ -35,11 +33,11 @@ import static gov.cms.ab2d.worker.config.AutoScalingServiceImpl.Mode.SCALING_UP;
  */
 @Slf4j
 @Service
-public class AutoScalingServiceImpl implements AutoScalingService, ApplicationListener<PropertiesChangedEvent> {
+public class AutoScalingServiceImpl implements AutoScalingService {
 
     private final ThreadPoolTaskExecutor executor;
     private final RoundRobinBlockingQueue eobClaimRequestsQueue;
-    private final PropertiesAPIService propertiesApiService;
+    private final PropertiesService propertiesService;
 
     // Can be modified by changing values in properties table
     // in the shared Postgres database
@@ -58,13 +56,13 @@ public class AutoScalingServiceImpl implements AutoScalingService, ApplicationLi
      */
     public AutoScalingServiceImpl(Executor patientProcessorThreadPool,
                                   RoundRobinBlockingQueue eobClaimRequestsQueue,
-                                  PropertiesAPIService propertiesApiService,
+                                  PropertiesService propertiesService,
                                   @Value("${pcp.core.pool.size}") int corePoolSize,
                                   @Value("${pcp.max.pool.size}") int maxPoolSize,
                                   @Value("${pcp.scaleToMax.time}") int scaleToMaxTime) {
         this.executor = (ThreadPoolTaskExecutor) patientProcessorThreadPool;
         this.eobClaimRequestsQueue = eobClaimRequestsQueue;
-        this.propertiesApiService = propertiesApiService;
+        this.propertiesService = propertiesService;
         this.corePoolSize = corePoolSize;
         this.maxPoolSize = maxPoolSize;
         this.scaleToMaxTime = scaleToMaxTime;
@@ -89,10 +87,11 @@ public class AutoScalingServiceImpl implements AutoScalingService, ApplicationLi
     @Override
     @Scheduled(fixedDelay = 5000)
     public void autoscale() {
+        updateProperties();
 
         // If in maintenance mode immediately scale down because new work won't be processed.
         // If no new work is present immediately scale down.
-        if (propertiesApiService.isToggleOn(MAINTENANCE_MODE) || eobClaimRequestsQueue.isEmpty()) {
+        if (getBooleanProperty(MAINTENANCE_MODE, false) || eobClaimRequestsQueue.isEmpty()) {
             // No busy threads -- no active jobs. We can scale back to minimums immediately;
             // no need to do so gradually.
             scaleBackToMin();
@@ -144,14 +143,36 @@ public class AutoScalingServiceImpl implements AutoScalingService, ApplicationLi
         }
     }
 
-    // An event that originates from the PropertiesChangeDetection class
-    @Override
-    public void onApplicationEvent(PropertiesChangedEvent propertiesChangedEvent) {
-        corePoolSize = Integer.parseInt(propertiesChangedEvent.getPropertiesMap().get(PCP_CORE_POOL_SIZE).toString());
-        maxPoolSize = Integer.parseInt(propertiesChangedEvent.getPropertiesMap().get(PCP_MAX_POOL_SIZE).toString());
-        scaleToMaxTime = Double.parseDouble(propertiesChangedEvent.getPropertiesMap().get(PCP_SCALE_TO_MAX_TIME).toString());
+    public void updateProperties() {
+        corePoolSize = getIntProperty(PCP_CORE_POOL_SIZE, corePoolSize);
+        maxPoolSize = getIntProperty(PCP_MAX_POOL_SIZE, maxPoolSize);
+        scaleToMaxTime = getDoubleProperty(PCP_SCALE_TO_MAX_TIME, scaleToMaxTime);
 
         this.executor.setCorePoolSize(corePoolSize);
+    }
+
+    public int getIntProperty(String property, int defaultVal) {
+        try {
+            return Integer.parseInt(propertiesService.getProperty(property, "" + defaultVal));
+        } catch (Exception ex) {
+            return defaultVal;
+        }
+    }
+
+    public double getDoubleProperty(String property, double defaultVal) {
+        try {
+            return Double.parseDouble(propertiesService.getProperty(property, "2000"));
+        } catch (Exception ex) {
+            return defaultVal;
+        }
+    }
+
+    public boolean getBooleanProperty(String property, boolean defaultVal) {
+        try {
+            return propertiesService.isToggleOn(MAINTENANCE_MODE, defaultVal);
+        } catch (Exception ex) {
+            return defaultVal;
+        }
     }
 
     enum Mode {

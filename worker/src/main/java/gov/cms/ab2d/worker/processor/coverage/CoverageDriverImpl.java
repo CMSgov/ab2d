@@ -3,8 +3,8 @@ package gov.cms.ab2d.worker.processor.coverage;
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.service.PdpClientService;
-import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
@@ -83,13 +83,13 @@ public class CoverageDriverImpl implements CoverageDriver {
     private final CoverageService coverageService;
     private final CoverageProcessor coverageProcessor;
     private final CoverageLockWrapper coverageLockWrapper;
-    private final PropertiesAPIService propertiesApiService;
+    private final PropertiesService propertiesService;
     private final ContractToContractCoverageMapping mapping;
 
     public CoverageDriverImpl(CoverageSearchRepository coverageSearchRepository,
                               PdpClientService pdpClientService,
                               CoverageService coverageService,
-                              PropertiesAPIService propertiesApiService,
+                              PropertiesService propertiesService,
                               CoverageProcessor coverageProcessor,
                               CoverageLockWrapper coverageLockWrapper,
                               ContractToContractCoverageMapping mapping) {
@@ -98,7 +98,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         this.coverageService = coverageService;
         this.coverageProcessor = coverageProcessor;
         this.coverageLockWrapper = coverageLockWrapper;
-        this.propertiesApiService = propertiesApiService;
+        this.propertiesService = propertiesService;
         this.mapping = mapping;
     }
 
@@ -114,9 +114,9 @@ public class CoverageDriverImpl implements CoverageDriver {
      * @return the current meaningful coverage update configuration
      */
     private CoverageUpdateConfig retrieveConfig() {
-        String updateMonths = propertiesApiService.getProperty(COVERAGE_SEARCH_UPDATE_MONTHS);
-        String stuckHours = propertiesApiService.getProperty(COVERAGE_SEARCH_STUCK_HOURS);
-        String override = propertiesApiService.getProperty(COVERAGE_SEARCH_OVERRIDE);
+        String updateMonths = propertiesService.getProperty(COVERAGE_SEARCH_UPDATE_MONTHS, "3");
+        String stuckHours = propertiesService.getProperty(COVERAGE_SEARCH_STUCK_HOURS, "24");
+        String override = propertiesService.getProperty(COVERAGE_SEARCH_OVERRIDE, "false");
 
         return new CoverageUpdateConfig(Integer.parseInt(updateMonths), Integer.parseInt(stuckHours), Boolean.parseBoolean(override));
     }
@@ -352,7 +352,7 @@ public class CoverageDriverImpl implements CoverageDriver {
     @Scheduled(cron = "${coverage.update.load.schedule}")
     public void loadMappingJob() {
 
-        if (propertiesApiService.isToggleOn(MAINTENANCE_MODE)) {
+        if (propertiesService.isToggleOn(MAINTENANCE_MODE, false)) {
             log.info("waiting to execute queued coverage searches because api is in maintenance mode");
             return;
         }
