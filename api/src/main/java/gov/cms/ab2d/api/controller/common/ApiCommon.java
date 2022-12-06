@@ -52,6 +52,7 @@ public class ApiCommon {
     public static final Set<String> ALLOWABLE_OUTPUT_FORMAT_SET = Set.of(ALLOWABLE_OUTPUT_FORMATS.split(","));
     public static final String JOB_CANCELLED_MSG = "Job canceled";
 
+    
     private ContractService contractService;
 
     public ApiCommon(SQSEventClient eventLogger, JobClient jobClient, PropertiesAPIService propertiesApiService,
