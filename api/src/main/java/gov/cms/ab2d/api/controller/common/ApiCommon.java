@@ -98,7 +98,7 @@ public class ApiCommon {
     }
 
     public void checkIfInMaintenanceMode() {
-        if (propertiesService.isToggleOn(PropertyConstants.MAINTENANCE_MODE, true)) {
+        if (propertiesService.isToggleOn(PropertyConstants.MAINTENANCE_MODE, false)) {
             throw new InMaintenanceModeException("The system is currently in maintenance mode. Please try the request again later.");
         }
     }

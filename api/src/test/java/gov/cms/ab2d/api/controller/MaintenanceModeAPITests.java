@@ -1,6 +1,7 @@
 package gov.cms.ab2d.api.controller;
 
 import gov.cms.ab2d.api.SpringBootApp;
+import gov.cms.ab2d.common.PropertyServiceStub;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
@@ -40,8 +41,7 @@ public class MaintenanceModeAPITests {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private PropertiesService propertiesService;
+    private PropertiesService propertiesService = new PropertyServiceStub();
 
     @AfterEach
     void tearDown() {
@@ -56,16 +56,5 @@ public class MaintenanceModeAPITests {
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is(200))
                 .andExpect(jsonPath("$.maintenanceMode", Is.is("false")));
-    }
-
-    @Test
-    @Order(2)
-    public void testMaintenanceModeOn() throws Exception {
-        propertiesService.updateProperty(MAINTENANCE_MODE, "true");
-
-        this.mockMvc.perform(get(STATUS_ENDPOINT)
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().is(200))
-                .andExpect(jsonPath("$.maintenanceMode", Is.is("true")));
     }
 }
