@@ -17,7 +17,7 @@ public class PropertiesServiceImpl implements PropertiesService {
     private PropertiesClient propertiesClient;
     private static final String ERROR_MESSAGE = "Cannot access properties service, using default database value";
 
-    PropertiesServiceImpl(@Value("${property.service.url}") String propertyServiceUrl) {
+    public PropertiesServiceImpl(@Value("${property.service.url}") String propertyServiceUrl) {
         this.propertiesClient = new PropertiesClientImpl(propertyServiceUrl);
     }
 
