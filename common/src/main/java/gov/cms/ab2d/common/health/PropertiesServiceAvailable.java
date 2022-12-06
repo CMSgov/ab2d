@@ -14,7 +14,11 @@ import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
 public class PropertiesServiceAvailable {
     private final PropertiesService propertiesService;
 
-    public boolean isAvailable() {
+    public boolean isAvailable(boolean productionEnv) {
+        if (!productionEnv) {
+            return true;
+        }
+
         String maintMode = propertiesService.getProperty(MAINTENANCE_MODE, "false");
         if (!validBoolean(maintMode)) {
             log.error("Unable to retrieve a valid maintenance value: " + maintMode);

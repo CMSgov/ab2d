@@ -148,9 +148,9 @@ public class BFDHealthCheckTest {
     @Test
     void propertiesHealthy() {
         PropertiesServiceAvailable propertiesServiceAvailable = new PropertiesServiceAvailable(propertiesService);
-        assertFalse(propertiesServiceAvailable.isAvailable());
+        assertFalse(propertiesServiceAvailable.isAvailable(true));
         propertiesServiceAvailable = new PropertiesServiceAvailable(new PropertyServiceStub());
-        assertTrue(propertiesServiceAvailable.isAvailable());
+        assertTrue(propertiesServiceAvailable.isAvailable(true));
     }
 }
 

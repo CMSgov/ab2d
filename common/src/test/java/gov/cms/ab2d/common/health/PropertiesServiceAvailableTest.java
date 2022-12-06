@@ -60,7 +60,8 @@ public class PropertiesServiceAvailableTest {
         assertFalse(propertiesServiceAvailableReal.validBoolean("0"));
         assertFalse(propertiesServiceAvailableReal.validBoolean(""));
         assertFalse(propertiesServiceAvailableReal.validBoolean(null));
-        assertFalse(propertiesServiceAvailableReal.isAvailable());
+        assertFalse(propertiesServiceAvailableReal.isAvailable(true));
+        assertFalse(propertiesServiceAvailableReal.isAvailable(false));
     }
 
     @Test
@@ -93,14 +94,14 @@ public class PropertiesServiceAvailableTest {
     @Test
     void mainMethod() {
         when(mockPropertiesService.getProperty(eq(MAINTENANCE_MODE), anyString())).thenReturn(null);
-        assertFalse(mockPropertiesServiceAvailable.isAvailable());
+        assertFalse(mockPropertiesServiceAvailable.isAvailable(true));
     }
 
     @Test
     void mainMethod2() {
         when(mockPropertiesService.getProperty(eq(MAINTENANCE_MODE), anyString())).thenReturn("false");
         when(mockPropertiesService.createProperty("fake.key", "fake_value")).thenReturn(false);
-        assertFalse(mockPropertiesServiceAvailable.isAvailable());
+        assertFalse(mockPropertiesServiceAvailable.isAvailable(true));
     }
     @Test
     void mainMethod3() {
@@ -108,7 +109,7 @@ public class PropertiesServiceAvailableTest {
         when(mockPropertiesService.createProperty("fake.key", "fake_value")).thenReturn(true);
         when(mockPropertiesService.getProperty(eq("fake.key"), anyString())).thenReturn("fake_value");
         when(mockPropertiesService.updateProperty("fake.key", "fake_value1")).thenReturn(false);
-        assertFalse(mockPropertiesServiceAvailable.isAvailable());
+        assertFalse(mockPropertiesServiceAvailable.isAvailable(false));
     }
     @Test
     void mainMethod4() {
@@ -120,6 +121,6 @@ public class PropertiesServiceAvailableTest {
                 .thenReturn(null);
         when(mockPropertiesService.updateProperty("fake.key", "fake_value1")).thenReturn(true);
         when(mockPropertiesService.deleteProperty("fake.key")).thenReturn(false);
-        assertFalse(mockPropertiesServiceAvailable.isAvailable());
+        assertFalse(mockPropertiesServiceAvailable.isAvailable(true));
     }
 }
