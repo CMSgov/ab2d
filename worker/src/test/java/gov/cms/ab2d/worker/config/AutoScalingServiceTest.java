@@ -11,7 +11,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.Future;
 
-import gov.cms.ab2d.worker.PropertyServiceStub;
+import gov.cms.ab2d.common.PropertyServiceStub;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

@@ -12,7 +12,7 @@ import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.job.model.Job;
-import gov.cms.ab2d.worker.PropertyServiceStub;
+import gov.cms.ab2d.common.PropertyServiceStub;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;

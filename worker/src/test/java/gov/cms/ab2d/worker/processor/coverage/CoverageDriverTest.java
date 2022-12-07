@@ -30,7 +30,7 @@ import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import gov.cms.ab2d.fhir.IdentifierUtils;
 import gov.cms.ab2d.job.service.JobCleanup;
-import gov.cms.ab2d.worker.PropertyServiceStub;
+import gov.cms.ab2d.common.PropertyServiceStub;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import java.time.DayOfWeek;

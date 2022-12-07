@@ -19,36 +19,12 @@ public class PropertiesServiceAvailable {
             return true;
         }
 
-        String maintMode = propertiesService.getProperty(MAINTENANCE_MODE, "false");
+        String maintMode = propertiesService.getProperty(MAINTENANCE_MODE, null);
         if (!validBoolean(maintMode)) {
             log.error("Unable to retrieve a valid maintenance value: " + maintMode);
             return false;
         }
 
-        String fakeKey = "fake.key";
-        String fakeValue = "fake_value";
-
-        // Create a fake key
-        boolean canCreate = createValue(fakeKey, fakeValue);
-        if (!canCreate) {
-            log.error("Cannot create a new property");
-            return false;
-        }
-
-        // Update fake value
-        boolean canUpdate = updateValue(fakeKey, fakeValue + "1");
-        if (!canUpdate) {
-            log.error("Cannot update a property");
-            return false;
-        }
-
-        // Delete property
-        boolean canDelete = deleteValue(fakeKey);
-        if (!canDelete) {
-            log.error("Cannot delete a property");
-            return false;
-        }
-        log.info("Properties Service is Available");
         return true;
     }
 

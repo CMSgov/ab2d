@@ -1,5 +1,6 @@
 package gov.cms.ab2d.common.health;
 
+import gov.cms.ab2d.common.PropertyServiceStub;
 import gov.cms.ab2d.common.SpringBootApp;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.properties.client.PropertyNotFoundException;
@@ -34,6 +35,20 @@ public class PropertiesServiceAvailableTest {
 
     @Mock
     private PropertiesService mockPropertiesService;
+
+    private PropertiesService noDeletePropertiesService = new PropertyServiceStub() {
+        @Override
+        public boolean deleteProperty(String key) {
+            return false;
+        }
+    };
+
+    private PropertiesService noUpdatePropertiesService = new PropertyServiceStub() {
+        @Override
+        public boolean updateProperty(String property, String value) {
+            return false;
+        }
+    };
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
@@ -88,12 +103,25 @@ public class PropertiesServiceAvailableTest {
 
         when(mockPropertiesService.updateProperty("test6", "six")).thenReturn(false);
         assertFalse(mockPropertiesServiceAvailable.updateValue("test6", "six-six"));
+    }
 
+    @Test
+    void testWithMockAgain() {
+        when(mockPropertiesService.deleteProperty("test5")).thenReturn(true);
+        when(mockPropertiesService.getProperty("test5", null)).thenReturn("five");
+        assertFalse(mockPropertiesServiceAvailable.deleteValue("test5"));
+    }
+
+    @Test
+    void testMockException() {
+        when(mockPropertiesService.deleteProperty("test5")).thenReturn(true);
+        when(mockPropertiesService.getProperty("test5", null)).thenThrow(RuntimeException.class);
+        assertTrue(mockPropertiesServiceAvailable.deleteValue("test5"));
     }
 
     @Test
     void mainMethod() {
-        when(mockPropertiesService.getProperty(eq(MAINTENANCE_MODE), anyString())).thenReturn(null);
+        when(mockPropertiesService.getProperty(eq(MAINTENANCE_MODE), anyString())).thenReturn("five");
         assertFalse(mockPropertiesServiceAvailable.isAvailable(true));
     }
 

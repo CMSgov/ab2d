@@ -6,7 +6,7 @@ import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.common.properties.PropertiesService;
-import gov.cms.ab2d.worker.PropertyServiceStub;
+import gov.cms.ab2d.common.PropertyServiceStub;
 import gov.cms.ab2d.worker.SpringBootApp;
 import org.hl7.fhir.dstu3.model.CapabilityStatement;
 import org.hl7.fhir.dstu3.model.Enumerations;

@@ -2,7 +2,7 @@ package gov.cms.ab2d.worker.quartz;
 
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.common.properties.PropertiesService;
-import gov.cms.ab2d.worker.PropertyServiceStub;
+import gov.cms.ab2d.common.PropertyServiceStub;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageVerificationException;
 import java.util.List;
