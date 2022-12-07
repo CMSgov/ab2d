@@ -27,7 +27,7 @@ import static org.mockito.Mockito.when;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @Testcontainers
-public class PropertiesServiceAvailableTest {
+class PropertiesServiceAvailableTest {
     private PropertiesServiceAvailable mockPropertiesServiceAvailable;
 
     @Autowired

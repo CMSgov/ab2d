@@ -23,7 +23,6 @@ public class PropertiesServiceImpl implements PropertiesService {
 
     @Override
     public String getProperty(String property, String defaultValue) {
-        String value;
         try {
             return propertiesClient.getProperty(property).getValue();
         } catch (Exception ex) {
@@ -47,9 +46,7 @@ public class PropertiesServiceImpl implements PropertiesService {
     public List<PropertiesDTO> getAllProperties() {
         List<Property> properties = propertiesClient.getAllProperties();
         if (properties != null && !properties.isEmpty()) {
-            return properties.stream().map(p -> {
-                return new PropertiesDTO(p.getKey(), p.getValue());
-            }).toList();
+            return properties.stream().map(p -> new PropertiesDTO(p.getKey(), p.getValue())).toList();
         } else {
             log.error(ERROR_MESSAGE);
             return new ArrayList<>();

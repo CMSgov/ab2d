@@ -169,7 +169,7 @@ public class AutoScalingServiceImpl implements AutoScalingService {
 
     public boolean getBooleanProperty(String property, boolean defaultVal) {
         try {
-            return propertiesService.isToggleOn(MAINTENANCE_MODE, defaultVal);
+            return propertiesService.isToggleOn(property, defaultVal);
         } catch (Exception ex) {
             return defaultVal;
         }
