@@ -13,7 +13,7 @@ import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.job.service.JobCleanup;
 import gov.cms.ab2d.job.service.JobService;
 import gov.cms.ab2d.common.properties.PropertiesService;
-import gov.cms.ab2d.worker.PropertyServiceStub;
+import gov.cms.ab2d.common.PropertyServiceStub;
 import gov.cms.ab2d.worker.config.JobHandler;
 import java.time.OffsetDateTime;
 import java.util.Random;
