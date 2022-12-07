@@ -60,8 +60,8 @@ public class PropertiesServiceAvailableTest {
         assertFalse(propertiesServiceAvailableReal.validBoolean("0"));
         assertFalse(propertiesServiceAvailableReal.validBoolean(""));
         assertFalse(propertiesServiceAvailableReal.validBoolean(null));
-        assertFalse(propertiesServiceAvailableReal.isAvailable(true));
-        assertFalse(propertiesServiceAvailableReal.isAvailable(false));
+        assertTrue(propertiesServiceAvailableReal.isAvailable(false));
+        assertTrue(propertiesServiceAvailableReal.isAvailable(false));
     }
 
     @Test
@@ -109,7 +109,7 @@ public class PropertiesServiceAvailableTest {
         when(mockPropertiesService.createProperty("fake.key", "fake_value")).thenReturn(true);
         when(mockPropertiesService.getProperty(eq("fake.key"), anyString())).thenReturn("fake_value");
         when(mockPropertiesService.updateProperty("fake.key", "fake_value1")).thenReturn(false);
-        assertFalse(mockPropertiesServiceAvailable.isAvailable(false));
+        assertTrue(mockPropertiesServiceAvailable.isAvailable(false));
     }
     @Test
     void mainMethod4() {
