@@ -1,4 +1,4 @@
-package gov.cms.ab2d.common;
+package gov.cms.ab2d.common.properties;
 
 import gov.cms.ab2d.common.properties.PropertiesDTO;
 import gov.cms.ab2d.common.properties.PropertiesService;

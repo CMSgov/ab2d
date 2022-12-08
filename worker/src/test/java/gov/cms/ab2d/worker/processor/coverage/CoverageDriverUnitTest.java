@@ -12,7 +12,7 @@ import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.job.model.Job;
-import gov.cms.ab2d.common.PropertyServiceStub;
+import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -37,9 +37,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
-import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_OVERRIDE;
-import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_STUCK_HOURS;
-import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_UPDATE_MONTHS;
 import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

@@ -1,6 +1,6 @@
 package gov.cms.ab2d.common.health;
 
-import gov.cms.ab2d.common.PropertyServiceStub;
+import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.common.SpringBootApp;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.properties.client.PropertyNotFoundException;

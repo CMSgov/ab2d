@@ -19,7 +19,7 @@ import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import gov.cms.ab2d.job.model.Job;
-import gov.cms.ab2d.common.PropertyServiceStub;
+import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.util.WorkerDataSetup;

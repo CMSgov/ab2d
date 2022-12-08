@@ -4,7 +4,7 @@ import com.okta.jwt.AccessTokenVerifier;
 import com.okta.jwt.Jwt;
 import com.okta.jwt.JwtVerificationException;
 import com.okta.jwt.impl.DefaultJwt;
-import gov.cms.ab2d.common.PropertyServiceStub;
+import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.job.model.JobOutput;

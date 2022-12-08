@@ -1,7 +1,7 @@
 package gov.cms.ab2d.api.controller;
 
 import gov.cms.ab2d.api.SpringBootApp;
-import gov.cms.ab2d.common.PropertyServiceStub;
+import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
