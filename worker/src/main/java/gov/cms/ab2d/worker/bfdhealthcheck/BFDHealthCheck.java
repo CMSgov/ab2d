@@ -3,7 +3,7 @@ package gov.cms.ab2d.worker.bfdhealthcheck;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
-import gov.cms.ab2d.properties.service.PropertiesAPIService;
+import gov.cms.ab2d.common.properties.PropertiesService;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -22,17 +22,17 @@ import static gov.cms.ab2d.worker.bfdhealthcheck.HealthCheckData.Status;
 class BFDHealthCheck {
 
     private final SQSEventClient logManager;
-    private final PropertiesAPIService propertiesApiService;
+    private final PropertiesService propertiesService;
     private final BFDClient bfdClient;
     private final int consecutiveSuccessesToBringUp;
     private final int consecutiveFailuresToTakeDown;
     private final List<HealthCheckData> healthCheckData = new ArrayList<>();
 
-    BFDHealthCheck(SQSEventClient logManager, PropertiesAPIService propertiesApiService, BFDClient bfdClient,
+    BFDHealthCheck(SQSEventClient logManager, PropertiesService propertiesService, BFDClient bfdClient,
                           @Value("${bfd.health.check.consecutive.successes}") int consecutiveSuccessesToBringUp,
                           @Value("${bfd.health.check.consecutive.failures}") int consecutiveFailuresToTakeDown) {
         this.logManager = logManager;
-        this.propertiesApiService = propertiesApiService;
+        this.propertiesService = propertiesService;
         this.bfdClient = bfdClient;
         this.consecutiveSuccessesToBringUp = consecutiveSuccessesToBringUp;
         this.consecutiveFailuresToTakeDown = consecutiveFailuresToTakeDown;
@@ -86,7 +86,7 @@ class BFDHealthCheck {
         // Slack alert that we are going into maintenance mode
         logManager.alert(MAINT_MODE + " Maintenance Mode status for " + data.getVersion() +
                 " is: " + statusString, Ab2dEnvironment.ALL);
-        propertiesApiService.updateProperty(MAINTENANCE_MODE, statusString);
+        propertiesService.updateProperty(MAINTENANCE_MODE, statusString);
         log.info("Updated the {} property to {}", MAINTENANCE_MODE, statusString);
     }
 

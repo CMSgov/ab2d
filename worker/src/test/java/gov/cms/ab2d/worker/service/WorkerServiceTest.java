@@ -11,7 +11,8 @@ import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.job.service.JobCleanup;
 import gov.cms.ab2d.job.service.JobService;
-import gov.cms.ab2d.properties.service.PropertiesAPIService;
+import gov.cms.ab2d.common.properties.PropertiesService;
+import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.worker.config.JobHandler;
 import java.time.OffsetDateTime;
 import java.util.Random;
@@ -48,7 +49,7 @@ class WorkerServiceTest extends JobCleanup {
     @Autowired private JobRepository jobRepository;
     @Autowired private PdpClientRepository pdpClientRepository;
     @Autowired private JobService jobService;
-    @Autowired private PropertiesAPIService propertiesApiService;
+    private PropertiesService propertiesService = new PropertyServiceStub();
     @Autowired private WorkerServiceImpl workerServiceImpl;
     @Autowired private JobHandler jobHandler;
 
@@ -59,7 +60,7 @@ class WorkerServiceTest extends JobCleanup {
 
     @BeforeEach
     public void init() {
-        workerServiceStub = new WorkerServiceStub(jobService, propertiesApiService);
+        workerServiceStub = new WorkerServiceStub(jobService, propertiesService);
 
         ReflectionTestUtils.setField(jobHandler, "workerService", workerServiceStub);
     }

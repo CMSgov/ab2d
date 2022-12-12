@@ -87,7 +87,7 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
                     sh '''
                         export AB2D_EFS_MOUNT="${AB2D_HOME}"
-                        mvn --settings settings.xml -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD} test -pl common,job,coverage,api,worker,audit,hpms,properties
+                        mvn --settings settings.xml -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD} test -pl common,job,coverage,api,worker,audit,hpms
                     '''
                 }
             }

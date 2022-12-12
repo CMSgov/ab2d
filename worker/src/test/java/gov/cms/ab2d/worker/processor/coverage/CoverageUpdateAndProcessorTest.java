@@ -4,11 +4,11 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.ContractDTO;
 import gov.cms.ab2d.common.dto.PdpClientDTO;
 import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
-import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.coverage.model.CoverageJobStatus;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
@@ -19,6 +19,7 @@ import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.util.WorkerDataSetup;
@@ -103,8 +104,7 @@ class CoverageUpdateAndProcessorTest {
     @Autowired
     private CoverageService coverageService;
 
-    @Autowired
-    private PropertiesAPIService propertiesApiService;
+    private PropertiesService propertiesService = new PropertyServiceStub();
 
     @Autowired
     private WorkerDataSetup dataSetup;
@@ -156,7 +156,7 @@ class CoverageUpdateAndProcessorTest {
         taskExecutor.initialize();
 
         processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS, contractWorkerClient);
-        driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesApiService, processor, searchLock, mapping);
+        driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesService, processor, searchLock, mapping);
     }
 
     @AfterEach
@@ -166,15 +166,15 @@ class CoverageUpdateAndProcessorTest {
         dataSetup.cleanup();
         coverageDataSetup.cleanup();
 
-        originalValues.entrySet().stream().forEach(c -> propertiesApiService.updateProperty(c.getKey(), c.getValue()));
+        originalValues.entrySet().stream().forEach(c -> propertiesService.updateProperty(c.getKey(), c.getValue()));
     }
 
     private void addPropertiesTableValues() {
-        originalValues.put(COVERAGE_SEARCH_UPDATE_MONTHS, propertiesApiService.getProperty(COVERAGE_SEARCH_UPDATE_MONTHS));
-        originalValues.put(COVERAGE_SEARCH_STUCK_HOURS, propertiesApiService.getProperty(COVERAGE_SEARCH_STUCK_HOURS));
+        originalValues.put(COVERAGE_SEARCH_UPDATE_MONTHS, propertiesService.getProperty(COVERAGE_SEARCH_UPDATE_MONTHS, "3"));
+        originalValues.put(COVERAGE_SEARCH_STUCK_HOURS, propertiesService.getProperty(COVERAGE_SEARCH_STUCK_HOURS, "24"));
 
-        propertiesApiService.updateProperty(COVERAGE_SEARCH_UPDATE_MONTHS, "" + PAST_MONTHS);
-        propertiesApiService.updateProperty(COVERAGE_SEARCH_STUCK_HOURS, "" + STUCK_HOURS);
+        propertiesService.updateProperty(COVERAGE_SEARCH_UPDATE_MONTHS, "" + PAST_MONTHS);
+        propertiesService.updateProperty(COVERAGE_SEARCH_STUCK_HOURS, "" + STUCK_HOURS);
     }
 
     @DisplayName("Loading coverage periods")

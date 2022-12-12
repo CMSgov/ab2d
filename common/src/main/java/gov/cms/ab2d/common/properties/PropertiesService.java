@@ -1,20 +1,16 @@
-package gov.cms.ab2d.properties.service;
-
-import gov.cms.ab2d.properties.dto.PropertiesDTO;
+package gov.cms.ab2d.common.properties;
 
 import java.util.List;
 
-/**
- * Defines outside interface to the properties service
- */
-public interface PropertiesAPIService {
+public interface PropertiesService {
     /**
      * Retrieve the value of a property
      *
      * @param property - the property key
+     * @param defaultValue - the default value if it can't be found
      * @return - the property value
      */
-    String getProperty(String property);
+    String getProperty(String property, String defaultValue);
 
     /**
      * Update the value of an existing property
@@ -36,9 +32,10 @@ public interface PropertiesAPIService {
      * Determine if the value of the property is true
      *
      * @param toggleName - the property key
+     * @param defaultValue - the default value if it can't be found
      * @return true if the value is true, false otherwise
      */
-    boolean isToggleOn(String toggleName);
+    boolean isToggleOn(String toggleName, boolean defaultValue);
 
     /**
      * Create a new property

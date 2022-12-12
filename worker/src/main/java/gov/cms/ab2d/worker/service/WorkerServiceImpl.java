@@ -2,7 +2,7 @@ package gov.cms.ab2d.worker.service;
 
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
-import gov.cms.ab2d.properties.service.PropertiesAPIService;
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.worker.processor.JobPreProcessor;
 import gov.cms.ab2d.worker.processor.JobProcessor;
@@ -28,7 +28,7 @@ public class WorkerServiceImpl implements WorkerService {
     private final JobPreProcessor jobPreprocessor;
     private final JobProcessor jobProcessor;
     private final ShutDownService shutDownService;
-    private final PropertiesAPIService propertiesApiService;
+    private final PropertiesService propertiesService;
 
     private final List<String> activeJobs = Collections.synchronizedList(new ArrayList<>());
 
@@ -63,7 +63,7 @@ public class WorkerServiceImpl implements WorkerService {
 
     @Override
     public FeatureEngagement getEngagement() {
-        return FeatureEngagement.fromString(propertiesApiService.getProperty(WORKER_ENGAGEMENT));
+        return FeatureEngagement.fromString(propertiesService.getProperty(WORKER_ENGAGEMENT, FeatureEngagement.IN_GEAR.getSerialValue()));
     }
 
     @PreDestroy

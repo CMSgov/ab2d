@@ -1,4 +1,4 @@
-package gov.cms.ab2d.properties.dto;
+package gov.cms.ab2d.common.properties;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

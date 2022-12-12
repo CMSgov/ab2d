@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
  */
 public enum Environment {
 
-
     LOCAL(Ab2dEnvironment.LOCAL, "local-config.yml", List.of("docker-compose.yml")),
     CI(Ab2dEnvironment.LOCAL, "local-config.yml", List.of("docker-compose.yml", "docker-compose.jenkins.yml")),
     DEV(Ab2dEnvironment.DEV, "dev-config.yml", Collections.emptyList()),
