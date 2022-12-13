@@ -25,7 +25,7 @@ class CoverageCheckPredicatesDisableAlertTest {
     @DisplayName("Coverage periods have no coverage present for S3147 2021 12")
     @Test
     void whenCoveragePeriodsMissingAndContractS3147And2021_12_passCoverageCheck() {
-        ContractDTO contractDTO = new ContractDTO("S3147", "Test",
+        ContractDTO contractDTO = new ContractDTO(null, "S3147", "Test",
                 OffsetDateTime.of(2021, 12, 30, 1, 1, 1, 1, ZoneOffset.UTC)
                         .minus(2, ChronoUnit.YEARS), Contract.ContractType.NORMAL);
         Map<String, List<CoverageCount>> coverageCounts =
@@ -55,7 +55,7 @@ class CoverageCheckPredicatesDisableAlertTest {
     @DisplayName("Coverage ignored")
     @Test
     void whenCoveragePeriodsMissing_log() throws NoSuchMethodException {
-        ContractDTO contractDTO = new ContractDTO("S3147", "Test",
+        ContractDTO contractDTO = new ContractDTO(null, "S3147", "Test",
                 OffsetDateTime.of(2021, 12, 30, 1, 1, 1, 1, ZoneOffset.UTC)
                         .minus(2, ChronoUnit.YEARS), Contract.ContractType.NORMAL);
         CoveragePresentCheck check = new CoveragePresentCheck(null, null, null);

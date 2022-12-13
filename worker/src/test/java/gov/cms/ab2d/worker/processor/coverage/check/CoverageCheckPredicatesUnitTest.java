@@ -69,7 +69,7 @@ public class CoverageCheckPredicatesUnitTest {
 
 
     private ContractDTO getContractDTO() {
-        return new ContractDTO("TEST", null, ATTESTATION_TIME.toOffsetDateTime(), Contract.ContractType.NORMAL);
+        return new ContractDTO(null, "TEST", null, ATTESTATION_TIME.toOffsetDateTime(), Contract.ContractType.NORMAL);
     }
 
     @DisplayName("Coverage periods all present for contract check passes")

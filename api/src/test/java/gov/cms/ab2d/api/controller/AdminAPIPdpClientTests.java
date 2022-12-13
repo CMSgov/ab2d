@@ -6,17 +6,16 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.remote.JobClientMock;
-import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.common.dto.PdpClientDTO;
-import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
-import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.RoleService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.contracts.model.Contract;
+import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.job.dto.StartJobDTO;
 import java.util.List;
 import org.hamcrest.core.Is;
@@ -392,6 +391,6 @@ public class AdminAPIPdpClientTests {
     }
 
     private ContractDTO buildContractDTO() {
-        return new ContractDTO(VALID_CONTRACT_NUMBER, "Test Contract " + VALID_CONTRACT_NUMBER, null, null);
+        return new ContractDTO(null,VALID_CONTRACT_NUMBER, "Test Contract " + VALID_CONTRACT_NUMBER, null, null);
     }
 }

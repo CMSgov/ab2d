@@ -828,7 +828,7 @@ class CoverageDriverTest extends JobCleanup {
         client.setClientId(clientId);
         client.setOrganization(clientId);
         client.setEnabled(true);
-        ContractDTO contractDTO = new ContractDTO(contract.getContractNumber(), contract.getContractName(),
+        ContractDTO contractDTO = new ContractDTO(contract.getId(), contract.getContractNumber(), contract.getContractName(),
                 contract.getAttestedOn(), contract.getContractType());
         client.setContract(contractDTO);
         client.setRole(roleName);
