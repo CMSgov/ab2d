@@ -5,6 +5,7 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.SinceSource;
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.service.InvalidContractException;
@@ -27,7 +28,6 @@ import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.job.service.JobOutputService;
 import gov.cms.ab2d.job.service.JobService;
 import gov.cms.ab2d.job.service.JobServiceImpl;
-import gov.cms.ab2d.properties.service.PropertiesAPIService;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.processor.ContractProcessor;
 import gov.cms.ab2d.worker.processor.JobPreProcessor;
@@ -146,7 +146,7 @@ public class EndToEndBfdTests {
     @Autowired
     private CoverageLockWrapper coverageLockWrapper;
     @Autowired
-    private PropertiesAPIService propertiesApiService;
+    private PropertiesService propertiesService;
     @Autowired
     private PdpClientRepository pdpClientRepository;
     @Autowired
@@ -170,12 +170,12 @@ public class EndToEndBfdTests {
     void setUp() {
 
         /* These properties are set to improve performance of this test */
-        propertiesApiService.updateProperty(PCP_CORE_POOL_SIZE, "20");
-        propertiesApiService.updateProperty(PCP_MAX_POOL_SIZE, "30");
-        propertiesApiService.updateProperty(PCP_SCALE_TO_MAX_TIME, "10");
+        propertiesService.updateProperty(PCP_CORE_POOL_SIZE, "20");
+        propertiesService.updateProperty(PCP_MAX_POOL_SIZE, "30");
+        propertiesService.updateProperty(PCP_SCALE_TO_MAX_TIME, "10");
 
         coverageDriver = new CoverageDriverImpl(coverageSearchRepository, pdpClientService, coverageService,
-                propertiesApiService, coverageProcessor, coverageLockWrapper, contractToContractCoverageMapping);
+                propertiesService, coverageProcessor, coverageLockWrapper, contractToContractCoverageMapping);
 
         // Instantiate the job processors
         jobService = new JobServiceImpl(jobRepository, jobOutputService, logManager, path.getAbsolutePath());

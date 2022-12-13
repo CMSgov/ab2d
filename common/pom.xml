@@ -17,8 +17,8 @@
     <dependencies>
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
-            <artifactId>properties</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <artifactId>ab2d-properties-client</artifactId>
+            <version>${properties-client.version}</version>
         </dependency>
         <dependency>
             <groupId>javax.validation</groupId>

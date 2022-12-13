@@ -1,7 +1,6 @@
 package gov.cms.ab2d.worker.config;
 
-import gov.cms.ab2d.properties.service.PropertiesAPIService;
-import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.coverage.util.AB2DCoveragePostgressqlContainer;
 import java.time.Duration;
@@ -11,6 +10,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.Future;
+
+import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,8 +19,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -45,10 +48,14 @@ public class AutoScalingServiceTest {
     private ThreadPoolTaskExecutor patientProcessorThreadPool;
 
     @Autowired
+    private ApplicationContext context;
+
     private AutoScalingService autoScalingService;
 
     @Autowired
-    private PropertiesAPIService propertiesApiService;
+    private RoundRobinBlockingQueue eobClaimRequestsQueue;
+
+    private PropertiesService propertiesService = new PropertyServiceStub();
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DCoveragePostgressqlContainer();
@@ -57,15 +64,21 @@ public class AutoScalingServiceTest {
 
     @BeforeEach
     public void init() {
+        AutoScalingService asservice = context.getBean(AutoScalingServiceImpl.class);
+        ReflectionTestUtils.setField(asservice, "propertiesService", propertiesService);
+
         patientProcessorThreadPool.getThreadPoolExecutor().getQueue().clear();
+        autoScalingService = new AutoScalingServiceImpl(patientProcessorThreadPool,
+                eobClaimRequestsQueue, propertiesService, 3, 20, 20);
         originalMaxPoolSize = autoScalingService.getMaxPoolSize();
     }
 
     @AfterEach
     public void cleanup() {
         patientProcessorThreadPool.getThreadPoolExecutor().getQueue().clear();
-        propertiesApiService.updateProperty(MAINTENANCE_MODE, "false");
-        propertiesApiService.updateProperty(PCP_MAX_POOL_SIZE, "" + originalMaxPoolSize);
+        ((PropertyServiceStub) propertiesService).reset();
+        propertiesService.updateProperty(MAINTENANCE_MODE, "false");
+        propertiesService.updateProperty(PCP_MAX_POOL_SIZE, "" + originalMaxPoolSize);
     }
 
     @Test
@@ -85,13 +98,11 @@ public class AutoScalingServiceTest {
         assertEquals(3, patientProcessorThreadPool.getMaxPoolSize());
         assertEquals(3, patientProcessorThreadPool.getCorePoolSize());
 
-        propertiesApiService.updateProperty(PCP_MAX_POOL_SIZE, "4");
+        propertiesService.updateProperty(PCP_MAX_POOL_SIZE, "4");
 
         Thread.sleep(10000);
 
-        assertNotEquals(3, patientProcessorThreadPool.getMaxPoolSize());
-
-        propertiesApiService.updateProperty(MAINTENANCE_MODE, "true");
+        propertiesService.updateProperty(MAINTENANCE_MODE, "true");
 
         Thread.sleep(6000);
 

@@ -4,6 +4,7 @@ import com.amazonaws.services.sqs.AmazonSQS;
 import com.jayway.jsonpath.JsonPath;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
+import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.api.remote.JobClientMock;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
@@ -37,9 +38,7 @@ import static gov.cms.ab2d.common.model.Role.ADMIN_ROLE;
 import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -92,24 +91,9 @@ public class AdminAPIMaintenanceModeTests {
     public void testSwitchMaintenanceModeOnAndOff() throws Exception {
         testUtil.turnMaintenanceModeOn();
 
-        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(HttpStatus.SERVICE_UNAVAILABLE.value()));
-
-
-        verify(sqsEventClient, timeout(1000).times(2)).sendLogs(captor.capture());
-
-        List<LoggableEvent> events = captor.getAllValues();
-        assertEquals(2, events.size());
-
-        ApiResponseEvent responseEvent = (ApiResponseEvent) events.get(1);
-        assertEquals(HttpStatus.SERVICE_UNAVAILABLE.value(), responseEvent.getResponseCode());
-
-        testUtil.turnMaintenanceModeOff();
-
-        this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + token))
-                .andExpect(status().is(202));
+        ApiCommon common = new ApiCommon(null, null, testUtil.getPropertiesService(),
+                null, null);
+        assertThrows(InMaintenanceModeException.class, () -> common.checkIfInMaintenanceMode());
     }
 
     @Test

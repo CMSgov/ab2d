@@ -4,11 +4,13 @@ import com.okta.jwt.AccessTokenVerifier;
 import com.okta.jwt.Jwt;
 import com.okta.jwt.JwtVerificationException;
 import com.okta.jwt.impl.DefaultJwt;
-import gov.cms.ab2d.properties.service.PropertiesAPIService;
+import gov.cms.ab2d.common.properties.PropertyServiceStub;
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.job.model.JobOutput;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.Getter;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,8 +43,8 @@ public class TestUtil {
     @Autowired
     private DataSetup dataSetup;
 
-    @Autowired
-    private PropertiesAPIService propertiesApiService;
+    @Getter
+    private PropertiesService propertiesService = new PropertyServiceStub();
 
     @MockBean
     AccessTokenVerifier mockAccessTokenVerifier;
@@ -120,11 +122,11 @@ public class TestUtil {
     }
 
     public void turnMaintenanceModeOff() {
-        propertiesApiService.updateProperty(MAINTENANCE_MODE, "false");
+        propertiesService.updateProperty(MAINTENANCE_MODE, "false");
     }
 
     public void turnMaintenanceModeOn() {
-        propertiesApiService.updateProperty(MAINTENANCE_MODE, "true");
+        propertiesService.updateProperty(MAINTENANCE_MODE, "true");
     }
 
     private String buildTokenStr() {

@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.quartz;
 
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
-import gov.cms.ab2d.properties.service.PropertiesAPIService;
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
 import gov.cms.ab2d.worker.processor.coverage.CoverageVerificationException;
 import java.util.List;
@@ -47,12 +47,12 @@ public class CoverageCheckQuartzJob extends QuartzJobBean {
 
     private final SQSEventClient logManager;
     private final CoverageDriver driver;
-    private final PropertiesAPIService propertiesApiService;
+    private final PropertiesService propertiesService;
 
     @Override
     protected void executeInternal(JobExecutionContext jobExecutionContext) throws JobExecutionException {
 
-        if (propertiesApiService.isToggleOn(MAINTENANCE_MODE)) {
+        if (propertiesService.isToggleOn(MAINTENANCE_MODE, false)) {
             log.info("Skipping enrollment verification because AB2D is already in maintenance mode");
         }
 
