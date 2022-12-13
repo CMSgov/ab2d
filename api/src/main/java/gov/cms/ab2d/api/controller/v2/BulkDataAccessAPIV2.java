@@ -4,7 +4,7 @@ import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.api.remote.JobClient;
 import gov.cms.ab2d.api.util.SwaggerConstants;
 import gov.cms.ab2d.common.feign.ContractFeignClient;
-import gov.cms.ab2d.contracts.model.Contract;
+import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.job.dto.StartJobDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -120,7 +120,7 @@ public class BulkDataAccessAPIV2 {
             @RequestParam(required = false, name = SINCE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
                     OffsetDateTime since) {
 
-        List<Contract> contractList = contractFeignClient.getContracts(null);
+        List<ContractDTO> contractList = contractFeignClient.getContracts(null);
         log.info("Received request to export");
 //        StartJobDTO startJobDTO = apiCommon.checkValidCreateJob(request, null, since, resourceTypes,
 //                outputFormat, R4);

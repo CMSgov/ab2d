@@ -1,7 +1,7 @@
 package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.dto.PdpClientDTO;
-import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;

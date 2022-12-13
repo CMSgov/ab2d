@@ -20,7 +20,7 @@ import org.springframework.retry.annotation.EnableRetry;
         "gov.cms.ab2d.eventclient.clients",
         "gov.cms.ab2d.properties"
 })
-@EntityScan(basePackages = {"gov.cms.ab2d.common.model", "gov.cms.ab2d.job.model", "gov.cms.ab2d.coverage.model", "gov.cms.ab2d.properties.model"})
+@EntityScan(basePackages = {"gov.cms.ab2d.common.model", "gov.cms.ab2d.job.model", "gov.cms.ab2d.coverage.model", "gov.cms.ab2d.properties.model", "gov.cms.ab2d.contracts"})
 @EnableJpaRepositories(basePackages = {"gov.cms.ab2d.common.repository", "gov.cms.ab2d.job.repository",
         "gov.cms.ab2d.coverage.repository", "gov.cms.ab2d.properties.repository"})
 @EnableRetry
