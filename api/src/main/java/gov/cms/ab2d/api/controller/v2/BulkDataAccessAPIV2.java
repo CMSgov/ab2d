@@ -3,8 +3,6 @@ package gov.cms.ab2d.api.controller.v2;
 import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.api.remote.JobClient;
 import gov.cms.ab2d.api.util.SwaggerConstants;
-import gov.cms.ab2d.common.feign.ContractFeignClient;
-import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.job.dto.StartJobDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -17,7 +15,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.OffsetDateTime;
-import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotBlank;
 import lombok.extern.slf4j.Slf4j;
@@ -76,12 +73,9 @@ public class BulkDataAccessAPIV2 {
     private final JobClient jobClient;
     private final ApiCommon apiCommon;
 
-    private final ContractFeignClient contractFeignClient;
-
-    public BulkDataAccessAPIV2(JobClient jobClient, ApiCommon apiCommon, ContractFeignClient contractFeignClient) {
+    public BulkDataAccessAPIV2(JobClient jobClient, ApiCommon apiCommon) {
         this.jobClient = jobClient;
         this.apiCommon = apiCommon;
-        this.contractFeignClient = contractFeignClient;
     }
 
     @Operation(summary = BULK_EXPORT)
@@ -119,15 +113,12 @@ public class BulkDataAccessAPIV2 {
                     String outputFormat,
             @RequestParam(required = false, name = SINCE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
                     OffsetDateTime since) {
-
-        List<ContractDTO> contractList = contractFeignClient.getContracts(null);
         log.info("Received request to export");
-//        StartJobDTO startJobDTO = apiCommon.checkValidCreateJob(request, null, since, resourceTypes,
-//                outputFormat, R4);
-//        String jobGuid = jobClient.createJob(startJobDTO);
-//        apiCommon.logSuccessfulJobCreation(jobGuid);
-//        return apiCommon.returnStatusForJobCreation(jobGuid, API_PREFIX_V2, (String) request.getAttribute(REQUEST_ID), request);
-        return null;
+        StartJobDTO startJobDTO = apiCommon.checkValidCreateJob(request, null, since, resourceTypes,
+                outputFormat, R4);
+        String jobGuid = jobClient.createJob(startJobDTO);
+        apiCommon.logSuccessfulJobCreation(jobGuid);
+        return apiCommon.returnStatusForJobCreation(jobGuid, API_PREFIX_V2, (String) request.getAttribute(REQUEST_ID), request);
     }
 
     @Deprecated
