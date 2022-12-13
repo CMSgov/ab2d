@@ -10,7 +10,7 @@ import org.springframework.context.annotation.PropertySource;
 @SpringBootApplication(scanBasePackages = {"gov.cms.ab2d.common", "gov.cms.ab2d.eventclient.clients", "gov.cms.ab2d.contracts"})
 @PropertySource("classpath:application.common.properties")
 @Import(AB2DSQSMockConfig.class)
-@EntityScan(basePackages = {"gov.cms.ab2d.common.model", "gov.cms.ab2d.job.model", "gov.cms.ab2d.properties.model", "gov.cms.ab2d.contracts"})
+@EntityScan(basePackages = {"gov.cms.ab2d.common.model", "gov.cms.ab2d.properties.model", "gov.cms.ab2d.contracts"})
 public class SpringBootApp {
 
     public static void main(String [] args) {
