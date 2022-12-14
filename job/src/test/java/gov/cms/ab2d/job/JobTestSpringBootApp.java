@@ -13,7 +13,6 @@ import org.springframework.context.annotation.PropertySource;
 @PropertySource("classpath:job-test.properties")
 @Import(AB2DSQSMockConfig.class)
 @EntityScan(basePackages = {"gov.cms.ab2d.common.model", "gov.cms.ab2d.job.model", "gov.cms.ab2d.properties.model", "gov.cms.ab2d.contracts"})
-@EnableFeignClients(clients = {ContractFeignClient.class})
 public class JobTestSpringBootApp {
     public static void main(String [] args) {
         SpringApplication.run(JobTestSpringBootApp.class, args);
