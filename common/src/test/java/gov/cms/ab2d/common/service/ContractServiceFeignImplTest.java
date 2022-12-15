@@ -60,7 +60,7 @@ class ContractServiceFeignImplTest {
     @Test
     void contractGetNumber() {
         ContractDTO contractDTO = new ContractDTO(42L, "NATTE", "Test Contract", OffsetDateTime.now(), Contract.ContractType.NORMAL);
-        when(contractFeignClient.getContractByNumber(any())).thenReturn(List.of(contractDTO));
+        when(contractFeignClient.getContractByNumber(any())).thenReturn(contractDTO);
 
         Optional<Contract> retrieved = contractService.getContractByContractNumber("NATTE");
 

@@ -44,7 +44,7 @@ public class ContractServiceImpl implements ContractService {
 
     public Optional<Contract> getContractByContractNumber(String contractNumber) {
         if (contractServiceEnabled)
-            return Optional.of(dtoToContract(contractFeignClient.getContractByNumber(contractNumber).get(0)));
+            return Optional.of(dtoToContract(contractFeignClient.getContractByNumber(contractNumber)));
 
         return contractRepository.findContractByContractNumber(contractNumber);
     }
