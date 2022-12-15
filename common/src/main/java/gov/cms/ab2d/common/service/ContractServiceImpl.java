@@ -35,7 +35,7 @@ public class ContractServiceImpl implements ContractService {
         // There are about 100 contracts including test contracts so this call has minimal cost.
         // This call is only made once a day as well.
         if (contractServiceEnabled)
-            return contractFeignClient.getContracts(null).stream()
+            return contractFeignClient.getContracts(null).stream().filter(contractDTO -> contractDTO.getAttestedOn() != null)
                     .map(this::dtoToContract).toList();
 
         return contractRepository.findAll()
@@ -71,6 +71,7 @@ public class ContractServiceImpl implements ContractService {
         Contract contract = new Contract(contractDTO.getContractNumber(), contractDTO.getContractName(), null, null, null);
         contract.setAttestedOn(contract.getAttestedOn());
         contract.setContractType(contractDTO.getContractType());
+        contract.setId(contractDTO.getId());
         return contract;
     }
 
