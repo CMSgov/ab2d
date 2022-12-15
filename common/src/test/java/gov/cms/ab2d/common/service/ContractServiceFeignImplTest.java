@@ -54,6 +54,7 @@ class ContractServiceFeignImplTest {
         assertEquals(allContracts.get(0).getContractName(), attestedContracts.get(0).getContractName());
         assertEquals(allContracts.get(0).getContractType(), attestedContracts.get(0).getContractType());
         assertEquals(allContracts.get(0).getId(), attestedContracts.get(0).getId());
+        assertEquals(allContracts.get(0).getAttestedOn(), attestedContracts.get(0).getAttestedOn());
     }
 
     @DisplayName("Get a contract with an appropriate number")
@@ -66,8 +67,15 @@ class ContractServiceFeignImplTest {
 
         assertTrue(retrieved.isPresent());
 
-        assertEquals("Test Contract", retrieved.get().getContractName());
-        assertEquals("NATTE", retrieved.get().getContractNumber());
+        assertEquals(contractDTO.getContractName(), retrieved.get().getContractName());
+        assertEquals(contractDTO.getContractNumber(), retrieved.get().getContractNumber());
+        assertEquals(contractDTO.getContractType(), retrieved.get().getContractType());
+        assertEquals(contractDTO.getId(), retrieved.get().getId());
+        assertEquals(contractDTO.getAttestedOn(), retrieved.get().getAttestedOn());
+
+
+
+
     }
 
     @DisplayName("Get a contract with an appropriate id")
@@ -79,7 +87,10 @@ class ContractServiceFeignImplTest {
         Contract retrieved = contractService.getContractByContractId(42L);
 
 
-        assertEquals("Test Contract", retrieved.getContractName());
-        assertEquals("NATTE", retrieved.getContractNumber());
+        assertEquals(contractDTO.getContractName(), retrieved.getContractName());
+        assertEquals(contractDTO.getContractNumber(), retrieved.getContractNumber());
+        assertEquals(contractDTO.getContractType(), retrieved.getContractType());
+        assertEquals(contractDTO.getId(), retrieved.getId());
+        assertEquals(contractDTO.getAttestedOn(), retrieved.getAttestedOn());
     }
 }
