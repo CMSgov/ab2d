@@ -20,7 +20,6 @@ import javax.validation.constraints.NotBlank;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -68,7 +67,6 @@ import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 @RestController
 @ConditionalOnExpression("${v2.controller.enabled:false}")
 @RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {APPLICATION_JSON})
-@EnableFeignClients
 public class BulkDataAccessAPIV2 {
     private final JobClient jobClient;
     private final ApiCommon apiCommon;
@@ -114,6 +112,7 @@ public class BulkDataAccessAPIV2 {
             @RequestParam(required = false, name = SINCE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
                     OffsetDateTime since) {
         log.info("Received request to export");
+
         StartJobDTO startJobDTO = apiCommon.checkValidCreateJob(request, null, since, resourceTypes,
                 outputFormat, R4);
         String jobGuid = jobClient.createJob(startJobDTO);
