@@ -96,10 +96,10 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 /**
  * This is an end to end test for a Synthea contract which also tests the default _since behavior for the R4 API
- *
+ * <p>
  * It goes through the whole life cycle of several jobs, calculating the new default since depending on if the
  * previous job is successful and had downloaded all its data.
- *
+ * <p>
  * In the db container, it generates coverage data for the contract, pre-processes, then processes each job
  * (except the last one). All the data pulls from BFDs sandbox Synthea data.
  */
@@ -193,13 +193,13 @@ public class EndToEndBfdTests {
     }
 
     /**
-     *  Run a bunch of jobs with different scenarios to test the default _since capabilities. To run the jobs,
-     *  we first need to do some setup:
-     *
-     *  1. Disable all contracts except the one we want to use
-     *  2. Load all the coverage data for that contract
-     *  3. Run the jobs
-     *  4. Clean up files for the jobs if necessary
+     * Run a bunch of jobs with different scenarios to test the default _since capabilities. To run the jobs,
+     * we first need to do some setup:
+     * <p>
+     * 1. Disable all contracts except the one we want to use
+     * 2. Load all the coverage data for that contract
+     * 3. Run the jobs
+     * 4. Clean up files for the jobs if necessary
      */
     @Test
     void runJobs() throws InterruptedException {
@@ -236,8 +236,8 @@ public class EndToEndBfdTests {
     /**
      * Call the service to mark the file as downloaded and delete the file
      *
-     * @param path - the directory all job data is stored under
-     * @param jobUuid - the job ID
+     * @param path     - the directory all job data is stored under
+     * @param jobUuid  - the job ID
      * @param filename - the name of the file (without a path)
      */
     private void downloadFile(String path, String jobUuid, String filename) {
@@ -267,17 +267,17 @@ public class EndToEndBfdTests {
 
     /**
      * Load the coverage data for all enabled contracts. To do this we:
-     *
+     * <p>
      * 1. Discover all the coverage periods for the contracts
      * 2. Queue all the stale coverage periods to searches
      * 3. For each search, start it
      * 4. While the searches are not complete, call monitorMappingJobs which takes the results of the searches and adds
-     *    them to the queue to save. This would be done by a quartz job normally
+     * them to the queue to save. This would be done by a quartz job normally
      * 5. While the searches have not been saved, call insertJobResults which takes the results of the save queue and *
-     *    adds saves the data. This would be done by a quartz job normally
-     *
-     *  These operations are done sequentially and it's fine for a small amount of data. This is not appropriate
-     *  for several or large contracts
+     * adds saves the data. This would be done by a quartz job normally
+     * <p>
+     * These operations are done sequentially and it's fine for a small amount of data. This is not appropriate
+     * for several or large contracts
      *
      * @throws InterruptedException if there is an issue with threads being interrupted
      */

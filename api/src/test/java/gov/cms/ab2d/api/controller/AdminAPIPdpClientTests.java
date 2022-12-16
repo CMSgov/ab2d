@@ -68,7 +68,7 @@ public class AdminAPIPdpClientTests {
     JobClientMock jobClientMock;
 
     @Container
-    private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
+    private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Autowired
     private PdpClientRepository pdpClientRepository;
@@ -84,7 +84,6 @@ public class AdminAPIPdpClientTests {
 
 
     private String token;
-
 
 
     @BeforeEach
@@ -391,6 +390,6 @@ public class AdminAPIPdpClientTests {
     }
 
     private ContractDTO buildContractDTO() {
-        return new ContractDTO(null,VALID_CONTRACT_NUMBER, "Test Contract " + VALID_CONTRACT_NUMBER, null, null);
+        return new ContractDTO(null, VALID_CONTRACT_NUMBER, "Test Contract " + VALID_CONTRACT_NUMBER, null, null);
     }
 }
