@@ -301,7 +301,7 @@ class ContractProcessorUnitTest {
     }
 
     private ContractDTO createContractDTO() {
-        return new ContractDTO(null,  "CONTRACT_NM_00000", "CONTRACT_00000", OffsetDateTime.now().minusDays(10), Contract.ContractType.NORMAL);
+        return new ContractDTO(1000L,  "CONTRACT_NM_00000", "CONTRACT_00000", OffsetDateTime.now().minusDays(10), Contract.ContractType.NORMAL);
     }
 
     private Job createJob(PdpClient pdpClient) {
