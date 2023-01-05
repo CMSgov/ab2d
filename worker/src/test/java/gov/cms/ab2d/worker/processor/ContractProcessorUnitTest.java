@@ -1,8 +1,8 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.aggregator.AggregatorCallable;
-import gov.cms.ab2d.common.dto.ContractDTO;
-import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.contracts.model.ContractDTO;
+import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
@@ -301,7 +301,7 @@ class ContractProcessorUnitTest {
     }
 
     private ContractDTO createContractDTO() {
-        return new ContractDTO("CONTRACT_NM_00000", "CONTRACT_00000", OffsetDateTime.now().minusDays(10), Contract.ContractType.NORMAL);
+        return new ContractDTO(null,  "CONTRACT_NM_00000", "CONTRACT_00000", OffsetDateTime.now().minusDays(10), Contract.ContractType.NORMAL);
     }
 
     private Job createJob(PdpClient pdpClient) {

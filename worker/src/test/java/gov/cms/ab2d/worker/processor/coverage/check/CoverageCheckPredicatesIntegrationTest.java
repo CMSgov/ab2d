@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.processor.coverage.check;
 
-import gov.cms.ab2d.common.dto.ContractDTO;
+import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
@@ -233,8 +233,9 @@ public class CoverageCheckPredicatesIntegrationTest {
 
         assertFalse(stableCheck.test(contract));
 
-        int expectedIssues = attestationMonth.getMonth() == 12 || attestationMonthPlus1.getMonth() == 12
-                || attestationMonthPlus2.getMonth() == 12 ? 1 : 2;
+        boolean test = attestationMonth.getMonth() == 12 || attestationMonthPlus1.getMonth() == 12
+                || attestationMonthPlus2.getMonth() == 12;
+        int expectedIssues = attestationMonth.getMonth() == 12 || attestationMonthPlus1.getMonth() == 12 ? 1 : 2;
 
         assertEquals(expectedIssues, issues.size());
         issues.forEach(issue -> assertTrue(issue.contains("enrollment changed")));

@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.common.dto.ContractDTO;
-import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.contracts.model.ContractDTO;
+import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.model.SinceSource;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.fhir.FhirVersion;
@@ -67,7 +67,7 @@ class JobPreProcessorUnitTest {
 
     @BeforeEach
     void setUp() {
-        contract = new ContractDTO("JPP5678", "JPP5678", null, null);
+        contract = new ContractDTO(null, "JPP5678", "JPP5678", null, null);
         cut = new JobPreProcessorImpl(contractWorkerClient, jobRepository, eventLogger, coverageDriver);
         job = createJob();
     }
@@ -240,7 +240,7 @@ class JobPreProcessorUnitTest {
         newJob.setStatus(JobStatus.SUBMITTED);
         newJob.setCreatedAt(OffsetDateTime.now());
 
-        ContractDTO contract = new ContractDTO("contractNum", null, null, Contract.ContractType.CLASSIC_TEST);
+        ContractDTO contract = new ContractDTO(null, "contractNum", null, null, Contract.ContractType.CLASSIC_TEST);
         newJob.setContractNumber(contract.getContractNumber());
 
         Job oldJob = createJob();
@@ -257,7 +257,7 @@ class JobPreProcessorUnitTest {
         // No longer allow null contracts so things get flagged as first run now.
         assertEquals(SinceSource.FIRST_RUN, newJob.getSinceSource());
 
-        contract = new ContractDTO("contractNum", null, null, Contract.ContractType.SYNTHEA);
+        contract = new ContractDTO(null, "contractNum", null, null, Contract.ContractType.SYNTHEA);
 
         when(jobRepository.findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(anyString(), any(), any())).thenReturn(List.of(oldJob));
 

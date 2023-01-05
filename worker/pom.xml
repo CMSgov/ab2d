@@ -157,6 +157,9 @@
                 <configuration>
                     <executable>true</executable>
                     <classifier>exe</classifier>
+                    <arguments>
+                        <argument>parameters</argument>
+                    </arguments>
                 </configuration>
             </plugin>
             <plugin>

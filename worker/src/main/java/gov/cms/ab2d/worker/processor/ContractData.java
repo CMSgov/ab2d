@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.common.dto.ContractDTO;
+import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.fhir.FhirVersion;
 import java.util.HashMap;
 import java.util.LinkedList;

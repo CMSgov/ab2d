@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.util;
 
-import gov.cms.ab2d.common.dto.ContractDTO;
-import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.contracts.model.ContractDTO;
+import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.Role;
 import gov.cms.ab2d.common.repository.ContractRepository;
@@ -83,7 +83,7 @@ public class WorkerDataSetup {
     }
 
     public ContractDTO setupWorkerContract(String contractNumber, OffsetDateTime attestedOn) {
-        ContractDTO contract = new ContractDTO(contractNumber, "Test ContractWorkerDto " + contractNumber, attestedOn, Contract.ContractType.NORMAL);
+        ContractDTO contract = new ContractDTO(null, contractNumber, "Test ContractWorkerDto " + contractNumber, attestedOn, Contract.ContractType.NORMAL);
 
         queueForCleanup(contract);
         return contract;

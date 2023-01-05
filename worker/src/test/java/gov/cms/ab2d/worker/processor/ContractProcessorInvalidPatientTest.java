@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.dto.ContractDTO;
+import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
@@ -85,7 +85,7 @@ class ContractProcessorInvalidPatientTest {
     @BeforeEach
     void setup() {
         contractWorkerClient = new ContractWorkerClientMock();
-        contract = new ContractDTO(contractId, contractId, OffsetDateTime.now().minusYears(50), null);
+        contract = new ContractDTO(null, contractId, contractId, OffsetDateTime.now().minusYears(50), null);
 
         SearchConfig searchConfig = new SearchConfig(tmpDirFolder.getAbsolutePath(), STREAMING_DIR,
                 FINISHED_DIR, 0, 0, 1, 2);

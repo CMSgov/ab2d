@@ -11,7 +11,7 @@ import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.controller.v1.CapabilityStatementSTU3;
 import gov.cms.ab2d.api.controller.v2.CapabilityStatementR4;
 import gov.cms.ab2d.api.remote.JobClientMock;
-import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;

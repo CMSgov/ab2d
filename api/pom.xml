@@ -104,7 +104,6 @@
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-ui</artifactId>
@@ -131,6 +130,9 @@
                 </executions>
                 <configuration>
                     <executable>true</executable>
+                    <arguments>
+                        <argument>parameters</argument>
+                    </arguments>
                 </configuration>
             </plugin>
 
