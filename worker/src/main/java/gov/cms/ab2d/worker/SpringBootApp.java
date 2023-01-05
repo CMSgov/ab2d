@@ -1,10 +1,12 @@
 package gov.cms.ab2d.worker;
 
+import gov.cms.ab2d.common.feign.ContractFeignClient;
 import gov.cms.ab2d.worker.bfdhealthcheck.BFDHealthCheckQuartzSetup;
 import gov.cms.ab2d.worker.stuckjob.StuckJobQuartzSetup;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -19,12 +21,13 @@ import org.springframework.retry.annotation.EnableRetry;
         "gov.cms.ab2d.audit",
         "gov.cms.ab2d.eventclient.clients"
 })
-@EntityScan(basePackages = {"gov.cms.ab2d.common.model", "gov.cms.ab2d.job.model", "gov.cms.ab2d.coverage.model"})
+@EntityScan(basePackages = {"gov.cms.ab2d.common.model", "gov.cms.ab2d.job.model", "gov.cms.ab2d.coverage.model", "gov.cms.ab2d.properties.model", "gov.cms.ab2d.contracts"})
 @EnableJpaRepositories(basePackages = {"gov.cms.ab2d.common.repository", "gov.cms.ab2d.job.repository",
         "gov.cms.ab2d.coverage.repository"})
 @EnableRetry
 @PropertySource("classpath:application.common.properties")
 @Import({StuckJobQuartzSetup.class, BFDHealthCheckQuartzSetup.class})
+@EnableFeignClients(clients = {ContractFeignClient.class})
 public class SpringBootApp {
     public static void main(String[] args) {
         SpringApplication.run(SpringBootApp.class, args);

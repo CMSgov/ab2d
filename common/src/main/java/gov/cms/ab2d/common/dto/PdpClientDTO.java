@@ -1,8 +1,8 @@
 package gov.cms.ab2d.common.dto;
 
-import lombok.Data;
-
+import gov.cms.ab2d.contracts.model.ContractDTO;
 import javax.validation.constraints.NotNull;
+import lombok.Data;
 
 @Data
 public class PdpClientDTO {

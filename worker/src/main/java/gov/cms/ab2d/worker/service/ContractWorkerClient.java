@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.service;
 
-import gov.cms.ab2d.common.dto.ContractDTO;
-import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.contracts.model.ContractDTO;
+import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.service.ContractService;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;

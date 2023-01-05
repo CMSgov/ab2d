@@ -1,8 +1,8 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
 import com.newrelic.api.agent.Trace;
-import gov.cms.ab2d.common.dto.ContractDTO;
-import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.contracts.model.ContractDTO;
+import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.util.DateUtil;

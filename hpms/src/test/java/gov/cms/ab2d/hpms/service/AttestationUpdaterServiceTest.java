@@ -1,6 +1,6 @@
 package gov.cms.ab2d.hpms.service;
 
-import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;

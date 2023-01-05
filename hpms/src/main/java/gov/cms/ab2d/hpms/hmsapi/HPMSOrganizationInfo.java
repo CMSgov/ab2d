@@ -1,6 +1,6 @@
 package gov.cms.ab2d.hpms.hmsapi;
 
-import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.contracts.model.Contract;
 import lombok.*;
 
 @NoArgsConstructor  // Needed for Jackson
