@@ -31,7 +31,7 @@
         <project.root>${basedir}</project.root>
         <java.version>17</java.version>
         <hapi.version>6.2.2</hapi.version>
-        <mockito.inline.version>4.9.0</mockito.inline.version>
+        <mockito.inline.version>4.11.0</mockito.inline.version>
         <okhttp3.version>4.10.0</okhttp3.version>
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
         <logback-encoder.version>7.2</logback-encoder.version>
