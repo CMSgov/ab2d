@@ -3,13 +3,12 @@ package gov.cms.ab2d.worker.processor.coverage.check;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.service.CoverageService;
+import lombok.extern.slf4j.Slf4j;
+import org.joda.time.LocalDate;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import lombok.extern.slf4j.Slf4j;
-import org.joda.time.LocalDate;
 
 /**
  * Check to make sure that month to month enrollment changes are within acceptable bounds. If enrollment goes from
@@ -43,7 +42,7 @@ public class CoverageStableCheck extends CoverageCheckPredicate {
             CoverageCount nextMonth = coverageCounts.get(idx);
             int change = Math.abs(previousMonth.getBeneficiaryCount() - nextMonth.getBeneficiaryCount());
 
-            if (skipCheck(previousMonth, change)) {
+            if (skipCheck(previousMonth, nextMonth, change)) {
                 continue;
             }
 
@@ -62,14 +61,20 @@ public class CoverageStableCheck extends CoverageCheckPredicate {
     }
 
     //Moved the skip check conditions to a method to make sonar happy
-    private boolean skipCheck(CoverageCount previousMonth, int change) {
+    private boolean skipCheck(CoverageCount previousMonth, CoverageCount nextMonth, int change) {
 
         // Don't check December to January because changes can be 200% or more
+        LocalDate now = LocalDate.now();
         boolean skip = previousMonth.getMonth() == 12;
+
+        // Ignores coverage checks from previous years
+        if (nextMonth.getYear() < now.getYear() && previousMonth.getYear() < now.getYear()) {
+            skip = true;
+        }
 
         // January to February changes can also be significant.
         // Stop sending this notification once February ends.
-        if (LocalDate.now().getMonthOfYear() > 2 && previousMonth.getMonth() == 1) {
+        if (now.getMonthOfYear() > 2 && previousMonth.getMonth() == 1) {
             skip = true;
         }
 
