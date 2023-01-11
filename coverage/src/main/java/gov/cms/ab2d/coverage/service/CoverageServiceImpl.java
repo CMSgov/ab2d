@@ -255,7 +255,7 @@ public class CoverageServiceImpl implements CoverageService {
     @Override
     public List<CoveragePeriod> coveragePeriodNeverSearchedSuccessfully() {
 
-        log.info("attempting to find all never successfully searched coverage periods");
+        log.debug("attempting to find all never successfully searched coverage periods");
 
         List<CoveragePeriod> neverSuccessful = coveragePeriodRepo.findAllByLastSuccessfulJobIsNull();
 
@@ -267,7 +267,7 @@ public class CoverageServiceImpl implements CoverageService {
     @Override
     public List<CoveragePeriod> coveragePeriodNotUpdatedSince(int month, int year, OffsetDateTime lastSuccessful) {
 
-        log.info("Looking for coverage periods in {}/{} not updated since {}", month, year, lastSuccessful);
+        log.debug("Looking for coverage periods in {}/{} not updated since {}", month, year, lastSuccessful);
 
         return coveragePeriodRepo.findAllByMonthAndYearAndLastSuccessfulJobLessThanEqual(month, year, lastSuccessful);
     }
@@ -275,7 +275,7 @@ public class CoverageServiceImpl implements CoverageService {
     @Override
     public List<CoveragePeriod> coveragePeriodStuckJobs(OffsetDateTime startedBefore) {
 
-        log.info("attempting to find all coverage searches that have been in progress for too long");
+        log.debug("attempting to find all coverage searches that have been in progress for too long");
 
         List<CoverageSearchEvent> events = coverageSearchEventRepo
                 .findStuckAtStatus(CoverageJobStatus.IN_PROGRESS.name(), startedBefore);

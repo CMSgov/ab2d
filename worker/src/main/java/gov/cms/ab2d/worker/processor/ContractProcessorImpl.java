@@ -15,6 +15,7 @@ import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ErrorEvent;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobOutput;
+import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
@@ -222,7 +223,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUEST_QUEUED, current.size());
 
         // Do not replace with for each, continue is meant to force patients to wait to be queued
-        while (current.getNextRequest().isPresent()) {
+        while (!contractData.getJob().hasJobBeenCancelled() && current.getNextRequest().isPresent()) {
 
             if (eobClaimRequestsQueue.size(jobUuid) > eobJobPatientQueueMaxSize) {
                 // Wait for queue to empty out some before adding more
@@ -237,6 +238,9 @@ public class ContractProcessorImpl implements ContractProcessor {
             jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUEST_QUEUED, current.size());
 
             processFinishedRequests(contractData);
+        }
+        if (contractData.getJob().hasJobBeenCancelled()) {
+            return;
         }
 
         // Verify that the number of benes requested matches the number expected from the database and fail
@@ -290,11 +294,12 @@ public class ContractProcessorImpl implements ContractProcessor {
 
     private void processFinishedRequests(ContractData contractData) {
         String jobUuid = contractData.getJob().getJobUuid();
-        Job job = jobRepository.findByJobUuid(jobUuid);
+        jobRepository.flush();
+        JobStatus jobStatus = jobRepository.getJobStatusOfJob(jobUuid);
 
-        if (job.hasJobBeenCancelled()) {
-            log.warn("Job [{}] has been cancelled. Attempting to stop processing the job shortly ... ",
-                    job.getJobUuid());
+        if (jobStatus == JobStatus.CANCELLED) {
+            contractData.getJob().setStatus(JobStatus.CANCELLED);
+            log.warn("Job [{}] has been cancelled. Attempting to stop processing the job shortly ... ", jobUuid);
             cancelFuturesInQueue(contractData);
             final String errMsg = "Job was cancelled while it was being processed";
             log.warn("{}", errMsg);
@@ -353,13 +358,26 @@ public class ContractProcessorImpl implements ContractProcessor {
         List<Future<ProgressTrackerUpdate>> eobRequestHandles = contractData.getEobRequestHandles();
 
         // cancel any futures that have not started processing and are waiting in the queue.
-        eobRequestHandles.parallelStream().forEach(future -> future.cancel(false));
+        eobRequestHandles.parallelStream().forEach(future -> future.cancel(true));
 
         //At this point, there may be a few futures that are already in progress.
         //But all the futures that are not yet in progress would be cancelled.
 
         // Cancel the aggregator
-        contractData.getAggregatorHandle().cancel(false);
+        contractData.getAggregatorHandle().cancel(true);
+
+        // Wait until they are done so that the files can be deleted
+        try {
+            while (eobRequestHandles.stream().filter(f -> !f.isDone()).count() > 0) {
+                Thread.sleep(100);
+            }
+            while (!contractData.getAggregatorHandle().isDone()) {
+                Thread.sleep(100);
+            }
+        } catch (Exception ex) {
+            log.error("Problem killing threads");
+        }
+        log.info("All threads cancelled");
     }
 
     /**
@@ -396,6 +414,9 @@ public class ContractProcessorImpl implements ContractProcessor {
     private ProgressTrackerUpdate processFuture(Future<ProgressTrackerUpdate> future, ContractData data) {
         int numBenes = 0;
         try {
+            if (future.isCancelled()) {
+                return new ProgressTrackerUpdate();
+            }
             numBenes = data.getNumberBenes(future);
             return future.get();
         } catch (CancellationException e) {
