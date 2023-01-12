@@ -51,7 +51,7 @@ import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 @Slf4j
 @Tag(name = "Status", description = STATUS_API)
 @RestController
-@ConditionalOnExpression("${v2.controller.enabled:false}")
+@ConditionalOnExpression("${v2.controller.enabled:true}")
 @RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {APPLICATION_JSON})
 @AllArgsConstructor
 public class StatusAPIV2 {
