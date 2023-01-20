@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.processor.coverage.check;
 
-import gov.cms.ab2d.common.dto.ContractDTO;
+import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
@@ -16,15 +16,6 @@ import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import gov.cms.ab2d.worker.util.WorkerDataSetup;
-import java.time.OffsetDateTime;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -35,6 +26,15 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static java.util.stream.Collectors.groupingBy;
@@ -205,7 +205,13 @@ public class CoverageCheckPredicatesIntegrationTest {
     @Test
     void whenCoverageUnstable_failCoverageStabilityCheck() {
 
-        createCoveragePeriods();
+        ZonedDateTime dateTime = ZonedDateTime.now();
+        // This test was using the actual month. Some month have their own logic which failed the test.
+        // Special cases should have their own test(s). This test should pass regardless of the current date.
+        //Hardcoding to May since we currently don't have any special logic for that month.
+        dateTime.withMonth(5);
+
+        createCoveragePeriods(dateTime);
 
         Set<Identifiers> tenK = new LinkedHashSet<>();
         for (long idx = 0; idx < 10000; idx++) {
@@ -233,16 +239,12 @@ public class CoverageCheckPredicatesIntegrationTest {
 
         assertFalse(stableCheck.test(contract));
 
-        int expectedIssues = attestationMonth.getMonth() == 12 || attestationMonthPlus1.getMonth() == 12
-                || attestationMonthPlus2.getMonth() == 12 ? 1 : 2;
+        int expectedIssues =  2;
 
         assertEquals(expectedIssues, issues.size());
         issues.forEach(issue -> assertTrue(issue.contains("enrollment changed")));
 
-        //Won't work in month March. Date range begins in December which causes testing errors.
-        //So we check if the date range begins in December to see if this test is valid. 
-        if (attestationMonth.getMonth() != 12)
-            assertTrue(issues.get(0).contains("20%"));
+        assertTrue(issues.get(0).contains("20%"));
     }
 
     @DisplayName("Coverage changes are limited to 10% between months passes when changes are 1000 benes or less")

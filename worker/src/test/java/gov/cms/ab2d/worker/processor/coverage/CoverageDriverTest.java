@@ -1,9 +1,9 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.dto.ContractDTO;
+import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.common.dto.PdpClientDTO;
-import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
@@ -828,7 +828,7 @@ class CoverageDriverTest extends JobCleanup {
         client.setClientId(clientId);
         client.setOrganization(clientId);
         client.setEnabled(true);
-        ContractDTO contractDTO = new ContractDTO(contract.getContractNumber(), contract.getContractName(),
+        ContractDTO contractDTO = new ContractDTO(contract.getId(), contract.getContractNumber(), contract.getContractName(),
                 contract.getAttestedOn(), contract.getContractType());
         client.setContract(contractDTO);
         client.setRole(roleName);

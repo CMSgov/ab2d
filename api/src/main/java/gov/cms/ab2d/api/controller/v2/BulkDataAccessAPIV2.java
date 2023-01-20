@@ -14,6 +14,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.OffsetDateTime;
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.NotBlank;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -27,9 +30,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.NotBlank;
-import java.time.OffsetDateTime;
 
 import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
 import static gov.cms.ab2d.api.controller.common.ApiText.ASYNC;
@@ -44,7 +44,6 @@ import static gov.cms.ab2d.api.controller.common.ApiText.PREFER;
 import static gov.cms.ab2d.api.controller.common.ApiText.RUNNING_JOBIDS;
 import static gov.cms.ab2d.api.controller.common.ApiText.SINCE;
 import static gov.cms.ab2d.api.controller.common.ApiText.TYPE_PARAM;
-
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_CONTRACT_EXPORT;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT_TYPE;
@@ -112,8 +111,8 @@ public class BulkDataAccessAPIV2 {
                     String outputFormat,
             @RequestParam(required = false, name = SINCE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
                     OffsetDateTime since) {
-
         log.info("Received request to export");
+
         StartJobDTO startJobDTO = apiCommon.checkValidCreateJob(request, null, since, resourceTypes,
                 outputFormat, R4);
         String jobGuid = jobClient.createJob(startJobDTO);

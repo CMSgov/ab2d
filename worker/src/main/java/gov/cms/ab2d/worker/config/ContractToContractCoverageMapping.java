@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.config;
 
-import gov.cms.ab2d.common.dto.ContractDTO;
-import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.contracts.model.ContractDTO;
+import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import javax.annotation.PostConstruct;
 import org.modelmapper.AbstractConverter;

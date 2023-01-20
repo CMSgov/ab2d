@@ -30,8 +30,8 @@
     <properties>
         <project.root>${basedir}</project.root>
         <java.version>17</java.version>
-        <hapi.version>6.2.2</hapi.version>
-        <mockito.inline.version>4.10.0</mockito.inline.version>
+        <hapi.version>6.2.4</hapi.version>
+        <mockito.inline.version>5.0.0</mockito.inline.version>
         <okhttp3.version>4.10.0</okhttp3.version>
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
         <logback-encoder.version>7.2</logback-encoder.version>
@@ -45,12 +45,12 @@
         <maven.assembly.plugin.version>2.3</maven.assembly.plugin.version>
 
         <!-- AB2D lib versions -->
-        <events-client.version>1.11.3</events-client.version>
-        <bfd-lib.version>2.0.3</bfd-lib.version>
-        <fhir-lib.version>1.1.6</fhir-lib.version>
-        <aggregator-lib.version>1.2.6</aggregator-lib.version>
-        <filters-lib.version>1.8</filters-lib.version>
-        <properties-client.version>1.1.4</properties-client.version>
+        <events-client.version>1.11.4</events-client.version>
+        <bfd-lib.version>2.0.4</bfd-lib.version>
+        <fhir-lib.version>1.1.7</fhir-lib.version>
+        <aggregator-lib.version>1.2.7</aggregator-lib.version>
+        <filters-lib.version>1.8.1</filters-lib.version>
+        <properties-client.version>1.1.5</properties-client.version>
     </properties>
 
     <dependencies>
@@ -90,7 +90,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>3.2.1</version>
                 <configuration>
                     <configLocation>${checkstyle.config}</configLocation>
                     <consoleOutput>true</consoleOutput>
@@ -156,7 +156,7 @@
             <plugin>
                 <groupId>org.cyclonedx</groupId>
                 <artifactId>cyclonedx-maven-plugin</artifactId>
-                <version>2.7.3</version>
+                <version>2.7.4</version>
                 <executions>
                     <execution>
                         <phase>package</phase>

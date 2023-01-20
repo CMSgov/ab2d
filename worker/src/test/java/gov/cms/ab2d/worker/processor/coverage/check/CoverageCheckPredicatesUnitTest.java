@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.processor.coverage.check;
 
-import gov.cms.ab2d.common.dto.ContractDTO;
-import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.contracts.model.ContractDTO;
+import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
@@ -69,7 +69,7 @@ public class CoverageCheckPredicatesUnitTest {
 
 
     private ContractDTO getContractDTO() {
-        return new ContractDTO("TEST", null, ATTESTATION_TIME.toOffsetDateTime(), Contract.ContractType.NORMAL);
+        return new ContractDTO(null, "TEST", null, ATTESTATION_TIME.toOffsetDateTime(), Contract.ContractType.NORMAL);
     }
 
     @DisplayName("Coverage periods all present for contract check passes")
@@ -179,26 +179,26 @@ public class CoverageCheckPredicatesUnitTest {
 
         ContractDTO contract = getContractDTO();
 
-        ZonedDateTime nonDecAttestationTime;
-        if (ATTESTATION_TIME.getMonth().getValue() == 12)
-            nonDecAttestationTime = ATTESTATION_TIME.plusMonths(1);
-        else
-            nonDecAttestationTime = ATTESTATION_TIME;
+        ZonedDateTime may = ZonedDateTime.now();
+        may.withMonth(5);
 
+
+        // This test was using the actual month. Some month have their own logic which failed the test.
+        // Special cases should have their own test(s). This test should pass regardless of the current date.
+        //Hardcoding to May since we currently don't have any special logic for that month.
         List<CoverageCount> fakeCounts = List.of(
-                new CoverageCount("TEST", nonDecAttestationTime.plusMonths(0).getYear(),
-                        nonDecAttestationTime.plusMonths(0).getMonthValue(), 1, 1, 10000),
-                new CoverageCount("TEST", nonDecAttestationTime.plusMonths(1).getYear(),
-                        nonDecAttestationTime.plusMonths(1).getMonthValue(), 1, 1, 12000),
-                new CoverageCount("TEST", nonDecAttestationTime.plusMonths(2).getYear(),
-                        nonDecAttestationTime.plusMonths(2).getMonthValue(), 1, 1, 10000)
+                new CoverageCount("TEST", may.getYear(),
+                        may.getMonthValue(), 1, 1, 10000),
+                new CoverageCount("TEST", may.plusMonths(1).getYear(),
+                        may.plusMonths(1).getMonthValue(), 1, 1, 12000),
+                new CoverageCount("TEST", may.plusMonths(2).getYear(),
+                        may.plusMonths(2).getMonthValue(), 1, 1, 10000)
         );
         coverageCounts.put("TEST", fakeCounts);
 
         assertFalse(stableCheck.test(contract));
 
-        int expectedIssues = (nonDecAttestationTime.getMonthValue() == 12 || nonDecAttestationTime.plusMonths(1).getMonthValue() == 12
-                || nonDecAttestationTime.plusMonths(2).getMonthValue() == 12) && nonDecAttestationTime.getMonthValue() != 0 ? 1 : 2;
+        int expectedIssues = 2;
 
         assertEquals(expectedIssues, issues.size());
         issues.forEach(issue -> assertTrue(issue.contains("enrollment changed")));
@@ -390,11 +390,11 @@ public class CoverageCheckPredicatesUnitTest {
 
             ContractDTO contract = getContractDTO();
             List<CoverageCount> fakeCounts = List.of(
-                    new CoverageCount("TEST", 2022,
+                    new CoverageCount("TEST", currentLocalDate.getYear(),
                             1, 1, 1, 500),
-                    new CoverageCount("TEST", 2022,
+                    new CoverageCount("TEST", currentLocalDate.getYear(),
                             2, 1, 2, 32151),
-                    new CoverageCount("TEST", 2022,
+                    new CoverageCount("TEST", currentLocalDate.getYear(),
                             3, 1, 3, 32100)
             );
             Map<String, List<CoverageCount>> coverageCounts = new HashMap<>();
@@ -417,11 +417,41 @@ public class CoverageCheckPredicatesUnitTest {
 
             ContractDTO contract = getContractDTO();
             List<CoverageCount> fakeCounts = List.of(
-                    new CoverageCount("TEST", 2022,
+                    new CoverageCount("TEST", currentLocalDate.getYear(),
                             1, 1, 1, 500),
-                    new CoverageCount("TEST", 2022,
+                    new CoverageCount("TEST", currentLocalDate.getYear(),
                             2, 1, 2, 32151),
-                    new CoverageCount("TEST", 2022,
+                    new CoverageCount("TEST", currentLocalDate.getYear(),
+                            3, 1, 3, 32100)
+            );
+            Map<String, List<CoverageCount>> coverageCounts = new HashMap<>();
+            List<String> issues = new ArrayList<>();
+            coverageCounts.put("TEST", fakeCounts);
+            CoverageStableCheck stableCheck =
+                    new CoverageStableCheck(coverageService, coverageCounts, issues);
+            assertTrue(stableCheck.test(contract));
+            assertTrue(issues.isEmpty());
+        }
+    }
+
+    @DisplayName("Suppress alert for previous years coverage check failure")
+    @Test
+    void whenCoverageFailIgnoreIssuePreviousYear() {
+        LocalDate currentLocalDate = LocalDate.parse(LocalDate.now()
+                .getYear() + "-01-01");
+        //override LocalDate.now() to avoid the test pass/failing depending on current date
+        try (MockedStatic<LocalDate> topDateTimeUtilMock = Mockito.mockStatic(LocalDate.class)) {
+            topDateTimeUtilMock.when(LocalDate::now)
+                    .thenReturn(currentLocalDate);
+
+            ContractDTO contract = getContractDTO();
+            int year = currentLocalDate.getYear() - 1;
+            List<CoverageCount> fakeCounts = List.of(
+                    new CoverageCount("TEST", year,
+                            1, 1, 1, 500),
+                    new CoverageCount("TEST", year,
+                            2, 1, 2, 32151),
+                    new CoverageCount("TEST", year,
                             3, 1, 3, 32100)
             );
             Map<String, List<CoverageCount>> coverageCounts = new HashMap<>();

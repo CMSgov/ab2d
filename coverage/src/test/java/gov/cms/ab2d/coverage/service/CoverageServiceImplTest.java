@@ -1,5 +1,6 @@
 package gov.cms.ab2d.coverage.service;
 
+import gov.cms.ab2d.common.feign.ContractFeignClient;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.model.CoverageDelta;
@@ -49,6 +50,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -76,6 +78,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @EnableJpaRepositories({"gov.cms.ab2d.common.repository", "gov.cms.ab2d.coverage.repository"})
 @Testcontainers
 @TestPropertySource(locations = "/application.coverage.properties")
+@EnableFeignClients(clients = {ContractFeignClient.class})
 class CoverageServiceImplTest {
     private static final int YEAR = 2020;
     private static final int JANUARY = 1;

@@ -4,7 +4,7 @@ import ca.uhn.fhir.context.FhirContext;
 import ca.uhn.fhir.parser.IParser;
 import ca.uhn.fhir.rest.api.EncodingEnum;
 import com.newrelic.api.agent.Token;
-import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.filter.FilterOutByDate;

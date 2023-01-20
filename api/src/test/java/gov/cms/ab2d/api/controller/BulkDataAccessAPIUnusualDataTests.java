@@ -13,7 +13,7 @@ import gov.cms.ab2d.eventclient.events.ErrorEvent;
 import gov.cms.ab2d.eventclient.messages.GeneralSQSMessage;
 import gov.cms.ab2d.eventclient.messages.TraceAndAlertSQSMessage;
 import gov.cms.ab2d.job.dto.StartJobDTO;
-import gov.cms.ab2d.common.model.Contract;
+import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.repository.*;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;

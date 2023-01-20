@@ -1,7 +1,7 @@
 package gov.cms.ab2d.common.service;
 
-import gov.cms.ab2d.common.model.Contract;
 
+import gov.cms.ab2d.contracts.model.Contract;
 import java.util.List;
 import java.util.Optional;
 
