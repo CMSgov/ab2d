@@ -58,7 +58,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.common.util.Constants.OPERATION_OUTCOME;
-import static gov.cms.ab2d.common.util.Constants.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
@@ -169,12 +168,12 @@ class JobServiceTest extends JobCleanup {
 
     @Test
     void createJob() {
-        Job job = createJobAllContracts(ZIPFORMAT);
+        Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
         assertNotNull(job);
         assertNotNull(job.getId());
         assertNotNull(job.getJobUuid());
         assertNotNull(job.getOutputFormat());
-        assertEquals(ZIPFORMAT, job.getOutputFormat());
+        assertEquals(NDJSON_FIRE_CONTENT_TYPE, job.getOutputFormat());
         assertEquals(Integer.valueOf(0), job.getProgress());
         assertEquals(pdpClientRepository.findByClientId(CLIENTID).getOrganization(), job.getOrganization());
         assertEquals(EOB, job.getResourceTypes());
@@ -374,7 +373,7 @@ class JobServiceTest extends JobCleanup {
 
     @Test
     void updateJob() {
-        Job job = createJobAllContracts(ZIPFORMAT);
+        Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime localDateTime = OffsetDateTime.now();
         job.setProgress(100);
@@ -408,7 +407,7 @@ class JobServiceTest extends JobCleanup {
         job.setJobOutputs(output);
 
         Job updatedJob = jobService.updateJob(job);
-        assertEquals(ZIPFORMAT, updatedJob.getOutputFormat());
+        assertEquals(NDJSON_FIRE_CONTENT_TYPE, updatedJob.getOutputFormat());
         assertEquals(Integer.valueOf(100), updatedJob.getProgress());
         assertEquals(now, updatedJob.getLastPollTime());
         assertEquals(JobStatus.IN_PROGRESS, updatedJob.getStatus());

@@ -1,7 +1,5 @@
 package gov.cms.ab2d.api.util;
 
-import static gov.cms.ab2d.common.util.Constants.ZIPFORMAT;
-
 public final class SwaggerConstants {
     public static final String MAIN = "This API Provides Part A (Hospital Insurance) & B " +
             "(Medical Insurance) claim data to Part D (Prescription Drug Benefit) sponsors. Consistent with " +
@@ -20,11 +18,10 @@ public final class SwaggerConstants {
 
     public static final String BULK_PREFER = "Value must be respond-async";
 
-    public static final String BULK_ACCEPT = "Value must be application/fhir+json or " + ZIPFORMAT;
+    public static final String BULK_ACCEPT = "Value must be application/fhir+json";
 
     public static final String BULK_OUTPUT_FORMAT = "The format for the " +
-            "requested bulk data files to be generated. Currently, only application/fhir+json and " + ZIPFORMAT +
-            " are supported.";
+            "requested bulk data files to be generated. Currently, only application/fhir+json is supported.";
 
     public static final String BULK_CONTRACT_EXPORT = "Initiate Part A & B bulk claim export job for a given contract number, DEPRECATED";
     public static final String BULK_CANCEL = "Cancel a pending or in progress export job";
