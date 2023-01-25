@@ -22,6 +22,9 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     @Query("update Job j set j.status = gov.cms.ab2d.job.model.JobStatus.CANCELLED where j.jobUuid = :jobUuid")
     void cancelJobByJobUuid(@Param("jobUuid") String jobUuid);
 
+    @Query("select j.status from Job j where j.jobUuid = :jobUuid")
+    JobStatus getJobStatusOfJob(String jobUuid);
+
     Job findByJobUuid(String jobUuid);
 
     @Query("select j from Job j where j.organization = :organization and (j.status = 'IN_PROGRESS' or j.status = 'SUBMITTED')")
