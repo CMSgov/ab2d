@@ -82,12 +82,14 @@ public class JobServiceImpl implements JobService {
     public void cancelJob(String jobUuid, String organization) {
         Job job = getAuthorizedJobByJobUuid(jobUuid, organization);
 
+        log.info("Cancel job in database: {}", jobUuid);
         if (!job.getStatus().isCancellable()) {
             log.error("Job had a status of {} so it was not able to be cancelled", job.getStatus());
             throw new InvalidJobStateTransition("Job has a status of " + job.getStatus() + ", so it cannot be cancelled");
         }
         eventLogger.sendLogs(job.buildJobStatusChangeEvent(JobStatus.CANCELLED, "Job Cancelled"));
         jobRepository.cancelJobByJobUuid(jobUuid);
+        jobRepository.flush();
     }
 
     public Job getAuthorizedJobByJobUuid(String jobUuid, String organization) {

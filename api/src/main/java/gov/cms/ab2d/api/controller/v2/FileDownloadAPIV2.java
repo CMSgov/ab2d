@@ -44,7 +44,7 @@ import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 @Slf4j
 @Tag(name = "Download", description = BULK_DNLD_DSC)
 @RestController
-@ConditionalOnExpression("${v2.controller.enabled:false}")
+@ConditionalOnExpression("${v2.controller.enabled:true}")
 @RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {APPLICATION_JSON, NDJSON_FIRE_CONTENT_TYPE})
 public class FileDownloadAPIV2 {
     private FileDownloadCommon fileDownloadCommon;

@@ -34,6 +34,7 @@ import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_CALL_FAILURE;
 import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_COMPLETED;
 import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_FAILURE;
 import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_QUEUE_MISMATCH;
+import static gov.cms.ab2d.job.model.JobStatus.CANCELLED;
 import static gov.cms.ab2d.job.model.JobStatus.FAILED;
 import static gov.cms.ab2d.job.model.JobStatus.SUCCESSFUL;
 
@@ -86,7 +87,8 @@ public class JobProcessorImpl implements JobProcessor {
             processJob(job, outputDirPath);
 
         } catch (JobCancelledException e) {
-            log.warn("Job: [{}] CANCELLED", jobUuid);
+            job.setStatus(CANCELLED);
+            log.info("Job: [{}] CANCELLED", jobUuid);
 
             if (outputDirPath != null) {
                 log.info("Deleting output directory : {} ", outputDirPath.toAbsolutePath());
@@ -255,35 +257,39 @@ public class JobProcessorImpl implements JobProcessor {
     }
 
     /**
-     * Delete directory with all the ndjson files or zip files. If the files are directories or symbolic links, write
+     * Delete directory with all the ndjson files. If the files are directories or symbolic links, write
      * error, but continue. If it's a regular file, delete it, then delete the directory. If the directory is not
-     * empty, throws an exception (if it has files other than ndjson or zip in it)
+     * empty, throws an exception (if it has files other than ndjson)
      *
      * @param outputDirPath - the directory to delete
      */
     private void deleteExistingDirectory(Path outputDirPath, Job job) {
-        final File[] files = outputDirPath.toFile().listFiles(getFilenameFilter());
+        final File[] files = outputDirPath.toFile().listFiles();
 
         assert files != null;
+        // First find all the subdirectories and go down them recursively
         for (File file : files) {
-            final Path filePath = file.toPath();
-            if (file.isDirectory() || Files.isSymbolicLink(filePath)) {
-                var errMsg = "File is not a regular file";
-                log.error("{} - isDirectory: {}", errMsg, file.isDirectory());
-                continue;
+            if (file.isDirectory()) {
+                deleteExistingDirectory(Path.of(file.getAbsolutePath()), job);
             }
+        }
 
+        // Now find all the matching files in the directory and delete them
+        final File[] matchingFiles = outputDirPath.toFile().listFiles(getFilenameFilter());
+        for (File file : matchingFiles) {
+            final Path filePath = file.toPath();
             if (Files.isRegularFile(filePath)) {
                 eventLogger.sendLogs(job.buildFileEvent(filePath.toFile(), FileEvent.FileStatus.DELETE));
                 doDelete(filePath);
             }
         }
 
+        // Now delete the current directory
         doDelete(outputDirPath);
     }
 
     /**
-     * @return a Filename filter for ndjson and zip files
+     * @return a Filename filter for ndjson
      */
     FilenameFilter getFilenameFilter() {
         return (dir, name) -> {
