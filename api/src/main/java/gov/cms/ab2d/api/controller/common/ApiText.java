@@ -1,7 +1,6 @@
 package gov.cms.ab2d.api.controller.common;
 
 import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
-import static gov.cms.ab2d.common.util.Constants.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
 
@@ -31,7 +30,7 @@ public class ApiText {
     public static final String STATUS_DES = "Returns a status of an export job.";
     public static final String JOB_ID = "A job identifier";
     public static final String FILE_NAME = "A file name";
-    public static final String DNLD_DESC = "Returns the requested file as " + NDJSON_FIRE_CONTENT_TYPE + " or " + ZIPFORMAT;
+    public static final String DNLD_DESC = "Returns the requested file as " + NDJSON_FIRE_CONTENT_TYPE;
     public static final String JOB_NOT_FOUND = "Job not found. " + GENERIC_FHIR_ERR_MSG;
     public static final String JOB_CANCELLED_MSG = "Job canceled";
     public static final String CAP_STMT = "FHIR capability statement";

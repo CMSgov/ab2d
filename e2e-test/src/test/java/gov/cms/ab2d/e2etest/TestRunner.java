@@ -48,7 +48,6 @@ import java.util.*;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
-import static gov.cms.ab2d.common.util.Constants.ZIPFORMAT;
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
 import static gov.cms.ab2d.e2etest.APIClient.PATIENT_EXPORT_PATH;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
@@ -564,22 +563,11 @@ class TestRunner {
     }
 
     @ParameterizedTest
-    @MethodSource("getVersion")
-    @Order(4)
-    void runSystemWideZipExport(FhirVersion version) throws IOException, InterruptedException, JSONException {
-        System.out.println();
-        log.info("Starting test 4 - " + version.toString());
-        HttpResponse<String> exportResponse = apiClient.exportRequest(ZIPFORMAT, null, version);
-        log.info("run system wide zip export {}", exportResponse);
-        assertEquals(400, exportResponse.statusCode());
-    }
-
-    @ParameterizedTest
     @MethodSource("getVersionAndContract")
-    @Order(5)
+    @Order(4)
     void runContractNumberExport(FhirVersion version, String contract) throws IOException, InterruptedException, JSONException {
         System.out.println();
-        log.info("Starting test 5 - " + version.toString());
+        log.info("Starting test 4 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contract, FHIR_TYPE, null, version);
         log.info("run contract number export {}", exportResponse);
         assertEquals(202, exportResponse.statusCode());
@@ -591,22 +579,11 @@ class TestRunner {
     }
 
     @ParameterizedTest
-    @MethodSource("getVersionAndContract")
-    @Order(6)
-    void runContractNumberZipExport(FhirVersion version, String contract) throws IOException, InterruptedException, JSONException {
-        System.out.println();
-        log.info("Starting test 6 - " + version.toString());
-        HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contract, ZIPFORMAT, null, version);
-        log.info("run contract number zip export {}", exportResponse);
-        assertEquals(400, exportResponse.statusCode());
-    }
-
-    @ParameterizedTest
     @MethodSource("getVersion")
-    @Order(7)
+    @Order(5)
     void testDelete(FhirVersion version) throws IOException, InterruptedException {
         System.out.println();
-        log.info("Starting test 7 - " + version.toString());
+        log.info("Starting test 5 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null, version);
 
         assertEquals(202, exportResponse.statusCode());
@@ -620,10 +597,10 @@ class TestRunner {
 
     @ParameterizedTest
     @MethodSource("getVersionAndContract")
-    @Order(8)
+    @Order(6)
     void testClientCannotDownloadOtherClientsJob(FhirVersion version, String contract) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
         System.out.println();
-        log.info("Starting test 8 - " + version.toString());
+        log.info("Starting test 6 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contract, FHIR_TYPE, null, version);
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
@@ -638,10 +615,10 @@ class TestRunner {
 
     @ParameterizedTest
     @MethodSource("getVersion")
-    @Order(9)
+    @Order(7)
     void testClientCannotDeleteOtherClientsJob(FhirVersion version) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
         System.out.println();
-        log.info("Starting test 9 - " + version.toString());
+        log.info("Starting test 7 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null, version);
 
         assertEquals(202, exportResponse.statusCode());
@@ -661,10 +638,10 @@ class TestRunner {
 
     @ParameterizedTest
     @MethodSource("getVersion")
-    @Order(10)
+    @Order(8)
     void testClientCannotCheckStatusOtherClientsJob(FhirVersion version) throws IOException, InterruptedException, JSONException, NoSuchAlgorithmException, KeyManagementException {
         System.out.println();
-        log.info("Starting test 10 - " + version.toString());
+        log.info("Starting test 8 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null, version);
 
         assertEquals(202, exportResponse.statusCode());
@@ -692,10 +669,10 @@ class TestRunner {
 
     @ParameterizedTest
     @MethodSource("getVersion")
-    @Order(11)
+    @Order(9)
     void testClientCannotMakeRequestWithoutToken(FhirVersion version) throws IOException, InterruptedException {
         System.out.println();
-        log.info("Starting test 11 - " + version.toString());
+        log.info("Starting test 9 - " + version.toString());
         HttpRequest exportRequest = HttpRequest.newBuilder()
                 .uri(URI.create(APIClient.buildAB2DAPIUrl(version) + PATIENT_EXPORT_PATH))
                 .timeout(Duration.ofSeconds(30))
@@ -710,10 +687,10 @@ class TestRunner {
 
     @ParameterizedTest
     @MethodSource("getVersion")
-    @Order(12)
+    @Order(10)
     void testClientCannotMakeRequestWithSelfSignedToken(FhirVersion version) throws IOException, InterruptedException, JSONException {
         System.out.println();
-        log.info("Starting test 12 - " + version.toString());
+        log.info("Starting test 10 - " + version.toString());
         String clientSecret = "wefikjweglkhjwelgkjweglkwegwegewg";
         SecretKey sharedSecret = Keys.hmacShaKeyFor(clientSecret.getBytes(StandardCharsets.UTF_8));
         Instant now = Instant.now();
@@ -749,10 +726,10 @@ class TestRunner {
 
     @ParameterizedTest
     @MethodSource("getVersion")
-    @Order(13)
+    @Order(11)
     void testClientCannotMakeRequestWithNullClaims(FhirVersion version) throws IOException, InterruptedException, JSONException {
         System.out.println();
-        log.info("Starting test 13 - " + version.toString());
+        log.info("Starting test 11 - " + version.toString());
         String clientSecret = "wefikjweglkhjwelgkjweglkwegwegewg";
         SecretKey sharedSecret = Keys.hmacShaKeyFor(clientSecret.getBytes(StandardCharsets.UTF_8));
         Instant now = Instant.now();
@@ -781,10 +758,10 @@ class TestRunner {
 
     @ParameterizedTest
     @MethodSource("getVersion")
-    @Order(14)
+    @Order(12)
     void testBadQueryParameterResource(FhirVersion version) throws IOException, InterruptedException {
         System.out.println();
-        log.info("Starting test 14 - " + version.toString());
+        log.info("Starting test 12 - " + version.toString());
         var params = new HashMap<>() {{
             put("_type", "BadParam");
         }};
@@ -796,10 +773,10 @@ class TestRunner {
 
     @ParameterizedTest
     @MethodSource("getVersion")
-    @Order(15)
+    @Order(13)
     void testBadQueryParameterOutputFormat(FhirVersion version) throws IOException, InterruptedException {
         System.out.println();
-        log.info("Starting test 15 - " + version.toString());
+        log.info("Starting test 13 - " + version.toString());
         var params = new HashMap<>() {{
             put("_outputFormat", "BadParam");
         }};
@@ -811,10 +788,10 @@ class TestRunner {
     }
 
     @Test
-    @Order(16)
+    @Order(14)
     void testHealthEndPoint() throws IOException, InterruptedException {
         System.out.println();
-        log.info("Starting test 16");
+        log.info("Starting test 14");
         HttpResponse<String> healthCheckResponse = apiClient.healthCheck();
 
         assertEquals(200, healthCheckResponse.statusCode());
