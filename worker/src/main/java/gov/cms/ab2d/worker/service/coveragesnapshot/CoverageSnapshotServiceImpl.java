@@ -1,9 +1,87 @@
 package gov.cms.ab2d.worker.service.coveragesnapshot;
 
-public class CoverageSnapshotServiceImpl implements CoverageSnapshotService{
+import com.fasterxml.jackson.core.JsonProcessingException;
+import gov.cms.ab2d.common.service.PdpClientService;
+import gov.cms.ab2d.contracts.model.Contract;
+import gov.cms.ab2d.contracts.model.ContractDTO;
+import gov.cms.ab2d.coverage.model.CoverageCount;
+import gov.cms.ab2d.coverage.service.CoverageService;
+import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
+import gov.cms.ab2d.snsclient.clients.SNSClient;
+import gov.cms.ab2d.snsclient.messages.AB2DServices;
+import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
+import gov.cms.ab2d.worker.processor.coverage.check.CoveragePeriodsPresentCheck;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static gov.cms.ab2d.snsclient.messages.Topics.COVERAGE_COUNTS;
+import static java.util.stream.Collectors.groupingBy;
+
+@Service
+@Slf4j
+public class CoverageSnapshotServiceImpl implements CoverageSnapshotService {
+
+    private final PdpClientService pdpClientService;
+    private final CoverageService coverageService;
+    private final ContractToContractCoverageMapping mapping;
+
+    private final SNSClient snsClient;
+
+    public CoverageSnapshotServiceImpl(PdpClientService pdpClientService, CoverageService coverageService, ContractToContractCoverageMapping mapping, SNSClient snsClient, Ab2dEnvironment environment) {
+        this.pdpClientService = pdpClientService;
+        this.coverageService = coverageService;
+        this.mapping = mapping;
+        this.snsClient = snsClient;
+    }
 
     @Override
-    public void sendCoverageCounts(){
+    public void sendCoverageCounts(AB2DServices services) {
+        List<ContractDTO> enabledContracts = pdpClientService.getAllEnabledContracts()
+                .stream()
+                .filter(contract -> !contract.isTestContract())
+                .map(Contract::toDTO)
+                .toList();
+        List<ContractDTO> filteredContracts = enabledContracts.stream()
+                .filter(new CoveragePeriodsPresentCheck(coverageService, null, new ArrayList<>()))
+                .toList();
+        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(filteredContracts.stream()
+                        .map(mapping::map)
+                        .toList())
+                .stream()
+                .collect(groupingBy(CoverageCount::getContractNumber));
+
+        Timestamp time = Timestamp.from(Instant.now());
+
+        List<CoverageCountDTO> coverageCountDTOS = coverageCounts.entrySet()
+                .stream()
+                .map(count -> count.getValue()
+                        .stream()
+                        .map(c -> {
+                            CoverageCountDTO coverageCountDTO = new CoverageCountDTO();
+                            coverageCountDTO.setContractNumber(count.getKey());
+                            coverageCountDTO.setCount(c.getBeneficiaryCount());
+                            coverageCountDTO.setService(services.toString());
+                            coverageCountDTO.setMonth(c.getMonth());
+                            coverageCountDTO.setYear(c.getYear());
+                            coverageCountDTO.setCountedAt(time);
+                            return coverageCountDTO;
+                        })
+                        .collect(Collectors.toList()))
+                .flatMap(List::stream)
+                .toList();
+
+        try {
+            snsClient.sendMessage(COVERAGE_COUNTS.getValue(), coverageCountDTOS);
+        } catch (JsonProcessingException e) {
+            log.error("Sending coverage count snapshot failed, swallowing exception to protect coverage update", e);
+        }
 
     }
 

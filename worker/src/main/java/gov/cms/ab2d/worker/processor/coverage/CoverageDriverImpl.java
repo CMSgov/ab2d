@@ -17,6 +17,7 @@ import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.snsclient.messages.AB2DServices;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.processor.coverage.check.CoverageNoDuplicatesCheck;
 import gov.cms.ab2d.worker.processor.coverage.check.CoveragePeriodsPresentCheck;
@@ -39,6 +40,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
+import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -86,13 +88,16 @@ public class CoverageDriverImpl implements CoverageDriver {
     private final PropertiesService propertiesService;
     private final ContractToContractCoverageMapping mapping;
 
+    private final CoverageSnapshotService coverageSnapshotService;
+
     public CoverageDriverImpl(CoverageSearchRepository coverageSearchRepository,
                               PdpClientService pdpClientService,
                               CoverageService coverageService,
                               PropertiesService propertiesService,
                               CoverageProcessor coverageProcessor,
                               CoverageLockWrapper coverageLockWrapper,
-                              ContractToContractCoverageMapping mapping) {
+                              ContractToContractCoverageMapping mapping,
+                              CoverageSnapshotService coverageSnapshotService) {
         this.coverageSearchRepository = coverageSearchRepository;
         this.pdpClientService = pdpClientService;
         this.coverageService = coverageService;
@@ -100,6 +105,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         this.coverageLockWrapper = coverageLockWrapper;
         this.propertiesService = propertiesService;
         this.mapping = mapping;
+        this.coverageSnapshotService = coverageSnapshotService;
     }
 
 
@@ -126,16 +132,16 @@ public class CoverageDriverImpl implements CoverageDriver {
      * and coverage information that is too old.
      *
      * @throws InterruptedException if is interrupted by a shutdown
-     * @throws CoverageDriverException on failure to acquire lock programmatically
+     * @throws gov.cms.ab2d.worker.processor.coverage.CoverageDriverException on failure to acquire lock programmatically
      */
     @Override
     public void queueStaleCoveragePeriods() throws InterruptedException {
 
         Lock lock = coverageLockWrapper.getCoverageLock();
         boolean locked = false;
+        coverageSnapshotService.sendCoverageCounts(AB2DServices.AB2D);
 
         try {
-
             Set<CoveragePeriod> outOfDateInfo = getCoveragePeriods();
 
             log.info("queueing all stale coverage periods");
@@ -364,6 +370,7 @@ public class CoverageDriverImpl implements CoverageDriver {
 
         Optional<CoverageSearch> search = getNextSearch();
         if (search.isEmpty()) {
+            coverageSnapshotService.sendCoverageCounts(AB2DServices.BFD);
             return;
         }
 

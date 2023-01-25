@@ -46,6 +46,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
+
+import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -133,6 +135,9 @@ class CoverageDriverTest extends JobCleanup {
     @Autowired
     private ContractToContractCoverageMapping contractToContractCoverageMapping;
 
+    @Autowired
+    private CoverageSnapshotService snapshotService;
+
     private Contract contract;
     private Contract contract1;
     private ContractForCoverageDTO contractForCoverageDTO;
@@ -192,7 +197,7 @@ class CoverageDriverTest extends JobCleanup {
         taskExecutor.initialize();
 
         processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS, contractWorkerClient);
-        driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesService, processor, searchLock, contractToContractCoverageMapping);
+        driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesService, processor, searchLock, contractToContractCoverageMapping, snapshotService);
     }
 
     @AfterEach

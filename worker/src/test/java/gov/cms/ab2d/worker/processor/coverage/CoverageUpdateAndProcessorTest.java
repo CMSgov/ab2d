@@ -22,6 +22,7 @@ import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
+import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
 import gov.cms.ab2d.worker.util.WorkerDataSetup;
 import java.time.DayOfWeek;
 import java.time.OffsetDateTime;
@@ -118,6 +119,9 @@ class CoverageUpdateAndProcessorTest {
     @Autowired
     private ContractToContractCoverageMapping mapping;
 
+    @Autowired
+    private CoverageSnapshotService snapshotService;
+
     private Contract contract;
     private CoveragePeriod january;
     private CoveragePeriod february;
@@ -156,7 +160,7 @@ class CoverageUpdateAndProcessorTest {
         taskExecutor.initialize();
 
         processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS, contractWorkerClient);
-        driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesService, processor, searchLock, mapping);
+        driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesService, processor, searchLock, mapping, snapshotService);
     }
 
     @AfterEach

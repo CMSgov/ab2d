@@ -1,6 +1,8 @@
 package gov.cms.ab2d.worker.service.coveragesnapshot;
 
-interface CoverageSnapshotService {
+import gov.cms.ab2d.snsclient.messages.AB2DServices;
 
-    void sendCoverageCounts();
+public interface CoverageSnapshotService {
+
+    void sendCoverageCounts(AB2DServices services);
 }
