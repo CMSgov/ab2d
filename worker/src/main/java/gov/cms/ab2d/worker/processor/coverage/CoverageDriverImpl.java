@@ -138,7 +138,7 @@ public class CoverageDriverImpl implements CoverageDriver {
 
             Set<CoveragePeriod> outOfDateInfo = getCoveragePeriods();
 
-            log.info("queueing all stale coverage periods");
+            log.debug("queueing all stale coverage periods");
 
             /*
              * Guarantee that no other worker node is also trying to start or update queued searches
@@ -156,7 +156,6 @@ public class CoverageDriverImpl implements CoverageDriver {
                     coverageProcessor.queueCoveragePeriod(period, false);
                 }
 
-                log.info("queued all stale coverage periods");
             } else {
                 throw new CoverageDriverException("could not retrieve lock to update stale coverage periods");
             }
@@ -182,7 +181,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      * @return list of coverage periods that need to be updated
      */
     private Set<CoveragePeriod> getCoveragePeriods() {
-        log.info("attempting to find all stale coverage periods");
+        log.debug("attempting to find all stale coverage periods");
 
         // Use a linked hash set to order by discovery
         // Add all new coverage periods that have never been mapped/searched
@@ -209,7 +208,7 @@ public class CoverageDriverImpl implements CoverageDriver {
             locked = lock.tryLock(TEN_MINUTES, TimeUnit.MINUTES);
 
             if (locked) {
-                log.info("discovering all coverage periods that should exist");
+                log.debug("discovering all coverage periods that should exist");
 
                 // Iterate through all attested contracts and look for new
                 // coverage periods for each contract
@@ -219,7 +218,6 @@ public class CoverageDriverImpl implements CoverageDriver {
                     discoverCoveragePeriods(mapping.map(contract));
                 }
 
-                log.info("discovered all coverage periods now exiting");
             } else {
                 throw new CoverageDriverException("could not retrieve lock to discover new coverage periods");
             }
@@ -247,13 +245,13 @@ public class CoverageDriverImpl implements CoverageDriver {
             attestationTime = attestationTime.plusMonths(1);
         }
 
-        log.info("discovered {} coverage periods for contract {}", coveragePeriodsForContracts,
+        log.debug("discovered {} coverage periods for contract {}", coveragePeriodsForContracts,
                 contract.getContractNumber());
     }
 
     private Set<CoveragePeriod> findAndCancelStuckCoverageJobs() {
 
-        log.info("attempting to find all stuck coverage searches and then cancel those stuck coverage searches");
+        log.debug("attempting to find all stuck coverage searches and then cancel those stuck coverage searches");
 
         CoverageUpdateConfig config = retrieveConfig();
 
@@ -288,7 +286,7 @@ public class CoverageDriverImpl implements CoverageDriver {
      */
     private Set<CoveragePeriod> findStaleCoverageInformation() {
 
-        log.info("attempting to find all coverage information that is out of date and reduce down to coverage periods");
+        log.debug("attempting to find all coverage information that is out of date and reduce down to coverage periods");
 
         CoverageUpdateConfig config = retrieveConfig();
 
@@ -305,7 +303,7 @@ public class CoverageDriverImpl implements CoverageDriver {
                     .truncatedTo(ChronoUnit.DAYS);
         }
 
-        log.info("Last Sunday computed as {}", lastSunday);
+        log.debug("Last Sunday computed as {}", lastSunday);
 
         /* Check coverage periods up to {@link CoverageUpdateConfig#getPastMonthsToUpdate()} */
         do {
@@ -328,9 +326,9 @@ public class CoverageDriverImpl implements CoverageDriver {
                 notRunning.forEach(c -> log.info("    Contract: {}, id: {}, last successful {}", c.getContractNumber(), c.getId(), c.getLastSuccessfulJob()));
                 stalePeriods.addAll(notRunning);
             } else {
-                log.info("Looking for periods not updated for {}/{} since {}", month, year, lastSunday);
+                log.debug("Looking for periods not updated for {}/{} since {}", month, year, lastSunday);
                 List<CoveragePeriod> found = coverageService.coveragePeriodNotUpdatedSince(month, year, lastSunday);
-                found.forEach(c -> log.info("    Contract: {}, id: {}, last successful {}", c.getContractNumber(), c.getId(), c.getLastSuccessfulJob()));
+                found.forEach(c -> log.debug("    Contract: {}, id: {}, last successful {}", c.getContractNumber(), c.getId(), c.getLastSuccessfulJob()));
                 stalePeriods.addAll(found);
             }
 
@@ -471,7 +469,7 @@ public class CoverageDriverImpl implements CoverageDriver {
             // If so then create those coverage periods.
             discoverCoveragePeriods(mapping.map(contract));
 
-            log.info("queueing never searched coverage metadata periods for {}", contractNumber);
+            log.debug("queueing never searched coverage metadata periods for {}", contractNumber);
             /*
              * If any relevant coverage period has never been pulled from BFD successfully then automatically fail the
              * search
@@ -541,7 +539,7 @@ public class CoverageDriverImpl implements CoverageDriver {
             startDateTime = startDateTime.plusMonths(1);
         }
 
-        log.info("counting number of beneficiaries for {} coverage periods for job {}",
+        log.debug("counting number of beneficiaries for {} coverage periods for job {}",
                 periodsToReport.size(), job.getJobUuid());
 
         return coverageService.countBeneficiariesByCoveragePeriod(periodsToReport);
@@ -560,8 +558,6 @@ public class CoverageDriverImpl implements CoverageDriver {
         if (contract == null) {
             throw new CoverageDriverException("cannot retrieve metadata for job missing contract");
         }
-
-        log.info("attempting to build first page of results for job {}", job.getJobUuid());
 
         ZonedDateTime startDateTime = getStartDateTime(contract);
 

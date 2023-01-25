@@ -26,7 +26,6 @@ public final class CoverageUtils {
         // Force first coverage period to be after
         // January 1st 2020 which is the first moment we report data for
         if (attestationTime.isBefore(AB2D_EPOCH)) {
-            log.info("contract attested before ab2d epoch setting to epoch");
             attestationTime = AB2D_EPOCH;
         }
         return attestationTime;
