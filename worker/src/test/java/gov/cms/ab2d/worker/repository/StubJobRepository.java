@@ -35,6 +35,11 @@ public class StubJobRepository implements JobRepository {
     }
 
     @Override
+    public JobStatus getJobStatusOfJob(String jobUuid) {
+        return this.job.getStatus();
+    }
+
+    @Override
     public Job findByJobUuid(String jobUuid) {
         return (job.getJobUuid().equals(jobUuid)) ? job : null;
     }

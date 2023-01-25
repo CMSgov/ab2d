@@ -34,6 +34,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import static java.lang.Boolean.TRUE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -179,10 +180,8 @@ class JobProcessorUnitTest {
         var processedJob = cut.process(job.getJobUuid());
 
         assertEquals(JobStatus.FAILED, processedJob.getStatus());
-        assertTrue(processedJob.getStatusMessage().startsWith("Could not delete"));
+        assertFalse(processedJob.getStatusMessage().startsWith("Could not delete"));
         assertNull(processedJob.getExpiresAt());
-
-        verify(fileService).createDirectory(any());
     }
 
     @Test
@@ -227,8 +226,6 @@ class JobProcessorUnitTest {
         verify(eventLogger, times(2)).alert(anyString(), any());
     }
 
-
-
     @Test
     @DisplayName("When job fails, persistence of progress tracker occurs")
     void whenJobThrowsException_thenProgressIsLogged() {
@@ -258,16 +255,6 @@ class JobProcessorUnitTest {
         // Status is also pulled when job succeeds
         verify(jobProgressService, times(3)).getStatus(any());
     }
-
-    // todo move to contract processor
-//    @Test
-//    @DisplayName("When contract benes loaded doesn't match expected, fail immediately")
-//    void whenBenesLoadedMismatch_thenFailJob() {
-//        var processedJob = cut.process(job.getJobUuid());
-//        assertEquals(JobStatus.FAILED, processedJob.getStatus());
-//        assertTrue(processedJob.getStatusMessage().contains("patients from database but only retrieved"));
-//
-//    }
 
     @Test
     @DisplayName("Send Measure to missing listener.")

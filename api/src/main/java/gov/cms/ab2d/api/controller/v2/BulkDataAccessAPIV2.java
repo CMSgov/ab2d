@@ -65,7 +65,7 @@ import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 @Slf4j
 @Tag(description = SwaggerConstants.BULK_MAIN, name = "Export")
 @RestController
-@ConditionalOnExpression("${v2.controller.enabled:false}")
+@ConditionalOnExpression("${v2.controller.enabled:true}")
 @RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {APPLICATION_JSON})
 public class BulkDataAccessAPIV2 {
     private final JobClient jobClient;

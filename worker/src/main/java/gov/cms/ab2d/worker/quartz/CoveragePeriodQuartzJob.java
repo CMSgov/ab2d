@@ -52,8 +52,6 @@ public class CoveragePeriodQuartzJob extends QuartzJobBean {
     @Override
     protected void executeInternal(JobExecutionContext jobExecutionContext) throws JobExecutionException {
 
-        log.info("running coverage period quartz job by first looking for new coverage periods and then queueing new" +
-                " and stale coverage periods");
         boolean override = Boolean.parseBoolean(propertiesService.getProperty(COVERAGE_SEARCH_OVERRIDE, "false"));
 
         try {
@@ -62,17 +60,15 @@ public class CoveragePeriodQuartzJob extends QuartzJobBean {
             FeatureEngagement disvoeryState = FeatureEngagement.fromString(discoveryEngagement);
 
             if (disvoeryState == FeatureEngagement.IN_GEAR) {
-                log.info("coverage search discovery is engaged so attempting to discover new coverage periods");
                 driver.discoverCoveragePeriods();
+            } else {
+                log.info("coverage search discovery is NOT engaged so can't discover new coverage periods");
             }
 
             String queueEngagement = propertiesService.getProperty(COVERAGE_SEARCH_QUEUEING, FeatureEngagement.IN_GEAR.getSerialValue());
             FeatureEngagement queueState = FeatureEngagement.fromString(queueEngagement);
 
             if (queueState == FeatureEngagement.IN_GEAR) {
-                log.info("coverage search queueing is engaged so attempting to queue searches for new coverage periods " +
-                        "and stale coverage periods");
-
                 // Start this job every day on Tuesday at midnight
                 // or override and force start
                 OffsetDateTime now = OffsetDateTime.now(AB2D_ZONE);
@@ -80,6 +76,8 @@ public class CoveragePeriodQuartzJob extends QuartzJobBean {
                     driver.queueStaleCoveragePeriods();
                 }
 
+            } else {
+                log.info("coverage search queueing is NOT engaged");
             }
         } catch (Exception exception) {
             log.error("coverage period updates could not be conducted");
