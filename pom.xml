@@ -10,7 +10,6 @@
         <module>api</module>
         <module>worker</module>
         <module>audit</module>
-        <module>hpms</module>
         <module>e2e-test</module>
         <module>e2e-bfd-test</module>
     </modules>
