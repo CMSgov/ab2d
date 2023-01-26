@@ -24,7 +24,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest(properties = { "contract.service.enabled=true" })
+@SpringBootTest
 @Testcontainers
 @TestPropertySource(locations = "/application.common.properties")
 class ContractServiceFeignImplTest {
