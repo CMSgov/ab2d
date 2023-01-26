@@ -8,10 +8,6 @@ pipeline {
         // Get code climate id
         CC_TEST_REPORTER_ID = credentials('CC_TEST_REPORTER_ID')
 
-        // HPMS key id and secret
-        HPMS_AUTH_KEY_ID = credentials('HPMS_AUTH_KEY_ID')
-        HPMS_AUTH_KEY_SECRET = credentials('HPMS_AUTH_KEY_SECRET')
-
         // Tell e2e test that it should override the docker compose it normally uses locally
         // with docker-compose.jenkins.yml
         E2E_ENVIRONMENT = 'CI'
@@ -87,7 +83,7 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
                     sh '''
                         export AB2D_EFS_MOUNT="${AB2D_HOME}"
-                        mvn --settings settings.xml -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD} test -pl common,job,coverage,api,worker,audit,hpms
+                        mvn --settings settings.xml -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD} test -pl common,job,coverage,api,worker,audit
                     '''
                 }
             }
@@ -193,9 +189,6 @@ pipeline {
 
                    export JACOCO_SOURCE_PATH=./coverage/src/main/java
                    ./codeclimate/cc-test-reporter format-coverage ./coverage/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.coverage.json
-
-                    export JACOCO_SOURCE_PATH=./hpms/src/main/java
-                    ./codeclimate/cc-test-reporter format-coverage ./hpms/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.hpms.json
 
                     export JACOCO_SOURCE_PATH=./worker/src/main/java
                     ./codeclimate/cc-test-reporter format-coverage ./worker/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.worker.json

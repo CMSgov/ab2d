@@ -19,9 +19,6 @@ public final class PropertyConstants {
     // Accepted values: engaged, idle
     public static final String WORKER_ENGAGEMENT = "worker.engaged";
 
-    // Accepted values: engaged, idle
-    public static final String HPMS_INGESTION_ENGAGEMENT = "hpms.ingest.engaged";
-
     // Control when automatic metadata loading is and isn't enabled
     public static final String COVERAGE_SEARCH_DISCOVERY = "coverage.update.discovery";
     public static final String COVERAGE_SEARCH_QUEUEING = "coverage.update.queueing";
