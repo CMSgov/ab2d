@@ -6,11 +6,10 @@ import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.SinceSource;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
-import gov.cms.ab2d.common.service.ContractServiceStub;
+import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.InvalidContractException;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import gov.cms.ab2d.common.util.ContractServiceTestConfig;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
@@ -71,8 +70,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.test.annotation.DirtiesContext;
@@ -108,8 +105,6 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 @Testcontainers
 @Slf4j
 @ExtendWith(MockitoExtension.class)
-@Profile("test")
-@Import(ContractServiceTestConfig.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 public class EndToEndBfdTests {
     @Container
@@ -126,7 +121,7 @@ public class EndToEndBfdTests {
     @Autowired
     private JobRepository jobRepository;
     @Autowired
-    private ContractServiceStub contractServiceStub;
+    private ContractService contractServiceStub;
     @Autowired
     private ContractWorkerClient contractWorkerClient;
     @Autowired
