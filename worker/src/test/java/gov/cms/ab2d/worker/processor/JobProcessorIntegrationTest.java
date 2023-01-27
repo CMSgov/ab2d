@@ -1,10 +1,10 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.service.ContractServiceStub;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
-import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
@@ -117,7 +117,7 @@ class JobProcessorIntegrationTest extends JobCleanup {
     private PdpClientRepository pdpClientRepository;
 
     @Autowired
-    private ContractRepository contractRepository;
+    private ContractServiceStub contractServiceStub;
 
     @Autowired
     private ContractWorkerClient contractWorkerClient;
@@ -237,7 +237,6 @@ class JobProcessorIntegrationTest extends JobCleanup {
         jobCleanup();
         dataSetup.cleanup();
         pdpClientRepository.deleteAll();
-        contractRepository.deleteAll();
     }
 
     @Test
@@ -427,7 +426,7 @@ class JobProcessorIntegrationTest extends JobCleanup {
         contract.setContractNumber(CONTRACT_NUMBER);
         contract.setAttestedOn(OffsetDateTime.now().minusDays(10));
 
-        contract = contractRepository.saveAndFlush(contract);
+        contractServiceStub.updateContract(contract);
         dataSetup.queueForCleanup(contract);
         return contract;
     }

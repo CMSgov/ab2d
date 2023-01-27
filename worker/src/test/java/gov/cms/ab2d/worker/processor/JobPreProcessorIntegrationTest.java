@@ -1,13 +1,13 @@
 package gov.cms.ab2d.worker.processor;
 
-import gov.cms.ab2d.contracts.model.ContractDTO;
-import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
-import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
+import gov.cms.ab2d.common.service.ContractServiceStub;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.contracts.model.Contract;
+import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.JobStatusChangeEvent;
 import gov.cms.ab2d.eventclient.events.LoggableEvent;
@@ -32,6 +32,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Profile;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -54,12 +55,13 @@ import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @Testcontainers
+@Profile("test")
 class JobPreProcessorIntegrationTest extends JobCleanup {
 
     private JobPreProcessor cut;
 
     @Autowired
-    private ContractRepository contractRepository;
+    private ContractServiceStub contractServiceStub;
 
     @Autowired
     private ContractWorkerClient contractWorkerClient;
@@ -98,11 +100,11 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
 
         cut = new JobPreProcessorImpl(contractWorkerClient, jobRepository, sqsEventClient, coverageDriver);
 
-        Contract tmpContract = new Contract();
-        tmpContract.setContractNumber(UUID.randomUUID().toString());
-        tmpContract.setContractName(UUID.randomUUID().toString());
-        contract = contractRepository.save(tmpContract);
-        pdpClient = createClient(tmpContract);
+        contract = new Contract();
+        contract.setContractNumber(UUID.randomUUID().toString());
+        contract.setContractName(UUID.randomUUID().toString());
+        contractServiceStub.updateContract(contract);
+        pdpClient = createClient(contract);
         job = createJob(pdpClient, contract.getContractNumber());
     }
 
@@ -110,7 +112,6 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
     void clear() {
         jobCleanup();
         dataSetup.cleanup();
-        contractRepository.flush();
     }
 
     @Test

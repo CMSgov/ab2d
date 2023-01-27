@@ -11,13 +11,13 @@ import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.controller.v1.CapabilityStatementSTU3;
 import gov.cms.ab2d.api.controller.v2.CapabilityStatementR4;
 import gov.cms.ab2d.api.remote.JobClientMock;
-import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
-import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
+import gov.cms.ab2d.common.service.ContractServiceStub;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.eventclient.clients.SQSConfig;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ApiRequestEvent;
@@ -103,7 +103,7 @@ class BulkDataAccessAPIIntegrationTests {
     private PdpClientRepository pdpClientRepository;
 
     @Autowired
-    private ContractRepository contractRepository;
+    private ContractServiceStub contractServiceStub;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
@@ -388,7 +388,7 @@ class BulkDataAccessAPIIntegrationTests {
 
     @Test
     void testBasicPatientExportWithContractWithHttps() throws Exception {
-        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+        Optional<Contract> contractOptional = contractServiceStub.getContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         ResultActions resultActions = this.mockMvc.perform(
                 get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
@@ -413,7 +413,7 @@ class BulkDataAccessAPIIntegrationTests {
 
     @Test
     void testBasicPatientExportWithContract() throws Exception {
-        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+        Optional<Contract> contractOptional = contractServiceStub.getContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         ResultActions resultActions = this.mockMvc.perform(
                 get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
@@ -435,7 +435,7 @@ class BulkDataAccessAPIIntegrationTests {
 
     @Test
     void testPatientExportWithParametersWithContract() throws Exception {
-        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+        Optional<Contract> contractOptional = contractServiceStub.getContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         final String typeParams =
                 "?_type=ExplanationOfBenefit&_outputFormat=application/fhir+ndjson&since=20191015";
@@ -460,7 +460,7 @@ class BulkDataAccessAPIIntegrationTests {
 
     @Test
     void testPatientExportWithInvalidTypeWithContract() throws Exception {
-        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+        Optional<Contract> contractOptional = contractServiceStub.getContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         final String typeParams = "?_type=PatientInvalid,ExplanationOfBenefit";
         this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams)
@@ -476,7 +476,7 @@ class BulkDataAccessAPIIntegrationTests {
 
     @Test
     void testPatientExportWithInvalidOutputFormatWithContract() throws Exception {
-        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+        Optional<Contract> contractOptional = contractServiceStub.getContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         final String typeParams = "?_outputFormat=Invalid";
         this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export" + typeParams)
@@ -502,7 +502,7 @@ class BulkDataAccessAPIIntegrationTests {
 
     @Test
     void testPatientExportWithContractDuplicateSubmission() throws Exception {
-        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+        Optional<Contract> contractOptional = contractServiceStub.getContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         createMaxJobsWithContract(contract);
 
@@ -517,7 +517,7 @@ class BulkDataAccessAPIIntegrationTests {
 
     @Test
     void testPatientExportWithContractDuplicateSubmissionInProgress() throws Exception {
-        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+        Optional<Contract> contractOptional = contractServiceStub.getContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         createMaxJobsWithContract(contract);
 
@@ -533,7 +533,7 @@ class BulkDataAccessAPIIntegrationTests {
 
     @Test
     void testPatientExportWithContractDuplicateSubmissionDifferentContract() throws Exception {
-        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+        Optional<Contract> contractOptional = contractServiceStub.getContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
 
         for (int i = 0; i < MAX_JOBS_PER_CLIENT - 1; i++) {
@@ -559,7 +559,7 @@ class BulkDataAccessAPIIntegrationTests {
 
     @Test
     void testPatientExportWithContractDuplicateSubmissionDifferentClient() throws Exception {
-        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+        Optional<Contract> contractOptional = contractServiceStub.getContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         createMaxJobsWithContract(contract);
 

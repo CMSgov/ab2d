@@ -1,32 +1,38 @@
 package gov.cms.ab2d.common.util;
 
-import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.Role;
-import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.repository.RoleRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import javax.sql.DataSource;
+import gov.cms.ab2d.common.service.ContractServiceStub;
+import gov.cms.ab2d.contracts.model.Contract;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Set;
+import javax.sql.DataSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
+import org.springframework.stereotype.Component;
+
 
 import static java.util.stream.Collectors.toList;
 
 @Component
+@Import(ContractServiceTestConfig.class)
 public class DataSetup {
 
     @Autowired
     private DataSource dataSource;
 
     @Autowired
-    private ContractRepository contractRepository;
+    private ContractServiceStub contractService;
 
     @Autowired
     private PdpClientRepository pdpClientRepository;
@@ -35,6 +41,8 @@ public class DataSetup {
     private RoleRepository roleRepository;
 
     private final Set<Object> domainObjects = new HashSet<>();
+
+    Random randomGenerator = new Random();
 
     public void queueForCleanup(Object object) {
         domainObjects.add(object);
@@ -64,10 +72,7 @@ public class DataSetup {
             }
         });
 
-        List<Contract> contractsToDelete = domainObjects.stream().filter(object -> object instanceof Contract)
-                .map(object -> (Contract) object).collect(toList());
-        contractRepository.deleteAll(contractsToDelete);
-        contractRepository.flush();
+        contractService.reset();
 
         domainObjects.clear();
     }
@@ -97,8 +102,9 @@ public class DataSetup {
         contract.setAttestedOn(attestedOn);
         contract.setContractName("Test Contract " + contractNumber);
         contract.setContractNumber(contractNumber);
+        contract.setId(randomGenerator.nextLong(200L, 400L));
 
-        contract =  contractRepository.save(contract);
+        contractService.updateContract(contract);
         queueForCleanup(contract);
         return contract;
     }
@@ -106,12 +112,12 @@ public class DataSetup {
     public void setupContractWithNoAttestation(List<String> clientRoles) {
         setupPdpClient(clientRoles);
 
-        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+        Optional<Contract> contractOptional = contractService.getContractByContractNumber(VALID_CONTRACT_NUMBER);
         @SuppressWarnings("OptionalGetWithoutIsPresent")
         Contract contract = contractOptional.get();
         contract.setAttestedOn(null);
 
-        contractRepository.saveAndFlush(contract);
+        contractService.updateContract(contract);
     }
 
     public void setupContractSponsorForParentClientData(List<String> clientRoles) {

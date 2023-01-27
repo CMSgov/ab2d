@@ -2,6 +2,8 @@ package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.SpringBootApp;
 import gov.cms.ab2d.common.dto.PdpClientDTO;
+import gov.cms.ab2d.common.feign.ContractFeignClient;
+import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.contracts.model.Contract;
@@ -9,11 +11,13 @@ import gov.cms.ab2d.contracts.model.ContractDTO;
 import java.util.List;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -34,11 +38,16 @@ import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @TestPropertySource(locations = "/application.common.properties")
 @Testcontainers
 class PdpClientServiceTest {
+
+    @MockBean
+    ContractFeignClient contractFeignClient;
 
     @Autowired
     private ContractService contractService;
@@ -48,6 +57,9 @@ class PdpClientServiceTest {
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
+
+    @Autowired
+    private PdpClientRepository pdpClientRepository;
 
     @Autowired
     private DataSetup dataSetup;
@@ -190,6 +202,7 @@ class PdpClientServiceTest {
 
     @Test
     void testSetupClientAndRolesInSecurityContextBadClient() {
+        buildContract("ClientDoesNotExist");
         HttpServletRequest httpServletRequest = new MockHttpServletRequest();
         var exceptionThrown = Assertions.assertThrows(ResourceNotFoundException.class,
                 () -> pdpClientService.setupClientImpersonation("ClientDoesNotExist", httpServletRequest));
@@ -219,12 +232,23 @@ class PdpClientServiceTest {
     }
 
     private PdpClientDTO buildClientDTO(String contractNumber, String clientId, String sponsorRole) {
-        Contract contract = dataSetup.setupContract(contractNumber, AB2D_EPOCH.toOffsetDateTime());
+        Contract contract = buildContract(contractNumber);
 
         return createClient(contract, clientId, sponsorRole);
     }
 
+    @NotNull
+    private Contract buildContract(String contractNumber) {
+        Contract contract = dataSetup.setupContract(contractNumber, AB2D_EPOCH.toOffsetDateTime());
+
+        when(contractFeignClient.getContractByNumber(eq(contractNumber))).thenReturn(contract.toDTO());
+        when(contractFeignClient.getContracts(eq(contract.getId()))).thenReturn(List.of(contract.toDTO()));
+        return contract;
+    }
+
     private ContractDTO buildContractDTO(Contract contract) {
+        when(contractFeignClient.getContractByNumber(eq(contract.getContractNumber()))).thenReturn(contract.toDTO());
+        when(contractFeignClient.getContracts(eq(contract.getId()))).thenReturn(List.of(contract.toDTO()));
         return contract.toDTO();
     }
 

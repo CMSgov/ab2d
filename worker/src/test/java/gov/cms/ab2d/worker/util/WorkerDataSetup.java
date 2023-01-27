@@ -1,18 +1,19 @@
 package gov.cms.ab2d.worker.util;
 
-import gov.cms.ab2d.contracts.model.ContractDTO;
-import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.Role;
-import gov.cms.ab2d.common.repository.ContractRepository;
-import gov.cms.ab2d.job.model.Job;
-import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.repository.RoleRepository;
+import gov.cms.ab2d.common.service.ContractServiceStub;
+import gov.cms.ab2d.contracts.model.Contract;
+import gov.cms.ab2d.contracts.model.ContractDTO;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.repository.JobRepository;
 import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -24,7 +25,7 @@ import static java.util.stream.Collectors.toList;
 public class WorkerDataSetup {
 
     @Autowired
-    private ContractRepository contractRepository;
+    private ContractServiceStub contractServiceStub;
 
     @Autowired
     private PdpClientRepository pdpClientRepository;
@@ -40,6 +41,8 @@ public class WorkerDataSetup {
     public void queueForCleanup(Object object) {
         domainObjects.add(object);
     }
+
+    Random randomGenerator = new Random();
 
     public void cleanup() {
 
@@ -75,11 +78,9 @@ public class WorkerDataSetup {
 
         List<Contract> contractsToDelete = domainObjects.stream().filter(object -> object instanceof Contract)
                 .map(object -> (Contract) object).collect(toList());
-        contractRepository.deleteAll(contractsToDelete);
-        contractRepository.flush();
+        contractServiceStub.reset();
 
         domainObjects.clear();
-        contractRepository.flush();
     }
 
     public ContractDTO setupWorkerContract(String contractNumber, OffsetDateTime attestedOn) {
@@ -95,6 +96,7 @@ public class WorkerDataSetup {
         contract.setContractNumber(contractNumber);
         contract.setAttestedOn(attestedOn);
         queueForCleanup(contract);
+        contract.setId(randomGenerator.nextLong(200L, 400L));
         return contract;
     }
 }

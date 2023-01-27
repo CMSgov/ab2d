@@ -1,7 +1,6 @@
 package gov.cms.ab2d.common.service;
 
 import gov.cms.ab2d.common.feign.ContractFeignClient;
-import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import java.util.List;
@@ -15,7 +14,7 @@ public class ContractServiceImpl implements ContractService {
 
     private final ContractFeignClient contractFeignClient;
 
-    public ContractServiceImpl(ContractRepository contractRepository, ContractFeignClient contractFeignClient) {
+    public ContractServiceImpl(ContractFeignClient contractFeignClient) {
         this.contractFeignClient = contractFeignClient;
     }
 

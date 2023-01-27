@@ -1,11 +1,11 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.service.ContractServiceStub;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.common.dto.PdpClientDTO;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
-import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
@@ -96,7 +96,7 @@ class CoverageDriverTest extends JobCleanup {
     private static final PostgreSQLContainer postgres = new AB2DPostgresqlContainer();
 
     @Autowired
-    private ContractRepository contractRepo;
+    private ContractServiceStub contractServiceStub;
 
     @Autowired
     private ContractWorkerClient contractWorkerClient;
@@ -163,7 +163,7 @@ class CoverageDriverTest extends JobCleanup {
         contractForCoverageDTO1 = new ContractForCoverageDTO("TST-45", AB2D_EPOCH.toOffsetDateTime(),ContractForCoverageDTO.ContractType.NORMAL);
 
 
-        contractRepo.saveAndFlush(contract);
+        contractServiceStub.updateContract(contract);
 
         january = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 1, 2020);
         february = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), 2, 2020);
@@ -219,7 +219,7 @@ class CoverageDriverTest extends JobCleanup {
 
         Contract attestedAfterEpoch = dataSetup.setupContract("TST-AFTER-EPOCH",
                 AB2D_EPOCH.toOffsetDateTime().plusMonths(3));
-        contractRepo.saveAndFlush(attestedAfterEpoch);
+        contractServiceStub.updateContract(attestedAfterEpoch);
 
         PdpClientDTO attestedAfterClient = createClient(attestedAfterEpoch, "TST-AFTER-EPOCH", SPONSOR_ROLE);
         pdpClientService.createClient(attestedAfterClient);
@@ -227,7 +227,7 @@ class CoverageDriverTest extends JobCleanup {
 
         Contract attestedBeforeEpoch = dataSetup.setupContract("TST-BEFORE-EPOCH",
                 AB2D_EPOCH.toOffsetDateTime().minusNanos(1));
-        contractRepo.saveAndFlush(attestedBeforeEpoch);
+        contractServiceStub.updateContract(attestedBeforeEpoch);
 
         PdpClientDTO attestedBeforeClient = createClient(attestedBeforeEpoch, "TST-BEFORE-EPOCH", SPONSOR_ROLE);
         pdpClientService.createClient(attestedBeforeClient);
@@ -264,7 +264,7 @@ class CoverageDriverTest extends JobCleanup {
                 AB2D_EPOCH.toOffsetDateTime().plusMonths(3));
         testContract.setUpdateMode(Contract.UpdateMode.NONE);
 
-        contractRepo.saveAndFlush(testContract);
+        contractServiceStub.updateContract(testContract);
 
         try {
             driver.discoverCoveragePeriods();
@@ -706,7 +706,7 @@ class CoverageDriverTest extends JobCleanup {
         Job job = new Job();
         job.setCreatedAt(OffsetDateTime.now());
 
-        Contract temp = contractRepo.findContractByContractNumber(contractForCoverageDTO.getContractNumber()).get();
+        Contract temp = contractServiceStub.getContractByContractNumber(contractForCoverageDTO.getContractNumber()).get();
         job.setContractNumber(temp.getContractNumber());
 
         OffsetDateTime since = OffsetDateTime.of(LocalDate.of(2020, 3, 1),
@@ -743,7 +743,7 @@ class CoverageDriverTest extends JobCleanup {
 
         // Override BeforeEach method settings to make this test work for a smaller period of time
         contract.setAttestedOn(OffsetDateTime.now().minus(1, ChronoUnit.SECONDS));
-        contractRepo.save(contract);
+        contractServiceStub.updateContract(contract);
 
         CoveragePeriod period = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), contract.getESTAttestationTime().getMonthValue(), contract.getESTAttestationTime().getYear());
 

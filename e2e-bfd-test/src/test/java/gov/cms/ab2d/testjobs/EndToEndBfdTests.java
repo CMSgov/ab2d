@@ -2,15 +2,15 @@ package gov.cms.ab2d.testjobs;
 
 import gov.cms.ab2d.AB2DLocalstackContainer;
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.feign.ContractFeignClient;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.SinceSource;
 import gov.cms.ab2d.common.properties.PropertiesService;
-import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
+import gov.cms.ab2d.common.service.ContractServiceStub;
 import gov.cms.ab2d.common.service.InvalidContractException;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.ContractServiceTestConfig;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
@@ -71,7 +71,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.context.annotation.Import;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.test.annotation.DirtiesContext;
@@ -108,7 +108,7 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 @Slf4j
 @ExtendWith(MockitoExtension.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
-@EnableFeignClients(clients = {ContractFeignClient.class})
+@Import(ContractServiceTestConfig.class)
 public class EndToEndBfdTests {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
@@ -119,13 +119,12 @@ public class EndToEndBfdTests {
     // We don't care about logging here
     @Mock
     SQSEventClient logManager;
-
     @Autowired
     private BFDClient client;
     @Autowired
     private JobRepository jobRepository;
     @Autowired
-    private ContractRepository contractRepository;
+    private ContractServiceStub contractServiceStub;
     @Autowired
     private ContractWorkerClient contractWorkerClient;
     @Autowired
@@ -255,10 +254,10 @@ public class EndToEndBfdTests {
      */
     private void disableContractWeDontNeed() {
         List<PdpClient> clients = pdpClientRepository.findAllByEnabledTrue().stream()
-                .filter(client -> client.getContractId() != null && contractRepository.findById(client.getContractId()).get().getAttestedOn() != null)
+                .filter(client -> client.getContractId() != null && contractServiceStub.getContractByContractId(client.getContractId()).getAttestedOn() != null)
                 .collect(toList());
         for (PdpClient pdp : clients) {
-            if (!contractRepository.findById(pdp.getContractId()).get().getContractNumber().equals(CONTRACT_TO_USE)) {
+            if (!contractServiceStub.getContractByContractId(pdp.getContractId()).getContractNumber().equals(CONTRACT_TO_USE)) {
                 pdp.setEnabled(false);
                 pdpClientRepository.save(pdp);
             }
@@ -332,7 +331,7 @@ public class EndToEndBfdTests {
     }
 
     private Contract getContract() {
-        return contractRepository.findContractByContractNumber(EndToEndBfdTests.CONTRACT_TO_USE).orElse(null);
+        return contractServiceStub.getContractByContractNumber(EndToEndBfdTests.CONTRACT_TO_USE).orElse(null);
     }
 
     private PdpClient setupClient(Contract contract) {
@@ -341,7 +340,7 @@ public class EndToEndBfdTests {
         pdpClient.setOrganization("Synthea Data");
         pdpClient.setEnabled(true);
         pdpClient.setContractId(contract.getId());
-        contractRepository.save(contract);
+        contractServiceStub.updateContract(contract);
         return pdpClientRepository.save(pdpClient);
     }
 
@@ -367,7 +366,7 @@ public class EndToEndBfdTests {
         job.setOrganization(pdpClient.getOrganization());
 
         // Check to see if there is any attestation
-        Contract contract = contractRepository.findById(pdpClient.getContractId()).orElse(null);
+        Contract contract = contractServiceStub.getContractByContractId(pdpClient.getContractId());
         if (contractNumber != null && !contractNumber.equals(contract.getContractNumber())) {
             String errorMsg = "Specifying contract: " + contractNumber + " not associated with internal id: " + pdpClient.getId();
             throw new InvalidContractException(errorMsg);
