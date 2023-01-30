@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.service.coveragesnapshot;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.contracts.model.ContractDTO;
