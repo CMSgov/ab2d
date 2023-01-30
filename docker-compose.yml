@@ -69,6 +69,7 @@ services:
       - AB2D_EXECUTION_ENV=${AB2D_EXECUTION_ENV:-local}
       - AB2D_V2_ENABLED=${AB2D_V2_ENABLED}
       - AWS_SQS_URL=http://localstack:4566
+      - PROPERTIES_SERVICE_URL="${PROPERTIES_SERVICE_URL}"
     ports:
       # Set port as an environment variable
       # The e2e-test forcefully sets this itself otherwise set via command line
@@ -115,6 +116,7 @@ services:
       - AB2D_KEYSTORE_PASSWORD=${AB2D_KEYSTORE_PASSWORD}
       - AB2D_KEY_ALIAS=${AB2D_KEY_ALIAS}
       - AWS_SQS_URL=http://localstack:4566
+      - PROPERTIES_SERVICE_URL="${PROPERTIES_SERVICE_URL}"
       # Update coverage frequently so that tests aren't slowed down too much
       - "COVERAGE_UPDATE_LOAD_SCHEDULE=0/1 * * * * ?"
       - "COVERAGE_UPDATE_MONITORING_INTERVAL=0/1 * * * * ?"
