@@ -7,4 +7,6 @@ import java.util.Set;
 public interface CoverageSnapshotService {
 
     void sendCoverageCounts(AB2DServices services, Set<String> contracts);
+
+    void sendCoverageCounts(AB2DServices services, String contract, int count, int year, int month);
 }

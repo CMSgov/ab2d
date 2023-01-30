@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 
 
@@ -87,7 +88,12 @@ public class CoverageSnapshotTest {
         CoverageService coverageService = Mockito.mock(CoverageService.class);
         Mockito.when(coverageService.countBeneficiariesForContracts(any()))
                 .thenReturn(Arrays.asList(new CoverageCount("test", 1, 1, 1, 1, 1), new CoverageCount("test", 1, 1, 1, 1, 1)));
-        coverageSnapshotService.sendCoverageCounts(AB2DServices.AB2D, Set.of("test"));
+        assertDoesNotThrow(() -> coverageSnapshotService.sendCoverageCounts(AB2DServices.AB2D, Set.of("test")));
+    }
+
+    @Test
+    void sendCoverageCount() {
+        assertDoesNotThrow(() -> coverageSnapshotService.sendCoverageCounts(AB2DServices.AB2D, "test", 1, 1, 1));
     }
 
     @Test
@@ -134,7 +140,8 @@ public class CoverageSnapshotTest {
             coveragePeriodRepo.saveAndFlush(period);
         });
 
-        coverageSnapshotService.sendCoverageCounts(AB2DServices.AB2D, Set.of(contractNumber));
+        assertDoesNotThrow(() -> coverageSnapshotService.sendCoverageCounts(AB2DServices.AB2D, Set.of(contractNumber)));
+        ;
     }
 
     private CoverageSearchEvent startSearchAndPullEvent() {

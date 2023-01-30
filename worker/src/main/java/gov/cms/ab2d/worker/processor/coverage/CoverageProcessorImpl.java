@@ -8,17 +8,6 @@ import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.snsclient.messages.AB2DServices;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import javax.annotation.PreDestroy;
-
 import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -27,6 +16,15 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PreDestroy;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 
@@ -360,7 +358,8 @@ public class CoverageProcessorImpl implements CoverageProcessor {
             coverageService.completeSearch(periodId, "successfully inserted all data for in progress search");
 
             log.info("marked search as completed {}-{}-{}", contractNumber, month, year);
-            coverageSnapshotService.sendCoverageCounts(AB2DServices.BFD, Set.of(contractNumber));
+            coverageSnapshotService.sendCoverageCounts(AB2DServices.BFD, contractNumber, result.getBeneficiaryIds()
+                    .size(), year, month);
         } catch (Exception exception) {
             log.error("inserting the coverage data failed for {}-{}-{}", result.getContractNumber(),
                     result.getPeriod().getMonth(), result.getPeriod().getYear());
