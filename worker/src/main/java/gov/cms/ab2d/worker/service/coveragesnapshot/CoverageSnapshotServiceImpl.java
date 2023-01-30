@@ -19,6 +19,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.snsclient.messages.Topics.COVERAGE_COUNTS;
@@ -42,16 +43,13 @@ public class CoverageSnapshotServiceImpl implements CoverageSnapshotService {
     }
 
     @Override
-    public void sendCoverageCounts(AB2DServices services) {
+    public void sendCoverageCounts(AB2DServices services, Set<String> contracts) {
         List<ContractDTO> enabledContracts = pdpClientService.getAllEnabledContracts()
                 .stream()
-                .filter(contract -> !contract.isTestContract())
+                .filter(contract -> contracts.contains(contract.getContractNumber()))
                 .map(Contract::toDTO)
                 .toList();
-        List<ContractDTO> filteredContracts = enabledContracts.stream()
-                .filter(new CoveragePeriodsPresentCheck(coverageService, null, new ArrayList<>()))
-                .toList();
-        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(filteredContracts.stream()
+        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(enabledContracts.stream()
                         .map(mapping::map)
                         .toList())
                 .stream()

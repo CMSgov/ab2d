@@ -44,6 +44,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
+import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
@@ -86,8 +87,8 @@ public class CoverageDriverImpl implements CoverageDriver {
     private final CoverageLockWrapper coverageLockWrapper;
     private final PropertiesService propertiesService;
     private final ContractToContractCoverageMapping mapping;
-
     private final CoverageSnapshotService coverageSnapshotService;
+
 
     //CHECKSTYLE.OFF
     public CoverageDriverImpl(CoverageSearchRepository coverageSearchRepository,
@@ -140,7 +141,6 @@ public class CoverageDriverImpl implements CoverageDriver {
 
         Lock lock = coverageLockWrapper.getCoverageLock();
         boolean locked = false;
-        coverageSnapshotService.sendCoverageCounts(AB2DServices.AB2D);
 
         try {
             Set<CoveragePeriod> outOfDateInfo = getCoveragePeriods();
@@ -158,7 +158,9 @@ public class CoverageDriverImpl implements CoverageDriver {
                     log.info("Attempting to add {}-{}-{} to queue", period.getContractNumber(),
                             period.getYear(), period.getMonth());
                 }
+                Set<String> contracts = outOfDateInfo.stream().map(CoveragePeriod::getContractNumber).collect(Collectors.toSet());
 
+                coverageSnapshotService.sendCoverageCounts(AB2DServices.AB2D, contracts);
                 for (CoveragePeriod period : outOfDateInfo) {
                     coverageProcessor.queueCoveragePeriod(period, false);
                 }
@@ -372,7 +374,6 @@ public class CoverageDriverImpl implements CoverageDriver {
 
         Optional<CoverageSearch> search = getNextSearch();
         if (search.isEmpty()) {
-            coverageSnapshotService.sendCoverageCounts(AB2DServices.BFD);
             return;
         }
 
