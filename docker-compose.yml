@@ -59,10 +59,6 @@ services:
       - AB2D_DB_PASSWORD=ab2d
       # Location to store file within container
       - AB2D_EFS_MOUNT=/opt/ab2d
-      # Credentials and location of HPMS sandbox
-      - HPMS_AUTH_KEY_ID="${HPMS_AUTH_KEY_ID}"
-      - HPMS_AUTH_KEY_SECRET="${HPMS_AUTH_KEY_SECRET}"
-      - AB2D_HPMS_URL=${AB2D_HPMS_URL}
       - NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}"
       - NEW_RELIC_APP_NAME="${NEW_RELIC_APP_NAME}"
       # LOCAL always to shut off Kinesis logging
