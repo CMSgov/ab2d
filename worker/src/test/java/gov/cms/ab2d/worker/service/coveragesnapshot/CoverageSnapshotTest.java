@@ -46,7 +46,7 @@ import static org.mockito.ArgumentMatchers.any;
 @SpringBootTest
 @Testcontainers
 @Import(AB2DSQSMockConfig.class)
-public class CoverageSnapshotTest {
+class CoverageSnapshotTest {
 
     @SuppressWarnings("rawtypes")
     @Container

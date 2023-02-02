@@ -5,8 +5,8 @@ import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.service.CoverageService;
-import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
 import gov.cms.ab2d.snsclient.clients.SNSClient;
+import gov.cms.ab2d.snsclient.messages.CoverageCountDTO;
 import gov.cms.ab2d.snsclient.messages.AB2DServices;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +17,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static gov.cms.ab2d.snsclient.messages.Topics.COVERAGE_COUNTS;
 import static java.util.stream.Collectors.groupingBy;
@@ -32,7 +31,7 @@ public class CoverageSnapshotServiceImpl implements CoverageSnapshotService {
 
     private final SNSClient snsClient;
 
-    public CoverageSnapshotServiceImpl(PdpClientService pdpClientService, CoverageService coverageService, ContractToContractCoverageMapping mapping, SNSClient snsClient, Ab2dEnvironment environment) {
+    public CoverageSnapshotServiceImpl(PdpClientService pdpClientService, CoverageService coverageService, ContractToContractCoverageMapping mapping, SNSClient snsClient) {
         this.pdpClientService = pdpClientService;
         this.coverageService = coverageService;
         this.mapping = mapping;
@@ -60,7 +59,7 @@ public class CoverageSnapshotServiceImpl implements CoverageSnapshotService {
                         .stream()
                         .map(c -> new CoverageCountDTO(count.getKey(), services.toString(),
                                 c.getBeneficiaryCount(), c.getYear(), c.getMonth(), time))
-                        .collect(Collectors.toList()))
+                        .toList())
                 .flatMap(List::stream)
                 .toList();
 
