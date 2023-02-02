@@ -21,6 +21,7 @@ import gov.cms.ab2d.coverage.repository.CoverageServiceRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import gov.cms.ab2d.snsclient.messages.AB2DServices;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,6 +83,10 @@ public class CoverageSnapshotTest {
     @Autowired
     private CoveragePeriodRepository coveragePeriodRepo;
 
+    @AfterEach
+    void cleanup(){
+        dataSetup.cleanup();
+    }
 
     @Test
     void sendCoverageCounts() {
@@ -141,7 +146,6 @@ public class CoverageSnapshotTest {
         });
 
         assertDoesNotThrow(() -> coverageSnapshotService.sendCoverageCounts(AB2DServices.AB2D, Set.of(contractNumber)));
-        ;
     }
 
     private CoverageSearchEvent startSearchAndPullEvent() {
