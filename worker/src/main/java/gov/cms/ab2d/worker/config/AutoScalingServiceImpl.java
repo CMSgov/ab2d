@@ -148,6 +148,7 @@ public class AutoScalingServiceImpl implements AutoScalingService {
         maxPoolSize = getIntProperty(PCP_MAX_POOL_SIZE, maxPoolSize);
         scaleToMaxTime = getDoubleProperty(PCP_SCALE_TO_MAX_TIME, scaleToMaxTime);
 
+        this.executor.setMaxPoolSize(maxPoolSize);
         this.executor.setCorePoolSize(corePoolSize);
     }
 
