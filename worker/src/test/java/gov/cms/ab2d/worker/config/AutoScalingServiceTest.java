@@ -39,7 +39,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Testcontainers
 @Slf4j
 @Import(AB2DSQSMockConfig.class)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class AutoScalingServiceTest {
 
     public static final int QUEUE_SIZE = 25;
@@ -73,6 +72,8 @@ public class AutoScalingServiceTest {
         autoScalingService = new AutoScalingServiceImpl(patientProcessorThreadPool,
                 eobClaimRequestsQueue, propertiesService, 3, 20, 20);
         originalMaxPoolSize = autoScalingService.getMaxPoolSize();
+        patientProcessorThreadPool.setMaxPoolSize(originalMaxPoolSize);
+
     }
 
     @AfterEach
@@ -118,12 +119,12 @@ public class AutoScalingServiceTest {
     @DisplayName("Auto-scaling does not kick in when the queue remains empty")
     void emptyQueueNoAutoScaling() throws InterruptedException {
         // Verify that initially the pool is sized at the minimums
-        assertEquals(3, patientProcessorThreadPool.getMaxPoolSize());
+        assertEquals(originalMaxPoolSize, patientProcessorThreadPool.getMaxPoolSize());
         assertEquals(3, patientProcessorThreadPool.getCorePoolSize());
 
         // Auto-scaling should not kick in while the queue is empty
         Thread.sleep(7000);
-        assertEquals(20, patientProcessorThreadPool.getMaxPoolSize());
+        assertEquals(originalMaxPoolSize, patientProcessorThreadPool.getMaxPoolSize());
         assertEquals(3, patientProcessorThreadPool.getCorePoolSize());
 
     }
