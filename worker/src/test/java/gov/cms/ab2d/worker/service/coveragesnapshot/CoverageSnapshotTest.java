@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.service.coveragesnapshot;
 
-import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.repository.RoleRepository;
 import gov.cms.ab2d.common.service.PdpClientService;
@@ -62,8 +61,6 @@ class CoverageSnapshotTest {
     RoleRepository roleRepository;
     @Autowired
     PdpClientRepository pdpClientRepository;
-    @Autowired
-    ContractRepository contractRepository;
     @Autowired
     CoverageServiceRepository coverageServiceRepository;
 
