@@ -40,33 +40,34 @@ public class CoverageSnapshotServiceImpl implements CoverageSnapshotService {
 
     @Override
     public void sendCoverageCounts(AB2DServices services, Set<String> contracts) {
-        List<ContractDTO> enabledContracts = pdpClientService.getAllEnabledContracts()
-                .stream()
-                .filter(contract -> contracts.contains(contract.getContractNumber()))
-                .map(Contract::toDTO)
-                .toList();
-        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(enabledContracts.stream()
-                        .map(mapping::map)
-                        .toList())
-                .stream()
-                .collect(groupingBy(CoverageCount::getContractNumber));
-
-        Timestamp time = Timestamp.from(Instant.now());
-
-        List<CoverageCountDTO> coverageCountDTOS = coverageCounts.entrySet()
-                .stream()
-                .map(count -> count.getValue()
-                        .stream()
-                        .map(c -> new CoverageCountDTO(count.getKey(), services.toString(),
-                                c.getBeneficiaryCount(), c.getYear(), c.getMonth(), time))
-                        .toList())
-                .flatMap(List::stream)
-                .toList();
 
         try {
+            List<ContractDTO> enabledContracts = pdpClientService.getAllEnabledContracts()
+                    .stream()
+                    .filter(contract -> contracts.contains(contract.getContractNumber()))
+                    .map(Contract::toDTO)
+                    .toList();
+            Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(enabledContracts.stream()
+                            .map(mapping::map)
+                            .toList())
+                    .stream()
+                    .collect(groupingBy(CoverageCount::getContractNumber));
+
+            Timestamp time = Timestamp.from(Instant.now());
+
+            List<CoverageCountDTO> coverageCountDTOS = coverageCounts.entrySet()
+                    .stream()
+                    .map(count -> count.getValue()
+                            .stream()
+                            .map(c -> new CoverageCountDTO(count.getKey(), services.toString(),
+                                    c.getBeneficiaryCount(), c.getYear(), c.getMonth(), time))
+                            .toList())
+                    .flatMap(List::stream)
+                    .toList();
+
             snsClient.sendMessage(COVERAGE_COUNTS.getValue(), coverageCountDTOS);
         } catch (Exception e) {
-            log.error("Sending coverage count snapshot failed, swallowing exception to protect coverage update", e);
+            log.error("Sending coverage count snapshot failed, swallowing all exceptions to protect coverage update", e);
         }
     }
 
@@ -76,7 +77,7 @@ public class CoverageSnapshotServiceImpl implements CoverageSnapshotService {
             snsClient.sendMessage(COVERAGE_COUNTS.getValue(), List.of(new CoverageCountDTO(contract, services.toString(),
                     count, year, month, Timestamp.from(Instant.now()))));
         } catch (Exception e) {
-            log.error("Sending coverage count snapshot failed, swallowing exception to protect coverage update", e);
+            log.error("Sending coverage count snapshot failed, swallowing all exceptions to protect coverage update", e);
         }
     }
 
