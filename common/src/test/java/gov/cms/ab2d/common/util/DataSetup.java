@@ -16,6 +16,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.stream.Collectors.toList;
 
@@ -92,13 +93,11 @@ public class DataSetup {
     }
 
     public Contract setupContract(String contractNumber, OffsetDateTime attestedOn) {
-        Contract contract = new Contract();
-
+        // prevent errors if two tests try to add the same contract
+        Contract contract = contractRepository.findContractByContractNumber(contractNumber)
+                .orElse(new Contract(contractNumber, "Test Contract " + contractNumber, null, null, null));
         contract.setAttestedOn(attestedOn);
-        contract.setContractName("Test Contract " + contractNumber);
-        contract.setContractNumber(contractNumber);
-
-        contract =  contractRepository.save(contract);
+        contractRepository.save(contract);
         queueForCleanup(contract);
         return contract;
     }

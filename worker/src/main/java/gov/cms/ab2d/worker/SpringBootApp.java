@@ -18,7 +18,6 @@ import org.springframework.retry.annotation.EnableRetry;
         "gov.cms.ab2d.coverage",
         "gov.cms.ab2d.worker",
         "gov.cms.ab2d.bfd.client",
-        "gov.cms.ab2d.audit",
         "gov.cms.ab2d.eventclient.clients",
         "gov.cms.ab2d.snsclient.clients"
 })
