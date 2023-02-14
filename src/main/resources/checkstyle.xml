@@ -76,6 +76,11 @@
     <!-- </module> -->
     <module name="SuppressWarningsFilter"/>
 
+    <module name="SuppressWithPlainTextCommentFilter">
+        <property name="offCommentFormat" value="CHECKSTYLE.OFF"/>
+        <property name="onCommentFormat" value="CHECKSTYLE.ON"/>
+    </module>
+
     <module name="TreeWalker">
 
         <!-- Checks for Naming Conventions.                  -->

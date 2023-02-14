@@ -21,6 +21,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.stream.Collectors.toList;
 
@@ -99,6 +101,7 @@ public class DataSetup {
     public Contract setupContract(String contractNumber, OffsetDateTime attestedOn) {
         Contract contract = new Contract();
 
+        // prevent errors if two tests try to add the same contract
         contract.setAttestedOn(attestedOn);
         contract.setContractName("Test Contract " + contractNumber);
         contract.setContractNumber(contractNumber);

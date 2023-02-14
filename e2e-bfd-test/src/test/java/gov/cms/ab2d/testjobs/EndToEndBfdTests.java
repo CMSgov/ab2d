@@ -55,6 +55,8 @@ import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IDomainResource;
@@ -156,6 +158,9 @@ public class EndToEndBfdTests {
     @Autowired
     private ContractToContractCoverageMapping contractToContractCoverageMapping;
 
+    @Autowired
+    private CoverageSnapshotService snapshotService;
+
     @TempDir
     File path;
 
@@ -176,7 +181,7 @@ public class EndToEndBfdTests {
         propertiesService.updateProperty(PCP_SCALE_TO_MAX_TIME, "10");
 
         coverageDriver = new CoverageDriverImpl(coverageSearchRepository, pdpClientService, coverageService,
-                propertiesService, coverageProcessor, coverageLockWrapper, contractToContractCoverageMapping);
+                propertiesService, coverageProcessor, coverageLockWrapper, contractToContractCoverageMapping, snapshotService);
 
         // Instantiate the job processors
         jobService = new JobServiceImpl(jobRepository, jobOutputService, logManager, path.getAbsolutePath());
@@ -242,7 +247,7 @@ public class EndToEndBfdTests {
         try {
             Path file = Paths.get(path, jobUuid, filename);
             Resource resource = new UrlResource(file.toUri());
-            //delete is handled by the audit module
+            //delete is handled by the audit lambda
         } catch (Exception ex) {
             throw new RuntimeException("Unable to delete file " + filename, ex);
         }

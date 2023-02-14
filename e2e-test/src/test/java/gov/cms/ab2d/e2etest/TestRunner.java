@@ -210,7 +210,7 @@ class TestRunner {
         }
     }
 
-    /**
+D    /**
      * Load api client by retrieving JSON web token using environment variables for keystore and password.
      *
      * @param apiPort api port to connect client to, only used in local or CI environments

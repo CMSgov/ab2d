@@ -25,6 +25,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import javax.persistence.EntityNotFoundException;
+
+import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +35,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
 
 
@@ -70,6 +73,9 @@ class CoverageDriverUnitTest {
     private CoverageProcessor coverageProcessor;
 
     private PropertiesService propertiesService = new PropertyServiceStub();
+
+    @Autowired
+    private CoverageSnapshotService snapshotService;
 
     @Mock
     private ContractToContractCoverageMapping mapping;
@@ -144,7 +150,7 @@ class CoverageDriverUnitTest {
 
     @BeforeEach
     void before() {
-        driver = new CoverageDriverImpl(null, null, coverageService, null, null, null,mapping);
+        driver = new CoverageDriverImpl(null, null, coverageService, null, null, null,mapping, snapshotService);
     }
 
     @AfterEach
@@ -298,7 +304,7 @@ class CoverageDriverUnitTest {
 
         when(lockWrapper.getCoverageLock()).thenReturn(tryLockFalse);
 
-        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, propertiesService, null, lockWrapper,null);
+        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, propertiesService, null, lockWrapper,null, snapshotService);
 
         CoverageDriverException exception = assertThrows(CoverageDriverException.class, driver::discoverCoveragePeriods);
         assertTrue(exception.getMessage().contains("could not retrieve lock"));
@@ -318,7 +324,7 @@ class CoverageDriverUnitTest {
         Job job = new Job();
         job.setContractNumber(contract.getContractNumber());
 
-        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, propertiesService, null, lockWrapper,null);
+        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, propertiesService, null, lockWrapper,null, snapshotService);
 
         assertThrows(InterruptedException.class, driver::discoverCoveragePeriods);
         assertThrows(InterruptedException.class, driver::queueStaleCoveragePeriods);
@@ -333,7 +339,7 @@ class CoverageDriverUnitTest {
         when(coverageService.coveragePeriodStuckJobs(any())).thenReturn(Collections.emptyList());
         when(coverageService.coveragePeriodNotUpdatedSince(anyInt(), anyInt(), any())).thenReturn(Collections.emptyList());
 
-        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, null, null, lockWrapper,null);
+        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, null, null, lockWrapper,null, snapshotService);
 
         ContractDTO contract = new ContractDTO(null, "contractNum", null, null, null);
         Job job = new Job();
@@ -351,7 +357,7 @@ class CoverageDriverUnitTest {
     void failureToPageCausesExceptions() {
         when(coverageService.pageCoverage(any())).thenThrow(RuntimeException.class);
 
-        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, null, null, null,null);
+        CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, null, null, null,null, snapshotService);
 
         ContractForCoverageDTO contract = new ContractForCoverageDTO();
         contract.setContractNumber("contractNum");
@@ -364,7 +370,7 @@ class CoverageDriverUnitTest {
     @Test
     void loadMappingFailsQuietly() {
         CoverageDriverImpl driver = spy(new CoverageDriverImpl(null, null,
-                coverageService, propertiesService, coverageProcessor, lockWrapper,null)
+                coverageService, propertiesService, coverageProcessor, lockWrapper,null, snapshotService)
         );
 
         propertiesService.updateProperty(MAINTENANCE_MODE, "true");
