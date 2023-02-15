@@ -65,7 +65,7 @@ services:
       - AB2D_EXECUTION_ENV=${AB2D_EXECUTION_ENV:-local}
       - AB2D_V2_ENABLED=${AB2D_V2_ENABLED}
       - AWS_SQS_URL=http://localstack:4566
-      - PROPERTIES_SERVICE_URL=http://http://localhost:8070
+      - PROPERTIES_SERVICE_URL=http://localhost:8070
       - AWS_ACCESS_KEY_ID="invalid"
       - AWS_SECRET_KEY="invalid"
       - HPMS_AUTH_KEY_ID="${HPMS_AUTH_KEY_ID}"
