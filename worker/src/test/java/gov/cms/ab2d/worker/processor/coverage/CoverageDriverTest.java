@@ -210,6 +210,7 @@ class CoverageDriverTest extends JobCleanup {
 
         propertiesService.updateProperty(WORKER_ENGAGEMENT, IN_GEAR.getSerialValue());
         propertiesService.updateProperty(COVERAGE_SEARCH_OVERRIDE, "false");
+        contractServiceStub.reset();
     }
 
     private void addPropertiesTableValues() {
