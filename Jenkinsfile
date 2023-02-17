@@ -4,7 +4,6 @@ pipeline {
         OKTA_CLIENT_PASSWORD = credentials('OKTA_CLIENT_PASSWORD')
         SECONDARY_USER_OKTA_CLIENT_ID = credentials('SECONDARY_USER_OKTA_CLIENT_ID')
         SECONDARY_USER_OKTA_CLIENT_PASSWORD = credentials('SECONDARY_USER_OKTA_CLIENT_PASSWORD')
-//        PROPERTIES_SERVICE_URL = credentials('PROPERTIES_SERVICE_URL')
 
         // Get code climate id
         CC_TEST_REPORTER_ID = credentials('CC_TEST_REPORTER_ID')

@@ -66,8 +66,6 @@ services:
       - AB2D_V2_ENABLED=${AB2D_V2_ENABLED}
       - AWS_SQS_URL=http://localstack:4566
       - PROPERTIES_SERVICE_URL=contracts:8070
-      - AWS_ACCESS_KEY_ID="invalid"
-      - AWS_SECRET_KEY="invalid"
       - HPMS_AUTH_KEY_ID="${HPMS_AUTH_KEY_ID}"
       - HPMS_AUTH_KEY_SECRET="${HPMS_AUTH_KEY_SECRET}"
     ports:
@@ -119,8 +117,6 @@ services:
       - AB2D_KEY_ALIAS=${AB2D_KEY_ALIAS}
       - AWS_SQS_URL=http://localstack:4566
       - PROPERTIES_SERVICE_URL=contracts:8070
-      - AWS_ACCESS_KEY_ID=invalid
-      - AWS_SECRET_KEY=invalid
       - HPMS_AUTH_KEY_ID="${HPMS_AUTH_KEY_ID}"
       - HPMS_AUTH_KEY_SECRET="${HPMS_AUTH_KEY_SECRET}"
       # Update coverage frequently so that tests aren't slowed down too much
@@ -151,8 +147,6 @@ services:
       - AB2D_V2_ENABLED=true
       - HPMS_INGEST_SCHEDULE=0 0/1 * * * ?
       - AWS_SQS_URL=http://localstack:4566
-      - AWS_ACCESS_KEY_ID=invalid
-      - AWS_SECRET_KEY=invalid
       - HPMS_AUTH_KEY_ID="${HPMS_AUTH_KEY_ID}"
       - HPMS_AUTH_KEY_SECRET="${HPMS_AUTH_KEY_SECRET}"
       - AB2D_HPMS_URL=${AB2D_HPMS_URL}
