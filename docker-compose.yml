@@ -134,7 +134,7 @@ services:
     volumes:
       - tmp-volume:/opt/ab2d
   contracts:
-    image: 349849222861.dkr.ecr.us-east-1.amazonaws.com/ab2d-dev-services:contracts-service
+    image: ${CONTRACTS_IMAGE_URL}
 #    command: gradle jar --info build
     environment:
       - AB2D_DB_HOST=db
