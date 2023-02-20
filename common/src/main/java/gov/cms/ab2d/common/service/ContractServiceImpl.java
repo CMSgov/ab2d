@@ -23,13 +23,11 @@ public class ContractServiceImpl implements ContractService {
         // There are about 100 contracts including test contracts so this call has minimal cost.
         // This call is only made once a day as well.
         return contractFeignClient.getContracts(null).stream().filter(contractDTO -> contractDTO.getAttestedOn() != null)
-                    .map(this::dtoToContract).toList();
-
+                .map(this::dtoToContract).toList();
     }
 
     public Optional<Contract> getContractByContractNumber(String contractNumber) {
         return Optional.of(dtoToContract(contractFeignClient.getContractByNumber(contractNumber)));
-
     }
 
     @Override
@@ -40,7 +38,6 @@ public class ContractServiceImpl implements ContractService {
     @Override
     public Contract getContractByContractId(Long contractId) {
         return dtoToContract(contractFeignClient.getContracts(contractId).get(0));
-
     }
 
     //TODO replace Contract with ContractDTO
@@ -51,5 +48,4 @@ public class ContractServiceImpl implements ContractService {
         contract.setId(contractDTO.getId());
         return contract;
     }
-
 }
