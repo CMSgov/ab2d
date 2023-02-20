@@ -164,8 +164,8 @@ class CoverageDriverTest extends JobCleanup {
 
         contract1 = dataSetup.setupContract("TST-45", AB2D_EPOCH.toOffsetDateTime());
 
-        contractForCoverageDTO = new ContractForCoverageDTO("TST-12", AB2D_EPOCH.toOffsetDateTime(),ContractForCoverageDTO.ContractType.NORMAL);
-        contractForCoverageDTO1 = new ContractForCoverageDTO("TST-45", AB2D_EPOCH.toOffsetDateTime(),ContractForCoverageDTO.ContractType.NORMAL);
+        contractForCoverageDTO = new ContractForCoverageDTO("TST-12", AB2D_EPOCH.toOffsetDateTime(), ContractForCoverageDTO.ContractType.NORMAL);
+        contractForCoverageDTO1 = new ContractForCoverageDTO("TST-45", AB2D_EPOCH.toOffsetDateTime(), ContractForCoverageDTO.ContractType.NORMAL);
 
 
         contractServiceStub.updateContract(contract);
@@ -723,7 +723,7 @@ class CoverageDriverTest extends JobCleanup {
             changeStatus(contractForCoverageDTO, since, CoverageJobStatus.SUCCESSFUL);
 
             LocalDate startMonth = LocalDate.of(2020, 3, 1);
-            LocalTime startDay = LocalTime.of(0,0,0);
+            LocalTime startDay = LocalTime.of(0, 0, 0);
 
             job.setSince(OffsetDateTime.of(startMonth, startDay, AB2D_ZONE.getRules().getOffset(Instant.now())));
 
@@ -731,7 +731,7 @@ class CoverageDriverTest extends JobCleanup {
             assertFalse(inProgressBeginningMonth, "eob searches should run when only month after since is successful");
 
             LocalDate endMonth = LocalDate.of(2020, 3, 31);
-            LocalTime endDay = LocalTime.of(23,59,59);
+            LocalTime endDay = LocalTime.of(23, 59, 59);
 
             job.setSince(OffsetDateTime.of(endMonth, endDay, AB2D_ZONE.getRules().getOffset(Instant.now())));
 
