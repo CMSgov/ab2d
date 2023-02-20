@@ -36,7 +36,7 @@
         <logback-encoder.version>7.2</logback-encoder.version>
         <testcontainers.version>1.17.6</testcontainers.version>
         <newrelic.version>8.0.0</newrelic.version>
-        <postgres.version>42.5.3</postgres.version>
+        <postgres.version>42.5.4</postgres.version>
 
         <!-- Maven plugin versions -->
         <jacoco.version>0.8.8</jacoco.version>
