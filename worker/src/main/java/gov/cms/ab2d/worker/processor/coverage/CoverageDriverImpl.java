@@ -158,9 +158,7 @@ public class CoverageDriverImpl implements CoverageDriver {
                     log.info("Attempting to add {}-{}-{} to queue", period.getContractNumber(),
                             period.getYear(), period.getMonth());
                 }
-                Set<String> contracts = outOfDateInfo.stream().map(CoveragePeriod::getContractNumber).collect(Collectors.toSet());
 
-                coverageSnapshotService.sendCoverageCounts(AB2DServices.AB2D, contracts);
                 for (CoveragePeriod period : outOfDateInfo) {
                     coverageProcessor.queueCoveragePeriod(period, false);
                 }
@@ -223,6 +221,7 @@ public class CoverageDriverImpl implements CoverageDriver {
                 // coverage periods for each contract
                 List<Contract> enabledContracts = pdpClientService.getAllEnabledContracts();
 
+                coverageSnapshotService.sendCoverageCounts(AB2DServices.AB2D, enabledContracts.stream().map(Contract::getContractNumber).collect(Collectors.toSet()));
                 for (Contract contract : enabledContracts) {
                     discoverCoveragePeriods(mapping.map(contract));
                 }
