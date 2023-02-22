@@ -47,8 +47,7 @@ public class ApiCommon {
     private final PdpClientService pdpClientService;
 
     // Since this is used in an annotation, it can't be derived from the Set, otherwise it will be an error
-    public static final String ALLOWABLE_OUTPUT_FORMATS =
-            "application/fhir+ndjson,application/ndjson,ndjson," + ZIPFORMAT;
+    public static final String ALLOWABLE_OUTPUT_FORMATS = "application/fhir+ndjson,application/ndjson,ndjson";
     public static final Set<String> ALLOWABLE_OUTPUT_FORMAT_SET = Set.of(ALLOWABLE_OUTPUT_FORMATS.split(","));
     public static final String JOB_CANCELLED_MSG = "Job canceled";
 

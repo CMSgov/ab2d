@@ -83,7 +83,7 @@ public class BulkDataAccessAPIV2 {
             @Parameter(name = TYPE_PARAM, description = BULK_EXPORT_TYPE, in = ParameterIn.QUERY, schema = @Schema(allowableValues = EOB, defaultValue = EOB)),
             @Parameter(name = OUT_FORMAT, description = BULK_OUTPUT_FORMAT, in = ParameterIn.QUERY,
                 schema = @Schema(allowableValues = {
-                    "application/fhir+ndjson", "application/ndjson", "ndjson", "application/zip"
+                    "application/fhir+ndjson", "application/ndjson", "ndjson"
                 }, defaultValue = NDJSON_FIRE_CONTENT_TYPE)
             ),
             @Parameter(name = SINCE, description = BULK_SINCE_DEFAULT, schema = @Schema(type = "date-time", description = SINCE_EARLIEST_DATE))
@@ -129,7 +129,7 @@ public class BulkDataAccessAPIV2 {
             @Parameter(name = TYPE_PARAM, description = BULK_EXPORT_TYPE, in = ParameterIn.QUERY, schema = @Schema(allowableValues = EOB, defaultValue = EOB)),
             @Parameter(name = OUT_FORMAT, description = BULK_OUTPUT_FORMAT, in = ParameterIn.QUERY,
                     schema = @Schema(allowableValues = {
-                            "application/fhir+ndjson", "application/ndjson", "ndjson", "application/zip"
+                            "application/fhir+ndjson", "application/ndjson", "ndjson"
                     }, defaultValue = NDJSON_FIRE_CONTENT_TYPE)
             ),
             @Parameter(name = SINCE, description = BULK_SINCE_DEFAULT, example = SINCE_EARLIEST_DATE, schema = @Schema(type = "date-time"))

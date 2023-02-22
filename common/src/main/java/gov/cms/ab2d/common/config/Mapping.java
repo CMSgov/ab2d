@@ -34,6 +34,7 @@ public class Mapping {
     public void init() {
         modelMapper = new ModelMapper();
         modelMapper.getConfiguration().setSkipNullEnabled(true);
+        modelMapper.getConfiguration().setImplicitMappingEnabled(false);
 
         Converter<String, Role> roleDTOToRoleConverter = context -> {
             if (context.getSource() == null) {
@@ -75,10 +76,12 @@ public class Mapping {
         modelMapper.addConverter(sponsorDTOSponsorConverter);
         modelMapper.createTypeMap(PdpClient.class, PdpClientDTO.class)
                 .addMappings(mapper -> mapper.using(roleToRoleDTOConverter).map(PdpClient::getRoles, PdpClientDTO::setRole))
-                .addMappings(mapper -> mapper.using(contractIDtoContractDTOConverter).map(PdpClient::getContractId, PdpClientDTO::setContract));
+                .addMappings(mapper -> mapper.using(contractIDtoContractDTOConverter).map(PdpClient::getContractId, PdpClientDTO::setContract))
+                .implicitMappings();
         modelMapper.createTypeMap(PdpClientDTO.class, PdpClient.class)
                 .addMappings(mapper -> mapper.using(roleDTOToRoleConverter).map(PdpClientDTO::getRole, PdpClient::addRole))
-                .addMappings(mapper -> mapper.using(contractDTOtoContractIDConverter).map(PdpClientDTO::getContract, PdpClient::setContractId));
+                .addMappings(mapper -> mapper.using(contractDTOtoContractIDConverter).map(PdpClientDTO::getContract, PdpClient::setContractId))
+                .implicitMappings();
     }
 
     public ModelMapper getModelMapper() {

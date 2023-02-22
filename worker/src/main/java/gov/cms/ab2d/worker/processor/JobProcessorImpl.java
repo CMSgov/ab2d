@@ -257,9 +257,9 @@ public class JobProcessorImpl implements JobProcessor {
     }
 
     /**
-     * Delete directory with all the ndjson files or zip files. If the files are directories or symbolic links, write
+     * Delete directory with all the ndjson files. If the files are directories or symbolic links, write
      * error, but continue. If it's a regular file, delete it, then delete the directory. If the directory is not
-     * empty, throws an exception (if it has files other than ndjson or zip in it)
+     * empty, throws an exception (if it has files other than ndjson)
      *
      * @param outputDirPath - the directory to delete
      */
@@ -289,7 +289,7 @@ public class JobProcessorImpl implements JobProcessor {
     }
 
     /**
-     * @return a Filename filter for ndjson and zip files
+     * @return a Filename filter for ndjson
      */
     FilenameFilter getFilenameFilter() {
         return (dir, name) -> {

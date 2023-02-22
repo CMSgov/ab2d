@@ -5,8 +5,18 @@ import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.service.CoverageService;
+import gov.cms.ab2d.snsclient.messages.AB2DServices;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
+import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.stereotype.Service;
+
+import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -15,14 +25,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.annotation.PreDestroy;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.springframework.stereotype.Service;
-
 
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 
@@ -84,24 +86,28 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
     private final ContractToContractCoverageMapping contractCoverageMapping = new ContractToContractCoverageMapping();
 
+    private final CoverageSnapshotService coverageSnapshotService;
+
     /**
      * Coverage processor needs an interface to the database, client for BFD, and thread pool to concurrently execute
      * searches.
      *
-     * @param coverageService interface with the database for querying, saving, and inserting searches
-     * @param bfdClient REST client for specific calls to BFD
-     * @param executor thread pool to execute enrollment updates within
-     * @param maxAttempts max number of retries to make for updating enrollment for a specific month before failing outright
+     * @param coverageService         interface with the database for querying, saving, and inserting searches
+     * @param bfdClient               REST client for specific calls to BFD
+     * @param executor                thread pool to execute enrollment updates within
+     * @param maxAttempts             max number of retries to make for updating enrollment for a specific month before failing outright
+     * @param coverageSnapshotService
      */
     public CoverageProcessorImpl(CoverageService coverageService, BFDClient bfdClient,
                                  @Qualifier("patientCoverageThreadPool") ThreadPoolTaskExecutor executor,
                                  @Value("${coverage.update.max.attempts}") int maxAttempts,
-                                 ContractWorkerClient contractWorkerClient) {
+                                 ContractWorkerClient contractWorkerClient, CoverageSnapshotService coverageSnapshotService) {
         this.coverageService = coverageService;
         this.bfdClient = bfdClient;
         this.executor = executor;
         this.maxAttempts = maxAttempts;
         this.contractWorkerClient = contractWorkerClient;
+        this.coverageSnapshotService = coverageSnapshotService;
     }
 
     @Override
@@ -352,6 +358,8 @@ public class CoverageProcessorImpl implements CoverageProcessor {
             coverageService.completeSearch(periodId, "successfully inserted all data for in progress search");
 
             log.info("marked search as completed {}-{}-{}", contractNumber, month, year);
+            coverageSnapshotService.sendCoverageCounts(AB2DServices.BFD, contractNumber, result.getBeneficiaryIds()
+                    .size(), year, month);
         } catch (Exception exception) {
             log.error("inserting the coverage data failed for {}-{}-{}", result.getContractNumber(),
                     result.getPeriod().getMonth(), result.getPeriod().getYear());

@@ -9,7 +9,6 @@
         <module>coverage</module>
         <module>api</module>
         <module>worker</module>
-        <module>audit</module>
         <module>hpms</module>
         <module>e2e-test</module>
         <module>e2e-bfd-test</module>
@@ -30,14 +29,14 @@
     <properties>
         <project.root>${basedir}</project.root>
         <java.version>17</java.version>
-        <hapi.version>6.2.4</hapi.version>
-        <mockito.inline.version>5.0.0</mockito.inline.version>
+        <hapi.version>6.2.5</hapi.version>
+        <mockito.inline.version>5.1.1</mockito.inline.version>
         <okhttp3.version>4.10.0</okhttp3.version>
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
         <logback-encoder.version>7.2</logback-encoder.version>
         <testcontainers.version>1.17.6</testcontainers.version>
-        <newrelic.version>7.11.1</newrelic.version>
-        <postgres.version>42.5.1</postgres.version>
+        <newrelic.version>8.0.0</newrelic.version>
+        <postgres.version>42.5.3</postgres.version>
 
         <!-- Maven plugin versions -->
         <jacoco.version>0.8.8</jacoco.version>
