@@ -180,12 +180,6 @@ class TestRunner {
     private void loadDockerComposeContainers(int apiPort) {
         File[] composeFiles = environment.getComposeFiles();
 
-        Map<String, String> mapOfEnvs = System.getenv();
-        for (String key: mapOfEnvs.keySet()) {
-            String value = mapOfEnvs.get(key);
-            System.out.println("ENVS: " + key + "=" + value);
-        }
-
         DockerComposeContainer container = new DockerComposeContainer(composeFiles)
                 .withEnv(System.getenv())
                 // Add api variable to environment to populate docker-compose port variable
