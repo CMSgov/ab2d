@@ -121,7 +121,7 @@
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>ab2d-contracts-client</artifactId>
-            <version>1.0.0</version>
+            <version>${contract-client.version}</version>
         </dependency>
     </dependencies>
 
