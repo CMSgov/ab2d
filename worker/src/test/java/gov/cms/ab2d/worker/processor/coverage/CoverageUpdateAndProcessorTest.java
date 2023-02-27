@@ -1,15 +1,17 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.common.dto.PdpClientDTO;
-import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.properties.PropertiesService;
-import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.common.properties.PropertyServiceStub;
+import gov.cms.ab2d.common.service.ContractServiceStub;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
+import gov.cms.ab2d.common.util.ContractServiceTestConfig;
 import gov.cms.ab2d.common.util.DateUtil;
+import gov.cms.ab2d.contracts.model.Contract;
+import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.CoverageJobStatus;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
@@ -19,7 +21,6 @@ import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import gov.cms.ab2d.job.model.Job;
-import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
@@ -51,10 +52,10 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
-import static gov.cms.ab2d.fhir.FhirVersion.STU3;
-import static gov.cms.ab2d.fhir.IdentifierUtils.BENEFICIARY_ID;
 import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_STUCK_HOURS;
 import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_UPDATE_MONTHS;
+import static gov.cms.ab2d.fhir.FhirVersion.STU3;
+import static gov.cms.ab2d.fhir.IdentifierUtils.BENEFICIARY_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -70,7 +71,7 @@ import static org.mockito.Mockito.when;
 // Never run internal coverage processor so this coverage processor runs unimpeded
 @SpringBootTest(properties = "coverage.update.initial.delay=1000000")
 @Testcontainers
-@Import(AB2DSQSMockConfig.class)
+@Import({AB2DSQSMockConfig.class, ContractServiceTestConfig.class})
 class CoverageUpdateAndProcessorTest {
 
     private static final int PAST_MONTHS = 3;
@@ -85,7 +86,7 @@ class CoverageUpdateAndProcessorTest {
     private int maxRetries;
 
     @Autowired
-    private ContractRepository contractRepo;
+    private ContractServiceStub contractServiceStub;
 
     @Autowired
     private ContractWorkerClient contractWorkerClient;
@@ -142,7 +143,7 @@ class CoverageUpdateAndProcessorTest {
         originalValues.clear();
 
         contract = dataSetup.setupContract("TST-12", AB2D_EPOCH.toOffsetDateTime());
-        contractRepo.saveAndFlush(contract);
+        contractServiceStub.updateContract(contract);
 
         january = coverageDataSetup.createCoveragePeriod("TST-12", 1, 2020);
         february = coverageDataSetup.createCoveragePeriod("TST-12", 2, 2020);
@@ -187,7 +188,7 @@ class CoverageUpdateAndProcessorTest {
 
         Contract attestedAfterEpoch = dataSetup.setupContract("TST-AFTER-EPOCH",
                 AB2D_EPOCH.toOffsetDateTime().plusMonths(3));
-        contractRepo.saveAndFlush(attestedAfterEpoch);
+        contractServiceStub.updateContract(attestedAfterEpoch);
 
         PdpClientDTO attestedAfterClient = createClient(attestedAfterEpoch.toDTO(), "TST-AFTER-EPOCH", SPONSOR_ROLE);
         pdpClientService.createClient(attestedAfterClient);
@@ -195,7 +196,7 @@ class CoverageUpdateAndProcessorTest {
 
         Contract attestedBeforeEpoch = dataSetup.setupContract("TST-BEFORE-EPOCH",
                 AB2D_EPOCH.toOffsetDateTime().minusNanos(1));
-        contractRepo.saveAndFlush(attestedBeforeEpoch);
+        contractServiceStub.updateContract(attestedBeforeEpoch);
 
         PdpClientDTO attestedBeforeClient = createClient(attestedBeforeEpoch.toDTO(), "TST-BEFORE-EPOCH", SPONSOR_ROLE);
         pdpClientService.createClient(attestedBeforeClient);

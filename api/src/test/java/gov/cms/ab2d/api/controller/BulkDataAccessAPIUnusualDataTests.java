@@ -4,6 +4,7 @@ import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.PurgeQueueRequest;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.remote.JobClientMock;
+import gov.cms.ab2d.common.service.ContractServiceStub;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.eventclient.clients.SQSConfig;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
@@ -61,7 +62,7 @@ public class BulkDataAccessAPIUnusualDataTests {
     private TestUtil testUtil;
 
     @Autowired
-    private ContractRepository contractRepository;
+    private ContractServiceStub contractServiceStub;
 
     @Autowired
     private DataSetup dataSetup;
@@ -89,7 +90,7 @@ public class BulkDataAccessAPIUnusualDataTests {
     void testPatientExportWithNoAttestation() throws Exception {
         // Valid contract number for sponsor, but no attestation
         String token = testUtil.setupContractWithNoAttestation(List.of(SPONSOR_ROLE));
-        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+        Optional<Contract> contractOptional = contractServiceStub.getContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         this.mockMvc.perform(get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -111,7 +112,7 @@ public class BulkDataAccessAPIUnusualDataTests {
     public void testPatientExportWithOnlyParentAttestation() throws Exception {
         String token = testUtil.setupContractSponsorForParentClientData(List.of(SPONSOR_ROLE));
 
-        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+        Optional<Contract> contractOptional = contractServiceStub.getContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         ResultActions resultActions = this.mockMvc.perform(
                         get(API_PREFIX_V1 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)

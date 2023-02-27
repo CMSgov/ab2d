@@ -1,8 +1,5 @@
 package gov.cms.ab2d.common.properties;
 
-import gov.cms.ab2d.common.properties.PropertiesDTO;
-import gov.cms.ab2d.common.properties.PropertiesService;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +16,6 @@ public class PropertyServiceStub implements PropertiesService {
         propertiesMapOrig.put("property.change.detection", "false");
         propertiesMapOrig.put("ZipSupportOn", "false");
         propertiesMapOrig.put("worker.engaged", "engaged");
-        propertiesMapOrig.put("hpms.ingest.engaged", "engaged");
         propertiesMapOrig.put("coverage.update.stuck.hours", "24");
         propertiesMapOrig.put("coverage.update.discovery", "engaged");
         propertiesMapOrig.put("coverage.update.queueing", "engaged");

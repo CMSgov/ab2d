@@ -3,12 +3,12 @@ package gov.cms.ab2d.api.controller;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.remote.JobClientMock;
-import gov.cms.ab2d.contracts.model.Contract;
-import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
+import gov.cms.ab2d.common.service.ContractServiceStub;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.job.dto.StartJobDTO;
 import java.util.List;
 import java.util.Optional;
@@ -55,7 +55,7 @@ public class BulkDataAccessAPIV2IntegrationTests {
     private PdpClientRepository pdpClientRepository;
 
     @Autowired
-    private ContractRepository contractRepository;
+    private ContractServiceStub contractRepository;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
@@ -108,7 +108,7 @@ public class BulkDataAccessAPIV2IntegrationTests {
 
     @Test
     void testBasicPatientExportWithContractWithHttps() throws Exception {
-        Optional<Contract> contractOptional = contractRepository.findContractByContractNumber(VALID_CONTRACT_NUMBER);
+        Optional<Contract> contractOptional = contractRepository.getContractByContractNumber(VALID_CONTRACT_NUMBER);
         Contract contract = contractOptional.get();
         ResultActions resultActions = this.mockMvc.perform(
                 get(API_PREFIX_V2 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)

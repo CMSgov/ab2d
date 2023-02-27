@@ -1,8 +1,8 @@
 package gov.cms.ab2d.worker.service;
 
-import gov.cms.ab2d.contracts.model.Contract;
-import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.common.service.ContractServiceStub;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.repository.CoveragePeriodRepository;
@@ -53,7 +53,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 class PerformanceTestingCoverageOperations {
 
     @Autowired
-    private ContractRepository contractRepo;
+    private ContractServiceStub contractRepo;
 
     @Autowired
     private CoveragePeriodRepository coveragePeriodRepo;

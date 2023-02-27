@@ -1,16 +1,16 @@
 package gov.cms.ab2d.job.service;
 
-import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.Role;
-import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.service.ContractService;
+import gov.cms.ab2d.common.service.ContractServiceStub;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.common.service.RoleService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.job.JobTestSpringBootApp;
 import gov.cms.ab2d.job.dto.JobPollResult;
@@ -45,7 +45,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.Resource;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.annotation.DirtiesContext;
@@ -93,7 +92,7 @@ class JobServiceTest extends JobCleanup {
     private PdpClientRepository pdpClientRepository;
 
     @Autowired
-    private ContractRepository contractRepository;
+    private ContractServiceStub contractServiceStub;
 
     @Autowired
     private JobOutputRepository jobOutputRepository;
@@ -191,7 +190,7 @@ class JobServiceTest extends JobCleanup {
 
     @Test
     void createJobWithContract() {
-        Contract contract = contractRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+        Contract contract = contractServiceStub.getAllAttestedContracts().iterator().next();
 
         Job job = jobService.createJob(buildStartJobContract(contract.getContractNumber()));
         addJobForCleanup(job);
@@ -226,7 +225,7 @@ class JobServiceTest extends JobCleanup {
 
     @Test
     void reportFirstJobRunForAContract() {
-        Contract contract = contractRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+        Contract contract = contractServiceStub.getAllAttestedContracts().iterator().next();
 
         Job job1 = jobService.createJob(buildStartJobContract(contract.getContractNumber()));
         addJobForCleanup(job1);

@@ -1,24 +1,31 @@
 package gov.cms.ab2d.common.service;
 
-import gov.cms.ab2d.contracts.model.Contract;
-import gov.cms.ab2d.common.repository.ContractRepository;
+import gov.cms.ab2d.common.feign.ContractFeignClient;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.contracts.model.Contract;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.List;
-import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @Testcontainers
@@ -28,8 +35,8 @@ class ContractServiceImplTest {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
-    @Autowired
-    private ContractRepository contractRepo;
+    @MockBean
+    private ContractFeignClient contractRepo;
 
     @Autowired
     private ContractServiceImpl contractService;
@@ -44,8 +51,9 @@ class ContractServiceImplTest {
         contract = new Contract();
         contract.setContractName("Test Contract");
         contract.setContractNumber("NATTE");
+        when(contractRepo.getContracts(anyLong())).thenReturn(List.of(contract.toDTO()));
+        when(contractRepo.getContractByNumber(anyString())).thenReturn(contract.toDTO());
 
-        contract = contractRepo.save(contract);
         dataSetup.queueForCleanup(contract);
     }
 
@@ -58,7 +66,7 @@ class ContractServiceImplTest {
     @Test
     void contractServiceFilterAttestation() {
 
-        List<Contract> allContracts = contractRepo.findAll();
+        List<Contract> allContracts = List.of(contract);
         List<Contract> attestedContracts = contractService.getAllAttestedContracts();
 
         // All manually added contracts are automatically attested so these lists should match

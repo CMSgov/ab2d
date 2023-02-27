@@ -9,7 +9,6 @@
         <module>coverage</module>
         <module>api</module>
         <module>worker</module>
-        <module>hpms</module>
         <module>e2e-test</module>
         <module>e2e-bfd-test</module>
     </modules>

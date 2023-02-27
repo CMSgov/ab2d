@@ -1,7 +1,7 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
+import gov.cms.ab2d.common.service.ContractServiceStub;
 import gov.cms.ab2d.contracts.model.ContractDTO;
-import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
@@ -36,7 +36,7 @@ class CoverageProcessorIntTest {
     private static final AB2DLocalstackContainer LOCALSTACK_CONTAINER = new AB2DLocalstackContainer();
 
     @Autowired
-    private ContractRepository contractRepo;
+    private ContractServiceStub contractServiceStub;
 
     @Autowired
     private CoveragePeriodRepository coveragePeriodRepo;
@@ -67,7 +67,7 @@ class CoverageProcessorIntTest {
     void integrationTest() {
 
 
-        ContractDTO contract = contractRepo.findContractByContractNumber("Z0010").get().toDTO();
+        ContractDTO contract = contractServiceStub.getContractByContractNumber("Z0010").get().toDTO();
         CoveragePeriod january = dataSetup.createCoveragePeriod(contract.getContractNumber(), 1, 2000);
         CoveragePeriod february = dataSetup.createCoveragePeriod(contract.getContractNumber(), 2, 2000);
         CoveragePeriod march = dataSetup.createCoveragePeriod(contract.getContractNumber(), 3, 2000);

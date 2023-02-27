@@ -1,8 +1,8 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
+import gov.cms.ab2d.common.service.ContractServiceStub;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
-import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
@@ -52,7 +52,7 @@ public class CoverageCheckIntegrationTest {
     private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
 
     @Autowired
-    private ContractRepository contractRepo;
+    private ContractServiceStub contractServiceStub;
 
     @Autowired
     private CoverageSearchRepository coverageSearchRepo;
@@ -99,7 +99,7 @@ public class CoverageCheckIntegrationTest {
         PdpClient client = dataSetup.setupNonStandardClient("special", "TEST", List.of("SPONSOR"));
         contract = contractService.getContractByContractNumber("TEST").get();
         contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
-        contractRepo.saveAndFlush(contract);
+        contractServiceStub.updateContract(contract);
 
     }
 
@@ -165,7 +165,7 @@ public class CoverageCheckIntegrationTest {
         contract.setAttestedOn(ATTESTATION_TIME.toOffsetDateTime());
         contract.setUpdateMode(Contract.UpdateMode.NONE);
         contract.setContractType(Contract.ContractType.CLASSIC_TEST);
-        contractRepo.saveAndFlush(contract);
+        contractServiceStub.updateContract(contract);
 
         CoverageVerificationException exception =
                 assertThrows(CoverageVerificationException.class, () -> coverageDriver.verifyCoverage());
@@ -245,7 +245,7 @@ public class CoverageCheckIntegrationTest {
         createCoveragePeriods(dateTime);
 
         contract.setAttestedOn(ZonedDateTime.now().toOffsetDateTime());
-        contractRepo.saveAndFlush(contract);
+        contractServiceStub.updateContract(contract);
 
         Set<Identifiers> tenK = new LinkedHashSet<>();
         for (long idx = 0; idx < 10000; idx++) {

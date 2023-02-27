@@ -1,7 +1,7 @@
 package gov.cms.ab2d.job.service;
 
+import gov.cms.ab2d.common.service.ContractServiceStub;
 import gov.cms.ab2d.contracts.model.Contract;
-import gov.cms.ab2d.common.repository.ContractRepository;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
@@ -40,7 +40,7 @@ class MaxJobsTest extends JobCleanup {
     private static final int MAX_JOBS_PER_CLIENT = 3;
 
     @Autowired
-    private ContractRepository contractRepository;
+    private ContractServiceStub contractServiceStub;
 
     @Autowired
     private JobService jobService;
@@ -76,7 +76,7 @@ class MaxJobsTest extends JobCleanup {
         setupRegularClientSecurityContext();
 
 
-        Contract contract = contractRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).iterator().next();
+        Contract contract = contractServiceStub.getAllAttestedContracts().iterator().next();
         String organization = pdpClientService.getCurrentClient().getOrganization();
         startJobDTO = new StartJobDTO(contract.getContractNumber(), organization,
                 EOB, LOCAL_HOST, NDJSON_FIRE_CONTENT_TYPE, null, STU3);
