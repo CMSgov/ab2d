@@ -34,7 +34,7 @@ public class ContractServiceStub implements ContractService {
         pdpClients.sort(Comparator.comparing(PdpClient::getContractId));
 
         for (int i = 0; i < pdpClients.size(); i++) {
-            Contract contract = new Contract("Z100" + (i+1), "Z100" + (i+1), null, null, null);
+            Contract contract = new Contract("Z100" + (i+1), "Z100" + (i+1), null, null, null, 0, 0);
             contract.setId(pdpClients.get(i).getContractId());
             contract.setAttestedOn(OffsetDateTime.parse( "2020-03-01T12:00-06:00"));
             contract.setUpdateMode(Contract.UpdateMode.NONE);

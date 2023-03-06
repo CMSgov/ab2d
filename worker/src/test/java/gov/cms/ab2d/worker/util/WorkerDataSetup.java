@@ -84,7 +84,7 @@ public class WorkerDataSetup {
     }
 
     public ContractDTO setupWorkerContract(String contractNumber, OffsetDateTime attestedOn) {
-        ContractDTO contract = new ContractDTO(null, contractNumber, "Test ContractWorkerDto " + contractNumber, attestedOn, Contract.ContractType.NORMAL);
+        ContractDTO contract = new ContractDTO(null, contractNumber, "Test ContractWorkerDto " + contractNumber, attestedOn, Contract.ContractType.NORMAL, 0, 0);
 
         queueForCleanup(contract);
         return contract;
