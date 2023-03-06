@@ -151,3 +151,5 @@ databaseChangeLog:
       file: db/changelog/v2022/properties-service-database-migration.sql
   - include:
       file: db/changelog/v2022/contract-service-database-migration.sql
+  - include:
+      file: db/changelog/v2023/drop-unused-tables.sql
