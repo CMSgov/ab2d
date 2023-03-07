@@ -158,9 +158,9 @@ public class CoverageDriverImpl implements CoverageDriver {
                     log.info("Attempting to add {}-{}-{} to queue", period.getContractNumber(),
                             period.getYear(), period.getMonth());
                 }
-                Set<String> contracts = outOfDateInfo.stream().map(CoveragePeriod::getContractNumber).collect(Collectors.toSet());
-
-                coverageSnapshotService.sendCoverageCounts(AB2DServices.AB2D, contracts);
+                //commented out, needs to be moved elsewhere due to do timeout
+                //Set<String> contracts = outOfDateInfo.stream().map(CoveragePeriod::getContractNumber).collect(Collectors.toSet());
+                //coverageSnapshotService.sendCoverageCounts(AB2DServices.AB2D, contracts);
                 for (CoveragePeriod period : outOfDateInfo) {
                     coverageProcessor.queueCoveragePeriod(period, false);
                 }
