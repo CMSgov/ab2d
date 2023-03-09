@@ -20,6 +20,9 @@ pipeline {
         SEARCH_BENE_BATCH_SIZE=10
 
         ARTIFACTORY_URL = credentials('ARTIFACTORY_URL')
+
+        AWS_DEFAULT_REGION = "us-east-1"
+        ECR_REPO_ENV_AWS_ACCOUNT_NUMBER = "777200079629"
     }
 
     agent {
@@ -164,6 +167,10 @@ pipeline {
                         chmod 666 $KEYSTORE_LOCATION
 
                         ls -la $KEYSTORE_LOCATION
+
+                        # Log into ECR for Docker Compose in e2e tests
+                        aws --region "${AWS_DEFAULT_REGION}" ecr get-login-password |
+                          docker login --username AWS --password-stdin "${ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
 
                         mvn test --settings settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD}
                     '''
