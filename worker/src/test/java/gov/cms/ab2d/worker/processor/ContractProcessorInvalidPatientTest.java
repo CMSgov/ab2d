@@ -85,7 +85,7 @@ class ContractProcessorInvalidPatientTest {
     @BeforeEach
     void setup() {
         contractWorkerClient = new ContractWorkerClientMock();
-        contract = new ContractDTO(null, contractId, contractId, OffsetDateTime.now().minusYears(50), null);
+        contract = new ContractDTO(null, contractId, contractId, OffsetDateTime.now().minusYears(50), null, 0, 0);
 
         SearchConfig searchConfig = new SearchConfig(tmpDirFolder.getAbsolutePath(), STREAMING_DIR,
                 FINISHED_DIR, 0, 0, 1, 2);

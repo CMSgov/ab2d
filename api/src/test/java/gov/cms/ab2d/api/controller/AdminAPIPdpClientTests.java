@@ -390,6 +390,6 @@ public class AdminAPIPdpClientTests {
     }
 
     private ContractDTO buildContractDTO() {
-        return new ContractDTO(null, VALID_CONTRACT_NUMBER, "Test Contract " + VALID_CONTRACT_NUMBER, null, null);
+        return new ContractDTO(null, VALID_CONTRACT_NUMBER, "Test Contract " + VALID_CONTRACT_NUMBER, null, null, 0, 0);
     }
 }
