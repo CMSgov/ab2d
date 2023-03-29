@@ -11,6 +11,8 @@ public class TestLauncher {
 
     // Used when not being run from TravisCI as part of a build to pass in values to the TestRunner. This allows us
     // to use different environments without having to change any code
+
+    // PIPELINE CHECK - REMOVE ME!
     public static void main(String [] args) throws InterruptedException, JSONException, IOException, InvocationTargetException,
             IllegalAccessException, KeyManagementException, NoSuchAlgorithmException {
         Environment env = Environment.DEV;
