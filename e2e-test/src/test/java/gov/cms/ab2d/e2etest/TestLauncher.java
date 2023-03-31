@@ -24,5 +24,6 @@ public class TestLauncher {
 
         TestRunner testRunner = new TestRunner(env);
         testRunner.runTests(contractNum);
+        //testing
     }
 }
