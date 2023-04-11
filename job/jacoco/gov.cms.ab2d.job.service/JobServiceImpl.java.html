@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JobServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">job</a> &gt; <a href="index.source.html" class="el_package">gov.cms.ab2d.job.service</a> &gt; <span class="el_source">JobServiceImpl.java</span></div><h1>JobServiceImpl.java</h1><pre class="source lang-java linenums">package gov.cms.ab2d.job.service;
+
+import gov.cms.ab2d.common.service.ResourceNotFoundException;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
+import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
+import gov.cms.ab2d.eventclient.events.SlackEvents;
+import gov.cms.ab2d.job.dto.JobPollResult;
+import gov.cms.ab2d.job.dto.StaleJob;
+import gov.cms.ab2d.job.dto.StartJobDTO;
+import gov.cms.ab2d.job.model.Job;
+import gov.cms.ab2d.job.model.JobOutput;
+import gov.cms.ab2d.job.model.JobStatus;
+import gov.cms.ab2d.job.repository.JobRepository;
+import java.io.File;
+import java.net.MalformedURLException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.OffsetDateTime;
+import java.util.Comparator;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+
+import static gov.cms.ab2d.common.util.Constants.MAX_DOWNLOADS;
+
+<span class="fc" id="L33">@Slf4j</span>
+@Service
+@Transactional
+public class JobServiceImpl implements JobService {
+
+    private final JobRepository jobRepository;
+    private final JobOutputService jobOutputService;
+    private final SQSEventClient eventLogger;
+    private final String fileDownloadPath;
+
+    public static final String INITIAL_JOB_STATUS_MESSAGE = &quot;0%&quot;;
+
+    public JobServiceImpl(JobRepository jobRepository, JobOutputService jobOutputService,
+                          SQSEventClient eventLogger,
+<span class="fc" id="L47">                          @Value(&quot;${efs.mount}&quot;) String fileDownloadPath) {</span>
+<span class="fc" id="L48">        this.jobRepository = jobRepository;</span>
+<span class="fc" id="L49">        this.jobOutputService = jobOutputService;</span>
+<span class="fc" id="L50">        this.eventLogger = eventLogger;</span>
+<span class="fc" id="L51">        this.fileDownloadPath = fileDownloadPath;</span>
+<span class="fc" id="L52">    }</span>
+
+    @Override
+    public Job createJob(StartJobDTO startJobDTO) {
+<span class="fc" id="L56">        Job job = new Job();</span>
+<span class="fc" id="L57">        job.setResourceTypes(startJobDTO.getResourceTypes());</span>
+<span class="fc" id="L58">        job.setJobUuid(UUID.randomUUID().toString());</span>
+<span class="fc" id="L59">        job.setRequestUrl(startJobDTO.getUrl());</span>
+<span class="fc" id="L60">        job.setStatusMessage(INITIAL_JOB_STATUS_MESSAGE);</span>
+<span class="fc" id="L61">        job.setCreatedAt(OffsetDateTime.now());</span>
+<span class="fc" id="L62">        job.setOutputFormat(startJobDTO.getOutputFormat());</span>
+<span class="fc" id="L63">        job.setProgress(0);</span>
+<span class="fc" id="L64">        job.setSince(startJobDTO.getSince());</span>
+<span class="fc" id="L65">        job.setFhirVersion(startJobDTO.getVersion());</span>
+<span class="fc" id="L66">        job.setOrganization(startJobDTO.getOrganization());</span>
+
+<span class="fc" id="L68">        eventLogger.sendLogs(job.buildJobStatusChangeEvent(JobStatus.SUBMITTED, &quot;Job Created&quot;));</span>
+
+        // Report client running first job in prod
+<span class="fc bfc" id="L71" title="All 2 branches covered.">        if (clientHasNeverCompletedJob(startJobDTO.getContractNumber())) {</span>
+<span class="fc" id="L72">            String firstJobMessage = String.format(SlackEvents.ORG_FIRST + &quot; Organization %s is running their first job for contract %s&quot;,</span>
+<span class="fc" id="L73">                    startJobDTO.getOrganization(), startJobDTO.getContractNumber());</span>
+<span class="fc" id="L74">            eventLogger.alert(firstJobMessage, Ab2dEnvironment.PROD_LIST);</span>
+        }
+<span class="fc" id="L76">        job.setContractNumber(startJobDTO.getContractNumber());</span>
+<span class="fc" id="L77">        job.setStatus(JobStatus.SUBMITTED);</span>
+<span class="fc" id="L78">        return jobRepository.save(job);</span>
+    }
+
+    @Override
+    public void cancelJob(String jobUuid, String organization) {
+<span class="fc" id="L83">        Job job = getAuthorizedJobByJobUuid(jobUuid, organization);</span>
+
+<span class="fc" id="L85">        log.info(&quot;Cancel job in database: {}&quot;, jobUuid);</span>
+<span class="fc bfc" id="L86" title="All 2 branches covered.">        if (!job.getStatus().isCancellable()) {</span>
+<span class="fc" id="L87">            log.error(&quot;Job had a status of {} so it was not able to be cancelled&quot;, job.getStatus());</span>
+<span class="fc" id="L88">            throw new InvalidJobStateTransition(&quot;Job has a status of &quot; + job.getStatus() + &quot;, so it cannot be cancelled&quot;);</span>
+        }
+<span class="fc" id="L90">        eventLogger.sendLogs(job.buildJobStatusChangeEvent(JobStatus.CANCELLED, &quot;Job Cancelled&quot;));</span>
+<span class="fc" id="L91">        jobRepository.cancelJobByJobUuid(jobUuid);</span>
+<span class="fc" id="L92">        jobRepository.flush();</span>
+<span class="fc" id="L93">    }</span>
+
+    public Job getAuthorizedJobByJobUuid(String jobUuid, String organization) {
+<span class="fc" id="L96">        Job job = getJobByJobUuid(jobUuid);</span>
+
+<span class="fc bfc" id="L98" title="All 2 branches covered.">        if (!job.getOrganization().equals(organization)) {</span>
+<span class="fc" id="L99">            log.error(&quot;Client attempted to download a file where they had a valid UUID, but was not logged in as the &quot; +</span>
+                    &quot;client that created the job&quot;);
+<span class="fc" id="L101">            throw new InvalidJobAccessException(&quot;Unauthorized&quot;);</span>
+        }
+
+<span class="fc" id="L104">        return job;</span>
+    }
+
+    @Override
+    public Job getJobByJobUuid(String jobUuid) {
+<span class="fc" id="L109">        Job job = jobRepository.findByJobUuid(jobUuid);</span>
+
+<span class="fc bfc" id="L111" title="All 2 branches covered.">        if (job == null) {</span>
+<span class="fc" id="L112">            log.error(&quot;Job {} was searched for and was not found&quot;, jobUuid);</span>
+<span class="fc" id="L113">            throw new ResourceNotFoundException(&quot;No job with jobUuid &quot; + jobUuid + &quot; was found&quot;);</span>
+        }
+
+<span class="fc" id="L116">        return job;</span>
+    }
+
+    @Override
+    public Job updateJob(Job job) {
+<span class="fc" id="L121">        return jobRepository.save(job);</span>
+    }
+
+    @Override
+    public Resource getResourceForJob(String jobUuid, String fileName, String organization) throws MalformedURLException {
+<span class="fc" id="L126">        Job job = getAuthorizedJobByJobUuid(jobUuid, organization);</span>
+
+        // Make sure that there is a path that matches a job output for the job they are requesting
+<span class="fc" id="L129">        boolean jobOutputMatchesPath = false;</span>
+<span class="fc" id="L130">        JobOutput foundJobOutput = null;</span>
+<span class="fc bfc" id="L131" title="All 2 branches covered.">        for (JobOutput jobOutput : job.getJobOutputs()) {</span>
+<span class="fc bfc" id="L132" title="All 2 branches covered.">            if (jobOutput.getFilePath().equals(fileName)) {</span>
+<span class="fc" id="L133">                jobOutputMatchesPath = true;</span>
+<span class="fc" id="L134">                foundJobOutput = jobOutput;</span>
+<span class="fc" id="L135">                break;</span>
+            }
+<span class="fc" id="L137">        }</span>
+
+<span class="fc bfc" id="L139" title="All 2 branches covered.">        if (!jobOutputMatchesPath) {</span>
+<span class="fc" id="L140">            log.error(&quot;No Job Output with the file name {} exists in our records&quot;, fileName);</span>
+<span class="fc" id="L141">            throw new ResourceNotFoundException(&quot;No Job Output with the file name &quot; + fileName + &quot; exists in our records&quot;);</span>
+        }
+
+<span class="fc" id="L144">        Path file = Paths.get(fileDownloadPath, job.getJobUuid(), fileName);</span>
+<span class="fc" id="L145">        Resource resource = new UrlResource(file.toUri());</span>
+<span class="fc bfc" id="L146" title="All 2 branches covered.">        if (foundJobOutput.getDownloaded() &gt;= MAX_DOWNLOADS) {</span>
+<span class="fc" id="L147">            throw new JobOutputMissingException(&quot;The file has already been download the maximum number of allowed times.&quot;);</span>
+        }
+<span class="fc bfc" id="L149" title="All 2 branches covered.">        if (!resource.exists()) {</span>
+            String errorMsg;
+<span class="fc bfc" id="L151" title="All 2 branches covered.">            if (job.getExpiresAt().isBefore(OffsetDateTime.now())) {</span>
+<span class="fc" id="L152">                errorMsg = &quot;The file is not present as it has expired. Please resubmit the job.&quot;;</span>
+            } else {
+<span class="fc" id="L154">                errorMsg = &quot;The file is not present as there was an error. Please resubmit the job.&quot;;</span>
+            }
+<span class="fc" id="L156">            log.error(errorMsg);</span>
+<span class="fc" id="L157">            throw new JobOutputMissingException(errorMsg);</span>
+        }
+
+<span class="fc" id="L160">        return resource;</span>
+    }
+
+
+    public void incrementDownload(File file, String jobUuid) {
+<span class="fc" id="L165">        Job job = jobRepository.findByJobUuid(jobUuid);</span>
+<span class="fc" id="L166">        JobOutput jobOutput = jobOutputService.findByFilePathAndJob(file.getName(), job);</span>
+        // Incrementing downloaded in this way is likely not concurrency safe.
+        // If multiple users (aka threads) download the same file at the same time the count won't record every download
+        // This would result in the file being downloaded more than the allowed number of time.
+<span class="fc" id="L170">        jobOutput.setDownloaded(jobOutput.getDownloaded() + 1);</span>
+<span class="fc" id="L171">        jobOutput.setLastDownloadAt(OffsetDateTime.now());</span>
+<span class="fc" id="L172">        jobOutputService.updateJobOutput(jobOutput);</span>
+<span class="fc" id="L173">    }</span>
+
+    @Override
+    public int activeJobs(String organization) {
+<span class="fc" id="L177">        List&lt;Job&gt; jobs = jobRepository.findActiveJobsByClient(organization);</span>
+<span class="fc" id="L178">        return jobs.size();</span>
+    }
+
+    @Override
+    public List&lt;String&gt; getActiveJobIds(String organization) {
+        //Sorting with stream so we don't affect existing code that uses findActiveJobsByClient.
+        //Number of jobs returned should be small
+<span class="nc" id="L185">        return jobRepository.findActiveJobsByClient(organization).stream()</span>
+<span class="nc" id="L186">                .sorted(Comparator.comparing(Job::getCreatedAt))</span>
+<span class="nc" id="L187">                .map(Job::getJobUuid).collect(Collectors.toList());</span>
+    }
+
+    @Override
+    public JobPollResult poll(boolean admin, String jobUuid, String organization, int delaySeconds) {
+<span class="pc bpc" id="L192" title="1 of 2 branches missed.">        Job job = (admin) ? getJobByJobUuid(jobUuid) : getAuthorizedJobByJobUuid(jobUuid, organization);</span>
+<span class="fc" id="L193">        job.pollAndUpdateTime(delaySeconds);</span>
+<span class="fc" id="L194">        jobRepository.save(job);</span>
+<span class="fc" id="L195">        String transactionTime = job.getFhirVersion().getFhirTime(job.getCreatedAt());</span>
+<span class="fc" id="L196">        return new JobPollResult(job.getRequestUrl(), job.getStatus(), job.getProgress(), transactionTime,</span>
+<span class="fc" id="L197">                job.getExpiresAt(), job.getJobOutputs());</span>
+    }
+
+    @Override
+    public List&lt;StaleJob&gt; checkForExpiration(List&lt;String&gt; jobUuids, int ttlHours) {
+<span class="fc" id="L202">        return jobRepository.findByJobUuidIn(jobUuids).stream()</span>
+<span class="fc" id="L203">                .filter(job -&gt; job.isExpired(ttlHours))</span>
+<span class="fc" id="L204">                .map(job -&gt; new StaleJob(job.getJobUuid(), job.getOrganization()))</span>
+<span class="fc" id="L205">                .toList();</span>
+    }
+
+    private boolean clientHasNeverCompletedJob(String contractNumber) {
+<span class="fc" id="L209">        int completedJobs = jobRepository.countJobByContractNumberAndStatus(contractNumber,</span>
+<span class="fc" id="L210">                List.of(JobStatus.SUBMITTED, JobStatus.IN_PROGRESS, JobStatus.SUCCESSFUL));</span>
+<span class="fc bfc" id="L211" title="All 2 branches covered.">        return completedJobs == 0;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

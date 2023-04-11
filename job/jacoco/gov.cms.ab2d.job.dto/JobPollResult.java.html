@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JobPollResult.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">job</a> &gt; <a href="index.source.html" class="el_package">gov.cms.ab2d.job.dto</a> &gt; <span class="el_source">JobPollResult.java</span></div><h1>JobPollResult.java</h1><pre class="source lang-java linenums">package gov.cms.ab2d.job.dto;
+
+import gov.cms.ab2d.job.model.JobOutput;
+import gov.cms.ab2d.job.model.JobStatus;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+import java.time.OffsetDateTime;
+import java.util.List;
+
+<span class="nc bnc" id="L11" title="All 48 branches missed.">@Data</span>
+<span class="fc" id="L12">@AllArgsConstructor</span>
+public class JobPollResult {
+<span class="nc" id="L14">    private String requestUrl;</span>
+<span class="fc" id="L15">    private JobStatus status;</span>
+<span class="nc" id="L16">    private int progress;</span>
+<span class="nc" id="L17">    private String transactionTime;</span>
+<span class="nc" id="L18">    private OffsetDateTime expiresAt;</span>
+<span class="nc" id="L19">    private List&lt;JobOutput&gt; jobOutputs;</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>
