@@ -64,10 +64,8 @@ pipeline {
             steps {
                 sh '''
                     mvn --version
-
                     echo $WORKSPACE
-
-                    mvn clean
+                    mvn -U clean
                 '''
             }
         }
@@ -75,7 +73,7 @@ pipeline {
         stage('Package without tests - Create SBOM') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
-                    sh 'mvn package --settings settings.xml -DskipTests -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD}'
+                    sh 'mvn package -s settings.xml -DskipTests -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL}'
                 }
             }
         }
@@ -86,7 +84,7 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
                     sh '''
                         export AB2D_EFS_MOUNT="${AB2D_HOME}"
-                        mvn --settings settings.xml -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD} test -pl common,job,coverage,api,worker
+                        mvn -s settings.xml -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
                     '''
                 }
             }
@@ -113,7 +111,7 @@ pipeline {
 
                         export AB2D_V2_ENABLED=true
 
-                        mvn test --settings settings.xml -pl e2e-bfd-test -am -Dtest=EndToEndBfdTests -DfailIfNoTests=false -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD}
+                        mvn test -s settings.xml -pl e2e-bfd-test -am -Dtest=EndToEndBfdTests -DfailIfNoTests=false -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL}
                     '''
                 }
             }
@@ -125,7 +123,9 @@ pipeline {
                     git branch: env.BRANCH_NAME, credentialsId: 'GITHUB_AB2D_JENKINS_PAT', url: env.GIT_URL
                     // Automatically saves the an id for the SonarQube build
                     withSonarQubeEnv('CMSSonar') {
-                        sh '''mvn --settings settings.xml sonar:sonar -Dsonar.projectKey=ab2d-project -DskipTests -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD}'''
+                        sh '''
+                            mvn -s settings.xml sonar:sonar -Dsonar.projectKey=ab2d-project -DskipTests -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL}
+                        '''
                     }
                 }
             }
@@ -172,7 +172,7 @@ pipeline {
                         aws --region "${AWS_DEFAULT_REGION}" ecr get-login-password |
                           docker login --username AWS --password-stdin "${ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
 
-                        mvn test --settings settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dartifactory.username=${ARTIFACTORY_USER} -Dartifactory.password=${ARTIFACTORY_PASSWORD}
+                        mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL}
                     '''
                 }
             }
