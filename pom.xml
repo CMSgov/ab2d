@@ -28,7 +28,7 @@
     <properties>
         <project.root>${basedir}</project.root>
         <java.version>17</java.version>
-        <hapi.version>6.4.2</hapi.version>
+        <hapi.version>6.4.4</hapi.version>
         <mockito.inline.version>5.1.1</mockito.inline.version>
         <okhttp3.version>4.10.0</okhttp3.version>
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
