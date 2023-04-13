@@ -39,7 +39,7 @@
 
         <!-- Maven plugin versions -->
         <jacoco.version>0.8.8</jacoco.version>
-        <maven.resources.plugin.version>3.3.0</maven.resources.plugin.version>
+        <maven.resources.plugin.version>3.3.1</maven.resources.plugin.version>
         <maven.assembly.plugin.version>2.3</maven.assembly.plugin.version>
 
         <!-- AB2D lib versions -->
