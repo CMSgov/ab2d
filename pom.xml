@@ -38,7 +38,7 @@
         <postgres.version>42.6.0</postgres.version>
 
         <!-- Maven plugin versions -->
-        <jacoco.version>0.8.9</jacoco.version>
+        <jacoco.version>0.8.10</jacoco.version>
         <maven.resources.plugin.version>3.3.0</maven.resources.plugin.version>
         <maven.assembly.plugin.version>2.3</maven.assembly.plugin.version>
 
