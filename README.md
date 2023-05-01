@@ -50,3 +50,23 @@ API Setup
 
 
 [AB2D Deploy](Deploy/README.md)
+
+## Installing and Using Pre-commit with Gitleaks
+
+### Step 1: Install pre-commit
+
+You can install pre-commit using pip, the Python package manager. Run the following command in your terminal:
+
+```sh
+pip install pre-commit
+```
+
+### Step 2: Install the gitleaks hook
+
+Run the following command to install the gitleaks hook:
+
+```sh
+pre-commit install --hook-type gitleaks
+```
+
+This will download and install the gitleaks hook, which will now run before every commit.
