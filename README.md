@@ -54,6 +54,8 @@ API Setup
 
 ## Installing and Using Pre-commit
 
+Anyone committing to this repo must use the pre-commit hook to lower the likelihood that secrets will be exposed.
+
 ### Step 1: Install pre-commit
 
 You can install pre-commit using the MacOS package manager Homebrew:
