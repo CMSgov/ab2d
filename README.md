@@ -55,18 +55,20 @@ API Setup
 
 ### Step 1: Install pre-commit
 
-You can install pre-commit using pip, the Python package manager. Run the following command in your terminal:
+You can install pre-commit using the MacOS package manager Homebrew:
 
 ```sh
-pip install pre-commit
+brew install pre-commit
 ```
 
-### Step 2: Install the gitleaks hook
+Other installation options can be found in the [pre-commit documentation](https://pre-commit.com/#install).
+
+### Step 2: Install the hooks
 
 Run the following command to install the gitleaks hook:
 
 ```sh
-pre-commit install --hook-type gitleaks
+pre-commit install
 ```
 
-This will download and install the gitleaks hook, which will now run before every commit.
+This will download and install the pre-commit hooks specified in `.pre-commit-config.yaml`.
