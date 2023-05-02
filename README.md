@@ -11,6 +11,7 @@
 
 1. [Create volume directory](#create-volume-directory)
 1. [Running Locally with Intelij](#running-locally-with-intelij)
+1. [Installing and Using Pre-Commit](#installing-and-using-pre-commit)
 
 ## Create volume directory
 
@@ -51,7 +52,7 @@ API Setup
 
 [AB2D Deploy](Deploy/README.md)
 
-## Installing and Using Pre-commit with Gitleaks
+## Installing and Using Pre-commit
 
 ### Step 1: Install pre-commit
 
