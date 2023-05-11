@@ -1,43 +1,24 @@
-**JIRA Tickets:**
+## 🎫 Ticket
 
-[AB2D-42](https://jira.cms.gov/browse/AB2D-42) - Description
+https://jira.cms.gov/browse/AB2D-xxx
 
-***Related Tickets***
+## 🛠 Changes
 
-[AB2D-41](https://jira.cms.gov/browse/AB2D-41) - Reason it's related
- 
-### What Does This PR Do?
+(What was added, updated, or removed in this PR.)
 
-### What Should Reviewers Watch For?
+## ℹ️ Context for reviewers
 
-### Usage/Deployment Instructions
+(Background context, more in-depth details of the implementation, and anything else you'd like to call out or ask reviewers.)
 
-### Impacted External Components
+## ✅ Acceptance Validation
 
-### Database Changes
+(How were the changes verified? Did you fully test the acceptance criteria in the ticket? Provide reproducible testing instructions and screenshots if applicable.)
 
-- [ ] All QuickSight impacts have been identified
-
-### Limitations
-
-### 🔒 Security Implications
-
-Submitters should complete the following questionnaire:
+## 🔒 Security Implications
 
 - [ ] This PR adds a new software dependency or dependencies.
-
 - [ ] This PR modifies or invalidates one or more of our security controls.
-
 - [ ] This PR stores or transmits data that was not stored or transmitted before.
-
 - [ ] This PR requires additional review of its security implications for other reasons.
 
-If any of the statements above were checked, then please add Jason Ashbaugh (GitHub username: StewGoin) as a reviewer, and note that this PR should not be merged unless/until he also approves it.
-
-### What Needs to Be Merged and Deployed Before this PR?
-
-### Submitter Checklist
-
-- [ ] This PR includes any required documentation changes, (`README`, changelog / release notes, website - see [confluence](https://confluence.cms.gov/display/AB2D/Public+Facing+Documentation) for full list).
-- [ ] All tech debt and/or shortcomings introduced by this PR are detailed in `TODO` and/or `FIXME` comments.
-- [ ] Code checked for PHI/PII exposure
+If any security implications apply, add Jason Ashbaugh (GitHub username: StewGoin) as a reviewer and do not merge this PR without his approval.
