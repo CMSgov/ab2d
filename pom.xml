@@ -34,11 +34,11 @@
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
         <logback-encoder.version>7.3</logback-encoder.version>
         <testcontainers.version>1.18.0</testcontainers.version>
-        <newrelic.version>8.1.0</newrelic.version>
+        <newrelic.version>8.2.0</newrelic.version>
         <postgres.version>42.6.0</postgres.version>
 
         <!-- Maven plugin versions -->
-        <jacoco.version>0.8.9</jacoco.version>
+        <jacoco.version>0.8.10</jacoco.version>
         <maven.resources.plugin.version>3.3.0</maven.resources.plugin.version>
         <maven.assembly.plugin.version>2.3</maven.assembly.plugin.version>
 
