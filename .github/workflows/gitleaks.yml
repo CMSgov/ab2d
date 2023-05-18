@@ -7,11 +7,13 @@ jobs:
     runs-on: ubuntu-latest
     env:
       REPO: https://github.com/CMSgov/ab2d
+      REMOTE_EXCLUDES_URL: https://raw.githubusercontent.com/gitleaks/gitleaks/master/config/gitleaks.toml
       GITLEAKS_VERSION: v7.2.2
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
     - name: Execute Gitleaks
       run: |
+        wget ${REMOTE_EXCLUDES_URL} -O gitleaks.toml
         wget https://github.com/zricethezav/gitleaks/releases/download/${GITLEAKS_VERSION}/gitleaks-linux-amd64 -O gitleaks
         chmod +x gitleaks
         echo ${GITHUB_SHA}
