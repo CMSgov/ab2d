@@ -7,12 +7,12 @@ jobs:
     runs-on: ubuntu-latest
     env:
       REPO: https://github.com/CMSgov/ab2d
-      GITLEAKS_VERSION: v8.16.3
+      GITLEAKS_VERSION: v8.16.2
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
     - name: Execute Gitleaks
       run: |
-        wget https://github.com/zricethezav/gitleaks/releases/download/${GITLEAKS_VERSION}/gitleaks-linux-amd64 -O gitleaks
+        wget https://github.com/zricethezav/gitleaks/releases/download/${GITLEAKS_VERSION}/gitleaks_8.16.3_linux_x64.tar.gz -O - | tar -xz
         chmod +x gitleaks
         echo ${GITHUB_SHA}
         echo "gitleaks --repo-url=${REPO} -v --redact --commit=${GITHUB_SHA} --access-token=${GITHUB_TOKEN}"
