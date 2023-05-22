@@ -4,25 +4,20 @@ on: [push]
 
 jobs:
   secrets-scanner:
+    name: gitleaks
     runs-on: ubuntu-latest
-    env:
-      REPO: https://github.com/CMSgov/ab2d
-      REMOTE_EXCLUDES_URL: https://raw.githubusercontent.com/semanticbits/ab2d-gitleaks-automation/master/ab2d/gitleaks.toml
-      GITLEAKS_VERSION: v7.2.2
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-    - name: Execute Gitleaks
-      run: |
-        wget ${REMOTE_EXCLUDES_URL} -O gitleaks.toml
-        wget https://github.com/zricethezav/gitleaks/releases/download/${GITLEAKS_VERSION}/gitleaks-linux-amd64 -O gitleaks
-        chmod +x gitleaks
-        echo ${GITHUB_SHA}
-        echo "gitleaks --repo-url=${REPO} -v --redact --commit=${GITHUB_SHA} --config-path=gitleaks.toml --access-token=${GITHUB_TOKEN}"
-        ./gitleaks --repo-url=${REPO} -v --redact --commit=${GITHUB_SHA} --config-path=gitleaks.toml --access-token=${GITHUB_TOKEN}
-    - name: Slack notification
-      if: failure()
-      env:
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-      uses: Ilshidur/action-slack@master
-      with:
-        args: 'Potential Secrets found in: https://github.com/{{ GITHUB_REPOSITORY }}/commit/{{ GITHUB_SHA }} Link to build with full gitleaks output: https://github.com/{{ GITHUB_REPOSITORY }}/commit/{{ GITHUB_SHA }}/checks'
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE}}
+      - name: Slack notification
+        if: failure()
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        uses: Ilshidur/action-slack@master
+        with:
+          args: 'Potential Secrets found in: https://github.com/{{ GITHUB_REPOSITORY }}/commit/{{ GITHUB_SHA }} Link to build with full gitleaks output: https://github.com/{{ GITHUB_REPOSITORY }}/commit/{{ GITHUB_SHA }}/checks'
