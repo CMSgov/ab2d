@@ -411,6 +411,9 @@ public class EndToEndBfdTests {
 
         log.info("Contract: " + contract + " has " + numberOfBenes + " benes with " + patientIds.size() + " ids");
         assertTrue(patientIds.size() >= 1000);
+        /* Commenting this out because the patientId size doesn't work with this assertion
+        assertTrue(patientIds.size() >= 0);
+        */
         assertTrue(patientIds.size() >= (2 * numberOfBenes));
     }
 
@@ -440,4 +443,3 @@ public class EndToEndBfdTests {
         return v2Enabled != null && v2Enabled.equalsIgnoreCase("true");
     }
 }
-
