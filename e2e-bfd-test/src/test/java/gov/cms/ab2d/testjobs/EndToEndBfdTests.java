@@ -411,9 +411,8 @@ public class EndToEndBfdTests {
 
         log.info("Contract: " + contract + " has " + numberOfBenes + " benes with " + patientIds.size() + " ids");
         assertTrue(patientIds.size() >= 1000);
-        /* Commenting this out because the patientId size doesn't work with this assertion
-        assertEquals(0, patientIds.size() % 1000);
-        */
+        // TODO Figure out why this modulo assertion is failing
+        //assertEquals(0, patientIds.size() % 1000);
         assertTrue(patientIds.size() >= (2 * numberOfBenes));
     }
 
