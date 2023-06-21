@@ -45,6 +45,7 @@ services:
   api:
     build:
       context: ./api
+    command: --wait-timeout
     environment:
       # Limit RAM usage of each container because containers share a VM
       - JVM_INITIAL_RAM=${JVM_INITIAL_RAM:-5.0}
