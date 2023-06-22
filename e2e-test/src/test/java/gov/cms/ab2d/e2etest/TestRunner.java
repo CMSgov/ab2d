@@ -57,6 +57,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.util.Pair;
 import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.yaml.snakeyaml.Yaml;
 
 
