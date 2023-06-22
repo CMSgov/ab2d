@@ -46,7 +46,6 @@ pipeline {
 
         // Make sure codeclimate is present in the environment
         stage('Download Code Coverage') {
-            when { expression { return false } }
             steps {
                 sh '''
                     mkdir -p codeclimate
@@ -91,7 +90,6 @@ pipeline {
         }
 
         stage('Run e2e-bfd-test') {
-            when { expression { return false } }
             steps {
 
                 withCredentials([file(credentialsId: 'SANDBOX_BFD_KEYSTORE', variable: 'SANDBOX_BFD_KEYSTORE'),
@@ -181,7 +179,6 @@ pipeline {
         }
 
         stage('Run codeclimate tests') {
-            when { expression { return false } }
             steps {
                 sh '''
                     export JACOCO_SOURCE_PATH=./api/src/main/java
