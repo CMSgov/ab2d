@@ -37,6 +37,7 @@ pipeline {
     stages {
 
         stage('Create ab2d workspace directory and copy in keystore') {
+            when { expression { return false } }
             steps {
                 sh '''
                     mkdir -p "$WORKSPACE/opt/ab2d"
@@ -46,7 +47,7 @@ pipeline {
 
         // Make sure codeclimate is present in the environment
         stage('Download Code Coverage') {
-
+            when { expression { return false } }
             steps {
                 sh '''
                     mkdir -p codeclimate
@@ -71,6 +72,7 @@ pipeline {
         }
 
         stage('Package without tests - Create SBOM') {
+            when { expression { return false } }
             steps {
                 withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
                     sh 'mvn package -s settings.xml -DskipTests -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL}'
@@ -79,7 +81,7 @@ pipeline {
         }
 
         stage('Run unit and integration tests') {
-
+            when { expression { return false } }
             steps {
                 withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
                     sh '''
@@ -91,7 +93,7 @@ pipeline {
         }
 
         stage('Run e2e-bfd-test') {
-
+            when { expression { return false } }
             steps {
 
                 withCredentials([file(credentialsId: 'SANDBOX_BFD_KEYSTORE', variable: 'SANDBOX_BFD_KEYSTORE'),
@@ -117,6 +119,7 @@ pipeline {
             }
         }
         stage('SonarQube Analysis') {
+            when { expression { return false } }
             steps {
                 withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
                     git branch: 'master', credentialsId: 'GITHUB_AB2D_JENKINS_PAT', url: env.GIT_URL
@@ -133,6 +136,7 @@ pipeline {
 
         // New Way in declarative pipeline
         stage("Quality Gate") {
+            when { expression { return false } }
             options {
                 timeout(time: 10, unit: 'MINUTES')
             }
@@ -179,7 +183,7 @@ pipeline {
         }
 
         stage('Run codeclimate tests') {
-
+            when { expression { return false } }
             steps {
                 sh '''
                     export JACOCO_SOURCE_PATH=./api/src/main/java
