@@ -193,7 +193,7 @@ class TestRunner {
                 .withLocalCompose(true)
                 .withScaledService("worker", 2)
                 .withScaledService("api", 1)
-                .waitingFor("api_1", Wait.forLogMessage("Started SpringBootApp", 1).withStartupTimeout(Duration.ofSeconds(120)))
+                .waitingFor("api", Wait.forLogMessage("Started SpringBootApp", 1).withStartupTimeout(Duration.ofSeconds(200)))
                 // Used to debug failures in tests by piping container logs to console
                 .withLogConsumer("worker", new Slf4jLogConsumer(workerLogger))
                 .withLogConsumer("api", new Slf4jLogConsumer(apiLogger));
