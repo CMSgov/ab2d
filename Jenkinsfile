@@ -37,7 +37,6 @@ pipeline {
     stages {
 
         stage('Create ab2d workspace directory and copy in keystore') {
-            when { expression { return false } }
             steps {
                 sh '''
                     mkdir -p "$WORKSPACE/opt/ab2d"
