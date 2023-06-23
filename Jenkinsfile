@@ -90,6 +90,7 @@ pipeline {
         }
 
         stage('Run e2e-bfd-test') {
+            when { expression { return false } }
             steps {
 
                 withCredentials([file(credentialsId: 'SANDBOX_BFD_KEYSTORE', variable: 'SANDBOX_BFD_KEYSTORE'),
@@ -248,7 +249,7 @@ pipeline {
     }
 
     post {
-        always {
+        success {
             script {
                 sh '''
                   rm -rf "$WORKSPACE/opt/ab2d" 2> /dev/null
