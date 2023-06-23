@@ -73,7 +73,7 @@ services:
     ports:
       # Set port as an environment variable
       # The e2e-test forcefully sets this itself otherwise set via command line
-      - "${API_PORT}:8443"
+      - "8443:8443"
     healthcheck:
       test: [ "CMD-SHELL", "curl -X GET https://localhost:8443/health --insecure" ]
       interval: 5s
