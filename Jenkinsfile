@@ -70,7 +70,6 @@ pipeline {
         }
 
         stage('Package without tests - Create SBOM') {
-            when { expression { return false } }
             steps {
                 withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
                     sh 'mvn package -s settings.xml -DskipTests -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL}'
