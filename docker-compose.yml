@@ -127,7 +127,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      api:
+      contracts:
         condition: service_healthy
       localstack:
         condition: service_healthy
