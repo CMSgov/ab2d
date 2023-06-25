@@ -81,7 +81,6 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 class TestRunner {
 
     private static final Logger apiLogger = LoggerFactory.getLogger("gov.cms.ab2d.api");
-    private static final Logger contractsLogger = LoggerFactory.getLogger("gov.cms.ab2d.contracts");
     private static final Logger workerLogger = LoggerFactory.getLogger("gov.cms.ab2d.worker");
 
     public static final String MBI_ID = "http://hl7.org/fhir/sid/us-mbi";
@@ -194,7 +193,6 @@ class TestRunner {
                 .withScaledService("worker", 2)
                 .withScaledService("api", 1)
                 // Used to debug failures in tests by piping container logs to console
-                .withLogConsumer("contracts", new Slf4jLogConsumer(contractsLogger))
                 .withLogConsumer("worker", new Slf4jLogConsumer(workerLogger))
                 .withLogConsumer("api", new Slf4jLogConsumer(apiLogger));
 
