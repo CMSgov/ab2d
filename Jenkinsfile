@@ -46,6 +46,7 @@ pipeline {
 
         // Make sure codeclimate is present in the environment
         stage('Download Code Coverage') {
+
             steps {
                 sh '''
                     mkdir -p codeclimate
@@ -78,7 +79,7 @@ pipeline {
         }
 
         stage('Run unit and integration tests') {
-            when { expression { return false } }
+
             steps {
                 withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
                     sh '''
@@ -90,7 +91,7 @@ pipeline {
         }
 
         stage('Run e2e-bfd-test') {
-            when { expression { return false } }
+
             steps {
 
                 withCredentials([file(credentialsId: 'SANDBOX_BFD_KEYSTORE', variable: 'SANDBOX_BFD_KEYSTORE'),
@@ -116,7 +117,6 @@ pipeline {
             }
         }
         stage('SonarQube Analysis') {
-            when { expression { return false } }
             steps {
                 withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
                     git branch: 'master', credentialsId: 'GITHUB_AB2D_JENKINS_PAT', url: env.GIT_URL
@@ -133,7 +133,6 @@ pipeline {
 
         // New Way in declarative pipeline
         stage("Quality Gate") {
-            when { expression { return false } }
             options {
                 timeout(time: 10, unit: 'MINUTES')
             }
@@ -180,6 +179,7 @@ pipeline {
         }
 
         stage('Run codeclimate tests') {
+
             steps {
                 sh '''
                     export JACOCO_SOURCE_PATH=./api/src/main/java
@@ -249,7 +249,7 @@ pipeline {
     }
 
     post {
-        success {
+        always {
             script {
                 sh '''
                   rm -rf "$WORKSPACE/opt/ab2d" 2> /dev/null
