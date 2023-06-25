@@ -83,6 +83,8 @@ services:
         condition: service_healthy
       localstack:
         condition: service_healthy
+      contracts:
+        condition: service_healthy
     volumes:
       - tmp-volume:/opt/ab2d
   worker:
@@ -127,7 +129,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      contracts:
+      api:
         condition: service_healthy
       localstack:
         condition: service_healthy
@@ -166,9 +168,6 @@ services:
       - 8070
     depends_on:
       db:
-        condition: service_healthy
-      # API must come up before contracts to create db schema
-      api:
         condition: service_healthy
       localstack:
         condition: service_healthy
