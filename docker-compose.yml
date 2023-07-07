@@ -67,8 +67,8 @@ services:
       - AWS_SQS_URL=http://localstack:4566
       - PROPERTIES_SERVICE_URL=contracts:8070
 #      Only Needed if running Locally
-#      - AWS_ACCESS_KEY_ID=null
-#      - AWS_SECRET_KEY=null
+      - AWS_ACCESS_KEY_ID=null
+      - AWS_SECRET_KEY=null
     ports:
       # Set port as an environment variable
       # The e2e-test forcefully sets this itself otherwise set via command line
@@ -122,8 +122,8 @@ services:
       # Disable verification during e2e tests
       - "COVERAGE_VERIFY_SCHEDULE=0 0 0 1 * ? 2099"
 #      Only Needed if running Locally
-#      - AWS_ACCESS_KEY_ID=null
-#      - AWS_SECRET_KEY=null
+      - AWS_ACCESS_KEY_ID=null
+      - AWS_SECRET_KEY=null
     depends_on:
       db:
         condition: service_healthy
@@ -153,8 +153,8 @@ services:
       - AB2D_HPMS_URL=${AB2D_HPMS_URL}
       - PROPERTIES_SERVICE_URL=properties:8070
 #      Only Needed if running Locally
-#      - AWS_ACCESS_KEY_ID=null
-#      - AWS_SECRET_KEY=null
+      - AWS_ACCESS_KEY_ID=null
+      - AWS_SECRET_KEY=null
     healthcheck:
       test: [ "CMD-SHELL", "curl -X GET http://localhost:8070/health --insecure" ]
       interval: 30s
