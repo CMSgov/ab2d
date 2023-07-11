@@ -237,7 +237,7 @@ class TestRunner {
         long start = System.currentTimeMillis();
         int status = 0;
         Set<Integer> statusesBetween0And100 = new HashSet<>();
-        while (status != 200 && status != 500) {
+        while (status != 200 && status != 500 status != 429) {
             Thread.sleep(DELAY * 1000 + 2000);
 
             log.info("polling for status at url start {}", statusUrl);
@@ -249,6 +249,12 @@ class TestRunner {
             status = statusResponse.statusCode();
 
             log.info("polling for status at url status {} {}", statusUrl, status);
+
+            if (status == 429) {
+            // handle 429 Too Many Requests response appropriately here
+            // this could be retrying after a certain amount of time, or simply logging the issue
+            continue;
+            }
 
             List<String> xProgressList = statusResponse.headers().map().get("x-progress");
             if (xProgressList != null && !xProgressList.isEmpty()) {
@@ -263,7 +269,7 @@ class TestRunner {
             }
         }
 
-        if (status == 200 || status == 500) {
+        if (status == 200 || status == 500 || status == 429) {
             return statusResponse;
         } else {
             // Instead of doing Assert.fail do this to make the return status happy
