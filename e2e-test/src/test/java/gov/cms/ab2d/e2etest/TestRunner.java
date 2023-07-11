@@ -92,7 +92,7 @@ class TestRunner {
 
     private static APIClient apiClient;
 
-    private static final int DELAY = 5;
+    private static final int DELAY = 10;
 
     private static final int JOB_TIMEOUT = 300;
 
