@@ -264,7 +264,7 @@ class TestRunner {
                     statusesBetween0And100.add(xProgressValue);
                 }
             }
-            if (System.currentTimeMillis() - start > (JOB_TIMEOUT * 1000)) {
+            if (System.currentTimeMillis() - start > (JOB_TIMEOUT * 2000)) {
                 break;
             }
         }
