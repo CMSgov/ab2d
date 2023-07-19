@@ -10,7 +10,7 @@ pipeline {
 
         // Tell e2e test that it should override the docker compose it normally uses locally
         // with docker-compose.jenkins.yml
-        E2E_ENVIRONMENT = 'CI'
+        E2E_ENVIRONMENT = 'IMP'
         AB2D_HOME="${WORKSPACE}/opt/ab2d"
 
         // R4 V2 endpoints enabled
