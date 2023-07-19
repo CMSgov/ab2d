@@ -222,6 +222,17 @@ class TestRunner {
             baseUrl += ":" + apiPort;
         }
 
+        String envOktaUrl = System.getenv("OKTA_URL");
+        if (!StringUtils.isBlank(envOktaUrl)) {
+            oktaUrl = envOktaUrl;
+        }
+
+        String envBaseUrl = System.getenv("AB2D_BASE_URL");
+        if (!StringUtils.isBlank(envBaseUrl)) {
+            baseUrl = envBaseUrl;
+        }
+        log.info("Using base URL {}", baseUrl);
+
         String oktaClientId = System.getenv("OKTA_CLIENT_ID");
         String oktaPassword = System.getenv("OKTA_CLIENT_PASSWORD");
 
