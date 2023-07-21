@@ -10,12 +10,13 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 0
 
   - package-ecosystem: "maven"
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 25
+    open-pull-requests-limit: 0
 
 #Terraform not working because we use vars.
   #- package-ecosystem: "terraform"
