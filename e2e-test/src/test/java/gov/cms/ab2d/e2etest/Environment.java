@@ -15,7 +15,7 @@ public enum Environment {
     CI(Ab2dEnvironment.LOCAL, "local-config.yml", List.of("docker-compose.yml", "docker-compose.jenkins.yml")),
     DEV(Ab2dEnvironment.DEV, "dev-config.yml", Collections.emptyList()),
     SBX(Ab2dEnvironment.SANDBOX, "sbx-config.yml", Collections.emptyList()),
-    IMP(Ab2dEnvironment.IMPL, "imp-config.yml", Collections.emptyList()),
+    IMPL(Ab2dEnvironment.IMPL, "impl-config.yml", Collections.emptyList()),
     PROD(Ab2dEnvironment.PRODUCTION, "prod-config.yml", Collections.emptyList());
 
     private final Ab2dEnvironment ab2dEnvironment;
