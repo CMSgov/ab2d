@@ -49,7 +49,7 @@
         <aggregator-lib.version>1.2.11</aggregator-lib.version>
         <filters-lib.version>1.8.5</filters-lib.version>
         <properties-client.version>1.1.9</properties-client.version>
-        <contract-client.version>1.1.1</contract-client.version>
+        <contract-client.version>1.1.4</contract-client.version>
     </properties>
 
     <dependencies>
