@@ -27,7 +27,7 @@ class CoverageCheckPredicatesDisableAlertTest {
     void whenCoveragePeriodsMissingAndContractS3147And2021_12_passCoverageCheck() {
         ContractDTO contractDTO = new ContractDTO(null, "S3147", "Test",
                 OffsetDateTime.of(2021, 12, 30, 1, 1, 1, 1, ZoneOffset.UTC)
-                        .minus(2, ChronoUnit.YEARS), Contract.ContractType.NORMAL);
+                        .minus(2, ChronoUnit.YEARS), Contract.ContractType.NORMAL, 0, 0);
         Map<String, List<CoverageCount>> coverageCounts =
                 Map.of("S3147",
                         List.of(new CoverageCount("S3147", 2021, 12, 1, 1, 0)));
@@ -57,7 +57,7 @@ class CoverageCheckPredicatesDisableAlertTest {
     void whenCoveragePeriodsMissing_log() throws NoSuchMethodException {
         ContractDTO contractDTO = new ContractDTO(null, "S3147", "Test",
                 OffsetDateTime.of(2021, 12, 30, 1, 1, 1, 1, ZoneOffset.UTC)
-                        .minus(2, ChronoUnit.YEARS), Contract.ContractType.NORMAL);
+                        .minus(2, ChronoUnit.YEARS), Contract.ContractType.NORMAL, 0, 0);
         CoveragePresentCheck check = new CoveragePresentCheck(null, null, null);
         Method method = Arrays.stream(CoveragePresentCheck.class.getDeclaredMethods())
                 .filter(m -> "logIssue".equals(m.getName()))

@@ -67,7 +67,7 @@ class CoverageMappingCallableTest {
         when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class), anyString())).thenReturn(bundle2);
 
 
-        ContractDTO contract = new ContractDTO(null, "TESTING", "TESTING", null, null);
+        ContractDTO contract = new ContractDTO(null, "TESTING", "TESTING", null, null, 0, 0);
 
 
         CoveragePeriod period = new CoveragePeriod();
@@ -100,7 +100,7 @@ class CoverageMappingCallableTest {
     @DisplayName("Test to see if it returns the correct year for test contracts")
     @Test
     void testTestContractYears() {
-        ContractDTO contract = new ContractDTO(null, "TESTING", "TESTING", OffsetDateTime.now(), Contract.ContractType.CLASSIC_TEST);
+        ContractDTO contract = new ContractDTO(null, "TESTING", "TESTING", OffsetDateTime.now(), Contract.ContractType.CLASSIC_TEST, 0, 0);
 
 
         CoveragePeriod period = new CoveragePeriod();
@@ -142,7 +142,7 @@ class CoverageMappingCallableTest {
         when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class), anyString())).thenReturn(bundle2);
 
-        ContractDTO contract = new ContractDTO(null, "TESTING", "TESTING", null, null);
+        ContractDTO contract = new ContractDTO(null, "TESTING", "TESTING", null, null, 0, 0);
 
 
         CoveragePeriod period = new CoveragePeriod();
@@ -192,7 +192,7 @@ class CoverageMappingCallableTest {
         when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class), anyString())).thenReturn(bundle2);
 
-        ContractDTO contract = new ContractDTO(null, "TESTING", "TESTING", null, null);
+        ContractDTO contract = new ContractDTO(null, "TESTING", "TESTING", null, null, 0, 0);
 
 
         CoveragePeriod period = new CoveragePeriod();
@@ -238,7 +238,7 @@ class CoverageMappingCallableTest {
         when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class), anyString())).thenReturn(bundle2);
 
-        ContractDTO contract = new ContractDTO(null, "TESTING", "TESTING", null, null);
+        ContractDTO contract = new ContractDTO(null, "TESTING", "TESTING", null, null, 0, 0);
 
 
         CoveragePeriod period = new CoveragePeriod();
@@ -289,7 +289,7 @@ class CoverageMappingCallableTest {
         when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class), anyString())).thenReturn(bundle2);
 
-        ContractDTO contract = new ContractDTO(null, "TESTING", "TESTING", null, null);
+        ContractDTO contract = new ContractDTO(null, "TESTING", "TESTING", null, null, 0, 0);
 
         CoveragePeriod period = new CoveragePeriod();
         period.setContractNumber(contract.getContractNumber());
@@ -337,7 +337,7 @@ class CoverageMappingCallableTest {
         when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
         when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class), anyString())).thenReturn(bundle2);
 
-        ContractDTO contract = new ContractDTO(null, "TESTING", "TESTING", null, null);
+        ContractDTO contract = new ContractDTO(null, "TESTING", "TESTING", null, null, 0, 0);
 
 
         CoveragePeriod period = new CoveragePeriod();
@@ -376,7 +376,7 @@ class CoverageMappingCallableTest {
 
         when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt())).thenThrow(new RuntimeException("exception"));
 
-        ContractDTO contract = new ContractDTO(null, "TESTING", "TESTING", null, null);
+        ContractDTO contract = new ContractDTO(null, "TESTING", "TESTING", null, null, 0, 0);
 
 
         CoveragePeriod period = new CoveragePeriod();
@@ -405,7 +405,7 @@ class CoverageMappingCallableTest {
 
     @Test
     void testNullMbi() {
-        ContractDTO contract = new ContractDTO(null, "TESTING", "TESTING", null, null);
+        ContractDTO contract = new ContractDTO(null, "TESTING", "TESTING", null, null, 0, 0);
 
         CoveragePeriod period = new CoveragePeriod();
         period.setContractNumber(contract.getContractNumber());
