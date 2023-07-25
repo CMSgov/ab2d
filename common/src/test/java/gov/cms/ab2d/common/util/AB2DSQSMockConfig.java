@@ -3,7 +3,7 @@ package gov.cms.ab2d.common.util;
 import com.amazonaws.services.sqs.AmazonSQSAsync;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import io.awspring.cloud.autoconfigure.context.ContextStackAutoConfiguration;
-import io.awspring.cloud.autoconfigure.messaging.MessagingAutoConfiguration;
+import io.awspring.cloud.autoconfigure.messaging.SqsAutoConfiguration;
 import io.awspring.cloud.messaging.config.SimpleMessageListenerContainerFactory;
 import io.awspring.cloud.messaging.listener.QueueMessageHandler;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Primary;
 import static org.mockito.Mockito.mock;
 
 @TestConfiguration
-@EnableAutoConfiguration(exclude = {MessagingAutoConfiguration.class, ContextStackAutoConfiguration.class})
+@EnableAutoConfiguration(exclude = {SqsAutoConfiguration.class, ContextStackAutoConfiguration.class})
 public class AB2DSQSMockConfig {
 
   static {
