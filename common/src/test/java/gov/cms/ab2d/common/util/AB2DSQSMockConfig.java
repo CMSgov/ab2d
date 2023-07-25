@@ -15,7 +15,11 @@ import org.springframework.context.annotation.Primary;
 import static org.mockito.Mockito.mock;
 
 @TestConfiguration
-@EnableAutoConfiguration(exclude = {SqsAutoConfiguration.class, ContextStackAutoConfiguration.class})
+@EnableAutoConfiguration(exclude = {
+    SqsAutoConfiguration.class,
+    ContextStackAutoConfiguration.class,
+    ContextResourceLoaderAutoConfiguration.class,
+})
 public class AB2DSQSMockConfig {
 
   static {
