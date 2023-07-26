@@ -36,6 +36,7 @@
         <testcontainers.version>1.18.3</testcontainers.version>
         <newrelic.version>8.4.0</newrelic.version>
         <postgres.version>42.6.0</postgres.version>
+        <spring-cloud.version>2.4.4</spring-cloud.version>
 
         <!-- Maven plugin versions -->
         <jacoco.version>0.8.10</jacoco.version>
