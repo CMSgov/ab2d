@@ -6,10 +6,14 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
 
 @SpringBootApplication(scanBasePackages = {"gov.cms.ab2d.common", "gov.cms.ab2d.eventclient.clients", "gov.cms.ab2d.contracts"})
+@ComponentScan(excludeFilters =
+    @ComponentScan.Filter(type = FilterType.REGEX, pattern = "org.springframework.cloud.aws.autoconfigure.*"))
 @PropertySource("classpath:application.common.properties")
 @Import(AB2DSQSMockConfig.class)
 @EntityScan(basePackages = {"gov.cms.ab2d.common.model", "gov.cms.ab2d.properties.model", "gov.cms.ab2d.contracts"})
