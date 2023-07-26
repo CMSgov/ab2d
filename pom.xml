@@ -36,7 +36,8 @@
         <testcontainers.version>1.18.3</testcontainers.version>
         <newrelic.version>8.4.0</newrelic.version>
         <postgres.version>42.6.0</postgres.version>
-        <spring-cloud.version>2.4.4</spring-cloud.version>
+        <spring-cloud.version>2021.0.8</spring-cloud.version>
+        <spring-cloud-aws.version>2.4.4</spring-cloud-aws.version>
 
         <!-- Maven plugin versions -->
         <jacoco.version>0.8.10</jacoco.version>
@@ -58,6 +59,13 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-dependencies</artifactId>
+            <version>${spring-cloud.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
