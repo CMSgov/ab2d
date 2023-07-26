@@ -4,6 +4,7 @@ import com.amazonaws.services.sqs.AmazonSQSAsync;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import io.awspring.cloud.autoconfigure.context.ContextResourceLoaderAutoConfiguration;
 import io.awspring.cloud.autoconfigure.context.ContextStackAutoConfiguration;
+import io.awspring.cloud.autoconfigure.messaging.SnsAutoConfiguration;
 import io.awspring.cloud.autoconfigure.messaging.SqsAutoConfiguration;
 import io.awspring.cloud.messaging.config.SimpleMessageListenerContainerFactory;
 import io.awspring.cloud.messaging.listener.QueueMessageHandler;
@@ -19,6 +20,7 @@ import static org.mockito.Mockito.mock;
 @EnableAutoConfiguration(exclude = {
     ContextResourceLoaderAutoConfiguration.class,
     ContextStackAutoConfiguration.class,
+    SnsAutoConfiguration.class,
     SqsAutoConfiguration.class,
 })
 public class AB2DSQSMockConfig {
