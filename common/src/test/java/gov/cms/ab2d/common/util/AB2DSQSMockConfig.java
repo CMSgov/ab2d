@@ -1,5 +1,7 @@
 package gov.cms.ab2d.common.util;
 
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.services.sqs.AmazonSQSAsync;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import io.awspring.cloud.autoconfigure.context.ContextResourceLoaderAutoConfiguration;
@@ -52,5 +54,11 @@ public class AB2DSQSMockConfig {
   @Primary
   public AmazonSQSAsync amazonSQSAsync() {
     return mock(AmazonSQSAsync.class);
+  }
+
+  @Bean
+  @Primary
+  public AWSCredentialsProvider awsCredentialsProvider() {
+    return new DefaultAWSCredentialsProviderChain();
   }
 }
