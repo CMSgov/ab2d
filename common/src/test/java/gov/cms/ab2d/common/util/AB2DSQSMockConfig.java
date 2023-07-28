@@ -12,7 +12,6 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.springframework.cloud.aws.core.credentials.CredentialsProviderFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import static org.mockito.Mockito.mock;
@@ -23,7 +22,6 @@ import static org.mockito.Mockito.mock;
     ContextStackAutoConfiguration.class,
     SnsAutoConfiguration.class,
     SqsAutoConfiguration.class,
-    CredentialsProviderFactoryBean.class,
 })
 public class AB2DSQSMockConfig {
 
