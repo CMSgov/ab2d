@@ -49,6 +49,7 @@ public class AB2DSQSMockConfig {
   }
 
   @Bean("mockAmazonSQS")
+  @Primary
   public AmazonSQSAsync amazonSQSAsync() {
     return mock(AmazonSQSAsync.class);
   }
