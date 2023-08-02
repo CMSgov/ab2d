@@ -41,10 +41,10 @@ class ContractServiceFeignImplTest {
     @DisplayName("Find all contracts and filter by attestation")
     @Test
     void contractServiceFilterAttestation() {
-        ContractDTO contractDTO = new ContractDTO(42L, "NATTE", "Test Contract", OffsetDateTime.now(), Contract.ContractType.NORMAL);
+        ContractDTO contractDTO = new ContractDTO(42L, "NATTE", "Test Contract", OffsetDateTime.now(), Contract.ContractType.NORMAL, 0, 0);
         List<ContractDTO> allContracts = new ArrayList<>();
         allContracts.add(contractDTO);
-        contractDTO = new ContractDTO(43L, "not real", "Test Contract",null, Contract.ContractType.NORMAL);
+        contractDTO = new ContractDTO(43L, "not real", "Test Contract",null, Contract.ContractType.NORMAL, 0, 0);
         allContracts.add(contractDTO);
         when(contractFeignClient.getContracts(any())).thenReturn(allContracts);
         List<Contract> attestedContracts = contractService.getAllAttestedContracts();
@@ -60,7 +60,7 @@ class ContractServiceFeignImplTest {
     @DisplayName("Get a contract with an appropriate number")
     @Test
     void contractGetNumber() {
-        ContractDTO contractDTO = new ContractDTO(42L, "NATTE", "Test Contract", OffsetDateTime.now(), Contract.ContractType.NORMAL);
+        ContractDTO contractDTO = new ContractDTO(42L, "NATTE", "Test Contract", OffsetDateTime.now(), Contract.ContractType.NORMAL, 0, 0);
         when(contractFeignClient.getContractByNumber(any())).thenReturn(contractDTO);
 
         Optional<Contract> retrieved = contractService.getContractByContractNumber("NATTE");
@@ -81,7 +81,7 @@ class ContractServiceFeignImplTest {
     @DisplayName("Get a contract with an appropriate id")
     @Test
     void contractGetID() {
-        ContractDTO contractDTO = new ContractDTO(42L, "NATTE", "Test Contract", OffsetDateTime.now(), Contract.ContractType.NORMAL);
+        ContractDTO contractDTO = new ContractDTO(42L, "NATTE", "Test Contract", OffsetDateTime.now(), Contract.ContractType.NORMAL, 0, 0);
         when(contractFeignClient.getContracts(any())).thenReturn(List.of(contractDTO));
 
         Contract retrieved = contractService.getContractByContractId(42L);

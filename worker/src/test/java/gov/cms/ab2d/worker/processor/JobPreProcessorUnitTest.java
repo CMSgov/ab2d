@@ -67,7 +67,7 @@ class JobPreProcessorUnitTest {
 
     @BeforeEach
     void setUp() {
-        contract = new ContractDTO(null, "JPP5678", "JPP5678", null, null);
+        contract = new ContractDTO(null, "JPP5678", "JPP5678", null, null, 0, 0);
         cut = new JobPreProcessorImpl(contractWorkerClient, jobRepository, eventLogger, coverageDriver);
         job = createJob();
     }
@@ -240,7 +240,7 @@ class JobPreProcessorUnitTest {
         newJob.setStatus(JobStatus.SUBMITTED);
         newJob.setCreatedAt(OffsetDateTime.now());
 
-        ContractDTO contract = new ContractDTO(null, "contractNum", null, null, Contract.ContractType.CLASSIC_TEST);
+        ContractDTO contract = new ContractDTO(null, "contractNum", null, null, Contract.ContractType.CLASSIC_TEST, 0, 0);
         newJob.setContractNumber(contract.getContractNumber());
 
         Job oldJob = createJob();
@@ -257,7 +257,7 @@ class JobPreProcessorUnitTest {
         // No longer allow null contracts so things get flagged as first run now.
         assertEquals(SinceSource.FIRST_RUN, newJob.getSinceSource());
 
-        contract = new ContractDTO(null, "contractNum", null, null, Contract.ContractType.SYNTHEA);
+        contract = new ContractDTO(null, "contractNum", null, null, Contract.ContractType.SYNTHEA, 0, 0);
 
         when(jobRepository.findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(anyString(), any(), any())).thenReturn(List.of(oldJob));
 

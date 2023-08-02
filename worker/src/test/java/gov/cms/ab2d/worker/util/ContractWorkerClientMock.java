@@ -17,6 +17,6 @@ public class ContractWorkerClientMock extends ContractWorkerClient {
 
 
     public ContractDTO getContractByContractNumber(String contractNumber) {
-        return new ContractDTO(null, contractNumber, contractNumber, OffsetDateTime.now(), Contract.ContractType.NORMAL);
+        return new ContractDTO(null, contractNumber, contractNumber, OffsetDateTime.now(), Contract.ContractType.NORMAL, 0, 0);
     }
 }

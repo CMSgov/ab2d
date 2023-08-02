@@ -42,7 +42,9 @@ public class ContractServiceImpl implements ContractService {
 
     //TODO replace Contract with ContractDTO
     private Contract dtoToContract(ContractDTO contractDTO) {
-        Contract contract = new Contract(contractDTO.getContractNumber(), contractDTO.getContractName(), null, null, null);
+        Contract contract = new Contract(contractDTO.getContractNumber(), contractDTO.getContractName(),
+                null, null, null,
+                contractDTO.getTotalEnrollment(), contractDTO.getMedicareEligible());
         contract.setAttestedOn(contractDTO.getAttestedOn());
         contract.setContractType(contractDTO.getContractType());
         contract.setId(contractDTO.getId());
