@@ -155,3 +155,5 @@ databaseChangeLog:
       file: db/changelog/v2023/drop-unused-tables.sql
   - include:
       file: db/changelog/v2023/add_columns_to_coverage.sql
+  - include:
+      file: db/changelog/v2023/add_optout_property.sql
