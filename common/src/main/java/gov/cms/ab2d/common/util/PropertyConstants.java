@@ -33,4 +33,7 @@ public final class PropertyConstants {
 
     // Force a coverage update to run even when not scheduled
     public static final String COVERAGE_SEARCH_OVERRIDE = "coverage.update.override";
+
+    public static final String OPT_OUT_ON = "OptOutOn";
+
 }

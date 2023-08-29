@@ -22,6 +22,7 @@ public class PropertyServiceStub implements PropertiesService {
         propertiesMapOrig.put("coverage.update.months.past", "1");
         propertiesMapOrig.put("coverage.update.override", "false");
         propertiesMapOrig.put("maintenance.mode", "false");
+        propertiesMapOrig.put("OptOutOn", "false");
     }
 
     public void reset() {

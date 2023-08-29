@@ -1,6 +1,7 @@
 package gov.cms.ab2d.coverage.repository;
 
 import com.newrelic.api.agent.Trace;
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.model.CoverageJobStatus;
@@ -96,6 +97,13 @@ public class CoverageServiceRepository {
             " WHERE bene_coverage_period_id IN(:ids) AND contract = :contract AND year IN (:years)";
 
     /**
+     * Return a count of all beneficiaries who aggred to share their data associated with an {@link CoveragePeriod}
+     * from any event. For those beneficiaries out_out_flag equals false in the public.coverage table.
+     */
+    private static final String SELECT_DISTINCT_OPTOUT_COVERAGE_BY_PERIOD_COUNT = "SELECT COUNT(DISTINCT beneficiary_id) FROM coverage" +
+            " WHERE bene_coverage_period_id IN(:ids) AND contract = :contract AND year IN (:years) AND opt_out_flag = false";
+
+    /**
      * Delete all coverage associated with a single update from BFD {@link CoverageSearchEvent}
      *
      * The contract and year must be included to take advantage of the partitions and prevent a table scan.
@@ -158,6 +166,13 @@ public class CoverageServiceRepository {
             " ORDER BY beneficiary_id " +
             " LIMIT :limit";
 
+    private static final String SELECT_OPTOUT_COVERAGE_WITHOUT_CURSOR =
+            "SELECT beneficiary_id, current_mbi, historic_mbis, year, month " +
+                    " FROM coverage " +
+                    " WHERE contract = :contract and year IN (:years) and opt_out_flag = false" +
+                    " ORDER BY beneficiary_id " +
+                    " LIMIT :limit";
+
     /**
      * Select a limited number of records starting from a beneficiary (cursor)
      * from the coverage table associated with a specific contract.
@@ -172,6 +187,13 @@ public class CoverageServiceRepository {
             " WHERE contract = :contract and year IN (:years) AND beneficiary_id >= :cursor " +
             " ORDER BY beneficiary_id " +
             " LIMIT :limit";
+
+    private static final String SELECT_OPTOUT_COVERAGE_WITH_CURSOR =
+            "SELECT beneficiary_id, current_mbi, historic_mbis, year, month " +
+                    " FROM coverage " +
+                    " WHERE contract = :contract and year IN (:years) and opt_out_flag = false AND beneficiary_id >= :cursor " +
+                    " ORDER BY beneficiary_id " +
+                    " LIMIT :limit";
 
     /**
      * Given a list of contracts, for each contract and all {@link CoveragePeriod}s that contract has been active for,
@@ -197,12 +219,14 @@ public class CoverageServiceRepository {
     private final DataSource dataSource;
     private final CoveragePeriodRepository coveragePeriodRepo;
     private final CoverageSearchEventRepository coverageSearchEventRepo;
+    private final PropertiesService propertiesService;
 
     public CoverageServiceRepository(DataSource dataSource, CoveragePeriodRepository coveragePeriodRepo,
-                                     CoverageSearchEventRepository coverageSearchEventRepo) {
+                                     CoverageSearchEventRepository coverageSearchEventRepo, PropertiesService propertiesService) {
         this.dataSource = dataSource;
         this.coverageSearchEventRepo = coverageSearchEventRepo;
         this.coveragePeriodRepo = coveragePeriodRepo;
+        this.propertiesService = propertiesService;
     }
 
     /**
@@ -284,8 +308,10 @@ public class CoverageServiceRepository {
                 .addValue("years", YEARS);
 
         NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
+        //If OptOut is enabled, count beneficiaries who agreed to share their data
+        String query = (propertiesService.isToggleOn("OptOutOn", false)) ? SELECT_DISTINCT_OPTOUT_COVERAGE_BY_PERIOD_COUNT : SELECT_DISTINCT_COVERAGE_BY_PERIOD_COUNT;
 
-        return template.queryForList(SELECT_DISTINCT_COVERAGE_BY_PERIOD_COUNT, parameters, Integer.class)
+        return template.queryForList(query, parameters, Integer.class)
                 .stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for any " +
                                 "of the coverage periods provided"));
     }
@@ -572,14 +598,17 @@ public class CoverageServiceRepository {
 
         pageCursor.ifPresent((cursor) -> sqlParameterSource.addValue("cursor", cursor));
 
+        boolean isOptOutOn = propertiesService.isToggleOn("OptOutOn", false);
         // Grab the enrollment
         List<CoverageMembership> enrollment;
         NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
         if (pageCursor.isPresent()) {
-            enrollment = template.query(SELECT_COVERAGE_WITH_CURSOR, sqlParameterSource,
+            String queryWithCursor = (isOptOutOn) ? SELECT_OPTOUT_COVERAGE_WITH_CURSOR : SELECT_COVERAGE_WITH_CURSOR;
+            enrollment = template.query(queryWithCursor, sqlParameterSource,
                     CoverageServiceRepository::asMembership);
         } else {
-            enrollment = template.query(SELECT_COVERAGE_WITHOUT_CURSOR, sqlParameterSource,
+            String queryWithoutCursor = (isOptOutOn) ? SELECT_OPTOUT_COVERAGE_WITHOUT_CURSOR : SELECT_COVERAGE_WITHOUT_CURSOR;
+            enrollment = template.query(queryWithoutCursor, sqlParameterSource,
                     CoverageServiceRepository::asMembership);
         }
         return enrollment;
