@@ -62,7 +62,7 @@ import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
  * The sole REST controller for AB2D's implementation of the FHIR Bulk Data API specification.
  */
 @Slf4j
-@Tag(name = "Export", description = BULK_MAIN)
+@Tag(name = "2. Export", description = BULK_MAIN)
 @RestController
 @RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX, produces = {APPLICATION_JSON})
 public class BulkDataAccessAPIV1 {
