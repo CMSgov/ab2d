@@ -3,7 +3,7 @@ name: GitHub Actions Workflow
 on:
   push:
     branches:
-      - master
+      - '*'
 
 jobs:
   build:
