@@ -40,7 +40,7 @@ import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
  */
 @AllArgsConstructor
 @Slf4j
-@Tag(name = "Capabilities", description = CAP_API)
+@Tag(name = "4. Capabilities", description = CAP_API)
 @RestController
 @RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX, produces = {APPLICATION_JSON})
 public class CapabilityAPIV1 {

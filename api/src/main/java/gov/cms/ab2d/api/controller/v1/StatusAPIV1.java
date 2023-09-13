@@ -48,7 +48,7 @@ import static org.springframework.http.HttpHeaders.RETRY_AFTER;
  * The sole REST controller for AB2D's implementation of the FHIR Bulk Data API Status (both GET & DELETE).
  */
 @Slf4j
-@Tag(name = "Status", description = STATUS_API)
+@Tag(name = "2. Status", description = STATUS_API)
 @RestController
 @RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX, produces = {APPLICATION_JSON})
 @AllArgsConstructor
