@@ -1,0 +1,73 @@
+name: GitHub Actions Workflow
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    env:
+      OKTA_CLIENT_ID: ${{ secrets.OKTA_CLIENT_ID }}
+      OKTA_CLIENT_PASSWORD: ${{ secrets.OKTA_CLIENT_PASSWORD }}
+      SECONDARY_USER_OKTA_CLIENT_ID: ${{ secrets.SECONDARY_USER_OKTA_CLIENT_ID }}
+      SECONDARY_USER_OKTA_CLIENT_PASSWORD: ${{ secrets.SECONDARY_USER_OKTA_CLIENT_PASSWORD }}
+      CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+      E2E_ENVIRONMENT: 'CI'
+      AB2D_V2_ENABLED: 'true'
+      SEARCH_BENE_BATCH_SIZE: '10'
+      ARTIFACTORY_URL: ${{ secrets.ARTIFACTORY_URL }}
+      AWS_DEFAULT_REGION: "us-east-1"
+      ECR_REPO_ENV_AWS_ACCOUNT_NUMBER: "777200079629"
+      WORKSPACE: ${{ github.workspace }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Setup Maven
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '17'
+          maven-version: '3.6.3'
+        
+      - name: Create ab2d workspace directory and copy in keystore
+        run: mkdir -p "$WORKSPACE/opt/ab2d"
+
+      - name: Download Code Coverage
+        run: |
+          mkdir -p codeclimate
+          if [ ! -f ./codeclimate/cc-test-reporter ]; then
+            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 \
+            > ./codeclimate/cc-test-reporter && chmod +x ./codeclimate/cc-test-reporter
+          fi
+
+      - name: Clean maven
+        run: |
+          mvn --version
+          echo $WORKSPACE
+          mvn -U clean
+
+      # ... (Similar conversions for other stages)
+
+      - name: Run unit and integration tests
+        run: |
+          export AB2D_EFS_MOUNT="${AB2D_HOME}"
+          mvn -s settings.xml -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
+
+      - name: Cleanup - first pass of docker deletions part 1
+        run: |
+          docker volume ls -qf dangling=true | xargs -I name docker volume rm name
+          docker ps -aq | xargs -I name docker rm --force name
+
+      # ... (Similar conversions for other cleanup steps)
+
+      - name: Post-Cleanup
+        if: always()
+        run: |
+          rm -rf "$WORKSPACE/opt/ab2d" 2> /dev/null
+          rm -rf "$WORKSPACE/.m2/repository/gov/cms/ab2d" 2> /dev/null
