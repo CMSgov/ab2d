@@ -44,7 +44,7 @@ import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 
 @AllArgsConstructor
 @Slf4j
-@Tag(name = "Download", description = BULK_DNLD_DSC)
+@Tag(name = "3. Download", description = BULK_DNLD_DSC)
 @RestController
 @RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX)
 public class FileDownloadAPIV1 {
