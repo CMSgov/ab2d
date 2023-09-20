@@ -418,7 +418,7 @@ class TestRunner {
 
         final JSONArray extensions = jsonObject.getJSONArray("extension");
         assertNotNull(extensions);
-        assertEquals(1, extensions.length());
+        assertEquals(11, extensions.length());
 
         // Assume first extension is MBI object
         JSONObject idObj = extensions.getJSONObject(0);
