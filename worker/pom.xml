@@ -5,7 +5,7 @@
     <parent>
         <artifactId>app</artifactId>
         <groupId>gov.cms.ab2d</groupId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>1.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>worker</artifactId>
@@ -20,12 +20,12 @@
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>common</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>1.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>job</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>1.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
@@ -62,14 +62,14 @@
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>common</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>1.1-SNAPSHOT</version>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>job</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>1.1-SNAPSHOT</version>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
@@ -111,7 +111,7 @@
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>coverage</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>1.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -123,7 +123,7 @@
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>coverage</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>1.1-SNAPSHOT</version>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
