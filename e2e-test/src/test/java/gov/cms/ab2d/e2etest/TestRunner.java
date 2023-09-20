@@ -438,7 +438,7 @@ class TestRunner {
         assertFalse(StringUtils.isBlank(mbi));
 
         JSONArray extensionsArray = valueIdentifier.getJSONArray("extension");
-        assertEquals(1, extensionsArray.length());
+        assertEquals(11, extensionsArray.length());
 
         JSONObject currencyExtension = extensionsArray.getJSONObject(0);
         assertEquals(CURRENCY_IDENTIFIER, currencyExtension.getString("url"));
