@@ -404,6 +404,8 @@ class TestRunner {
     private void checkEOBExtensions(JSONObject jsonObject, FhirVersion version) throws JSONException {
         switch (version) {
             case STU3:
+                //ToDo: Temporary fix for Humana.
+                // Uncomment and fix.
                 checkEOBExtensionsSTU3(jsonObject);
                 break;
             case R4:
@@ -426,9 +428,7 @@ class TestRunner {
 
         // Unwrap identifier
         JSONObject valueIdentifier = idObj.getJSONObject("valueIdentifier");
-        //ToDo: Temporary fix for Humana.
-        // Uncomment and fix.
-    //    assertNotNull(valueIdentifier);
+        assertNotNull(valueIdentifier);
 
         // Test that we gave correct label to identifier
         String system = valueIdentifier.getString("system");
