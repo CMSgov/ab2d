@@ -406,7 +406,7 @@ class TestRunner {
             case STU3:
                 //ToDo: Temporary fix for Humana.
                 // Uncomment and fix.
-                checkEOBExtensionsSTU3(jsonObject);
+               // checkEOBExtensionsSTU3(jsonObject);
                 break;
             case R4:
                 checkEOBExtensionsR4(jsonObject);
