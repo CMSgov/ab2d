@@ -9,8 +9,8 @@ import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import java.util.List;
-import javax.annotation.Nullable;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.annotation.Nullable;
+import jakarta.servlet.http.HttpServletRequest;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -117,9 +117,13 @@ class PdpClientServiceTest {
         var exceptionThrown = Assertions.assertThrows(DataIntegrityViolationException.class, () -> {
             pdpClientService.createClient(client);
         });
-        assertEquals("could not execute statement; SQL [n/a]; constraint [uc_user_account_username]; " +
-                        "nested exception is org.hibernate.exception.ConstraintViolationException: could not execute statement",
-                exceptionThrown.getMessage());
+        // assertEquals("could not execute statement; SQL [n/a]; constraint [uc_user_account_username]; " +
+        //                 "nested exception is org.hibernate.exception.ConstraintViolationException: could not execute statement",
+        //         exceptionThrown.getMessage());
+
+        // This changed because the migration to Springboot 3.0.0 updated Hibernate from version 5 to 6.
+        // This feels like a poorly written assertion to me? Should we ever be hard-coding an exact error message?
+        assertEquals("could not execute statement; SQL [n/a]; constraint [uc_user_account_username]", exceptionThrown.getMessage());
     }
 
     @Test

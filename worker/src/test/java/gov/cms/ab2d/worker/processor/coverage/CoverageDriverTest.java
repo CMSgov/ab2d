@@ -45,7 +45,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
 import org.junit.jupiter.api.AfterEach;
