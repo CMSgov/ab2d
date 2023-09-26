@@ -23,8 +23,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.NotBlank;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.NotBlank;
 
 import static gov.cms.ab2d.api.controller.common.ApiText.FILE_EXPIRES;
 import static gov.cms.ab2d.api.controller.common.ApiText.JOB_CANCELLED_MSG;
