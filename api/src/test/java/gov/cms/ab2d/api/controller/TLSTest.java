@@ -99,5 +99,6 @@ public class TLSTest {
                 HttpMethod.GET, entity, String.class);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
+        httpClient.close();
     }
 }
