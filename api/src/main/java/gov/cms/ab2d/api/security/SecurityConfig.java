@@ -40,7 +40,6 @@ import static gov.cms.ab2d.eventclient.events.SlackEvents.API_AUTHNZ_ERROR;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-// public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final FilterChainExceptionHandler filterChainExceptionHandler;
     private final JwtTokenAuthenticationFilter jwtTokenAuthenticationFilter;
@@ -51,7 +50,7 @@ public class SecurityConfig {
     private final String[] authExceptions = new String[]{"/swagger-ui/**", "/configuration/**",
             "/swagger-resources/**", "/v3/api-docs/**", "/webjars/**",
             AKAMAI_TEST_OBJECT, "/favicon.ico", "/error", HEALTH_ENDPOINT, STATUS_ENDPOINT};
-    
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity security) throws Exception {
         security
@@ -86,40 +85,6 @@ public class SecurityConfig {
         return security.build();
     }
 
-    // @Override
-    // protected void configure(HttpSecurity security) throws Exception {
-    //     security
-    //         .csrf().disable()
-
-    //         .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-    //         .and()
-    //         // Setup filter exception handling
-    //         .addFilterBefore(filterChainExceptionHandler, LogoutFilter.class)
-    //         // Add a filter to validate the tokens with every request.
-    //         .addFilterAfter(jwtTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-    //         .authorizeHttpRequests()
-    //         .antMatchers(API_PREFIX_V1 + ADMIN_PREFIX + "/**").hasAuthority(ADMIN_ROLE)
-    //         .antMatchers(API_PREFIX_V1 + FHIR_PREFIX + "/**").hasAnyAuthority(SPONSOR_ROLE)
-    //             .antMatchers(authExceptions).permitAll()
-    //         .anyRequest().authenticated();
-
-    //     // Override default behavior to add more informative logs
-    //     security.exceptionHandling()
-    //             .accessDeniedHandler((request, response, accessDeniedException) -> {
-
-    //                 // Log authorization errors like PDP does not have SPONSOR role
-    //                 logSecurityException(request, accessDeniedException, HttpServletResponse.SC_FORBIDDEN);
-    //                 response.sendError(HttpServletResponse.SC_FORBIDDEN);
-    //             })
-    //             .authenticationEntryPoint((request, response, authException) -> {
-
-    //                 // Log authentication errors that are not caught by JWT filter
-    //                 logSecurityException(request, authException, HttpServletResponse.SC_UNAUTHORIZED);
-    //                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-    //             });
-    // }
-
-    // @Override
     public void configure(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
         authenticationManagerBuilder
                 .userDetailsService(customUserDetailsService);
