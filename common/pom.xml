@@ -150,7 +150,17 @@
             <type>pom</type>
             <scope>import</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-aws-messaging</artifactId>
+            <version>2.2.6.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+            <version>4.0.4</version>
+        </dependency>
+        
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>ab2d-contracts-client</artifactId>
