@@ -151,7 +151,7 @@
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
-            <version>3.1.5</version>
+            <version>4.0.4</version>
         </dependency>
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
