@@ -424,9 +424,11 @@ class TestRunner {
         JSONObject idObj = extensions.getJSONObject(0);
         assertNotNull(idObj);
 
+        log.error("------------------------ idObj: " + idObj);
+
         // Unwrap identifier
         JSONObject valueIdentifier = idObj.getJSONObject("valueIdentifier");
-        log.info("------------------------ " + valueIdentifier);
+        log.error("------------------------ valueIdentifier: " + valueIdentifier);
         assertNotNull(valueIdentifier);
 
         // Test that we gave correct label to identifier
