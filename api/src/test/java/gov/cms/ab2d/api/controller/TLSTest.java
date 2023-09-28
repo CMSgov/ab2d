@@ -1,6 +1,7 @@
 package gov.cms.ab2d.api.controller;
 
 import com.amazonaws.services.sqs.AmazonSQS;
+import com.github.dockerjava.zerodep.shaded.org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
@@ -18,6 +19,7 @@ import org.apache.hc.core5.ssl.SSLContextBuilder;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,8 +86,11 @@ public class TLSTest {
                 .loadTrustMaterial(trustStore.getURL(), trustStorePassword.toCharArray())
                 .build();
         SSLConnectionSocketFactory socketFactory = new SSLConnectionSocketFactory(sslContext);
-        CloseableHttpClient httpClient = HttpClients.custom()
+        HttpClientConnectionManager connectionManager = PoolingHttpClientConnectionManagerBuilder.create()
                 .setSSLSocketFactory(socketFactory)
+                .build();
+        CloseableHttpClient httpClient = HttpClients.custom()
+                .setConnectionManager(connectionManager)
                 .build();
         HttpComponentsClientHttpRequestFactory factory =
                 new HttpComponentsClientHttpRequestFactory(httpClient);
