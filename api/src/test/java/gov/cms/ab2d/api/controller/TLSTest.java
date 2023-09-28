@@ -14,7 +14,7 @@ import java.security.cert.CertificateException;
 import java.util.List;
 import javax.net.ssl.SSLContext;
 import org.apache.hc.core5.ssl.SSLContextBuilder;
-import org.apache.hc.core5.io.ModalCloseable;
+import org.apache.hc.client5.http.io.HttpClientConnectionManager;
 import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
