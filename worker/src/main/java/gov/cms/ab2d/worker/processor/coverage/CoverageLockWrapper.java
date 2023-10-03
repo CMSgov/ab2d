@@ -4,6 +4,7 @@ import org.springframework.integration.jdbc.lock.DefaultLockRepository;
 import org.springframework.integration.jdbc.lock.JdbcLockRegistry;
 import org.springframework.integration.jdbc.lock.LockRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.sql.DataSource;
 import java.util.concurrent.locks.Lock;
@@ -22,7 +23,7 @@ import java.util.concurrent.locks.Lock;
 public class CoverageLockWrapper {
 
     @Autowired
-    ApplicationContext context;
+    private ApplicationContext context;
 
     private static final String COVERAGE_LOCK_NAME = "COVERAGE_LOCK";
     private static final int TEN_MINUTES_IN_MILLIS = 600_000;
