@@ -21,6 +21,9 @@ import java.util.concurrent.locks.Lock;
  */
 public class CoverageLockWrapper {
 
+    @Autowired
+    ApplicationContext context;
+
     private static final String COVERAGE_LOCK_NAME = "COVERAGE_LOCK";
     private static final int TEN_MINUTES_IN_MILLIS = 600_000;
 
@@ -44,7 +47,9 @@ public class CoverageLockWrapper {
         // What this means is that if you are locking longer than this TTL, then
         // you need to renew the lock otherwise you will lose it and get undefined
         // behavior when you attempt to unlock your lock.
+        defaultLockRepository.setApplicationContext(context);
         defaultLockRepository.setTimeToLive(TEN_MINUTES_IN_MILLIS);
+        defaultLockRepository.afterSingletonsInstantiated();
         defaultLockRepository.afterPropertiesSet();
         return defaultLockRepository;
     }
