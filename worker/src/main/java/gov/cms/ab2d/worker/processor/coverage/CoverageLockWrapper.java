@@ -5,6 +5,7 @@ import org.springframework.integration.jdbc.lock.JdbcLockRegistry;
 import org.springframework.integration.jdbc.lock.LockRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 
 import javax.sql.DataSource;
 import java.util.concurrent.locks.Lock;
