@@ -9,6 +9,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -23,7 +24,12 @@ import lombok.ToString;
 public class CoveragePeriod extends TimestampBase {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "bene_coverage_period_seq")
+    @SequenceGenerator(
+        name = "bene_coverage_period_seq", 
+        sequenceName = "bene_coverage_period_seq",
+        allocationSize = 1
+    )
     private Integer id;
 
     @NotNull
