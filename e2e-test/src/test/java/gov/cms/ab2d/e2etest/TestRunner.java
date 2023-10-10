@@ -411,15 +411,12 @@ class TestRunner {
         final JSONArray extensions = jsonObject.getJSONArray("extension");
         assertNotNull(extensions);
 
-        int extensionLength = extensions.length();
+        List<Integer> possibleNumberOfExtensions = Arrays.asList(11, 21, 22, 23 ,24);
 
-        log.info("-------------------------- extensions: " + extensions.length());
+        assertTrue(possibleNumberOfExtensions.contains(extensions.length())) ;
 
-        assertTrue(extensionLength >= 11) ;
-    //    assertEquals(22, extensions.length());
-
-        // Assume first extension is MBI object
-        JSONObject idObj = extensions.getJSONObject(extensionLength - 1);
+        // Assume last extension is MBI object
+        JSONObject idObj = extensions.getJSONObject(extensions.length() - 1);
         assertNotNull(idObj);
 
         // Unwrap identifier
