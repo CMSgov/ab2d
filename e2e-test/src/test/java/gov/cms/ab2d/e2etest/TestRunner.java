@@ -408,6 +408,8 @@ class TestRunner {
 
     private void checkEOBExtensionsSTU3(JSONObject jsonObject) throws JSONException {
 
+        log.info("------------- jO: " + jsonObject.toString());
+
         final JSONArray extensions = jsonObject.getJSONArray("extension");
         assertNotNull(extensions);
 
@@ -415,8 +417,8 @@ class TestRunner {
 
         assertTrue(possibleNumberOfExtensions.contains(extensions.length())) ;
 
-        // Assume first extension is MBI object
-        JSONObject idObj = extensions.getJSONObject(0);
+        // Assume last extension is MBI object
+        JSONObject idObj = extensions.getJSONObject(extensions.length()-1);
         assertNotNull(idObj);
 
         // Unwrap identifier
