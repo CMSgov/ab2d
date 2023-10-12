@@ -109,10 +109,6 @@ class TestRunner {
 
     private final Set<String> acceptableIdStrings = Set.of("carrier", "dme", "hha", "hospice", "inpatient", "outpatient", "snf");
 
-    // Define default test contract
-    private String testContractV1 = "Z0000";
-    private String testContractV2 = "Z0000";
-
     // Get all methods annotated with @Test and run them. This will only be called from TestLaucher when running against
     // an external environment, the regular tests that run as part of a build will be called like they normally would
     // during a build.
@@ -120,7 +116,7 @@ class TestRunner {
         if (testContract != null && !testContract.isEmpty()) {
             log.info("Running test with contract: " + testContract);
         }
-        final Class annotation = Test.class;
+        final Class<Test> annotation = Test.class;
         final Class<?> klass = this.getClass();
         final List<Method> allMethods = new ArrayList<>(Arrays.asList(klass.getDeclaredMethods()));
         for (final Method method : allMethods) {
@@ -253,7 +249,7 @@ class TestRunner {
             List<String> xProgressList = statusResponse.headers().map().get("x-progress");
             if (xProgressList != null && !xProgressList.isEmpty()) {
                 String xProgress = xProgressList.iterator().next();
-                int xProgressValue = Integer.valueOf(xProgress.substring(0, xProgress.indexOf('%')));
+                int xProgressValue = Integer.parseInt(xProgress.substring(0, xProgress.indexOf('%')));
                 if (xProgressValue > 0 && xProgressValue < 100) {
                     statusesBetween0And100.add(xProgressValue);
                 }
@@ -403,27 +399,23 @@ class TestRunner {
 
     private void checkEOBExtensions(JSONObject jsonObject, FhirVersion version) throws JSONException {
         switch (version) {
-            case STU3:
-                //ToDo: Temporary fix for Humana.
-                // Uncomment and fix.
-               // checkEOBExtensionsSTU3(jsonObject);
-                break;
-            case R4:
-                checkEOBExtensionsR4(jsonObject);
-                break;
-            default:
-                break;
+            case STU3 -> checkEOBExtensionsSTU3(jsonObject);
+            case R4 -> checkEOBExtensionsR4(jsonObject);
+            default -> {
+            }
         }
     }
 
     private void checkEOBExtensionsSTU3(JSONObject jsonObject) throws JSONException {
-
         final JSONArray extensions = jsonObject.getJSONArray("extension");
         assertNotNull(extensions);
-        assertEquals(11, extensions.length());
 
-        // Assume first extension is MBI object
-        JSONObject idObj = extensions.getJSONObject(0);
+        List<Integer> possibleNumberOfExtensions = Arrays.asList(11, 21, 22, 23 ,24);
+
+        assertTrue(possibleNumberOfExtensions.contains(extensions.length())) ;
+
+        // Assume last extension is MBI object
+        JSONObject idObj = extensions.getJSONObject(extensions.length()-1);
         assertNotNull(idObj);
 
         // Unwrap identifier
@@ -440,7 +432,7 @@ class TestRunner {
         assertFalse(StringUtils.isBlank(mbi));
 
         JSONArray extensionsArray = valueIdentifier.getJSONArray("extension");
-        assertEquals(11, extensionsArray.length());
+        assertEquals(1, extensionsArray.length());
 
         JSONObject currencyExtension = extensionsArray.getJSONObject(0);
         assertEquals(CURRENCY_IDENTIFIER, currencyExtension.getString("url"));
@@ -477,11 +469,10 @@ class TestRunner {
                 if (!allowedFields.contains(val)) {
                     if (disallowedFields.contains(val)) {
                         log.info("********** API outputted invalid field '" + val + "'");
-                        return false;
                     } else {
                         log.info("********** API outputted unknown field '" + val + "'");
-                        return false;
                     }
+                    return false;
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -513,7 +504,7 @@ class TestRunner {
         List<String> retryAfterList = statusResponse.headers().map().get("retry-after");
         assertEquals(retryAfterList.iterator().next(), String.valueOf(DELAY));
         List<String> xProgressList = statusResponse.headers().map().get("x-progress");
-        assertTrue(xProgressList.iterator().next().matches("\\d+\\% complete"));
+        assertTrue(xProgressList.iterator().next().matches("\\d+% complete"));
 
         HttpResponse<String> retryStatusResponse = apiClient.statusRequest(contentLocationList.iterator().next());
 
@@ -627,6 +618,7 @@ class TestRunner {
 
         APIClient secondAPIClient = createSecondClient();
 
+        assertNotNull(downloadDetails);
         HttpResponse<InputStream> downloadResponse = secondAPIClient.fileDownloadRequest(downloadDetails.getFirst());
         assertEquals(403, downloadResponse.statusCode());
     }
@@ -821,7 +813,10 @@ class TestRunner {
      * @return the stream of arguments
      */
     private Stream<Arguments> getVersionAndContract() {
+        // Define default test contract
+        String testContractV1 = "Z0000";
         if (v2Enabled()) {
+            String testContractV2 = "Z0000";
             return Stream.of(arguments(STU3, testContractV1), arguments(R4, testContractV2));
         } else {
             return Stream.of(arguments(STU3, testContractV1));
@@ -843,9 +838,6 @@ class TestRunner {
 
     private static boolean v2Enabled() {
         String v2Enabled = System.getenv("AB2D_V2_ENABLED");
-        if (v2Enabled != null && v2Enabled.equalsIgnoreCase("true")) {
-            return true;
-        }
-        return false;
+        return v2Enabled != null && v2Enabled.equalsIgnoreCase("true");
     }
 }
