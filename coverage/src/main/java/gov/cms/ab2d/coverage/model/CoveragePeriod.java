@@ -26,7 +26,7 @@ public class CoveragePeriod extends TimestampBase {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "bene_coverage_period_seq")
     @SequenceGenerator(
-        name = "bene_coverage_period_seq", 
+        name = "bene_coverage_period_seq",
         sequenceName = "bene_coverage_period_seq",
         allocationSize = 1
     )
