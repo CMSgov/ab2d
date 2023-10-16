@@ -20,6 +20,9 @@ jobs:
       AB2D_V2_ENABLED: 'true'
       SEARCH_BENE_BATCH_SIZE: '10'
       AWS_DEFAULT_REGION: "us-east-1"
+      ARTIFACTORY_URL: ${{ secrets.ARTIFACTORY_URL }}
+      ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
+      ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
       ECR_REPO_ENV_AWS_ACCOUNT_NUMBER: "777200079629"
       WORKSPACE: ${{ github.workspace }}
 
@@ -54,17 +57,17 @@ jobs:
       # ... (Similar conversions for other stages)
 
 
-      - name: Set env vars from AWS params
-        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
-        env:
-          AWS_REGION: ${{ vars.AWS_REGION }}
-        with:
-          params: |
-            ARTIFACTORY_URL=/artifactory/url
-            ARTIFACTORY_USER=/artifactory/user
-            ARTIFACTORY_PASSWORD=/artifactory/password
-            SONAR_HOST_URL=/sonarqube/url
-            SONAR_TOKEN=/sonarqube/token
+#      - name: Set env vars from AWS params
+#        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+#        env:
+#          AWS_REGION: ${{ vars.AWS_REGION }}
+#        with:
+#          params: |
+#            ARTIFACTORY_URL=/artifactory/url
+#            ARTIFACTORY_USER=/artifactory/user
+#            ARTIFACTORY_PASSWORD=/artifactory/password
+#            SONAR_HOST_URL=/sonarqube/url
+#            SONAR_TOKEN=/sonarqube/token
 
 
       - name: Run unit and integration tests
