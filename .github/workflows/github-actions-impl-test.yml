@@ -39,8 +39,8 @@ jobs:
 
       - name: Install Maven
         run: |
-          sudo apt-get update
-          sudo apt-get install -y maven     
+          sudo yum update -y
+          sudo yum install -y maven
         
       - name: Create ab2d workspace directory and copy in keystore
         run: mkdir -p "$WORKSPACE/opt/ab2d"
