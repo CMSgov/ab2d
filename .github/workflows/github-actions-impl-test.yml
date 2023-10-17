@@ -41,6 +41,7 @@ jobs:
         run: |
           sudo yum update -y
           sudo yum install -y maven
+          sudo yum upgrade maven
         
       - name: Create ab2d workspace directory and copy in keystore
         run: mkdir -p "$WORKSPACE/opt/ab2d"
