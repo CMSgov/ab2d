@@ -37,12 +37,12 @@ jobs:
           java-version: '17'
           maven-version: '3.6.3'
 
-    - name: Install Maven 3.2.5
-      run: |
-        wget https://archive.apache.org/dist/maven/maven-3/3.2.5/binaries/apache-maven-3.2.5-bin.tar.gz
-        tar xzvf apache-maven-3.2.5-bin.tar.gz
-        sudo mv apache-maven-3.2.5 /opt/maven
-        echo "PATH=$PATH:/opt/maven/bin" >> $GITHUB_ENV
+      - name: Install Maven 3.2.5
+        run: |
+          wget https://archive.apache.org/dist/maven/maven-3/3.2.5/binaries/apache-maven-3.2.5-bin.tar.gz
+          tar xzvf apache-maven-3.2.5-bin.tar.gz
+          sudo mv apache-maven-3.2.5 /opt/maven
+          echo "PATH=$PATH:/opt/maven/bin" >> $GITHUB_ENV
         
       - name: Create ab2d workspace directory and copy in keystore
         run: mkdir -p "$WORKSPACE/opt/ab2d"
