@@ -10,7 +10,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.SequenceGenerator;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -30,13 +29,8 @@ import lombok.ToString;
 public class CoverageSearchEvent extends TimestampBase {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "event_bene_coverage_search_status_change_seq")
-    @SequenceGenerator(
-        name = "event_bene_coverage_search_status_change_seq",
-        sequenceName = "event_bene_coverage_search_status_change_seq",
-        allocationSize = 1
-    )
     @EqualsAndHashCode.Include
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
     @ManyToOne

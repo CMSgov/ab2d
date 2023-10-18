@@ -2,6 +2,7 @@ package gov.cms.ab2d.coverage.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
@@ -16,8 +17,8 @@ import java.time.OffsetDateTime;
 @AllArgsConstructor
 public class CoverageSearch {
     @Id
-    @GeneratedValue
     @EqualsAndHashCode.Include
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
     @OneToOne

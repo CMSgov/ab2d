@@ -29,8 +29,8 @@ import static jakarta.persistence.EnumType.STRING;
 public class Job {
 
     @Id
-    @GeneratedValue
     @EqualsAndHashCode.Include
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
     @Column(unique = true)
