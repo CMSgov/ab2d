@@ -111,7 +111,7 @@ pipeline {
 
                         export AB2D_V2_ENABLED=true
 
-                        mvn test -s settings.xml -pl e2e-bfd-test -am -Dtest=EndToEndBfdTests -Dsurefire.failIfNoTests=false -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL}
+                        mvn test -s settings.xml -pl e2e-bfd-test -am -Dtest=EndToEndBfdTests -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL}
                     '''
                 }
             }
