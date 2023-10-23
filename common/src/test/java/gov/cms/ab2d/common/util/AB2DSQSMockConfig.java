@@ -5,9 +5,6 @@ import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
-// import org.springframework.cloud.aws.autoconfigure.context.ContextStackAutoConfiguration;
-// import org.springframework.cloud.aws.autoconfigure.messaging.MessagingAutoConfiguration;
 import org.springframework.cloud.aws.messaging.config.SimpleMessageListenerContainerFactory;
 import org.springframework.cloud.aws.messaging.listener.QueueMessageHandler;
 import org.springframework.context.annotation.Bean;
@@ -16,7 +13,6 @@ import static org.mockito.Mockito.mock;
 
 @TestConfiguration
 @EnableAutoConfiguration
-// @EnableAutoConfiguration(exclude = {MessagingAutoConfiguration.class, ContextStackAutoConfiguration.class})
 public class AB2DSQSMockConfig {
 
   static {
