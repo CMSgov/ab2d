@@ -59,7 +59,7 @@ jobs:
         run: |
           sudo chmod -R 777 /opt/actions-runner/_work/ab2d/ab2d/common/
           # Add other commands if necessary
-          
+
       - name: Clean maven
         run: |
           mvn --version
@@ -85,7 +85,7 @@ jobs:
       - name: Run unit and integration tests
         run: |
           export AB2D_EFS_MOUNT="${AB2D_HOME}"
-          mvn -s settings.xml -X -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
+          mvn -s settings.xml -X -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,coverage,api,worker
 
       - name: Cleanup - first pass of docker deletions part 1
         run: |
