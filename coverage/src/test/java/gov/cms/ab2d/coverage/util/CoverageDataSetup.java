@@ -69,7 +69,7 @@ public class CoverageDataSetup {
         repository.flush();
 
         try {
-            Thread.sleep(1000);
+            Thread.sleep(2000);
         } catch (InterruptedException e) {
             System.out.print("Exception: " + e);
         }
