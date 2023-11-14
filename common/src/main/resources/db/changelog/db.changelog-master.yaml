@@ -158,6 +158,9 @@ databaseChangeLog:
   - include:
       file: db/changelog/v2023/add_optout_property.sql
   - include:
+      file: db/changelog/v2023/extend_coverage_partition.sql
+  - include:
       file: db/changelog/v2023/create_current_mbi_table.sql
   - include:
       file: db/changelog/v2023/create_current_mbi_procedure.sql
+
