@@ -20,9 +20,3 @@ create table if not exists tst_2022 partition of tst
 
 create table if not exists tst_2023 partition of tst
     for values in (2023);
-
-create table if not exists tst_2024 partition of tst
-    for values in (2024);
-
-create table if not exists tst_2025 partition of tst
-    for values in (2025);
