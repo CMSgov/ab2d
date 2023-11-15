@@ -6,7 +6,7 @@ import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.fhir.FhirVersion;
 import java.time.OffsetDateTime;
 import java.util.List;
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

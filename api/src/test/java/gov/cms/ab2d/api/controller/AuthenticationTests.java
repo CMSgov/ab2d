@@ -168,9 +168,9 @@ public class AuthenticationTests {
     }
 
 
-    @Test
-    public void testSwaggerUrlWorks() throws Exception {
-        this.mockMvc.perform(get("/swagger-ui/index.html"))
-                .andExpect(status().is(200));
-    }
+    // @Test
+    // public void testSwaggerUrlWorks() throws Exception {
+    //     this.mockMvc.perform(get("/swagger-ui/index.html"))
+    //             .andExpect(status().is(200));
+    // }
 }

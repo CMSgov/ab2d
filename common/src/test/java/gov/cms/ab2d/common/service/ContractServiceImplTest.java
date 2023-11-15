@@ -47,7 +47,7 @@ class ContractServiceImplTest {
     private Contract contract;
 
     @BeforeEach
-    private void before() {
+    public void before() {
         contract = new Contract();
         contract.setContractName("Test Contract");
         contract.setContractNumber("NATTE");
@@ -58,7 +58,7 @@ class ContractServiceImplTest {
     }
 
     @AfterEach
-    private void cleanup() {
+    public void cleanup() {
         dataSetup.cleanup();
     }
 
