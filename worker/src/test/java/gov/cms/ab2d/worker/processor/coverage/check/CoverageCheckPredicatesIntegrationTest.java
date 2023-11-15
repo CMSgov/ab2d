@@ -239,7 +239,7 @@ public class CoverageCheckPredicatesIntegrationTest {
 
         assertFalse(stableCheck.test(contract));
 
-        int expectedIssues =  1;
+        int expectedIssues =  2;
 
         assertEquals(expectedIssues, issues.size());
         issues.forEach(issue -> assertTrue(issue.contains("enrollment changed")));
