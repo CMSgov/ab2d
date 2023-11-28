@@ -66,12 +66,17 @@ jobs:
           echo $WORKSPACE
           mvn -U clean
 
+      - name: Download bfd keystore
+        run: |
+          aws s3 cp s3://bcda-opensbx-access-logs/ab2d_sbx_keystore /tmp/ab2d_sbx_keystore      
+
       - name: Run e2e-bfd-test
         run: |
           export AB2D_BFD_KEYSTORE_LOCATION="${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
-          cp ${{ secrets.SANDBOX_BFD_KEYSTORE }} ${{ env.AB2D_BFD_KEYSTORE_LOCATION }}
+          cp /tmp/ab2d_sbx_keystore ${{ env.AB2D_BFD_KEYSTORE_LOCATION }}
           test -f ${{ env.AB2D_BFD_KEYSTORE_LOCATION }} && echo "created keystore file"
           chmod 666 ${{ env.AB2D_BFD_KEYSTORE_LOCATION }}
+          export AB2D_BFD_KEYSTORE_PASSWORD=${{ secrets.AB2D_BFD_KEYSTORE_PASSWORD }}
           export AB2D_V2_ENABLED=true
           mvn test -s settings.xml -pl e2e-bfd-test -am -Dtest=EndToEndBfdTests -DfailIfNoTests=false -Dusername=${{ secrets.ARTIFACTORY_USER }} -Dpassword=${{ secrets.ARTIFACTORY_PASSWORD }} -Drepository_url=${{ secrets.ARTIFACTORY_URL }}
         working-directory: ${{ github.workspace }}
@@ -80,7 +85,7 @@ jobs:
         run: |
           export AB2D_BFD_KEYSTORE_LOCATION="/opt/ab2d/ab2d_bfd_keystore"
           export KEYSTORE_LOCATION="${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
-          cp ${{ secrets.SANDBOX_BFD_KEYSTORE }} ${{ env.KEYSTORE_LOCATION }}
+          cp /tmp/ab2d_sbx_keystore ${{ env.KEYSTORE_LOCATION }}
           test -f ${{ env.KEYSTORE_LOCATION }} && echo "created keystore file"
           chmod 666 ${{ env.KEYSTORE_LOCATION }}
           aws --region "${{ env.AWS_DEFAULT_REGION }}" ecr get-login-password | docker login --username AWS --password-stdin "${{ env.ECR_REPO_ENV_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ env.AWS_DEFAULT_REGION }}.amazonaws.com"
