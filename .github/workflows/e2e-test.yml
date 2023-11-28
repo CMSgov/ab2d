@@ -25,6 +25,7 @@ jobs:
       ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
       ECR_REPO_ENV_AWS_ACCOUNT_NUMBER: "777200079629"
       WORKSPACE: ${{ github.workspace }}
+      AB2D_BFD_KEYSTORE_LOCATION: "${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
 
     steps:
       - name: Checkout Code
@@ -72,7 +73,6 @@ jobs:
 
       - name: Run e2e-bfd-test
         run: |
-          export AB2D_BFD_KEYSTORE_LOCATION="${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
           cp /tmp/ab2d_sbx_keystore ${{ env.AB2D_BFD_KEYSTORE_LOCATION }}
           test -f ${{ env.AB2D_BFD_KEYSTORE_LOCATION }} && echo "created keystore file"
           chmod 666 ${{ env.AB2D_BFD_KEYSTORE_LOCATION }}
