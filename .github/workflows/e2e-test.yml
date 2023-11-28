@@ -1,0 +1,100 @@
+name: GitHub Actions Workflow
+
+on:
+  push:
+    branches:
+      - '*'
+
+jobs:
+  build:
+
+    runs-on: self-hosted
+
+    env:
+      OKTA_CLIENT_ID: ${{ secrets.OKTA_CLIENT_ID }}
+      OKTA_CLIENT_PASSWORD: ${{ secrets.OKTA_CLIENT_PASSWORD }}
+      SECONDARY_USER_OKTA_CLIENT_ID: ${{ secrets.SECONDARY_USER_OKTA_CLIENT_ID }}
+      SECONDARY_USER_OKTA_CLIENT_PASSWORD: ${{ secrets.SECONDARY_USER_OKTA_CLIENT_PASSWORD }}
+      CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+      E2E_ENVIRONMENT: 'CI'
+      AB2D_V2_ENABLED: 'true'
+      SEARCH_BENE_BATCH_SIZE: '10'
+      AWS_DEFAULT_REGION: "us-east-1"
+      ARTIFACTORY_URL: ${{ secrets.ARTIFACTORY_URL }}
+      ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
+      ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+      ECR_REPO_ENV_AWS_ACCOUNT_NUMBER: "777200079629"
+      WORKSPACE: ${{ github.workspace }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Setup Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '17'
+          maven-version: '3.6.3'
+
+      - name: Install Maven 3.2.5
+        run: |
+          wget https://archive.apache.org/dist/maven/maven-3/3.2.5/binaries/apache-maven-3.2.5-bin.tar.gz
+          tar xzvf apache-maven-3.2.5-bin.tar.gz
+          sudo mv apache-maven-3.2.5 /opt/maven
+          echo "PATH=$PATH:/opt/maven/bin" >> $GITHUB_ENV
+        
+      - name: Create ab2d workspace directory and copy in keystore
+        run: mkdir -p "$WORKSPACE/opt/ab2d"
+
+      - name: Download Code Coverage
+        run: |
+          mkdir -p codeclimate
+          if [ ! -f ./codeclimate/cc-test-reporter ]; then
+            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 \
+            > ./codeclimate/cc-test-reporter && chmod +x ./codeclimate/cc-test-reporter
+          fi
+
+      - name: Set directory permissions
+        run: |
+          sudo chmod -R 777 /opt/actions-runner/_work/ab2d/ab2d/common/
+          # Add other commands if necessary
+
+      - name: Clean maven
+        run: |
+          mvn --version
+          echo $WORKSPACE
+          mvn -U clean
+
+      - name: Run e2e-bfd-test
+        run: |
+          export AB2D_BFD_KEYSTORE_LOCATION="${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
+          cp ${{ secrets.SANDBOX_BFD_KEYSTORE }} ${{ env.AB2D_BFD_KEYSTORE_LOCATION }}
+          test -f ${{ env.AB2D_BFD_KEYSTORE_LOCATION }} && echo "created keystore file"
+          chmod 666 ${{ env.AB2D_BFD_KEYSTORE_LOCATION }}
+          export AB2D_V2_ENABLED=true
+          mvn test -s settings.xml -pl e2e-bfd-test -am -Dtest=EndToEndBfdTests -DfailIfNoTests=false -Dusername=${{ secrets.ARTIFACTORY_USER }} -Dpassword=${{ secrets.ARTIFACTORY_PASSWORD }} -Drepository_url=${{ secrets.ARTIFACTORY_URL }}
+        working-directory: ${{ github.workspace }}
+
+       - name: Run e2e-test
+        run: |
+          export AB2D_BFD_KEYSTORE_LOCATION="/opt/ab2d/ab2d_bfd_keystore"
+          export KEYSTORE_LOCATION="${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
+          cp ${{ secrets.SANDBOX_BFD_KEYSTORE }} ${{ env.KEYSTORE_LOCATION }}
+          test -f ${{ env.KEYSTORE_LOCATION }} && echo "created keystore file"
+          chmod 666 ${{ env.KEYSTORE_LOCATION }}
+          aws --region "${{ env.AWS_DEFAULT_REGION }}" ecr get-login-password | docker login --username AWS --password-stdin "${{ env.ECR_REPO_ENV_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ env.AWS_DEFAULT_REGION }}.amazonaws.com"
+          mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dusername=${{ secrets.ARTIFACTORY_USER }} -Dpassword=${{ secrets.ARTIFACTORY_PASSWORD }} -Drepository_url=${{ secrets.ARTIFACTORY_URL }}
+        working-directory: ${{ github.workspace }}
+
+      - name: Run codeclimate tests
+        run: |
+          export JACOCO_SOURCE_PATH=./api/src/main/java
+          ./codeclimate/cc-test-reporter format-coverage ./api/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.api.json
+          export JACOCO_SOURCE_PATH=./common/src/main/java
+          ./codeclimate/cc-test-reporter format-coverage ./common/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.common.json
+          export JACOCO_SOURCE_PATH=./job/src/main/java
+          ./codeclimate/cc-test-reporter format-coverage ./job/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.job.json
+          export JACOCO_SOURCE_PATH=./coverage/src/main/java
+          ./codeclimate/cc-test-reporter format-coverage ./coverage/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.coverage.json
+          export JACOCO_SOURCE_PATH=./worker/src/main/java                 
