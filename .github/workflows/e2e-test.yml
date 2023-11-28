@@ -81,7 +81,7 @@ jobs:
           mvn test -s settings.xml -pl e2e-bfd-test -am -Dtest=EndToEndBfdTests -DfailIfNoTests=false -Dusername=${{ secrets.ARTIFACTORY_USER }} -Dpassword=${{ secrets.ARTIFACTORY_PASSWORD }} -Drepository_url=${{ secrets.ARTIFACTORY_URL }}
         working-directory: ${{ github.workspace }}
 
-       - name: Run e2e-test
+      - name: Run e2e-test
         run: |
           export AB2D_BFD_KEYSTORE_LOCATION="/opt/ab2d/ab2d_bfd_keystore"
           export KEYSTORE_LOCATION="${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
