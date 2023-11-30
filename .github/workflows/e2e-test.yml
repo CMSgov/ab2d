@@ -46,9 +46,8 @@ jobs:
           echo "PATH=$PATH:/opt/maven/bin" >> $GITHUB_ENV
         continue-on-error: true
 
-      - name: Check Maven Installation
-        if: ${{ success() }}
-        run: mvn --version
+      - name: Set Maven path
+        run: echo "PATH=$PATH:/opt/maven/bin" >> $GITHUB_ENV
 
         
       - name: Create ab2d workspace directory and copy in keystore
