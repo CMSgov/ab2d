@@ -44,6 +44,12 @@ jobs:
           tar xzvf apache-maven-3.2.5-bin.tar.gz
           sudo mv apache-maven-3.2.5 /opt/maven
           echo "PATH=$PATH:/opt/maven/bin" >> $GITHUB_ENV
+        continue-on-error: true
+
+      - name: Check Maven Installation
+        if: ${{ success() }}
+        run: mvn --version
+
         
       - name: Create ab2d workspace directory and copy in keystore
         run: mkdir -p "$WORKSPACE/opt/ab2d"
