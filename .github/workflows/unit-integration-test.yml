@@ -1,0 +1,100 @@
+name: GitHub Actions Workflow
+
+on:
+  push:
+    branches:
+      - '*'
+
+jobs:
+  build:
+
+    runs-on: self-hosted
+
+    env:
+      OKTA_CLIENT_ID: ${{ secrets.OKTA_CLIENT_ID }}
+      OKTA_CLIENT_PASSWORD: ${{ secrets.OKTA_CLIENT_PASSWORD }}
+      SECONDARY_USER_OKTA_CLIENT_ID: ${{ secrets.SECONDARY_USER_OKTA_CLIENT_ID }}
+      SECONDARY_USER_OKTA_CLIENT_PASSWORD: ${{ secrets.SECONDARY_USER_OKTA_CLIENT_PASSWORD }}
+      CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+      E2E_ENVIRONMENT: 'CI'
+      AB2D_V2_ENABLED: 'true'
+      SEARCH_BENE_BATCH_SIZE: '10'
+      AWS_DEFAULT_REGION: "us-east-1"
+      ARTIFACTORY_URL: ${{ secrets.ARTIFACTORY_URL }}
+      ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
+      ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+      ECR_REPO_ENV_AWS_ACCOUNT_NUMBER: ${{ vars.SBX_ACCOUNT_NUMBER }}
+      WORKSPACE: ${{ github.workspace }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Setup Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '17'
+          maven-version: '3.6.3'
+
+      - name: Install Maven 3.2.5
+        run: |
+          wget https://archive.apache.org/dist/maven/maven-3/3.2.5/binaries/apache-maven-3.2.5-bin.tar.gz
+          tar xzvf apache-maven-3.2.5-bin.tar.gz
+          sudo mv apache-maven-3.2.5 /opt/maven
+          echo "PATH=$PATH:/opt/maven/bin" >> $GITHUB_ENV
+        
+      - name: Create ab2d workspace directory and copy in keystore
+        run: mkdir -p "$WORKSPACE/opt/ab2d"
+
+      - name: Download Code Coverage
+        run: |
+          mkdir -p codeclimate
+          if [ ! -f ./codeclimate/cc-test-reporter ]; then
+            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 \
+            > ./codeclimate/cc-test-reporter && chmod +x ./codeclimate/cc-test-reporter
+          fi
+
+      - name: Set directory permissions
+        run: |
+          sudo chmod -R 777 /opt/actions-runner/_work/ab2d/ab2d/common/
+          # Add other commands if necessary
+
+      - name: Clean maven
+        run: |
+          mvn --version
+          echo $WORKSPACE
+          mvn -U clean
+
+      # ... (Similar conversions for other stages)
+
+
+#      - name: Set env vars from AWS params
+#        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+#        env:
+#          AWS_REGION: ${{ vars.AWS_REGION }}
+#        with:
+#          params: |
+#            ARTIFACTORY_URL=/artifactory/url
+#            ARTIFACTORY_USER=/artifactory/user
+#            ARTIFACTORY_PASSWORD=/artifactory/password
+#            SONAR_HOST_URL=/sonarqube/url
+#            SONAR_TOKEN=/sonarqube/token
+
+
+      - name: Run unit and integration tests
+        run: |
+          mvn -s settings.xml -X -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
+
+      - name: Cleanup - first pass of docker deletions part 1
+        run: |
+          docker volume ls -qf dangling=true | xargs -I name docker volume rm name
+          docker ps -aq | xargs -I name docker rm --force name
+
+      # ... (Similar conversions for other cleanup steps)
+
+      - name: Post-Cleanup
+        if: always()
+        run: |
+          rm -rf "$WORKSPACE/opt/ab2d" 2> /dev/null
+          rm -rf "$WORKSPACE/.m2/repository/gov/cms/ab2d" 2> /dev/null
