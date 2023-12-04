@@ -11,6 +11,17 @@ jobs:
     runs-on: self-hosted
 
 
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Setup Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '17'
+          maven-version: '3.6.3'
+
       - name: Set env vars from AWS params
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
         env:
@@ -25,24 +36,13 @@ jobs:
           SEARCH_BENE_BATCH_SIZE: '10'
           ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
           ECR_REPO_ENV_AWS_ACCOUNT_NUMBER: ${{ vars.SBX_ACCOUNT_NUMBER }}
-      WORKSPACE: ${{ github.workspace }}
+          WORKSPACE: ${{ github.workspace }}
         with:
           params: |
             ARTIFACTORY_URL=/artifactory/url
             ARTIFACTORY_USER=/artifactory/user
             ARTIFACTORY_PASSWORD=/artifactory/password 
 
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
-
-      - name: Setup Java
-        uses: actions/setup-java@v2
-        with:
-          distribution: 'adopt'
-          java-version: '17'
-          maven-version: '3.6.3'
 
       - name: Install Maven 3.2.5
         run: |
