@@ -52,7 +52,7 @@ jobs:
           echo "PATH=$PATH:/opt/maven/bin" >> $GITHUB_ENV
         
       - name: Create ab2d workspace directory and copy in keystore
-        run: mkdir -p "$WORKSPACE/opt/ab2d"
+        run: sudo mkdir -p "$WORKSPACE/opt/ab2d"
 
       - name: Download Code Coverage
         run: |
