@@ -10,21 +10,28 @@ jobs:
 
     runs-on: self-hosted
 
-    env:
-      OKTA_CLIENT_ID: ${{ secrets.OKTA_CLIENT_ID }}
-      OKTA_CLIENT_PASSWORD: ${{ secrets.OKTA_CLIENT_PASSWORD }}
-      SECONDARY_USER_OKTA_CLIENT_ID: ${{ secrets.SECONDARY_USER_OKTA_CLIENT_ID }}
-      SECONDARY_USER_OKTA_CLIENT_PASSWORD: ${{ secrets.SECONDARY_USER_OKTA_CLIENT_PASSWORD }}
-      CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
-      E2E_ENVIRONMENT: 'CI'
-      AB2D_V2_ENABLED: 'true'
-      SEARCH_BENE_BATCH_SIZE: '10'
-      AWS_DEFAULT_REGION: "us-east-1"
-      ARTIFACTORY_URL: ${{ secrets.ARTIFACTORY_URL }}
-      ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
-      ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
-      ECR_REPO_ENV_AWS_ACCOUNT_NUMBER: ${{ vars.SBX_ACCOUNT_NUMBER }}
+
+      - name: Set env vars from AWS params
+        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          OKTA_CLIENT_ID: ${{ secrets.OKTA_CLIENT_ID }}
+          OKTA_CLIENT_PASSWORD: ${{ secrets.OKTA_CLIENT_PASSWORD }}
+          SECONDARY_USER_OKTA_CLIENT_ID: ${{ secrets.SECONDARY_USER_OKTA_CLIENT_ID }}
+          SECONDARY_USER_OKTA_CLIENT_PASSWORD: ${{ secrets.SECONDARY_USER_OKTA_CLIENT_PASSWORD }}
+          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+          E2E_ENVIRONMENT: 'CI'
+          AB2D_V2_ENABLED: 'true'
+          SEARCH_BENE_BATCH_SIZE: '10'
+          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+          ECR_REPO_ENV_AWS_ACCOUNT_NUMBER: ${{ vars.SBX_ACCOUNT_NUMBER }}
       WORKSPACE: ${{ github.workspace }}
+        with:
+          params: |
+            ARTIFACTORY_URL=/artifactory/url
+            ARTIFACTORY_USER=/artifactory/user
+            ARTIFACTORY_PASSWORD=/artifactory/password 
+
 
     steps:
       - name: Checkout Code
