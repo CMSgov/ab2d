@@ -11,6 +11,16 @@ jobs:
     runs-on: self-hosted
 
 
+    env:
+      CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+      E2E_ENVIRONMENT: 'CI'
+      AB2D_V2_ENABLED: 'true'
+      SEARCH_BENE_BATCH_SIZE: '10'
+      AWS_DEFAULT_REGION: "us-east-1"
+      WORKSPACE: ${{ github.workspace }}
+      AB2D_BFD_KEYSTORE_LOCATION: "${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
+
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
@@ -26,29 +36,39 @@ jobs:
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
-          OKTA_CLIENT_ID: ${{ secrets.OKTA_CLIENT_ID }}
-          OKTA_CLIENT_PASSWORD: ${{ secrets.OKTA_CLIENT_PASSWORD }}
-          SECONDARY_USER_OKTA_CLIENT_ID: ${{ secrets.SECONDARY_USER_OKTA_CLIENT_ID }}
-          SECONDARY_USER_OKTA_CLIENT_PASSWORD: ${{ secrets.SECONDARY_USER_OKTA_CLIENT_PASSWORD }}
-          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
-          E2E_ENVIRONMENT: 'CI'
-          AB2D_V2_ENABLED: 'true'
-          SEARCH_BENE_BATCH_SIZE: '10'
-          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
           ECR_REPO_ENV_AWS_ACCOUNT_NUMBER: ${{ vars.SBX_ACCOUNT_NUMBER }}
-          WORKSPACE: ${{ github.workspace }}
         with:
           params: |
             ARTIFACTORY_URL=/artifactory/url
             ARTIFACTORY_USER=/artifactory/user
             ARTIFACTORY_PASSWORD=/artifactory/password 
+            CC_TEST_REPORTER_ID=cc-test-reporter-id
+
+      - name: Assume role in target account
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::${{ vars.SBX_ACCOUNT_NUMBER }}:role/delegatedadmin/developer/github-actions-runner-role            
+
+      - name: Set env vars from AWS params
+        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          ECR_REPO_ENV_AWS_ACCOUNT_NUMBER: ${{ vars.SBX_ACCOUNT_NUMBER }}
+        with:
+          params: |
+            OKTA_CLIENT_ID=okta/client-id
+            OKTA_CLIENT_PASSWORD=okta/client-secret
+            SECONDARY_USER_OKTA_CLIENT_ID=secondary-okta/client-id
+            SECONDARY_USER_OKTA_CLIENT_PASSWORD=secondary-okta/client-secret
 
 
-      - name: Install Maven 3.2.5
+
+      - name: Install Maven 3.6.3
         run: |
-          wget https://archive.apache.org/dist/maven/maven-3/3.2.5/binaries/apache-maven-3.2.5-bin.tar.gz
-          tar xzvf apache-maven-3.2.5-bin.tar.gz
-          sudo mv apache-maven-3.2.5 /opt/maven
+          wget https://archive.apache.org/dist/maven/maven-3/3.2.5/binaries/apache-maven-3.6.3-bin.tar.gz
+          tar xzvf apache-maven-3.6.3-bin.tar.gz
+          sudo mv apache-maven-3.6.3 /opt/maven
           echo "PATH=$PATH:/opt/maven/bin" >> $GITHUB_ENV
         
       - name: Create ab2d workspace directory and copy in keystore
@@ -58,7 +78,7 @@ jobs:
         run: |
           mkdir -p codeclimate
           if [ ! -f ./codeclimate/cc-test-reporter ]; then
-            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 \
+            curl -L --no-progress-meter https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 \
             > ./codeclimate/cc-test-reporter && chmod +x ./codeclimate/cc-test-reporter
           fi
 
@@ -98,10 +118,3 @@ jobs:
           docker volume ls -qf dangling=true | xargs -I name docker volume rm name
           docker ps -aq | xargs -I name docker rm --force name
 
-      # ... (Similar conversions for other cleanup steps)
-
-      - name: Post-Cleanup
-        if: always()
-        run: |
-          rm -rf "$WORKSPACE/opt/ab2d" 2> /dev/null
-          rm -rf "$WORKSPACE/.m2/repository/gov/cms/ab2d" 2> /dev/null
