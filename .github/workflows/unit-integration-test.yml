@@ -110,9 +110,9 @@ jobs:
         run: |
           mvn -s settings.xml -X -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
         working-directory: ${{ github.workspace }}
-        
-      - name: Cleanup - first pass of docker deletions part 1
+
+      - name: Cleanup -
         run: |
-          docker volume ls -qf dangling=true | xargs -I name docker volume rm name
-          docker ps -aq | xargs -I name docker rm --force name
+          sudo rm -rf /opt/actions-runner/_work/ab2d/ab2d/opt/ab2d
+
 
