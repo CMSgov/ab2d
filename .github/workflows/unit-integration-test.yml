@@ -48,18 +48,18 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-region: us-east-1
-          role-to-assume: arn:aws:iam::${{ vars.SBX_ACCOUNT_NUMBER }}:role/delegatedadmin/developer/github-actions-runner-role            
+          role-to-assume: arn:aws:iam::${{ vars.DEV_ACCOUNT_NUMBER }}:role/delegatedadmin/developer/github-actions-runner-role            
 
       - name: Set Environment Variables
         run: |
-          AWS_ACCOUNT_ID=${{ vars.SBX_ACCOUNT_NUMBER }}
+          AWS_ACCOUNT_ID=${{ vars.DEV_ACCOUNT_NUMBER }}
           AWS_REGION=${{ vars.AWS_REGION }}
 
 
-          OKTA_CLIENT_ID=$(aws ssm get-parameter --name okta/client-id --region $AWS_REGION --account-id $AWS_ACCOUNT_ID --query "Parameter.Value" --output text)
-          OKTA_CLIENT_PASSWORD=$(aws ssm get-parameter --name okta/client-secret --region $AWS_REGION --account-id $AWS_ACCOUNT_ID --query "Parameter.Value" --output text)
-          SECONDARY_USER_OKTA_CLIENT_ID=$(aws ssm get-parameter --name secondary-okta/client-id --region $AWS_REGION --account-id $AWS_ACCOUNT_ID --query "Parameter.Value" --output text)
-          SECONDARY_USER_OKTA_CLIENT_PASSWORD=$(aws ssm get-parameter --name ${PARAMETER_PATH}/SECONDARY_USER_OKTA_CLIENT_PASSWORD --region $AWS_REGION --account-id $AWS_ACCOUNT_ID --query "Parameter.Value" --output text)
+          OKTA_CLIENT_ID=$(aws ssm get-parameter --name okta/client-id --region $AWS_REGION = --query "Parameter.Value" --output text)
+          OKTA_CLIENT_PASSWORD=$(aws ssm get-parameter --name okta/client-secret --region $AWS_REGION  --query "Parameter.Value" --output text)
+          SECONDARY_USER_OKTA_CLIENT_ID=$(aws ssm get-parameter --name secondary-okta/client-id --region $AWS_REGION  --query "Parameter.Value" --output text)
+          SECONDARY_USER_OKTA_CLIENT_PASSWORD=$(aws ssm get-parameter --name ${PARAMETER_PATH}/SECONDARY_USER_OKTA_CLIENT_PASSWORD --region $AWS_REGION  --query "Parameter.Value" --output text)
 
           echo "OKTA_CLIENT_ID=$OKTA_CLIENT_ID" >> $GITHUB_ENV
           echo "OKTA_CLIENT_PASSWORD=$OKTA_CLIENT_PASSWORD" >> $GITHUB_ENV
