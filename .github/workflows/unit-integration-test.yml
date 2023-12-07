@@ -69,8 +69,8 @@ jobs:
           sudo mv apache-maven-3.6.3 /opt/maven
           echo "PATH=$PATH:/opt/maven/bin" >> $GITHUB_ENV
         
-      - name: Create ab2d workspace directory and copy in keystore
-        run: sudo mkdir -p "$WORKSPACE/opt/ab2d"
+ #     - name: Create ab2d workspace directory and copy in keystore
+ #       run: sudo mkdir -p "$WORKSPACE/opt/ab2d"
 
       - name: Download Code Coverage
         run: |
