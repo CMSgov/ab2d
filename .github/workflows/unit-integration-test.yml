@@ -59,7 +59,7 @@ jobs:
           OKTA_CLIENT_ID=$(aws ssm get-parameter --name okta/client-id --region $AWS_REGION  --query "Parameter.Value" --output text)
           OKTA_CLIENT_PASSWORD=$(aws ssm get-parameter --name okta/client-secret --region $AWS_REGION  --query "Parameter.Value" --output text)
           SECONDARY_USER_OKTA_CLIENT_ID=$(aws ssm get-parameter --name secondary-okta/client-id --region $AWS_REGION  --query "Parameter.Value" --output text)
-          SECONDARY_USER_OKTA_CLIENT_PASSWORD=$(aws ssm get-parameter --name ${PARAMETER_PATH}/SECONDARY_USER_OKTA_CLIENT_PASSWORD --region $AWS_REGION  --query "Parameter.Value" --output text)
+          SECONDARY_USER_OKTA_CLIENT_PASSWORD=$(aws ssm get-parameter --name secondary-okta/client-secret --region $AWS_REGION  --query "Parameter.Value" --output text)
 
           echo "OKTA_CLIENT_ID=$OKTA_CLIENT_ID" >> $GITHUB_ENV
           echo "OKTA_CLIENT_PASSWORD=$OKTA_CLIENT_PASSWORD" >> $GITHUB_ENV
