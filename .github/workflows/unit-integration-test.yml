@@ -62,22 +62,9 @@ jobs:
             SECONDARY_USER_OKTA_CLIENT_PASSWORD=/secondary-okta/client-secret
 
 
-        #  OKTA_CLIENT_ID=$(aws ssm get-parameter --name okta/client-id --region $AWS_REGION  --query "Parameter.Value" --output text)
-        #  OKTA_CLIENT_PASSWORD=$(aws ssm get-parameter --name okta/client-secret --region $AWS_REGION  --query "Parameter.Value" --output text)
-        #  SECONDARY_USER_OKTA_CLIENT_ID=$(aws ssm get-parameter --name secondary-okta/client-id --region $AWS_REGION  --query "Parameter.Value" --output text)
-        #  SECONDARY_USER_OKTA_CLIENT_PASSWORD=$(aws ssm get-parameter --name secondary-okta/client-secret --region $AWS_REGION  --query "Parameter.Value" --output text)
-
-        #  echo "OKTA_CLIENT_ID=$OKTA_CLIENT_ID" >> $GITHUB_ENV
-        #  echo "OKTA_CLIENT_PASSWORD=$OKTA_CLIENT_PASSWORD" >> $GITHUB_ENV
-        #  echo "SECONDARY_USER_OKTA_CLIENT_ID=$SECONDARY_USER_OKTA_CLIENT_ID" >> $GITHUB_ENV
-        #  echo "SECONDARY_USER_OKTA_CLIENT_PASSWORD=$SECONDARY_USER_OKTA_CLIENT_PASSWORD" >> $GITHUB_ENV
-
-
-
-
       - name: Install Maven 3.6.3
         run: |
-          wget https://archive.apache.org/dist/maven/maven-3/3.2.5/binaries/apache-maven-3.6.3-bin.tar.gz
+          wget https://archive.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz
           tar xzvf apache-maven-3.6.3-bin.tar.gz
           sudo mv apache-maven-3.6.3 /opt/maven
           echo "PATH=$PATH:/opt/maven/bin" >> $GITHUB_ENV
