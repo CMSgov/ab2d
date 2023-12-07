@@ -56,10 +56,10 @@ jobs:
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:
           params: |
-            OKTA_CLIENT_ID=okta/client-id
-            OKTA_CLIENT_PASSWORD=okta/client-secret
-            SECONDARY_USER_OKTA_CLIENT_ID=secondary-okta/client-id
-            SECONDARY_USER_OKTA_CLIENT_PASSWORD=secondary-okta/client-secret
+            OKTA_CLIENT_ID=/okta/client-id
+            OKTA_CLIENT_PASSWORD=/okta/client-secret
+            SECONDARY_USER_OKTA_CLIENT_ID=/secondary-okta/client-id
+            SECONDARY_USER_OKTA_CLIENT_PASSWORD=/secondary-okta/client-secret
 
 
         #  OKTA_CLIENT_ID=$(aws ssm get-parameter --name okta/client-id --region $AWS_REGION  --query "Parameter.Value" --output text)
