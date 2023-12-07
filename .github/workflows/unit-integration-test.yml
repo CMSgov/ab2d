@@ -91,21 +91,6 @@ jobs:
           echo $WORKSPACE
           mvn -U clean
 
-      # ... (Similar conversions for other stages)
-
-
-#      - name: Set env vars from AWS params
-#        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
-#        env:
-#          AWS_REGION: ${{ vars.AWS_REGION }}
-#        with:
-#          params: |
-#            ARTIFACTORY_URL=/artifactory/url
-#            ARTIFACTORY_USER=/artifactory/user
-#            ARTIFACTORY_PASSWORD=/artifactory/password
-#            SONAR_HOST_URL=/sonarqube/url
-#            SONAR_TOKEN=/sonarqube/token
-
 
       - name: Run unit and integration tests
         run: |

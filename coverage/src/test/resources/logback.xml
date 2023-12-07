@@ -4,9 +4,9 @@
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
-    <logger name="com.github.dockerjava.core.command" level="ERROR"/>
-    <logger name="liquibase" level="ERROR"/>
-    <root level="INFO">
+    <logger name="com.github.dockerjava.core.command" level="WARN"/>
+    <logger name="liquibase" level="WARN"/>
+    <root level="WARN">
         <appender-ref ref="STDOUT" />
     </root>
 </configuration>
