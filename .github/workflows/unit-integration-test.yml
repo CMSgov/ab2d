@@ -61,6 +61,15 @@ jobs:
             SECONDARY_USER_OKTA_CLIENT_ID=/secondary-okta/client-id
             SECONDARY_USER_OKTA_CLIENT_PASSWORD=/secondary-okta/client-secret
 
+      - name: Remove Maven Directory
+        run: |
+          if [ -d "/opt/maven/apache-maven-3.6.3" ]; then
+            sudo rm -rf /opt/maven/apache-maven-3.6.3
+            echo "Maven directory removed."
+          else
+            echo "Maven directory does not exist."
+          fi
+
 
       - name: Install Maven 3.6.3
         run: |
