@@ -109,7 +109,8 @@ jobs:
       - name: Run unit and integration tests
         run: |
           mvn -s settings.xml -X -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
-
+        working-directory: ${{ github.workspace }}
+        
       - name: Cleanup - first pass of docker deletions part 1
         run: |
           docker volume ls -qf dangling=true | xargs -I name docker volume rm name
