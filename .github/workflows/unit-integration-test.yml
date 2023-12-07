@@ -32,6 +32,10 @@ jobs:
           java-version: '17'
           maven-version: '3.6.3'
 
+      - name: Download bfd keystore
+        run: |
+          aws s3 cp s3://bcda-opensbx-access-logs/ab2d_sbx_keystore /tmp/ab2d_sbx_keystore 
+
       - name: Set env vars from AWS params
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
         env:
@@ -77,11 +81,7 @@ jobs:
           tar xzvf apache-maven-3.6.3-bin.tar.gz
           sudo mv apache-maven-3.6.3 /opt/maven
           echo "PATH=$PATH:/opt/maven/bin" >> $GITHUB_ENV
-        
-      - name: Download bfd keystore
-        run: |
-          aws s3 cp s3://bcda-opensbx-access-logs/ab2d_sbx_keystore /tmp/ab2d_sbx_keystore 
-
+  
 
       - name: Create ab2d workspace directory and copy in keystore
         run: sudo mkdir -p "$WORKSPACE/opt/ab2d"
