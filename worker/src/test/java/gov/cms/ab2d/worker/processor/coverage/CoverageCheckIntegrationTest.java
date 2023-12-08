@@ -239,8 +239,7 @@ public class CoverageCheckIntegrationTest {
     @Test
     void verifyCoverage_whenCoverageUnstable_fail() {
 
-        ZonedDateTime dateTime = ZonedDateTime.now();
-        dateTime.withMonth(5);
+        ZonedDateTime dateTime = ZonedDateTime.now().withMonth(5);
 
         createCoveragePeriods(dateTime);
 
