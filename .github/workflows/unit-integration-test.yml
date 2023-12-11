@@ -22,11 +22,11 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Setup Java
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
-          distribution: 'adopt'
           java-version: '17'
-          maven-version: '3.6.3'
+          distribution: temurin
+          cache: maven
 
       - name: Download bfd keystore
         run: |
@@ -61,22 +61,6 @@ jobs:
             SECONDARY_USER_OKTA_CLIENT_ID=/secondary-okta/client-id
             SECONDARY_USER_OKTA_CLIENT_PASSWORD=/secondary-okta/client-secret
 
-      - name: Remove Maven Directory
-        run: |
-          if [ -d "/opt/maven/apache-maven-3.6.3" ]; then
-            sudo rm -rf /opt/maven/apache-maven-3.6.3
-            echo "Maven directory removed."
-          else
-            echo "Maven directory does not exist."
-          fi
-
-      - name: Install Maven 3.6.3
-        run: |
-          wget https://archive.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz
-          tar xzvf apache-maven-3.6.3-bin.tar.gz
-          sudo mv apache-maven-3.6.3 /opt/maven
-          echo "PATH=$PATH:/opt/maven/bin" >> $GITHUB_ENV
-
       - name: Create ab2d workspace directory and copy in keystore
         run: sudo mkdir -p "$WORKSPACE/opt/ab2d"
 
@@ -96,13 +80,11 @@ jobs:
       - name: Clean maven
         run: |
           mvn --version
-          echo $WORKSPACE
           mvn -U clean
 
       - name: Run unit and integration tests
         run: |
           mvn -s settings.xml -X -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
-        working-directory: ${{ github.workspace }}
 
       - name: Cleanup -
         run: |
