@@ -1,9 +1,8 @@
 name: GitHub Actions Workflow
 
 on:
-  push:
-    branches:
-      - '*'
+  pull_request:
+  workflow_dispatch: # Allow manual trigger
 
 jobs:
   build:
