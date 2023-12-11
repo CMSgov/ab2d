@@ -62,7 +62,7 @@ jobs:
             SECONDARY_USER_OKTA_CLIENT_PASSWORD=/secondary-okta/client-secret
 
       - name: Create ab2d workspace directory and copy in keystore
-        run: sudo mkdir -p "$WORKSPACE/opt/ab2d"
+        run: mkdir -p opt/ab2d
 
       - name: Download Code Coverage
         run: |
@@ -74,7 +74,7 @@ jobs:
 
       - name: Set directory permissions
         run: |
-          sudo chmod -R 777 /opt/actions-runner/_work/ab2d/ab2d/common/
+          chmod -R 777 /opt/actions-runner/_work/ab2d/ab2d/common/
           # Add other commands if necessary
 
       - name: Clean maven
@@ -85,7 +85,3 @@ jobs:
       - name: Run unit and integration tests
         run: |
           mvn -s settings.xml -X -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
-
-      - name: Cleanup -
-        run: |
-          sudo rm -rf /opt/actions-runner/_work/ab2d/ab2d/opt/ab2d
