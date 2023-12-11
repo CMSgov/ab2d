@@ -61,6 +61,13 @@ jobs:
             SECONDARY_USER_OKTA_CLIENT_ID=/secondary-okta/client-id
             SECONDARY_USER_OKTA_CLIENT_PASSWORD=/secondary-okta/client-secret
 
+      - name: Install Maven 3.6.3
+        run: |
+          if mvn -v; then echo "Maven already installed" && exit 0; else echo "Installing Maven"; fi
+          curl -LsS https://archive.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz | tar xf -
+          sudo mv apache-maven-3.6.3 /opt/maven
+          echo "PATH=$PATH:/opt/maven/bin" >> $GITHUB_ENV
+
       - name: Create ab2d workspace directory and copy in keystore
         run: mkdir -p opt/ab2d
 
