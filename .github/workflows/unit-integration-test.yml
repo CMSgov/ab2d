@@ -64,7 +64,7 @@ jobs:
       - name: Install Maven 3.6.3
         run: |
           if mvn -v; then echo "Maven already installed" && exit 0; else echo "Installing Maven"; fi
-          curl -LsS https://archive.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz | tar xf -
+          curl -LsS https://archive.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz | tar xzf -
           sudo mv apache-maven-3.6.3 /opt/maven
           echo "PATH=$PATH:/opt/maven/bin" >> $GITHUB_ENV
 
