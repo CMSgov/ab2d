@@ -205,11 +205,10 @@ public class CoverageCheckPredicatesIntegrationTest {
     @Test
     void whenCoverageUnstable_failCoverageStabilityCheck() {
 
-        ZonedDateTime dateTime = ZonedDateTime.now();
         // This test was using the actual month. Some month have their own logic which failed the test.
         // Special cases should have their own test(s). This test should pass regardless of the current date.
         //Hardcoding to May since we currently don't have any special logic for that month.
-        dateTime.withMonth(5);
+        ZonedDateTime dateTime = ZonedDateTime.now().withMonth(5);
 
         createCoveragePeriods(dateTime);
 
@@ -239,7 +238,7 @@ public class CoverageCheckPredicatesIntegrationTest {
 
         assertFalse(stableCheck.test(contract));
 
-        int expectedIssues =  1;
+        int expectedIssues =  2;
 
         assertEquals(expectedIssues, issues.size());
         issues.forEach(issue -> assertTrue(issue.contains("enrollment changed")));

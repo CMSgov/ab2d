@@ -238,14 +238,7 @@ public class CoverageCheckIntegrationTest {
     @DisplayName("Verify coverage stops if some coverage periods change drastically")
     @Test
     void verifyCoverage_whenCoverageUnstable_fail() {
-
-        ZonedDateTime dateTime = ZonedDateTime.now();
-        dateTime.withMonth(5);
-
-        createCoveragePeriods(dateTime);
-
-        contract.setAttestedOn(ZonedDateTime.now().toOffsetDateTime());
-        contractServiceStub.updateContract(contract);
+        createCoveragePeriods();
 
         Set<Identifiers> tenK = new LinkedHashSet<>();
         for (long idx = 0; idx < 10000; idx++) {

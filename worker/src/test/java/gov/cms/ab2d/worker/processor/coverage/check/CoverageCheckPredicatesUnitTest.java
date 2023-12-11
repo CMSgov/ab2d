@@ -179,8 +179,7 @@ public class CoverageCheckPredicatesUnitTest {
 
         ContractDTO contract = getContractDTO();
 
-        ZonedDateTime may = ZonedDateTime.now();
-        may.withMonth(5);
+        ZonedDateTime may = ZonedDateTime.now().withMonth(5);
 
 
         // This test was using the actual month. Some month have their own logic which failed the test.
@@ -198,7 +197,7 @@ public class CoverageCheckPredicatesUnitTest {
 
         assertFalse(stableCheck.test(contract));
 
-        int expectedIssues = 1;
+        int expectedIssues = 2;
 
         assertEquals(expectedIssues, issues.size());
         issues.forEach(issue -> assertTrue(issue.contains("enrollment changed")));
