@@ -7,9 +7,7 @@ on:
 
 jobs:
   build:
-
     runs-on: self-hosted
-
 
     env:
       CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
@@ -19,7 +17,6 @@ jobs:
       AWS_DEFAULT_REGION: "us-east-1"
       WORKSPACE: ${{ github.workspace }}
       AB2D_BFD_KEYSTORE_LOCATION: "${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
-
 
     steps:
       - name: Checkout Code
@@ -34,7 +31,7 @@ jobs:
 
       - name: Download bfd keystore
         run: |
-          aws s3 cp s3://bcda-opensbx-access-logs/ab2d_sbx_keystore /tmp/ab2d_sbx_keystore 
+          aws s3 cp s3://bcda-opensbx-access-logs/ab2d_sbx_keystore /tmp/ab2d_sbx_keystore
 
       - name: Set env vars from AWS params
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
@@ -45,14 +42,14 @@ jobs:
           params: |
             ARTIFACTORY_URL=/artifactory/url
             ARTIFACTORY_USER=/artifactory/user
-            ARTIFACTORY_PASSWORD=/artifactory/password 
+            ARTIFACTORY_PASSWORD=/artifactory/password
             CC_TEST_REPORTER_ID=cc-test-reporter-id
 
       - name: Assume role in target account
         uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-region: us-east-1
-          role-to-assume: arn:aws:iam::${{ vars.DEV_ACCOUNT_NUMBER }}:role/delegatedadmin/developer/github-actions-runner-role            
+          role-to-assume: arn:aws:iam::${{ vars.DEV_ACCOUNT_NUMBER }}:role/delegatedadmin/developer/github-actions-runner-role
 
       - name: Set env vars from AWS params
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
@@ -74,14 +71,12 @@ jobs:
             echo "Maven directory does not exist."
           fi
 
-
       - name: Install Maven 3.6.3
         run: |
           wget https://archive.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz
           tar xzvf apache-maven-3.6.3-bin.tar.gz
           sudo mv apache-maven-3.6.3 /opt/maven
           echo "PATH=$PATH:/opt/maven/bin" >> $GITHUB_ENV
-  
 
       - name: Create ab2d workspace directory and copy in keystore
         run: sudo mkdir -p "$WORKSPACE/opt/ab2d"
@@ -105,7 +100,6 @@ jobs:
           echo $WORKSPACE
           mvn -U clean
 
-
       - name: Run unit and integration tests
         run: |
           mvn -s settings.xml -X -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
@@ -114,5 +108,3 @@ jobs:
       - name: Cleanup -
         run: |
           sudo rm -rf /opt/actions-runner/_work/ab2d/ab2d/opt/ab2d
-
-
