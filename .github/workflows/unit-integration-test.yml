@@ -68,11 +68,6 @@ jobs:
             > ./codeclimate/cc-test-reporter && chmod +x ./codeclimate/cc-test-reporter
           fi
 
-      - name: Set directory permissions
-        run: |
-          chmod -R 777 /opt/actions-runner/_work/ab2d/ab2d/common/
-          # Add other commands if necessary
-
       - name: Clean maven
         run: |
           mvn -ntp -U clean
