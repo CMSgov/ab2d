@@ -28,6 +28,8 @@ jobs:
             ARTIFACTORY_URL=/artifactory/url
             ARTIFACTORY_USER=/artifactory/user
             ARTIFACTORY_PASSWORD=/artifactory/password
+            SONAR_HOST_URL=/sonarqube/url
+            SONAR_TOKEN=/sonarqube/token
 
       - name: Assume role in target account
         uses: aws-actions/configure-aws-credentials@v3
@@ -59,6 +61,17 @@ jobs:
       - name: Clean maven
         run: |
           mvn -ntp -U clean
+
+      - name: SonarQube analysis
+        run: |
+          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} sonar:sonar -Dsonar.projectKey=ab2d-project -DskipTests -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL}
+
+      - name: SonarQube Quality Gate check
+        id: sonarqube-quality-gate-check
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        with:
+          scanMetadataReportFile: build/sonar/report-task.txt
+        timeout-minutes: 5
 
       - name: Run unit and integration tests
         run: |
