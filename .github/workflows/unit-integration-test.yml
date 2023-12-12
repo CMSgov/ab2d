@@ -57,9 +57,6 @@ jobs:
           sudo rm -rf /opt/maven
           sudo mv "$tmpdir/apache-maven-3.6.3" /opt/maven
 
-      - name: Create ab2d workspace directory
-        run: mkdir -p opt/ab2d
-
       - name: Clean maven
         run: |
           mvn -ntp -U clean
