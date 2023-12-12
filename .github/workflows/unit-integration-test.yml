@@ -64,7 +64,7 @@ jobs:
 
       - name: SonarQube analysis
         run: |
-          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} package sonar:sonar -Dsonar.projectKey=ab2d-project -DskipTests -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL}
+          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} compile sonar:sonar -Dsonar.projectKey=ab2d-project -DskipTests -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL}
 
       - name: SonarQube Quality Gate check
         id: sonarqube-quality-gate-check
