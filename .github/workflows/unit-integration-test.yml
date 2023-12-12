@@ -60,14 +60,6 @@ jobs:
       - name: Create ab2d workspace directory
         run: mkdir -p opt/ab2d
 
-      - name: Download Code Coverage
-        run: |
-          mkdir -p codeclimate
-          if [ ! -f ./codeclimate/cc-test-reporter ]; then
-            curl -L --no-progress-meter https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 \
-            > ./codeclimate/cc-test-reporter && chmod +x ./codeclimate/cc-test-reporter
-          fi
-
       - name: Clean maven
         run: |
           mvn -ntp -U clean
