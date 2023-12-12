@@ -6,7 +6,10 @@ import java.util.Collections;
 
 public class AB2DPostgresqlContainer extends PostgreSQLContainer<AB2DPostgresqlContainer> {
 
-    private static final String IMAGE_VERSION = "postgres:11";
+    // We should really move this to some sort of config right?
+    // Right now this is separate from docker-compose image version and that feels dirty to me
+    // This is also duplicated across other files...which seems like a potential maintainence concern.
+    private static final String IMAGE_VERSION = "postgres:15";
 
     public AB2DPostgresqlContainer() {
         super(IMAGE_VERSION);
