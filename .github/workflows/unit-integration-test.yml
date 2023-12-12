@@ -15,7 +15,7 @@ jobs:
       SEARCH_BENE_BATCH_SIZE: '10'
       AWS_DEFAULT_REGION: "us-east-1"
       WORKSPACE: ${{ github.workspace }}
-      AB2D_BFD_KEYSTORE_LOCATION: "${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
+  #    AB2D_BFD_KEYSTORE_LOCATION: "${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
 
     steps:
       - name: Checkout Code
@@ -28,15 +28,14 @@ jobs:
           distribution: temurin
           cache: maven
 
-      - name: Download bfd keystore
-        run: |
-          aws s3 cp s3://bcda-opensbx-access-logs/ab2d_sbx_keystore /tmp/ab2d_sbx_keystore
+  #    - name: Download bfd keystore
+  #      run: |
+  #        aws s3 cp s3://bcda-opensbx-access-logs/ab2d_sbx_keystore /tmp/ab2d_sbx_keystore
 
       - name: Set env vars from AWS params
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
-          ECR_REPO_ENV_AWS_ACCOUNT_NUMBER: ${{ vars.SBX_ACCOUNT_NUMBER }}
         with:
           params: |
             ARTIFACTORY_URL=/artifactory/url
@@ -71,7 +70,7 @@ jobs:
           sudo rm -rf /opt/maven
           sudo mv "$tmpdir/apache-maven-3.6.3" /opt/maven
 
-      - name: Create ab2d workspace directory and copy in keystore
+      - name: Create ab2d workspace directory 
         run: mkdir -p opt/ab2d
 
       - name: Download Code Coverage
