@@ -28,7 +28,6 @@ jobs:
             ARTIFACTORY_URL=/artifactory/url
             ARTIFACTORY_USER=/artifactory/user
             ARTIFACTORY_PASSWORD=/artifactory/password
-            CC_TEST_REPORTER_ID=cc-test-reporter-id
 
       - name: Assume role in target account
         uses: aws-actions/configure-aws-credentials@v3
