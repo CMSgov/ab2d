@@ -11,6 +11,7 @@ ENV JVM_MAX_RAM=80.0
 
 #Update Packages
 RUN yum update -y --security
+RUN yum install -y git
 
 #Install PG_Cron 15
 RUN git clone https://github.com/citusdata/pg_cron.git
