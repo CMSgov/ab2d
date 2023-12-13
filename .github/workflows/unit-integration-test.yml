@@ -1,0 +1,71 @@
+name: GitHub Actions Workflow
+
+on:
+  pull_request:
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  build:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: temurin
+          cache: maven
+
+      - name: Set env vars from AWS params
+        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |
+            ARTIFACTORY_URL=/artifactory/url
+            ARTIFACTORY_USER=/artifactory/user
+            ARTIFACTORY_PASSWORD=/artifactory/password
+            SONAR_HOST_URL=/sonarqube/url
+            SONAR_TOKEN=/sonarqube/token
+
+      - name: Assume role in target account
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::${{ vars.DEV_ACCOUNT_NUMBER }}:role/delegatedadmin/developer/github-actions-runner-role
+
+      - name: Set env vars from AWS params
+        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |
+            OKTA_CLIENT_ID=/okta/client-id
+            OKTA_CLIENT_PASSWORD=/okta/client-secret
+            SECONDARY_USER_OKTA_CLIENT_ID=/secondary-okta/client-id
+            SECONDARY_USER_OKTA_CLIENT_PASSWORD=/secondary-okta/client-secret
+
+      - name: Install Maven 3.6.3
+        run: |
+          export PATH="$PATH:/opt/maven/bin"
+          echo "PATH=$PATH" >> $GITHUB_ENV
+          if mvn -v; then echo "Maven already installed" && exit 0; else echo "Installing Maven"; fi
+          tmpdir="$(mktemp -d)"
+          curl -LsS https://archive.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz | tar xzf - -C "$tmpdir"
+          sudo rm -rf /opt/maven
+          sudo mv "$tmpdir/apache-maven-3.6.3" /opt/maven
+
+      - name: Clean maven
+        run: |
+          mvn -ntp -U clean
+
+      - name: SonarQube analysis
+        run: |
+          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} compile sonar:sonar -Dsonar.projectKey=ab2d-project -Dsonar.qualitygate.wait=true -DskipTests -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL}
+
+      - name: Run unit and integration tests
+        run: |
+          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
