@@ -12,6 +12,9 @@ ENV JVM_MAX_RAM=80.0
 #Update Packages
 RUN yum update -y --security
 
+#Install PG_Cron 15
+RUN yum install -y pg_cron_15
+
 #JAVA commands
 CMD java \
     -XX:+UseContainerSupport \
