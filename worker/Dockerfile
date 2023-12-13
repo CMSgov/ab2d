@@ -19,6 +19,7 @@ CMD cd pg_cron
 # Ensure pg_config is in your path, e.g.
 CMD export PATH=/usr/pgsql-15/bin:$PATH
 CMD make && sudo PATH=$PATH make install
+CMD cd ..
 
 #JAVA commands
 CMD java \
