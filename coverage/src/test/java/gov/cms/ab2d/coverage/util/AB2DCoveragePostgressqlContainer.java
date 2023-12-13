@@ -8,7 +8,7 @@ public class AB2DCoveragePostgressqlContainer extends PostgreSQLContainer<AB2DCo
     // We should really move this to some sort of config right?
     // Right now this is separate from docker-compose image version and that feels dirty to me
     // This is also duplicated across other files...which seems like a potential maintainence concern.
-    private static final String IMAGE_VERSION = "postgres:15-bullseye";
+    private static final String IMAGE_VERSION = "postgres:15.2";
 
     public AB2DCoveragePostgressqlContainer() {
         super(IMAGE_VERSION);
