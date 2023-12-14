@@ -11,17 +11,17 @@ ENV JVM_MAX_RAM=80.0
 
 #Update Packages
 RUN yum update -y --security
-RUN yum install -y git
-RUN yum install -y make
+# RUN yum install -y git
+# RUN yum install -y make
 
-#Install PG_Cron 15
-RUN git clone https://github.com/citusdata/pg_cron.git
-RUN cd pg_cron
+# #Install PG_Cron 15
+# RUN git clone https://github.com/citusdata/pg_cron.git
+# RUN cd pg_cron
 
-# Ensure pg_config is in your path, e.g.
-RUN export PATH=/usr/pgsql-15/bin:$PATH
-RUN make && PATH=$PATH make install
-RUN cd ..
+# # Ensure pg_config is in your path, e.g.
+# RUN export PATH=/usr/pgsql-15/bin:$PATH
+# RUN make && PATH=$PATH make install
+# RUN cd ..
 
 #JAVA commands
 CMD java \
