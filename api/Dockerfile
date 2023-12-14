@@ -10,17 +10,11 @@ ENV JVM_MAX_RAM=80.0
 
 #Update Packages
 RUN yum update -y --security
-# RUN yum install -y git
-# RUN yum install -y make
 
-# #Install PG_Cron 15
-# RUN git clone https://github.com/citusdata/pg_cron.git
-# RUN cd pg_cron
-
-# # Ensure pg_config is in your path, e.g.
-# RUN export PATH=/usr/pgsql-15/bin:$PATH
-# RUN make && PATH=$PATH make install
-# RUN cd ..
+#Install PG_Cron 15
+RUN yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+RUN yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+RUN yum install -y pg_cron_15
 
 #JAVA Commands
 CMD java \

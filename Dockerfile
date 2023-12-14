@@ -1,3 +1,3 @@
 FROM postgres:15-bullseye
-RUN apt-get update && apt-get install -y curl
-RUN apt-get -y install postgresql-15-cron
+RUN apt-get update
+RUN apt-get install -y curl postgresql-15-cron
