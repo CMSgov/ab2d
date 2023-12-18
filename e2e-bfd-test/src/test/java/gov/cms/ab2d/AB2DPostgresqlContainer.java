@@ -1,18 +1,28 @@
 package gov.cms.ab2d;
 
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.images.builder.ImageFromDockerfile;
+import org.testcontainers.utility.DockerImageName;
 
 import java.util.Collections;
 
 public class AB2DPostgresqlContainer extends PostgreSQLContainer<AB2DPostgresqlContainer> {
 
-    // We should really move this to some sort of config right?
-    // Right now this is separate from docker-compose image version and that feels dirty to me
-    // This is also duplicated across other files...which seems like a potential maintainence concern.
-    private static final String IMAGE_VERSION = "postgres:15-bullseye";
+    private static final ImageFromDockerfile DOCKER_IMAGE = new ImageFromDockerfile()
+        .withDockerfileFromBuilder(builder ->
+            builder
+                .from("postgres:15-bullseye")
+                .run("apt-get update")
+                .run("apt-get install -y curl postgresql-15-cron")
+                .run("echo \"shared_preload_libraries = 'pg_cron'\" >> /var/lib/postgresql/data/postgresql.conf")
+                .build()
+        );
+
+    private static final DockerImageName IMAGE_NAME = DockerImageName.parse(DOCKER_IMAGE.get())
+        .asCompatibleSubstituteFor(PostgreSQLContainer.IMAGE);
 
     public AB2DPostgresqlContainer() {
-        super(IMAGE_VERSION);
+        super(IMAGE_NAME);
     }
 
     @Override
