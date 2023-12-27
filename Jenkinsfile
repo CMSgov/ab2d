@@ -66,7 +66,6 @@ pipeline {
                     mvn --version
                     echo $WORKSPACE
                     mvn -U clean
-                    mvn clean install -U
                 '''
             }
         }
