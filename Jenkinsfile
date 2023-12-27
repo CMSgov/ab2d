@@ -66,7 +66,7 @@ pipeline {
                     mvn --version
                     echo $WORKSPACE
                     mvn -U clean
-                    mvn dependency:purge-local-repository
+                    mvn clean install -U
                 '''
             }
         }
