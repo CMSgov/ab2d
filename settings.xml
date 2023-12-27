@@ -24,14 +24,20 @@
                         <checksumPolicy>warn</checksumPolicy>
                     </releases>
                     <snapshots>
-                        <enabled>false</enabled>
+                        <enabled>true</enabled>
+                        <updatePolicy>always</updatePolicy>
+                        <checksumPolicy>warn</checksumPolicy>
                     </snapshots>
                     <id>central</id>
                     <name>ab2d-maven-virtual</name>
                     <url>${repository_url}/ab2d-maven-virtual</url>
                 </repository>
                 <repository>
-                    <snapshots/>
+                    <snapshots>
+                        <enabled>true</enabled>
+                        <updatePolicy>always</updatePolicy>
+                        <checksumPolicy>warn</checksumPolicy>
+                    </snapshots>
                     <id>snapshots</id>
                     <name>ab2d-maven-virtual</name>
                     <url>${repository_url}/ab2d-maven-virtual</url>
@@ -45,7 +51,9 @@
                         <checksumPolicy>warn</checksumPolicy>
                     </releases>
                     <snapshots>
-                        <enabled>false</enabled>
+                        <enabled>true</enabled>
+                        <updatePolicy>always</updatePolicy>
+                        <checksumPolicy>warn</checksumPolicy>
                     </snapshots>
                     <id>central</id>
                     <name>ab2d-maven-virtual</name>
