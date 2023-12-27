@@ -74,8 +74,8 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
                     sh '''
-                    mvn dependency:purge-local-repository -DactTransitively=false -DreResolve=false
-                    mvn package -s settings.xml -DskipTests -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL}'
+                        mvn dependency:purge-local-repository -DactTransitively=false -DreResolve=false
+                        mvn package -s settings.xml -DskipTests -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL}'
                     '''
                 }
             }
