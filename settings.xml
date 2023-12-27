@@ -18,6 +18,11 @@
         <profile>
             <repositories>
                 <repository>
+                    <releases>
+                        <enabled>true</enabled>
+                        <updatePolicy>always</updatePolicy>
+                        <checksumPolicy>warn</checksumPolicy>
+                    </releases>
                     <snapshots>
                         <enabled>false</enabled>
                     </snapshots>
@@ -34,6 +39,11 @@
             </repositories>
             <pluginRepositories>
                 <pluginRepository>
+                    <releases>
+                        <enabled>true</enabled>
+                        <updatePolicy>always</updatePolicy>
+                        <checksumPolicy>warn</checksumPolicy>
+                    </releases>
                     <snapshots>
                         <enabled>false</enabled>
                     </snapshots>
