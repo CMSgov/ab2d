@@ -28,8 +28,10 @@
                 <repository>
                     <snapshots/>
                     <id>snapshots</id>
-                    <name>ab2d-maven-virtual</name>
-                    <url>${repository_url}/ab2d-maven-virtual</url>
+                    <name>ab2d-maven</name>
+                    <url>${repository_url}/ab2d-main</url>
+<!--                    <name>ab2d-maven-virtual</name>-->
+<!--                    <url>${repository_url}/ab2d-maven-virtual</url>-->
                 </repository>
             </repositories>
             <pluginRepositories>
@@ -44,8 +46,10 @@
                 <pluginRepository>
                     <snapshots/>
                     <id>snapshots</id>
-                    <name>ab2d-maven-virtual</name>
-                    <url>${repository_url}/ab2d-maven-virtual</url>
+                    <name>ab2d-maven</name>
+                    <url>${repository_url}/ab2d-main</url>
+<!--                    <name>ab2d-maven-virtual</name>-->
+<!--                    <url>${repository_url}/ab2d-maven-virtual</url>-->
                 </pluginRepository>
             </pluginRepositories>
             <id>artifactory</id>
