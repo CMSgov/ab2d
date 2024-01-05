@@ -21,7 +21,8 @@ public class AB2DCoveragePostgressqlContainer extends PostgreSQLContainer<AB2DCo
                 .run("echo \"# Required to load pg_cron\"\n >> /docker-entrypoint-initdb.d/init_pg_cron.sh")
                 .run("echo \"pg_ctl restart\"\n >> /docker-entrypoint-initdb.d/init_pg_cron.sh")
                 .run("chmod +x /docker-entrypoint-initdb.d/init_pg_cron.sh")
-                .run("apt-get install -y curl postgresql-15-cron")
+                .run("apt-get install -y curl")
+                .run("apt-get install -y postgresql-15-cron")
                 .build()
         );
 
