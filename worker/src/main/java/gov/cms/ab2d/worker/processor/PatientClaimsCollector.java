@@ -103,8 +103,6 @@ public class PatientClaimsCollector {
                 .filter(resource -> matchingPatient(resource, patient))
                 // Make sure update date is after since date
                 .filter(this::afterSinceDate)
-                // Only for S4802 Contract (Centene support)
-                .filter(this::duringMonth)
                 // Add MBIs to the claim
                 .peek(eob -> FhirUtils.addMbiIdsToEobs(eob, patient, claimsRequest.getVersion()))
                 // compile the list
@@ -131,23 +129,6 @@ public class PatientClaimsCollector {
         }
         return sinceTime.toInstant().toEpochMilli() < lastUpdated.getTime();
     }
-
-   //Centene Support
-    boolean duringMonth(IBaseResource resource) {
-        if (!claimsRequest.getContractNum().equals("S4802"))
-            return true;
-
-        OffsetDateTime sinceTime = claimsRequest.getSinceTime();
-        if (sinceTime == null) {
-            return true;
-        }
-        Date lastUpdated = resource.getMeta().getLastUpdated();
-        if (lastUpdated == null) {
-            return false;
-        }
-        return lastUpdated.getTime() < sinceTime.plusWeeks(2).toInstant().toEpochMilli();
-    }
-
 
     /**
      * returns true if the patient is a valid member of a contract, false otherwise. If either value is empty,
