@@ -12,7 +12,7 @@ public class AB2DPostgresqlContainer extends PostgreSQLContainer<AB2DPostgresqlC
         .withDockerfileFromBuilder(builder ->
             builder
                 .from("postgres:15.2")
-                .run("apt-get update")
+                .run("apt-get -y update")
                 .run("touch /docker-entrypoint-initdb.d/init_pg_cron.sh")
                 .run("echo \"#!/bin/sh\"\n >> /docker-entrypoint-initdb.d/init_pg_cron.sh")
                 .run("echo \"# Configure PG Cron\"\n >> /docker-entrypoint-initdb.d/init_pg_cron.sh")
