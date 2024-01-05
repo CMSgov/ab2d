@@ -1,11 +1,11 @@
-name: GitHub Actions Workflow
+name: Run unit and integration tests
 
 on:
   pull_request:
   workflow_dispatch: # Allow manual trigger
 
 jobs:
-  build:
+  test:
     runs-on: self-hosted
 
     steps:
@@ -31,16 +31,14 @@ jobs:
             SONAR_HOST_URL=/sonarqube/url
             SONAR_TOKEN=/sonarqube/token
 
-      - name: Assume role in target account
+      - name: Assume role in AB2D dev account
         uses: aws-actions/configure-aws-credentials@v3
         with:
-          aws-region: us-east-1
-          role-to-assume: arn:aws:iam::${{ vars.DEV_ACCOUNT_NUMBER }}:role/delegatedadmin/developer/github-actions-runner-role
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ vars.AB2D_DEV_ROLE }}
 
       - name: Set env vars from AWS params
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
-        env:
-          AWS_REGION: ${{ vars.AWS_REGION }}
         with:
           params: |
             OKTA_CLIENT_ID=/okta/client-id
