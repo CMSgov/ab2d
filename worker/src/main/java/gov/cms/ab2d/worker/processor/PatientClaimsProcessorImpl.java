@@ -218,9 +218,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     //Centene Support
     boolean isContinue(IBaseResource resource, PatientClaimsRequest request) {
-        if (!(request.getContractNum().equals("S4802")))
-            return true;
-
         OffsetDateTime sinceTime = request.getSinceTime();
         if (sinceTime == null) {
             return true;
@@ -229,7 +226,10 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         if (lastUpdated == null) {
             return false;
         }
-        return lastUpdated.getTime() < sinceTime.plusWeeks(2).toInstant().toEpochMilli();
+        if(request.getContractNum().equals("S4802") || request.getContractNum().equals("Z1001")){
+            return lastUpdated.getTime() < sinceTime.plusMonths(1).toInstant().toEpochMilli();
+        }
+        return true;
     }
 
     /**

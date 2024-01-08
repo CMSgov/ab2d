@@ -242,16 +242,17 @@ public class ContractProcessorImpl implements ContractProcessor {
         if (contractData.getJob().hasJobBeenCancelled()) {
             return;
         }
-
         // Verify that the number of benes requested matches the number expected from the database and fail
         // immediately if the two do not match
         ProgressTracker progressTracker = jobProgressService.getStatus(jobUuid);
         int totalQueued = progressTracker.getPatientRequestQueuedCount();
         int totalExpected = progressTracker.getPatientsExpected();
-
-        if (totalQueued != totalExpected) {
-            throw new ContractProcessingException("expected " + totalExpected +
-                    " patients from database but retrieved " + totalQueued);
+        //Ignore for S4802 during Centene support
+        if (!contractData.getContract().getContractName().equals("S4802") && !contractData.getContract().getContractName().equals("Z1001")) {
+            if (totalQueued != totalExpected) {
+                throw new ContractProcessingException("expected " + totalExpected +
+                        " patients from database but retrieved " + totalQueued);
+            }
         }
     }
 

@@ -521,8 +521,8 @@ public class CoverageDriverImpl implements CoverageDriver {
 
         ZonedDateTime time;
         //Centene support
-        if (job.getContractNumber().equals("S4802"))
-            time = job.getSince().atZoneSameInstant(AB2D_ZONE).plusWeeks(2);
+        if (job.getContractNumber().equals("S4802") || job.getContractNumber().equals("Z1001"))
+            time = job.getSince().atZoneSameInstant(AB2D_ZONE).plusMonths(1);
         else time = getEndDateTime();
 
         if (contract == null) {

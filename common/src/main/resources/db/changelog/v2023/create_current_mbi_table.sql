@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS public.current_mbi (mbi VARCHAR(32) NOT NULL);
-CREATE UNIQUE INDEX unique_mbi ON public.current_mbi(mbi);
+CREATE UNIQUE INDEX  IF NOT EXISTS unique_mbi ON public.current_mbi(mbi);
 
 INSERT INTO public.current_mbi
 SELECT DISTINCT current_mbi from coverage_anthem_united WHERE current_mbi IS NOT NULL
