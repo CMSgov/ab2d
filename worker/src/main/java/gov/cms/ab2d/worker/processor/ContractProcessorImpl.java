@@ -248,7 +248,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         int totalQueued = progressTracker.getPatientRequestQueuedCount();
         int totalExpected = progressTracker.getPatientsExpected();
         //Ignore for S4802 during Centene support
-        if (!contractData.getContract().getContractName().equals("S4802") && !contractData.getContract().getContractName().equals("Z1001")) {
+        if (!contractData.getContract().getContractName().equals("S4802") && !contractData.getContract().getContractName().equals("Z1001") && !contractData.getContract().getContractName().equals("S3147")) {
             if (totalQueued != totalExpected) {
                 throw new ContractProcessingException("expected " + totalExpected +
                         " patients from database but retrieved " + totalQueued);
