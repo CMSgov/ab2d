@@ -245,8 +245,8 @@ public class ContractProcessorImpl implements ContractProcessor {
             return;
         }
         //Ignore for S4802 during Centene support
-        log.warn("Contract Name = " + contractData.getContract().getContractName());
-        if (contractData.getContract().getContractName().equals("S4802") || contractData.getContract().getContractName().equals("Z1001") || contractData.getContract().getContractName().equals("S3147")) {
+        log.warn("Contract Number = " + contractData.getContract().getContractNumber());
+        if (contractData.getContract().getContractNumber().equals("S4802") || contractData.getContract().getContractNumber().equals("Z1001") || contractData.getContract().getContractNumber().equals("S3147")) {
             return;
         }
         // Verify that the number of benes requested matches the number expected from the database and fail
