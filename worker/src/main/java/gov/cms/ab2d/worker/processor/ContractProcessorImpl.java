@@ -244,6 +244,8 @@ public class ContractProcessorImpl implements ContractProcessor {
         if (contractData.getJob().hasJobBeenCancelled()) {
             return;
         }
+        //Ignore for S4802 during Centene support
+        log.warn("Contract Name = " + contractData.getContract().getContractName());
         if (contractData.getContract().getContractName().equals("S4802") || contractData.getContract().getContractName().equals("Z1001") || contractData.getContract().getContractName().equals("S3147")) {
             return;
         }
@@ -252,8 +254,6 @@ public class ContractProcessorImpl implements ContractProcessor {
         ProgressTracker progressTracker = jobProgressService.getStatus(jobUuid);
         int totalQueued = progressTracker.getPatientRequestQueuedCount();
         int totalExpected = progressTracker.getPatientsExpected();
-        //Ignore for S4802 during Centene support
-        log.warn("Contract Name = " + contractData.getContract().getContractName());
 
         if (totalQueued != totalExpected) {
             throw new ContractProcessingException("expected " + totalExpected +
