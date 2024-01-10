@@ -30,7 +30,7 @@ jobs:
           distribution: 'adopt'
           java-version: '17'
           maven-version: '3.6.3'
-          
+
       - name: Download bfd keystore
         run: |
           aws s3 cp s3://bcda-opensbx-access-logs/ab2d_sbx_keystore /tmp/ab2d_sbx_keystore            
@@ -104,9 +104,9 @@ jobs:
           cp /tmp/ab2d_sbx_keystore ${{ env.AB2D_BFD_KEYSTORE_LOCATION }}
           test -f ${{ env.AB2D_BFD_KEYSTORE_LOCATION }} && echo "created keystore file"
           chmod 666 ${{ env.AB2D_BFD_KEYSTORE_LOCATION }}
-          export AB2D_BFD_KEYSTORE_PASSWORD=${{ secrets.AB2D_BFD_KEYSTORE_PASSWORD }}
+          export AB2D_BFD_KEYSTORE_PASSWORD=${AB2D_BFD_KEYSTORE_PASSWORD}
           export AB2D_V2_ENABLED=true
-          mvn test -s settings.xml -pl e2e-bfd-test -am -Dtest=EndToEndBfdTests -DfailIfNoTests=false -Dusername=${{ secrets.ARTIFACTORY_USER }} -Dpassword=${{ secrets.ARTIFACTORY_PASSWORD }} -Drepository_url=${{ secrets.ARTIFACTORY_URL }}
+          mvn test -s settings.xml -pl e2e-bfd-test -am -Dtest=EndToEndBfdTests -DfailIfNoTests=false -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL}
         working-directory: ${{ github.workspace }}
 
       - name: Run e2e-test
