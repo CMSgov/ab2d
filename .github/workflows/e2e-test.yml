@@ -46,6 +46,7 @@ jobs:
             ARTIFACTORY_PASSWORD=/artifactory/password
             SONAR_HOST_URL=/sonarqube/url
             SONAR_TOKEN=/sonarqube/token
+            AB2D_BFD_KEYSTORE_PASSWORD=/bfd/password
 
       - name: Assume role in AB2D dev account
         uses: aws-actions/configure-aws-credentials@v3
