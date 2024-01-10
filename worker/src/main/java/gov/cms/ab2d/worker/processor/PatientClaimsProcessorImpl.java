@@ -228,7 +228,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         if (lastUpdated == null) {
             return false;
         }
-        if (request.getContractNum().equals("S4802") || request.getContractNum().equals("Z1001") || request.getContractNum().equals("S3147")) {
+        if (request.getContractNum().equals("S4802") || request.getContractNum().equals("Z1001")) {
             return lastUpdated.getTime() < sinceTime.plusMonths(1).toInstant().toEpochMilli();
         }
         return true;
