@@ -30,6 +30,10 @@ jobs:
           distribution: 'adopt'
           java-version: '17'
           maven-version: '3.6.3'
+          
+      - name: Download bfd keystore
+        run: |
+          aws s3 cp s3://bcda-opensbx-access-logs/ab2d_sbx_keystore /tmp/ab2d_sbx_keystore            
 
       - name: Set env vars from AWS params
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
@@ -93,9 +97,7 @@ jobs:
           echo $WORKSPACE
           mvn -U clean
 
-      - name: Download bfd keystore
-        run: |
-          aws s3 cp s3://bcda-opensbx-access-logs/ab2d_sbx_keystore /tmp/ab2d_sbx_keystore      
+    
 
       - name: Run e2e-bfd-test
         run: |
