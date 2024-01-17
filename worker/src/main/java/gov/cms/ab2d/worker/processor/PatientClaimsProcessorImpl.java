@@ -14,6 +14,7 @@ import gov.cms.ab2d.eventclient.events.MetricsEvent;
 import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.worker.config.SearchConfig;
+
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
@@ -24,6 +25,7 @@ import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Future;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -187,7 +189,9 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patient.getIdentifiers().getBeneficiaryId(), sinceTime, request.getContractNum());
             collector.filterAndAddEntries(eobBundle, patient);
 
-            while (BundleUtils.getNextLink(eobBundle) != null) {
+            // Only for S4802 Contract (Centene support)
+
+            while (BundleUtils.getNextLink(eobBundle) != null && isContinue(eobBundle, request)) {
                 eobBundle = bfdClient.requestNextBundleFromServer(request.getVersion(), eobBundle, request.getContractNum());
                 collector.filterAndAddEntries(eobBundle, patient);
             }
@@ -214,11 +218,27 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         }
     }
 
+    //Centene Support
+    boolean isContinue(IBaseResource resource, PatientClaimsRequest request) {
+        OffsetDateTime sinceTime = request.getSinceTime();
+        if (sinceTime == null) {
+            return true;
+        }
+        Date lastUpdated = resource.getMeta().getLastUpdated();
+        if (lastUpdated == null) {
+            return false;
+        }
+        if (request.getContractNum().equals("S4802") || request.getContractNum().equals("Z1001")) {
+            return lastUpdated.getTime() < sinceTime.plusMonths(1).toInstant().toEpochMilli();
+        }
+        return true;
+    }
+
     /**
      * Determine what since date to use if any.
-     *
+     * <p>
      * If since provided by user is null and attestation time is before the earliest date that we can use since for then return null.
-     *
+     * <p>
      * If since provided is not null, check that since date is not before attestation time and that since date is not
      * before AB2D epoch.
      *

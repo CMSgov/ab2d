@@ -519,7 +519,11 @@ public class CoverageDriverImpl implements CoverageDriver {
     @Override
     public int numberOfBeneficiariesToProcess(Job job, ContractDTO contract) {
 
-        ZonedDateTime now = getEndDateTime();
+        ZonedDateTime time;
+        //Centene support
+        if (job.getContractNumber().equals("S4802") || job.getContractNumber().equals("Z1001"))
+            time = job.getSince().atZoneSameInstant(AB2D_ZONE).plusMonths(1);
+        else time = getEndDateTime();
 
         if (contract == null) {
             throw new CoverageDriverException("cannot retrieve metadata for job missing contract");
@@ -528,7 +532,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         ZonedDateTime startDateTime = getStartDateTime(contract);
 
         List<CoveragePeriod> periodsToReport = new ArrayList<>();
-        while (startDateTime.isBefore(now)) {
+        while (startDateTime.isBefore(time)) {
             CoveragePeriod periodToReport =
                     coverageService.getCoveragePeriod(mapping.map(contract), startDateTime.getMonthValue(), startDateTime.getYear());
             periodsToReport.add(periodToReport);
