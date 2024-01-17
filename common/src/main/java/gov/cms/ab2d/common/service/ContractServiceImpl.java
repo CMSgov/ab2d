@@ -51,18 +51,18 @@ public class ContractServiceImpl implements ContractService {
         Contract contract = new Contract(contractDTO.getContractNumber(), contractDTO.getContractName(),
                 null, null, null,
                 contractDTO.getTotalEnrollment(), contractDTO.getMedicareEligible());
+
         log.info("ContractServiceImpl-dtoToContract: Contract created from DTO.");
         log.info("ContractServiceImpl-dtoToContract: Setting attestation date...");
-        log.info("ContractServiceImpl-dtoToContract: attestedOn = " + contractDTO.getAttestedOn().toString());
         contract.setAttestedOn(contractDTO.getAttestedOn());
 
         log.info("ContractServiceImpl-dtoToContract: Setting contract type...");
-        log.info("ContractServiceImpl-dtoToContract: contractType = " + contractDTO.getContractType().toString());
         contract.setContractType(contractDTO.getContractType());
+        log.info("ContractServiceImpl-dtoToContract: contractType = " + contractDTO.getContractType().toString());
 
         log.info("ContractServiceImpl-dtoToContract: Setting ID...");
-        log.info("ContractServiceImpl-dtoToContract: ID = " + Long.toString(contractDTO.getId()));
         contract.setId(contractDTO.getId());
+        log.info("ContractServiceImpl-dtoToContract: ID = " + Long.toString(contractDTO.getId()));
 
         log.info("ContractServiceImpl-dtoToContract: contract = " + contract.toString());
         log.info("ContractServiceImpl-dtoToContract: Returning contract...");
