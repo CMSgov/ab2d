@@ -7,10 +7,7 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
 
-
-@Slf4j
 @Service
 @Transactional
 public class ContractServiceImpl implements ContractService {
@@ -45,27 +42,12 @@ public class ContractServiceImpl implements ContractService {
 
     //TODO replace Contract with ContractDTO
     private Contract dtoToContract(ContractDTO contractDTO) {
-        log.info("ContractServiceImpl-dtoToContract: Retrieving contract information...");
-        log.info("ContractServiceImpl-dtoToContract: contractDTO = " + contractDTO.toString());
-
         Contract contract = new Contract(contractDTO.getContractNumber(), contractDTO.getContractName(),
                 null, null, null,
                 contractDTO.getTotalEnrollment(), contractDTO.getMedicareEligible());
-
-        log.info("ContractServiceImpl-dtoToContract: Contract created from DTO.");
-        log.info("ContractServiceImpl-dtoToContract: Setting attestation date...");
         contract.setAttestedOn(contractDTO.getAttestedOn());
-
-        log.info("ContractServiceImpl-dtoToContract: Setting contract type...");
         contract.setContractType(contractDTO.getContractType());
-        log.info("ContractServiceImpl-dtoToContract: contractType = " + contractDTO.getContractType().toString());
-
-        log.info("ContractServiceImpl-dtoToContract: Setting ID...");
         contract.setId(contractDTO.getId());
-        log.info("ContractServiceImpl-dtoToContract: ID = " + Long.toString(contractDTO.getId()));
-
-        log.info("ContractServiceImpl-dtoToContract: contract = " + contract.toString());
-        log.info("ContractServiceImpl-dtoToContract: Returning contract...");
         return contract;
     }
 }
