@@ -77,8 +77,8 @@ public class JobPreProcessorImpl implements JobPreProcessor {
         if (contract.getAttestedOn() == null) {
             log.warn("JobPreProcessorImpl > preprocess: job FAILED because the contract attestation date is null.");
 
-            eventLogger.logAndAlert(job.buildJobStatusChangeEvent(FAILED, EOB_JOB_FAILURE + " Job for "
-                + contract.getContractNumber() + " in progress"), PUBLIC_LIST);
+            eventLogger.logAndAlert(job.buildJobStatusChangeEvent(FAILED, EOB_JOB_FAILURE + " Job " + jobUuid
+                + "failed for contract: " + contract.getContractNumber() + " because contract attestation date is null"), PUBLIC_LIST);
 
             job.setStatus(FAILED);
             job.setStatusMessage("failed because contract attestation date is null.");
