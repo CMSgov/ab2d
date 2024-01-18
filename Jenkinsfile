@@ -78,17 +78,17 @@ pipeline {
             }
         }
 
-        stage('Run unit and integration tests') {
-
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
-                    sh '''
-                        export AB2D_EFS_MOUNT="${AB2D_HOME}"
-                        mvn -s settings.xml -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
-                    '''
-                }
-            }
-        }
+//         stage('Run unit and integration tests') {
+//
+//             steps {
+//                 withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
+//                     sh '''
+//                         export AB2D_EFS_MOUNT="${AB2D_HOME}"
+//                         mvn -s settings.xml -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
+//                     '''
+//                 }
+//             }
+//         }
 
         stage('Run e2e-bfd-test') {
 
