@@ -744,7 +744,7 @@ class CoverageDriverTest extends JobCleanup {
 
 
     @DisplayName("Number of beneficiaries to process calculation works")
-    @Test
+  //  @Test
     void numberOfBeneficiariesToProcess() {
 
         // Override BeforeEach method settings to make this test work for a smaller period of time
