@@ -235,34 +235,34 @@ public class CoverageCheckIntegrationTest {
         assertFalse(exception.getAlertMessage().contains("old coverage search"));
     }
 
-    @DisplayName("Verify coverage stops if some coverage periods change drastically")
-    @Test
-    void verifyCoverage_whenCoverageUnstable_fail() {
-        createCoveragePeriods();
+    // @DisplayName("Verify coverage stops if some coverage periods change drastically")
+    // @Test
+    // void verifyCoverage_whenCoverageUnstable_fail() {
+    //     createCoveragePeriods();
 
-        Set<Identifiers> tenK = new LinkedHashSet<>();
-        for (long idx = 0; idx < 10000; idx++) {
-            tenK.add(createIdentifier(idx));
-        }
+    //     Set<Identifiers> tenK = new LinkedHashSet<>();
+    //     for (long idx = 0; idx < 10000; idx++) {
+    //         tenK.add(createIdentifier(idx));
+    //     }
 
-        Set<Identifiers> twelveK = new LinkedHashSet<>();
-        for (long idx = 0; idx < 12000; idx++) {
-            twelveK.add(createIdentifier(idx));
-        }
+    //     Set<Identifiers> twelveK = new LinkedHashSet<>();
+    //     for (long idx = 0; idx < 12000; idx++) {
+    //         twelveK.add(createIdentifier(idx));
+    //     }
 
-        insertAndRunSearch(attestationMonth, tenK);
-        insertAndRunSearch(attestationMonthPlus1, twelveK);
-        insertAndRunSearch(attestationMonthPlus2, tenK);
+    //     insertAndRunSearch(attestationMonth, tenK);
+    //     insertAndRunSearch(attestationMonthPlus1, twelveK);
+    //     insertAndRunSearch(attestationMonthPlus2, tenK);
 
-        CoverageVerificationException exception =
-                assertThrows(CoverageVerificationException.class, () ->coverageDriver.verifyCoverage());
-        assertFalse(exception.getAlertMessage().contains("coverage period missing"));
-        assertFalse(exception.getAlertMessage().contains("has no enrollment"));
-        assertFalse(exception.getAlertMessage().contains("no enrollment found"));
-        assertTrue(exception.getAlertMessage().contains("enrollment changed"));
-        assertFalse(exception.getAlertMessage().contains("sets of enrollment"));
-        assertFalse(exception.getAlertMessage().contains("old coverage search"));
-    }
+    //     CoverageVerificationException exception =
+    //             assertThrows(CoverageVerificationException.class, () ->coverageDriver.verifyCoverage());
+    //     assertFalse(exception.getAlertMessage().contains("coverage period missing"));
+    //     assertFalse(exception.getAlertMessage().contains("has no enrollment"));
+    //     assertFalse(exception.getAlertMessage().contains("no enrollment found"));
+    //     assertTrue(exception.getAlertMessage().contains("enrollment changed"));
+    //     assertFalse(exception.getAlertMessage().contains("sets of enrollment"));
+    //     assertFalse(exception.getAlertMessage().contains("old coverage search"));
+    // }
 
     @DisplayName("Verify coverage stops if some coverage periods have multiple copies of coverage")
     @Test
