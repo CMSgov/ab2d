@@ -201,50 +201,50 @@ public class CoverageCheckPredicatesIntegrationTest {
         assertTrue(issues.isEmpty());
     }
 
-    // @DisplayName("Coverage changes are limited to 10% between months fails when changes are large")
-    // @Test
-    // void whenCoverageUnstable_failCoverageStabilityCheck() {
+    @DisplayName("Coverage changes are limited to 10% between months fails when changes are large")
+    @Test
+    void whenCoverageUnstable_failCoverageStabilityCheck() {
 
-    //     // This test was using the actual month. Some month have their own logic which failed the test.
-    //     // Special cases should have their own test(s). This test should pass regardless of the current date.
-    //     //Hardcoding to May since we currently don't have any special logic for that month.
-    //     ZonedDateTime dateTime = ZonedDateTime.now().withMonth(5);
+        // This test was using the actual month. Some month have their own logic which failed the test.
+        // Special cases should have their own test(s). This test should pass regardless of the current date.
+        //Hardcoding to May since we currently don't have any special logic for that month.
+        ZonedDateTime dateTime = ZonedDateTime.now().withMonth(5);
 
-    //     createCoveragePeriods(dateTime);
+        createCoveragePeriods(dateTime);
 
-    //     Set<Identifiers> tenK = new LinkedHashSet<>();
-    //     for (long idx = 0; idx < 10000; idx++) {
-    //         tenK.add(createIdentifier(idx));
-    //     }
+        Set<Identifiers> tenK = new LinkedHashSet<>();
+        for (long idx = 0; idx < 10000; idx++) {
+            tenK.add(createIdentifier(idx));
+        }
 
-    //     Set<Identifiers> twelveK = new LinkedHashSet<>();
-    //     for (long idx = 0; idx < 12000; idx++) {
-    //         twelveK.add(createIdentifier(idx));
-    //     }
+        Set<Identifiers> twelveK = new LinkedHashSet<>();
+        for (long idx = 0; idx < 12000; idx++) {
+            twelveK.add(createIdentifier(idx));
+        }
 
-    //     insertAndRunSearch(attestationMonth, tenK);
-    //     insertAndRunSearch(attestationMonthPlus1, twelveK);
-    //     insertAndRunSearch(attestationMonthPlus2, tenK);
+        insertAndRunSearch(attestationMonth, tenK);
+        insertAndRunSearch(attestationMonthPlus1, twelveK);
+        insertAndRunSearch(attestationMonthPlus2, tenK);
 
-    //     Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contractForCoverageDTO))
-    //             .stream().collect(groupingBy(CoverageCount::getContractNumber));
+        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contractForCoverageDTO))
+                .stream().collect(groupingBy(CoverageCount::getContractNumber));
 
-    //     coverageCounts.get(contract.getContractNumber())
-    //             .forEach(count -> assertTrue(count.getBeneficiaryCount() >= 10000));
+        coverageCounts.get(contract.getContractNumber())
+                .forEach(count -> assertTrue(count.getBeneficiaryCount() >= 10000));
 
-    //     List<String> issues = new ArrayList<>();
-    //     CoverageStableCheck stableCheck =
-    //             new CoverageStableCheck(coverageService, coverageCounts, issues);
+        List<String> issues = new ArrayList<>();
+        CoverageStableCheck stableCheck =
+                new CoverageStableCheck(coverageService, coverageCounts, issues);
 
-    //     assertFalse(stableCheck.test(contract));
+        assertFalse(stableCheck.test(contract));
 
-    //     int expectedIssues =  2;
+        int expectedIssues =  2;
 
-    //     assertEquals(expectedIssues, issues.size());
-    //     issues.forEach(issue -> assertTrue(issue.contains("enrollment changed")));
+        assertEquals(expectedIssues, issues.size());
+        issues.forEach(issue -> assertTrue(issue.contains("enrollment changed")));
 
-    //     assertTrue(issues.get(0).contains("20%"));
-    // }
+        assertTrue(issues.get(0).contains("20%"));
+    }
 
     @DisplayName("Coverage changes are limited to 10% between months passes when changes are 1000 benes or less")
     @Test
@@ -381,40 +381,40 @@ public class CoverageCheckPredicatesIntegrationTest {
         assertTrue(issues.isEmpty());
     }
 
-    // @DisplayName("Out of date enrollment causes a failure")
-    // @Test
-    // void whenCoverageOutOfDate_failCoverageDateCheck() {
+    @DisplayName("Out of date enrollment causes a failure")
+    @Test
+    void whenCoverageOutOfDate_failCoverageDateCheck() {
 
-    //     createCoveragePeriods();
+        createCoveragePeriods();
 
-    //     Set<Identifiers> tenK = new LinkedHashSet<>();
-    //     for (long idx = 0; idx < 10000; idx++) {
-    //         tenK.add(createIdentifier(idx));
-    //     }
+        Set<Identifiers> tenK = new LinkedHashSet<>();
+        for (long idx = 0; idx < 10000; idx++) {
+            tenK.add(createIdentifier(idx));
+        }
 
-    //     insertAndRunSearch(attestationMonth, tenK);
-    //     runSearchAndLeaveOld(attestationMonth);
+        insertAndRunSearch(attestationMonth, tenK);
+        runSearchAndLeaveOld(attestationMonth);
 
-    //     insertAndRunSearch(attestationMonthPlus1, tenK);
-    //     runSearchAndLeaveOld(attestationMonthPlus1);
+        insertAndRunSearch(attestationMonthPlus1, tenK);
+        runSearchAndLeaveOld(attestationMonthPlus1);
 
-    //     insertAndRunSearch(attestationMonthPlus2, tenK);
-    //     runSearchAndLeaveOld(attestationMonthPlus2);
+        insertAndRunSearch(attestationMonthPlus2, tenK);
+        runSearchAndLeaveOld(attestationMonthPlus2);
 
-    //     insertAndRunSearch(attestationMonthPlus3, tenK);
-    //     runSearchAndLeaveOld(attestationMonthPlus3);
+        insertAndRunSearch(attestationMonthPlus3, tenK);
+        runSearchAndLeaveOld(attestationMonthPlus3);
 
-    //     Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contractForCoverageDTO))
-    //             .stream().collect(groupingBy(CoverageCount::getContractNumber));
+        Map<String, List<CoverageCount>> coverageCounts = coverageService.countBeneficiariesForContracts(List.of(contractForCoverageDTO))
+                .stream().collect(groupingBy(CoverageCount::getContractNumber));
 
-    //     List<String> issues = new ArrayList<>();
-    //     CoverageUpToDateCheck upToDateCheck = new CoverageUpToDateCheck(coverageService, coverageCounts, issues);
+        List<String> issues = new ArrayList<>();
+        CoverageUpToDateCheck upToDateCheck = new CoverageUpToDateCheck(coverageService, coverageCounts, issues);
 
-    //     assertFalse(upToDateCheck.test(contract));
+        assertFalse(upToDateCheck.test(contract));
 
-    //     assertEquals(4, issues.size());
-    //     issues.forEach(issue -> assertTrue(issue.contains("old coverage search")));
-    // }
+        assertEquals(4, issues.size());
+        issues.forEach(issue -> assertTrue(issue.contains("old coverage search")));
+    }
 
     @DisplayName("Up to date enrollment passes")
     @Test

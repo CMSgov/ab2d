@@ -743,34 +743,34 @@ class CoverageDriverTest extends JobCleanup {
     }
 
 
-    // @DisplayName("Number of beneficiaries to process calculation works")
-    // @Test
-    // void numberOfBeneficiariesToProcess() {
+    @DisplayName("Number of beneficiaries to process calculation works")
+    @Test
+    void numberOfBeneficiariesToProcess() {
 
-    //     // Override BeforeEach method settings to make this test work for a smaller period of time
-    //     contract.setAttestedOn(OffsetDateTime.now().minus(1, ChronoUnit.SECONDS));
-    //     contractServiceStub.updateContract(contract);
+        // Override BeforeEach method settings to make this test work for a smaller period of time
+        contract.setAttestedOn(OffsetDateTime.now().minus(1, ChronoUnit.SECONDS));
+        contractServiceStub.updateContract(contract);
 
-    //     CoveragePeriod period = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), contract.getESTAttestationTime().getMonthValue(), contract.getESTAttestationTime().getYear());
+        CoveragePeriod period = coverageDataSetup.createCoveragePeriod(contract.getContractNumber(), contract.getESTAttestationTime().getMonthValue(), contract.getESTAttestationTime().getYear());
 
-    //     int total = driver.numberOfBeneficiariesToProcess(job, contract.toDTO());
-    //     assertEquals(0, total);
+        int total = driver.numberOfBeneficiariesToProcess(job, contract.toDTO());
+        assertEquals(0, total);
 
-    //     CoverageSearchEvent event = new CoverageSearchEvent();
-    //     event.setOldStatus(CoverageJobStatus.SUBMITTED);
-    //     event.setNewStatus(CoverageJobStatus.IN_PROGRESS);
-    //     event.setDescription("test");
-    //     event.setCoveragePeriod(period);
-    //     event = coverageSearchEventRepo.saveAndFlush(event);
-    //     dataSetup.queueForCleanup(event);
+        CoverageSearchEvent event = new CoverageSearchEvent();
+        event.setOldStatus(CoverageJobStatus.SUBMITTED);
+        event.setNewStatus(CoverageJobStatus.IN_PROGRESS);
+        event.setDescription("test");
+        event.setCoveragePeriod(period);
+        event = coverageSearchEventRepo.saveAndFlush(event);
+        dataSetup.queueForCleanup(event);
 
-    //     Set<Identifiers> members = new HashSet<>();
-    //     members.add(new Identifiers(1, "1234", new LinkedHashSet<>()));
-    //     coverageService.insertCoverage(event.getId(), members);
+        Set<Identifiers> members = new HashSet<>();
+        members.add(new Identifiers(1, "1234", new LinkedHashSet<>()));
+        coverageService.insertCoverage(event.getId(), members);
 
-    //     total = driver.numberOfBeneficiariesToProcess(job, contract.toDTO());
-    //     assertEquals(1, total);
-    // }
+        total = driver.numberOfBeneficiariesToProcess(job, contract.toDTO());
+        assertEquals(1, total);
+    }
 
     private CoverageSearchEvent createEvent(CoveragePeriod period, CoverageJobStatus status, OffsetDateTime created) {
         CoverageSearchEvent event = new CoverageSearchEvent();
