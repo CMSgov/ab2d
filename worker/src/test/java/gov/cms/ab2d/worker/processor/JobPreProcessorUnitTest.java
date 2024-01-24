@@ -39,8 +39,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.never;
@@ -54,8 +52,6 @@ class JobPreProcessorUnitTest {
     private JobPreProcessor cut;
 
     private static final String JOB_UUID = "6d08bf08-f926-4e19-8d89-ad67ef89f17e";
-
-    // private final ContractWorkerClientMock contractWorkerClient = new ContractWorkerClientMock();
 
     @Mock
     private ContractWorkerClient contractWorkerClient;
@@ -139,12 +135,12 @@ class JobPreProcessorUnitTest {
     @DisplayName("Job is FAILED if contract is not attested")
     @Test
     void jobFailedIfContractNotAttested() {
-        
+
         contract.setAttestedOn(null);
 
         job.setContractNumber(contract.getContractNumber());
         job.setStatus(JobStatus.SUBMITTED);
-        
+
         when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
         when(contractWorkerClient.getContractByContractNumber(job.getContractNumber())).thenReturn(contract);
 
