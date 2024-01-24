@@ -83,7 +83,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
             job.setStatus(FAILED);
             job.setStatusMessage("failed because contract attestation date is null.");
 
-            job = jobRepository.save(job);
+            jobRepository.save(job);
             return job;
         }
 
