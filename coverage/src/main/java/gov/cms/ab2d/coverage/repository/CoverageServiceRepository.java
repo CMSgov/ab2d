@@ -21,14 +21,8 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.IntStream;
 import javax.sql.DataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -61,7 +55,9 @@ import static java.util.stream.Collectors.toList;
 @Repository
 public class CoverageServiceRepository {
     private static final int BATCH_INSERT_SIZE = 10000;
-    private static final List<Integer> YEARS = List.of(2020, 2021, 2022, 2023);
+
+    // List of years from 2020 to current year
+    private static final List<Integer> YEARS = IntStream.rangeClosed(2020, Calendar.getInstance().get(Calendar.YEAR)).boxed().toList();
 
     /**
      * Assign a beneficiary as being a member of a contract during a year and month {@link CoveragePeriod}
