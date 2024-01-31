@@ -61,7 +61,7 @@ import static java.util.stream.Collectors.toList;
 @Repository
 public class CoverageServiceRepository {
     private static final int BATCH_INSERT_SIZE = 10000;
-    private static final List<Integer> YEARS = List.of(2020, 2021, 2022, 2023);
+    private static final List<Integer> YEARS = List.of(2020, 2021, 2022, 2023, 2024);
 
     /**
      * Assign a beneficiary as being a member of a contract during a year and month {@link CoveragePeriod}
