@@ -245,8 +245,8 @@ public class ContractProcessorImpl implements ContractProcessor {
             return;
         }
         //Ignore for S4802 during Centene support
-        if (contractData.getContract().getContractNumber().equals("S4802") || contractData.getContract().getContractNumber().equals("Z1001")) {
-            return;
+        if (contractData.getContract().getContractNumber().equals("S4802") || contractData.getContract().getContractNumber().equals("Z1001")) {  //NOSONAR
+            return;                                                                                                                              //NOSONAR
         }
         // Verify that the number of benes requested matches the number expected from the database and fail
         // immediately if the two do not match

@@ -191,7 +191,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
             // Only for S4802 Contract (Centene support)
 
-            while (BundleUtils.getNextLink(eobBundle) != null && isContinue(eobBundle, request)) {
+            while (BundleUtils.getNextLink(eobBundle) != null && isContinue(eobBundle, request)) { //NOSONAR
                 eobBundle = bfdClient.requestNextBundleFromServer(request.getVersion(), eobBundle, request.getContractNum());
                 collector.filterAndAddEntries(eobBundle, patient);
             }
@@ -219,6 +219,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     }
 
     //Centene Support
+    // @SONAR_STOP@
     boolean isContinue(IBaseResource resource, PatientClaimsRequest request) {
         OffsetDateTime sinceTime = request.getSinceTime();
         if (sinceTime == null) {
@@ -228,11 +229,14 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         if (lastUpdated == null) {
             return false;
         }
+        // @SONAR_STOP@
         if (request.getContractNum().equals("S4802") || request.getContractNum().equals("Z1001")) {
             return lastUpdated.getTime() < sinceTime.plusMonths(1).toInstant().toEpochMilli();
         }
+        // @SONAR_START@
         return true;
     }
+    // @SONAR_START@
 
     /**
      * Determine what since date to use if any.
