@@ -171,6 +171,8 @@ pipeline {
                         # Log into ECR for Docker Compose in e2e tests
                         aws --region "${AWS_DEFAULT_REGION}" ecr get-login-password |
                           docker login --username AWS --password-stdin "${ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+                          docker container prune -f
+                          docker system prune -a -f
 
                         mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL}
                     '''
