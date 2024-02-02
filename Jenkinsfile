@@ -115,92 +115,90 @@ pipeline {
 //                     '''
 //                 }
 //             }
+// //         }
+//         stage('SonarQube Analysis') {
+//             steps {
+//                 withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
+//                     git branch: 'master', credentialsId: 'GITHUB_AB2D_JENKINS_PAT', url: env.GIT_URL
+//                     git branch: env.BRANCH_NAME, credentialsId: 'GITHUB_AB2D_JENKINS_PAT', url: env.GIT_URL
+//                     // Automatically saves the an id for the SonarQube build
+//                     withSonarQubeEnv('CMSSonar') {
+//                         sh '''
+//                             mvn -s settings.xml sonar:sonar -Dsonar.projectKey=ab2d-project -DskipTests -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL}
+//                         '''
+//                     }
+//                 }
+//             }
 //         }
-        stage('SonarQube Analysis') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
-                    git branch: 'master', credentialsId: 'GITHUB_AB2D_JENKINS_PAT', url: env.GIT_URL
-                    git branch: env.BRANCH_NAME, credentialsId: 'GITHUB_AB2D_JENKINS_PAT', url: env.GIT_URL
-                    // Automatically saves the an id for the SonarQube build
-                    withSonarQubeEnv('CMSSonar') {
-                        sh '''
-                            mvn -s settings.xml sonar:sonar -Dsonar.projectKey=ab2d-project -DskipTests -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL}
-                        '''
-                    }
-                }
-            }
-        }
-
-        // New Way in declarative pipeline
-        stage("Quality Gate") {
-            options {
-                timeout(time: 10, unit: 'MINUTES')
-            }
-            steps {
-                // Parameter indicates whether to set pipeline to UNSTABLE if Quality Gate fails
-                // true = set pipeline to UNSTABLE, false = don't
-                waitForQualityGate abortPipeline: true
-            }
-        }
-
-
-        stage('Run e2e-test') {
-
-            steps {
-
-                withCredentials([file(credentialsId: 'SANDBOX_BFD_KEYSTORE', variable: 'SANDBOX_BFD_KEYSTORE'),
-                                 string(credentialsId: 'SANDBOX_BFD_KEYSTORE_PASSWORD', variable: 'AB2D_BFD_KEYSTORE_PASSWORD'),
-                                 usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
-
-                    sh '''
-                        export AB2D_BFD_KEYSTORE_LOCATION="/opt/ab2d/ab2d_bfd_keystore"
-
-                        export KEYSTORE_LOCATION="$WORKSPACE/opt/ab2d/ab2d_bfd_keystore"
-
-                        export JENKINS_UID=$(id -u)
-                        export JENKINS_GID=$(id -g)
-
-                        cp $SANDBOX_BFD_KEYSTORE $KEYSTORE_LOCATION
-
-                        test -f $KEYSTORE_LOCATION && echo "created keystore file"
-
-                        chmod 666 $KEYSTORE_LOCATION
-
-                        ls -la $KEYSTORE_LOCATION
-
-                        # Log into ECR for Docker Compose in e2e tests
-                        aws --region "${AWS_DEFAULT_REGION}" ecr get-login-password |
-                          docker login --username AWS --password-stdin "${ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
-                          docker container prune -f
-                          docker system prune -a -f
-
-                        mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL}
-                    '''
-                }
-            }
-        }
-
-        stage('Run codeclimate tests') {
-
-            steps {
-                sh '''
-                    export JACOCO_SOURCE_PATH=./api/src/main/java
-                    ./codeclimate/cc-test-reporter format-coverage ./api/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.api.json
-
-                    export JACOCO_SOURCE_PATH=./common/src/main/java
-                   ./codeclimate/cc-test-reporter format-coverage ./common/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.common.json
-
-                    export JACOCO_SOURCE_PATH=./job/src/main/java
-                   ./codeclimate/cc-test-reporter format-coverage ./job/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.job.json
-
-                   export JACOCO_SOURCE_PATH=./coverage/src/main/java
-                   ./codeclimate/cc-test-reporter format-coverage ./coverage/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.coverage.json
-
-                    export JACOCO_SOURCE_PATH=./worker/src/main/java
-                    ./codeclimate/cc-test-reporter format-coverage ./worker/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.worker.json
-                '''
-            }
-        }
+//
+//         // New Way in declarative pipeline
+//         stage("Quality Gate") {
+//             options {
+//                 timeout(time: 10, unit: 'MINUTES')
+//             }
+//             steps {
+//                 // Parameter indicates whether to set pipeline to UNSTABLE if Quality Gate fails
+//                 // true = set pipeline to UNSTABLE, false = don't
+//                 waitForQualityGate abortPipeline: true
+//             }
+//         }
+//
+//
+//         stage('Run e2e-test') {
+//
+//             steps {
+//
+//                 withCredentials([file(credentialsId: 'SANDBOX_BFD_KEYSTORE', variable: 'SANDBOX_BFD_KEYSTORE'),
+//                                  string(credentialsId: 'SANDBOX_BFD_KEYSTORE_PASSWORD', variable: 'AB2D_BFD_KEYSTORE_PASSWORD'),
+//                                  usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
+//
+//                     sh '''
+//                         export AB2D_BFD_KEYSTORE_LOCATION="/opt/ab2d/ab2d_bfd_keystore"
+//
+//                         export KEYSTORE_LOCATION="$WORKSPACE/opt/ab2d/ab2d_bfd_keystore"
+//
+//                         export JENKINS_UID=$(id -u)
+//                         export JENKINS_GID=$(id -g)
+//
+//                         cp $SANDBOX_BFD_KEYSTORE $KEYSTORE_LOCATION
+//
+//                         test -f $KEYSTORE_LOCATION && echo "created keystore file"
+//
+//                         chmod 666 $KEYSTORE_LOCATION
+//
+//                         ls -la $KEYSTORE_LOCATION
+//
+//                         # Log into ECR for Docker Compose in e2e tests
+//                         aws --region "${AWS_DEFAULT_REGION}" ecr get-login-password |
+//                           docker login --username AWS --password-stdin "${ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+//
+//                         mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL}
+//                     '''
+//                 }
+//             }
+//         }
+//
+//         stage('Run codeclimate tests') {
+//
+//             steps {
+//                 sh '''
+//                     export JACOCO_SOURCE_PATH=./api/src/main/java
+//                     ./codeclimate/cc-test-reporter format-coverage ./api/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.api.json
+//
+//                     export JACOCO_SOURCE_PATH=./common/src/main/java
+//                    ./codeclimate/cc-test-reporter format-coverage ./common/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.common.json
+//
+//                     export JACOCO_SOURCE_PATH=./job/src/main/java
+//                    ./codeclimate/cc-test-reporter format-coverage ./job/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.job.json
+//
+//                    export JACOCO_SOURCE_PATH=./coverage/src/main/java
+//                    ./codeclimate/cc-test-reporter format-coverage ./coverage/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.coverage.json
+//
+//                     export JACOCO_SOURCE_PATH=./worker/src/main/java
+//                     ./codeclimate/cc-test-reporter format-coverage ./worker/target/site/jacoco/jacoco.xml --input-type jacoco -o codeclimate.worker.json
+//                 '''
+//             }
+//         }
 
         stage('Cleanup - first pass of docker deletions part 1') {
             steps {
