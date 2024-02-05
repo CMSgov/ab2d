@@ -614,6 +614,9 @@ public class CoverageDriverImpl implements CoverageDriver {
         if (period.getStatus() == CoverageJobStatus.FAILED &&
                 period.getModified()
                         .isAfter(job.getCreatedAt())) {
+            log.error("---------------------- job.getCreatedAt(): " + job.getCreatedAt());
+            log.error("---------------------- period.getModified(): " + period.getModified());
+
             throw new CoverageDriverException("attempts to pull coverage information failed too many times, " +
                     "cannot pull coverage");
         }
