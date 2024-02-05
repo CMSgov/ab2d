@@ -236,15 +236,15 @@ class TestRunner {
         while (status != 200 && status != 500) {
             Thread.sleep(DELAY * 1000 + 2000);
 
-            log.info("polling for status at url start {}", statusUrl);
+            log.error("polling for status at url start {}", statusUrl);
 
             statusResponse = apiClient.statusRequest(statusUrl);
 
-            log.info("polling for status at url end {} {}", statusUrl, statusResponse);
+            log.error("polling for status at url end {} {}", statusUrl, statusResponse);
 
             status = statusResponse.statusCode();
 
-            log.info("polling for status at url status {} {}", statusUrl, status);
+            log.error("polling for status at url status {} {}", statusUrl, status);
 
             List<String> xProgressList = statusResponse.headers().map().get("x-progress");
             if (xProgressList != null && !xProgressList.isEmpty()) {
@@ -515,7 +515,7 @@ class TestRunner {
         HttpResponse<String> statusResponseAgain = pollForStatusResponse(contentLocationList.iterator().next());
 
         String jobUuid = JobUtil.getJobUuid(contentLocationList.iterator().next());
-
+        log.error("-------------------------------- Status: " + statusResponseAgain.statusCode());
         if (statusResponseAgain.statusCode() == 500) {
             // No values returned if 500
             return null;
