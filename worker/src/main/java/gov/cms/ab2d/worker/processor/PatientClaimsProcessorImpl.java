@@ -26,7 +26,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Future;
 
-import gov.cms.ab2d.worker.processor.coverage.check.CenteneSupportCheck;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -229,7 +228,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         if (lastUpdated == null) {
             return false;
         }
-        if (CenteneSupportCheck.isCentene(request.getContractNum())) {
+        if (request.getContractNum().equals("S4802") || request.getContractNum().equals("Z1001")) {
             return lastUpdated.getTime() < sinceTime.plusMonths(1).toInstant().toEpochMilli();
         }
         return true;

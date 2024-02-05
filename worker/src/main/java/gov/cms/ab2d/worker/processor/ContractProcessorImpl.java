@@ -21,7 +21,6 @@ import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.config.SearchConfig;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
-import gov.cms.ab2d.worker.processor.coverage.check.CenteneSupportCheck;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.service.JobChannelService;
 
@@ -246,7 +245,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             return;
         }
         //Ignore for S4802 during Centene support
-        if (CenteneSupportCheck.isCentene(contractData.getContract().getContractNumber())) {
+        if (contractData.getContract().getContractNumber().equals("S4802") || contractData.getContract().getContractNumber().equals("Z1001")) {
             return;
         }
         // Verify that the number of benes requested matches the number expected from the database and fail
