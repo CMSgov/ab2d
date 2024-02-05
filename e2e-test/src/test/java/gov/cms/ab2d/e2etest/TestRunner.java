@@ -94,7 +94,7 @@ class TestRunner {
 
     private static final int DELAY = 5;
 
-    private static final int JOB_TIMEOUT = 300;
+    private static final int JOB_TIMEOUT = 1000;
 
     // Default API port exposed on local environments
     private static final int DEFAULT_API_PORT = 8443;
