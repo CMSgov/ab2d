@@ -1,6 +1,6 @@
 package gov.cms.ab2d.worker.processor.coverage.check;
 
-public class CenteneSupportCheck {
+public final class CenteneSupportCheck {
 
     private CenteneSupportCheck() {
     }
