@@ -21,6 +21,7 @@ import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.config.RoundRobinBlockingQueue;
 import gov.cms.ab2d.worker.config.SearchConfig;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
+import gov.cms.ab2d.worker.processor.coverage.check.CenteneSupportCheck;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.service.JobChannelService;
 
@@ -244,12 +245,10 @@ public class ContractProcessorImpl implements ContractProcessor {
         if (contractData.getJob().hasJobBeenCancelled()) {
             return;
         }
-        // @SONAR_STOP
         //Ignore for S4802 during Centene support
-        if (contractData.getContract().getContractNumber().equals("S4802") || contractData.getContract().getContractNumber().equals("Z1001")) {
+        if (CenteneSupportCheck.isCentene(contractData.getContract().getContractNumber())) {
             return;
         }
-        // @SONAR_START
         // Verify that the number of benes requested matches the number expected from the database and fail
         // immediately if the two do not match
         ProgressTracker progressTracker = jobProgressService.getStatus(jobUuid);

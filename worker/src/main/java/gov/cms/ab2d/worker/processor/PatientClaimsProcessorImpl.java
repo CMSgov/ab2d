@@ -26,6 +26,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Future;
 
+import gov.cms.ab2d.worker.processor.coverage.check.CenteneSupportCheck;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -190,12 +191,12 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             collector.filterAndAddEntries(eobBundle, patient);
 
             // Only for S4802 Contract (Centene support)
-            // @SONAR_STOP
+
             while (BundleUtils.getNextLink(eobBundle) != null && isContinue(eobBundle, request)) {
                 eobBundle = bfdClient.requestNextBundleFromServer(request.getVersion(), eobBundle, request.getContractNum());
                 collector.filterAndAddEntries(eobBundle, patient);
             }
-            // @SONAR_START
+
             // Log request to Kinesis and NewRelic
             logSuccessful(request, beneficiaryId, requestStartTime);
             collector.logBundleEvent(sinceTime);
@@ -219,7 +220,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     }
 
     //Centene Support
-    // @SONAR_STOP
     boolean isContinue(IBaseResource resource, PatientClaimsRequest request) {
         OffsetDateTime sinceTime = request.getSinceTime();
         if (sinceTime == null) {
@@ -229,12 +229,11 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         if (lastUpdated == null) {
             return false;
         }
-        if (request.getContractNum().equals("S4802") || request.getContractNum().equals("Z1001")) {
+        if (CenteneSupportCheck.isCentene(request.getContractNum())) {
             return lastUpdated.getTime() < sinceTime.plusMonths(1).toInstant().toEpochMilli();
         }
         return true;
     }
-    // @SONAR_START
 
     /**
      * Determine what since date to use if any.
