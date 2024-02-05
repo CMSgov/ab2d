@@ -244,10 +244,12 @@ public class ContractProcessorImpl implements ContractProcessor {
         if (contractData.getJob().hasJobBeenCancelled()) {
             return;
         }
+        // @SONAR_STOP
         //Ignore for S4802 during Centene support
-        if (contractData.getContract().getContractNumber().equals("S4802") || contractData.getContract().getContractNumber().equals("Z1001")) {  //NOSONAR
-            return;                                                                                                                              //NOSONAR
+        if (contractData.getContract().getContractNumber().equals("S4802") || contractData.getContract().getContractNumber().equals("Z1001")) {
+            return;
         }
+        // @SONAR_START
         // Verify that the number of benes requested matches the number expected from the database and fail
         // immediately if the two do not match
         ProgressTracker progressTracker = jobProgressService.getStatus(jobUuid);
