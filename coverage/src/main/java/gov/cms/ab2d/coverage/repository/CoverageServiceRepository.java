@@ -1,6 +1,5 @@
 package gov.cms.ab2d.coverage.repository;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
