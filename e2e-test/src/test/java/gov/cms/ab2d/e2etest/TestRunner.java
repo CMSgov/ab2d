@@ -94,7 +94,7 @@ class TestRunner {
 
     private static final int DELAY = 5;
 
-    private static final int JOB_TIMEOUT = 10000;
+    private static final int JOB_TIMEOUT = 300;
 
     // Default API port exposed on local environments
     private static final int DEFAULT_API_PORT = 8443;
@@ -814,9 +814,9 @@ class TestRunner {
      */
     private Stream<Arguments> getVersionAndContract() {
         // Define default test contract
-        String testContractV1 = "Z0000";
+        String testContractV1 = "Z0030";
         if (v2Enabled()) {
-            String testContractV2 = "Z0000";
+            String testContractV2 = "Z0030";
             return Stream.of(arguments(STU3, testContractV1), arguments(R4, testContractV2));
         } else {
             return Stream.of(arguments(STU3, testContractV1));
