@@ -114,7 +114,7 @@ class TestRunner {
     // during a build.
     public void runTests(String testContract) throws InvocationTargetException, IllegalAccessException {
         if (testContract != null && !testContract.isEmpty()) {
-            log.info("Running test with contract: " + testContract);
+            log.error("Running test with contract: " + testContract);
         }
         final Class<Test> annotation = Test.class;
         final Class<?> klass = this.getClass();
@@ -137,7 +137,8 @@ class TestRunner {
         int apiPort = getApiPort();
 
         log.info("Expecting API to be available at port {}", apiPort);
-
+        log.error("------- env" + environment.getAb2dEnvironment());
+        log.error("------- env" + environment.getConfigName());
         if (environment.hasComposeFiles()) {
             loadDockerComposeContainers(apiPort);
         }
@@ -611,6 +612,7 @@ class TestRunner {
         System.out.println();
         log.info("Starting test 6 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contract, FHIR_TYPE, null, version);
+        log.error("-------------------------- exportResponse" + exportResponse);
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
@@ -814,9 +816,9 @@ class TestRunner {
      */
     private Stream<Arguments> getVersionAndContract() {
         // Define default test contract
-        String testContractV1 = "Z0030";
+        String testContractV1 = "Z0000";
         if (v2Enabled()) {
-            String testContractV2 = "Z0030";
+            String testContractV2 = "Z0000";
             return Stream.of(arguments(STU3, testContractV1), arguments(R4, testContractV2));
         } else {
             return Stream.of(arguments(STU3, testContractV1));
