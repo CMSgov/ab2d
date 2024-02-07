@@ -232,7 +232,7 @@ public class CoverageDriverImpl implements CoverageDriver {
             attestationTime = attestationTime.plusMonths(1);
         }
 
-        log.error("discovered {} coverage periods for contract {}", coveragePeriodsForContracts,
+        log.debug("discovered {} coverage periods for contract {}", coveragePeriodsForContracts,
                 contract.getContractNumber());
     }
 
@@ -452,7 +452,7 @@ public class CoverageDriverImpl implements CoverageDriver {
             locked = coverageLock.tryLock(MINUTE, TimeUnit.MINUTES);
 
             if (!locked) {
-                log.error("Could not retrieve lock after timeout of {} minute(s)." +
+                log.warn("Could not retrieve lock after timeout of {} minute(s)." +
                         " Cannot confirm coverage metadata is available", MINUTE);
                 return false;
             }
@@ -461,7 +461,7 @@ public class CoverageDriverImpl implements CoverageDriver {
             // If so then create those coverage periods.
             discoverCoveragePeriods(mapping.map(contract));
 
-            log.error("queueing never searched coverage metadata periods for {}", contractNumber);
+            log.debug("queueing never searched coverage metadata periods for {}", contractNumber);
             /*
              * If any relevant coverage period has never been pulled from BFD successfully then automatically fail the
              * search
@@ -470,8 +470,6 @@ public class CoverageDriverImpl implements CoverageDriver {
                     .stream()
                     .filter(period -> Objects.equals(contract.getContractNumber(), period.getContractNumber()))
                     .toList();
-
-            log.error(("------------------------ neverSearched: " + neverSearched));
             if (!neverSearched.isEmpty()) {
                 // Check that we've not submitted and failed these jobs
                 neverSearched.forEach(period -> checkCoveragePeriodValidity(job, period));
@@ -616,9 +614,6 @@ public class CoverageDriverImpl implements CoverageDriver {
         if (period.getStatus() == CoverageJobStatus.FAILED &&
                 period.getModified()
                         .isAfter(job.getCreatedAt())) {
-            log.error("---------------------- job.getCreatedAt(): " + job.getCreatedAt());
-            log.error("---------------------- period.getModified(): " + period.getModified());
-
             throw new CoverageDriverException("attempts to pull coverage information failed too many times, " +
                     "cannot pull coverage");
         }

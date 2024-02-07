@@ -114,7 +114,7 @@ class TestRunner {
     // during a build.
     public void runTests(String testContract) throws InvocationTargetException, IllegalAccessException {
         if (testContract != null && !testContract.isEmpty()) {
-            log.error("Running test with contract: " + testContract);
+            log.info("Running test with contract: " + testContract);
         }
         final Class<Test> annotation = Test.class;
         final Class<?> klass = this.getClass();
@@ -137,8 +137,7 @@ class TestRunner {
         int apiPort = getApiPort();
 
         log.info("Expecting API to be available at port {}", apiPort);
-        log.error("------- env" + environment.getAb2dEnvironment());
-        log.error("------- env" + environment.getConfigName());
+
         if (environment.hasComposeFiles()) {
             loadDockerComposeContainers(apiPort);
         }
@@ -237,15 +236,15 @@ class TestRunner {
         while (status != 200 && status != 500) {
             Thread.sleep(DELAY * 1000 + 2000);
 
-            log.error("polling for status at url start {}", statusUrl);
+            log.info("polling for status at url start {}", statusUrl);
 
             statusResponse = apiClient.statusRequest(statusUrl);
 
-            log.error("polling for status at url end {} {}", statusUrl, statusResponse);
+            log.info("polling for status at url end {} {}", statusUrl, statusResponse);
 
             status = statusResponse.statusCode();
 
-            log.error("polling for status at url status {} {}", statusUrl, status);
+            log.info("polling for status at url status {} {}", statusUrl, status);
 
             List<String> xProgressList = statusResponse.headers().map().get("x-progress");
             if (xProgressList != null && !xProgressList.isEmpty()) {
@@ -516,7 +515,7 @@ class TestRunner {
         HttpResponse<String> statusResponseAgain = pollForStatusResponse(contentLocationList.iterator().next());
 
         String jobUuid = JobUtil.getJobUuid(contentLocationList.iterator().next());
-        log.error("-------------------------------- Status: " + statusResponseAgain.statusCode());
+
         if (statusResponseAgain.statusCode() == 500) {
             // No values returned if 500
             return null;
@@ -612,7 +611,6 @@ class TestRunner {
         System.out.println();
         log.info("Starting test 6 - " + version.toString());
         HttpResponse<String> exportResponse = apiClient.exportByContractRequest(contract, FHIR_TYPE, null, version);
-        log.error("-------------------------- exportResponse" + exportResponse);
         assertEquals(202, exportResponse.statusCode());
         List<String> contentLocationList = exportResponse.headers().map().get("content-location");
 
