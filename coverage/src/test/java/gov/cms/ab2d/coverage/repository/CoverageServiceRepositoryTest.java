@@ -27,9 +27,12 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.sql.DataSource;
+import java.lang.reflect.Field;
 import java.util.*;
 
 import static gov.cms.ab2d.common.util.PropertyConstants.OPT_OUT_ON;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 @SpringBootTest
@@ -64,6 +67,8 @@ class CoverageServiceRepositoryTest {
     @Mock
     private PropertiesService mockPropertiesService;
 
+    private CoverageServiceRepository coverageServiceRepository;
+
     private CoveragePeriod period1Jan;
     private Set<Identifiers> results;
 
@@ -79,25 +84,31 @@ class CoverageServiceRepositoryTest {
 
         CoverageSearchEvent inProgress1 = startSearchAndPullEvent();
         coverageService.insertCoverage(inProgress1.getId(), results);
+
+        coverageServiceRepository = new CoverageServiceRepository(dataSource, coveragePeriodRepo, coverageSearchEventRepo, mockPropertiesService);
     }
 
     @DisplayName("Calculate the number of beneficiaries when OptOut is disabled")
     @Test
     void countBeneficiariesByPeriodsWithoutOptOutTest() {
-        CoverageServiceRepository coverageServiceRepository = new CoverageServiceRepository(dataSource, coveragePeriodRepo, coverageSearchEventRepo, mockPropertiesService);
-
         Assertions.assertEquals(3, coverageServiceRepository.countBeneficiariesByPeriods(List.of(period1Jan.getId()), "TST-12"));
     }
 
     @DisplayName("Calculate the number of beneficiaries when OptOut is enabled")
     @Test
     void countBeneficiariesByPeriodsWithOptOutTest() {
-        CoverageServiceRepository coverageServiceRepository = new CoverageServiceRepository(dataSource, coveragePeriodRepo, coverageSearchEventRepo, mockPropertiesService);
-
         Mockito.when(mockPropertiesService.isToggleOn(OPT_OUT_ON, false)).thenReturn(true);
        //The expected number is 3, and is the same as in previous test, since switching opt_out_flag from false to true is only available in OptOutLambda.
         //Here all beneficiaries have opt_out_flag equals false by default.
         Assertions.assertEquals(3, coverageServiceRepository.countBeneficiariesByPeriods(List.of(period1Jan.getId()), "TST-12"));
+    }
+
+    @Test
+    void yearsTest() throws NoSuchFieldException, IllegalAccessException {
+        Field X = CoverageServiceRepository.class.getDeclaredField("YEARS");
+        X.setAccessible(true);
+        Assertions.assertNotNull(X.get(null));
+        Assertions.assertTrue(X.get(null).toString().startsWith("[2020, 2021, 2022, 2023, 2024"));
     }
 
     private Identifiers createIdentifier(Long suffix) {
