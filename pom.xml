@@ -54,18 +54,6 @@
         <contract-client.version>1.2.1</contract-client.version>
     </properties>
 
-    <!-- <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-dependencies</artifactId>
-                <version>${spring-cloud.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement> -->
-
     <dependencies>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -95,6 +83,12 @@
             <artifactId>localstack</artifactId>
             <version>1.18.3</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.awspring.cloud</groupId>
+            <artifactId>spring-cloud-aws-dependencies</artifactId>
+            <version>${spring-cloud-aws.version}</version>
+            <type>pom</type>
         </dependency>
     </dependencies>
 
