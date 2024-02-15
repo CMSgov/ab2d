@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PUBLIC_LIST;
 import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_COVERAGE_ISSUE;
 import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_STARTED;
+import static gov.cms.ab2d.eventclient.events.SlackEvents.EOB_JOB_FAILURE;
 import static gov.cms.ab2d.job.model.JobStatus.FAILED;
 import static gov.cms.ab2d.job.model.JobStatus.IN_PROGRESS;
 import static gov.cms.ab2d.job.model.JobStatus.SUBMITTED;
@@ -72,6 +73,20 @@ public class JobPreProcessorImpl implements JobPreProcessor {
         if (contract == null) {
             throw new IllegalArgumentException("A job must always have a contract.");
         }
+
+        if (contract.getAttestedOn() == null) {
+            log.warn("JobPreProcessorImpl > preprocess: job FAILED because the contract attestation date is null.");
+
+            eventLogger.logAndAlert(job.buildJobStatusChangeEvent(FAILED, EOB_JOB_FAILURE + " Job " + jobUuid
+                + "failed for contract: " + contract.getContractNumber() + " because contract attestation date is null"), PUBLIC_LIST);
+
+            job.setStatus(FAILED);
+            job.setStatusMessage("failed because contract attestation date is null.");
+
+            jobRepository.save(job);
+            return job;
+        }
+
         Optional<OffsetDateTime> sinceValue = Optional.ofNullable(job.getSince());
         if (sinceValue.isPresent()) {
             // If the user provided a 'since' value

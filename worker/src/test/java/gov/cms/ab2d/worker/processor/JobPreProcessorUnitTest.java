@@ -10,7 +10,7 @@ import gov.cms.ab2d.job.model.JobOutput;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
-import gov.cms.ab2d.worker.util.ContractWorkerClientMock;
+import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -53,8 +53,8 @@ class JobPreProcessorUnitTest {
 
     private static final String JOB_UUID = "6d08bf08-f926-4e19-8d89-ad67ef89f17e";
 
-    private final ContractWorkerClientMock contractWorkerClient = new ContractWorkerClientMock();
-
+    @Mock
+    private ContractWorkerClient contractWorkerClient;
     @Mock
     private JobRepository jobRepository;
     @Mock
@@ -67,7 +67,7 @@ class JobPreProcessorUnitTest {
 
     @BeforeEach
     void setUp() {
-        contract = new ContractDTO(null, "JPP5678", "JPP5678", null, null, 0, 0);
+        contract = new ContractDTO(null, "JPP5678", "JPP5678", OffsetDateTime.now(), Contract.ContractType.NORMAL, 0, 0);
         cut = new JobPreProcessorImpl(contractWorkerClient, jobRepository, eventLogger, coverageDriver);
         job = createJob();
     }
@@ -123,6 +123,7 @@ class JobPreProcessorUnitTest {
 
         when(jobRepository.save(Mockito.any())).thenReturn(job);
         when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
+        when(contractWorkerClient.getContractByContractNumber(job.getContractNumber())).thenReturn(contract);
         when(coverageDriver.isCoverageAvailable(any(Job.class), any(ContractDTO.class))).thenReturn(true);
 
         var processedJob = cut.preprocess(job.getJobUuid());
@@ -131,12 +132,30 @@ class JobPreProcessorUnitTest {
         verify(jobRepository).save(Mockito.any());
     }
 
+    @DisplayName("Job is FAILED if contract is not attested")
+    @Test
+    void jobFailedIfContractNotAttested() {
+
+        contract.setAttestedOn(null);
+
+        job.setContractNumber(contract.getContractNumber());
+        job.setStatus(JobStatus.SUBMITTED);
+
+        when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
+        when(contractWorkerClient.getContractByContractNumber(job.getContractNumber())).thenReturn(contract);
+
+        job = cut.preprocess(job.getJobUuid());
+
+        assertEquals(JobStatus.FAILED, job.getStatus());
+    }
+
     @DisplayName("Job is not started if coverage is not available")
     @Test
     void proccessingNotTriggeredIfCoverageNotAvailable() throws InterruptedException {
 
         job.setStatus(JobStatus.SUBMITTED);
         when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
+        when(contractWorkerClient.getContractByContractNumber(job.getContractNumber())).thenReturn(contract);
         when(coverageDriver.isCoverageAvailable(any(Job.class), any(ContractDTO.class))).thenReturn(false);
 
         Job result = cut.preprocess(job.getJobUuid());
@@ -149,6 +168,7 @@ class JobPreProcessorUnitTest {
 
         job.setStatus(JobStatus.SUBMITTED);
         when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
+        when(contractWorkerClient.getContractByContractNumber(job.getContractNumber())).thenReturn(contract);
         when(coverageDriver.isCoverageAvailable(any(Job.class), any(ContractDTO.class))).thenThrow(InterruptedException.class);
 
         var exceptionThrown = assertThrows(RuntimeException.class,
@@ -165,6 +185,7 @@ class JobPreProcessorUnitTest {
         job.setStatus(JobStatus.SUBMITTED);
         job.setContractNumber(contract.getContractNumber());
         when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
+        when(contractWorkerClient.getContractByContractNumber(job.getContractNumber())).thenReturn(contract);
         cut.preprocess(job.getJobUuid());
         assertNull(job.getSince());
         verify(jobRepository, never()).findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(anyString(), any(), any());
@@ -178,8 +199,10 @@ class JobPreProcessorUnitTest {
         job.setFhirVersion(R4);
         job.setStatus(JobStatus.SUBMITTED);
         when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
+        when(contractWorkerClient.getContractByContractNumber(job.getContractNumber())).thenReturn(contract);
         when(jobRepository.findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(anyString(), any(), any())).thenReturn(Collections.emptyList());
         cut.preprocess(job.getJobUuid());
+
         assertNull(job.getSince());
         assertEquals(SinceSource.FIRST_RUN, job.getSinceSource());
     }
@@ -200,6 +223,7 @@ class JobPreProcessorUnitTest {
         oldJob.setCreatedAt(oldJobTime);
 
         when(jobRepository.findByJobUuid(newJob.getJobUuid())).thenReturn(newJob);
+        when(contractWorkerClient.getContractByContractNumber(newJob.getContractNumber())).thenReturn(contract);
         when(jobRepository.findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(anyString(), any(), any())).thenReturn(List.of(oldJob));
 
         cut.preprocess(newJob.getJobUuid());
@@ -225,6 +249,7 @@ class JobPreProcessorUnitTest {
         oldJob.setJobUuid(oldJob.getJobUuid() + "-2");
 
         when(jobRepository.findByJobUuid(newJob.getJobUuid())).thenReturn(newJob);
+        when(contractWorkerClient.getContractByContractNumber(newJob.getContractNumber())).thenReturn(contract);
 
         cut.preprocess(newJob.getJobUuid());
 
@@ -240,9 +265,6 @@ class JobPreProcessorUnitTest {
         newJob.setStatus(JobStatus.SUBMITTED);
         newJob.setCreatedAt(OffsetDateTime.now());
 
-        ContractDTO contract = new ContractDTO(null, "contractNum", null, null, Contract.ContractType.CLASSIC_TEST, 0, 0);
-        newJob.setContractNumber(contract.getContractNumber());
-
         Job oldJob = createJob();
         oldJob.setStatus(SUCCESSFUL);
         oldJob.setJobUuid(oldJob.getJobUuid() + "-2");
@@ -250,14 +272,15 @@ class JobPreProcessorUnitTest {
         oldJob.setCreatedAt(oldJobTime);
 
         when(jobRepository.findByJobUuid(newJob.getJobUuid())).thenReturn(newJob);
+        when(contractWorkerClient.getContractByContractNumber(newJob.getContractNumber())).thenReturn(contract);
 
-        cut.preprocess(newJob.getJobUuid());
+        newJob = cut.preprocess(newJob.getJobUuid());
 
         assertNull(newJob.getSince());
         // No longer allow null contracts so things get flagged as first run now.
         assertEquals(SinceSource.FIRST_RUN, newJob.getSinceSource());
 
-        contract = new ContractDTO(null, "contractNum", null, null, Contract.ContractType.SYNTHEA, 0, 0);
+        contract = new ContractDTO(null, "contractNum", null, OffsetDateTime.now(), Contract.ContractType.SYNTHEA, 0, 0);
 
         when(jobRepository.findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(anyString(), any(), any())).thenReturn(List.of(oldJob));
 
@@ -303,6 +326,7 @@ class JobPreProcessorUnitTest {
         assertTrue(impl.getLastSuccessfulJobWithDownloads(List.of(job3)).isEmpty());
 
         when(jobRepository.findByJobUuid(newJob.getJobUuid())).thenReturn(newJob);
+        when(contractWorkerClient.getContractByContractNumber(job.getContractNumber())).thenReturn(contract);
         when(jobRepository.findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(anyString(), any(), any())).thenReturn(List.of(job1, job2, job3, job4));
         cut.preprocess(newJob.getJobUuid());
         assertEquals(newJob.getSince().getNano(), job4.getCreatedAt().getNano());
