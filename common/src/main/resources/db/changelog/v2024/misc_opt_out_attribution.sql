@@ -12,13 +12,6 @@ SELECT cov.contract,
        cov.bene_coverage_search_event_id
 FROM coverage cov;
 
-ALTER TABLE public.coverage_view
-    OWNER TO cmsadmin;
-
-GRANT SELECT ON TABLE public.coverage_view TO ab2d_analyst;
-GRANT ALL ON TABLE public.coverage_view TO cmsadmin;
-
-
 ALTER TABLE current_mbi ADD COLUMN IF NOT EXISTS opt_out_flag BOOLEAN ; --add new columns
 ALTER TABLE current_mbi ADD COLUMN IF NOT EXISTS effective_date TIMESTAMP;
 
