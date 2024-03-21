@@ -35,7 +35,9 @@ WHERE contract  in (
     FROM job_view
     WHERE contract_number not LIKE 'Z%'
 ) and effective_date> CURRENT_DATE - 1
-on conflict do nothing
+on conflict do nothing;
+end;
+$$;
 -- /******* END ******/
 
 --- /*****RUNS on schedule weekly --TODO Set pg_cron schedule and update proc name ****/
