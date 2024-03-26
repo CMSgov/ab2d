@@ -157,7 +157,10 @@ public class JobProcessorImpl implements JobProcessor {
                     job.getJobUuid(), job.getContractNumber());
             return;
         }
-
+        //Ignore for S4802 during Centene support
+        if (job.getContractNumber().equals("S4802") || job.getContractNumber().equals("Z1001")) {
+            return;
+        }
         // Number in database
         int expectedPatients = progressTracker.getPatientsExpected();
 
