@@ -65,7 +65,6 @@ public class TLSTest {
     DataSetup dataSetup;
 
     @Autowired
-    @Qualifier("mockAmazonSQS")
     AmazonSQS amazonSqs;
 
     @Container
