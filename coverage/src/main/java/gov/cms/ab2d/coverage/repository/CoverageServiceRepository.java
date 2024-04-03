@@ -96,7 +96,8 @@ public class CoverageServiceRepository {
      * Return a count of all beneficiaries who aggred to share their data associated with an {@link CoveragePeriod}
      * from any event. For those beneficiaries out_out_flag equals false in the public.coverage table.
      */
-    private static final String SELECT_DISTINCT_OPTOUT_COVERAGE_BY_PERIOD_COUNT = "SELECT COUNT(DISTINCT beneficiary_id) FROM coverage" +
+    private static final String SELECT_DISTINCT_OPTOUT_COVERAGE_BY_PERIOD_COUNT = "SELECT COUNT(DISTINCT beneficiary_id) FROM coverage c " +
+            " join current_mbi m on  c.current_mbi=m.mbi" +
             " WHERE bene_coverage_period_id IN(:ids) AND contract = :contract AND year IN (:years) AND opt_out_flag is not false";
 
     /**
@@ -164,7 +165,7 @@ public class CoverageServiceRepository {
 
     private static final String SELECT_OPTOUT_COVERAGE_WITHOUT_CURSOR =
             "SELECT beneficiary_id, current_mbi, historic_mbis, year, month " +
-                    " FROM coverage " +
+                    " FROM coverage c join current_mbi m on  c.current_mbi=m.mbi " +
                     " WHERE contract = :contract and year IN (:years) and opt_out_flag is not false" +
                     " ORDER BY beneficiary_id " +
                     " LIMIT :limit";
@@ -186,7 +187,7 @@ public class CoverageServiceRepository {
 
     private static final String SELECT_OPTOUT_COVERAGE_WITH_CURSOR =
             "SELECT beneficiary_id, current_mbi, historic_mbis, year, month " +
-                    " FROM coverage " +
+                    " FROM coverage c join current_mbi m on  c.current_mbi=m.mbi" +
                     " WHERE contract = :contract and year IN (:years) and opt_out_flag is not false AND beneficiary_id >= :cursor " +
                     " ORDER BY beneficiary_id " +
                     " LIMIT :limit";
