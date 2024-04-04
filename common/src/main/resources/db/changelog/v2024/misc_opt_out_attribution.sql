@@ -12,10 +12,12 @@ SELECT cov.contract,
 FROM public.coverage cov;
 
 ALTER TABLE public.current_mbi ADD COLUMN IF NOT EXISTS opt_out_flag BOOLEAN ; --add new columns
-ALTER TABLE public.current_mbi ADD COLUMN IF NOT EXISTS effective_date DATE;
+ALTER TABLE public.current_mbi ADD COLUMN IF NOT EXISTS effective_date TIMESTAMP;
 ALTER TABLE public.current_mbi ALTER COLUMN opt_out_flag DROP DEFAULT ;
 ALTER TABLE public.coverage DROP COLUMN opt_out_flag  ;
 ALTER TABLE public.coverage DROP COLUMN effective_date  ;
+
+ALTER TABLE current_mbi ALTER COLUMN effective_date TYPE DATE;
 
 
 --update  current_mbi set opt_out_flag=NULL  RUN ONLY ONCE if table is created with default as "fault"
