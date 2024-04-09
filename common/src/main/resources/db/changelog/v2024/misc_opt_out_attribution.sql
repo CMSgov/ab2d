@@ -34,7 +34,7 @@ WHERE contract  in (
     SELECT DISTINCT(contract_number)
     FROM job_view
     WHERE contract_number not LIKE 'Z%'
-)
+)and current_mbi is not null  order by current_mbi
 on conflict do nothing;
 end;
 $$;
