@@ -42,5 +42,47 @@ end;
 $$;
 -- /******* END ******/
 
+DROP procedure public.insert_new_current_mbi(); --obsolete changed MBI update from insert_new_current_mbi to another
+-- view below due to time out issues and to address AB2D-6051
+
+CREATE OR REPLACE Procedure  proc_insert_mbi_to_table(
+var_offset int,
+var_limit int default 0)
+AS
+$$
+DECLARE
+v_cnt int;
+    contract_cursor CURSOR FOR
+Select distinct contract_number from contract_view where contract_number not like '%Z%' and contract_number not like '%E%'order by contract_number OFFSET(var_offset) limit(var_limit) ;
+contract_record RECORD;
+BEGIN
+-- Open cursor
+SET statement_timeout = 0;
+OPEN contract_cursor;
+RAISE NOTICE 'Start';
+--Fetch rows and return
+LOOP
+FETCH NEXT FROM contract_cursor INTO contract_record;
+        EXIT WHEN NOT FOUND;
+
+-- INSERT Contract and get count from INSERT
+INSERT into public.current_mbi(mbi) SELECT distinct current_mbi
+FROM coverage_view_with_mbi WHERE contract  in (contract_record.contract_number)
+                              and current_mbi is not null  order by current_mbi on conflict do nothing;
+
+get diagnostics v_cnt = row_count; -- get count
+RAISE NOTICE 'Contract: % Value: %' , contract_record.contract_number, v_cnt;
+END LOOP;
+RAISE NOTICE 'All Done!';
+-- Close cursor
+
+CLOSE contract_cursor;
+COMMIT;
+END;
+$$
+LANGUAGE PLPGSQL;
+
+
+
 
 
