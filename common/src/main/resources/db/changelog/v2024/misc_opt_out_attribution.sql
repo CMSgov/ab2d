@@ -45,7 +45,7 @@ $$;
 DROP procedure public.insert_new_current_mbi(); --obsolete changed MBI update from insert_new_current_mbi to another
 -- view below due to time out issues and to address AB2D-6051
 
-CREATE OR REPLACE Procedure  proc_insert_mbi_to_table(
+CREATE OR REPLACE Procedure proc_insert_mbi_to_table(
 var_offset int,
 var_limit int default 0)
 AS
