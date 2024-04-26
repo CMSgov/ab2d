@@ -19,30 +19,6 @@ ALTER TABLE public.coverage DROP COLUMN IF EXISTS effective_date  ;
 
 ALTER TABLE current_mbi ALTER COLUMN effective_date TYPE DATE;
 
-
---update  current_mbi set opt_out_flag=NULL  RUN ONLY ONCE if table is created with default as "fault"
-
---/*******RUN ONLY ONCE WHEN TABLE IS EMPTY without "effective_date> CURRENT_DATE - 1" to pull historic data *****/
---TODO Set pg_cron schedule to get new PDP enrollments ****/
-Create or replace procedure public.insert_new_current_mbi()
-LANGUAGE plpgsql
-AS $$
-begin
-insert into public.current_mbi(
-    mbi)
-SELECT distinct current_mbi
-FROM coverage_view_with_mbi
-WHERE contract  in (
-    SELECT DISTINCT(contract_number)
-    FROM job_view
-    WHERE contract_number not LIKE 'Z%'
-)
-on conflict do nothing;
-end;
-$$;
--- /******* END ******/
-
-DROP procedure public.insert_new_current_mbi(); --obsolete changed MBI update from insert_new_current_mbi to another
 -- view below due to time out issues and to address AB2D-6051
 
 CREATE OR REPLACE Procedure proc_insert_mbi_to_table(
