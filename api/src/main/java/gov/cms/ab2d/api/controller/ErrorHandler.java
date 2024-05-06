@@ -62,6 +62,8 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     private final int retryAfterDelay;
     private final ApiCommon apiCommon;
 
+    private static final String API_ERROR = "API Error";
+
     private static final HashMap<Class, HttpStatus> RESPONSE_MAP;
         static {
             RESPONSE_MAP = new HashMap<>();
@@ -129,7 +131,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
                 ErrorEvent.ErrorType.UNAUTHORIZED_CONTRACT, description));
 
         ApiResponseEvent responseEvent = new ApiResponseEvent(MDC.get(ORGANIZATION), null, status,
-                "API Error", description, (String) request.getAttribute(REQUEST_ID));
+                API_ERROR, description, (String) request.getAttribute(REQUEST_ID));
         eventLogger.logAndAlert(responseEvent, Ab2dEnvironment.PROD_LIST);
 
         return new ResponseEntity<>(null, null, status);
@@ -154,7 +156,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
         // Then log to other destinations
         ApiResponseEvent responseEvent = new ApiResponseEvent(MDC.get(ORGANIZATION), null, status,
-                "API Error", description, (String) request.getAttribute(REQUEST_ID));
+                API_ERROR, description, (String) request.getAttribute(REQUEST_ID));
         eventLogger.sendLogs(responseEvent);
 
         return new ResponseEntity<>(null, null, status);
@@ -169,7 +171,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
         // Then log to other destinations
         eventLogger.sendLogs(new ApiResponseEvent(MDC.get(ORGANIZATION), null, status,
-                "API Error", ex.getClass().getSimpleName(), (String) request.getAttribute(REQUEST_ID)));
+                API_ERROR, ex.getClass().getSimpleName(), (String) request.getAttribute(REQUEST_ID)));
         eventLogger.trace("API_MAINT_BLOCKED Maintenance mode blocked API request " + request.getAttribute(REQUEST_ID), Ab2dEnvironment.PROD_LIST);
 
         return new ResponseEntity<>(null, null, status);
