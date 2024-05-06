@@ -56,7 +56,6 @@ public class AdminAPIMaintenanceModeTests {
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Autowired
-    @Qualifier("mockAmazonSQS")
     AmazonSQS amazonSqs;
 
     @Autowired
