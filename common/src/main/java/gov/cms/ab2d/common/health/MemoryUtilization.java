@@ -22,12 +22,11 @@ public final class MemoryUtilization {
      */
     public static boolean outOfMemory(int numMBToCreate) {
         try {
-
             byte[][] arr = new byte[numMBToCreate][1024];
-            return false;
         } catch (OutOfMemoryError ex) {
             log.error("Error allocating memory - " + numMBToCreate + "MB", ex);
             return true;
         }
+        return false;
     }
 }
