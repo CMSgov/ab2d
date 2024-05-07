@@ -83,14 +83,14 @@ public class CoverageServiceRepository {
      * The contract and year must be included to take advantage of the partitions and prevent a table scan
      */
     private static final String SELECT_COVERAGE_BY_SEARCH_COUNT = "SELECT COUNT(*) FROM coverage " +
-            " WHERE bene_coverage_search_event_id = :id AND contract = :contract AND year IN (:years)";
+            " WHERE bene_coverage_search_event_id = :id AND contract = :contract AND year IN (:years) and current_mbi is not null";
 
     /**
      * Return a count of all beneficiaries associated with an {@link CoveragePeriod}
      * from any event.
      */
     private static final String SELECT_DISTINCT_COVERAGE_BY_PERIOD_COUNT = "SELECT COUNT(DISTINCT beneficiary_id) FROM coverage" +
-            " WHERE bene_coverage_period_id IN(:ids) AND contract = :contract AND year IN (:years)";
+            " WHERE bene_coverage_period_id IN(:ids) AND contract = :contract AND year IN (:years) and current_mbi is not null";
 
     /**
      * Return a count of all beneficiaries who aggred to share their data associated with an {@link CoveragePeriod}
@@ -99,7 +99,7 @@ public class CoverageServiceRepository {
 
     private static final String SELECT_DISTINCT_OPTOUT_COVERAGE_BY_PERIOD_COUNT = "SELECT COUNT(DISTINCT beneficiary_id) FROM coverage c " +
             " join current_mbi m on  c.current_mbi=m.mbi" +
-            " WHERE bene_coverage_period_id IN(:ids) AND contract = :contract AND year IN (:years) AND opt_out_flag is not false";
+            " WHERE bene_coverage_period_id IN(:ids) AND contract = :contract AND year IN (:years) AND opt_out_flag is not false and current_mbi is not null";
 
     /**
      * Delete all coverage associated with a single update from BFD {@link CoverageSearchEvent}
@@ -144,9 +144,9 @@ public class CoverageServiceRepository {
      * The contract and year must be included to take advantage of the partitions and prevent a table scan.
      */
     private static final String SELECT_INTERSECTION = "SELECT COUNT(*) FROM (" +
-            " SELECT DISTINCT beneficiary_id FROM coverage WHERE bene_coverage_search_event_id = :search1 AND contract = :contract AND year IN (:years)" +
+            " SELECT DISTINCT beneficiary_id FROM coverage WHERE bene_coverage_search_event_id = :search1 AND contract = :contract AND year IN (:years) and current_mbi is not null" +
             " INTERSECT " +
-            " SELECT DISTINCT beneficiary_id FROM coverage WHERE bene_coverage_search_event_id = :search2 AND contract = :contract AND year IN (:years)" +
+            " SELECT DISTINCT beneficiary_id FROM coverage WHERE bene_coverage_search_event_id = :search2 AND contract = :contract AND year IN (:years) and current_mbi is not null" +
             ") I";
 
     /**
@@ -160,14 +160,14 @@ public class CoverageServiceRepository {
     private static final String SELECT_COVERAGE_WITHOUT_CURSOR =
             "SELECT beneficiary_id, current_mbi, historic_mbis, year, month " +
             " FROM coverage " +
-            " WHERE contract = :contract and year IN (:years) " +
+            " WHERE contract = :contract and year IN (:years) and current_mbi is not null" +
             " ORDER BY beneficiary_id " +
             " LIMIT :limit";
 
     private static final String SELECT_OPTOUT_COVERAGE_WITHOUT_CURSOR =
             "SELECT beneficiary_id, current_mbi, historic_mbis, year, month " +
                     " FROM coverage c join current_mbi m on  c.current_mbi=m.mbi " +
-                    " WHERE contract = :contract and year IN (:years) and opt_out_flag is not false" +
+                    " WHERE contract = :contract and year IN (:years) and opt_out_flag is not false and current_mbi is not null" +
                     " ORDER BY beneficiary_id " +
                     " LIMIT :limit";
 
@@ -182,14 +182,14 @@ public class CoverageServiceRepository {
     private static final String SELECT_COVERAGE_WITH_CURSOR =
             "SELECT beneficiary_id, current_mbi, historic_mbis, year, month " +
             " FROM coverage " +
-            " WHERE contract = :contract and year IN (:years) AND beneficiary_id >= :cursor " +
+            " WHERE contract = :contract and year IN (:years) and current_mbi is not null AND beneficiary_id >= :cursor " +
             " ORDER BY beneficiary_id " +
             " LIMIT :limit";
 
     private static final String SELECT_OPTOUT_COVERAGE_WITH_CURSOR =
             "SELECT beneficiary_id, current_mbi, historic_mbis, year, month " +
                     " FROM coverage c join current_mbi m on  c.current_mbi=m.mbi" +
-                    " WHERE contract = :contract and year IN (:years) and opt_out_flag is not false AND beneficiary_id >= :cursor " +
+                    " WHERE contract = :contract and year IN (:years) and  current_mbi is not null and opt_out_flag is not false AND beneficiary_id >= :cursor " +
                     " ORDER BY beneficiary_id " +
                     " LIMIT :limit";
 
@@ -208,7 +208,7 @@ public class CoverageServiceRepository {
             " SELECT coverage.contract, coverage.year, coverage.month, coverage.bene_coverage_period_id," +
                     " coverage.bene_coverage_search_event_id, COUNT(*) as bene_count " +
             " FROM coverage INNER JOIN bene_coverage_period bcp ON coverage.bene_coverage_period_id = bcp.id " +
-            " WHERE bcp.status = 'SUCCESSFUL' AND coverage.contract IN (:contracts) AND coverage.year IN (:years) " +
+            " WHERE bcp.status = 'SUCCESSFUL' AND coverage.contract IN (:contracts)  and coverage.current_mbi is not null AND coverage.year IN (:years) " +
             " GROUP BY coverage.contract, coverage.year, coverage.month, " +
                     " coverage.bene_coverage_period_id, coverage.bene_coverage_search_event_id " +
             " ORDER BY coverage.contract, coverage.year, coverage.month, " +
