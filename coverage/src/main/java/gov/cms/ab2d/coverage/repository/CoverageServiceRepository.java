@@ -597,7 +597,7 @@ public class CoverageServiceRepository {
                 .addValue(YEARS_STRING, YEARS)
                 .addValue("limit", limit);
 
-        pageCursor.ifPresent((cursor) -> sqlParameterSource.addValue("cursor", cursor));
+        pageCursor.ifPresent(cursor -> sqlParameterSource.addValue("cursor", cursor));
 
         boolean isOptOutOn = propertiesService.isToggleOn("OptOutOn", false);
         // Grab the enrollment
