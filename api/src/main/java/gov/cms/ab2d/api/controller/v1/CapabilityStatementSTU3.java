@@ -18,6 +18,7 @@ import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
 
 public class CapabilityStatementSTU3 {
     public static CapabilityStatement populateCS(String server) {
+        String OAUTH_STRING = "OAuth";
         SimpleDateFormat sdfLess = new SimpleDateFormat("MM/dd/yyyy HH:mm");
         CapabilityStatement cs = new CapabilityStatement();
         cs.setPublisher("Centers for Medicare &amp; Medicaid Services");
@@ -63,10 +64,10 @@ public class CapabilityStatementSTU3 {
         CodeableConcept codeableConcept = new CodeableConcept();
         Coding coding = new Coding();
         coding.setSystem("http://hl7.org/fhir/ValueSet/restful-security-service");
-        coding.setCode("OAuth");
-        coding.setDisplay("OAuth");
+        coding.setCode(OAUTH_STRING);
+        coding.setDisplay(OAUTH_STRING);
         codeableConcept.setCoding(List.of(coding));
-        codeableConcept.setText("OAuth");
+        codeableConcept.setText(OAUTH_STRING);
         security.setService(List.of(codeableConcept));
         rest.setSecurity(security);
         List<CapabilityStatement.CapabilityStatementRestOperationComponent> restComponents = new ArrayList<>();
