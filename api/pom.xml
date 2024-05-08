@@ -167,7 +167,7 @@
                             <includeGroupIds>com.newrelic.agent.java</includeGroupIds>
                             <includeArtifactIds>newrelic-java</includeArtifactIds>
                             <!-- you can optionally exclude files -->
-                            <!-- <excludes>**/newrelic.yml</excludes> -->
+                            <!-- for example: <excludes>**/newrelic.yml</excludes> -->
                             <overWriteReleases>false</overWriteReleases>
                             <overWriteSnapshots>false</overWriteSnapshots>
                             <overWriteIfNewer>true</overWriteIfNewer>
