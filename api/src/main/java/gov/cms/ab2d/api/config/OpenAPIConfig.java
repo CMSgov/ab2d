@@ -44,14 +44,14 @@ public class OpenAPIConfig {
      */
     @Bean
     public OpenAPI ab2dAPI() {
-        final String BEARER_AUTH = "bearerAuth";
+        final String bearerAuth = "bearerAuth";
         return new OpenAPI()
                 // Dictate that all endpoints within Swagger must make authenticated calls using
                 // a bearer token.
                 // This corresponds to the "Authorize" button in Swagger
-                .addSecurityItem(new SecurityRequirement().addList(BEARER_AUTH))
-                .components(new Components().addSecuritySchemes(BEARER_AUTH, new SecurityScheme()
-                        .name(BEARER_AUTH)
+                .addSecurityItem(new SecurityRequirement().addList(bearerAuth))
+                .components(new Components().addSecuritySchemes(bearerAuth, new SecurityScheme()
+                        .name(bearerAuth)
                         .type(SecurityScheme.Type.HTTP)
                         .scheme("bearer")
                         .bearerFormat("JWT"))
