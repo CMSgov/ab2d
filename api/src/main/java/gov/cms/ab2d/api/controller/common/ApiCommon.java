@@ -51,6 +51,8 @@ public class ApiCommon {
     public static final Set<String> ALLOWABLE_OUTPUT_FORMAT_SET = Set.of(ALLOWABLE_OUTPUT_FORMATS.split(","));
     public static final String JOB_CANCELLED_MSG = "Job canceled";
 
+    private static final String HTTPS_STRING = "https";
+
     private ContractService contractService;
 
     public ApiCommon(SQSEventClient eventLogger, JobClient jobClient, PropertiesService propertiesService,
@@ -63,18 +65,18 @@ public class ApiCommon {
     }
 
     public boolean shouldReplaceWithHttps(HttpServletRequest request) {
-        return "https".equalsIgnoreCase(request.getHeader("X-Forwarded-Proto"));
+        return HTTPS_STRING.equalsIgnoreCase(request.getHeader("X-Forwarded-Proto"));
     }
 
     public String getCurrentUrl(HttpServletRequest request) {
         return shouldReplaceWithHttps(request) ?
-                ServletUriComponentsBuilder.fromCurrentRequest().scheme("https").toUriString() :
+                ServletUriComponentsBuilder.fromCurrentRequest().scheme(HTTPS_STRING).toUriString() :
                 ServletUriComponentsBuilder.fromCurrentRequest().toUriString().replace(":80/", "/");
     }
 
     public String getUrl(String ending, HttpServletRequest request) {
         return shouldReplaceWithHttps(request) ?
-                ServletUriComponentsBuilder.fromCurrentRequestUri().scheme("https").replacePath(ending).toUriString() :
+                ServletUriComponentsBuilder.fromCurrentRequestUri().scheme(HTTPS_STRING).replacePath(ending).toUriString() :
                 ServletUriComponentsBuilder.fromCurrentRequestUri().replacePath(ending).toUriString().replace(":80/", "/");
     }
 
