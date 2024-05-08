@@ -4,6 +4,9 @@ import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
 import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
 
+import lombok.experimental.UtilityClass;
+
+@UtilityClass
 public class ApiText {
     public static final String STATUS_API = "API to determine the status of the job, the files to download " +
             "once the job is complete and an endpoint to cancel a job";
