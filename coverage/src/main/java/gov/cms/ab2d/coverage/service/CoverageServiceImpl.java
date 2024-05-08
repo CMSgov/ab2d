@@ -82,6 +82,8 @@ public class CoverageServiceImpl implements CoverageService {
 
     private final SQSEventClient eventLogger;
 
+    private static final String JOB_TRANSITION_ERROR_PRESTRING = "cannot change from ";
+
     @Override
     public CoveragePeriod getCoveragePeriod(ContractForCoverageDTO contract, int month, int year) {
         checkMonthAndYear(month, year);
@@ -378,7 +380,7 @@ public class CoverageServiceImpl implements CoverageService {
         CoverageJobStatus coverageJobStatus = period.getStatus();
 
         if (coverageJobStatus != CoverageJobStatus.SUBMITTED) {
-            throw new InvalidJobStateTransition("cannot change from " + coverageJobStatus
+            throw new InvalidJobStateTransition(JOB_TRANSITION_ERROR_PRESTRING + coverageJobStatus
                     + " to " + CoverageJobStatus.CANCELLED);
         }
 
@@ -394,7 +396,7 @@ public class CoverageServiceImpl implements CoverageService {
         CoverageJobStatus coverageJobStatus = period.getStatus();
 
         if (coverageJobStatus != CoverageJobStatus.IN_PROGRESS) {
-            throw new InvalidJobStateTransition("cannot change from " + coverageJobStatus
+            throw new InvalidJobStateTransition(JOB_TRANSITION_ERROR_PRESTRING + coverageJobStatus
                     + " to " + CoverageJobStatus.FAILED);
         }
 
@@ -425,7 +427,7 @@ public class CoverageServiceImpl implements CoverageService {
         CoverageJobStatus coverageJobStatus = period.getStatus();
 
         if (coverageJobStatus != CoverageJobStatus.IN_PROGRESS) {
-            throw new InvalidJobStateTransition("cannot change from " + coverageJobStatus
+            throw new InvalidJobStateTransition(JOB_TRANSITION_ERROR_PRESTRING + coverageJobStatus
                     + " to " + CoverageJobStatus.SUCCESSFUL);
         }
 
