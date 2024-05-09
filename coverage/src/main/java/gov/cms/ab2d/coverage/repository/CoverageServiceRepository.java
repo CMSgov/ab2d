@@ -308,7 +308,7 @@ public class CoverageServiceRepository {
         NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
         //If OptOut is enabled, count beneficiaries who agreed to share their data
         String query = (propertiesService.isToggleOn("OptOutOn", false)) ? SELECT_DISTINCT_OPTOUT_COVERAGE_BY_PERIOD_COUNT : SELECT_DISTINCT_COVERAGE_BY_PERIOD_COUNT;
-
+        log.error("SELECT_DISTINCT_OPTOUT_COVERAGE_BY_PERIOD_COUNT   " + query);
         return template.queryForList(query, parameters, Integer.class)
                 .stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for any " +
                                 "of the coverage periods provided"));
@@ -602,10 +602,12 @@ public class CoverageServiceRepository {
         NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
         if (pageCursor.isPresent()) {
             String queryWithCursor = (isOptOutOn) ? SELECT_OPTOUT_COVERAGE_WITH_CURSOR : SELECT_COVERAGE_WITH_CURSOR;
+            log.error("SELECT_OPTOUT_COVERAGE_WITH_CURSOR   " + queryWithCursor);
             enrollment = template.query(queryWithCursor, sqlParameterSource,
                     CoverageServiceRepository::asMembership);
         } else {
             String queryWithoutCursor = (isOptOutOn) ? SELECT_OPTOUT_COVERAGE_WITHOUT_CURSOR : SELECT_COVERAGE_WITHOUT_CURSOR;
+            log.error("SELECT_OPTOUT_COVERAGE_WITHOUT_CURSOR   " + queryWithoutCursor);
             enrollment = template.query(queryWithoutCursor, sqlParameterSource,
                     CoverageServiceRepository::asMembership);
         }
