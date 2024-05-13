@@ -137,6 +137,9 @@ services:
     image: 777200079629.dkr.ecr.us-east-1.amazonaws.com/ab2d-sbx-services:contracts-service
 #    Use if running locally. Build imqge in Contract Service repo first
 #    image: ab2d-contracts-contracts
+    volumes:
+      - ./start-contracts.sh:/var/lib/jenkins/jenkins_agent/start-contracts.sh
+    entrypoint: ["/bin/bash", "/var/lib/jenkins/jenkins_agent/start-contracts.sh"]    
     environment:
       - AB2D_DB_HOST=db
       - AB2D_DB_PORT=5432
@@ -157,15 +160,9 @@ services:
 #      - AWS_SECRET_KEY=null
     healthcheck:
       test: [ "CMD-SHELL", "curl -X GET http://localhost:8070/health --insecure" ]
-<<<<<<< HEAD
       interval: 1m
       timeout: 10s
       retries: 5
-=======
-      interval: 30s
-      timeout: 5s
-      retries: 10
->>>>>>> 30e03a71b196b70be1eccb7907420d7db4841a91
     ports:
       - '8070:8070'
     expose:
