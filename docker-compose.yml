@@ -157,8 +157,8 @@ services:
 #      - AWS_SECRET_KEY=null
     healthcheck:
       test: [ "CMD-SHELL", "curl -X GET http://localhost:8070/health --insecure" ]
-      interval: 30s
-      timeout: 5s
+      interval: 1m
+      timeout: 10s
       retries: 5
     ports:
       - '8070:8070'
