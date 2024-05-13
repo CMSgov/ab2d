@@ -80,8 +80,8 @@ services:
       timeout: 5s
       retries: 40
     depends_on:
-      -  db:
-      -  localstack:
+      -  db
+      -  localstack
     volumes:
       - tmp-volume:/opt/ab2d
   worker:
@@ -124,9 +124,9 @@ services:
 #      - AWS_ACCESS_KEY_ID=null
 #      - AWS_SECRET_KEY=null
     depends_on:
-      -  db:
-      - contracts:
-      - localstack:
+      -  db
+      - contracts
+      - localstack
     volumes:
       - tmp-volume:/opt/ab2d
   contracts:
@@ -161,10 +161,10 @@ services:
     expose:
       - 8070
     depends_on:
-      -  db:
+      -  db
       # API must come up before contracts to create db schema
-      -  api:
-      -  localstack:
+      -  api
+      -  localstack
     volumes:
       - tmp-volume:/opt/ab2d
 # This needs a shared volume so that both the API and worker module can access the ndjson files being generated
