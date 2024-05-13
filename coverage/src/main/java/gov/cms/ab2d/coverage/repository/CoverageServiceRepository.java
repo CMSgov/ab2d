@@ -604,15 +604,15 @@ public class CoverageServiceRepository {
         if (pageCursor.isPresent()) {
             String queryWithCursor = (isOptOutOn) ? SELECT_OPTOUT_COVERAGE_WITH_CURSOR : SELECT_COVERAGE_WITH_CURSOR;
             log.error("SELECT_OPTOUT_COVERAGE_WITH_CURSOR   " + queryWithCursor);
-            log.error("SELECT_OPTOUT_COVERAGE_WITH_CURSOR PARAM  " + sqlParameterSource );
-            log.error("SELECT_OPTOUT_COVERAGE_WITH_CURSOR_VALUE  " + pageCursor );
+            log.error("SELECT_OPTOUT_COVERAGE_WITH_CURSOR PARAM  " + sqlParameterSource);
+            log.error("SELECT_OPTOUT_COVERAGE_WITH_CURSOR_VALUE  " + pageCursor);
             enrollment = template.query(queryWithCursor, sqlParameterSource,
                     CoverageServiceRepository::asMembership);
         } else {
             String queryWithoutCursor = (isOptOutOn) ? SELECT_OPTOUT_COVERAGE_WITHOUT_CURSOR : SELECT_COVERAGE_WITHOUT_CURSOR;
             log.error("SELECT_OPTOUT_COVERAGE_WITHOUT_CURSOR   " + queryWithoutCursor);
-            log.error("SELECT_OPTOUT_COVERAGE_WITHOUT_CURSOR PARAM  " + sqlParameterSource );
-            log.error("SELECT_OPTOUT_COVERAGE_WITHOUT_CURSOR_VALUE  " + pageCursor );
+            log.error("SELECT_OPTOUT_COVERAGE_WITHOUT_CURSOR PARAM  " + sqlParameterSource);
+            log.error("SELECT_OPTOUT_COVERAGE_WITHOUT_CURSOR_VALUE  " + pageCursor);
             enrollment = template.query(queryWithoutCursor, sqlParameterSource,
                     CoverageServiceRepository::asMembership);
         }
