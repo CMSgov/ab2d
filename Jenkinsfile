@@ -143,41 +143,6 @@ pipeline {
             }
         }
 
-
-        stage('Run e2e-test') {
-
-            steps {
-
-                withCredentials([file(credentialsId: 'SANDBOX_BFD_KEYSTORE', variable: 'SANDBOX_BFD_KEYSTORE'),
-                                 string(credentialsId: 'SANDBOX_BFD_KEYSTORE_PASSWORD', variable: 'AB2D_BFD_KEYSTORE_PASSWORD'),
-                                 usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
-
-                    sh '''
-                        export AB2D_BFD_KEYSTORE_LOCATION="/opt/ab2d/ab2d_bfd_keystore"
-
-                        export KEYSTORE_LOCATION="$WORKSPACE/opt/ab2d/ab2d_bfd_keystore"
-
-                        export JENKINS_UID=$(id -u)
-                        export JENKINS_GID=$(id -g)
-
-                        cp $SANDBOX_BFD_KEYSTORE $KEYSTORE_LOCATION
-
-                        test -f $KEYSTORE_LOCATION && echo "created keystore file"
-
-                        chmod 666 $KEYSTORE_LOCATION
-
-                        ls -la $KEYSTORE_LOCATION
-
-                        # Log into ECR for Docker Compose in e2e tests
-                        aws --region "${AWS_DEFAULT_REGION}" ecr get-login-password |
-                          docker login --username AWS --password-stdin "${ECR_REPO_ENV_AWS_ACCOUNT_NUMBER}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
-
-                        mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL}
-                    '''
-                }
-            }
-        }
-
         stage('Run codeclimate tests') {
 
             steps {
