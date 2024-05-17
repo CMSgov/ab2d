@@ -33,6 +33,8 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
     // Not empty condition on the lock
     private final Condition notEmpty = lock.newCondition();
 
+    private static final String OPERATION_NOT_NEEDED_STRING = "Not Needed";
+
     public static final ThreadLocal<String> CATEGORY_HOLDER = new ThreadLocal<>();
 
     // New code to add items
@@ -103,12 +105,12 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
 
     @Override
     public int drainTo(Collection<? super E> c, int maxElements) {
-        throw new UnsupportedOperationException("Not needed");
+        throw new UnsupportedOperationException(OPERATION_NOT_NEEDED_STRING);
     }
 
     @Override
     public Iterator<E> iterator() {
-        throw new UnsupportedOperationException("Not needed");
+        throw new UnsupportedOperationException(OPERATION_NOT_NEEDED_STRING);
     }
 
     @Override
@@ -131,7 +133,7 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
 
     @Override
     public boolean offer(E e, long timeout, TimeUnit unit) {
-        throw new UnsupportedOperationException("Not needed");
+        throw new UnsupportedOperationException(OPERATION_NOT_NEEDED_STRING);
     }
 
     @Override
@@ -200,22 +202,22 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
 
     @Override
     public boolean containsAll(Collection<?> c) {
-        throw new UnsupportedOperationException("Not needed");
+        throw new UnsupportedOperationException(OPERATION_NOT_NEEDED_STRING);
     }
 
     @Override
     public boolean addAll(Collection<? extends E> c) {
-        throw new UnsupportedOperationException("Not needed");
+        throw new UnsupportedOperationException(OPERATION_NOT_NEEDED_STRING);
     }
 
     @Override
     public boolean removeAll(Collection<?> c) {
-        throw new UnsupportedOperationException("Not needed");
+        throw new UnsupportedOperationException(OPERATION_NOT_NEEDED_STRING);
     }
 
     @Override
     public boolean retainAll(Collection<?> c) {
-        throw new UnsupportedOperationException("Not needed");
+        throw new UnsupportedOperationException(OPERATION_NOT_NEEDED_STRING);
     }
 
     @Override
@@ -262,12 +264,12 @@ public class RoundRobinBlockingQueue<E> implements BlockingQueue<E> {
 
     @Override
     public Object[] toArray() {
-        throw new UnsupportedOperationException("Not needed");
+        throw new UnsupportedOperationException(OPERATION_NOT_NEEDED_STRING);
     }
 
     @Override
     public <T> T[] toArray(T[] a) {
-        throw new UnsupportedOperationException("Not needed");
+        throw new UnsupportedOperationException(OPERATION_NOT_NEEDED_STRING);
     }
 
     @Override
