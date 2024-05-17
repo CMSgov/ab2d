@@ -15,6 +15,14 @@
         <springfox.version>3.0.0</springfox.version>
         <okta-jwt.version>0.5.7</okta-jwt.version>
         <sonar.coverage.exclusions>**/JobClient.java</sonar.coverage.exclusions>
+        <!-- 
+            - AB2D-6099 -
+            Ignoring capability statement stu3 because sonarqube marks code as duplicate
+            but actually we are using different imported classes. It may be possible to
+            use a wrapper and generics to solve this issue, but it is a significant amount of
+            work beyond the scope of this ticket.
+        -->
+        <sonar.cpd.exclusions>**/CapabilityStatementSTU3.java</sonar.cpd.exclusions>
     </properties>
 
     <dependencies>
@@ -167,7 +175,7 @@
                             <includeGroupIds>com.newrelic.agent.java</includeGroupIds>
                             <includeArtifactIds>newrelic-java</includeArtifactIds>
                             <!-- you can optionally exclude files -->
-                            <!-- <excludes>**/newrelic.yml</excludes> -->
+                            <!-- for example: <excludes>**/newrelic.yml</excludes> -->
                             <overWriteReleases>false</overWriteReleases>
                             <overWriteSnapshots>false</overWriteSnapshots>
                             <overWriteIfNewer>true</overWriteIfNewer>

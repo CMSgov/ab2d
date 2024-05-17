@@ -200,6 +200,10 @@ class CoverageServiceImplTest {
     void getOrCreateInsertsNew() {
         CoveragePeriod period = coverageService.getCreateIfAbsentCoveragePeriod(contract1, 12, 2020);
         coveragePeriodRepo.delete(period);
+
+        assertThrows(EntityNotFoundException.class,
+            () -> coverageService.getCoveragePeriod(contract1, 12, 2020)
+        );
     }
 
     @DisplayName("Coverage search status works")

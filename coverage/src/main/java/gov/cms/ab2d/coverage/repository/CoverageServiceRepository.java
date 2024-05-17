@@ -54,6 +54,9 @@ import static java.util.stream.Collectors.toList;
 @Slf4j
 @Repository
 public class CoverageServiceRepository {
+    private static final String CONTRACT_STRING = "contract";
+    private static final String YEARS_STRING = "years";
+
     private static final int BATCH_INSERT_SIZE = 10000;
 
     // List of years from 2020 to current year
@@ -243,8 +246,8 @@ public class CoverageServiceRepository {
 
         SqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("id", searchEvent.getId())
-                .addValue("contract", searchEvent.getCoveragePeriod().getContractNumber())
-                .addValue("years", YEARS);
+                .addValue(CONTRACT_STRING, searchEvent.getCoveragePeriod().getContractNumber())
+                .addValue(YEARS_STRING, YEARS);
 
         NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
 
@@ -280,8 +283,8 @@ public class CoverageServiceRepository {
         SqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("search1", searchEvent1.getId())
                 .addValue("search2", searchEvent2.getId())
-                .addValue("contract", searchEvent1.getCoveragePeriod().getContractNumber())
-                .addValue("years", YEARS);
+                .addValue(CONTRACT_STRING, searchEvent1.getCoveragePeriod().getContractNumber())
+                .addValue(YEARS_STRING, YEARS);
 
         NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
 
@@ -302,8 +305,8 @@ public class CoverageServiceRepository {
 
         SqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("ids", coveragePeriodIds)
-                .addValue("contract", contractNum)
-                .addValue("years", YEARS);
+                .addValue(CONTRACT_STRING, contractNum)
+                .addValue(YEARS_STRING, YEARS);
 
         NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
         //If OptOut is enabled, count beneficiaries who agreed to share their data
@@ -329,7 +332,7 @@ public class CoverageServiceRepository {
         List<String> contractNumbers = contracts.stream().map(ContractForCoverageDTO::getContractNumber).collect(toList());
         SqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("contracts", contractNumbers)
-                .addValue("years", YEARS);
+                .addValue(YEARS_STRING, YEARS);
 
         NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
 
@@ -442,8 +445,8 @@ public class CoverageServiceRepository {
         if (searchEvent.isPresent()) {
             MapSqlParameterSource parameterSource = new MapSqlParameterSource()
                     .addValue("searchEvent", searchEvent.get().getId())
-                    .addValue("contract", period.getContractNumber())
-                    .addValue("years", YEARS);
+                    .addValue(CONTRACT_STRING, period.getContractNumber())
+                    .addValue(YEARS_STRING, YEARS);
 
             NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
             template.update(DELETE_SEARCH, parameterSource);
@@ -475,8 +478,8 @@ public class CoverageServiceRepository {
 
             MapSqlParameterSource sqlParameterSource = new MapSqlParameterSource()
                     .addValue("searchEvents", inProgressEvents)
-                    .addValue("contract", period.getContractNumber())
-                    .addValue("years", YEARS);
+                    .addValue(CONTRACT_STRING, period.getContractNumber())
+                    .addValue(YEARS_STRING, YEARS);
 
             NamedParameterJdbcTemplate template = new NamedParameterJdbcTemplate(dataSource);
             template.update(DELETE_PREVIOUS_SEARCHES, sqlParameterSource);
@@ -590,11 +593,11 @@ public class CoverageServiceRepository {
         Optional<Long> pageCursor = page.getCursor();
 
         MapSqlParameterSource sqlParameterSource = new MapSqlParameterSource()
-                .addValue("contract", page.getContractNumber())
-                .addValue("years", YEARS)
+                .addValue(CONTRACT_STRING, page.getContractNumber())
+                .addValue(YEARS_STRING, YEARS)
                 .addValue("limit", limit);
 
-        pageCursor.ifPresent((cursor) -> sqlParameterSource.addValue("cursor", cursor));
+        pageCursor.ifPresent(cursor -> sqlParameterSource.addValue("cursor", cursor));
 
         boolean isOptOutOn = propertiesService.isToggleOn("OptOutOn", false);
         // Grab the enrollment

@@ -1,6 +1,7 @@
 package gov.cms.ab2d.common.config;
 
 import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.layout.TTLLLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -32,7 +33,7 @@ public class LoggingConfig {
         if (jsonLogging != null && jsonLogging.equals("false")) {
             // First remove the old loggers, including access logs
             LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-            ch.qos.logback.classic.Logger rootLogger = loggerContext.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+            Logger rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
             rootLogger.detachAppender("jsonConsoleAppender");
             rootLogger.detachAppender("logstash-access");
 
