@@ -33,7 +33,7 @@ public class LoggingConfig {
         if (jsonLogging != null && jsonLogging.equals("false")) {
             // First remove the old loggers, including access logs
             LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-            ch.qos.logback.classic.Logger rootLogger = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
+            Logger rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
             rootLogger.detachAppender("jsonConsoleAppender");
             rootLogger.detachAppender("logstash-access");
 
