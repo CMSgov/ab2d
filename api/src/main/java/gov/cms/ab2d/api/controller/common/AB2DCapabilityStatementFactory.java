@@ -11,27 +11,27 @@ import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
 
 
 public class AB2DCapabilityStatementFactory {
-    static final String oauthString = "OAuth";
+    private static final String OAUTH_STRING = "OAuth";
 
-    static SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
-    static SimpleDateFormat sdfLess = new SimpleDateFormat("MM/dd/yyyy HH:mm");
+    private static SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+    private static SimpleDateFormat sdfLess = new SimpleDateFormat("MM/dd/yyyy HH:mm");
 
     public static org.hl7.fhir.r4.model.CapabilityStatement generateR4CapabilityStatement(String server) {
         // R4
-        org.hl7.fhir.r4.model.CodeType codeType = new org.hl7.fhir.r4.model.CodeType();        
-        org.hl7.fhir.r4.model.CodeType codeType2 = new org.hl7.fhir.r4.model.CodeType();        
+        org.hl7.fhir.r4.model.CodeType codeType = new org.hl7.fhir.r4.model.CodeType();
+        org.hl7.fhir.r4.model.CodeType codeType2 = new org.hl7.fhir.r4.model.CodeType();
         org.hl7.fhir.r4.model.Coding coding = new org.hl7.fhir.r4.model.Coding();
         org.hl7.fhir.r4.model.CodeableConcept codeableConcept = new org.hl7.fhir.r4.model.CodeableConcept();
 
         org.hl7.fhir.r4.model.CapabilityStatement.CapabilityStatementSoftwareComponent cssc = new org.hl7.fhir.r4.model.CapabilityStatement.CapabilityStatementSoftwareComponent();
-        org.hl7.fhir.r4.model.CapabilityStatement.CapabilityStatementImplementationComponent implementation = new org.hl7.fhir.r4.model.CapabilityStatement.CapabilityStatementImplementationComponent();        
+        org.hl7.fhir.r4.model.CapabilityStatement.CapabilityStatementImplementationComponent implementation = new org.hl7.fhir.r4.model.CapabilityStatement.CapabilityStatementImplementationComponent();
         org.hl7.fhir.r4.model.CapabilityStatement.CapabilityStatementRestSecurityComponent security = new org.hl7.fhir.r4.model.CapabilityStatement.CapabilityStatementRestSecurityComponent();
         org.hl7.fhir.r4.model.CapabilityStatement.CapabilityStatementRestComponent rest = new org.hl7.fhir.r4.model.CapabilityStatement.CapabilityStatementRestComponent();
         org.hl7.fhir.r4.model.CapabilityStatement cs = new org.hl7.fhir.r4.model.CapabilityStatement();
         List<org.hl7.fhir.r4.model.CapabilityStatement.CapabilityStatementRestResourceOperationComponent> restComponents = new ArrayList<>();
 
         String releaseDateSource = "05/01/2020 00:00:00";
-        
+
         cs.setStatus(org.hl7.fhir.r4.model.Enumerations.PublicationStatus.DRAFT);
         cs.setFhirVersion(org.hl7.fhir.r4.model.Enumerations.FHIRVersion._4_0_0);
         cs.setPurpose("Defines FHIR R4 (V2) version of AB2D bulk data download");
@@ -40,7 +40,7 @@ public class AB2DCapabilityStatementFactory {
         cssc.setName("AB2D");
         cssc.setVersion("V2");
         implementation.setDescription("AB2D FHIR R4 Bulk Data Download Implementation");
-        
+
         restComponents.add(createR4Operation("export", server + "/Patient/$export"));
         restComponents.add(createR4Operation("export by contract", server + "/Group/{contractNumber}/$export"));
         restComponents.add(createR4Operation("cancel", server + "/Job/{jobUuid}/$status"));
@@ -57,7 +57,7 @@ public class AB2DCapabilityStatementFactory {
         } catch (Exception ex) {
             cs.setDate(new Date());
         }
-        
+
         // Duplicate Code
         implementation.setUrl(server);
         security.setCors(true);
@@ -68,11 +68,11 @@ public class AB2DCapabilityStatementFactory {
         codeType2.setValue("application/fhir+json");
 
         coding.setSystem("http://hl7.org/fhir/ValueSet/restful-security-service");
-        coding.setCode(oauthString);
-        coding.setDisplay(oauthString);
+        coding.setCode(OAUTH_STRING);
+        coding.setDisplay(OAUTH_STRING);
 
         codeableConcept.setCoding(List.of(coding));
-        codeableConcept.setText(oauthString);
+        codeableConcept.setText(OAUTH_STRING);
 
         try {
             Date releaseDate = sdf.parse(releaseDateSource);
@@ -93,20 +93,20 @@ public class AB2DCapabilityStatementFactory {
     }
 
     public static org.hl7.fhir.dstu3.model.CapabilityStatement generateSTU3CapabilityStatement(String server) {
-        org.hl7.fhir.dstu3.model.CodeType codeType = new org.hl7.fhir.dstu3.model.CodeType();        
-        org.hl7.fhir.dstu3.model.CodeType codeType2 = new org.hl7.fhir.dstu3.model.CodeType();        
+        org.hl7.fhir.dstu3.model.CodeType codeType = new org.hl7.fhir.dstu3.model.CodeType();
+        org.hl7.fhir.dstu3.model.CodeType codeType2 = new org.hl7.fhir.dstu3.model.CodeType();
         org.hl7.fhir.dstu3.model.Coding coding = new org.hl7.fhir.dstu3.model.Coding();
         org.hl7.fhir.dstu3.model.CodeableConcept codeableConcept = new org.hl7.fhir.dstu3.model.CodeableConcept();
 
         org.hl7.fhir.dstu3.model.CapabilityStatement.CapabilityStatementSoftwareComponent cssc = new org.hl7.fhir.dstu3.model.CapabilityStatement.CapabilityStatementSoftwareComponent();
-        org.hl7.fhir.dstu3.model.CapabilityStatement.CapabilityStatementImplementationComponent implementation = new org.hl7.fhir.dstu3.model.CapabilityStatement.CapabilityStatementImplementationComponent();        
+        org.hl7.fhir.dstu3.model.CapabilityStatement.CapabilityStatementImplementationComponent implementation = new org.hl7.fhir.dstu3.model.CapabilityStatement.CapabilityStatementImplementationComponent();
         org.hl7.fhir.dstu3.model.CapabilityStatement.CapabilityStatementRestSecurityComponent security = new org.hl7.fhir.dstu3.model.CapabilityStatement.CapabilityStatementRestSecurityComponent();
         org.hl7.fhir.dstu3.model.CapabilityStatement.CapabilityStatementRestComponent rest = new org.hl7.fhir.dstu3.model.CapabilityStatement.CapabilityStatementRestComponent();
         org.hl7.fhir.dstu3.model.CapabilityStatement cs = new org.hl7.fhir.dstu3.model.CapabilityStatement();
         List<org.hl7.fhir.dstu3.model.CapabilityStatement.CapabilityStatementRestOperationComponent> restComponents = new ArrayList<>();
 
         String releaseDateSource = "08/27/2020 00:00:00";
-        
+
         cs.setStatus(org.hl7.fhir.dstu3.model.Enumerations.PublicationStatus.ACTIVE);
         cs.setAcceptUnknown(org.hl7.fhir.dstu3.model.CapabilityStatement.UnknownContentCode.EXTENSIONS);
         cs.setKind(org.hl7.fhir.dstu3.model.CapabilityStatement.CapabilityStatementKind.REQUIREMENTS);
@@ -142,11 +142,11 @@ public class AB2DCapabilityStatementFactory {
         codeType2.setValue("application/fhir+json");
 
         coding.setSystem("http://hl7.org/fhir/ValueSet/restful-security-service");
-        coding.setCode(oauthString);
-        coding.setDisplay(oauthString);
+        coding.setCode(OAUTH_STRING);
+        coding.setDisplay(OAUTH_STRING);
 
         codeableConcept.setCoding(List.of(coding));
-        codeableConcept.setText(oauthString);
+        codeableConcept.setText(OAUTH_STRING);
 
         try {
             Date releaseDate = sdf.parse(releaseDateSource);
@@ -166,7 +166,7 @@ public class AB2DCapabilityStatementFactory {
         return cs;
 
     }
-    
+
     private static org.hl7.fhir.r4.model.CapabilityStatement.CapabilityStatementRestResourceOperationComponent createR4Operation(String name, String path) {
         org.hl7.fhir.r4.model.CapabilityStatement.CapabilityStatementRestResourceOperationComponent operation = new org.hl7.fhir.r4.model.CapabilityStatement.CapabilityStatementRestResourceOperationComponent();
         operation.setName(name);
