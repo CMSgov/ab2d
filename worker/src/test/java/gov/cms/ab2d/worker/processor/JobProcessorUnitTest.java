@@ -33,6 +33,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 
 import static java.lang.Boolean.TRUE;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -259,8 +260,7 @@ class JobProcessorUnitTest {
     @Test
     @DisplayName("Send Measure to missing listener.")
     void sendMeasureToMissingListener() {
-        // As long as no exceptions are thrown, this test passes
-        jobChannelService.sendUpdate("silly-not-a-real-guid", JobMeasure.EOBS_WRITTEN, -1);
+        assertDoesNotThrow(() -> jobChannelService.sendUpdate("silly-not-a-real-guid", JobMeasure.EOBS_WRITTEN, -1));
     }
 
     @Test
