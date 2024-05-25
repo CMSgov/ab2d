@@ -119,7 +119,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'artifactoryuserpass', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
-                    git branch: 'master', credentialsId: 'GITHUB_AB2D_JENKINS_PAT', url: env.GIT_URL
+                    git branch: 'main', credentialsId: 'GITHUB_AB2D_JENKINS_PAT', url: env.GIT_URL
                     git branch: env.BRANCH_NAME, credentialsId: 'GITHUB_AB2D_JENKINS_PAT', url: env.GIT_URL
                     // Automatically saves the an id for the SonarQube build
                     withSonarQubeEnv('CMSSonar') {
