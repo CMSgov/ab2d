@@ -1,6 +1,7 @@
 name: end-to-end tests
 
 on:
+  pull_request:
   workflow_call:
   workflow_dispatch: # Allow manual trigger
 
