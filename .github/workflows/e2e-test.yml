@@ -1,0 +1,81 @@
+name: end-to-end tests
+
+on:
+  workflow_call:
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  test:
+    runs-on: self-hosted
+
+    env:
+      E2E_ENVIRONMENT: 'IMPL'
+      AB2D_V2_ENABLED: 'true'
+      AWS_DEFAULT_REGION: "us-east-1"
+      WORKSPACE: ${{ github.workspace }}
+      AB2D_BFD_KEYSTORE_LOCATION: "${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Assume role in AB2D impl account
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ vars.AB2D_DEV_ROLE }}
+
+      - name: Download bfd keystore
+        run: |
+          aws s3 cp s3://bcda-opensbx-access-logs/ab2d_sbx_keystore /tmp/ab2d_sbx_keystore
+
+      - name: Set env vars from AWS params
+        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |
+            AB2D_BFD_KEYSTORE_PASSWORD=/bfd/password
+
+      - name: Set env vars from AWS params
+        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        with:
+          params: |
+            OKTA_CLIENT_ID=/okta/client-id
+            OKTA_CLIENT_PASSWORD=/okta/client-secret
+            SECONDARY_USER_OKTA_CLIENT_ID=/secondary-okta/client-id
+            SECONDARY_USER_OKTA_CLIENT_PASSWORD=/secondary-okta/client-secret
+
+      - name: Install Maven 3.2.5
+        run: |
+          wget https://archive.apache.org/dist/maven/maven-3/3.2.5/binaries/apache-maven-3.2.5-bin.tar.gz
+          tar xzvf apache-maven-3.2.5-bin.tar.gz
+          sudo mv apache-maven-3.2.5 /opt/maven
+          echo "PATH=$PATH:/opt/maven/bin" >> $GITHUB_ENV
+
+      - name: Set Maven path
+        run: echo "PATH=$PATH:/opt/maven/bin" >> $GITHUB_ENV
+
+      - name: Create ab2d workspace directory and copy in keystore
+        run: mkdir -p "$WORKSPACE/opt/ab2d"
+
+      - name: Set directory permissions
+        run: |
+          sudo chmod -R 777 /opt/actions-runner/_work/ab2d/ab2d/common/
+          # Add other commands if necessary
+
+      - name: Run e2e-bfd-test
+        run: |
+          cp /tmp/ab2d_sbx_keystore ${{ env.AB2D_BFD_KEYSTORE_LOCATION }}
+          test -f ${{ env.AB2D_BFD_KEYSTORE_LOCATION }} && echo "created keystore file"
+          chmod 666 ${{ env.AB2D_BFD_KEYSTORE_LOCATION }}
+          mvn test -s settings.xml -pl e2e-bfd-test -am -Dtest=EndToEndBfdTests -DfailIfNoTests=false -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL}
+
+      - name: Run e2e-test
+        run: |
+          export KEYSTORE_LOCATION="${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
+          cp /tmp/ab2d_sbx_keystore ${{ env.KEYSTORE_LOCATION }}
+          test -f ${{ env.KEYSTORE_LOCATION }} && echo "created keystore file"
+          chmod 666 ${{ env.KEYSTORE_LOCATION }}
+          aws --region "${{ env.AWS_DEFAULT_REGION }}" ecr get-login-password | docker login --username AWS --password-stdin "${{ env.ECR_REPO_ENV_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ env.AWS_DEFAULT_REGION }}.amazonaws.com"
+          mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dusername=${{ secrets.ARTIFACTORY_USER }} -Dpassword=${{ secrets.ARTIFACTORY_PASSWORD }} -Drepository_url=${{ secrets.ARTIFACTORY_URL }}
