@@ -1,7 +1,6 @@
-alter table job add column until TIMESTAMP WITH TIME ZONE;
+ALTER TABLE job ADD COLUMN IF NOT EXISTS until TIMESTAMP WITH TIME ZONE;
 
-CREATE
-OR REPLACE VIEW job_view AS
+ALTER VIEW IF EXISTS job_view AS
 SELECT j.id,
        j.job_uuid,
        j.created_at,
