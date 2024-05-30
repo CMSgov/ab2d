@@ -1,6 +1,10 @@
+DROP VIEW job_view;
+
 ALTER TABLE job ADD COLUMN IF NOT EXISTS until TIMESTAMP WITH TIME ZONE;
 
-ALTER VIEW IF EXISTS job_view AS
+-- Recreate the view
+CREATE
+    OR REPLACE VIEW job_view AS
 SELECT j.id,
        j.job_uuid,
        j.created_at,
