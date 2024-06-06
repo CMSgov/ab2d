@@ -34,7 +34,7 @@
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
         <logback-encoder.version>7.3</logback-encoder.version>
         <testcontainers.version>1.18.3</testcontainers.version>
-        <newrelic.version>8.4.0</newrelic.version>
+        <newrelic.version>8.11.1</newrelic.version>
         <postgres.version>42.6.0</postgres.version>
         <spring-cloud-aws.version>2.4.4</spring-cloud-aws.version>
 
