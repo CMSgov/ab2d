@@ -30,11 +30,11 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: ${{ vars.AB2D_DEV_ROLE }}
+          role-to-assume: arn:aws:iam::${{ secrets.IMPL_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-test-github-actions
 
       - name: Download bfd keystore
         run: |
-          aws s3 cp s3://bcda-opensbx-access-logs/ab2d_sbx_keystore /tmp/ab2d_sbx_keystore
+          aws s3 cp s3://ab2d-east-impl-main/ab2d_imp_keystore /tmp/ab2d_imp_keystore
 
       - name: Set env vars from AWS params
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
