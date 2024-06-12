@@ -30,8 +30,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-
-import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
 import static gov.cms.ab2d.api.controller.common.ApiText.ASYNC;
 import static gov.cms.ab2d.api.controller.common.ApiText.BULK_RESPONSE;
 import static gov.cms.ab2d.api.controller.common.ApiText.BULK_RESPONSE_LONG;
@@ -51,6 +49,7 @@ import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_OUTPUT_FORMAT;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_PREFER;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
+import static gov.cms.ab2d.common.util.Constants.FHIR_JSON_CONTENT_TYPE;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.FHIR_NDJSON_CONTENT_TYPE;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
@@ -66,7 +65,7 @@ import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 @Tag(description = SwaggerConstants.BULK_MAIN, name = "Export")
 @RestController
 @ConditionalOnExpression("${v2.controller.enabled:true}")
-@RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {APPLICATION_JSON})
+@RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {FHIR_JSON_CONTENT_TYPE})
 public class BulkDataAccessAPIV2 {
     private final JobClient jobClient;
     private final ApiCommon apiCommon;
@@ -97,7 +96,7 @@ public class BulkDataAccessAPIV2 {
             ),
             @ApiResponse(responseCode = "429", description = MAX_JOBS, headers =
                 @Header(name = CONTENT_LOCATION, description = RUNNING_JOBIDS, schema = @Schema(type = "string")),
-                content = @Content(schema = @Schema(ref = "#/components/schemas/OperationOutcome"))
+                content = @Content(mediaType = FHIR_JSON_CONTENT_TYPE, schema = @Schema(ref = "#/components/schemas/OperationOutcome"))
             )
         }
     )
@@ -144,7 +143,7 @@ public class BulkDataAccessAPIV2 {
             ),
             @ApiResponse(responseCode = "429", description = MAX_JOBS, headers =
                 @Header(name = CONTENT_LOCATION, description = RUNNING_JOBIDS, schema = @Schema(type = "string")),
-                content = @Content(schema = @Schema(ref = "#/components/schemas/OperationOutcome"))
+                content = @Content(mediaType = FHIR_JSON_CONTENT_TYPE, schema = @Schema(ref = "#/components/schemas/OperationOutcome"))
             )
         }
     )
