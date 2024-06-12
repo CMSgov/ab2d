@@ -42,6 +42,7 @@ import static gov.cms.ab2d.api.controller.common.ApiText.X_PROG;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_CANCEL;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
+import static gov.cms.ab2d.common.util.Constants.FHIR_JSON_CONTENT_TYPE;
 import static org.springframework.http.HttpHeaders.EXPIRES;
 import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 
@@ -74,7 +75,7 @@ public class StatusAPIV2 {
             )
         }
     )
-    @GetMapping(value = "/Job/{jobUuid}/$status", produces = APPLICATION_JSON)
+    @GetMapping(value = "/Job/{jobUuid}/$status", produces = { APPLICATION_JSON, FHIR_JSON_CONTENT_TYPE })
     @ResponseStatus(value = HttpStatus.OK)
     public ResponseEntity<JobCompletedResponse> getJobStatus(HttpServletRequest request,
             @PathVariable @NotBlank String jobUuid) {
