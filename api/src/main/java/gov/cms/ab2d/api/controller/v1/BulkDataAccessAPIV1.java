@@ -51,7 +51,7 @@ import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_PREFER;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
+import static gov.cms.ab2d.common.util.Constants.FHIR_NDJSON_CONTENT_TYPE;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
@@ -82,7 +82,7 @@ public class BulkDataAccessAPIV1 {
             @Parameter(name = OUT_FORMAT, description = BULK_OUTPUT_FORMAT, in = ParameterIn.QUERY,
                 schema = @Schema(allowableValues = {
                     "application/fhir+ndjson", "application/ndjson", "ndjson"
-                }, defaultValue = NDJSON_FIRE_CONTENT_TYPE)
+                }, defaultValue = FHIR_NDJSON_CONTENT_TYPE)
             ),
             @Parameter(name = SINCE, description = BULK_SINCE, schema = @Schema(type = "date-time", description = SINCE_EARLIEST_DATE))
 
@@ -104,7 +104,7 @@ public class BulkDataAccessAPIV1 {
             HttpServletRequest request,
             @RequestParam(name = TYPE_PARAM, required = false, defaultValue = EOB)
                 String resourceTypes,
-            @RequestParam(name = OUT_FORMAT, required = false, defaultValue = NDJSON_FIRE_CONTENT_TYPE)
+            @RequestParam(name = OUT_FORMAT, required = false, defaultValue = FHIR_NDJSON_CONTENT_TYPE)
                 String outputFormat,
             @RequestParam(required = false, name = SINCE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
                 OffsetDateTime since) {
@@ -126,7 +126,7 @@ public class BulkDataAccessAPIV1 {
             @Parameter(name = OUT_FORMAT, description = BULK_OUTPUT_FORMAT, in = ParameterIn.QUERY,
                 schema = @Schema(allowableValues = {
                     "application/fhir+ndjson", "application/ndjson", "ndjson"
-                }, defaultValue = NDJSON_FIRE_CONTENT_TYPE)
+                }, defaultValue = FHIR_NDJSON_CONTENT_TYPE)
             ),
             @Parameter(name = SINCE, description = BULK_SINCE, example = SINCE_EARLIEST_DATE, schema = @Schema(type = "date-time"))
         }

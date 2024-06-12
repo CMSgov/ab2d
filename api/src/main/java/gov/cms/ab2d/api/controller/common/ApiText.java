@@ -1,7 +1,7 @@
 package gov.cms.ab2d.api.controller.common;
 
 import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
-import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
+import static gov.cms.ab2d.common.util.Constants.FHIR_NDJSON_CONTENT_TYPE;
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
 
 import lombok.experimental.UtilityClass;
@@ -25,6 +25,7 @@ public class ApiText {
     public static final String CAP_DESC = "A JSON FHIR capability statement matching ";
     public static final String CAP_REQ = "Request the FHIR capability statement detailing what operations this API supports ";
     public static final String APPLICATION_JSON = "application/json";
+    public static 
     public static final String DOWNLOAD_DESC = "Downloads a file produced by an export job.";
     public static final String CONTENT_TYPE_DESC = "Header which must match the file format being delivered: ";
     public static final String BULK_DNLD_DSC = "After creating a job, the API to download the generated bulk download files";
@@ -33,7 +34,7 @@ public class ApiText {
     public static final String STATUS_DES = "Returns a status of an export job.";
     public static final String JOB_ID = "A job identifier";
     public static final String FILE_NAME = "A file name";
-    public static final String DNLD_DESC = "Returns the requested file as " + NDJSON_FIRE_CONTENT_TYPE;
+    public static final String DNLD_DESC = "Returns the requested file as " + FHIR_NDJSON_CONTENT_TYPE;
     public static final String JOB_NOT_FOUND = "Job not found. " + GENERIC_FHIR_ERR_MSG;
     public static final String JOB_CANCELLED_MSG = "Job canceled";
     public static final String CAP_STMT = "FHIR capability statement";

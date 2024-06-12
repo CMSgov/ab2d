@@ -55,7 +55,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 
-import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
+import static gov.cms.ab2d.common.util.Constants.FHIR_NDJSON_CONTENT_TYPE;
 import static gov.cms.ab2d.common.util.Constants.OPERATION_OUTCOME;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
@@ -148,7 +148,7 @@ class JobServiceTest extends JobCleanup {
     }
 
     private StartJobDTO buildStartJobContract(String contractNumber) {
-        return buildStartJob(contractNumber, EOB, NDJSON_FIRE_CONTENT_TYPE);
+        return buildStartJob(contractNumber, EOB, FHIR_NDJSON_CONTENT_TYPE);
     }
 
     private StartJobDTO buildStartJobOutputFormat(String outputFormat) {
@@ -157,7 +157,7 @@ class JobServiceTest extends JobCleanup {
 
     private StartJobDTO buildStartJobResourceTypes(String resourceTypes) {
         return buildStartJob(contractService.getContractByContractId(pdpClientService.getCurrentClient().getContractId()).getContractNumber(),
-                resourceTypes, NDJSON_FIRE_CONTENT_TYPE);
+                resourceTypes, FHIR_NDJSON_CONTENT_TYPE);
     }
 
     private StartJobDTO buildStartJob(String contractNumber, String resourceTypes, String outputFormat) {
@@ -167,12 +167,12 @@ class JobServiceTest extends JobCleanup {
 
     @Test
     void createJob() {
-        Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
+        Job job = createJobAllContracts(FHIR_NDJSON_CONTENT_TYPE);
         assertNotNull(job);
         assertNotNull(job.getId());
         assertNotNull(job.getJobUuid());
         assertNotNull(job.getOutputFormat());
-        assertEquals(NDJSON_FIRE_CONTENT_TYPE, job.getOutputFormat());
+        assertEquals(FHIR_NDJSON_CONTENT_TYPE, job.getOutputFormat());
         assertEquals(Integer.valueOf(0), job.getProgress());
         assertEquals(pdpClientRepository.findByClientId(CLIENTID).getOrganization(), job.getOrganization());
         assertEquals(EOB, job.getResourceTypes());
@@ -199,7 +199,7 @@ class JobServiceTest extends JobCleanup {
         assertNotNull(job.getId());
         assertNotNull(job.getJobUuid());
         assertNotNull(job.getOutputFormat());
-        assertEquals(NDJSON_FIRE_CONTENT_TYPE, job.getOutputFormat());
+        assertEquals(FHIR_NDJSON_CONTENT_TYPE, job.getOutputFormat());
         assertEquals(Integer.valueOf(0), job.getProgress());
         assertEquals(pdpClientRepository.findByClientId(CLIENTID).getOrganization(), job.getOrganization());
         assertEquals(EOB, job.getResourceTypes());
@@ -254,7 +254,7 @@ class JobServiceTest extends JobCleanup {
 
     @Test
     void cancelJob() {
-        Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
+        Job job = createJobAllContracts(FHIR_NDJSON_CONTENT_TYPE);
 
         jobService.cancelJob(job.getJobUuid(), pdpClientService.getCurrentClient().getOrganization());
 
@@ -272,7 +272,7 @@ class JobServiceTest extends JobCleanup {
 
     @Test
     void getJob() {
-        Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
+        Job job = createJobAllContracts(FHIR_NDJSON_CONTENT_TYPE);
 
         Job retrievedJob = jobService.getAuthorizedJobByJobUuid(job.getJobUuid(),
                 pdpClientService.getCurrentClient().getOrganization());
@@ -283,7 +283,7 @@ class JobServiceTest extends JobCleanup {
     @Test
     void getJobAdminRole() {
         // Job created by regular client
-        Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
+        Job job = createJobAllContracts(FHIR_NDJSON_CONTENT_TYPE);
 
         setupAdminClient();
 
@@ -298,7 +298,7 @@ class JobServiceTest extends JobCleanup {
         setupAdminClient();
 
         // Job created by admin client
-        Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
+        Job job = createJobAllContracts(FHIR_NDJSON_CONTENT_TYPE);
 
         setupRegularClientSecurityContext();
 
@@ -337,7 +337,7 @@ class JobServiceTest extends JobCleanup {
 
     @Test
     void testJobInSuccessfulState() {
-        Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
+        Job job = createJobAllContracts(FHIR_NDJSON_CONTENT_TYPE);
 
         job.setStatus(SUCCESSFUL);
         jobRepository.saveAndFlush(job);
@@ -348,7 +348,7 @@ class JobServiceTest extends JobCleanup {
 
     @Test
     void testJobInCancelledState() {
-        Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
+        Job job = createJobAllContracts(FHIR_NDJSON_CONTENT_TYPE);
 
         job.setStatus(JobStatus.CANCELLED);
         jobRepository.saveAndFlush(job);
@@ -360,7 +360,7 @@ class JobServiceTest extends JobCleanup {
 
     @Test
     void testJobInFailedState() {
-        Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
+        Job job = createJobAllContracts(FHIR_NDJSON_CONTENT_TYPE);
 
         job.setStatus(FAILED);
         jobRepository.saveAndFlush(job);
@@ -372,7 +372,7 @@ class JobServiceTest extends JobCleanup {
 
     @Test
     void updateJob() {
-        Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
+        Job job = createJobAllContracts(FHIR_NDJSON_CONTENT_TYPE);
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime localDateTime = OffsetDateTime.now();
         job.setProgress(100);
@@ -406,7 +406,7 @@ class JobServiceTest extends JobCleanup {
         job.setJobOutputs(output);
 
         Job updatedJob = jobService.updateJob(job);
-        assertEquals(NDJSON_FIRE_CONTENT_TYPE, updatedJob.getOutputFormat());
+        assertEquals(FHIR_NDJSON_CONTENT_TYPE, updatedJob.getOutputFormat());
         assertEquals(Integer.valueOf(100), updatedJob.getProgress());
         assertEquals(now, updatedJob.getLastPollTime());
         assertEquals(JobStatus.IN_PROGRESS, updatedJob.getStatus());
@@ -498,7 +498,7 @@ class JobServiceTest extends JobCleanup {
     }
 
     private Job createJobForFileDownloads(String fileName, String errorFileName) {
-        Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
+        Job job = createJobAllContracts(FHIR_NDJSON_CONTENT_TYPE);
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime localDateTime = OffsetDateTime.now();
         job.setProgress(100);
@@ -599,16 +599,16 @@ class JobServiceTest extends JobCleanup {
 
     @Test
     void checkIfClientCanAddJobTrueTest() {
-        createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
+        createJobAllContracts(FHIR_NDJSON_CONTENT_TYPE);
 
         assertTrue(canRun());
     }
 
     @Test
     void checkIfClientCanAddJobPastLimitTest() {
-        createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
-        createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
-        createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
+        createJobAllContracts(FHIR_NDJSON_CONTENT_TYPE);
+        createJobAllContracts(FHIR_NDJSON_CONTENT_TYPE);
+        createJobAllContracts(FHIR_NDJSON_CONTENT_TYPE);
 
         assertFalse(canRun());
     }
@@ -630,7 +630,7 @@ class JobServiceTest extends JobCleanup {
 
     @Test
     void checkForExpirations() {
-        Job job = createJobAllContracts(NDJSON_FIRE_CONTENT_TYPE);
+        Job job = createJobAllContracts(FHIR_NDJSON_CONTENT_TYPE);
         job.setStatus(FAILED);
         jobRepository.save(job);
 

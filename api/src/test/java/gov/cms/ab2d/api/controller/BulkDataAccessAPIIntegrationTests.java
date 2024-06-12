@@ -61,7 +61,7 @@ import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.MAX_DOWNLOADS;
-import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
+import static gov.cms.ab2d.common.util.Constants.FHIR_NDJSON_CONTENT_TYPE;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_PDP_CLIENT;
 import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
@@ -313,7 +313,7 @@ class BulkDataAccessAPIIntegrationTests {
                         .header("Authorization", "Bearer " + token)
                         .header("Accept-Encoding", "gzip, deflate, br"))
                 .andExpect(status().is(200))
-                .andExpect(content().contentType(NDJSON_FIRE_CONTENT_TYPE))
+                .andExpect(content().contentType(FHIR_NDJSON_CONTENT_TYPE))
                 .andReturn();
     }
 
