@@ -30,8 +30,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-
-import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
 import static gov.cms.ab2d.api.controller.common.ApiText.ASYNC;
 import static gov.cms.ab2d.api.controller.common.ApiText.BULK_RESPONSE;
 import static gov.cms.ab2d.api.controller.common.ApiText.BULK_RESPONSE_LONG;
