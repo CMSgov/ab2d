@@ -64,7 +64,7 @@ import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 @Slf4j
 @Tag(name = "1. Export", description = BULK_MAIN)
 @RestController
-@RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX, consumes = FHIR_JSON_CONTENT_TYPE, produces = { APPLICATION_JSON, FHIR_JSON_CONTENT_TYPE })
+@RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX, produces = { FHIR_JSON_CONTENT_TYPE, APPLICATION_JSON })
 public class BulkDataAccessAPIV1 {
     private final JobClient jobClient;
     private final ApiCommon apiCommon;
