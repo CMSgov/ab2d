@@ -130,6 +130,14 @@ public class PatientClaimsCollector {
         return sinceTime.toInstant().toEpochMilli() < lastUpdated.getTime();
     }
 
+//    boolean beforeUntilDate(IBaseResource resource) {
+//        OffsetDateTime untilTime = claimsRequest.getUntilTime();
+//        if (untilTime == null) {
+//            return true;
+//        }
+//        Date lastUpdated = resource.getMeta().
+//    }
+
     /**
      * returns true if the patient is a valid member of a contract, false otherwise. If either value is empty,
      * it returns false
@@ -151,11 +159,12 @@ public class PatientClaimsCollector {
      * Create custom NewRelic event and log it
      * @param since since date used if in use
      */
-    public void logBundleEvent(OffsetDateTime since) {
+    public void logBundleEvent(OffsetDateTime since, OffsetDateTime until) {
         Map<String, Object> event = new HashMap<>();
         event.put("organization", claimsRequest.getOrganization());
         event.put("contract", claimsRequest.getContractNum());
         event.put("since", since);
+        event.put("until", until);
         event.put("jobid", claimsRequest.getJob());
         event.put("bundles", bundles);
         event.put("raweobs", rawEobs);

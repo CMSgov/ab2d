@@ -341,6 +341,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             var patientClaimsRequest = new PatientClaimsRequest(patient,
                     contractData.getContract().getAttestedOn(),
                     job.getSince(),
+                    job.getUntil(),
                     job.getOrganization(),
                     jobUuid,
                     job.getContractNumber(),
