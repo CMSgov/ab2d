@@ -73,7 +73,7 @@ public class StatusAPIV1 {
             )
         }
     )
-    @GetMapping(value = "/Job/{jobUuid}/$status", produces = { APPLICATION_JSON, FHIR_JSON_CONTENT_TYPE })
+    @GetMapping(value = "/Job/{jobUuid}/$status", produces = {APPLICATION_JSON, FHIR_JSON_CONTENT_TYPE})
     @ResponseStatus(value = HttpStatus.OK)
     public ResponseEntity<JobCompletedResponse> getJobStatus(HttpServletRequest request,
             @PathVariable @NotBlank String jobUuid) {
