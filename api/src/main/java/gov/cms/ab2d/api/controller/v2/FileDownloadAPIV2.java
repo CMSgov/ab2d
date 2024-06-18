@@ -65,7 +65,7 @@ public class FileDownloadAPIV2 {
      }
     )
     @ResponseStatus(value = HttpStatus.OK)
-    @GetMapping(value = "/Job/{jobUuid}/file/{filename}", produces = { FHIR_NDJSON_CONTENT_TYPE })
+    @GetMapping(value = "/Job/{jobUuid}/file/{filename}", produces = {FHIR_NDJSON_CONTENT_TYPE})
     public ResponseEntity downloadFile(HttpServletRequest request,
             HttpServletResponse response,
             @PathVariable @NotBlank String jobUuid,
