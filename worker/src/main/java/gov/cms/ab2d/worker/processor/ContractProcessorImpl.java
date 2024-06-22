@@ -253,8 +253,9 @@ public class ContractProcessorImpl implements ContractProcessor {
         ProgressTracker progressTracker = jobProgressService.getStatus(jobUuid);
         int totalQueued = progressTracker.getPatientRequestQueuedCount();
         int totalExpected = progressTracker.getPatientsExpected();
-
-        if (totalQueued != totalExpected) {
+        //AB2D-6157 Update mismatch job failure to pass in slack alerts
+        //Magic 35 is the biggest difference (April 2024) and alert threshold.
+        if ((totalQueued != totalExpected) && (Math.abs(totalQueued - totalExpected) > 35)) {
             throw new ContractProcessingException("expected " + totalExpected +
                     " patients from database but retrieved " + totalQueued);
         }
