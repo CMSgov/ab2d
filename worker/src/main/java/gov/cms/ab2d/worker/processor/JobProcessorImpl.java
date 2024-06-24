@@ -158,7 +158,7 @@ public class JobProcessorImpl implements JobProcessor {
             return;
         }
         //Custom fix for Centene
-        if(job.getContractNumber().equals("S4802"))
+        if (job.getContractNumber().equals("S4802"))
             return;
 
         // Number in database
