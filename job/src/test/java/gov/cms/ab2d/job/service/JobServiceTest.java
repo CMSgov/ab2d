@@ -162,7 +162,7 @@ class JobServiceTest extends JobCleanup {
 
     private StartJobDTO buildStartJob(String contractNumber, String resourceTypes, String outputFormat) {
         String organization = pdpClientService.getCurrentClient().getOrganization();
-        return new StartJobDTO(contractNumber, organization, resourceTypes, LOCAL_HOST, outputFormat, null, STU3);
+        return new StartJobDTO(contractNumber, organization, resourceTypes, LOCAL_HOST, outputFormat, null, null, STU3);
     }
 
     @Test

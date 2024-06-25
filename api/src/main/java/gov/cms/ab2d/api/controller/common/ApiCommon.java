@@ -157,7 +157,7 @@ public class ApiCommon {
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
         checkSinceTime(since);
         return new StartJobDTO(contractNumber, pdpClient.getOrganization(), resourceTypes,
-                getCurrentUrl(request), outputFormat, since, version);
+                getCurrentUrl(request), outputFormat, since,  version);
     }
 
     private String checkIfContractAttested(Contract contract, String contractNumber) {

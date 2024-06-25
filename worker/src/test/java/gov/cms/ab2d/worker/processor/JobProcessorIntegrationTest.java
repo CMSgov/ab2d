@@ -184,7 +184,7 @@ class JobProcessorIntegrationTest extends JobCleanup {
             copy.getPatient().setReference("Patient/" + args.getArgument(1));
             return EobTestDataUtil.createBundle(copy);
         });
-        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any(), anyString())).thenAnswer((args) -> {
+        when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any(), any(), anyString())).thenAnswer((args) -> {
             ExplanationOfBenefit copy = EOB.copy();
             copy.getPatient().setReference("Patient/" + args.getArgument(1));
             return EobTestDataUtil.createBundle(copy);
@@ -294,7 +294,7 @@ class JobProcessorIntegrationTest extends JobCleanup {
     @DisplayName("When bene has no eobs then do not count bene toward statistic")
     void when_beneHasNoEobs_notCounted() {
         reset(mockBfdClient);
-        OngoingStubbing<IBaseBundle> stubbing = when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any(), anyString()));
+        OngoingStubbing<IBaseBundle> stubbing = when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any(), any(), anyString()));
         stubbing = andThenAnswerEobs(stubbing, 0, 95);
         stubbing.thenReturn(BundleUtils.createBundle())
                 .thenReturn(BundleUtils.createBundle())
@@ -328,7 +328,7 @@ class JobProcessorIntegrationTest extends JobCleanup {
     @DisplayName("When the error count is below threshold, job does not fail")
     void when_errorCount_is_below_threshold_do_not_fail_job() {
         reset(mockBfdClient);
-        OngoingStubbing<IBaseBundle> stubbing = when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any(), anyString()));
+        OngoingStubbing<IBaseBundle> stubbing = when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any(), any(), anyString()));
         stubbing = andThenAnswerEobs(stubbing, 0, 95);
         stubbing.thenThrow(fail, fail, fail, fail, fail);
 
@@ -366,7 +366,7 @@ class JobProcessorIntegrationTest extends JobCleanup {
         when(mockCoverageDriver.numberOfBeneficiariesToProcess(any(Job.class), any(ContractDTO.class))).thenReturn(40);
         andThenAnswerPatients(mockCoverageDriver, contractForCoverageDTO, 10, 40);
 
-        OngoingStubbing<IBaseBundle> stubbing = when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any(), anyString()));
+        OngoingStubbing<IBaseBundle> stubbing = when(mockBfdClient.requestEOBFromServer(eq(STU3), anyLong(), any(), any(), anyString()));
         stubbing = andThenAnswerEobs(stubbing, 0, 20);
         stubbing = stubbing.thenThrow(fail, fail, fail, fail, fail, fail, fail, fail, fail, fail);
         andThenAnswerEobs(stubbing, 30, 10);
