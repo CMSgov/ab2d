@@ -137,6 +137,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         ContractDTO contract = contractWorkerClient.getContractByContractNumber(contractNumber);
         int numBenes = coverageDriver.numberOfBeneficiariesToProcess(job, contract);
         jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENTS_EXPECTED, numBenes);
+        log.error("jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENTS_EXPECTED, numBenes)  " + numBenes);
         log.info("Contract [{}] has [{}] Patients", contractNumber, numBenes);
 
         // Create the aggregator
@@ -238,7 +239,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             current = coverageDriver.pageCoverage(current.getNextRequest().get());
             loadRequestBatch(contractData, current, searchConfig.getNumberBenesPerBatch());
             jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUEST_QUEUED, current.size());
-
+            log.error("sendUpdate(jobUuid, JobMeasure.PATIENT_REQUEST_QUEUED, current.size()   " + current.size());
             processFinishedRequests(contractData);
         }
         if (contractData.getJob().hasJobBeenCancelled()) {
