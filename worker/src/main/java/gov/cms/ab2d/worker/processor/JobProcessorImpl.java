@@ -18,6 +18,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -157,9 +159,11 @@ public class JobProcessorImpl implements JobProcessor {
                     job.getJobUuid(), job.getContractNumber());
             return;
         }
-        //Custom fix for Centene
-        if (job.getContractNumber().equals("S4802"))
+        //Custom fix for Centene and Humana
+        List<String> ignoredContracts = Arrays.asList("S4802", "S5884", "Z1001");
+        if (ignoredContracts.contains(job.getContractNumber())) {
             return;
+        }
 
         // Number in database
         int expectedPatients = progressTracker.getPatientsExpected();

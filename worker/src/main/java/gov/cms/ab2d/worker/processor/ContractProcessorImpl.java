@@ -28,10 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -244,8 +241,10 @@ public class ContractProcessorImpl implements ContractProcessor {
         if (contractData.getJob().hasJobBeenCancelled()) {
             return;
         }
-        //Ignore for S4802 during Centene support
-        if (contractData.getContract().getContractNumber().equals("S4802") || contractData.getContract().getContractNumber().equals("Z1001")) {
+
+        //Ignore for S4802 and S5884 during Centene and Humana support
+        List<String> ignoredContracts = Arrays.asList("S4802", "S5884", "Z1001");
+        if (ignoredContracts.contains(contractData.getContract().getContractNumber())) {
             return;
         }
         // Verify that the number of benes requested matches the number expected from the database and fail
