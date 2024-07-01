@@ -233,7 +233,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             return lastUpdated.getTime() < sinceTime.plusMonths(1).toInstant().toEpochMilli();
         }
         //AB2D-6167 Create customized script for Humana
-        if (request.getContractNum().equals("S5884")){
+        if (request.getContractNum().equals("S5884")) {
             return lastUpdated.getTime() < sinceTime.plusMonths(4).toInstant().toEpochMilli();
         }
         return true;
