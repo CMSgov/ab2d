@@ -1066,7 +1066,7 @@ class CoverageServiceImplTest {
     }
 
     @Test
-    void g() {
+    void testCoveragePeriodNeverSearchedSuccessfully() {
         List<CoveragePeriod> coveragePeriodsOne = coverageService.coveragePeriodNeverSearchedSuccessfully();
         assertEquals(5, coveragePeriodsOne.size());
 
