@@ -1176,6 +1176,17 @@ class CoverageServiceImplTest {
         assertTrue(coverageSearchEventTwo.isEmpty());
     }
 
+    @Test
+    void testSubmitSearchReturnEmpty() {
+        Optional<CoverageSearchEvent> coverageSearchEventOne = coverageService.submitSearch(period1Jan.getId(), "testing");
+        assertFalse(coverageSearchEventOne.isEmpty());
+
+        startSearchAndPullEvent();
+
+        Optional<CoverageSearchEvent> coverageSearchEventTwo = coverageService.submitSearch(period1Jan.getId(), "testing");
+        assertTrue(coverageSearchEventTwo.isEmpty());
+    }
+
     @DisplayName("Coverage period searches are successfully resubmitted if necessary")
     @Test
     void resubmitSearch() {
