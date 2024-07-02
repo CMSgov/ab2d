@@ -1207,6 +1207,28 @@ class CoverageServiceImplTest {
         assertEquals(CoverageJobStatus.SUBMITTED, period.getStatus());
     }
 
+    @Test
+    void resubmitSearchWithPriority() {
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+
+        CoverageSearchEvent started = startSearchAndPullEvent();
+        CoverageSearchEvent startedCopy = coverageSearchEventRepo.findById(started.getId()).get();
+
+        assertEquals(CoverageJobStatus.SUBMITTED, startedCopy.getOldStatus());
+        assertEquals(CoverageJobStatus.IN_PROGRESS, startedCopy.getNewStatus());
+
+        coverageService.resubmitSearch(started.getCoveragePeriod().getId(), 1, "failed job", "restarting job", true);
+
+        CoveragePeriod period = coveragePeriodRepo.findById(started.getCoveragePeriod().getId()).get();
+
+        CoverageSearchEvent submitEvent = coverageSearchEventRepo.findFirstByCoveragePeriodOrderByCreatedDesc(period).get();
+        assertEquals(CoverageJobStatus.FAILED, submitEvent.getOldStatus());
+        assertEquals(CoverageJobStatus.SUBMITTED, submitEvent.getNewStatus());
+        assertEquals("restarting job", submitEvent.getDescription());
+
+        assertEquals(CoverageJobStatus.SUBMITTED, period.getStatus());
+    }
+
     private CoverageSearchEvent startSearchAndPullEvent() {
         Optional<CoverageSearch> search = coverageSearchRepo.findFirstByOrderByCreatedAsc();
         coverageSearchRepo.delete(search.get());
