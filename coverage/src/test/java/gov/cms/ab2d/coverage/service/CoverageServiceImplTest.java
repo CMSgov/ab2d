@@ -1066,6 +1066,18 @@ class CoverageServiceImplTest {
     }
 
     @Test
+    void g() {
+        List<CoveragePeriod> coveragePeriodsOne = coverageService.coveragePeriodNeverSearchedSuccessfully();
+        assertEquals(5, coveragePeriodsOne.size());
+
+        coverageService.prioritizeSearch(period1Jan.getId(), "testing");
+        startSearchAndPullEvent();
+
+        List<CoveragePeriod> coveragePeriodsTwo = coverageService.coveragePeriodNeverSearchedSuccessfully();
+        assertEquals(4, coveragePeriodsTwo.size());
+    }
+
+    @Test
     void testStartSearchNull() {
         Optional<CoverageMapping> coverageMapping = coverageService.startSearch(null, "testing");
         assertTrue(coverageMapping.isEmpty());
