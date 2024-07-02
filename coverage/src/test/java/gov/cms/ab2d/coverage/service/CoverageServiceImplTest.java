@@ -1065,6 +1065,12 @@ class CoverageServiceImplTest {
         assertEquals(0, coveragePeriods.size());
     }
 
+    @Test
+    void testStartSearchNull() {
+        Optional<CoverageMapping> coverageMapping = coverageService.startSearch(null, "testing");
+        assertTrue(coverageMapping.isEmpty());
+    }
+
     @DisplayName("Find all stuck jobs")
     @Test
     void findStuckJobs() {
@@ -1145,6 +1151,26 @@ class CoverageServiceImplTest {
 
         assertEquals(CoverageJobStatus.SUBMITTED, startedCopy.getOldStatus());
         assertEquals(CoverageJobStatus.IN_PROGRESS, startedCopy.getNewStatus());
+    }
+
+    @Test
+    void testPrioritizeSearches() {
+        coverageService.prioritizeSearch(period1Jan.getId(), "testing");
+        coverageService.prioritizeSearch(period2Jan.getId(), "testing");
+
+        CoverageSearchEvent started = startSearchAndPullEvent();
+        CoverageSearchEvent startedCopy = coverageSearchEventRepo.findById(started.getId()).get();
+
+        assertEquals(CoverageJobStatus.SUBMITTED, startedCopy.getOldStatus());
+        assertEquals(CoverageJobStatus.IN_PROGRESS, startedCopy.getNewStatus());
+    }
+
+    @Test
+    void testPrioritizeSearchReturnEmpty() {
+        coverageService.prioritizeSearch(period1Jan.getId(), "testing");
+        startSearchAndPullEvent();
+        Optional<CoverageSearchEvent> coverageSearchEvent = coverageService.prioritizeSearch(period1Jan.getId(), "testing");
+        assertTrue(coverageSearchEvent.isEmpty());
     }
 
     @DisplayName("Coverage period searches are successfully resubmitted if necessary")
@@ -1326,6 +1352,12 @@ class CoverageServiceImplTest {
 
         assertThrows(IllegalArgumentException.class,
                 () -> coverageService.getCoveragePeriod(contract1, 12, 2019));
+    }
+
+    @Test
+    void testGetCoveragePeriods() {
+        List<CoveragePeriod> coveragePeriods = coverageService.getCoveragePeriods(APRIL, YEAR);
+        assertEquals(1, coveragePeriods.size());
     }
 
     private Identifiers createIdentifier(Long suffix) {
