@@ -1167,10 +1167,13 @@ class CoverageServiceImplTest {
 
     @Test
     void testPrioritizeSearchReturnEmpty() {
-        coverageService.prioritizeSearch(period1Jan.getId(), "testing");
+        Optional<CoverageSearchEvent> coverageSearchEventOne = coverageService.prioritizeSearch(period1Jan.getId(), "testing");
+        assertFalse(coverageSearchEventOne.isEmpty());
+
         startSearchAndPullEvent();
-        Optional<CoverageSearchEvent> coverageSearchEvent = coverageService.prioritizeSearch(period1Jan.getId(), "testing");
-        assertTrue(coverageSearchEvent.isEmpty());
+
+        Optional<CoverageSearchEvent> coverageSearchEventTwo = coverageService.prioritizeSearch(period1Jan.getId(), "testing");
+        assertTrue(coverageSearchEventTwo.isEmpty());
     }
 
     @DisplayName("Coverage period searches are successfully resubmitted if necessary")
