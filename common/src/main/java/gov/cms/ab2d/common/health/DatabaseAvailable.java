@@ -18,13 +18,11 @@ public final class DatabaseAvailable {
      * @return true if you can access the db, false otherwise
      */
     public static boolean isDbAvailable(DataSource datasource) {
-        try (Connection conn = datasource.getConnection()) {
-            try (Statement stmt = conn.createStatement()) {
-                stmt.execute("SELECT 1");
-                return true;
-            } catch (Exception ex) {
-                return false;
-            }
+        try {
+            Connection conn = datasource.getConnection();
+            Statement stmt = conn.createStatement();
+            stmt.execute("SELECT 1");
+            return true;
         } catch (Exception ex) {
             return false;
         }
