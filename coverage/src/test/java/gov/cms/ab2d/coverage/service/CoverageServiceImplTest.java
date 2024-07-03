@@ -235,6 +235,13 @@ class CoverageServiceImplTest {
 
         assertTrue(coverageService.canEOBSearchBeStarted(period1Jan.getId()));
         assertFalse(coverageService.isCoveragePeriodInProgress(period1Jan.getId()));
+
+        assertThrows(
+            CoveragePeriodNotFoundException.class,
+            () -> {
+                coverageService.isCoveragePeriodInProgress(999999999);
+            }
+        );
     }
 
     @DisplayName("Count coverage records for a group of coverage periods")
