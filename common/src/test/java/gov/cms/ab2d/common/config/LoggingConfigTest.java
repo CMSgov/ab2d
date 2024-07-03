@@ -12,7 +12,7 @@ class LoggingConfigTest {
 
   @Test
   void testConstructor() {
-    // jsonLogging is null
+    // getProperty returns null
     assertDoesNotThrow(
       () -> {
         Environment mockEnv = mock(Environment.class);
@@ -20,7 +20,7 @@ class LoggingConfigTest {
       }
     );
 
-    // jsonLogging is false
+    // getProperty returns "false"
     assertDoesNotThrow(
       () -> {
         Environment mockEnv = mock(Environment.class);
@@ -29,7 +29,7 @@ class LoggingConfigTest {
       }
     );
 
-    // jsonLogging is true
+    // getProperty returns "true"
     assertDoesNotThrow(
       () -> {
         Environment mockEnv = mock(Environment.class);
