@@ -85,6 +85,7 @@ class CoverageServiceImplTest {
     private static final int FEBRUARY = 2;
     private static final int MARCH = 3;
     private static final int APRIL = 4;
+    private static final int MAY = 5;
 
     // Used to test the coverage summary code
 
@@ -164,6 +165,15 @@ class CoverageServiceImplTest {
     @AfterEach
     public void cleanUp() {
         dataSetup.cleanup();
+    }
+
+    @Test
+    void testFindAssociatedCoveragePeriods() {
+        List<CoveragePeriod> coveragePeriodsOne = coverageService.findAssociatedCoveragePeriods("TST-12");
+        assertFalse(coveragePeriodsOne.isEmpty());
+
+        List<CoveragePeriod> coveragePeriodsTwo = coverageService.findAssociatedCoveragePeriods("does-not-exist");
+        assertTrue(coveragePeriodsTwo.isEmpty());
     }
 
     @DisplayName("Get a coverage period")
@@ -1404,8 +1414,11 @@ class CoverageServiceImplTest {
 
     @Test
     void testGetCoveragePeriods() {
-        List<CoveragePeriod> coveragePeriods = coverageService.getCoveragePeriods(APRIL, YEAR);
-        assertEquals(1, coveragePeriods.size());
+        List<CoveragePeriod> coveragePeriodsOne = coverageService.getCoveragePeriods(JANUARY, YEAR);
+        assertFalse(coveragePeriodsOne.isEmpty());
+
+        List<CoveragePeriod> coveragePeriodsTwo = coverageService.getCoveragePeriods(MAY, YEAR);
+        assertTrue(coveragePeriodsTwo.isEmpty());
     }
 
     private Identifiers createIdentifier(Long suffix) {
