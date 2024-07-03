@@ -47,5 +47,7 @@ class DatabaseAvailableTest {
         assertFalse(DatabaseAvailable.isDbAvailable(bogusDS));
         Mockito.when(bogusDS.getConnection()).thenReturn(bogusCon);
         assertFalse(DatabaseAvailable.isDbAvailable(bogusDS));
+        Mockito.when(bogusDS.getConnection()).thenThrow(RuntimeException.class);
+        assertFalse(DatabaseAvailable.isDbAvailable(bogusDS));
     }
 }
