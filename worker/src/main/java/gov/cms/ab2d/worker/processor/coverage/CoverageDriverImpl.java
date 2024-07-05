@@ -524,7 +524,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         if (job.getContractNumber().equals("S4802") || job.getContractNumber().equals("Z1001"))
             time = job.getSince().atZoneSameInstant(AB2D_ZONE).plusMonths(1);
         else if (job.getContractNumber().equals("S5884"))
-            time = job.getSince().atZoneSameInstant(AB2D_ZONE).plusMonths(4);
+            time = job.getSince().atZoneSameInstant(AB2D_ZONE).plusMonths(2);
         else time = getEndDateTime();
 
         if (contract == null) {
