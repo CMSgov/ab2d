@@ -520,9 +520,11 @@ public class CoverageDriverImpl implements CoverageDriver {
     public int numberOfBeneficiariesToProcess(Job job, ContractDTO contract) {
 
         ZonedDateTime time;
-        //Centene support
+        //Centene and Humana support
         if (job.getContractNumber().equals("S4802") || job.getContractNumber().equals("Z1001"))
             time = job.getSince().atZoneSameInstant(AB2D_ZONE).plusMonths(1);
+        else if (job.getContractNumber().equals("S5884"))
+            time = job.getSince().atZoneSameInstant(AB2D_ZONE).plusMonths(2);
         else time = getEndDateTime();
 
         if (contract == null) {
