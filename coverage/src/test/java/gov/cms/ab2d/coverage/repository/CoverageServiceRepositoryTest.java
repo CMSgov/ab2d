@@ -22,17 +22,19 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.sql.DataSource;
-import java.lang.reflect.Field;
+
 import java.util.*;
+import java.lang.reflect.*;
 
 import static gov.cms.ab2d.common.util.PropertyConstants.OPT_OUT_ON;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 @SpringBootTest
@@ -105,10 +107,26 @@ class CoverageServiceRepositoryTest {
 
     @Test
     void yearsTest() throws NoSuchFieldException, IllegalAccessException {
-        Field X = CoverageServiceRepository.class.getDeclaredField("YEARS");
-        X.setAccessible(true);
-        Assertions.assertNotNull(X.get(null));
-        Assertions.assertTrue(X.get(null).toString().startsWith("[2020, 2021, 2022, 2023, 2024"));
+        Field field = CoverageServiceRepository.class.getDeclaredField("YEARS");
+        field.setAccessible(true);
+        Assertions.assertNotNull(field.get(null));
+        Assertions.assertTrue(field.get(null).toString().startsWith("[2020, 2021, 2022, 2023, 2024"));
+    }
+
+    @Test
+    void testVacuumCoverage() {
+        assertDoesNotThrow(() -> {
+            coverageServiceRepository.vacuumCoverage();
+        });
+
+        String vacuumCoverage = (String) ReflectionTestUtils.getField(coverageServiceRepository, "vacuumCoverage");
+        ReflectionTestUtils.setField(coverageServiceRepository, "vacuumCoverage", "broken");
+
+        assertThrows(RuntimeException.class, () -> {
+            coverageServiceRepository.vacuumCoverage();
+        });
+
+        ReflectionTestUtils.setField(coverageServiceRepository, "vacuumCoverage", vacuumCoverage);
     }
 
     private Identifiers createIdentifier(Long suffix) {
