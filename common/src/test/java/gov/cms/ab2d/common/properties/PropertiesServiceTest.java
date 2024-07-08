@@ -16,6 +16,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
@@ -68,12 +69,6 @@ public class PropertiesServiceTest {
 
         assertFalse(propertiesService.isToggleOn(null, false));
         assertFalse(propertiesService.isToggleOn(val4.getKey(), false));
-
-        /*
-            public boolean createProperty(String key, String value) {
-            public boolean deleteProperty(String key) {
-
-         */
     }
 
     @Test
@@ -82,6 +77,8 @@ public class PropertiesServiceTest {
         when(propertiesClient.setProperty(val1.getKey(), val1.getValue())).thenReturn(val1);
         assertTrue(propertiesService.createProperty(val1.getKey(), val1.getValue()));
         assertTrue(propertiesService.createProperty(val1.getKey(), val1.getValue()));
+        assertFalse(propertiesService.createProperty(val1.getKey(), null));
+        assertFalse(propertiesService.createProperty(null, val1.getValue()));
     }
 
     @Test
@@ -94,4 +91,11 @@ public class PropertiesServiceTest {
         assertFalse(propertiesService.createProperty(val1.getKey(), val1.getValue()));
     }
 
+    @Test
+    void testDeleteProperty() {
+        assertFalse(propertiesService.deleteProperty(null));
+        assertTrue(propertiesService.deleteProperty(val1.getKey()));
+        doThrow(PropertyNotFoundException.class).when(propertiesClient).deleteProperty(val1.getKey());
+        assertFalse(propertiesService.deleteProperty(val1.getKey()));
+    }
 }
