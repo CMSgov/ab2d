@@ -29,8 +29,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.sql.DataSource;
 
+import java.lang.reflect.Field;
 import java.util.*;
-import java.lang.reflect.*;
 
 import static gov.cms.ab2d.common.util.PropertyConstants.OPT_OUT_ON;
 import static org.junit.Assert.assertThrows;
