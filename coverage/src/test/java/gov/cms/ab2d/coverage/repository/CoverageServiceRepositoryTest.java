@@ -2,7 +2,9 @@ package gov.cms.ab2d.coverage.repository;
 
 import gov.cms.ab2d.common.feign.ContractFeignClient;
 import gov.cms.ab2d.common.properties.PropertiesService;
+import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageMembership;
+import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
@@ -31,6 +33,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import javax.sql.DataSource;
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 
 import static gov.cms.ab2d.common.util.PropertyConstants.OPT_OUT_ON;
@@ -151,6 +155,20 @@ class CoverageServiceRepositoryTest {
         assertEquals(
             new LinkedHashSet<String>(Arrays.asList("historic", "mbi", "string")),
             coverageMembership.getIdentifiers().getHistoricMbis()
+        );
+    }
+
+    @Test
+    void testPageCoverage() {
+        OffsetDateTime now = OffsetDateTime.of(1999, 1, 1, 1, 1, 1, 1, ZoneOffset.UTC);
+        ContractForCoverageDTO contract = new ContractForCoverageDTO(
+            "stuff", now, ContractForCoverageDTO.ContractType.NORMAL
+        );
+        CoveragePagingRequest page = new CoveragePagingRequest(1, 1L, contract, now);
+
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> {coverageServiceRepository.pageCoverage(page);}
         );
     }
 
