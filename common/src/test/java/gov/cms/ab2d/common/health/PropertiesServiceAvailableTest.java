@@ -80,6 +80,46 @@ class PropertiesServiceAvailableTest {
     }
 
     @Test
+    void testCreateValue1() {
+        String value = "three";
+        String gottenValue = "three";
+
+        when(mockPropertiesService.createProperty("test3", value)).thenReturn(true);
+        when(mockPropertiesService.getProperty(eq("test3"), anyString())).thenReturn(gottenValue);
+        assertTrue(mockPropertiesServiceAvailable.createValue("test3", value));
+    }
+
+    @Test
+    void testCreateValue2() {
+        String value = null;
+        String gottenValue = null;
+
+        when(mockPropertiesService.createProperty("test3", value)).thenReturn(true);
+        when(mockPropertiesService.getProperty(eq("test3"), anyString())).thenReturn(gottenValue);
+        assertTrue(mockPropertiesServiceAvailable.createValue("test3", value));
+    }
+
+    @Test
+    void testCreateValue3() {
+        String value = "three";
+        String gottenValue = null;
+
+        when(mockPropertiesService.createProperty("test3", value)).thenReturn(true);
+        when(mockPropertiesService.getProperty(eq("test3"), anyString())).thenReturn(gottenValue);
+        assertFalse(mockPropertiesServiceAvailable.createValue("test3", value));
+    }
+
+    @Test
+    void testCreateValue4() {
+        String value = null;
+        String gottenValue = "three";
+
+        when(mockPropertiesService.createProperty("test3", value)).thenReturn(true);
+        when(mockPropertiesService.getProperty(eq("test3"), anyString())).thenReturn(gottenValue);
+        assertFalse(mockPropertiesServiceAvailable.createValue("test3", value));
+    }
+
+    @Test
     void testWithMock() {
         when(mockPropertiesService.getProperty(eq("test1"), anyString())).thenReturn(null);
         assertTrue(mockPropertiesServiceAvailable.checkValue("test1", null));
