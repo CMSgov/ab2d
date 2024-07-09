@@ -131,6 +131,7 @@ class PropertiesServiceAvailableTest {
         when(mockPropertiesService.createProperty("fake.key", "fake_value")).thenReturn(false);
         assertFalse(mockPropertiesServiceAvailable.isAvailable(true));
     }
+
     @Test
     void mainMethod3() {
         when(mockPropertiesService.getProperty(eq(MAINTENANCE_MODE), anyString())).thenReturn("false");
@@ -139,6 +140,7 @@ class PropertiesServiceAvailableTest {
         when(mockPropertiesService.updateProperty("fake.key", "fake_value1")).thenReturn(false);
         assertTrue(mockPropertiesServiceAvailable.isAvailable(false));
     }
+
     @Test
     void mainMethod4() {
         when(mockPropertiesService.getProperty(eq(MAINTENANCE_MODE), anyString())).thenReturn("false");
@@ -150,5 +152,11 @@ class PropertiesServiceAvailableTest {
         when(mockPropertiesService.updateProperty("fake.key", "fake_value1")).thenReturn(true);
         when(mockPropertiesService.deleteProperty("fake.key")).thenReturn(false);
         assertFalse(mockPropertiesServiceAvailable.isAvailable(true));
+    }
+
+    @Test
+    void mainMethod5() {
+        when(mockPropertiesService.getProperty(MAINTENANCE_MODE, null)).thenReturn("false");
+        assertTrue(mockPropertiesServiceAvailable.isAvailable(true));
     }
 }
