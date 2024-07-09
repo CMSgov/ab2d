@@ -2,6 +2,7 @@ package gov.cms.ab2d.coverage.repository;
 
 import gov.cms.ab2d.common.feign.ContractFeignClient;
 import gov.cms.ab2d.common.properties.PropertiesService;
+import gov.cms.ab2d.coverage.model.CoverageMembership;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
@@ -29,11 +30,15 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Field;
+import java.sql.ResultSet;
 import java.util.*;
 
 import static gov.cms.ab2d.common.util.PropertyConstants.OPT_OUT_ON;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 @SpringBootTest
@@ -126,6 +131,27 @@ class CoverageServiceRepositoryTest {
         });
 
         ReflectionTestUtils.setField(coverageServiceRepository, "vacuumCoverage", vacuumCoverage);
+    }
+
+    @Test
+    void testAsMembership() throws Exception {
+        ResultSet rs = mock(ResultSet.class);
+        when(rs.getInt(4)).thenReturn(2000);
+        when(rs.getInt(5)).thenReturn(12);
+        when(rs.getLong(1)).thenReturn(9L);
+        when(rs.getString(2)).thenReturn("currentMbi");
+        when(rs.getString(3)).thenReturn("historic,mbi,string");
+
+        CoverageMembership coverageMembership = CoverageServiceRepository.asMembership(rs, 0);
+
+        assertEquals(2000, coverageMembership.getYear());
+        assertEquals(12, coverageMembership.getMonth());
+        assertEquals(9L, coverageMembership.getIdentifiers().getBeneficiaryId());
+        assertEquals("currentMbi", coverageMembership.getIdentifiers().getCurrentMbi());
+        assertEquals(
+            new LinkedHashSet<String>(Arrays.asList("historic", "mbi", "string")),
+            coverageMembership.getIdentifiers().getHistoricMbis()
+        );
     }
 
     private Identifiers createIdentifier(Long suffix) {
