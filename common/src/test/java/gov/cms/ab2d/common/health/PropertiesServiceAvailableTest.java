@@ -146,6 +146,13 @@ class PropertiesServiceAvailableTest {
     }
 
     @Test
+    void testUpdateValue() {
+        when(mockPropertiesService.updateProperty("test6", "six")).thenReturn(true);
+        when(mockPropertiesService.getProperty(eq("test6"), anyString())).thenReturn("six");
+        assertTrue(mockPropertiesServiceAvailable.updateValue("test6", "six"));
+    }
+
+    @Test
     void testWithMockAgain() {
         when(mockPropertiesService.deleteProperty("test5")).thenReturn(true);
         when(mockPropertiesService.getProperty("test5", null)).thenReturn("five");
