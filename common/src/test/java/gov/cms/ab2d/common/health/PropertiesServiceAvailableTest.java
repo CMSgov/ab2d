@@ -160,6 +160,13 @@ class PropertiesServiceAvailableTest {
     }
 
     @Test
+    void testDeleteValue() {
+        when(mockPropertiesService.deleteProperty("test5")).thenReturn(true);
+        when(mockPropertiesService.getProperty("test5", null)).thenReturn(null);
+        assertTrue(mockPropertiesServiceAvailable.deleteValue("test5"));
+    }
+
+    @Test
     void mainMethod() {
         when(mockPropertiesService.getProperty(eq(MAINTENANCE_MODE), anyString())).thenReturn("five");
         assertFalse(mockPropertiesServiceAvailable.isAvailable(true));
