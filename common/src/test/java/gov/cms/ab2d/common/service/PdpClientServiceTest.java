@@ -35,7 +35,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import static gov.cms.ab2d.common.model.Role.ADMIN_ROLE;
 import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
+import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
@@ -225,6 +227,34 @@ class PdpClientServiceTest {
         assertEquals(1, authentication.getAuthorities().size());
         GrantedAuthority grantedAuthority = authentication.getAuthorities().iterator().next();
         assertEquals(SPONSOR_ROLE, grantedAuthority.getAuthority());
+    }
+
+    @Test
+    void testGetCurrentClient() {
+        HttpServletRequest httpServletRequest = new MockHttpServletRequest();
+
+        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(ADMIN_ROLE));
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                "ADMIN", null, authorities);
+        auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(httpServletRequest));
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        PdpClientDTO client = buildClientDTO("Test", TEST_CLIENT, SPONSOR_ROLE);
+        PdpClientDTO createdClient = pdpClientService.createClient(client);
+        dataSetup.queueForCleanup(pdpClientService.getClientById("test@test.com"));
+
+        String contractNumber = createdClient.getContract().getContractNumber();
+
+        pdpClientService.setupClientImpersonation(contractNumber, httpServletRequest);
+
+        assertNotNull(pdpClientService.getCurrentClient());
+    }
+
+    @Test
+    void testGetClientById() {
+        assertThrows(ResourceNotFoundException.class, () -> {
+            pdpClientService.getClientById("does-not-exist@test.com");
+        });
     }
 
     @Test
