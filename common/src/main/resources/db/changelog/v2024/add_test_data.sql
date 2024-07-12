@@ -1,8 +1,3 @@
---liquibase formatted sql
---  -------------------------------------------------------------------------------------------------------------------
-
---changeset lsharshar:AB2D-3874 failOnError:true
-
 insert into Contract.contract (id, contract_number, contract_name, attested_on, update_mode, created, modified) values ((select nextval('hibernate_sequence')), 'Z1010', 'Z1010', '2020-03-01', 'TEST', NOW(), NOW());
 
 insert into user_account(id, client_id, enabled, max_parallel_jobs, contract_id, organization) values((select nextval('hibernate_sequence')), '0oa9jyw49f9U20vvB297', true, 1000, (select id from Contract.contract where contract_number='Z1010' limit 1), 'PDP-1010');
