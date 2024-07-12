@@ -35,6 +35,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import static gov.cms.ab2d.common.model.Role.ADMIN_ROLE;
 import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
+import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -92,6 +93,33 @@ class PdpClientServiceTest {
 
         assertEquals(10, contracts.size());
         assertTrue(contracts.stream().filter(c -> c.getContractNumber().equals(contract.getContractNumber())).findAny().isPresent());
+    }
+
+    @Test
+    void testContractList() {
+        // Baseline number of contracts is 9
+        List<Contract> contracts = pdpClientService.getAllEnabledContracts();
+        assertEquals(9, contracts.size());
+
+        // Create a client with the sponsor role
+        PdpClientDTO client = buildClientDTO("Enabled", "stuff@test.com", SPONSOR_ROLE);
+        client.setEnabled(true);
+        pdpClientService.createClient(client);
+        dataSetup.queueForCleanup(pdpClientService.getClientById("stuff@test.com"));
+
+        // Client was added with sponsor role, so one more contract is available
+        contracts = pdpClientService.getAllEnabledContracts();
+        assertEquals(10, contracts.size());
+
+        // Create a client with the admin role
+        client = buildClientDTO("Enabled", "things@test.com", ADMIN_ROLE);
+        client.setEnabled(true);
+        pdpClientService.createClient(client);
+        dataSetup.queueForCleanup(pdpClientService.getClientById("things@test.com"));
+
+        // Client was added with admin role, so number of contracts remains the same
+        contracts = pdpClientService.getAllEnabledContracts();
+        assertEquals(10, contracts.size());
     }
 
     @Test
