@@ -165,3 +165,5 @@ databaseChangeLog:
       file: db/changelog/v2024/misc_opt_out_attribution.sql
   - include:
       file: db/changelog/v2024/add_until_column.sql
+  - include:
+      file: db/changelog/v2024/add_test_data.sql
