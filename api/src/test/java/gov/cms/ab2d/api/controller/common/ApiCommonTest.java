@@ -40,7 +40,7 @@ class ApiCommonTest {
     @Test
     void unattestedCheck() {
         InvalidContractException ice = assertThrows(InvalidContractException.class, () ->
-                apiCommon.checkValidCreateJob(null, CONTRACT_NUMBER, null,
+                apiCommon.checkValidCreateJob(null, CONTRACT_NUMBER, null, null,
         "resource_type", "jpg", FhirVersion.STU3));
         assertNotNull(ice);
         assertTrue(ice.getMessage().contains(CONTRACT_NUMBER + " is not attested."));
@@ -50,7 +50,7 @@ class ApiCommonTest {
     void contractNumberMismatch() {
         final String bogusContractNumber = "BOGUS";
         InvalidContractException ice = assertThrows(InvalidContractException.class, () ->
-                apiCommon.checkValidCreateJob(null, bogusContractNumber, null,
+                apiCommon.checkValidCreateJob(null, bogusContractNumber, null, null,
                         "resource_type", "jpg", FhirVersion.STU3));
         assertNotNull(ice);
         assertTrue(ice.getMessage().contains(bogusContractNumber + " not associated with internal id"));

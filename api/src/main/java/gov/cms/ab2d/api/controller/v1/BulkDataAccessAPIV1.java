@@ -30,18 +30,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 
-import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
-import static gov.cms.ab2d.api.controller.common.ApiText.ASYNC;
-import static gov.cms.ab2d.api.controller.common.ApiText.BULK_RESPONSE;
-import static gov.cms.ab2d.api.controller.common.ApiText.BULK_SINCE;
-import static gov.cms.ab2d.api.controller.common.ApiText.CONTRACT_NO;
-import static gov.cms.ab2d.api.controller.common.ApiText.EXPORT_STARTED;
-import static gov.cms.ab2d.api.controller.common.ApiText.MAX_JOBS;
-import static gov.cms.ab2d.api.controller.common.ApiText.OUT_FORMAT;
-import static gov.cms.ab2d.api.controller.common.ApiText.PREFER;
-import static gov.cms.ab2d.api.controller.common.ApiText.RUNNING_JOBIDS;
-import static gov.cms.ab2d.api.controller.common.ApiText.SINCE;
-import static gov.cms.ab2d.api.controller.common.ApiText.TYPE_PARAM;
+import static gov.cms.ab2d.api.controller.common.ApiText.*;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_CONTRACT_EXPORT;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT_TYPE;
@@ -84,8 +73,8 @@ public class BulkDataAccessAPIV1 {
                     "application/fhir+ndjson", "application/ndjson", "ndjson"
                 }, defaultValue = NDJSON_FIRE_CONTENT_TYPE)
             ),
-            @Parameter(name = SINCE, description = BULK_SINCE, schema = @Schema(type = "date-time", description = SINCE_EARLIEST_DATE))
-
+            @Parameter(name = SINCE, description = BULK_SINCE, schema = @Schema(type = "date-time", description = SINCE_EARLIEST_DATE)),
+            @Parameter(name = UNTIL, description = BULK_UNTIL, schema = @Schema(type = "date-time", description = SINCE_EARLIEST_DATE))
         }
     )
     @ApiResponses(value = {
@@ -107,10 +96,12 @@ public class BulkDataAccessAPIV1 {
             @RequestParam(name = OUT_FORMAT, required = false, defaultValue = NDJSON_FIRE_CONTENT_TYPE)
                 String outputFormat,
             @RequestParam(required = false, name = SINCE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-                OffsetDateTime since) {
+                OffsetDateTime since,
+            @RequestParam(required = false, name = UNTIL) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            OffsetDateTime until) {
 
         log.info("Received request to export");
-        StartJobDTO startJobDTO = apiCommon.checkValidCreateJob(request, null, since, resourceTypes, outputFormat, STU3);
+        StartJobDTO startJobDTO = apiCommon.checkValidCreateJob(request, null, since, until, resourceTypes, outputFormat, STU3);
         String jobGuid = jobClient.createJob(startJobDTO);
         apiCommon.logSuccessfulJobCreation(jobGuid);
         return apiCommon.returnStatusForJobCreation(jobGuid, API_PREFIX_V1, (String) request.getAttribute(REQUEST_ID), request);
@@ -128,7 +119,8 @@ public class BulkDataAccessAPIV1 {
                     "application/fhir+ndjson", "application/ndjson", "ndjson"
                 }, defaultValue = NDJSON_FIRE_CONTENT_TYPE)
             ),
-            @Parameter(name = SINCE, description = BULK_SINCE, example = SINCE_EARLIEST_DATE, schema = @Schema(type = "date-time"))
+            @Parameter(name = SINCE, description = BULK_SINCE, example = SINCE_EARLIEST_DATE, schema = @Schema(type = "date-time")),
+            @Parameter(name = UNTIL, description = BULK_UNTIL, example = SINCE_EARLIEST_DATE, schema = @Schema(type = "date-time"))
         }
     )
     @ApiResponses(value = {
@@ -153,12 +145,14 @@ public class BulkDataAccessAPIV1 {
             @RequestParam(required = false, name = OUT_FORMAT)
                     String outputFormat,
             @RequestParam(required = false, name = SINCE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-                    OffsetDateTime since
+                    OffsetDateTime since,
+            @RequestParam(required = false, name = UNTIL) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+                    OffsetDateTime until
     ) {
 
         MDC.put(CONTRACT_LOG, contractNumber);
         log.info("Received request to export by contractNumber");
-        StartJobDTO startJobDTO = apiCommon.checkValidCreateJob(request, contractNumber, since, resourceTypes,
+        StartJobDTO startJobDTO = apiCommon.checkValidCreateJob(request, contractNumber, since, until, resourceTypes,
                 outputFormat, STU3);
         String jobGuid = jobClient.createJob(startJobDTO);
         apiCommon.logSuccessfulJobCreation(jobGuid);
