@@ -279,6 +279,17 @@ class PdpClientServiceTest {
     }
 
     @Test
+    void testGetClient() {
+        PdpClientDTO client = buildClientDTO("Test", TEST_CLIENT, SPONSOR_ROLE);
+        client.setEnabled(false);
+
+        pdpClientService.createClient(client);
+        dataSetup.queueForCleanup(pdpClientService.getClientById("test@test.com"));
+
+        assertNotNull(pdpClientService.getClient("Test"));
+    }
+
+    @Test
     void testDisableClient() {
         PdpClientDTO client = buildClientDTO("Test", TEST_CLIENT, SPONSOR_ROLE);
         pdpClientService.createClient(client);
