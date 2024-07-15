@@ -37,8 +37,7 @@ import java.util.concurrent.Future;
 
 import static gov.cms.ab2d.aggregator.FileOutputType.DATA;
 import static gov.cms.ab2d.aggregator.FileOutputType.ERROR;
-import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
-import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
+import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE_TIME;
 
 @Slf4j
 @Component
@@ -54,8 +53,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
     @Value("${bfd.retry.backoffDelay:250}")
     private int bfdTimeout;
-
-    private static final OffsetDateTime START_CHECK = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
 
     /**
      * Process the retrieval of patient explanation of benefit objects and return the result
@@ -245,7 +242,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         OffsetDateTime sinceTime = request.getSinceTime();
 
         if (sinceTime == null) {
-            if (request.getAttTime().isAfter(START_CHECK) || request.getAttTime().isEqual(START_CHECK)) {
+            if (request.getAttTime().isAfter(SINCE_EARLIEST_DATE_TIME) || request.getAttTime().isEqual(SINCE_EARLIEST_DATE_TIME)) {
                 sinceTime = request.getAttTime();
             }
         } else {
@@ -255,7 +252,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             }
 
             // Should not be possible but just in case
-            if (sinceTime.isBefore(START_CHECK)) {
+            if (sinceTime.isBefore(SINCE_EARLIEST_DATE_TIME)) {
                 sinceTime = null;
             }
         }

@@ -37,12 +37,7 @@ import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT_TYPE;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_MAIN;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_OUTPUT_FORMAT;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_PREFER;
-import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
-import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
-import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
-import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
-import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
+import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
@@ -74,7 +69,7 @@ public class BulkDataAccessAPIV1 {
                 }, defaultValue = NDJSON_FIRE_CONTENT_TYPE)
             ),
             @Parameter(name = SINCE, description = BULK_SINCE, schema = @Schema(type = "date-time", description = SINCE_EARLIEST_DATE)),
-            @Parameter(name = UNTIL, description = BULK_UNTIL, schema = @Schema(type = "date-time", description = SINCE_EARLIEST_DATE))
+            @Parameter(name = UNTIL, description = BULK_UNTIL, schema = @Schema(type = "date-time", description = UNTIL_EXAMPLE_DATE))
         }
     )
     @ApiResponses(value = {
@@ -119,9 +114,8 @@ public class BulkDataAccessAPIV1 {
                     "application/fhir+ndjson", "application/ndjson", "ndjson"
                 }, defaultValue = NDJSON_FIRE_CONTENT_TYPE)
             ),
-            @Parameter(name = SINCE, description = BULK_SINCE, example = SINCE_EARLIEST_DATE, schema = @Schema(type = "date-time")),
-            @Parameter(name = UNTIL, description = BULK_UNTIL, example = SINCE_EARLIEST_DATE, schema = @Schema(type = "date-time"))
-        }
+            @Parameter(name = SINCE, description = BULK_SINCE, example = SINCE_EARLIEST_DATE, schema = @Schema(type = "date-time"))
+    }
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "202", description = EXPORT_STARTED, headers =

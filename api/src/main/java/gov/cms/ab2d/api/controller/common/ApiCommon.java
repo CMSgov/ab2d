@@ -29,7 +29,6 @@ import java.util.Set;
 
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
-import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 
@@ -82,39 +81,27 @@ public class ApiCommon {
         if (date.isAfter(OffsetDateTime.now())) {
             throw new InvalidClientInputException("You can not use a time after the current time for _since");
         }
-        try {
-            OffsetDateTime ed = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
-            if (date.isBefore(ed)) {
-                log.error("Invalid _since time received {}", date);
-                throw new InvalidClientInputException("_since must be after " + ed.format(ISO_OFFSET_DATE_TIME));
-            }
-        } catch (Exception ex) {
-            throw new InvalidClientInputException("${api.since.date.earliest} date value '" + SINCE_EARLIEST_DATE + "' is invalid");
+        if (date.isBefore(SINCE_EARLIEST_DATE_TIME)) {
+            log.error("Invalid _since time received {}", date);
+            throw new InvalidClientInputException("_since must be after " + SINCE_EARLIEST_DATE_TIME.format(ISO_OFFSET_DATE_TIME));
         }
     }
 
-    public void checkUntilTime(OffsetDateTime since, OffsetDateTime until) {
+    public void checkUntilTime(OffsetDateTime since, OffsetDateTime until, FhirVersion version) {
         if (until == null) {
             return;
         }
-//        if (until.isAfter(OffsetDateTime.now())) {
-//            throw new InvalidClientInputException("You can not use a time after the current time for _until");
-//        }
-        try {
-            if (since == null) {
-                OffsetDateTime ed = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
-                if (until.isBefore(ed)) {
-                    log.error("Invalid _until time received {}", until);
-                    throw new InvalidClientInputException("_until must be after " + ed.format(ISO_OFFSET_DATE_TIME));
-                }
-            } else {
-                if (until.isBefore(since)) {
-                    log.error("Invalid _until time received {}", until);
-                    throw new InvalidClientInputException("_until must be after " + since);
-                }
-            }
-        } catch (Exception ex) {
-            throw new InvalidClientInputException("${api.until.date} date value '" + until + "' is invalid");
+        if (version.equals(FhirVersion.STU3)){
+            log.error("_until is not available for V1");
+            throw new InvalidClientInputException("The _until parameter is only available with version 2 (FHIR R4) of the API");
+        }
+        if (since != null && until.isBefore(since)) {
+            log.error("Invalid _until time received {}", until);
+            throw new InvalidClientInputException("_until must be after " + since.format(ISO_OFFSET_DATE_TIME));
+        }
+        if (until.isBefore(SINCE_EARLIEST_DATE_TIME)) {
+            log.error("Invalid _until time received {}", until);
+            throw new InvalidClientInputException("_until must be after " + SINCE_EARLIEST_DATE_TIME.format(ISO_OFFSET_DATE_TIME));
         }
     }
 
@@ -176,7 +163,7 @@ public class ApiCommon {
         checkIfCurrentClientCanAddJob();
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
         checkSinceTime(since);
-        checkUntilTime(since, until);
+        checkUntilTime(since, until, version);
         return new StartJobDTO(contractNumber, pdpClient.getOrganization(), resourceTypes,
                 getCurrentUrl(request), outputFormat, since, until, version);
     }
