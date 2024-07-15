@@ -91,7 +91,7 @@ public class ApiCommon {
         if (until == null) {
             return;
         }
-        if (version.equals(FhirVersion.STU3)){
+        if (version.equals(FhirVersion.STU3)) {
             log.error("_until is not available for V1");
             throw new InvalidClientInputException("The _until parameter is only available with version 2 (FHIR R4) of the API");
         }
