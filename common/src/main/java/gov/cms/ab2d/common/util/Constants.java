@@ -3,8 +3,6 @@ package gov.cms.ab2d.common.util;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
-import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
-
 public final class Constants {
 
     private Constants() { }
