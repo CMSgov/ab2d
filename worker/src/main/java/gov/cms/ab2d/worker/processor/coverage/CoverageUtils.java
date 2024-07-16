@@ -1,9 +1,10 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
-import java.time.ZonedDateTime;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
@@ -16,8 +17,16 @@ public final class CoverageUtils {
         ZonedDateTime now = ZonedDateTime.now(AB2D_ZONE);
         now = now.plusMonths(1);
         now = ZonedDateTime.of(now.getYear(), now.getMonthValue(),
-                1, 0, 0, 0, 0,  AB2D_ZONE);
+                1, 0, 0, 0, 0, AB2D_ZONE);
         return now;
+    }
+
+    public static ZonedDateTime getEndDateTimeFromUntil(OffsetDateTime until) {
+        // Assume current time zone is EST since all deployments are in EST
+        until = until.plusMonths(1);
+
+        return ZonedDateTime.of(until.getYear(), until.getMonthValue(),
+                1, 0, 0, 0, 0, AB2D_ZONE);
     }
 
     public static ZonedDateTime getAttestationTime(ContractForCoverageDTO contract) {

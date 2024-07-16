@@ -30,8 +30,7 @@ import java.util.concurrent.locks.Lock;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_ZONE;
 import static gov.cms.ab2d.common.util.PropertyConstants.*;
-import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getAttestationTime;
-import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getEndDateTime;
+import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.*;
 import static java.util.stream.Collectors.groupingBy;
 
 /**
@@ -519,11 +518,7 @@ public class CoverageDriverImpl implements CoverageDriver {
     @Override
     public int numberOfBeneficiariesToProcess(Job job, ContractDTO contract) {
 
-        ZonedDateTime time;
-        //Centene support
-        if (job.getContractNumber().equals("S4802") || job.getContractNumber().equals("Z1001"))
-            time = job.getSince().atZoneSameInstant(AB2D_ZONE).plusMonths(1);
-        else time = getEndDateTime();
+        ZonedDateTime time = getDateTime(job);
 
         if (contract == null) {
             throw new CoverageDriverException("cannot retrieve metadata for job missing contract");
@@ -553,7 +548,7 @@ public class CoverageDriverImpl implements CoverageDriver {
     @Trace(metricName = "EnrollmentLoadFromDB", dispatcher = true)
     @Override
     public CoveragePagingResult pageCoverage(Job job, ContractDTO contract) {
-        ZonedDateTime now = getEndDateTime();
+        ZonedDateTime time = getDateTime(job);
 
         if (contract == null) {
             throw new CoverageDriverException("cannot retrieve metadata for job missing contract");
@@ -563,7 +558,7 @@ public class CoverageDriverImpl implements CoverageDriver {
 
         try {
             // Check that all coverage periods necessary are present before beginning to page
-            while (startDateTime.isBefore(now)) {
+            while (startDateTime.isBefore(time)) {
                 // Will throw exception if it doesn't exist
                 coverageService.getCoveragePeriod(mapping.map(contract), startDateTime.getMonthValue(), startDateTime.getYear());
                 startDateTime = startDateTime.plusMonths(1);
@@ -608,6 +603,16 @@ public class CoverageDriverImpl implements CoverageDriver {
 
         return ZonedDateTime.of(startDateTime.getYear(), startDateTime.getMonthValue(),
                 1, 0, 0, 0, 0, AB2D_ZONE);
+    }
+
+    private static ZonedDateTime getDateTime(Job job) {
+        ZonedDateTime time;
+        OffsetDateTime untilTime = job.getUntil();
+        if (untilTime == null)
+            time = getEndDateTime();
+        else
+            time = getEndDateTimeFromUntil(untilTime);
+        return time;
     }
 
     void checkCoveragePeriodValidity(Job job, CoveragePeriod period) {

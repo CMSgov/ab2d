@@ -97,7 +97,7 @@ public class ApiCommon {
         }
         if (since != null && until.isBefore(since)) {
             log.error("Invalid _until time received {}", until);
-            throw new InvalidClientInputException("_until must be after " + since.format(ISO_OFFSET_DATE_TIME));
+            throw new InvalidClientInputException("_until must be after _since " + since.format(ISO_OFFSET_DATE_TIME));
         }
         if (until.isBefore(SINCE_EARLIEST_DATE_TIME)) {
             log.error("Invalid _until time received {}", until);
