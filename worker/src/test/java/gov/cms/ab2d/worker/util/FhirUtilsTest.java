@@ -142,6 +142,13 @@ public class FhirUtilsTest {
         }
     }
 
+    @Test
+    void testNullInputs() {
+        assertDoesNotThrow(() -> {
+            FhirUtils.addMbiIdsToEobs(null, null, null);
+        });
+    }
+
     public static Identifiers createIdentifier(long beneficiaryId, String currentMbi, String... historicMbis) {
         return new Identifiers(beneficiaryId, currentMbi, new LinkedHashSet<>(Set.of(historicMbis)));
     }
