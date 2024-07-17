@@ -157,6 +157,11 @@ public class JobProcessorImpl implements JobProcessor {
                     job.getJobUuid(), job.getContractNumber());
             return;
         }
+//        //Custom fix for Centene and Humana
+//        List<String> ignoredContracts = Arrays.asList("S4802", "S5884", "Z1001");
+//        if (ignoredContracts.contains(job.getContractNumber())) {
+//            return;
+//        }
 
         // Number in database
         int expectedPatients = progressTracker.getPatientsExpected();
@@ -167,14 +172,16 @@ public class JobProcessorImpl implements JobProcessor {
         // Number of retrievals processed
         int processedPatients = progressTracker.getPatientRequestProcessedCount();
 
-        if (expectedPatients != queuedPatients) {
+        //AB2D-6157 Update mismatch job failure to pass in slack alerts
+        //Magic 35 is the biggest difference (April 2024) and alert threshold.
+        if ((expectedPatients != queuedPatients) && (Math.abs(expectedPatients - queuedPatients) > 35)) {
             String alertMessage = String.format(EOB_JOB_QUEUE_MISMATCH + " [%s] expected beneficiaries (%d) does not match queued beneficiaries (%d)",
                     job.getJobUuid(), expectedPatients, queuedPatients);
             log.error(alertMessage);
             eventLogger.alert(alertMessage, PROD_LIST);
         }
 
-        if (expectedPatients != processedPatients) {
+        if ((expectedPatients != processedPatients) && (Math.abs(expectedPatients - processedPatients) > 35)) {
             String alertMessage = String.format(EOB_JOB_CALL_FAILURE + " [%s] expected beneficiaries (%d) does not match processed beneficiaries (%d)",
                     job.getJobUuid(), expectedPatients, queuedPatients);
             log.error(alertMessage);

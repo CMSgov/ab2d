@@ -130,14 +130,6 @@ public class PatientClaimsCollector {
         return sinceTime.toInstant().toEpochMilli() < lastUpdated.getTime();
     }
 
-//    boolean beforeUntilDate(IBaseResource resource) {
-//        OffsetDateTime untilTime = claimsRequest.getUntilTime();
-//        if (untilTime == null) {
-//            return true;
-//        }
-//        Date lastUpdated = resource.getMeta().
-//    }
-
     /**
      * returns true if the patient is a valid member of a contract, false otherwise. If either value is empty,
      * it returns false

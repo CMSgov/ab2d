@@ -245,13 +245,19 @@ public class ContractProcessorImpl implements ContractProcessor {
             return;
         }
 
+//        //Ignore for S4802 and S5884 during Centene and Humana support
+//        List<String> ignoredContracts = Arrays.asList("S4802", "S5884", "Z1001");
+//        if (ignoredContracts.contains(contractData.getContract().getContractNumber())) {
+//            return;
+//        }
         // Verify that the number of benes requested matches the number expected from the database and fail
         // immediately if the two do not match
         ProgressTracker progressTracker = jobProgressService.getStatus(jobUuid);
         int totalQueued = progressTracker.getPatientRequestQueuedCount();
         int totalExpected = progressTracker.getPatientsExpected();
-
-        if (totalQueued != totalExpected) {
+        //AB2D-6157 Update mismatch job failure to pass in slack alerts
+        //Magic 35 is the biggest difference (April 2024) and alert threshold.
+        if ((totalQueued != totalExpected) && (Math.abs(totalQueued - totalExpected) > 35)) {
             throw new ContractProcessingException("expected " + totalExpected +
                     " patients from database but retrieved " + totalQueued);
         }
