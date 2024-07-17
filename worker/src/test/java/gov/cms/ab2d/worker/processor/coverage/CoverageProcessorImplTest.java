@@ -11,20 +11,16 @@ import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.common.util.ContractServiceTestConfig;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.contracts.model.ContractDTO;
-import gov.cms.ab2d.coverage.model.CoverageJobStatus;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
-import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
-import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
 import gov.cms.ab2d.worker.util.WorkerDataSetup;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -44,17 +40,10 @@ import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
 import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_STUCK_HOURS;
 import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_UPDATE_MONTHS;
-import static gov.cms.ab2d.fhir.FhirVersion.STU3;
-import static gov.cms.ab2d.fhir.IdentifierUtils.BENEFICIARY_ID;
 import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 // Never run internal coverage processor so this coverage processor runs unimpeded
 @SpringBootTest(properties = "coverage.update.initial.delay=1000000")
@@ -85,9 +74,6 @@ class CoverageProcessorImplTest {
     private CoverageSearchRepository coverageSearchRepo;
 
     @Autowired
-    private CoverageSearchEventRepository coverageSearchEventRepo;
-
-    @Autowired
     private CoverageService coverageService;
 
     private PropertiesService propertiesService = new PropertyServiceStub();
@@ -99,23 +85,13 @@ class CoverageProcessorImplTest {
     private CoverageDataSetup coverageDataSetup;
 
     @Autowired
-    private CoverageLockWrapper searchLock;
-
-    @Autowired
-    private ContractToContractCoverageMapping mapping;
-
-    @Autowired
     private CoverageSnapshotService snapshotService;
 
     private Contract contract;
     private CoveragePeriod january;
-    private CoveragePeriod february;
-    private CoveragePeriod march;
-    private CoveragePeriod april;
 
     private BFDClient bfdClient;
 
-    private CoverageDriverImpl driver;
     private CoverageProcessorImpl processor;
 
     private final Map<String, String> originalValues = new HashMap<>();
@@ -131,9 +107,6 @@ class CoverageProcessorImplTest {
         contractServiceStub.updateContract(contract);
 
         january = coverageDataSetup.createCoveragePeriod("TST-12", 1, 2020);
-        february = coverageDataSetup.createCoveragePeriod("TST-12", 2, 2020);
-        march = coverageDataSetup.createCoveragePeriod("TST-12", 3, 2020);
-        april = coverageDataSetup.createCoveragePeriod("TST-12", 4, 2020);
 
         PdpClientDTO contractPdpClient = createClient(contract.toDTO(), "TST-12", SPONSOR_ROLE);
         pdpClientService.createClient(contractPdpClient);
@@ -147,7 +120,6 @@ class CoverageProcessorImplTest {
         taskExecutor.initialize();
 
         processor = new CoverageProcessorImpl(coverageService, bfdClient, taskExecutor, MAX_ATTEMPTS, contractWorkerClient, snapshotService);
-        driver = new CoverageDriverImpl(coverageSearchRepo, pdpClientService, coverageService, propertiesService, processor, searchLock, mapping, snapshotService);
     }
 
     @AfterEach
@@ -180,6 +152,20 @@ class CoverageProcessorImplTest {
         processor.shutdown();
         processor.queueCoveragePeriod(january, true);
         assertEquals(0, coverageSearchRepo.count());
+    }
+
+    @Test
+    void testQueueMapping() {
+      assertEquals(0, coverageSearchRepo.count());
+
+      CoverageSearchEvent event = new CoverageSearchEvent();
+      event.setCoveragePeriod(january);
+      CoverageSearch search = new CoverageSearch();
+      search.setPeriod(january);
+      CoverageMapping coverageMapping = new CoverageMapping(event, search);
+
+      processor.queueMapping(coverageMapping, false);
+      assertEquals(1, coverageSearchRepo.count());
     }
 
     @Test
