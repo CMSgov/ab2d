@@ -156,7 +156,6 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                 return false;
             }
 
-
             log.info("starting search for {} during {}-{}", mapping.getContractNumber(),
                     mapping.getPeriod().getMonth(), mapping.getPeriod().getYear());
 

@@ -12,7 +12,10 @@ import gov.cms.ab2d.common.util.ContractServiceTestConfig;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.CoverageJobStatus;
+import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
+import gov.cms.ab2d.coverage.model.CoverageSearch;
+import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
@@ -28,13 +31,11 @@ import javax.annotation.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -45,6 +46,7 @@ import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_STUCK_H
 import static gov.cms.ab2d.common.util.PropertyConstants.COVERAGE_SEARCH_UPDATE_MONTHS;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.fhir.IdentifierUtils.BENEFICIARY_ID;
+import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -52,7 +54,6 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
 // Never run internal coverage processor so this coverage processor runs unimpeded
@@ -110,6 +111,7 @@ class CoverageProcessorImplTest {
     private CoveragePeriod january;
     private CoveragePeriod february;
     private CoveragePeriod march;
+    private CoveragePeriod april;
 
     private BFDClient bfdClient;
 
@@ -131,6 +133,7 @@ class CoverageProcessorImplTest {
         january = coverageDataSetup.createCoveragePeriod("TST-12", 1, 2020);
         february = coverageDataSetup.createCoveragePeriod("TST-12", 2, 2020);
         march = coverageDataSetup.createCoveragePeriod("TST-12", 3, 2020);
+        april = coverageDataSetup.createCoveragePeriod("TST-12", 4, 2020);
 
         PdpClientDTO contractPdpClient = createClient(contract.toDTO(), "TST-12", SPONSOR_ROLE);
         pdpClientService.createClient(contractPdpClient);
@@ -180,112 +183,27 @@ class CoverageProcessorImplTest {
     }
 
     @Test
-    void normalExecution() throws CoverageDriverException {
+    void testStartJob1() {
+      CoverageSearchEvent event = new CoverageSearchEvent();
+      event.setCoveragePeriod(january);
+      CoverageSearch search = new CoverageSearch();
+      search.setPeriod(january);
+      CoverageMapping coverageMapping = new CoverageMapping(event, search);
 
-        org.hl7.fhir.dstu3.model.Bundle bundle1 = buildBundle(0, 10);
-        bundle1.setLink(Collections.singletonList(new org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent().setRelation(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT)));
-
-        org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20);
-
-        when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class), anyString())).thenReturn(bundle2);
-
-        processor.queueCoveragePeriod(january, false);
-        CoverageJobStatus status = coverageService.getSearchStatus(january.getId());
-        assertEquals(CoverageJobStatus.SUBMITTED, status);
-
-        driver.loadMappingJob();
-        status = coverageService.getSearchStatus(january.getId());
-        assertEquals(CoverageJobStatus.IN_PROGRESS, status);
-
-        sleep(1000);
-
-        processor.monitorMappingJobs();
-        status = coverageService.getSearchStatus(january.getId());
-        assertEquals(CoverageJobStatus.IN_PROGRESS, status);
-
-        processor.insertJobResults();
-        status = coverageService.getSearchStatus(january.getId());
-        assertEquals(CoverageJobStatus.SUCCESSFUL, status);
+      assertTrue(processor.startJob(coverageMapping));
     }
 
+    // test code path for returning early due to shutdown
     @Test
-    void mappingRetried() {
+    void testStartJob2() {
+      CoverageSearchEvent event = new CoverageSearchEvent();
+      event.setCoveragePeriod(january);
+      CoverageSearch search = new CoverageSearch();
+      search.setPeriod(january);
+      CoverageMapping coverageMapping = new CoverageMapping(event, search);
 
-        when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt())).thenThrow(new RuntimeException("oops"));
-
-        processor.queueCoveragePeriod(january, false);
-        CoverageJobStatus status = coverageService.getSearchStatus(january.getId());
-        assertEquals(CoverageJobStatus.SUBMITTED, status);
-
-        driver.loadMappingJob();
-        status = coverageService.getSearchStatus(january.getId());
-        assertEquals(CoverageJobStatus.IN_PROGRESS, status);
-
-        sleep(1000);
-
-        processor.monitorMappingJobs();
-        assertTrue(coverageSearchEventRepo.findAll().stream().anyMatch(event -> event.getNewStatus() == CoverageJobStatus.FAILED));
-
-        status = coverageService.getSearchStatus(january.getId());
-        assertEquals(CoverageJobStatus.SUBMITTED, status);
-
-        reset(bfdClient);
-
-        org.hl7.fhir.dstu3.model.Bundle bundle1 = buildBundle(0, 10);
-        bundle1.setLink(Collections.singletonList(new org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent().setRelation(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT)));
-
-        org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20);
-
-        Mockito.clearInvocations();
-        when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class), anyString())).thenReturn(bundle2);
-
-        driver.loadMappingJob();
-
-        sleep(1000);
-
-        processor.monitorMappingJobs();
-
-        sleep(1000);
-
-        processor.insertJobResults();
-
-        status = coverageService.getSearchStatus(january.getId());
-        assertEquals(CoverageJobStatus.SUCCESSFUL, status);
-    }
-
-    @Test
-    void limitRunningJobsByDBSpeed() {
-        org.hl7.fhir.dstu3.model.Bundle bundle1 = buildBundle(0, 10);
-        bundle1.setLink(Collections.singletonList(new org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent().setRelation(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT)));
-
-        org.hl7.fhir.dstu3.model.Bundle bundle2 = buildBundle(10, 20);
-
-        Mockito.clearInvocations();
-        when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt())).thenReturn(bundle1);
-        when(bfdClient.requestNextBundleFromServer(eq(STU3), any(org.hl7.fhir.dstu3.model.Bundle.class), anyString())).thenReturn(bundle2);
-
-        ThreadPoolTaskExecutor twoThreads = new ThreadPoolTaskExecutor();
-        twoThreads.setMaxPoolSize(2);
-        twoThreads.initialize();
-
-        ReflectionTestUtils.setField(processor, "executor", twoThreads);
-
-        processor.queueCoveragePeriod(january, false);
-        processor.queueCoveragePeriod(february, false);
-        processor.queueCoveragePeriod(march, false);
-
-        driver.loadMappingJob();
-        driver.loadMappingJob();
-
-        sleep(1000);
-
-        processor.monitorMappingJobs();
-
-        driver.loadMappingJob();
-
-        assertEquals(0, twoThreads.getActiveCount());
+      processor.shutdown();
+      assertFalse(processor.startJob(coverageMapping));
     }
 
     private void addPropertiesTableValues() {
@@ -294,33 +212,6 @@ class CoverageProcessorImplTest {
 
       propertiesService.updateProperty(COVERAGE_SEARCH_UPDATE_MONTHS, "" + PAST_MONTHS);
       propertiesService.updateProperty(COVERAGE_SEARCH_STUCK_HOURS, "" + STUCK_HOURS);
-    }
-
-    private org.hl7.fhir.dstu3.model.Bundle buildBundle(int startIndex, int endIndex) {
-        org.hl7.fhir.dstu3.model.Bundle bundle1 = new org.hl7.fhir.dstu3.model.Bundle();
-
-        for (int i = startIndex; i < endIndex; i++) {
-            org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent component = new org.hl7.fhir.dstu3.model.Bundle.BundleEntryComponent();
-            org.hl7.fhir.dstu3.model.Patient patient = new org.hl7.fhir.dstu3.model.Patient();
-
-            org.hl7.fhir.dstu3.model.Identifier identifier = new org.hl7.fhir.dstu3.model.Identifier();
-            identifier.setSystem(BENEFICIARY_ID);
-            identifier.setValue("test-" + i);
-
-            patient.setIdentifier(Collections.singletonList(identifier));
-            component.setResource(patient);
-
-            bundle1.addEntry(component);
-        }
-        return bundle1;
-    }
-
-    private void sleep(int milliseconds) {
-        try {
-            Thread.sleep(milliseconds);
-        } catch (InterruptedException ie) {
-
-        }
     }
 
     private PdpClientDTO createClient(ContractDTO contract, String clientId, @Nullable String roleName) {
