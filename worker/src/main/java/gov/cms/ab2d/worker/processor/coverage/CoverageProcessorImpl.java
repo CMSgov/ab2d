@@ -68,7 +68,7 @@ import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 public class CoverageProcessorImpl implements CoverageProcessor {
 
     private static final long ONE_SECOND = 1000;
-    private static final long SIXTY_SECONDS = 6;
+    private static final long SIXTY_SECONDS = 60000;
 
     private final CoverageService coverageService;
     private final BFDClient bfdClient;
@@ -155,6 +155,7 @@ public class CoverageProcessorImpl implements CoverageProcessor {
                 log.warn("cannot grab contract using contract number {}", mapping.getContractNumber());
                 return false;
             }
+
 
             log.info("starting search for {} during {}-{}", mapping.getContractNumber(),
                     mapping.getPeriod().getMonth(), mapping.getPeriod().getYear());
