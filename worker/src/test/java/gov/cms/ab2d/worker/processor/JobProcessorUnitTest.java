@@ -54,7 +54,7 @@ class JobProcessorUnitTest {
     // class under test
     private JobProcessorImpl cut;
 
-    private static final String jobUuid = "6d08bf08-f926-4e19-8d89-ad67ef89f17e";
+    private static final String JOB_UUID = "6d08bf08-f926-4e19-8d89-ad67ef89f17e";
 
     @TempDir Path efsMountTmpDir;
 
@@ -73,7 +73,7 @@ class JobProcessorUnitTest {
         MockitoAnnotations.initMocks(this);
 
         JobProgressServiceImpl jobProgressUpdateService = spy(new JobProgressServiceImpl(jobRepository));
-        jobProgressUpdateService.initJob(jobUuid);
+        jobProgressUpdateService.initJob(JOB_UUID);
         jobProgressService = jobProgressUpdateService;
         jobChannelService = new JobChannelStubServiceImpl(jobProgressUpdateService);
 
@@ -96,7 +96,7 @@ class JobProcessorUnitTest {
         var contract = createContract();
         job.setContractNumber(contract.getContractNumber());
 
-        final Path outputDirPath = Paths.get(efsMountTmpDir.toString(), jobUuid);
+        final Path outputDirPath = Paths.get(efsMountTmpDir.toString(), JOB_UUID);
         final Path outputDir = Files.createDirectories(outputDirPath);
 
         lenient().when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
@@ -138,7 +138,7 @@ class JobProcessorUnitTest {
     void whenOutputDirectoryAlreadyExist_DeleteItAndCreateItAfresh() throws IOException{
 
         //create output dir, so it already exists
-        final Path outputDir = Paths.get(efsMountTmpDir.toString(), jobUuid);
+        final Path outputDir = Paths.get(efsMountTmpDir.toString(), JOB_UUID);
         Files.createDirectories(outputDir);
 
         //create files inside the directory.
@@ -168,7 +168,7 @@ class JobProcessorUnitTest {
     void whenExistingOutputDirectoryHasSubDirectory_JobFailsGracefully() throws IOException {
 
         //create output dir, so it already exists
-        final Path outputDir = Paths.get(efsMountTmpDir.toString(), jobUuid);
+        final Path outputDir = Paths.get(efsMountTmpDir.toString(), JOB_UUID);
         Files.createDirectories(outputDir);
 
         //add a file in the directory which is NOT a regular file, but a directory
@@ -271,8 +271,8 @@ class JobProcessorUnitTest {
         Files.writeString(Path.of(tempDir.getAbsolutePath(), "file3_error.ndjson"), "ghi");
         final File[] files = tempDir.listFiles(cut.getFilenameFilter());
         assertEquals(2, files.length);
-        assertNotEquals(files[0].getName(), "file2");
-        assertNotEquals(files[1].getName(), "file2");
+        assertNotEquals("file2", files[0].getName());
+        assertNotEquals("file2", files[1].getName());
     }
 
     private PdpClient createClient() {
@@ -293,8 +293,8 @@ class JobProcessorUnitTest {
     }
 
     private Job createJob(PdpClient pdpClient) {
-        Job job = new Job();
-        job.setJobUuid(jobUuid);
+        job = new Job();
+        job.setJobUuid(JOB_UUID);
         job.setStatusMessage("0%");
         job.setStatus(JobStatus.IN_PROGRESS);
         job.setOrganization(pdpClient.getOrganization());
