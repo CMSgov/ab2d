@@ -140,6 +140,12 @@ class RoundRobinBlockingQueueTest {
     }
 
     @Test
+    void testToString() {
+        RoundRobinBlockingQueue<Object> queue = new RoundRobinBlockingQueue<>();
+        assertEquals("RoundRobinBlockingQueue: ", queue.toString());
+    }
+
+    @Test
     void peek() throws InterruptedException {
         RoundRobinBlockingQueue<Object> queue = new RoundRobinBlockingQueue<>();
         String contract1 = "0001";
