@@ -1,9 +1,7 @@
 package gov.cms.ab2d.worker.config;
 
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -11,8 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@Slf4j
-public class RoundRobinBlockingQueueTest {
+class RoundRobinBlockingQueueTest {
 
 
     @Test
@@ -31,7 +28,7 @@ public class RoundRobinBlockingQueueTest {
     }
 
     @Test
-    void add() throws FileNotFoundException {
+    void add() {
         RoundRobinBlockingQueue<Object> queue = new RoundRobinBlockingQueue<>();
         String contract1 = "0001";
         RoundRobinBlockingQueue.CATEGORY_HOLDER.set(contract1);
@@ -60,7 +57,7 @@ public class RoundRobinBlockingQueueTest {
     }
 
     @Test
-    void drainTo() throws FileNotFoundException {
+    void drainTo() {
         RoundRobinBlockingQueue<Object> queue = new RoundRobinBlockingQueue<>();
         String contract1 = "0001";
         RoundRobinBlockingQueue.CATEGORY_HOLDER.set(contract1);
@@ -80,7 +77,7 @@ public class RoundRobinBlockingQueueTest {
 
         List<Object> returnedVal = new ArrayList<>();
         int count = queue.drainTo(returnedVal);
-        assertEquals(count, 5);
+        assertEquals(5, count);
         assertEquals(5, returnedVal.size());
         assertEquals(future1, returnedVal.get(0));
         assertEquals(future2, returnedVal.get(1));
@@ -93,7 +90,7 @@ public class RoundRobinBlockingQueueTest {
     }
 
     @Test
-    void remove() throws FileNotFoundException {
+    void remove() {
         RoundRobinBlockingQueue<Object> queue = new RoundRobinBlockingQueue<>();
         String contract1 = "0001";
         assertThrows(NoSuchElementException.class, () -> queue.remove());
@@ -115,7 +112,7 @@ public class RoundRobinBlockingQueueTest {
     }
 
     @Test
-    void testOffer() throws FileNotFoundException, InterruptedException {
+    void testOffer() throws InterruptedException {
         RoundRobinBlockingQueue<Object> queue = new RoundRobinBlockingQueue<>();
         String contract1 = "0001";
         RoundRobinBlockingQueue.CATEGORY_HOLDER.set(contract1);
@@ -143,7 +140,7 @@ public class RoundRobinBlockingQueueTest {
     }
 
     @Test
-    void peek() throws FileNotFoundException, InterruptedException {
+    void peek() throws InterruptedException {
         RoundRobinBlockingQueue<Object> queue = new RoundRobinBlockingQueue<>();
         String contract1 = "0001";
         RoundRobinBlockingQueue.CATEGORY_HOLDER.set(contract1);
@@ -162,7 +159,7 @@ public class RoundRobinBlockingQueueTest {
     }
 
     @Test
-    void peekAgain() throws FileNotFoundException, InterruptedException {
+    void peekAgain() {
         RoundRobinBlockingQueue<Object> queue = new RoundRobinBlockingQueue<>();
         String contract1 = "0001";
         String contract2 = "0002";
