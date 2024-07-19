@@ -28,6 +28,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @SpringBootTest(classes = SpringBootApp.class)
@@ -152,5 +154,28 @@ public class BFDHealthCheckTest {
         propertiesServiceAvailable = new PropertiesServiceAvailable(new PropertyServiceStub());
         assertTrue(propertiesServiceAvailable.isAvailable(true));
     }
-}
 
+    @Test
+    void testCheckBFDHealth1() {
+        HealthCheckData data = mock(HealthCheckData.class);
+        when(data.getVersion()).thenReturn(STU3);
+        bfdHealthCheck.checkBFDHealth(data);
+        verify(data).incrementFailures();
+    }
+
+    @Test
+    void testCheckBFDHealth2() {
+        HealthCheckData data = mock(HealthCheckData.class);
+        when(data.getVersion()).thenThrow(NullPointerException.class).thenReturn(STU3);
+        bfdHealthCheck.checkBFDHealth(data);
+        verify(data).incrementFailures();
+    }
+
+    @Test
+    void testCheckBFDHealth3() {
+        HealthCheckData data = mock(HealthCheckData.class);
+        when(data.getVersion()).thenReturn(STU3).thenThrow(NullPointerException.class).thenReturn(STU3);
+        bfdHealthCheck.checkBFDHealth(data);
+        verify(data).incrementFailures();
+    }
+}
