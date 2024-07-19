@@ -87,6 +87,10 @@ class RoundRobinBlockingQueueTest {
         assertEquals(0, queue.size());
         assertTrue(queue.isEmpty());
         RoundRobinBlockingQueue.CATEGORY_HOLDER.remove();
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            queue.drainTo(queue);
+        });
     }
 
     @Test
