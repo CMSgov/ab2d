@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,7 +29,10 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.stubbing.Answer;
+import org.postgresql.util.PSQLException;
 import org.springframework.test.util.ReflectionTestUtils;
 
 
@@ -41,8 +45,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.anyString;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -52,7 +58,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class JobProcessorUnitTest {
     // class under test
-    private JobProcessorImpl cut;
+    private JobProcessorImpl jobProcessor;
 
     private static final String JOB_UUID = "6d08bf08-f926-4e19-8d89-ad67ef89f17e";
 
@@ -77,7 +83,7 @@ class JobProcessorUnitTest {
         jobProgressService = jobProgressUpdateService;
         jobChannelService = new JobChannelStubServiceImpl(jobProgressUpdateService);
 
-        cut = spy(new JobProcessorImpl(
+        jobProcessor = spy(new JobProcessorImpl(
                 fileService,
                 jobChannelService,
                 jobProgressService,
@@ -88,7 +94,7 @@ class JobProcessorUnitTest {
                 eventLogger
         ));
 
-        ReflectionTestUtils.setField(cut, "efsMount", efsMountTmpDir.toString());
+        ReflectionTestUtils.setField(jobProcessor, "efsMount", efsMountTmpDir.toString());
 
         final PdpClient pdpClient = createClient();
         job = createJob(pdpClient);
@@ -107,7 +113,7 @@ class JobProcessorUnitTest {
     @DisplayName("When a job is in submitted status, it can be processed")
     void processJob_happyPath() {
 
-        var processedJob = cut.process(job.getJobUuid());
+        var processedJob = jobProcessor.process(job.getJobUuid());
 
         assertEquals(JobStatus.SUCCESSFUL, processedJob.getStatus());
         assertEquals("100%", processedJob.getStatusMessage());
@@ -118,7 +124,7 @@ class JobProcessorUnitTest {
     @Test
     @DisplayName("When client belongs to a parent sponsor, contracts for the children sponsors are processed")
     void whenTheClientBelongsToParent_ChildContractsAreProcessed() {
-        var processedJob = cut.process(job.getJobUuid());
+        var processedJob = jobProcessor.process(job.getJobUuid());
 
         assertEquals(JobStatus.SUCCESSFUL, processedJob.getStatus());
         assertEquals("100%", processedJob.getStatusMessage());
@@ -154,7 +160,7 @@ class JobProcessorUnitTest {
                 .thenThrow(uncheckedIOE)
                 .thenReturn(efsMountTmpDir);
 
-        var processedJob = cut.process(job.getJobUuid());
+        var processedJob = jobProcessor.process(job.getJobUuid());
 
         assertEquals(JobStatus.SUCCESSFUL, processedJob.getStatus());
         assertEquals("100%", processedJob.getStatusMessage());
@@ -178,7 +184,7 @@ class JobProcessorUnitTest {
         var uncheckedIOE = new UncheckedIOException(errMsg, new IOException(errMsg));
 
         Mockito.when(fileService.createDirectory(any())).thenThrow(uncheckedIOE);
-        var processedJob = cut.process(job.getJobUuid());
+        var processedJob = jobProcessor.process(job.getJobUuid());
 
         assertEquals(JobStatus.FAILED, processedJob.getStatus());
         assertFalse(processedJob.getStatusMessage().startsWith("Could not delete"));
@@ -194,7 +200,7 @@ class JobProcessorUnitTest {
 
         Mockito.when(fileService.createDirectory(any())).thenThrow(uncheckedIOE);
 
-        var processedJob = cut.process(job.getJobUuid());
+        var processedJob = jobProcessor.process(job.getJobUuid());
 
         assertEquals(JobStatus.FAILED, processedJob.getStatus());
         assertTrue(processedJob.getStatusMessage().startsWith("Could not create output directory"));
@@ -211,7 +217,7 @@ class JobProcessorUnitTest {
         jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENT_REQUEST_QUEUED, 10);
         jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENT_REQUESTS_PROCESSED, 10);
 
-        cut.verifyTrackedJobProgress(job);
+        jobProcessor.verifyTrackedJobProgress(job);
         verify(eventLogger, never()).alert(anyString(), any());
     }
 
@@ -223,7 +229,7 @@ class JobProcessorUnitTest {
         jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENT_REQUEST_QUEUED, 9);
         jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENT_REQUESTS_PROCESSED, 9);
 
-        cut.verifyTrackedJobProgress(job);
+        jobProcessor.verifyTrackedJobProgress(job);
         verify(eventLogger, times(2)).alert(anyString(), any());
     }
 
@@ -232,11 +238,11 @@ class JobProcessorUnitTest {
     void whenJobThrowsException_thenProgressIsLogged() {
         when(contractProcessor.process(any())).thenThrow(RuntimeException.class);
 
-        var processedJob = cut.process(job.getJobUuid());
+        var processedJob = jobProcessor.process(job.getJobUuid());
 
         assertEquals(JobStatus.FAILED, processedJob.getStatus());
 
-        verify(cut, times(1)).persistTrackedJobProgress(any());
+        verify(jobProcessor, times(1)).persistTrackedJobProgress(any());
 
         verify(jobProgressService, times(1)).getStatus(any());
     }
@@ -244,12 +250,12 @@ class JobProcessorUnitTest {
     @Test
     @DisplayName("When job succeeds, verification and persistence of progress tracker occurs")
     void whenJobSucceeds_thenProgressIsVerified() {
-        var processedJob = cut.process(job.getJobUuid());
+        var processedJob = jobProcessor.process(job.getJobUuid());
 
         assertEquals(JobStatus.SUCCESSFUL, processedJob.getStatus());
 
-        verify(cut, times(1)).verifyTrackedJobProgress(any());
-        verify(cut, times(1)).persistTrackedJobProgress(any());
+        verify(jobProcessor, times(1)).verifyTrackedJobProgress(any());
+        verify(jobProcessor, times(1)).persistTrackedJobProgress(any());
         verify(eventLogger, times(1)).sendLogs(any(ContractSearchEvent.class));
 
         // Status is pulled after finishing loading benes
@@ -269,10 +275,93 @@ class JobProcessorUnitTest {
         Files.writeString(Path.of(tempDir.getAbsolutePath(), "file1.ndjson"), "abc");
         Files.writeString(Path.of(tempDir.getAbsolutePath(), "file2"), "def");
         Files.writeString(Path.of(tempDir.getAbsolutePath(), "file3_error.ndjson"), "ghi");
-        final File[] files = tempDir.listFiles(cut.getFilenameFilter());
+        final File[] files = tempDir.listFiles(jobProcessor.getFilenameFilter());
         assertEquals(2, files.length);
         assertNotEquals("file2", files[0].getName());
         assertNotEquals("file2", files[1].getName());
+    }
+
+    @Test
+    void testJobCancelledException() {
+        JobProgressServiceImpl jobProgressUpdateService = spy(new JobProgressServiceImpl(jobRepository));
+        jobProgressUpdateService.initJob(JOB_UUID);
+        jobProgressService = jobProgressUpdateService;
+        jobChannelService = mock(JobChannelStubServiceImpl.class);
+
+        jobProcessor = new JobProcessorImpl(
+                fileService,
+                jobChannelService,
+                jobProgressService,
+                jobProgressUpdateService,
+                jobRepository,
+                jobOutputRepository,
+                contractProcessor,
+                eventLogger
+        );
+        ReflectionTestUtils.setField(jobProcessor, "efsMount", efsMountTmpDir.toString());
+
+        lenient().doThrow(JobCancelledException.class).when(jobChannelService).sendUpdate(anyString(), any(), anyLong());
+
+        assertDoesNotThrow(() -> {
+            jobProcessor.process(job.getJobUuid());
+        });
+    }
+
+    @Test
+    void testNullPointerException() {
+        JobProgressServiceImpl jobProgressUpdateService = spy(new JobProgressServiceImpl(jobRepository));
+        jobProgressUpdateService.initJob(JOB_UUID);
+        jobProgressService = jobProgressUpdateService;
+        jobChannelService = mock(JobChannelStubServiceImpl.class);
+
+        jobProcessor = new JobProcessorImpl(
+                fileService,
+                jobChannelService,
+                jobProgressService,
+                jobProgressUpdateService,
+                jobRepository,
+                jobOutputRepository,
+                contractProcessor,
+                eventLogger
+        );
+        ReflectionTestUtils.setField(jobProcessor, "efsMount", efsMountTmpDir.toString());
+
+        lenient().doThrow(NullPointerException.class).when(jobChannelService).sendUpdate(anyString(), any(), anyLong());
+
+        assertDoesNotThrow(() -> {
+            jobProcessor.process(job.getJobUuid());
+        });
+    }
+
+    @Test
+    void testPSQLException() {
+        JobProgressServiceImpl jobProgressUpdateService = spy(new JobProgressServiceImpl(jobRepository));
+        jobProgressUpdateService.initJob(JOB_UUID);
+        jobProgressService = jobProgressUpdateService;
+        jobChannelService = mock(JobChannelStubServiceImpl.class);
+
+        jobProcessor = new JobProcessorImpl(
+                fileService,
+                jobChannelService,
+                jobProgressService,
+                jobProgressUpdateService,
+                jobRepository,
+                jobOutputRepository,
+                contractProcessor,
+                eventLogger
+        );
+        ReflectionTestUtils.setField(jobProcessor, "efsMount", efsMountTmpDir.toString());
+
+        lenient().doAnswer(new Answer<Void>() {
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                throw new PSQLException("BOOM!", null, null);
+            }
+        }).when(jobChannelService).sendUpdate(anyString(), any(), anyLong());
+
+        assertDoesNotThrow(() -> {
+            jobProcessor.process(job.getJobUuid());
+        });
     }
 
     private PdpClient createClient() {
