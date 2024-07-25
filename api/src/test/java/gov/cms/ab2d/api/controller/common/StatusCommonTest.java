@@ -5,7 +5,6 @@ import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -60,7 +59,6 @@ class StatusCommonTest {
   @Test
   void testDoStatus1() {
     when(jobPollResult.getStatus()).thenReturn(JobStatus.SUCCESSFUL);
-
     assertNotNull(
       statusCommon.doStatus("1234", req, "prefix")
     );
@@ -96,6 +94,13 @@ class StatusCommonTest {
     assertThrows(JobProcessingException.class, () -> {
       statusCommon.doStatus("1234", req, "prefix");
     });
+  }
+
+  @Test
+  void testCancelJob() {
+    assertNotNull(
+      statusCommon.cancelJob("1234", req)
+    );
   }
 
 }
