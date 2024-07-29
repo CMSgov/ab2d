@@ -43,7 +43,7 @@ jobs:
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:
           params: |
-            AB2D_BFD_KEYSTORE_PASSWORD=/bfd/password
+            AB2D_BFD_KEYSTORE_PASSWORD=/bfd/keystore-password
 
       - name: Set env vars from AWS params
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
