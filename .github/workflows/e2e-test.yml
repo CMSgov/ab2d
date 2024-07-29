@@ -27,17 +27,24 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Set env vars from AWS params in management account
+        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |
+            ARTIFACTORY_URL=/artifactory/url
+            ARTIFACTORY_USER=/artifactory/user
+            ARTIFACTORY_PASSWORD=/artifactory/password
+
       - name: Assume role in AB2D impl account
         uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ secrets.IMPL_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-test-github-actions
 
-      - name: Download bfd keystore
-        run: |
-          aws s3 cp s3://ab2d-east-impl-main/ab2d_imp_keystore /tmp/ab2d_imp_keystore
-
-      - uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+      - name: Set env vars from AWS params in impl account
+        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:
@@ -58,9 +65,6 @@ jobs:
           sudo rm -rf /opt/maven
           sudo mv "$tmpdir/apache-maven-3.6.3" /opt/maven
 
-      - name: Set Maven path
-        run: echo "PATH=$PATH:/opt/maven/bin" >> $GITHUB_ENV
-
       - name: Create ab2d workspace directory and copy in keystore
         run: mkdir -p "$WORKSPACE/opt/ab2d"
 
@@ -68,6 +72,10 @@ jobs:
         run: |
           sudo chmod -R 777 /opt/actions-runner/_work/ab2d/ab2d/common/
           # Add other commands if necessary
+
+      - name: Download bfd keystore
+        run: |
+          aws s3 cp s3://ab2d-east-impl-main/ab2d_imp_keystore /tmp/ab2d_imp_keystore
 
       - name: Run e2e-bfd-test
         run: |
