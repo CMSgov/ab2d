@@ -15,6 +15,7 @@ jobs:
       AWS_DEFAULT_REGION: "us-east-1"
       WORKSPACE: ${{ github.workspace }}
       AB2D_BFD_KEYSTORE_LOCATION: "${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
     steps:
       - name: Checkout Code
