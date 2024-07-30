@@ -189,7 +189,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patient.getIdentifiers().getBeneficiaryId(), sinceTime, request.getContractNum());
             collector.filterAndAddEntries(eobBundle, patient);
 
-            // Only for S4802 and S5884 contracts (Centene and Humana support)
+            // Only for S4802 contracts (Centene support)
 
             while (BundleUtils.getNextLink(eobBundle) != null && isContinue(eobBundle, request)) {
                 eobBundle = bfdClient.requestNextBundleFromServer(request.getVersion(), eobBundle, request.getContractNum());
@@ -231,10 +231,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         //AB2D-5892 (Sprint 3)Centene customer support to provide 2 year data
         if (request.getContractNum().equals("S4802") || request.getContractNum().equals("Z1001")) {
             return lastUpdated.getTime() < sinceTime.plusMonths(1).toInstant().toEpochMilli();
-        }
-        //AB2D-6167 Create customized script for Humana
-        if (request.getContractNum().equals("S5884")) {
-            return lastUpdated.getTime() < sinceTime.plusMonths(2).toInstant().toEpochMilli();
         }
         return true;
     }

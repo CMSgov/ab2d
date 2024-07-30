@@ -242,8 +242,8 @@ public class ContractProcessorImpl implements ContractProcessor {
             return;
         }
 
-        //Ignore for S4802 and S5884 during Centene and Humana support
-        List<String> ignoredContracts = Arrays.asList("S4802", "S5884", "Z1001");
+        //Ignore for S4802 during Centene and Humana support
+        List<String> ignoredContracts = Arrays.asList("S4802", "Z1001");
         if (ignoredContracts.contains(contractData.getContract().getContractNumber())) {
             return;
         }

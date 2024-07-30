@@ -159,8 +159,8 @@ public class JobProcessorImpl implements JobProcessor {
                     job.getJobUuid(), job.getContractNumber());
             return;
         }
-        //Custom fix for Centene and Humana
-        List<String> ignoredContracts = Arrays.asList("S4802", "S5884", "Z1001");
+        //Custom fix for Centene
+        List<String> ignoredContracts = Arrays.asList("S4802", "Z1001");
         if (ignoredContracts.contains(job.getContractNumber())) {
             return;
         }
