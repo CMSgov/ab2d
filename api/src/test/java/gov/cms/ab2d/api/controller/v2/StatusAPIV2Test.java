@@ -110,7 +110,7 @@ class StatusAPIV2Test {
       delete(String.format("https://localhost:8443/api/v2/fhir/Job/%s/$status", jobUuid)).contentType(MediaType.APPLICATION_JSON)
         .header("Authorization", "Bearer " + token));
 
-    // assert that you can't (because the job is already marked successful)g
+    // assert that you can't (because the job is already marked successful)
     resultActions.andExpect(status().is4xxClientError());
   }
 
