@@ -104,7 +104,7 @@ class StatusAPIV2Test {
               .header("Authorization", "Bearer " + token)
               .header("X-Forwarded-Proto", "https"));
 
-    // delete the job
+    // try and delete the job
     String jobUuid = jobClientMock.pickAJob();
     ResultActions resultActions = this.mockMvc.perform(
       delete(String.format("https://localhost:8443/api/v2/fhir/Job/%s/$status", jobUuid)).contentType(MediaType.APPLICATION_JSON)
