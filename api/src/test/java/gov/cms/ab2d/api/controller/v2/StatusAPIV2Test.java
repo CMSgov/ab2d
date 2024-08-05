@@ -25,6 +25,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.util.List;
 
 import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
+import static gov.cms.ab2d.common.util.Constants.FHIR_NDJSON_CONTENT_TYPE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -77,14 +78,14 @@ class StatusAPIV2Test {
   void testStatus() throws Exception {
     // start a job
     this.mockMvc.perform(
-      get("https://localhost:8443/api/v2/fhir/Patient/$export").contentType(MediaType.APPLICATION_JSON)
+      get("https://localhost:8443/api/v2/fhir/Patient/$export").contentType(FHIR_NDJSON_CONTENT_TYPE)
               .header("Authorization", "Bearer " + token)
               .header("X-Forwarded-Proto", "https"));
 
     // get the job status
     String jobUuid = jobClientMock.pickAJob();
     ResultActions resultActions = this.mockMvc.perform(
-      get(String.format("https://localhost:8443/api/v2/fhir/Job/%s/$status", jobUuid)).contentType(MediaType.APPLICATION_JSON)
+      get(String.format("https://localhost:8443/api/v2/fhir/Job/%s/$status", jobUuid)).contentType(FHIR_NDJSON_CONTENT_TYPE)
         .header("Authorization", "Bearer " + token));
 
     // assert ok
@@ -95,14 +96,14 @@ class StatusAPIV2Test {
   void testDelete() throws Exception {
     // start a job
     this.mockMvc.perform(
-      get("https://localhost:8443/api/v2/fhir/Patient/$export").contentType(MediaType.APPLICATION_JSON)
+      get("https://localhost:8443/api/v2/fhir/Patient/$export").contentType(FHIR_NDJSON_CONTENT_TYPE)
               .header("Authorization", "Bearer " + token)
               .header("X-Forwarded-Proto", "https"));
 
     // try and delete the job
     String jobUuid = jobClientMock.pickAJob();
     ResultActions resultActions = this.mockMvc.perform(
-      delete(String.format("https://localhost:8443/api/v2/fhir/Job/%s/$status", jobUuid)).contentType(MediaType.APPLICATION_JSON)
+      delete(String.format("https://localhost:8443/api/v2/fhir/Job/%s/$status", jobUuid)).contentType(FHIR_NDJSON_CONTENT_TYPE)
         .header("Authorization", "Bearer " + token));
 
     // assert that you can't (because the job is already marked successful)
