@@ -23,6 +23,7 @@ import com.amazonaws.services.sqs.model.PurgeQueueRequest;
 
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.controller.TestUtil;
+import gov.cms.ab2d.api.remote.JobClientMock;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
@@ -40,6 +41,9 @@ class StatusAPIV2Test {
 
   @Autowired
   private MockMvc mockMvc;
+
+  @Autowired
+  JobClientMock jobClientMock;
 
   @Container
   private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
@@ -70,23 +74,44 @@ class StatusAPIV2Test {
   @AfterEach
   public void cleanup() {
     dataSetup.cleanup();
+    jobClientMock.cleanupAll();
     amazonSQS.purgeQueue(new PurgeQueueRequest(System.getProperty("sqs.queue-name")));
   }
 
   @Test
   void testStatus() throws Exception {
+    // start a job
+    this.mockMvc.perform(
+      get("https://localhost:8443/api/v2/fhir/Patient/$export").contentType(MediaType.APPLICATION_JSON)
+              .header("Authorization", "Bearer " + token)
+              .header("X-Forwarded-Proto", "https"));
+
+    // get the job status
+    String jobUuid = jobClientMock.pickAJob();
     ResultActions resultActions = this.mockMvc.perform(
-      get(String.format("https://localhost:8443/api/v2/fhir/Job/%d/$status", 1234)).contentType(MediaType.APPLICATION_JSON)
+      get(String.format("https://localhost:8443/api/v2/fhir/Job/%s/$status", jobUuid)).contentType(MediaType.APPLICATION_JSON)
         .header("Authorization", "Bearer " + token));
-    resultActions.andExpect(status().isNotFound());
+
+    // assert ok
+    resultActions.andExpect(status().isOk());
   }
 
   @Test
   void testDelete() throws Exception {
+    // start a job
+    this.mockMvc.perform(
+      get("https://localhost:8443/api/v2/fhir/Patient/$export").contentType(MediaType.APPLICATION_JSON)
+              .header("Authorization", "Bearer " + token)
+              .header("X-Forwarded-Proto", "https"));
+
+    // delete the job
+    String jobUuid = jobClientMock.pickAJob();
     ResultActions resultActions = this.mockMvc.perform(
-      delete(String.format("https://localhost:8443/api/v2/fhir/Job/%d/$status", 1234)).contentType(MediaType.APPLICATION_JSON)
+      delete(String.format("https://localhost:8443/api/v2/fhir/Job/%s/$status", jobUuid)).contentType(MediaType.APPLICATION_JSON)
         .header("Authorization", "Bearer " + token));
-    resultActions.andExpect(status().isNotFound());
+
+    // assert ok
+    resultActions.andExpect(status().is4xxClientError());
   }
 
 }
