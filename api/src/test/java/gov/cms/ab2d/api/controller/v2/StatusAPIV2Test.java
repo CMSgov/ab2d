@@ -1,9 +1,13 @@
 package gov.cms.ab2d.api.controller.v2;
 
-import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
-
-import java.util.List;
-
+import com.amazonaws.services.sqs.AmazonSQS;
+import gov.cms.ab2d.api.SpringBootApp;
+import gov.cms.ab2d.api.controller.TestUtil;
+import gov.cms.ab2d.api.remote.JobClientMock;
+import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
+import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,17 +22,9 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.model.PurgeQueueRequest;
+import java.util.List;
 
-import gov.cms.ab2d.api.SpringBootApp;
-import gov.cms.ab2d.api.controller.TestUtil;
-import gov.cms.ab2d.api.remote.JobClientMock;
-import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
-import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import gov.cms.ab2d.common.util.DataSetup;
-import gov.cms.ab2d.eventclient.clients.SQSEventClient;
-
+import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -75,7 +71,6 @@ class StatusAPIV2Test {
   public void cleanup() {
     dataSetup.cleanup();
     jobClientMock.cleanupAll();
-    amazonSQS.purgeQueue(new PurgeQueueRequest(System.getProperty("sqs.queue-name")));
   }
 
   @Test
