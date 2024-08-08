@@ -15,8 +15,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 
 import gov.cms.ab2d.api.controller.JobProcessingException;
+import gov.cms.ab2d.api.controller.TooManyRequestsException;
 import gov.cms.ab2d.api.remote.JobClient;
 import gov.cms.ab2d.common.model.PdpClient;
+import gov.cms.ab2d.common.model.TooFrequentInvocations;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.job.dto.JobPollResult;
@@ -53,6 +55,14 @@ class StatusCommonTest {
   void testThrowFailedResponse() {
     assertThrows(JobProcessingException.class, () -> {
       statusCommon.throwFailedResponse("error!");
+    });
+  }
+
+  @Test
+  void testTooFrequentInvocations() {
+    when(jobClient.poll(anyBoolean(), any(), any(), anyInt())).thenThrow(TooFrequentInvocations.class);
+    assertThrows(TooManyRequestsException.class, () -> {
+      statusCommon.doStatus("1234", req, "prefix");
     });
   }
 
