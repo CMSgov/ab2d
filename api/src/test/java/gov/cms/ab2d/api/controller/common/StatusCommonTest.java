@@ -113,4 +113,11 @@ class StatusCommonTest {
     );
   }
 
+  @Test
+  void testGetJobCompletedResponse() {
+    assertNotNull(
+      statusCommon.getJobCompletedResponse(jobPollResult, "1234", req, "prefix")
+    );
+  }
+
 }
