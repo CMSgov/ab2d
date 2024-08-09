@@ -213,17 +213,13 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     }
 
     boolean isContinue(IBaseResource resource, PatientClaimsRequest request) {
-        OffsetDateTime sinceTime = request.getSinceTime();
-        OffsetDateTime untilTime = request.getUntilTime();
-        if (sinceTime == null) {
-            return true;
-        }
         Date lastUpdated = resource.getMeta().getLastUpdated();
         if (lastUpdated == null) {
             return false;
         }
+        OffsetDateTime untilTime = request.getUntilTime();
         if (untilTime != null) {
-            return lastUpdated.getTime() <= untilTime.toInstant().toEpochMilli();
+            return lastUpdated.getTime() < untilTime.toInstant().toEpochMilli();
         }
         return true;
     }

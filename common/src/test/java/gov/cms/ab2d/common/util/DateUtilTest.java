@@ -46,6 +46,6 @@ class DateUtilTest {
     @Test
     void testSinceEarliestDateTime() {
         OffsetDateTime startCheck = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
-        assertEquals(startCheck, SINCE_EARLIEST_DATE_TIME);
+        assertEquals(SINCE_EARLIEST_DATE_TIME, startCheck);
     }
 }

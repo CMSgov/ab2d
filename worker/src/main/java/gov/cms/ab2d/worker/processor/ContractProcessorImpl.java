@@ -245,11 +245,6 @@ public class ContractProcessorImpl implements ContractProcessor {
             return;
         }
 
-//        //Ignore for S4802 and S5884 during Centene and Humana support
-//        List<String> ignoredContracts = Arrays.asList("S4802", "S5884", "Z1001");
-//        if (ignoredContracts.contains(contractData.getContract().getContractNumber())) {
-//            return;
-//        }
         // Verify that the number of benes requested matches the number expected from the database and fail
         // immediately if the two do not match
         ProgressTracker progressTracker = jobProgressService.getStatus(jobUuid);
