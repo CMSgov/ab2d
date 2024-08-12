@@ -84,6 +84,19 @@ class JobPreProcessorUnitTest {
     }
 
     @Test
+    void checkUntilAndFhirParameters() {
+        when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
+        job.setFhirVersion(STU3);
+        job.setUntil(OffsetDateTime.of(2022, 7, 11, 1, 2, 3, 0, ZoneOffset.UTC));
+        job.setStatus(SUBMITTED);
+        var exceptionThrown = assertThrows(
+                IllegalArgumentException.class,
+                () -> cut.preprocess(job.getJobUuid()));
+
+        assertEquals("The _until parameter is only available with version 2 (FHIR R4).", exceptionThrown.getMessage());
+    }
+
+    @Test
     @DisplayName("Throws exception when the job for the given JobUuid is not in submitted status")
     void whenTheJobForTheGivenJobUuidIsNotInSubmittedStatus_ThrowsException() {
 
@@ -188,6 +201,7 @@ class JobPreProcessorUnitTest {
         when(contractWorkerClient.getContractByContractNumber(job.getContractNumber())).thenReturn(contract);
         cut.preprocess(job.getJobUuid());
         assertNull(job.getSince());
+        assertNull(job.getUntil());
         verify(jobRepository, never()).findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(anyString(), any(), any());
         assertNull(job.getSinceSource());
     }
@@ -204,6 +218,7 @@ class JobPreProcessorUnitTest {
         cut.preprocess(job.getJobUuid());
 
         assertNull(job.getSince());
+        assertNull(job.getUntil());
         assertEquals(SinceSource.FIRST_RUN, job.getSinceSource());
     }
 

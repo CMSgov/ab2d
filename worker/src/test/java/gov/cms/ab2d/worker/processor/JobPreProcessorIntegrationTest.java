@@ -323,6 +323,24 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
         addJobForCleanup(newJob);
     }
 
+    @Test
+    void testUntilDateForJob() {
+        Job job = new Job();
+        job.setJobUuid("AA-BB");
+        job.setStatus(JobStatus.SUBMITTED);
+        job.setStatusMessage("0%");
+        job.setOrganization(pdpClient.getOrganization());
+        job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
+        OffsetDateTime until = OffsetDateTime.parse("2022-02-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
+        job.setUntil(until);
+
+        job.setContractNumber(contract.getContractNumber());
+        job = jobRepository.save(job);
+
+        Job processedJob = cut.preprocess(job.getJobUuid());
+        assertEquals(until.getNano(), processedJob.getUntil().getNano());
+    }
+
     private PdpClient createClient(Contract contract) {
         PdpClient pdpClient = new PdpClient();
         pdpClient.setClientId("Harry_Potter");

@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.processor;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.common.model.SinceSource;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
+import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobOutput;
 import gov.cms.ab2d.job.model.JobStartedBy;
@@ -67,6 +68,10 @@ public class JobPreProcessorImpl implements JobPreProcessor {
             final String errMsg = String.format("Job %s is not in %s status", jobUuid, SUBMITTED);
             log.error("Job is not in submitted status");
             throw new IllegalArgumentException(errMsg);
+        }
+
+        if (job.getFhirVersion() == FhirVersion.STU3 && job.getUntil() != null){
+            throw new IllegalArgumentException("The _until parameter is only available with version 2 (FHIR R4).");
         }
 
         ContractDTO contract = contractWorkerClient.getContractByContractNumber(job.getContractNumber());
