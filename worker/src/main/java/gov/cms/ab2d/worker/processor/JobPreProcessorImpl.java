@@ -70,7 +70,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
             throw new IllegalArgumentException(errMsg);
         }
 
-        if (job.getFhirVersion() == FhirVersion.STU3 && job.getUntil() != null){
+        if (job.getFhirVersion() == FhirVersion.STU3 && job.getUntil() != null) {
             throw new IllegalArgumentException("The _until parameter is only available with version 2 (FHIR R4).");
         }
 
