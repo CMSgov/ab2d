@@ -21,6 +21,12 @@ class LogstashHeaderFilterTest {
       logstashHeaderFilter.getIncludes(),
       new HashSet<>(Arrays.asList("cats", "dogs"))
     );
+
+    logstashHeaderFilter.removeInclude("dogs");
+    assertEquals(
+      logstashHeaderFilter.getIncludes(),
+      new HashSet<>(Arrays.asList("cats"))
+    );
   }
 
   @Test
@@ -31,6 +37,12 @@ class LogstashHeaderFilterTest {
     assertEquals(
       logstashHeaderFilter.getExcludes(),
       new HashSet<>(Arrays.asList("lizards", "snakes"))
+    );
+
+    logstashHeaderFilter.removeExclude("snakes");
+    assertEquals(
+      logstashHeaderFilter.getExcludes(),
+      new HashSet<>(Arrays.asList("lizards"))
     );
   }
 
