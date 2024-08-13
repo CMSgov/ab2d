@@ -185,7 +185,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patient.getIdentifiers().getBeneficiaryId(), sinceTime, untilTime, request.getContractNum());
             collector.filterAndAddEntries(eobBundle, patient);
 
-            while (BundleUtils.getNextLink(eobBundle) != null) {//&& isContinue(eobBundle, request)) {
+            while (BundleUtils.getNextLink(eobBundle) != null) { //&& isContinue(eobBundle, request)) {
                 eobBundle = bfdClient.requestNextBundleFromServer(request.getVersion(), eobBundle, request.getContractNum());
                 collector.filterAndAddEntries(eobBundle, patient);
             }
