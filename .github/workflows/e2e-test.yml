@@ -5,6 +5,10 @@ on:
   workflow_call:
   workflow_dispatch: # Allow manual trigger
 
+# Ensure we have only one e2e test running at a time
+concurrency:
+  group: e2e-test
+
 jobs:
   test:
     runs-on: self-hosted
