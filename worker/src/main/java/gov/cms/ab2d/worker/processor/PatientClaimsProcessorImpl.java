@@ -66,7 +66,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         FhirVersion fhirVersion = request.getVersion();
         try {
             String anyErrors = writeOutData(request, fhirVersion, update);
-            if (anyErrors != null && anyErrors.length() > 0) {
+            if (anyErrors != null && !anyErrors.isEmpty()) {
                 writeOutErrors(anyErrors, request);
             }
         } catch (Exception ex) {
@@ -185,7 +185,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patient.getIdentifiers().getBeneficiaryId(), sinceTime, untilTime, request.getContractNum());
             collector.filterAndAddEntries(eobBundle, patient);
 
-            while (BundleUtils.getNextLink(eobBundle) != null && isContinue(eobBundle, request)) {
+            while (BundleUtils.getNextLink(eobBundle) != null) {//&& isContinue(eobBundle, request)) {
                 eobBundle = bfdClient.requestNextBundleFromServer(request.getVersion(), eobBundle, request.getContractNum());
                 collector.filterAndAddEntries(eobBundle, patient);
             }
@@ -212,17 +212,21 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         }
     }
 
-    boolean isContinue(IBaseResource resource, PatientClaimsRequest request) {
-        Date lastUpdated = resource.getMeta().getLastUpdated();
-        if (lastUpdated == null) {
-            return false;
-        }
-        OffsetDateTime untilTime = request.getUntilTime();
-        if (untilTime != null) {
-            return lastUpdated.getTime() < untilTime.toInstant().toEpochMilli();
-        }
-        return true;
-    }
+//    boolean isContinue(IBaseResource resource, PatientClaimsRequest request) {
+//        OffsetDateTime sinceTime = request.getSinceTime();
+//        if (sinceTime == null) {
+//            return true;
+//        }
+//        Date lastUpdated = resource.getMeta().getLastUpdated();
+//        if (lastUpdated == null) {
+//            return false;
+//        }
+//        OffsetDateTime untilTime = request.getUntilTime();
+//        if (untilTime != null) {
+//            return lastUpdated.getTime() < untilTime.toInstant().toEpochMilli();
+//        }
+//        return true;
+//    }
 
     /**
      * Determine what since date to use if any.
