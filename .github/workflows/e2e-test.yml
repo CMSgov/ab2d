@@ -10,7 +10,6 @@ jobs:
     runs-on: self-hosted
 
     env:
-      E2E_ENVIRONMENT: 'IMPL'
       AB2D_V2_ENABLED: 'true'
       AWS_DEFAULT_REGION: "us-east-1"
       WORKSPACE: ${{ github.workspace }}
@@ -82,8 +81,10 @@ jobs:
           cp /tmp/ab2d_imp_keystore $AB2D_BFD_KEYSTORE_LOCATION
           test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
           chmod 666 $AB2D_BFD_KEYSTORE_LOCATION
-          mvn test -s settings.xml -pl e2e-bfd-test -am -Dtest=EndToEndBfdTests -DfailIfNoTests=false -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL}
+          mvn test -s settings.xml -pl e2e-bfd-test -am -Dtest=EndToEndBfdTests -DfailIfNoTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL
 
       - name: Run e2e-test
+        env:
+          E2E_ENVIRONMENT: 'IMPL'
         run: |
-          mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dusername=${{ secrets.ARTIFACTORY_USER }} -Dpassword=${{ secrets.ARTIFACTORY_PASSWORD }} -Drepository_url=${{ secrets.ARTIFACTORY_URL }}
+          mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL
