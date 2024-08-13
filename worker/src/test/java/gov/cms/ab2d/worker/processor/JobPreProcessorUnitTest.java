@@ -84,16 +84,25 @@ class JobPreProcessorUnitTest {
     }
 
     @Test
-    void checkUntilAndFhirParameters() {
+    void checkUntilAndSTU3Parameters() {
         when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
         job.setFhirVersion(STU3);
         job.setUntil(OffsetDateTime.of(2022, 7, 11, 1, 2, 3, 0, ZoneOffset.UTC));
         job.setStatus(SUBMITTED);
-        var exceptionThrown = assertThrows(
-                IllegalArgumentException.class,
-                () -> cut.preprocess(job.getJobUuid()));
+        cut.preprocess(job.getJobUuid());
+        assertEquals(JobStatus.FAILED, job.getStatus());
+    }
 
-        assertEquals("The _until parameter is only available with version 2 (FHIR R4).", exceptionThrown.getMessage());
+    @Test
+    void checkUntilAndR4Parameters() throws InterruptedException {
+        when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
+        job.setFhirVersion(R4);
+        job.setUntil(OffsetDateTime.of(2022, 7, 11, 1, 2, 3, 0, ZoneOffset.UTC));
+        job.setStatus(SUBMITTED);
+        when(contractWorkerClient.getContractByContractNumber(job.getContractNumber())).thenReturn(contract);
+        when(coverageDriver.isCoverageAvailable(any(Job.class), any(ContractDTO.class))).thenReturn(true);
+        cut.preprocess(job.getJobUuid());
+        assertEquals(JobStatus.IN_PROGRESS, job.getStatus());
     }
 
     @Test
