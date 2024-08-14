@@ -31,6 +31,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import static gov.cms.ab2d.api.controller.common.ApiText.*;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_CONTRACT_EXPORT;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT_TYPE;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_OUTPUT_FORMAT;
+import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_PREFER;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
