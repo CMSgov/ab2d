@@ -18,6 +18,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -155,6 +157,11 @@ public class JobProcessorImpl implements JobProcessor {
         if (progressTracker == null) {
             log.info("Job [{}] - contract [{}] does not have any progress information, skipping verifying tracker",
                     job.getJobUuid(), job.getContractNumber());
+            return;
+        }
+        //Custom fix for Centene
+        List<String> ignoredContracts = Arrays.asList("S4802", "Z1001");
+        if (ignoredContracts.contains(job.getContractNumber())) {
             return;
         }
 

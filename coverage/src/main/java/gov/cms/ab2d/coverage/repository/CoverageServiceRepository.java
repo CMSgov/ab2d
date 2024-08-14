@@ -217,6 +217,8 @@ public class CoverageServiceRepository {
             " ORDER BY coverage.contract, coverage.year, coverage.month, " +
                     " coverage.bene_coverage_period_id, coverage.bene_coverage_search_event_id ";
 
+    private static String vacuumCoverage = "VACUUM coverage";
+
     private final DataSource dataSource;
     private final CoveragePeriodRepository coveragePeriodRepo;
     private final CoverageSearchEventRepository coverageSearchEventRepo;
@@ -754,7 +756,7 @@ public class CoverageServiceRepository {
     @Trace
     public void vacuumCoverage() {
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement("VACUUM coverage")) {
+             PreparedStatement statement = connection.prepareStatement(vacuumCoverage)) {
             statement.execute();
         } catch (SQLException exception) {
             throw new RuntimeException("Could not vacuum coverage table", exception);

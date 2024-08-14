@@ -185,7 +185,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patient.getIdentifiers().getBeneficiaryId(), sinceTime, untilTime, request.getContractNum());
             collector.filterAndAddEntries(eobBundle, patient);
 
-            while (BundleUtils.getNextLink(eobBundle) != null) { //&& isContinue(eobBundle, request)) {
+            while (BundleUtils.getNextLink(eobBundle) != null) {
                 eobBundle = bfdClient.requestNextBundleFromServer(request.getVersion(), eobBundle, request.getContractNum());
                 collector.filterAndAddEntries(eobBundle, patient);
             }
@@ -211,22 +211,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             BFDClient.BFD_BULK_JOB_ID.remove();
         }
     }
-
-//    boolean isContinue(IBaseResource resource, PatientClaimsRequest request) {
-//        OffsetDateTime sinceTime = request.getSinceTime();
-//        if (sinceTime == null) {
-//            return true;
-//        }
-//        Date lastUpdated = resource.getMeta().getLastUpdated();
-//        if (lastUpdated == null) {
-//            return false;
-//        }
-//        OffsetDateTime untilTime = request.getUntilTime();
-//        if (untilTime != null) {
-//            return lastUpdated.getTime() < untilTime.toInstant().toEpochMilli();
-//        }
-//        return true;
-//    }
 
     /**
      * Determine what since date to use if any.

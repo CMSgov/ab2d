@@ -59,7 +59,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 
-import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
+import static gov.cms.ab2d.common.util.Constants.FHIR_NDJSON_CONTENT_TYPE;
 import static gov.cms.ab2d.eventclient.events.ErrorEvent.ErrorType.TOO_MANY_SEARCH_ERRORS;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.TestUtil.getOpenRange;
@@ -437,7 +437,7 @@ class JobProcessorIntegrationTest extends JobCleanup {
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage("0%");
         job.setOrganization(pdpClient.getOrganization());
-        job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
+        job.setOutputFormat(FHIR_NDJSON_CONTENT_TYPE);
         job.setCreatedAt(OffsetDateTime.now());
         job.setFhirVersion(STU3);
         job.setContractNumber(contract.getContractNumber());

@@ -22,7 +22,7 @@ import org.springframework.stereotype.Service;
 
 import static gov.cms.ab2d.common.util.Constants.FILE_LOG;
 import static gov.cms.ab2d.common.util.Constants.JOB_LOG;
-import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
+import static gov.cms.ab2d.common.util.Constants.FHIR_NDJSON_CONTENT_TYPE;
 import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 
@@ -46,7 +46,7 @@ public class FileDownloadCommon {
 
         String fileDownloadName = downloadResource.getFile().getName();
 
-        response.setHeader(HttpHeaders.CONTENT_TYPE, NDJSON_FIRE_CONTENT_TYPE);
+        response.setHeader(HttpHeaders.CONTENT_TYPE, FHIR_NDJSON_CONTENT_TYPE);
         response.setHeader("Content-Disposition", "inline; swaggerDownload=\"attachment\"; filename=\"" + fileDownloadName + "\"");
 
         try (OutputStream out = response.getOutputStream(); FileInputStream in = new FileInputStream(downloadResource.getFile())) {

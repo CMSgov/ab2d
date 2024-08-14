@@ -29,14 +29,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-
 import static gov.cms.ab2d.api.controller.common.ApiText.*;
-import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_CONTRACT_EXPORT;
-import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT;
-import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT_TYPE;
-import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_MAIN;
-import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_OUTPUT_FORMAT;
-import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_PREFER;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
@@ -48,7 +41,7 @@ import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 @Slf4j
 @Tag(name = "1. Export", description = BULK_MAIN)
 @RestController
-@RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX, produces = {APPLICATION_JSON})
+@RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX, produces = {FHIR_JSON_CONTENT_TYPE, APPLICATION_JSON})
 public class BulkDataAccessAPIV1 {
     private final JobClient jobClient;
     private final ApiCommon apiCommon;
@@ -66,7 +59,7 @@ public class BulkDataAccessAPIV1 {
             @Parameter(name = OUT_FORMAT, description = BULK_OUTPUT_FORMAT, in = ParameterIn.QUERY,
                 schema = @Schema(allowableValues = {
                     "application/fhir+ndjson", "application/ndjson", "ndjson"
-                }, defaultValue = NDJSON_FIRE_CONTENT_TYPE)
+                }, defaultValue = FHIR_NDJSON_CONTENT_TYPE)
             ),
             @Parameter(name = SINCE, description = BULK_SINCE, schema = @Schema(type = "date-time", description = SINCE_EARLIEST_DATE)),
             @Parameter(name = UNTIL, description = BULK_UNTIL, schema = @Schema(type = "date-time", description = UNTIL_EXAMPLE_DATE))
@@ -78,7 +71,7 @@ public class BulkDataAccessAPIV1 {
             ),
             @ApiResponse(responseCode = "429", description = MAX_JOBS,
                 headers = @Header(name = CONTENT_LOCATION, description = RUNNING_JOBIDS, schema = @Schema(type = "string")),
-                content = @Content(schema = @Schema(ref = "#/components/schemas/OperationOutcome"))
+                content = @Content(mediaType = FHIR_JSON_CONTENT_TYPE, schema = @Schema(ref = "#/components/schemas/OperationOutcome"))
             )
         }
     )
@@ -88,7 +81,7 @@ public class BulkDataAccessAPIV1 {
             HttpServletRequest request,
             @RequestParam(name = TYPE_PARAM, required = false, defaultValue = EOB)
                 String resourceTypes,
-            @RequestParam(name = OUT_FORMAT, required = false, defaultValue = NDJSON_FIRE_CONTENT_TYPE)
+            @RequestParam(name = OUT_FORMAT, required = false, defaultValue = FHIR_NDJSON_CONTENT_TYPE)
                 String outputFormat,
             @RequestParam(required = false, name = SINCE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
                 OffsetDateTime since,
@@ -112,7 +105,7 @@ public class BulkDataAccessAPIV1 {
             @Parameter(name = OUT_FORMAT, description = BULK_OUTPUT_FORMAT, in = ParameterIn.QUERY,
                 schema = @Schema(allowableValues = {
                     "application/fhir+ndjson", "application/ndjson", "ndjson"
-                }, defaultValue = NDJSON_FIRE_CONTENT_TYPE)
+                }, defaultValue = FHIR_NDJSON_CONTENT_TYPE)
             ),
             @Parameter(name = SINCE, description = BULK_SINCE, example = SINCE_EARLIEST_DATE, schema = @Schema(type = "date-time"))
     }
@@ -123,7 +116,7 @@ public class BulkDataAccessAPIV1 {
             ),
             @ApiResponse(responseCode = "429", description = MAX_JOBS,
                 headers = @Header(name = CONTENT_LOCATION, description = RUNNING_JOBIDS, schema = @Schema(type = "string")),
-                content = @Content(schema = @Schema(ref = "#/components/schemas/OperationOutcome"))
+                content = @Content(mediaType = FHIR_JSON_CONTENT_TYPE, schema = @Schema(ref = "#/components/schemas/OperationOutcome"))
             )
         }
     )

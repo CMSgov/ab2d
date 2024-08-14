@@ -18,7 +18,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -89,4 +89,12 @@ class ContractServiceImplTest {
 
         assertEquals(contract, retrieved.get());
     }
+
+    @Test
+    void testUpdateContract() {
+        assertDoesNotThrow(() -> {
+            contractService.updateContract(contract);
+        });
+    }
+
 }

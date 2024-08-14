@@ -7,10 +7,11 @@ import gov.cms.ab2d.common.service.InvalidContractException;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.fhir.FhirVersion;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import org.junit.jupiter.api.Test;
 
 import java.time.OffsetDateTime;
-
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE_TIME;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -74,6 +75,29 @@ class ApiCommonTest {
         assertThrows(InvalidClientInputException.class, () -> apiCommon.checkUntilTime(SINCE_EARLIEST_DATE_TIME, currentDate, FhirVersion.STU3));
         assertThrows(InvalidClientInputException.class, () -> apiCommon.checkUntilTime(currentDate, SINCE_EARLIEST_DATE_TIME, FhirVersion.R4));
         assertThrows(InvalidClientInputException.class, () -> apiCommon.checkUntilTime(null, SINCE_EARLIEST_DATE_TIME.minusMonths(1), FhirVersion.R4));
+    }
+  
+    void testCheckSinceTime() {
+        assertDoesNotThrow(() -> {
+            apiCommon.checkSinceTime(null);
+        });
+
+        OffsetDateTime time1 = OffsetDateTime.of(9999, 1, 1, 1, 1, 1, 1, ZoneOffset.UTC);
+        assertThrows(InvalidClientInputException.class, () -> {
+            apiCommon.checkSinceTime(time1);
+        });
+
+        OffsetDateTime time2 = OffsetDateTime.of(1, 1, 1, 1, 1, 1, 1, ZoneOffset.UTC);
+        assertThrows(InvalidClientInputException.class, () -> {
+            apiCommon.checkSinceTime(time2);
+        });
+    }
+
+    @Test
+    void testCheckIfContractAttested() {
+        assertThrows(IllegalStateException.class, () -> {
+            apiCommon.checkIfContractAttested(null, CONTRACT_NUMBER);
+        });
     }
 
     private ApiCommon buildApiCommon(ContractService contractService) {

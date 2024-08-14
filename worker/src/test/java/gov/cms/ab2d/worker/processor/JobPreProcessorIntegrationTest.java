@@ -41,7 +41,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import static gov.cms.ab2d.common.model.SinceSource.AB2D;
 import static gov.cms.ab2d.common.model.SinceSource.FIRST_RUN;
 import static gov.cms.ab2d.common.model.SinceSource.USER;
-import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
+import static gov.cms.ab2d.common.util.Constants.FHIR_NDJSON_CONTENT_TYPE;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.job.model.JobStartedBy.DEVELOPER;
@@ -174,7 +174,7 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
         oldJob.setStatus(JobStatus.SUCCESSFUL);
         oldJob.setStatusMessage("100%");
         oldJob.setOrganization(pdpClient.getOrganization());
-        oldJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
+        oldJob.setOutputFormat(FHIR_NDJSON_CONTENT_TYPE);
         OffsetDateTime oldJobTime = OffsetDateTime.parse("2021-01-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
         oldJob.setCreatedAt(oldJobTime);
         oldJob.setFhirVersion(STU3);
@@ -188,7 +188,7 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
         reallyOldJob.setStatusMessage("100%");
         reallyOldJob.setOrganization(pdpClient.getOrganization());
         reallyOldJob.setStartedBy(DEVELOPER);
-        reallyOldJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
+        reallyOldJob.setOutputFormat(FHIR_NDJSON_CONTENT_TYPE);
         OffsetDateTime reallyOldldJobTime = OffsetDateTime.parse("2020-12-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
         reallyOldJob.setCreatedAt(reallyOldldJobTime);
         reallyOldJob.setFhirVersion(R4);
@@ -200,7 +200,7 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
         newJob.setStatus(JobStatus.SUBMITTED);
         newJob.setStatusMessage("0%");
         newJob.setOrganization(pdpClient.getOrganization());
-        newJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
+        newJob.setOutputFormat(FHIR_NDJSON_CONTENT_TYPE);
         newJob.setCreatedAt(OffsetDateTime.now());
         newJob.setFhirVersion(R4);
         newJob.setContractNumber(contract.getContractNumber());
@@ -223,7 +223,7 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
         oldJob.setStatus(JobStatus.FAILED);
         oldJob.setStatusMessage("100%");
         oldJob.setOrganization(pdpClient.getOrganization());
-        oldJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
+        oldJob.setOutputFormat(FHIR_NDJSON_CONTENT_TYPE);
         OffsetDateTime oldJobTime = OffsetDateTime.parse("2021-01-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
         oldJob.setCreatedAt(oldJobTime);
         oldJob.setFhirVersion(STU3);
@@ -235,7 +235,7 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
         newJob.setStatus(JobStatus.SUBMITTED);
         newJob.setStatusMessage("0%");
         newJob.setOrganization(pdpClient.getOrganization());
-        newJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
+        newJob.setOutputFormat(FHIR_NDJSON_CONTENT_TYPE);
         OffsetDateTime newJobTime = OffsetDateTime.parse("2021-02-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
         newJob.setCreatedAt(newJobTime);
         newJob.setFhirVersion(R4);
@@ -259,7 +259,7 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
         oldJob.setStatusMessage("100%");
         oldJob.setOrganization(pdpClient.getOrganization());
         oldJob.setStartedBy(DEVELOPER);
-        oldJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
+        oldJob.setOutputFormat(FHIR_NDJSON_CONTENT_TYPE);
         OffsetDateTime oldJobTime = OffsetDateTime.parse("2021-01-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
         oldJob.setCreatedAt(oldJobTime);
         oldJob.setFhirVersion(STU3);
@@ -271,7 +271,7 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
         newJob.setStatus(JobStatus.SUBMITTED);
         newJob.setStatusMessage("0%");
         newJob.setOrganization(pdpClient.getOrganization());
-        newJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
+        newJob.setOutputFormat(FHIR_NDJSON_CONTENT_TYPE);
         newJob.setCreatedAt(OffsetDateTime.now());
         newJob.setFhirVersion(R4);
         newJob.setContractNumber(contract.getContractNumber());
@@ -294,7 +294,7 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
         oldJob.setStatus(JobStatus.SUCCESSFUL);
         oldJob.setStatusMessage("100%");
         oldJob.setOrganization(pdpClient.getOrganization());
-        oldJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
+        oldJob.setOutputFormat(FHIR_NDJSON_CONTENT_TYPE);
         OffsetDateTime oldJobTime = OffsetDateTime.parse("2021-01-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
         oldJob.setCreatedAt(oldJobTime);
         oldJob.setFhirVersion(STU3);
@@ -306,7 +306,7 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
         newJob.setStatus(JobStatus.SUBMITTED);
         newJob.setStatusMessage("0%");
         newJob.setOrganization(pdpClient.getOrganization());
-        newJob.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
+        newJob.setOutputFormat(FHIR_NDJSON_CONTENT_TYPE);
         OffsetDateTime suppliedSince = OffsetDateTime.parse("2021-02-01T00:00:00.000-05:00", DateTimeFormatter.ISO_DATE_TIME);
         newJob.setSince(suppliedSince);
         newJob.setCreatedAt(OffsetDateTime.now());
@@ -359,7 +359,7 @@ class JobPreProcessorIntegrationTest extends JobCleanup {
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage("0%");
         job.setOrganization(pdpClient.getOrganization());
-        job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
+        job.setOutputFormat(FHIR_NDJSON_CONTENT_TYPE);
         job.setCreatedAt(OffsetDateTime.now());
         job.setFhirVersion(STU3);
         job.setContractNumber(contractNumber);
