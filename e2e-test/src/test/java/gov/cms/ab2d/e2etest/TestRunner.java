@@ -518,6 +518,7 @@ class TestRunner {
 
         if (statusResponseAgain.statusCode() == 500) {
             // No values returned if 500
+            log.info("500 response body: " + statusResponseAgain.body());
             return null;
         }
         assertEquals(200, statusResponseAgain.statusCode());
