@@ -15,9 +15,7 @@ jobs:
 
     env:
       AB2D_V2_ENABLED: 'true'
-      AWS_DEFAULT_REGION: "us-east-1"
-      WORKSPACE: ${{ github.workspace }}
-      AB2D_BFD_KEYSTORE_LOCATION: "${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
+      AB2D_BFD_KEYSTORE_LOCATION: "opt/ab2d/ab2d_bfd_keystore"
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
     steps:
@@ -29,6 +27,16 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+
+      - name: Install Maven 3.6.3
+        run: |
+          export PATH="$PATH:/opt/maven/bin"
+          echo "PATH=$PATH" >> $GITHUB_ENV
+          if mvn -v; then echo "Maven already installed" && exit 0; else echo "Installing Maven"; fi
+          tmpdir="$(mktemp -d)"
+          curl -LsS https://archive.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz | tar xzf - -C "$tmpdir"
+          sudo rm -rf /opt/maven
+          sudo mv "$tmpdir/apache-maven-3.6.3" /opt/maven
 
       - name: Set env vars from AWS params in management account
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
@@ -58,33 +66,18 @@ jobs:
             SECONDARY_USER_OKTA_CLIENT_ID=/okta/test-pdp-1000-id
             SECONDARY_USER_OKTA_CLIENT_PASSWORD=/okta/test-pdp-1000-secret
 
-      - name: Install Maven 3.6.3
-        run: |
-          export PATH="$PATH:/opt/maven/bin"
-          echo "PATH=$PATH" >> $GITHUB_ENV
-          if mvn -v; then echo "Maven already installed" && exit 0; else echo "Installing Maven"; fi
-          tmpdir="$(mktemp -d)"
-          curl -LsS https://archive.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz | tar xzf - -C "$tmpdir"
-          sudo rm -rf /opt/maven
-          sudo mv "$tmpdir/apache-maven-3.6.3" /opt/maven
-
-      - name: Create ab2d workspace directory and copy in keystore
-        run: mkdir -p "$WORKSPACE/opt/ab2d"
-
-      - name: Set directory permissions
-        run: |
-          sudo chmod -R 777 /opt/actions-runner/_work/ab2d/ab2d/common/
-          # Add other commands if necessary
-
       - name: Download bfd keystore
         run: |
           aws s3 cp s3://ab2d-east-impl-main/ab2d_imp_keystore /tmp/ab2d_imp_keystore
 
-      - name: Run e2e-bfd-test
+      - name: Create ab2d directory and copy in keystore
         run: |
+          mkdir -p "opt/ab2d"
           cp /tmp/ab2d_imp_keystore $AB2D_BFD_KEYSTORE_LOCATION
           test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
-          chmod 666 $AB2D_BFD_KEYSTORE_LOCATION
+
+      - name: Run e2e-bfd-test
+        run: |
           mvn test -s settings.xml -pl e2e-bfd-test -am -Dtest=EndToEndBfdTests -DfailIfNoTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress
 
       - name: Run e2e-test
