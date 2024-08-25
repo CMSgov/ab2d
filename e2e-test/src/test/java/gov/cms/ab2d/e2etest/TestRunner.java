@@ -675,6 +675,10 @@ class TestRunner {
         String oktaClientId = System.getenv("SECONDARY_USER_OKTA_CLIENT_ID");
         String oktaPassword = System.getenv("SECONDARY_USER_OKTA_CLIENT_PASSWORD");
 
+        if (StringUtils.isBlank(oktaClientId) || StringUtils.isBlank(oktaPassword)) {
+            fail("Both SECONDARY_USER_OKTA_CLIENT_ID and SECONDARY_USER_OKTA_CLIENT_PASSWORD must be set in env");
+        }
+
         return new APIClient(baseUrl, oktaUrl, oktaClientId, oktaPassword);
     }
 
