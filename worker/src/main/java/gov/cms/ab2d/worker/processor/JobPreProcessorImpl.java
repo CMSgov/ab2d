@@ -83,6 +83,20 @@ public class JobPreProcessorImpl implements JobPreProcessor {
             return job;
         }
 
+        if (job.getSince() != null && job.getUntil() != null
+                && job.getUntil().toInstant().isBefore(job.getSince().toInstant())) {
+            log.warn("JobPreProcessorImpl > preprocess: job FAILED because the _until is before _since.");
+
+            eventLogger.logAndAlert(job.buildJobStatusChangeEvent(FAILED, EOB_JOB_FAILURE + " Job " + jobUuid
+                    + "failed because the _until is before _since."), PUBLIC_LIST);
+
+            job.setStatus(FAILED);
+            job.setStatusMessage("failed because the _until is before _since.");
+
+            jobRepository.save(job);
+            return job;
+        }
+
         ContractDTO contract = contractWorkerClient.getContractByContractNumber(job.getContractNumber());
         if (contract == null) {
             throw new IllegalArgumentException("A job must always have a contract.");

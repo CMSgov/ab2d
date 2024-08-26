@@ -106,6 +106,17 @@ class JobPreProcessorUnitTest {
     }
 
     @Test
+    void checkUntilAndSinceParameters() {
+        when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
+        job.setFhirVersion(R4);
+        job.setSince(OffsetDateTime.of(2024, 7, 11, 1, 2, 3, 0, ZoneOffset.UTC));
+        job.setUntil(OffsetDateTime.of(2022, 7, 11, 1, 2, 3, 0, ZoneOffset.UTC));
+        job.setStatus(SUBMITTED);
+        cut.preprocess(job.getJobUuid());
+        assertEquals(JobStatus.FAILED, job.getStatus());
+    }
+
+    @Test
     @DisplayName("Throws exception when the job for the given JobUuid is not in submitted status")
     void whenTheJobForTheGivenJobUuidIsNotInSubmittedStatus_ThrowsException() {
 
