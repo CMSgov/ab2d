@@ -7,15 +7,29 @@ jobs:
   unit-integration-test:
     uses: ./.github/workflows/unit-integration-test.yml
     secrets: inherit
-  deploy-api:
+  build-api:
     needs: unit-integration-test
+    uses: ./.github/workflows/build.yml
+    with:
+      environment: test
+      module: api
+    secrets: inherit
+  build-worker:
+    needs: unit-integration-test
+    uses: ./.github/workflows/build.yml
+    with:
+      environment: test
+      module: worker
+    secrets: inherit
+  deploy-api:
+    needs: build-api
     uses: ./.github/workflows/deploy.yml
     with:
       environment: test
       module: api
     secrets: inherit
   deploy-worker:
-    needs: unit-integration-test
+    needs: build-worker
     uses: ./.github/workflows/deploy.yml
     with:
       environment: test
