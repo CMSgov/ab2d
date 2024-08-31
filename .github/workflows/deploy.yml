@@ -5,16 +5,10 @@ on:
     inputs:
       environment:
         required: true
-        type: choice
-        options:
-          - dev
-          - test
+        type: string
       module:
         required: true
-        type: choice
-        options:
-          - api
-          - worker
+        type: string
   workflow_dispatch:
     inputs:
       environment:
