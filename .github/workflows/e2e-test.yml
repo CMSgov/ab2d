@@ -92,6 +92,6 @@ jobs:
 
       - name: Run e2e-test
         env:
-          E2E_ENVIRONMENT: ${{ format('{0}', fromJson('{ "dev": "DEV", "test": "IMPL", "sbx": "SANDBOX" }')[inputs.environment]) }}
+          E2E_ENVIRONMENT: ${{ inputs.environment == 'dev' && 'DEV' || inputs.environment == 'test' && 'IMPL' || inputs.environment == 'sbx' && 'SANDBOX' }}
         run: |
           mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress
