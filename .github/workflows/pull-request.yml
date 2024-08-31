@@ -23,6 +23,9 @@ jobs:
     secrets: inherit
   deploy-api:
     needs: build-api
+    permissions:
+      contents: read
+      id-token: write
     uses: ./.github/workflows/deploy.yml
     with:
       environment: test
@@ -30,6 +33,9 @@ jobs:
     secrets: inherit
   deploy-worker:
     needs: build-worker
+    permissions:
+      contents: read
+      id-token: write
     uses: ./.github/workflows/deploy.yml
     with:
       environment: test
