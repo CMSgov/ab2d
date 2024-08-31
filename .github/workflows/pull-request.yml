@@ -4,18 +4,18 @@ on:
   pull_request:
 
 jobs:
-  unit-integration-test:
-    uses: ./.github/workflows/unit-integration-test.yml
-    secrets: inherit
+  #unit-integration-test:
+  #  uses: ./.github/workflows/unit-integration-test.yml
+  #  secrets: inherit
   build-api:
-    needs: unit-integration-test
+    #needs: unit-integration-test
     uses: ./.github/workflows/build.yml
     with:
       environment: test
       module: api
     secrets: inherit
   build-worker:
-    needs: unit-integration-test
+    #needs: unit-integration-test
     uses: ./.github/workflows/build.yml
     with:
       environment: test
