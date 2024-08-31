@@ -79,7 +79,7 @@ jobs:
           SHA_SHORT=$(git rev-parse --short HEAD)
           echo "Building image for commit sha $SHA_SHORT"
           docker build \
-            -t "${ECR_REPO_URI}:${DEPLOYMENT_ENV}-$SHA_SHORT" \
-            -t "${ECR_REPO_URI}:${DEPLOYMENT_ENV}-latest" .
+            -t "${ECR_REPO_URI}:ab2d-${DEPLOYMENT_ENV}-$SHA_SHORT" \
+            -t "${ECR_REPO_URI}:ab2d-${DEPLOYMENT_ENV}-latest" .
           echo "Pushing image"
           docker push "${ECR_REPO_URI}" --all-tags
