@@ -82,7 +82,7 @@ jobs:
       - name: Create opt/ab2d directory and download keystore
         run: |
           mkdir -p opt/ab2d
-          KEYSTORE_FILE_NAME="ab2d_${{ inputs.environment == "test" && "imp" || inputs.environment }}_keystore"
+          KEYSTORE_FILE_NAME="ab2d_${{ inputs.environment == 'test' && 'imp' || inputs.environment }}_keystore"
           aws s3 cp s3://${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}-main/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
           test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
 
