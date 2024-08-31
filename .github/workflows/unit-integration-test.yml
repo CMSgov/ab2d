@@ -1,7 +1,7 @@
 name: Run unit and integration tests
 
 on:
-  pull_request:
+  workflow_call:
   workflow_dispatch: # Allow manual trigger
 
 jobs:

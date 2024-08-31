@@ -1,0 +1,29 @@
+name: pull request jobs
+
+on:
+  pull_request:
+
+jobs:
+  unit-integration-test:
+    uses: ./.github/workflows/unit-integration-test.yml
+    secrets: inherit
+  deploy-api:
+    needs: unit-integration-test
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: test
+      module: api
+    secrets: inherit
+  deploy-worker:
+    needs: unit-integration-test
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: test
+      module: worker
+    secrets: inherit
+  e2e-test:
+    needs: [deploy-api, deploy-worker]
+    uses: ./.github/workflows/e2e-test.yml
+    with:
+      environment: test
+    secrets: inherit
