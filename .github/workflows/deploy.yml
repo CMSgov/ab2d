@@ -9,7 +9,6 @@ on:
         options:
           - dev
           - test
-    inputs:
       module:
         required: true
         type: choice
@@ -24,7 +23,6 @@ on:
         options:
           - dev
           - test
-    inputs:
       module:
         required: true
         type: choice
