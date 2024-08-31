@@ -33,10 +33,6 @@ jobs:
       AWS_REGION: ${{ vars.AWS_REGION }}
       DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}
 
-    defaults:
-      run:
-        working-directory: ./${{ inputs.module }}
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -75,6 +71,7 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets.MGMT_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-mgmt-github-actions
 
       - name: Push to ECR
+        working-directory: ./${{ inputs.module }}
         run: |
           ECR_REPO_DOMAIN="${{ secrets.MGMT_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com"
           aws ecr get-login-password | docker login --username AWS --password-stdin "$ECR_REPO_DOMAIN"
