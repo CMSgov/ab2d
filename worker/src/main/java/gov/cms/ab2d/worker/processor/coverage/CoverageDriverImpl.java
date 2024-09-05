@@ -556,6 +556,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         ZonedDateTime now = getEndDateTime();
 
         if (contract == null) {
+            log.error("CoverageDriverImpl Error: Cannot pull an initial page of enrollment from the DB because the contract we were passed is null.");
             throw new CoverageDriverException("cannot retrieve metadata for job missing contract");
         }
 
@@ -575,7 +576,7 @@ public class CoverageDriverImpl implements CoverageDriver {
             // Make request for coverage metadata
             return coverageService.pageCoverage(request);
         } catch (Exception exception) {
-            log.error("coverage period missing or year,month query incorrect, driver should have resolved earlier");
+            log.error("CoverageDriverImpl Error: Failed when attempting to pull an initial page of enrollment from the database. Coverage period may be missing or the year/month query may be incorrect.");
             throw new CoverageDriverException("coverage driver failing preconditions", exception);
         }
     }
@@ -630,7 +631,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         try {
             return coverageService.pageCoverage(request);
         } catch (Exception exception) {
-            log.error("coverage period missing or year,month query incorrect, driver should have resolved earlier");
+            log.error("CoverageDriverImpl Error: The CoverageService has failed to page coverage for the CoveragePagingRequest for contract: " + request.getContractNumber());
             throw new CoverageDriverException("coverage driver failing preconditions", exception);
         }
     }

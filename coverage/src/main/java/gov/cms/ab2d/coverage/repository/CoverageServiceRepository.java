@@ -383,6 +383,7 @@ public class CoverageServiceRepository {
             }
 
         } catch (SQLException sqlException) {
+            log.error("CoverageServiceRepository Error: Failed at function: insertBatches. Failed to insert coverage information.");
             throw new RuntimeException("failed to insert coverage information", sqlException);
         }
     }
@@ -549,6 +550,8 @@ public class CoverageServiceRepository {
         // A missing period = one month of enrollment missing for the contract
         List<CoveragePeriod> coveragePeriods = coveragePeriodRepo.findAllByContractNumber(contract.getContractNumber());
         if (coveragePeriods.size() != expectedCoveragePeriods) {
+            log.error("CoverageServiceRepository Error: Failed at function: pageCoverage. We failed to page coverage because there is at least one coverage period missing from the enrollment table for contract " + page.getContract().getContractNumber());
+            log.error("CoverageServiceRepository Error Details: coveragePeriods.size() = " + coveragePeriods.size() + " expectedCoveragePeriods = " + expectedCoveragePeriods);
             throw new IllegalArgumentException("at least one coverage period missing from enrollment table for contract "
                     + page.getContract().getContractNumber());
         }
@@ -759,6 +762,7 @@ public class CoverageServiceRepository {
              PreparedStatement statement = connection.prepareStatement(vacuumCoverage)) {
             statement.execute();
         } catch (SQLException exception) {
+            log.error("CoverageServiceRepository: Error: Failed at function: vacuumCoverage. Failed to execute the query: 'VACUUM coverage' to vacuum the coverage table.");
             throw new RuntimeException("Could not vacuum coverage table", exception);
         }
     }
