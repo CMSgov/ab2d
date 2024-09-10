@@ -24,8 +24,11 @@ public class FilterChainExceptionHandler extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) {
         try {
+            log.warn("AB2D-6303 doFilterInternal before doFilter. filterChain: {}", filterChain);
             filterChain.doFilter(request, response);
+            log.warn("AB2D-6303 doFilterInternal after doFilter");
         } catch (Exception e) {
+            log.warn("AB2D-6303 doFilterInternal in catch. Exception: {}", e);
             handlerExceptionResolver.resolveException(request, response, null, e);
         }
     }

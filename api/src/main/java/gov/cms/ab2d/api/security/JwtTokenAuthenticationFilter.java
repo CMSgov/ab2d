@@ -100,6 +100,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
+        log.warn("AB2D-6303 Entering doFilterInternal");
 
         String jobId = UtilMethods.parseJobId(request.getRequestURI());
 
@@ -110,6 +111,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
             chain.doFilter(request, response);
             return;
         }
+        log.warn("AB2D-6303 After shouldBePublic");
 
         String token = null;
         String client;
@@ -118,6 +120,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
             token = getToken(request);
             client = getClientId(token);
         } catch (Exception ex) {
+            log.warn("AB2D-6303 Throwing exception after getToken");
             logApiRequestEvent(request, token, null, jobId);
             throw ex;
         }
@@ -160,6 +163,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
         pdpClientService.setupClientAndRolesInSecurityContext(pdpClient, request);
 
         // go to the next filter in the filter chain
+        log.warn("AB2D-6303 calling chain.doFilter");
         chain.doFilter(request, response);
     }
 
@@ -204,6 +208,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
      * @return true if it's public
      */
     private boolean shouldBePublic(String requestUri) {
+        log.warn("AB2D-6303 Entering shouldBePublic");
         if (SWAGGER_LIST.stream().anyMatch(requestUri::startsWith)) {
             log.debug("Swagger requested");
             return true;
@@ -223,6 +228,12 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
             return true;
         }
 
+        if (requestUri.endsWith("/metadata")) {
+            log.debug("metadata requested");
+            return true;
+        }
+        log.warn("AB2D-6303 Exiting shouldBePublic with false");
+
         return false;
     }
 
@@ -233,14 +244,17 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
      * @return - the value of the bearer token
      */
     private String getToken(HttpServletRequest request) {
+        log.warn("AB2D-6303 Entering getToken");
         String header = request.getHeader(jwtConfig.getHeader());
         if (header == null) {
             String noHeaderMsg = "Authorization header for token was not present";
+            log.warn("AB2D-6303 header not present");
             log.error(noHeaderMsg);
             throw new InvalidAuthHeaderException(noHeaderMsg);
         }
 
         if (!header.startsWith(jwtConfig.getPrefix())) {
+            log.warn("AB2D-6303 header wrong prefix");
             log.error("Header did not start with prefix {}", jwtConfig.getPrefix());
             throw new InvalidAuthHeaderException("Authorization header must start with " + jwtConfig.getPrefix());
         }
@@ -248,6 +262,7 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
         String token = header.replace(jwtConfig.getPrefix(), "");
 
         if (Strings.isNullOrEmpty(token)) {
+            log.warn("AB2D-6303 header wrong prefix");
             String emptyTokenMsg = "Did not receive a token for JWT authentication";
             log.error(emptyTokenMsg);
             throw new MissingTokenException(emptyTokenMsg);

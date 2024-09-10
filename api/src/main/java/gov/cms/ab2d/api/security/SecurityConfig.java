@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -81,6 +82,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     logSecurityException(request, authException, HttpServletResponse.SC_UNAUTHORIZED);
                     response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
                 });
+        showSecurityContext(security);
     }
 
     @Override
@@ -112,5 +114,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         } catch (Exception exception) {
             log.error("Could not additional logs for exception: " + exception.getCause());
         }
+    }
+
+    private void showSecurityContext (HttpSecurity security) {
+        ApplicationContext ctx = (ApplicationContext) security.getSharedObject(ApplicationContext.class);
+        log.warn("AB2D-6303 HttpSecurity bean names: {}", ctx.getBeanDefinitionNames());
     }
 }
