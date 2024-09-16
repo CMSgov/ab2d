@@ -127,10 +127,10 @@ public class StatusCommon {
         responseHeaders.setContentType(APPLICATION_JSON);
 
         OperationOutcome outcome = new OperationOutcome();
-        
+
         OpenAPIConfig.Details details = new OpenAPIConfig.Details();
         details.setText("Job is canceled.");
-        
+
         OpenAPIConfig.Issue issue = new OpenAPIConfig.Issue();
         issue.setDetails(details);
         issue.setCode("deleted");
