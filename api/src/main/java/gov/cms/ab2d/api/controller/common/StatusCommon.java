@@ -1,5 +1,7 @@
 package gov.cms.ab2d.api.controller.common;
 
+import gov.cms.ab2d.api.config.OpenAPIConfig;
+import gov.cms.ab2d.api.config.OpenAPIConfig.OperationOutcome;
 import gov.cms.ab2d.api.controller.JobCompletedResponse;
 import gov.cms.ab2d.api.controller.JobProcessingException;
 import gov.cms.ab2d.api.controller.TooManyRequestsException;
@@ -33,6 +35,7 @@ import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 import static org.springframework.http.HttpHeaders.EXPIRES;
 import static org.springframework.http.HttpHeaders.RETRY_AFTER;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @Service
 @Slf4j
@@ -80,6 +83,8 @@ public class StatusCommon {
                         "Job in progress", jobPollResult.getProgress() + "% complete",
                         (String) request.getAttribute(REQUEST_ID)));
                 return new ResponseEntity<>(null, responseHeaders, HttpStatus.ACCEPTED);
+            case CANCELLED:
+                return getCanceledResponse(jobPollResult, jobUuid, request);
             case FAILED:
                 throwFailedResponse("Job failed while processing");
                 break;
@@ -115,6 +120,30 @@ public class StatusCommon {
         }).toList());
 
         return resp;
+    }
+
+    private ResponseEntity getCanceledResponse(JobPollResult jobPollResult, String jobUuid, HttpServletRequest request) {
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.setContentType(APPLICATION_JSON);
+
+        OperationOutcome outcome = new OperationOutcome();
+        
+        OpenAPIConfig.Details details = new OpenAPIConfig.Details();
+        details.setText("Job is canceled.");
+        
+        OpenAPIConfig.Issue issue = new OpenAPIConfig.Issue();
+        issue.setDetails(details);
+        issue.setCode("deleted");
+        issue.setSeverity("information");
+
+        List<OpenAPIConfig.Issue> issuesList = new ArrayList<>();
+        issuesList.add(issue);
+        outcome.setIssue(issuesList);
+
+        eventLogger.sendLogs(new ApiResponseEvent(MDC.get(ORGANIZATION), jobUuid, HttpStatus.NOT_FOUND,
+                "Job was previously canceled", null, (String) request.getAttribute(REQUEST_ID)));
+
+        return new ResponseEntity<OperationOutcome>(outcome, responseHeaders, HttpStatus.NOT_FOUND);
     }
 
     private String getUrlPath(String jobUuid, String filePath, HttpServletRequest request, String apiPrefix) {
