@@ -1,7 +1,6 @@
 package gov.cms.ab2d.api.controller.common;
 
 import gov.cms.ab2d.api.config.OpenAPIConfig;
-import gov.cms.ab2d.api.config.OpenAPIConfig.OperationOutcome;
 import gov.cms.ab2d.api.controller.JobCompletedResponse;
 import gov.cms.ab2d.api.controller.JobProcessingException;
 import gov.cms.ab2d.api.controller.TooManyRequestsException;
@@ -13,6 +12,7 @@ import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
 import gov.cms.ab2d.job.dto.JobPollResult;
 import gov.cms.ab2d.job.model.JobOutput;
+
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -26,7 +26,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
 
 import static gov.cms.ab2d.api.controller.common.ApiText.X_PROG;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
@@ -44,6 +43,7 @@ public class StatusCommon {
     private final JobClient jobClient;
     private final SQSEventClient eventLogger;
     private final int retryAfterDelay;
+    private final OpenAPIConfig openApi;
 
     StatusCommon(PdpClientService pdpClientService, JobClient jobClient,
                  SQSEventClient eventLogger, @Value("${api.retry-after.delay}") int retryAfterDelay) {
@@ -51,6 +51,8 @@ public class StatusCommon {
         this.jobClient = jobClient;
         this.eventLogger = eventLogger;
         this.retryAfterDelay = retryAfterDelay;
+
+        this.openApi = new OpenAPIConfig();
     }
 
     public void throwFailedResponse(String msg) {
@@ -126,8 +128,7 @@ public class StatusCommon {
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.setContentType(APPLICATION_JSON);
 
-        OperationOutcome outcome = new OperationOutcome();
-
+        OpenAPIConfig.OperationOutcome outcome = openApi.new OperationOutcome();
         OpenAPIConfig.Details details = new OpenAPIConfig.Details();
         details.setText("Job is canceled.");
 
@@ -143,7 +144,7 @@ public class StatusCommon {
         eventLogger.sendLogs(new ApiResponseEvent(MDC.get(ORGANIZATION), jobUuid, HttpStatus.NOT_FOUND,
                 "Job was previously canceled", null, (String) request.getAttribute(REQUEST_ID)));
 
-        return new ResponseEntity<OperationOutcome>(outcome, responseHeaders, HttpStatus.NOT_FOUND);
+        return new ResponseEntity<OpenAPIConfig.OperationOutcome>(outcome, responseHeaders, HttpStatus.NOT_FOUND);
     }
 
     private String getUrlPath(String jobUuid, String filePath, HttpServletRequest request, String apiPrefix) {
