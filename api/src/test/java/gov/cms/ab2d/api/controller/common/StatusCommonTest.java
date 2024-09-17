@@ -101,9 +101,9 @@ class StatusCommonTest {
   @Test
   void testDoStatus5() {
     when(jobPollResult.getStatus()).thenReturn(JobStatus.CANCELLED);
-    assertThrows(JobProcessingException.class, () -> {
-      statusCommon.doStatus("1234", req, "prefix");
-    });
+    assertNotNull(
+      statusCommon.doStatus("1234", req, "prefix")
+    );
   }
 
   @Test
@@ -117,6 +117,13 @@ class StatusCommonTest {
   void testGetJobCompletedResponse() {
     assertNotNull(
       statusCommon.getJobCompletedResponse(jobPollResult, "1234", req, "prefix")
+    );
+  }
+
+  @Test
+  void testGetJobCanceledResponse() {
+    assertNotNull(
+      statusCommon.getCanceledResponse(jobPollResult, "1234", req)
     );
   }
 

@@ -124,7 +124,7 @@ public class StatusCommon {
         return resp;
     }
 
-    private ResponseEntity getCanceledResponse(JobPollResult jobPollResult, String jobUuid, HttpServletRequest request) {
+    protected ResponseEntity<OpenAPIConfig.OperationOutcome> getCanceledResponse(JobPollResult jobPollResult, String jobUuid, HttpServletRequest request) {
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.setContentType(APPLICATION_JSON);
 
