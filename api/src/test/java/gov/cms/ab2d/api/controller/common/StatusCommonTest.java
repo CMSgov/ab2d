@@ -67,7 +67,7 @@ class StatusCommonTest {
   }
 
   @Test
-  void testDoStatus1() {
+  void testDoStatusSuccessful() {
     when(jobPollResult.getStatus()).thenReturn(JobStatus.SUCCESSFUL);
     assertNotNull(
       statusCommon.doStatus("1234", req, "prefix")
@@ -75,7 +75,7 @@ class StatusCommonTest {
   }
 
   @Test
-  void testDoStatus2() {
+  void testDoStatusSubmitted() {
     when(jobPollResult.getStatus()).thenReturn(JobStatus.SUBMITTED);
     assertNotNull(
       statusCommon.doStatus("1234", req, "prefix")
@@ -83,7 +83,7 @@ class StatusCommonTest {
   }
 
   @Test
-  void testDoStatus3() {
+  void testDoStatusInProgress() {
     when(jobPollResult.getStatus()).thenReturn(JobStatus.IN_PROGRESS);
     assertNotNull(
       statusCommon.doStatus("1234", req, "prefix")
@@ -91,7 +91,7 @@ class StatusCommonTest {
   }
 
   @Test
-  void testDoStatus4() {
+  void testDoStatusFailed() {
     when(jobPollResult.getStatus()).thenReturn(JobStatus.FAILED);
     assertThrows(JobProcessingException.class, () -> {
       statusCommon.doStatus("1234", req, "prefix");
@@ -99,7 +99,7 @@ class StatusCommonTest {
   }
 
   @Test
-  void testDoStatus5() {
+  void testDoStatusCanceled() {
     when(jobPollResult.getStatus()).thenReturn(JobStatus.CANCELLED);
     assertNotNull(
       statusCommon.doStatus("1234", req, "prefix")
