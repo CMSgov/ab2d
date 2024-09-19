@@ -129,6 +129,8 @@ public class StatusCommon {
         responseHeaders.setContentType(APPLICATION_JSON);
 
         OpenAPIConfig.OperationOutcome outcome = openApi.new OperationOutcome();
+        outcome.setResourceType("OperationOutcome");
+        
         OpenAPIConfig.Details details = new OpenAPIConfig.Details();
         details.setText("Job is canceled.");
 
