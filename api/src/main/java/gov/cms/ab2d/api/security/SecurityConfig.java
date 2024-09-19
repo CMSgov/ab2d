@@ -10,7 +10,6 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -49,7 +48,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private final String[] authExceptions = new String[]{"/swagger-ui/**", "/configuration/**",
             "/swagger-resources/**", "/v3/api-docs/**", "/webjars/**",
             AKAMAI_TEST_OBJECT, "/favicon.ico", "/error", HEALTH_ENDPOINT, STATUS_ENDPOINT,
-            "/metadata"};
+            "/**/metadata"};
 
     @Override
     protected void configure(HttpSecurity security) throws Exception {
@@ -63,9 +62,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             // Add a filter to validate the tokens with every request.
             .addFilterAfter(jwtTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests()
+            .antMatchers(authExceptions).permitAll()
             .antMatchers(API_PREFIX_V1 + ADMIN_PREFIX + "/**").hasAuthority(ADMIN_ROLE)
             .antMatchers(API_PREFIX_V1 + FHIR_PREFIX + "/**").hasAnyAuthority(SPONSOR_ROLE)
-                .antMatchers(authExceptions).permitAll()
             .anyRequest().authenticated();
 
         // Override default behavior to add more informative logs
@@ -82,7 +81,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     logSecurityException(request, authException, HttpServletResponse.SC_UNAUTHORIZED);
                     response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
                 });
-        showSecurityContext(security);
     }
 
     @Override
@@ -114,10 +112,5 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         } catch (Exception exception) {
             log.error("Could not additional logs for exception: " + exception.getCause());
         }
-    }
-
-    private void showSecurityContext (HttpSecurity security) {
-        ApplicationContext ctx = (ApplicationContext) security.getSharedObject(ApplicationContext.class);
-        log.warn("AB2D-6303 HttpSecurity bean names: {}", ctx.getBeanDefinitionNames());
     }
 }
