@@ -130,7 +130,7 @@ public class StatusCommon {
 
         OpenAPIConfig.OperationOutcome outcome = openApi.new OperationOutcome();
         outcome.setResourceType("OperationOutcome");
-        
+
         OpenAPIConfig.Details details = new OpenAPIConfig.Details();
         details.setText("Job is canceled.");
 
