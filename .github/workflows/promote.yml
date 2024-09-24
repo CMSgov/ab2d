@@ -1,0 +1,49 @@
+name: promote
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      module:
+        required: true
+        type: string
+
+jobs:
+  promote:
+    runs-on: self-hosted
+
+    steps:
+      - name: Assume role in AB2D Management account
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets.MGMT_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-mgmt-github-actions
+
+      - name: Retag images in ECR
+        run: |
+          ECR_REPO_DOMAIN="${{ secrets.MGMT_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com"
+          ECR_REPO_URI="$ECR_REPO_DOMAIN/ab2d_${{ inputs.module }}"
+
+          # Define target tags based on the environment
+          if [ "${{ inputs.environment }}" == "sandbox" ]; then
+            TARGET_TAG="sandbox-latest"
+          elif [ "${{ inputs.environment }}" == "prod" ]; then
+            TARGET_TAG="prod-latest"
+          elif [ "${{ inputs.environment }}" == "prod-test" ]; then
+            TARGET_TAG="prod-test-latest"
+          else
+            echo "Unsupported environment: ${{ inputs.environment }}"
+            exit 1
+          fi
+
+          # Get the manifest of the latest image
+          MANIFEST=$(aws ecr batch-get-image --repository-name "ab2d_${{ inputs.module }}" --image-ids imageTag=ab2d-test-latest --output text --query 'images[].imageManifest')
+
+          # Retag the image
+          aws ecr put-image --repository-name "ab2d_${{ inputs.module }}" --image-tag "$TARGET_TAG" --image-manifest "$MANIFEST"
+
+      - name: Verify new tags
+        run: |
+          aws ecr describe-images --repository-name "ab2d_${{ inputs.module }}"
