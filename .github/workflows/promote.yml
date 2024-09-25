@@ -10,6 +10,17 @@ on:
         required: true
         type: string
   pull_request:  
+  workflow_dispatch:
+    inputs:
+      environment:
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+          - sbx
+          - prod
+          - prod-test  
   
 jobs:
   promote:
