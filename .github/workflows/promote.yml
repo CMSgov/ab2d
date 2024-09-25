@@ -9,7 +9,8 @@ on:
       module:
         required: true
         type: string
-
+  pull_request:  
+  
 jobs:
   promote:
     runs-on: self-hosted
