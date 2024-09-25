@@ -26,6 +26,9 @@ jobs:
   promote:
     runs-on: self-hosted
 
+    env:
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true    
+
     steps:
       - name: Assume role in AB2D Management account
         uses: aws-actions/configure-aws-credentials@v3
