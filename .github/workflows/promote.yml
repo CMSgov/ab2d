@@ -9,7 +9,6 @@ on:
       module:
         required: true
         type: string
-  pull_request:  
   workflow_dispatch:
     inputs:
       environment:
@@ -21,10 +20,16 @@ on:
           - sbx
           - prod
           - prod-test  
+      module:
+        required: true
+        type: choice
+        options:
+          - api
+          - worker          
   
 jobs:
   promote:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     env:
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true    
