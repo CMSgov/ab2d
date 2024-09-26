@@ -56,10 +56,10 @@ jobs:
         run: |
           mvn -ntp -U clean
 
+      - name: Run unit and integration tests
+        run: |
+            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
+
       - name: SonarQube analysis
         run: |
           mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} package sonar:sonar -Dsonar.projectKey=ab2d-project -Dsonar.qualitygate.wait=true -DskipTests -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL}
-
-      - name: Run unit and integration tests
-        run: |
-          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
