@@ -1,0 +1,36 @@
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        required: true
+        type: choice
+        options:
+          - dev
+          - sandbox
+          - prod
+          - prod-test
+      module:
+        required: true
+        type: choice
+        options:
+          - api
+          - worker
+
+jobs:
+  release:
+    runs-on: self-hosted
+
+    steps:
+      - name: Call build workflow
+        uses: ./.github/workflows/build.yml
+        with:
+          environment: ${{ inputs.environment }}
+          module: ${{ inputs.module }}
+
+      - name: Call promote workflow
+        uses: ./.github/workflows/promote.yml
+        with:
+          environment: ${{ inputs.environment }}
+          module: ${{ inputs.module }}
