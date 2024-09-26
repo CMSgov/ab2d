@@ -6,7 +6,9 @@ public final class Constants {
 
     public static final String OPERATION_OUTCOME = "OperationOutcome";
 
-    public static final String NDJSON_FIRE_CONTENT_TYPE = "application/fhir+ndjson";
+    public static final String FHIR_NDJSON_CONTENT_TYPE = "application/fhir+ndjson";
+
+    public static final String FHIR_JSON_CONTENT_TYPE = "application/fhir+json";
 
     public static final String JOB_LOG = "job";
 

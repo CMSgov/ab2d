@@ -1,2 +1,2 @@
 okta-url: 'https://test.idp.idm.cms.gov/oauth2/aus2r7y3gdaFMKBol297/v1/token'
-base-url: 'https://internal-ab2d-east-impl-460119366.us-east-1.elb.amazonaws.com'
+base-url: 'https://impl.ab2d.cms.gov'

@@ -80,6 +80,46 @@ class PropertiesServiceAvailableTest {
     }
 
     @Test
+    void testCreateValue1() {
+        String value = "three";
+        String gottenValue = "three";
+
+        when(mockPropertiesService.createProperty("test3", value)).thenReturn(true);
+        when(mockPropertiesService.getProperty(eq("test3"), anyString())).thenReturn(gottenValue);
+        assertTrue(mockPropertiesServiceAvailable.createValue("test3", value));
+    }
+
+    @Test
+    void testCreateValue2() {
+        String value = null;
+        String gottenValue = null;
+
+        when(mockPropertiesService.createProperty("test3", value)).thenReturn(true);
+        when(mockPropertiesService.getProperty(eq("test3"), anyString())).thenReturn(gottenValue);
+        assertTrue(mockPropertiesServiceAvailable.createValue("test3", value));
+    }
+
+    @Test
+    void testCreateValue3() {
+        String value = "three";
+        String gottenValue = null;
+
+        when(mockPropertiesService.createProperty("test3", value)).thenReturn(true);
+        when(mockPropertiesService.getProperty(eq("test3"), anyString())).thenReturn(gottenValue);
+        assertFalse(mockPropertiesServiceAvailable.createValue("test3", value));
+    }
+
+    @Test
+    void testCreateValue4() {
+        String value = null;
+        String gottenValue = "three";
+
+        when(mockPropertiesService.createProperty("test3", value)).thenReturn(true);
+        when(mockPropertiesService.getProperty(eq("test3"), anyString())).thenReturn(gottenValue);
+        assertFalse(mockPropertiesServiceAvailable.createValue("test3", value));
+    }
+
+    @Test
     void testWithMock() {
         when(mockPropertiesService.getProperty(eq("test1"), anyString())).thenReturn(null);
         assertTrue(mockPropertiesServiceAvailable.checkValue("test1", null));
@@ -106,6 +146,13 @@ class PropertiesServiceAvailableTest {
     }
 
     @Test
+    void testUpdateValue() {
+        when(mockPropertiesService.updateProperty("test6", "six")).thenReturn(true);
+        when(mockPropertiesService.getProperty(eq("test6"), anyString())).thenReturn("six");
+        assertTrue(mockPropertiesServiceAvailable.updateValue("test6", "six"));
+    }
+
+    @Test
     void testWithMockAgain() {
         when(mockPropertiesService.deleteProperty("test5")).thenReturn(true);
         when(mockPropertiesService.getProperty("test5", null)).thenReturn("five");
@@ -116,6 +163,13 @@ class PropertiesServiceAvailableTest {
     void testMockException() {
         when(mockPropertiesService.deleteProperty("test5")).thenReturn(true);
         when(mockPropertiesService.getProperty("test5", null)).thenThrow(RuntimeException.class);
+        assertTrue(mockPropertiesServiceAvailable.deleteValue("test5"));
+    }
+
+    @Test
+    void testDeleteValue() {
+        when(mockPropertiesService.deleteProperty("test5")).thenReturn(true);
+        when(mockPropertiesService.getProperty("test5", null)).thenReturn(null);
         assertTrue(mockPropertiesServiceAvailable.deleteValue("test5"));
     }
 
@@ -131,6 +185,7 @@ class PropertiesServiceAvailableTest {
         when(mockPropertiesService.createProperty("fake.key", "fake_value")).thenReturn(false);
         assertFalse(mockPropertiesServiceAvailable.isAvailable(true));
     }
+
     @Test
     void mainMethod3() {
         when(mockPropertiesService.getProperty(eq(MAINTENANCE_MODE), anyString())).thenReturn("false");
@@ -139,6 +194,7 @@ class PropertiesServiceAvailableTest {
         when(mockPropertiesService.updateProperty("fake.key", "fake_value1")).thenReturn(false);
         assertTrue(mockPropertiesServiceAvailable.isAvailable(false));
     }
+
     @Test
     void mainMethod4() {
         when(mockPropertiesService.getProperty(eq(MAINTENANCE_MODE), anyString())).thenReturn("false");
@@ -150,5 +206,11 @@ class PropertiesServiceAvailableTest {
         when(mockPropertiesService.updateProperty("fake.key", "fake_value1")).thenReturn(true);
         when(mockPropertiesService.deleteProperty("fake.key")).thenReturn(false);
         assertFalse(mockPropertiesServiceAvailable.isAvailable(true));
+    }
+
+    @Test
+    void mainMethod5() {
+        when(mockPropertiesService.getProperty(MAINTENANCE_MODE, null)).thenReturn("false");
+        assertTrue(mockPropertiesServiceAvailable.isAvailable(true));
     }
 }

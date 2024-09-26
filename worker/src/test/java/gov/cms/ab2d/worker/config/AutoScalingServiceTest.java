@@ -22,7 +22,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -30,9 +29,13 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
 import static gov.cms.ab2d.common.util.PropertyConstants.PCP_MAX_POOL_SIZE;
+import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 // Set property.change.detection to false, otherwise the values from the database will override the values that are being hardcoded here.
 @SpringBootTest(properties = {"pcp.core.pool.size=3", "pcp.max.pool.size=20", "pcp.scaleToMax.time=20", "property.change.detection=false"})
@@ -51,7 +54,7 @@ public class AutoScalingServiceTest {
     @Autowired
     private ApplicationContext context;
 
-    private AutoScalingService autoScalingService;
+    private AutoScalingServiceImpl autoScalingService;
 
     @Autowired
     private RoundRobinBlockingQueue eobClaimRequestsQueue;
@@ -73,7 +76,6 @@ public class AutoScalingServiceTest {
                 eobClaimRequestsQueue, propertiesService, 3, 20, 20);
         originalMaxPoolSize = autoScalingService.getMaxPoolSize();
         patientProcessorThreadPool.setMaxPoolSize(originalMaxPoolSize);
-
     }
 
     @AfterEach
@@ -189,6 +191,35 @@ public class AutoScalingServiceTest {
         assertEquals(0, patientProcessorThreadPool.getThreadPoolExecutor().getActiveCount());
     }
 
+    @Test
+    void testGetIntProperty() {
+        PropertiesService mockPropertiesService = mock(PropertiesService.class);
+        AutoScalingServiceImpl mockedAutoScalingService = new AutoScalingServiceImpl(
+            patientProcessorThreadPool, eobClaimRequestsQueue, mockPropertiesService, 3, 20, 20
+        );
+        when(mockPropertiesService.getProperty(anyString(), anyString())).thenThrow(NullPointerException.class);
+        assertEquals(99, mockedAutoScalingService.getIntProperty("property", 99));
+    }
+
+    @Test
+    void testGetDoubleProperty() {
+        PropertiesService mockPropertiesService = mock(PropertiesService.class);
+        AutoScalingServiceImpl mockedAutoScalingService = new AutoScalingServiceImpl(
+            patientProcessorThreadPool, eobClaimRequestsQueue, mockPropertiesService, 3, 20, 20
+        );
+        when(mockPropertiesService.getProperty(anyString(), anyString())).thenThrow(NullPointerException.class);
+        assertEquals(99, mockedAutoScalingService.getDoubleProperty("property", 99));
+    }
+
+    @Test
+    void testGetBooleanProperty() {
+        PropertiesService mockPropertiesService = mock(PropertiesService.class);
+        AutoScalingServiceImpl mockedAutoScalingService = new AutoScalingServiceImpl(
+            patientProcessorThreadPool, eobClaimRequestsQueue, mockPropertiesService, 3, 20, 20
+        );
+        when(mockPropertiesService.isToggleOn(anyString(), anyBoolean())).thenThrow(NullPointerException.class);
+        assertFalse(mockedAutoScalingService.getBooleanProperty("property", false));
+    }
 
     private Runnable sleepyRunnable() {
         return () -> {

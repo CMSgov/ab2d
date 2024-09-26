@@ -42,6 +42,7 @@ import static gov.cms.ab2d.api.controller.common.ApiText.X_PROG;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_CANCEL;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
+import static gov.cms.ab2d.common.util.Constants.FHIR_JSON_CONTENT_TYPE;
 import static org.springframework.http.HttpHeaders.EXPIRES;
 import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 
@@ -52,7 +53,7 @@ import static org.springframework.http.HttpHeaders.RETRY_AFTER;
 @Tag(name = "Status", description = STATUS_API)
 @RestController
 @ConditionalOnExpression("${v2.controller.enabled:true}")
-@RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {APPLICATION_JSON})
+@RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {APPLICATION_JSON, FHIR_JSON_CONTENT_TYPE})
 @AllArgsConstructor
 public class StatusAPIV2 {
 
@@ -67,14 +68,14 @@ public class StatusAPIV2 {
             ),
             @ApiResponse(responseCode = "200", description = JOB_COMPLETE, headers = {
                 @Header(name = EXPIRES, description = FILE_EXPIRES, schema = @Schema(type = "string"))},
-                content = @Content(schema = @Schema(ref = "#/components/schemas/JobCompletedResponse"))
+                content = @Content(mediaType = APPLICATION_JSON, schema = @Schema(ref = "#/components/schemas/JobCompletedResponse"))
             ),
             @ApiResponse(responseCode = "404", description = JOB_NOT_FOUND,
-                content = @Content(schema = @Schema(ref = "#/components/schemas/OperationOutcome"))
+                content = @Content(mediaType = FHIR_JSON_CONTENT_TYPE, schema = @Schema(ref = "#/components/schemas/OperationOutcome"))
             )
         }
     )
-    @GetMapping(value = "/Job/{jobUuid}/$status", produces = APPLICATION_JSON)
+    @GetMapping(value = "/Job/{jobUuid}/$status", produces = {APPLICATION_JSON, FHIR_JSON_CONTENT_TYPE})
     @ResponseStatus(value = HttpStatus.OK)
     public ResponseEntity<JobCompletedResponse> getJobStatus(HttpServletRequest request,
             @PathVariable @NotBlank String jobUuid) {
@@ -86,7 +87,7 @@ public class StatusAPIV2 {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "202", description = JOB_CANCELLED_MSG),
             @ApiResponse(responseCode = "404", description = JOB_NOT_FOUND,
-                    content = @Content(schema = @Schema(ref = "#/components/schemas/OperationOutcome")))}
+                    content = @Content(mediaType = FHIR_JSON_CONTENT_TYPE, schema = @Schema(ref = "#/components/schemas/OperationOutcome")))}
     )
     @DeleteMapping(value = "/Job/{jobUuid}/$status")
     @ResponseStatus(value = HttpStatus.ACCEPTED)
