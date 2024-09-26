@@ -29,7 +29,6 @@ import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 
 import static gov.cms.ab2d.api.controller.common.ApiText.BULK_DNLD_DSC;
 import static gov.cms.ab2d.api.controller.common.ApiText.DOWNLOAD_DESC;
-import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
 import static gov.cms.ab2d.api.controller.common.ApiText.DNLD_DESC;
 import static gov.cms.ab2d.api.controller.common.ApiText.CONTENT_TYPE_DESC;
 import static gov.cms.ab2d.api.controller.common.ApiText.NOT_FOUND;
@@ -39,8 +38,9 @@ import static gov.cms.ab2d.api.controller.common.ApiText.FILE_NAME;
 import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
 
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
+import static gov.cms.ab2d.common.util.Constants.FHIR_JSON_CONTENT_TYPE;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
+import static gov.cms.ab2d.common.util.Constants.FHIR_NDJSON_CONTENT_TYPE;
 
 @AllArgsConstructor
 @Slf4j
@@ -57,16 +57,16 @@ public class FileDownloadAPIV1 {
     })
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = DNLD_DESC,
-                    headers = {@Header(name = CONTENT_TYPE, description = CONTENT_TYPE_DESC + NDJSON_FIRE_CONTENT_TYPE)},
-                    content = @Content(mediaType = NDJSON_FIRE_CONTENT_TYPE)
+                    headers = {@Header(name = CONTENT_TYPE, description = CONTENT_TYPE_DESC + FHIR_NDJSON_CONTENT_TYPE)},
+                    content = @Content(mediaType = FHIR_NDJSON_CONTENT_TYPE)
             ),
             @ApiResponse(responseCode = "404", description = NOT_FOUND + GENERIC_FHIR_ERR_MSG, content =
-                @Content(mediaType = APPLICATION_JSON, schema = @Schema(ref = "#/components/schemas/OperationOutcome"))
+                @Content(mediaType = FHIR_JSON_CONTENT_TYPE, schema = @Schema(ref = "#/components/schemas/OperationOutcome"))
             )
         }
     )
     @ResponseStatus(value = HttpStatus.OK)
-    @GetMapping(value = "/Job/{jobUuid}/file/{filename}", produces = { NDJSON_FIRE_CONTENT_TYPE })
+    @GetMapping(value = "/Job/{jobUuid}/file/{filename}", produces = {FHIR_NDJSON_CONTENT_TYPE})
     public ResponseEntity downloadFile(HttpServletRequest request,
             HttpServletResponse response,
             @PathVariable @NotBlank String jobUuid,

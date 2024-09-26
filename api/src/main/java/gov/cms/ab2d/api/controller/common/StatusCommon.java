@@ -89,7 +89,7 @@ public class StatusCommon {
         throw new JobProcessingException("Unknown error");
     }
 
-    private JobCompletedResponse getJobCompletedResponse(JobPollResult jobPollResult, String jobUuid,
+    protected JobCompletedResponse getJobCompletedResponse(JobPollResult jobPollResult, String jobUuid,
                                                          HttpServletRequest request, String apiPrefix) {
 
         final JobCompletedResponse resp = new JobCompletedResponse();

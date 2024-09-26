@@ -22,7 +22,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 
-import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
+import static gov.cms.ab2d.common.util.Constants.FHIR_NDJSON_CONTENT_TYPE;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.job.service.JobServiceTest.CLIENTID;
@@ -79,7 +79,7 @@ class MaxJobsTest extends JobCleanup {
         Contract contract = contractServiceStub.getAllAttestedContracts().iterator().next();
         String organization = pdpClientService.getCurrentClient().getOrganization();
         startJobDTO = new StartJobDTO(contract.getContractNumber(), organization,
-                EOB, LOCAL_HOST, NDJSON_FIRE_CONTENT_TYPE, null, STU3);
+                EOB, LOCAL_HOST, FHIR_NDJSON_CONTENT_TYPE, null, STU3);
         for (int idx = 0; idx < MAX_JOBS_PER_CLIENT; idx++) {
             Job retJob = jobService.createJob(startJobDTO);
             assertNotNull(retJob);

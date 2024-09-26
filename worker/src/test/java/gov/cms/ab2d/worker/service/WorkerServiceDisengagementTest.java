@@ -30,7 +30,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import static gov.cms.ab2d.common.util.Constants.NDJSON_FIRE_CONTENT_TYPE;
+import static gov.cms.ab2d.common.util.Constants.FHIR_NDJSON_CONTENT_TYPE;
 import static gov.cms.ab2d.common.util.PropertyConstants.WORKER_ENGAGEMENT;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
@@ -144,7 +144,7 @@ class WorkerServiceDisengagementTest extends JobCleanup {
         job.setResourceTypes(EOB);
         job.setCreatedAt(OffsetDateTime.now());
         job.setOrganization(pdpClient.getOrganization());
-        job.setOutputFormat(NDJSON_FIRE_CONTENT_TYPE);
+        job.setOutputFormat(FHIR_NDJSON_CONTENT_TYPE);
         job.setContractNumber(contract.getContractNumber());
         job.setFhirVersion(STU3);
 

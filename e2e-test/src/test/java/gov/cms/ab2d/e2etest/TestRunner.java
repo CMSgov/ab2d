@@ -518,6 +518,7 @@ class TestRunner {
 
         if (statusResponseAgain.statusCode() == 500) {
             // No values returned if 500
+            log.info("500 response body: " + statusResponseAgain.body());
             return null;
         }
         assertEquals(200, statusResponseAgain.statusCode());
@@ -673,6 +674,10 @@ class TestRunner {
 
         String oktaClientId = System.getenv("SECONDARY_USER_OKTA_CLIENT_ID");
         String oktaPassword = System.getenv("SECONDARY_USER_OKTA_CLIENT_PASSWORD");
+
+        if (StringUtils.isBlank(oktaClientId) || StringUtils.isBlank(oktaPassword)) {
+            fail("Both SECONDARY_USER_OKTA_CLIENT_ID and SECONDARY_USER_OKTA_CLIENT_PASSWORD must be set in env");
+        }
 
         return new APIClient(baseUrl, oktaUrl, oktaClientId, oktaPassword);
     }

@@ -85,6 +85,7 @@ class CoverageServiceImplTest {
     private static final int FEBRUARY = 2;
     private static final int MARCH = 3;
     private static final int APRIL = 4;
+    private static final int MAY = 5;
 
     // Used to test the coverage summary code
 
@@ -166,6 +167,15 @@ class CoverageServiceImplTest {
         dataSetup.cleanup();
     }
 
+    @Test
+    void testFindAssociatedCoveragePeriods() {
+        List<CoveragePeriod> coveragePeriodsOne = coverageService.findAssociatedCoveragePeriods("TST-12");
+        assertFalse(coveragePeriodsOne.isEmpty());
+
+        List<CoveragePeriod> coveragePeriodsTwo = coverageService.findAssociatedCoveragePeriods("does-not-exist");
+        assertTrue(coveragePeriodsTwo.isEmpty());
+    }
+
     @DisplayName("Get a coverage period")
     @Test
     void getCoveragePeriod() {
@@ -225,6 +235,13 @@ class CoverageServiceImplTest {
 
         assertTrue(coverageService.canEOBSearchBeStarted(period1Jan.getId()));
         assertFalse(coverageService.isCoveragePeriodInProgress(period1Jan.getId()));
+
+        assertThrows(
+            CoveragePeriodNotFoundException.class,
+            () -> {
+                coverageService.isCoveragePeriodInProgress(999999999);
+            }
+        );
     }
 
     @DisplayName("Count coverage records for a group of coverage periods")
@@ -1065,6 +1082,24 @@ class CoverageServiceImplTest {
         assertEquals(0, coveragePeriods.size());
     }
 
+    @Test
+    void testCoveragePeriodNeverSearchedSuccessfully() {
+        List<CoveragePeriod> coveragePeriodsOne = coverageService.coveragePeriodNeverSearchedSuccessfully();
+        assertEquals(5, coveragePeriodsOne.size());
+
+        coverageService.prioritizeSearch(period1Jan.getId(), "testing");
+        startSearchAndPullEvent();
+
+        List<CoveragePeriod> coveragePeriodsTwo = coverageService.coveragePeriodNeverSearchedSuccessfully();
+        assertEquals(4, coveragePeriodsTwo.size());
+    }
+
+    @Test
+    void testStartSearchNull() {
+        Optional<CoverageMapping> coverageMapping = coverageService.startSearch(null, "testing");
+        assertTrue(coverageMapping.isEmpty());
+    }
+
     @DisplayName("Find all stuck jobs")
     @Test
     void findStuckJobs() {
@@ -1147,6 +1182,40 @@ class CoverageServiceImplTest {
         assertEquals(CoverageJobStatus.IN_PROGRESS, startedCopy.getNewStatus());
     }
 
+    @Test
+    void testPrioritizeSearches() {
+        coverageService.prioritizeSearch(period1Jan.getId(), "testing");
+        coverageService.prioritizeSearch(period2Jan.getId(), "testing");
+
+        CoverageSearchEvent started = startSearchAndPullEvent();
+        CoverageSearchEvent startedCopy = coverageSearchEventRepo.findById(started.getId()).get();
+
+        assertEquals(CoverageJobStatus.SUBMITTED, startedCopy.getOldStatus());
+        assertEquals(CoverageJobStatus.IN_PROGRESS, startedCopy.getNewStatus());
+    }
+
+    @Test
+    void testPrioritizeSearchReturnEmpty() {
+        Optional<CoverageSearchEvent> coverageSearchEventOne = coverageService.prioritizeSearch(period1Jan.getId(), "testing");
+        assertFalse(coverageSearchEventOne.isEmpty());
+
+        startSearchAndPullEvent();
+
+        Optional<CoverageSearchEvent> coverageSearchEventTwo = coverageService.prioritizeSearch(period1Jan.getId(), "testing");
+        assertTrue(coverageSearchEventTwo.isEmpty());
+    }
+
+    @Test
+    void testSubmitSearchReturnEmpty() {
+        Optional<CoverageSearchEvent> coverageSearchEventOne = coverageService.submitSearch(period1Jan.getId(), "testing");
+        assertFalse(coverageSearchEventOne.isEmpty());
+
+        startSearchAndPullEvent();
+
+        Optional<CoverageSearchEvent> coverageSearchEventTwo = coverageService.submitSearch(period1Jan.getId(), "testing");
+        assertTrue(coverageSearchEventTwo.isEmpty());
+    }
+
     @DisplayName("Coverage period searches are successfully resubmitted if necessary")
     @Test
     void resubmitSearch() {
@@ -1169,6 +1238,28 @@ class CoverageServiceImplTest {
         assertEquals(CoverageJobStatus.IN_PROGRESS, failedEvent.getOldStatus());
         assertEquals(CoverageJobStatus.FAILED, failedEvent.getNewStatus());
         assertEquals("failed job", failedEvent.getDescription());
+
+        CoverageSearchEvent submitEvent = coverageSearchEventRepo.findFirstByCoveragePeriodOrderByCreatedDesc(period).get();
+        assertEquals(CoverageJobStatus.FAILED, submitEvent.getOldStatus());
+        assertEquals(CoverageJobStatus.SUBMITTED, submitEvent.getNewStatus());
+        assertEquals("restarting job", submitEvent.getDescription());
+
+        assertEquals(CoverageJobStatus.SUBMITTED, period.getStatus());
+    }
+
+    @Test
+    void resubmitSearchWithPriority() {
+        coverageService.submitSearch(period1Jan.getId(), "testing");
+
+        CoverageSearchEvent started = startSearchAndPullEvent();
+        CoverageSearchEvent startedCopy = coverageSearchEventRepo.findById(started.getId()).get();
+
+        assertEquals(CoverageJobStatus.SUBMITTED, startedCopy.getOldStatus());
+        assertEquals(CoverageJobStatus.IN_PROGRESS, startedCopy.getNewStatus());
+
+        coverageService.resubmitSearch(started.getCoveragePeriod().getId(), 1, "failed job", "restarting job", true);
+
+        CoveragePeriod period = coveragePeriodRepo.findById(started.getCoveragePeriod().getId()).get();
 
         CoverageSearchEvent submitEvent = coverageSearchEventRepo.findFirstByCoveragePeriodOrderByCreatedDesc(period).get();
         assertEquals(CoverageJobStatus.FAILED, submitEvent.getOldStatus());
@@ -1326,6 +1417,15 @@ class CoverageServiceImplTest {
 
         assertThrows(IllegalArgumentException.class,
                 () -> coverageService.getCoveragePeriod(contract1, 12, 2019));
+    }
+
+    @Test
+    void testGetCoveragePeriods() {
+        List<CoveragePeriod> coveragePeriodsOne = coverageService.getCoveragePeriods(JANUARY, YEAR);
+        assertFalse(coveragePeriodsOne.isEmpty());
+
+        List<CoveragePeriod> coveragePeriodsTwo = coverageService.getCoveragePeriods(MAY, YEAR);
+        assertTrue(coveragePeriodsTwo.isEmpty());
     }
 
     private Identifiers createIdentifier(Long suffix) {

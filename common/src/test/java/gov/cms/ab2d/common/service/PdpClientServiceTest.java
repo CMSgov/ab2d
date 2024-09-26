@@ -35,7 +35,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import static gov.cms.ab2d.common.model.Role.ADMIN_ROLE;
 import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.DateUtil.AB2D_EPOCH;
+import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
@@ -92,6 +94,33 @@ class PdpClientServiceTest {
 
         assertEquals(10, contracts.size());
         assertTrue(contracts.stream().filter(c -> c.getContractNumber().equals(contract.getContractNumber())).findAny().isPresent());
+    }
+
+    @Test
+    void testContractList() {
+        // Baseline number of contracts is 9
+        List<Contract> contracts = pdpClientService.getAllEnabledContracts();
+        assertEquals(9, contracts.size());
+
+        // Create a client with the sponsor role
+        PdpClientDTO client = buildClientDTO("Enabled", "stuff@test.com", SPONSOR_ROLE);
+        client.setEnabled(true);
+        pdpClientService.createClient(client);
+        dataSetup.queueForCleanup(pdpClientService.getClientById("stuff@test.com"));
+
+        // Client was added with sponsor role, so one more contract is available
+        contracts = pdpClientService.getAllEnabledContracts();
+        assertEquals(10, contracts.size());
+
+        // Create a client with the admin role
+        client = buildClientDTO("Enabled", "things@test.com", ADMIN_ROLE);
+        client.setEnabled(true);
+        pdpClientService.createClient(client);
+        dataSetup.queueForCleanup(pdpClientService.getClientById("things@test.com"));
+
+        // Client was added with admin role, so number of contracts remains the same
+        contracts = pdpClientService.getAllEnabledContracts();
+        assertEquals(10, contracts.size());
     }
 
     @Test
@@ -201,6 +230,34 @@ class PdpClientServiceTest {
     }
 
     @Test
+    void testGetCurrentClient() {
+        HttpServletRequest httpServletRequest = new MockHttpServletRequest();
+
+        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(ADMIN_ROLE));
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                "ADMIN", null, authorities);
+        auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(httpServletRequest));
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        PdpClientDTO client = buildClientDTO("Test", TEST_CLIENT, SPONSOR_ROLE);
+        PdpClientDTO createdClient = pdpClientService.createClient(client);
+        dataSetup.queueForCleanup(pdpClientService.getClientById("test@test.com"));
+
+        String contractNumber = createdClient.getContract().getContractNumber();
+
+        pdpClientService.setupClientImpersonation(contractNumber, httpServletRequest);
+
+        assertNotNull(pdpClientService.getCurrentClient());
+    }
+
+    @Test
+    void testGetClientById() {
+        assertThrows(ResourceNotFoundException.class, () -> {
+            pdpClientService.getClientById("does-not-exist@test.com");
+        });
+    }
+
+    @Test
     void testSetupClientAndRolesInSecurityContextBadClient() {
         buildContract("ClientDoesNotExist");
         HttpServletRequest httpServletRequest = new MockHttpServletRequest();
@@ -219,6 +276,17 @@ class PdpClientServiceTest {
 
         PdpClientDTO updatedClient = pdpClientService.enableClient(client.getContract().getContractNumber());
         assertEquals(true, updatedClient.getEnabled());
+    }
+
+    @Test
+    void testGetClient() {
+        PdpClientDTO client = buildClientDTO("Test", TEST_CLIENT, SPONSOR_ROLE);
+        client.setEnabled(false);
+
+        pdpClientService.createClient(client);
+        dataSetup.queueForCleanup(pdpClientService.getClientById("test@test.com"));
+
+        assertNotNull(pdpClientService.getClient("Test"));
     }
 
     @Test
