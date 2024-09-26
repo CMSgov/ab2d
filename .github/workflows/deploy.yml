@@ -1,0 +1,48 @@
+name: deploy
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      module:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      environment:
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+          - sbx
+          - prod
+          - prod-test
+      module:
+        required: true
+        type: choice
+        options:
+          - api
+          - worker
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}
+      ACCOUNT: ${{ inputs.environment == 'prod-test' && 'prod' || inputs.environment }}
+
+    steps:
+      - name: Assume role in AB2D ${{ env.ACCOUNT }} account
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
+
+      - name: Deploy latest image in ECR to ECS
+        run: aws ecs update-service --cluster ab2d-${DEPLOYMENT_ENV}-${{ inputs.module }} --service ab2d-${DEPLOYMENT_ENV}-${{ inputs.module }} --force-new-deployment
