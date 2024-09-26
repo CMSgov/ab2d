@@ -1,9 +1,12 @@
 package gov.cms.ab2d.api.security;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.okta.jwt.Jwt;
+import com.okta.jwt.AccessTokenVerifier;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.controller.TestUtil;
+import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
@@ -16,6 +19,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
@@ -25,14 +30,21 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
 
+import javax.servlet.FilterChain;
+
 import static gov.cms.ab2d.common.model.Role.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
+import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atMostOnce;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -267,6 +279,91 @@ class JwtAuthenticationFilterTest {
         }
     }
 
+    @Test
+    void testDoFilterInternal1() throws Exception {
+        PdpClientService pdpClientService = mock(PdpClientService.class);
+        JwtConfig jwtConfig = new JwtConfig("Authorization", "Bearer ");
+        SQSEventClient eventLogger = mock(SQSEventClient.class);
+
+        AccessTokenVerifier accessTokenVerifier = mock(AccessTokenVerifier.class);
+        Jwt jwt = mock(Jwt.class);
+        when(accessTokenVerifier.decode(anyString())).thenReturn(jwt);
+        when(jwt.getClaims()).thenReturn(new java.util.HashMap<>(){{
+            put("sub", "fake.jwt");
+        }});
+
+        filter = new JwtTokenAuthenticationFilter(accessTokenVerifier, pdpClientService, jwtConfig, eventLogger, "");
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer fake.jwt");
+
+        assertThrows(UsernameNotFoundException.class, () -> {
+            filter.doFilterInternal(request, null, null);
+        });
+    }
+
+    @Test
+    void testDoFilterInternal2() throws Exception {
+        PdpClientService pdpClientService = mock(PdpClientService.class);
+        JwtConfig jwtConfig = new JwtConfig("Authorization", "Bearer ");
+        SQSEventClient eventLogger = mock(SQSEventClient.class);
+
+        AccessTokenVerifier accessTokenVerifier = mock(AccessTokenVerifier.class);
+        Jwt jwt = mock(Jwt.class);
+        when(accessTokenVerifier.decode(anyString())).thenReturn(jwt);
+        when(jwt.getClaims()).thenReturn(new java.util.HashMap<>(){{
+            put("sub", null);
+        }});
+
+        filter = new JwtTokenAuthenticationFilter(accessTokenVerifier, pdpClientService, jwtConfig, eventLogger, "");
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer fake.jwt");
+
+        assertThrows(BadJWTTokenException.class, () -> {
+            filter.doFilterInternal(request, null, null);
+        });
+    }
+
+    @Test
+    void testDoFilterInternal3() throws Exception {
+        PdpClientService pdpClientService = mock(PdpClientService.class);
+        JwtConfig jwtConfig = new JwtConfig("Authorization", "Bearer ");
+        SQSEventClient eventLogger = mock(SQSEventClient.class);
+
+        AccessTokenVerifier accessTokenVerifier = mock(AccessTokenVerifier.class);
+        Jwt jwt = mock(Jwt.class);
+        when(accessTokenVerifier.decode(anyString())).thenReturn(jwt);
+        when(jwt.getClaims()).thenReturn(new java.util.HashMap<>(){{
+            put("sub", "");
+        }});
+
+        filter = new JwtTokenAuthenticationFilter(accessTokenVerifier, pdpClientService, jwtConfig, eventLogger, "");
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer fake.jwt");
+
+        assertThrows(BadJWTTokenException.class, () -> {
+            filter.doFilterInternal(request, null, null);
+        });
+    }
+
+    @Test
+    void testDoFilterInternal4() {
+        PdpClientService pdpClientService = mock(PdpClientService.class);
+        JwtConfig jwtConfig = new JwtConfig("Authorization", "Bearer ");
+        SQSEventClient eventLogger = mock(SQSEventClient.class);
+        AccessTokenVerifier accessTokenVerifier = mock(AccessTokenVerifier.class);
+        FilterChain chain = mock(FilterChain.class);
+
+        filter = new JwtTokenAuthenticationFilter(accessTokenVerifier, pdpClientService, jwtConfig, eventLogger, "test");
+        ReflectionTestUtils.setField(filter, "uriFilters", String.join(",", "^/health$"));
+        ReflectionTestUtils.invokeMethod(filter, "constructFilters");
+
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRequestURI("/favicon.ico");
+
+        assertDoesNotThrow(() -> {
+            filter.doFilterInternal(request, null, chain);
+        });
+    }
 
     private void rebuildFilters(String ... regexes) {
         ReflectionTestUtils.setField(filter, "uriFilters", String.join(",", regexes));

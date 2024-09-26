@@ -102,7 +102,7 @@ public class CoverageServiceRepository {
 
     private static final String SELECT_DISTINCT_OPTOUT_COVERAGE_BY_PERIOD_COUNT = "SELECT COUNT(DISTINCT beneficiary_id) FROM coverage c " +
             " join current_mbi m on  c.current_mbi=m.mbi" +
-            " WHERE bene_coverage_period_id IN(:ids) AND contract = :contract AND year IN (:years) AND opt_out_flag is not false and current_mbi is not null";
+            " WHERE bene_coverage_period_id IN(:ids) AND contract = :contract AND year IN (:years) AND share_data is not false and current_mbi is not null";
 
     /**
      * Delete all coverage associated with a single update from BFD {@link CoverageSearchEvent}
@@ -170,7 +170,7 @@ public class CoverageServiceRepository {
     private static final String SELECT_OPTOUT_COVERAGE_WITHOUT_CURSOR =
             "SELECT beneficiary_id, current_mbi, historic_mbis, year, month " +
                     " FROM coverage c join current_mbi m on  c.current_mbi=m.mbi " +
-                    " WHERE contract = :contract and year IN (:years) and opt_out_flag is not false and current_mbi is not null" +
+                    " WHERE contract = :contract and year IN (:years) and share_data is not false and current_mbi is not null" +
                     " ORDER BY beneficiary_id " +
                     " LIMIT :limit";
 
@@ -192,7 +192,7 @@ public class CoverageServiceRepository {
     private static final String SELECT_OPTOUT_COVERAGE_WITH_CURSOR =
             "SELECT beneficiary_id, current_mbi, historic_mbis, year, month " +
                     " FROM coverage c join current_mbi m on  c.current_mbi=m.mbi" +
-                    " WHERE contract = :contract and year IN (:years) and  current_mbi is not null and opt_out_flag is not false AND beneficiary_id >= :cursor " +
+                    " WHERE contract = :contract and year IN (:years) and  current_mbi is not null and share_data is not false AND beneficiary_id >= :cursor " +
                     " ORDER BY beneficiary_id " +
                     " LIMIT :limit";
 
@@ -216,6 +216,8 @@ public class CoverageServiceRepository {
                     " coverage.bene_coverage_period_id, coverage.bene_coverage_search_event_id " +
             " ORDER BY coverage.contract, coverage.year, coverage.month, " +
                     " coverage.bene_coverage_period_id, coverage.bene_coverage_search_event_id ";
+
+    private static String vacuumCoverage = "VACUUM coverage";
 
     private final DataSource dataSource;
     private final CoveragePeriodRepository coveragePeriodRepo;
@@ -754,7 +756,7 @@ public class CoverageServiceRepository {
     @Trace
     public void vacuumCoverage() {
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement("VACUUM coverage")) {
+             PreparedStatement statement = connection.prepareStatement(vacuumCoverage)) {
             statement.execute();
         } catch (SQLException exception) {
             throw new RuntimeException("Could not vacuum coverage table", exception);

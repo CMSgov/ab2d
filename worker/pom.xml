@@ -14,7 +14,7 @@
         <project.root>${basedir}/..</project.root>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <sonar.coverage.exclusions>**/PatientClaimsProcessorImpl.java,**/ContractProcessorImpl.java,**/CoverageDriverImpl.java</sonar.coverage.exclusions>
+        <sonar.coverage.exclusions>**/PatientClaimsProcessorImpl.java,**/ContractProcessorImpl.java,**/CoverageDriverImpl.java,**/JobProcessorImpl.java</sonar.coverage.exclusions>
     </properties>
 
     <dependencies>
@@ -118,7 +118,7 @@
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>ab2d-sns-client</artifactId>
-            <version>0.2.3</version>
+            <version>0.2.4</version>
         </dependency>
 
         <dependency>
