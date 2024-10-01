@@ -1,13 +1,25 @@
 name: end-to-end tests
 
 on:
-  pull_request:
   workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
   workflow_dispatch: # Allow manual trigger
+    inputs:
+      environment:
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+          - sbx
+        default: test
 
-# Ensure we have only one e2e test running at a time
+# Ensure we have only one e2e test running at a time in each environment
 concurrency:
-  group: e2e-test
+  group: ${{ inputs.environment }}-e2e-test
 
 jobs:
   test:
@@ -39,7 +51,7 @@ jobs:
           sudo rm -rf /opt/maven
           sudo mv "$tmpdir/apache-maven-3.6.3" /opt/maven
 
-      - name: Set env vars from AWS params in management account
+      - name: Set env vars from AWS params in BCDA management account
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
@@ -49,13 +61,13 @@ jobs:
             ARTIFACTORY_USER=/artifactory/user
             ARTIFACTORY_PASSWORD=/artifactory/password
 
-      - name: Assume role in AB2D impl account
+      - name: Assume role in AB2D account for this environment
         uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ secrets.IMPL_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-test-github-actions
+          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', inputs.environment)] }}:role/delegatedadmin/developer/ab2d-${{ inputs.environment }}-github-actions
 
-      - name: Set env vars from AWS params in impl account
+      - name: Set env vars from AWS params in AB2D account
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
@@ -70,7 +82,8 @@ jobs:
       - name: Create opt/ab2d directory and download keystore
         run: |
           mkdir -p opt/ab2d
-          aws s3 cp s3://ab2d-east-impl-main/ab2d_imp_keystore $AB2D_BFD_KEYSTORE_LOCATION
+          KEYSTORE_FILE_NAME="ab2d_${{ inputs.environment == 'test' && 'imp' || inputs.environment }}_keystore"
+          aws s3 cp s3://ab2d-${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}-main/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
           test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
 
       - name: Run e2e-bfd-test
@@ -79,6 +92,6 @@ jobs:
 
       - name: Run e2e-test
         env:
-          E2E_ENVIRONMENT: 'IMPL'
+          E2E_ENVIRONMENT: ${{ inputs.environment == 'dev' && 'DEV' || inputs.environment == 'test' && 'IMPL' || inputs.environment == 'sbx' && 'SANDBOX' }}
         run: |
           mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress
