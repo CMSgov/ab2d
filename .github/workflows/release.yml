@@ -89,6 +89,9 @@ jobs:
   deploy-sbx-api:
     needs: promote-sbx-api
     uses: ./.github/workflows/deploy.yml
+    permissions:
+      contents: read
+      id-token: write    
     with:
       environment: sbx
       module: api
@@ -97,6 +100,9 @@ jobs:
   deploy-sbx-worker:
     needs: promote-sbx-worker
     uses: ./.github/workflows/deploy.yml
+    permissions:
+      contents: read
+      id-token: write
     with:
       environment: sbx
       module: worker
