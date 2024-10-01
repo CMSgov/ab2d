@@ -28,6 +28,8 @@ on:
 jobs:
   promote:
     runs-on: ubuntu-latest
+    env:
+        AWS_REGION: ${{ vars.AWS_REGION }}
 
     steps:
       - name: Retag images in ECR
