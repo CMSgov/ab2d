@@ -29,6 +29,7 @@ jobs:
   promote:
     runs-on: ubuntu-latest
 
+    steps:
       - name: Retag images in ECR
         run: |
           ECR_REPO_DOMAIN="${{ secrets.MGMT_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com"
