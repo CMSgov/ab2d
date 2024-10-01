@@ -29,16 +29,6 @@ jobs:
   promote:
     runs-on: ubuntu-latest
 
-    env:
-      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true    
-
-    steps:
-      - name: Assume role in AB2D Management account
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ secrets.MGMT_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-mgmt-github-actions
-
       - name: Retag images in ECR
         run: |
           ECR_REPO_DOMAIN="${{ secrets.MGMT_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com"
