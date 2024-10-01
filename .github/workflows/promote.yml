@@ -48,7 +48,7 @@ jobs:
           fi
 
           # Get the manifest of the latest test image
-          MANIFEST=$(aws ecr batch-get-image --repository-name "ab2d_${{ inputs.module }}" --image-ids imageTag=ab2d-test-latest --output text --query 'images[].imageManifest')
+          MANIFEST=$(aws ecr batch-get-image --repository-name "ab2d_${{ inputs.module }}" --image-ids imageTag=ab2d-east-impl-latest --output text --query 'images[].imageManifest')
 
           # Retag the image
           aws ecr put-image --repository-name "ab2d_${{ inputs.module }}" --image-tag "$TARGET_TAG" --image-manifest "$MANIFEST"
