@@ -3,6 +3,7 @@ name: release
 on:
   release:
     types: [released]
+  push:  
 
 jobs:
   # Promote and Deploy to prod-test
@@ -28,44 +29,44 @@ jobs:
       module: api
     secrets: inherit
 
-  deploy-prod-test-worker:
-    needs: promote-prod-test-worker
-    uses: ./.github/workflows/deploy.yml
-    with:
-      environment: prod-test
-      module: worker
-    secrets: inherit
+#  deploy-prod-test-worker:
+#    needs: promote-prod-test-worker
+#    uses: ./.github/workflows/deploy.yml
+#    with:
+#      environment: prod-test
+#      module: worker
+#    secrets: inherit
 
   # Promote and Deploy to prod
-  promote-prod-api:
-    uses: ./.github/workflows/promote.yml
-    with:
-      environment: prod
-      module: api
-    secrets: inherit
+#  promote-prod-api:
+#    uses: ./.github/workflows/promote.yml
+#    with:
+#      environment: prod
+#      module: api
+#    secrets: inherit
 
-  promote-prod-worker:
-    uses: ./.github/workflows/promote.yml
-    with:
-      environment: prod
-      module: worker
-    secrets: inherit
+#  promote-prod-worker:
+#    uses: ./.github/workflows/promote.yml
+#    with:
+#      environment: prod
+#      module: worker
+#   secrets: inherit
 
-  deploy-prod-api:
-    needs: promote-prod-api
-    uses: ./.github/workflows/deploy.yml
-    with:
-      environment: prod
-      module: api
-    secrets: inherit
+#  deploy-prod-api:
+#    needs: promote-prod-api
+#    uses: ./.github/workflows/deploy.yml
+#    with:
+#      environment: prod
+#      module: api
+#    secrets: inherit
 
-  deploy-prod-worker:
-    needs: promote-prod-worker
-    uses: ./.github/workflows/deploy.yml
-    with:
-      environment: prod
-      module: worker
-    secrets: inherit
+#  deploy-prod-worker:
+#    needs: promote-prod-worker
+#    uses: ./.github/workflows/deploy.yml
+#    with:
+#      environment: prod
+#      module: worker
+#    secrets: inherit
 
   # Promote and Deploy to sandbox
   promote-sbx-api:
