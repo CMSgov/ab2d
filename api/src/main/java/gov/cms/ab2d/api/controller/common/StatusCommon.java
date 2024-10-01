@@ -137,7 +137,7 @@ public class StatusCommon {
         OpenAPIConfig.Issue issue = new OpenAPIConfig.Issue();
         issue.setDetails(details);
         issue.setCode("deleted");
-        issue.setSeverity("information");
+        issue.setSeverity("error");
 
         List<OpenAPIConfig.Issue> issuesList = new ArrayList<>();
         issuesList.add(issue);
