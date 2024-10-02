@@ -75,6 +75,7 @@ jobs:
 
           # Retag the image
           aws ecr put-image --repository-name "ab2d_${{ inputs.module }}" --image-tag "$TARGET_TAG-$SHA_SHORTs" --image-manifest "$MANIFEST"
+        fi
 
       - name: Verify new tags
         run: |
