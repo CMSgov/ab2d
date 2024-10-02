@@ -5,6 +5,10 @@ on:
     types: [released]
   push:  
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   # Promote and Deploy to prod-test
   promote-prod-test-api:
@@ -23,9 +27,6 @@ jobs:
 
   deploy-prod-test-api:
     needs: promote-prod-test-api
-    permissions:
-      contents: read
-      id-token: write
     uses: ./.github/workflows/deploy.yml
     with:
       environment: prod-test
@@ -88,10 +89,7 @@ jobs:
 
   deploy-sbx-api:
     needs: promote-sbx-api
-    uses: ./.github/workflows/deploy.yml
-    permissions:
-      contents: read
-      id-token: write    
+    uses: ./.github/workflows/deploy.yml 
     with:
       environment: sbx
       module: api
@@ -100,9 +98,6 @@ jobs:
   deploy-sbx-worker:
     needs: promote-sbx-worker
     uses: ./.github/workflows/deploy.yml
-    permissions:
-      contents: read
-      id-token: write
     with:
       environment: sbx
       module: worker
