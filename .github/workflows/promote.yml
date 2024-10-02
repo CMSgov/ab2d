@@ -24,6 +24,9 @@ on:
         options:
           - api
           - worker          
+permissions:
+  contents: read
+  id-token: write
   
 jobs:
   promote:
