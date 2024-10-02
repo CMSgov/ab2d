@@ -37,6 +37,9 @@ jobs:
         DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}
 
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
       - name: Assume role in AB2D Management account
         uses: aws-actions/configure-aws-credentials@v3
         with:
@@ -45,26 +48,33 @@ jobs:
           
       - name: Retag images in ECR
         run: |
+          SHA_SHORT=$(git rev-parse --short HEAD)        
           ECR_REPO_DOMAIN="${{ secrets.MGMT_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com"
           ECR_REPO_URI="$ECR_REPO_DOMAIN/ab2d_${{ inputs.module }}"
 
           # Define target tags based on the environment
           if [ "${{ inputs.environment }}" == "sbx" ]; then
-            TARGET_TAG="sandbox-latest"
+            TARGET_TAG="ab2d-sbx-sandbox-latest"
           elif [ "${{ inputs.environment }}" == "prod" ]; then
-            TARGET_TAG="prod-latest"
+            TARGET_TAG="ab2d-east-prod-latest"
           elif [ "${{ inputs.environment }}" == "prod-test" ]; then
-            TARGET_TAG="prod-test-latest"
+            TARGET_TAG="ab2d-east-prod-test-latest"
           else
             echo "Unsupported environment: ${{ inputs.environment }}"
             exit 1
           fi
 
-          # Get the manifest of the latest test image
-          MANIFEST=$(aws ecr batch-get-image --repository-name "ab2d_${{ inputs.module }}" --image-ids imageTag=ab2d-east-impl-latest --output text --query 'images[].imageManifest' --debug)
+
+          IMAGE_EXISTS=$(aws ecr describe-images --repository-name "ab2d_${{ inputs.module }}" --image-ids imageTag=$TARGET_TAG --query 'imageDetails' --output text)
+
+          if [ -n "$IMAGE_EXISTS" ]; then
+            echo "Image with tag $TARGET_TAG already exists. Skipping put-image."
+          else
+            # Get the manifest of the latest test image
+            MANIFEST=$(aws ecr batch-get-image --repository-name "ab2d_${{ inputs.module }}" --image-ids imageTag=ab2d-east-impl-latest --output text --query 'images[].imageManifest' --debug)
 
           # Retag the image
-          aws ecr put-image --repository-name "ab2d_${{ inputs.module }}" --image-tag "$TARGET_TAG" --image-manifest "$MANIFEST"
+          aws ecr put-image --repository-name "ab2d_${{ inputs.module }}" --image-tag "$TARGET_TAG-$SHA_SHORTs" --image-manifest "$MANIFEST"
 
       - name: Verify new tags
         run: |

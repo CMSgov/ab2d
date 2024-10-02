@@ -4,6 +4,15 @@ on:
   release:
     types: [released]
   push:  
+  workflow_dispatch:
+  inputs:
+    environment:
+      required: true
+      type: choice
+      options:
+        - sbx
+        - prod
+        - prod-test  
 
 permissions:
   contents: read
