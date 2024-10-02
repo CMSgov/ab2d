@@ -151,11 +151,12 @@ public class PatientClaimsCollector {
      * Create custom NewRelic event and log it
      * @param since since date used if in use
      */
-    public void logBundleEvent(OffsetDateTime since) {
+    public void logBundleEvent(OffsetDateTime since, OffsetDateTime until) {
         Map<String, Object> event = new HashMap<>();
         event.put("organization", claimsRequest.getOrganization());
         event.put("contract", claimsRequest.getContractNum());
         event.put("since", since);
+        event.put("until", until);
         event.put("jobid", claimsRequest.getJob());
         event.put("bundles", bundles);
         event.put("raweobs", rawEobs);

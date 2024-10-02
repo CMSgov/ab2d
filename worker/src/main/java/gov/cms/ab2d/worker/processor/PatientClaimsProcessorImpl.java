@@ -14,6 +14,15 @@ import gov.cms.ab2d.eventclient.events.MetricsEvent;
 import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.worker.config.SearchConfig;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.hl7.fhir.instance.model.api.IBaseBundle;
+import org.hl7.fhir.instance.model.api.IBaseResource;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.AsyncResult;
+import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,21 +35,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Future;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.hl7.fhir.instance.model.api.IBaseBundle;
-import org.hl7.fhir.instance.model.api.IBaseResource;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.AsyncResult;
-import org.springframework.stereotype.Component;
-
-
 import static gov.cms.ab2d.aggregator.FileOutputType.DATA;
 import static gov.cms.ab2d.aggregator.FileOutputType.ERROR;
-import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
-import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
+import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE_TIME;
 
 @Slf4j
 @Component
@@ -57,8 +54,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     @Value("${bfd.retry.backoffDelay:250}")
     private int bfdTimeout;
 
-    private static final OffsetDateTime START_CHECK = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
-
     /**
      * Process the retrieval of patient explanation of benefit objects and return the result
      * for further post-processing
@@ -71,7 +66,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         FhirVersion fhirVersion = request.getVersion();
         try {
             String anyErrors = writeOutData(request, fhirVersion, update);
-            if (anyErrors != null && anyErrors.length() > 0) {
+            if (anyErrors != null && !anyErrors.isEmpty()) {
                 writeOutErrors(anyErrors, request);
             }
         } catch (Exception ex) {
@@ -177,8 +172,9 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
         IBaseBundle eobBundle;
 
-        // Guarantee that since date provided with job doesn't violate AB2D requirements
+        // Guarantee that since and until dates provided with job don't violate AB2D requirements
         OffsetDateTime sinceTime = getSinceTime(request);
+        OffsetDateTime untilTime = getUntilTime(request, sinceTime);
 
         try {
 
@@ -186,19 +182,17 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             BFDClient.BFD_BULK_JOB_ID.set(request.getJob());
 
             // Make first request and begin looping over remaining pages
-            eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patient.getIdentifiers().getBeneficiaryId(), sinceTime, request.getContractNum());
+            eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patient.getIdentifiers().getBeneficiaryId(), sinceTime, untilTime, request.getContractNum());
             collector.filterAndAddEntries(eobBundle, patient);
 
-            // Only for S4802 contracts (Centene support)
-
-            while (BundleUtils.getNextLink(eobBundle) != null && isContinue(eobBundle, request)) {
+            while (BundleUtils.getNextLink(eobBundle) != null) {
                 eobBundle = bfdClient.requestNextBundleFromServer(request.getVersion(), eobBundle, request.getContractNum());
                 collector.filterAndAddEntries(eobBundle, patient);
             }
 
             // Log request to Kinesis and NewRelic
             logSuccessful(request, beneficiaryId, requestStartTime);
-            collector.logBundleEvent(sinceTime);
+            collector.logBundleEvent(sinceTime, untilTime);
 
             return collector.getEobs();
         } catch (Exception ex) {
@@ -218,23 +212,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         }
     }
 
-    //Centene Support
-    boolean isContinue(IBaseResource resource, PatientClaimsRequest request) {
-        OffsetDateTime sinceTime = request.getSinceTime();
-        if (sinceTime == null) {
-            return true;
-        }
-        Date lastUpdated = resource.getMeta().getLastUpdated();
-        if (lastUpdated == null) {
-            return false;
-        }
-        //AB2D-5892 (Sprint 3)Centene customer support to provide 2 year data
-        if (request.getContractNum().equals("S4802") || request.getContractNum().equals("Z1001")) {
-            return lastUpdated.getTime() < sinceTime.plusMonths(1).toInstant().toEpochMilli();
-        }
-        return true;
-    }
-
     /**
      * Determine what since date to use if any.
      * <p>
@@ -249,7 +226,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         OffsetDateTime sinceTime = request.getSinceTime();
 
         if (sinceTime == null) {
-            if (request.getAttTime().isAfter(START_CHECK) || request.getAttTime().isEqual(START_CHECK)) {
+            if (request.getAttTime().isAfter(SINCE_EARLIEST_DATE_TIME) || request.getAttTime().isEqual(SINCE_EARLIEST_DATE_TIME)) {
                 sinceTime = request.getAttTime();
             }
         } else {
@@ -259,12 +236,24 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             }
 
             // Should not be possible but just in case
-            if (sinceTime.isBefore(START_CHECK)) {
+            if (sinceTime.isBefore(SINCE_EARLIEST_DATE_TIME)) {
                 sinceTime = null;
             }
         }
 
         return sinceTime;
+    }
+
+    private OffsetDateTime getUntilTime(PatientClaimsRequest request, OffsetDateTime updatedSinceTime) {
+        OffsetDateTime untilTime = request.getUntilTime();
+        if (untilTime == null || untilTime.isAfter(OffsetDateTime.now()))
+            return null;
+
+        if (updatedSinceTime != null && untilTime.isBefore(updatedSinceTime)) {
+            return null;
+        }
+
+        return untilTime;
     }
 
     private void logSuccessful(PatientClaimsRequest request, long beneficiaryId, OffsetDateTime start) {
