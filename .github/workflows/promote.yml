@@ -46,7 +46,7 @@ jobs:
           ECR_REPO_URI="$ECR_REPO_DOMAIN/ab2d_${{ inputs.module }}"
 
           # Define target tags based on the environment
-          if [ "${{ inputs.environment }}" == "sandbox" ]; then
+          if [ "${{ inputs.environment }}" == "sbx" ]; then
             TARGET_TAG="sandbox-latest"
           elif [ "${{ inputs.environment }}" == "prod" ]; then
             TARGET_TAG="prod-latest"
