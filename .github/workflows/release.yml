@@ -11,13 +11,6 @@ permissions:
 
 jobs:
   # Promote and Deploy to prod-test, which only includes worker
-  promote-prod-test-api:
-    uses: ./.github/workflows/promote.yml
-    with:
-      environment: prod-test
-      module: api
-    secrets: inherit
-
   promote-prod-test-worker:
     uses: ./.github/workflows/promote.yml
     with:
