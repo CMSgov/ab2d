@@ -22,8 +22,9 @@ on:
         required: true
         type: choice
         options:
-          - api
-          - worker          
+          - api 
+          - worker 
+#These are the job permissions          
 permissions:
   contents: read
   id-token: write
