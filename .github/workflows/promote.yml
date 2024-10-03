@@ -32,7 +32,6 @@ jobs:
   promote:
     runs-on: ubuntu-latest
     env:
-        ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
         AWS_REGION: ${{ vars.AWS_REGION }}
         DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}
 
@@ -64,7 +63,6 @@ jobs:
             exit 1
           fi
 
-
           IMAGE_EXISTS=$(aws ecr describe-images --repository-name "ab2d_${{ inputs.module }}" --image-ids imageTag=$TARGET_TAG --query 'imageDetails' --output text)
 
           if [ -n "$IMAGE_EXISTS" ]; then
@@ -77,6 +75,3 @@ jobs:
           aws ecr put-image --repository-name "ab2d_${{ inputs.module }}" --image-tag "$TARGET_TAG-$SHA_SHORTs" --image-manifest "$MANIFEST"
           fi  
 
-      - name: Verify new tags
-        run: |
-          aws ecr describe-images --repository-name "ab2d_${{ inputs.module }}"
