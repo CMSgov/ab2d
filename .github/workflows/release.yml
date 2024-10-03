@@ -4,21 +4,13 @@ on:
   release:
     types: [released]
   workflow_dispatch:
-    inputs:
-      environment:
-        required: true
-        type: choice
-        options:
-          - sbx
-          - prod
-          - prod-test  
 
 permissions:
   contents: read
   id-token: write
 
 jobs:
-  # Promote and Deploy to prod-test
+  # Promote and Deploy to prod-test. We do not have api job deploy job for prod-test because we only deploy to worker for prod-test
   promote-prod-test-api:
     uses: ./.github/workflows/promote.yml
     with:
