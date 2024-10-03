@@ -24,7 +24,7 @@ on:
         options:
           - api 
           - worker 
-#These are the job permissions          
+          
 permissions:
   contents: read
   id-token: write
