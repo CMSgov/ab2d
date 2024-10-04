@@ -17,62 +17,53 @@ on:
         options:
           - sbx
           - prod
-          - prod-test  
+          - prod-test
       module:
         required: true
         type: choice
         options:
-          - api 
-          - worker 
-          
+          - api
+          - worker
+
 permissions:
   contents: read
   id-token: write
-  
+
 jobs:
   promote:
     runs-on: ubuntu-latest
-    env:
-        AWS_REGION: ${{ vars.AWS_REGION }}
-        DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}
-
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      - name: Assume role in AB2D Management account
-        uses: aws-actions/configure-aws-credentials@v3
+      - uses: actions/checkout@v3
+      - uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ secrets.MGMT_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-mgmt-github-actions    
-          
+          role-to-assume: arn:aws:iam::${{ secrets.MGMT_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-mgmt-github-actions
       - name: Retag images in ECR
+        env:
+          DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}
         run: |
-          SHA_SHORT=$(git rev-parse --short HEAD)        
-          ECR_REPO_DOMAIN="${{ secrets.MGMT_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com"
-          ECR_REPO_URI="$ECR_REPO_DOMAIN/ab2d_${{ inputs.module }}"
+          REPO="ab2d_${{ inputs.module }}"
+          SHA_SHORT=$(git rev-parse --short HEAD)
 
-          # Define target tags based on the environment
-          if [ "${{ inputs.environment }}" == "sbx" ]; then
-            TARGET_TAG="ab2d-sbx-sandbox-latest"
-          elif [ "${{ inputs.environment }}" == "prod" ]; then
-            TARGET_TAG="ab2d-east-prod-latest"
-          elif [ "${{ inputs.environment }}" == "prod-test" ]; then
-            TARGET_TAG="ab2d-east-prod-test-latest"
-          else
-            echo "Unsupported environment: ${{ inputs.environment }}"
-            exit 1
+          # Get the manifest of the image pushed for latest commit to main
+          MANIFEST=$(aws ecr batch-get-image --repository-name "$REPO" --image-ids imageTag=main-$SHORT_SHA --output text --query 'images[].imageManifest')
+
+          # Add the tag for sha
+          if ! OUT=$(2>&1 aws ecr put-image --repository-name "$REPO" --image-tag "ab2d-$DEPLOYMENT_ENV-$SHA_SHORT" --image-manifest "$MANIFEST"); then
+            if echo "$OUT" | grep ImageAlreadyExistsException > /dev/null; then
+              echo "Image for main-$SHORT_SHA has already been tagged with ab2d-$DEPLOYMENT_ENV-$SHA_SHORT"
+            else
+              >&2 echo "$OUT"
+              exit 1
+            fi
           fi
 
-          IMAGE_EXISTS=$(aws ecr describe-images --repository-name "ab2d_${{ inputs.module }}" --image-ids imageTag=$TARGET_TAG --query 'imageDetails' --output text)
-
-          if [ -n "$IMAGE_EXISTS" ]; then
-            echo "Image with tag $TARGET_TAG already exists. Skipping put-image."
-          else
-            # Get the manifest of the latest test image
-            MANIFEST=$(aws ecr batch-get-image --repository-name "ab2d_${{ inputs.module }}" --image-ids imageTag=ab2d-east-impl-latest --output text --query 'images[].imageManifest' --debug)
-
-          # Retag the image
-          aws ecr put-image --repository-name "ab2d_${{ inputs.module }}" --image-tag "$TARGET_TAG-$SHA_SHORTs" --image-manifest "$MANIFEST"
-          fi  
-
+          # Add the tag for latest
+          if ! OUT=$(2>&1 aws ecr put-image --repository-name "$REPO" --image-tag "ab2d-$DEPLOYMENT_ENV-latest" --image-manifest "$MANIFEST"); then
+            if echo "$OUT" | grep ImageAlreadyExistsException > /dev/null; then
+              echo "Image for main-$SHORT_SHA has already been tagged with ab2d-$DEPLOYMENT_ENV-latest"
+            else
+              >&2 echo "$OUT"
+              exit 1
+            fi
+          fi
