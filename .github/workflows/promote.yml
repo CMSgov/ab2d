@@ -43,25 +43,29 @@ jobs:
           DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}
         run: |
           REPO="ab2d_${{ inputs.module }}"
-          SHA_SHORT=$(git rev-parse --short HEAD)
+          #SHA_SHORT=$(git rev-parse --short HEAD)
+          SHA_SHORT=82d2398 # TODO remove after testing
 
-          # Get the manifest of the image pushed for latest commit to main
+          echo "Getting the manifest of the image pushed with the latest commit to main at sha $SHA_SHORT"
           MANIFEST=$(aws ecr batch-get-image --repository-name "$REPO" --image-ids imageTag=main-$SHORT_SHA --output text --query 'images[].imageManifest')
 
-          # Add the tag for sha
-          if ! OUT=$(2>&1 aws ecr put-image --repository-name "$REPO" --image-tag "ab2d-$DEPLOYMENT_ENV-$SHA_SHORT" --image-manifest "$MANIFEST"); then
+          SHA_TAG="ab2d-$DEPLOYMENT_ENV-$SHA_SHORT"
+          echo "Adding the tag for $SHA_TAG to main-$SHORT_SHA image"
+          # Avoid failure on existing image and tag
+          if ! OUT=$(2>&1 aws ecr put-image --repository-name "$REPO" --image-tag "$SHA_TAG" --image-manifest "$MANIFEST"); then
             if echo "$OUT" | grep ImageAlreadyExistsException > /dev/null; then
-              echo "Image for main-$SHORT_SHA has already been tagged with ab2d-$DEPLOYMENT_ENV-$SHA_SHORT"
+              echo "Image for main-$SHORT_SHA has already been tagged with $SHA_TAG"
             else
               >&2 echo "$OUT"
               exit 1
             fi
           fi
 
-          # Add the tag for latest
-          if ! OUT=$(2>&1 aws ecr put-image --repository-name "$REPO" --image-tag "ab2d-$DEPLOYMENT_ENV-latest" --image-manifest "$MANIFEST"); then
+          LATEST_TAG="ab2d-$DEPLOYMENT_ENV-latest"
+          echo "Adding the tag for $LATEST_TAG to main-$SHORT_SHA image"
+          if ! OUT=$(2>&1 aws ecr put-image --repository-name "$REPO" --image-tag "$LATEST_TAG" --image-manifest "$MANIFEST"); then
             if echo "$OUT" | grep ImageAlreadyExistsException > /dev/null; then
-              echo "Image for main-$SHORT_SHA has already been tagged with ab2d-$DEPLOYMENT_ENV-latest"
+              echo "Image for main-$SHORT_SHA has already been tagged with $LATEST_TAG"
             else
               >&2 echo "$OUT"
               exit 1
