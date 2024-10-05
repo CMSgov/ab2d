@@ -19,7 +19,7 @@ on:
           - test
           - sbx
           - prod
-          - prod-test
+          - prod_test
       module:
         required: true
         type: choice
@@ -35,7 +35,7 @@ jobs:
       id-token: write
     env:
       DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}
-      ACCOUNT: ${{ inputs.environment == 'prod-test' && 'prod' || inputs.environment }}
+      ACCOUNT: ${{ inputs.environment == 'prod_test' && 'prod' || inputs.environment }}
 
     steps:
       - uses: aws-actions/configure-aws-credentials@v3

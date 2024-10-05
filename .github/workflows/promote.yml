@@ -17,7 +17,7 @@ on:
         options:
           - sbx
           - prod
-          - prod-test
+          - prod_test
       module:
         required: true
         type: choice
@@ -47,14 +47,14 @@ jobs:
           SHA_SHORT=82d2398 # TODO remove after testing
 
           echo "Getting the manifest of the image pushed with the latest commit to main at sha $SHA_SHORT"
-          MANIFEST=$(aws ecr batch-get-image --repository-name "$REPO" --image-ids imageTag=main-$SHORT_SHA --output text --query 'images[].imageManifest')
+          MANIFEST=$(aws ecr batch-get-image --repository-name "$REPO" --image-ids imageTag=main-$SHA_SHORT --output text --query 'images[].imageManifest')
 
           SHA_TAG="ab2d-$DEPLOYMENT_ENV-$SHA_SHORT"
-          echo "Adding the tag for $SHA_TAG to main-$SHORT_SHA image"
+          echo "Adding the tag for $SHA_TAG to main-$SHA_SHORT image"
           # Avoid failure on existing image and tag
           if ! OUT=$(2>&1 aws ecr put-image --repository-name "$REPO" --image-tag "$SHA_TAG" --image-manifest "$MANIFEST"); then
             if echo "$OUT" | grep ImageAlreadyExistsException > /dev/null; then
-              echo "Image for main-$SHORT_SHA has already been tagged with $SHA_TAG"
+              echo "Image for main-$SHA_SHORT has already been tagged with $SHA_TAG"
             else
               >&2 echo "$OUT"
               exit 1
@@ -62,10 +62,10 @@ jobs:
           fi
 
           LATEST_TAG="ab2d-$DEPLOYMENT_ENV-latest"
-          echo "Adding the tag for $LATEST_TAG to main-$SHORT_SHA image"
+          echo "Adding the tag for $LATEST_TAG to main-$SHA_SHORT image"
           if ! OUT=$(2>&1 aws ecr put-image --repository-name "$REPO" --image-tag "$LATEST_TAG" --image-manifest "$MANIFEST"); then
             if echo "$OUT" | grep ImageAlreadyExistsException > /dev/null; then
-              echo "Image for main-$SHORT_SHA has already been tagged with $LATEST_TAG"
+              echo "Image for main-$SHA_SHORT has already been tagged with $LATEST_TAG"
             else
               >&2 echo "$OUT"
               exit 1
