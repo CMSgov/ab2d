@@ -44,4 +44,4 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
 
       - name: Deploy ECS service to run on latest image in ECR
-        run: aws ecs update-service --cluster ab2d-${DEPLOYMENT_ENV}-${{ inputs.module }} --service ab2d-${DEPLOYMENT_ENV}-${{ inputs.module }} --force-new-deployment
+        run: aws ecs update-service --cluster ab2d-${DEPLOYMENT_ENV}-${{ inputs.module }} --service ab2d-${DEPLOYMENT_ENV}-${{ inputs.module }} --force-new-deployment > /dev/null
