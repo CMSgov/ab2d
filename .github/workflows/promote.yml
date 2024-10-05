@@ -41,8 +41,8 @@ jobs:
       - name: Retag images in ECR
         env:
           DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}
+          REPO: ab2d_${{ inputs.module }}
         run: |
-          REPO="ab2d_${{ inputs.module }}"
           #SHA_SHORT=$(git rev-parse --short HEAD)
           SHA_SHORT=7da005a # TODO remove after testing
 
