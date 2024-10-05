@@ -44,7 +44,7 @@ jobs:
         run: |
           REPO="ab2d_${{ inputs.module }}"
           #SHA_SHORT=$(git rev-parse --short HEAD)
-          SHA_SHORT=82d2398 # TODO remove after testing
+          SHA_SHORT=7da005a # TODO remove after testing
 
           echo "Getting the manifest of the image pushed with the latest commit to main at sha $SHA_SHORT"
           MANIFEST=$(aws ecr batch-get-image --repository-name "$REPO" --image-ids imageTag=main-$SHA_SHORT --output text --query 'images[].imageManifest')
