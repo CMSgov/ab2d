@@ -48,15 +48,15 @@ jobs:
           SHA_SHORT=7da005a # TODO remove after testing
           CONTENT_TYPE="application/vnd.docker.distribution.manifest.v2+json"
 
-          aws ecr get-login-password | docker login --username AWS --password-stdin "$ECR_REPO_DOMAIN"
+          TOKEN=$(aws ecr get-authorization-token --output text --query 'authorizationData[].authorizationToken')
 
           echo "Getting the manifest of the image pushed with the latest commit to main at sha $SHA_SHORT"
-          MANIFEST=$(curl -H "Accept: $CONTENT_TYPE" "$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/main-$SHA_SHORT")
+          MANIFEST=$(curl -sS -H "Authorization: Basic $TOKEN" -H "Accept: $CONTENT_TYPE" "https://$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/main-$SHA_SHORT")
 
           SHA_TAG="ab2d-$DEPLOYMENT_ENV-$SHA_SHORT"
           echo "Adding the tag for $SHA_TAG to main-$SHA_SHORT image"
-          curl -X PUT -H "Content-Type: $CONTENT_TYPE" -d "$MANIFEST" "$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/$SHA_TAG"
+          curl -sS -X PUT -H "Authorization: Basic $TOKEN" -H "Content-Type: $CONTENT_TYPE" -d "$MANIFEST" "https://$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/$SHA_TAG"
 
           LATEST_TAG="ab2d-$DEPLOYMENT_ENV-latest"
           echo "Adding the tag for $LATEST_TAG to main-$SHA_SHORT image"
-          curl -X PUT -H "Content-Type: $CONTENT_TYPE" -d "$MANIFEST" "$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/$LATEST_TAG"
+          curl -sS -X PUT -H "Authorization: Basic $TOKEN" -H "Content-Type: $CONTENT_TYPE" -d "$MANIFEST" "https://$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/$LATEST_TAG"
