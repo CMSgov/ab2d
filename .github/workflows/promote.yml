@@ -41,33 +41,22 @@ jobs:
       - name: Retag images in ECR
         env:
           DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}
-          REPO: ab2d_${{ inputs.module }}
+          ECR_REPO_DOMAIN: ${{ secrets.MGMT_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com
+          ECR_REPO: ab2d_${{ inputs.module }}
         run: |
           #SHA_SHORT=$(git rev-parse --short HEAD)
           SHA_SHORT=7da005a # TODO remove after testing
+          CONTENT_TYPE="application/vnd.docker.distribution.manifest.v2+json"
+
+          aws ecr get-login-password | docker login --username AWS --password-stdin "$ECR_REPO_DOMAIN"
 
           echo "Getting the manifest of the image pushed with the latest commit to main at sha $SHA_SHORT"
-          MANIFEST=$(aws ecr batch-get-image --repository-name "$REPO" --image-ids imageTag=main-$SHA_SHORT --output text --query 'images[].imageManifest')
+          MANIFEST=$(curl -H "Accept: $CONTENT_TYPE" "$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/main-$SHA_SHORT")
 
           SHA_TAG="ab2d-$DEPLOYMENT_ENV-$SHA_SHORT"
           echo "Adding the tag for $SHA_TAG to main-$SHA_SHORT image"
-          # Avoid failure on existing image and tag
-          if ! OUT=$(2>&1 aws ecr put-image --repository-name "$REPO" --image-tag "$SHA_TAG" --image-manifest "$MANIFEST"); then
-            if echo "$OUT" | grep ImageAlreadyExistsException > /dev/null; then
-              echo "Image for main-$SHA_SHORT has already been tagged with $SHA_TAG"
-            else
-              >&2 echo "$OUT"
-              exit 1
-            fi
-          fi
+          curl -X PUT -H "Content-Type: $CONTENT_TYPE" -d "$MANIFEST" "$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/$SHA_TAG"
 
           LATEST_TAG="ab2d-$DEPLOYMENT_ENV-latest"
           echo "Adding the tag for $LATEST_TAG to main-$SHA_SHORT image"
-          if ! OUT=$(2>&1 aws ecr put-image --repository-name "$REPO" --image-tag "$LATEST_TAG" --image-manifest "$MANIFEST"); then
-            if echo "$OUT" | grep ImageAlreadyExistsException > /dev/null; then
-              echo "Image for main-$SHA_SHORT has already been tagged with $LATEST_TAG"
-            else
-              >&2 echo "$OUT"
-              exit 1
-            fi
-          fi
+          curl -X PUT -H "Content-Type: $CONTENT_TYPE" -d "$MANIFEST" "$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/$LATEST_TAG"
