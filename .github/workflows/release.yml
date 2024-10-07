@@ -14,7 +14,7 @@ jobs:
   promote-prod-test-worker:
     uses: ./.github/workflows/promote.yml
     with:
-      environment: prod-test
+      environment: prod_test
       module: worker
     secrets: inherit
 
@@ -22,11 +22,11 @@ jobs:
     needs: promote-prod-test-worker
     uses: ./.github/workflows/deploy.yml
     with:
-      environment: prod-test
+      environment: prod_test
       module: worker
     secrets: inherit
 
-   # Promote and Deploy to prod
+  # Promote and Deploy to prod
   promote-prod-api:
     uses: ./.github/workflows/promote.yml
     with:
@@ -74,7 +74,7 @@ jobs:
 
   deploy-sbx-api:
     needs: promote-sbx-api
-    uses: ./.github/workflows/deploy.yml 
+    uses: ./.github/workflows/deploy.yml
     with:
       environment: sbx
       module: api

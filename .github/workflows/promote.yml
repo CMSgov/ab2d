@@ -17,62 +17,44 @@ on:
         options:
           - sbx
           - prod
-          - prod-test  
+          - prod_test
       module:
         required: true
         type: choice
         options:
-          - api 
-          - worker 
-          
+          - api
+          - worker
+
 permissions:
   contents: read
   id-token: write
-  
+
 jobs:
   promote:
     runs-on: ubuntu-latest
-    env:
-        AWS_REGION: ${{ vars.AWS_REGION }}
-        DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}
-
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      - name: Assume role in AB2D Management account
-        uses: aws-actions/configure-aws-credentials@v3
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+      - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ secrets.MGMT_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-mgmt-github-actions    
-          
+          role-to-assume: arn:aws:iam::${{ secrets.MGMT_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-mgmt-github-actions
       - name: Retag images in ECR
+        env:
+          DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}
+          ECR_REPO_DOMAIN: ${{ secrets.MGMT_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com
+          ECR_REPO: ab2d_${{ inputs.module }}
         run: |
-          SHA_SHORT=$(git rev-parse --short HEAD)        
-          ECR_REPO_DOMAIN="${{ secrets.MGMT_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com"
-          ECR_REPO_URI="$ECR_REPO_DOMAIN/ab2d_${{ inputs.module }}"
+          SHA_SHORT="$(git rev-parse --short HEAD)"
+          TOKEN="$(aws ecr get-authorization-token --output text --query 'authorizationData[].authorizationToken')"
+          CONTENT_TYPE="application/vnd.docker.distribution.manifest.v2+json"
 
-          # Define target tags based on the environment
-          if [ "${{ inputs.environment }}" == "sbx" ]; then
-            TARGET_TAG="ab2d-sbx-sandbox-latest"
-          elif [ "${{ inputs.environment }}" == "prod" ]; then
-            TARGET_TAG="ab2d-east-prod-latest"
-          elif [ "${{ inputs.environment }}" == "prod-test" ]; then
-            TARGET_TAG="ab2d-east-prod-test-latest"
-          else
-            echo "Unsupported environment: ${{ inputs.environment }}"
-            exit 1
-          fi
+          echo "Getting the manifest of the image tagged main-$SHA_SHORT"
+          MANIFEST="$(curl -sS -H "Authorization: Basic $TOKEN" -H "Accept: $CONTENT_TYPE" "https://$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/main-$SHA_SHORT")"
 
-          IMAGE_EXISTS=$(aws ecr describe-images --repository-name "ab2d_${{ inputs.module }}" --image-ids imageTag=$TARGET_TAG --query 'imageDetails' --output text)
+          SHA_TAG="ab2d-$DEPLOYMENT_ENV-$SHA_SHORT"
+          echo "Adding the $SHA_TAG tag to main-$SHA_SHORT image"
+          curl -sS -X PUT -H "Authorization: Basic $TOKEN" -H "Content-Type: $CONTENT_TYPE" -d "$MANIFEST" "https://$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/$SHA_TAG"
 
-          if [ -n "$IMAGE_EXISTS" ]; then
-            echo "Image with tag $TARGET_TAG already exists. Skipping put-image."
-          else
-            # Get the manifest of the latest test image
-            MANIFEST=$(aws ecr batch-get-image --repository-name "ab2d_${{ inputs.module }}" --image-ids imageTag=ab2d-east-impl-latest --output text --query 'images[].imageManifest' --debug)
-
-          # Retag the image
-          aws ecr put-image --repository-name "ab2d_${{ inputs.module }}" --image-tag "$TARGET_TAG-$SHA_SHORTs" --image-manifest "$MANIFEST"
-          fi  
-
+          LATEST_TAG="ab2d-$DEPLOYMENT_ENV-latest"
+          echo "Adding the $LATEST_TAG tag to main-$SHA_SHORT image"
+          curl -sS -X PUT -H "Authorization: Basic $TOKEN" -H "Content-Type: $CONTENT_TYPE" -d "$MANIFEST" "https://$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/$LATEST_TAG"
