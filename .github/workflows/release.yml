@@ -1,0 +1,89 @@
+name: release
+
+on:
+  release:
+    types: [released]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  # Promote and Deploy to prod-test, which only includes worker
+  promote-prod-test-worker:
+    uses: ./.github/workflows/promote.yml
+    with:
+      environment: prod_test
+      module: worker
+    secrets: inherit
+
+  deploy-prod-test-worker:
+    needs: promote-prod-test-worker
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: prod_test
+      module: worker
+    secrets: inherit
+
+  # Promote and Deploy to prod
+  promote-prod-api:
+    uses: ./.github/workflows/promote.yml
+    with:
+      environment: prod
+      module: api
+    secrets: inherit
+
+  promote-prod-worker:
+    uses: ./.github/workflows/promote.yml
+    with:
+      environment: prod
+      module: worker
+    secrets: inherit
+
+  deploy-prod-api:
+    needs: promote-prod-api
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: prod
+      module: api
+    secrets: inherit
+
+  deploy-prod-worker:
+    needs: promote-prod-worker
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: prod
+      module: worker
+    secrets: inherit
+
+  # Promote and Deploy to sandbox
+  promote-sbx-api:
+    uses: ./.github/workflows/promote.yml
+    with:
+      environment: sbx
+      module: api
+    secrets: inherit
+
+  promote-sbx-worker:
+    uses: ./.github/workflows/promote.yml
+    with:
+      environment: sbx
+      module: worker
+    secrets: inherit
+
+  deploy-sbx-api:
+    needs: promote-sbx-api
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: sbx
+      module: api
+    secrets: inherit
+
+  deploy-sbx-worker:
+    needs: promote-sbx-worker
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: sbx
+      module: worker
+    secrets: inherit
