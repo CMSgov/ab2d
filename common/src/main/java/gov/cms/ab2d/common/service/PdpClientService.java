@@ -4,7 +4,7 @@ import gov.cms.ab2d.common.dto.PdpClientDTO;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
 import java.util.List;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.GrantedAuthority;
 
 public interface PdpClientService {

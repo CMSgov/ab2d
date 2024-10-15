@@ -14,9 +14,9 @@ import org.springframework.context.annotation.PropertySource;
 @Import(AB2DSQSMockConfig.class)
 @EntityScan(basePackages = {"gov.cms.ab2d.common.model", "gov.cms.ab2d.properties.model", "gov.cms.ab2d.contracts"})
 @EnableFeignClients(clients = {ContractFeignClient.class})
-public class SpringBootApp {
+public class SpringBootAppTest {
 
     public static void main(String [] args) {
-        SpringApplication.run(SpringBootApp.class, args);
+        SpringApplication.run(SpringBootAppTest.class, args);
     }
 }
