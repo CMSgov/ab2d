@@ -1,5 +1,6 @@
 package gov.cms.ab2d.api.controller.common;
 
+import gov.cms.ab2d.api.config.OpenAPIConfig;
 import gov.cms.ab2d.api.controller.JobCompletedResponse;
 import gov.cms.ab2d.api.controller.JobProcessingException;
 import gov.cms.ab2d.api.controller.TooManyRequestsException;
@@ -11,6 +12,7 @@ import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
 import gov.cms.ab2d.job.dto.JobPollResult;
 import gov.cms.ab2d.job.model.JobOutput;
+
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -25,7 +27,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-
 import static gov.cms.ab2d.api.controller.common.ApiText.X_PROG;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.JOB_LOG;
@@ -33,6 +34,7 @@ import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 import static org.springframework.http.HttpHeaders.EXPIRES;
 import static org.springframework.http.HttpHeaders.RETRY_AFTER;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @Service
 @Slf4j
@@ -41,6 +43,7 @@ public class StatusCommon {
     private final JobClient jobClient;
     private final SQSEventClient eventLogger;
     private final int retryAfterDelay;
+    private final OpenAPIConfig openApi;
 
     StatusCommon(PdpClientService pdpClientService, JobClient jobClient,
                  SQSEventClient eventLogger, @Value("${api.retry-after.delay}") int retryAfterDelay) {
@@ -48,6 +51,8 @@ public class StatusCommon {
         this.jobClient = jobClient;
         this.eventLogger = eventLogger;
         this.retryAfterDelay = retryAfterDelay;
+
+        this.openApi = new OpenAPIConfig();
     }
 
     public void throwFailedResponse(String msg) {
@@ -80,6 +85,8 @@ public class StatusCommon {
                         "Job in progress", jobPollResult.getProgress() + "% complete",
                         (String) request.getAttribute(REQUEST_ID)));
                 return new ResponseEntity<>(null, responseHeaders, HttpStatus.ACCEPTED);
+            case CANCELLED:
+                return getCanceledResponse(jobPollResult, jobUuid, request);
             case FAILED:
                 throwFailedResponse("Job failed while processing");
                 break;
@@ -115,6 +122,31 @@ public class StatusCommon {
         }).toList());
 
         return resp;
+    }
+
+    protected ResponseEntity<OpenAPIConfig.OperationOutcome> getCanceledResponse(JobPollResult jobPollResult, String jobUuid, HttpServletRequest request) {
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.setContentType(APPLICATION_JSON);
+
+        OpenAPIConfig.OperationOutcome outcome = openApi.new OperationOutcome();
+        outcome.setResourceType("OperationOutcome");
+
+        OpenAPIConfig.Details details = new OpenAPIConfig.Details();
+        details.setText("Job is canceled.");
+
+        OpenAPIConfig.Issue issue = new OpenAPIConfig.Issue();
+        issue.setDetails(details);
+        issue.setCode("deleted");
+        issue.setSeverity("error");
+
+        List<OpenAPIConfig.Issue> issuesList = new ArrayList<>();
+        issuesList.add(issue);
+        outcome.setIssue(issuesList);
+
+        eventLogger.sendLogs(new ApiResponseEvent(MDC.get(ORGANIZATION), jobUuid, HttpStatus.NOT_FOUND,
+                "Job was previously canceled", null, (String) request.getAttribute(REQUEST_ID)));
+
+        return new ResponseEntity<OpenAPIConfig.OperationOutcome>(outcome, responseHeaders, HttpStatus.NOT_FOUND);
     }
 
     private String getUrlPath(String jobUuid, String filePath, HttpServletRequest request, String apiPrefix) {

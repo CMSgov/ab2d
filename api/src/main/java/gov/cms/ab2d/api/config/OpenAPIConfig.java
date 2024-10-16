@@ -142,7 +142,7 @@ public class OpenAPIConfig {
     @JsonPropertyOrder({
             "text"
     })
-    static class Details {
+    public static class Details {
 
         @JsonProperty("text")
         private String text;
@@ -177,7 +177,7 @@ public class OpenAPIConfig {
             "code",
             "details"
     })
-    static class Issue {
+    public static class Issue {
         @JsonProperty("severity")
         private String severity;
         @JsonProperty("code")
