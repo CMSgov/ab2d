@@ -1,0 +1,47 @@
+name: Verify deployment
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      module:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      environment:
+        required: true
+        type: choice
+        options:
+          - sbx-sandbox
+          - east-prod
+          - east-impl
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set script file based on environment
+        run: |
+          if [[ "${{ github.event.inputs.environment }}" == "sbx-sandbox" ]]; then
+            script="verify-deployment-ab2d-sbx-sandbox.sh"
+          elif [[ "${{ github.event.inputs.environment }}" == "east-prod" ]]; then
+            script="verify-deployment-ab2d-east-prod.sh"
+          elif [[ "${{ github.event.inputs.environment }}" == "east-impl" ]]; then
+            script="verify-deployment-ab2d-east-impl.sh"
+          else
+            echo "Invalid environment selected."
+            exit 1
+          fi
+
+      - name: Run deployment verification script
+        run: |
+          chmod +x $script
+          ./$script
+
