@@ -23,11 +23,23 @@
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>ab2d-bfd</artifactId>
             <version>${bfd-lib.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.awspring.cloud</groupId>
+                    <artifactId>spring-cloud-aws-dependencies</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>worker</artifactId>
             <version>0.0.1-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.awspring.cloud</groupId>
+                    <artifactId>spring-cloud-aws-dependencies</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>gov.cms.ab2d</groupId>

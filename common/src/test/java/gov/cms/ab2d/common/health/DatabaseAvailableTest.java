@@ -1,6 +1,6 @@
 package gov.cms.ab2d.common.health;
 
-import gov.cms.ab2d.common.SpringBootApp;
+import gov.cms.ab2d.common.SpringBootAppTest;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import org.junit.jupiter.api.Test;
@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(MockitoExtension.class)
-@SpringBootTest(classes = SpringBootApp.class)
+@SpringBootTest(classes = SpringBootAppTest.class)
 @TestPropertySource(locations = "/application.common.properties")
 @Testcontainers
 @Import(AB2DSQSMockConfig.class)

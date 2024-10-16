@@ -4,8 +4,8 @@ import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import lombok.extern.slf4j.Slf4j;
-import org.joda.time.LocalDate;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -74,7 +74,7 @@ public class CoverageStableCheck extends CoverageCheckPredicate {
 
         // January to February changes can also be significant.
         // Stop sending this notification once February ends.
-        if (now.getMonthOfYear() > 2 && previousMonth.getMonth() == 1) {
+        if (now.getMonthValue() > 2 && previousMonth.getMonth() == 1) {
             skip = true;
         }
 
