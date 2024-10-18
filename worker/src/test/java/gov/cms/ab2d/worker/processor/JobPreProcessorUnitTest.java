@@ -84,6 +84,39 @@ class JobPreProcessorUnitTest {
     }
 
     @Test
+    void checkUntilAndSTU3Parameters() {
+        when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
+        job.setFhirVersion(STU3);
+        job.setUntil(OffsetDateTime.of(2022, 7, 11, 1, 2, 3, 0, ZoneOffset.UTC));
+        job.setStatus(SUBMITTED);
+        cut.preprocess(job.getJobUuid());
+        assertEquals(JobStatus.FAILED, job.getStatus());
+    }
+
+    @Test
+    void checkUntilAndR4Parameters() throws InterruptedException {
+        when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
+        job.setFhirVersion(R4);
+        job.setUntil(OffsetDateTime.of(2022, 7, 11, 1, 2, 3, 0, ZoneOffset.UTC));
+        job.setStatus(SUBMITTED);
+        when(contractWorkerClient.getContractByContractNumber(job.getContractNumber())).thenReturn(contract);
+        when(coverageDriver.isCoverageAvailable(any(Job.class), any(ContractDTO.class))).thenReturn(true);
+        cut.preprocess(job.getJobUuid());
+        assertEquals(JobStatus.IN_PROGRESS, job.getStatus());
+    }
+
+    @Test
+    void checkUntilAndSinceParameters() {
+        when(jobRepository.findByJobUuid(job.getJobUuid())).thenReturn(job);
+        job.setFhirVersion(R4);
+        job.setSince(OffsetDateTime.of(2024, 7, 11, 1, 2, 3, 0, ZoneOffset.UTC));
+        job.setUntil(OffsetDateTime.of(2022, 7, 11, 1, 2, 3, 0, ZoneOffset.UTC));
+        job.setStatus(SUBMITTED);
+        cut.preprocess(job.getJobUuid());
+        assertEquals(JobStatus.FAILED, job.getStatus());
+    }
+
+    @Test
     @DisplayName("Throws exception when the job for the given JobUuid is not in submitted status")
     void whenTheJobForTheGivenJobUuidIsNotInSubmittedStatus_ThrowsException() {
 
@@ -188,6 +221,7 @@ class JobPreProcessorUnitTest {
         when(contractWorkerClient.getContractByContractNumber(job.getContractNumber())).thenReturn(contract);
         cut.preprocess(job.getJobUuid());
         assertNull(job.getSince());
+        assertNull(job.getUntil());
         verify(jobRepository, never()).findByContractNumberEqualsAndStatusInAndStartedByOrderByCompletedAtDesc(anyString(), any(), any());
         assertNull(job.getSinceSource());
     }
@@ -204,6 +238,7 @@ class JobPreProcessorUnitTest {
         cut.preprocess(job.getJobUuid());
 
         assertNull(job.getSince());
+        assertNull(job.getUntil());
         assertEquals(SinceSource.FIRST_RUN, job.getSinceSource());
     }
 

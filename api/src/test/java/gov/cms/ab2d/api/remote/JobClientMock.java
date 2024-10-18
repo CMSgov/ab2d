@@ -89,7 +89,7 @@ public class JobClientMock extends JobClient {
 
     private StartJobDTO convert(StartJobDTO orig, String organization) {
         return new StartJobDTO(orig.getContractNumber(), organization, orig.getResourceTypes(),
-                orig.getUrl(), orig.getOutputFormat(), orig.getSince(), orig.getVersion());
+                orig.getUrl(), orig.getOutputFormat(), orig.getSince(), orig.getUntil(), orig.getVersion());
     }
 
     public List<String> getActiveJobIds(String organization) {

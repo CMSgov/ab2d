@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.processor;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.common.model.SinceSource;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
+import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobOutput;
 import gov.cms.ab2d.job.model.JobStartedBy;
@@ -69,6 +70,33 @@ public class JobPreProcessorImpl implements JobPreProcessor {
             throw new IllegalArgumentException(errMsg);
         }
 
+        if (job.getFhirVersion() == FhirVersion.STU3 && job.getUntil() != null) {
+            log.warn("JobPreProcessorImpl > preprocess: job FAILED because the _until parameter is only available with version 2 (FHIR R4).");
+
+            eventLogger.logAndAlert(job.buildJobStatusChangeEvent(FAILED, EOB_JOB_FAILURE + " Job " + jobUuid
+                    + "failed because the _until parameter is only available with version 2 (FHIR R4)"), PUBLIC_LIST);
+
+            job.setStatus(FAILED);
+            job.setStatusMessage("failed because the _until parameter is only available with version 2 (FHIR R4).");
+
+            jobRepository.save(job);
+            return job;
+        }
+
+        if (job.getSince() != null && job.getUntil() != null
+                && job.getUntil().toInstant().isBefore(job.getSince().toInstant())) {
+            log.warn("JobPreProcessorImpl > preprocess: job FAILED because the _until is before _since.");
+
+            eventLogger.logAndAlert(job.buildJobStatusChangeEvent(FAILED, EOB_JOB_FAILURE + " Job " + jobUuid
+                    + "failed because the _until is before _since."), PUBLIC_LIST);
+
+            job.setStatus(FAILED);
+            job.setStatusMessage("failed because the _until is before _since.");
+
+            jobRepository.save(job);
+            return job;
+        }
+
         ContractDTO contract = contractWorkerClient.getContractByContractNumber(job.getContractNumber());
         if (contract == null) {
             throw new IllegalArgumentException("A job must always have a contract.");
@@ -132,9 +160,12 @@ public class JobPreProcessorImpl implements JobPreProcessor {
         }
         String contractNum = job.getContractNumber() == null ? "(unknown)" : job.getContractNumber();
         String statusString = String.format("%s for %s in progress", EOB_JOB_STARTED, contractNum);
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
         if (job.getSince() != null) {
-            DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
             statusString += " (since date: " + job.getSince().format(formatter) + ")";
+        }
+        if (job.getUntil() != null) {
+            statusString += " (until date: " + job.getUntil().format(formatter) + ")";
         }
         return statusString;
     }
