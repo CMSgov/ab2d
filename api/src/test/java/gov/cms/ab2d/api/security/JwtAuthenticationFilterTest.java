@@ -6,6 +6,9 @@ import com.okta.jwt.AccessTokenVerifier;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.controller.TestUtil;
+import gov.cms.ab2d.api.controller.common.ApiCommon;
+import gov.cms.ab2d.common.properties.PropertiesService;
+import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
@@ -13,10 +16,12 @@ import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -80,6 +85,18 @@ class JwtAuthenticationFilterTest {
 
     @Autowired
     SQSEventClient sqsEventClient;
+
+    @Autowired
+    private ApplicationContext context;
+
+    private final PropertiesService propertiesService = new PropertyServiceStub();
+
+    @BeforeEach
+    public void setup() throws JwtVerificationException {
+        ApiCommon apiCommon = context.getBean(ApiCommon.class);
+        ReflectionTestUtils.setField(apiCommon, "propertiesService", propertiesService);
+        propertiesService.createProperty("maintenance.mode", "false");
+    }
 
     @AfterEach
     public void cleanup() {

@@ -3,7 +3,10 @@ package gov.cms.ab2d.api.controller.v2;
 import com.amazonaws.services.sqs.AmazonSQS;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.controller.TestUtil;
+import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.api.remote.JobClientMock;
+import gov.cms.ab2d.common.properties.PropertiesService;
+import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
@@ -14,8 +17,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
+import org.springframework.context.ApplicationContext;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -60,12 +64,20 @@ class StatusAPIV2Test {
   @Autowired
   SQSEventClient sqsEventClient;
 
+  @Autowired
+  private ApplicationContext context;
+
+  private final PropertiesService propertiesService = new PropertyServiceStub();
+
   private String token;
 
   @BeforeEach
   public void setup() throws Exception {
     token = testUtil.setupToken(List.of(SPONSOR_ROLE));
     testUtil.turnMaintenanceModeOff();
+    ApiCommon apiCommon = context.getBean(ApiCommon.class);
+    ReflectionTestUtils.setField(apiCommon, "propertiesService", propertiesService);
+    propertiesService.createProperty("maintenance.mode", "false");
   }
 
   @AfterEach

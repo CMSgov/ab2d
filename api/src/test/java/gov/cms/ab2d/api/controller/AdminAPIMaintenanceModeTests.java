@@ -6,11 +6,12 @@ import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.api.remote.JobClientMock;
+import gov.cms.ab2d.common.properties.PropertiesService;
+import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
-import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
 import gov.cms.ab2d.eventclient.events.LoggableEvent;
 import gov.cms.ab2d.job.model.JobOutput;
 import java.util.List;
@@ -20,12 +21,12 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Import;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -70,6 +71,11 @@ public class AdminAPIMaintenanceModeTests {
     @Autowired
     SQSEventClient sqsEventClient;
 
+    @Autowired
+    private ApplicationContext context;
+
+    private final PropertiesService propertiesService = new PropertyServiceStub();
+
     @Captor
     private ArgumentCaptor<LoggableEvent> captor;
 
@@ -78,6 +84,10 @@ public class AdminAPIMaintenanceModeTests {
     @BeforeEach
     public void setup() throws JwtVerificationException {
         token = testUtil.setupToken(List.of(SPONSOR_ROLE, ADMIN_ROLE));
+        ApiCommon apiCommon = context.getBean(ApiCommon.class);
+        ReflectionTestUtils.setField(apiCommon, "propertiesService", propertiesService);
+        propertiesService.createProperty("maintenance.mode", "false");
+        propertiesService.createProperty("ZipSupportOn", "false");
     }
 
     @AfterEach
