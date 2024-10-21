@@ -8,10 +8,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.jayway.jsonpath.JsonPath;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
+import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.api.controller.v1.CapabilityStatementSTU3;
 import gov.cms.ab2d.api.controller.v2.CapabilityStatementR4;
 import gov.cms.ab2d.api.remote.JobClientMock;
 import gov.cms.ab2d.common.model.PdpClient;
+import gov.cms.ab2d.common.properties.PropertiesService;
+import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.service.ContractServiceStub;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
@@ -41,10 +44,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
@@ -123,6 +128,11 @@ class BulkDataAccessAPIIntegrationTests {
     @Autowired
     SQSEventClient sqsEventClient;
 
+    @Autowired
+    private ApplicationContext context;
+
+    private final PropertiesService propertiesService = new PropertyServiceStub();
+
     private String token;
 
     public static final String PATIENT_EXPORT_PATH = "/Patient/$export";
@@ -133,6 +143,9 @@ class BulkDataAccessAPIIntegrationTests {
     public void setup() throws JwtVerificationException {
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
         testUtil.turnMaintenanceModeOff();
+        ApiCommon apiCommon = context.getBean(ApiCommon.class);
+        ReflectionTestUtils.setField(apiCommon, "propertiesService", propertiesService);
+        propertiesService.createProperty("maintenance.mode", "false");
     }
 
     @AfterEach
