@@ -5,8 +5,8 @@ import com.okta.jwt.Jwt;
 import com.okta.jwt.AccessTokenVerifier;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
+import gov.cms.ab2d.api.controller.MaintenanceModeAPI;
 import gov.cms.ab2d.api.controller.TestUtil;
-import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.common.service.PdpClientService;
@@ -93,8 +93,8 @@ class JwtAuthenticationFilterTest {
 
     @BeforeEach
     public void setup() throws JwtVerificationException {
-        ApiCommon apiCommon = context.getBean(ApiCommon.class);
-        ReflectionTestUtils.setField(apiCommon, "propertiesService", propertiesService);
+        MaintenanceModeAPI maintenanceModeAPI = context.getBean(MaintenanceModeAPI.class);
+        ReflectionTestUtils.setField(maintenanceModeAPI, "propertiesService", propertiesService);
         propertiesService.createProperty("maintenance.mode", "false");
     }
 
