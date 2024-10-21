@@ -564,7 +564,9 @@ class TestRunner {
         System.out.println();
         log.info("Starting test 3 - " + version.toString());
         OffsetDateTime timeBeforeEarliest = earliest.minus(1, ChronoUnit.MINUTES);
+        log.error("-------- runErrorSince.timeBeforeEarliest" + timeBeforeEarliest);
         HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, timeBeforeEarliest, version);
+        log.error("-------- runErrorSince.exportResponse" + exportResponse);
         assertEquals(400, exportResponse.statusCode());
 
         OffsetDateTime timeAfterNow = OffsetDateTime.now().plus(1, ChronoUnit.MINUTES);
