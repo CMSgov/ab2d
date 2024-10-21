@@ -30,6 +30,7 @@ import java.util.List;
 
 import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.Constants.FHIR_NDJSON_CONTENT_TYPE;
+import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -77,7 +78,7 @@ class StatusAPIV2Test {
     testUtil.turnMaintenanceModeOff();
     ApiCommon apiCommon = context.getBean(ApiCommon.class);
     ReflectionTestUtils.setField(apiCommon, "propertiesService", propertiesService);
-    propertiesService.createProperty("maintenance.mode", "false");
+    propertiesService.createProperty(MAINTENANCE_MODE, "false");
   }
 
   @AfterEach

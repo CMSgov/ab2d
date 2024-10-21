@@ -48,7 +48,7 @@ public class MaintenanceModeAPITests {
     public void setup() {
         MaintenanceModeAPI maintenanceModeAPI = context.getBean(MaintenanceModeAPI.class);
         ReflectionTestUtils.setField(maintenanceModeAPI, "propertiesService", propertiesService);
-        propertiesService.createProperty("maintenance.mode", "false");
+        propertiesService.createProperty(MAINTENANCE_MODE, "false");
     }
 
     @AfterEach

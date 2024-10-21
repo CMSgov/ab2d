@@ -69,6 +69,7 @@ import static gov.cms.ab2d.common.util.Constants.MAX_DOWNLOADS;
 import static gov.cms.ab2d.common.util.Constants.FHIR_NDJSON_CONTENT_TYPE;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_PDP_CLIENT;
 import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
+import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
@@ -145,7 +146,7 @@ class BulkDataAccessAPIIntegrationTests {
         testUtil.turnMaintenanceModeOff();
         ApiCommon apiCommon = context.getBean(ApiCommon.class);
         ReflectionTestUtils.setField(apiCommon, "propertiesService", propertiesService);
-        propertiesService.createProperty("maintenance.mode", "false");
+        propertiesService.createProperty(MAINTENANCE_MODE, "false");
     }
 
     @AfterEach

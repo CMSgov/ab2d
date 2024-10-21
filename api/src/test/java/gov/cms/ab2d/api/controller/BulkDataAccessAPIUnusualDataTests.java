@@ -43,6 +43,7 @@ import java.util.Optional;
 import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.*;
+import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -94,7 +95,7 @@ public class BulkDataAccessAPIUnusualDataTests {
     public void setup() throws JwtVerificationException {
         ApiCommon apiCommon = context.getBean(ApiCommon.class);
         ReflectionTestUtils.setField(apiCommon, "propertiesService", propertiesService);
-        propertiesService.createProperty("maintenance.mode", "false");
+        propertiesService.createProperty(MAINTENANCE_MODE, "false");
     }
 
     @AfterEach

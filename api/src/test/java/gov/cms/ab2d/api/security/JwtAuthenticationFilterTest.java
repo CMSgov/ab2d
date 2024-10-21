@@ -39,6 +39,7 @@ import javax.servlet.FilterChain;
 
 import static gov.cms.ab2d.common.model.Role.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;
+import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -95,7 +96,7 @@ class JwtAuthenticationFilterTest {
     public void setup() throws JwtVerificationException {
         MaintenanceModeAPI maintenanceModeAPI = context.getBean(MaintenanceModeAPI.class);
         ReflectionTestUtils.setField(maintenanceModeAPI, "propertiesService", propertiesService);
-        propertiesService.createProperty("maintenance.mode", "false");
+        propertiesService.createProperty(MAINTENANCE_MODE, "false");
     }
 
     @AfterEach

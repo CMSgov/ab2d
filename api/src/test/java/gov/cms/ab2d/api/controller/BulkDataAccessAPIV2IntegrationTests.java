@@ -36,6 +36,7 @@ import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_PDP_CLIENT;
 import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
+import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -89,7 +90,7 @@ public class BulkDataAccessAPIV2IntegrationTests {
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
         ApiCommon apiCommon = context.getBean(ApiCommon.class);
         ReflectionTestUtils.setField(apiCommon, "propertiesService", propertiesService);
-        propertiesService.createProperty("maintenance.mode", "false");
+        propertiesService.createProperty(MAINTENANCE_MODE, "false");
     }
 
     @AfterEach
