@@ -1,13 +1,13 @@
 package gov.cms.ab2d.api.controller;
 
-import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
-import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.api.remote.JobClientMock;
-import gov.cms.ab2d.common.properties.PropertiesService;
-import gov.cms.ab2d.common.properties.PropertyServiceStub;
+import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.service.ContractServiceStub;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
+import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
+import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.eventclient.clients.SQSConfig;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ApiRequestEvent;
@@ -16,40 +16,35 @@ import gov.cms.ab2d.eventclient.events.ErrorEvent;
 import gov.cms.ab2d.eventclient.messages.GeneralSQSMessage;
 import gov.cms.ab2d.eventclient.messages.TraceAndAlertSQSMessage;
 import gov.cms.ab2d.job.dto.StartJobDTO;
-import gov.cms.ab2d.contracts.model.Contract;
-import gov.cms.ab2d.common.repository.*;
-import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import gov.cms.ab2d.common.util.DataSetup;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.ApplicationContext;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest;
-import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 
 import java.util.List;
 import java.util.Optional;
 
-
 import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
-import static gov.cms.ab2d.common.util.Constants.*;
-import static gov.cms.ab2d.common.util.DataSetup.*;
-import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
-import static org.junit.jupiter.api.Assertions.*;
+import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
+import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
+import static gov.cms.ab2d.common.util.DataSetup.TEST_PDP_CLIENT;
+import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
