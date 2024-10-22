@@ -62,6 +62,7 @@ public class JobServiceImpl implements JobService {
         job.setOutputFormat(startJobDTO.getOutputFormat());
         job.setProgress(0);
         job.setSince(startJobDTO.getSince());
+        job.setUntil(startJobDTO.getUntil());
         job.setFhirVersion(startJobDTO.getVersion());
         job.setOrganization(startJobDTO.getOrganization());
 
