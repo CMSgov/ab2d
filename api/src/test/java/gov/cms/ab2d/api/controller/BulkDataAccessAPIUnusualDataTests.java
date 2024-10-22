@@ -1,5 +1,6 @@
 package gov.cms.ab2d.api.controller;
 
+import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.api.remote.JobClientMock;
