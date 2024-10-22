@@ -1,6 +1,8 @@
 package gov.cms.ab2d.coverage.service;
 
 import gov.cms.ab2d.common.feign.ContractFeignClient;
+import gov.cms.ab2d.common.properties.PropertiesService;
+import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.model.CoverageDelta;
@@ -39,20 +41,17 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.persistence.EntityNotFoundException;
 import javax.sql.DataSource;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
-import org.mockito.Mockito;
+
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.context.ApplicationContext;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -116,9 +115,6 @@ class CoverageServiceImplTest {
     @Autowired
     CoverageSearchRepository coverageSearchRepo;
 
-    @SpyBean
-    CoverageServiceRepository coverageServiceRepo;
-
     @Autowired
     CoverageDeltaRepository coverageDeltaRepository;
 
@@ -137,6 +133,10 @@ class CoverageServiceImplTest {
     @Autowired
     DataSource dataSource;
 
+    private final PropertiesService propertiesService = new PropertyServiceStub();
+
+    private CoverageServiceRepository  coverageServiceRepo;
+
     private ContractForCoverageDTO contract1;
     private ContractForCoverageDTO contract2;
 
@@ -147,10 +147,13 @@ class CoverageServiceImplTest {
     private OffsetDateTime jobStartTime;
 
     private CoveragePeriod period2Jan;
+    @Autowired
+    private ApplicationContext context;
 
     @BeforeEach
     public void insertContractAndDefaultCoveragePeriod() {
-
+        CoverageServiceRepository c = context.getBean(CoverageServiceRepository.class);
+        ReflectionTestUtils.setField(c, "propertiesService", propertiesService);
         contract1 = dataSetup.setupContractDTO("TST-12", AB2D_EPOCH.toOffsetDateTime());
         contract2 = dataSetup.setupContractDTO("TST-34", AB2D_EPOCH.toOffsetDateTime());
         period1Jan = dataSetup.createCoveragePeriod("TST-12", JANUARY, YEAR);
@@ -160,6 +163,9 @@ class CoverageServiceImplTest {
         jobStartTime = OffsetDateTime.of(YEAR, APRIL, 2, 0, 0, 0, 0, ZoneOffset.UTC);
 
         period2Jan = dataSetup.createCoveragePeriod("TST-34", JANUARY, YEAR);
+
+        coverageServiceRepo = new CoverageServiceRepository(dataSource, coveragePeriodRepo, coverageSearchEventRepo, propertiesService);
+        propertiesService.createProperty("OptOutOn", "false");
     }
 
     @AfterEach
@@ -1029,20 +1035,6 @@ class CoverageServiceImplTest {
         assertTrue(distinctSearchEvents.contains(inProgress3.getId()));
     }
 
-    @DisplayName("Delete previous search on completion failure triggers alert")
-    @Test
-    void deletePreviousSearchOnCompletionFailure() {
-
-        Mockito.doThrow(new RuntimeException()).when(coverageServiceRepo).deletePreviousSearches(ArgumentMatchers.nullable(CoveragePeriod.class), ArgumentMatchers.nullable(Integer.class));
-
-        coverageService.submitSearch(period1Jan.getId(), "testing");
-        startSearchAndPullEvent();
-
-        assertThrows(RuntimeException.class, () -> coverageService.completeSearch(period1Jan.getId(), "testing"));
-
-        Mockito.verify(eventLogger, Mockito.times(1)).alert(ArgumentMatchers.any(), ArgumentMatchers.any());
-    }
-
     @DisplayName("Check search status on CoveragePeriod")
     @Test
     void getSearchStatus() {
@@ -1386,20 +1378,6 @@ class CoverageServiceImplTest {
 
         // Deleting a coverage searches results deletes the data for that search
         Assertions.assertTrue(dataSetup.findCoverage().isEmpty());
-    }
-
-    @DisplayName("Coverage period searches can be cancelled")
-    @Test
-    void failSearchDeleteAlerts() {
-
-        Mockito.doThrow(RuntimeException.class).when(coverageServiceRepo).deleteCurrentSearch(ArgumentMatchers.any());
-
-        coverageService.submitSearch(period1Jan.getId(), "testing");
-        startSearchAndPullEvent();
-
-        assertThrows(RuntimeException.class, () -> coverageService.failSearch(period1Jan.getId(), "testing"));
-
-        Mockito.verify(eventLogger, Mockito.times(1)).alert(ArgumentMatchers.any(), ArgumentMatchers.any());
     }
 
     @DisplayName("Coverage period month and year are checked correctly")

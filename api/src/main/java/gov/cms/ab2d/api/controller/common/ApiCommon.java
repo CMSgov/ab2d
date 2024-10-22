@@ -3,7 +3,6 @@ package gov.cms.ab2d.api.controller.common;
 import gov.cms.ab2d.api.controller.InMaintenanceModeException;
 import gov.cms.ab2d.api.controller.TooManyRequestsException;
 import gov.cms.ab2d.api.remote.JobClient;
-import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.service.ContractService;
@@ -11,13 +10,11 @@ import gov.cms.ab2d.common.service.InvalidClientInputException;
 import gov.cms.ab2d.common.service.InvalidContractException;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.util.PropertyConstants;
+import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.job.dto.StartJobDTO;
-import java.time.OffsetDateTime;
-import java.util.Set;
-import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.http.HttpHeaders;
@@ -26,15 +23,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import javax.servlet.http.HttpServletRequest;
+import java.time.OffsetDateTime;
+import java.util.Set;
 
-import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.JOB_LOG;
-import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
-import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
-import static gov.cms.ab2d.common.util.Constants.ZIPFORMAT;
-import static gov.cms.ab2d.common.util.Constants.ZIP_SUPPORT_ON;
+import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
-import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
 import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 
@@ -87,14 +81,27 @@ public class ApiCommon {
         if (date.isAfter(OffsetDateTime.now())) {
             throw new InvalidClientInputException("You can not use a time after the current time for _since");
         }
-        try {
-            OffsetDateTime ed = OffsetDateTime.parse(SINCE_EARLIEST_DATE, ISO_DATE_TIME);
-            if (date.isBefore(ed)) {
-                log.error("Invalid _since time received {}", date);
-                throw new InvalidClientInputException("_since must be after " + ed.format(ISO_OFFSET_DATE_TIME));
-            }
-        } catch (Exception ex) {
-            throw new InvalidClientInputException("${api.since.date.earliest} date value '" + SINCE_EARLIEST_DATE + "' is invalid");
+        if (date.isBefore(SINCE_EARLIEST_DATE_TIME)) {
+            log.error("Invalid _since time received {}", date);
+            throw new InvalidClientInputException("_since must be after " + SINCE_EARLIEST_DATE_TIME.format(ISO_OFFSET_DATE_TIME));
+        }
+    }
+
+    public void checkUntilTime(OffsetDateTime since, OffsetDateTime until, FhirVersion version) {
+        if (until == null) {
+            return;
+        }
+        if (version.equals(FhirVersion.STU3)) {
+            log.error("_until is not available for V1");
+            throw new InvalidClientInputException("The _until parameter is only available with version 2 (FHIR R4) of the API");
+        }
+        if (since != null && until.isBefore(since)) {
+            log.error("Invalid _until time received {}", until);
+            throw new InvalidClientInputException("_until must be after _since " + since.format(ISO_OFFSET_DATE_TIME));
+        }
+        if (until.isBefore(SINCE_EARLIEST_DATE_TIME)) {
+            log.error("Invalid _until time received {}", until);
+            throw new InvalidClientInputException("_until must be after " + SINCE_EARLIEST_DATE_TIME.format(ISO_OFFSET_DATE_TIME));
         }
     }
 
@@ -149,15 +156,16 @@ public class ApiCommon {
     }
 
     public StartJobDTO checkValidCreateJob(HttpServletRequest request, String contractNumber, OffsetDateTime since,
-                                           String resourceTypes, String outputFormat, FhirVersion version) {
+                                           OffsetDateTime until, String resourceTypes, String outputFormat, FhirVersion version) {
         PdpClient pdpClient = pdpClientService.getCurrentClient();
         contractNumber = checkIfContractAttested(contractService.getContractByContractId(pdpClient.getContractId()), contractNumber);
         checkIfInMaintenanceMode();
         checkIfCurrentClientCanAddJob();
         checkResourceTypesAndOutputFormat(resourceTypes, outputFormat);
         checkSinceTime(since);
+        checkUntilTime(since, until, version);
         return new StartJobDTO(contractNumber, pdpClient.getOrganization(), resourceTypes,
-                getCurrentUrl(request), outputFormat, since, version);
+                getCurrentUrl(request), outputFormat, since, until, version);
     }
 
     protected String checkIfContractAttested(Contract contract, String contractNumber) {

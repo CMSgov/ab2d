@@ -22,10 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotBlank;
 import java.time.OffsetDateTime;
 
-import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
-import static gov.cms.ab2d.api.controller.common.ApiText.OUT_FORMAT;
-import static gov.cms.ab2d.api.controller.common.ApiText.SINCE;
-import static gov.cms.ab2d.api.controller.common.ApiText.TYPE_PARAM;
+import static gov.cms.ab2d.api.controller.common.ApiText.*;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
 import static gov.cms.ab2d.common.util.Constants.ADMIN_PREFIX;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
@@ -58,13 +55,14 @@ public class AdminAPI {
 
     @PostMapping("/job/{contractNumber}")
     public ResponseEntity<Void> createJobByContractOnBehalfOfClient(@PathVariable @NotBlank String contractNumber,
-                                                        HttpServletRequest request,
-                                                        @RequestParam(required = false, name = TYPE_PARAM, defaultValue = EOB) String resourceTypes,
-                                                        @RequestParam(required = false, name = OUT_FORMAT) String outputFormat,
-                                                        @RequestParam(required = false, name = SINCE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since) {
+                                                                    HttpServletRequest request,
+                                                                    @RequestParam(required = false, name = TYPE_PARAM, defaultValue = EOB) String resourceTypes,
+                                                                    @RequestParam(required = false, name = OUT_FORMAT) String outputFormat,
+                                                                    @RequestParam(required = false, name = SINCE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime since,
+                                                                    @RequestParam(required = false, name = UNTIL) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime until) {
         pdpClientService.setupClientImpersonation(contractNumber, request);
 
-        return bulkDataAccessAPIV1.exportPatientsWithContract(request, contractNumber, resourceTypes, outputFormat, since);
+        return bulkDataAccessAPIV1.exportPatientsWithContract(request, contractNumber, resourceTypes, outputFormat, since, until);
     }
 
     @ResponseStatus(value = HttpStatus.OK)
