@@ -108,8 +108,8 @@ class CoverageServiceRepositoryTest {
     @Test
     void countBeneficiariesByPeriodsWithOptOutTest() {
         Mockito.when(mockPropertiesService.isToggleOn(OPT_OUT_ON, false)).thenReturn(true);
-       //The expected number is 3, and is the same as in previous test, since switching opt_out_flag from false to true is only available in OptOutLambda.
-        //Here all beneficiaries have opt_out_flag equals false by default.
+       //The expected number is 3, and is the same as in previous test, since switching shared_data from false to true is only available in OptOutLambda.
+        //Here all beneficiaries have shared_data equals false by default.
         Assertions.assertEquals(0, coverageServiceRepository.countBeneficiariesByPeriods(List.of(period1Jan.getId()), "TST-12"));
     }
 

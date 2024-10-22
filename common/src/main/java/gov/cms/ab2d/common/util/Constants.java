@@ -1,5 +1,8 @@
 package gov.cms.ab2d.common.util;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+
 public final class Constants {
 
     private Constants() { }
@@ -47,6 +50,7 @@ public final class Constants {
     // wanted to include it in the swagger documentation and for the swagger annotation, the value has to be
     // constant at compile time so I put it here.
     public static final String SINCE_EARLIEST_DATE = "2020-02-13T00:00:00.000-05:00";
-
+    public static final OffsetDateTime SINCE_EARLIEST_DATE_TIME = OffsetDateTime.of(2020, 2, 13, 0, 0, 0, 0, ZoneOffset.ofHours(-5));
+    public static final String UNTIL_EXAMPLE_DATE = "2024-01-01T00:00:00.000-05:00";
     public static final String ZIPFORMAT = "application/zip";
 }

@@ -47,7 +47,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final String[] authExceptions = new String[]{"/swagger-ui/**", "/configuration/**",
             "/swagger-resources/**", "/v3/api-docs/**", "/webjars/**",
-            AKAMAI_TEST_OBJECT, "/favicon.ico", "/error", HEALTH_ENDPOINT, STATUS_ENDPOINT};
+            AKAMAI_TEST_OBJECT, "/favicon.ico", "/error", HEALTH_ENDPOINT, STATUS_ENDPOINT,
+            "/**/metadata"};
 
     @Override
     protected void configure(HttpSecurity security) throws Exception {
@@ -61,9 +62,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             // Add a filter to validate the tokens with every request.
             .addFilterAfter(jwtTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests()
+            .antMatchers(authExceptions).permitAll()
             .antMatchers(API_PREFIX_V1 + ADMIN_PREFIX + "/**").hasAuthority(ADMIN_ROLE)
             .antMatchers(API_PREFIX_V1 + FHIR_PREFIX + "/**").hasAnyAuthority(SPONSOR_ROLE)
-                .antMatchers(authExceptions).permitAll()
             .anyRequest().authenticated();
 
         // Override default behavior to add more informative logs

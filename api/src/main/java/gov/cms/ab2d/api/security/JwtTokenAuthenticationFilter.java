@@ -223,6 +223,11 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
             return true;
         }
 
+        if (requestUri.endsWith("/metadata")) {
+            log.debug("metadata requested");
+            return true;
+        }
+
         return false;
     }
 
