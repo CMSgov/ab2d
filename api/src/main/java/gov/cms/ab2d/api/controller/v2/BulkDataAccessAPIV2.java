@@ -30,31 +30,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
-import static gov.cms.ab2d.api.controller.common.ApiText.ASYNC;
-import static gov.cms.ab2d.api.controller.common.ApiText.BULK_RESPONSE;
-import static gov.cms.ab2d.api.controller.common.ApiText.BULK_RESPONSE_LONG;
-import static gov.cms.ab2d.api.controller.common.ApiText.BULK_SINCE_DEFAULT;
-import static gov.cms.ab2d.api.controller.common.ApiText.CONTRACT_NO;
-import static gov.cms.ab2d.api.controller.common.ApiText.EXPORT_STARTED;
-import static gov.cms.ab2d.api.controller.common.ApiText.MAX_JOBS;
-import static gov.cms.ab2d.api.controller.common.ApiText.OUT_FORMAT;
-import static gov.cms.ab2d.api.controller.common.ApiText.PREFER;
-import static gov.cms.ab2d.api.controller.common.ApiText.RUNNING_JOBIDS;
-import static gov.cms.ab2d.api.controller.common.ApiText.SINCE;
-import static gov.cms.ab2d.api.controller.common.ApiText.TYPE_PARAM;
+import static gov.cms.ab2d.api.controller.common.ApiText.*;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_CONTRACT_EXPORT;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_EXPORT_TYPE;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_OUTPUT_FORMAT;
 import static gov.cms.ab2d.api.util.SwaggerConstants.BULK_PREFER;
-import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
-import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
-import static gov.cms.ab2d.common.util.Constants.FHIR_JSON_CONTENT_TYPE;
-import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.FHIR_NDJSON_CONTENT_TYPE;
-import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
-import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE;
+import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
@@ -86,8 +68,8 @@ public class BulkDataAccessAPIV2 {
                     "application/fhir+ndjson", "application/ndjson", "ndjson"
                 }, defaultValue = FHIR_NDJSON_CONTENT_TYPE)
             ),
-            @Parameter(name = SINCE, description = BULK_SINCE_DEFAULT, schema = @Schema(type = "date-time", description = SINCE_EARLIEST_DATE))
-
+            @Parameter(name = SINCE, description = BULK_SINCE_DEFAULT, schema = @Schema(type = "date-time", description = SINCE_EARLIEST_DATE)),
+            @Parameter(name = UNTIL, description = BULK_UNTIL_DEFAULT, schema = @Schema(type = "date-time", description = UNTIL_EXAMPLE_DATE)),
     }
     )
     @ApiResponses(value = {
@@ -110,10 +92,12 @@ public class BulkDataAccessAPIV2 {
             @RequestParam(name = OUT_FORMAT, required = false, defaultValue = FHIR_NDJSON_CONTENT_TYPE)
                     String outputFormat,
             @RequestParam(required = false, name = SINCE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-                    OffsetDateTime since) {
+                    OffsetDateTime since,
+            @RequestParam(required = false, name = UNTIL) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            OffsetDateTime until) {
         log.info("Received request to export");
 
-        StartJobDTO startJobDTO = apiCommon.checkValidCreateJob(request, null, since, resourceTypes,
+        StartJobDTO startJobDTO = apiCommon.checkValidCreateJob(request, null, since, until, resourceTypes,
                 outputFormat, R4);
         String jobGuid = jobClient.createJob(startJobDTO);
         apiCommon.logSuccessfulJobCreation(jobGuid);
@@ -132,9 +116,7 @@ public class BulkDataAccessAPIV2 {
                             "application/fhir+ndjson", "application/ndjson", "ndjson"
                     }, defaultValue = FHIR_NDJSON_CONTENT_TYPE)
             ),
-            @Parameter(name = SINCE, description = BULK_SINCE_DEFAULT, example = SINCE_EARLIEST_DATE, schema = @Schema(type = "date-time"))
-
-    }
+            @Parameter(name = SINCE, description = BULK_SINCE_DEFAULT, example = SINCE_EARLIEST_DATE, schema = @Schema(type = "date-time"))}
     )
     @ApiResponses({
             @ApiResponse(responseCode = "202", description = EXPORT_STARTED,
@@ -160,12 +142,14 @@ public class BulkDataAccessAPIV2 {
             @RequestParam(required = false, name = OUT_FORMAT)
                     String outputFormat,
             @RequestParam(required = false, name = SINCE) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-                    OffsetDateTime since
+                    OffsetDateTime since,
+            @RequestParam(required = false, name = UNTIL) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            OffsetDateTime until
     ) {
 
         MDC.put(CONTRACT_LOG, contractNumber);
         log.info("Received request to export by contractNumber");
-        StartJobDTO startJobDTO = apiCommon.checkValidCreateJob(request, contractNumber, since, resourceTypes,
+        StartJobDTO startJobDTO = apiCommon.checkValidCreateJob(request, contractNumber, since, until, resourceTypes,
                 outputFormat, R4);
         String jobGuid = jobClient.createJob(startJobDTO);
         apiCommon.logSuccessfulJobCreation(jobGuid);
