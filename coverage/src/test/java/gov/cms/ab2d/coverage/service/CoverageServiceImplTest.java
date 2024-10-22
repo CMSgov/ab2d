@@ -218,7 +218,7 @@ class CoverageServiceImplTest {
         coveragePeriodRepo.delete(period);
 
         assertThrows(EntityNotFoundException.class,
-                () -> coverageService.getCoveragePeriod(contract1, 12, 2020)
+            () -> coverageService.getCoveragePeriod(contract1, 12, 2020)
         );
     }
 
@@ -243,10 +243,10 @@ class CoverageServiceImplTest {
         assertFalse(coverageService.isCoveragePeriodInProgress(period1Jan.getId()));
 
         assertThrows(
-                CoveragePeriodNotFoundException.class,
-                () -> {
-                    coverageService.isCoveragePeriodInProgress(999999999);
-                }
+            CoveragePeriodNotFoundException.class,
+            () -> {
+                coverageService.isCoveragePeriodInProgress(999999999);
+            }
         );
     }
 
@@ -453,7 +453,7 @@ class CoverageServiceImplTest {
         Set<Identifiers> identifiers = Set.of(createIdentifier(123L), createIdentifier(456L),
                 createIdentifier(789L));
         List<Long> originalBeneIds = identifiers.stream().map(Identifiers::getBeneficiaryId)
-                .collect(toList());
+                                        .collect(toList());
 
         CoverageSearchEvent savedTo = coverageService.insertCoverage(inProgress.getId(), identifiers);
 
@@ -1410,4 +1410,3 @@ class CoverageServiceImplTest {
         return new Identifiers(suffix, "mbi-" + suffix, new LinkedHashSet<>());
     }
 }
-
