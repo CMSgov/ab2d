@@ -27,8 +27,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
-import static gov.cms.ab2d.common.util.PropertyConstants.PCP_MAX_POOL_SIZE;
+import static gov.cms.ab2d.common.util.PropertyConstants.*;
 import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -68,14 +67,17 @@ public class AutoScalingServiceTest {
 
     @BeforeEach
     public void init() {
-        AutoScalingService asservice = context.getBean(AutoScalingServiceImpl.class);
-        ReflectionTestUtils.setField(asservice, "propertiesService", propertiesService);
-
         patientProcessorThreadPool.getThreadPoolExecutor().getQueue().clear();
         autoScalingService = new AutoScalingServiceImpl(patientProcessorThreadPool,
                 eobClaimRequestsQueue, propertiesService, 3, 20, 20);
         originalMaxPoolSize = autoScalingService.getMaxPoolSize();
         patientProcessorThreadPool.setMaxPoolSize(originalMaxPoolSize);
+        AutoScalingService asservice = context.getBean(AutoScalingServiceImpl.class);
+        ReflectionTestUtils.setField(asservice, "propertiesService", propertiesService);
+        propertiesService.createProperty(MAINTENANCE_MODE, "false");
+        propertiesService.createProperty(PCP_MAX_POOL_SIZE, "" + originalMaxPoolSize);
+        propertiesService.createProperty(PCP_SCALE_TO_MAX_TIME, "20");
+        propertiesService.createProperty(PCP_CORE_POOL_SIZE, "3");
     }
 
     @AfterEach

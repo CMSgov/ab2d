@@ -2,7 +2,10 @@ package gov.cms.ab2d.api.controller;
 
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
+import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.api.remote.JobClientMock;
+import gov.cms.ab2d.common.properties.PropertiesService;
+import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.service.ContractServiceStub;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
@@ -18,7 +21,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.MediaType;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -31,6 +36,7 @@ import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_PDP_CLIENT;
 import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
+import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -69,7 +75,12 @@ public class BulkDataAccessAPIV2IntegrationTests {
     @Autowired
     private DataSetup dataSetup;
 
+    @Autowired
+    private ApplicationContext context;
+
     private String token;
+
+    private final PropertiesService propertiesService = new PropertyServiceStub();
 
     public static final String PATIENT_EXPORT_PATH = "/Patient/$export";
 
@@ -77,6 +88,9 @@ public class BulkDataAccessAPIV2IntegrationTests {
     public void setup() throws JwtVerificationException {
         testUtil.turnMaintenanceModeOff();
         token = testUtil.setupToken(List.of(SPONSOR_ROLE));
+        ApiCommon apiCommon = context.getBean(ApiCommon.class);
+        ReflectionTestUtils.setField(apiCommon, "propertiesService", propertiesService);
+        propertiesService.createProperty(MAINTENANCE_MODE, "false");
     }
 
     @AfterEach
