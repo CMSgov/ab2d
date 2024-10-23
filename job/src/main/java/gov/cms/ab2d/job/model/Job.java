@@ -74,6 +74,9 @@ public class Job {
     private OffsetDateTime since;
 
     @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
+    private OffsetDateTime until;
+
+    @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime expiresAt;
 
     @Pattern(regexp = EOB, message = "_type should be ExplanationOfBenefit")

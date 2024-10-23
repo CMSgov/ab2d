@@ -6,16 +6,14 @@ import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import org.hamcrest.core.Is;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -41,7 +39,17 @@ public class MaintenanceModeAPITests {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private ApplicationContext context;
+
     private PropertiesService propertiesService = new PropertyServiceStub();
+
+    @BeforeEach
+    public void setup() {
+        MaintenanceModeAPI maintenanceModeAPI = context.getBean(MaintenanceModeAPI.class);
+        ReflectionTestUtils.setField(maintenanceModeAPI, "propertiesService", propertiesService);
+        propertiesService.createProperty(MAINTENANCE_MODE, "false");
+    }
 
     @AfterEach
     void tearDown() {
