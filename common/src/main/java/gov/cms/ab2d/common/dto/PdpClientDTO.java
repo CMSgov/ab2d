@@ -1,7 +1,7 @@
 package gov.cms.ab2d.common.dto;
 
 import gov.cms.ab2d.contracts.model.ContractDTO;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data

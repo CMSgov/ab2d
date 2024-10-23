@@ -1,6 +1,5 @@
 package gov.cms.ab2d.api.controller;
 
-import com.amazonaws.services.sqs.AmazonSQS;
 import com.jayway.jsonpath.JsonPath;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
@@ -32,7 +31,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import static gov.cms.ab2d.api.controller.BulkDataAccessAPIIntegrationTests.PATIENT_EXPORT_PATH;
 import static gov.cms.ab2d.common.model.Role.ADMIN_ROLE;
@@ -58,7 +57,7 @@ public class AdminAPIMaintenanceModeTests {
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
     @Autowired
-    AmazonSQS amazonSqs;
+    SqsAsyncClient amazonSqs;
 
     @Autowired
     private TestUtil testUtil;

@@ -14,8 +14,8 @@ import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import lombok.extern.slf4j.Slf4j;
-import org.springdoc.core.GroupedOpenApi;
-import org.springdoc.core.customizers.OpenApiCustomiser;
+import org.springdoc.core.models.GroupedOpenApi;
+import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -33,7 +33,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
  *
  * {@link OpenAPI} - the base configuration for all versions of the API
  * {@link GroupedOpenApi} - one of these for each version of FHIR we support (V1 - STU3, V2 - R4)
- * {@link OpenApiCustomiser} - customize a {@link GroupedOpenApi} with default behavior
+ * {@link OpenApiCustomizer} - customize a {@link GroupedOpenApi} with default behavior
  */
 @Slf4j
 @Configuration
@@ -70,7 +70,7 @@ public class OpenAPIConfig {
                 // Only match /v1/fhir calls
                 .pathsToMatch(API_PREFIX_V1 + FHIR_PREFIX + "/**")
                 // Customize the page with default error responses to authentication and internal errors
-                .addOpenApiCustomiser(defaultResponseMessages())
+                .addOpenApiCustomizer(defaultResponseMessages())
                 .build();
     }
 
@@ -85,11 +85,11 @@ public class OpenAPIConfig {
                 // Only match /v2/fhir calls
                 .pathsToMatch(API_PREFIX_V2 + FHIR_PREFIX + "/**")
                 // Customize the page with default error responses to authentication and internal errors
-                .addOpenApiCustomiser(defaultResponseMessages())
+                .addOpenApiCustomizer(defaultResponseMessages())
                 .build();
     }
 
-    public OpenApiCustomiser defaultResponseMessages() {
+    public OpenApiCustomizer defaultResponseMessages() {
         return api -> {
 
             // Add JSON templates for expected response bodies

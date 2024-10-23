@@ -2,7 +2,7 @@ package gov.cms.ab2d.api.controller.common;
 
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 public class Common {
     private static final String HTTPS_STRING = "https";
