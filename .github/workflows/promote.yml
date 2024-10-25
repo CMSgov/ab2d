@@ -38,9 +38,18 @@ jobs:
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ secrets.MGMT_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-mgmt-github-actions
-      - name: Retag images in ECR
+
+      - name: Set environment variables
         env:
           DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}
+        run: |
+          if [ "${{ inputs.environment }}" == "prod_test" ]; then
+            echo "TAG_PREFIX=ab2d-prod-test" >> $GITHUB_ENV
+          else
+            echo "TAG_PREFIX=ab2d-$DEPLOYMENT_ENV" >> $GITHUB_ENV
+
+      - name: Retag images in ECR
+        env:
           ECR_REPO_DOMAIN: ${{ secrets.MGMT_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com
           ECR_REPO: ab2d_${{ inputs.module }}
         run: |
@@ -51,14 +60,10 @@ jobs:
           echo "Getting the manifest of the image tagged main-$SHA_SHORT"
           MANIFEST="$(curl -sS -H "Authorization: Basic $TOKEN" -H "Accept: $CONTENT_TYPE" "https://$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/main-$SHA_SHORT")"
 
-          if [ "${{ inputs.environment }}" == "prod_test" ]; then
-          SHA_TAG="ab2d-prod-test-$SHA_SHORT"
-          else
-          SHA_TAG="ab2d-$DEPLOYMENT_ENV-$SHA_SHORT"
-          fi
+          SHA_TAG="$TAG_PREFIX-$SHA_SHORT"
           echo "Adding the $SHA_TAG tag to main-$SHA_SHORT image"
           curl -sS -X PUT -H "Authorization: Basic $TOKEN" -H "Content-Type: $CONTENT_TYPE" -d "$MANIFEST" "https://$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/$SHA_TAG"
 
-          LATEST_TAG="ab2d-$DEPLOYMENT_ENV-latest"
+          LATEST_TAG="$TAG_PREFIX-latest"
           echo "Adding the $LATEST_TAG tag to main-$SHA_SHORT image"
           curl -sS -X PUT -H "Authorization: Basic $TOKEN" -H "Content-Type: $CONTENT_TYPE" -d "$MANIFEST" "https://$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/$LATEST_TAG"
