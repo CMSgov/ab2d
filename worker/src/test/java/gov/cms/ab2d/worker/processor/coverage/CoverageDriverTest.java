@@ -607,22 +607,22 @@ class CoverageDriverTest extends JobCleanup {
         assertTrue(driver.getNextSearch().isEmpty());
     }
 
-//    @DisplayName("Do not start an eob job if any relevant coverage period has never had data pulled for it")
-//    @Test
-//    void availableCoverageWhenNeverSearched() {
-//
-//        Job job = new Job();
-//        job.setContractNumber(contract.getContractNumber());
-//
-//        try {
-//            boolean noCoverageStatuses = driver.isCoverageAvailable(job, contract.toDTO());
-//
-//            assertFalse(noCoverageStatuses, "eob searches should not run when a" +
-//                    " coverage period has no information");
-//        } catch (InterruptedException | CoverageDriverException exception) {
-//            fail("could not check for available coverage", exception);
-//        }
-//    }
+    @DisplayName("Do not start an eob job if any relevant coverage period has never had data pulled for it")
+    @Test
+    void availableCoverageWhenNeverSearched() {
+
+        Job job = new Job();
+        job.setContractNumber(contract.getContractNumber());
+
+        try {
+            boolean noCoverageStatuses = driver.isCoverageAvailable(job, contract.toDTO());
+
+            assertFalse(noCoverageStatuses, "eob searches should not run when a" +
+                    " coverage period has no information");
+        } catch (InterruptedException | CoverageDriverException exception) {
+            fail("could not check for available coverage", exception);
+        }
+    }
 
     @DisplayName("Do not start an eob job if any relevant coverage period is queued for an update")
     @Test
