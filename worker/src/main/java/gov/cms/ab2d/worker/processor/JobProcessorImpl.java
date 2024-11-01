@@ -164,7 +164,9 @@ public class JobProcessorImpl implements JobProcessor {
         if (ignoredContracts.contains(job.getContractNumber())) {
             return;
         }
-
+        if (job.getUntil() != null) {
+            return;
+        }
         // Number in database
         int expectedPatients = progressTracker.getPatientsExpected();
 

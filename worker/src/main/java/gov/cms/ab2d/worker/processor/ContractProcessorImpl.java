@@ -241,7 +241,9 @@ public class ContractProcessorImpl implements ContractProcessor {
         if (contractData.getJob().hasJobBeenCancelled()) {
             return;
         }
-
+        if (contractData.getJob().getUntil() != null) {
+            return;
+        }
         // Verify that the number of benes requested matches the number expected from the database and fail
         // immediately if the two do not match
         ProgressTracker progressTracker = jobProgressService.getStatus(jobUuid);
