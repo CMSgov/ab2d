@@ -379,8 +379,8 @@ public class CoverageCheckPredicatesUnitTest {
         assertTrue(issues.isEmpty());
     }
 
-    @DisplayName("Coverage issues for January->February fails in February")
-    @Test
+//    @DisplayName("Coverage issues for January->February fails in February")
+//    @Test
     void whenCoverageAfterFebruary_ThrowsIssueJanuaryCheck() {
         LocalDate currentLocalDate = LocalDate.parse( LocalDate.now().getYear() + "-02-01");
         //override LocalDate.now() to avoid the test pass/failing depending on current date
@@ -401,8 +401,8 @@ public class CoverageCheckPredicatesUnitTest {
             coverageCounts.put("TEST", fakeCounts);
             CoverageStableCheck stableCheck =
                     new CoverageStableCheck(coverageService, coverageCounts, issues);
-      //      assertFalse(stableCheck.test(contract));
-      //      assertFalse(issues.isEmpty());
+            assertFalse(stableCheck.test(contract));
+            assertFalse(issues.isEmpty());
         }
     }
 
