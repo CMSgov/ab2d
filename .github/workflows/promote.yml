@@ -47,7 +47,7 @@ jobs:
             echo "TAG_PREFIX=ab2d-prod-test" >> $GITHUB_ENV
           else
             echo "TAG_PREFIX=ab2d-$DEPLOYMENT_ENV" >> $GITHUB_ENV
-            fi
+          fi
 
       - name: Retag images in ECR
         env:
