@@ -519,13 +519,7 @@ public class CoverageDriverImpl implements CoverageDriver {
     @Override
     public int numberOfBeneficiariesToProcess(Job job, ContractDTO contract) {
 
-       // ZonedDateTime time;
-//        //Centene and Humana support
-//        if (job.getContractNumber().equals("S4802") || job.getContractNumber().equals("Z1001"))
-//            time = job.getSince().atZoneSameInstant(AB2D_ZONE).plusMonths(1);
-//        else if (job.getContractNumber().equals("S5884"))
-//            time = job.getSince().atZoneSameInstant(AB2D_ZONE).plusMonths(2);
-        ZonedDateTime time = getEndDateTime();
+        ZonedDateTime endTime = (job.getUntil() != null) ? job.getUntil().atZoneSameInstant(AB2D_ZONE).plusMonths(1) : getEndDateTime();
 
         if (contract == null) {
             throw new CoverageDriverException("cannot retrieve metadata for job missing contract");
@@ -534,7 +528,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         ZonedDateTime startDateTime = getStartDateTime(contract);
 
         List<CoveragePeriod> periodsToReport = new ArrayList<>();
-        while (startDateTime.isBefore(time)) {
+        while (startDateTime.isBefore(endTime)) {
             CoveragePeriod periodToReport =
                     coverageService.getCoveragePeriod(mapping.map(contract), startDateTime.getMonthValue(), startDateTime.getYear());
             periodsToReport.add(periodToReport);
@@ -555,7 +549,7 @@ public class CoverageDriverImpl implements CoverageDriver {
     @Trace(metricName = "EnrollmentLoadFromDB", dispatcher = true)
     @Override
     public CoveragePagingResult pageCoverage(Job job, ContractDTO contract) {
-        ZonedDateTime now = getEndDateTime();
+        ZonedDateTime endTime = (job.getUntil() != null) ? job.getUntil().atZoneSameInstant(AB2D_ZONE).plusMonths(1) : getEndDateTime();
 
         if (contract == null) {
             throw new CoverageDriverException("cannot retrieve metadata for job missing contract");
@@ -565,7 +559,7 @@ public class CoverageDriverImpl implements CoverageDriver {
 
         try {
             // Check that all coverage periods necessary are present before beginning to page
-            while (startDateTime.isBefore(now)) {
+            while (startDateTime.isBefore(endTime)) {
                 // Will throw exception if it doesn't exist
                 coverageService.getCoveragePeriod(mapping.map(contract), startDateTime.getMonthValue(), startDateTime.getYear());
                 startDateTime = startDateTime.plusMonths(1);
