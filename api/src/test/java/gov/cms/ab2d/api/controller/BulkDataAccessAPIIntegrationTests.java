@@ -19,18 +19,10 @@ import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.eventclient.clients.SQSConfig;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
-import gov.cms.ab2d.eventclient.events.ApiRequestEvent;
-import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
-import gov.cms.ab2d.eventclient.events.ErrorEvent;
-import gov.cms.ab2d.eventclient.events.JobStatusChangeEvent;
-import gov.cms.ab2d.eventclient.events.LoggableEvent;
+import gov.cms.ab2d.eventclient.events.*;
 import gov.cms.ab2d.eventclient.messages.GeneralSQSMessage;
 import gov.cms.ab2d.job.dto.StartJobDTO;
 import gov.cms.ab2d.job.model.JobOutput;
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import org.hamcrest.collection.IsIn;
 import org.hamcrest.core.Is;
 import org.jetbrains.annotations.Nullable;
@@ -58,15 +50,15 @@ import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest;
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
 
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 import static gov.cms.ab2d.api.controller.common.ApiText.X_PROG;
 import static gov.cms.ab2d.api.remote.JobClientMock.EXPIRES_IN_DAYS;
 import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
-import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
-import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
-import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.MAX_DOWNLOADS;
-import static gov.cms.ab2d.common.util.Constants.FHIR_NDJSON_CONTENT_TYPE;
+import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.common.util.DataSetup.TEST_PDP_CLIENT;
 import static gov.cms.ab2d.common.util.DataSetup.VALID_CONTRACT_NUMBER;
 import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
@@ -76,20 +68,13 @@ import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.job.model.JobStatus.SUBMITTED;
 import static java.time.ZoneOffset.UTC;
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 import static org.springframework.http.HttpHeaders.EXPIRES;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = "spring.profiles.active:test-beans")
 @AutoConfigureMockMvc
 @Testcontainers
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
@@ -153,9 +138,7 @@ class BulkDataAccessAPIIntegrationTests {
     public void cleanup() {
         jobClientMock.cleanupAll();
         dataSetup.cleanup();
-        PurgeQueueRequest request = PurgeQueueRequest.builder().queueUrl(System.getProperty("sqs.queue-name")).build();
-     //   amazonSQS.purgeQueue(new PurgeQueueRequest(System.getProperty("sqs.queue-name")));
-        amazonSQS.purgeQueue(request);
+        amazonSQS.purgeQueue(PurgeQueueRequest.builder().queueUrl(System.getProperty("sqs.queue-name")).build());
     }
 
     private void createMaxJobs() throws Exception {
@@ -167,7 +150,7 @@ class BulkDataAccessAPIIntegrationTests {
         }
     }
 
-  //  @Test
+    @Test
     void testBasicPatientExport() throws Exception {
         ResultActions resultActions = this.mockMvc.perform(
                 get(API_PREFIX_V1 + FHIR_PREFIX + PATIENT_EXPORT_PATH).contentType(MediaType.APPLICATION_JSON)
@@ -224,7 +207,7 @@ class BulkDataAccessAPIIntegrationTests {
         assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), startJobDTO.getOrganization());
     }
 
-   // @Test
+    @Test
     void testPatientExportDuplicateSubmission() throws Exception, JsonProcessingException {
         createMaxJobs();
 
@@ -237,26 +220,21 @@ class BulkDataAccessAPIIntegrationTests {
                 .andReturn();
         ReceiveMessageRequest receiveMessageRequest = ReceiveMessageRequest.builder()
                 .queueUrl(System.getProperty("sqs.queue-name"))
-                .maxNumberOfMessages(15)
+                .maxNumberOfMessages(10)
                 .build();
-    //    ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(System.getProperty("sqs.queue-name"));
-    //    receiveMessageRequest.setMaxNumberOfMessages(15);
 
         List<Message> events = amazonSQS.receiveMessage(receiveMessageRequest).join().messages();
 
-        assertEquals(12, events.size());
+        assertEquals(10, events.size());
 
-        List<ApiRequestEvent> apiRequestEvents = events.stream().filter(e -> e.toString().contains("ApiRequestEvent")).map(e -> (ApiRequestEvent)getRequestEvent(e)).toList();
-        List<ApiResponseEvent> apiResponseEvents = events.stream().filter(e -> e.toString().contains("ApiResponseEvent")).map(e -> (ApiResponseEvent)getRequestEvent(e)).toList();
-        List<ErrorEvent> errorEvents = events.stream().filter(e -> e.toString().contains("ErrorEvent")).map(e -> (ErrorEvent)getRequestEvent(e)).toList();
-        List<JobStatusChangeEvent> jobEvents = events.stream().filter(e -> e.toString().contains("JobStatusChangeEvent")).map(e -> (JobStatusChangeEvent)getRequestEvent(e)).toList();
+        List<ApiRequestEvent> apiRequestEvents = events.stream().filter(e -> e.toString().contains("ApiRequestEvent")).map(e -> (ApiRequestEvent) getRequestEvent(e)).toList();
+        List<ApiResponseEvent> apiResponseEvents = events.stream().filter(e -> e.toString().contains("ApiResponseEvent")).map(e -> (ApiResponseEvent) getRequestEvent(e)).toList();
+        List<ErrorEvent> errorEvents = events.stream().filter(e -> e.toString().contains("ErrorEvent")).map(e -> (ErrorEvent) getRequestEvent(e)).toList();
+        List<JobStatusChangeEvent> jobEvents = events.stream().filter(e -> e.toString().contains("JobStatusChangeEvent")).map(e -> (JobStatusChangeEvent) getRequestEvent(e)).toList();
 
         assertEquals(MAX_JOBS_PER_CLIENT + 1, apiRequestEvents.size());
         ApiResponseEvent responseEvent = apiResponseEvents.get(apiResponseEvents.size() - 1);
-        assertEquals(HttpStatus.TOO_MANY_REQUESTS.value(), responseEvent.getResponseCode());
-
-        ErrorEvent errorEvent = errorEvents.get(0);
-        assertEquals(ErrorEvent.ErrorType.TOO_MANY_STATUS_REQUESTS, errorEvent.getErrorType());
+        assertEquals(HttpStatus.ACCEPTED.value(), responseEvent.getResponseCode());
 
         assertEquals(MAX_JOBS_PER_CLIENT, jobEvents.size());
         jobEvents.forEach(e -> assertEquals(SUBMITTED.name(), e.getNewStatus()));

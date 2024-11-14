@@ -8,11 +8,13 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 @TestConfiguration
 @EnableAutoConfiguration
+@Profile("mock-beans")
 public class AB2DSQSMockConfig {
 
   static {
@@ -24,19 +26,6 @@ public class AB2DSQSMockConfig {
 
   @MockBean
   SQSEventClient sQSEventClient;
-
-//  @Bean
-//  @Primary
-//  public SimpleMessageListenerContainerFactory simpleMessageListenerContainerFactory() {
-//    SimpleMessageListenerContainerFactory factory = new SimpleMessageListenerContainerFactory();
-//    factory.setAutoStartup(false);
-//    return factory;
-//  }
-
-//  @Bean
- // public QueueMessageHandler messageHandler() {
- //   return mock(QueueMessageHandler.class);
- // }
 
    @Bean("mockAmazonSQS")
   public SqsAsyncClient amazonSQSAsync() {

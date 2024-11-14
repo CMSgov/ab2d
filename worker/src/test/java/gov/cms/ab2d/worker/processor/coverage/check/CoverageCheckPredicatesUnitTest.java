@@ -32,9 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class CoverageCheckPredicatesUnitTest {
@@ -379,31 +377,34 @@ public class CoverageCheckPredicatesUnitTest {
         assertTrue(issues.isEmpty());
     }
 
-//    @DisplayName("Coverage issues for January->February fails in February")
-//    @Test
+    @DisplayName("Coverage issues for January->February fails in February")
+    @Test
     void whenCoverageAfterFebruary_ThrowsIssueJanuaryCheck() {
-        LocalDate currentLocalDate = LocalDate.parse( LocalDate.now().getYear() + "-02-01");
-        //override LocalDate.now() to avoid the test pass/failing depending on current date
-        try (MockedStatic<LocalDate> topDateTimeUtilMock = Mockito.mockStatic(LocalDate.class)) {
-            topDateTimeUtilMock.when(LocalDate::now).thenReturn(currentLocalDate);
-
-            ContractDTO contract = getContractDTO();
-            List<CoverageCount> fakeCounts = List.of(
-                    new CoverageCount("TEST", currentLocalDate.getYear(),
-                            1, 1, 1, 500),
-                    new CoverageCount("TEST", currentLocalDate.getYear(),
-                            2, 1, 2, 32151),
-                    new CoverageCount("TEST", currentLocalDate.getYear(),
-                            3, 1, 3, 32100)
-            );
-            Map<String, List<CoverageCount>> coverageCounts = new HashMap<>();
-            List<String> issues = new ArrayList<>();
-            coverageCounts.put("TEST", fakeCounts);
+       try (MockedStatic<CoverageStableCheckHelper> helper = mockStatic(CoverageStableCheckHelper.class)) {
+           helper.when(() -> CoverageStableCheckHelper.skipCheck(any(), any(), anyInt())).thenReturn(false);
+           LocalDate currentLocalDate = LocalDate.parse(LocalDate.now().getYear() + "-02-01");
+           //override LocalDate.now() to avoid the test pass/failing depending on current date
+           try (MockedStatic<LocalDate> topDateTimeUtilMock = Mockito.mockStatic(LocalDate.class, Mockito.CALLS_REAL_METHODS)) {
+               topDateTimeUtilMock.when(LocalDate::now).thenReturn(currentLocalDate);
+               LocalDate date = LocalDate.now();
+               ContractDTO contract = getContractDTO();
+               List<CoverageCount> fakeCounts = List.of(
+                       new CoverageCount("TEST", currentLocalDate.getYear(),
+                               1, 1, 1, 500),
+                       new CoverageCount("TEST", currentLocalDate.getYear(),
+                               2, 1, 2, 32151),
+                       new CoverageCount("TEST", currentLocalDate.getYear(),
+                               3, 1, 3, 32100)
+               );
+               Map<String, List<CoverageCount>> coverageCounts = new HashMap<>();
+               List<String> issues = new ArrayList<>();
+               coverageCounts.put("TEST", fakeCounts);
             CoverageStableCheck stableCheck =
                     new CoverageStableCheck(coverageService, coverageCounts, issues);
-            assertFalse(stableCheck.test(contract));
-            assertFalse(issues.isEmpty());
-        }
+               assertFalse(stableCheck.test(contract));
+               assertFalse(issues.isEmpty());
+           }
+       }
     }
 
     @DisplayName("Coverage issues for January->February passes in March")

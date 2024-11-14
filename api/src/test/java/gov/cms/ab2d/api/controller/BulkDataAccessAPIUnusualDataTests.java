@@ -56,7 +56,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = "spring.profiles.active:test-beans")
 @AutoConfigureMockMvc
 @Testcontainers
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
@@ -111,7 +111,7 @@ public class BulkDataAccessAPIUnusualDataTests {
         amazonSQS.purgeQueue(PurgeQueueRequest.builder().queueUrl(System.getProperty("sqs.queue-name")).build());
     }
 
- //   @Test
+    @Test
     void testPatientExportWithNoAttestation() throws Exception {
         // Valid contract number for sponsor, but no attestation
         String token = testUtil.setupContractWithNoAttestation(List.of(SPONSOR_ROLE));

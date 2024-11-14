@@ -16,22 +16,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 
-
 import static gov.cms.ab2d.common.model.Role.ADMIN_ROLE;
 import static gov.cms.ab2d.common.model.Role.SPONSOR_ROLE;
-import static gov.cms.ab2d.common.util.Constants.ADMIN_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.AKAMAI_TEST_OBJECT;
-import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
-import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.HEALTH_ENDPOINT;
-import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
-import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
-import static gov.cms.ab2d.common.util.Constants.STATUS_ENDPOINT;
+import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.eventclient.events.SlackEvents.API_AUTHNZ_ERROR;
 
 @Slf4j
@@ -53,23 +46,20 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity security) throws Exception {
-        security.csrf().disable()
-
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
+        security.csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(authExceptions).permitAll()
+                        .requestMatchers(API_PREFIX_V1 + ADMIN_PREFIX + "/**").hasAuthority(ADMIN_ROLE)
+                        .requestMatchers(API_PREFIX_V1 + FHIR_PREFIX + "/**").hasAnyAuthority(SPONSOR_ROLE)
+                        .anyRequest().authenticated())
                 // Setup filter exception handling
                 .addFilterBefore(filterChainExceptionHandler, LogoutFilter.class)
                 // Add a filter to validate the tokens with every request.
-                .addFilterAfter(jwtTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .authorizeHttpRequests()
-                .requestMatchers(authExceptions).permitAll()
-                .requestMatchers(API_PREFIX_V1 + ADMIN_PREFIX + "/**").hasAuthority(ADMIN_ROLE)
-                .requestMatchers(API_PREFIX_V1 + FHIR_PREFIX + "/**").hasAnyAuthority(SPONSOR_ROLE)
-                .anyRequest().authenticated();
+                .addFilterAfter(jwtTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         // Override default behavior to add more informative logs
-        security.exceptionHandling()
-                .accessDeniedHandler((request, response, accessDeniedException) -> {
+        security.exceptionHandling(ex -> ex.accessDeniedHandler((request, response, accessDeniedException) -> {
 
                     // Log authorization errors like PDP does not have SPONSOR role
                     logSecurityException(request, accessDeniedException, HttpServletResponse.SC_FORBIDDEN);
@@ -80,7 +70,7 @@ public class SecurityConfig {
                     // Log authentication errors that are not caught by JWT filter
                     logSecurityException(request, authException, HttpServletResponse.SC_UNAUTHORIZED);
                     response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-                });
+                }));
         return security.build();
     }
 
