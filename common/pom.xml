@@ -127,12 +127,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-
-<!--        <dependency>-->
-<!--          <groupId>io.awspring.cloud</groupId>-->
-<!--          <artifactId>spring-cloud-aws-autoconfigure</artifactId>-->
-<!--          <version>${spring-cloud-aws.version}</version>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>io.awspring.cloud</groupId>
             <artifactId>spring-cloud-aws-dependencies</artifactId>
