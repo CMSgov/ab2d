@@ -555,15 +555,15 @@ public class CoverageDriverImpl implements CoverageDriver {
     @Trace(metricName = "EnrollmentLoadFromDB", dispatcher = true)
     @Override
     public CoveragePagingResult pageCoverage(Job job, ContractDTO contract) {
+        ZonedDateTime now = getEndDateTime();
 
         if (contract == null) {
             throw new CoverageDriverException("cannot retrieve metadata for job missing contract");
         }
 
+        ZonedDateTime startDateTime = getStartDateTime(contract);
         Optional<String> additionalDetails = Optional.empty();
         try {
-            ZonedDateTime now = getEndDateTime();
-            ZonedDateTime startDateTime = getStartDateTime(contract);
             // Check that all coverage periods necessary are present before beginning to page
             while (startDateTime.isBefore(now)) {
                 additionalDetails = Optional.of(String.format("contract='%s' month='%s', year='%s'",

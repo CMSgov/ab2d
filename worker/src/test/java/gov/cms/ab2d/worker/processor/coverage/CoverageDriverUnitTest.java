@@ -234,7 +234,7 @@ class CoverageDriverUnitTest {
 
     @DisplayName("Paging coverage fails when coverage periods are missing")
     @Test
-    void failPagingWhenCoveragePeriodMissing() {
+    void failPagingWhenCoveragePeriodMissing(CapturedOutput output) {
 
         when(coverageService.getCoveragePeriod(any(), anyInt(), anyInt())).thenThrow(new EntityNotFoundException());
 
@@ -243,6 +243,8 @@ class CoverageDriverUnitTest {
 
         CoverageDriverException startDateInFuture = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(job, contract));
         assertEquals(EntityNotFoundException.class, startDateInFuture.getCause().getClass());
+        assertTrue(output.getOut().contains("coverage period missing or year,month query incorrect, driver should have resolved earlier - contract='null' month='1', year='2020'"));
+
     }
 
     @DisplayName("Paging coverage periods")
