@@ -45,12 +45,6 @@
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>common</artifactId>
             <version>0.0.1-SNAPSHOT</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.awspring.cloud</groupId>
-                    <artifactId>spring-cloud-aws-dependencies</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
