@@ -232,6 +232,27 @@ class CoverageDriverUnitTest {
         assertNotNull(result);
     }
 
+    @DisplayName("Paging coverage fails when all coverage periods are present but CoverageService#pageCoverage throws exception")
+    @Test
+    void failPagingWhenCoveragePeriodsPresentButUnderlyingMethodThrowsException(CapturedOutput output) {
+        when(coverageService.getCoveragePeriod(any(ContractForCoverageDTO.class), anyInt(), anyInt())).thenAnswer((invocationOnMock) -> {
+            CoveragePeriod period = new CoveragePeriod();
+            period.setContractNumber((invocationOnMock.getArgument(0).toString()));
+            period.setMonth(invocationOnMock.getArgument(1));
+            period.setYear(invocationOnMock.getArgument(2));
+            return period;
+        });
+
+        when(coverageService.pageCoverage(any())).thenThrow(RuntimeException.class);
+
+        Job job = new Job();
+        ContractDTO contract = new ContractDTO(null, "Contract-0", null, AB2D_EPOCH.toOffsetDateTime(), null, 0, 0);
+        when(mapping.map(any(ContractDTO.class))).thenReturn(new ContractForCoverageDTO("Contract-0", contract.getAttestedOn(), ContractForCoverageDTO.ContractType.NORMAL));
+
+        assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(job, contract));
+        assertTrue(output.getOut().contains("coverage period missing or year,month query incorrect, driver should have resolved earlier - CoveragePagingRequest(jobStartTime=null, contract=ContractForCoverageDTO(contractNumber=Contract-0, attestedOn=2020-01-01T00:00-05:00, contractType=NORMAL), pageSize=10000, cursor=Optional.empty)"));
+    }
+
     @DisplayName("Paging coverage fails when coverage periods are missing")
     @Test
     void failPagingWhenCoveragePeriodMissing(CapturedOutput output) {
@@ -244,7 +265,6 @@ class CoverageDriverUnitTest {
         CoverageDriverException startDateInFuture = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(job, contract));
         assertEquals(EntityNotFoundException.class, startDateInFuture.getCause().getClass());
         assertTrue(output.getOut().contains("coverage period missing or year,month query incorrect, driver should have resolved earlier - contract='null' month='1', year='2020'"));
-
     }
 
     @DisplayName("Paging coverage periods")
@@ -367,10 +387,10 @@ class CoverageDriverUnitTest {
         ContractForCoverageDTO contract = new ContractForCoverageDTO();
         contract.setContractNumber("contractNum");
 
-        val coveragePagingRequest = new CoveragePagingRequest( 1000, null, contract, OffsetDateTime.now());
+        val coveragePagingRequest = new CoveragePagingRequest( 1000, null, contract, AB2D_EPOCH.toOffsetDateTime());
         CoverageDriverException exception = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(coveragePagingRequest));
         assertTrue(exception.getMessage().contains("coverage driver failing preconditions"));
-        assertTrue(output.getOut().contains("coverage period missing or year,month query incorrect, driver should have resolved earlier - " + coveragePagingRequest.toString()));
+        assertTrue(output.getOut().contains("coverage period missing or year,month query incorrect, driver should have resolved earlier - CoveragePagingRequest(jobStartTime=2020-01-01T00:00-05:00, contract=ContractForCoverageDTO(contractNumber=contractNum, attestedOn=null, contractType=null), pageSize=1000, cursor=Optional.empty"));
     }
 
     @DisplayName("When loading a mapping job exit early if conditions not met")

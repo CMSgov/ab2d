@@ -562,6 +562,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         }
 
         ZonedDateTime startDateTime = getStartDateTime(contract);
+        // Additional details to log in the event of exception
         Optional<String> additionalDetails = Optional.empty();
         try {
             // Check that all coverage periods necessary are present before beginning to page
