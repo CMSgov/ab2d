@@ -27,6 +27,7 @@ import java.util.concurrent.locks.Lock;
 import javax.persistence.EntityNotFoundException;
 
 import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
+import lombok.val;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,6 +37,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 
@@ -60,7 +63,7 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for paging coverage which are much easier using mocked resources
  */
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
 class CoverageDriverUnitTest {
 
     @Mock
@@ -354,7 +357,7 @@ class CoverageDriverUnitTest {
 
     @DisplayName("When paging coverage fails throw coverage driver exception")
     @Test
-    void failureToPageCausesExceptions() {
+    void failureToPageCausesExceptions(CapturedOutput output) {
         when(coverageService.pageCoverage(any())).thenThrow(RuntimeException.class);
 
         CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, null, null, null,null, snapshotService);
@@ -362,8 +365,10 @@ class CoverageDriverUnitTest {
         ContractForCoverageDTO contract = new ContractForCoverageDTO();
         contract.setContractNumber("contractNum");
 
-        CoverageDriverException exception = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(new CoveragePagingRequest( 1000, null, contract, OffsetDateTime.now())));
+        val coveragePagingRequest = new CoveragePagingRequest( 1000, null, contract, OffsetDateTime.now());
+        CoverageDriverException exception = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(coveragePagingRequest));
         assertTrue(exception.getMessage().contains("coverage driver failing preconditions"));
+        assertTrue(output.getOut().contains("coverage period missing or year,month query incorrect, driver should have resolved earlier - " + coveragePagingRequest.toString()));
     }
 
     @DisplayName("When loading a mapping job exit early if conditions not met")
