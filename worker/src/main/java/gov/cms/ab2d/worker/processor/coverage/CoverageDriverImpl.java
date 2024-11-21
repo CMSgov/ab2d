@@ -562,22 +562,28 @@ public class CoverageDriverImpl implements CoverageDriver {
         }
 
         ZonedDateTime startDateTime = getStartDateTime(contract);
-
+        // Additional details to log in the event of exception
+        Optional<String> additionalDetails = Optional.empty();
         try {
             // Check that all coverage periods necessary are present before beginning to page
             while (startDateTime.isBefore(now)) {
+                additionalDetails = Optional.of(String.format("contract='%s' month='%s', year='%s'",
+                        contract.getContractNumber(),
+                        startDateTime.getMonthValue(),
+                        startDateTime.getYear()));
                 // Will throw exception if it doesn't exist
                 coverageService.getCoveragePeriod(mapping.map(contract), startDateTime.getMonthValue(), startDateTime.getYear());
                 startDateTime = startDateTime.plusMonths(1);
             }
+            additionalDetails = Optional.empty();
 
             // Make initial request which returns a result and a request starting at the next cursor
             CoveragePagingRequest request = new CoveragePagingRequest(PAGING_SIZE, null, mapping.map(contract), job.getCreatedAt());
-
+            additionalDetails = Optional.of(request.toString());
             // Make request for coverage metadata
             return coverageService.pageCoverage(request);
         } catch (Exception exception) {
-            log.error("coverage period missing or year,month query incorrect, driver should have resolved earlier");
+            log.error("coverage period missing or year,month query incorrect, driver should have resolved earlier - {}", additionalDetails.orElse(""));
             throw new CoverageDriverException("coverage driver failing preconditions", exception);
         }
     }
@@ -632,7 +638,7 @@ public class CoverageDriverImpl implements CoverageDriver {
         try {
             return coverageService.pageCoverage(request);
         } catch (Exception exception) {
-            log.error("coverage period missing or year,month query incorrect, driver should have resolved earlier");
+            log.error("coverage period missing or year,month query incorrect, driver should have resolved earlier - {}", request.toString());
             throw new CoverageDriverException("coverage driver failing preconditions", exception);
         }
     }
