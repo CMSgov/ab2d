@@ -122,8 +122,6 @@ public class EndToEndBfdTests {
     private static final AB2DLocalstackContainer LOCALSTACK_CONTAINER = new AB2DLocalstackContainer();
 
     // We don't care about logging here
-    @MockBean
-    Ab2dEnvironment environment;
     @Mock
     SQSEventClient logManager;
     @Autowired
