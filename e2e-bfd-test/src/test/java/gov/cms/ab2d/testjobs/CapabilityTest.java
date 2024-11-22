@@ -23,7 +23,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 @ComponentScan(basePackages = {"gov.cms.ab2d.bfd.client"})
 @Testcontainers
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
-@EnableFeignClients(clients = {ContractFeignClient.class})
 public class CapabilityTest {
     @Autowired
     private BFDClient bfdClient;
