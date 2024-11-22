@@ -74,6 +74,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -107,6 +108,7 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
  * (except the last one). All the data pulls from BFDs sandbox Synthea data.
  */
 @SpringBootTest
+@ComponentScan(basePackages = {"gov.cms.ab2d.bfd.client"})
 @Testcontainers
 @Slf4j
 @ExtendWith(MockitoExtension.class)
