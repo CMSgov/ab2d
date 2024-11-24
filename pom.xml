@@ -28,7 +28,7 @@
     <properties>
         <project.root>${basedir}</project.root>
         <java.version>17</java.version>
-        <hapi.version>6.6.2</hapi.version>
+        <hapi.version>7.6.0</hapi.version>
         <mockito.inline.version>5.2.0</mockito.inline.version>
         <okhttp3.version>4.10.0</okhttp3.version>
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
@@ -36,7 +36,7 @@
         <testcontainers.version>1.18.3</testcontainers.version>
         <newrelic.version>8.15.0</newrelic.version>
         <postgresql.version>42.7.4</postgresql.version>
-        <spring-cloud-aws.version>2.4.4</spring-cloud-aws.version>
+        <spring-cloud-aws.version>3.0.0</spring-cloud-aws.version>
 
         <!-- Maven plugin versions -->
         <jacoco.version>0.8.10</jacoco.version>
