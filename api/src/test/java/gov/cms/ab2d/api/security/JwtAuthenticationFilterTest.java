@@ -35,7 +35,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
 
-import javax.servlet.FilterChain;
+import jakarta.servlet.FilterChain;
 
 import static gov.cms.ab2d.common.model.Role.ADMIN_ROLE;
 import static gov.cms.ab2d.common.util.Constants.*;

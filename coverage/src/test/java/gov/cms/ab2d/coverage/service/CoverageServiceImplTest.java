@@ -39,7 +39,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.persistence.EntityNotFoundException;
+import jakarta.persistence.EntityNotFoundException;
 import javax.sql.DataSource;
 
 import org.junit.jupiter.api.*;
