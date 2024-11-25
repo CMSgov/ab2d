@@ -16,7 +16,6 @@ import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
-import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
 import gov.cms.ab2d.fhir.BundleUtils;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.fhir.IdentifierUtils;
@@ -93,16 +92,16 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
  * In the db container, it generates coverage data for the contract, pre-processes, then processes each job
  * (except the last one). All the data pulls from BFDs sandbox Synthea data.
  */
-@SpringBootTest
+@SpringBootTest(properties = "spring.profiles.active=test")
 @ComponentScan(basePackages = {"gov.cms.ab2d.bfd.client",
         "gov.cms.ab2d.eventclient.clients",
         "gov.cms.ab2d.snsclient.clients",
         "gov.cms.ab2d.common.config",
-        "gov.cms.ab2d.common.feign",
         "gov.cms.ab2d.common.model",
         "gov.cms.ab2d.common.properties",
         "gov.cms.ab2d.common.repository",
         "gov.cms.ab2d.common.service",
+        "gov.cms.ab2d.common.util",
         "gov.cms.ab2d.coverage.repository",
         "gov.cms.ab2d.coverage.service",
         "gov.cms.ab2d.job.service",
