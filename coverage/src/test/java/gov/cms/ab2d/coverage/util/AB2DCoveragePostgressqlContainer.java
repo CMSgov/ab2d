@@ -5,7 +5,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 
 public class AB2DCoveragePostgressqlContainer extends PostgreSQLContainer<AB2DCoveragePostgressqlContainer> {
 
-    private static final String IMAGE_VERSION = "postgres:11";
+    private static final String IMAGE_VERSION = "postgres:16";
 
     public AB2DCoveragePostgressqlContainer() {
         super(IMAGE_VERSION);

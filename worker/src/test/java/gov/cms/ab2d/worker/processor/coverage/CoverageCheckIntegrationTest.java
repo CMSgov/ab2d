@@ -236,7 +236,7 @@ public class CoverageCheckIntegrationTest {
     }
 
     @DisplayName("Verify coverage stops if some coverage periods change drastically")
- //   @Test
+  //  @Test
     void verifyCoverage_whenCoverageUnstable_fail() {
         ZonedDateTime dateTime = ZonedDateTime.now();
         createCoveragePeriods(dateTime);
