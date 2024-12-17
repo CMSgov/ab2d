@@ -10,8 +10,8 @@ import org.springframework.integration.dsl.*;
 import org.springframework.scheduling.annotation.EnableAsync;
 
 import javax.sql.DataSource;
+import java.time.Duration;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Configures Spring Integration.
@@ -44,7 +44,7 @@ public class WorkerFlowConfig {
 
     @Bean
     public IntegrationFlow flow() {
-        return IntegrationFlows.from(new JobMessageSource(dataSource), c -> c.poller(Pollers.fixedDelay(pollingFrequency, TimeUnit.SECONDS)))
+        return IntegrationFlow.from(new JobMessageSource(dataSource), c -> c.poller(Pollers.fixedDelay(Duration.ofSeconds(pollingFrequency))))
                             .channel(new ExecutorChannel(mainJobPool))
                             .handle(handler)
                             .get();

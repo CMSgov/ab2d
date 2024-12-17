@@ -156,6 +156,8 @@ class CoverageDriverTest extends JobCleanup {
 
     @BeforeEach
     void before() {
+        coverageDataSetup.cleanup();
+        dataSetup.cleanup();
         mapping = new ContractToContractCoverageMapping();
         // Set properties values in database
         addPropertiesTableValues();

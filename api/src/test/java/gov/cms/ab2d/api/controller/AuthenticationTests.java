@@ -1,6 +1,5 @@
 package gov.cms.ab2d.api.controller;
 
-import com.amazonaws.services.sqs.AmazonSQS;
 import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.common.model.PdpClient;
@@ -25,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import software.amazon.awssdk.services.sqs.SqsAsyncClient;
 
 import java.util.Collections;
 import java.util.List;
@@ -58,7 +58,7 @@ public class AuthenticationTests {
     private DataSetup dataSetup;
 
     @Autowired
-    AmazonSQS amazonSqs;
+    SqsAsyncClient amazonSqs;
 
     @Autowired
     SQSEventClient sqsEventClient;

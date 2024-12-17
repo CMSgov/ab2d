@@ -303,25 +303,4 @@ class PatientClaimsProcessorUnitTest {
         org.hl7.fhir.r4.model.Patient patient = new org.hl7.fhir.r4.model.Patient();
         assertFalse(gov.cms.ab2d.fhir.BundleUtils.isExplanationOfBenefitResource(patient));
     }
-
-//    @Test
-//    void isContinueTest(){
-//        var eob = createEOB();
-//        // lastUpdated == null && until == null
-//        assertFalse(cut.isContinue(eob, request));
-//
-//        request = new PatientClaimsRequest(List.of(coverageSummary), LATER_ATT_DATE, null,
-//                OffsetDateTime.of(2024, 2, 15, 0, 0, 0, 0, ZoneOffset.UTC),"client", "job",
-//                CONTRACT_NUM, Contract.ContractType.NORMAL, noOpToken, STU3, tmpEfsMountDir.getAbsolutePath());
-//        // lastUpdated == null && until != null
-//        assertFalse(cut.isContinue(eob, request));
-//
-//        eob.getMeta().setLastUpdated(new Date());
-//        // lastUpdated == null && until != null && lastUpdated > until
-//        assertFalse(cut.isContinue(eob, request));
-//
-//        eob.getMeta().setLastUpdated( new GregorianCalendar(2024, Calendar.FEBRUARY, 1).getTime());
-//        // lastUpdated == null && until != null && lastUpdated < until
-//        assertTrue(cut.isContinue(eob, request));
-//    }
 }
