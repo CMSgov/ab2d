@@ -26,6 +26,7 @@ public class StartJobDTO {
     @NotNull
     private final String outputFormat;
     private final OffsetDateTime since;
+    private final OffsetDateTime until;
     @NotNull
     private final FhirVersion version;
 }

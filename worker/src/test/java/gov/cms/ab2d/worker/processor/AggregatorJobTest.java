@@ -83,23 +83,23 @@ class AggregatorJobTest {
         String org = "org1";
         final Token token = NewRelic.getAgent().getTransaction().getToken();
 
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq(1L), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(1)));
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq(2L), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(2)));
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq(3L), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(3)));
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq(4L), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(4)));
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq(5L), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(5)));
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq(6L), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(6)));
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq(7L), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(7)));
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq(8L), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(8)));
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq(9L), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(9)));
-        when(bfdClient.requestEOBFromServer(eq(STU3), eq(10L), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(10)));
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(1L), any(), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(1)));
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(2L), any(), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(2)));
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(3L), any(), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(3)));
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(4L), any(), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(4)));
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(5L), any(), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(5)));
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(6L), any(), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(6)));
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(7L), any(), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(7)));
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(8L), any(), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(8)));
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(9L), any(), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(9)));
+        when(bfdClient.requestEOBFromServer(eq(STU3), eq(10L), any(), any(), any())).thenReturn(BundleUtils.createBundle(createBundleEntry(10)));
 
         ContractForCoverageDTO contract = createContract(contractNo);
 
         PatientClaimsRequest request = new PatientClaimsRequest(createCoverageSummaries(10, contract),
                 OffsetDateTime.of(2020, 1, 1, 0, 0, 0, 9, ZoneOffset.UTC),
                 OffsetDateTime.of(2020, 1, 1, 0, 0, 0, 9, ZoneOffset.UTC),
-                org, job, contract.getContractNumber(), Contract.ContractType.NORMAL, token, FhirVersion.STU3, tempDir.getAbsolutePath());
+                null, org, job, contract.getContractNumber(), Contract.ContractType.NORMAL, token, FhirVersion.STU3, tempDir.getAbsolutePath());
         ReflectionTestUtils.setField(processor, "earliestDataDate", "01/01/2020");
 
         Future<ProgressTrackerUpdate> future = processor.process(request);
