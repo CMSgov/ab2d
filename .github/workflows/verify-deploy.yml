@@ -32,7 +32,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::test:role/delegatedadmin/developer/ab2d-${{ inputs.environment }}-github-actions
+          role-to-assume: arn:aws:iam::330810004472:role/delegatedadmin/developer/ab2d-test-github-actions
 
 
       - name: Set script file based on environment
