@@ -16,9 +16,9 @@ on:
         required: true
         type: choice
         options:
-          - sbx-sandbox
-          - east-prod
-          - east-impl
+          - dev
+          - test
+          - prod
 
 jobs:
   test:
@@ -32,16 +32,16 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', inputs.environment)] }}:role/delegatedadmin/developer/ab2d-${{ inputs.environment }}-github-actions
+          role-to-assume: arn:aws:iam::test:role/delegatedadmin/developer/ab2d-${{ inputs.environment }}-github-actions
 
 
       - name: Set script file based on environment
         run: |
-          if [[ "${{ github.event.inputs.environment }}" == "sbx-sandbox" ]]; then
+          if [[ "${{ github.event.inputs.environment }}" == "sbx" ]]; then
             script="./scripts/verify-deployment-ab2d-sbx-sandbox.sh"
-          elif [[ "${{ github.event.inputs.environment }}" == "east-prod" ]]; then
+          elif [[ "${{ github.event.inputs.environment }}" == "prod" ]]; then
             script="./scripts/verify-deployment-ab2d-east-prod.sh"
-          elif [[ "${{ github.event.inputs.environment }}" == "east-impl" ]]; then
+          elif [[ "${{ github.event.inputs.environment }}" == "test" ]]; then
             script="./scripts/verify-deployment-ab2d-east-impl.sh"
           else
             echo "Invalid environment selected."
