@@ -36,11 +36,11 @@ jobs:
 
 
       - name: Set script file based on environment
-        run: |
-          script="./scripts/verify-deployment-ab2d-east-impl.sh"
+        run: echo "script=./scripts/verify-deployment-ab2d-east-impl.sh" >> $GITHUB_ENV
 
       - name: Run deployment verification script
         run: |
           chmod +x $script
           ./$script
-
+        env:
+          script: ${{ env.script }}
