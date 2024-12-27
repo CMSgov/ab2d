@@ -5,7 +5,7 @@ on:
   workflow_call:
     inputs:
       environment:
-        required: true
+        required: false
         type: string
       module:
         required: true
@@ -44,7 +44,7 @@ jobs:
           elif [[ "${{ github.event.inputs.environment }}" == "test" ]]; then
             script="./scripts/verify-deployment-ab2d-east-impl.sh"
           else
-            echo "Invalid environment selected."
+            script="./scripts/verify-deployment-ab2d-east-impl.sh"
             exit 1
           fi
 
