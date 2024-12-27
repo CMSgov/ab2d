@@ -37,16 +37,7 @@ jobs:
 
       - name: Set script file based on environment
         run: |
-          if [[ "${{ github.event.inputs.environment }}" == "sbx" ]]; then
-            script="./scripts/verify-deployment-ab2d-sbx-sandbox.sh"
-          elif [[ "${{ github.event.inputs.environment }}" == "prod" ]]; then
-            script="./scripts/verify-deployment-ab2d-east-prod.sh"
-          elif [[ "${{ github.event.inputs.environment }}" == "test" ]]; then
-            script="./scripts/verify-deployment-ab2d-east-impl.sh"
-          else
-            script="./scripts/verify-deployment-ab2d-east-impl.sh"
-            exit 1
-          fi
+          script="./scripts/verify-deployment-ab2d-east-impl.sh"
 
       - name: Run deployment verification script
         run: |
