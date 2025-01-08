@@ -1,0 +1,98 @@
+name: Build and Publish Libraries
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+env:
+  ARTIFACTORY_URL: ${{ secrets.ARTIFACTORY_URL }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'corretto'
+
+      - name: Set up Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: '8.10'
+
+      - name: Build Libraries
+        env:
+          ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
+          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+        run: gradle -b build.gradle
+
+      - name: Test Libraries
+        env:
+          ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
+          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+        run: gradle clean test --info -b build.gradle
+
+      - name: Build Jars
+        env:
+          ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
+          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+        run: gradle jar --info -b build.gradle
+
+      - name: SonarQube Analysis
+        env:
+          ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
+          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          gradle sonarqube \
+            -Dsonar.projectKey=ab2d-lib-project \
+            -Dsonar.host.url=https://sonarqube.cloud.cms.gov \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+
+      - name: Quality Gate
+        id: quality-gate
+        uses: sonarsource/sonarcloud-github-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        timeout-minutes: 10
+
+      - name: Generate SBOM
+        env:
+          ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
+          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+        run: gradle cyclonedxBom
+
+      - name: Publish Libraries
+        if: github.ref == 'refs/heads/main'
+        env:
+          ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
+          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+        run: |
+          # Check for artifacts to deploy
+          versionPublishedList=$(gradle -q lookForArtifacts)
+
+          deployScript=""
+          for entry in $(echo "$versionPublishedList" | tr "'''" "\n"); do
+            buildName=$(echo "$entry" | cut -d":" -f1)
+            isPublished=$(echo "$entry" | cut -d":" -f2)
+
+            if [ "$isPublished" == "false" ]; then
+              echo "Deploying $buildName"
+              deployScript+="$buildName:artifactoryPublish "
+            fi
+          done
+
+          if [ "$deployScript" != "" ]; then
+            gradle $deployScript -b build.gradle
+          else
+            echo "No artifacts to publish."
+          fi
+
