@@ -40,7 +40,7 @@ jobs:
 
       - name: Set environment-specific variables
         run: |
-          if [ "${{ github.event_name }}" == "push" ]; then
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
             echo "SECRET_ID=ab2d/ab2d-east-impl/jenkins-verify-api" >> $GITHUB_ENV
             echo "BASE_URL=https://impl.ab2d.cms.gov" >> $GITHUB_ENV
             echo "EXPORT_URL=https://impl.ab2d.cms.gov/api/v2/fhir/Patient/$export?_type=ExplanationOfBenefit&_since=2020-02-13T00:00:00.000-05:00&_outputFormat=application%2Ffhir%2Bndjson" >> $GITHUB_ENV
