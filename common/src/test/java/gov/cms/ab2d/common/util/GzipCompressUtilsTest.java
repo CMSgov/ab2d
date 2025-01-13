@@ -147,6 +147,7 @@ class GzipCompressUtilsTest {
 
         // verify unrelated file (neither data nor error) is not changed
         assertTrue(testTextFile.exists());
+        assertFalse(new File(jobDirectory, "test.txt.gz").exists());
     }
 
     Path newTestFile(String suffix) throws IOException {
