@@ -7,6 +7,7 @@ import gov.cms.ab2d.aggregator.AggregatorCallable;
 import gov.cms.ab2d.aggregator.FileOutputType;
 import gov.cms.ab2d.aggregator.FileUtils;
 import gov.cms.ab2d.aggregator.JobHelper;
+import gov.cms.ab2d.common.util.GzipCompressUtils;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
@@ -34,6 +35,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,8 +43,9 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 
-import static gov.cms.ab2d.aggregator.FileOutputType.DATA;
+import static gov.cms.ab2d.aggregator.FileOutputType.DATA_COMPRESSED;
 import static gov.cms.ab2d.aggregator.FileOutputType.ERROR;
+import static gov.cms.ab2d.aggregator.FileOutputType.ERROR_COMPRESSED;
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
@@ -168,16 +171,28 @@ public class ContractProcessorImpl implements ContractProcessor {
                 Thread.sleep(1000);
             }
 
+            // Compress job output files (DATA and ERROR)
+            GzipCompressUtils.compressJobOutputFiles(
+                    job.getJobUuid(),
+                    searchConfig.getEfsMount(),
+                    this::shouldCompressFile
+            );
+
             // Retrieve all the job output info
-            jobOutputs.addAll(getOutputs(job.getJobUuid(), DATA));
-            jobOutputs.addAll(getOutputs(job.getJobUuid(), ERROR));
             log.info("Number of outputs: " + jobOutputs.size());
+            jobOutputs.addAll(getOutputs(job.getJobUuid(), DATA_COMPRESSED));
+            jobOutputs.addAll(getOutputs(job.getJobUuid(), ERROR_COMPRESSED));
 
         } catch (InterruptedException | IOException ex) {
             log.error("interrupted while processing job for contract");
         }
 
         return jobOutputs;
+    }
+
+    private boolean shouldCompressFile(File file) {
+        val type = FileOutputType.getFileType(file);
+        return type == FileOutputType.DATA || type == FileOutputType.ERROR;
     }
 
     /**
