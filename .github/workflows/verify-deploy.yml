@@ -32,11 +32,11 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Assume role in AB2D account for this environment
+      - name: Assume role in AB2D Management account
         uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::330810004472:role/delegatedadmin/developer/ab2d-test-github-actions
+          role-to-assume: arn:aws:iam::${{ secrets.MGMT_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-mgmt-github-actions
 
       - name: Set environment-specific variables
         run: |
