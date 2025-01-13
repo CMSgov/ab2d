@@ -112,15 +112,42 @@ class GzipCompressUtilsTest {
     }
 
     @Test
-    void testCompressFile_fileNotFound(@TempDir File tempDir) throws IOException {
+    void testCompressFile_fileNotFound(@TempDir File tempDir) {
         assertFalse(GzipCompressUtils.compressFile(new File("not-a-real-file"), true));
     }
 
     @Test
-    void testCompressFile_fileIsADirectory(@TempDir File tempDir) throws IOException {
+    void testCompressFile_fileIsADirectory(@TempDir File tempDir)  {
         assertFalse(GzipCompressUtils.compressFile(tempDir, true));
     }
 
+    @Test
+    void testCompressJobOutputFiles(@TempDir File tempDir) throws IOException {
+        String jobId = "job1234";
+        File jobDirectory = new File(tempDir, jobId);
+        jobDirectory.mkdirs();
+
+        File testDataFile = copyFile(UNCOMPRESSED_FILE.toFile(), jobDirectory, "test.ndjson").toFile();
+        File testErrorFile = copyFile(UNCOMPRESSED_FILE.toFile(), jobDirectory, "test_error.ndjson").toFile();
+        File testTextFile = copyFile(UNCOMPRESSED_FILE.toFile(), jobDirectory, "test.txt").toFile();
+
+        assertTrue(testDataFile.exists());
+        assertTrue(testErrorFile.exists());
+        assertTrue(testTextFile.exists());
+
+        GzipCompressUtils.compressJobOutputFiles(jobId, tempDir.getAbsolutePath(), this::fileFilter);
+
+        // verify files are compressed
+        assertTrue(new File(jobDirectory, "test.ndjson.gz").exists());
+        assertTrue(new File(jobDirectory, "test_error.ndjson.gz").exists());
+
+        // verify original files were deleted after being compressed
+        assertFalse(testDataFile.exists());
+        assertFalse(testErrorFile.exists());
+
+        // verify unrelated file (neither data nor error) is not changed
+        assertTrue(testTextFile.exists());
+    }
 
     Path newTestFile(String suffix) throws IOException {
         Path file = Files.createTempFile(getClass().getSimpleName(), suffix);
@@ -130,5 +157,13 @@ class GzipCompressUtilsTest {
 
     Path copyFile(File file, File directory) throws IOException {
         return Files.copy(file.toPath(), new File(directory, file.getName()).toPath());
+    }
+
+    Path copyFile(File file, File directory, String newFilename) throws IOException {
+        return Files.copy(file.toPath(), new File(directory, newFilename).toPath());
+    }
+
+    boolean fileFilter(File file) {
+        return file.getName().endsWith("_error.ndjson") || file.getName().endsWith(".ndjson");
     }
 }
