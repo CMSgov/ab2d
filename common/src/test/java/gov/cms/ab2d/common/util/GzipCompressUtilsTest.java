@@ -35,8 +35,8 @@ class GzipCompressUtilsTest {
          output that differs from {@link GzipCompressUtils#compress}, however both outputs are valid.
 
          assertTrue(
-         FileUtils.contentEquals(output.toFile(),
-         COMPRESSED_FILE.toFile())
+             FileUtils.contentEquals(output.toFile(),
+             COMPRESSED_FILE.toFile())
          );
 
          Instead, decompress the `outputCompressed` file and assert it matches {@link UNCOMPRESSED_FILE}
