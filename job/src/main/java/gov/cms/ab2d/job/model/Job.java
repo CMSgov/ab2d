@@ -5,22 +5,22 @@ import gov.cms.ab2d.common.model.TooFrequentInvocations;
 import gov.cms.ab2d.eventclient.events.FileEvent;
 import gov.cms.ab2d.eventclient.events.JobStatusChangeEvent;
 import gov.cms.ab2d.fhir.FhirVersion;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 import java.io.File;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import static gov.cms.ab2d.job.model.JobStatus.CANCELLED;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
-import static javax.persistence.EnumType.STRING;
+import static gov.cms.ab2d.job.model.JobStatus.CANCELLED;
+import static jakarta.persistence.EnumType.STRING;
 
 @Entity
 @Getter
@@ -29,7 +29,7 @@ import static javax.persistence.EnumType.STRING;
 public class Job {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @EqualsAndHashCode.Include
     private Long id;
 

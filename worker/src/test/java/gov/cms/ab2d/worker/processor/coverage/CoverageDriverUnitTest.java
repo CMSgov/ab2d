@@ -24,7 +24,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
-import javax.persistence.EntityNotFoundException;
+import jakarta.persistence.EntityNotFoundException;
 
 import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
 import lombok.val;

@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 
 //plan on cleaning up when decoupling contract_id foreign keys in database
@@ -50,19 +51,13 @@ public class CoverageDataSetup {
         // wipe the tables between tests and that the tables started as empty tables.
         // Based on these assumptions it is safe to simply delete everything associated
         // with those tables
-        coverageDeltaTestRepository.deleteAll();
-        coverageDeltaTestRepository.flush();
+        cleanupRepository(coverageDeltaTestRepository);
 
         deleteCoverage();
 
-        coverageSearchEventRepo.deleteAll();
-        coverageSearchEventRepo.flush();
-
-        coverageSearchRepo.deleteAll();
-        coverageSearchRepo.flush();
-
-        coveragePeriodRepo.deleteAll();
-        coveragePeriodRepo.flush();
+        cleanupRepository(coverageSearchEventRepo);
+        cleanupRepository(coverageSearchRepo);
+        cleanupRepository(coveragePeriodRepo);
 
         domainObjects.clear();
     }
@@ -125,5 +120,16 @@ public class CoverageDataSetup {
 
     public ContractForCoverageDTO setupContractDTO(String contractNumber, OffsetDateTime attestedOn) {
         return new ContractForCoverageDTO(contractNumber, attestedOn, ContractForCoverageDTO.ContractType.NORMAL);
+    }
+
+    private void cleanupRepository(JpaRepository repository) {
+        repository.deleteAll();
+        repository.flush();
+
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            System.out.print("Exception: " + e);
+        }
     }
 }

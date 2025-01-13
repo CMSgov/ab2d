@@ -2,7 +2,7 @@ package gov.cms.ab2d.job.dto;
 
 import lombok.Value;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 @Value
 public class StaleJob {
