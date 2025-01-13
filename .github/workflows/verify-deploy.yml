@@ -38,30 +38,77 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ secrets.MGMT_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-mgmt-github-actions
 
+
+The issue is that the SECRET_ID, BASE_URL, and EXPORT_URL are not being correctly set due to a mismatch in the logic or lack of default values. Here’s how to fix it:
+
+Updated Workflow
+Ensure the variables are correctly set for push events and default to test if the environment input is not provided.
+Add a fallback to set SECRET_ID, BASE_URL, and EXPORT_URL to the test environment if none is provided.
+Here’s the corrected script:
+
+yaml
+Copy code
+name: Verify deployment
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_call:
+    inputs:
+      environment:
+        required: false
+        type: string
+      module:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      environment:
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+          - sbx
+          - prod
+
+jobs:
+  test:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Assume role in AB2D account for this environment
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::330810004472:role/delegatedadmin/developer/ab2d-test-github-actions
+
       - name: Set environment-specific variables
         run: |
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
+          ENVIRONMENT="${{ inputs.environment || 'test' }}"
+          if [ "$ENVIRONMENT" == "test" ]; then
             echo "SECRET_ID=ab2d/ab2d-east-impl/jenkins-verify-api" >> $GITHUB_ENV
             echo "BASE_URL=https://impl.ab2d.cms.gov" >> $GITHUB_ENV
-            echo "EXPORT_URL=https://impl.ab2d.cms.gov/api/v2/fhir/Patient/$export?_type=ExplanationOfBenefit&_since=2020-02-13T00:00:00.000-05:00&_outputFormat=application%2Ffhir%2Bndjson" >> $GITHUB_ENV
-          elif [ "${{ inputs.environment }}" == "dev" ]; then
+            echo "EXPORT_URL=https://impl.ab2d.cms.gov/api/v2/fhir/Patient/?_type=ExplanationOfBenefit&_since=2020-02-13T00:00:00.000-05:00&_outputFormat=application%2Ffhir%2Bndjson" >> $GITHUB_ENV
+          elif [ "$ENVIRONMENT" == "dev" ]; then
             echo "SECRET_ID=ab2d/ab2d-dev/jenkins-verify-basic-auth" >> $GITHUB_ENV
             echo "BASE_URL=https://dev.ab2d.cms.gov" >> $GITHUB_ENV
-            echo "EXPORT_URL=https://dev.ab2d.cms.gov/api/v2/fhir/Patient/$export?_type=ExplanationOfBenefit&_since=2020-02-13T00:00:00.000-05:00&_outputFormat=application%2Ffhir%2Bndjson" >> $GITHUB_ENV
-          elif [ "${{ inputs.environment }}" == "test" ]; then
-            echo "SECRET_ID=ab2d/ab2d-east-impl/jenkins-verify-api" >> $GITHUB_ENV
-            echo "BASE_URL=https://impl.ab2d.cms.gov" >> $GITHUB_ENV
-            echo "EXPORT_URL=https://impl.ab2d.cms.gov/api/v2/fhir/Patient/$export?_type=ExplanationOfBenefit&_since=2020-02-13T00:00:00.000-05:00&_outputFormat=application%2Ffhir%2Bndjson" >> $GITHUB_ENV
-          elif [ "${{ inputs.environment }}" == "sbx" ]; then
+            echo "EXPORT_URL=https://dev.ab2d.cms.gov/api/v2/fhir/Patient/?_type=ExplanationOfBenefit&_since=2020-02-13T00:00:00.000-05:00&_outputFormat=application%2Ffhir%2Bndjson" >> $GITHUB_ENV
+          elif [ "$ENVIRONMENT" == "sbx" ]; then
             echo "SECRET_ID=ab2d/ab2d-sbx-sandbox/jenkins-verify-basic-auth" >> $GITHUB_ENV
             echo "BASE_URL=https://sbx.ab2d.cms.gov" >> $GITHUB_ENV
-            echo "EXPORT_URL=https://sbx.ab2d.cms.gov/api/v2/fhir/Patient/$export?_type=ExplanationOfBenefit&_since=2020-02-13T00:00:00.000-05:00&_outputFormat=application%2Ffhir%2Bndjson" >> $GITHUB_ENV
-          elif [ "${{ inputs.environment }}" == "prod" ]; then
+            echo "EXPORT_URL=https://sbx.ab2d.cms.gov/api/v2/fhir/Patient/?_type=ExplanationOfBenefit&_since=2020-02-13T00:00:00.000-05:00&_outputFormat=application%2Ffhir%2Bndjson" >> $GITHUB_ENV
+          elif [ "$ENVIRONMENT" == "prod" ]; then
             echo "SECRET_ID=ab2d/ab2d-east-prod/jenkins-verify-basic-auth" >> $GITHUB_ENV
             echo "BASE_URL=https://api.ab2d.cms.gov" >> $GITHUB_ENV
-            echo "EXPORT_URL=https://api.ab2d.cms.gov/api/v2/fhir/Patient/$export?_type=ExplanationOfBenefit&_since=2020-02-13T00:00:00.000-05:00&_outputFormat=application%2Ffhir%2Bndjson" >> $GITHUB_ENV
+            echo "EXPORT_URL=https://api.ab2d.cms.gov/api/v2/fhir/Patient/?_type=ExplanationOfBenefit&_since=2020-02-13T00:00:00.000-05:00&_outputFormat=application%2Ffhir%2Bndjson" >> $GITHUB_ENV
           else
-            echo "Invalid environment: ${{ inputs.environment }}"
+            echo "Invalid environment: $ENVIRONMENT"
             exit 1
           fi
 
