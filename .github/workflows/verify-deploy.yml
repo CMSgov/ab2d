@@ -59,7 +59,7 @@ jobs:
           fi
 
       - name: Set script file based on environment
-        run: echo "script=./scripts/verify-deployment-ab2d-east-impl.sh" >> $GITHUB_ENV
+        run: echo "script=./scripts/verify-deployment.sh" >> $GITHUB_ENV
 
       - name: Run deployment verification script
         run: |
