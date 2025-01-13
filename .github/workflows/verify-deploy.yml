@@ -2,6 +2,9 @@ name: Verify deployment
 
 on:
   pull_request:
+  push:
+    branches:
+      - main
   workflow_call:
     inputs:
       environment:
@@ -37,7 +40,11 @@ jobs:
 
       - name: Set environment-specific variables
         run: |
-          if [ "${{ inputs.environment }}" == "dev" ]; then
+          if [ "${{ github.event_name }}" == "push" ]; then
+            echo "SECRET_ID=ab2d/ab2d-east-impl/jenkins-verify-api" >> $GITHUB_ENV
+            echo "BASE_URL=https://impl.ab2d.cms.gov" >> $GITHUB_ENV
+            echo "EXPORT_URL=https://impl.ab2d.cms.gov/api/v2/fhir/Patient/$export?_type=ExplanationOfBenefit&_since=2020-02-13T00:00:00.000-05:00&_outputFormat=application%2Ffhir%2Bndjson" >> $GITHUB_ENV
+          elif [ "${{ inputs.environment }}" == "dev" ]; then
             echo "SECRET_ID=ab2d/ab2d-dev/jenkins-verify-basic-auth" >> $GITHUB_ENV
             echo "BASE_URL=https://dev.ab2d.cms.gov" >> $GITHUB_ENV
             echo "EXPORT_URL=https://dev.ab2d.cms.gov/api/v2/fhir/Patient/$export?_type=ExplanationOfBenefit&_since=2020-02-13T00:00:00.000-05:00&_outputFormat=application%2Ffhir%2Bndjson" >> $GITHUB_ENV
