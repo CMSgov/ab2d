@@ -99,10 +99,10 @@ public class FileDownloadCommon {
 
     static String getDownloadFilename(
             Resource downloadResource,
-            Encoding requestedEncoding) {
+            Encoding requestedEncoding) throws IOException {
 
         final Encoding fileEncoding = getFileEncoding(downloadResource);
-        final String filename = downloadResource.getFilename();
+        final String filename = downloadResource.getFile().getName();
         if (requestedEncoding == fileEncoding) {
             return filename;
         }
@@ -114,8 +114,8 @@ public class FileDownloadCommon {
         }
     }
 
-    static Encoding getFileEncoding(Resource resource) {
-        if (resource.getFilename().endsWith(".gz")) {
+    static Encoding getFileEncoding(Resource resource) throws IOException {
+        if (resource.getFile().getName().endsWith(".gz")) {
             return GZIP_COMPRESSED;
         }
         return UNCOMPRESSED;
@@ -124,11 +124,15 @@ public class FileDownloadCommon {
     // determine optional encoding requested by user, defaulting to uncompressed if not provided
     static Encoding getRequestedEncoding(HttpServletRequest request) {
         val values = request.getHeaders("Accept-Encoding");
-        while (values.hasMoreElements()) {
-            if (values.nextElement().equalsIgnoreCase(Constants.GZIP_ENCODING)) {
-                return GZIP_COMPRESSED;
+        if (values != null) {
+            while (values.hasMoreElements()) {
+                val header = values.nextElement();
+                if (header.equalsIgnoreCase(Constants.GZIP_ENCODING)) {
+                    return GZIP_COMPRESSED;
+                }
             }
         }
+
         return UNCOMPRESSED;
     }
 }
