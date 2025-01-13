@@ -69,7 +69,9 @@ jobs:
 
       - name: Run deployment verification script
         run: |
-          chmod +x $script
-          ./$script
+          chmod +x ./scripts/verify-deployment.sh
+          ./scripts/verify-deployment.sh "$SECRET_ID" "$BASE_URL" "$EXPORT_URL"
         env:
-          script: ${{ env.script }}
+          SECRET_ID: ${{ env.SECRET_ID }}
+          BASE_URL: ${{ env.BASE_URL }}
+          EXPORT_URL: ${{ env.EXPORT_URL }}
