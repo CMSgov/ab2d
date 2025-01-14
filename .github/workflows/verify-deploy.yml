@@ -6,9 +6,6 @@ on:
       environment:
         required: false
         type: string
-      module:
-        required: true
-        type: string
   workflow_dispatch:
     inputs:
       environment:
