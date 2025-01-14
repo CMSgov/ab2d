@@ -69,11 +69,9 @@ public class FileDownloadCommon {
             // write to response stream, compressing or decompressing file contents as needed
             if (requestedEncoding == fileEncoding) {
                 IOUtils.copy(in, out);
-            }
-            else if (fileEncoding == GZIP_COMPRESSED && requestedEncoding == UNCOMPRESSED) {
+            } else if (fileEncoding == GZIP_COMPRESSED && requestedEncoding == UNCOMPRESSED) {
                 GzipCompressUtils.decompress(in, response.getOutputStream());
-            }
-            else if (fileEncoding == UNCOMPRESSED && requestedEncoding == GZIP_COMPRESSED) {
+            } else if (fileEncoding == UNCOMPRESSED && requestedEncoding == GZIP_COMPRESSED) {
                 GzipCompressUtils.compress(in, response.getOutputStream());
             }
 
@@ -89,8 +87,7 @@ public class FileDownloadCommon {
         try {
             // look for compressed file
             return jobClient.getResourceForJob(jobUuid, filename + ".gz", organization);
-        }
-        catch (RuntimeException e) {
+        } catch (RuntimeException e) {
             // look for uncompressed file
             // allow this exception to be thrown to caller (for consistency with current behavior)
             return jobClient.getResourceForJob(jobUuid, filename, organization);
@@ -105,11 +102,9 @@ public class FileDownloadCommon {
         final String filename = downloadResource.getFile().getName();
         if (requestedEncoding == fileEncoding) {
             return filename;
-        }
-        else if (fileEncoding == GZIP_COMPRESSED && requestedEncoding == UNCOMPRESSED) {
+        } else if (fileEncoding == GZIP_COMPRESSED && requestedEncoding == UNCOMPRESSED) {
             return filename.replace(".gz", "");
-        }
-        else {
+        } else {
             return filename + ".gz";
         }
     }
