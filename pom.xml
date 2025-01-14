@@ -49,7 +49,7 @@
         <events-client.version>1.12.10</events-client.version>
         <bfd-lib.version>2.4.1</bfd-lib.version>
         <fhir-lib.version>1.2.10</fhir-lib.version>
-        <aggregator-lib.version>2.0.1-SNAPSHOT</aggregator-lib.version>
+        <aggregator-lib.version>2.0.1</aggregator-lib.version>
         <filters-lib.version>1.9.7</filters-lib.version>
         <properties-client.version>1.2.5</properties-client.version>
         <contract-client.version>1.2.4</contract-client.version>
