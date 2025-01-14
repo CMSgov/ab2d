@@ -83,7 +83,7 @@ public class GzipCompressUtils {
      * @return true if file was compressed successfully, false otherwise
      */
     static boolean compressFile(File file, boolean deleteFile) {
-        if (file != null && !file.exists() && !file.isFile()) {
+        if (file == null || !file.exists() || !file.isFile()) {
             return false;
         }
         // append ".gz" to the input filename

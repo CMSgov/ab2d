@@ -4,6 +4,7 @@ import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import javax.persistence.SqlResultSetMapping;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -148,6 +149,20 @@ class GzipCompressUtilsTest {
         // verify unrelated file (neither data nor error) is not changed
         assertTrue(testTextFile.exists());
         assertFalse(new File(jobDirectory, "test.txt.gz").exists());
+    }
+
+    @Test
+    void testCompressJobOutputFiles_badInputs(@TempDir File tempDir) throws IOException {
+        copyFile(UNCOMPRESSED_FILE.toFile(), tempDir).toFile();
+        assertFalse(GzipCompressUtils.compressJobOutputFiles("non-existent-job-id", tempDir.getAbsolutePath(), null));
+        assertFalse(GzipCompressUtils.compressJobOutputFiles(UNCOMPRESSED_FILE.toFile().getName(), tempDir.getAbsolutePath(), null));
+    }
+
+    @Test
+    void compressFile_invalidInputs(@TempDir File tempDir) {
+        assertFalse(GzipCompressUtils.compressFile(null, true));
+        assertFalse(GzipCompressUtils.compressFile(new File("does-not-exist.ndjson"), true));
+        assertFalse(GzipCompressUtils.compressFile(tempDir, true));
     }
 
     Path newTestFile(String suffix) throws IOException {
