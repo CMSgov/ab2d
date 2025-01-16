@@ -1,0 +1,55 @@
+name: publish
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      module:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      environment:
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+      module:
+        required: true
+        type: choice
+        options:
+          - api
+          - worker
+
+jobs:
+  publish:
+    runs-on: self-hosted
+
+    env:
+      ARTIFACTORY_URL: ${{ secrets.ARTIFACTORY_URL }}
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: '7.2'
+
+      - name: Publish Libraries
+        env:
+          ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
+          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+        run: |
+          echo "Publishing libraries using Gradle..."
+          gradle artifactoryPublish -b build.gradle --info \
+            -Dusername="${ARTIFACTORY_USER}" \
+            -Dpassword="${ARTIFACTORY_PASSWORD}" \
+            -Drepository_url="${ARTIFACTORY_URL}"
