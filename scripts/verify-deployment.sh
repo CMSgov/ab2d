@@ -62,17 +62,20 @@ if [ -z "$TOKEN" ]; then
     exit 3
 fi
 
-# Start the PDP-100 job
 echo "Starting PDP-100 job..."
-JOB=$(curl -k -s --head --location --request GET "$EXPORT_URL" \
---header "Prefer: respond-async" \
---header "Authorization: Bearer $TOKEN" \
-| awk -v FS=": " '/^content-location/{print $2}' | sed 's/content-location: //' | tr -d '\r') || {
-    echo "Failed to start job."; exit 3;
-}
+RESPONSE_HEADERS=$(curl -k -s --head --location --request GET "$EXPORT_URL" \
+    --header "Prefer: respond-async" \
+    --header "Authorization: Bearer $TOKEN")
+
+echo "Response headers:"
+echo "$RESPONSE_HEADERS"
+
+JOB=$(echo "$RESPONSE_HEADERS" | awk -v FS=": " '/^content-location/{print $2}' | tr -d '\r' | sed 's/content-location: //')
 
 if [ -z "$JOB" ]; then
-    echo "Job location is empty. Exiting."
+    echo "Failed to retrieve job location. Exiting."
+    echo "Full response headers:"
+    echo "$RESPONSE_HEADERS"
     exit 3
 fi
 
