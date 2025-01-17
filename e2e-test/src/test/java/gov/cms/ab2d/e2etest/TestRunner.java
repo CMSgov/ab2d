@@ -521,7 +521,15 @@ class TestRunner {
             log.info("500 response body: " + statusResponseAgain.body());
             return null;
         }
-        assertEquals(200, statusResponseAgain.statusCode());
+
+        // TODO - remove temporary debugging code
+        if (statusResponseAgain.body() != null) {
+            log.info(statusResponseAgain.body());
+        }
+        assertEquals(
+                200,
+                statusResponseAgain.statusCode(),
+                "Expected HTTP 200 but received " + statusResponseAgain.statusCode());
 
         return verifyJsonFromStatusResponse(statusResponseAgain, jobUuid, isContract, contractNumber, version);
     }
