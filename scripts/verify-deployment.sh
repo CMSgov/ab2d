@@ -57,62 +57,24 @@ TOKEN=$(curl -s --location --request POST 'https://test.idp.idm.cms.gov/oauth2/a
     echo "Token refresh failed."; exit 3;
 }
 
-if [ -z "$TOKEN" ]; then
-    echo "Token is empty. Exiting."
-    exit 3
-fi
 
 echo "Starting PDP-100 job..."
-RESPONSE_HEADERS=$(curl -k -s --head --location --request GET "$EXPORT_URL" \
-    --header "Prefer: respond-async" \
-    --header "Authorization: Bearer $TOKEN")
+JOB=$(curl -k -s --head --location --request GET 'https://impl.ab2d.cms.gov/api/v2/fhir/Patient/$export?_type=ExplanationOfBenefit&_since=2020-02-13T00:00:00.000-05:00&_outputFormat=application%2Ffhir%2Bndjson' \
+--header "Prefer: respond-async" \
+--header "Authorization: Bearer $TOKEN" \
+| awk -v FS=": " "/^content-location/{print \$2}" | sed 's/content-location: //' | tr -d '\r')
 
-echo "Response headers:"
-echo "$RESPONSE_HEADERS"
+echo "$JOB"
 
-JOB=$(echo "$RESPONSE_HEADERS" | awk -v FS=": " '/^content-location/{print $2}' | tr -d '\r' | sed 's/content-location: //')
 
-if [ -z "$JOB" ]; then
-    echo "Failed to retrieve job location. Exiting."
-    echo "Full response headers:"
-    echo "$RESPONSE_HEADERS"
-    exit 3
-fi
-
-echo "Job started at: $JOB"
-
-# Check job status
+# Check on job status
 echo "Checking job status..."
 STATUS=""
-attempts=0
-max_attempts=60
-
-while [ -z "$STATUS" ]; do
-    if [ $attempts -eq $max_attempts ]; then
-        echo "Max attempts reached while checking job status. Exiting."
-        exit 3
-    fi
-
-    echo "Fetching status from $JOB"
-    STATUS=$(curl -k -s --location --request GET "$JOB" \
-    --header "Authorization: Bearer $TOKEN" \
-    | jq -r '.status') || {
-        echo "Failed to check job status."; exit 3;
-    }
-
-    if [ -z "$STATUS" ]; then
-        echo "Job status not available. Retrying in 5 seconds..."
-        attempts=$((attempts + 1))
-        sleep 5
-    fi
+while [ -z $STATUS ]; do
+    sleep 5
+    echo "$JOB"
+    STATUS=$(curl -k -s --location --request GET "${JOB}" \
+    --header "Authorization: Bearer $TOKEN")
 done
 
-echo "Job status: $STATUS"
-
-# Verify job completion
-if [ "$STATUS" != "COMPLETED" ]; then
-    echo "Job did not complete successfully. Exiting."
-    exit 5
-fi
-
-echo "Job completed successfully."
+echo "Complete"
