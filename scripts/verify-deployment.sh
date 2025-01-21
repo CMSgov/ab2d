@@ -70,7 +70,7 @@ echo "$JOB"
 # Check on job status
 echo "Checking job status..."
 STATUS=""
-while [ -z $STATUS ]; do
+while [ -z "$STATUS" ]; do
     sleep 5
     echo "$JOB"
     STATUS=$(curl -k -s --location --request GET "${JOB}" \
