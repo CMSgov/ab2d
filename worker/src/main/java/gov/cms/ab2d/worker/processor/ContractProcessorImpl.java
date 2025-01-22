@@ -178,7 +178,6 @@ public class ContractProcessorImpl implements ContractProcessor {
                     this::shouldCompressFile
             );
 
-            log.info("Looking for compressed output files...");
             // Retrieve all the job output info
             log.info("Number of outputs: " + jobOutputs.size());
             jobOutputs.addAll(getOutputs(job.getJobUuid(), DATA_COMPRESSED));

@@ -65,14 +65,12 @@ public class GzipCompressUtils {
             FileFilter fileFilter) {
         val jobDirectory = new File(baseDir + File.separator + jobId);
         if (!jobDirectory.exists() || !jobDirectory.isDirectory()) {
-            log.info("Job directory does not exist: {}", jobDirectory.getAbsolutePath());
             return false;
         }
 
         val files = jobDirectory.listFiles(fileFilter);
         boolean success = true;
         for (File file : files) {
-            log.info("Compressing file: {}", file.getAbsolutePath());
             success = success && compressFile(file, true);
         }
         return success;
