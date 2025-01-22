@@ -144,8 +144,7 @@ public class JobServiceImpl implements JobService {
 
         Path file = Paths.get(fileDownloadPath, job.getJobUuid(), fileName);
         Resource resource = new UrlResource(file.toUri());
-        if (foundJobOutput.getDownloaded() >= 100) { // TODO remove -- for testing only
-        //if (foundJobOutput.getDownloaded() >= MAX_DOWNLOADS) {
+        if (foundJobOutput.getDownloaded() >= MAX_DOWNLOADS) {
             throw new JobOutputMissingException("The file has already been download the maximum number of allowed times.");
         }
         if (!resource.exists()) {
