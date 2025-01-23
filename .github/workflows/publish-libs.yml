@@ -1,6 +1,7 @@
 name: publish
 
 on:
+  pull_request:
   workflow_call:
     inputs:
       environment:
