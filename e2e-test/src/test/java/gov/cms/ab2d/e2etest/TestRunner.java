@@ -829,6 +829,43 @@ class TestRunner {
     }
 
     /**
+     * This test is identical to {@link #runSystemWideExport} except this calls {@link #downloadFileWithoutAcceptEncoding}
+     */
+    @ParameterizedTest
+    @MethodSource("getVersionAndContract")
+    @Order(15)
+    void runSystemWideExportWithoutAcceptEncoding(FhirVersion version, String contract) throws IOException, InterruptedException, JSONException {
+        System.out.println();
+        log.info("Starting test 15 - " + version.toString());
+        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, null, version);
+        assertEquals(202, exportResponse.statusCode());
+        List<String> contentLocationList = exportResponse.headers().map().get("content-location");
+
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, contract, version);
+        assertNotNull(downloadDetails);
+        downloadFileWithoutAcceptEncoding(downloadDetails, null, version);
+    }
+
+    /**
+     * This test is identical to {@link #runSystemWideExportSince} except this calls {@link #downloadFileWithoutAcceptEncoding}
+     */
+    @ParameterizedTest
+    @MethodSource("getVersionAndContract")
+    @Order(16)
+    void runSystemWideExportSinceWithoutAcceptEncoding(FhirVersion version, String contract) throws IOException, InterruptedException, JSONException {
+        System.out.println();
+        log.info("Starting test 16 - " + version.toString());
+        HttpResponse<String> exportResponse = apiClient.exportRequest(FHIR_TYPE, earliest, version);
+        log.info("run system wide export since {}", exportResponse);
+        assertEquals(202, exportResponse.statusCode());
+        List<String> contentLocationList = exportResponse.headers().map().get("content-location");
+
+        Pair<String, JSONArray> downloadDetails = performStatusRequests(contentLocationList, false, contract, version);
+        assertNotNull(downloadDetails);
+        downloadFileWithoutAcceptEncoding(downloadDetails, earliest, version);
+    }
+
+    /**
      * Returns the stream of FHIR version and contract to use for that version
      *
      * @return the stream of arguments
