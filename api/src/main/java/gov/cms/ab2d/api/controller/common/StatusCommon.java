@@ -156,7 +156,7 @@ public class StatusCommon {
     }
 
     // job output files are now stored in gzip format - remove '.gz' extension before building file download URL for backwards compatibility
-    private String removeGzFileExtension(String filePath) {
+    protected String removeGzFileExtension(String filePath) {
         val index = filePath.lastIndexOf(".gz");
         return (index == -1)
                 ? filePath
