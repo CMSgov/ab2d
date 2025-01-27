@@ -20,9 +20,19 @@ import java.io.UncheckedIOException;
 @Getter
 public class StreamOutput {
 
+    /**
+     * Filename of compressed file (includes the '.gz' file suffix)
+     */
     private final String filePath;
+    /**
+     * Checksum of the uncompressed file
+     */
     private final String checksum;
+    /**
+     * Length of the uncompressed file
+     */
     private final long fileLength;
+
     private final FileOutputType type;
 
     public StreamOutput(final File uncompressedFile) {

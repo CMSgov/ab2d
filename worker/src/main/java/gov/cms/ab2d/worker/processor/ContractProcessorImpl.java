@@ -190,7 +190,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         final String fileLocation = searchConfig.getEfsMount() + "/" + jobId;
         List<JobOutput> jobOutputs = new ArrayList<>();
         List<StreamOutput> dataOutputs = FileUtils.listFiles(fileLocation, type).stream()
-                .map(file -> new StreamOutput(file))
+                .map(StreamOutput::new)
                 .toList();
         dataOutputs.stream().map(this::createJobOutput).forEach(jobOutputs::add);
         return jobOutputs;

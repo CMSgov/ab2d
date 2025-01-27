@@ -122,45 +122,6 @@ class GzipCompressUtilsTest {
         assertNull(GzipCompressUtils.compressFile(tempDir, true));
     }
 
-    /*
-    @Test
-    void testCompressJobOutputFiles(@TempDir File tempDir) throws IOException {
-        String jobId = "job1234";
-        File jobDirectory = new File(tempDir, jobId);
-        jobDirectory.mkdirs();
-
-        File testDataFile = copyFile(UNCOMPRESSED_FILE.toFile(), jobDirectory, "test.ndjson").toFile();
-        File testErrorFile = copyFile(UNCOMPRESSED_FILE.toFile(), jobDirectory, "test_error.ndjson").toFile();
-        File testTextFile = copyFile(UNCOMPRESSED_FILE.toFile(), jobDirectory, "test.txt").toFile();
-
-        assertTrue(testDataFile.exists());
-        assertTrue(testErrorFile.exists());
-        assertTrue(testTextFile.exists());
-
-        GzipCompressUtils.compressJobOutputFiles(jobId, tempDir.getAbsolutePath(), this::fileFilter);
-
-        // verify files are compressed
-        assertTrue(new File(jobDirectory, "test.ndjson.gz").exists());
-        assertTrue(new File(jobDirectory, "test_error.ndjson.gz").exists());
-
-        // verify original files were deleted after being compressed
-        assertFalse(testDataFile.exists());
-        assertFalse(testErrorFile.exists());
-
-        // verify unrelated file (neither data nor error) is not changed
-        assertTrue(testTextFile.exists());
-        assertFalse(new File(jobDirectory, "test.txt.gz").exists());
-    }
-
-    @Test
-    void testCompressJobOutputFiles_badInputs(@TempDir File tempDir) throws IOException {
-        copyFile(UNCOMPRESSED_FILE.toFile(), tempDir).toFile();
-        assertFalse(GzipCompressUtils.compressJobOutputFiles("non-existent-job-id", tempDir.getAbsolutePath(), null));
-        assertFalse(GzipCompressUtils.compressJobOutputFiles(UNCOMPRESSED_FILE.toFile().getName(), tempDir.getAbsolutePath(), null));
-    }
-     */
-
-
     @Test
     void compressFile_invalidInputs(@TempDir File tempDir) {
         assertNull(GzipCompressUtils.compressFile(null, true));

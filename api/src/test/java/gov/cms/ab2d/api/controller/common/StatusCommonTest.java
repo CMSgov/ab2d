@@ -159,7 +159,7 @@ class StatusCommonTest {
   }
 
   @Test
-  void test() {
+  void testRemoveGzFileExtension() {
     assertEquals("file.ndjson", statusCommon.removeGzFileExtension("file.ndjson.gz"));
     assertEquals("file.ndjson", statusCommon.removeGzFileExtension("file.ndjson"));
   }

@@ -53,32 +53,6 @@ public class GzipCompressUtils {
     }
 
     /**
-     * Compress job output files (both 'DATA' and 'ERROR' types)
-     * @param jobId job id
-     * @param baseDir root directory containing directory for corresponding job id
-     * @param fileFilter function to determine whether a file should be compressed
-     * @return false if an error occurred while compressing one or more files (unlikely), true otherwise
-     */
-    /*
-    public static boolean compressJobOutputFiles(
-            String jobId,
-            String baseDir,
-            FileFilter fileFilter) {
-        val jobDirectory = new File(baseDir + File.separator + jobId);
-        if (!jobDirectory.exists() || !jobDirectory.isDirectory()) {
-            return false;
-        }
-
-        val files = jobDirectory.listFiles(fileFilter);
-        boolean success = true;
-        for (File file : files) {
-            success = success && compressFile(file, true);
-        }
-        return success;
-    }
-    */
-
-    /**
      * Compress a file (outputting to the same directory) and optionally delete file after compressing
      * @param file file to compress
      * @param deleteFile if true, delete file after compressing
