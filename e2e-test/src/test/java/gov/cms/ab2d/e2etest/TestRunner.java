@@ -532,21 +532,12 @@ class TestRunner {
 
         String jobUuid = JobUtil.getJobUuid(contentLocationList.iterator().next());
 
-        final String statusResponseAgainBody = statusResponseAgain.body();
-
         if (statusResponseAgain.statusCode() == 500) {
             // No values returned if 500
-            log.info("500 response body: " + statusResponseAgainBody);
+            log.info("500 response body: " + statusResponseAgain.body());
             return null;
         }
-
-        // TODO - remove temporary debugging code
-        log.info("Body -> {}", statusResponseAgainBody);
-        log.info("Status code -> {}", statusResponseAgain.statusCode());
-        assertEquals(
-                200,
-                statusResponseAgain.statusCode(),
-                "Expected HTTP 200 but received " + statusResponseAgain.statusCode());
+        assertEquals(200, statusResponseAgain.statusCode());
 
         return verifyJsonFromStatusResponse(statusResponseAgain, jobUuid, isContract, contractNumber, version);
     }
