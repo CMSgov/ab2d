@@ -7,7 +7,6 @@ import gov.cms.ab2d.aggregator.AggregatorCallable;
 import gov.cms.ab2d.aggregator.FileOutputType;
 import gov.cms.ab2d.aggregator.FileUtils;
 import gov.cms.ab2d.aggregator.JobHelper;
-import gov.cms.ab2d.common.util.GzipCompressUtils;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
 import gov.cms.ab2d.coverage.model.CoveragePagingResult;
@@ -35,7 +34,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -486,8 +484,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         jobOutput.setFileLength(streamOutput.getFileLength());
         if (streamOutput.getType() == ERROR || streamOutput.getType() == ERROR_COMPRESSED) {
             jobOutput.setError(true);
-        }
-        else {
+        } else {
             jobOutput.setError(false);
         }
 

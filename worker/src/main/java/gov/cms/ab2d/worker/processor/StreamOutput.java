@@ -3,7 +3,6 @@ package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.aggregator.FileOutputType;
 import gov.cms.ab2d.common.util.GzipCompressUtils;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.val;
 import org.apache.commons.codec.binary.Hex;
@@ -36,8 +35,7 @@ public class StreamOutput {
         if (compressedFile != null) {
             this.filePath = compressedFile.getName();
             this.type = FileOutputType.getFileType(compressedFile);
-        }
-        else {
+        } else {
             this.filePath = uncompressedFile.getName();
             this.type = FileOutputType.getFileType(uncompressedFile);
         }

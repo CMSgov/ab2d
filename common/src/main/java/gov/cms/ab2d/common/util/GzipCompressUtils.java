@@ -1,7 +1,5 @@
 package gov.cms.ab2d.common.util;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -11,7 +9,6 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
 
 @UtilityClass
 @Slf4j
