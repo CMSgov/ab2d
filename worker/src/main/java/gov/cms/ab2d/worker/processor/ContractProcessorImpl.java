@@ -43,9 +43,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 
-import static gov.cms.ab2d.aggregator.FileOutputType.DATA_COMPRESSED;
-import static gov.cms.ab2d.aggregator.FileOutputType.ERROR;
-import static gov.cms.ab2d.aggregator.FileOutputType.ERROR_COMPRESSED;
+import static gov.cms.ab2d.aggregator.FileOutputType.*;
 import static gov.cms.ab2d.common.util.Constants.CONTRACT_LOG;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static net.logstash.logback.argument.StructuredArguments.keyValue;
@@ -171,17 +169,10 @@ public class ContractProcessorImpl implements ContractProcessor {
                 Thread.sleep(1000);
             }
 
-            // Compress job output files (DATA and ERROR)
-            GzipCompressUtils.compressJobOutputFiles(
-                    job.getJobUuid(),
-                    searchConfig.getEfsMount(),
-                    this::shouldCompressFile
-            );
-
             // Retrieve all the job output info
             log.info("Number of outputs: " + jobOutputs.size());
-            jobOutputs.addAll(getOutputs(job.getJobUuid(), DATA_COMPRESSED));
-            jobOutputs.addAll(getOutputs(job.getJobUuid(), ERROR_COMPRESSED));
+            jobOutputs.addAll(getOutputs(job.getJobUuid(), DATA));
+            jobOutputs.addAll(getOutputs(job.getJobUuid(), ERROR));
 
         } catch (InterruptedException | IOException ex) {
             log.error("interrupted while processing job for contract");
@@ -190,26 +181,24 @@ public class ContractProcessorImpl implements ContractProcessor {
         return jobOutputs;
     }
 
-    private boolean shouldCompressFile(File file) {
-        val type = FileOutputType.getFileType(file);
-        return type == FileOutputType.DATA || type == FileOutputType.ERROR;
-    }
-
     /**
-     * Look through the job output file and create JobOutput objects with them
+     * Look through and compress the job output files and create JobOutput objects with them
      *
      * @param jobId - the job id
      * @param type  - the file type
      * @return the list of outputs
      */
     List<JobOutput> getOutputs(String jobId, FileOutputType type) {
+        final String fileLocation = searchConfig.getEfsMount() + "/" + jobId;
         List<JobOutput> jobOutputs = new ArrayList<>();
-        List<StreamOutput> dataOutputs = FileUtils.listFiles(searchConfig.getEfsMount() + "/" + jobId, type).stream()
-                .map(file -> new StreamOutput(file, type))
+        List<StreamOutput> dataOutputs = FileUtils.listFiles(fileLocation, type).stream()
+                .map(file -> new StreamOutput(file))
                 .toList();
-        dataOutputs.stream().map(output -> createJobOutput(output, type)).forEach(jobOutputs::add);
+        dataOutputs.stream().map(this::createJobOutput).forEach(jobOutputs::add);
         return jobOutputs;
     }
+
+
 
     /**
      * Load beneficiaries and create an EOB request for each patient. Patients are loaded a page at a time. The page size is
@@ -486,17 +475,22 @@ public class ContractProcessorImpl implements ContractProcessor {
      * From a file, return the JobOutput object
      *
      * @param streamOutput - the output file from the job
-     * @param type         - file output type
      * @return - the job output object
      */
     @Trace(dispatcher = true)
-    private JobOutput createJobOutput(StreamOutput streamOutput, FileOutputType type) {
+    private JobOutput createJobOutput(StreamOutput streamOutput) {
         JobOutput jobOutput = new JobOutput();
         jobOutput.setFilePath(streamOutput.getFilePath());
         jobOutput.setFhirResourceType(EOB);
-        jobOutput.setError(type == ERROR);
         jobOutput.setChecksum(streamOutput.getChecksum());
         jobOutput.setFileLength(streamOutput.getFileLength());
+        if (streamOutput.getType() == ERROR || streamOutput.getType() == ERROR_COMPRESSED) {
+            jobOutput.setError(true);
+        }
+        else {
+            jobOutput.setError(false);
+        }
+
         return jobOutput;
     }
 

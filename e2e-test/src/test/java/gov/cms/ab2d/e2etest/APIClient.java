@@ -195,15 +195,21 @@ public class APIClient {
     }
 
     public HttpResponse<InputStream> fileDownloadRequest(String url) throws IOException, InterruptedException {
-        HttpRequest fileDownloadRequest = HttpRequest.newBuilder()
+        return fileDownloadRequest(url, "gzip, deflate, br");
+    }
+
+    // create file download request with 'Accept-Encoding' header - set to null to omit header in request
+    public HttpResponse<InputStream> fileDownloadRequest(String url, String acceptEncoding) throws IOException, InterruptedException {
+        HttpRequest.Builder fileDownloadRequest = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .timeout(Duration.ofSeconds(defaultTimeout))
                 .header("Authorization", "Bearer " + jwtStr)
-                .header("Accept-Encoding", "gzip, deflate, br")
-                .GET()
-                .build();
+                .GET();
 
-        return httpClient.send(fileDownloadRequest, HttpResponse.BodyHandlers.ofInputStream());
+        if (acceptEncoding != null) {
+            fileDownloadRequest.header("Accept-Encoding", acceptEncoding);
+        }
+        return httpClient.send(fileDownloadRequest.build(), HttpResponse.BodyHandlers.ofInputStream());
     }
 
     public HttpResponse<String> healthCheck() throws IOException, InterruptedException {

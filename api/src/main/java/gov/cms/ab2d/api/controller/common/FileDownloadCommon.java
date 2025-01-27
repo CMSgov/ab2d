@@ -66,7 +66,7 @@ public class FileDownloadCommon {
             final String fileDownloadName = getDownloadFilename(downloadResource, requestedEncoding);
             response.setHeader("Content-Disposition", "inline; swaggerDownload=\"attachment\"; filename=\"" + fileDownloadName + "\"");
 
-            // write to response stream, compressing or decompressing file contents as needed
+            // write to response stream, compressing or decompressing file contents depending on 'Accept-Encoding' header
             if (requestedEncoding == fileEncoding) {
                 IOUtils.copy(in, out);
             } else if (fileEncoding == GZIP_COMPRESSED && requestedEncoding == UNCOMPRESSED) {
@@ -122,7 +122,7 @@ public class FileDownloadCommon {
         if (values != null) {
             while (values.hasMoreElements()) {
                 val header = values.nextElement();
-                if (header.equalsIgnoreCase(Constants.GZIP_ENCODING)) {
+                if (header.trim().equalsIgnoreCase(Constants.GZIP_ENCODING)) {
                     return GZIP_COMPRESSED;
                 }
             }

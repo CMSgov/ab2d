@@ -150,12 +150,12 @@ public class StatusCommon {
         return new ResponseEntity<OpenAPIConfig.OperationOutcome>(outcome, responseHeaders, HttpStatus.NOT_FOUND);
     }
 
-    private String getUrlPath(String jobUuid, String filePath, HttpServletRequest request, String apiPrefix) {
+    protected String getUrlPath(String jobUuid, String filePath, HttpServletRequest request, String apiPrefix) {
         val filePathWithoutGzExtension = removeGzFileExtension(filePath);
         return Common.getUrl(apiPrefix + FHIR_PREFIX + "/Job/" + jobUuid + "/file/" + filePathWithoutGzExtension, request);
     }
 
-    // job output files are now stored in gzip format - remove '.gz' extension from file download URL for backwards compatibility
+    // job output files are now stored in gzip format - remove '.gz' extension before building file download URL for backwards compatibility
     private String removeGzFileExtension(String filePath) {
         val index = filePath.lastIndexOf(".gz");
         return (index == -1)

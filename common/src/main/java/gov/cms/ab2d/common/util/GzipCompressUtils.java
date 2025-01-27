@@ -1,5 +1,7 @@
 package gov.cms.ab2d.common.util;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -9,6 +11,7 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 
 @UtilityClass
 @Slf4j
@@ -59,6 +62,7 @@ public class GzipCompressUtils {
      * @param fileFilter function to determine whether a file should be compressed
      * @return false if an error occurred while compressing one or more files (unlikely), true otherwise
      */
+    /*
     public static boolean compressJobOutputFiles(
             String jobId,
             String baseDir,
@@ -75,16 +79,17 @@ public class GzipCompressUtils {
         }
         return success;
     }
+    */
 
     /**
-     * Compress a file and optionally delete file after compressing
+     * Compress a file (outputting to the same directory) and optionally delete file after compressing
      * @param file file to compress
      * @param deleteFile if true, delete file after compressing
-     * @return true if file was compressed successfully, false otherwise
+     * @return the output file if file was compressed successfully, null otherwise
      */
-    static boolean compressFile(File file, boolean deleteFile) {
+    public static File compressFile(File file, boolean deleteFile) {
         if (file == null || !file.exists() || !file.isFile()) {
-            return false;
+            return null;
         }
         // append ".gz" to the input filename
         val compressedOutputFile = new File(file.getParent(), file.getName() + ".gz");
@@ -92,7 +97,7 @@ public class GzipCompressUtils {
             GzipCompressUtils.compress(file.toPath(), compressedOutputFile.toPath());
         } catch (IOException e) {
             log.error("Unable to compress file: {}", file.getAbsoluteFile());
-            return false;
+            return null;
         }
         if (deleteFile) {
             try {
@@ -101,7 +106,6 @@ public class GzipCompressUtils {
                 log.error("Unable to delete file: {}", file.getAbsolutePath());
             }
         }
-
-        return true;
+        return compressedOutputFile;
     }
 }

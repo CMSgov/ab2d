@@ -1,8 +1,5 @@
 package gov.cms.ab2d.api.controller.common;
 
-import gov.cms.ab2d.api.remote.JobClient;
-import gov.cms.ab2d.common.service.PdpClientService;
-import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -10,7 +7,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.Resource;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 
@@ -73,6 +69,9 @@ class FileDownloadCommonTest {
         assertEquals(GZIP_COMPRESSED, FileDownloadCommon.getRequestedEncoding(request));
 
         when(request.getHeaders("Accept-Encoding")).thenReturn(enumeration(asList("test", "gzip")));
+        assertEquals(GZIP_COMPRESSED, FileDownloadCommon.getRequestedEncoding(request));
+
+        when(request.getHeaders("Accept-Encoding")).thenReturn(enumeration(asList("gzip ", "deflate ", "br ")));
         assertEquals(GZIP_COMPRESSED, FileDownloadCommon.getRequestedEncoding(request));
     }
 

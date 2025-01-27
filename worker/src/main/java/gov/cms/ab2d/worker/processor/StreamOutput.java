@@ -2,8 +2,10 @@ package gov.cms.ab2d.worker.processor;
 
 
 import gov.cms.ab2d.aggregator.FileOutputType;
+import gov.cms.ab2d.common.util.GzipCompressUtils;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.val;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 
@@ -17,7 +19,6 @@ import java.io.UncheckedIOException;
  * to identify the file
  */
 @Getter
-@AllArgsConstructor
 public class StreamOutput {
 
     private final String filePath;
@@ -25,11 +26,21 @@ public class StreamOutput {
     private final long fileLength;
     private final FileOutputType type;
 
-    public StreamOutput(File file, FileOutputType type) {
-        this.filePath = file.getName();
-        this.type = type;
-        this.fileLength = file.length();
-        this.checksum = generateChecksum(file);
+    public StreamOutput(final File uncompressedFile) {
+        // calculate checksum and file length before compressing file
+        this.fileLength = uncompressedFile.length();
+        this.checksum = generateChecksum(uncompressedFile);
+
+        // compress file and if successful, delete original file
+        val compressedFile = GzipCompressUtils.compressFile(uncompressedFile, true);
+        if (compressedFile != null) {
+            this.filePath = compressedFile.getName();
+            this.type = FileOutputType.getFileType(compressedFile);
+        }
+        else {
+            this.filePath = uncompressedFile.getName();
+            this.type = FileOutputType.getFileType(uncompressedFile);
+        }
     }
 
     public static String generateChecksum(File file) {

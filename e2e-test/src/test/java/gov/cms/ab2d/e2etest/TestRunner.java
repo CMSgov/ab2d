@@ -23,15 +23,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 import javax.crypto.SecretKey;
@@ -493,6 +485,30 @@ class TestRunner {
             downloadString = IOUtils.toString(gzipInputStream, Charset.defaultCharset());
         }
 
+        verifyJsonFromfileDownload(downloadString, downloadDetails.getSecond(), since, version);
+    }
+
+    private void downloadFileWithoutAcceptEncoding(Pair<String, JSONArray> downloadDetails, OffsetDateTime since, FhirVersion version) throws IOException, InterruptedException, JSONException {
+        // set acceptEncoding=null to omit 'Accept-Encoding' header
+        HttpResponse<InputStream> downloadResponse = apiClient.fileDownloadRequest(downloadDetails.getFirst(), null);
+
+        assertEquals(200, downloadResponse.statusCode());
+
+
+        boolean responseContainsGzipEncoding = false;
+        Map<String, List<String>> headerMap = downloadResponse.headers().map();
+        if (headerMap.containsKey("content-encoding")) {
+            List<String> values = headerMap.get("content-encoding");
+            for (String value : values) {
+                if (value.equalsIgnoreCase("gzip")) {
+                    responseContainsGzipEncoding = true;
+                }
+            }
+        }
+
+        assertFalse(responseContainsGzipEncoding, "Response header 'content-encoding' should not contain 'gzip'");
+
+        String downloadString = IOUtils.toString(downloadResponse.body(), Charset.defaultCharset());
         verifyJsonFromfileDownload(downloadString, downloadDetails.getSecond(), since, version);
     }
 
