@@ -1,7 +1,6 @@
 package gov.cms.ab2d.api.controller.common;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -12,6 +11,8 @@ import java.time.OffsetDateTime;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.mock.web.MockHttpServletRequest;
 
 import gov.cms.ab2d.api.controller.JobProcessingException;
@@ -23,6 +24,8 @@ import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.job.dto.JobPollResult;
 import gov.cms.ab2d.job.model.JobStatus;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 class StatusCommonTest {
 
@@ -49,6 +52,10 @@ class StatusCommonTest {
     statusCommon = new StatusCommon(pdpClientService, jobClient, eventLogger, 0);
 
     req = new MockHttpServletRequest();
+    RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(req));
+    req.setScheme("http");
+    req.setServerName("localhost");
+    req.setServerPort(8080);
   }
 
   @Test
@@ -126,5 +133,37 @@ class StatusCommonTest {
       statusCommon.getCanceledResponse(jobPollResult, "1234", req)
     );
   }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+        "Z0000_0001.ndjson.gz",
+        "Z0000_0001.ndjson"
+  })
+  void testGetUrlPathData(String file) {
+    assertEquals(
+            "http://localhost:8080/v1/fhir/Job/1234/file/Z0000_0001.ndjson",
+            statusCommon.getUrlPath("1234", file, req, "v1")
+    );
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {
+          "Z0000_0001_error.ndjson.gz",
+          "Z0000_0001_error.ndjson"
+  })
+  void testGetUrlPathError(String file) {
+    assertEquals(
+            "http://localhost:8080/v1/fhir/Job/1234/file/Z0000_0001_error.ndjson",
+            statusCommon.getUrlPath("1234", file, req, "v1")
+    );
+  }
+
+  @Test
+  void testRemoveGzFileExtension() {
+    assertEquals("file.ndjson", statusCommon.removeGzFileExtension("file.ndjson.gz"));
+    assertEquals("file.ndjson", statusCommon.removeGzFileExtension("file.ndjson"));
+  }
+
+
 
 }
