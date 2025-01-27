@@ -168,9 +168,9 @@ public class ContractProcessorImpl implements ContractProcessor {
             }
 
             // Retrieve all the job output info
-            log.info("Number of outputs: " + jobOutputs.size());
             jobOutputs.addAll(getOutputs(job.getJobUuid(), DATA));
             jobOutputs.addAll(getOutputs(job.getJobUuid(), ERROR));
+            log.info("Number of outputs: " + jobOutputs.size());
 
         } catch (InterruptedException | IOException ex) {
             log.error("interrupted while processing job for contract");
