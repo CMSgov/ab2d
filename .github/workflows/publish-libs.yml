@@ -36,8 +36,10 @@ jobs:
       DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - name: Checkout AB2D-Libs Repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'cmsgov/AB2D-Libs'
 
       - name: Set up Gradle
         uses: gradle/gradle-build-action@v2
