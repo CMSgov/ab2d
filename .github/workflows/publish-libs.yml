@@ -30,7 +30,9 @@ jobs:
     runs-on: self-hosted
 
     env:
-      ARTIFACTORY_URL: ${{ secrets.ARTIFACTORY_URL }}
+      ARTIFACTORY_URL: /artifactory/url
+      ARTIFACTORY_USER: /artifactory/user
+      ARTIFACTORY_PASSWORD: /artifactory/password     
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
       AWS_REGION: ${{ vars.AWS_REGION }}
       DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}
