@@ -30,9 +30,6 @@ jobs:
     runs-on: self-hosted
 
     env:
-      ARTIFACTORY_URL: /artifactory/url
-      ARTIFACTORY_USER: /artifactory/user
-      ARTIFACTORY_PASSWORD: /artifactory/password     
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
       AWS_REGION: ${{ vars.AWS_REGION }}
       DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}
@@ -47,13 +44,8 @@ jobs:
         uses: actions/setup-java@v3
         with:
           java-version: '17'
-          distribution: 'temurin'
+          distribution: 'adopt'
 
-      - name: Set up Gradle
-        uses: gradle/gradle-build-action@v2
-        with:
-          gradle-version: '8.10'
-          
       - name: Set env vars from AWS params
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
         env:
@@ -63,6 +55,13 @@ jobs:
             ARTIFACTORY_URL=/artifactory/url
             ARTIFACTORY_USER=/artifactory/user
             ARTIFACTORY_PASSWORD=/artifactory/password     
+            
+
+      - name: Set up Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: '7.5'
+        
 
       - name: Publish Libraries
         run: |
