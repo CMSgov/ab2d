@@ -6,13 +6,11 @@ import gov.cms.ab2d.contracts.model.ContractDTO;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
-@Profile("prod")
 public class ContractServiceImpl implements ContractService {
 
     private final ContractFeignClient contractFeignClient;
