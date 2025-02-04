@@ -49,7 +49,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Create Python3 venv
-#        run: ./scripts/setup-venv.sh
+        #        run: ./scripts/setup-venv.sh
         run: |
           # Any error will cause the script to exit immediately
           set -e
@@ -67,8 +67,8 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
           # may need to try MGMT_ACCOUNT_ID if TEST_ACCOUNT_ID doesn't work
           #role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', inputs.environment)] }}:role/delegatedadmin/developer/ab2d-test-github-actions
-#          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', inputs.environment)] }}:role/delegatedadmin/developer/ab2d-test-github-actions
-      #          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', inputs.environment)] }}:role/delegatedadmin/developer/ab2d-mgmt-github-actions
+          #          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', inputs.environment)] }}:role/delegatedadmin/developer/ab2d-test-github-actions
+          #          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', inputs.environment)] }}:role/delegatedadmin/developer/ab2d-mgmt-github-actions
           role-to-assume: arn:aws:iam::${{ secrets.MGMT_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-mgmt-github-actions
 
 
