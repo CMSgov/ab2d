@@ -82,7 +82,6 @@ jobs:
           echo "DB user=DATABASE_USER"
           echo "DB schema name=DATABASE_SCHEMA_NAME"
           return 0
-
       - name: Insert record
         run: |
           COMMAND_01="SELECT d.contract_name FROM contract.contract d "
