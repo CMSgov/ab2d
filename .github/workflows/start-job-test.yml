@@ -2,7 +2,8 @@
 name: start-job-test
 
 on:
-  pull_request: # TODO remove - for testing only
+  push:
+    branches: [start-job-workflow]
   workflow_dispatch: # Allow manual trigger
     inputs:
       contractNumber:
