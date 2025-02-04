@@ -1,4 +1,5 @@
-name: start-job-dev
+# hardcoded values for test (IMPL) environment
+name: start-job-test
 
 on:
   workflow_dispatch: # Allow manual trigger
