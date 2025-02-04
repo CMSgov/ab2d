@@ -1,7 +1,7 @@
 name: publish
 
 on:
-  pull_request: # TODO remove
+  pull_request:
   workflow_call:
     inputs:
       environment:
