@@ -3,7 +3,7 @@ name: start-job-test
 
 on:
   push:
-    branches: [start-job-workflow]
+    branches: [ start-job-workflow ]
   workflow_dispatch: # Allow manual trigger
     inputs:
       contractNumber:
@@ -44,8 +44,8 @@ jobs:
       API_URL_PREFIX: ${{ inputs.apiUrlPrefix }}
 
     steps:
-#      - name: Checkout Code
-#        uses: actions/checkout@v3
+      #      - name: Checkout Code
+      #        uses: actions/checkout@v3
 
       - name: Create Python3 venv
         run: ./scripts/setup-venv.sh
@@ -57,7 +57,7 @@ jobs:
           # may need to try MGMT_ACCOUNT_ID if TEST_ACCOUNT_ID doesn't work
           #role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', inputs.environment)] }}:role/delegatedadmin/developer/ab2d-test-github-actions
           role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', inputs.environment)] }}:role/delegatedadmin/developer/ab2d-test-github-actions
-#          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', inputs.environment)] }}:role/delegatedadmin/developer/ab2d-mgmt-github-actions
+      #          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', inputs.environment)] }}:role/delegatedadmin/developer/ab2d-mgmt-github-actions
 
       - name: Set env vars from AWS params in AB2D account
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
@@ -101,10 +101,10 @@ jobs:
           | head -n 1 \
           | xargs \
           | tr -d '\r')
-
+          
           echo "organization=$ORGANIZATION"
-        
-        # Create insert job command string
+          
+          # Create insert job command string
           
           JOB_ID=$(uuidgen)
           COMMAND_01="INSERT INTO ${DATABASE_SCHEMA_NAME}.job("
