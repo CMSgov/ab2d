@@ -38,11 +38,17 @@ jobs:
     runs-on: self-hosted
 
     env:
-      CONTRACT_NUMBER: ${{ inputs.contractNumber }}
-      FHIR_VERSION: ${{ inputs.fhirVersion }}
-      SINCE: ${{ inputs.since }}
-      UNTIL: ${{ inputs.until }}
-      API_URL_PREFIX: ${{ inputs.apiUrlPrefix }}
+#      CONTRACT_NUMBER: ${{ inputs.contractNumber }}
+#      FHIR_VERSION: ${{ inputs.fhirVersion }}
+#      SINCE: ${{ inputs.since }}
+#      UNTIL: ${{ inputs.until }}
+#      API_URL_PREFIX: ${{ inputs.apiUrlPrefix }}
+      CONTRACT_NUMBER: 'Z0001'
+      FHIR_VERSION: 'STU3'
+      SINCE: '2024-12-13T00:00:00.000-05:00'
+      UNTIL: ''
+      API_URL_PREFIX: 'https://impl.ab2d.cms.gov'
+
 
     steps:
       - name: Checkout Code
