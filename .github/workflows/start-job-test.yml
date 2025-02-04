@@ -96,7 +96,9 @@ jobs:
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:
           params: |
-            DATABASE_HOST=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_host/2020-01-02-09-15-01
+            DATABASE_HOST=/ab2d/opt-out/db-host
+            OKTA_CLIENT_ID=/okta/test-pdp-100-id
+
 
       - name: Test env variables
         run: |
