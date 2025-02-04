@@ -22,10 +22,11 @@ on:
         description: 'Since date to use for a job. The earliest accepted date is 2020-02-13T00:00:00.000-05:00'
         type: string
         required: true
+        default: '2024-12-13T00:00:00.000-05:00' # TODO remove -- only for testing in branch
       until:
         description: 'Until date to use for a job. Accepted date format for V2 is 2020-02-13T00:00:00.000-05:00'
         type: string
-        required: true
+        required: false
       apiUrlPrefix:
         description: 'Origin of request for a job. May correspond to actual AB2D API URL or not.'
         type: string
