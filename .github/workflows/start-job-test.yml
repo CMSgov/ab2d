@@ -105,9 +105,9 @@ jobs:
           echo "since=$SINCE"
           echo "until=$UNTIL"
           echo "DB host=$DATABASE_HOST"
-          echo "DB port=DATABASE_PORT"
-          echo "DB user=DATABASE_USER"
-          echo "DB schema name=DATABASE_SCHEMA_NAME"
+          echo "DB port=$DATABASE_PORT"
+          echo "DB user=$DATABASE_USER"
+          echo "DB schema name=$DATABASE_SCHEMA_NAME"
 #      - name: Insert record
 #        run: |
 #          COMMAND_01="SELECT d.contract_name FROM contract.contract d "
