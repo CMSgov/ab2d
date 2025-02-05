@@ -75,7 +75,7 @@ jobs:
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:
           params: |
-            P=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_password/2020-01-02-09-15-01
+            P=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/schema_name/2020-01-02-09-15-01
       - name: Test env variables
         run: |
           echo "Testing ..."
