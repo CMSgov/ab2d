@@ -38,11 +38,6 @@ jobs:
     runs-on: self-hosted
 
     env:
-      #      CONTRACT_NUMBER: ${{ inputs.contractNumber }}
-      #      FHIR_VERSION: ${{ inputs.fhirVersion }}
-      #      SINCE: ${{ inputs.since }}
-      #      UNTIL: ${{ inputs.until }}
-      #      API_URL_PREFIX: ${{ inputs.apiUrlPrefix }}
       CONTRACT_NUMBER: 'Z0001'
       FHIR_VERSION: 'STU3'
       SINCE: '2024-12-13T00:00:00.000-05:00'
@@ -72,93 +67,16 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          #role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', inputs.environment)] }}:role/delegatedadmin/developer/ab2d-${{ inputs.environment }}-github-actions
           role-to-assume: arn:aws:iam::${{ secrets.TEST_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-test-github-actions
 
-      #
-      #      - name: Set env vars from AWS params in AB2D account
-      #        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
-      #        env:
-      #          AWS_REGION: ${{ vars.AWS_REGION }}
-      #        with:
-      #          params: |
-      #            DATABASE_HOST=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_host/2020-01-02-09-15-01
-      #            DATABASE_PORT=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_port/2020-01-02-09-15-01
-      #            DATABASE_USER=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_user/2020-01-02-09-15-01
-      #            DATABASE_SCHEMA_NAME=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_schema_name/2020-01-02-09-15-01
-      #            PGPASSWORD=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_password/2020-01-02-09-15-01
-      #
       - name: Set env vars from AWS params in AB2D account
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:
           params: |
-            DATABASE_HOST=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_host/2020-01-02-09-15-01~true
-            DATABASE_PORT=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_port/2020-01-02-09-15-01~true
-            DATABASE_USER=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_user/2020-01-02-09-15-01~true
-            DATABASE_SCHEMA_NAME=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_schema_name/2020-01-02-09-15-01~true
-            PGPASSWORD=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_password/2020-01-02-09-15-01~true
+            DATABASE_PORT=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_port/2020-01-02-09-15-01
 
       - name: Test env variables
         run: |
-          echo "contract number=CONTRACT_NUMBER"
-          echo "fhir version=$FHIR_VERSION"
-          echo "API URL prefix=$API_URL_PREFIX"
-          echo "since=$SINCE"
-          echo "until=$UNTIL"
-          echo "DB host=$DATABASE_HOST"
           echo "DB port=$DATABASE_PORT"
-          echo "DB user=$DATABASE_USER"
-          echo "DB schema name=$DATABASE_SCHEMA_NAME"
-#      - name: Insert record
-#        run: |
-#          COMMAND_01="SELECT d.contract_name FROM contract.contract d "
-#          COMMAND_02="INNER JOIN ${DATABASE_SCHEMA_NAME}.user_account e ON d.id = e.contract_id "
-#          COMMAND_03="WHERE d.contract_number = '${CONTRACT_NUMBER}';"
-#
-#          # Get user account id
-#
-#          ORGANIZATION=$(
-#          psql \
-#          -t \
-#          --host="${DATABASE_HOST}" \
-#          --port="${DATABASE_PORT}" \
-#          --username="${DATABASE_USER}" \
-#          --dbname="${DATABASE_NAME}" \
-#          --command="${COMMAND_01}${COMMAND_02}${COMMAND_03}" \
-#          | head -n 1 \
-#          | xargs \
-#          | tr -d '\r')
-#
-#          echo "organization=$ORGANIZATION"
-#
-#          # Create insert job command string
-#
-#          JOB_ID=$(uuidgen)
-#          COMMAND_01="INSERT INTO ${DATABASE_SCHEMA_NAME}.job("
-#          COMMAND_02="id, job_uuid, organization, created_at, expires_at, resource_types, status, status_message, "
-#          COMMAND_03="request_url, progress, last_poll_time, completed_at, contract_number, output_format, since, fhir_version, started_by) "
-#          COMMAND_03_UNTIL="request_url, progress, last_poll_time, completed_at, contract_number, output_format, since, until, fhir_version, started_by) "
-#          COMMAND_04="VALUES ((select nextval('hibernate_sequence')), '${JOB_ID}', '${ORGANIZATION}', (select now()), "
-#          COMMAND_05="(select now() + INTERVAL '1 day'), 'ExplanationOfBenefit', 'SUBMITTED', '0%', "
-#          COMMAND_06="'${API_URL_PREFIX}/v1/fhir/Patient/\$export?_outputFormat=application%252Ffhir%252Bndjson&_type=ExplanationOfBenefit', "
-#          COMMAND_07="0, null, null, '${CONTRACT_NUMBER}', null, '${SINCE}', '${FHIR_VERSION}', 'JENKINS');"
-#          COMMAND_07_UNTIL="0, null, null, '${CONTRACT_NUMBER}', null, '${SINCE}', '${UNTIL}', '${FHIR_VERSION}', 'JENKINS');"
-#
-#          # Insert job record
-#          if [[ ${FHIR_VERSION} = "R4" ]]; then
-#          psql \
-#          --dbname="${DATABASE_NAME}" \
-#          --host="${DATABASE_HOST}" \
-#          --port="${DATABASE_PORT}" \
-#          --username="${DATABASE_USER}" \
-#          --command="${COMMAND_01}${COMMAND_02}${COMMAND_03_UNTIL}${COMMAND_04}${COMMAND_05}${COMMAND_06}${COMMAND_07_UNTIL}"
-#          else
-#          psql \
-#          --dbname="${DATABASE_NAME}" \
-#          --host="${DATABASE_HOST}" \
-#          --port="${DATABASE_PORT}" \
-#          --username="${DATABASE_USER}" \
-#          --command="${COMMAND_01}${COMMAND_02}${COMMAND_03}${COMMAND_04}${COMMAND_05}${COMMAND_06}${COMMAND_07}"
-#          fi
