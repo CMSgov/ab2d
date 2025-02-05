@@ -75,10 +75,9 @@ jobs:
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:
           params: |
-            DATABASE_SCHEMA_NAME=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_schema_name/2020-01-02-09-15-01
+#            DATABASE_SCHEMA_NAME=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_schema_name/2020-01-02-09-15-01
+            DATABASE_HOST=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_host/2020-01-02-09-15-01
+
       - name: Test env variables
         run: |
-          echo "DB host=$DATABASE_HOST"
-          echo "DB port=$DATABASE_PORT"
-          echo "DB user=$DATABASE_USER"
-          echo "DB schema name=$DATABASE_SCHEMA_NAME"
+          echo "Testing ..."
