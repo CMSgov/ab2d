@@ -78,15 +78,10 @@ jobs:
             DATABASE_PORT=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_port/2020-01-02-09-15-01
             DATABASE_USER=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_user/2020-01-02-09-15-01
             DATABASE_HOST=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_host/2020-01-02-09-15-01
-#            DATABASE_SCHEMA_NAME=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_schema_name/2020-01-02-09-15-01
+            DATABASE_SCHEMA_NAME=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_schema_name/2020-01-02-09-15-01
 #            PGPASSWORD=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_password/2020-01-02-09-15-01
       - name: Test env variables
         run: |
-          echo "contract number=CONTRACT_NUMBER"
-          echo "fhir version=$FHIR_VERSION"
-          echo "API URL prefix=$API_URL_PREFIX"
-          echo "since=$SINCE"
-          echo "until=$UNTIL"
           echo "DB host=$DATABASE_HOST"
           echo "DB port=$DATABASE_PORT"
           echo "DB user=$DATABASE_USER"
