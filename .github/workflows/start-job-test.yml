@@ -97,28 +97,28 @@ jobs:
           echo "DB port=$DATABASE_PORT"
           echo "DB user=$DATABASE_USER"
           echo "DB schema name=$DATABASE_SCHEMA_NAME"
-#      - name: Insert record
-#        run: |
-#          COMMAND_01="SELECT d.contract_name FROM contract.contract d "
-#          COMMAND_02="INNER JOIN ${DATABASE_SCHEMA_NAME}.user_account e ON d.id = e.contract_id "
-#          COMMAND_03="WHERE d.contract_number = '${CONTRACT_NUMBER}';"
-#
-#          # Get user account id
-#
-#          ORGANIZATION=$(
-#          psql \
-#          -t \
-#          --host="${DATABASE_HOST}" \
-#          --port="${DATABASE_PORT}" \
-#          --username="${DATABASE_USER}" \
-#          --dbname="${DATABASE_NAME}" \
-#          --command="${COMMAND_01}${COMMAND_02}${COMMAND_03}" \
-#          | head -n 1 \
-#          | xargs \
-#          | tr -d '\r')
-#
-#          echo "organization=$ORGANIZATION"
-#
+      - name: Insert record
+        run: |
+          COMMAND_01="SELECT d.contract_name FROM contract.contract d "
+          COMMAND_02="INNER JOIN ${DATABASE_SCHEMA_NAME}.user_account e ON d.id = e.contract_id "
+          COMMAND_03="WHERE d.contract_number = '${CONTRACT_NUMBER}';"
+
+          # Get user account id
+
+          ORGANIZATION=$(
+          psql \
+          -t \
+          --host="${DATABASE_HOST}" \
+          --port="${DATABASE_PORT}" \
+          --username="${DATABASE_USER}" \
+          --dbname="${DATABASE_NAME}" \
+          --command="${COMMAND_01}${COMMAND_02}${COMMAND_03}" \
+          | head -n 1 \
+          | xargs \
+          | tr -d '\r')
+
+          echo "organization=$ORGANIZATION"
+
 #          # Create insert job command string
 #
 #          JOB_ID=$(uuidgen)
