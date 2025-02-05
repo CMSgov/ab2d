@@ -100,7 +100,7 @@ jobs:
 
       - name: Install psql
         run: |
-          sudo amazon-linux-extras install postgresql14
+          sudo dnf install postgresql15 -y
 
       - name: Insert record
         run: |
