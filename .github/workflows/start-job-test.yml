@@ -76,8 +76,6 @@ jobs:
         with:
           params: |
             DATABASE_SCHEMA_NAME=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_schema_name/2020-01-02-09-15-01
-#           DATABASE_HOST=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_host/2020-01-02-09-15-01
-
       - name: Test env variables
         run: |
           echo "Testing ..."
