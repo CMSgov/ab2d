@@ -97,8 +97,15 @@ jobs:
           echo "DB port=$DATABASE_PORT"
           echo "DB user=$DATABASE_USER"
           echo "DB schema name=$DATABASE_SCHEMA_NAME"
+
+      - name: Install psql
+        run: |
+          sudo amazon-linux-extras install postgresql14
+
       - name: Insert record
         run: |
+          set -e
+          
           COMMAND_01="SELECT d.contract_name FROM contract.contract d "
           COMMAND_02="INNER JOIN ${DATABASE_SCHEMA_NAME}.user_account e ON d.id = e.contract_id "
           COMMAND_03="WHERE d.contract_number = '${CONTRACT_NUMBER}';"

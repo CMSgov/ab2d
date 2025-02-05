@@ -99,6 +99,7 @@ jobs:
           echo "DB schema name=$DATABASE_SCHEMA_NAME"
 #      - name: Insert record
 #        run: |
+
 #          COMMAND_01="SELECT d.contract_name FROM contract.contract d "
 #          COMMAND_02="INNER JOIN ${DATABASE_SCHEMA_NAME}.user_account e ON d.id = e.contract_id "
 #          COMMAND_03="WHERE d.contract_number = '${CONTRACT_NUMBER}';"
