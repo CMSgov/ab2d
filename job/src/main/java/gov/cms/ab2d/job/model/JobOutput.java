@@ -15,7 +15,7 @@ import java.time.OffsetDateTime;
 public class JobOutput {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue
     @EqualsAndHashCode.Include
     private Long id;
 
