@@ -118,12 +118,14 @@ public class FileDownloadCommon {
 
     // determine optional encoding requested by user, defaulting to uncompressed if not provided
     static Encoding getRequestedEncoding(HttpServletRequest request) {
-        val values = request.getHeaders("Accept-Encoding");
-        if (values != null) {
-            while (values.hasMoreElements()) {
-                val header = values.nextElement();
-                if (header.trim().equalsIgnoreCase(Constants.GZIP_ENCODING)) {
-                    return GZIP_COMPRESSED;
+        val headers = request.getHeaders("Accept-Encoding");
+        if (headers != null) {
+            while (headers.hasMoreElements()) {
+                val values = headers.nextElement().split(",");
+                for (String value : values) {
+                    if (value.trim().equalsIgnoreCase(Constants.GZIP_ENCODING)) {
+                        return GZIP_COMPRESSED;
+                    }
                 }
             }
         }

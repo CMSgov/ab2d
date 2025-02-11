@@ -62,6 +62,9 @@ class FileDownloadCommonTest {
         when(request.getHeaders("Accept-Encoding")).thenReturn(enumeration(asList("gzip2")));
         assertEquals(UNCOMPRESSED, FileDownloadCommon.getRequestedEncoding(request));
 
+        when(request.getHeaders("Accept-Encoding")).thenReturn(enumeration(asList("identity")));
+        assertEquals(UNCOMPRESSED, FileDownloadCommon.getRequestedEncoding(request));
+
         when(request.getHeaders("Accept-Encoding")).thenReturn(enumeration(asList("gzip")));
         assertEquals(GZIP_COMPRESSED, FileDownloadCommon.getRequestedEncoding(request));
 
@@ -69,6 +72,9 @@ class FileDownloadCommonTest {
         assertEquals(GZIP_COMPRESSED, FileDownloadCommon.getRequestedEncoding(request));
 
         when(request.getHeaders("Accept-Encoding")).thenReturn(enumeration(asList("test", "gzip")));
+        assertEquals(GZIP_COMPRESSED, FileDownloadCommon.getRequestedEncoding(request));
+
+        when(request.getHeaders("Accept-Encoding")).thenReturn(enumeration(asList("gzip, deflate, br")));
         assertEquals(GZIP_COMPRESSED, FileDownloadCommon.getRequestedEncoding(request));
 
         when(request.getHeaders("Accept-Encoding")).thenReturn(enumeration(asList("gzip ", "deflate ", "br ")));
