@@ -45,3 +45,9 @@ jobs:
     with:
       environment: test
     secrets: inherit
+  verify-deployment:
+    needs: [e2e-test]
+    uses: ./.github/workflows/verify-deploy.yml
+    with:
+      environment: test
+    secrets: inherit    
