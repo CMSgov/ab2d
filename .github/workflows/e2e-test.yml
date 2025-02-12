@@ -27,7 +27,7 @@ jobs:
 
     env:
       # Keystore location must be full path for spring framework
-      AB2D_BFD_KEYSTORE_LOCATION: =${AB2D_BFD_KEYSTORE_LOCATION}
+      AB2D_BFD_KEYSTORE_LOCATION: "${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
       AB2D_V2_ENABLED: 'true'
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
@@ -73,7 +73,7 @@ jobs:
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:
           params: |
-            AB2D_BFD_KEYSTORE_PASSWORD=${AB2D_BFD_KEYSTORE_PASSWORD}
+            AB2D_BFD_KEYSTORE_PASSWORD=/bfd/keystore-password
             OKTA_CLIENT_ID=/okta/test-pdp-100-id
             OKTA_CLIENT_PASSWORD=/okta/test-pdp-100-secret
             SECONDARY_USER_OKTA_CLIENT_ID=/okta/test-pdp-1000-id
