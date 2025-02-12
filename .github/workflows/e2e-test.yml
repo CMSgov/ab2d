@@ -16,6 +16,7 @@ on:
           - test
           - sbx
         default: test
+  pull_request:
 
 # Ensure we have only one e2e test running at a time in each environment
 concurrency:
