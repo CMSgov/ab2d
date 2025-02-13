@@ -53,7 +53,6 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public Job createJob(StartJobDTO startJobDTO) {
-        log.error("createJob: NEW JOB");
         Job job = new Job();
         job.setResourceTypes(startJobDTO.getResourceTypes());
         job.setJobUuid(UUID.randomUUID().toString());
