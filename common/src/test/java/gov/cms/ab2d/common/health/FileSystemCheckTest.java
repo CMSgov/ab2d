@@ -27,7 +27,7 @@ class FileSystemCheckTest {
     @Test
     void unableToWriteToDir() {
         String randomDirName = RandomStringUtils.randomAlphabetic(20);
-        File newDir = new File("." + File.separator + randomDirName);
+        File newDir = new File("/opt/ab2d" +  File.separator + randomDirName);
         assertTrue(newDir.mkdir());
         // Windows does not support the ability to turn off creating files in a directory
         if (!SystemUtils.IS_OS_WINDOWS) {
