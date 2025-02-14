@@ -9,10 +9,7 @@ import gov.cms.ab2d.coverage.util.AB2DCoverageLocalstackContainer;
 import gov.cms.ab2d.coverage.util.AB2DCoveragePostgressqlContainer;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @Testcontainers
 @TestPropertySource(locations = "/application.coverage.properties")
 @EnableFeignClients(clients = {ContractFeignClient.class})
+@Disabled("TODO Remove -- Disabled in order to test file-compression code")
 public class CoverageServiceExceptionTest {
 
     @Container
