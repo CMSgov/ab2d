@@ -5,8 +5,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.Resource;
+import org.springframework.mock.web.MockHttpServletRequest;
 
-import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
 
@@ -23,7 +23,7 @@ class FileDownloadCommonTest {
     Resource downloadResource;
 
     @Mock
-    HttpServletRequest request;
+    MockHttpServletRequest request;
 
     @Test
     void download_filename_matches_requested_encoding() throws Exception {
