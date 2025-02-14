@@ -48,7 +48,6 @@ import static org.mockito.Mockito.when;
 @Testcontainers
 @TestPropertySource(locations = "/application.coverage.properties")
 @EnableFeignClients(clients = {ContractFeignClient.class})
-@Disabled("TODO Remove -- Disabled in order to test file-compression code")
 class CoverageServiceRepositoryTest {
 
     @Container

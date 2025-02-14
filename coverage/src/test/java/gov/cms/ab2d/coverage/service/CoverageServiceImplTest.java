@@ -78,7 +78,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Testcontainers
 @TestPropertySource(locations = "/application.coverage.properties")
 @EnableFeignClients(clients = {ContractFeignClient.class})
-@Disabled("TODO Remove -- Disabled in order to test file-compression code")
 class CoverageServiceImplTest {
     private static final int YEAR = 2020;
     private static final int JANUARY = 1;

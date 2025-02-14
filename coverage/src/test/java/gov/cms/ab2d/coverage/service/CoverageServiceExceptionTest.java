@@ -33,7 +33,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @Testcontainers
 @TestPropertySource(locations = "/application.coverage.properties")
 @EnableFeignClients(clients = {ContractFeignClient.class})
-@Disabled("TODO Remove -- Disabled in order to test file-compression code")
 public class CoverageServiceExceptionTest {
 
     @Container

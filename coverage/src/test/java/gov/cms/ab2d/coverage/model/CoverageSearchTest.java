@@ -28,7 +28,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @EnableJpaRepositories({"gov.cms.ab2d.common.repository", "gov.cms.ab2d.coverage.repository"})
 @TestPropertySource(locations = "/application.coverage.properties")
 @EnableFeignClients(clients = {ContractFeignClient.class})
-@Disabled("TODO Remove -- Disabled in order to test file-compression code")
 class CoverageSearchTest {
 
     @SuppressWarnings({"rawtypes", "unused"})
