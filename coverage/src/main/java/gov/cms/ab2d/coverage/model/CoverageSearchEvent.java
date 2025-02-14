@@ -1,14 +1,7 @@
 package gov.cms.ab2d.coverage.model;
 
 import gov.cms.ab2d.common.model.TimestampBase;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -28,7 +21,8 @@ import lombok.ToString;
 public class CoverageSearchEvent extends TimestampBase {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "event_bene_coverage_search_status_change_seq")
+    @SequenceGenerator(name = "event_bene_coverage_search_status_change_seq", sequenceName = "public.event_bene_coverage_search_status_change_seq", allocationSize = 1)
     @EqualsAndHashCode.Include
     private Long id;
 

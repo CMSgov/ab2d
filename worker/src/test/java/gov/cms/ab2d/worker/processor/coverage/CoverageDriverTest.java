@@ -606,7 +606,6 @@ class CoverageDriverTest extends JobCleanup {
 
     @DisplayName("Do not start an eob job if any relevant coverage period has never had data pulled for it")
     @Test
-    @Disabled
     void availableCoverageWhenNeverSearched() {
 
         Job job = new Job();

@@ -15,7 +15,8 @@ import java.time.OffsetDateTime;
 public class JobOutput {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "job_output_seq")
+    @SequenceGenerator(name = "job_output_seq", sequenceName = "public.job_output_seq", allocationSize = 1)
     @EqualsAndHashCode.Include
     private Long id;
 
