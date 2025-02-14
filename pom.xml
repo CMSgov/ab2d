@@ -48,10 +48,13 @@
         <events-client.version>3.2.5</events-client.version>
         <bfd-lib.version>3.2.0</bfd-lib.version>
         <fhir-lib.version>2.1.0</fhir-lib.version>
-        <aggregator-lib.version>2.0.0</aggregator-lib.version>
         <filters-lib.version>2.1.0</filters-lib.version>
         <properties-client.version>2.0.0</properties-client.version>
         <contract-client.version>2.0.0</contract-client.version>
+
+        <!-- Dependency versions -->
+        <commons-compress.version>1.27.1</commons-compress.version>
+        <commons-io.version>2.18.0</commons-io.version>
     </properties>
 
     <dependencies>
