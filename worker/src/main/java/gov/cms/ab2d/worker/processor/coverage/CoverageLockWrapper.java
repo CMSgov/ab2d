@@ -1,5 +1,7 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.integration.jdbc.lock.DefaultLockRepository;
 import org.springframework.integration.jdbc.lock.JdbcLockRegistry;
 import org.springframework.integration.jdbc.lock.LockRepository;
@@ -20,6 +22,9 @@ import java.util.concurrent.locks.Lock;
  * the entry is deleted. This allows different instances of worker to not step on each other.
  */
 public class CoverageLockWrapper {
+
+    @Autowired
+    private ApplicationContext context;
 
     private static final String COVERAGE_LOCK_NAME = "COVERAGE_LOCK";
     private static final int TEN_MINUTES_IN_MILLIS = 600_000;
@@ -44,7 +49,9 @@ public class CoverageLockWrapper {
         // What this means is that if you are locking longer than this TTL, then
         // you need to renew the lock otherwise you will lose it and get undefined
         // behavior when you attempt to unlock your lock.
+        defaultLockRepository.setApplicationContext(context);
         defaultLockRepository.setTimeToLive(TEN_MINUTES_IN_MILLIS);
+        defaultLockRepository.afterSingletonsInstantiated();
         defaultLockRepository.afterPropertiesSet();
         return defaultLockRepository;
     }
