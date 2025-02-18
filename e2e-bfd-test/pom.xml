@@ -13,18 +13,11 @@
     <properties>
         <project.root>${basedir}/..</project.root>
     </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>commons-lang</groupId>
-                <artifactId>commons-lang</artifactId>
-                <version>2.6</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -59,25 +52,11 @@
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>common</artifactId>
             <version>0.0.1-SNAPSHOT</version>
-            <exclusions>
-                <!-- Exclude org.apache.commons:commons-lang3:jar:3.13.0 because it interferes with commons-lang:commons-lang:jar:2.6 and causes NoClassDefFound org/apache/commons/lang3/ArrayFill-->
-                <exclusion>
-                    <groupId>org.apache.commons</groupId>
-                    <artifactId>commons-lang3</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>common</artifactId>
             <version>0.0.1-SNAPSHOT</version>
-            <exclusions>
-                <!-- Exclude org.apache.commons:commons-lang3:jar:3.13.0 because it interferes with commons-lang:commons-lang:jar:2.6 and causes NoClassDefFound org/apache/commons/lang3/ArrayFill-->
-                <exclusion>
-                    <groupId>org.apache.commons</groupId>
-                    <artifactId>commons-lang3</artifactId>
-                </exclusion>
-            </exclusions>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
