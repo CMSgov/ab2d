@@ -56,6 +56,11 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
+            <!--
+                Current Spring Boot version is 3.13.0; bump to 3.16.0 to fix
+                java.lang.NoClassDefFoundError: org/apache/commons/lang3/ArrayFill added in 3.14.0
+             -->
+            <version>${commons-lang3.version}</version>
         </dependency>
 
         <dependency>
