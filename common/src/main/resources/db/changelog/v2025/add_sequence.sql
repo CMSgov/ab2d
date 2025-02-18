@@ -25,5 +25,3 @@ ALTER TABLE public.coverage_search ALTER COLUMN id SET DEFAULT nextval('public.c
 CREATE SEQUENCE IF NOT EXISTS public.role_seq START 1 INCREMENT BY 1;
 SELECT setval('public.role_seq', COALESCE((SELECT MAX(id) FROM public.role), 1), true);
 ALTER TABLE public.role ALTER COLUMN id SET DEFAULT nextval('public.role_seq');
-
-ALTER SEQUENCE IF EXISTS contract_seq INCREMENT BY 50;
