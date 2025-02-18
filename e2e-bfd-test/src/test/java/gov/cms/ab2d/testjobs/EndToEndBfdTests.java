@@ -92,7 +92,7 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
  * In the db container, it generates coverage data for the contract, pre-processes, then processes each job
  * (except the last one). All the data pulls from BFDs sandbox Synthea data.
  */
-@SpringBootTest(properties = "spring.profiles.active=test")
+@SpringBootTest(properties = "spring.profiles.active=prod")
 @ComponentScan(basePackages = {"gov.cms.ab2d.bfd.client",
         "gov.cms.ab2d.eventclient.clients",
         "gov.cms.ab2d.snsclient.clients",

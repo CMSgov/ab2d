@@ -53,7 +53,6 @@
         <properties-client.version>2.0.0</properties-client.version>
         <contract-client.version>2.0.0</contract-client.version>
 
-
         <!-- Dependency versions -->
         <commons-compress.version>1.27.1</commons-compress.version>
         <commons-io.version>2.18.0</commons-io.version>
