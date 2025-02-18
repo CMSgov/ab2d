@@ -20,11 +20,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
-<<<<<<< HEAD
-@SpringBootTest
-=======
 @SpringBootTest(properties = "spring.profiles.active=prod")
->>>>>>> main
 @ComponentScan(basePackages = {"gov.cms.ab2d.bfd.client"})
 @Testcontainers
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
