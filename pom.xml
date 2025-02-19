@@ -46,7 +46,7 @@
 
         <!-- AB2D lib versions -->
         <events-client.version>3.2.5</events-client.version>
-        <bfd-lib.version>3.2.0</bfd-lib.version>
+        <bfd-lib.version>4.0.0</bfd-lib.version>
         <fhir-lib.version>2.1.0</fhir-lib.version>
         <aggregator-lib.version>2.0.0</aggregator-lib.version>
         <filters-lib.version>2.1.0</filters-lib.version>
