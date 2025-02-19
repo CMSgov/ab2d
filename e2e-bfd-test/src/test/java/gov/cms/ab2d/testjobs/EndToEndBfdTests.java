@@ -29,33 +29,11 @@ import gov.cms.ab2d.job.service.JobOutputService;
 import gov.cms.ab2d.job.service.JobService;
 import gov.cms.ab2d.job.service.JobServiceImpl;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
-import gov.cms.ab2d.worker.processor.ContractProcessor;
-import gov.cms.ab2d.worker.processor.JobPreProcessor;
-import gov.cms.ab2d.worker.processor.JobPreProcessorImpl;
-import gov.cms.ab2d.worker.processor.JobProcessor;
-import gov.cms.ab2d.worker.processor.JobProcessorImpl;
-import gov.cms.ab2d.worker.processor.JobProgressService;
-import gov.cms.ab2d.worker.processor.JobProgressUpdateService;
-import gov.cms.ab2d.worker.processor.coverage.CoverageDriver;
-import gov.cms.ab2d.worker.processor.coverage.CoverageDriverImpl;
-import gov.cms.ab2d.worker.processor.coverage.CoverageLockWrapper;
-import gov.cms.ab2d.worker.processor.coverage.CoverageProcessor;
-import gov.cms.ab2d.worker.processor.coverage.CoverageProcessorImpl;
+import gov.cms.ab2d.worker.processor.*;
+import gov.cms.ab2d.worker.processor.coverage.*;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.service.FileServiceImpl;
 import gov.cms.ab2d.worker.service.JobChannelService;
-import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
@@ -71,28 +49,38 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.BlockingQueue;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import static gov.cms.ab2d.common.util.PropertyConstants.PCP_CORE_POOL_SIZE;
-import static gov.cms.ab2d.common.util.PropertyConstants.PCP_MAX_POOL_SIZE;
-import static gov.cms.ab2d.common.util.PropertyConstants.PCP_SCALE_TO_MAX_TIME;
+import static gov.cms.ab2d.common.util.PropertyConstants.*;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static java.util.stream.Collectors.toList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 /**
@@ -104,7 +92,22 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
  * In the db container, it generates coverage data for the contract, pre-processes, then processes each job
  * (except the last one). All the data pulls from BFDs sandbox Synthea data.
  */
-@SpringBootTest
+@SpringBootTest(properties = "spring.profiles.active=prod")
+@ComponentScan(basePackages = {"gov.cms.ab2d.bfd.client",
+        "gov.cms.ab2d.eventclient.clients",
+        "gov.cms.ab2d.snsclient.clients",
+        "gov.cms.ab2d.common.config",
+        "gov.cms.ab2d.common.model",
+        "gov.cms.ab2d.common.properties",
+        "gov.cms.ab2d.common.repository",
+        "gov.cms.ab2d.common.service",
+        "gov.cms.ab2d.common.util",
+        "gov.cms.ab2d.coverage.repository",
+        "gov.cms.ab2d.coverage.service",
+        "gov.cms.ab2d.job.service",
+        "gov.cms.ab2d.worker.config",
+        "gov.cms.ab2d.worker.processor",
+        "gov.cms.ab2d.worker.service"})
 @Testcontainers
 @Slf4j
 @ExtendWith(MockitoExtension.class)
@@ -160,6 +163,10 @@ public class EndToEndBfdTests {
 
     @Autowired
     private CoverageSnapshotService snapshotService;
+
+    @Autowired
+    @Qualifier(value = "patientCoverageThreadPool")
+    private ThreadPoolTaskExecutor taskExecutor;
 
     @TempDir
     File path;
