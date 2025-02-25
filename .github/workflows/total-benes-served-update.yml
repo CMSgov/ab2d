@@ -1,0 +1,59 @@
+name: total-benes-served-update
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+
+  workflow_dispatch:
+    inputs:
+      environment:
+        required: true
+        type: choice
+        options:
+          - sbx
+          - prod
+          - prod_test
+
+jobs:
+  start-job:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Assume role in AB2D account for this environment
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
+        env:
+          ACCOUNT: ${{ inputs.environment == '' && 'test' || inputs.environment }}
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
+
+
+      - name: Set environment-specific variables
+        run: |
+          ENVIRONMENT="${{ inputs.environment }}"
+          if [ "$ENVIRONMENT" == "sbx" ]; then
+            TARGET_CMS_ENV_PARAM=ab2d-sbx-sandbox
+          elif [ "$ENVIRONMENT" == "prod-test" ]; then
+            TARGET_CMS_ENV_PARAM=ab2d-east-prod-test
+          elif [ "$ENVIRONMENT" == "prod" ]; then
+            TARGET_CMS_ENV_PARAM=ab2d-east-prod
+          else
+            echo "Invalid environment: $ENVIRONMENT"
+            exit 1
+          fi
+
+      - name: Set script file based on environment
+        run: echo "script=./scripts/ci/total-benes-served.sh" >> $GITHUB_ENV
+
+      - name: Conduct update of total benes served
+        run: |
+          chmod +x ./scripts/ci/total-benes-served.sh
+          ./scripts/ci/total-benes-served.sh $TARGET_CMS_ENV_PARAM
+        env:
+          TARGET_CMS_ENV_PARAM: ${{ env.TARGET_CMS_ENV_PARAM }}
