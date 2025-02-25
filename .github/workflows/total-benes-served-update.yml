@@ -1,12 +1,6 @@
 name: total-benes-served-update
 
 on:
-  workflow_call:
-    inputs:
-      environment:
-        required: true
-        type: string
-
   workflow_dispatch:
     inputs:
       environment:
@@ -39,7 +33,7 @@ jobs:
           ENVIRONMENT="${{ inputs.environment }}"
           if [ "$ENVIRONMENT" == "sbx" ]; then
             TARGET_CMS_ENV_PARAM=ab2d-sbx-sandbox
-          elif [ "$ENVIRONMENT" == "prod-test" ]; then
+          elif [ "$ENVIRONMENT" == "prod_test" ]; then
             TARGET_CMS_ENV_PARAM=ab2d-east-prod-test
           elif [ "$ENVIRONMENT" == "prod" ]; then
             TARGET_CMS_ENV_PARAM=ab2d-east-prod
