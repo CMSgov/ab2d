@@ -27,14 +27,14 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Assume role in AB2D account for this environment
-        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
-        env:
+#      - name: Assume role in AB2D account for this environment
+#        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
+#        env:
   #        ACCOUNT: ${{ inputs.environment == '' && 'test' || inputs.environment }}
-          ACCOUNT: ${{ env.ENVIR == '' && 'test' || env.ENVIR }}
-        with:
-          aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
+#          ACCOUNT: ${{ env.ENVIR == '' && 'test' || env.ENVIR }}
+#        with:
+#          aws-region: ${{ vars.AWS_REGION }}
+#          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
 
 
       - name: Set environment-specific variables
