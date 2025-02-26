@@ -13,6 +13,8 @@ on:
           - sbx
           - prod
           - prod_test
+        # TEMP?
+        default: 'prod_test'
 
 jobs:
   start-job:
