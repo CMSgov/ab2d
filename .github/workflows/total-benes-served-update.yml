@@ -1,6 +1,9 @@
 name: total-benes-served-update
 
 on:
+  push:
+    branches: [ AB2D-6560/TotalBenesServedUpdate-workflow ]
+
   workflow_dispatch:
     inputs:
       environment:
