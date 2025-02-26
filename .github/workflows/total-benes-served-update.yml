@@ -20,6 +20,9 @@ jobs:
   start-job:
     runs-on: self-hosted
 
+    env:
+      ENVIR: 'prod_test'
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -27,7 +30,8 @@ jobs:
       - name: Assume role in AB2D account for this environment
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
         env:
-          ACCOUNT: ${{ inputs.environment == '' && 'test' || inputs.environment }}
+  #        ACCOUNT: ${{ inputs.environment == '' && 'test' || inputs.environment }}
+          ACCOUNT: ${{ ENVIR == '' && 'test' || ENVIR }}
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
@@ -35,8 +39,9 @@ jobs:
 
       - name: Set environment-specific variables
         run: |
-          echo ${{ inputs.environment }}
-          ENVIRONMENT="${{ inputs.environment }}"
+          echo "Envir: $ENVIR"
+          echo "ACCOUNT: ${{ env.ACCOUNT }}"
+          ENVIRONMENT="$ENVIR"
           if [ "$ENVIRONMENT" == "sbx" ]; then
             TARGET_CMS_ENV_PARAM=ab2d-sbx-sandbox
           elif [ "$ENVIRONMENT" == "prod_test" ]; then
