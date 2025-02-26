@@ -35,6 +35,7 @@ jobs:
 
       - name: Set environment-specific variables
         run: |
+          echo ${{ inputs.environment }}
           ENVIRONMENT="${{ inputs.environment }}"
           if [ "$ENVIRONMENT" == "sbx" ]; then
             TARGET_CMS_ENV_PARAM=ab2d-sbx-sandbox
