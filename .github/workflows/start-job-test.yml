@@ -49,7 +49,6 @@ jobs:
       UNTIL: ''
       API_URL_PREFIX: 'https://impl.ab2d.cms.gov'
 
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
