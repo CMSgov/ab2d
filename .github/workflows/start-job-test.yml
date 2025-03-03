@@ -126,32 +126,34 @@ jobs:
 
           echo "organization=$ORGANIZATION"
 
-#          # Create insert job command string
-#
-#          JOB_ID=$(uuidgen)
-#          COMMAND_01="INSERT INTO ${DATABASE_SCHEMA_NAME}.job("
-#          COMMAND_02="id, job_uuid, organization, created_at, expires_at, resource_types, status, status_message, "
-#          COMMAND_03="request_url, progress, last_poll_time, completed_at, contract_number, output_format, since, fhir_version, started_by) "
-#          COMMAND_03_UNTIL="request_url, progress, last_poll_time, completed_at, contract_number, output_format, since, until, fhir_version, started_by) "
-#          COMMAND_04="VALUES ((select nextval('hibernate_sequence')), '${JOB_ID}', '${ORGANIZATION}', (select now()), "
-#          COMMAND_05="(select now() + INTERVAL '1 day'), 'ExplanationOfBenefit', 'SUBMITTED', '0%', "
-#          COMMAND_06="'${API_URL_PREFIX}/v1/fhir/Patient/\$export?_outputFormat=application%252Ffhir%252Bndjson&_type=ExplanationOfBenefit', "
-#          COMMAND_07="0, null, null, '${CONTRACT_NUMBER}', null, '${SINCE}', '${FHIR_VERSION}', 'JENKINS');"
-#          COMMAND_07_UNTIL="0, null, null, '${CONTRACT_NUMBER}', null, '${SINCE}', '${UNTIL}', '${FHIR_VERSION}', 'JENKINS');"
-#
-#          # Insert job record
-#          if [[ ${FHIR_VERSION} = "R4" ]]; then
-#          psql \
-#          --dbname="${DATABASE_NAME}" \
-#          --host="${DATABASE_HOST}" \
-#          --port="${DATABASE_PORT}" \
-#          --username="${DATABASE_USER}" \
-#          --command="${COMMAND_01}${COMMAND_02}${COMMAND_03_UNTIL}${COMMAND_04}${COMMAND_05}${COMMAND_06}${COMMAND_07_UNTIL}"
-#          else
-#          psql \
-#          --dbname="${DATABASE_NAME}" \
-#          --host="${DATABASE_HOST}" \
-#          --port="${DATABASE_PORT}" \
-#          --username="${DATABASE_USER}" \
-#          --command="${COMMAND_01}${COMMAND_02}${COMMAND_03}${COMMAND_04}${COMMAND_05}${COMMAND_06}${COMMAND_07}"
-#          fi
+          # Create insert job command string
+
+          JOB_ID=$(uuidgen)
+          COMMAND_01="INSERT INTO ${DATABASE_SCHEMA_NAME}.job("
+          COMMAND_02="id, job_uuid, organization, created_at, expires_at, resource_types, status, status_message, "
+          COMMAND_03="request_url, progress, last_poll_time, completed_at, contract_number, output_format, since, fhir_version, started_by) "
+          COMMAND_03_UNTIL="request_url, progress, last_poll_time, completed_at, contract_number, output_format, since, until, fhir_version, started_by) "
+          COMMAND_04="VALUES ((select nextval('hibernate_sequence')), '${JOB_ID}', '${ORGANIZATION}', (select now()), "
+          COMMAND_05="(select now() + INTERVAL '1 day'), 'ExplanationOfBenefit', 'SUBMITTED', '0%', "
+          COMMAND_06="'${API_URL_PREFIX}/v1/fhir/Patient/\$export?_outputFormat=application%252Ffhir%252Bndjson&_type=ExplanationOfBenefit', "
+          COMMAND_07="0, null, null, '${CONTRACT_NUMBER}', null, '${SINCE}', '${FHIR_VERSION}', 'JENKINS');"
+          COMMAND_07_UNTIL="0, null, null, '${CONTRACT_NUMBER}', null, '${SINCE}', '${UNTIL}', '${FHIR_VERSION}', 'JENKINS');"
+
+          # Insert job record
+          if [[ ${FHIR_VERSION} = "R4" ]]; then
+            echo "${COMMAND_01}${COMMAND_02}${COMMAND_03_UNTIL}${COMMAND_04}${COMMAND_05}${COMMAND_06}${COMMAND_07_UNTIL}"
+#            psql \
+#            --dbname="${DATABASE_NAME}" \
+#            --host="${DATABASE_HOST}" \
+#            --port="${DATABASE_PORT}" \
+#            --username="${DATABASE_USER}" \
+#            --command="${COMMAND_01}${COMMAND_02}${COMMAND_03_UNTIL}${COMMAND_04}${COMMAND_05}${COMMAND_06}${COMMAND_07_UNTIL}"
+          else
+            echo "${COMMAND_01}${COMMAND_02}${COMMAND_03}${COMMAND_04}${COMMAND_05}${COMMAND_06}${COMMAND_07}"
+#            psql \
+#            --dbname="${DATABASE_NAME}" \
+#            --host="${DATABASE_HOST}" \
+#            --port="${DATABASE_PORT}" \
+#            --username="${DATABASE_USER}" \
+#            --command="${COMMAND_01}${COMMAND_02}${COMMAND_03}${COMMAND_04}${COMMAND_05}${COMMAND_06}${COMMAND_07}"
+            fi
