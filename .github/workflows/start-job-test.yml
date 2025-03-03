@@ -17,7 +17,8 @@ on:
         options:
           - STU3
           - R4
-        default: STU3
+#        default: STU3
+        default: R4
       since:
         description: 'Since date to use for a job. The earliest accepted date is 2020-02-13T00:00:00.000-05:00'
         type: string
