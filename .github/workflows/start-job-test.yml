@@ -105,7 +105,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ vars.ACCOUNT_ID }}:role/delegatedadmin/developer/${{ vars.ROLE }}
+          role-to-assume: arn:aws:iam::${{ env.ACCOUNT_ID }}:role/delegatedadmin/developer/${{ env.ROLE }}
 
       #          role-to-assume: arn:aws:iam::${{ secrets.TEST_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-test-github-actions
 
@@ -115,12 +115,12 @@ jobs:
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:
           params: |
-            PGHOST=/aws/reference/secretsmanager/${{ vars.SECRET_STORE_PREFIX }}/module/db/database_host/2020-01-02-09-15-01
-            PGPORT=/aws/reference/secretsmanager/${{ vars.SECRET_STORE_PREFIX }}/module/db/database_port/2020-01-02-09-15-01
-            PGUSER=/aws/reference/secretsmanager/${{ vars.SECRET_STORE_PREFIX }}/module/db/database_user/2020-01-02-09-15-01
-            PGDATABASE=/aws/reference/secretsmanager/${{ vars.SECRET_STORE_PREFIX }}/module/db/database_name/2020-01-02-09-15-01
-            PGPASSWORD=/aws/reference/secretsmanager/${{ vars.SECRET_STORE_PREFIX }}/module/db/database_password/2020-01-02-09-15-01
-            DATABASE_SCHEMA_NAME=/aws/reference/secretsmanager/${{ vars.SECRET_STORE_PREFIX }}/module/db/schema_name/2020-01-02-09-15-01
+            PGHOST=/aws/reference/secretsmanager/${{ env.SECRET_STORE_PREFIX }}/module/db/database_host/2020-01-02-09-15-01
+            PGPORT=/aws/reference/secretsmanager/${{ env.SECRET_STORE_PREFIX }}/module/db/database_port/2020-01-02-09-15-01
+            PGUSER=/aws/reference/secretsmanager/${{ env.SECRET_STORE_PREFIX }}/module/db/database_user/2020-01-02-09-15-01
+            PGDATABASE=/aws/reference/secretsmanager/${{ env.SECRET_STORE_PREFIX }}/module/db/database_name/2020-01-02-09-15-01
+            PGPASSWORD=/aws/reference/secretsmanager/${{ env.SECRET_STORE_PREFIX }}/module/db/database_password/2020-01-02-09-15-01
+            DATABASE_SCHEMA_NAME=/aws/reference/secretsmanager/${{ env.SECRET_STORE_PREFIX }}/module/db/schema_name/2020-01-02-09-15-01
 
       - name: Install psql
         run: |
