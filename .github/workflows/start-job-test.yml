@@ -92,9 +92,9 @@ jobs:
           echo "API URL prefix=$API_URL_PREFIX"
           echo "since=$SINCE"
           echo "until=$UNTIL"
-          echo "DB host=$DATABASE_HOST"
-          echo "DB port=$DATABASE_PORT"
-          echo "DB user=$DATABASE_USER"
+          echo "DB host=PGPORT"
+          echo "DB port=PGPORT"
+          echo "DB user=PGDATABASE"
           echo "DB schema name=$DATABASE_SCHEMA_NAME"
 
       - name: Install psql
@@ -106,6 +106,7 @@ jobs:
           set -e
           
           SQL_GET_ORGANIZATION=$(envsubst < .github/workflows/scripts/get-organization.sql)
+          echo "${SQL_GET_ORGANIZATION}"
           
           ORGANIZATION=$(
           psql \
@@ -115,7 +116,7 @@ jobs:
           | xargs \
           | tr -d '\r')
 
-          echo "organization = ${ORGANIZATION}
+          echo "organization = ${ORGANIZATION}"
 
           if [[ ${FHIR_VERSION} = "R4" ]]; then
             echo "R4"
