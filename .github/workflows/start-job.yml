@@ -1,5 +1,5 @@
 
-name: start-job-test
+name: start-job
 
 on:
   push:
@@ -46,18 +46,12 @@ jobs:
     runs-on: self-hosted
 
     env:
-#      CONTRACT_NUMBER: ${{ inputs.contractNumber }}
-#      FHIR_VERSION: ${{ inputs.fhirVersion }}
-#      SINCE: ${{ inputs.since }}
-#      UNTIL: ${{ inputs.until }}
-#      API_URL_PREFIX: ${{ inputs.apiUrlPrefix }}
-#      ENVIRONMENT: ${{ inputs.environment
-      CONTRACT_NUMBER: 'Z0001'
-      FHIR_VERSION: 'STU3'
-      SINCE: '2020-02-13T00:00:00.000-05:00'
-      UNTIL: '2024-12-31T00:00:00.000-05:00'
-      API_URL_PREFIX: ''
-      ENVIRONMENT: 'test'
+      CONTRACT_NUMBER: ${{ inputs.contractNumber }}
+      FHIR_VERSION: ${{ inputs.fhirVersion }}
+      SINCE: ${{ inputs.since }}
+      UNTIL: ${{ inputs.until }}
+      API_URL_PREFIX: ${{ inputs.apiUrlPrefix }}
+      ENVIRONMENT: ${{ inputs.environment }}
 
     steps:
       - name: Checkout Code
@@ -128,21 +122,17 @@ jobs:
         run: |
           set -e
           JOB_ID=$(uuidgen)
-          SQL_GET_ORGANIZATION=$(envsubst < .github/workflows/resources/get-organization.sql)
-          echo "${SQL_GET_ORGANIZATION}"
           
+          SQL_GET_ORGANIZATION=$(envsubst < .github/workflows/resources/get-organization.sql)
           export ORGANIZATION=$(psql -t --command="${SQL_GET_ORGANIZATION}" | head -n 1 | xargs | tr -d '\r')
-
           if [ -z "${ORGANIZATION}" ]; then
             echo "Unable to retrieve organization"
             exit 1
           fi
 
-          echo "organization = ${ORGANIZATION}"
-
           if [[ ${FHIR_VERSION} = "R4" ]]; then
             if [ -z "${UNTIL}" ]; then
-              echo "FHIR version R4 requires a valid 'until' parameter"
+              echo "FHIR version R4 requires a value for 'until'"
               exit 1
             fi  
             export UNTIL="'${UNTIL}'"
@@ -151,11 +141,10 @@ jobs:
           fi
           
           if [ -z "${API_URL_PREFIX}" ]; then
-            echo "API URL prefix not provided -- using default"
             export API_URL_PREFIX=${DEFAULT_API_URL_PREFIX}
           fi
           
           SQL_INSERT_RECORD=$(envsubst < .github/workflows/resources/insert-record.sql)
           echo "$SQL_INSERT_RECORD"
-          echo "$JOB_ID"
-#          psql -t --command="${SQL_INSERT_RECORD}"
+          psql -t --command="${SQL_INSERT_RECORD}"
+          echo "Inserted record with job UUID = $JOB_ID"
