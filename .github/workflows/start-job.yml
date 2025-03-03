@@ -129,7 +129,7 @@ jobs:
       - name: Insert record
         run: |
           set -e
-          JOB_ID=$(uuidgen)
+          export JOB_ID=$(uuidgen)
           
           SQL_GET_ORGANIZATION=$(envsubst < .github/workflows/resources/get-organization.sql)
           export ORGANIZATION=$(psql -t --command="${SQL_GET_ORGANIZATION}" | head -n 1 | xargs | tr -d '\r')
