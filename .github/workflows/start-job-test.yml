@@ -63,7 +63,8 @@ jobs:
 
       - name: Set environment-specific variables
         run: |
-          ENVIRONMENT="${{ inputs.environment || 'test' }}"
+#          ENVIRONMENT="${{ inputs.environment || 'test' }}"
+          ENVIRONMENT='dev'
           if [ "$ENVIRONMENT" == "dev" ]; then
             SECRET_STORE_PREFIX="ab2d/ab2d-dev"
             DEFAULT_API_URL_PREFIX="https://dev.ab2d.cms.gov"
@@ -105,7 +106,6 @@ jobs:
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ secrets[env.ACCOUNT_ID] }}:role/delegatedadmin/developer/${{ env.ROLE }}
-
       #          role-to-assume: arn:aws:iam::${{ secrets.TEST_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-test-github-actions
 
       - name: Set env vars from AWS params in AB2D account
