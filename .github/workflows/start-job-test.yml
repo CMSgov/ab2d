@@ -105,7 +105,7 @@ jobs:
         run: |
           set -e
           
-          SQL_GET_ORGANIZATION=$(envsubst < ./scripts/get-organization.sql)
+          SQL_GET_ORGANIZATION=$(envsubst < .github/workflows/scripts/get-organization.sql)
           
           ORGANIZATION=$(
           psql \
