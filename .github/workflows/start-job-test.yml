@@ -18,7 +18,6 @@ on:
           - STU3
           - R4
         default: STU3
-#        default: R4
       since:
         description: 'Since date to use for a job. The earliest accepted date is 2020-02-13T00:00:00.000-05:00'
         type: string
@@ -46,7 +45,7 @@ jobs:
       #      UNTIL: ${{ inputs.until }}
       #      API_URL_PREFIX: ${{ inputs.apiUrlPrefix }}
       CONTRACT_NUMBER: 'Z0001'
-      FHIR_VERSION: 'R4'
+      FHIR_VERSION: 'STU3'
       SINCE: '2024-12-13T00:00:00.000-05:00'
       UNTIL: ''
       API_URL_PREFIX: 'https://impl.ab2d.cms.gov'
@@ -138,7 +137,17 @@ jobs:
           COMMAND_07_UNTIL="0, null, null, '${CONTRACT_NUMBER}', null, '${SINCE}', '${UNTIL}', '${FHIR_VERSION}', 'GITHUB_RUNNER');"
 
           if [[ ${FHIR_VERSION} = "R4" ]]; then
-            echo "${COMMAND_01}${COMMAND_02}${COMMAND_03_UNTIL}${COMMAND_04}${COMMAND_05}${COMMAND_06}${COMMAND_07_UNTIL}"
+            psql \
+            --dbname="${DATABASE_NAME}" \
+            --host="${DATABASE_HOST}" \
+            --port="${DATABASE_PORT}" \
+            --username="${DATABASE_USER}" \
+            --command="${COMMAND_01}${COMMAND_02}${COMMAND_03_UNTIL}${COMMAND_04}${COMMAND_05}${COMMAND_06}${COMMAND_07_UNTIL}"
           else
-            echo "${COMMAND_01}${COMMAND_02}${COMMAND_03}${COMMAND_04}${COMMAND_05}${COMMAND_06}${COMMAND_07}"
-            fi
+            psql \
+            --dbname="${DATABASE_NAME}" \
+            --host="${DATABASE_HOST}" \
+            --port="${DATABASE_PORT}" \
+            --username="${DATABASE_USER}" \
+            --command="${COMMAND_01}${COMMAND_02}${COMMAND_03}${COMMAND_04}${COMMAND_05}${COMMAND_06}${COMMAND_07}"
+          fi
