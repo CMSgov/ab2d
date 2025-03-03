@@ -126,18 +126,22 @@ jobs:
       - name: Insert record
         run: |
           set -e
-           
+          JOB_ID=$(uuidgen)
           SQL_GET_ORGANIZATION=$(envsubst < .github/workflows/resources/get-organization.sql)
           echo "${SQL_GET_ORGANIZATION}"
           
           export ORGANIZATION=$(psql -t --command="${SQL_GET_ORGANIZATION}" | head -n 1 | xargs | tr -d '\r')
 
+          if [ -z "${ORGANIZATION}" ]; then
+            echo "Unable to retrieve organization"
+            exit 1
+          fi
+
           echo "organization = ${ORGANIZATION}"
 
           if [[ ${FHIR_VERSION} = "R4" ]]; then
-            # TODO check for valid UNTIL value
             if [ -z "${UNTIL}" ]; then
-              echo "FHIR version R4 requires the 'until' parameter"
+              echo "FHIR version R4 requires a valid 'until' parameter"
               exit 1
             fi  
             export UNTIL="'${UNTIL}'"
@@ -152,4 +156,5 @@ jobs:
           
           SQL_INSERT_RECORD=$(envsubst < .github/workflows/resources/insert-record.sql)
           echo "$SQL_INSERT_RECORD"
+          echo "$JOB_ID"
 #          psql -t --command="${SQL_INSERT_RECORD}"
