@@ -52,7 +52,7 @@ jobs:
       #      UNTIL: ${{ inputs.until }}
       #      API_URL_PREFIX: ${{ inputs.apiUrlPrefix }}
       CONTRACT_NUMBER: 'Z0001'
-      FHIR_VERSION: 'R4'
+      FHIR_VERSION: 'STU3'
       SINCE: '2020-02-13T00:00:00.000-05:00'
       UNTIL: '2024-12-31T00:00:00.000-05:00'
       API_URL_PREFIX: ''
@@ -63,7 +63,7 @@ jobs:
 
       - name: Set environment-specific variables
         run: |
-          ENVIRONMENT="${{ inputs.environment || 'dev' }}"
+          ENVIRONMENT="${{ inputs.environment || 'sbx' }}"
           if [ "$ENVIRONMENT" == "dev" ]; then
             SECRET_STORE_PREFIX="ab2d/ab2d-dev"
             DEFAULT_API_URL_PREFIX="https://dev.ab2d.cms.gov"
@@ -147,6 +147,7 @@ jobs:
           fi
           
           if [ -z "${API_URL_PREFIX}" ]; then
+            echo "API URL prefix not provided -- using default"
             export API_URL_PREFIX=${DEFAULT_API_URL_PREFIX}
           fi
           
