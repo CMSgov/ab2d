@@ -17,17 +17,18 @@ on:
         options:
           - STU3
           - R4
-#        default: STU3
-        default: R4
+        default: STU3
+#        default: R4
       since:
         description: 'Since date to use for a job. The earliest accepted date is 2020-02-13T00:00:00.000-05:00'
         type: string
         required: true
-        default: '2024-12-13T00:00:00.000-05:00' # TODO remove -- only for testing in branch
+        default: '2025-02-01T00:00:00.000-05:00' # TODO remove -- only for testing in branch
       until:
         description: 'Until date to use for a job. Accepted date format for V2 is 2020-02-13T00:00:00.000-05:00'
         type: string
         required: false
+        default: '2025-03-01T00:00:00.000-05:00' # TODO remove -- only for testing in branch
       apiUrlPrefix:
         description: 'Origin of request for a job. May correspond to actual AB2D API URL or not.'
         type: string
@@ -45,7 +46,7 @@ jobs:
       #      UNTIL: ${{ inputs.until }}
       #      API_URL_PREFIX: ${{ inputs.apiUrlPrefix }}
       CONTRACT_NUMBER: 'Z0001'
-      FHIR_VERSION: 'STU3'
+      FHIR_VERSION: 'R4'
       SINCE: '2024-12-13T00:00:00.000-05:00'
       UNTIL: ''
       API_URL_PREFIX: 'https://impl.ab2d.cms.gov'
@@ -133,8 +134,8 @@ jobs:
           COMMAND_04="VALUES ((select nextval('hibernate_sequence')), '${JOB_ID}', '${ORGANIZATION}', (select now()), "
           COMMAND_05="(select now() + INTERVAL '1 day'), 'ExplanationOfBenefit', 'SUBMITTED', '0%', "
           COMMAND_06="'${API_URL_PREFIX}/v1/fhir/Patient/\$export?_outputFormat=application%252Ffhir%252Bndjson&_type=ExplanationOfBenefit', "
-          COMMAND_07="0, null, null, '${CONTRACT_NUMBER}', null, '${SINCE}', '${FHIR_VERSION}', 'JENKINS');"
-          COMMAND_07_UNTIL="0, null, null, '${CONTRACT_NUMBER}', null, '${SINCE}', '${UNTIL}', '${FHIR_VERSION}', 'JENKINS');"
+          COMMAND_07="0, null, null, '${CONTRACT_NUMBER}', null, '${SINCE}', '${FHIR_VERSION}', 'GITHUB_RUNNER');"
+          COMMAND_07_UNTIL="0, null, null, '${CONTRACT_NUMBER}', null, '${SINCE}', '${UNTIL}', '${FHIR_VERSION}', 'GITHUB_RUNNER');"
 
           if [[ ${FHIR_VERSION} = "R4" ]]; then
             echo "${COMMAND_01}${COMMAND_02}${COMMAND_03_UNTIL}${COMMAND_04}${COMMAND_05}${COMMAND_06}${COMMAND_07_UNTIL}"
