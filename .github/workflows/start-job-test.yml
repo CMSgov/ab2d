@@ -99,13 +99,12 @@ jobs:
           echo "DEFAULT_API_URL_PREFIX=${DEFAULT_API_URL_PREFIX}" >> $GITHUB_ENV
           echo "ACCOUNT_ID=${ACCOUNT_ID}" >> $GITHUB_ENV
           echo "ROLE=${ROLE}" >> $GITHUB_ENV
-      
 
       - name: Assume role in AB2D account for this environment
         uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ env.ACCOUNT_ID }}:role/delegatedadmin/developer/${{ env.ROLE }}
+          role-to-assume: arn:aws:iam::${{ secrets[env.ACCOUNT_ID] }}:role/delegatedadmin/developer/${{ env.ROLE }}
 
       #          role-to-assume: arn:aws:iam::${{ secrets.TEST_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-test-github-actions
 
