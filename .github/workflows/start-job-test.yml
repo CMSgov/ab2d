@@ -6,6 +6,16 @@ on:
     branches: [ start-job-workflow ]
   workflow_dispatch: # Allow manual trigger
     inputs:
+      environment:
+        description: 'AB2D environment'
+        type: choice
+        options:
+          - dev
+          - test
+          - sbx
+          - prod_test
+          - prod
+        default: test
       contractNumber:
         description: 'Contract to start a job for'
         type: string
@@ -27,10 +37,9 @@ on:
         type: string
         required: false
       apiUrlPrefix:
-        description: 'Origin of request for a job. May correspond to actual AB2D API URL or not.'
+        description: 'Origin of request for a job. May correspond to actual AB2D API URL or not. Leave blank to populate default value.'
         type: string
-        required: true
-        default: 'https://impl.ab2d.cms.gov'
+        required: false
 
 jobs:
   start-job:
@@ -52,11 +61,46 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
+      - name: Set environment-specific variables
+        run: |
+          ENVIRONMENT="${{ inputs.environment || 'test' }}"
+          if [ "$ENVIRONMENT" == "dev" ]; then
+            SECRET_STORE_PREFIX="ab2d/ab2d-dev"
+            DEFAULT_API_URL_PREFIX="https://dev.ab2d.cms.gov"
+            ACCOUNT_ID="DEV_ACCOUNT_ID"
+          elif [ "$ENVIRONMENT" == "test" ]; then
+            SECRET_STORE_PREFIX="ab2d/ab2d-east-impl" 
+            DEFAULT_API_URL_PREFIX="https://impl.ab2d.cms.gov"
+            ACCOUNT_ID="TEST_ACCOUNT_ID"
+          elif [ "$ENVIRONMENT" == "sbx" ]; then
+            SECRET_STORE_PREFIX="ab2d/ab2d-sbx-sandbox"
+            DEFAULT_API_URL_PREFIX="https://sandbox.ab2d.cms.gov"
+            ACCOUNT_ID="SBX_ACCOUNT_ID"
+          elif [ "$ENVIRONMENT" == "prod_test" ]; then
+            SECRET_STORE_PREFIX="ab2d/ab2d-east-prod-test"
+            DEFAULT_API_URL_PREFIX="https://api.prod-test.ab2d.cms.gov"
+            ACCOUNT_ID="PROD_ACCOUNT_ID"
+          elif [ "$ENVIRONMENT" == "prod" ]; then
+            SECRET_STORE_PREFIX="ab2d/ab2d-east-prod"
+            DEFAULT_API_URL_PREFIX="https://api.prod-test.ab2d.cms.gov"
+            ACCOUNT_ID="PROD_ACCOUNT_ID"
+          else
+            echo "Invalid environment: $ENVIRONMENT"
+            exit 1
+          fi
+          
+          echo "ENVIRONMENT=${ENVIRONMENT}" >> $GITHUB_ENV
+          echo "SECRET_STORE_PREFIX=${SECRET_STORE_PREFIX}" >> $GITHUB_ENV
+          echo "DEFAULT_API_URL_PREFIX=${DEFAULT_API_URL_PREFIX}" >> $GITHUB_ENV
+          echo "ACCOUNT_ID=${ACCOUNT_ID}" >> $GITHUB_ENV
+
       - name: Assume role in AB2D account for this environment
         uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ secrets.TEST_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-test-github-actions
+          role-to-assume: arn:aws:iam::${{ vars.ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-test-github-actions
+
+      #          role-to-assume: arn:aws:iam::${{ secrets.TEST_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-test-github-actions
 
       - name: Set env vars from AWS params in AB2D account
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
@@ -64,12 +108,12 @@ jobs:
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:
           params: |
-            PGHOST=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_host/2020-01-02-09-15-01
-            PGPORT=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_port/2020-01-02-09-15-01
-            PGUSER=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_user/2020-01-02-09-15-01
-            PGDATABASE=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_name/2020-01-02-09-15-01
-            PGPASSWORD=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_password/2020-01-02-09-15-01
-            DATABASE_SCHEMA_NAME=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/schema_name/2020-01-02-09-15-01
+            PGHOST=/aws/reference/secretsmanager/${{ vars.SECRET_STORE_PREFIX }}/module/db/database_host/2020-01-02-09-15-01
+            PGPORT=/aws/reference/secretsmanager/${{ vars.SECRET_STORE_PREFIX }}/module/db/database_port/2020-01-02-09-15-01
+            PGUSER=/aws/reference/secretsmanager/${{ vars.SECRET_STORE_PREFIX }}/module/db/database_user/2020-01-02-09-15-01
+            PGDATABASE=/aws/reference/secretsmanager/${{ vars.SECRET_STORE_PREFIX }}/module/db/database_name/2020-01-02-09-15-01
+            PGPASSWORD=/aws/reference/secretsmanager/${{ vars.SECRET_STORE_PREFIX }}/module/db/database_password/2020-01-02-09-15-01
+            DATABASE_SCHEMA_NAME=/aws/reference/secretsmanager/${{ vars.SECRET_STORE_PREFIX }}/module/db/schema_name/2020-01-02-09-15-01
 
       - name: Install psql
         run: |
@@ -87,6 +131,7 @@ jobs:
           echo "organization = ${ORGANIZATION}"
 
           if [[ ${FHIR_VERSION} = "R4" ]]; then
+            # TODO check for valid UNTIL value
             export UNTIL="'${UNTIL}'"
           else
             export UNTIL="null"
@@ -94,4 +139,4 @@ jobs:
           
           SQL_INSERT_RECORD=$(envsubst < .github/workflows/resources/insert-record.sql)
           echo "$SQL_INSERT_RECORD"
-          psql -t --command="${SQL_INSERT_RECORD}"
+#          psql -t --command="${SQL_INSERT_RECORD}"
