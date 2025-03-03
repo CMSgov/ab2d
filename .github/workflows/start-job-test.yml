@@ -51,11 +51,13 @@ jobs:
 #      SINCE: ${{ inputs.since }}
 #      UNTIL: ${{ inputs.until }}
 #      API_URL_PREFIX: ${{ inputs.apiUrlPrefix }}
+#      ENVIRONMENT: ${{ inputs.environment
       CONTRACT_NUMBER: 'Z0001'
       FHIR_VERSION: 'STU3'
       SINCE: '2020-02-13T00:00:00.000-05:00'
       UNTIL: '2024-12-31T00:00:00.000-05:00'
       API_URL_PREFIX: ''
+      ENVIRONMENT: 'test'
 
     steps:
       - name: Checkout Code
@@ -63,7 +65,6 @@ jobs:
 
       - name: Set environment-specific variables
         run: |
-          ENVIRONMENT="${{ inputs.environment || 'test' }}"
           if [ "$ENVIRONMENT" == "dev" ]; then
             SECRET_STORE_PREFIX="ab2d/ab2d-dev"
             DEFAULT_API_URL_PREFIX="https://dev.ab2d.cms.gov"
