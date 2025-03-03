@@ -104,22 +104,20 @@ jobs:
       - name: Insert record
         run: |
           set -e
-          
+           
           SQL_GET_ORGANIZATION=$(envsubst < .github/workflows/scripts/get-organization.sql)
           echo "${SQL_GET_ORGANIZATION}"
           
-          ORGANIZATION=$(
-          psql \
-          -t \
-          --command="${SQL_GET_ORGANIZATION}" \
-          | head -n 1 \
-          | xargs \
-          | tr -d '\r')
+          export ORGANIZATION=$(psql -t --command="${SQL_GET_ORGANIZATION}" | head -n 1 | xargs | tr -d '\r')
 
           echo "organization = ${ORGANIZATION}"
 
           if [[ ${FHIR_VERSION} = "R4" ]]; then
-            echo "R4"
+            export UNTIL="'${UNTIL}'"
           else
-            echo "STU3"
+            export UNTIL="null"
           fi
+          
+          SQL_INSERT_RECORD=$(envsubst < .github/workflows/scripts/insert-record.sql)
+          echo "$SQL_INSERT_RECORD"
+#          psql -t --command="${SQL_INSERT_RECORD}"
