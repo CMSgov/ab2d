@@ -52,20 +52,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Create Python3 venv
-        #        run: ./scripts/setup-venv.sh
-        run: |
-          # Any error will cause the script to exit immediately
-          set -e
-          # Create python3 virtual environment for deployments
-          # and verify that
-          python3 --version
-          # Create virtualenv
-          python3 -m venv ./venv
-          . ./venv/bin/activate
-          # Check that version is active and log for
-          python --version
-
       - name: Assume role in AB2D account for this environment
         uses: aws-actions/configure-aws-credentials@v3
         with:
@@ -85,18 +71,6 @@ jobs:
             PGPASSWORD=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/database_password/2020-01-02-09-15-01
             DATABASE_SCHEMA_NAME=/aws/reference/secretsmanager/ab2d/ab2d-east-impl/module/db/schema_name/2020-01-02-09-15-01
 
-      - name: Test env variables
-        run: |
-          echo "contract number=CONTRACT_NUMBER"
-          echo "fhir version=$FHIR_VERSION"
-          echo "API URL prefix=$API_URL_PREFIX"
-          echo "since=$SINCE"
-          echo "until=$UNTIL"
-          echo "DB host=PGPORT"
-          echo "DB port=PGPORT"
-          echo "DB user=PGDATABASE"
-          echo "DB schema name=$DATABASE_SCHEMA_NAME"
-
       - name: Install psql
         run: |
           sudo dnf install postgresql15 -y
@@ -105,7 +79,7 @@ jobs:
         run: |
           set -e
            
-          SQL_GET_ORGANIZATION=$(envsubst < .github/workflows/scripts/get-organization.sql)
+          SQL_GET_ORGANIZATION=$(envsubst < .github/workflows/resources/get-organization.sql)
           echo "${SQL_GET_ORGANIZATION}"
           
           export ORGANIZATION=$(psql -t --command="${SQL_GET_ORGANIZATION}" | head -n 1 | xargs | tr -d '\r')
@@ -118,6 +92,6 @@ jobs:
             export UNTIL="null"
           fi
           
-          SQL_INSERT_RECORD=$(envsubst < .github/workflows/scripts/insert-record.sql)
+          SQL_INSERT_RECORD=$(envsubst < .github/workflows/resources/insert-record.sql)
           echo "$SQL_INSERT_RECORD"
-#          psql -t --command="${SQL_INSERT_RECORD}"
+          psql -t --command="${SQL_INSERT_RECORD}"
