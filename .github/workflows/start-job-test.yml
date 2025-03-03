@@ -133,8 +133,8 @@ jobs:
           COMMAND_04="VALUES ((select nextval('hibernate_sequence')), '${JOB_ID}', '${ORGANIZATION}', (select now()), "
           COMMAND_05="(select now() + INTERVAL '1 day'), 'ExplanationOfBenefit', 'SUBMITTED', '0%', "
           COMMAND_06="'${API_URL_PREFIX}/v1/fhir/Patient/\$export?_outputFormat=application%252Ffhir%252Bndjson&_type=ExplanationOfBenefit', "
-          COMMAND_07="0, null, null, '${CONTRACT_NUMBER}', null, '${SINCE}', '${FHIR_VERSION}', 'GITHUB_RUNNER');"
-          COMMAND_07_UNTIL="0, null, null, '${CONTRACT_NUMBER}', null, '${SINCE}', '${UNTIL}', '${FHIR_VERSION}', 'GITHUB_RUNNER');"
+          COMMAND_07="0, null, null, '${CONTRACT_NUMBER}', null, '${SINCE}', '${FHIR_VERSION}', 'JENKINS');"
+          COMMAND_07_UNTIL="0, null, null, '${CONTRACT_NUMBER}', null, '${SINCE}', '${UNTIL}', '${FHIR_VERSION}', 'JENKINS');"
 
           if [[ ${FHIR_VERSION} = "R4" ]]; then
             psql \
