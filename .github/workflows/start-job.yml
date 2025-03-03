@@ -2,8 +2,6 @@
 name: start-job
 
 on:
-  push:
-    branches: [ start-job-workflow ]
   workflow_dispatch: # Allow manual trigger
     inputs:
       environment:
