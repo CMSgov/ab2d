@@ -63,7 +63,7 @@ jobs:
 
       - name: Set environment-specific variables
         run: |
-          ENVIRONMENT="${{ inputs.environment }}"
+          ENVIRONMENT="${{ inputs.environment || 'test' }}"
           if [ "$ENVIRONMENT" == "dev" ]; then
             SECRET_STORE_PREFIX="ab2d/ab2d-dev"
             DEFAULT_API_URL_PREFIX="https://dev.ab2d.cms.gov"
