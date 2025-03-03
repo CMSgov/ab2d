@@ -55,7 +55,7 @@ jobs:
       FHIR_VERSION: 'R4'
       SINCE: '2020-02-13T00:00:00.000-05:00'
       UNTIL: '2024-12-31T00:00:00.000-05:00'
-      API_URL_PREFIX: 'https://impl.ab2d.cms.gov'
+      API_URL_PREFIX: ''
 
     steps:
       - name: Checkout Code
@@ -137,9 +137,17 @@ jobs:
 
           if [[ ${FHIR_VERSION} = "R4" ]]; then
             # TODO check for valid UNTIL value
+            if [ -z "${UNTIL}" ]; then
+              echo "FHIR version R4 requires the 'until' parameter"
+              exit 1
+            fi  
             export UNTIL="'${UNTIL}'"
           else
             export UNTIL="null"
+          fi
+          
+          if [ -z "${API_URL_PREFIX}" ]; then
+            export API_URL_PREFIX=${DEFAULT_API_URL_PREFIX}
           fi
           
           SQL_INSERT_RECORD=$(envsubst < .github/workflows/resources/insert-record.sql)
