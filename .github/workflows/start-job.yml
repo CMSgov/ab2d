@@ -2,9 +2,6 @@
 name: start-job
 
 on:
-  push:
-    branches:
-      - start-job-workflow
   workflow_dispatch: # Allow manual trigger
     inputs:
       environment:
@@ -47,19 +44,12 @@ jobs:
     runs-on: self-hosted
 
     env:
-#      CONTRACT_NUMBER: ${{ inputs.contractNumber }}
-#      FHIR_VERSION: ${{ inputs.fhirVersion }}
-#      SINCE: ${{ inputs.since }}
-#      UNTIL: ${{ inputs.until }}
-#      API_URL_PREFIX: ${{ inputs.apiUrlPrefix }}
-#      ENVIRONMENT: ${{ inputs.environment }}
-      CONTRACT_NUMBER: 'Z0001'
-      FHIR_VERSION: 'STU3'
-      SINCE: '2020-02-13T00:00:00.000-05:00'
-      UNTIL: '2024-12-31T00:00:00.000-05:00'
-      API_URL_PREFIX: ''
-      ENVIRONMENT: 'test'
-
+      CONTRACT_NUMBER: ${{ inputs.contractNumber }}
+      FHIR_VERSION: ${{ inputs.fhirVersion }}
+      SINCE: ${{ inputs.since }}
+      UNTIL: ${{ inputs.until }}
+      API_URL_PREFIX: ${{ inputs.apiUrlPrefix }}
+      ENVIRONMENT: ${{ inputs.environment }}
 
     steps:
       - name: Checkout Code
@@ -97,7 +87,7 @@ jobs:
           ACCOUNT: ${{ inputs.environment == 'prod_test' && 'prod' || inputs.environment }}
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ vars[format('{0}_ACCOUNT_ID', inputs.environment)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
+          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', inputs.environment)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
 
       - name: Set env vars from AWS params in AB2D account
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
