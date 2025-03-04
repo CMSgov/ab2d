@@ -44,12 +44,19 @@ jobs:
     runs-on: self-hosted
 
     env:
-      CONTRACT_NUMBER: ${{ inputs.contractNumber }}
-      FHIR_VERSION: ${{ inputs.fhirVersion }}
-      SINCE: ${{ inputs.since }}
-      UNTIL: ${{ inputs.until }}
-      API_URL_PREFIX: ${{ inputs.apiUrlPrefix }}
-      ENVIRONMENT: ${{ inputs.environment }}
+#      CONTRACT_NUMBER: ${{ inputs.contractNumber }}
+#      FHIR_VERSION: ${{ inputs.fhirVersion }}
+#      SINCE: ${{ inputs.since }}
+#      UNTIL: ${{ inputs.until }}
+#      API_URL_PREFIX: ${{ inputs.apiUrlPrefix }}
+#      ENVIRONMENT: ${{ inputs.environment }}
+      CONTRACT_NUMBER: 'Z0001'
+      FHIR_VERSION: 'STU3'
+      SINCE: '2020-02-13T00:00:00.000-05:00'
+      UNTIL: '2024-12-31T00:00:00.000-05:00'
+      API_URL_PREFIX: ''
+      ENVIRONMENT: 'sbx'
+
 
     steps:
       - name: Checkout Code
@@ -103,14 +110,16 @@ jobs:
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
+          MODULE_DB_PREFIX: /aws/reference/secretsmanager/${{ env.SECRET_STORE_PREFIX }}/module/db
+          MODULE_DB_SUFFIX: 2020-01-02-09-15-01
         with:
           params: |
-            PGHOST=/aws/reference/secretsmanager/${{ env.SECRET_STORE_PREFIX }}/module/db/database_host/2020-01-02-09-15-01
-            PGPORT=/aws/reference/secretsmanager/${{ env.SECRET_STORE_PREFIX }}/module/db/database_port/2020-01-02-09-15-01
-            PGUSER=/aws/reference/secretsmanager/${{ env.SECRET_STORE_PREFIX }}/module/db/database_user/2020-01-02-09-15-01
-            PGDATABASE=/aws/reference/secretsmanager/${{ env.SECRET_STORE_PREFIX }}/module/db/database_name/2020-01-02-09-15-01
-            PGPASSWORD=/aws/reference/secretsmanager/${{ env.SECRET_STORE_PREFIX }}/module/db/database_password/2020-01-02-09-15-01
-            DATABASE_SCHEMA_NAME=/aws/reference/secretsmanager/${{ env.SECRET_STORE_PREFIX }}/module/db/schema_name/2020-01-02-09-15-01
+            PGHOST=${{ env.MODULE_DB_PREFIX }}/database_host/${{ env.MODULE_DB_SUFFIX }}
+            PGPORT=${{ env.MODULE_DB_PREFIX }}/database_port/${{ env.MODULE_DB_SUFFIX }}
+            PGUSER=${{ env.MODULE_DB_PREFIX }}/database_user/${{ env.MODULE_DB_SUFFIX }}
+            PGDATABASE=${{ env.MODULE_DB_PREFIX }}/database_name/${{ env.MODULE_DB_SUFFIX }}
+            PGPASSWORD=${{ env.MODULE_DB_PREFIX }}/database_password/${{ env.MODULE_DB_SUFFIX }}
+            DATABASE_SCHEMA_NAME=${{ env.MODULE_DB_PREFIX }}/schema_name/${{ env.MODULE_DB_SUFFIX }}
 
       - name: Install psql
         run: |
