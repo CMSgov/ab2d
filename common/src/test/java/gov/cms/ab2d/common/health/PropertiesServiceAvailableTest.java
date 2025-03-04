@@ -1,7 +1,7 @@
 package gov.cms.ab2d.common.health;
 
 import gov.cms.ab2d.common.properties.PropertyServiceStub;
-import gov.cms.ab2d.common.SpringBootApp;
+import gov.cms.ab2d.common.SpringBootAppTest;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.properties.client.PropertyNotFoundException;
 import gov.cms.ab2d.common.properties.PropertiesServiceImpl;
@@ -25,7 +25,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest(classes = SpringBootApp.class)
+@SpringBootTest(classes = SpringBootAppTest.class)
 @Testcontainers
 class PropertiesServiceAvailableTest {
     private PropertiesServiceAvailable mockPropertiesServiceAvailable;

@@ -12,6 +12,7 @@
 
     <properties>
         <project.root>${basedir}/..</project.root>
+        <sonar.coverage.exclusions>**/SpringBootAppTest.java</sonar.coverage.exclusions>
     </properties>
 
     <dependencies>
@@ -19,10 +20,16 @@
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>ab2d-properties-client</artifactId>
             <version>${properties-client.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.awspring.cloud</groupId>
+                    <artifactId>spring-cloud-aws-dependencies</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
-            <groupId>javax.validation</groupId>
-            <artifactId>validation-api</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -78,14 +85,21 @@
             <version>3.1.1</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpcore</artifactId>
+            <groupId>org.apache.httpcomponents.core5</groupId>
+            <artifactId>httpcore5</artifactId>
+            <version>5.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>ab2d-fhir</artifactId>
             <version>${fhir-lib.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.awspring.cloud</groupId>
+                    <artifactId>spring-cloud-aws-dependencies</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -106,30 +120,41 @@
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>ab2d-events-client</artifactId>
             <version>${events-client.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.awspring.cloud</groupId>
+                    <artifactId>spring-cloud-aws-dependencies</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
-
-        <dependency>
-          <groupId>io.awspring.cloud</groupId>
-          <artifactId>spring-cloud-aws-autoconfigure</artifactId>
-          <version>${spring-cloud-aws.version}</version>
-        </dependency>
-
         <dependency>
             <groupId>io.awspring.cloud</groupId>
-            <artifactId>spring-cloud-starter-aws-messaging</artifactId>
+            <artifactId>spring-cloud-aws-dependencies</artifactId>
+            <version>${spring-cloud-aws.version}</version>
+            <type>pom</type>
+        </dependency>
+        <dependency>
+            <groupId>io.awspring.cloud</groupId>
+            <artifactId>spring-cloud-aws-starter-sqs</artifactId>
             <version>${spring-cloud-aws.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
-            <version>3.1.5</version>
+            <version>4.1.3</version>
         </dependency>
 
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>ab2d-contracts-client</artifactId>
             <version>${contract-client.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.awspring.cloud</groupId>
+                    <artifactId>spring-cloud-aws-dependencies</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
