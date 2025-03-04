@@ -32,16 +32,34 @@
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>ab2d-bfd</artifactId>
             <version>${bfd-lib.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.awspring.cloud</groupId>
+                    <artifactId>spring-cloud-aws-dependencies</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>ab2d-filters</artifactId>
             <version>${filters-lib.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.awspring.cloud</groupId>
+                    <artifactId>spring-cloud-aws-dependencies</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>ab2d-aggregator</artifactId>
             <version>${aggregator-lib.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.awspring.cloud</groupId>
+                    <artifactId>spring-cloud-aws-dependencies</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -118,7 +136,7 @@
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>ab2d-sns-client</artifactId>
-            <version>0.2.4</version>
+            <version>1.0.1</version>
         </dependency>
 
         <dependency>
@@ -132,14 +150,20 @@
         <!-- used by mockito to mock static methods -->
         <dependency>
             <groupId>org.mockito</groupId>
-            <artifactId>mockito-inline</artifactId>
-            <version>${mockito.inline.version}</version>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito.core.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>ab2d-events-client</artifactId>
             <version>${events-client.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.awspring.cloud</groupId>
+                    <artifactId>spring-cloud-aws-dependencies</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
     <build>

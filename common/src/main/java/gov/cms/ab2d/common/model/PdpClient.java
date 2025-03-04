@@ -5,16 +5,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.Table;
-import javax.validation.constraints.NotNull;
+
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -34,7 +27,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 public class PdpClient extends TimestampBase implements UserDetails {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_account_seq")
+    @SequenceGenerator(name = "user_account_seq", sequenceName = "public.user_account_seq", allocationSize = 1)
     @EqualsAndHashCode.Include
     private Long id;
 
