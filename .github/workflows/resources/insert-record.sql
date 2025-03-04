@@ -1,18 +1,3 @@
-/*
-
-Generates SQL to insert a record into the job table.
-For testing, export the variables below:
-
-export JOB_ID=$(uuidgen)
-export DATABASE_SCHEMA_NAME='public'
-export CONTRACT_NUMBER='Z0001'
-export ORGANIZATION='Z0001'
-export FHIR_VERSION='R4'
-export SINCE='2020-02-13T00:00:00.000-05:00'
-export UNTIL="'2024-12-31T00:00:00.000-05:00'"
-export API_URL_PREFIX='https://impl.ab2d.cms.gov'
-
-*/
 INSERT INTO ${DATABASE_SCHEMA_NAME}.job (
     id,
     job_uuid,
