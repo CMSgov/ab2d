@@ -58,7 +58,7 @@ jobs:
       SINCE: '2020-02-13T00:00:00.000-05:00'
       UNTIL: '2024-12-31T00:00:00.000-05:00'
       API_URL_PREFIX: ''
-      ENVIRONMENT: 'sbx'
+      ENVIRONMENT: 'test'
 
 
     steps:
@@ -67,47 +67,37 @@ jobs:
 
       - name: Set environment-specific variables
         run: |
+          
           if [ "$ENVIRONMENT" == "dev" ]; then
             SECRET_STORE_PREFIX="ab2d/ab2d-dev"
             DEFAULT_API_URL_PREFIX="https://dev.ab2d.cms.gov"
-            ACCOUNT_ID="DEV_ACCOUNT_ID"
-            ROLE="ab2d-dev-github-actions"
           elif [ "$ENVIRONMENT" == "test" ]; then
             SECRET_STORE_PREFIX="ab2d/ab2d-east-impl" 
             DEFAULT_API_URL_PREFIX="https://impl.ab2d.cms.gov"
-            ACCOUNT_ID="TEST_ACCOUNT_ID"
-            ROLE="ab2d-test-github-actions"
           elif [ "$ENVIRONMENT" == "sbx" ]; then
             SECRET_STORE_PREFIX="ab2d/ab2d-sbx-sandbox"
             DEFAULT_API_URL_PREFIX="https://sandbox.ab2d.cms.gov"
-            ACCOUNT_ID="SBX_ACCOUNT_ID"
-            ROLE="ab2d-sbx-github-actions"
           elif [ "$ENVIRONMENT" == "prod_test" ]; then
             SECRET_STORE_PREFIX="ab2d/ab2d-east-prod-test"
             DEFAULT_API_URL_PREFIX="https://api.prod-test.ab2d.cms.gov"
-            ACCOUNT_ID="PROD_ACCOUNT_ID"
-            ROLE="ab2d-prod-github-actions"
           elif [ "$ENVIRONMENT" == "prod" ]; then
             SECRET_STORE_PREFIX="ab2d/ab2d-east-prod"
             DEFAULT_API_URL_PREFIX="https://api.prod-test.ab2d.cms.gov"
-            ACCOUNT_ID="PROD_ACCOUNT_ID"
-            ROLE="ab2d-prod-github-actions"
           else
             echo "Invalid environment: $ENVIRONMENT"
             exit 1
           fi
           
-          echo "ENVIRONMENT=${ENVIRONMENT}" >> $GITHUB_ENV
           echo "SECRET_STORE_PREFIX=${SECRET_STORE_PREFIX}" >> $GITHUB_ENV
           echo "DEFAULT_API_URL_PREFIX=${DEFAULT_API_URL_PREFIX}" >> $GITHUB_ENV
-          echo "ACCOUNT_ID=${ACCOUNT_ID}" >> $GITHUB_ENV
-          echo "ROLE=${ROLE}" >> $GITHUB_ENV
 
       - name: Assume role in AB2D account for this environment
         uses: aws-actions/configure-aws-credentials@v3
+        env:
+          ACCOUNT: ${{ inputs.environment == 'prod_test' && 'prod' || inputs.environment }}
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ secrets[env.ACCOUNT_ID] }}:role/delegatedadmin/developer/${{ env.ROLE }}
+          role-to-assume: arn:aws:iam::${{ vars[format('{0}_ACCOUNT_ID', inputs.environment)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
 
       - name: Set env vars from AWS params in AB2D account
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
@@ -155,5 +145,5 @@ jobs:
           fi
           
           SQL_INSERT_RECORD=$(envsubst < .github/workflows/resources/insert-record.sql)
-          psql -t --command="${SQL_INSERT_RECORD}"
+#          psql -t --command="${SQL_INSERT_RECORD}"
           echo "Inserted record with job UUID = $JOB_ID"
