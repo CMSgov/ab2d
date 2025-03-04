@@ -57,7 +57,6 @@ jobs:
 
       - name: Set environment-specific variables
         run: |
-          
           if [ "$ENVIRONMENT" == "dev" ]; then
             SECRET_STORE_PREFIX="ab2d/ab2d-dev"
             DEFAULT_API_URL_PREFIX="https://dev.ab2d.cms.gov"
@@ -135,5 +134,5 @@ jobs:
           fi
           
           SQL_INSERT_RECORD=$(envsubst < .github/workflows/resources/insert-record.sql)
-          #psql -t --command="${SQL_INSERT_RECORD}"
+          psql -t --command="${SQL_INSERT_RECORD}"
           echo "Inserted record with job UUID = $JOB_ID"
