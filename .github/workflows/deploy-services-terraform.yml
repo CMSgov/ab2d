@@ -1,0 +1,93 @@
+name: deploy-terraform
+
+on:
+  workflow_call:
+    inputs:
+      apply:
+        required: false
+        type: boolean
+      environment:
+        required: true
+        type: string
+      branch_name:
+        required: false
+        type: string
+        default: 'main'
+  workflow_dispatch:
+    inputs:
+      apply:
+        required: false
+        type: boolean
+        default: false
+      environment:
+        required: true
+        type: choice
+        options:
+          - ab2d-east-impl
+          - ab2d-dev
+          - ab2d-sbx-sandbox
+          - ab2d-east-prod
+          - ab2d-east-prod-test
+      branch_name:
+        required: false
+        type: string
+        default: 'main'
+
+jobs:
+  terraform:
+    runs-on: self-hosted
+
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', github.event.inputs.environment || inputs.environment)] }}
+      AWS_ACCOUNT_NUMBER: ${{ secrets[format('{0}_ACCOUNT_ID', github.event.inputs.environment || inputs.environment)] }}
+
+    steps:
+
+      - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        env:
+          ACCOUNT: ${{ inputs.environment == 'prod_test' && 'prod' || inputs.environment }}
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions    
+
+      - name: Checkout AB2D-Ops Repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'cmsgov/AB2D-Ops'
+
+      - name: Verify AWS Account Selection
+        run: |
+          if [[ -z "${{ env.AWS_ACCOUNT_NUMBER }}" ]]; then
+            echo "Error: AWS_ACCOUNT_NUMBER is not set for environment ${{ inputs.environment }}"
+            exit 1
+          fi
+          echo "Using AWS Account ID: $AWS_ACCOUNT_NUMBER"
+
+      - name: Assume AWS Role
+        run: |
+          source scripts/functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh
+          fn_get_temporary_aws_credentials_via_aws_sts_assume_role ${AWS_ACCOUNT_NUMBER} ${{ inputs.environment }} > /dev/null 2>&1
+
+      - name: Terraform Init & Plan
+        working-directory: terraform/environments/ab2d/core/
+        run: |
+          terraform init -no-color -reconfigure -backend-config=backend/${{ inputs.environment }}.conf
+          terraform plan -no-color -var env=${{ inputs.environment }} -out=core.tfplan
+
+      - name: Terraform Approve
+        if: ${{ inputs.apply == true }}
+        run: |
+          echo "Terraform plan requires manual approval before apply."
+
+      - name: Terraform Apply
+        if: ${{ inputs.apply == true }}
+        working-directory: terraform/environments/ab2d/core/
+        run: |
+          terraform apply -input=false -no-color core.tfplan
+
+      - name: Cleanup Terraform Plan
+        if: always()
+        working-directory: terraform/environments/ab2d/core/
+        run: |
+          rm -f core.tfplan
