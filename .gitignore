@@ -85,6 +85,9 @@ build/
 *.tar
 *.tgz
 
+### Include compressed file for testing GzipCompressUtils
+!EOB-500.ndjson.gz
+
 ### Eclipse
 .checkstyle
 
