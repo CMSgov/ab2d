@@ -104,6 +104,7 @@ jobs:
 
       - name: Determine lambdas build version
         run: |
+          echo "build version from inputs = ${{ inputs.buildVersion }}
           buildVersion=$(echo ${{ needs.publish_lambdas.outputs.build_version || inputs.buildVersion }} | tr -d ' ')
           echo "buildVersion=$buildVersion"
           echo "BUILD_VERSION=$buildVersion" >> $GITHUB_ENV
