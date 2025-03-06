@@ -32,6 +32,9 @@ on:
         required: false
         type: string
         default: 'main'
+  pull_request:
+    paths:
+      - 'terraform/**'
 
 jobs:
   terraform:
@@ -44,12 +47,11 @@ jobs:
 
     steps:
 
-      - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
-        env:
-          ACCOUNT: ${{ inputs.environment == 'prod_test' && 'prod' || inputs.environment }}
+      - name: Assume role in target account
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions    
+          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT', inputs.environment)] }}:role/delegatedadmin/developer/ab2d-${{ inputs.environment }}-github-actions
 
       - name: Checkout AB2D-Ops Repository
         uses: actions/checkout@v4
@@ -74,6 +76,20 @@ jobs:
         run: |
           terraform init -no-color -reconfigure -backend-config=backend/${{ inputs.environment }}.conf
           terraform plan -no-color -var env=${{ inputs.environment }} -out=core.tfplan
+
+      - name: Post Terraform Plan Output as PR Comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const planOutput = fs.readFileSync('terraform/environments/ab2d/core/core.tfplan', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.payload.pull_request.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `### Terraform Plan Output\n\`\`\`\n${planOutput}\n\`\`\``
+            });
 
       - name: Terraform Approve
         if: ${{ inputs.apply == true }}
