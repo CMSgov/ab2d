@@ -48,8 +48,7 @@ jobs:
       - name: Checkout AB2D-Ops Repository
         uses: actions/checkout@v4
         with:
-          repository: 'cmsgov/AB2D-Ops'
-          fetch-depth: 0  # Ensures full history is available for diff
+          repository: 'cmsgov/ab2d-ops'
 
       - name: Detect Changes in Terraform Directory
         id: check_changes
