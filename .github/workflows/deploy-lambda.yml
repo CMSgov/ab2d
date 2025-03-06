@@ -22,18 +22,10 @@ on:
 
 jobs:
   publish_lambdas:
-    runs-on: self-hosted
-    steps:
-      - name: Checkout ab2d-lambdas repository
-        uses: actions/checkout@v4
-        with:
-          repository: 'cmsgov/ab2d-lambdas'
-
-      - name: Run publish-lambdas workflow
-        uses: cmsgov/ab2d-lambdas/.github/workflows/publish-lambdas.yml@update-publish-lamda-workflow
-        with:
-          environment: dev
-        if: true
+    uses: cmsgov/ab2d-lambdas/.github/workflows/publish-lambdas.yml@update-publish-lamda-workflow
+    with:
+      environment: dev
+    if: true
 
   deploy:
     runs-on: self-hosted
