@@ -1,10 +1,6 @@
 package gov.cms.ab2d.coverage.model;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -15,8 +11,10 @@ import java.time.OffsetDateTime;
 @Data
 @AllArgsConstructor
 public class CoverageSearch {
+
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "coverage_search_seq")
+    @SequenceGenerator(name = "coverage_search_seq", sequenceName = "public.coverage_search_seq", allocationSize = 1)
     @EqualsAndHashCode.Include
     private Long id;
 

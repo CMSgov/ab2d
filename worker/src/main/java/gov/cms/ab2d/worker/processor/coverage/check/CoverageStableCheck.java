@@ -4,7 +4,6 @@ import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import lombok.extern.slf4j.Slf4j;
-import org.joda.time.LocalDate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +16,6 @@ import java.util.Map;
 @Slf4j
 public class CoverageStableCheck extends CoverageCheckPredicate {
 
-    private static final int CHANGE_THRESHOLD = 1000;
     private static final int CHANGE_PERCENT_THRESHOLD = 15;
 
     public CoverageStableCheck(CoverageService coverageService, Map<String, List<CoverageCount>> coverageCounts, List<String> issues) {
@@ -42,7 +40,7 @@ public class CoverageStableCheck extends CoverageCheckPredicate {
             CoverageCount nextMonth = coverageCounts.get(idx);
             int change = Math.abs(previousMonth.getBeneficiaryCount() - nextMonth.getBeneficiaryCount());
 
-            if (skipCheck(previousMonth, nextMonth, change)) {
+            if (CoverageStableCheckHelper.skipCheck(previousMonth, nextMonth, change)) {
                 continue;
             }
 
@@ -58,30 +56,5 @@ public class CoverageStableCheck extends CoverageCheckPredicate {
         }
 
         return coveragePeriodsChanged;
-    }
-
-    //Moved the skip check conditions to a method to make sonar happy
-    private boolean skipCheck(CoverageCount previousMonth, CoverageCount nextMonth, int change) {
-
-        // Don't check December to January because changes can be 200% or more
-        LocalDate now = LocalDate.now();
-        boolean skip = previousMonth.getMonth() == 12;
-
-        // Ignores coverage checks from previous years
-        if (nextMonth.getYear() < now.getYear() && previousMonth.getYear() < now.getYear()) {
-            skip = true;
-        }
-
-        // January to February changes can also be significant.
-        // Stop sending this notification once February ends.
-        if (now.getMonthOfYear() > 2 && previousMonth.getMonth() == 1) {
-            skip = true;
-        }
-
-        // Change could be anomaly for smaller contracts, ignore
-        if (change < CHANGE_THRESHOLD) {
-            skip = true;
-        }
-        return skip;
     }
 }

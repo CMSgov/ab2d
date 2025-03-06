@@ -1,6 +1,6 @@
 package gov.cms.ab2d.api.util;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 public final class UtilMethods {
 

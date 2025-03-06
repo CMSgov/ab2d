@@ -1,0 +1,70 @@
+name: Verify deployment
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: false
+        type: string
+  workflow_dispatch:
+    inputs:
+      environment:
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+          - sbx
+          - prod
+
+jobs:
+  test:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Assume role in AB2D account for this environment
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
+        env:
+          ACCOUNT: ${{ inputs.environment == '' && 'test' || inputs.environment }}
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
+          
+      - name: Set environment-specific variables
+        run: |
+          ENVIRONMENT="${{ inputs.environment || 'test' }}"
+          if [ "$ENVIRONMENT" == "test" ]; then
+            echo "SECRET_ID=ab2d/ab2d-east-impl/jenkins-verify-api" >> $GITHUB_ENV
+            echo "BASE_URL=https://impl.ab2d.cms.gov" >> $GITHUB_ENV
+            echo "EXPORT_URL=https://impl.ab2d.cms.gov/api/v2/fhir/Patient/?_type=ExplanationOfBenefit&_since=2020-02-13T00:00:00.000-05:00&_outputFormat=application%2Ffhir%2Bndjson" >> $GITHUB_ENV
+          elif [ "$ENVIRONMENT" == "dev" ]; then
+            echo "SECRET_ID=ab2d/ab2d-dev/jenkins-verify-basic-auth" >> $GITHUB_ENV
+            echo "BASE_URL=https://dev.ab2d.cms.gov" >> $GITHUB_ENV
+            echo "EXPORT_URL=https://dev.ab2d.cms.gov/api/v2/fhir/Patient/?_type=ExplanationOfBenefit&_since=2020-02-13T00:00:00.000-05:00&_outputFormat=application%2Ffhir%2Bndjson" >> $GITHUB_ENV
+          elif [ "$ENVIRONMENT" == "sbx" ]; then
+            echo "SECRET_ID=ab2d/ab2d-sbx-sandbox/jenkins-verify-basic-auth" >> $GITHUB_ENV
+            echo "BASE_URL=https://sbx.ab2d.cms.gov" >> $GITHUB_ENV
+            echo "EXPORT_URL=https://sbx.ab2d.cms.gov/api/v2/fhir/Patient/?_type=ExplanationOfBenefit&_since=2020-02-13T00:00:00.000-05:00&_outputFormat=application%2Ffhir%2Bndjson" >> $GITHUB_ENV
+          elif [ "$ENVIRONMENT" == "prod" ]; then
+            echo "SECRET_ID=ab2d/ab2d-east-prod/jenkins-verify-basic-auth" >> $GITHUB_ENV
+            echo "BASE_URL=https://api.ab2d.cms.gov" >> $GITHUB_ENV
+            echo "EXPORT_URL=https://api.ab2d.cms.gov/api/v2/fhir/Patient/?_type=ExplanationOfBenefit&_since=2020-02-13T00:00:00.000-05:00&_outputFormat=application%2Ffhir%2Bndjson" >> $GITHUB_ENV
+          else
+            echo "Invalid environment: $ENVIRONMENT"
+            exit 1
+          fi
+
+      - name: Set script file based on environment
+        run: echo "script=./scripts/verify-deployment.sh" >> $GITHUB_ENV
+
+      - name: Run deployment verification script
+        run: |
+          chmod +x ./scripts/verify-deployment.sh
+          ./scripts/verify-deployment.sh "$SECRET_ID" "$BASE_URL" "$EXPORT_URL"
+        env:
+          SECRET_ID: ${{ env.SECRET_ID }}
+          BASE_URL: ${{ env.BASE_URL }}
+          EXPORT_URL: ${{ env.EXPORT_URL }}
