@@ -98,9 +98,9 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
         with:
-          token: ${{ env.OPS_GITHUB_TOKEN }}
           repository: 'cmsgov/ab2d-ops'
           ref: ${{ inputs.ab2dOpsBranch }}
+          token: ${{ env.OPS_GITHUB_TOKEN }}
 
       - name: Determine lambdas build version
         run: |
@@ -122,7 +122,7 @@ jobs:
 
         run: |
           curl -u "${ARTIFACTORY_USER}:${ARTIFACTORY_PASSWORD}" "${ARTIFACTORY_PREFIX}/metrics-lambda/${BUILD_VERSION}/metrics-lambda-${BUILD_VERSION}.zip" --output metrics-lambda.zip
-
+          echo "$(ls)"
 #          mkdir -p terraform/modules/lambda/event-service || true
 #          cd terraform/modules/lambda/event-service
 #          curl -u "${ARTIFACTORY_USER}:${ARTIFACTORY_PASSWORD}" "https://artifactory.cloud.cms.gov/artifactory/ab2d-main/gov/cms/ab2d/metrics-lambda/${buildVersion//[$'\t\r\n ']}/metrics-lambda-${buildVersion//[$'\t\r\n ']}.zip" --output metrics-lambda.zip
