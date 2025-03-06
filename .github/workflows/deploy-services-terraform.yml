@@ -45,10 +45,20 @@ jobs:
       AWS_ACCOUNT_NUMBER: ${{ secrets[format('{0}_ACCOUNT_ID', github.event.inputs.environment || inputs.environment)] }}
 
     steps:
+
+      - name: Get AWS params
+        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |
+            OPS_GITHUB_TOKEN=/ci/github/token
+    
       - name: Checkout AB2D-Ops Repository
         uses: actions/checkout@v4
         with:
           repository: 'cmsgov/ab2d-ops'
+          token: ${{ env.OPS_GITHUB_TOKEN }}          
 
       - name: Detect Changes in Terraform Directory
         id: check_changes
