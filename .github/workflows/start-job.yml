@@ -1,0 +1,138 @@
+
+name: start-job
+
+on:
+  workflow_dispatch: # Allow manual trigger
+    inputs:
+      environment:
+        description: 'AB2D environment'
+        type: choice
+        options:
+          - dev
+          - test
+          - sbx
+          - prod_test
+          - prod
+        default: test
+      contractNumber:
+        description: 'Contract to start a job for'
+        type: string
+        required: true
+        default: 'Z0001'
+      fhirVersion:
+        description: 'FHIR version'
+        type: choice
+        options:
+          - STU3
+          - R4
+        default: STU3
+      since:
+        description: 'Since date to use for a job. The earliest accepted date is 2020-02-13T00:00:00.000-05:00'
+        type: string
+        required: true
+      until:
+        description: 'Until date to use for a job. Accepted date format for V2 is 2020-02-13T00:00:00.000-05:00'
+        type: string
+        required: false
+      apiUrlPrefix:
+        description: 'Origin of request for a job. May correspond to actual AB2D API URL or not. Leave blank to populate default value.'
+        type: string
+        required: false
+
+jobs:
+  start-job:
+    runs-on: self-hosted
+
+    env:
+      CONTRACT_NUMBER: ${{ inputs.contractNumber }}
+      FHIR_VERSION: ${{ inputs.fhirVersion }}
+      SINCE: ${{ inputs.since }}
+      UNTIL: ${{ inputs.until }}
+      API_URL_PREFIX: ${{ inputs.apiUrlPrefix }}
+      ENVIRONMENT: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set environment-specific variables
+        run: |
+          if [ "$ENVIRONMENT" == "dev" ]; then
+            SECRET_STORE_PREFIX="ab2d/ab2d-dev"
+            DEFAULT_API_URL_PREFIX="https://dev.ab2d.cms.gov"
+          elif [ "$ENVIRONMENT" == "test" ]; then
+            SECRET_STORE_PREFIX="ab2d/ab2d-east-impl" 
+            DEFAULT_API_URL_PREFIX="https://impl.ab2d.cms.gov"
+          elif [ "$ENVIRONMENT" == "sbx" ]; then
+            SECRET_STORE_PREFIX="ab2d/ab2d-sbx-sandbox"
+            DEFAULT_API_URL_PREFIX="https://sandbox.ab2d.cms.gov"
+          elif [ "$ENVIRONMENT" == "prod_test" ]; then
+            SECRET_STORE_PREFIX="ab2d/ab2d-east-prod-test"
+            DEFAULT_API_URL_PREFIX="https://api.prod-test.ab2d.cms.gov"
+          elif [ "$ENVIRONMENT" == "prod" ]; then
+            SECRET_STORE_PREFIX="ab2d/ab2d-east-prod"
+            DEFAULT_API_URL_PREFIX="https://api.prod-test.ab2d.cms.gov"
+          else
+            echo "Invalid environment: $ENVIRONMENT"
+            exit 1
+          fi
+          
+          echo "SECRET_STORE_PREFIX=${SECRET_STORE_PREFIX}" >> $GITHUB_ENV
+          echo "DEFAULT_API_URL_PREFIX=${DEFAULT_API_URL_PREFIX}" >> $GITHUB_ENV
+
+      - name: Assume role in AB2D account for this environment
+        uses: aws-actions/configure-aws-credentials@v3
+        env:
+          ACCOUNT: ${{ inputs.environment == 'prod_test' && 'prod' || inputs.environment }}
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
+
+      - name: Set env vars from AWS params in AB2D account
+        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          MODULE_DB_PREFIX: /aws/reference/secretsmanager/${{ env.SECRET_STORE_PREFIX }}/module/db
+          MODULE_DB_SUFFIX: 2020-01-02-09-15-01
+        with:
+          params: |
+            PGHOST=${{ env.MODULE_DB_PREFIX }}/database_host/${{ env.MODULE_DB_SUFFIX }}
+            PGPORT=${{ env.MODULE_DB_PREFIX }}/database_port/${{ env.MODULE_DB_SUFFIX }}
+            PGUSER=${{ env.MODULE_DB_PREFIX }}/database_user/${{ env.MODULE_DB_SUFFIX }}
+            PGDATABASE=${{ env.MODULE_DB_PREFIX }}/database_name/${{ env.MODULE_DB_SUFFIX }}
+            PGPASSWORD=${{ env.MODULE_DB_PREFIX }}/database_password/${{ env.MODULE_DB_SUFFIX }}
+            DATABASE_SCHEMA_NAME=${{ env.MODULE_DB_PREFIX }}/schema_name/${{ env.MODULE_DB_SUFFIX }}
+
+      - name: Install psql
+        run: |
+          sudo dnf install postgresql15 -y
+
+      - name: Insert record
+        run: |
+          set -e
+          export JOB_ID=$(uuidgen)
+          
+          SQL_GET_ORGANIZATION=$(envsubst < .github/workflows/resources/get-organization.sql)
+          export ORGANIZATION=$(psql -t --command="${SQL_GET_ORGANIZATION}" | head -n 1 | xargs | tr -d '\r')
+          if [ -z "${ORGANIZATION}" ]; then
+            echo "Unable to retrieve organization"
+            exit 1
+          fi
+
+          if [[ ${FHIR_VERSION} = "R4" ]]; then
+            if [ -z "${UNTIL}" ]; then
+              echo "FHIR version R4 requires a value for 'until'"
+              exit 1
+            fi  
+            export UNTIL="'${UNTIL}'"
+          else
+            export UNTIL="null"
+          fi
+          
+          if [ -z "${API_URL_PREFIX}" ]; then
+            export API_URL_PREFIX=${DEFAULT_API_URL_PREFIX}
+          fi
+          
+          SQL_INSERT_RECORD=$(envsubst < .github/workflows/resources/insert-record.sql)
+          psql -t --command="${SQL_INSERT_RECORD}"
+          echo "Inserted record with job UUID = $JOB_ID"
