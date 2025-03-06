@@ -6,9 +6,9 @@ name: deploy-lambdas
 #  string(defaultValue: 'main', name: 'AB2D_REPO_REF', description: "ab2d-lambda branch?")
 
 on:
-  push:
-    branches:
-      - lambda-tf-workflow
+#  push:
+#    branches:
+#      - lambda-tf-workflow
   workflow_call:
     inputs:
       apply:
