@@ -23,6 +23,8 @@ on:
 jobs:
   publish_lambdas:
     uses: cmsgov/ab2d-lambdas/.github/workflows/publish-lambdas.yml@update-publish-lamda-workflow
+    with:
+      environment: dev
     if: true
 
   deploy:
