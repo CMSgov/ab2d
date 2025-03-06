@@ -32,9 +32,8 @@ on:
         required: false
         type: string
         default: 'main'
-  pull_request:
-    paths:
-      - 'terraform/**'
+  pull_request:  # Runs on all PRs, but we will filter Terraform changes later
+    types: [opened, synchronize, reopened]
 
 jobs:
   terraform:
@@ -46,17 +45,35 @@ jobs:
       AWS_ACCOUNT_NUMBER: ${{ secrets[format('{0}_ACCOUNT_ID', github.event.inputs.environment || inputs.environment)] }}
 
     steps:
+      - name: Checkout AB2D-Ops Repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'cmsgov/AB2D-Ops'
+          fetch-depth: 0  # Ensures full history is available for diff
+
+      - name: Detect Changes in Terraform Directory
+        id: check_changes
+        run: |
+          CHANGED_FILES=$(git diff --name-only origin/main...HEAD | grep '^terraform/' || true)
+          if [[ -z "$CHANGED_FILES" ]]; then
+            echo "No changes detected in terraform/ directory. Skipping Terraform job."
+            echo "skip=true" >> $GITHUB_ENV
+          else
+            echo "Terraform changes detected:"
+            echo "$CHANGED_FILES"
+          fi
+
+      - name: Skip Job if No Terraform Changes
+        if: env.skip == 'true'
+        run: |
+          echo "No relevant Terraform changes, exiting job."
+          exit 0
 
       - name: Assume role in target account
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT', inputs.environment)] }}:role/delegatedadmin/developer/ab2d-${{ inputs.environment }}-github-actions
-
-      - name: Checkout AB2D-Ops Repository
-        uses: actions/checkout@v4
-        with:
-          repository: 'cmsgov/AB2D-Ops'
 
       - name: Verify AWS Account Selection
         run: |
@@ -66,16 +83,11 @@ jobs:
           fi
           echo "Using AWS Account ID: $AWS_ACCOUNT_NUMBER"
 
-      - name: Assume AWS Role
-        run: |
-          source scripts/functions/fn_get_temporary_aws_credentials_via_aws_sts_assume_role.sh
-          fn_get_temporary_aws_credentials_via_aws_sts_assume_role ${AWS_ACCOUNT_NUMBER} ${{ inputs.environment }} > /dev/null 2>&1
-
       - name: Terraform Init & Plan
         working-directory: terraform/environments/ab2d/core/
         run: |
           terraform init -no-color -reconfigure -backend-config=backend/${{ inputs.environment }}.conf
-          terraform plan -no-color -var env=${{ inputs.environment }} -out=core.tfplan
+          terraform plan -no-color -var env=${{ inputs.environment }} -out=core.tfplan | tee plan_output.txt
 
       - name: Post Terraform Plan Output as PR Comment
         if: github.event_name == 'pull_request'
@@ -83,7 +95,7 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const planOutput = fs.readFileSync('terraform/environments/ab2d/core/core.tfplan', 'utf8');
+            const planOutput = fs.readFileSync('terraform/environments/ab2d/core/plan_output.txt', 'utf8');
             github.rest.issues.createComment({
               issue_number: context.payload.pull_request.number,
               owner: context.repo.owner,
@@ -91,19 +103,8 @@ jobs:
               body: `### Terraform Plan Output\n\`\`\`\n${planOutput}\n\`\`\``
             });
 
-      - name: Terraform Approve
-        if: ${{ inputs.apply == true }}
-        run: |
-          echo "Terraform plan requires manual approval before apply."
-
-      - name: Terraform Apply
-        if: ${{ inputs.apply == true }}
-        working-directory: terraform/environments/ab2d/core/
-        run: |
-          terraform apply -input=false -no-color core.tfplan
-
       - name: Cleanup Terraform Plan
         if: always()
         working-directory: terraform/environments/ab2d/core/
         run: |
-          rm -f core.tfplan
+          rm -f core.tfplan plan_output.txt
