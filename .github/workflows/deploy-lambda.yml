@@ -87,6 +87,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
         with:
+          token: ${{ env.OPS_GITHUB_TOKEN }}
           repository: 'cmsgov/ab2d-ops'
           ref: ${{ inputs.ab2dOpsBranch }}
 
