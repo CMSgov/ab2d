@@ -126,7 +126,8 @@ jobs:
           ARTIFACTORY_PREFIX: 'https://artifactory.cloud.cms.gov/artifactory/ab2d-main/gov/cms/ab2d'
 
         run: |
-          for name in 'metrics-lambda' 'audit' 'database-management' 'coverage-counts' 'retrieve-hpms-counts'; 
+          declare -a lambdas=('metrics-lambda' 'audit' 'database-management' 'coverage-counts' 'retrieve-hpms-counts')
+          for name in "${lambdas[@]}"
             do curl -u "${ARTIFACTORY_USER}:${ARTIFACTORY_PASSWORD}" "${ARTIFACTORY_PREFIX}/${name}/${{ env.BUILD_VERSION }}/${name}-${{ env.BUILD_VERSION }}.zip" --output ${name}.zip
           done
           
