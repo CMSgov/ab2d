@@ -159,6 +159,16 @@ jobs:
         with:
           terraform_version: "1.0.0"
 
+      - name: Setup node for terraform
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20'
+
+      - name: Setup terraform
+        uses: actions/setup-terraform@v3
+        with:
+          terraform_version: '1.2.0'
+
       - name: Terraform init and plan
         run: |
           echo "$(ls -lah)"
