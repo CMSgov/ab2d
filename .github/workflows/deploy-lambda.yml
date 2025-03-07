@@ -1,14 +1,8 @@
 name: deploy-lambdas
 
-#  booleanParam(defaultValue: false, name: 'APPLY', description: "Apply output from plan?")
-#  choice(choices: ["-",'ab2d-east-impl', 'ab2d-dev', 'ab2d-sbx-sandbox', 'ab2d-east-prod', 'ab2d-east-prod-test'], name: 'PARENT_ENV', description: "Ab2d environment?")
-#  string(defaultValue: 'main', name: 'BRANCH_NAME', description: "Github branch?")
-#  string(defaultValue: 'main', name: 'AB2D_REPO_REF', description: "ab2d-lambda branch?")
+# gh workflow run deploy-lambda.yml --ref lambda-tf-workflow -f apply=false -f environment=dev -f ab2dOpsBranch=main -f ab2dLambdasBranch=main -f runBuildJob=false -f buildVersion=1.1.0
 
 on:
-#  push:
-#    branches:
-#      - lambda-tf-workflow
   workflow_call:
     inputs:
       apply:
@@ -72,12 +66,13 @@ jobs:
     uses: cmsgov/ab2d-lambdas/.github/workflows/publish-lambdas.yml@update-publish-lamda-workflow
     with:
       environment: dev
+      ref: ${{ inputs.ab2dLambdasBranch }}
     if: ${{ inputs.runBuildJob == true }}
 
   deploy:
     runs-on: self-hosted
     needs: publish_lambdas
-    # always run this job but - if runBuildJob=true, then wait for 'publish_lambdas' job to finish
+    # always run this job but if runBuildJob=true, then wait for 'publish_lambdas' job to finish
     # without this conditional, this job will not run unless runBuildJob=true
     if: ${{ always() && !cancelled() }}
 
