@@ -136,7 +136,6 @@ jobs:
       - name: Download ZIP files
         env:
           ARTIFACTORY_PREFIX: 'https://artifactory.cloud.cms.gov/artifactory/ab2d-main/gov/cms/ab2d'
-
         run: |
           mkdir -p terraform/modules/lambda/event-service || true
           cd terraform/modules/lambda/event-service
@@ -154,10 +153,16 @@ jobs:
           
           echo "$(ls -lah)"
           cd -
-          
+
+      - name: install terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.0.0"
+
+      - name: Terraform init and plan
+        run: |
+          echo "$(ls -lah)"
           set -x
-          
-          
-          
+          cd terraform/environments/ab2d/lambda/
           terraform init -no-color -reconfigure -backend-config=backend/${AB2D_ENV}.conf
           terraform plan -no-color -var env=${AB2D_ENV} -out=lambda.tfplan
