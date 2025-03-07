@@ -154,6 +154,7 @@ jobs:
           echo "$(ls -lah)"
           cd -
 
+      # without this step, terraform fails with `/usr/bin/env: ‘node’: No such file or directory`
       - name: Setup node for terraform
         uses: actions/setup-node@v2
         with:
