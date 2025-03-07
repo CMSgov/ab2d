@@ -110,7 +110,7 @@ jobs:
             echo "Unable to determine build version"
             exit 1
           fi  
-          echo "BUILD_VERSION=$buildVersion" >> $GITHUB_ENV
+          echo "BUILD_VERSION=${BUILD_VERSION}" >> $GITHUB_ENV
 
 
       - name: Assume role in AB2D account for this environment
