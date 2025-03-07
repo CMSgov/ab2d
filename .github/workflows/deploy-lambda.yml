@@ -145,3 +145,15 @@ jobs:
           
           echo "$(ls -lah)"
           cd -
+          
+          set -x
+          
+          if [[ ${{ inputs.environment }} = "dev" ]];         then AB2D_ENV='ab2d-dev'
+          elif [[ ${{ inputs.environment }} = "test" ]];      then AB2D_ENV='ab2d-east-impl'
+          elif [[ ${{ inputs.environment }} = "sbx" ]];       then AB2D_ENV='ab2d-sbx-sandbox'
+          elif [[ ${{ inputs.environment }} = "prod_test" ]]; then AB2D_ENV='ab2d-east-prod-test'
+          elif [[ ${{ inputs.environment }} = "prod" ]];      then AB2D_ENV='ab2d-east-prod'
+          fi
+          
+          terraform init -no-color -reconfigure -backend-config=backend/${AB2D_ENV}.conf
+          terraform plan -no-color -var env=${AB2D_ENV} -out=lambda.tfplan
