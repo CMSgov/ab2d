@@ -1,7 +1,5 @@
 name: deploy-lambdas
 
-# gh workflow run deploy-lambda.yml --ref lambda-tf-workflow -f apply=false -f environment=dev -f ab2dOpsBranch=main -f ab2dLambdasBranch=main -f runBuildJob=false -f buildVersion=1.1.0
-
 on:
   workflow_call:
     inputs:
