@@ -77,7 +77,10 @@ jobs:
   deploy:
     runs-on: self-hosted
     needs: publish_lambdas
-    if: always()
+    # always run this job but - if runBuildJob=true, then wait for 'publish_lambdas' job to finish
+    # without this conditional, this job will not run unless runBuildJob=true
+    if: ${{ always() && !cancelled() }}
+
     env:
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
       AWS_REGION: ${{ vars.AWS_REGION }}
@@ -126,6 +129,9 @@ jobs:
           ARTIFACTORY_PREFIX: 'https://artifactory.cloud.cms.gov/artifactory/ab2d-main/gov/cms/ab2d'
 
         run: |
+          mkdir -p terraform/modules/lambda/event-service || true
+          cd terraform/modules/lambda/event-service
+          
           declare -a lambdas=(
             'metrics-lambda' 
             'audit' 
@@ -138,11 +144,4 @@ jobs:
           done
           
           echo "$(ls -lah)"
-#          mkdir -p terraform/modules/lambda/event-service || true
-#          cd terraform/modules/lambda/event-service
-#          curl -u "${ARTIFACTORY_USER}:${ARTIFACTORY_PASSWORD}" "https://artifactory.cloud.cms.gov/artifactory/ab2d-main/gov/cms/ab2d/metrics-lambda/${buildVersion//[$'\t\r\n ']}/metrics-lambda-${buildVersion//[$'\t\r\n ']}.zip" --output metrics-lambda.zip
-#          curl -u "${ARTIFACTORY_USER}:${ARTIFACTORY_PASSWORD}" "https://artifactory.cloud.cms.gov/artifactory/ab2d-main/gov/cms/ab2d/audit/${buildVersion//[$'\t\r\n ']}/audit-${buildVersion//[$'\t\r\n ']}.zip" --output audit.zip
-#          curl -u "${ARTIFACTORY_USER}:${ARTIFACTORY_PASSWORD}" "https://artifactory.cloud.cms.gov/artifactory/ab2d-main/gov/cms/ab2d/database-management/${buildVersion//[$'\t\r\n ']}/database-management-${buildVersion//[$'\t\r\n ']}.zip" --output database-management.zip
-#          curl -u "${ARTIFACTORY_USER}:${ARTIFACTORY_PASSWORD}" "https://artifactory.cloud.cms.gov/artifactory/ab2d-main/gov/cms/ab2d/coverage-counts/${buildVersion//[$'\t\r\n ']}/coverage-counts-${buildVersion//[$'\t\r\n ']}.zip" --output coverage-counts.zip
-#          curl -u "${ARTIFACTORY_USER}:${ARTIFACTORY_PASSWORD}" "https://artifactory.cloud.cms.gov/artifactory/ab2d-main/gov/cms/ab2d/retrieve-hpms-counts/${buildVersion//[$'\t\r\n ']}/retrieve-hpms-counts-${buildVersion//[$'\t\r\n ']}.zip" --output retrieve-hpms-counts.zip
-#          cd -
+          cd -
