@@ -104,7 +104,7 @@ jobs:
 
       - name: Determine lambdas build version
         run: |
-          BUILD_VERSION=$(echo ${{ needs.publish_lambdas.outputs.build_version || inputs.buildVersion }} | tr -d ' ')
+          BUILD_VERSION=$(echo "${{ needs.publish_lambdas.outputs.build_version || inputs.buildVersion }}" | tr -d ' ')
           echo "BUILD_VERSION=${BUILD_VERSION}"
           if [ -z "${BUILD_VERSION}" ]; then
             echo "Unable to determine build version"
@@ -126,7 +126,7 @@ jobs:
           ARTIFACTORY_PREFIX: 'https://artifactory.cloud.cms.gov/artifactory/ab2d-main/gov/cms/ab2d'
 
         run: |
-          curl -u "${ARTIFACTORY_USER}:${ARTIFACTORY_PASSWORD}" "${ARTIFACTORY_PREFIX}/metrics-lambda/${BUILD_VERSION}/metrics-lambda-${BUILD_VERSION}.zip" --output metrics-lambda.zip
+          curl -u "${ARTIFACTORY_USER}:${ARTIFACTORY_PASSWORD}" "${ARTIFACTORY_PREFIX}/metrics-lambda/${ env.BUILD_VERSION }/metrics-lambda-${ env.BUILD_VERSION }.zip" --output metrics-lambda.zip
           echo "$(ls -lah)"
 #          mkdir -p terraform/modules/lambda/event-service || true
 #          cd terraform/modules/lambda/event-service
