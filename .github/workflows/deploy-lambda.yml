@@ -166,8 +166,14 @@ jobs:
 
       - name: Terraform init and plan
         run: |
-          echo "$(ls -lah)"
           set -x
           cd terraform/environments/ab2d/lambda/
           terraform init -no-color -reconfigure -backend-config=backend/${AB2D_ENV}.conf
           terraform plan -no-color -var env=${AB2D_ENV} -out=lambda.tfplan
+
+      - name: Terraform apply
+        if: ${{ inputs.apply == true }}
+        run: |
+          set -e
+          cd terraform/environments/ab2d/lambda/
+          terraform apply -input=false -no-color lambda.tfplan
