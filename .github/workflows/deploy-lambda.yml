@@ -154,11 +154,6 @@ jobs:
           echo "$(ls -lah)"
           cd -
 
-      - name: install terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: "1.0.0"
-
       - name: Setup node for terraform
         uses: actions/setup-node@v2
         with:
