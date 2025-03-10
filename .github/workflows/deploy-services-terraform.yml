@@ -110,8 +110,8 @@ jobs:
       - name: Terraform Init & Plan
         working-directory: terraform/environments/ab2d/core/
         run: |
-          terraform init -no-color -reconfigure -backend-config=backend/${{ inputs.environment }}.conf
-          terraform plan -no-color -var env=${{ inputs.environment }} -out=core.tfplan | tee plan_output.txt
+          terraform init -no-color -reconfigure -backend-config=backend/ab2d-dev.conf
+          terraform plan -no-color -var env=ab2d-dev -out=core.tfplan | tee plan_output.txt
 
       - name: Post Terraform Plan Output as PR Comment
         if: github.event_name == 'pull_request'
