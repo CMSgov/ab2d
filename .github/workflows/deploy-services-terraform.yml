@@ -117,21 +117,6 @@ jobs:
           terraform init -no-color -reconfigure -backend-config=backend/ab2d-dev.conf
           terraform plan -no-color -var env=ab2d-dev -out=core.tfplan | tee plan_output.txt
 
-      - name: Post Terraform Plan Output as PR Comment
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.PAT_TOKEN }}  # Use the PAT instead
-          script: |
-            const fs = require('fs');
-            const planOutput = fs.readFileSync('terraform/environments/ab2d/core/plan_output.txt', 'utf8');
-            github.rest.issues.createComment({
-              issue_number: context.payload.pull_request.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `### Terraform Plan Output\n\`\`\`\n${planOutput}\n\`\`\``
-            });
-
       - name: Cleanup Terraform Plan
         if: always()
         working-directory: terraform/environments/ab2d/core/
