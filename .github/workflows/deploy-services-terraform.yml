@@ -39,10 +39,11 @@ jobs:
   terraform:
     runs-on: self-hosted
 
+
     env:
       AWS_REGION: ${{ vars.AWS_REGION }}
-      DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', github.event.inputs.environment || inputs.environment)] }}
-      AWS_ACCOUNT_NUMBER: ${{ secrets[format('{0}_ACCOUNT_ID', github.event.inputs.environment || inputs.environment)] }}
+      DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', github.event.inputs.environment || 'dev') ] }}
+      AWS_ACCOUNT_NUMBER: ${{ secrets[format('{0}_ACCOUNT_ID', github.event.inputs.environment || 'dev') ] }}
 
     steps:
 
