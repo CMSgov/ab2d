@@ -59,8 +59,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: 'cmsgov/ab2d-ops'
-          token: ${{ env.OPS_GITHUB_TOKEN }}          
+          token: ${{ env.OPS_GITHUB_TOKEN }}        
 
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.5  # Update to match your required version
+
+      - name: Verify Terraform Installation
+        run: terraform version
+          
       - name: Detect Changes in Terraform Directory
         id: check_changes
         run: |
