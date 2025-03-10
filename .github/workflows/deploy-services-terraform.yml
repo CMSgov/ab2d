@@ -35,6 +35,10 @@ on:
   pull_request:  # Runs on all PRs, but we will filter Terraform changes later
     types: [opened, synchronize, reopened]
 
+permissions:
+  contents: read
+  pull-requests: write  # 👈 This is required to post PR comments
+
 jobs:
   terraform:
     runs-on: self-hosted
@@ -117,6 +121,7 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.PAT_TOKEN }}  # Use the PAT instead
           script: |
             const fs = require('fs');
             const planOutput = fs.readFileSync('terraform/environments/ab2d/core/plan_output.txt', 'utf8');
