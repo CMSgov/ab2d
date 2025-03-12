@@ -43,6 +43,9 @@ on:
           - core
           - controller
           - web
+  pull_request:
+    types: [opened, synchronize, reopened]
+
 
 permissions:
   contents: read
