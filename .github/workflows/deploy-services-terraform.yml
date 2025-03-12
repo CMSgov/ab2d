@@ -8,25 +8,16 @@ on:
         type: boolean
       environment:
         required: true
-        type: choice
-        options:
-          - dev
-          - test
-          - sbx
-          - prod-test
-          - prod
+        type: string  # Choice not allowed in workflow_call, so using string
       branch_name:
         required: false
         type: string
         default: 'main'
       service:
         required: true
-        type: choice
-        options:
-          - core
-          - controller
-          - web
-  workflow_dispatch:
+        type: string  # Same as above
+
+  workflow_dispatch:  # Manual trigger with dropdowns
     inputs:
       apply:
         required: false
@@ -52,8 +43,6 @@ on:
           - core
           - controller
           - web
-  pull_request:
-    types: [opened, synchronize, reopened]
 
 permissions:
   contents: read
@@ -68,6 +57,22 @@ jobs:
       DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', github.event.inputs.environment) ] }}
 
     steps:
+
+      - name: Validate Environment and Service (for workflow_call)
+        if: github.event_name == 'workflow_call'
+        run: |
+          VALID_ENVIRONMENTS=("dev" "test" "sbx" "prod-test" "prod")
+          VALID_SERVICES=("core" "controller" "web")
+
+          if [[ ! " ${VALID_ENVIRONMENTS[@]} " =~ " ${{ inputs.environment }} " ]]; then
+            echo "Error: Invalid environment '${{ inputs.environment }}'. Must be one of: ${VALID_ENVIRONMENTS[@]}"
+            exit 1
+          fi
+
+          if [[ ! " ${VALID_SERVICES[@]} " =~ " ${{ inputs.service }} " ]]; then
+            echo "Error: Invalid service '${{ inputs.service }}'. Must be one of: ${VALID_SERVICES[@]}"
+            exit 1
+          fi
 
       - name: Set BACKEND_ENV based on environment
         run: |
@@ -113,7 +118,6 @@ jobs:
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
-
 
       - name: Terraform Init & Plan
         working-directory: terraform/environments/ab2d/${{ inputs.service }}/
