@@ -1,4 +1,4 @@
-name: deploy-terraform
+name: Deploy Services Terraform 
 
 on:
   workflow_call:
