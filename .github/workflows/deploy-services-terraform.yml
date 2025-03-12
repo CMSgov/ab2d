@@ -8,7 +8,7 @@ on:
         type: boolean
       environment:
         required: true
-        type: string  # Choice not allowed in workflow_call, so using string
+        type: string  # `choice` is not supported in workflow_call
       branch_name:
         required: false
         type: string
@@ -43,9 +43,9 @@ on:
           - core
           - controller
           - web
-  pull_request:
-    types: [opened, synchronize, reopened]
 
+  pull_request:  # Runs on PRs but lacks inputs, so defaults are needed
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: read
@@ -61,25 +61,21 @@ jobs:
 
     steps:
 
-      - name: Validate Environment and Service (for workflow_call)
-        if: github.event_name == 'workflow_call'
+      - name: Set Defaults for Environment and Service
         run: |
-          VALID_ENVIRONMENTS=("dev" "test" "sbx" "prod-test" "prod")
-          VALID_SERVICES=("core" "controller" "web")
+          # Default to 'dev' if environment is not set
+          ENVIRONMENT="${{ inputs.environment || 'dev' }}"
+          SERVICE="${{ inputs.service || 'core' }}"
 
-          if [[ ! " ${VALID_ENVIRONMENTS[@]} " =~ " ${{ inputs.environment }} " ]]; then
-            echo "Error: Invalid environment '${{ inputs.environment }}'. Must be one of: ${VALID_ENVIRONMENTS[@]}"
-            exit 1
-          fi
+          echo "Using environment: $ENVIRONMENT"
+          echo "Using service: $SERVICE"
 
-          if [[ ! " ${VALID_SERVICES[@]} " =~ " ${{ inputs.service }} " ]]; then
-            echo "Error: Invalid service '${{ inputs.service }}'. Must be one of: ${VALID_SERVICES[@]}"
-            exit 1
-          fi
+          echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_ENV
+          echo "SERVICE=$SERVICE" >> $GITHUB_ENV
 
       - name: Set BACKEND_ENV based on environment
         run: |
-          case "${{ inputs.environment }}" in
+          case "$ENVIRONMENT" in
             dev) BACKEND_ENV="ab2d-dev" ;;
             test) BACKEND_ENV="ab2d-east-impl" ;;
             sbx) BACKEND_ENV="ab2d-sbx-sandbox" ;;
@@ -117,26 +113,26 @@ jobs:
       - name: Assume role in AB2D account for this environment
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
         env:
-          ACCOUNT: ${{ inputs.environment == '' && 'test' || inputs.environment }}
+          ACCOUNT: ${{ env.ENVIRONMENT }}
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
 
       - name: Terraform Init & Plan
-        working-directory: terraform/environments/ab2d/${{ inputs.service }}/
+        working-directory: terraform/environments/ab2d/${{ env.SERVICE }}/
         run: |
           terraform init -no-color -reconfigure -backend-config=backend/${{ env.BACKEND_ENV }}.conf
-          terraform plan -no-color -var env=${{ env.BACKEND_ENV }} -out=${{ inputs.service }}.tfplan | tee plan_output.txt
+          terraform plan -no-color -var env=${{ env.BACKEND_ENV }} -out=${{ env.SERVICE }}.tfplan | tee plan_output.txt
 
       - name: Terraform Apply
         if: ${{ inputs.apply == true }}
         run: |
           set -e
-          cd terraform/environments/ab2d/${{ inputs.service }}/
-          terraform apply -input=false -no-color ${{ inputs.service }}.tfplan         
+          cd terraform/environments/ab2d/${{ env.SERVICE }}/
+          terraform apply -input=false -no-color ${{ env.SERVICE }}.tfplan         
 
       - name: Cleanup Terraform Plan
         if: always()
-        working-directory: terraform/environments/ab2d/${{ inputs.service }}/
+        working-directory: terraform/environments/ab2d/${{ env.SERVICE }}/
         run: |
-          rm -f ${{ inputs.service }}.tfplan plan_output.txt
+          rm -f ${{ env.SERVICE }}.tfplan plan_output.txt
