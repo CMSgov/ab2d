@@ -1,0 +1,122 @@
+name: Deploy Services Terraform 
+
+on:
+  workflow_call:
+    inputs:
+      apply:
+        required: false
+        type: boolean
+      environment:
+        required: true
+        type: string  # Choice not allowed in workflow_call, so using string
+      branch_name:
+        required: false
+        type: string
+        default: 'main'
+      service:
+        required: true
+        type: string  # Same as above
+
+  workflow_dispatch:  # Manual trigger with dropdowns
+    inputs:
+      apply:
+        required: false
+        type: boolean
+        default: false
+      environment:
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+          - sbx
+          - prod-test
+          - prod
+      branch_name:
+        required: false
+        type: string
+        default: 'main'
+      service:
+        required: true
+        type: choice
+        options:
+          - core
+          - controller
+          - web
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  terraform:
+    runs-on: self-hosted
+
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', github.event.inputs.environment) ] }}
+
+    steps:
+      - name: Set BACKEND_ENV based on environment
+        run: |
+          case "${{ inputs.environment }}" in
+            dev) BACKEND_ENV="ab2d-dev" ;;
+            test) BACKEND_ENV="ab2d-east-impl" ;;
+            sbx) BACKEND_ENV="ab2d-sbx-sandbox" ;;
+            prod-test) BACKEND_ENV="ab2d-east-prod-test" ;;
+            prod) BACKEND_ENV="ab2d-east-prod" ;;
+            *) echo "Invalid environment input"; exit 1 ;;
+          esac
+          echo "BACKEND_ENV=${BACKEND_ENV}" >> $GITHUB_ENV
+
+      - name: Get AWS params
+        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |
+            OPS_GITHUB_TOKEN=/ci/github/token
+    
+      - name: Checkout AB2D-Ops Repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'cmsgov/ab2d-ops'
+          token: ${{ env.OPS_GITHUB_TOKEN }}
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install terraform
+        uses: cmsgov/ab2d-bcda-dpc-platform/actions/setup-tfenv-terraform@main
+
+      - name: Verify Terraform Installation
+        run: terraform version
+
+      - name: Assume role in AB2D account for this environment
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
+        env:
+          ACCOUNT: ${{ inputs.environment == '' && 'test' || inputs.environment }}
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
+
+      - name: Terraform Init & Plan
+        working-directory: terraform/environments/ab2d/${{ inputs.service }}/
+        run: |
+          terraform init -no-color -reconfigure -backend-config=backend/${{ env.BACKEND_ENV }}.conf
+          terraform plan -no-color -var env=${{ env.BACKEND_ENV }} -out=${{ inputs.service }}.tfplan | tee plan_output.txt
+
+      - name: Terraform Apply
+        if: ${{ inputs.apply == true }}
+        run: |
+          set -e
+          cd terraform/environments/ab2d/${{ inputs.service }}/
+          terraform apply -input=false -no-color ${{ inputs.service }}.tfplan         
+
+      - name: Cleanup Terraform Plan
+        if: always()
+        working-directory: terraform/environments/ab2d/${{ inputs.service }}/
+        run: |
+          rm -f ${{ inputs.service }}.tfplan plan_output.txt
