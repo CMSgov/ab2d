@@ -1,16 +1,11 @@
 package gov.cms.ab2d.job.model;
 
+import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.time.OffsetDateTime;
 
 @Entity
@@ -20,7 +15,8 @@ import java.time.OffsetDateTime;
 public class JobOutput {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "job_output_seq")
+    @SequenceGenerator(name = "job_output_seq", sequenceName = "public.job_output_seq", allocationSize = 1)
     @EqualsAndHashCode.Include
     private Long id;
 

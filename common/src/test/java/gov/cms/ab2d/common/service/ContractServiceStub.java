@@ -3,12 +3,17 @@ package gov.cms.ab2d.common.service;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.contracts.model.Contract;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Profile;
+
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
+@TestConfiguration
+@Profile("test")
 public class ContractServiceStub implements ContractService {
     PdpClientRepository pdpClientRepository;
     private ArrayList<Contract> contractMap;

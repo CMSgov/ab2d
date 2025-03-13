@@ -48,10 +48,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -156,6 +153,8 @@ class CoverageDriverTest extends JobCleanup {
 
     @BeforeEach
     void before() {
+        coverageDataSetup.cleanup();
+        dataSetup.cleanup();
         mapping = new ContractToContractCoverageMapping();
         // Set properties values in database
         addPropertiesTableValues();
