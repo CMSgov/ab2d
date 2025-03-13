@@ -1,0 +1,72 @@
+name: publish
+
+on:
+  pull_request:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      module:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      environment:
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+      module:
+        required: true
+        type: choice
+        options:
+          - api
+          - worker
+
+jobs:
+  publish:
+    runs-on: self-hosted
+
+    env:
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}
+
+    steps:
+      - name: Checkout AB2D-Libs Repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'cmsgov/AB2D-Libs'
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'adopt'
+
+      - name: Set env vars from AWS params
+        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |
+            ARTIFACTORY_URL=/artifactory/url
+            ARTIFACTORY_USER=/artifactory/user
+            ARTIFACTORY_PASSWORD=/artifactory/password     
+            
+
+      - name: Set up Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: '7.5'
+        
+
+      - name: Publish Libraries
+        run: |
+          echo "Publishing libraries using Gradle..."
+          gradle artifactoryPublish -b build.gradle --info \
+            -Dusername="${ARTIFACTORY_USER}" \
+            -Dpassword="${ARTIFACTORY_PASSWORD}" \
+            -Drepository_url="${ARTIFACTORY_URL}"

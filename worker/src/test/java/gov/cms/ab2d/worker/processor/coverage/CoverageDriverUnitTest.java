@@ -24,9 +24,10 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
-import javax.persistence.EntityNotFoundException;
+import jakarta.persistence.EntityNotFoundException;
 
 import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
+import lombok.val;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,6 +37,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 
@@ -60,7 +63,7 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for paging coverage which are much easier using mocked resources
  */
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
 class CoverageDriverUnitTest {
 
     @Mock
@@ -229,9 +232,30 @@ class CoverageDriverUnitTest {
         assertNotNull(result);
     }
 
+    @DisplayName("Paging coverage fails when all coverage periods are present but CoverageService#pageCoverage throws exception")
+    @Test
+    void failPagingWhenCoveragePeriodsPresentButUnderlyingMethodThrowsException(CapturedOutput output) {
+        when(coverageService.getCoveragePeriod(any(ContractForCoverageDTO.class), anyInt(), anyInt())).thenAnswer((invocationOnMock) -> {
+            CoveragePeriod period = new CoveragePeriod();
+            period.setContractNumber((invocationOnMock.getArgument(0).toString()));
+            period.setMonth(invocationOnMock.getArgument(1));
+            period.setYear(invocationOnMock.getArgument(2));
+            return period;
+        });
+
+        when(coverageService.pageCoverage(any())).thenThrow(RuntimeException.class);
+
+        Job job = new Job();
+        ContractDTO contract = new ContractDTO(null, "Contract-0", null, AB2D_EPOCH.toOffsetDateTime(), null, 0, 0);
+        when(mapping.map(any(ContractDTO.class))).thenReturn(new ContractForCoverageDTO("Contract-0", contract.getAttestedOn(), ContractForCoverageDTO.ContractType.NORMAL));
+
+        assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(job, contract));
+        assertTrue(output.getOut().contains("coverage period missing or year,month query incorrect, driver should have resolved earlier - CoveragePagingRequest(jobStartTime=null, contract=ContractForCoverageDTO(contractNumber=Contract-0, attestedOn=2020-01-01T00:00-05:00, contractType=NORMAL), pageSize=10000, cursor=Optional.empty)"));
+    }
+
     @DisplayName("Paging coverage fails when coverage periods are missing")
     @Test
-    void failPagingWhenCoveragePeriodMissing() {
+    void failPagingWhenCoveragePeriodMissing(CapturedOutput output) {
 
         when(coverageService.getCoveragePeriod(any(), anyInt(), anyInt())).thenThrow(new EntityNotFoundException());
 
@@ -240,6 +264,7 @@ class CoverageDriverUnitTest {
 
         CoverageDriverException startDateInFuture = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(job, contract));
         assertEquals(EntityNotFoundException.class, startDateInFuture.getCause().getClass());
+        assertTrue(output.getOut().contains("coverage period missing or year,month query incorrect, driver should have resolved earlier - contract='null' month='1', year='2020'"));
     }
 
     @DisplayName("Paging coverage periods")
@@ -354,7 +379,7 @@ class CoverageDriverUnitTest {
 
     @DisplayName("When paging coverage fails throw coverage driver exception")
     @Test
-    void failureToPageCausesExceptions() {
+    void failureToPageCausesExceptions(CapturedOutput output) {
         when(coverageService.pageCoverage(any())).thenThrow(RuntimeException.class);
 
         CoverageDriver driver = new CoverageDriverImpl(null, null, coverageService, null, null, null,null, snapshotService);
@@ -362,8 +387,10 @@ class CoverageDriverUnitTest {
         ContractForCoverageDTO contract = new ContractForCoverageDTO();
         contract.setContractNumber("contractNum");
 
-        CoverageDriverException exception = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(new CoveragePagingRequest( 1000, null, contract, OffsetDateTime.now())));
+        val coveragePagingRequest = new CoveragePagingRequest( 1000, null, contract, AB2D_EPOCH.toOffsetDateTime());
+        CoverageDriverException exception = assertThrows(CoverageDriverException.class, () -> driver.pageCoverage(coveragePagingRequest));
         assertTrue(exception.getMessage().contains("coverage driver failing preconditions"));
+        assertTrue(output.getOut().contains("coverage period missing or year,month query incorrect, driver should have resolved earlier - CoveragePagingRequest(jobStartTime=2020-01-01T00:00-05:00, contract=ContractForCoverageDTO(contractNumber=contractNum, attestedOn=null, contractType=null), pageSize=1000, cursor=Optional.empty"));
     }
 
     @DisplayName("When loading a mapping job exit early if conditions not met")

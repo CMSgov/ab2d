@@ -2,14 +2,9 @@ package gov.cms.ab2d.coverage.model;
 
 import gov.cms.ab2d.common.model.TimestampBase;
 import java.time.OffsetDateTime;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.validation.constraints.NotNull;
+
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,7 +18,8 @@ import lombok.ToString;
 public class CoveragePeriod extends TimestampBase {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "bene_coverage_period_seq")
+    @SequenceGenerator(name = "bene_coverage_period_seq", sequenceName = "public.bene_coverage_period_seq", allocationSize = 1)
     private Integer id;
 
     @NotNull

@@ -6,7 +6,7 @@ import java.util.Collections;
 
 public class AB2DPostgresqlContainer extends PostgreSQLContainer<AB2DPostgresqlContainer> {
 
-    private static final String IMAGE_VERSION = "postgres:11";
+    private static final String IMAGE_VERSION = "postgres:16";
 
     public AB2DPostgresqlContainer() {
         super(IMAGE_VERSION);
