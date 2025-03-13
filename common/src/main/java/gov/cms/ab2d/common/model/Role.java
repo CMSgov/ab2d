@@ -1,16 +1,12 @@
 package gov.cms.ab2d.common.model;
 
+import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.NaturalId;
 
 import java.io.Serializable;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
 
 @Entity
 @Getter
@@ -23,7 +19,8 @@ public class Role extends TimestampBase implements Serializable {
     public static final String ATTESTOR_ROLE = "ATTESTOR";
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "role_seq")
+    @SequenceGenerator(name = "role_seq", sequenceName = "public.role_seq", allocationSize = 1)
     private Long id;
 
     @NaturalId
