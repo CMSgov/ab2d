@@ -129,7 +129,7 @@ jobs:
         env:
           ARTIFACTORY_PREFIX: 'https://artifactory.cloud.cms.gov/artifactory/ab2d-main/gov/cms/ab2d'
         run: |
-          mkdir -p terraform/modules/lambda/event-service || true
+          mkdir -p terraform/modules/lambda/event-service 
           cd terraform/modules/lambda/event-service
           
           declare -a lambdas=(
@@ -146,23 +146,15 @@ jobs:
           echo "$(ls -lah)"
           cd -
 
-      # without this step, terraform fails with `/usr/bin/env: ‘node’: No such file or directory`
-      - name: Setup node for terraform
-        uses: actions/setup-node@v2
-        with:
-          node-version: '20'
-
-      - name: Setup terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: '1.1.2'
+      - name: Install terraform
+        uses: cmsgov/ab2d-bcda-dpc-platform/actions/setup-tfenv-terraform@main
 
       - name: Terraform init and plan
         run: |
           set -x
           cd terraform/environments/ab2d/lambda/
-          terraform init -no-color -reconfigure -backend-config=backend/${AB2D_ENV}.conf
-          terraform plan -no-color -var env=${AB2D_ENV} -out=lambda.tfplan
+          terraform init -reconfigure -backend-config=backend/${AB2D_ENV}.conf
+          terraform plan -var env=${AB2D_ENV} -out=lambda.tfplan
 
       - name: Terraform apply
         if: ${{ inputs.apply == true }}
