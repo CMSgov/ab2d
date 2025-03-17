@@ -161,4 +161,10 @@ jobs:
         run: |
           set -e
           cd terraform/environments/ab2d/lambda/
-          terraform apply -input=false -no-color lambda.tfplan
+          terraform apply -input=false lambda.tfplan
+
+      - name: Cleanup Terraform Plan
+        if: ${{ always() && !cancelled() }}
+        working-directory: terraform/environments/ab2d/lambda/
+        run: |
+          rm -f lambda.tfplan 
