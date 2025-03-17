@@ -45,19 +45,16 @@ jobs:
           echo "SECRET_STORE_PREFIX=${SECRET_STORE_PREFIX}" >> $GITHUB_ENV
 
       - name: Assume role in AB2D account for this environment
-        uses: .github/actions/assume-role.yml
+        uses: ./.github/actions/assume-role.yml
         with:
             environment: ${{ inputs.environment }}
             aws_region: ${{ vars.AWS_REGION }}
 
       - name: Set env vars from AWS params in AB2D account
-        uses: .github/actions/set-aws-params
+        uses: ./.github/actions/set-aws-params.yml
         with:
           aws_region: ${{ vars.AWS_REGION }}
           secret_store_prefix: ${{ env.SECRET_STORE_PREFIX }}
-
-      - name: Set script file based on environment
-        run: echo "script=./scripts/ci/total-benes-served.sh" >> $GITHUB_ENV
 
       - name: Install psql
         run: |
