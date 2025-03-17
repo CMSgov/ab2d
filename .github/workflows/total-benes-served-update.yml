@@ -1,12 +1,13 @@
 name: total-benes-served-update
 
+#on:
+#  push:
+#    branches: [ AB2D-6560/TotalBenesServedUpdate ]
 on:
-  push:
-    branches: [ AB2D-6560/TotalBenesServedUpdate ]
-
   workflow_dispatch:
     inputs:
       environment:
+        description: 'AB2D environment'
         required: true
         type: choice
         options:
@@ -16,11 +17,10 @@ on:
         default: 'prod_test'
 
 jobs:
-  start-job:
+  total-benes-served-update:
     runs-on: self-hosted
 
     env:
-      ENVIRONMENT_Test: 'prod_test'
       ENVIRONMENT: ${{ inputs.environment }}
 
     steps:
@@ -29,7 +29,7 @@ jobs:
 
       - name: Set environment-specific variables
         run: |
-          echo "ENVIRONMENT: ENVIRONMENT"
+          echo "ENVIRONMENT: $ENVIRONMENT"
         
           if [ "$ENVIRONMENT" == "sbx" ]; then
             SECRET_STORE_PREFIX="ab2d/ab2d-sbx-sandbox"
