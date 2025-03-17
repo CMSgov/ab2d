@@ -28,10 +28,3 @@ runs:
           PGDATABASE=${{ env.MODULE_DB_PREFIX }}/database_name/${{ env.MODULE_DB_SUFFIX }}
           PGPASSWORD=${{ env.MODULE_DB_PREFIX }}/database_password/${{ env.MODULE_DB_SUFFIX }}
           DATABASE_SCHEMA_NAME=${{ env.MODULE_DB_PREFIX }}/schema_name/${{ env.MODULE_DB_SUFFIX }}
-      run: |
-      
-       echo "Set AWS Params in AB2D Account"
-       echo "${{ inputs.module_db_suffix }}"
-       echo "${{ env.MODULE_DB_PREFIX }}"
-       echo "${{ env.MODULE_DB_PREFIX }}"
-       echo "${{ DATABASE_SCHEMA_NAME }}"

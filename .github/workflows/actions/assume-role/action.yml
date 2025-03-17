@@ -7,6 +7,9 @@ inputs:
   aws_region:
     description: "AWS region"
     required: true
+  account_id:
+    description: "AWS Account ID for the role"
+    required: true
 runs:
   using: "composite"
   steps:
@@ -16,8 +19,4 @@ runs:
         ACCOUNT: ${{ inputs.environment == 'prod_test' && 'prod' || inputs.environment }}
       with:
         aws-region: ${{ inputs.aws_region }}
-        role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
-      run: | 
-        
-        echo "Assume Role in AB2D Account"
-        echo "${{ inputs.environment }}"
+        role-to-assume: arn:aws:iam::${{ inputs.account_id }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
