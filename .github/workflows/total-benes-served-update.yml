@@ -47,6 +47,9 @@ jobs:
 
       - name: Assume role in AB2D account for this environment
         uses: ./.github/workflows/actions/assume-role
+        env:
+#          ACCOUNT: ${{ inputs.environment == 'prod_test' && 'prod' || inputs.environment }}
+           ACCOUNT: prod_test
         with:
 #            environment: ${{ inputs.environment }}
             environment: prod_test
