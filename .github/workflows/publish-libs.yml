@@ -1,7 +1,6 @@
-name: publish
+name: publish libs
 
 on:
-  pull_request:
   workflow_call:
     inputs:
       environment:
