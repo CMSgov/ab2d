@@ -7,10 +7,6 @@ inputs:
   secret_store_prefix:
     description: "Secret store prefix for constructing MODULE_DB_PREFIX"
     required: true
-  module_db_suffix:
-    description: "Suffix for the module DB secrets"
-    required: false
-    default: "2020-01-02-09-15-01"
 runs:
   using: "composite"
   steps:
@@ -19,7 +15,7 @@ runs:
       env:
         AWS_REGION: ${{ inputs.aws_region }}
         MODULE_DB_PREFIX: /aws/reference/secretsmanager/${{ inputs.secret_store_prefix }}/module/db
-        MODULE_DB_SUFFIX: ${{ inputs.module_db_suffix }}
+        MODULE_DB_SUFFIX: 2020-01-02-09-15-01
       with:
         params: |
           PGHOST=${{ env.MODULE_DB_PREFIX }}/database_host/${{ env.MODULE_DB_PREFIX }}

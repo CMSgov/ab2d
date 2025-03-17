@@ -43,26 +43,27 @@ jobs:
             exit 1
           fi
           
+          echo "SECRET_STORE_PREFIX=${SECRET_STORE_PREFIX}"
           echo "SECRET_STORE_PREFIX=${SECRET_STORE_PREFIX}" >> $GITHUB_ENV
 
-#      - name: Assume role in AB2D account for this environment
-#        uses: ./.github/workflows/actions/assume-role
-#        env:
-##          ACCOUNT: ${{ inputs.environment == 'prod_test' && 'prod' || inputs.environment }}
-#           ACCOUNT: prod_test
-#        with:
-##            environment: ${{ inputs.environment }}
-#            environment: prod_test
-#            aws_region: ${{ vars.AWS_REGION }}
-#            account_id: ${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}
-
       - name: Assume role in AB2D account for this environment
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: ./.github/workflows/actions/assume-role
         env:
-          ACCOUNT: prod
+#          ACCOUNT: ${{ inputs.environment == 'prod_test' && 'prod' || inputs.environment }}
+           ACCOUNT: prod
         with:
-          aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
+#            environment: ${{ inputs.environment }}
+            environment: prod_test
+            aws_region: ${{ vars.AWS_REGION }}
+            account_id: ${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}
+
+#      - name: Assume role in AB2D account for this environment
+#        uses: aws-actions/configure-aws-credentials@v3
+#        env:
+#          ACCOUNT: prod
+#        with:
+#          aws-region: ${{ vars.AWS_REGION }}
+#          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
 
       - name: Set env vars from AWS params in AB2D account
         uses: ./.github/workflows/actions/set-aws-params
