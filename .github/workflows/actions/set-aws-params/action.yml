@@ -18,7 +18,7 @@ runs:
         MODULE_DB_SUFFIX: 2020-01-02-09-15-01
       with:
         params: |
-          PGHOST=${{ env.MODULE_DB_PREFIX }}/database_host/${{ env.MODULE_DB_PREFIX }}
+          PGHOST=${{ env.MODULE_DB_PREFIX }}/database_host/${{ env.MODULE_DB_SUFFIX }}
           PGPORT=${{ env.MODULE_DB_PREFIX }}/database_port/${{ env.MODULE_DB_SUFFIX }}
           PGUSER=${{ env.MODULE_DB_PREFIX }}/database_user/${{ env.MODULE_DB_SUFFIX }}
           PGDATABASE=${{ env.MODULE_DB_PREFIX }}/database_name/${{ env.MODULE_DB_SUFFIX }}
