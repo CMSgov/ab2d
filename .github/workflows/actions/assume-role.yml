@@ -1,0 +1,23 @@
+name: "Assume Role in AB2D Account"
+description: "Composite action to assume role in AB2D account for a given environment"
+inputs:
+  environment:
+    description: "Deployment environment (e.g. sbx, prod, prod_test)"
+    required: true
+  aws_region:
+    description: "AWS region"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Assume role in AB2D account for this environment
+      uses: aws-actions/configure-aws-credentials@v3
+      env:
+        ACCOUNT: ${{ inputs.environment == 'prod_test' && 'prod' || inputs.environment }}
+      with:
+        aws-region: ${{ inputs.aws_region }}
+        role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
+      run: | 
+        
+        echo "Assume Role in AB2D Account"
+        echo "${{ inputs.environment }}"

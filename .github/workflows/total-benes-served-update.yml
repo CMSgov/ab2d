@@ -1,0 +1,71 @@
+name: total-benes-served-update
+
+on:
+  push:
+    branches: [ AB2D-6560/TotalBenesServedUpdate ]
+
+  workflow_dispatch:
+    inputs:
+      environment:
+        required: true
+        type: choice
+        options:
+          - sbx
+          - prod
+          - prod_test
+        default: 'prod_test'
+
+jobs:
+  start-job:
+    runs-on: self-hosted
+
+    env:
+      ENVIRONMENT_Test: 'prod_test'
+      ENVIRONMENT: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set environment-specific variables
+        run: |
+          echo "ENVIRONMENT: ENVIRONMENT"
+        
+          if [ "$ENVIRONMENT" == "sbx" ]; then
+            SECRET_STORE_PREFIX="ab2d/ab2d-sbx-sandbox"
+          elif [ "$ENVIRONMENT" == "prod_test" ]; then
+            SECRET_STORE_PREFIX="ab2d/ab2d-east-prod-test"
+          elif [ "$ENVIRONMENT" == "prod" ]; then
+            SECRET_STORE_PREFIX="ab2d/ab2d-east-prod"
+          else
+            echo "Invalid environment: $ENVIRONMENT"
+            exit 1
+          fi
+          
+          echo "SECRET_STORE_PREFIX=${SECRET_STORE_PREFIX}" >> $GITHUB_ENV
+
+      - name: Assume role in AB2D account for this environment
+        uses: .github/actions/assume-role.yml
+        with:
+            environment: ${{ inputs.environment }}
+            aws_region: ${{ vars.AWS_REGION }}
+
+      - name: Set env vars from AWS params in AB2D account
+        uses: .github/actions/set-aws-params
+        with:
+          aws_region: ${{ vars.AWS_REGION }}
+          secret_store_prefix: ${{ env.SECRET_STORE_PREFIX }}
+
+      - name: Set script file based on environment
+        run: echo "script=./scripts/ci/total-benes-served.sh" >> $GITHUB_ENV
+
+      - name: Install psql
+        run: |
+          sudo dnf install postgresql15 -y
+
+      - name: Conduct update of total benes served
+        run: |
+          SQL_TOTAL_BENE_SERVED=$(envsubst < .github/workflows/resources/total-benes-served.sql)
+          psql -t --command="${SQL_TOTAL_BENE_SERVED}"
+          echo "Complete"
+
