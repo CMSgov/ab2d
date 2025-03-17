@@ -1,9 +1,9 @@
 name: total-benes-served-update
 
-#on:
-#  push:
-#    branches: [ AB2D-6560/TotalBenesServedUpdate ]
 on:
+  push:
+    branches: [ AB2D-6560/TotalBenesServedUpdate ]
+
   workflow_dispatch:
     inputs:
       environment:
@@ -14,7 +14,7 @@ on:
           - sbx
           - prod
           - prod_test
-        default: 'prod_test'
+        default: prod_test
 
 jobs:
   total-benes-served-update:
