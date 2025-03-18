@@ -105,9 +105,8 @@ jobs:
 
       - name: Terraform Apply
         if: ${{ inputs.apply == true }}
+        working-directory: terraform/environments/ab2d/${{ inputs.service }}/
         run: |
-          set -e
-          cd terraform/environments/ab2d/${{ inputs.service }}/
           terraform apply -input=false ${{ inputs.service }}.tfplan
 
       - name: Cleanup Terraform Plan
