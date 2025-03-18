@@ -89,19 +89,10 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
 
       - name: Set env vars from AWS params in AB2D account
-        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
-        env:
-          AWS_REGION: ${{ vars.AWS_REGION }}
-          MODULE_DB_PREFIX: /aws/reference/secretsmanager/${{ env.SECRET_STORE_PREFIX }}/module/db
-          MODULE_DB_SUFFIX: 2020-01-02-09-15-01
+        uses: ./.github/workflows/actions/set-aws-params
         with:
-          params: |
-            PGHOST=${{ env.MODULE_DB_PREFIX }}/database_host/${{ env.MODULE_DB_SUFFIX }}
-            PGPORT=${{ env.MODULE_DB_PREFIX }}/database_port/${{ env.MODULE_DB_SUFFIX }}
-            PGUSER=${{ env.MODULE_DB_PREFIX }}/database_user/${{ env.MODULE_DB_SUFFIX }}
-            PGDATABASE=${{ env.MODULE_DB_PREFIX }}/database_name/${{ env.MODULE_DB_SUFFIX }}
-            PGPASSWORD=${{ env.MODULE_DB_PREFIX }}/database_password/${{ env.MODULE_DB_SUFFIX }}
-            DATABASE_SCHEMA_NAME=${{ env.MODULE_DB_PREFIX }}/schema_name/${{ env.MODULE_DB_SUFFIX }}
+          aws_region: ${{ vars.AWS_REGION }}
+          secret_store_prefix: ${{ env.SECRET_STORE_PREFIX }}
 
       - name: Install psql
         run: |
