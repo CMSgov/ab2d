@@ -100,15 +100,15 @@ jobs:
       - name: Terraform Init & Plan
         working-directory: terraform/environments/ab2d/${{ inputs.service }}/
         run: |
-          terraform init -no-color -reconfigure -backend-config=backend/${{ env.BACKEND_ENV }}.conf
-          terraform plan -no-color -var env=${{ env.BACKEND_ENV }} -out=${{ inputs.service }}.tfplan | tee plan_output.txt
+          terraform init -reconfigure -backend-config=backend/${{ env.BACKEND_ENV }}.conf
+          terraform plan -var env=${{ env.BACKEND_ENV }} -out=${{ inputs.service }}.tfplan | tee plan_output.txt
 
       - name: Terraform Apply
         if: ${{ inputs.apply == true }}
         run: |
           set -e
           cd terraform/environments/ab2d/${{ inputs.service }}/
-          terraform apply -input=false -no-color ${{ inputs.service }}.tfplan
+          terraform apply -input=false ${{ inputs.service }}.tfplan
 
       - name: Cleanup Terraform Plan
         if: always()
