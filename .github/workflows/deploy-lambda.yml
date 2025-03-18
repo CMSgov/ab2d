@@ -61,7 +61,7 @@ on:
 
 jobs:
   publish_lambdas:
-    uses: cmsgov/ab2d-lambdas/.github/workflows/publish-lambdas.yml@update-publish-lamda-workflow
+    uses: cmsgov/ab2d-lambdas/.github/workflows/publish-lambdas.yml@main
     with:
       ref: ${{ inputs.ab2dLambdasBranch }}
     if: ${{ inputs.runBuildJob == true }}
