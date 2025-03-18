@@ -1,0 +1,13 @@
+name: test of tf
+
+on:
+  pull_request:
+
+jobs:
+  tf:
+    uses: ./.github/workflows/terraform.yml
+    with:
+      environment: test
+      ops_branch: PLT-939
+      service: core
+    secrets: inherit

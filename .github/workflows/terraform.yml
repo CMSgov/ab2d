@@ -1,4 +1,4 @@
-name: Deploy Services Terraform 
+name: tf ${{ inputs.apply && 'apply' || 'plan' }} ${{ inputs.service }} ${{ inputs.environment }}
 
 on:
   workflow_call:
@@ -9,7 +9,7 @@ on:
       environment:
         required: true
         type: string  # Choice not allowed in workflow_call, so using string
-      branch_name:
+      ops_branch:
         required: false
         type: string
         default: 'main'
@@ -32,7 +32,7 @@ on:
           - sbx
           - prod-test
           - prod
-      branch_name:
+      ops_branch:
         required: false
         type: string
         default: 'main'
@@ -76,15 +76,16 @@ jobs:
         with:
           params: |
             OPS_GITHUB_TOKEN=/ci/github/token
-    
+
       - name: Checkout AB2D-Ops Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: 'cmsgov/ab2d-ops'
           token: ${{ env.OPS_GITHUB_TOKEN }}
+          ref: ${{ inputs.ops_branch }}
 
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
           node-version: '20'
 
@@ -95,7 +96,7 @@ jobs:
         run: terraform version
 
       - name: Assume role in AB2D account for this environment
-        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
+        uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
         env:
           ACCOUNT: ${{ inputs.environment == '' && 'test' || inputs.environment }}
         with:
@@ -113,7 +114,7 @@ jobs:
         run: |
           set -e
           cd terraform/environments/ab2d/${{ inputs.service }}/
-          terraform apply -input=false -no-color ${{ inputs.service }}.tfplan         
+          terraform apply -input=false -no-color ${{ inputs.service }}.tfplan
 
       - name: Cleanup Terraform Plan
         if: always()
