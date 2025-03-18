@@ -47,6 +47,7 @@ on:
           - microservices
           - web
           - worker
+          - eventbridge
 
 jobs:
   terraform:
