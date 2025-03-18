@@ -1,0 +1,170 @@
+name: deploy-lambdas
+
+on:
+  workflow_call:
+    inputs:
+      apply:
+        type: boolean
+        required: true
+        default: false
+      environment:
+        required: true
+        type: string
+      ab2dOpsBranch:
+        type: string
+        required: true
+      ab2dLambdasBranch:
+        type: string
+        required: true
+      runBuildJob:
+        type: boolean
+        required: true
+        default: false
+      buildVersion:
+        type: string
+        required: false
+
+  workflow_dispatch:
+    inputs:
+      apply:
+        type: boolean
+        required: true
+        default: false
+        description: 'Apply output from terraform plan?'
+      environment:
+        description: 'AB2D environment'
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+          - sbx
+          - prod_test
+          - prod
+      ab2dOpsBranch:
+        type: string
+        required: true
+        description: 'Branch for ab2d-ops'
+      ab2dLambdasBranch:
+        type: string
+        required: true
+        description: 'Branch for ab2d-lambdas'
+      runBuildJob:
+        type: boolean
+        required: true
+        default: false
+        description: 'Build lambdas before publishing'
+      buildVersion:
+        type: string
+        required: false
+        description: 'Version of lambda you want to deploy - This is ignored if you check runBuildJob'
+
+jobs:
+  publish_lambdas:
+    uses: cmsgov/ab2d-lambdas/.github/workflows/publish-lambdas.yml@main
+    with:
+      ref: ${{ inputs.ab2dLambdasBranch }}
+    if: ${{ inputs.runBuildJob == true }}
+
+  deploy:
+    runs-on: self-hosted
+    needs: publish_lambdas
+    # always run this job but if runBuildJob=true, then wait for 'publish_lambdas' job to finish
+    # without this conditional, this job will not run unless runBuildJob=true
+    if: ${{ always() && !cancelled() }}
+
+    env:
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}
+
+    steps:
+      - name: Set environment variables
+        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |
+            ARTIFACTORY_URL=/artifactory/url
+            ARTIFACTORY_USER=/artifactory/user
+            ARTIFACTORY_PASSWORD=/artifactory/password
+            OPS_GITHUB_TOKEN=/ci/github/token
+
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          repository: 'cmsgov/ab2d-ops'
+          ref: ${{ inputs.ab2dOpsBranch }}
+          token: ${{ env.OPS_GITHUB_TOKEN }}
+
+      - name: Set variables for build version and AB2D environment
+        run: |
+          BUILD_VERSION=$(echo "${{ needs.publish_lambdas.outputs.build_version || inputs.buildVersion }}" | tr -d ' ')
+          echo "BUILD_VERSION=${BUILD_VERSION}"
+          if [ -z "${BUILD_VERSION}" ]; then
+            echo "Unable to determine build version"
+            exit 1
+          fi  
+          
+          if [[ ${{ inputs.environment }} = "dev" ]];         then AB2D_ENV='ab2d-dev'
+          elif [[ ${{ inputs.environment }} = "test" ]];      then AB2D_ENV='ab2d-east-impl'
+          elif [[ ${{ inputs.environment }} = "sbx" ]];       then AB2D_ENV='ab2d-sbx-sandbox'
+          elif [[ ${{ inputs.environment }} = "prod_test" ]]; then AB2D_ENV='ab2d-east-prod-test'
+          elif [[ ${{ inputs.environment }} = "prod" ]];      then AB2D_ENV='ab2d-east-prod'
+          else echo "Unable to determine AB2D environment"; exit 1
+          fi
+          
+          echo "BUILD_VERSION=${BUILD_VERSION}" >> $GITHUB_ENV
+          echo "AB2D_ENV=${AB2D_ENV}" >> $GITHUB_ENV
+
+      - name: Assume role in AB2D account for this environment
+        uses: aws-actions/configure-aws-credentials@v4
+        env:
+          ACCOUNT: ${{ inputs.environment == 'prod_test' && 'prod' || inputs.environment }}
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
+
+      - name: Download ZIP files
+        env:
+          ARTIFACTORY_PREFIX: 'https://artifactory.cloud.cms.gov/artifactory/ab2d-main/gov/cms/ab2d'
+        run: |
+          mkdir -p terraform/modules/lambda/event-service 
+          cd terraform/modules/lambda/event-service
+          
+          declare -a lambdas=(
+            'metrics-lambda' 
+            'audit' 
+            'database-management' 
+            'coverage-counts' 
+            'retrieve-hpms-counts'
+          )
+          for name in "${lambdas[@]}"
+            do curl -u "${ARTIFACTORY_USER}:${ARTIFACTORY_PASSWORD}" "${ARTIFACTORY_PREFIX}/${name}/${{ env.BUILD_VERSION }}/${name}-${{ env.BUILD_VERSION }}.zip" --output ${name}.zip
+          done
+          
+          echo "$(ls -lah)"
+          cd -
+
+      - name: Install terraform
+        uses: cmsgov/ab2d-bcda-dpc-platform/actions/setup-tfenv-terraform@main
+
+      - name: Terraform init and plan
+        run: |
+          set -x
+          cd terraform/environments/ab2d/lambda/
+          terraform init -reconfigure -backend-config=backend/${AB2D_ENV}.conf
+          terraform plan -var env=${AB2D_ENV} -out=lambda.tfplan
+
+      - name: Terraform apply
+        if: ${{ inputs.apply == true }}
+        run: |
+          set -e
+          cd terraform/environments/ab2d/lambda/
+          terraform apply -input=false lambda.tfplan
+
+      - name: Cleanup Terraform Plan
+        if: ${{ always() && !cancelled() }}
+        working-directory: terraform/environments/ab2d/lambda/
+        run: |
+          rm -f lambda.tfplan 
