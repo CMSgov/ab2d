@@ -1,4 +1,5 @@
-name: "tf ${{ inputs.apply && 'apply' || 'plan' }} ${{ inputs.service }} ${{ inputs.environment }}"
+name: terraform
+run-name: tf ${{ inputs.apply && 'apply' || 'plan' }} ${{ inputs.service }} ${{ inputs.environment }}
 
 on:
   workflow_call:
