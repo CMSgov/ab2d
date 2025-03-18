@@ -41,9 +41,12 @@ on:
         required: true
         type: choice
         options:
+          - api
           - core
           - controller
+          - microservices
           - web
+          - worker
 
 jobs:
   terraform:
