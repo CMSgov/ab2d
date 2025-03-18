@@ -89,7 +89,7 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
 
       - name: Set env vars from AWS params in AB2D account
-        uses: ./.github/workflows/actions/set-aws-params
+        uses: ./.github/workflows/actions/set-database-params
         with:
           aws_region: ${{ vars.AWS_REGION }}
           secret_store_prefix: ${{ env.SECRET_STORE_PREFIX }}
