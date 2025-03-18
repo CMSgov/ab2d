@@ -43,7 +43,7 @@ jobs:
           echo "SECRET_STORE_PREFIX=${SECRET_STORE_PREFIX}" >> $GITHUB_ENV
 
       - name: Assume role in AB2D account for this environment
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: aws-actions/configure-aws-credentials@v4
         env:
           ACCOUNT: ${{ inputs.environment == 'prod_test' && 'prod' || inputs.environment }}
         with:
