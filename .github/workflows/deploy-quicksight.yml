@@ -1,0 +1,94 @@
+name: deploy-quicksight
+
+on:
+  push:
+    branches: [AB2D-6529/Deploy_Quicksight]
+
+  workflow_call:
+    inputs:
+      apply:
+        type: boolean
+        required: true
+        default: false
+      environment:
+        required: true
+        type: string
+      ab2dBranch:
+        type: string
+        required: true
+        default: main
+
+  workflow_dispatch:
+    inputs:
+      apply:
+        type: boolean
+        required: true
+        default: false
+        description: 'Apply output from plan?'
+      environment:
+        description: 'AB2D environment'
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+          - sbx
+          - prod_test
+          - prod
+      ab2dBranch:
+        type: string
+        required: true
+        default: main
+        description: 'Branch for ab2d'
+
+jobs:
+  publish_quicksight:
+    - name: Set variables AB2D environment
+      run: |
+          ENV: test
+#          if [[ ${{ inputs.environment }} = "dev" ]];         then AB2D_ENV='ab2d-dev'
+#          elif [[ ${{ inputs.environment }} = "test" ]];      then AB2D_ENV='ab2d-east-impl'
+#          elif [[ ${{ inputs.environment }} = "sbx" ]];       then AB2D_ENV='ab2d-sbx-sandbox'
+#          elif [[ ${{ inputs.environment }} = "prod_test" ]]; then AB2D_ENV='ab2d-east-prod-test'
+#          elif [[ ${{ inputs.environment }} = "prod" ]];      then AB2D_ENV='ab2d-east-prod'
+            if [[ ${{ ENV }} = "dev" ]];         then AB2D_ENV='ab2d-dev'
+            elif [[ ${{ ENV }} = "test" ]];      then AB2D_ENV='ab2d-east-impl'
+            elif [[ ${{ ENV }} = "sbx" ]];       then AB2D_ENV='ab2d-sbx-sandbox'
+            elif [[ ${{ ENV }} = "prod_test" ]]; then AB2D_ENV='ab2d-east-prod-test'
+            elif [[ ${{ ENV }} = "prod" ]];      then AB2D_ENV='ab2d-east-prod'
+          else echo "Unable to determine AB2D environment"; exit 1
+          fi
+        
+          echo "AB2D_ENV=${AB2D_ENV}" >> $GITHUB_ENV
+
+    - name: Assume role in AB2D account for this environment
+      uses: aws-actions/configure-aws-credentials@v4
+      env:
+#        ACCOUNT: ${{ inputs.environment == 'prod_test' && 'prod' || inputs.environment }}
+         ACCOUNT: test
+      with:
+        aws-region: ${{ vars.AWS_REGION }}
+        role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
+
+    - name: Install terraform
+      uses: cmsgov/ab2d-bcda-dpc-platform/actions/setup-tfenv-terraform@main
+
+    - name: Terraform init and plan
+      run: |
+        set -x
+        cd terraform/environments/ab2d/lambda/
+        terraform init -reconfigure -backend-config=backend/${AB2D_ENV}.conf
+        terraform plan -var env=${AB2D_ENV} -out=quicksight.tfplan
+
+    - name: Terraform apply
+      if: ${{ inputs.apply == true }}
+      run: |
+        set -e
+        cd terraform/environments/ab2d/quicksight/
+        terraform apply -input=false quicksight.tfplan
+
+    - name: Cleanup Terraform Plan
+      if: ${{ always() && !cancelled() }}
+      working-directory: terraform/environments/ab2d/quicksight/
+      run: |
+        rm -f quicksight.tfplan 
