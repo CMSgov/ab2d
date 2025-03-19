@@ -2,7 +2,7 @@ name: deploy-quicksight
 
 on:
   push:
-    branches: [AB2D-6529/Deploy_Quicksight]
+    branches: [ AB2D-6529/Deploy_Quicksight ]
 
   workflow_call:
     inputs:
@@ -52,21 +52,27 @@ jobs:
     steps:
       - name: Set environment variables
         run: |
-
-            if [[ "$ENV" = "dev" ]];         then AB2D_ENV='ab2d-dev'
-            elif [[ "$ENV" = "test" ]];      then AB2D_ENV='ab2d-east-impl'
-            elif [[ "$ENV" = "sbx" ]];       then AB2D_ENV='ab2d-sbx-sandbox'
-            elif [[ "$ENV" = "prod_test" ]]; then AB2D_ENV='ab2d-east-prod-test'
-            elif [[ "$ENV" = "prod" ]];      then AB2D_ENV='ab2d-east-prod'
-          else echo "Unable to determine AB2D environment"; exit 1
+          if [ "$ENV" = "dev" ]; then 
+            AB2D_ENV='ab2d-dev'
+          elif [ "$ENV" = "test" ]; then 
+            AB2D_ENV='ab2d-east-impl'
+          elif [ "$ENV" = "sbx" ]; then 
+            AB2D_ENV='ab2d-sbx-sandbox'
+          elif [ "$ENV" = "prod_test" ]; then 
+            AB2D_ENV='ab2d-east-prod-test'
+          elif [ "$ENV" = "prod" ]; then 
+            AB2D_ENV='ab2d-east-prod'
+          else 
+            echo "Unable to determine AB2D environment"; 
+            exit 1
           fi
-        
+          
           echo "AB2D_ENV=${AB2D_ENV}" >> $GITHUB_ENV
 
       - name: Assume role in AB2D account for this environment
         uses: aws-actions/configure-aws-credentials@v4
         env:
-#        ACCOUNT: ${{ inputs.environment == 'prod_test' && 'prod' || inputs.environment }}
+          #        ACCOUNT: ${{ inputs.environment == 'prod_test' && 'prod' || inputs.environment }}
           ACCOUNT: test
         with:
           aws-region: ${{ vars.AWS_REGION }}
