@@ -42,6 +42,7 @@ on:
         description: 'Branch for ab2d'
 
 jobs:
+
   deploy:
     runs-on: self-hosted
 
@@ -49,13 +50,9 @@ jobs:
       ENV: test
 
     steps:
-      - name: Set variables AB2D environment
+      - name: Set environment variables
         run: |
-#          if [[ ${{ inputs.environment }} = "dev" ]];         then AB2D_ENV='ab2d-dev'
-#          elif [[ ${{ inputs.environment }} = "test" ]];      then AB2D_ENV='ab2d-east-impl'
-#          elif [[ ${{ inputs.environment }} = "sbx" ]];       then AB2D_ENV='ab2d-sbx-sandbox'
-#          elif [[ ${{ inputs.environment }} = "prod_test" ]]; then AB2D_ENV='ab2d-east-prod-test'
-#          elif [[ ${{ inputs.environment }} = "prod" ]];      then AB2D_ENV='ab2d-east-prod'
+
             if [[ ${{ ENV }} = "dev" ]];         then AB2D_ENV='ab2d-dev'
             elif [[ ${{ ENV }} = "test" ]];      then AB2D_ENV='ab2d-east-impl'
             elif [[ ${{ ENV }} = "sbx" ]];       then AB2D_ENV='ab2d-sbx-sandbox'
