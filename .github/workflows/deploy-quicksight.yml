@@ -42,7 +42,9 @@ on:
         description: 'Branch for ab2d'
 
 jobs:
-  publish_quicksight:
+  deploy:
+    runs-on: self-hosted
+    steps:
     - name: Set variables AB2D environment
       run: |
           ENV: test
