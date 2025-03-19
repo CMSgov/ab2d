@@ -52,6 +52,24 @@ jobs:
 
     steps:
       - name: Set environment variables
+        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |
+            ARTIFACTORY_URL=/artifactory/url
+            ARTIFACTORY_USER=/artifactory/user
+            ARTIFACTORY_PASSWORD=/artifactory/password
+            OPS_GITHUB_TOKEN=/ci/github/token
+
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          repository: 'cmsgov/ab2d-ops'
+          ref: main
+          token: ${{ env.OPS_GITHUB_TOKEN }}
+
+      - name: Set variables for AB2D environment
         run: |
           if [ "$ENV" = "dev" ]; then 
             AB2D_ENV='ab2d-dev'
