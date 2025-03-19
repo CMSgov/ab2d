@@ -85,7 +85,7 @@ jobs:
       - name: Terraform init and plan
         run: |
           set -x
-          cd terraform/environments/ab2d/lambda/
+          cd terraform/environments/ab2d/quicksight/
           terraform init -reconfigure -backend-config=backend/${AB2D_ENV}.conf
           terraform plan -var env=${AB2D_ENV} -out=quicksight.tfplan
 
