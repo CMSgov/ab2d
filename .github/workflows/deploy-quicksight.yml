@@ -49,8 +49,8 @@ jobs:
       ENV: test
 
     steps:
-    - name: Set variables AB2D environment
-      run: |
+      - name: Set variables AB2D environment
+        run: |
 #          if [[ ${{ inputs.environment }} = "dev" ]];         then AB2D_ENV='ab2d-dev'
 #          elif [[ ${{ inputs.environment }} = "test" ]];      then AB2D_ENV='ab2d-east-impl'
 #          elif [[ ${{ inputs.environment }} = "sbx" ]];       then AB2D_ENV='ab2d-sbx-sandbox'
@@ -66,34 +66,34 @@ jobs:
         
           echo "AB2D_ENV=${AB2D_ENV}" >> $GITHUB_ENV
 
-    - name: Assume role in AB2D account for this environment
-      uses: aws-actions/configure-aws-credentials@v4
-      env:
+      - name: Assume role in AB2D account for this environment
+        uses: aws-actions/configure-aws-credentials@v4
+        env:
 #        ACCOUNT: ${{ inputs.environment == 'prod_test' && 'prod' || inputs.environment }}
          ACCOUNT: test
-      with:
+        with:
         aws-region: ${{ vars.AWS_REGION }}
         role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
 
-    - name: Install terraform
-      uses: cmsgov/ab2d-bcda-dpc-platform/actions/setup-tfenv-terraform@main
+      - name: Install terraform
+        uses: cmsgov/ab2d-bcda-dpc-platform/actions/setup-tfenv-terraform@main
 
-    - name: Terraform init and plan
-      run: |
-        set -x
-        cd terraform/environments/ab2d/lambda/
-        terraform init -reconfigure -backend-config=backend/${AB2D_ENV}.conf
-        terraform plan -var env=${AB2D_ENV} -out=quicksight.tfplan
+      - name: Terraform init and plan
+        run: |
+         set -x
+         cd terraform/environments/ab2d/lambda/
+         terraform init -reconfigure -backend-config=backend/${AB2D_ENV}.conf
+         terraform plan -var env=${AB2D_ENV} -out=quicksight.tfplan
 
-    - name: Terraform apply
-      if: ${{ inputs.apply == true }}
-      run: |
-        set -e
-        cd terraform/environments/ab2d/quicksight/
-        terraform apply -input=false quicksight.tfplan
+      - name: Terraform apply
+        if: ${{ inputs.apply == true }}
+        run: |
+          set -e
+          cd terraform/environments/ab2d/quicksight/
+          terraform apply -input=false quicksight.tfplan
 
-    - name: Cleanup Terraform Plan
-      if: ${{ always() && !cancelled() }}
-      working-directory: terraform/environments/ab2d/quicksight/
-      run: |
-        rm -f quicksight.tfplan 
+      - name: Cleanup Terraform Plan
+        if: ${{ always() && !cancelled() }}
+        working-directory: terraform/environments/ab2d/quicksight/
+        run: |
+          rm -f quicksight.tfplan 
