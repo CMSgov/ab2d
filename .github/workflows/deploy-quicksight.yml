@@ -81,6 +81,8 @@ jobs:
 
       - name: Install terraform
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/setup-tfenv-terraform@main
+        with:
+          directory: /opt/actions-runner/_work/ab2d/ab2d/terraform
 
       - name: Terraform init and plan
         run: |
