@@ -2,7 +2,8 @@ name: deploy-quicksight
 
 on:
   push:
-    branches: [ AB2D-6529/Deploy_Quicksight ]
+    branches:
+      - AB2D-6529/Deploy_Quicksights
 
   workflow_call:
     inputs:
