@@ -44,10 +44,13 @@ on:
 jobs:
   deploy:
     runs-on: self-hosted
+
+    env:
+      ENV: test
+
     steps:
     - name: Set variables AB2D environment
       run: |
-          ENV: test
 #          if [[ ${{ inputs.environment }} = "dev" ]];         then AB2D_ENV='ab2d-dev'
 #          elif [[ ${{ inputs.environment }} = "test" ]];      then AB2D_ENV='ab2d-east-impl'
 #          elif [[ ${{ inputs.environment }} = "sbx" ]];       then AB2D_ENV='ab2d-sbx-sandbox'
