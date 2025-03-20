@@ -96,11 +96,11 @@ jobs:
       - name: Assume role in AB2D account for this environment
         uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
         env:
-          ACCOUNT: ${{ inputs.environment == '' && 'test' || inputs.environment }}
+          ACCOUNT: ${{ inputs.environment == 'prod-test' && 'prod' || inputs.environment == '' && 'test' || inputs.environment }}
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
-
+          
       - name: Terraform Init & Plan
         working-directory: terraform/environments/ab2d/${{ inputs.service }}/
         run: |
