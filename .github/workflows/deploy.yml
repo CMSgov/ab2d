@@ -46,4 +46,5 @@ jobs:
         run: |
           echo "Deploying service $SERVICE_NAME"
           aws ecs update-service --cluster "$SERVICE_NAME" --service "$SERVICE_NAME" --force-new-deployment > /dev/null
-          aws ecs wait services-stable --cluster "$SERVICE_NAME" --services "$SERVICE_NAME"
+          aws ecs wait services-stable --cluster "$SERVICE_NAME" --services "$SERVICE_NAME" --max-attempts 15
+
