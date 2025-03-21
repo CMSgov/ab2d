@@ -1,0 +1,26 @@
+name: "Set AWS Params in AB2D Account"
+description: "Composite action to set environment variables from AWS parameters in AB2D account"
+inputs:
+  aws_region:
+    description: "AWS region to use"
+    required: true
+  secret_store_prefix:
+    description: "Secret store prefix for constructing MODULE_DB_PREFIX"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Set env vars from AWS params in AB2D account
+      uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+      env:
+        AWS_REGION: ${{ inputs.aws_region }}
+        MODULE_DB_PREFIX: /aws/reference/secretsmanager/${{ inputs.secret_store_prefix }}/module/db
+        MODULE_DB_SUFFIX: 2020-01-02-09-15-01
+      with:
+        params: |
+          PGHOST=${{ env.MODULE_DB_PREFIX }}/database_host/${{ env.MODULE_DB_SUFFIX }}
+          PGPORT=${{ env.MODULE_DB_PREFIX }}/database_port/${{ env.MODULE_DB_SUFFIX }}
+          PGUSER=${{ env.MODULE_DB_PREFIX }}/database_user/${{ env.MODULE_DB_SUFFIX }}
+          PGDATABASE=${{ env.MODULE_DB_PREFIX }}/database_name/${{ env.MODULE_DB_SUFFIX }}
+          PGPASSWORD=${{ env.MODULE_DB_PREFIX }}/database_password/${{ env.MODULE_DB_SUFFIX }}
+          DATABASE_SCHEMA_NAME=${{ env.MODULE_DB_PREFIX }}/schema_name/${{ env.MODULE_DB_SUFFIX }}

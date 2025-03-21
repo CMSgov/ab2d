@@ -169,3 +169,5 @@ databaseChangeLog:
       file: db/changelog/v2024/ab2d_6151_rename_column.sql
   - include:
       file: db/changelog/v2025/add_sequence.sql
+  - include:
+      file: db/changelog/v2025/update_total_bene_served_procedure.sql

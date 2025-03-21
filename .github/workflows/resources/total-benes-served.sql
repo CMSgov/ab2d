@@ -1,0 +1,1 @@
+SET statement_timeout='30min'; CALL find_benes_served();
