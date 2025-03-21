@@ -83,8 +83,8 @@ jobs:
               AB2D_ENV='ab2d-east-prod'
            else 
                echo "Unable to determine AB2D environment";
-               exit 
-               fi
+               exit 1
+           fi
 #          if [ ${{ inputs.environment }} = "dev" ]; then
 #            AB2D_ENV='ab2d-dev'
 #          elif [ ${{ inputs.environment }} = "test" ]; then
