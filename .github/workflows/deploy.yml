@@ -40,11 +40,20 @@ jobs:
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
+
       - name: Deploy ECS service to run on latest image in ECR
         env:
           SERVICE_NAME: ab2d-${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}-${{ inputs.module }}
         run: |
-          echo "Deploying service $SERVICE_NAME"
+          echo "Deploying ECS service: $SERVICE_NAME"
           aws ecs update-service --cluster "$SERVICE_NAME" --service "$SERVICE_NAME" --force-new-deployment > /dev/null
-          aws ecs wait services-stable --cluster "$SERVICE_NAME" --services "$SERVICE_NAME" --max-attempts 15
-
+          echo "Waiting for new task to start..."
+          sleep 10
+          TASK_ARN=$(aws ecs list-tasks --cluster "$SERVICE_NAME" --service-name "$SERVICE_NAME" --desired-status RUNNING --query 'taskArns[-1]' --output text)
+          echo "New task: $TASK_ARN"
+          exit_status="1"
+          while [ "${exit_status}" != "0" ]; do
+            echo "Waiting for task to stop..."
+            aws ecs wait tasks-stopped --cluster "$SERVICE_NAME" --tasks "$TASK_ARN"
+            exit_status="$?"
+          done
