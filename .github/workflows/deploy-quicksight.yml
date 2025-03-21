@@ -1,10 +1,6 @@
 name: deploy-quicksight
 
 on:
-  push:
-    branches:
-      - AB2D-6529/Deploy_Quicksights
-
   workflow_call:
     inputs:
       apply:
@@ -47,9 +43,6 @@ jobs:
   deploy:
     runs-on: self-hosted
 
-    env:
-      ENV: test
-
     steps:
       - name: Set environment variables
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
@@ -71,15 +64,15 @@ jobs:
 
       - name: Set variables for AB2D environment
         run: |
-          if [ "$ENV" = "dev" ]; then 
+          if [ ${{ inputs.environment }} = "dev" ]; then 
             AB2D_ENV='ab2d-dev'
-          elif [ "$ENV" = "test" ]; then 
+          elif [ ${{ inputs.environment }} = "test" ]; then 
             AB2D_ENV='ab2d-east-impl'
-          elif [ "$ENV" = "sbx" ]; then 
+          elif [ ${{ inputs.environment }} = "sbx" ]; then 
             AB2D_ENV='ab2d-sbx-sandbox'
-          elif [ "$ENV" = "prod_test" ]; then 
+          elif [ ${{ inputs.environment }} = "prod_test" ]; then 
             AB2D_ENV='ab2d-east-prod-test'
-          elif [ "$ENV" = "prod" ]; then 
+          elif [ ${{ inputs.environment }} = "prod" ]; then 
             AB2D_ENV='ab2d-east-prod'
           else 
             echo "Unable to determine AB2D environment"; 
@@ -91,8 +84,7 @@ jobs:
       - name: Assume role in AB2D account for this environment
         uses: aws-actions/configure-aws-credentials@v4
         env:
-          #        ACCOUNT: ${{ inputs.environment == 'prod_test' && 'prod' || inputs.environment }}
-          ACCOUNT: test
+          ACCOUNT: ${{ inputs.environment == 'prod_test' && 'prod' || inputs.environment }}
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
