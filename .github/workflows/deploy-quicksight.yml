@@ -71,34 +71,20 @@ jobs:
 
       - name: Set variables for AB2D environment
         run: |
-           if [ "$ENV" = "dev" ]; then 
-              AB2D_ENV='ab2d-dev'
-           elif [ "$ENV" = "test" ]; then 
-              AB2D_ENV='ab2d-east-impl'
-           elif [ "$ENV" = "sbx" ]; then 
-              AB2D_ENV='ab2d-sbx-sandbox'
-           elif [ "$ENV" = "prod_test" ]; then 
-              AB2D_ENV='ab2d-east-prod-test'
-           elif [ "$ENV" = "prod" ]; then 
-              AB2D_ENV='ab2d-east-prod'
-           else 
-               echo "Unable to determine AB2D environment";
-               exit 1
-           fi
-#          if [ ${{ inputs.environment }} = "dev" ]; then
-#            AB2D_ENV='ab2d-dev'
-#          elif [ ${{ inputs.environment }} = "test" ]; then
-#            AB2D_ENV='ab2d-east-impl'
-#          elif [ ${{ inputs.environment }} = "sbx" ]; then
-#            AB2D_ENV='ab2d-sbx-sandbox'
-#          elif [ ${{ inputs.environment }} = "prod_test" ]; then
-#            AB2D_ENV='ab2d-east-prod-test'
-#          elif [ ${{ inputs.environment }} = "prod" ]; then
-#            AB2D_ENV='ab2d-east-prod'
-#          else
-#            echo "Unable to determine AB2D environment";
-#            exit 1
-#          fi
+          if [ "$ENV" = "dev" ]; then 
+            AB2D_ENV='ab2d-dev'
+          elif [ "$ENV" = "test" ]; then 
+            AB2D_ENV='ab2d-east-impl'
+          elif [ "$ENV" = "sbx" ]; then 
+            AB2D_ENV='ab2d-sbx-sandbox'
+          elif [ "$ENV" = "prod_test" ]; then 
+            AB2D_ENV='ab2d-east-prod-test'
+          elif [ "$ENV" = "prod" ]; then 
+            AB2D_ENV='ab2d-east-prod'
+          else 
+            echo "Unable to determine AB2D environment"; 
+            exit 1
+          fi
           
           echo "AB2D_ENV=${AB2D_ENV}" >> $GITHUB_ENV
 
