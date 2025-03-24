@@ -205,11 +205,11 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         httpHeaders.add(CONTENT_LOCATION, contentLocationHeader);
     }
 
-    private ResponseEntity<JsonNode> generateFHIRError(Exception e, HttpServletRequest request) throws IOException {
+    public ResponseEntity<JsonNode> generateFHIRError(Exception e, HttpServletRequest request) throws IOException {
         return generateFHIRError(e, null, request);
     }
 
-    private ResponseEntity<JsonNode> generateFHIRError(Exception e, HttpHeaders httpHeaders, HttpServletRequest request) throws IOException {
+    public ResponseEntity<JsonNode> generateFHIRError(Exception e, HttpHeaders httpHeaders, HttpServletRequest request) throws IOException {
         String msg = getRootCause(e);
         HttpStatus httpStatus = getErrorResponse(e.getClass());
 
