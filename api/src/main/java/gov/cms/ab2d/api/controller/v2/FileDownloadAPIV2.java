@@ -25,7 +25,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.web.servlet.HandlerExceptionResolver;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.io.IOException;
 
@@ -51,8 +50,7 @@ import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 @RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {FHIR_NDJSON_CONTENT_TYPE, FHIR_JSON_CONTENT_TYPE})
 public class FileDownloadAPIV2 {
     private FileDownloadCommon fileDownloadCommon;
-
-    private final HandlerExceptionResolver handlerExceptionResolver;
+    private HandlerExceptionResolver handlerExceptionResolver;
 
     @Operation(summary = DOWNLOAD_DESC)
     @Parameters(value = {
