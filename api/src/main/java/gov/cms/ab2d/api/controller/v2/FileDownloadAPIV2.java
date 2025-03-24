@@ -24,6 +24,9 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.NotBlank;
+import org.springframework.web.servlet.HandlerExceptionResolver;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
 import java.io.IOException;
 
 import static gov.cms.ab2d.api.controller.common.ApiText.BULK_DNLD_DSC;
@@ -49,6 +52,8 @@ import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 public class FileDownloadAPIV2 {
     private FileDownloadCommon fileDownloadCommon;
 
+    private final HandlerExceptionResolver handlerExceptionResolver;
+
     @Operation(summary = DOWNLOAD_DESC)
     @Parameters(value = {
         @Parameter(name = "jobUuid", description = JOB_ID, required = true),
@@ -71,6 +76,14 @@ public class FileDownloadAPIV2 {
             @PathVariable @NotBlank String jobUuid,
             @PathVariable @NotBlank String filename) throws IOException {
 
-        return fileDownloadCommon.downloadFile(jobUuid, filename, request, response);
+        try {
+            log.info("Calling downloadFile()");
+            return fileDownloadCommon.downloadFile(jobUuid, filename, request, response);
+        }
+        catch (Exception e) {
+            log.error("Exception calling downloadFile()", e);
+            handlerExceptionResolver.resolveException(request, response, null, e);
+            return null;
+        }
     }
 }
