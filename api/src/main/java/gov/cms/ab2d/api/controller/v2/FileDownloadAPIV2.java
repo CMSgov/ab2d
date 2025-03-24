@@ -24,8 +24,6 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.NotBlank;
-import org.springframework.web.servlet.HandlerExceptionResolver;
-
 import java.io.IOException;
 
 import static gov.cms.ab2d.api.controller.common.ApiText.BULK_DNLD_DSC;
@@ -50,7 +48,6 @@ import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 @RequestMapping(path = API_PREFIX_V2 + FHIR_PREFIX, produces = {FHIR_NDJSON_CONTENT_TYPE, FHIR_JSON_CONTENT_TYPE})
 public class FileDownloadAPIV2 {
     private FileDownloadCommon fileDownloadCommon;
-    private HandlerExceptionResolver handlerExceptionResolver;
 
     @Operation(summary = DOWNLOAD_DESC)
     @Parameters(value = {
@@ -74,13 +71,6 @@ public class FileDownloadAPIV2 {
             @PathVariable @NotBlank String jobUuid,
             @PathVariable @NotBlank String filename) throws IOException {
 
-        try {
-            log.info("Calling downloadFile()");
-            return fileDownloadCommon.downloadFile(jobUuid, filename, request, response);
-        } catch (Exception e) {
-            log.error("Exception calling downloadFile()", e);
-            handlerExceptionResolver.resolveException(request, response, null, e);
-            return null;
-        }
+        return fileDownloadCommon.downloadFile(jobUuid, filename, request, response);
     }
 }
