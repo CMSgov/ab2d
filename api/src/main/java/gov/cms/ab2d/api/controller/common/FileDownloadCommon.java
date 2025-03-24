@@ -36,7 +36,7 @@ public class FileDownloadCommon {
     private final PdpClientService pdpClientService;
     private final ErrorHandler errorHandler;
 
-    private ResponseEntity downloadFile(String jobUuid, String filename, HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public ResponseEntity downloadFile(String jobUuid, String filename, HttpServletRequest request, HttpServletResponse response) throws IOException {
         try {
             return _downloadFile(jobUuid, filename, request, response);
         } catch (Exception e) {
