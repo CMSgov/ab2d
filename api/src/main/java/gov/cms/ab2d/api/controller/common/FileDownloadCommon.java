@@ -38,13 +38,13 @@ public class FileDownloadCommon {
 
     public ResponseEntity downloadFile(String jobUuid, String filename, HttpServletRequest request, HttpServletResponse response) throws IOException {
         try {
-            return _downloadFile(jobUuid, filename, request, response);
+            return downloadFileInternal(jobUuid, filename, request, response);
         } catch (Exception e) {
             return errorHandler.generateFHIRError(e, request);
         }
     }
 
-    private ResponseEntity _downloadFile(String jobUuid, String filename, HttpServletRequest request, HttpServletResponse response) throws IOException {
+    private ResponseEntity downloadFileInternal(String jobUuid, String filename, HttpServletRequest request, HttpServletResponse response) throws IOException {
         MDC.put(JOB_LOG, jobUuid);
         MDC.put(FILE_LOG, filename);
         log.info("Request submitted to download file");
