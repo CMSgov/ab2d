@@ -78,8 +78,7 @@ public class FileDownloadAPIV1 {
         try {
             log.info("Calling downloadFile()");
             return fileDownloadCommon.downloadFile(jobUuid, filename, request, response);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("Exception calling downloadFile()", e);
             handlerExceptionResolver.resolveException(request, response, null, e);
             return null;
