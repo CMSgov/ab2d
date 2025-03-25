@@ -1,6 +1,5 @@
 package gov.cms.ab2d.api.controller.common;
 
-import gov.cms.ab2d.api.controller.ErrorHandler;
 import gov.cms.ab2d.api.remote.JobClient;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
@@ -34,18 +33,8 @@ public class FileDownloadCommon {
     private final JobClient jobClient;
     private final SQSEventClient eventLogger;
     private final PdpClientService pdpClientService;
-    private final ErrorHandler errorHandler;
 
-    public ResponseEntity downloadFile(String jobUuid, String filename, HttpServletRequest request, HttpServletResponse response) throws IOException {
-        try {
-            return downloadFileInternal(jobUuid, filename, request, response);
-        } catch (Exception e) {
-            errorHandler.generateFHIRError(e, request, response);
-            return null;
-        }
-    }
-
-    private ResponseEntity downloadFileInternal(String jobUuid, String filename, HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public ResponseEntity<String> downloadFile(String jobUuid, String filename, HttpServletRequest request, HttpServletResponse response) throws IOException {
         MDC.put(JOB_LOG, jobUuid);
         MDC.put(FILE_LOG, filename);
         log.info("Request submitted to download file");
