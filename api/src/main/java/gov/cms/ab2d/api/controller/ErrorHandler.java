@@ -41,14 +41,14 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 
+import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 import static gov.cms.ab2d.eventclient.events.SlackEvents.API_INVALID_CONTRACT;
-import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
-import static org.springframework.http.HttpHeaders.RETRY_AFTER;
+import static org.springframework.http.HttpHeaders.*;
 
 /**
  * Don't change exception classes without updating alerts in Splunk. Splunk alerts rely on the classname to filter
@@ -216,10 +216,9 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
      * and then write directly to response stream.
      */
     public void generateFHIRError(Exception e, HttpServletRequest request, HttpServletResponse response) throws IOException {
-        val headers = new HttpHeaders();
-        headers.set("Content-Type", "application/json");
-        val responseEntity = generateFHIRError(e, headers, request);
+        val responseEntity = generateFHIRError(e, null, request);
         response.setStatus(responseEntity.getStatusCode().value());
+        response.setHeader(CONTENT_TYPE, APPLICATION_JSON);
         response.getWriter().write(new ObjectMapper().writeValueAsString(responseEntity.getBody()));
         response.getWriter().flush();
     }
