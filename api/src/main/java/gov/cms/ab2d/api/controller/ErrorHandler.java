@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.slf4j.MDC;
@@ -210,10 +211,17 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         return generateFHIRError(e, null, request);
     }
 
+    /**
+     * Call {@link #generateFHIRError(Exception, HttpHeaders, HttpServletRequest)} to build a response entity
+     * and then write directly to response stream.
+     */
     public void generateFHIRError(Exception e, HttpServletRequest request, HttpServletResponse response) throws IOException {
-        ResponseEntity<JsonNode> r = generateFHIRError(e, null, request);
-        response.getWriter().write(new ObjectMapper().writeValueAsString(r.getBody()));
-        response.setStatus(r.getStatusCode().value());
+        val headers = new HttpHeaders();
+        headers.set("Content-Type", "application/json");
+        val responseEntity = generateFHIRError(e, headers, request);
+        response.setStatus(responseEntity.getStatusCode().value());
+        response.getWriter().write(new ObjectMapper().writeValueAsString(responseEntity.getBody()));
+        response.getWriter().flush();
     }
 
     public ResponseEntity<JsonNode> generateFHIRError(Exception e, HttpHeaders httpHeaders, HttpServletRequest request) throws IOException {
