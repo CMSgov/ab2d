@@ -223,7 +223,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         response.getWriter().flush();
     }
 
-    public ResponseEntity<JsonNode> generateFHIRError(Exception e, HttpHeaders httpHeaders, HttpServletRequest request) throws IOException {
+    private ResponseEntity<JsonNode> generateFHIRError(Exception e, HttpHeaders httpHeaders, HttpServletRequest request) throws IOException {
         String msg = getRootCause(e);
         HttpStatus httpStatus = getErrorResponse(e.getClass());
 
