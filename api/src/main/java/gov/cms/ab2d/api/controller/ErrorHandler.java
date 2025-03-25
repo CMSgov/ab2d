@@ -24,7 +24,9 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.slf4j.MDC;
@@ -207,6 +209,12 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
     public ResponseEntity<JsonNode> generateFHIRError(Exception e, HttpServletRequest request) throws IOException {
         return generateFHIRError(e, null, request);
+    }
+
+    public void generateFHIRError(Exception e, HttpServletRequest request, HttpServletResponse response) throws IOException {
+        ResponseEntity<JsonNode> r = generateFHIRError(e, null, request);
+        response.getWriter().write(new ObjectMapper().writeValueAsString(r.getBody()));
+        response.setStatus(r.getStatusCode().value());
     }
 
     public ResponseEntity<JsonNode> generateFHIRError(Exception e, HttpHeaders httpHeaders, HttpServletRequest request) throws IOException {

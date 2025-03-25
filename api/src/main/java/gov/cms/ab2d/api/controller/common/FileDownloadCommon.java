@@ -1,5 +1,6 @@
 package gov.cms.ab2d.api.controller.common;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import gov.cms.ab2d.api.controller.ErrorHandler;
 import gov.cms.ab2d.api.remote.JobClient;
 import gov.cms.ab2d.common.service.PdpClientService;
@@ -40,7 +41,8 @@ public class FileDownloadCommon {
         try {
             return downloadFileInternal(jobUuid, filename, request, response);
         } catch (Exception e) {
-            return errorHandler.generateFHIRError(e, request);
+            errorHandler.generateFHIRError(e, request, response);
+            return null;
         }
     }
 
