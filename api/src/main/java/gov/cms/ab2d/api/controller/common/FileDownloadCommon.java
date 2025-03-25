@@ -1,6 +1,5 @@
 package gov.cms.ab2d.api.controller.common;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import gov.cms.ab2d.api.controller.ErrorHandler;
 import gov.cms.ab2d.api.remote.JobClient;
 import gov.cms.ab2d.common.service.PdpClientService;
