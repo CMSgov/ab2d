@@ -62,6 +62,8 @@ jobs:
             *) echo "Invalid environment input: $ENVIRONMENT"; exit 1 ;;
           esac
 
+          AWS_ACCOUNT_NUMBER="${{ secrets[format('{0}_ACCOUNT_ID', ACCOUNT)] }}"
+
           case "$PARENT_ENV" in
             "ab2d-east-impl") ACCOUNT="test" ;;
             "ab2d-dev") ACCOUNT="dev" ;;
