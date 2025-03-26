@@ -73,11 +73,11 @@ jobs:
         run: |
           echo "AWS_ACCOUNT_NUMBER=${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}" >> $GITHUB_ENV
 
-      - name: Assume Role in AB2D Account
-        uses: aws-actions/configure-aws-credentials@v4.1.0
+      - name: Assume role in AB2D Management account
+        uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::653916833532:role/delegatedadmin/developer/github-actions-runner-role
+          role-to-assume: arn:aws:iam::${{ secrets.MGMT_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-mgmt-github-actions
 
       - name: Run Update Gold Disk Script
         run: |
