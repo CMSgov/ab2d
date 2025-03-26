@@ -85,3 +85,5 @@ jobs:
           scripts/deployment/update-gold-disk.sh --cms_env $PARENT_ENV --cloud_tamer false
         env:
           AWS_ACCOUNT_NUMBER: ${{ env.AWS_ACCOUNT_NUMBER }}
+          CLOUD_TAMER: false
+
