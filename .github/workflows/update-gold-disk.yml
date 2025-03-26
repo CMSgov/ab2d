@@ -98,9 +98,13 @@ jobs:
         with:
           version: 1.10.0
           
-      - name: Symlink packer to /usr/bin/packer
+      - name: Symlink packer to /usr/bin if not already linked
         run: |
-          sudo ln -s "$(which packer)" /usr/bin/packer
+          if [ ! -f /usr/bin/packer ]; then
+            sudo ln -s "$(which packer)" /usr/bin/packer
+          else
+            echo "✅ /usr/bin/packer already exists, skipping symlink."
+          fi
 
 
       - name: Run Update Gold Disk Script
