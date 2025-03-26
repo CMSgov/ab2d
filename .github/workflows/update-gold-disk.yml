@@ -62,8 +62,6 @@ jobs:
             *) echo "Invalid environment input: $ENVIRONMENT"; exit 1 ;;
           esac
 
-          AWS_ACCOUNT_NUMBER="${{ secrets[format('{0}_ACCOUNT_ID', ACCOUNT)] }}"
-
           case "$PARENT_ENV" in
             "ab2d-east-impl") ACCOUNT="test" ;;
             "ab2d-dev") ACCOUNT="dev" ;;
@@ -72,8 +70,12 @@ jobs:
             *) echo "Invalid PARENT_ENV"; exit 1 ;;
           esac
 
+          # Now that ACCOUNT is defined, use it to fetch the secret
+          AWS_ACCOUNT_NUMBER="${{ secrets[format('{0}_ACCOUNT_ID', ACCOUNT)] }}"
+
           echo "PARENT_ENV=$PARENT_ENV" >> $GITHUB_ENV
           echo "ACCOUNT=$ACCOUNT" >> $GITHUB_ENV
+          echo "AWS_ACCOUNT_NUMBER=$AWS_ACCOUNT_NUMBER" >> $GITHUB_ENV
 
       - name: Assume Role in AB2D Account
         uses: aws-actions/configure-aws-credentials@v4.1.0
