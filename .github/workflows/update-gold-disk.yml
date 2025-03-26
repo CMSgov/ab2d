@@ -49,6 +49,9 @@ jobs:
           token: ${{ env.OPS_GITHUB_TOKEN }}
           ref: 'oluwole-test-debug'
 
+      - name: Fetch all branches
+        run: git fetch --all
+
       - name: Set PARENT_ENV
         run: |
           case "${{ env.ENVIRONMENT }}" in
