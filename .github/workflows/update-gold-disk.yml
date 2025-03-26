@@ -93,6 +93,11 @@ jobs:
         id: setup
         with:
           version: 1.10.0
+          
+      - name: Symlink packer to /usr/bin/packer
+        run: |
+          sudo ln -s "$(which packer)" /usr/bin/packer
+
 
       - name: Run Update Gold Disk Script
         run: |
