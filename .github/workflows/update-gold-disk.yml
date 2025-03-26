@@ -35,48 +35,50 @@ jobs:
       - name: Determine Branch and Environment
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            ENVIRONMENT="dev"
-            BRANCH="${{ github.head_ref }}"
+            echo "ENVIRONMENT=dev" >> $GITHUB_ENV
+            echo "BRANCH=${{ github.head_ref }}" >> $GITHUB_ENV
           else
-            ENVIRONMENT="${{ github.event.inputs.environment || 'dev' }}"
-            BRANCH="${{ github.event.inputs.branch || 'main' }}"
+            echo "ENVIRONMENT=${{ github.event.inputs.environment || 'dev' }}" >> $GITHUB_ENV
+            echo "BRANCH=${{ github.event.inputs.branch || 'main' }}" >> $GITHUB_ENV
           fi
-
-          echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_ENV
-          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
 
       - name: Checkout AB2D-Ops Repository
         uses: actions/checkout@v4
         with:
           repository: 'cmsgov/ab2d-ops'
           token: ${{ env.OPS_GITHUB_TOKEN }}
+          ref: ${{ env.BRANCH }}
 
-      - name: Set PARENT_ENV and AWS_ACCOUNT_NUMBER
+      - name: Set PARENT_ENV
         run: |
-          case "$ENVIRONMENT" in
-            dev) PARENT_ENV="ab2d-dev" ;;
-            test) PARENT_ENV="ab2d-east-impl" ;;
-            sbx) PARENT_ENV="ab2d-sbx-sandbox" ;;
-            prod-test) PARENT_ENV="ab2d-east-prod-test" ;;
-            prod) PARENT_ENV="ab2d-east-prod" ;;
-            *) echo "Invalid environment input: $ENVIRONMENT"; exit 1 ;;
+          case "${{ env.ENVIRONMENT }}" in
+            dev) echo "PARENT_ENV=ab2d-dev" >> $GITHUB_ENV ;;
+            test) echo "PARENT_ENV=ab2d-east-impl" >> $GITHUB_ENV ;;
+            sbx) echo "PARENT_ENV=ab2d-sbx-sandbox" >> $GITHUB_ENV ;;
+            prod-test) echo "PARENT_ENV=ab2d-east-prod-test" >> $GITHUB_ENV ;;
+            prod) echo "PARENT_ENV=ab2d-east-prod" >> $GITHUB_ENV ;;
+            *) echo "Invalid environment: $ENVIRONMENT" && exit 1 ;;
           esac
-          echo "PARENT_ENV=$PARENT_ENV" >> $GITHUB_ENV
-        env:
-          ENVIRONMENT: ${{ env.ENVIRONMENT }}
-          AWS_ACCOUNT_NUMBER: ${{ secrets.DEV_ACCOUNT_ID }}  # overridden in next step
 
+      - name: Set ACCOUNT from ENVIRONMENT
+        run: |
+          case "${{ env.ENVIRONMENT }}" in
+            dev) echo "ACCOUNT=dev" >> $GITHUB_ENV ;;
+            test) echo "ACCOUNT=test" >> $GITHUB_ENV ;;
+            sbx) echo "ACCOUNT=sbx" >> $GITHUB_ENV ;;
+            prod | prod-test) echo "ACCOUNT=prod" >> $GITHUB_ENV ;;
+            *) echo "Invalid environment: $ENVIRONMENT" && exit 1 ;;
+          esac
 
+      - name: Set AWS_ACCOUNT_NUMBER from secret
+        run: |
+          echo "AWS_ACCOUNT_NUMBER=${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}" >> $GITHUB_ENV
 
       - name: Assume Role in AB2D Account
         uses: aws-actions/configure-aws-credentials@v4.1.0
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::349849222861:role/delegatedadmin/developer/ab2d-dev-github-actions
-
-      - name: Set AWS_ACCOUNT_NUMBER from secret
-        run: |
-          echo "AWS_ACCOUNT_NUMBER=${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}" >> $GITHUB_ENV
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_NUMBER }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
 
       - name: Run Update Gold Disk Script
         run: |
@@ -84,4 +86,3 @@ jobs:
           scripts/deployment/update-gold-disk.sh --cms_env $PARENT_ENV --cloud_tamer false
         env:
           AWS_ACCOUNT_NUMBER: ${{ env.AWS_ACCOUNT_NUMBER }}
-
