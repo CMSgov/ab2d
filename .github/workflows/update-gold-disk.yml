@@ -54,34 +54,18 @@ jobs:
       - name: Set PARENT_ENV and AWS_ACCOUNT_NUMBER
         run: |
           case "$ENVIRONMENT" in
-            dev)
-              PARENT_ENV="ab2d-dev"
-              AWS_ACCOUNT_NUMBER="${{ secrets.DEV_ACCOUNT_ID }}"
-              ;;
-            test)
-              PARENT_ENV="ab2d-east-impl"
-              AWS_ACCOUNT_NUMBER="${{ secrets.TEST_ACCOUNT_ID }}"
-              ;;
-            sbx)
-              PARENT_ENV="ab2d-sbx-sandbox"
-              AWS_ACCOUNT_NUMBER="${{ secrets.SBX_ACCOUNT_ID }}"
-              ;;
-            prod-test)
-              PARENT_ENV="ab2d-east-prod-test"
-              AWS_ACCOUNT_NUMBER="${{ secrets.PROD_ACCOUNT_ID }}"
-              ;;
-            prod)
-              PARENT_ENV="ab2d-east-prod"
-              AWS_ACCOUNT_NUMBER="${{ secrets.PROD_ACCOUNT_ID }}"
-              ;;
-            *)
-              echo "Invalid environment input: $ENVIRONMENT"
-              exit 1
-              ;;
+            dev) PARENT_ENV="ab2d-dev" ;;
+            test) PARENT_ENV="ab2d-east-impl" ;;
+            sbx) PARENT_ENV="ab2d-sbx-sandbox" ;;
+            prod-test) PARENT_ENV="ab2d-east-prod-test" ;;
+            prod) PARENT_ENV="ab2d-east-prod" ;;
+            *) echo "Invalid environment input: $ENVIRONMENT"; exit 1 ;;
           esac
-
           echo "PARENT_ENV=$PARENT_ENV" >> $GITHUB_ENV
-          echo "AWS_ACCOUNT_NUMBER=$AWS_ACCOUNT_NUMBER" >> $GITHUB_ENV
+        env:
+          ENVIRONMENT: ${{ env.ENVIRONMENT }}
+          AWS_ACCOUNT_NUMBER: ${{ secrets.DEV_ACCOUNT_ID }}  # overridden in next step
+
 
 
       - name: Assume Role in AB2D Account
