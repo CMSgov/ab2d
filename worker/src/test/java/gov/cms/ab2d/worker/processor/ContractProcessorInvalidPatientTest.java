@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.util.GzipCompressUtils;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoveragePagingRequest;
@@ -20,13 +21,17 @@ import gov.cms.ab2d.worker.repository.StubJobRepository;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import gov.cms.ab2d.worker.service.JobChannelStubServiceImpl;
 import gov.cms.ab2d.worker.util.ContractWorkerClientMock;
+
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.List;
+
+import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -136,11 +141,20 @@ class ContractProcessorInvalidPatientTest {
         assertNotNull(outputs);
         assertEquals(1, outputs.size());
 
-        String fileName1 = contractId + "_0001.ndjson";
+        String fileName1AfterCompressing = contractId + "_0001.ndjson.gz";
         String output1 = outputs.get(0).getFilePath();
+        assertTrue(output1.equalsIgnoreCase(fileName1AfterCompressing));
 
-        assertTrue(output1.equalsIgnoreCase(fileName1));
-        String actual1 = Files.readString(Path.of(tmpDirFolder.getAbsolutePath() + File.separator + job.getJobUuid() + "/" + output1));
+        // verify original output file is deleted after compressing
+        String fileName1BeforeCompressing = contractId + "_0001.ndjson";
+        val originalOutputFile = new File(tmpDirFolder.getAbsolutePath() + File.separator + job.getJobUuid() + "/" + fileName1BeforeCompressing);
+        assertFalse(originalOutputFile.exists());
+
+        // decompress output file and write decompressed contents to `outputFileDecompressed`
+        val outputFileCompressed = Path.of(tmpDirFolder.getAbsolutePath() + File.separator + job.getJobUuid() + "/" + output1);
+        val outputFileDecompressedStream = new ByteArrayOutputStream();
+        GzipCompressUtils.decompress(outputFileCompressed, outputFileDecompressedStream);
+        String actual1 = outputFileDecompressedStream.toString(Charset.defaultCharset());
 
         assertTrue(actual1.contains("Patient/1") && actual1.contains("Patient/2"));
         assertFalse(actual1.contains("Patient/3") || actual1.contains("Patient/4"));

@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -149,8 +150,17 @@ public class StatusCommon {
         return new ResponseEntity<OpenAPIConfig.OperationOutcome>(outcome, responseHeaders, HttpStatus.NOT_FOUND);
     }
 
-    private String getUrlPath(String jobUuid, String filePath, HttpServletRequest request, String apiPrefix) {
-        return Common.getUrl(apiPrefix + FHIR_PREFIX + "/Job/" + jobUuid + "/file/" + filePath, request);
+    protected String getUrlPath(String jobUuid, String filePath, HttpServletRequest request, String apiPrefix) {
+        val filePathWithoutGzExtension = removeGzFileExtension(filePath);
+        return Common.getUrl(apiPrefix + FHIR_PREFIX + "/Job/" + jobUuid + "/file/" + filePathWithoutGzExtension, request);
+    }
+
+    // job output files are now stored in gzip format - remove '.gz' extension before building file download URL for backwards compatibility
+    protected String removeGzFileExtension(String filePath) {
+        val index = filePath.lastIndexOf(".gz");
+        return (index == -1)
+                ? filePath
+                : filePath.substring(0, index);
     }
 
     private List<JobCompletedResponse.FileMetadata> generateValueOutputs(JobOutput o) {
