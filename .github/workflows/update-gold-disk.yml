@@ -88,6 +88,12 @@ jobs:
           ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
           echo "AWS_ACCOUNT_NUMBER=$ACCOUNT_ID" >> $GITHUB_ENV
 
+      - name: Setup `packer`
+        uses: hashicorp/setup-packer@main
+        id: setup
+        with:
+          version: 1.10.0
+
       - name: Run Update Gold Disk Script
         run: |
           chmod +x scripts/deployment/update-gold-disk.sh
