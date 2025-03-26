@@ -83,6 +83,11 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ secrets.MGMT_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-mgmt-github-actions
 
+      - name: Set AWS_ACCOUNT_NUMBER from current credentials
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+          echo "AWS_ACCOUNT_NUMBER=$ACCOUNT_ID" >> $GITHUB_ENV
+
       - name: Run Update Gold Disk Script
         run: |
           chmod +x scripts/deployment/update-gold-disk.sh
