@@ -207,7 +207,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         httpHeaders.add(CONTENT_LOCATION, contentLocationHeader);
     }
 
-    public ResponseEntity<JsonNode> generateFHIRError(Exception e, HttpServletRequest request) throws IOException {
+    private ResponseEntity<JsonNode> generateFHIRError(Exception e, HttpServletRequest request) throws IOException {
         return generateFHIRError(e, null, request);
     }
 
