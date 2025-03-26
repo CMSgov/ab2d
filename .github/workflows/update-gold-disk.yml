@@ -47,7 +47,6 @@ jobs:
         with:
           repository: 'cmsgov/ab2d-ops'
           token: ${{ env.OPS_GITHUB_TOKEN }}
-          ref: ${{ env.BRANCH }}
 
       - name: Set PARENT_ENV
         run: |
