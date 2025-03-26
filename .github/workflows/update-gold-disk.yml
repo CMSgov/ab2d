@@ -43,10 +43,11 @@ jobs:
           fi
 
       - name: Checkout AB2D-Ops Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: 'cmsgov/ab2d-ops'
           token: ${{ env.OPS_GITHUB_TOKEN }}
+          ref: 'oluwole-test-debug'
 
       - name: Set PARENT_ENV
         run: |
