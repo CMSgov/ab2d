@@ -77,7 +77,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4.1.0
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::653916833532:role/delegatedadmin/developer/Ab2dMgmtV2Role
+          role-to-assume: arn:aws:iam::653916833532:role/delegatedadmin/developer/github-actions-runner-role
 
       - name: Run Update Gold Disk Script
         run: |
