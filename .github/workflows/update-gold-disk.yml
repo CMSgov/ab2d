@@ -69,9 +69,13 @@ jobs:
             *) echo "Invalid environment: $ENVIRONMENT" && exit 1 ;;
           esac
 
-      - name: Set AWS_ACCOUNT_NUMBER from secret
-        run: |
-          echo "AWS_ACCOUNT_NUMBER=${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}" >> $GITHUB_ENV
+      - name: Assume role in AB2D account for this environment
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
+        env:
+          ACCOUNT: ${{ inputs.environment == '' && 'dev' || inputs.environment }}
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions >> $GITHUB_ENV
 
       - name: Assume role in AB2D Management account
         uses: aws-actions/configure-aws-credentials@v3
