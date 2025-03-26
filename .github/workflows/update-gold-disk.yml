@@ -54,6 +54,7 @@ jobs:
 
       - name: Set PARENT_ENV
         run: |
+          aws sts get-caller-identity
           case "${{ env.ENVIRONMENT }}" in
             dev) echo "PARENT_ENV=ab2d-dev" >> $GITHUB_ENV ;;
             test) echo "PARENT_ENV=ab2d-east-impl" >> $GITHUB_ENV ;;
