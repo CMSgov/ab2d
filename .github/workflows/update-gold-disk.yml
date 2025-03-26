@@ -70,12 +70,8 @@ jobs:
             *) echo "Invalid PARENT_ENV"; exit 1 ;;
           esac
 
-          # Now that ACCOUNT is defined, use it to fetch the secret
-          AWS_ACCOUNT_NUMBER="${{ secrets[format('{0}_ACCOUNT_ID', ACCOUNT)] }}"
-
           echo "PARENT_ENV=$PARENT_ENV" >> $GITHUB_ENV
           echo "ACCOUNT=$ACCOUNT" >> $GITHUB_ENV
-          echo "AWS_ACCOUNT_NUMBER=$AWS_ACCOUNT_NUMBER" >> $GITHUB_ENV
 
       - name: Assume Role in AB2D Account
         uses: aws-actions/configure-aws-credentials@v4.1.0
@@ -83,7 +79,14 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
 
+      - name: Set AWS_ACCOUNT_NUMBER from secret
+        run: |
+          echo "AWS_ACCOUNT_NUMBER=${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}" >> $GITHUB_ENV
+
       - name: Run Update Gold Disk Script
         run: |
           chmod +x scripts/deployment/update-gold-disk.sh
           scripts/deployment/update-gold-disk.sh --cms_env $PARENT_ENV --cloud_tamer false
+        env:
+          AWS_ACCOUNT_NUMBER: ${{ env.AWS_ACCOUNT_NUMBER }}
+
