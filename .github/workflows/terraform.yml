@@ -117,9 +117,10 @@ jobs:
             'worker'
           )
           for name in "${lambdas[@]}"; do
-            echo "~~~~~~~~~~$name~~~~~~~~~~"
             terraform init -reconfigure -backend-config=backend/ab2d-east-prod.conf
+            echo "~~~~~~~~~~$name~~~~~~~~~~"
             terraform state list
+            echo "~~~~~~~~~~~~~~~~~~~~~~~~~"
           done
           
       - name: Cleanup Terraform Plan
