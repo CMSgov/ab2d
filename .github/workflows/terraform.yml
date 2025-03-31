@@ -102,7 +102,6 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
           
       - name: Terraform state
-        working-directory: terraform/environments/ab2d/
         run: |
           declare -a services=(
             'api' 
@@ -116,7 +115,8 @@ jobs:
             'web'
             'worker'
           )
-          for name in "${lambdas[@]}"; do
+          for name in "${services[@]}"; do
+            cd terraform/environments/ab2d/$service
             terraform init -reconfigure -backend-config=backend/ab2d-east-prod.conf
             echo "~~~~~~~~~~$name~~~~~~~~~~"
             terraform state list
