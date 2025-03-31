@@ -101,13 +101,27 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
           
-      - name: Terraform state & show
-        working-directory: terraform/environments/ab2d/${{ inputs.service }}/
+      - name: Terraform state
+        working-directory: terraform/environments/ab2d/
         run: |
-          terraform init -reconfigure -backend-config=backend/${{ env.BACKEND_ENV }}.conf
-          echo "~~~~~~~~~~~~~~~~~~"
-          terraform state list
-
+          declare -a services=(
+            'api' 
+            'api_gateway' 
+            'bfd_insights'
+            'controller'
+            'core'
+            'eventbridge'
+            'lambda'
+            'microservices'
+            'web'
+            'worker'
+          )
+          for name in "${lambdas[@]}"; do
+            echo "~~~~~~~~~~$name~~~~~~~~~~"
+            terraform init -reconfigure -backend-config=backend/ab2d-east-prod.conf
+            terraform state list
+          done
+          
       - name: Cleanup Terraform Plan
         if: always()
         working-directory: terraform/environments/ab2d/${{ inputs.service }}/
