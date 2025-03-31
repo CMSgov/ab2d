@@ -107,8 +107,6 @@ jobs:
           terraform init -reconfigure -backend-config=backend/${{ env.BACKEND_ENV }}.conf
           echo "~~~~~~~~~~~~~~~~~~"
           terraform state list
-          echo ">>>>>>>>>>>>>>>>>>"
-          terraform show
 
       - name: Cleanup Terraform Plan
         if: always()
