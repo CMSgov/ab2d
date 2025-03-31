@@ -117,7 +117,7 @@ jobs:
             'worker'
           )
           for name in "${services[@]}"; do
-            cd "$service"
+            cd "name"
             echo $(pwd)
             echo $(ls)
             terraform init -reconfigure -backend-config=backend/ab2d-east-prod.conf
