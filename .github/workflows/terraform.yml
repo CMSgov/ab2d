@@ -118,13 +118,15 @@ jobs:
           )
           for name in "${services[@]}"; do
             cd "$service"
+            echo $(pwd)
+            echo $(ls)
             terraform init -reconfigure -backend-config=backend/ab2d-east-prod.conf
             echo "~~~~~~~~~~$name~~~~~~~~~~"
             terraform state list
             echo "~~~~~~~~~~~~~~~~~~~~~~~~~"
             cd -
           done
-          
+
       - name: Cleanup Terraform Plan
         if: always()
         working-directory: terraform/environments/ab2d/${{ inputs.service }}/
