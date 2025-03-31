@@ -118,8 +118,6 @@ jobs:
           )
           for name in "${services[@]}"; do
             cd "name"
-            echo $(pwd)
-            echo $(ls)
             terraform init -reconfigure -backend-config=backend/ab2d-east-prod.conf
             echo "~~~~~~~~~~$name~~~~~~~~~~"
             terraform state list
