@@ -171,3 +171,5 @@ databaseChangeLog:
       file: db/changelog/v2025/add_sequences.sql
   - include:
       file: db/changelog/v2025/alter_sequences.sql
+  - include:
+      file: db/changelog/v2025/update_total_bene_served_procedure.sql
