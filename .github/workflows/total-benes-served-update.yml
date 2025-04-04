@@ -1,0 +1,68 @@
+name: total-benes-served-update
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'AB2D environment'
+        required: true
+        type: choice
+        options:
+          - sbx
+          - prod
+          - prod_test
+        default: prod_test
+
+jobs:
+  total-benes-served-update:
+    runs-on: self-hosted
+
+    env:
+     ENVIRONMENT: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set environment-specific variables
+        run: |
+          echo "ENVIRONMENT: $ENVIRONMENT"
+        
+          if [ "$ENVIRONMENT" == "sbx" ]; then
+            SECRET_STORE_PREFIX="ab2d/ab2d-sbx-sandbox"
+          elif [ "$ENVIRONMENT" == "prod_test" ]; then
+            SECRET_STORE_PREFIX="ab2d/ab2d-east-prod-test"
+          elif [ "$ENVIRONMENT" == "prod" ]; then
+            SECRET_STORE_PREFIX="ab2d/ab2d-east-prod"
+          else
+            echo "Invalid environment: $ENVIRONMENT"
+            exit 1
+          fi
+          
+          echo "SECRET_STORE_PREFIX=${SECRET_STORE_PREFIX}"
+          echo "SECRET_STORE_PREFIX=${SECRET_STORE_PREFIX}" >> $GITHUB_ENV
+
+      - name: Assume role in AB2D account for this environment
+        uses: aws-actions/configure-aws-credentials@v4
+        env:
+          ACCOUNT: ${{ inputs.environment == 'prod_test' && 'prod' || inputs.environment }}
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
+
+      - name: Set env vars from AWS params in AB2D account
+        uses: ./.github/workflows/actions/set-database-params
+        with:
+          aws_region: ${{ vars.AWS_REGION }}
+          secret_store_prefix: ${{ env.SECRET_STORE_PREFIX }}
+
+      - name: Install psql
+        run: |
+          sudo dnf install postgresql15 -y
+
+      - name: Conduct update of total benes served
+        run: |
+          SQL_TOTAL_BENE_SERVED=$(envsubst < .github/workflows/resources/total-benes-served.sql)
+          psql -t --command="${SQL_TOTAL_BENE_SERVED}"
+          echo "Complete"
+
