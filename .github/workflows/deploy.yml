@@ -58,36 +58,11 @@ jobs:
           set -e
           echo "✅ ECS service stabilized."
 
-      - name: Set Auto Scaling Group Name
-        run: |
-          if [[ "${{ inputs.environment }}" == "dev" && "${{ inputs.module }}" == "worker" ]]; then
-            echo "ASG_NAME=ab2d-dev-worker" >> $GITHUB_ENV
-          elif [[ "${{ inputs.environment }}" == "dev" && "${{ inputs.module }}" == "api" ]]; then
-            echo "ASG_NAME=ab2d-dev-api" >> $GITHUB_ENV
-          elif [[ "${{ inputs.environment }}" == "test" && "${{ inputs.module }}" == "worker" ]]; then
-            echo "ASG_NAME=ab2d-east-impl-worker" >> $GITHUB_ENV
-          elif [[ "${{ inputs.environment }}" == "test" && "${{ inputs.module }}" == "api" ]]; then
-            echo "ASG_NAME=ab2d-east-impl-api" >> $GITHUB_ENV
-          elif [[ "${{ inputs.environment }}" == "sbx" && "${{ inputs.module }}" == "worker" ]]; then
-            echo "ASG_NAME=ab2d-sbx-sandbox-worker" >> $GITHUB_ENV
-          elif [[ "${{ inputs.environment }}" == "sbx" && "${{ inputs.module }}" == "api" ]]; then
-            echo "ASG_NAME=ab2d-sbx-sandbox-api" >> $GITHUB_ENV
-          elif [[ "${{ inputs.environment }}" == "prod" && "${{ inputs.module }}" == "worker" ]]; then
-            echo "ASG_NAME=ab2d-east-prod-worker" >> $GITHUB_ENV
-          elif [[ "${{ inputs.environment }}" == "prod" && "${{ inputs.module }}" == "api" ]]; then
-            echo "ASG_NAME=ab2d-east-prod-api" >> $GITHUB_ENV
-          elif [[ "${{ inputs.environment }}" == "prod_test" && "${{ inputs.module }}" == "worker" ]]; then
-            echo "ASG_NAME=ab2d-east-prod-test-worker" >> $GITHUB_ENV
-          elif [[ "${{ inputs.environment }}" == "prod_test" && "${{ inputs.module }}" == "api" ]]; then
-            echo "ASG_NAME=ab2d-east-prod-api" >> $GITHUB_ENV
-          else
-            echo "Invalid environment or module provided" && exit 1
-          fi
-          echo "Auto Scaling Group name set to: $ASG_NAME"
-
-
       - name: Start EC2 Instance Refresh
+        env:
+          ASG_NAME: "ab2d-${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}-${{ inputs.module }}"
         run: |
+          echo "ASG_NAME=$ASG_NAME" >> $GITHUB_ENV
           echo "Starting instance refresh for Auto Scaling Group: $ASG_NAME"
           aws autoscaling start-instance-refresh \
             --auto-scaling-group-name "$ASG_NAME" \
@@ -123,4 +98,3 @@ jobs:
             echo "❌ Instance refresh failed or timed out. Final status: $refresh_status"
             exit 1
           fi
-
