@@ -1,5 +1,6 @@
 package gov.cms.ab2d.api.controller.v1;
 
+import gov.cms.ab2d.api.controller.ErrorHandler;
 import gov.cms.ab2d.api.controller.common.FileDownloadCommon;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -49,6 +50,7 @@ import static gov.cms.ab2d.common.util.Constants.FHIR_NDJSON_CONTENT_TYPE;
 @RequestMapping(path = API_PREFIX_V1 + FHIR_PREFIX)
 public class FileDownloadAPIV1 {
     private FileDownloadCommon fileDownloadCommon;
+    private ErrorHandler errorHandler;
 
     @Operation(summary = DOWNLOAD_DESC)
     @Parameters(value = {
@@ -71,7 +73,11 @@ public class FileDownloadAPIV1 {
             HttpServletResponse response,
             @PathVariable @NotBlank String jobUuid,
             @PathVariable @NotBlank String filename) throws IOException {
-
-        return fileDownloadCommon.downloadFile(jobUuid, filename, request, response);
+        try {
+            return fileDownloadCommon.downloadFile(jobUuid, filename, request, response);
+        } catch (Exception e) {
+            errorHandler.generateFHIRError(e, request, response);
+            return null;
+        }
     }
 }
