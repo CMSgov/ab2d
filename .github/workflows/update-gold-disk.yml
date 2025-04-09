@@ -1,0 +1,107 @@
+name: Update Gold Disk
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        required: false
+        type: string
+        description: "Branch to run this workflow on (defaults to main)"
+      environment:
+        required: false
+        type: choice
+        options:
+          - dev
+          - test
+          - sbx
+          - prod-test
+          - prod
+        description: "Deployment environment (defaults to dev on pull request)"
+
+jobs:
+  update-gold-disk:
+    runs-on: self-hosted
+
+    steps:
+      - name: Get AWS params
+        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |
+            OPS_GITHUB_TOKEN=/ci/github/token
+
+      - name: Determine Branch and Environment
+        run: |
+              echo "ENVIRONMENT=${{ github.event.inputs.environment || 'dev' }}" >> $GITHUB_ENV
+              echo "BRANCH=${{ github.event.inputs.branch || 'main' }}" >> $GITHUB_ENV
+
+
+      - name: Checkout AB2D-Ops Repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'cmsgov/ab2d-ops'
+          token: ${{ env.OPS_GITHUB_TOKEN }}
+          ref: ${{ env.BRANCH }}
+
+      - name: Fetch all branches
+        run: git fetch --all
+
+      - name: Set PARENT_ENV
+        run: |
+          aws sts get-caller-identity
+          case "${{ env.ENVIRONMENT }}" in
+            dev) echo "PARENT_ENV=ab2d-dev" >> $GITHUB_ENV ;;
+            test) echo "PARENT_ENV=ab2d-east-impl" >> $GITHUB_ENV ;;
+            sbx) echo "PARENT_ENV=ab2d-sbx-sandbox" >> $GITHUB_ENV ;;
+            prod-test) echo "PARENT_ENV=ab2d-east-prod-test" >> $GITHUB_ENV ;;
+            prod) echo "PARENT_ENV=ab2d-east-prod" >> $GITHUB_ENV ;;
+            *) echo "Invalid environment: $ENVIRONMENT" && exit 1 ;;
+          esac
+
+      - name: Set ACCOUNT from ENVIRONMENT
+        run: |
+          case "${{ env.ENVIRONMENT }}" in
+            dev) echo "ACCOUNT=dev" >> $GITHUB_ENV ;;
+            test) echo "ACCOUNT=test" >> $GITHUB_ENV ;;
+            sbx) echo "ACCOUNT=sbx" >> $GITHUB_ENV ;;
+            prod | prod-test) echo "ACCOUNT=prod" >> $GITHUB_ENV ;;
+            *) echo "Invalid environment: $ENVIRONMENT" && exit 1 ;;
+          esac
+
+      - name: Assume role in AB2D account for this environment
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
+        env:
+          ACCOUNT: ${{ inputs.environment == '' && 'dev' || inputs.environment }}
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
+
+      - name: Set AWS_ACCOUNT_NUMBER from current credentials
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)
+          echo "AWS_ACCOUNT_NUMBER=$ACCOUNT_ID" >> $GITHUB_ENV
+
+      - name: Setup `packer`
+        uses: hashicorp/setup-packer@main
+        id: setup
+        with:
+          version: 1.10.0
+          
+      - name: Symlink packer to /usr/bin if not already linked
+        run: |
+          if [ ! -f /usr/bin/packer ]; then
+            sudo ln -s "$(which packer)" /usr/bin/packer
+          else
+            echo "✅ /usr/bin/packer already exists, skipping symlink."
+          fi
+
+
+      - name: Run Update Gold Disk Script
+        run: |
+          chmod +x scripts/deployment/update-gold-disk.sh
+          scripts/deployment/update-gold-disk.sh --cms_env $PARENT_ENV --cloud_tamer false
+        env:
+          AWS_ACCOUNT_NUMBER: ${{ env.AWS_ACCOUNT_NUMBER }}
+          CLOUD_TAMER: false
+

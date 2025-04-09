@@ -42,6 +42,7 @@ on:
         type: choice
         options:
           - api
+          - api_gateway
           - core
           - controller
           - microservices
