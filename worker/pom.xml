@@ -136,7 +136,7 @@
         <dependency>
             <groupId>gov.cms.ab2d</groupId>
             <artifactId>ab2d-sns-client</artifactId>
-            <version>1.0.1</version>
+            <version>${sns-client.version}</version>
         </dependency>
 
         <dependency>

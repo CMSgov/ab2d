@@ -101,7 +101,6 @@ class WorkerServiceTest extends JobCleanup {
 
     private Job createJob(final PdpClient pdpClient, Contract contract) {
         Job job = new Job();
-        job.setId((long) getIntRandom());
         job.setJobUuid(UUID.randomUUID().toString());
         job.setStatus(JobStatus.SUBMITTED);
         job.setStatusMessage("0%");
@@ -120,7 +119,6 @@ class WorkerServiceTest extends JobCleanup {
     private PdpClient createClient(Contract contract) {
         PdpClient pdpClient = new PdpClient();
         int clientNum = getIntRandom();
-        pdpClient.setId((long) clientNum);
         pdpClient.setClientId("testclient" + clientNum);
         pdpClient.setOrganization("testclient" + clientNum);
         pdpClient.setEnabled(true);
@@ -134,7 +132,6 @@ class WorkerServiceTest extends JobCleanup {
     private PdpClient createClient2() {
         PdpClient pdpClient = new PdpClient();
         int clientNum = getIntRandom();
-        pdpClient.setId((long) clientNum);
         pdpClient.setClientId("testclient2" + clientNum);
         pdpClient.setOrganization("testclient2" + clientNum);
         pdpClient.setEnabled(true);
