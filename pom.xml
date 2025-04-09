@@ -35,7 +35,7 @@
         <logback-encoder.version>7.3</logback-encoder.version>
         <testcontainers.version>1.20.1</testcontainers.version>
         <newrelic.version>8.15.0</newrelic.version>
-        <spring-cloud-aws.version>3.1.1</spring-cloud-aws.version>
+        <spring-cloud-aws.version>3.3.0</spring-cloud-aws.version>
         <postgresql.version>42.7.4</postgresql.version>
 
 
