@@ -1,5 +1,4 @@
 INSERT INTO ${DATABASE_SCHEMA_NAME}.job (
-    id,
     job_uuid,
     organization,
     created_at,
@@ -16,7 +15,6 @@ INSERT INTO ${DATABASE_SCHEMA_NAME}.job (
     started_by
 )
 VALUES (
-    (select nextval('hibernate_sequence')),
     '${JOB_ID}',
     '${ORGANIZATION}',
     (select now()),

@@ -58,3 +58,43 @@ jobs:
           set -e
           echo "✅ ECS service stabilized."
 
+      - name: Start EC2 Instance Refresh
+        env:
+          ASG_NAME: "ab2d-${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}-${{ inputs.module }}"
+        run: |
+          echo "ASG_NAME=$ASG_NAME" >> $GITHUB_ENV
+          echo "Starting instance refresh for Auto Scaling Group: $ASG_NAME"
+          aws autoscaling start-instance-refresh \
+            --auto-scaling-group-name "$ASG_NAME" \
+            --strategy Rolling \
+            --preferences '{"MinHealthyPercentage":90,"InstanceWarmup":300}' > /dev/null
+          echo "Instance refresh started for $ASG_NAME."
+  
+      - name: Wait for Instance Refresh to Complete
+        run: |
+          echo "Checking the status of the instance refresh for ASG: $ASG_NAME"
+  
+          timeout=600  # 10 minutes
+          elapsed=0
+  
+          refresh_status=$(aws autoscaling describe-instance-refreshes \
+            --auto-scaling-group-name "$ASG_NAME" \
+            --query "InstanceRefreshes[0].Status" \
+            --output text)
+  
+          while [ "$refresh_status" != "Successful" ] && [ "$refresh_status" != "Cancelled" ] && [ "$refresh_status" != "Failed" ] && [ $elapsed -lt $timeout ]; do
+            echo "Current status: $refresh_status (elapsed: ${elapsed}s)"
+            sleep 30
+            elapsed=$((elapsed + 30))
+            refresh_status=$(aws autoscaling describe-instance-refreshes \
+              --auto-scaling-group-name "$ASG_NAME" \
+              --query "InstanceRefreshes[0].Status" \
+              --output text)
+          done
+  
+          if [ "$refresh_status" == "Successful" ]; then
+            echo "✅ Instance refresh completed successfully for $ASG_NAME."
+          else
+            echo "❌ Instance refresh failed or timed out. Final status: $refresh_status"
+            exit 1
+          fi
