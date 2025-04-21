@@ -41,6 +41,7 @@ on:
         required: true
         type: choice
         options:
+          - api
           - api_gateway
           - core
           - controller
