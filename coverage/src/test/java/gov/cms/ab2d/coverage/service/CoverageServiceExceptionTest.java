@@ -15,10 +15,10 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -59,10 +59,10 @@ public class CoverageServiceExceptionTest {
     @Autowired
     CoverageService coverageService;
 
-    @SpyBean
+    @MockitoSpyBean
     CoverageServiceRepository coverageServiceRepo;
 
-    @SpyBean
+    @MockitoSpyBean
     SQSEventClient eventLogger;
 
     @Autowired
