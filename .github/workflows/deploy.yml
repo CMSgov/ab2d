@@ -74,7 +74,7 @@ jobs:
         run: |
           echo "Checking the status of the instance refresh for ASG: $ASG_NAME"
   
-          timeout=600  # 10 minutes
+          timeout=900  # 15 minutes
           elapsed=0
   
           refresh_status=$(aws autoscaling describe-instance-refreshes \
