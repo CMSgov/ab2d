@@ -46,11 +46,11 @@ jobs:
           SERVICE_NAME: ab2d-${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}-${{ inputs.module }}
         run: |
           echo "Deploying service $SERVICE_NAME"
-          aws ecs update-service --cluster "$SERVICE_NAME" --service "$SERVICE_NAME" --force-new-deployment > /dev/null
+          aws ecs update-service --cluster "$SERVICE_NAME" --service "$SERVICE_NAME" --deployment-configuration "deploymentCircuitBreaker={enable=true,rollback=true}" --force-new-deployment > /dev/null
           echo "Waiting for ECS service to stabilize..."
           exit_status=1
           set +e
-          while [ "$exit_status" != "0" ]; do
+          while [ "$exit_status" != "0" &&  "$exit_status" != "255" ]; do
             aws ecs wait services-stable --cluster "$SERVICE_NAME" --services "$SERVICE_NAME"
             exit_status="$?"
             echo "Wait result: $exit_status"
