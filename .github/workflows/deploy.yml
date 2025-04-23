@@ -50,14 +50,17 @@ jobs:
           echo "Waiting for ECS service to stabilize..."
           exit_status=1
           set +e
-          while [ "$exit_status" != "0" ]; do
+          while [[ "$exit_status" != "0" &&  "$exit_status" != "255" ]]; do
             aws ecs wait services-stable --cluster "$SERVICE_NAME" --services "$SERVICE_NAME"
             exit_status="$?"
             echo "Wait result: $exit_status"
           done
           set -e
-          echo "✅ ECS service stabilized."
-
+          if [ "$exit_status" == "255" ]; then
+            echo "❌ Error stabilizing ECS.  Error code:  $exit_status"
+          else
+            echo "✅ ECS service stabilized."
+          fi
       - name: Start EC2 Instance Refresh
         env:
           ASG_NAME: "ab2d-${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}-${{ inputs.module }}"
@@ -67,14 +70,14 @@ jobs:
           aws autoscaling start-instance-refresh \
             --auto-scaling-group-name "$ASG_NAME" \
             --strategy Rolling \
-            --preferences '{"MinHealthyPercentage":90,"InstanceWarmup":300}' > /dev/null
+            --preferences '{"MinHealthyPercentage":80,"InstanceWarmup":240}' > /dev/null
           echo "Instance refresh started for $ASG_NAME."
   
       - name: Wait for Instance Refresh to Complete
         run: |
           echo "Checking the status of the instance refresh for ASG: $ASG_NAME"
   
-          timeout=600  # 10 minutes
+          timeout=900  # 15 minutes
           elapsed=0
   
           refresh_status=$(aws autoscaling describe-instance-refreshes \
