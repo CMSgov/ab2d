@@ -50,7 +50,7 @@ jobs:
           echo "Waiting for ECS service to stabilize..."
           exit_status=1
           set +e
-          while [ "$exit_status" != "0" &&  "$exit_status" != "255" ]; do
+          while [[ "$exit_status" != "0" &&  "$exit_status" != "255" ]]; do
             aws ecs wait services-stable --cluster "$SERVICE_NAME" --services "$SERVICE_NAME"
             exit_status="$?"
             echo "Wait result: $exit_status"
