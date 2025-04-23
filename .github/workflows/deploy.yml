@@ -57,7 +57,7 @@ jobs:
           done
           set -e
           if [ "$exit_status" == "255" ]; then
-            echo "Error stabilizing ECS.  Error code:  $exit_status"
+            echo "❌ Error stabilizing ECS.  Error code:  $exit_status"
           else
             echo "✅ ECS service stabilized."
           fi
