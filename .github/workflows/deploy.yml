@@ -70,7 +70,7 @@ jobs:
           aws autoscaling start-instance-refresh \
             --auto-scaling-group-name "$ASG_NAME" \
             --strategy Rolling \
-            --preferences '{"MinHealthyPercentage":90,"InstanceWarmup":300}' > /dev/null
+            --preferences '{"MinHealthyPercentage":80,"InstanceWarmup":240}' > /dev/null
           echo "Instance refresh started for $ASG_NAME."
   
       - name: Wait for Instance Refresh to Complete
