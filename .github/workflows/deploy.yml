@@ -56,8 +56,11 @@ jobs:
             echo "Wait result: $exit_status"
           done
           set -e
-          echo "✅ ECS service stabilized."
-
+          if [ "$exit_status" == "255" ]; then
+            echo "Error stabilizing ECS.  Error code:  $exit_status"
+          else
+            echo "✅ ECS service stabilized."
+          fi
       - name: Start EC2 Instance Refresh
         env:
           ASG_NAME: "ab2d-${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}-${{ inputs.module }}"
