@@ -49,7 +49,7 @@ echo "AB2D API is online."
 
 # Refresh token
 echo "Refreshing token..."
-TOKEN=$(curl -s --location --request POST 'https://test.idp.idm.cms.gov/oauth2/aus2r7y3gdaFMKBol297/v1/token?grant_type=client_credentials&scope=clientCreds' \
+TOKEN=$(curl -s --location --request POST 'https://cms-test.okta.com/oauth2/aus2r7y3gdaFMKBol297/v1/token?grant_type=client_credentials&scope=clientCreds' \
 --header 'Content-Type: application/x-www-form-urlencoded' \
 --header "Authorization: Basic $BASIC_AUTH" \
 --header 'Cookie: JSESSIONID=3E7BD665DE5673C73A82647BBD9E548A' \
