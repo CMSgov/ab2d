@@ -13,7 +13,7 @@
     <properties>
         <project.root>${basedir}/..</project.root>
         <springfox.version>3.0.0</springfox.version>
-        <okta-jwt.version>0.5.10</okta-jwt.version>
+        <okta-jwt.version>0.5.11</okta-jwt.version>
         <sonar.coverage.exclusions>**/JobClient.java</sonar.coverage.exclusions>
         <!-- 
             - AB2D-6099 -
@@ -106,12 +106,12 @@
         <dependency>
             <groupId>org.apache.httpcomponents.client5</groupId>
             <artifactId>httpclient5</artifactId>
-            <version>5.3</version>
+            <version>5.4.2</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents.core5</groupId>
             <artifactId>httpcore5</artifactId>
-            <version>5.3</version>
+            <version>5.3.4</version>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>
