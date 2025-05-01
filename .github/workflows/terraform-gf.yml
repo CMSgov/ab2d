@@ -48,12 +48,6 @@ on:
           - web
           - worker
           - eventbridge
-      account_type:
-        required: true
-        type: choice
-        options:
-          - nonprod
-          - prod         
 
 jobs:
   terraform:
@@ -64,18 +58,6 @@ jobs:
       DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', github.event.inputs.environment) ] }}
 
     steps:
-      - name: Set BACKEND_ENV based on environment
-        run: |
-          case "${{ inputs.environment }}" in
-            dev) BACKEND_ENV="ab2d-dev" ;;
-            test) BACKEND_ENV="ab2d-east-impl" ;;
-            sbx) BACKEND_ENV="ab2d-sbx-sandbox" ;;
-            prod-test) BACKEND_ENV="ab2d-east-prod-test" ;;
-            prod) BACKEND_ENV="ab2d-east-prod" ;;
-            *) echo "Invalid environment input"; exit 1 ;;
-          esac
-          echo "BACKEND_ENV=${BACKEND_ENV}" >> $GITHUB_ENV
-
       - name: Get AWS params
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
         env:
@@ -95,12 +77,12 @@ jobs:
         uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ inputs.account_type == 'prod' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ inputs.environment }}-github-actions
+          role-to-assume: arn:aws:iam::${{contains(fromJSON('["dev", "test", "sandbox"]'), inputs.environment)&& secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT}}:role/delegatedadmin/developer/ab2d-${{ inputs.environment }}-github-actions
           
       - name: Terraform Init & Plan
         working-directory: terraform/environments/ab2d/${{ inputs.service }}/
         run: |
-          terraform init -reconfigure -backend-config=backend/${{ env.BACKEND_ENV }}-gf.conf
+          terraform init -reconfigure -backend-config=backend/ab2d-${{ inputs.environment }}-gf.conf
           terraform plan -var env=${{ env.BACKEND_ENV }} -out=${{ inputs.service }}.tfplan | tee plan_output.txt
 
       - name: Terraform Apply
