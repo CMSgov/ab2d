@@ -102,9 +102,13 @@ jobs:
         run: |
           set -e
           export JOB_ID=$(uuidgen)
+          export PGHOST=$PGHOST
+          export PGPORT=$PGPORT
+          export PGUSER=$PGUSER
+          export PGDATABASE=$PGDATABASE
           
           SQL_GET_ORGANIZATION=$(envsubst < .github/workflows/resources/get-organization.sql)
-          export ORGANIZATION=$(psql -t --command="${SQL_GET_ORGANIZATION}" | head -n 1 | xargs | tr -d '\r')
+          export ORGANIZATION=$(echo "$SQL_GET_ORGANIZATION" | PGPASSWORD="$PGPASSWORD" psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" -t | head -n 1 | xargs | tr -d '\r')
           if [ -z "${ORGANIZATION}" ]; then
             echo "Unable to retrieve organization"
             exit 1
@@ -125,5 +129,5 @@ jobs:
           fi
           
           SQL_INSERT_RECORD=$(envsubst < .github/workflows/resources/insert-record.sql)
-          psql -t --command="${SQL_INSERT_RECORD}"
+          echo "$SQL_INSERT_RECORD" | PGPASSWORD="$PGPASSWORD" psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" -t
           echo "Inserted record with job UUID = $JOB_ID"
