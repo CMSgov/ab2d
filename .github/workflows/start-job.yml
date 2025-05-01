@@ -96,7 +96,7 @@ jobs:
 
       - name: Install psql
         run: |
-          sudo dnf install postgresql15 -y
+          sudo dnf install postgresql15.x86_64 postgresql15-server -y
 
       - name: Insert record
         run: |
