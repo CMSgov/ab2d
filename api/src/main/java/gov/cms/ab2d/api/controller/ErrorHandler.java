@@ -24,7 +24,9 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.slf4j.MDC;
@@ -39,14 +41,14 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 
+import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
 import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
 import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
 import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
 import static gov.cms.ab2d.eventclient.events.SlackEvents.API_INVALID_CONTRACT;
-import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
-import static org.springframework.http.HttpHeaders.RETRY_AFTER;
+import static org.springframework.http.HttpHeaders.*;
 
 /**
  * Don't change exception classes without updating alerts in Splunk. Splunk alerts rely on the classname to filter
@@ -207,6 +209,18 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
 
     private ResponseEntity<JsonNode> generateFHIRError(Exception e, HttpServletRequest request) throws IOException {
         return generateFHIRError(e, null, request);
+    }
+
+    /**
+     * Call {@link #generateFHIRError(Exception, HttpHeaders, HttpServletRequest)} to build a response entity
+     * and then write directly to response stream.
+     */
+    public void generateFHIRError(Exception e, HttpServletRequest request, HttpServletResponse response) throws IOException {
+        val responseEntity = generateFHIRError(e, null, request);
+        response.setStatus(responseEntity.getStatusCode().value());
+        response.setHeader(CONTENT_TYPE, APPLICATION_JSON);
+        response.getWriter().write(new ObjectMapper().writeValueAsString(responseEntity.getBody()));
+        response.getWriter().flush();
     }
 
     private ResponseEntity<JsonNode> generateFHIRError(Exception e, HttpHeaders httpHeaders, HttpServletRequest request) throws IOException {
