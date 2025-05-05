@@ -99,8 +99,8 @@ public class FileDownloadCommon {
         }
     }
 
-    // In Swagger UI, omit ".gz" file extension because browsers implicitly send "accept-encoding:gzip" header
-    // and automatically decompress file when "Download file" is clicked
+    // Omit ".gz" file extension because browsers implicitly send "accept-encoding:gzip" header
+    // and automatically decompress file when "Download file" is clicked in Swagger UI
     static String getSwaggerDownloadFilename(Resource downloadResource) throws IOException {
         return downloadResource.getFile().getName().replace(".gz", "");
     }
