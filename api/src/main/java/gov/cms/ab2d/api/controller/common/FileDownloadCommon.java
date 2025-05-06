@@ -9,6 +9,8 @@ import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+
+import gov.cms.ab2d.job.service.JobOutputMissingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
@@ -63,7 +65,7 @@ public class FileDownloadCommon {
             if (requestedEncoding == GZIP_COMPRESSED) {
                 response.setHeader("Content-Encoding", Constants.GZIP_ENCODING);
             }
-            final String fileDownloadName = getDownloadFilename(downloadResource, requestedEncoding);
+            final String fileDownloadName = getSwaggerDownloadFilename(downloadResource);
             response.setHeader("Content-Disposition", "inline; swaggerDownload=\"attachment\"; filename=\"" + fileDownloadName + "\"");
 
             // write to response stream, compressing or decompressing file contents depending on 'Accept-Encoding' header
@@ -87,6 +89,9 @@ public class FileDownloadCommon {
         try {
             // look for compressed file
             return jobClient.getResourceForJob(jobUuid, filename + ".gz", organization);
+        } catch (JobOutputMissingException e) {
+            // compressed file is found but file has either (a) expired or (b) been downloaded the max number of times
+            throw e;
         } catch (RuntimeException e) {
             // look for uncompressed file
             // allow this exception to be thrown to caller (for consistency with current behavior)
@@ -94,19 +99,10 @@ public class FileDownloadCommon {
         }
     }
 
-    static String getDownloadFilename(
-            Resource downloadResource,
-            Encoding requestedEncoding) throws IOException {
-
-        final Encoding fileEncoding = getFileEncoding(downloadResource);
-        final String filename = downloadResource.getFile().getName();
-        if (requestedEncoding == fileEncoding) {
-            return filename;
-        } else if (fileEncoding == GZIP_COMPRESSED && requestedEncoding == UNCOMPRESSED) {
-            return filename.replace(".gz", "");
-        } else {
-            return filename + ".gz";
-        }
+    // Omit ".gz" file extension because browsers implicitly send "accept-encoding:gzip" header
+    // and automatically decompress file when "Download file" is clicked in Swagger UI
+    static String getSwaggerDownloadFilename(Resource downloadResource) throws IOException {
+        return downloadResource.getFile().getName().replace(".gz", "");
     }
 
     static Encoding getFileEncoding(Resource resource) throws IOException {

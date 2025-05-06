@@ -117,11 +117,9 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         return generateFHIRError(e, request);
     }
 
-    @ExceptionHandler({JobOutputMissingException.class})
-    public ResponseEntity<JsonNode> handleJobOutputMissing(Exception e, HttpServletRequest request) throws IOException {
+    private void handleJobOutputMissing(Exception e, HttpServletRequest request) throws IOException {
         eventLogger.sendLogs(new ErrorEvent(MDC.get(ORGANIZATION), UtilMethods.parseJobId(request.getRequestURI()),
                 ErrorEvent.ErrorType.FILE_ALREADY_DELETED, getRootCause(e)));
-        return generateFHIRError(e, request);
     }
 
     @ExceptionHandler({InvalidContractException.class})
@@ -216,6 +214,9 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
      * and then write directly to response stream.
      */
     public void generateFHIRError(Exception e, HttpServletRequest request, HttpServletResponse response) throws IOException {
+        if (e instanceof JobOutputMissingException) {
+            handleJobOutputMissing(e, request);
+        }
         val responseEntity = generateFHIRError(e, null, request);
         response.setStatus(responseEntity.getStatusCode().value());
         response.setHeader(CONTENT_TYPE, APPLICATION_JSON);
