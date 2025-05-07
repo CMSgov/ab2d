@@ -8,5 +8,5 @@ jobs:
     uses: ./.github/workflows/terraform-gf.yml
     with:
       environment: test
-      module: api
+      service: api
     secrets: inherit
