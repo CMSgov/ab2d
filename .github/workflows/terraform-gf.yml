@@ -53,6 +53,9 @@ on:
 
 jobs:
   terraform:
+    permissions:
+      contents: read
+      id-token: write
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
 
     steps:
