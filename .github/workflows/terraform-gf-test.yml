@@ -1,0 +1,12 @@
+name: terraform-gf-test
+
+on:
+  pull_request:
+
+jobs:
+  terraform-gf:
+    uses: ./.github/workflows/terraform-gf.yml
+    with:
+      environment: test
+      module: api
+    secrets: inherit
