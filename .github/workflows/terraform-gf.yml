@@ -53,11 +53,7 @@ on:
 
 jobs:
   terraform:
-    runs-on: codebuild-cdap-${{github.run_id}}-${{github.run_attempt}}
-
-    env:
-      AWS_REGION: ${{ vars.AWS_REGION }}
-      DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', github.event.inputs.environment) ] }}
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
 
     steps:
       - name: Get AWS params
