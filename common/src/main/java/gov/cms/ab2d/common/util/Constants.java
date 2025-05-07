@@ -13,6 +13,8 @@ public final class Constants {
 
     public static final String FHIR_JSON_CONTENT_TYPE = "application/fhir+json";
 
+    public static final String GZIP_ENCODING = "gzip";
+
     public static final String JOB_LOG = "job";
 
     public static final String ORGANIZATION = "organization";
