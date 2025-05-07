@@ -75,8 +75,8 @@ jobs:
         uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{contains(fromJSON('["dev", "test", "sandbox"]'), inputs.environment)&& secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT}}:role/delegatedadmin/developer/ab2d-${{ inputs.environment }}-github-actions
-          
+          role-to-assume: arn:aws:iam::${{contains(fromJSON('["dev", "test"]'), inputs.environment) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT}}:role/delegatedadmin/developer/ab2d-${{ inputs.environment }}-github-actions
+
       - name: Terraform Init & Plan
         working-directory: terraform/environments/ab2d/${{ inputs.service }}/
         run: |
