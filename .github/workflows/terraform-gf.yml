@@ -81,16 +81,16 @@ jobs:
         working-directory: terraform/services/${{ inputs.service }}/
         run: |
           terraform init -reconfigure -backend-config=../../backends/${{ inputs.environment }}.s3.tfbackend
-          terraform plan -var env=${{ inputs.environment }} -out=${{ inputs.service }}.tfplan | tee plan_output.txt
+          terraform plan -var env=${{ inputs.environment }} -out=tfplan | tee plan_output.txt
 
       - name: Terraform Apply
         if: ${{ inputs.apply == true }}
         working-directory: terraform/services/${{ inputs.service }}/
         run: |
-          terraform apply -input=false ${{ inputs.service }}.tfplan
+          terraform apply -input=false tfplan
 
       - name: Cleanup Terraform Plan
         if: always()
         working-directory: terraform/services/${{ inputs.service }}/
         run: |
-          rm -f ${{ inputs.service }}.tfplan plan_output.txt
+          rm -f tfplan plan_output.txt
