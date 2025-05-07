@@ -85,8 +85,9 @@ public class CoverageServiceRepository {
      *
      * The contract and year must be included to take advantage of the partitions and prevent a table scan
      */
-    private static final String SELECT_COVERAGE_BY_SEARCH_COUNT = "SELECT COUNT(*) FROM coverage " +
-            " WHERE bene_coverage_search_event_id = :id AND contract = :contract AND year IN (:years) and current_mbi is not null";
+    private static final String SELECT_COVERAGE_BY_SEARCH_COUNT = "SELECT COUNT(*) FROM coverage c " +
+            " join current_mbi m on  c.current_mbi=m.mbi" +
+            " WHERE bene_coverage_search_event_id = :id AND contract = :contract AND year IN (:years) AND opt_out_flag is not false AND current_mbi is not null";
 
     /**
      * Return a count of all beneficiaries associated with an {@link CoveragePeriod}
