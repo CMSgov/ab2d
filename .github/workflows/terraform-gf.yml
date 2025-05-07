@@ -42,12 +42,14 @@ on:
         options:
           - api
           - api_gateway
-          - core
+          - bfd_insights
           - controller
+          - core
+          - eventbridge
+          - lambda
           - microservices
           - web
           - worker
-          - eventbridge
 
 jobs:
   terraform:
