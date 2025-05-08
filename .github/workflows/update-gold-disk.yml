@@ -23,6 +23,13 @@ jobs:
     runs-on: self-hosted
 
     steps:
+      - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        env:
+          ACCOUNT: ${{ inputs.environment == 'prod_test' && 'prod' || inputs.environment }}
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
+    
       - name: Get AWS params
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
         env:
@@ -68,14 +75,6 @@ jobs:
             prod | prod-test) echo "ACCOUNT=prod" >> $GITHUB_ENV ;;
             *) echo "Invalid environment: $ENVIRONMENT" && exit 1 ;;
           esac
-
-      - name: Assume role in AB2D account for this environment
-        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
-        env:
-          ACCOUNT: ${{ inputs.environment == 'prod_test' && 'prod' || inputs.environment }}
-        with:
-          aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
 
       - name: Set AWS_ACCOUNT_NUMBER from current credentials
         run: |
