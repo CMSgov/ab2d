@@ -50,6 +50,7 @@ on:
           - microservices
           - web
           - worker
+          - ecr
 
 jobs:
   terraform:
