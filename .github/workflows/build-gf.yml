@@ -33,16 +33,16 @@ jobs:
 
     env:
       DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}
-      AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
       AWS_REGION: ${{ vars.AWS_REGION }}
+      AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
 
     steps:
       - name: Set AB2D_ENV and assume role
         uses: cmsgov/ab2d/actions/configure-ab2d-env-gf@build-workflow-gf
         with:
           environment: ${{ inputs.environment }}
-          region: ${AWS_REGION}
-          account: ${AWS_ACCOUNT}
+          region: ${{ env.AWS_REGION }}
+          account: ${{ env.AWS_ACCOUNT }}
 
       - name: Checkout Code
         uses: actions/checkout@v3
