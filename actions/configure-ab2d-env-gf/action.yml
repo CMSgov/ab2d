@@ -1,0 +1,36 @@
+name: "Configure AB2D environment - Greenfield"
+description: "Configure AB2D environment - Greenfield"
+inputs:
+  environment:
+    description: "AB2D environment"
+    required: true
+  region:
+    description: "AWS region"
+    required: true
+  account:
+    description: "AWS account"
+    required: true
+
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set AB2D_ENV based on environment
+      shell: bash
+      run: |
+        case "${{ inputs.environment }}" in
+          dev)          AB2D_ENV="ab2d-dev" ;;
+          test)         AB2D_ENV="ab2d-east-impl" ;;
+          sandbox)      AB2D_ENV="ab2d-sbx-sandbox" ;;
+          prod)         AB2D_ENV="ab2d-east-prod" ;;
+          *)            echo "Invalid environment input"; exit 1 ;;
+        esac
+        echo "AB2D_ENV=${AB2D_ENV}" >> $GITHUB_ENV
+        echo "AB2D_AWS_ACCOUNT=${{ inputs.account }}" >> $GITHUB_ENV
+
+    - name: Assume role in AB2D account for this environment
+      uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
+      with:
+        aws-region: ${{ inputs.region }}
+        role-to-assume: arn:aws:iam::${AB2D_AWS_ACCOUNT}:role/delegatedadmin/developer/ab2d-${{ inputs.environment }}-github-actions
+
