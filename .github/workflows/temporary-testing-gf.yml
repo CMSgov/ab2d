@@ -32,7 +32,7 @@ jobs:
 
     steps:
       - name: Set AB2D_ENV
-        uses: cmsgov/ab2d/actions/configure-ab2d-env-gf@terraform-gf-WIP
+        uses: cmsgov/ab2d/actions/configure-ab2d-env-gf@build-workflow-gf
         with:
           environment: ${{ inputs.environment }}
           region: ${{ vars.AWS_REGION }}
