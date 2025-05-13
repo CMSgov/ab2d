@@ -26,14 +26,24 @@ on:
 
 jobs:
   build:
-    runs-on: self-hosted
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
 
     env:
-      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-      AWS_REGION: ${{ vars.AWS_REGION }}
       DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}
+      AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
+      AWS_REGION: ${{ vars.AWS_REGION }}
 
     steps:
+      - name: Set AB2D_ENV and assume role
+        uses: cmsgov/ab2d/actions/configure-ab2d-env-gf@build-workflow-gf
+        with:
+          environment: ${{ inputs.environment }}
+          region: ${AWS_REGION}
+          account: ${AWS_ACCOUNT}
+
       - name: Checkout Code
         uses: actions/checkout@v3
 
@@ -42,16 +52,6 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-
-      - name: Install Maven 3.6.3
-        run: |
-          export PATH="$PATH:/opt/maven/bin"
-          echo "PATH=$PATH" >> $GITHUB_ENV
-          if mvn -v; then echo "Maven already installed" && exit 0; else echo "Installing Maven"; fi
-          tmpdir="$(mktemp -d)"
-          curl -LsS https://archive.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz | tar xzf - -C "$tmpdir"
-          sudo rm -rf /opt/maven
-          sudo mv "$tmpdir/apache-maven-3.6.3" /opt/maven
 
       - name: Set env vars from AWS params in BCDA management account
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
@@ -64,16 +64,10 @@ jobs:
       - name: Build package
         run: mvn -U clean package -s settings.xml -DskipTests -Dusername="${ARTIFACTORY_USER}" -Dpassword="${ARTIFACTORY_PASSWORD}" -Drepository_url="${ARTIFACTORY_URL}"
 
-      - name: Assume role in AB2D account for this environment
-        uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
-        with:
-          aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${ACCOUNT_ID}:role/delegatedadmin/developer/ab2d-${{ inputs.environment }}-github-actions
-
       - name: Build image and push to ECR
         working-directory: ./${{ inputs.module }}
         run: |
-          ECR_REPO_DOMAIN="${{ secrets.MGMT_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com"
+          ECR_REPO_DOMAIN="${AWS_ACCOUNT}.dkr.ecr.$AWS_REGION.amazonaws.com"
           aws ecr get-login-password | docker login --username AWS --password-stdin "$ECR_REPO_DOMAIN"
           ECR_REPO_URI="$ECR_REPO_DOMAIN/ab2d-${{ inputs.module }}"
           SHA_SHORT=$(git rev-parse --short HEAD)
