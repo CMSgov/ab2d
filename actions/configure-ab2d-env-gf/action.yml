@@ -6,10 +6,10 @@ inputs:
     required: true
   region:
     description: "AWS region"
-    required: true
+    required: false
   account:
     description: "AWS account"
-    required: true
+    required: false
 
 runs:
   using: "composite"
@@ -25,11 +25,12 @@ runs:
           *)            echo "Invalid environment input"; exit 1 ;;
         esac
         echo "AB2D_ENV=${AB2D_ENV}" >> $GITHUB_ENV
-        echo "AB2D_AWS_ACCOUNT=${{ inputs.account }}" >> $GITHUB_ENV
 
     - name: Assume role in AB2D account for this environment
+      if: ${{ inputs.region != '' && ${{ inputs.account != '' }}
       uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
       with:
+        mask-aws-account-id: true
         aws-region: ${{ inputs.region }}
         role-to-assume: arn:aws:iam::${{ inputs.account }}:role/delegatedadmin/developer/ab2d-${{ inputs.environment }}-github-actions
 
