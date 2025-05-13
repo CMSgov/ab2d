@@ -18,7 +18,9 @@ on:
 jobs:
   update-gold-disk:
     runs-on: self-hosted
-
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Get AWS params
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
