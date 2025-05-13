@@ -11,7 +11,6 @@ inputs:
     description: "AWS account"
     required: true
 
-
 runs:
   using: "composite"
   steps:
@@ -32,5 +31,5 @@ runs:
       uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
       with:
         aws-region: ${{ inputs.region }}
-        role-to-assume: arn:aws:iam::${AB2D_AWS_ACCOUNT}:role/delegatedadmin/developer/ab2d-${{ inputs.environment }}-github-actions
+        role-to-assume: arn:aws:iam::${{ inputs.account }}:role/delegatedadmin/developer/ab2d-${{ inputs.environment }}-github-actions
 
