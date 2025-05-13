@@ -31,11 +31,6 @@ jobs:
       id-token: write
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
 
-    env:
-      DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}
-      AWS_REGION: ${{ vars.AWS_REGION }}
-      AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
-
     steps:
       - name: Set AB2D_ENV and assume role
         uses: cmsgov/ab2d/actions/configure-ab2d-env-gf@build-workflow-gf

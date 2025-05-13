@@ -14,7 +14,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Set AB2D_ENV based on environment
+    - name: Set DEPLOYMENT_ENV based on environment
       shell: bash
       run: |
         case "${{ inputs.environment }}" in
@@ -34,3 +34,9 @@ runs:
         aws-region: ${{ inputs.region }}
         role-to-assume: arn:aws:iam::${{ inputs.account }}:role/delegatedadmin/developer/ab2d-${{ inputs.environment }}-github-actions
 
+    - name: Set AWS_REGION and AWS_ACCOUNT
+      shell: bash
+      if: ${{ inputs.region != '' && inputs.account != '' }}
+      run: |
+        echo "AWS_REGION=${{ inputs.region }}" >> $GITHUB_ENV
+        echo "AWS_ACCOUNT=${{ inputs.account }}" >> $GITHUB_ENV
