@@ -30,7 +30,7 @@ jobs:
 
       - name: Determine Branch and Environment
         run: |
-              echo "ENVIRONMENT=${{ github.event.inputs.environment || 'non_prod' }}" >> $GITHUB_ENV
+              echo "ENVIRONMENT=${{ github.event.inputs.environment || 'test' }}" >> $GITHUB_ENV
               echo "BRANCH=${{ github.event.inputs.branch || 'main' }}" >> $GITHUB_ENV
 
 
