@@ -14,7 +14,7 @@ on:
         required: false
         type: choice
         options:
-          - non_prod
+          - test
           - prod
         description: "Deployment environment (defaults to dev on pull request)"
 
