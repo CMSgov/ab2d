@@ -1,9 +1,6 @@
 name: build-gf
 
 on:
-  push:
-    branches:
-      - build-workflow-gf
   workflow_call:
     inputs:
       environment:

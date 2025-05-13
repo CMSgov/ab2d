@@ -18,13 +18,13 @@ runs:
       shell: bash
       run: |
         case "${{ inputs.environment }}" in
-          dev)          AB2D_ENV="ab2d-dev" ;;
-          test)         AB2D_ENV="ab2d-east-impl" ;;
-          sandbox)      AB2D_ENV="ab2d-sbx-sandbox" ;;
-          prod)         AB2D_ENV="ab2d-east-prod" ;;
+          dev)          DEPLOYMENT_ENV="dev" ;;
+          test)         DEPLOYMENT_ENV="east-impl" ;;
+          sandbox)      DEPLOYMENT_ENV="sbx-sandbox" ;;
+          prod)         DEPLOYMENT_ENV="east-prod" ;;
           *)            echo "Invalid environment input"; exit 1 ;;
         esac
-        echo "AB2D_ENV=${AB2D_ENV}" >> $GITHUB_ENV
+        echo "DEPLOYMENT_ENV=${DEPLOYMENT_ENV}" >> $GITHUB_ENV
 
     - name: Assume role in AB2D account for this environment
       if: ${{ inputs.region != '' && inputs.account != '' }}
