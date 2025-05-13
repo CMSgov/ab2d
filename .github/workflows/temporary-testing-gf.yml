@@ -41,6 +41,3 @@ jobs:
       - name: Verify
         run: |
           echo "AB2D env = ${AB2D_ENV}"
-          echo "AB2D_AWS_ACCOUNT" = ${AB2D_AWS_ACCOUNT}"
-          
-
