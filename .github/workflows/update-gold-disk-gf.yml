@@ -1,6 +1,9 @@
 name: Update Gold Disk
 
 on:
+  push:
+    branches:
+      - PLT-1045-gd
   workflow_dispatch:
     inputs:
       branch:
