@@ -2,9 +2,9 @@ name: temporary-testing-gf
 run-name: testing ${{ inputs.environment }}
 
 on:
-    push:
-      branches:
-        - terraform-gf-WIP
+  push:
+    branches:
+      - terraform-gf-WIP
 
   workflow_call:
     inputs:
