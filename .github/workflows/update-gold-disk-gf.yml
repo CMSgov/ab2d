@@ -48,7 +48,7 @@ jobs:
         run: |
           aws sts get-caller-identity
           case "${{ env.ENVIRONMENT }}" in
-            non_prod) echo "PARENT_ENV=ab2d-east-test" >> $GITHUB_ENV ;;
+            test) echo "PARENT_ENV=ab2d-east-test" >> $GITHUB_ENV ;;
             prod) echo "PARENT_ENV=ab2d-east-prod" >> $GITHUB_ENV ;;
             *) echo "Invalid environment: $ENVIRONMENT" && exit 1 ;;
           esac
