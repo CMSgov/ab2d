@@ -70,9 +70,12 @@ jobs:
         run: |
           echo "$(pwd)"
           echo "$(ls -lah)"
-#          ECR_REPO_DOMAIN="${AWS_ACCOUNT}.dkr.ecr.$AWS_REGION.amazonaws.com"
-#          aws ecr get-login-password | docker login --username AWS --password-stdin "$ECR_REPO_DOMAIN"
-#          ECR_REPO_URI="$ECR_REPO_DOMAIN/ab2d-${MODULE}"
+          ECR_REPO_DOMAIN="${AWS_ACCOUNT}.dkr.ecr.$AWS_REGION.amazonaws.com"
+          aws ecr get-login-password | docker login --username AWS --password-stdin "$ECR_REPO_DOMAIN"
+          ECR_REPO_URI="$ECR_REPO_DOMAIN/ab2d-${MODULE}"
+          
+          echo "ECR_REPO_URI=$ECR_REPO_URI"
+          echo "ECR_REPO_DOMAIN=$ECR_REPO_DOMAIN"
 #          SHA_SHORT=$(git rev-parse --short HEAD)
 #          echo "Building image for commit sha $SHA_SHORT"
 #          docker build \
