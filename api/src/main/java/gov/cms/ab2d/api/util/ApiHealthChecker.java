@@ -1,11 +1,13 @@
 package gov.cms.ab2d.api.util;
 
 import com.newrelic.api.agent.NewRelic;
+import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.HttpResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -16,36 +18,48 @@ import java.util.Map;
 @Component
 @Slf4j
 public class ApiHealthChecker {
+    private String HEALTH_URL;
 
-    private static final String HEALTH_URL = "https://api.ab2d.cms.gov/health";
+    public ApiHealthChecker(@Value("${execution.env}") String ab2dEnv) {
+        Ab2dEnvironment ab2dEnvironment = Ab2dEnvironment.fromName(ab2dEnv);
+
+        switch (ab2dEnvironment) {
+            case IMPL -> HEALTH_URL = "https://impl.ab2d.cms.gov/health";
+            case SANDBOX -> HEALTH_URL = "https://sandbox.ab2d.cms.gov/health";
+            case PRODUCTION -> HEALTH_URL = "https://api.ab2d.cms.gov/health";
+        }
+    }
 
     @Scheduled(fixedRateString = "300000")  // 5 minutes
     public void checkHealth() {
-        boolean success = false;
-        int status = -1;
+        if (HEALTH_URL != null && !HEALTH_URL.isEmpty()) {
 
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
-            HttpGet request = new HttpGet(HEALTH_URL);
+            boolean success = false;
+            int status = -1;
 
-            status = client.execute(request, HttpResponse::getCode);
-            success = (status >= 200 && status < 300);
-        } catch (IOException e) {
-            NewRelic.noticeError(e);
-            log.error("Health check failed: {}", e.getMessage());
-        }
+            try (CloseableHttpClient client = HttpClients.createDefault()) {
+                HttpGet request = new HttpGet(HEALTH_URL);
 
-        // Record a custom event in New Relic
-        Map<String, Object> attrs = new HashMap<>();
-        attrs.put("url", HEALTH_URL);
-        attrs.put("statusCode", status);
-        attrs.put("success", success);
-        NewRelic.getAgent().getInsights().recordCustomEvent("ApiHealthCheck", attrs);
+                status = client.execute(request, HttpResponse::getCode);
+                success = (status >= 200 && status < 300);
+            } catch (IOException e) {
+                NewRelic.noticeError(e);
+                log.error("Health check failed: {}", e.getMessage());
+            }
 
-        if (!success) {
-            NewRelic.noticeError("API unavailable, status=" + status);
-            log.warn("API health check FAILED (status={})", status);
-        } else {
-            log.info("API health check OK (status={})", status);
+            // Record a custom event in New Relic
+            Map<String, Object> attrs = new HashMap<>();
+            attrs.put("url", HEALTH_URL);
+            attrs.put("statusCode", status);
+            attrs.put("success", success);
+            NewRelic.getAgent().getInsights().recordCustomEvent("ApiHealthCheck", attrs);
+
+            if (!success) {
+                NewRelic.noticeError("API unavailable, status=" + status);
+                log.error("API health check FAILED (status={})", status);
+            } else {
+                log.error("API health check OK (status={})", status);
+            }
         }
     }
 }

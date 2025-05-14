@@ -23,7 +23,6 @@ import static org.mockito.Mockito.*;
 class ApiHealthCheckerTest {
 
     private CloseableHttpClient mockClient;
-    private Agent mockAgent;
     private Insights mockInsights;
     private ArgumentCaptor<Map<String, Object>> attrsCaptor;
 
@@ -34,13 +33,13 @@ class ApiHealthCheckerTest {
     @BeforeEach
     void beforeEach() {
         mockClient = mock(CloseableHttpClient.class);
-        mockAgent = mock(Agent.class);
+        Agent mockAgent = mock(Agent.class);
         mockInsights = mock(Insights.class);
         attrsCaptor = ArgumentCaptor.forClass(Map.class);
 
         when(mockAgent.getInsights()).thenReturn(mockInsights);
 
-        checker = new ApiHealthChecker();
+        checker = new ApiHealthChecker("ab2d-east-impl");
         httpClients = mockStatic(HttpClients.class);
         newRelic = mockStatic(NewRelic.class);
 
@@ -55,7 +54,7 @@ class ApiHealthCheckerTest {
     }
 
     @Test
-    void checkHealth_success200_recordsSuccessAndNoErrorNoticed() throws Exception {
+    void recordsSuccessAndNoErrorNoticedTest() throws Exception {
         when(mockClient.execute(any(HttpGet.class), any(HttpClientResponseHandler.class)))
                 .thenReturn(200);
 
@@ -71,7 +70,7 @@ class ApiHealthCheckerTest {
     }
 
     @Test
-    void checkHealth_http500_recordsFailureAndNoticesError() throws Exception {
+    void recordsFailureAndNoticesErrorTest() throws Exception {
         when(mockClient.execute(any(HttpGet.class), any(HttpClientResponseHandler.class)))
                 .thenReturn(500);
 
@@ -86,7 +85,7 @@ class ApiHealthCheckerTest {
     }
 
     @Test
-    void checkHealth_ioException_recordsFailureAndNoticesException() throws Exception {
+    void recordsFailureAndNoticesExceptionTest() throws Exception {
         when(mockClient.execute(any(HttpGet.class), any(HttpClientResponseHandler.class)))
                 .thenThrow(new IOException("network down"));
 
@@ -98,5 +97,13 @@ class ApiHealthCheckerTest {
         assertFalse((Boolean) evt.get("success"));
 
         newRelic.verify(() -> NewRelic.noticeError(isA(IOException.class)), times(1));
+    }
+
+    @Test
+    void environmentIsNotInListTest() {
+        checker = new ApiHealthChecker("local");
+        checker.checkHealth();
+
+        newRelic.verify(() -> NewRelic.noticeError(isA(IOException.class)), never());
     }
 }
