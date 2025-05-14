@@ -75,19 +75,21 @@ jobs:
       - name: Build image and push to ECR
         working-directory: ./${MODULE}
         run: |
-          ECR_REPO_DOMAIN="${AWS_ACCOUNT}.dkr.ecr.$AWS_REGION.amazonaws.com"
-          aws ecr get-login-password | docker login --username AWS --password-stdin "$ECR_REPO_DOMAIN"
-          ECR_REPO_URI="$ECR_REPO_DOMAIN/ab2d-${MODULE}"
-          SHA_SHORT=$(git rev-parse --short HEAD)
-          echo "Building image for commit sha $SHA_SHORT"
-          docker build \
-            -t "${ECR_REPO_URI}:ab2d-${DEPLOYMENT_ENV}-$SHA_SHORT" \
-            -t "${ECR_REPO_URI}:ab2d-${DEPLOYMENT_ENV}-latest" .
-
-          # Push to special tag for promotion if this is run on a push to main
-          if [ "$GITHUB_REF" == "refs/heads/main" ]; then
-            docker tag $ECR_REPO_URI:ab2d-$DEPLOYMENT_ENV-$SHA_SHORT $ECR_REPO_URI:main-$SHA_SHORT
-          fi
-
-          echo "Pushing image"
-          docker push "${ECR_REPO_URI}" --all-tags
+          echo "$(pwd)"
+          echo "$(ls -lah)"
+#          ECR_REPO_DOMAIN="${AWS_ACCOUNT}.dkr.ecr.$AWS_REGION.amazonaws.com"
+#          aws ecr get-login-password | docker login --username AWS --password-stdin "$ECR_REPO_DOMAIN"
+#          ECR_REPO_URI="$ECR_REPO_DOMAIN/ab2d-${MODULE}"
+#          SHA_SHORT=$(git rev-parse --short HEAD)
+#          echo "Building image for commit sha $SHA_SHORT"
+#          docker build \
+#            -t "${ECR_REPO_URI}:ab2d-${DEPLOYMENT_ENV}-$SHA_SHORT" \
+#            -t "${ECR_REPO_URI}:ab2d-${DEPLOYMENT_ENV}-latest" .
+#
+#          # Push to special tag for promotion if this is run on a push to main
+#          if [ "$GITHUB_REF" == "refs/heads/main" ]; then
+#            docker tag $ECR_REPO_URI:ab2d-$DEPLOYMENT_ENV-$SHA_SHORT $ECR_REPO_URI:main-$SHA_SHORT
+#          fi
+#
+#          echo "Pushing image"
+#          docker push "${ECR_REPO_URI}" --all-tags
