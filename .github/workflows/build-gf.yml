@@ -65,6 +65,7 @@ jobs:
         working-directory: ./${{ inputs.module }}
         run: |
           ECR_REPO_DOMAIN="${AWS_ACCOUNT}.dkr.ecr.$AWS_REGION.amazonaws.com"
+          DEPLOYMENT_ENV="${{ inputs.environment }}"
           aws ecr get-login-password | docker login --username AWS --password-stdin "$ECR_REPO_DOMAIN"
           ECR_REPO_URI="$ECR_REPO_DOMAIN/ab2d-${{ inputs.module }}"
           SHA_SHORT=$(git rev-parse --short HEAD)
