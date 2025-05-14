@@ -1,4 +1,5 @@
 # This script queries AWS for secrets starting with 'ab2d/ab2d-dev/*' and creates a new secret 'ab2d/dev/*' with same secret value
+# Note this is hardcoded for dev - need to parameterize script or hardcode values for other environments
 import subprocess
 import json
 
