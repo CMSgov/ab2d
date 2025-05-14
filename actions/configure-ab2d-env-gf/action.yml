@@ -1,5 +1,9 @@
-name: "Configure AB2D environment - Greenfield"
-description: "Configure AB2D environment - Greenfield"
+# Validate environment input (dev,test,sandbox,prod)
+#     Exports DEPLOYMENT_ENV (dev,east-impl,sbx-sandbox,east-prod)
+# If provided, assume role for AWS region and account
+#     Exports AWS_REGION and AWS_ACCOUNT
+name: "Configure AB2D environment variables - Greenfield"
+description: "Configure AB2D environment variables - Greenfield"
 inputs:
   environment:
     description: "AB2D environment"
@@ -26,7 +30,7 @@ runs:
         esac
         echo "DEPLOYMENT_ENV=${DEPLOYMENT_ENV}" >> $GITHUB_ENV
 
-    - name: Assume role in AB2D account for this environment # This action adds 'AWS_REGION' to $GITHUB_ENV
+    - name: Assume AWS role  # This action adds 'AWS_REGION' to $GITHUB_ENV
       if: ${{ inputs.region != '' && inputs.account != '' }}
       uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
       with:
