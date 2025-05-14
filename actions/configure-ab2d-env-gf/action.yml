@@ -29,7 +29,7 @@ runs:
           *)            echo "Invalid environment input"; exit 1 ;;
         esac
 
-    - name: Assume AWS role  # This action adds 'AWS_REGION' to $GITHUB_ENV
+    - name: Assume AWS role
       if: ${{ inputs.region != '' && inputs.account != '' }}
       uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
       with:
