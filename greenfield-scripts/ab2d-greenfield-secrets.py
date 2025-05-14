@@ -5,7 +5,7 @@ import json
 
 LOG_CMD=True
 DEBUG=False
-DRY_RUN=False
+DRY_RUN=True
 
 def run(command):
     if LOG_CMD:
