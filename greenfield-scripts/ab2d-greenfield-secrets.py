@@ -52,7 +52,7 @@ while True:
             else:
                 run(command)
 
-    if not next_token:
+        if not next_token:
             break
 
 run(f"rm {out_file}")
