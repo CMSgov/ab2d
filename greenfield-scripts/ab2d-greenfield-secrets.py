@@ -1,5 +1,8 @@
 # This script queries AWS for secrets starting with 'ab2d/ab2d-dev/*' and creates a new secret 'ab2d/dev/*' with same secret value
 # Note this is hardcoded for dev - need to parameterize script or hardcode values for other environments
+#
+# `aws secretsmanager batch-get-secret-value` will return a max of 20 results - to retrieve the next 20 results, the token
+# returned in the response must be provided to the next request to secrets manager
 import subprocess
 import json
 
