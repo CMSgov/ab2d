@@ -18,27 +18,28 @@ import java.util.Map;
 @Component
 @Slf4j
 public class ApiHealthChecker {
-    private String HEALTH_URL;
+    private final String healthUrl;
 
     public ApiHealthChecker(@Value("${execution.env}") String ab2dEnv) {
         Ab2dEnvironment ab2dEnvironment = Ab2dEnvironment.fromName(ab2dEnv);
 
-        switch (ab2dEnvironment) {
-            case IMPL -> HEALTH_URL = "https://impl.ab2d.cms.gov/health";
-            case SANDBOX -> HEALTH_URL = "https://sandbox.ab2d.cms.gov/health";
-            case PRODUCTION -> HEALTH_URL = "https://api.ab2d.cms.gov/health";
-        }
+        healthUrl = switch (ab2dEnvironment) {
+            case IMPL -> "https://impl.ab2d.cms.gov/health";
+            case SANDBOX -> "https://sandbox.ab2d.cms.gov/health";
+            case PRODUCTION -> "https://api.ab2d.cms.gov/health";
+            default -> "";
+        };
     }
 
     @Scheduled(fixedRateString = "300000")  // 5 minutes
     public void checkHealth() {
-        if (HEALTH_URL != null && !HEALTH_URL.isEmpty()) {
+        if (healthUrl != null && !healthUrl.isEmpty()) {
 
             boolean success = false;
             int status = -1;
 
             try (CloseableHttpClient client = HttpClients.createDefault()) {
-                HttpGet request = new HttpGet(HEALTH_URL);
+                HttpGet request = new HttpGet(healthUrl);
 
                 status = client.execute(request, HttpResponse::getCode);
                 success = (status >= 200 && status < 300);
@@ -49,7 +50,7 @@ public class ApiHealthChecker {
 
             // Record a custom event in New Relic
             Map<String, Object> attrs = new HashMap<>();
-            attrs.put("url", HEALTH_URL);
+            attrs.put("url", healthUrl);
             attrs.put("statusCode", status);
             attrs.put("success", success);
             NewRelic.getAgent().getInsights().recordCustomEvent("ApiHealthCheck", attrs);
