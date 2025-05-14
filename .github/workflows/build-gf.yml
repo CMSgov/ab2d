@@ -36,8 +36,8 @@ jobs:
         uses: cmsgov/ab2d/actions/configure-ab2d-env-gf@build-workflow-gf
         with:
           environment: ${{ inputs.environment }}
-          region: ${{ env.AWS_REGION }}
-          account: ${{ env.AWS_ACCOUNT }}
+          region: ${{ vars.AWS_REGION }}
+          account: ${{ secrets.NON_PROD_ACCOUNT }}
 
       - name: Checkout Code
         uses: actions/checkout@v3
