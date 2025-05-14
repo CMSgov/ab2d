@@ -34,7 +34,7 @@ jobs:
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
 
     steps:
-      - name: Set AB2D_ENV and assume role
+      - name: Set AB2D variables and assume role
         uses: cmsgov/ab2d/actions/configure-ab2d-env-gf@build-workflow-gf
         with:
           environment: ${{ inputs.environment }}
