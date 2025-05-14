@@ -1,5 +1,5 @@
 # Validate environment input (dev,test,sandbox,prod)
-#     Exports DEPLOYMENT_ENV (dev,east-impl,sbx-sandbox,east-prod)
+#
 # If provided, assume role for AWS region and account
 #     Exports AWS_REGION and AWS_ACCOUNT
 name: "Configure AB2D environment variables - Greenfield"
