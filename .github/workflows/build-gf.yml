@@ -12,12 +12,14 @@ on:
   workflow_dispatch:
     inputs:
       environment:
+        description: AB2D environment used for ECR
         required: true
         type: choice
         options:
           - dev
           - test
       module:
+        description: AB2D module
         required: true
         type: choice
         options:
