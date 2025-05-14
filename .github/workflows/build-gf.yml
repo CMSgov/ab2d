@@ -1,5 +1,5 @@
 name: build-gf
-run-name: build ${{ inputs.service }} ${{ inputs.environment }}
+run-name: build ${{ inputs.module }} ${{ inputs.environment }}
 
 on:
   workflow_call:
