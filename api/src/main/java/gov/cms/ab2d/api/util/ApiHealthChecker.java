@@ -4,18 +4,16 @@ import com.newrelic.api.agent.NewRelic;
 import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.util.Timeout;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,6 +34,15 @@ public class ApiHealthChecker {
         log.error("API ENV  " + healthUrl);
     }
 
+    RequestConfig reqCfg = RequestConfig.custom()
+            .setConnectionRequestTimeout(Timeout.ofSeconds(5))
+            .setResponseTimeout(Timeout.ofSeconds(7))
+            .build();
+
+    CloseableHttpClient client = HttpClients.custom()
+            .setDefaultRequestConfig(reqCfg)
+            .build();
+
     @Scheduled(fixedRateString = "300000")  // 5 minutes
     public void checkHealth() {
         if (healthUrl != null && !healthUrl.isEmpty()) {
@@ -43,7 +50,7 @@ public class ApiHealthChecker {
             boolean success = false;
             int status = -1;
 
-            try (CloseableHttpClient client = HttpClients.createDefault()) {
+            try {
                 HttpGet request = new HttpGet(healthUrl);
 
                 status = client.execute(request, HttpResponse::getCode);
@@ -63,34 +70,10 @@ public class ApiHealthChecker {
 
             if (!success) {
                 NewRelic.noticeError("API unavailable, status=" + status);
-                log.error("API health check FAILED status = " +  status);
+                log.error("API health check FAILED status = " + status);
             } else {
                 log.error("API health check OK status = " + status);
             }
-        }
-    }
-
-    @Scheduled(fixedRateString = "300000")  // 5 minutes
-    public void checkHealth2() {
-        if (healthUrl != null && !healthUrl.isEmpty()) {
-
-            HttpClient client = HttpClient.newBuilder()
-                    .connectTimeout(Duration.ofSeconds(5))
-                    .build();
-
-            HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(healthUrl))
-                    .GET()
-                    .build();
-
-            java.net.http.HttpResponse<Void> resp = null;
-            try {
-                resp = client.send(req, java.net.http.HttpResponse.BodyHandlers.discarding());
-            } catch (IOException | InterruptedException e) {
-                log.error("Health check failed for URL " + healthUrl + " — see stack trace:" + e);
-            }
-            int status = resp.statusCode();
-            log.error("API health check status = " + status);
         }
     }
 }
