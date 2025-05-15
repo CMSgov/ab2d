@@ -4,7 +4,7 @@ run-name: deploy-gf ${{ inputs.module }} ${{ inputs.environment }}
 on:
   push:
     branches:
-      - main
+      - more-workflows-gf
   workflow_call:
     inputs:
       environment:
