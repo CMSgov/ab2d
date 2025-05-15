@@ -1,9 +1,10 @@
 name: release-gf
 run-name: release-gf
 
+# TODO uncomment 'on release types' later - commented out to prevent from being triggered when releasing legacy apps
 on:
-  release:
-    types: [released]
+#  release:
+#    types: [released]
   workflow_dispatch:
 
 permissions:
