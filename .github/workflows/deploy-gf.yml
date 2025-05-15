@@ -1,0 +1,64 @@
+name: deploy-gf
+run-name: deploy-gf ${{ inputs.module }} ${{ inputs.environment }}
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      module:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: AB2D environment used for ECR
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+          - sandbox
+          - prod
+      module:
+        description: AB2D module
+        required: true
+        type: choice
+        options:
+          - api
+          - worker
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_ACCOUNT: ${{contains(fromJSON('["dev", "test"]'), inputs.environment) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT}}
+      AB2D_ENV: ${{ inputs.environment }}
+      MODULE: ${{ inputs.module }}
+
+    steps:
+      - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.AB2D_ENV }}-github-actions
+
+      - name: Deploy ECS service to run on latest image in ECR
+        env:
+          SERVICE_NAME: ab2d-${{ env.AB2D_ENV }}-${{ env.MODULE }} # TODO verify this
+        run: |
+          echo "Deploying service $SERVICE_NAME"
+          aws ecs update-service --cluster "$SERVICE_NAME" --service "$SERVICE_NAME" --force-new-deployment > /dev/null
+          echo "Waiting for ECS service to stabilize..."
+          exit_status=1
+          set +e
+          while [ "$exit_status" != "0" ]; do
+            aws ecs wait services-stable --cluster "$SERVICE_NAME" --services "$SERVICE_NAME"
+            exit_status="$?"
+            echo "Wait result: $exit_status"
+          done
+          set -e
+          echo "✅ ECS service stabilized."
