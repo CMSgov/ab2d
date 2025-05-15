@@ -1,0 +1,76 @@
+name: release-gf
+run-name: release-gf
+
+on:
+  release:
+    types: [released]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  # Note the legacy release.yml contains 'deploy-prod-test-worker' and 'promote-prod-test-worker' which are omitted here
+
+  # Promote and Deploy to prod
+  promote-prod-api:
+    uses: ./.github/workflows/promote-gf.yml
+    with:
+      environment: prod
+      module: api
+    secrets: inherit
+
+  promote-prod-worker:
+    uses: ./.github/workflows/promote-gf.yml
+    with:
+      environment: prod
+      module: worker
+    secrets: inherit
+
+  deploy-prod-api:
+    needs: promote-prod-api
+    uses: ./.github/workflows/deploy-gf.yml
+    with:
+      environment: prod
+      module: api
+    secrets: inherit
+
+  deploy-prod-worker:
+    needs: promote-prod-worker
+    uses: ./.github/workflows/deploy-gf.yml
+    with:
+      environment: prod
+      module: worker
+    secrets: inherit
+
+  # Promote and Deploy to sandbox
+  promote-sandbox-api:
+    uses: ./.github/workflows/promote-gf.yml
+    with:
+      environment: sandbox
+      module: api
+    secrets: inherit
+
+  promote-sandbox-worker:
+    uses: ./.github/workflows/promote-gf.yml
+    with:
+      environment: sbx
+      module: worker
+    secrets: inherit
+
+  deploy-sandbox-api:
+    needs: promote-sbx-api
+    uses: ./.github/workflows/deploy-gf.yml
+    with:
+      environment: sandbox
+      module: api
+    secrets: inherit
+
+  deploy-sandbox-worker:
+    needs: promote-sbx-worker
+    uses: ./.github/workflows/deploy-gf.yml
+    with:
+      environment: sandbox
+      module: worker
+    secrets: inherit

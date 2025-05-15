@@ -2,9 +2,6 @@ name: promote-gf
 run-name: promote-gf ${{ inputs.module }} ${{ inputs.environment }}
 
 on:
-  push:
-    branches:
-      - more-workflows-gf
   workflow_call:
     inputs:
       environment:
@@ -64,12 +61,10 @@ jobs:
           echo "Getting the manifest of the image tagged main-$SHA_SHORT"
           MANIFEST="$(curl -sS -H "Authorization: Basic $TOKEN" -H "Accept: $CONTENT_TYPE" "https://$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/main-$SHA_SHORT")"
 
-          echo "MANIFEST=$MANIFEST"
+          SHA_TAG="$TAG_PREFIX-$SHA_SHORT"
+          echo "Adding the $SHA_TAG tag to main-$SHA_SHORT image"
+          curl -sS -X PUT -H "Authorization: Basic $TOKEN" -H "Content-Type: $CONTENT_TYPE" -d "$MANIFEST" "https://$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/$SHA_TAG"
 
-#          SHA_TAG="$TAG_PREFIX-$SHA_SHORT"
-#          echo "Adding the $SHA_TAG tag to main-$SHA_SHORT image"
-#          curl -sS -X PUT -H "Authorization: Basic $TOKEN" -H "Content-Type: $CONTENT_TYPE" -d "$MANIFEST" "https://$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/$SHA_TAG"
-#
-#          LATEST_TAG="$TAG_PREFIX-latest"
-#          echo "Adding the $LATEST_TAG tag to main-$SHA_SHORT image"
-#          curl -sS -X PUT -H "Authorization: Basic $TOKEN" -H "Content-Type: $CONTENT_TYPE" -d "$MANIFEST" "https://$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/$LATEST_TAG"
+          LATEST_TAG="$TAG_PREFIX-latest"
+          echo "Adding the $LATEST_TAG tag to main-$SHA_SHORT image"
+          curl -sS -X PUT -H "Authorization: Basic $TOKEN" -H "Content-Type: $CONTENT_TYPE" -d "$MANIFEST" "https://$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/$LATEST_TAG"
