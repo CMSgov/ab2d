@@ -29,7 +29,7 @@ public class ApiHealthChecker {
             case PRODUCTION -> "https://api.ab2d.cms.gov/health";
             default -> "";
         };
-        log.error("API ENV", healthUrl);
+        log.error("API ENV  " + healthUrl);
     }
 
     @Scheduled(fixedRateString = "300000")  // 5 minutes
@@ -43,7 +43,7 @@ public class ApiHealthChecker {
                 HttpGet request = new HttpGet(healthUrl);
 
                 status = client.execute(request, HttpResponse::getCode);
-                log.error("API status", status);
+                log.error("API status " + status);
                 success = (status >= 200 && status < 300);
             } catch (IOException e) {
                 NewRelic.noticeError(e);
@@ -59,9 +59,9 @@ public class ApiHealthChecker {
 
             if (!success) {
                 NewRelic.noticeError("API unavailable, status=" + status);
-                log.error("API health check FAILED (status={})", status);
+                log.error("API health check FAILED status = " +  status);
             } else {
-                log.error("API health check OK (status={})", status);
+                log.error("API health check OK status = " + status);
             }
         }
     }
