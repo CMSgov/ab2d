@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.retry.annotation.EnableRetry;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(scanBasePackages = {
         "gov.cms.ab2d.common",
@@ -27,6 +28,7 @@ import org.springframework.retry.annotation.EnableRetry;
 @EnableJpaRepositories(basePackages = {"gov.cms.ab2d.common.repository", "gov.cms.ab2d.job.repository",
         "gov.cms.ab2d.coverage.repository"})
 @EnableRetry
+@EnableScheduling
 @PropertySource("classpath:application.common.properties")
 @Import({StuckJobQuartzSetup.class, BFDHealthCheckQuartzSetup.class})
 @EnableFeignClients(clients = {ContractFeignClient.class})
