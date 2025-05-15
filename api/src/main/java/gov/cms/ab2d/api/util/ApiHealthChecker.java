@@ -34,12 +34,12 @@ public class ApiHealthChecker {
         log.error("API ENV  " + healthUrl);
     }
 
-    RequestConfig reqCfg = RequestConfig.custom()
+    private final RequestConfig reqCfg = RequestConfig.custom()
             .setConnectionRequestTimeout(Timeout.ofSeconds(5))
             .setResponseTimeout(Timeout.ofSeconds(7))
             .build();
 
-    CloseableHttpClient client = HttpClients.custom()
+    private final CloseableHttpClient client = HttpClients.custom()
             .setDefaultRequestConfig(reqCfg)
             .build();
 
