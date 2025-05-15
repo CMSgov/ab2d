@@ -1,5 +1,5 @@
-name: promote
-run-name: deploy-gf ${{ inputs.module }} ${{ inputs.environment }}
+name: promote-gf
+run-name: promote-gf ${{ inputs.module }} ${{ inputs.environment }}
 
 on:
   push:
