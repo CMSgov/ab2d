@@ -1,0 +1,75 @@
+name: promote
+run-name: deploy-gf ${{ inputs.module }} ${{ inputs.environment }}
+
+on:
+  push:
+    branches:
+      - main
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      module:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: AB2D environment
+        required: true
+        type: choice
+        options:
+          - sandbox
+          - prod
+      module:
+        description: AB2D module
+        required: true
+        type: choice
+        options:
+          - api
+          - worker
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  promote:
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    env:
+      AWS_ACCOUNT: ${{ secrets.PROD_ACCOUNT }}
+      AB2D_ENV: ${{ inputs.environment }}
+      MODULE: ${{ inputs.module }}
+    steps:
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+      - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.AB2D_ENV }}-github-actions
+
+      - name: Set environment variables
+        run: |
+          echo "TAG_PREFIX=ab2d-${AB2D_MODULE}" >> $GITHUB_ENV
+
+      - name: Retag images in ECR
+        env:
+          ECR_REPO_DOMAIN: ${{ env.AWS_ACCOUNT }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com
+          ECR_REPO: ab2d-${{ env.MODULE }} # Note prefix is 'ab2d-' in greenfield and 'ab2d_' in legacy
+        run: |
+          SHA_SHORT="$(git rev-parse --short HEAD)"
+          TOKEN="$(aws ecr get-authorization-token --output text --query 'authorizationData[].authorizationToken')"
+          CONTENT_TYPE="application/vnd.docker.distribution.manifest.v2+json"
+
+          echo "Getting the manifest of the image tagged main-$SHA_SHORT"
+          MANIFEST="$(curl -sS -H "Authorization: Basic $TOKEN" -H "Accept: $CONTENT_TYPE" "https://$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/main-$SHA_SHORT")"
+
+          echo "MANIFEST=$MANIFEST"
+
+#          SHA_TAG="$TAG_PREFIX-$SHA_SHORT"
+#          echo "Adding the $SHA_TAG tag to main-$SHA_SHORT image"
+#          curl -sS -X PUT -H "Authorization: Basic $TOKEN" -H "Content-Type: $CONTENT_TYPE" -d "$MANIFEST" "https://$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/$SHA_TAG"
+#
+#          LATEST_TAG="$TAG_PREFIX-latest"
+#          echo "Adding the $LATEST_TAG tag to main-$SHA_SHORT image"
+#          curl -sS -X PUT -H "Authorization: Basic $TOKEN" -H "Content-Type: $CONTENT_TYPE" -d "$MANIFEST" "https://$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/$LATEST_TAG"
