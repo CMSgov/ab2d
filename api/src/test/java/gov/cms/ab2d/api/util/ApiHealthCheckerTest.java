@@ -15,7 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -30,7 +30,6 @@ class ApiHealthCheckerTest {
 
     @BeforeEach
     void setUp() {
-        // Static-mock NewRelic.getAgent()
         newRelicStatic = mockStatic(NewRelic.class);
         newRelicStatic.when(NewRelic::getAgent).thenReturn(mockAgent);
         when(mockAgent.getInsights()).thenReturn(mockInsights);
@@ -43,7 +42,6 @@ class ApiHealthCheckerTest {
 
     @Test
     void checkHealthTest() {
-
         ApiHealthChecker checker = new ApiHealthChecker("ab2d-east-impl");
         ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
 

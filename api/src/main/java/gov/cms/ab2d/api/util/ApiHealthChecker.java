@@ -18,19 +18,16 @@ public class ApiHealthChecker {
 
     public ApiHealthChecker(@Value("${execution.env}") String ab2dEnv) {
         this.ab2dEnvironment = Ab2dEnvironment.fromName(ab2dEnv);
-        log.error("API ENV  " + ab2dEnvironment);
     }
 
     @Scheduled(fixedRateString = "300000")  // 5 minutes
     public void checkHealth() {
         log.info("Checking API health");
-        log.error("Checking API health");
         // Record a custom event in New Relic
         Map<String, Object> attrs = new HashMap<>();
         attrs.put("environment", ab2dEnvironment);
         attrs.put("success", "success");
         NewRelic.getAgent().getInsights().recordCustomEvent("ApiHealthCheck", attrs);
-
     }
 }
 
