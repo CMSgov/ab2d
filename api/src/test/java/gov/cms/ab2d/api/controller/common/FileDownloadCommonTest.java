@@ -26,14 +26,11 @@ class FileDownloadCommonTest {
     MockHttpServletRequest request;
 
     @Test
-    void download_filename_matches_requested_encoding() throws Exception {
+    void swagger_download_filename_() throws Exception {
         when(downloadResource.getFile()).thenReturn(new File("/mnt/efs/xyz/test_1.ndjson"));
-        assertEquals("test_1.ndjson.gz", FileDownloadCommon.getDownloadFilename(downloadResource, GZIP_COMPRESSED));
-        assertEquals("test_1.ndjson.gz", FileDownloadCommon.getDownloadFilename(downloadResource, GZIP_COMPRESSED));
-
+        assertEquals("test_1.ndjson", FileDownloadCommon.getSwaggerDownloadFilename(downloadResource));
         when(downloadResource.getFile()).thenReturn(new File("/mnt/efs/xyz/test_1.ndjson.gz"));
-        assertEquals("test_1.ndjson", FileDownloadCommon.getDownloadFilename(downloadResource, UNCOMPRESSED));
-        assertEquals("test_1.ndjson", FileDownloadCommon.getDownloadFilename(downloadResource, UNCOMPRESSED));
+        assertEquals("test_1.ndjson", FileDownloadCommon.getSwaggerDownloadFilename(downloadResource));
     }
 
     @Test
