@@ -12,6 +12,7 @@ import org.springframework.cloud.openfeign.FeignAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(scanBasePackages = {"gov.cms.ab2d.common", "gov.cms.ab2d.job", "gov.cms.ab2d.api", "gov.cms.ab2d.eventclient.clients", "gov.cms.ab2d.contracts"})
 @EntityScan(basePackages = {"gov.cms.ab2d.common.model", "gov.cms.ab2d.job.model", "gov.cms.ab2d.contracts"})
@@ -19,6 +20,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @PropertySource("classpath:application.common.properties")
 @EnableFeignClients(clients = {ContractFeignClient.class})
 @ImportAutoConfiguration({FeignAutoConfiguration.class})
+@EnableScheduling
 public class SpringBootApp {
 
     public static void main(String[] args) {
