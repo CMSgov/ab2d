@@ -26,6 +26,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -206,7 +207,11 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
                         .build());
             }
             logError(request, beneficiaryId, requestStartTime, ex);
-            throw ex;
+            try {
+                throw ex;
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
         } finally {
             BFDClient.BFD_BULK_JOB_ID.remove();
         }

@@ -11,6 +11,7 @@ import gov.cms.ab2d.worker.TestUtil;
 import gov.cms.ab2d.worker.config.SearchConfig;
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -158,7 +159,7 @@ class PatientClaimsProcessorUnitTest {
     }
 
     @Test
-    void process_whenPatientHasSinglePageOfClaimsData() throws ExecutionException, InterruptedException {
+    void process_whenPatientHasSinglePageOfClaimsData() throws ExecutionException, InterruptedException, URISyntaxException {
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(STU3, patientId, request.getAttTime(), null, CONTRACT_NUM)).thenReturn(bundle1);
 
@@ -175,7 +176,7 @@ class PatientClaimsProcessorUnitTest {
     }
 
     @Test
-    void process_whenPatientHasMultiplePagesOfClaimsData() throws ExecutionException, InterruptedException {
+    void process_whenPatientHasMultiplePagesOfClaimsData() throws ExecutionException, InterruptedException, URISyntaxException {
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         bundle1.addLink(EobTestDataUtil.addNextLink());
 
@@ -197,7 +198,7 @@ class PatientClaimsProcessorUnitTest {
     }
 
     @Test
-    void process_whenBfdClientThrowsException() {
+    void process_whenBfdClientThrowsException() throws URISyntaxException {
         org.hl7.fhir.dstu3.model.Bundle bundle1 = EobTestDataUtil.createBundle(eob.copy());
         when(mockBfdClient.requestEOBFromServer(STU3, patientId, request.getAttTime(), null,CONTRACT_NUM)).thenThrow(new RuntimeException("Test Exception"));
 
@@ -211,7 +212,7 @@ class PatientClaimsProcessorUnitTest {
     }
 
     @Test
-    void process_whenPatientHasNoEOBClaimsData() throws ExecutionException, InterruptedException {
+    void process_whenPatientHasNoEOBClaimsData() throws ExecutionException, InterruptedException, URISyntaxException {
         org.hl7.fhir.dstu3.model.Bundle bundle1 = new org.hl7.fhir.dstu3.model.Bundle();
         when(mockBfdClient.requestEOBFromServer(STU3, patientId, request.getAttTime(),null, CONTRACT_NUM)).thenReturn(bundle1);
 
@@ -228,7 +229,7 @@ class PatientClaimsProcessorUnitTest {
     }
 
     @Test
-    void process_whenPatientHasSinglePageOfClaimsDataSince() throws ExecutionException, InterruptedException {
+    void process_whenPatientHasSinglePageOfClaimsDataSince() throws ExecutionException, InterruptedException, URISyntaxException {
         // Override default behavior of setup
         coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(patientId), null, List.of(TestUtil.getOpenRange()));
 
@@ -247,7 +248,7 @@ class PatientClaimsProcessorUnitTest {
     }
 
     @Test
-    void process_whenPatientHasSinglePageOfClaimsDataEarlyAttDate() throws ExecutionException, InterruptedException {
+    void process_whenPatientHasSinglePageOfClaimsDataEarlyAttDate() throws ExecutionException, InterruptedException, URISyntaxException {
         // Override default behavior of setup
         coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(patientId), null, List.of(TestUtil.getOpenRange()));
 
@@ -264,7 +265,7 @@ class PatientClaimsProcessorUnitTest {
     }
 
     @Test
-    void process_whenPatientHasSinglePageOfClaimsDataEarlySinceDate() throws ExecutionException, InterruptedException {
+    void process_whenPatientHasSinglePageOfClaimsDataEarlySinceDate() throws ExecutionException, InterruptedException, URISyntaxException {
         // Override default behavior of setup
         coverageSummary = new CoverageSummary(createIdentifierWithoutMbi(patientId), null, List.of(TestUtil.getOpenRange()));
 
