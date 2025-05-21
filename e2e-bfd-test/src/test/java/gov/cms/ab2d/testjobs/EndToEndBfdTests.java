@@ -63,6 +63,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.File;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
@@ -394,7 +395,7 @@ public class EndToEndBfdTests {
 
     @ParameterizedTest
     @MethodSource("getVersion")
-    public void testPatientEndpoint(FhirVersion version, String contract, int month, int year) {
+    public void testPatientEndpoint(FhirVersion version, String contract, int month, int year) throws URISyntaxException {
         BFDClient.BFD_BULK_JOB_ID.set("TEST");
 
         log.info("Testing IDs for " + version.toString());
