@@ -32,8 +32,6 @@ import gov.cms.ab2d.job.service.JobCleanup;
 import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
-
-import java.net.URISyntaxException;
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -533,7 +531,7 @@ class CoverageDriverTest extends JobCleanup {
 
     @DisplayName("Normal workflow functions")
     @Test
-    void normalExecution() throws URISyntaxException {
+    void normalExecution() {
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = buildBundle(0, 10);
         bundle1.setLink(singletonList(new org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent().setRelation(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT)));

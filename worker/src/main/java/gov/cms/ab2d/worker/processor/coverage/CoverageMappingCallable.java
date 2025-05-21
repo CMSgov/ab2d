@@ -9,8 +9,6 @@ import gov.cms.ab2d.fhir.ExtensionUtils;
 import gov.cms.ab2d.fhir.FhirVersion;
 import gov.cms.ab2d.fhir.IdentifierUtils;
 import gov.cms.ab2d.fhir.PatientIdentifier;
-
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -162,11 +160,7 @@ public class CoverageMappingCallable implements Callable<CoverageMapping> {
                     " for month " + month +
                     " and year " + this.year, e);
             coverageMapping.failed();
-            try {
-                throw e;
-            } catch (URISyntaxException ex) {
-                throw new RuntimeException(ex);
-            }
+            throw e;
         } finally {
             int total = patientIds.size() + missingReferenceYear + missingBeneId + pastReferenceYear;
             log.info("Search {}-{}-{} found {} distribution of reference years over a total of {} benes",

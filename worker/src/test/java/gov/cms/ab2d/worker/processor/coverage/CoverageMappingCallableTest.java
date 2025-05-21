@@ -10,8 +10,6 @@ import gov.cms.ab2d.coverage.model.CoverageSearch;
 import gov.cms.ab2d.coverage.model.CoverageSearchEvent;
 import gov.cms.ab2d.coverage.model.Identifiers;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
-
-import java.net.URISyntaxException;
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.Map;
@@ -58,7 +56,7 @@ class CoverageMappingCallableTest {
 
     @DisplayName("Successfully completing marks as done and transfers results")
     @Test
-    void callableFunctions() throws URISyntaxException {
+    void callableFunctions() {
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = buildBundle(0, 10, 2020);
         bundle1.setLink(singletonList(new org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent().setRelation(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT)));
@@ -134,7 +132,7 @@ class CoverageMappingCallableTest {
 
     @DisplayName("Multiple mbis captured")
     @Test
-    void multipleMbis() throws URISyntaxException {
+    void multipleMbis() {
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = buildBundle(0, 10, 3,2020);
         bundle1.setLink(singletonList(new org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent().setRelation(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT)));
@@ -179,7 +177,7 @@ class CoverageMappingCallableTest {
 
     @DisplayName("Current and historic mbis always captured")
     @Test
-    void currentMibAppearsFirst() throws URISyntaxException {
+    void currentMibAppearsFirst() {
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = buildBundle(0, 10, 3,2020);
         bundle1.setLink(singletonList(new org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent().setRelation(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT)));
@@ -230,7 +228,7 @@ class CoverageMappingCallableTest {
 
     @DisplayName("Track distribution of reference years returned to callable")
     @Test
-    void trackYears() throws URISyntaxException {
+    void trackYears() {
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = buildBundle(0, 10, 2020);
         bundle1.setLink(singletonList(new org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent().setRelation(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT)));
@@ -281,7 +279,7 @@ class CoverageMappingCallableTest {
 
     @DisplayName("Filter out years that do not match the provided year")
     @Test
-    void filterYear() throws URISyntaxException {
+    void filterYear() {
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = buildBundle(0, 10, 2020);
         bundle1.setLink(singletonList(new org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent().setRelation(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT)));
@@ -325,7 +323,7 @@ class CoverageMappingCallableTest {
 
     @DisplayName("Filter out patients without identifiers")
     @Test
-    void filterMissingIdentifier() throws URISyntaxException {
+    void filterMissingIdentifier() {
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = buildBundle(0, 10, 2020);
         bundle1.setLink(singletonList(new org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent().setRelation(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT)));

@@ -25,8 +25,6 @@ import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
 import gov.cms.ab2d.worker.util.WorkerDataSetup;
-
-import java.net.URISyntaxException;
 import java.time.DayOfWeek;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
@@ -448,7 +446,7 @@ class CoverageUpdateAndProcessorTest {
 
     @DisplayName("Normal workflow functions")
     @Test
-    void normalExecution() throws CoverageDriverException, URISyntaxException {
+    void normalExecution() throws CoverageDriverException {
 
         org.hl7.fhir.dstu3.model.Bundle bundle1 = buildBundle(0, 10);
         bundle1.setLink(Collections.singletonList(new org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent().setRelation(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT)));
@@ -479,7 +477,7 @@ class CoverageUpdateAndProcessorTest {
 
     @DisplayName("Mapping failure leads to retry but still can succeed on retry")
     @Test
-    void mappingRetried() throws URISyntaxException {
+    void mappingRetried() {
 
         when(bfdClient.requestPartDEnrolleesFromServer(eq(STU3), anyString(), anyInt())).thenThrow(new RuntimeException("oops"));
 
@@ -546,7 +544,7 @@ class CoverageUpdateAndProcessorTest {
 
     @DisplayName("Only ThreadPoolTaskExecutor.getMaxPoolSize() job results allowed in insertion queue")
     @Test
-    void limitRunningJobsByDBSpeed() throws URISyntaxException {
+    void limitRunningJobsByDBSpeed() {
         org.hl7.fhir.dstu3.model.Bundle bundle1 = buildBundle(0, 10);
         bundle1.setLink(Collections.singletonList(new org.hl7.fhir.dstu3.model.Bundle.BundleLinkComponent().setRelation(org.hl7.fhir.dstu3.model.Bundle.LINK_NEXT)));
 
