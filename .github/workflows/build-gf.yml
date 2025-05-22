@@ -79,7 +79,7 @@ jobs:
 
           # Push to special tag for promotion if this is run on a push to main
           if [ "$GITHUB_REF" == "refs/heads/main" ]; then
-            docker tag $ECR_REPO_URI:ab2d-$DEPLOYMENT_ENV-$SHA_SHORT $ECR_REPO_URI:main-$SHA_SHORT
+            docker tag $ECR_REPO_URI:ab2d-$AB2D_ENV-$SHA_SHORT $ECR_REPO_URI:main-$SHA_SHORT
           fi
 
           echo "Pushing image"
