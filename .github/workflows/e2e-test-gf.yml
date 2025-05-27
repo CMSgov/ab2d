@@ -1,0 +1,91 @@
+name: end-to-end-gf tests
+run-name: end-to-end-gf tests ${{ inputs.environment }}
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+  workflow_dispatch: # Allow manual trigger
+    inputs:
+      environment:
+        description: AB2D environment used for ECR
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+          - sbx
+        default: test
+
+# Ensure we have only one e2e test running at a time in each environment
+concurrency:
+  group: ${{ inputs.environment }}-e2e-test
+
+jobs:
+  test:
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    env:
+      # Keystore location must be full path for spring framework
+      AB2D_BFD_KEYSTORE_LOCATION: "${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
+      AB2D_V2_ENABLED: 'true'
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+
+    steps:
+      - name: Assume AWS role
+        uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.AB2D_ENV }}-github-actions
+
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set env vars from AWS params in BCDA management account
+        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |
+            ARTIFACTORY_URL=/artifactory/url
+            ARTIFACTORY_USER=/artifactory/user
+            ARTIFACTORY_PASSWORD=/artifactory/password
+
+      - name: Set env vars from AWS params in AB2D account
+        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |
+            AB2D_BFD_KEYSTORE_PASSWORD=/bfd/keystore-password
+            OKTA_CLIENT_ID=/okta/test-pdp-100-id
+            OKTA_CLIENT_PASSWORD=/okta/test-pdp-100-secret
+            SECONDARY_USER_OKTA_CLIENT_ID=/okta/test-pdp-1000-id
+            SECONDARY_USER_OKTA_CLIENT_PASSWORD=/okta/test-pdp-1000-secret
+
+      - name: Create opt/ab2d directory and download keystore
+        run: |
+          mkdir -p opt/ab2d
+          KEYSTORE_FILE_NAME="ab2d_${{ inputs.environment == 'test' && 'imp' || inputs.environment }}_keystore"
+          aws s3 cp s3://ab2d-${{ vars[format('{0}_AB2D_ENV', inputs.environment)] }}-main/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
+          test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
+
+      - name: Run e2e-bfd-test
+        run: |
+          mvn test -s settings.xml -pl e2e-bfd-test -am -Dtest=EndToEndBfdTests -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress
+#
+#      - name: Run e2e-test
+#        env:
+#          E2E_ENVIRONMENT: ${{ inputs.environment == 'dev' && 'DEV' || inputs.environment == 'test' && 'IMPL' || inputs.environment == 'sbx' && 'SANDBOX' }}
+#        run: |
+#          mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress
