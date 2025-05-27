@@ -39,7 +39,7 @@ No providers.<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_platform"></a> [platform](#module\_platform) | git::https://github.com/CMSgov/ab2d-bcda-dpc-platform.git//terraform/modules/platform | tofu |
+| <a name="module_platform"></a> [platform](#module\_platform) | git::https://github.com/CMSgov/ab2d-bcda-dpc-platform.git//terraform/modules/platform | PLT-1099 |
 | <a name="module_sops"></a> [sops](#module\_sops) | git::https://github.com/CMSgov/ab2d-bcda-dpc-platform.git//terraform/modules/sops | PLT-1099 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.

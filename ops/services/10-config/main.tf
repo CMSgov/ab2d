@@ -9,11 +9,10 @@ module "platform" {
 
   app         = local.app
   env         = terraform.workspace
-  root_module = "https://github.com/CMSgov/ab2d/tree/main/ops/services/01-config" #FIXME
+  root_module = "https://github.com/CMSgov/ab2d/tree/burling/ab2d-6689/ops/services/10-config" #FIXME
   service     = local.service
 }
 
-#TODO
 module "sops" {
   source = "git::https://github.com/CMSgov/ab2d-bcda-dpc-platform.git//terraform/modules/sops?ref=PLT-1099"
 
