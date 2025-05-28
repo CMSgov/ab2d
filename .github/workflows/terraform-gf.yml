@@ -83,14 +83,20 @@ jobs:
       - name: Install terraform
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/setup-tfenv-terraform@main
 
-      - name: Terraform Init & Plan
+      - name: Install tofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.10.0-beta1
+
+      - name: Tofu Init & Plan
         working-directory: terraform/services/${{ inputs.service }}/
         run: |
-          terraform init -reconfigure -backend-config=../../backends/${{ inputs.environment }}.s3.tfbackend
-          terraform plan -var env=${{ inputs.environment }} -out=tfplan
+          tofu init -reconfigure -backend-config=../../backends/${{ inputs.environment }}.s3.tfbackend
+          tofu plan -var env=${{ inputs.environment }} -out=tfplan
 
-      - name: Terraform Apply
+      - name: Tofu Apply
         if: ${{ inputs.apply == true }}
         working-directory: terraform/services/${{ inputs.service }}/
         run: |
-          terraform apply -input=false tfplan
+          tofu apply -input=false -var=contracts_service_image_tag=contracts-service-more-workflows-gf tfplan 
+          
