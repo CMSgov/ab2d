@@ -1,6 +1,8 @@
 /ab2d/${env}/db/bfd_url/2020-01-02-09-15-01: ENC[AES256_GCM,data:w7L9HIZsxg18sXhlOGQKUeaOsukJvLDRo+oiAg==,iv:3MwU5TWKP6lD/E8TA/OBLtQRZFHp5DgdwDP+cBe8k+M=,tag:Sm2C15IPi5xi0adb27E+yA==,type:str]
 /ab2d/${env}/db/schema_name/2020-01-02-09-15-01: ENC[AES256_GCM,data:eX5N9NE1,iv:dAPzBmmqGwhIhrfLJMQUfr/TMdYuv6kO0ZE+UQ7rcqk=,tag:GlFf7JVbXAa4T2g2eDvD4A==,type:str]
-/ab2d/${env}/db/bfd_keystore_location/2020-01-02-09-15-01: ENC[AES256_GCM,data:6AAFl3Jk9K2FP2mPv/aIgy9hQ4xhGsi/d4X5aTbaAvoKmfdFInIY6adlgT6s3OsZ,iv:mwCZgGbG4erAaJ+kwDAhLuHTuHucqPhYuB0MLrdWyz8=,tag:AycfdEsN1BA+B58BmLD0pQ==,type:str]
+/ab2d/${env}/core/nonsensitive/database_name: dev
+/ab2d/${env}/worker/nonsensitive/bfd_keystore_location: /mnt/efs/bfd-keystore/ab2d-dev/ab2d_dev_keystore
+/ab2d/${env}/core/nonsensitive/keystore_location: classpath:ab2d.p12
 /ab2d/${env}/common/sensitive/slack_trace_webhooks: ENC[AES256_GCM,data:+6LByMtAcseGbb9eCerbhQmAJtbx+z8fr3VaGTJ3ZuduKTxSfHJn1BBOe9s/61b3Xanz5kud97rCP6IXX5OPlWN5+a05069OFRqZHS/+PA==,iv:pwNiXs1+1qcYlNB0AXKu2QNYV761wnKRMLL0sofgF3o=,tag:q4I3iIJwCeMgQnzApVKsVg==,type:str]
 /ab2d/${env}/core/sensitive/database_password: ENC[AES256_GCM,data:FxDCua7IJR1TukBlS4llQx87N3HyuVyThvXnmvLmgN4=,iv:YmMG9KopSRr4m6n4KWUx97DSsVoXeP6QuSbZbx7qFEw=,tag:MlrD4fCR6zSs98niuVgQ1w==,type:str]
 /ab2d/${env}/core/sensitive/database_user: ENC[AES256_GCM,data:axgeB1wx3Qk=,iv:X6B0ocHf8ZgeZ0R8MQdhAYOHEwR5tzL5dJht8k5Hvu4=,tag:6oJ0KD7RkAnE9urV1y37/g==,type:str]
@@ -9,7 +11,7 @@
 /ab2d/${env}/common/nonsensitive/new_relic_app_name: AB2D_Dev
 /ab2d/${env}/db/db_ssl_mode: ENC[AES256_GCM,data:zk6VS86DNQ==,iv:q1SI15IvdUn4QsNGK3w7uCyhDAuLGwdLx+qz/at3iZk=,tag:BwDteaIdfk43SKu0sFdl3A==,type:str]
 /ab2d/${env}/db/vpn_private_ip_address_cidr_range/2020-01-02-09-15-01: ENC[AES256_GCM,data:OiEwP7/33nDiJLfYZCo=,iv:rMmN2mINS85Q7AX/Wo4ygF+UxzvGf5lDOVgEVT9U3Kk=,tag:5UUM46kezG/Izi2mhnAffw==,type:str]
-/ab2d/${env}/db/bfd_keystore_password/2020-01-02-09-15-01: ENC[AES256_GCM,data:XJKAcmoBCOcyzsiaEAtBo0XgcdHquaMH2RnmiEp4Uuw=,iv:Axooj4Qsh6YtBe9tYfrp6IkVSIqwS7nRgEU+0aKX1Sc=,tag:4pChQ4fgN3VSIaTUChpIhA==,type:str]
+/ab2d/${env}/worker/sensitive/bfd_keystore_password: ENC[AES256_GCM,data:u3WXqMn5XdR3novhGdEDNwUF/ID6R/pdxJuxH2G4q3g=,iv:zCnrQ9pX+ol92ozvStBbQd3xYRYg0ioNqOBoIPp/6hE=,tag:FOUgdi4Px4s19Uw2XEHjQQ==,type:str]
 /ab2d/${env}/db/database_host/2020-01-02-09-15-01: ENC[AES256_GCM,data:nzfUX+l8GpDNDxlqqPSrRJVAuFfiaRRwZCVaMbyApwmrLF47QaR4RGt/QHxjhfZ+AQ==,iv:s3WOE9p6O/QR6xpnx/Vb3iKduAt/vqNnk1waMxeGQgc=,tag:sEnDdwI5cOcENTjuHJwEuA==,type:str]
 /ab2d/${env}/core/sensitive/keystore_password: ENC[AES256_GCM,data:28coF7O0DA==,iv:2wrh6GgHBvBD30+DqLlm8wJM4qX+oyAE5L+zvFjYVzo=,tag:YWNOVtoJkB8rwidyleKplg==,type:str]
 /ab2d/${env}/db/okta_client_id/2020-01-02-09-15-01: ENC[AES256_GCM,data:NAF+/SYpF2OQiCvbD5JD,iv:dQ46O1bIZwvmP1JayrB2gikMwuQD8CBnOOjjgr5+fpI=,tag:pYwt01HAtvU0bnqRZPW8Lg==,type:str]
@@ -49,8 +51,8 @@ sops:
       created_at: "2025-05-26T23:07:28Z"
       enc: AQICAHhonxmrSV07CesL8pLeG4x+PGnMtEk0yQ1GnocKGkA6UAGqWZ/mh50Y4ZeuPXmtTO7sAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMLme+vn+aEDKJHGTwAgEQgDuNMrS8M0kSBqyCs8NI7oicbx6EAqIP8xQnCe4Zl8JBTXq14HB+D+tIt8+J8ZYtsk39aZScIQUZY9vV3g==
       aws_profile: ""
-  lastmodified: "2025-05-28T11:40:49Z"
-  mac: ENC[AES256_GCM,data:ANMT9UOhwah2SYlMMRys5lnd+OsziiWvDbGVEnjK8CvE24rrxOV+ApfnJENGRvQM4TIKaiAAE/lw24tFPdyrX1k+n1+ye4NYb1kax0p0E9du3i/jaIY/HMkRc2xXRD1z5TON4Lv3s8rjUshJFwkeOTk+XOpCFXu1a535mcqYFmw=,iv:rWpTpT+beZf6DHqdA2KUdopaBuR8VDslAAFXehPsJAo=,tag:OJafnWnVJSEh5FpcsMMv6g==,type:str]
+  lastmodified: "2025-05-28T12:40:05Z"
+  mac: ENC[AES256_GCM,data:/OuOVxSSuM7mIRd73ol/4CGJYcDv9lQhZVrwrqKauCB/V8MBmMJBEoSWxd/qwQbwk+Bar3V84Sozlrk+ypaH1FUurxiD9XUwuCYsER+r579IqZPRbfcgsjayrremdDH9uoEqRM50qxMftS0dJzsAFW0gS4WkndWkSXVR330w3N4=,iv:cuMDquxNts5hk3+Qq3yr9/GZNGE1ksOgpepfRQTpG7Y=,tag:XC2GJepzTHHlRZoLbl3Ijg==,type:str]
   unencrypted_regex: /nonsensitive/
   mac_only_encrypted: true
   version: 3.10.1
