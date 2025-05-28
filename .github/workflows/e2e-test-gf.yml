@@ -36,6 +36,10 @@ jobs:
       AB2D_BFD_KEYSTORE_LOCATION: "${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
       AB2D_V2_ENABLED: 'true'
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+      AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
+   #   AB2D_ENV: ${{ inputs.environment }}
+      AB2D_ENV: 'test'
+
 
     steps:
       - name: Assume AWS role
