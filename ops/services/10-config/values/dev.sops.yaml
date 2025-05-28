@@ -1,4 +1,3 @@
-/ab2d/${env}/api/nonsensitive/v2_enabled: true
 /ab2d/${env}/common/nonsensitive/new_relic_app_name: AB2D_Dev
 /ab2d/${env}/common/sensitive/new_relic_license_key: ENC[AES256_GCM,data:IA9HCqncDmh3hySWkjBZL1FCgd1gwI2360TVdGi7k0V6aHvVJbBkTg==,iv:BT9sMQWpNb3WBfjT/kAsgUoSkegzNAtrgtE6hTVduCQ=,tag:9gHOQn7ck+5G1eyI+NUebw==,type:str]
 /ab2d/${env}/common/sensitive/slack_alert_webhooks: ENC[AES256_GCM,data:4EFVE5UlMmWM+CUgBMicZ/FbJYD/kHuEgtQCpnGPoSRNW7SDLYdRT++ufzv9i6IBcDQ4On6jgr8Q2lwrmmqPaUDiG1vnZoANfnEdWlZZyQ==,iv:E7lYpKqiUuzexmCDQJqctc0B9cY9c//nXUsidXuikh4=,tag:dF3vKX7Yw+YuhKsqdC4vQA==,type:str]
@@ -38,9 +37,6 @@
 /ab2d/${env}/ecs/nonsensitive/execution_env: ab2d-dev
 /ab2d/${env}/lambda/artifactory_token: ENC[AES256_GCM,data:ERgMeMoNcNSE137eErMS6uO9fdgegsjNI8PlirBXOAhfMRNI9QezcZ64ys3dJyakPuWD3/gm0P3+v/CxwfsnGg==,iv:ut2xlRTvaNPNSnqoNcy3j7pCr8t92zBrH+tTwJJ1K/Q=,tag:4lD/kMVG084aFb9xSd7aRg==,type:str]
 /ab2d/${env}/lambda/nonsensitive/artifactory_url: https://artifactory.cloud.cms.gov
-/ab2d/${env}/microservice/nonsensitive/contracts_feature_flag: true
-/ab2d/${env}/microservice/nonsensitive/properties_feature_flag: true
-/ab2d/${env}/microservice/nonsensitive/properties_url: http://internal-microservice-lb-ab2d-dev-724613311.us-east-1.elb.amazonaws.com
 /ab2d/${env}/sqs/access_key: ENC[AES256_GCM,data:JWpeKDyDDKAf+ONcNetJFP22s7c=,iv:5bYOv2t9kmhY3YjLiLvFXtnpUcmzrvArK/GFmLrBvNk=,tag:G8UQDh9fwMO1PJ6QS6NeWw==,type:str]
 /ab2d/${env}/sqs/access_secret: ENC[AES256_GCM,data:yp2duiZjvV4km4aD6z45IJi6sixoZ4PkN6Lqvl1F7R7fx8Jss6WknQ==,iv:xp+PWYrHAAYxAh56BTKRQBShVhtUwFo2x6d+dlkYZ/Q=,tag:OcKKHJUae5VaUf315nJi2Q==,type:str]
 /ab2d/${env}/worker/nonsensitive/bfd_keystore_location: /mnt/efs/bfd-keystore/ab2d-dev/ab2d_dev_keystore
@@ -51,8 +47,8 @@ sops:
       created_at: "2025-05-26T23:07:28Z"
       enc: AQICAHhonxmrSV07CesL8pLeG4x+PGnMtEk0yQ1GnocKGkA6UAGqWZ/mh50Y4ZeuPXmtTO7sAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMLme+vn+aEDKJHGTwAgEQgDuNMrS8M0kSBqyCs8NI7oicbx6EAqIP8xQnCe4Zl8JBTXq14HB+D+tIt8+J8ZYtsk39aZScIQUZY9vV3g==
       aws_profile: ""
-  lastmodified: "2025-05-28T14:14:07Z"
-  mac: ENC[AES256_GCM,data:ulLWiZ3L4wNnhQnWZIKFJdYrlFXLhSZ/blRavtT7YmD5cgckCnJ2B5ib33G+7zj3spbU22Hp3lIRoK5JvSx2/OdWn1PjYa4KXJOGX5nr+NUhpYAyTGghVuVakfHH82x4rHRDYbF1d2NUR86MLjp3DnKi/1gMe8SAdvmV7j4JExk=,iv:jxTAprnSSDxMEtuGDA4YRslSe9uHbF/HDRwPv2N/xpk=,tag:B7ratSSQNmQkCruyDMaysg==,type:str]
+  lastmodified: "2025-05-28T14:37:19Z"
+  mac: ENC[AES256_GCM,data:jw+UpkOm1poxdL1fmbS4Vs7+1J825TaSLYycfTTW5n8S0vAQRYtw7Q/18kZtqI9MC8W9LYZHwX5bexYqFOZw2BNWFow2TNrzOVYJFiGiGCNUcHQICzBx+7CWihPcnG58XdT4SxiJ//g8aO2DnN9FGOb4WXJczWgB/J4k0zVF/Bw=,iv:Dcq2miodY8wkh1qfjTVICKd5JdHexYpAV9kyMryZNBE=,tag:BYDGGhjteiEZLqNPqS8UAw==,type:str]
   unencrypted_regex: /nonsensitive/
   mac_only_encrypted: true
   version: 3.10.1
