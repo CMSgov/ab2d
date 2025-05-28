@@ -1,0 +1,66 @@
+[
+  {
+    "name": "properties-service-container",
+    "image": "${properties_image}",
+    "essential": true,
+    "secrets": [
+      {
+        "name": "AB2D_DB_DATABASE",
+        "valueFrom": "${ab2d_db_database}"
+      },
+      {
+        "name": "AB2D_DB_PASSWORD",
+        "valueFrom": "${ab2d_db_password}"
+      },
+      {
+        "name": "AB2D_DB_USER",
+        "valueFrom": "${ab2d_db_user}"
+      }
+    ],
+    "environment": [
+      {
+        "name": "AB2D_DB_PORT",
+        "value": "${ab2d_db_port}"
+      },
+      {
+        "name": "AB2D_DB_HOST",
+        "value": "${ab2d_db_host}"
+      },
+      {
+        "name": "AB2D_EXECUTION_ENV",
+        "value": "${ab2d_execution_env}"
+      },
+      {
+        "name": "AB2D_DB_SSL_MODE",
+        "value": "${ab2d_db_ssl_mode}"
+      },
+      {
+        "name": "PROPERTIES_SERVICE_FEATURE_FLAG",
+        "value": "true"
+      },
+      {
+        "name": "IMAGE_VERSION",
+        "value": "${properties_service_image_version}"
+      },
+      {
+        "name": "PROPERTIES_SERVICE_URL",
+        "value": "${properties_service_url}"
+      }
+    ],
+    "portMappings": [
+      {
+        "containerPort": 8060
+      }
+    ],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "/aws/ecs/fargate/${ab2d_environment}/${service_name}",
+        "awslogs-create-group": "true",
+        "awslogs-region": "${region}",
+        "awslogs-stream-prefix": "${ab2d_environment}"
+      }
+    },
+    "healthCheck": null
+  }
+]
