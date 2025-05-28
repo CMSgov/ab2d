@@ -1,4 +1,5 @@
-name: deploy-lambdas
+name: deploy-lambdas-gf
+run-name: deploy-lambdas-gf ${{ inputs.environment }}
 
 on:
   workflow_call:
@@ -38,8 +39,7 @@ on:
         options:
           - dev
           - test
-          - sbx
-          - prod_test
+          - sandbox
           - prod
       ab2dOpsBranch:
         type: string
@@ -105,6 +105,8 @@ jobs:
             echo "Unable to determine build version"
             exit 1
           fi  
+          
+          
           
           if [[ ${{ inputs.environment }} = "dev" ]];         then AB2D_ENV='ab2d-dev'
           elif [[ ${{ inputs.environment }} = "test" ]];      then AB2D_ENV='ab2d-east-impl'
