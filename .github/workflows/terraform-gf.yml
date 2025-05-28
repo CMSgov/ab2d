@@ -92,11 +92,11 @@ jobs:
         working-directory: terraform/services/${{ inputs.service }}/
         run: |
           tofu init -reconfigure -backend-config=../../backends/${{ inputs.environment }}.s3.tfbackend
-          tofu plan -var env=${{ inputs.environment }} -out=tfplan
+          tofu plan -var env=${{ inputs.environment }} -var=contracts_service_image_tag=contracts-service-more-workflows-gf  -out=tfplan
 
       - name: Tofu Apply
         if: ${{ inputs.apply == true }}
         working-directory: terraform/services/${{ inputs.service }}/
         run: |
-          tofu apply -input=false -var=contracts_service_image_tag=contracts-service-more-workflows-gf tfplan 
+          tofu apply -input=false tfplan 
           
