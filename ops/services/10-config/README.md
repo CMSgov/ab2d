@@ -1,3 +1,10 @@
+# AB2D Config Root Module
+
+This root module is responsible for configuring the sops-enabled strategy for storing sensitive and nonsensitive configuration in AWS SSM Parameter Store.
+The _parent environment_ specific configuration values are located in the `values` directory.
+
+***NOTE*** At the time of this writing, neither this nor the upstream `sops` child module has sufficient documentation. However, this will change as the upstream sops module is accepted into CDAP's trunk and PLT-1099 is completed.
+
 <!-- BEGIN_TF_DOCS -->
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
