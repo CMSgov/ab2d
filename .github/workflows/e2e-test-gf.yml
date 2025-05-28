@@ -82,7 +82,7 @@ jobs:
         run: |
           mkdir -p opt/ab2d
           KEYSTORE_FILE_NAME="ab2d_test_keystore"     
-          aws s3 cp s3://ab2d-${{ vars[format('{0}_AB2D_ENV', 'test')] }}-main/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
+          aws s3 cp s3://ab2d-${{ vars[format('{0}_AB2D_ENV', 'imp')] }}-main/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
           test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
 
       - name: Run e2e-bfd-test
