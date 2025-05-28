@@ -86,7 +86,7 @@ jobs:
       - name: Install tofu
         uses: opentofu/setup-opentofu@v1
         with:
-          tofu_version: 1.6.0
+          tofu_version: 1.10.0-beta1
 
       - name: Tofu Init & Plan
         working-directory: terraform/services/${{ inputs.service }}/
