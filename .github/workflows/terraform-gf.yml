@@ -76,9 +76,12 @@ jobs:
       - name: Tofu Init & Plan
         working-directory: ops/services/20-microservices/
         run: |
-          tofu init -var=parent_env=dev -reconfigure
+          tofu init \ 
+            -var=parent_env=dev \
+            -var=contracts_service_image_tag=contracts-service-more-workflows-gf \ 
+            -reconfigure
           tofu workspace select -var=parent_env=dev -or-create=true dev
-          tofu plan -var=contracts_service_image_tag=contracts-service-more-workflows-gf -out=tfplan
+          tofu plan  -out=tfplan
 
 
       - name: Tofu Apply
