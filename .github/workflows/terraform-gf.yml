@@ -78,7 +78,7 @@ jobs:
         run: |
           tofu init -var=parent_env=dev -reconfigure
           tofu workspace select -var=parent_env=dev -or-create=true dev
-          tofu plan -out=tfplan
+          tofu plan -var=contracts_service_image_tag=contracts-service-more-workflows-gf -out=tfplan
 
 
       - name: Tofu Apply
