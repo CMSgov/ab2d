@@ -1,10 +1,19 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5"
+    }
+  }
+}
+
 module "platform" {
   source    = "git::https://github.com/CMSgov/ab2d-bcda-dpc-platform.git//terraform/modules/platform?ref=267771f3414c92e2f3090616587550e26bc41a47"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app         = "ab2d"
   env         = local.env
-  root_module = "https://github.com/CMSgov/ab2d-ops/tree/main/terraform/services/microservices"
+  root_module = "https://github.com/CMSgov/ab2d/tree/main/ops/services/20-microservices"
   service     = local.service
 }
 
@@ -45,21 +54,6 @@ locals {
   hpms_api_params_arn      = data.aws_ssm_parameter.hpms_api_params.arn
   hpms_auth_key_id_arn     = data.aws_ssm_parameter.hpms_auth_key_id.arn
   hpms_auth_key_secret_arn = data.aws_ssm_parameter.hpms_auth_key_secret.arn
-}
-
-data "aws_ecr_image" "contracts_service_image" {
-  repository_name = "ab2d-services"
-  image_tag       = var.contracts_service_image_tag
-}
-
-data "aws_ecr_image" "events_service_image" {
-  repository_name = "ab2d-services"
-  image_tag       = var.events_service_image_tag
-}
-
-data "aws_ecr_image" "properties_service_image" {
-  repository_name = "ab2d-services"
-  image_tag       = var.properties_service_image_tag
 }
 
 # ECS Cluster
