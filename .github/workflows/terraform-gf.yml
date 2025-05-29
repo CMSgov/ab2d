@@ -74,7 +74,7 @@ jobs:
           tofu_version: 1.10.0-beta1
 
       - name: Tofu Init & Plan
-        working-directory: terraform/services/${{ inputs.service }}/
+        working-directory: ops/services/20-microservices/
         run: |
           tofu init -var=parent_env=dev -reconfigure
           tofu workspace select -var=parent_env=dev -or-create=true dev
