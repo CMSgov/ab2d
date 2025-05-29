@@ -45,10 +45,10 @@ Many, chiefly:
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_contracts_service_image_tag"></a> [contracts\_service\_image\_tag](#input\_contracts\_service\_image\_tag) | Desired image tag for the contracts service stored in ECR | `string` | n/a | yes |
-| <a name="input_events_service_image_tag"></a> [events\_service\_image\_tag](#input\_events\_service\_image\_tag) | Desired image tag for the events service stored in ECR | `string` | n/a | yes |
-| <a name="input_properties_service_image_tag"></a> [properties\_service\_image\_tag](#input\_properties\_service\_image\_tag) | Desired image tag for the properties service stored in ECR | `string` | n/a | yes |
+| <a name="input_contracts_service_image_tag"></a> [contracts\_service\_image\_tag](#input\_contracts\_service\_image\_tag) | Desired image tag for the contracts service stored in ECR | `string` | `null` | no |
+| <a name="input_events_service_image_tag"></a> [events\_service\_image\_tag](#input\_events\_service\_image\_tag) | Desired image tag for the events service stored in ECR | `string` | `null` | no |
 | <a name="input_parent_env"></a> [parent\_env](#input\_parent\_env) | The parent environment of the current solution. Will correspond with `terraform.workspace`".<br>Necessary on `tofu init` and `tofu workspace select` \_only\_. In all other situations, parent env<br>will be divined from `terraform.workspace`. | `string` | `null` | no |
+| <a name="input_properties_service_image_tag"></a> [properties\_service\_image\_tag](#input\_properties\_service\_image\_tag) | Desired image tag for the properties service stored in ECR | `string` | `null` | no |
 | <a name="input_region"></a> [region](#input\_region) | n/a | `string` | `"us-east-1"` | no |
 | <a name="input_secondary_region"></a> [secondary\_region](#input\_secondary\_region) | n/a | `string` | `"us-west-2"` | no |
 
@@ -81,7 +81,6 @@ Many, chiefly:
 | [aws_ecs_task_definition.ab2d-contracts-service-task-definition](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_task_definition) | resource |
 | [aws_ecs_task_definition.ab2d-event-service-task-definition](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_task_definition) | resource |
 | [aws_ecs_task_definition.ab2d-properties-service-task-definition](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_task_definition) | resource |
-| [aws_iam_instance_profile.ab2d_microservice_instance_profile](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_instance_profile) | resource |
 | [aws_iam_policy.chatbot_guardrail_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
 | [aws_lb.internal_lb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb) | resource |
 | [aws_lb_listener.internal_lb_listener](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |

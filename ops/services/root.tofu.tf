@@ -68,10 +68,4 @@ terraform {
     kms_key_id   = "alias/${local.app}-${local.parent_env}-tfstate-bucket"
     use_lockfile = true
   }
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5"
-    }
-  }
 }
