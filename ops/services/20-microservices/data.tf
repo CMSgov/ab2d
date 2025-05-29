@@ -69,3 +69,22 @@ data "aws_ssm_parameter" "hpms_auth_key_secret" {
 data "aws_iam_role" "task_execution_role" {
   name = "ab2d-${local.env}-microservice-task-definition-role"
 }
+
+data "aws_ecr_image" "contracts_service_image" {
+  repository_name = "ab2d-contracts"
+  image_tag       = var.contracts_service_image_tag
+  most_recent     = true
+
+}
+
+data "aws_ecr_image" "events_service_image" {
+  repository_name = "ab2d-events"
+  image_tag       = var.events_service_image_tag
+  most_recent     = true
+}
+
+data "aws_ecr_image" "properties_service_image" {
+  repository_name = "ab2d-properties"
+  image_tag       = var.properties_service_image_tag
+  most_recent     = true
+}
