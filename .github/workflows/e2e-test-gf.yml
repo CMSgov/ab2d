@@ -38,7 +38,7 @@ jobs:
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
       AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
    #   AB2D_ENV: ${{ inputs.environment }}
-      AB2D_ENV: 'test'
+      AB2D_ENV: 'dev'
 
 
     steps:
@@ -81,8 +81,8 @@ jobs:
       - name: Create opt/ab2d directory and download keystore
         run: |
           mkdir -p opt/ab2d
-          KEYSTORE_FILE_NAME="ab2d_imp_keystore"     
-          aws s3 cp s3://ab2d-east-impl-main/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
+          KEYSTORE_FILE_NAME="ab2d_dev_keystore"     
+          aws s3 cp s3://ab2d-dev-main/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
           test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
 
       - name: Run e2e-bfd-test
