@@ -52,13 +52,16 @@ on:
         type: string
         required: false
 
+env:
+  RUNS_ON_DEFAULT: "codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}"
+
+
 jobs:
   terraform:
     permissions:
       contents: read
       id-token: write
     env:
-      RUNS_ON_DEFAULT: "codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}"
       AWS_ACCOUNT: ${{contains(fromJSON('["dev", "test"]'), inputs.environment) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT}}
       AB2D_ENV: ${{ inputs.environment }}
       CONTRACTS_IMAGE: ${{ inputs.contracts_service_image }}
