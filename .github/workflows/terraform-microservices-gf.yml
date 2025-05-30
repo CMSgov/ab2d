@@ -91,9 +91,11 @@ jobs:
           fi
           if [ "$EVENTS_IMAGE" != '' ]; then
             TOFU_VARS="$TOFU_VARS -var=events_service_image_tag=$EVENTS_IMAGE"
+            echo "**events_service_image_tag=$EVENTS_IMAGE**" >> $GITHUB_STEP_SUMMARY
           fi
           if [ "$PROPERTIES_IMAGE" != '' ]; then
             TOFU_VARS="$TOFU_VARS -var=properties_service_image=$PROPERTIES_IMAGE"
+            echo "**properties_service_image=$PROPERTIES_IMAGE**" >> $GITHUB_STEP_SUMMARY
           fi
           
           echo "tofu plan $TOFU_VARS -out=tfplan"
