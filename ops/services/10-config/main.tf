@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5"
+    }
+  }
+}
+
 locals {
   service      = "config"
   default_tags = module.platform.default_tags
