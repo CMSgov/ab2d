@@ -1,0 +1,111 @@
+name: terraform-gf
+run-name: tofu ${{ inputs.apply && 'apply' || 'plan' }}  ${{ inputs.environment }}
+
+on:
+  push:
+    branches:
+      - gf-test--burling/ab2d-6692
+  workflow_call:
+    inputs:
+      apply:
+        required: false
+        type: boolean
+      environment:
+        required: true
+        type: string
+      contracts_service_image:
+        type: string
+        required: false
+      events_service_image:
+        type: string
+        required: false
+      properties_service_image:
+        type: string
+        required: false
+
+  workflow_dispatch:  # Manual trigger with dropdowns
+    inputs:
+      apply:
+        description: "Apply terraform?"
+        required: false
+        type: boolean
+        default: false
+      environment:
+        description: "AB2D environment"
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+          - sandbox
+          - prod
+      contracts_service_image:
+        description: "ab2d-contracts image"
+        type: string
+        required: false
+      events_service_image:
+        description: "ab2d-events image"
+        type: string
+        required: false
+      properties_service_image:
+        description: "ab2d-properties image"
+        type: string
+        required: false
+
+jobs:
+  terraform:
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    env:
+      AWS_ACCOUNT: ${{contains(fromJSON('["dev", "test"]'), inputs.environment) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT}}
+      AB2D_ENV: ${{ inputs.environment }}
+
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Assume role in AB2D account for this environment
+        uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.AB2D_ENV }}-github-actions
+
+      - name: Install tofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.10.0-beta1
+
+      - name: Tofu init & plan
+        working-directory: ops/services/20-microservices/
+        env:
+          CONTRACTS_IMAGE: ${{ inputs.contracts_service_image }}
+          EVENTS_IMAGE: ${{ inputs.events_service_image }}
+          PROPERTIES_IMAGE: ${{ inputs.properties_service_image }}
+        run: |
+          tofu init -var=parent_env=dev -reconfigure
+          tofu workspace select -var=parent_env=dev -or-create=true dev
+          
+          TOFU_VARS=""
+          if [ "$CONTRACTS_IMAGE" != '' ]; then
+            TOFU_VARS="-var=contracts_service_image_tag=$CONTRACTS_IMAGE"
+          fi
+          if [ "$EVENTS_IMAGE" != '' ]; then
+            TOFU_VARS="$TOFU_VARS -var=events_service_image_tag=$EVENTS_IMAGE"
+          fi
+          if [ "$PROPERTIES_IMAGE" != '' ]; then
+            TOFU_VARS="$TOFU_VARS -var=properties_service_image=$PROPERTIES_IMAGE"
+          fi
+          
+#          tofu plan -var=contracts_service_image_tag=contracts-service-more-workflows-gf -out=tfplan
+          echo "tofu plan $TOFU_VARS -out=tfplan"
+
+
+      - name: Tofu apply
+        if: ${{ inputs.apply == true }}
+        working-directory: ops/services/20-microservices/
+        run: |
+          tofu apply -input=false tfplan 
+          
