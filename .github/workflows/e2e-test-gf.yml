@@ -84,6 +84,9 @@ jobs:
           mkdir -p opt/ab2d
           KEYSTORE_FILE_NAME="ab2d_dev_keystore"    
           KEYSTORE_PASSWORD=$(aws ssm get-parameter --name /bfd/ab2d-keystore-password --query Parameter.Value --output text)
+          echo $AB2D_BFD_KEYSTORE_LOCATION
+          echo $KEYSTORE_FILE_NAME
+          echo $AB2D_BFD_KEYSTORE_LOCATION/$KEYSTORE_FILE_NAME
           echo $KEYSTORE_PASSWORD > $AB2D_BFD_KEYSTORE_LOCATION/$KEYSTORE_FILE_NAME
           test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
 
