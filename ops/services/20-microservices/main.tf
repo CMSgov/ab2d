@@ -435,7 +435,7 @@ resource "aws_ecs_task_definition" "ab2d-properties-service-task-definition" {
 ####################################
 resource "aws_ecs_service" "contract_service" {
 
-  name             = "ab2d-contracts-service"
+  name             = "${local.service_prefix}-contracts-service"
   cluster          = aws_ecs_cluster.ab2d_ecs_cluster.id
   task_definition  = aws_ecs_task_definition.ab2d-contracts-service-task-definition.arn
   desired_count    = 1
