@@ -52,8 +52,6 @@ on:
         type: string
         required: false
 
-env:
-  RUNS_ON_DEFAULT: "codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}"
 
 
 jobs:
@@ -67,7 +65,7 @@ jobs:
       CONTRACTS_IMAGE: ${{ inputs.contracts_service_image }}
       EVENTS_IMAGE: ${{ inputs.events_service_image }}
       PROPERTIES_IMAGE: ${{ inputs.properties_service_image }}
-    runs-on: ${{ inputs.runs_on || env.RUNS_ON_DEFAULT }}
+    runs-on: ${{ inputs.runs_on }} #FIX THIS
 
 
     steps:
