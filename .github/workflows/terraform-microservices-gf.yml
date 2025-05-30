@@ -61,7 +61,9 @@ jobs:
     env:
       AWS_ACCOUNT: ${{contains(fromJSON('["dev", "test"]'), inputs.environment) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT}}
       AB2D_ENV: ${{ inputs.environment }}
-
+      CONTRACTS_IMAGE: ${{ inputs.contracts_service_image }}
+      EVENTS_IMAGE: ${{ inputs.events_service_image }}
+      PROPERTIES_IMAGE: ${{ inputs.properties_service_image }}
 
     steps:
       - name: Checkout Code
@@ -80,10 +82,7 @@ jobs:
 
       - name: Tofu init & plan
         working-directory: ops/services/20-microservices/
-        env:
-          CONTRACTS_IMAGE: ${{ inputs.contracts_service_image }}
-          EVENTS_IMAGE: ${{ inputs.events_service_image }}
-          PROPERTIES_IMAGE: ${{ inputs.properties_service_image }}
+
         run: |
           tofu init -var=parent_env=dev -reconfigure
           tofu workspace select -var=parent_env=dev -or-create=true dev
@@ -91,6 +90,7 @@ jobs:
           TOFU_VARS=""
           if [ "$CONTRACTS_IMAGE" != '' ]; then
             TOFU_VARS="-var=contracts_service_image_tag=$CONTRACTS_IMAGE"
+            echo "**contracts_service_image_tag=$CONTRACTS_IMAGE**" >> $GITHUB_STEP_SUMMARY
           fi
           if [ "$EVENTS_IMAGE" != '' ]; then
             TOFU_VARS="$TOFU_VARS -var=events_service_image_tag=$EVENTS_IMAGE"
