@@ -2,9 +2,6 @@ name: terraform-microservices-gf
 run-name: tofu ${{ inputs.apply && 'apply' || 'plan' }}  ${{ inputs.environment }}
 
 on:
-  push:
-    branches:
-      - gf-test--burling/ab2d-6692
   workflow_call:
     inputs:
       apply:
