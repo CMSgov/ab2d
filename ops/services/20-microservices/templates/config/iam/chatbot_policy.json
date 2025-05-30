@@ -1,0 +1,18 @@
+{
+    "Statement": [
+        {
+            "Action": [
+                "chatbot:UpdateSlackChannelConfiguration",
+                "chatbot:UpdateChimeWebhookConfiguration",
+                "chatbot:Describe*",
+                "chatbot:DeleteSlackChannelConfiguration",
+                "chatbot:CreateSlackChannelConfiguration",
+                "chatbot:CreateChimeWebhookConfiguration"
+            ],
+            "Effect": "Allow",
+            "Resource": "arn:aws:chatbot::${aws_account_number}:chat-configuration/slack-channel/Ab2d-microservice-task-definition",
+            "Sid": ""
+        }
+    ],
+    "Version": "2012-10-17"
+}
