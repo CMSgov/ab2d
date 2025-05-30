@@ -1,12 +1,15 @@
 **/.DS_Store
 **/manifests/*.*
 **/manifests/*.*
-.terraform
+.terraform*
 .terraform.d/
 .terraform/*
+!.terraform-docs.yml
 secrets.tf
 terraform.tfstate
 terraform.tfstate.backup
+sopsw
+.sops.yaml
 .aws/
 .bash_history
 .viminfo
