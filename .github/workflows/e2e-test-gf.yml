@@ -82,12 +82,10 @@ jobs:
       - name: Create opt/ab2d directory and download keystore
         run: |
           mkdir -p opt/ab2d
+          mkdir -p $AB2D_BFD_KEYSTORE_LOCATION
           KEYSTORE_FILE_NAME="ab2d_dev_keystore"    
           KEYSTORE_PASSWORD=$(aws ssm get-parameter --name /bfd/ab2d-keystore-password --query Parameter.Value --output text)
-          echo $AB2D_BFD_KEYSTORE_LOCATION
-          echo $KEYSTORE_FILE_NAME
-          echo $AB2D_BFD_KEYSTORE_LOCATION/$KEYSTORE_FILE_NAME
-          echo $KEYSTORE_PASSWORD > /opt/actions-runner/_work/ab2d/ab2d/opt/ab2d/ab2d_bfd_keystore/$KEYSTORE_FILE_NAME
+          echo $KEYSTORE_PASSWORD > $AB2D_BFD_KEYSTORE_LOCATION/$KEYSTORE_FILE_NAME
           test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
 
       - name: Run e2e-bfd-test
@@ -99,4 +97,3 @@ jobs:
 #          E2E_ENVIRONMENT: ${{ inputs.environment == 'dev' && 'DEV' || inputs.environment == 'test' && 'IMPL' || inputs.environment == 'sbx' && 'SANDBOX' }}
 #        run: |
 #          mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress
-
