@@ -83,7 +83,7 @@ jobs:
 
       - name: Tofu Apply
         if: ${{ inputs.apply == true }}
-        working-directory: terraform/services/${{ inputs.service }}/
+        working-directory: ops/services/20-microservices/
         run: |
           tofu apply -input=false tfplan 
           
