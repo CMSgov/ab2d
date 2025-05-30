@@ -1,4 +1,4 @@
-name: terraform-gf
+name: terraform-microservices-gf
 run-name: tofu ${{ inputs.apply && 'apply' || 'plan' }}  ${{ inputs.environment }}
 
 on:
