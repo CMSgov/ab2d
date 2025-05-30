@@ -73,18 +73,18 @@ data "aws_iam_role" "task_execution_role" {
 data "aws_ecr_image" "contracts_service_image" {
   repository_name = "ab2d-contracts"
   image_tag       = var.contracts_service_image_tag
-  most_recent     = true
+  most_recent     = var.contracts_service_image_tag == null ? true : null
 
 }
 
 data "aws_ecr_image" "events_service_image" {
   repository_name = "ab2d-events"
   image_tag       = var.events_service_image_tag
-  most_recent     = true
+  most_recent     = var.events_service_image_tag == null ? true : null
 }
 
 data "aws_ecr_image" "properties_service_image" {
   repository_name = "ab2d-properties"
   image_tag       = var.properties_service_image_tag
-  most_recent     = true
+  most_recent     = var.properties_service_image_tag == null ? true : null
 }
