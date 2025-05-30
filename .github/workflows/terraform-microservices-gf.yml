@@ -99,7 +99,6 @@ jobs:
             TOFU_VARS="$TOFU_VARS -var=properties_service_image=$PROPERTIES_IMAGE"
           fi
           
-#          tofu plan -var=contracts_service_image_tag=contracts-service-more-workflows-gf -out=tfplan
           echo "tofu plan $TOFU_VARS -out=tfplan"
 
 
