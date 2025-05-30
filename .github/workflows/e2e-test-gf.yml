@@ -88,8 +88,8 @@ jobs:
             --with-decryption \
             --query "Parameter.Value" \
             --output text)
-          echo $KEYSTORE_PASSWORD     
-          echo $KEYSTORE_PASSWORD >> $AB2D_BFD_KEYSTORE_LOCATION
+          echo $KEYSTORE_PASSWORD
+      #    echo $KEYSTORE_PASSWORD >> $AB2D_BFD_KEYSTORE_LOCATION
       #    aws s3 cp s3://ab2d-dev-main20250514133221464300000001/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
           test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
 
