@@ -3,6 +3,10 @@ run-name: tofu ${{ inputs.apply && 'apply' || 'plan' }}  ${{ inputs.environment 
 
 on:
   workflow_call:
+    secrets:
+      NON_PROD_ACCOUNT:
+        description: 'AWS account'
+        required: true
     inputs:
       apply:
         required: false
@@ -19,9 +23,6 @@ on:
       properties_service_image:
         type: string
         required: false
-      runs_on:
-        type: string
-        required: true
 
   workflow_dispatch:  # Manual trigger with dropdowns
     inputs:
@@ -51,6 +52,7 @@ on:
         description: "ab2d-properties image"
         type: string
         required: false
+
 
 
 
