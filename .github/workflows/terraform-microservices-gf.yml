@@ -26,6 +26,10 @@ on:
       runs_on:
         type: string
         required: true
+      ref:
+        type: string
+        required: true
+
 
   workflow_dispatch:  # Manual trigger with dropdowns
     inputs:
@@ -57,8 +61,6 @@ on:
         required: false
 
 
-
-
 jobs:
   terraform:
     permissions:
@@ -76,6 +78,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.ref || github.ref }}
 
       - name: Assume role in AB2D account for this environment
         uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
