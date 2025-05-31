@@ -23,6 +23,9 @@ on:
       properties_service_image:
         type: string
         required: false
+      runs_on:
+        type: string
+        required: true
 
   workflow_dispatch:  # Manual trigger with dropdowns
     inputs:
