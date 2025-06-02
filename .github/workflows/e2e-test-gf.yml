@@ -86,6 +86,6 @@ jobs:
 
       - name: Run e2e-test
         env:
-          E2E_ENVIRONMENT: 'dev'
+          E2E_ENVIRONMENT: 'DEV'
         run: |
           mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress
