@@ -429,8 +429,8 @@ resource "aws_ecs_task_definition" "properties" {
 ####################################
 resource "aws_ecs_service" "contracts" {
   name             = "${local.service_prefix}-contracts-service"
-  cluster          = aws_ecs_cluster.ab2d_ecs_cluster.id
-  task_definition  = aws_ecs_task_definition.ab2d-contracts-service-task-definition.arn
+  cluster          = aws_ecs_cluster.this.id
+  task_definition  = aws_ecs_task_definition.contracts.arn
   desired_count    = 1
   launch_type      = "FARGATE"
   platform_version = "1.4.0"
