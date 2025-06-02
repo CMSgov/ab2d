@@ -24,10 +24,36 @@ on:
           - api
           - worker
 
-jobs:
-  build:
-    runs-on: self-hosted
+env:
+  # workflow file matchers - workflow jobs will only run if matching files are found
+  # please see https://github.com/CMSgov/beneficiary-fhir-data/pull/773 for why we
+  # are using this workflow logic
+  # NOTE: The expression below can be extended to multi-line
+  # using a '\' as a continuation character.
+  # https://stackoverflow.com/questions/6268391/is-there-a-way-to-represent-a-long-string-that-doesnt-have-any-whitespace-on-mul
+  workflow_files_re: "^(api|common|coverage|e2e-bfd-test|e2e-test|job|src|worker)/.+$|^pom.xml$|^settings.xml$"
 
+jobs:
+  workflow:
+    name: Checking workflow
+    runs-on: ubuntu-24.04
+    outputs:
+      files: ${{ steps.workflow_files.outputs.files }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - id: workflow_files
+        name: Set output
+        run: |
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          echo "$(git diff --name-only --diff-filter=ACMRTD HEAD^ HEAD | grep -P '${{ env.workflow_files_re }}')" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+  build:
+    needs: workflow
+    if: needs.workflow.output.files
+    runs-on: self-hosted
     env:
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
       AWS_REGION: ${{ vars.AWS_REGION }}
