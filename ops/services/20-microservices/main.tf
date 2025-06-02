@@ -8,18 +8,26 @@ terraform {
 }
 
 module "platform" {
-  source    = "git::https://github.com/CMSgov/ab2d-bcda-dpc-platform.git//terraform/modules/platform?ref=267771f3414c92e2f3090616587550e26bc41a47"
+  source    = "git::https://github.com/CMSgov/ab2d-bcda-dpc-platform.git//terraform/modules/platform?ref=PLT-1099"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
-  app         = "ab2d"
-  env         = local.env
-  root_module = "https://github.com/CMSgov/ab2d/tree/main/ops/services/20-microservices"
-  service     = local.service
+  app          = local.app
+  env          = local.env
+  root_module  = "https://github.com/CMSgov/ab2d/tree/main/ops/services/20-microservices"
+  service      = local.service
+  ssm_root_map = local.ssm_root_map
 }
 
 locals {
-  service      = "services"
   default_tags = module.platform.default_tags
+  env          = terraform.workspace
+  service      = "microservices"
+
+  ssm_root_map = {
+    common = "/ab2d/${local.parent_env}/common"
+    core   = "/ab2d/${local.parent_env}/core"
+  }
+
   benv = lookup({
     "dev"     = "ab2d-dev"
     "test"    = "ab2d-east-impl"
@@ -27,39 +35,38 @@ locals {
     "sandbox" = "ab2d-sbx-sandbox"
   }, local.env, local.env)
 
-  aws_account_number     = module.platform.account_id
-  env                    = terraform.workspace
-  aws_region             = module.platform.primary_region.name
-  service_prefix         = "ab2d-${local.env}"
-  aws_sqs_url            = data.aws_sqs_queue.ab2d_sqs.url
-  properties_service_url = "http://${aws_lb.internal_lb.dns_name}"
   ab2d_db_host           = data.aws_db_instance.this.address
   ab2d_db_port           = "5432"
+  aws_account_number     = module.platform.account_id
+  aws_region             = module.platform.primary_region.name
+  events_sqs_url         = data.aws_sqs_queue.events.url
+  kms_master_key_id      = nonsensitive(module.platform.kms_alias_primary.target_key_arn)
+  properties_service_url = "http://${aws_lb.internal_lb.dns_name}"
   vpc_id                 = module.platform.vpc_id
 
-  contracts_service_image  = data.aws_ecr_image.contracts_service_image.image_uri
-  events_service_image     = data.aws_ecr_image.events_service_image.image_uri
-  properties_service_image = data.aws_ecr_image.properties_service_image.image_uri
+  contracts_service_image  = data.aws_ecr_image.contracts.image_uri
+  events_service_image     = data.aws_ecr_image.events.image_uri
+  properties_service_image = data.aws_ecr_image.properties.image_uri
 
-  db_database_arn               = data.aws_ssm_parameter.database_name.arn #TODO this is derivable
-  db_password_arn               = data.aws_ssm_parameter.database_password.arn
-  db_user_arn                   = data.aws_ssm_parameter.database_user.arn
-  ab2d_keystore_location_arn    = data.aws_ssm_parameter.keystore_location.arn #TODO this appears to be an invariant
-  ab2d_keystore_password_arn    = data.aws_ssm_parameter.keystore_password.arn
-  ab2d_okta_jwt_issuer_arn      = data.aws_ssm_parameter.okta_jwt_issuer.arn
-  ab2d_slack_alert_webhooks_arn = data.aws_ssm_parameter.slack_alert_webhooks.arn
-  ab2d_slack_trace_webhooks_arn = data.aws_ssm_parameter.slack_trace_webhooks.arn
-
-  hpms_url_arn             = data.aws_ssm_parameter.hpms_url.arn
-  hpms_api_params_arn      = data.aws_ssm_parameter.hpms_api_params.arn
-  hpms_auth_key_id_arn     = data.aws_ssm_parameter.hpms_auth_key_id.arn
-  hpms_auth_key_secret_arn = data.aws_ssm_parameter.hpms_auth_key_secret.arn
+  ab2d_keystore_location_arn    = module.platform.ssm.core.keystore_location.arn
+  ab2d_keystore_password_arn    = module.platform.ssm.core.keystore_password.arn
+  ab2d_okta_jwt_issuer_arn      = module.platform.ssm.core.okta_jwt_issuer.arn
+  ab2d_slack_alert_webhooks_arn = module.platform.ssm.common.slack_alert_webhooks.arn
+  ab2d_slack_trace_webhooks_arn = module.platform.ssm.common.slack_trace_webhooks.arn
+  db_database_arn               = module.platform.ssm.core.database_name.arn
+  db_password_arn               = module.platform.ssm.core.database_password.arn
+  db_user_arn                   = module.platform.ssm.core.database_user.arn
+  hpms_api_params_arn           = module.platform.ssm.core.hpms_api_params.arn
+  hpms_auth_key_id_arn          = module.platform.ssm.core.hpms_auth_key_id.arn
+  hpms_auth_key_secret_arn      = module.platform.ssm.core.hpms_auth_key_secret.arn
+  hpms_url_arn                  = module.platform.ssm.core.hpms_url.arn
+  network_access_logs_bucket    = module.platform.ssm.core.network-access-logs-bucket-name.value
 }
 
 # ECS Cluster
 ####################################
-resource "aws_ecs_cluster" "ab2d_ecs_cluster" {
-  name = "${local.service_prefix}-microservice-cluster"
+resource "aws_ecs_cluster" "this" {
+  name = "${local.service_prefix}-${local.service}"
 }
 
 # Monitoring
@@ -77,38 +84,39 @@ resource "aws_iam_policy" "chatbot_guardrail_policy" {
 }
 
 # Eventbridge
-resource "aws_cloudwatch_event_rule" "ab2d-microservice-eventbridge" {
-  name          = "${local.service_prefix}-microservice-task-monitoring-rule"
+resource "aws_cloudwatch_event_rule" "this" {
+  name          = "${local.service_prefix}-${local.service}-task-monitoring-rule"
   description   = "This rule captures the last status of task definitions"
   event_pattern = <<EOF
 {
   "source": ["aws.ecs"],
   "detail-type": ["ECS Task State Change"],
   "detail": {
-    "clusterArn": ["${aws_ecs_cluster.ab2d_ecs_cluster.arn}"],
+    "clusterArn": ["${aws_ecs_cluster.this.arn}"],
     "lastStatus": ["RUNNING"]
   }
 }
 EOF
 }
 
-resource "aws_cloudwatch_event_target" "ab2d-sns" {
-  rule      = aws_cloudwatch_event_rule.ab2d-microservice-eventbridge.name
+resource "aws_cloudwatch_event_target" "this" {
+  rule      = aws_cloudwatch_event_rule.this.name
   target_id = "SendToSNS"
-  arn       = aws_sns_topic.ab2d-microservice-sns.arn
+  arn       = aws_sns_topic.this.arn
 }
 
 # SNS
-resource "aws_sns_topic" "ab2d-microservice-sns" {
-  name = "${local.service_prefix}-microservice-monitoring-sns"
+resource "aws_sns_topic" "this" {
+  name              = "${local.service_prefix}-${local.service}-monitoring"
+  kms_master_key_id = local.kms_master_key_id
 }
 
-resource "aws_sns_topic_policy" "ab2d-microservice-sns-policy" {
-  arn    = aws_sns_topic.ab2d-microservice-sns.arn
-  policy = data.aws_iam_policy_document.ab2d-microservice-sns-topic-policy.json
+resource "aws_sns_topic_policy" "this" {
+  arn    = aws_sns_topic.this.arn
+  policy = data.aws_iam_policy_document.this.json
 }
 
-data "aws_iam_policy_document" "ab2d-microservice-sns-topic-policy" {
+data "aws_iam_policy_document" "this" {
   statement {
     effect  = "Allow"
     actions = ["SNS:Publish"]
@@ -117,22 +125,17 @@ data "aws_iam_policy_document" "ab2d-microservice-sns-topic-policy" {
       type        = "Service"
       identifiers = ["events.amazonaws.com"]
     }
-    resources = [aws_sns_topic.ab2d-microservice-sns.arn]
+    resources = [aws_sns_topic.this.arn]
   }
 }
 
 # Load Balancer
 ####################################
-data "aws_ssm_parameter" "lb_access_logs_bucket" {
-  #NOTE defined as part of ab2d `core`
-  name = "/ab2d/${local.env}/lb-access-logs-bucket-name"
-}
-
 resource "aws_lb" "internal_lb" {
-  name               = "${local.service_prefix}-microservice-lb"
+  name               = "${local.service_prefix}-${local.service}"
   internal           = true
   load_balancer_type = "application"
-  security_groups    = [aws_security_group.internal_lb_sg.id]
+  security_groups    = [aws_security_group.internal_lb.id]
   subnets            = keys(module.platform.private_subnets)
 
   enable_deletion_protection       = true
@@ -140,25 +143,24 @@ resource "aws_lb" "internal_lb" {
   drop_invalid_header_fields       = true
 
   access_logs {
-    bucket  = data.aws_ssm_parameter.lb_access_logs_bucket.insecure_value
-    prefix  = "${local.service_prefix}-microservice-lb"
+    bucket  = local.network_access_logs_bucket
+    prefix  = "${local.service_prefix}-${local.service}"
     enabled = true
   }
 }
 
-#FIXME: Eliminate usage of secrets manager for divining properties_service_url in worker and api modules
 resource "aws_ssm_parameter" "internal_lb" {
-  name  = "/ab2d/${local.env}/services/internal_lb"
+  name  = "/ab2d/${local.env}/${local.service}/nonsensitive/url"
   value = "http://${aws_lb.internal_lb.dns_name}"
   type  = "String"
 }
 
-resource "aws_security_group" "internal_lb_sg" {
-  name   = "${local.service_prefix}-microservice-lb-sg"
+resource "aws_security_group" "internal_lb" {
+  name   = "${local.service_prefix}-${local.service}-lb"
   vpc_id = module.platform.vpc_id
 
   tags = {
-    Name = "${local.service_prefix}-microservice-lb-sg"
+    Name = "${local.service_prefix}-${local.service}-lb"
   }
 }
 #########################################################################
@@ -169,7 +171,7 @@ resource "aws_security_group_rule" "worker_sg_ingress_access" {
   protocol                 = "tcp"
   description              = "inbound access for microservices"
   source_security_group_id = data.aws_security_group.worker.id
-  security_group_id        = aws_security_group.internal_lb_sg.id
+  security_group_id        = aws_security_group.internal_lb.id
 }
 resource "aws_security_group_rule" "properties_to_worker_egress_access" {
   type                     = "egress"
@@ -178,7 +180,7 @@ resource "aws_security_group_rule" "properties_to_worker_egress_access" {
   protocol                 = "tcp"
   description              = "properties svc to worker sg"
   source_security_group_id = data.aws_security_group.worker.id
-  security_group_id        = aws_security_group.internal_lb_sg.id
+  security_group_id        = aws_security_group.internal_lb.id
 }
 resource "aws_security_group_rule" "contracts_to_worker_egress_access" {
   type                     = "egress"
@@ -187,7 +189,7 @@ resource "aws_security_group_rule" "contracts_to_worker_egress_access" {
   protocol                 = "tcp"
   description              = "contracts svc to worker sg"
   source_security_group_id = data.aws_security_group.worker.id
-  security_group_id        = aws_security_group.internal_lb_sg.id
+  security_group_id        = aws_security_group.internal_lb.id
 }
 #########################################################################
 resource "aws_security_group_rule" "api_sg_ingress_access" {
@@ -197,7 +199,7 @@ resource "aws_security_group_rule" "api_sg_ingress_access" {
   protocol                 = "tcp"
   description              = "inbound access for microservices"
   source_security_group_id = data.aws_security_group.api.id
-  security_group_id        = aws_security_group.internal_lb_sg.id
+  security_group_id        = aws_security_group.internal_lb.id
 }
 resource "aws_security_group_rule" "properties_to_api_egress_access" {
   type                     = "egress"
@@ -206,7 +208,7 @@ resource "aws_security_group_rule" "properties_to_api_egress_access" {
   protocol                 = "tcp"
   description              = "properties svc to api sg"
   source_security_group_id = data.aws_security_group.api.id # Api
-  security_group_id        = aws_security_group.internal_lb_sg.id
+  security_group_id        = aws_security_group.internal_lb.id
 }
 resource "aws_security_group_rule" "contracts_to_api_egress_access" {
   type                     = "egress"
@@ -215,7 +217,7 @@ resource "aws_security_group_rule" "contracts_to_api_egress_access" {
   protocol                 = "tcp"
   description              = "contracts svc to api sg"
   source_security_group_id = data.aws_security_group.api.id # Api
-  security_group_id        = aws_security_group.internal_lb_sg.id
+  security_group_id        = aws_security_group.internal_lb.id
 }
 #########################################################################
 resource "aws_security_group_rule" "access_to_properties_svc" {
@@ -224,7 +226,7 @@ resource "aws_security_group_rule" "access_to_properties_svc" {
   to_port                  = 8060
   protocol                 = "tcp"
   description              = "for access to properties svc in api sg"
-  source_security_group_id = aws_security_group.internal_lb_sg.id
+  source_security_group_id = aws_security_group.internal_lb.id
   security_group_id        = data.aws_security_group.api.id
 }
 resource "aws_security_group_rule" "access_to_contract_svc" {
@@ -233,10 +235,10 @@ resource "aws_security_group_rule" "access_to_contract_svc" {
   to_port                  = 8070
   protocol                 = "tcp"
   description              = "for access to contract svc in api sg"
-  source_security_group_id = aws_security_group.internal_lb_sg.id
+  source_security_group_id = aws_security_group.internal_lb.id
   security_group_id        = data.aws_security_group.api.id
 }
-resource "aws_lb_target_group" "properties_tg" {
+resource "aws_lb_target_group" "properties" {
 
   name        = "${local.service_prefix}-properties"
   port        = 8060
@@ -250,7 +252,7 @@ resource "aws_lb_target_group" "properties_tg" {
   }
 }
 
-resource "aws_lb_target_group" "contracts_tg" {
+resource "aws_lb_target_group" "contracts" {
   name        = "${local.service_prefix}-contracts"
   port        = 8070
   protocol    = "HTTP"
@@ -262,26 +264,26 @@ resource "aws_lb_target_group" "contracts_tg" {
     port = 8070
   }
 }
-resource "aws_lb_listener" "internal_lb_listener" {
+resource "aws_lb_listener" "internal_lb" {
 
   load_balancer_arn = aws_lb.internal_lb.arn
   port              = 80
   protocol          = "HTTP"
 
   default_action {
-    target_group_arn = aws_lb_target_group.properties_tg.id
+    target_group_arn = aws_lb_target_group.properties.id
     type             = "forward"
   }
 
 }
 
-resource "aws_lb_listener_rule" "properties_svc_rule" {
-  listener_arn = aws_lb_listener.internal_lb_listener.arn
+resource "aws_lb_listener_rule" "properties" {
+  listener_arn = aws_lb_listener.internal_lb.arn
   priority     = 100
 
   action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.properties_tg.arn
+    target_group_arn = aws_lb_target_group.properties.arn
   }
 
   condition {
@@ -292,13 +294,13 @@ resource "aws_lb_listener_rule" "properties_svc_rule" {
 
 }
 
-resource "aws_lb_listener_rule" "contracts_svc_rule" {
-  listener_arn = aws_lb_listener.internal_lb_listener.arn
+resource "aws_lb_listener_rule" "contracts" {
+  listener_arn = aws_lb_listener.internal_lb.arn
   priority     = 200
 
   action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.contracts_tg.arn
+    target_group_arn = aws_lb_target_group.contracts.arn
   }
 
   condition {
@@ -311,10 +313,10 @@ resource "aws_lb_listener_rule" "contracts_svc_rule" {
 
 # Events Services
 ####################################
-resource "aws_ecs_service" "events_service" {
-  name             = "${local.service_prefix}-event-service"
-  cluster          = aws_ecs_cluster.ab2d_ecs_cluster.id
-  task_definition  = aws_ecs_task_definition.ab2d-event-service-task-definition.arn
+resource "aws_ecs_service" "events" {
+  name             = "${local.service_prefix}-events"
+  cluster          = aws_ecs_cluster.this.id
+  task_definition  = aws_ecs_task_definition.events.arn
   desired_count    = 1
   launch_type      = "FARGATE"
   platform_version = "1.4.0"
@@ -326,23 +328,15 @@ resource "aws_ecs_service" "events_service" {
   }
 }
 # Event Service SNS
-data "aws_sns_topic" "ab2d-sns-topic" {
-  name = "${local.service_prefix}-events-sns-topic"
-}
-
-data "aws_sqs_queue" "ab2d_sqs" {
-  name = "${local.service_prefix}-events-sqs"
-}
-
-resource "aws_sns_topic_subscription" "ab2d-sns-topic-subscription" {
-  topic_arn = data.aws_sns_topic.ab2d-sns-topic.arn
+resource "aws_sns_topic_subscription" "events" {
+  topic_arn = data.aws_sns_topic.events.arn
   protocol  = "sqs"
-  endpoint  = data.aws_sqs_queue.ab2d_sqs.arn
+  endpoint  = data.aws_sqs_queue.events.arn
 }
 
 # Event Service Task Definition
-resource "aws_ecs_task_definition" "ab2d-event-service-task-definition" {
-  family             = "${local.service_prefix}-event-service-task-definition"
+resource "aws_ecs_task_definition" "events" {
+  family             = "${local.service_prefix}-events-service"
   network_mode       = "awsvpc"
   execution_role_arn = data.aws_iam_role.task_execution_role.arn
   task_role_arn      = data.aws_iam_role.task_execution_role.arn
@@ -359,7 +353,7 @@ resource "aws_ecs_task_definition" "ab2d-event-service-task-definition" {
       ab2d_environment   = local.service_prefix
       ab2d_execution_env = local.benv
       account            = local.aws_account_number
-      aws_sqs_url        = local.aws_sqs_url
+      aws_sqs_url        = local.events_sqs_url
       region             = local.aws_region
 
       ab2d_db_ssl_mode          = "allow"
@@ -379,11 +373,11 @@ resource "aws_ecs_task_definition" "ab2d-event-service-task-definition" {
 
 # Properties Services
 ####################################
-resource "aws_ecs_service" "properties_service" {
+resource "aws_ecs_service" "properties" {
 
   name             = "${local.service_prefix}-properties-service"
-  cluster          = aws_ecs_cluster.ab2d_ecs_cluster.id
-  task_definition  = aws_ecs_task_definition.ab2d-properties-service-task-definition.arn
+  cluster          = aws_ecs_cluster.this.id
+  task_definition  = aws_ecs_task_definition.properties.arn
   desired_count    = 1
   launch_type      = "FARGATE"
   platform_version = "1.4.0"
@@ -394,15 +388,15 @@ resource "aws_ecs_service" "properties_service" {
     security_groups  = [data.aws_security_group.api.id]
   }
   load_balancer {
-    target_group_arn = aws_lb_target_group.properties_tg.arn
+    target_group_arn = aws_lb_target_group.properties.arn
     container_name   = "properties-service-container"
     container_port   = 8060
   }
 }
 
 # Properties Service Task Definition
-resource "aws_ecs_task_definition" "ab2d-properties-service-task-definition" {
-  family                   = "${local.service_prefix}-properties-service-task-definition"
+resource "aws_ecs_task_definition" "properties" {
+  family                   = "${local.service_prefix}-properties-service"
   network_mode             = "awsvpc"
   execution_role_arn       = data.aws_iam_role.task_execution_role.arn
   task_role_arn            = data.aws_iam_role.task_execution_role.arn
@@ -433,7 +427,7 @@ resource "aws_ecs_task_definition" "ab2d-properties-service-task-definition" {
 
 # Contracts Services
 ####################################
-resource "aws_ecs_service" "contract_service" {
+resource "aws_ecs_service" "contracts" {
   name             = "${local.service_prefix}-contracts-service"
   cluster          = aws_ecs_cluster.ab2d_ecs_cluster.id
   task_definition  = aws_ecs_task_definition.ab2d-contracts-service-task-definition.arn
@@ -447,15 +441,15 @@ resource "aws_ecs_service" "contract_service" {
     security_groups  = [data.aws_security_group.api.id]
   }
   load_balancer {
-    target_group_arn = aws_lb_target_group.contracts_tg.arn
+    target_group_arn = aws_lb_target_group.contracts.arn
     container_name   = "contracts-service-container"
     container_port   = 8070
   }
 }
 
 # Contracts Service Task Definition
-resource "aws_ecs_task_definition" "ab2d-contracts-service-task-definition" {
-  family                   = "${local.service_prefix}-contracts-service-task-definition"
+resource "aws_ecs_task_definition" "contracts" {
+  family                   = "${local.service_prefix}-contracts-service"
   network_mode             = "awsvpc"
   execution_role_arn       = data.aws_iam_role.task_execution_role.arn
   task_role_arn            = data.aws_iam_role.task_execution_role.arn #TODO task/execution role probably ought to be different 😕
@@ -472,7 +466,7 @@ resource "aws_ecs_task_definition" "ab2d-contracts-service-task-definition" {
       ab2d_environment       = local.service_prefix
       ab2d_execution_env     = local.benv
       account                = local.aws_account_number
-      aws_sqs_url            = local.aws_sqs_url
+      aws_sqs_url            = local.events_sqs_url
       region                 = local.aws_region
       properties_service_url = local.properties_service_url
 
@@ -496,9 +490,9 @@ resource "aws_security_group_rule" "lambda_sg_ingress_access" {
   from_port                = 80
   to_port                  = 80
   protocol                 = "tcp"
-  description              = "inbound access for lambda to microservice"
+  description              = "inbound access for lambda to microservices"
   source_security_group_id = data.aws_security_group.lambda.id
-  security_group_id        = aws_security_group.internal_lb_sg.id
+  security_group_id        = aws_security_group.internal_lb.id
 }
 
 resource "aws_security_group_rule" "contracts_to_lambda_egress_access" {
@@ -506,7 +500,7 @@ resource "aws_security_group_rule" "contracts_to_lambda_egress_access" {
   from_port                = 8070
   to_port                  = 8070
   protocol                 = "tcp"
-  description              = "contracts svc to lambda sg"
+  description              = "contracts svc to lambda"
   source_security_group_id = data.aws_security_group.lambda.id
-  security_group_id        = aws_security_group.internal_lb_sg.id
+  security_group_id        = aws_security_group.internal_lb.id
 }
