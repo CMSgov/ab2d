@@ -2,14 +2,12 @@ name: end-to-end-gf tests
 run-name: end-to-end-gf tests
 
 on:
-  push:
-    branches: [ AB2D-6604/bfd-e2e-gf ]
   workflow_call:
     inputs:
       environment:
         required: true
         type: string
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch:
     inputs:
       environment:
         description: AB2D environment used for ECR
@@ -22,7 +20,7 @@ on:
         default: test
 
 concurrency:
-  group: dev-e2e-test
+  group: ${{ inputs.environment }}-e2e-test
 
 jobs:
   test:
@@ -35,7 +33,7 @@ jobs:
       AB2D_V2_ENABLED: 'true'
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
       AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
-      AB2D_ENV: 'dev'
+      AB2D_ENV: ${{ inputs.environment }}
 
 
     steps:
@@ -79,9 +77,9 @@ jobs:
       - name: Create opt/ab2d directory and download keystore
         run: |
           mkdir -p opt/ab2d
-          KEYSTORE_FILE_NAME="ab2d_dev_keystore"    
+          KEYSTORE_FILE_NAME="ab2d_${AB2D_ENV}_keystore"    
           KEYSTORE_PASSWORD=$(aws ssm get-parameter --name /bfd/ab2d-keystore-password --query Parameter.Value --output text)
-          aws s3 cp s3://ab2d-dev-main20250514133221464300000001/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
+          aws s3 cp s3://ab2d-${AB2D_ENV}-main20250514133221464300000001/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
           test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
 
       - name: Run e2e-bfd-test
@@ -90,6 +88,6 @@ jobs:
 
       - name: Run e2e-test
         env:
-          E2E_ENVIRONMENT: 'DEV'
+          E2E_ENVIRONMENT: ${{ inputs.environment == 'dev' && 'DEV' || inputs.environment == 'test' && 'IMPL' || inputs.environment == 'sbx' && 'SANDBOX' }}
         run: |
           mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress
