@@ -8,7 +8,7 @@ terraform {
 }
 
 module "platform" {
-  source = "git::https://github.com/CMSgov/ab2d-bcda-dpc-platform.git//terraform/modules/platform?ref=267771f3414c92e2f3090616587550e26bc41a47"
+  source = "git::https://github.com/CMSgov/ab2d-bcda-dpc-platform.git//terraform/modules/platform?ref=PLT-1099"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app         = local.app
@@ -24,7 +24,7 @@ locals {
 }
 
 module "sops" {
-  source = "git::https://github.com/CMSgov/ab2d-bcda-dpc-platform.git//terraform/modules/sops?ref=267771f3414c92e2f3090616587550e26bc41a47"
+  source = "git::https://github.com/CMSgov/ab2d-bcda-dpc-platform.git//terraform/modules/sops?ref=PLT-1099"
 
   platform = module.platform
 }
