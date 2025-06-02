@@ -111,7 +111,7 @@ jobs:
             echo "**properties_service_image=$PROPERTIES_IMAGE**" >> $GITHUB_STEP_SUMMARY
           fi
           
-          echo "tofu plan $TOFU_VARS -out=tfplan"
+          tofu plan $TOFU_VARS -out=tfplan
 
 
       - name: Tofu apply
