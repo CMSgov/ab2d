@@ -16,7 +16,7 @@ on:
         options:
           - dev
           - test
-          - sbx
+          - sandbox
         default: test
 
 concurrency:
@@ -88,6 +88,6 @@ jobs:
 
       - name: Run e2e-test
         env:
-          E2E_ENVIRONMENT: ${{ inputs.environment == 'dev' && 'DEV' || inputs.environment == 'test' && 'IMPL' || inputs.environment == 'sbx' && 'SANDBOX' }}
+          E2E_ENVIRONMENT: ${{ inputs.environment == 'dev' && 'DEV' || inputs.environment == 'test' && 'IMPL' || inputs.environment == 'sandbox' && 'SANDBOX' }}
         run: |
           mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress
