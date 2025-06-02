@@ -274,7 +274,6 @@ resource "aws_lb_listener" "internal_lb" {
     target_group_arn = aws_lb_target_group.properties.id
     type             = "forward"
   }
-
 }
 
 resource "aws_lb_listener_rule" "properties" {
@@ -291,7 +290,6 @@ resource "aws_lb_listener_rule" "properties" {
       values = ["/properties"]
     }
   }
-
 }
 
 resource "aws_lb_listener_rule" "contracts" {
@@ -308,7 +306,6 @@ resource "aws_lb_listener_rule" "contracts" {
       values = ["/contracts", "/contracts/*"]
     }
   }
-
 }
 
 # Events Services
