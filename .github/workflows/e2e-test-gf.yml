@@ -44,3 +44,48 @@ jobs:
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.AB2D_ENV }}-github-actions
+
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set env vars from AWS params in BCDA management account
+        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |
+            ARTIFACTORY_URL=/artifactory/url
+            ARTIFACTORY_USER=/artifactory/user
+            ARTIFACTORY_PASSWORD=/artifactory/password
+
+      - name: Set env vars from AWS params in AB2D account
+        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |
+            AB2D_BFD_KEYSTORE_PASSWORD=/bfd/ab2d-keystore-password
+            OKTA_CLIENT_ID=/okta/test-pdp-100-id
+            OKTA_CLIENT_PASSWORD=/okta/test-pdp-100-secret
+            SECONDARY_USER_OKTA_CLIENT_ID=/okta/test-pdp-1000-id
+            SECONDARY_USER_OKTA_CLIENT_PASSWORD=/okta/test-pdp-1000-secret
+
+      - name: Create opt/ab2d directory and download keystore
+        run: |
+          mkdir -p opt/ab2d
+          KEYSTORE_FILE_NAME="ab2d_dev_keystore"    
+          KEYSTORE_PASSWORD=$(aws ssm get-parameter --name /bfd/ab2d-keystore-password --query Parameter.Value --output text)
+          aws s3 cp s3://ab2d-dev-main20250514133221464300000001/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
+          test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
+
+      - name: Run e2e-test
+        env:
+          E2E_ENVIRONMENT: 'dev'
+        run: |
+          mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress
