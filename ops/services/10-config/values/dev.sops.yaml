@@ -1,7 +1,7 @@
 /ab2d/${env}/common/nonsensitive/new_relic_app_name: AB2D_Dev
 /ab2d/${env}/common/sensitive/new_relic_license_key: ENC[AES256_GCM,data:xbn/WEo4aSNPXC+OEVDYibE65oCZFArBKuVUQTkp+nE2Wl1he88xVg==,iv:11V+tFOmHXYVNPSQRmcZL03XMcj+5idvly9pPwTc6CU=,tag:BGS9nQucswWs3UBAXw0SQQ==,type:str]
-/ab2d/${env}/common/sensitive/slack_alert_webhooks: ENC[AES256_GCM,data:F6YkyHkZ0rbrw5gEg5raDn9vgGmvowwfcIPEyp+JnLr6uT4JIGBKN2xEBKRfSoMDSx3KnLgh1L2/zm3QsccQcKTGja+lzsxa6YU5jXe/vQ==,iv:3SuXmsfUT8670HJyrtkLbPf02FSXQWfqgGVFHH3Uwbk=,tag:vBorIU4+rriGgjH2QYPmrw==,type:str]
-/ab2d/${env}/common/sensitive/slack_trace_webhooks: ENC[AES256_GCM,data:l8hEK/G+o/+F5RqyfaKe2nAgADV48QMkJ6U1Y8hW5Z/iiFAthG54Z5f15peKqbwZPp/gHyBEAPpfH70d6NTzsOklk8wHk6Xtyey1QtrYfA==,iv:vfjuGdhtIgs5og7htZhfstVKxc7u+rY4CDjEvXg99ng=,tag:llfXS8w8l6JA8MtWsudGLQ==,type:str]
+/ab2d/${env}/common/sensitive/slack_alert_webhooks: ENC[AES256_GCM,data:0JSzrMVitOuwxbb+uMktd7Y+aKmjxCwUUqtkQpS729KvIe1NiRTaKvMEObfbDfahsJPRGEzc4IsZs+qi1bXWq9teGueh4kPamsQmAti3OA==,iv:t8QDjtpc6wqOK7vz65E3ATT7/IdpCN/SqsNGvR3Z5Pg=,tag:cfN8OEPhqejmZGfuCkgdbA==,type:str]
+/ab2d/${env}/common/sensitive/slack_trace_webhooks: ENC[AES256_GCM,data:Lz4+jT1CDWi1QQ4zRgv4Odh/95+QkYN9I8fMZasuHr3SlTiwsLjhqQ2n0AFk6PVZTGJa0oEeZLdeMHp3Un8aUMPfeLU1er3a6lR0ycqQVg==,iv:qQHwxXBNfox91hvVUymIRjYlaxEhjIaUU9S1LH6AGes=,tag:1T7xAPz3IOPXK/ov0ZqVHg==,type:str]
 /ab2d/${env}/core/nonsensitive/database_name: dev
 /ab2d/${env}/core/nonsensitive/keystore_location: classpath:ab2d.p12
 /ab2d/${env}/core/sensitive/database_password: ENC[AES256_GCM,data:LqxOgQ4Izgdb6yjKBKhOHgW1hGOvvx4SFgcWQdzXu4g=,iv:aZ3B/HcmSvvgoQzQd7AVROdOzfGjGA7q1kXa5E6wpyU=,tag:Ijs21uWvZI69YuEYsDj/hQ==,type:str]
