@@ -67,6 +67,19 @@ locals {
 ####################################
 resource "aws_ecs_cluster" "this" {
   name = "${local.service_prefix}-${local.service}"
+
+  setting {
+    name  = "containerInsights"
+    value = module.platform.is_ephemeral_env ? "disabled" : "enabled"
+  }
+
+  # FIXME Enable the below, along with enabling the cluster acess to the CMK
+  # configuration {
+  #   managed_storage_configuration {
+  #     fargate_ephemeral_storage_kms_key_id = local.kms_master_key_id
+  #     kms_key_id                           = local.kms_master_key_id
+  #   }
+  # }
 }
 
 # Monitoring
