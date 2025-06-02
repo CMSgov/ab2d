@@ -1,6 +1,10 @@
-locals {
-  service      = "config"
-  default_tags = module.platform.default_tags
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5"
+    }
+  }
 }
 
 module "platform" {
@@ -8,9 +12,15 @@ module "platform" {
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app         = local.app
-  env         = terraform.workspace
+  env         = local.env
   root_module = "https://github.com/CMSgov/ab2d/tree/main/ops/services/10-config"
   service     = local.service
+}
+
+locals {
+  default_tags = module.platform.default_tags
+  env          = terraform.workspace
+  service      = "config"
 }
 
 module "sops" {
@@ -18,6 +28,7 @@ module "sops" {
 
   platform = module.platform
 }
+
 
 output "edit" {
   value = module.sops.sopsw

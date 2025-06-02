@@ -4,6 +4,8 @@
 locals {
   app              = "ab2d"
   established_envs = ["dev", "test", "sandbox", "prod"]
+  service_prefix   = "${local.app}-${local.env}"
+
   parent_env = coalesce(
     var.parent_env,
     one([for x in local.established_envs : x if can(regex("${x}$$", terraform.workspace))]),
@@ -21,11 +23,13 @@ locals {
 variable "region" {
   default  = "us-east-1"
   nullable = false
+  type     = string
 }
 
 variable "secondary_region" {
   default  = "us-west-2"
   nullable = false
+  type     = string
 }
 
 variable "parent_env" {
