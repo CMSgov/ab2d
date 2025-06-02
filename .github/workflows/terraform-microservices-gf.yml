@@ -32,7 +32,7 @@ on:
   workflow_dispatch:  # Manual trigger with dropdowns
     inputs:
       apply:
-        description: "Apply terraform?"
+        description: "Apply tofu?"
         required: false
         type: boolean
         default: false
@@ -58,6 +58,8 @@ on:
         type: string
         required: false
 
+env:
+  TOFU_VERSION: 1.10.0-beta2
 
 jobs:
   terraform:
@@ -88,11 +90,10 @@ jobs:
       - name: Install tofu
         uses: opentofu/setup-opentofu@v1
         with:
-          tofu_version: 1.10.0-beta1
+          tofu_version: ${{ env.TOFU_VERSION }}
 
       - name: Tofu init & plan
         working-directory: ops/services/20-microservices/
-
         run: |
           tofu init -var=parent_env=dev -reconfigure
           tofu workspace select -var=parent_env=dev -or-create=true dev
@@ -100,15 +101,15 @@ jobs:
           TOFU_VARS=""
           if [ "$CONTRACTS_IMAGE" != '' ]; then
             TOFU_VARS="-var=contracts_service_image_tag=$CONTRACTS_IMAGE"
-            echo "**contracts_service_image_tag=$CONTRACTS_IMAGE**" >> $GITHUB_STEP_SUMMARY
+            echo "**contracts_service_image_tag -> $CONTRACTS_IMAGE**" >> $GITHUB_STEP_SUMMARY
           fi
           if [ "$EVENTS_IMAGE" != '' ]; then
             TOFU_VARS="$TOFU_VARS -var=events_service_image_tag=$EVENTS_IMAGE"
-            echo "**events_service_image_tag=$EVENTS_IMAGE**" >> $GITHUB_STEP_SUMMARY
+            echo "**events_service_image_tag -> $EVENTS_IMAGE**" >> $GITHUB_STEP_SUMMARY
           fi
           if [ "$PROPERTIES_IMAGE" != '' ]; then
             TOFU_VARS="$TOFU_VARS -var=properties_service_image=$PROPERTIES_IMAGE"
-            echo "**properties_service_image=$PROPERTIES_IMAGE**" >> $GITHUB_STEP_SUMMARY
+            echo "**properties_service_image -> $PROPERTIES_IMAGE**" >> $GITHUB_STEP_SUMMARY
           fi
           
           tofu plan $TOFU_VARS -out=tfplan
