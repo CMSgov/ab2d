@@ -22,8 +22,8 @@ on:
         default: test
 
 # Ensure we have only one e2e test running at a time in each environment
-concurrency:
-  group: ${{ inputs.environment }}-e2e-test
+#concurrency:
+#  group: ${{ inputs.environment }}-e2e-test
 
 jobs:
   test:
