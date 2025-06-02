@@ -8,7 +8,8 @@
 secrets.tf
 terraform.tfstate
 terraform.tfstate.backup
-**/sopsw.sh
+sopsw
+.sops.yaml
 .aws/
 .bash_history
 .viminfo
