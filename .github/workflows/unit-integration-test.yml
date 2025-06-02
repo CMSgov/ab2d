@@ -16,7 +16,7 @@ env:
 jobs:
   workflow:
     name: Checking workflow
-    runs-on: self-hosted
+    runs-on: ubuntu-24.04
     outputs:
       files: ${{ steps.workflow_files.outputs.files }}
     steps:
