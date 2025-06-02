@@ -72,13 +72,15 @@ resource "aws_ecs_cluster" "this" {
 # Monitoring
 ####################################
 
-# Chatbot Guardrail Policy  
+# Chatbot Guardrail Policy
+# FIXME No idea where the chatbot/amazonq resources are to be defined
 resource "aws_iam_policy" "chatbot_guardrail_policy" {
   name = "${local.service_prefix}-chatbot-guardrail-policy"
   path = "/delegatedadmin/developer/"
   policy = templatefile("${path.module}/templates/config/iam/chatbot_policy.json",
     {
       aws_account_number = local.aws_account_number
+      role_name          = data.aws_iam_role.task_execution_role.id
     }
   )
 }

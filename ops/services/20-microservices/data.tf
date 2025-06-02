@@ -26,7 +26,7 @@ data "aws_db_instance" "this" {
 }
 
 data "aws_iam_role" "task_execution_role" {
-  name = "ab2d-${local.env}-microservices"
+  name = "${local.service_prefix}-microservices"
 }
 
 data "aws_ecr_image" "contracts" {

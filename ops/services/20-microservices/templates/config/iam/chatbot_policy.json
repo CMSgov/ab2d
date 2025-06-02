@@ -10,7 +10,7 @@
                 "chatbot:CreateChimeWebhookConfiguration"
             ],
             "Effect": "Allow",
-            "Resource": "arn:aws:chatbot::${aws_account_number}:chat-configuration/slack-channel/Ab2d-microservice-task-definition",
+            "Resource": "arn:aws:chatbot::${aws_account_number}:chat-configuration/slack-channel/${role_name}",
             "Sid": ""
         }
     ],
