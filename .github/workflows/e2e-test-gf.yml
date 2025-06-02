@@ -21,9 +21,8 @@ on:
           - sbx
         default: test
 
-# Ensure we have only one e2e test running at a time in each environment
 concurrency:
-  group: ${{ inputs.environment }}-e2e-test
+  group: dev-e2e-test
 
 jobs:
   test:
@@ -32,12 +31,10 @@ jobs:
       id-token: write
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     env:
-      # Keystore location must be full path for spring framework
       AB2D_BFD_KEYSTORE_LOCATION: "${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
       AB2D_V2_ENABLED: 'true'
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
       AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
-   #   AB2D_ENV: ${{ inputs.environment }}
       AB2D_ENV: 'dev'
 
 
@@ -86,10 +83,6 @@ jobs:
           KEYSTORE_PASSWORD=$(aws ssm get-parameter --name /bfd/ab2d-keystore-password --query Parameter.Value --output text)
           aws s3 cp s3://ab2d-dev-main20250514133221464300000001/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
           test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
-
-#      - name: Run e2e-bfd-test
-#        run: |
-#          mvn test -s settings.xml -pl e2e-bfd-test -am -Dtest=EndToEndBfdTests -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress
 
       - name: Run e2e-test
         env:
