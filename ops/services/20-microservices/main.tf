@@ -336,7 +336,7 @@ resource "aws_sns_topic_subscription" "events" {
 
 # Event Service Task Definition
 resource "aws_ecs_task_definition" "events" {
-  family             = "${local.service_prefix}-events-service"
+  family             = "${local.service_prefix}-events"
   network_mode       = "awsvpc"
   execution_role_arn = data.aws_iam_role.task_execution_role.arn
   task_role_arn      = data.aws_iam_role.task_execution_role.arn
@@ -375,7 +375,7 @@ resource "aws_ecs_task_definition" "events" {
 ####################################
 resource "aws_ecs_service" "properties" {
 
-  name             = "${local.service_prefix}-properties-service"
+  name             = "${local.service_prefix}-properties"
   cluster          = aws_ecs_cluster.this.id
   task_definition  = aws_ecs_task_definition.properties.arn
   desired_count    = 1
@@ -396,7 +396,7 @@ resource "aws_ecs_service" "properties" {
 
 # Properties Service Task Definition
 resource "aws_ecs_task_definition" "properties" {
-  family                   = "${local.service_prefix}-properties-service"
+  family                   = "${local.service_prefix}-properties"
   network_mode             = "awsvpc"
   execution_role_arn       = data.aws_iam_role.task_execution_role.arn
   task_role_arn            = data.aws_iam_role.task_execution_role.arn
@@ -428,7 +428,7 @@ resource "aws_ecs_task_definition" "properties" {
 # Contracts Services
 ####################################
 resource "aws_ecs_service" "contracts" {
-  name             = "${local.service_prefix}-contracts-service"
+  name             = "${local.service_prefix}-contracts"
   cluster          = aws_ecs_cluster.this.id
   task_definition  = aws_ecs_task_definition.contracts.arn
   desired_count    = 1
@@ -449,7 +449,7 @@ resource "aws_ecs_service" "contracts" {
 
 # Contracts Service Task Definition
 resource "aws_ecs_task_definition" "contracts" {
-  family                   = "${local.service_prefix}-contracts-service"
+  family                   = "${local.service_prefix}-contracts"
   network_mode             = "awsvpc"
   execution_role_arn       = data.aws_iam_role.task_execution_role.arn
   task_role_arn            = data.aws_iam_role.task_execution_role.arn #TODO task/execution role probably ought to be different 😕
