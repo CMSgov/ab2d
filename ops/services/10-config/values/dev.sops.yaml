@@ -39,7 +39,7 @@
 /ab2d/${env}/lambda/nonsensitive/artifactory_url: https://artifactory.cloud.cms.gov
 /ab2d/${env}/sqs/access_key: ENC[AES256_GCM,data:7ahEYBrtZMQyxxWJ6Bsd2yi7/kQ=,iv:crFG5AMNiB9BinPGjp1M3YzDNPKoQYEz1YTqtSpEAnU=,tag:E0jILCTBNm8Z3SLwazR0HQ==,type:str]
 /ab2d/${env}/sqs/access_secret: ENC[AES256_GCM,data:ZdAS4tXHdzpn5SjhUE815ghII4yla27LobS/CSa+APlg44Qpi3HwUg==,iv:vGQUD2KLd5ZpGcNJNCWleweqpMTBfDgy0DsuT3zHIiw=,tag:xtqW6wqr6UHCMS2OmAvJYg==,type:str]
-/ab2d/${env}/worker/nonsensitive/bfd_keystore_location: /mnt/efs/bfd-keystore/ab2d-dev/ab2d_dev_keystore
+/ab2d/${env}/worker/nonsensitive/bfd_keystore_location: /mnt/efs/bfd-keystore/dev/ab2d_dev_keystore
 /ab2d/${env}/worker/sensitive/bfd_keystore_password: ENC[AES256_GCM,data:W7N9fbbLaBKOxNGyMOTh+dx3bruaq3ruqEXLWDnQdXQ=,iv:BQDusOG05cZ9tYqdMQ9tqotxipPTzlwjALlC7E9wZ+0=,tag:kcBublERWtQqt3IZhB556w==,type:str]
 sops:
   kms:
