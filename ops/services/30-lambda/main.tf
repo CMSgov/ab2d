@@ -52,7 +52,6 @@ locals {
   db_password                     = module.platform.ssm.core.database_password.value
   db_username                     = module.platform.ssm.core.database_user.value
   slack_webhook_ab2d_slack_alerts = module.platform.ssm.webhooks.ab2d-slack-alerts.value
-  slack_webhook_ab2d_security     = module.platform.ssm.webhooks.ab2d-security.value
   contracts_service_url           = module.platform.ssm.microservices.url.value
 
   microservices_lb = data.aws_security_group.microservices_lb.id
