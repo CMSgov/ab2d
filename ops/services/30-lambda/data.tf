@@ -11,14 +11,6 @@ data "aws_lambda_invocation" "update_database_schema" {
   JSON
 }
 
-#FIXME: Error: reading CloudWatch Logs Log Group (/aws/lambda/audit-dev): empty result
-# data "aws_cloudwatch_log_group" "audit_svc_cw_log_group" {
-#   name = "/aws/lambda/audit-${local.env}"
-#   depends_on = [
-#     aws_lambda_function.audit
-#   ]
-# }
-
 data "aws_ec2_managed_prefix_list" "cloudfront" {
   name = "com.amazonaws.global.cloudfront.origin-facing"
 }
