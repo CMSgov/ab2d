@@ -197,41 +197,48 @@ resource "aws_lambda_permission" "allow_cloudwatch_to_call_deletion_lambda" {
   source_arn    = aws_cloudwatch_event_rule.audit_lambda_event_rule.arn
 }
 
-# Monitoring
-#FIXME: Error: reading CloudWatch Logs Log Group (/aws/lambda/audit-dev): empty result
-# resource "aws_lambda_permission" "cloudwatch_logs" {
-#   action        = "lambda:InvokeFunction"
-#   function_name = aws_lambda_function.audit_svc_monitoring.function_name
-#   #FIXME
-#   principal = "logs.us-east-1.amazonaws.com"
-#   #FIXME
-#   source_arn = "arn:aws:logs:us-east-1:${module.platform.aws_caller_identity.account_id}:log-group:/aws/lambda/audit-${local.env}:*"
+resource "aws_cloudwatch_log_group" "audit_svc_cw_log_group" {
+  name              = "/aws/lambda/audit-${local.env}"
+  retention_in_days = 30 
+  tags = {
+    Environment = local.env
+    Name        = "audit-${local.env}-log-group"
+  }
+}
 
-#   depends_on = [
-#     aws_lambda_function.audit
-#   ]
-# }
 
-#FIXME: Error: reading CloudWatch Logs Log Group (/aws/lambda/audit-dev): empty result
-# resource "aws_cloudwatch_log_subscription_filter" "cloudwatch_logs_su" {
-#   depends_on      = [aws_lambda_permission.cloudwatch_logs]
-#   destination_arn = aws_lambda_function.audit_svc_monitoring.arn
-#   filter_pattern  = "?ERROR ?Error ?Exception ?timed"
-#   log_group_name  = "/aws/lambda/audit-${local.env}"
-#   name            = "audit_svc_cloudwatch_logs"
-# }
+ resource "aws_lambda_permission" "cloudwatch_logs" {
+   action        = "lambda:InvokeFunction"
+   function_name = aws_lambda_function.audit_svc_monitoring.function_name
+   #FIXME
+   principal = "logs.us-east-1.amazonaws.com"
+   #FIXME
+   source_arn = "arn:aws:logs:us-east-1:${module.platform.aws_caller_identity.account_id}:log-group:/aws/lambda/audit-${local.env}:*"
 
-#FIXME: Error: reading CloudWatch Logs Log Group (/aws/lambda/audit-dev): empty result
-# resource "aws_lambda_function" "audit_svc_monitoring" {
-#   filename      = "${path.module}/monitoring_audit_svc.zip"
-#   function_name = "${local.service_prefix}-audit-svc-monitoring"
-#   handler       = "monitoring_audit_svc.lambda_handler"
-#   role          = aws_iam_role.microservices_lambda.arn
-#   runtime       = "python3.12"
-#   timeout       = 600
-#   description   = "Lambda function that monitors the Audit srvice lambda and sends alert to slack"
-#   tags          = { code = "https://github.com/CMSgov/ab2d/blob/main/ops/services/30-lambda/code/monitoring_audit_svc.py" }
-# }
+   depends_on = [
+     aws_lambda_function.audit
+   ]
+ }
+
+
+ resource "aws_cloudwatch_log_subscription_filter" "cloudwatch_logs_su" {
+   depends_on      = [aws_lambda_permission.cloudwatch_logs]
+   destination_arn = aws_lambda_function.audit_svc_monitoring.arn
+   filter_pattern  = "?ERROR ?Error ?Exception ?timed"
+   log_group_name  = "/aws/lambda/audit-${local.env}"
+   name            = "audit_svc_cloudwatch_logs"
+ }
+
+
+ resource "aws_lambda_function" "audit_svc_monitoring" {
+    function_name = "${local.service_prefix}-audit-svc-monitoring"
+   handler       = "monitoring_audit_svc.lambda_handler"
+   role          = aws_iam_role.microservices_lambda.arn
+   runtime       = "python3.12"
+   timeout       = 600
+   description   = "Lambda function that monitors the Audit srvice lambda and sends alert to slack"
+   tags          = { code = "https://github.com/CMSgov/ab2d/blob/main/ops/services/30-lambda/code/monitoring_audit_svc.py" }
+ }
 
 resource "aws_security_group_rule" "db_access_lambda_ingress" {
   type                     = "ingress"
