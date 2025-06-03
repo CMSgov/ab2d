@@ -62,7 +62,7 @@ data "aws_security_group" "efs_sg" {
 data "aws_security_group" "db" {
   filter {
     name   = "tag:Name"
-    values = ["ab2d-${local.env}-db"]
+    values = ["${local.service_prefix}-db"]
   }
 }
 

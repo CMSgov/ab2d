@@ -29,9 +29,9 @@ locals {
 
   ssm_root_map = {
     artifactory   = "/ab2d/mgmt/artifactory"
-    microservices = "/ab2d/${local.parent_env}/microservices"
-    common        = "/ab2d/${local.parent_env}/common"
-    core          = "/ab2d/${local.parent_env}/core"
+    microservices = "/ab2d/${local.env}/microservices"
+    common        = "/ab2d/${local.env}/common"
+    core          = "/ab2d/${local.env}/core"
     webhooks      = "/ab2d/mgmt/slack-webhooks"
   }
 
