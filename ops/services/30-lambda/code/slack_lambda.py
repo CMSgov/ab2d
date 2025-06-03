@@ -84,7 +84,6 @@ class CloudWatchAlarmParser:
         return _message
 
 
-
 def lambda_handler(event, context):
     sns_message = json.loads(event['Records'][0]['Sns']['Message'])
     print(sns_message)
@@ -92,14 +91,12 @@ def lambda_handler(event, context):
     slack_data = CloudWatchAlarmParser(sns_message).slack_data()
     slack_data["channel"] = 'p-ab2d-alerts'
 
-
     request = Request(
         webhook_url, 
         data=json.dumps(slack_data).encode(),
         headers={'Content-Type': 'application/json'}
         )
         
-    # response = requests.post(webhook_url, data=slack_data, headers={'Content-Type': 'application/json'})
     response = urlopen(request)
     return {
         'statusCode': response.getcode(),
