@@ -9,7 +9,7 @@ data "aws_iam_policy_document" "assume_lambda" {
 }
 
 resource "aws_iam_role" "slack_lambda" {
-  name                 = "slack-lambda-${local.env}"
+  name                 = "${local.service_prefix}-slack-lambda"
   path                 = "/delegatedadmin/developer/"
   permissions_boundary = "arn:aws:iam::${module.platform.aws_caller_identity.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
   assume_role_policy   = data.aws_iam_policy_document.assume_lambda.json
@@ -17,7 +17,7 @@ resource "aws_iam_role" "slack_lambda" {
 
 resource "aws_iam_policy" "slack_lambda" {
   path = "/delegatedadmin/developer/"
-  name = "slack_lambda-${local.env}"
+  name = "${local.service_prefix}-slack-lambda"
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -42,7 +42,7 @@ resource "aws_iam_role_policy_attachment" "slack_lambda_policy_attachment" {
 }
 
 resource "aws_iam_role" "metrics_transform" {
-  name                 = "metrics-transform-${local.env}"
+  name                 = "${local.service_prefix}-metrics-transform"
   path                 = "/delegatedadmin/developer/"
   permissions_boundary = "arn:aws:iam::${module.platform.aws_caller_identity.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
   assume_role_policy   = data.aws_iam_policy_document.assume_lambda.json
@@ -61,7 +61,7 @@ resource "aws_iam_role_policy_attachment" "metrics_transform_attachment" {
 }
 
 resource "aws_iam_role" "microservices_lambda" {
-  name                 = "${local.env}-microservices-lambda"
+  name                 = "${local.service_prefix}-microservices-lambda"
   path                 = "/delegatedadmin/developer/"
   permissions_boundary = "arn:aws:iam::${module.platform.aws_caller_identity.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
   assume_role_policy   = data.aws_iam_policy_document.assume_lambda.json
@@ -83,7 +83,7 @@ resource "aws_iam_role_policy_attachment" "microservices_lambda" {
 }
 
 resource "aws_iam_role" "lambda_database_sns_role" {
-  name                 = "${local.env}-database-sns-lambda-role"
+  name                 = "${local.service_prefix}-database-sns-lambda"
   path                 = "/delegatedadmin/developer/"
   permissions_boundary = "arn:aws:iam::${module.platform.aws_caller_identity.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
   assume_role_policy   = data.aws_iam_policy_document.assume_lambda.json
@@ -101,7 +101,7 @@ resource "aws_iam_role_policy_attachment" "lambda_db_sns_attachment" {
 }
 
 resource "aws_iam_role" "lambda_sns_role" {
-  name                 = "hpms-count-lambda-${local.env}"
+  name                 = "${local.service_prefix}-hpms-count-lambda"
   path                 = "/delegatedadmin/developer/"
   permissions_boundary = "arn:aws:iam::${module.platform.aws_caller_identity.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
   assume_role_policy   = data.aws_iam_policy_document.assume_lambda.json
