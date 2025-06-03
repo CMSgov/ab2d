@@ -11,11 +11,6 @@ terraform {
   }
 }
 
-provider "artifactory" {
-  url          = module.platform.ssm.artifactory.url.value
-  access_token = module.platform.ssm.artifactory.token.value
-}
-
 module "platform" {
   source    = "git::https://github.com/CMSgov/ab2d-bcda-dpc-platform.git//terraform/modules/platform?ref=PLT-1099"
   providers = { aws = aws, aws.secondary = aws.secondary }
@@ -72,6 +67,11 @@ locals {
     "coverage-counts",
     "retrieve-hpms-counts",
   ])
+}
+
+provider "artifactory" {
+  url          = module.platform.ssm.artifactory.url.value
+  access_token = module.platform.ssm.artifactory.token.value
 }
 
 resource "aws_efs_access_point" "audit_efs" {

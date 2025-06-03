@@ -1,6 +1,6 @@
-# Lambda Child Module
+# AB2D Lambda Root Module
 
-This child terraform module is responsible for creating AWS Lambdas and related resources that support ancillary, administrative functions in AB2D.
+This terraform module is responsible for creating AWS Lambdas and related resources that support ancillary, administrative functions in AB2D.
 
 ## Dependencies
 - core
