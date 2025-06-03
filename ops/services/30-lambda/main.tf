@@ -53,11 +53,12 @@ locals {
   db_port               = 5432
   ab2d_db_ssl_mode      = "allow"
 
-  db_name                   = module.platform.ssm.core.database_name.value
-  db_password               = module.platform.ssm.core.database_password.value
-  db_username               = module.platform.ssm.core.database_user.value
-  ab2d_slack_alerts_webhook = module.platform.ssm.webhooks.ab2d-slack-alerts.value
-  contracts_service_url     = module.platform.ssm.microservices.url.value
+  db_name                         = module.platform.ssm.core.database_name.value
+  db_password                     = module.platform.ssm.core.database_password.value
+  db_username                     = module.platform.ssm.core.database_user.value
+  slack_webhook_ab2d_slack_alerts = module.platform.ssm.webhooks.ab2d-slack-alerts.value
+  slack_webhook_ab2d_security     = module.platform.ssm.webhooks.ab2d-security.value
+  contracts_service_url           = module.platform.ssm.microservices.url.value
 
   microservices_lb = data.aws_security_group.microservices_lb.id
   cloudfront_id    = data.aws_ec2_managed_prefix_list.cloudfront.id
@@ -74,7 +75,6 @@ locals {
 }
 
 resource "aws_efs_access_point" "audit_efs" {
-
   #TODO is this advisable?
   posix_user {
     gid = 0
@@ -84,7 +84,7 @@ resource "aws_efs_access_point" "audit_efs" {
 }
 
 resource "aws_lambda_function" "slack_lambda" {
-  filename      = "${path.module}/slack_lambda.zip"
+  filename      = "${path.root}/slack_lambda.zip"
   function_name = "${local.service_prefix}-slack-alerts"
   role          = aws_iam_role.slack_lambda.arn
   handler       = "data_load_lambda.load_data"
@@ -92,7 +92,7 @@ resource "aws_lambda_function" "slack_lambda" {
   timeout       = 600
   environment {
     variables = {
-      SLACK_WEBHOOK_URL = local.ab2d_slack_alerts_webhook
+      SLACK_WEBHOOK_URL = local.slack_webhook_ab2d_slack_alerts
     }
   }
   tags = {
@@ -101,7 +101,7 @@ resource "aws_lambda_function" "slack_lambda" {
 }
 
 resource "aws_lambda_function" "metrics_transform" {
-  filename         = "${path.module}/metrics-lambda.zip"
+  filename         = "${path.root}/metrics-lambda.zip"
   source_code_hash = base64encode(data.artifactory_file.lambdas["metrics-lambda"].sha256)
   function_name    = "${local.service_prefix}-metrics-transform"
   role             = aws_iam_role.metrics_transform.arn
@@ -119,7 +119,7 @@ resource "aws_lambda_function" "metrics_transform" {
 }
 
 resource "aws_lambda_function" "audit" {
-  filename         = "${path.module}/audit.zip"
+  filename         = "${path.root}/audit.zip"
   source_code_hash = base64encode(data.artifactory_file.lambdas["audit"].sha256)
   function_name    = "${local.service_prefix}-audit"
   role             = aws_iam_role.microservices_lambda.arn
@@ -191,48 +191,40 @@ resource "aws_lambda_permission" "allow_cloudwatch_to_call_deletion_lambda" {
   source_arn    = aws_cloudwatch_event_rule.audit_lambda_event_rule.arn
 }
 
-resource "aws_cloudwatch_log_group" "audit_svc_cw_log_group" {
-  name              = "/aws/lambda/audit-${local.env}"
-  retention_in_days = 30 
+#TODO determine if this dependency chain makes sense; if this errors on next creation, we will know that it's bad.
+resource "aws_cloudwatch_log_group" "audit" {
+  name              = "/aws/lambda/${aws_lambda_function.audit.function_name}"
+  retention_in_days = 30
   tags = {
-    Environment = local.env
-    Name        = "audit-${local.env}-log-group"
+    Name = aws_lambda_function.audit.function_name
   }
 }
 
+resource "aws_lambda_permission" "audit_svc_monitoring" {
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.audit_svc_monitoring.function_name
+  principal     = "logs.us-east-1.amazonaws.com" #TODO consider putting in a dynamic region?
+  source_arn    = "${aws_cloudwatch_log_group.audit.arn}:*"
+}
 
- resource "aws_lambda_permission" "cloudwatch_logs" {
-   action        = "lambda:InvokeFunction"
-   function_name = aws_lambda_function.audit_svc_monitoring.function_name
-   #FIXME
-   principal = "logs.us-east-1.amazonaws.com"
-   #FIXME
-   source_arn = "arn:aws:logs:us-east-1:${module.platform.aws_caller_identity.account_id}:log-group:/aws/lambda/audit-${local.env}:*"
-
-   depends_on = [
-     aws_lambda_function.audit
-   ]
- }
-
-
- resource "aws_cloudwatch_log_subscription_filter" "cloudwatch_logs_su" {
-   depends_on      = [aws_lambda_permission.cloudwatch_logs]
-   destination_arn = aws_lambda_function.audit_svc_monitoring.arn
-   filter_pattern  = "?ERROR ?Error ?Exception ?timed"
-   log_group_name  = "/aws/lambda/audit-${local.env}"
-   name            = "audit_svc_cloudwatch_logs"
- }
+resource "aws_cloudwatch_log_subscription_filter" "audit_svc_monitoring" {
+  destination_arn = aws_lambda_function.audit_svc_monitoring.arn
+  filter_pattern  = "?ERROR ?Error ?Exception ?timed"
+  log_group_name  = aws_cloudwatch_log_group.audit.name
+  name            = aws_lambda_function.audit_svc_monitoring.function_name
+}
 
 
- resource "aws_lambda_function" "audit_svc_monitoring" {
-    function_name = "${local.service_prefix}-audit-svc-monitoring"
-   handler       = "monitoring_audit_svc.lambda_handler"
-   role          = aws_iam_role.microservices_lambda.arn
-   runtime       = "python3.12"
-   timeout       = 600
-   description   = "Lambda function that monitors the Audit srvice lambda and sends alert to slack"
-   tags          = { code = "https://github.com/CMSgov/ab2d/blob/main/ops/services/30-lambda/code/monitoring_audit_svc.py" }
- }
+resource "aws_lambda_function" "audit_svc_monitoring" {
+  filename      = "${path.root}/monitoring_audit_svc.zip"
+  function_name = "${local.service_prefix}-audit-svc-monitoring"
+  handler       = "monitoring_audit_svc.lambda_handler"
+  role          = aws_iam_role.microservices_lambda.arn
+  runtime       = "python3.12"
+  timeout       = 600
+  description   = "Lambda function that monitors the Audit srvice lambda and sends alert to slack"
+  tags          = { code = "https://github.com/CMSgov/ab2d/blob/main/ops/services/30-lambda/code/monitoring_audit_svc.py" }
+}
 
 resource "aws_security_group_rule" "db_access_lambda_ingress" {
   type                     = "ingress"
@@ -251,10 +243,6 @@ resource "aws_security_group" "database_lambda" {
   tags        = { Name = "${local.service_prefix}-database-lambda" }
 }
 
-data "aws_db_instance" "this" {
-  db_instance_identifier = local.service_prefix
-}
-
 resource "aws_lambda_function" "coverage_count" {
   depends_on = [
     aws_lambda_function.database_management,
@@ -264,7 +252,7 @@ resource "aws_lambda_function" "coverage_count" {
     security_group_ids = [local.db_sg_id, aws_security_group.database_lambda.id]
     subnet_ids         = local.node_subnet_ids
   }
-  filename         = "${path.module}/coverage-counts.zip"
+  filename         = "${path.root}/coverage-counts.zip"
   function_name    = "${local.service_prefix}-coverage-counts-handler"
   role             = aws_iam_role.lambda_database_sns_role.arn
   handler          = "gov.cms.ab2d.coveragecounts.CoverageCountsHandler"
@@ -310,7 +298,7 @@ resource "aws_sns_topic_subscription" "coverage_count_lambda_target" {
 }
 
 resource "aws_lambda_function" "database_management" {
-  filename         = "${path.module}/database-management.zip"
+  filename         = "${path.root}/database-management.zip"
   function_name    = "${local.service_prefix}-database-management-handler"
   role             = aws_iam_role.lambda_database_sns_role.arn
   handler          = "gov.cms.ab2d.databasemanagement.DatabaseManagementHandler"
@@ -340,7 +328,7 @@ resource "aws_lambda_function" "database_management" {
 }
 
 resource "aws_lambda_function" "hpms_counts" {
-  filename         = "${path.module}/retrieve-hpms-counts.zip"
+  filename         = "${path.root}/retrieve-hpms-counts.zip"
   function_name    = "${local.service_prefix}-hpms-counts-handler"
   role             = aws_iam_role.lambda_sns_role.arn
   handler          = "gov.cms.ab2d.retrievehpmscounts.HPMSCountsHandler"
@@ -357,7 +345,7 @@ resource "aws_lambda_function" "hpms_counts" {
       environment          = local.env
       JAVA_TOOL_OPTIONS    = local.java_options
       contract_service_url = local.contracts_service_url
-      SLACK_WEBHOOK_URL    = local.ab2d_slack_alerts_webhook
+      SLACK_WEBHOOK_URL    = local.slack_webhook_ab2d_slack_alerts
     }
   }
   tags = {
