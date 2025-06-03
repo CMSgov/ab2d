@@ -73,3 +73,7 @@ data "aws_security_group" "db" {
     values = ["ab2d-${local.env}-db"]
   }
 }
+
+data "aws_db_instance" "this" {
+  db_instance_identifier = local.service_prefix
+}

@@ -40,12 +40,6 @@ locals {
     webhooks      = "/ab2d/mgmt/slack-webhooks"
   }
 
-# data "aws_ssm_parameter" "contract_service_url" {
-#   # NOTE: This value is created alongside the microservices service
-#   name = "/ab2d/${local.env}/services/internal_lb"
-# }
-
-
   db_host = data.aws_db_instance.this.address
 
   java_options          = "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
