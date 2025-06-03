@@ -22,7 +22,7 @@ module "platform" {
 
   app          = local.app
   env          = local.env
-  root_module  = "https://github.com/CMSgov/ab2d/tree/main/ops/services/20-lambda"
+  root_module  = "https://github.com/CMSgov/ab2d/tree/main/ops/services/30-lambda"
   service      = local.service
   ssm_root_map = local.ssm_root_map
 }
