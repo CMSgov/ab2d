@@ -19,6 +19,10 @@ data "aws_lambda_invocation" "update_database_schema" {
 #   ]
 # }
 
+data "aws_ec2_managed_prefix_list" "cloudfront" {
+  name = "com.amazonaws.global.cloudfront.origin-facing"
+}
+
 data "archive_file" "python_lambda_package" {
   type        = "zip"
   source_file = "${path.module}/code/slack_lambda.py"

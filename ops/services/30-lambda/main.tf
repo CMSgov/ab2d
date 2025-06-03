@@ -65,10 +65,8 @@ locals {
   ab2d_slack_alerts_webhook = module.platform.ssm.webhooks.ab2d-slack-alerts.value
   contracts_service_url     = module.platform.ssm.microservices.url.value
 
-  microservices_lb        = data.aws_security_group.microservices_lb.id
-
-  # FIXME
-  # cloudfront_id        = data.aws_ec2_managed_prefix_list.cloudfront.id
+  microservices_lb = data.aws_security_group.microservices_lb.id
+  cloudfront_id    = data.aws_ec2_managed_prefix_list.cloudfront.id
 
   hpms_counts_schedule = "7 days" # I don't see a "1 week" option
   release_version      = "1.1.0"
@@ -119,7 +117,6 @@ resource "aws_lambda_function" "metrics_transform" {
   timeout          = 600
   environment {
     variables = {
-      #FIXME: how is the metrics lambda using 'environment'? Is the notion of an environment or ephemeral environment usable?
       environment       = local.env
       JAVA_TOOL_OPTIONS = local.java_options
     }
@@ -145,7 +142,6 @@ resource "aws_lambda_function" "audit" {
   }
   environment {
     variables = {
-      #FIXME: how is the audit lambda using 'environment'? Is the notion of an environment or ephemeral environment usable?
       environment           = local.env
       JAVA_TOOL_OPTIONS     = local.java_options
       AB2D_EFS_MOUNT        = local.efs_mount
@@ -388,16 +384,15 @@ resource "aws_security_group_rule" "lambda_contract_egress_access" {
   security_group_id = data.aws_security_group.microservices_lambda.id
 }
 
-#TODO: appears to depend on web terraservice or similar
-# resource "aws_security_group_rule" "sns_lambda_sg_ingress_access" {
-#   type              = "ingress"
-#   from_port         = 443
-#   to_port           = 443
-#   protocol          = "tcp"
-#   description       = "lambda sns"
-#   prefix_list_ids   = [local.cloudfront_id]
-#   security_group_id = data.aws_security_group.microservices_lambda.id
-# }
+resource "aws_security_group_rule" "sns_lambda" {
+  type              = "ingress"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  description       = "lambda sns"
+  prefix_list_ids   = [local.cloudfront_id]
+  security_group_id = data.aws_security_group.microservices_lambda.id
+}
 
 resource "aws_cloudwatch_event_rule" "hpms_counts_lambda_event_rule" {
   name                = "${local.service_prefix}-hpms-counts-lambda-event-rule"
