@@ -22,10 +22,7 @@ env:
   # with the native path filtering. This regex and the 'workflow' job below is a hack to only
   # run the lengthier/costlier workflows when there are relevant files changed.
   # See https://github.com/orgs/community/discussions/44490 for a discussion.
-  workflow_files_re: >-
-    ^(api|common|coverage|e2e-bfd-test|e2e-test|job|src|worker)/.+$|
-    ^(pom.xml|settings.xml)$|
-    ^.github/workflows/(build|deploy|e2e-test|unit-integration-test|verify-deploy).yml$
+  workflow_files_re: '^(api|common|coverage|e2e-bfd-test|e2e-test|job|src|worker)/.+$|^(pom.xml|settings.xml)$|^.github/workflows/(build|deploy|e2e-test|unit-integration-test|verify-deploy).yml$'
 jobs:
   workflow:
     name: Checking workflow
