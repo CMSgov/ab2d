@@ -326,12 +326,13 @@ resource "aws_lb_listener_rule" "contracts" {
 # Events Services
 ####################################
 resource "aws_ecs_service" "events" {
-  name             = "${local.service_prefix}-events"
-  cluster          = aws_ecs_cluster.this.id
-  task_definition  = aws_ecs_task_definition.events.arn
-  desired_count    = 1
-  launch_type      = "FARGATE"
-  platform_version = "1.4.0"
+  name                 = "${local.service_prefix}-events"
+  cluster              = aws_ecs_cluster.this.id
+  task_definition      = aws_ecs_task_definition.events.arn
+  desired_count        = 1
+  launch_type          = "FARGATE"
+  platform_version     = "1.4.0"
+  force_new_deployment = anytrue([var.force_events_deployment, var.events_service_image_tag != null])
 
   network_configuration {
     subnets          = keys(module.platform.private_subnets)
@@ -387,12 +388,13 @@ resource "aws_ecs_task_definition" "events" {
 ####################################
 resource "aws_ecs_service" "properties" {
 
-  name             = "${local.service_prefix}-properties"
-  cluster          = aws_ecs_cluster.this.id
-  task_definition  = aws_ecs_task_definition.properties.arn
-  desired_count    = 1
-  launch_type      = "FARGATE"
-  platform_version = "1.4.0"
+  name                 = "${local.service_prefix}-properties"
+  cluster              = aws_ecs_cluster.this.id
+  task_definition      = aws_ecs_task_definition.properties.arn
+  desired_count        = 1
+  launch_type          = "FARGATE"
+  platform_version     = "1.4.0"
+  force_new_deployment = anytrue([var.force_properties_deployment, var.properties_service_image_tag != null])
 
   network_configuration {
     subnets          = keys(module.platform.private_subnets)
@@ -440,12 +442,13 @@ resource "aws_ecs_task_definition" "properties" {
 # Contracts Services
 ####################################
 resource "aws_ecs_service" "contracts" {
-  name             = "${local.service_prefix}-contracts"
-  cluster          = aws_ecs_cluster.this.id
-  task_definition  = aws_ecs_task_definition.contracts.arn
-  desired_count    = 1
-  launch_type      = "FARGATE"
-  platform_version = "1.4.0"
+  name                 = "${local.service_prefix}-contracts"
+  cluster              = aws_ecs_cluster.this.id
+  task_definition      = aws_ecs_task_definition.contracts.arn
+  desired_count        = 1
+  launch_type          = "FARGATE"
+  platform_version     = "1.4.0"
+  force_new_deployment = anytrue([var.force_contracts_deployment, var.contracts_service_image_tag != null])
 
   network_configuration {
     subnets          = keys(module.platform.private_subnets)
