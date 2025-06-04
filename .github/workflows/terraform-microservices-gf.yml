@@ -114,10 +114,9 @@ jobs:
           
           tofu plan $TOFU_VARS -out=tfplan
 
-
       - name: Tofu apply
         if: ${{ inputs.apply == true }}
         working-directory: ops/services/20-microservices/
         run: |
           tofu apply -input=false tfplan 
-          
+        
