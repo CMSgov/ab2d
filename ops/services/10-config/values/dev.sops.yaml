@@ -7,7 +7,7 @@
 /ab2d/${env}/core/sensitive/database_password: ENC[AES256_GCM,data:LqxOgQ4Izgdb6yjKBKhOHgW1hGOvvx4SFgcWQdzXu4g=,iv:aZ3B/HcmSvvgoQzQd7AVROdOzfGjGA7q1kXa5E6wpyU=,tag:Ijs21uWvZI69YuEYsDj/hQ==,type:str]
 /ab2d/${env}/core/sensitive/database_user: ENC[AES256_GCM,data:HuiltDu1hO8=,iv:mYjy6su7jHoSHJeE3k+PrSo5/2i5zokqy3sk+7xUIz0=,tag:m1R04LMLsMuVlzTz1tXSTw==,type:str]
 /ab2d/${env}/core/sensitive/hicn_hash_iter: ENC[AES256_GCM,data:wiVwpQ==,iv:EhagvxEWYJfDlX5SyoRq/P1c65qLKC/EOSnyNExW2Zk=,tag:pmaZkWDYssn4k/GGPcW0XA==,type:int]
-/ab2d/${env}/core/sensitive/hpms_api_params: ENC[AES256_GCM,data:MRtQL+Hc2xlRj3utsKaUkpy962o=,iv:srApjEhEi7xG7XN8wvugiXEpHLlCZwTv6tVs+P0Mm3I=,tag:13wsK6tCgrHnPyeqWrWlDQ==,type:str]
+/ab2d/${env}/core/sensitive/hpms_api_params: ENC[AES256_GCM,data:Z9pXTKwhOUGMzFC6L+CApl7qTjE/L7MxA7LTXCE=,iv:Aan0Ab475Mq867nLBz7dXH2VZGO4MNke/oVqIpgKMm4=,tag:zZgT8QjzvpGsHYWHl47+VQ==,type:str]
 /ab2d/${env}/core/sensitive/hpms_auth_key_id: ENC[AES256_GCM,data:DrhnqLOLbbjzw8UkR56aA0Yz+gAnoisQsjQAkD93ybAyuBGn,iv:eROpMiPOQM8ZypovfU4+t8STzWFx2RZM3hwA881ulCM=,tag:u4ICfN7R0rjS0jQ42qF+Ag==,type:str]
 /ab2d/${env}/core/sensitive/hpms_auth_key_secret: ENC[AES256_GCM,data:LJmfY+KyXsA12HUXAIT649Pr1BPe7EGvDLUM0puGKAqrNHRHBSRhJOHjV3tPror7eqVfBmjFlI5lLpUJhH+eumEs0MKAk9Kq54s2P6SRbNjQK3ED6rJrog==,iv:B6oEFieH9XkYVBQliymWASYYHJME1rRnzJHhRLGlcm8=,tag:KdSG/STj5hOYaK11k1LwKA==,type:str]
 /ab2d/${env}/core/sensitive/hpms_url: ENC[AES256_GCM,data:UMCyHCe/s11/Ht0Z56gwJZro2tEmfuon,iv:0JkeroIPBTPUk5rDslbEi2KjhaRQe7g882lR/T6xHZ4=,tag:gvHKTLxM4/2zTLkXFigLwg==,type:str]
@@ -39,7 +39,7 @@
 /ab2d/${env}/lambda/nonsensitive/artifactory_url: https://artifactory.cloud.cms.gov
 /ab2d/${env}/sqs/access_key: ENC[AES256_GCM,data:7ahEYBrtZMQyxxWJ6Bsd2yi7/kQ=,iv:crFG5AMNiB9BinPGjp1M3YzDNPKoQYEz1YTqtSpEAnU=,tag:E0jILCTBNm8Z3SLwazR0HQ==,type:str]
 /ab2d/${env}/sqs/access_secret: ENC[AES256_GCM,data:ZdAS4tXHdzpn5SjhUE815ghII4yla27LobS/CSa+APlg44Qpi3HwUg==,iv:vGQUD2KLd5ZpGcNJNCWleweqpMTBfDgy0DsuT3zHIiw=,tag:xtqW6wqr6UHCMS2OmAvJYg==,type:str]
-/ab2d/${env}/worker/nonsensitive/bfd_keystore_location: /mnt/efs/bfd-keystore/ab2d-dev/ab2d_dev_keystore
+/ab2d/${env}/worker/nonsensitive/bfd_keystore_location: /mnt/efs/bfd-keystore/dev/ab2d_dev_keystore
 /ab2d/${env}/worker/sensitive/bfd_keystore_password: ENC[AES256_GCM,data:W7N9fbbLaBKOxNGyMOTh+dx3bruaq3ruqEXLWDnQdXQ=,iv:BQDusOG05cZ9tYqdMQ9tqotxipPTzlwjALlC7E9wZ+0=,tag:kcBublERWtQqt3IZhB556w==,type:str]
 sops:
   kms:
