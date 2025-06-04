@@ -76,7 +76,6 @@ jobs:
             OKTA_CLIENT_PASSWORD=/ab2d/${AB2D_ENV}/okta/sensitive/test-pdp-100-secret
             SECONDARY_USER_OKTA_CLIENT_ID=/ab2d/${AB2D_ENV}/okta/sensitive/test-pdp-1000-id
             SECONDARY_USER_OKTA_CLIENT_PASSWORD=/ab2d/${AB2D_ENV}/okta/sensitive/test-pdp-1000-secret
-    
 
       - name: Create opt/ab2d directory and download keystore
         run: |
