@@ -12,7 +12,9 @@ This root module is responsible for creating essential resources that the majori
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.99.1 |<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.99.1 |
+
+<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
      Manually updating sections between TF_DOCS tags may be overwritten.
      See https://terraform-docs.io/user-guide/configuration/ for more information.
