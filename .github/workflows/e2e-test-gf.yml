@@ -81,7 +81,6 @@ jobs:
         run: |
           mkdir -p opt/ab2d
           KEYSTORE_FILE_NAME="ab2d_${AB2D_ENV}_keystore"
-      # ToDo: bucket name depend on env. need to be changed
           aws s3 cp s3://ab2d-${AB2D_ENV}-main20250514133221464300000001/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
           test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
 
