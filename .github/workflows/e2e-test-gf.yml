@@ -1,5 +1,5 @@
 name: end-to-end-gf tests
-run-name: end-to-end-gf tests
+run-name: end-to-end-gf tests ${{ inputs.environment }}
 
 on:
   workflow_call:
@@ -35,7 +35,6 @@ jobs:
       AWS_ACCOUNT: ${{ inputs.environment == 'sandbox' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
       AB2D_ENV: ${{ inputs.environment }}
 
-
     steps:
       - name: Assume AWS role
         uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
@@ -61,13 +60,6 @@ jobs:
             ARTIFACTORY_URL=/artifactory/url
             ARTIFACTORY_USER=/artifactory/user
             ARTIFACTORY_PASSWORD=/artifactory/password
-
-      - name: Set env vars from AWS params in AB2D account
-        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
-        env:
-          AWS_REGION: ${{ vars.AWS_REGION }}
-        with:
-          params: |
             AB2D_BFD_KEYSTORE_PASSWORD=/bfd/ab2d-keystore-password
             OKTA_CLIENT_ID=/okta/test-pdp-100-id
             OKTA_CLIENT_PASSWORD=/okta/test-pdp-100-secret
