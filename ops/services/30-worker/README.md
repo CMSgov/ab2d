@@ -20,7 +20,9 @@ This module is responsible for creating the EC2-backed ECS Cluster and related r
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.99.1 |<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.99.1 |
+
+<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
      Manually updating sections between TF_DOCS tags may be overwritten.
      See https://terraform-docs.io/user-guide/configuration/ for more information.
@@ -40,6 +42,7 @@ This module is responsible for creating the EC2-backed ECS Cluster and related r
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_force_worker_deployment"></a> [force\_worker\_deployment](#input\_force\_worker\_deployment) | Override to force a worker deployment. Worker deployments are automatic when `var.worker_service_image_tag` is specified. | `bool` | `false` | no |
 | <a name="input_launch_template_block_device_mappings"></a> [launch\_template\_block\_device\_mappings](#input\_launch\_template\_block\_device\_mappings) | ECS Container Host block device map | `map(any)` | <pre>{<br>  "delete_on_termination": true,<br>  "device_name": "/dev/xvda",<br>  "encrypted": true,<br>  "iops": 3000,<br>  "throughput": 128,<br>  "volume_size": 100,<br>  "volume_type": "gp3"<br>}</pre> | no |
 | <a name="input_override_task_definition_arn"></a> [override\_task\_definition\_arn](#input\_override\_task\_definition\_arn) | Use to override the task definition managed by this solution | `string` | `null` | no |
 | <a name="input_parent_env"></a> [parent\_env](#input\_parent\_env) | The parent environment of the current solution. Will correspond with `terraform.workspace`".<br>Necessary on `tofu init` and `tofu workspace select` \_only\_. In all other situations, parent env<br>will be divined from `terraform.workspace`. | `string` | `null` | no |

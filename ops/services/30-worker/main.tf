@@ -184,7 +184,7 @@ resource "aws_ecs_service" "worker" {
   task_definition                    = coalesce(var.override_task_definition_arn, aws_ecs_task_definition.worker.arn)
   launch_type                        = "EC2"
   scheduling_strategy                = "DAEMON"
-  force_new_deployment               = true
+  force_new_deployment               = anytrue([var.force_worker_deployment, var.worker_service_image_tag != null])
   deployment_minimum_healthy_percent = 100
 }
 
