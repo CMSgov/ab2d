@@ -132,16 +132,6 @@ resource "aws_security_group_rule" "host_port" {
   security_group_id        = data.aws_security_group.api.id
 }
 
-resource "aws_security_group_rule" "egress_api" {
-  type              = "egress"
-  description       = "Allow all egress"
-  from_port         = "0"
-  to_port           = "0"
-  protocol          = "-1"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = data.aws_security_group.api.id
-}
-
 resource "aws_security_group" "load_balancer" {
   name        = "${local.service_prefix}-load-balancer-sg"
   description = "API load balancer security group"
