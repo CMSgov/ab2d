@@ -2,7 +2,7 @@ variable "launch_template_block_device_mappings" {
   default = {
     device_name           = "/dev/xvda"
     iops                  = 3000
-    throughput            = 128
+    throughput            = 250
     volume_size           = 100
     volume_type           = "gp3"
     delete_on_termination = true
