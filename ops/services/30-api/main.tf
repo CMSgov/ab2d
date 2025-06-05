@@ -141,6 +141,26 @@ resource "aws_security_group" "load_balancer" {
   }
 }
 
+resource "aws_security_group_rule" "load_balancer_api" {
+  type                     = "ingress"
+  description              = "Allow loadbalancer access to api workload on ${local.alb_listener_port}"
+  from_port                = local.alb_listener_port
+  to_port                  = local.alb_listener_port
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.load_balancer.id
+  security_group_id        = data.aws_security_group.api.id
+}
+
+resource "aws_security_group_rule" "egress_lb" {
+  type              = "egress"
+  description       = "Allow all egress"
+  from_port         = "0"
+  to_port           = "0"
+  protocol          = "-1"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.load_balancer.id
+}
+
 resource "aws_security_group_rule" "load_balancer_access_mgmt" {
   for_each = nonsensitive(module.platform.ssm.mgmt_ipv4)
 
