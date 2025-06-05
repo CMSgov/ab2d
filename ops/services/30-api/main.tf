@@ -41,6 +41,7 @@ locals {
     sandbox = "ab2d-sbx-sandbox"
   }, local.parent_env, local.env)
 
+  aws_region                            = module.platform.primary_region.name
   ab2d_keystore_location                = "classpath:ab2d.p12"
   ab2d_keystore_password                = module.platform.ssm.core.keystore_password.value
   ab2d_okta_jwt_issuer                  = module.platform.ssm.core.okta_jwt_issuer.value
@@ -220,20 +221,25 @@ resource "aws_security_group_rule" "efs_ingress" {
 
 resource "aws_ecs_cluster" "ab2d_api" {
   name = "${local.service_prefix}-api"
+
+  setting {
+    name  = "containerInsights"
+    value = module.platform.is_ephemeral_env ? "disabled" : "enabled"
+  }
 }
 
 resource "aws_ecs_task_definition" "api" {
   #ts:skip=AWS.EcsCluster.NetworkSecurity.High.0104 vpc is assigned via a security group on the aws_lb
-  family = "${local.service_prefix}-api"
+  family                   = "${local.service_prefix}-api"
+  network_mode             = "bridge"
+  execution_role_arn       = data.aws_iam_role.api.arn
+  requires_compatibilities = ["EC2"]
 
   volume {
     configure_at_launch = false
     name                = "efs"
     host_path           = "/mnt/efs"
   }
-  requires_compatibilities = ["EC2"]
-  network_mode             = "bridge"
-  execution_role_arn       = data.aws_iam_role.api.arn
 
   container_definitions = templatefile("${path.module}/templates/api_definition.tpl", {
     ab2d_keystore_location          = local.ab2d_keystore_location
@@ -311,7 +317,7 @@ resource "aws_launch_template" "ab2d_api" {
         env          = lower(local.env),
         cluster_name = "${local.service_prefix}-api",
         efs_id       = data.aws_efs_file_system.this.file_system_id
-        aws_region   = module.platform.primary_region.name
+        aws_region   = local.aws_region
         bucket_name  = local.main_bucket
       }
     )
