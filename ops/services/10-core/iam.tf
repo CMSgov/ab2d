@@ -32,20 +32,22 @@ resource "aws_iam_role" "worker" {
 }
 
 resource "aws_iam_role_policy_attachment" "worker" {
-  for_each = toset([
-    "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role",
-    "arn:aws:iam::aws:policy/AmazonECS_FullAccess",
-    "arn:aws:iam::aws:policy/AmazonAPIGatewayInvokeFullAccess",
-    "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
-    "arn:aws:iam::aws:policy/AmazonS3FullAccess",
-    "arn:aws:iam::aws:policy/AWSKeyManagementServicePowerUser",
-    "arn:aws:iam::aws:policy/SecretsManagerReadWrite",
-    "arn:aws:iam::aws:policy/EC2InstanceProfileForImageBuilderECRContainerBuilds",
-    "arn:aws:iam::aws:policy/AmazonSQSFullAccess",
-    "arn:aws:iam::aws:policy/AmazonSNSFullAccess",
-    "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
-    data.aws_iam_policy.cms_cloud_ssm_iam.arn
-  ])
+  for_each =  {
+   a =  "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role",
+   b =  "arn:aws:iam::aws:policy/AmazonECS_FullAccess",
+   c =  "arn:aws:iam::aws:policy/AmazonAPIGatewayInvokeFullAccess",
+   d =  "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
+   e =  "arn:aws:iam::aws:policy/AmazonS3FullAccess",
+   f =  "arn:aws:iam::aws:policy/AWSKeyManagementServicePowerUser",
+   g =  "arn:aws:iam::aws:policy/SecretsManagerReadWrite",
+   h =  "arn:aws:iam::aws:policy/EC2InstanceProfileForImageBuilderECRContainerBuilds",
+   i =  "arn:aws:iam::aws:policy/AmazonSQSFullAccess",
+   j =  "arn:aws:iam::aws:policy/AmazonSNSFullAccess",
+   k =  "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
+   l = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+   m = data.aws_iam_policy.cms_cloud_ssm_iam.arn
+   n = aws_iam_policy.microservices.arn
+  }
 
   role       = aws_iam_role.worker.name
   policy_arn = each.value
@@ -78,19 +80,22 @@ resource "aws_iam_role" "api" {
 }
 
 resource "aws_iam_role_policy_attachment" "api" {
-  for_each = toset([
-    "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role",
-    "arn:aws:iam::aws:policy/AmazonECS_FullAccess",
-    "arn:aws:iam::aws:policy/AmazonAPIGatewayInvokeFullAccess",
-    "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
-    "arn:aws:iam::aws:policy/AmazonS3FullAccess",
-    "arn:aws:iam::aws:policy/AWSKeyManagementServicePowerUser",
-    "arn:aws:iam::aws:policy/SecretsManagerReadWrite",
-    "arn:aws:iam::aws:policy/EC2InstanceProfileForImageBuilderECRContainerBuilds",
-    "arn:aws:iam::aws:policy/AmazonSQSFullAccess",
-    "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
-    data.aws_iam_policy.cms_cloud_ssm_iam.arn
-  ])
+  for_each = {
+    a = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role",
+    b = "arn:aws:iam::aws:policy/AmazonECS_FullAccess",
+    c = "arn:aws:iam::aws:policy/AmazonAPIGatewayInvokeFullAccess",
+    d = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
+    e = "arn:aws:iam::aws:policy/AmazonS3FullAccess",
+    f = "arn:aws:iam::aws:policy/AWSKeyManagementServicePowerUser",
+    g = "arn:aws:iam::aws:policy/SecretsManagerReadWrite",
+    h = "arn:aws:iam::aws:policy/EC2InstanceProfileForImageBuilderECRContainerBuilds",
+    i = "arn:aws:iam::aws:policy/AmazonSQSFullAccess",
+    j = "arn:aws:iam::aws:policy/AmazonEC2FullAccess",
+    k = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+    l = data.aws_iam_policy.cms_cloud_ssm_iam.arn,
+    m = aws_iam_policy.microservices.arn
+
+  }
 
   role       = aws_iam_role.api.name
   policy_arn = each.value
