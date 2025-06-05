@@ -351,9 +351,6 @@ resource "aws_launch_template" "ab2d_api" {
   }
 }
 
-locals {
-}
-
 resource "aws_autoscaling_group" "asg" {
   name_prefix               = "${local.service_prefix}-api"
   max_size                  = local.api_max_instances
