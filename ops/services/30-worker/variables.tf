@@ -4,7 +4,7 @@ variable "launch_template_block_device_mappings" {
     device_name           = "/dev/xvda"
     encrypted             = true
     iops                  = 3000
-    throughput            = 128
+    throughput            = 250
     volume_size           = 100
     volume_type           = "gp3"
   }
