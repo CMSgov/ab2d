@@ -31,13 +31,6 @@ locals {
     accounts      = "/ab2d/mgmt/aws-account-numbers"
   }
 
-  bfd_keystore_file_name = lookup({
-    test    = "ab2d_impl_keystore"
-    dev     = "ab2d_dev_keystore"
-    sandbox = "ab2d_sbx_keystore"
-    prod    = "ab2d_prod_keystore"
-  }, local.parent_env, local.env)
-
   bfd_insights       = "none"
   private_subnet_ids = keys(module.platform.private_subnets)
 
@@ -52,11 +45,11 @@ locals {
   vpc_id      = module.platform.vpc_id
 
   bfd_url = lookup({
-    dev     = "prod-sbx.fhir.bfd.cmscloud.local"
-    test    = "prod-sbx.fhir.bfd.cmscloud.local"
-    prod    = "prod.bfd.fhir.cmscloud.local"
-    sandbox = "prod-sbx.fhir.bfd.cmscloud.local"
-  }, local.env, "prod-sbx.fhir.bfd.cmscloud.local")
+    dev     = "https://prod-sbx.fhir.bfd.cmscloud.local"
+    test    = "https://prod-sbx.fhir.bfd.cmscloud.local"
+    prod    = "https://prod.bfd.fhir.cmscloud.local"
+    sandbox = "https://prod-sbx.fhir.bfd.cmscloud.local"
+  }, local.env, "https://prod-sbx.fhir.bfd.cmscloud.local")
 
   cpm_backup = "Daily Weekly Monthly" #FIXME
 
@@ -78,7 +71,6 @@ locals {
   db_name                     = module.platform.ssm.core.database_name.value
   db_password                 = module.platform.ssm.core.database_password.value
   db_username                 = module.platform.ssm.core.database_user.value
-  main_bucket                 = module.platform.ssm.core.main-bucket-name.value
   microservices_url           = module.platform.ssm.microservices.url.value
   new_relic_app_name          = module.platform.ssm.common.new_relic_app_name.value
   new_relic_license_key       = module.platform.ssm.common.new_relic_license_key.value
@@ -87,15 +79,16 @@ locals {
   aws_account_cms_gold_images = module.platform.ssm.accounts.cms-gold-images.value
 
   additional_asg_tags = {
-    Name           = "${local.service_prefix}-worker"
-    stack          = local.env
-    purpose        = "ECS container instance"
-    sensitivity    = "Public"
-    "cpm backup"   = local.cpm_backup #FIXME
-    purchase_type  = "On-Demand"      #FIXME
-    os_license     = "Amazon Linux 2023"
-    gold_disk_name = local.gold_disk_name
-    image_version  = local.image_version
+    Name             = "${local.service_prefix}-worker"
+    stack            = local.env
+    purpose          = "ECS container instance"
+    sensitivity      = "Public"
+    "cpm backup"     = local.cpm_backup #FIXME
+    purchase_type    = "On-Demand"      #FIXME
+    os_license       = "Amazon Linux 2023"
+    gold_disk_name   = local.gold_disk_name
+    image_version    = local.image_version
+    AmazonECSManaged = true
   }
 }
 
@@ -129,9 +122,22 @@ resource "aws_security_group_rule" "efs_ingress" {
   security_group_id        = data.aws_security_group.efs.id
 }
 
-
-resource "aws_ecs_cluster" "ab2d_worker" {
+resource "aws_ecs_cluster" "this" {
   name = "${local.service_prefix}-worker"
+}
+
+resource "aws_ecs_capacity_provider" "this" {
+  name = aws_ecs_cluster.this.name
+
+  auto_scaling_group_provider {
+    auto_scaling_group_arn         = aws_autoscaling_group.this.arn
+    managed_termination_protection = "ENABLED"
+  }
+}
+
+resource "aws_ecs_cluster_capacity_providers" "this" {
+  cluster_name       = aws_ecs_cluster.this.name
+  capacity_providers = [aws_ecs_capacity_provider.this.name]
 }
 
 data "aws_sqs_queue" "events" {
@@ -180,15 +186,15 @@ resource "aws_ecs_task_definition" "worker" {
 
 resource "aws_ecs_service" "worker" {
   name                               = "${local.service_prefix}-worker"
-  cluster                            = aws_ecs_cluster.ab2d_worker.id
+  cluster                            = aws_ecs_cluster.this.id
   task_definition                    = coalesce(var.override_task_definition_arn, aws_ecs_task_definition.worker.arn)
   launch_type                        = "EC2"
   scheduling_strategy                = "DAEMON"
-  force_new_deployment               = true
+  force_new_deployment               = anytrue([var.force_worker_deployment, var.worker_service_image_tag != null])
   deployment_minimum_healthy_percent = 100
 }
 
-resource "aws_launch_template" "ab2d_worker" {
+resource "aws_launch_template" "this" {
   name          = "${local.service_prefix}-worker"
   image_id      = local.ami_id
   instance_type = local.ec2_instance_type_worker
@@ -211,12 +217,10 @@ resource "aws_launch_template" "ab2d_worker" {
     templatefile(
       "${path.module}/templates/userdata.tpl",
       {
-        env                    = lower(local.env),
-        cluster_name           = "${local.service_prefix}-worker"
-        efs_id                 = data.aws_efs_file_system.this.file_system_id,
-        bfd_keystore_file_name = local.bfd_keystore_file_name
-        aws_region             = local.region_name
-        bucket_name            = local.main_bucket
+        aws_region   = local.region_name
+        cluster_name = "${local.service_prefix}-worker"
+        efs_id       = data.aws_efs_file_system.this.file_system_id,
+        env          = local.env
       }
     )
   )
@@ -239,7 +243,7 @@ resource "aws_launch_template" "ab2d_worker" {
   }
 }
 
-resource "aws_autoscaling_group" "asg" {
+resource "aws_autoscaling_group" "this" {
   name_prefix               = "${local.service_prefix}-worker"
   max_size                  = local.worker_max_instances
   min_size                  = local.worker_min_instances
@@ -248,6 +252,7 @@ resource "aws_autoscaling_group" "asg" {
   health_check_grace_period = 480
   enabled_metrics           = ["GroupTerminatingInstances", "GroupInServiceInstances", "GroupMaxSize", "GroupTotalInstances", "GroupMinSize", "GroupPendingInstances", "GroupDesiredCapacity", "GroupStandbyInstances"]
   vpc_zone_identifier       = toset(local.private_subnet_ids)
+  protect_from_scale_in     = true
 
   instance_refresh {
     strategy = "Rolling"
@@ -257,7 +262,7 @@ resource "aws_autoscaling_group" "asg" {
   }
 
   launch_template {
-    id      = aws_launch_template.ab2d_worker.id
+    id      = aws_launch_template.this.id
     version = "$Latest"
   }
 
@@ -279,7 +284,7 @@ resource "aws_autoscaling_group" "asg" {
 resource "aws_autoscaling_policy" "worker_target_tracking_policy" {
   name                      = "${local.service_prefix}-worker-target-tracking-policy"
   policy_type               = "TargetTrackingScaling"
-  autoscaling_group_name    = aws_autoscaling_group.asg.name
+  autoscaling_group_name    = aws_autoscaling_group.this.name
   estimated_instance_warmup = 120
 
   target_tracking_configuration {

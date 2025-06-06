@@ -35,7 +35,7 @@ data "aws_security_group" "efs" {
 }
 
 data "aws_security_group" "api" {
-  name = "${local.service_prefix}-api-sg" #FIXME jsut use -api
+  name = "${local.service_prefix}-api"
 }
 
 data "aws_efs_file_system" "this" {
