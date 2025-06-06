@@ -55,14 +55,23 @@ jobs:
           tofu_version: ${{ env.TOFU_VERSION }}
 
 
-      - name: Tofu plan and apply
-        working-directory: ops/services/20-microservices/
+      - name: Tofu plan and apply -- WORKER
+        working-directory: ops/services/30-microservices/
         run: |
           tofu init -var=parent_env=dev -reconfigure
           tofu workspace select -var=parent_env=dev -or-create=true dev
-          tofu plan -var=api_service_image_tag="ab2d-dev-latest" -var=worker_service_image_tag="ab2d-dev-latest" -out=tfplan
+          tofu plan -var=worker_service_image_tag="ab2d-dev-latest" -out=tfplan
           tofu apply -input=false tfplan 
-          
+        
+
+      - name: Tofu plan and apply -- API
+        working-directory: ops/services/30-microservices/
+        run: |
+          tofu init -var=parent_env=dev -reconfigure
+          tofu workspace select -var=parent_env=dev -or-create=true dev
+          tofu plan -var=api_service_image_tag="ab2d-dev-latest"  -out=tfplan
+          tofu apply -input=false tfplan 
+
 
 #      - name: Deploy ECS service to run on latest image in ECR
 #        env:
