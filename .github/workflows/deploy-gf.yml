@@ -29,6 +29,9 @@ on:
           - api
           - worker
 
+env:
+  TOFU_VERSION: 1.10.0-beta2
+
 jobs:
   deploy:
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
@@ -46,19 +49,34 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.AB2D_ENV }}-github-actions
 
-      - name: Deploy ECS service to run on latest image in ECR
-        env:
-          SERVICE_NAME: ab2d-${{ env.AB2D_ENV }}-${{ env.MODULE }} # TODO verify this
+      - name: Install tofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: ${{ env.TOFU_VERSION }}
+
+
+      - name: Tofu plan and apply
+        working-directory: ops/services/20-microservices/
         run: |
-          echo "Deploying service $SERVICE_NAME"
-          aws ecs update-service --cluster "$SERVICE_NAME" --service "$SERVICE_NAME" --force-new-deployment > /dev/null
-          echo "Waiting for ECS service to stabilize..."
-          exit_status=1
-          set +e
-          while [ "$exit_status" != "0" ]; do
-            aws ecs wait services-stable --cluster "$SERVICE_NAME" --services "$SERVICE_NAME"
-            exit_status="$?"
-            echo "Wait result: $exit_status"
-          done
-          set -e
-          echo "✅ ECS service stabilized."
+          tofu init -var=parent_env=dev -reconfigure
+          tofu workspace select -var=parent_env=dev -or-create=true dev
+          tofu plan -var=api_service_image_tag="ab2d-dev-latest" -var=worker_service_image_tag="ab2d-dev-latest" -out=tfplan
+          tofu apply -input=false tfplan 
+          
+
+#      - name: Deploy ECS service to run on latest image in ECR
+#        env:
+#          SERVICE_NAME: ab2d-${{ env.AB2D_ENV }}-${{ env.MODULE }} # TODO verify this
+#        run: |
+#          echo "Deploying service $SERVICE_NAME"
+#          aws ecs update-service --cluster "$SERVICE_NAME" --service "$SERVICE_NAME" --force-new-deployment > /dev/null
+#          echo "Waiting for ECS service to stabilize..."
+#          exit_status=1
+#          set +e
+#          while [ "$exit_status" != "0" ]; do
+#            aws ecs wait services-stable --cluster "$SERVICE_NAME" --services "$SERVICE_NAME"
+#            exit_status="$?"
+#            echo "Wait result: $exit_status"
+#          done
+#          set -e
+#          echo "✅ ECS service stabilized."
