@@ -176,7 +176,7 @@ resource "aws_security_group" "api" {
   description = "API security group"
   vpc_id      = local.vpc_id
   tags = {
-    "Name" = "${local.service_prefix}-api"
+    Name = "${local.service_prefix}-api"
   }
 }
 
@@ -201,25 +201,25 @@ resource "aws_security_group_rule" "db_access_api" {
 }
 
 resource "aws_security_group_rule" "db_access_mgmt" {
-  type                     = "ingress"
-  description              = "${local.service_prefix} db connections from mgmt"
-  from_port                = "5432"
-  to_port                  = "5432"
-  protocol                 = "tcp"
-  cidr_blocks              = [module.platform.platform_cidr]
-  security_group_id        = data.aws_security_group.db.id
+  type              = "ingress"
+  description       = "${local.service_prefix} db connections from mgmt"
+  from_port         = "5432"
+  to_port           = "5432"
+  protocol          = "tcp"
+  cidr_blocks       = [module.platform.platform_cidr]
+  security_group_id = data.aws_security_group.db.id
 }
 
 resource "aws_security_group" "worker" {
   name        = "${local.service_prefix}-worker"
   description = "Worker security group"
   vpc_id      = local.vpc_id
-  tags        = { "Name" = "${local.service_prefix}-worker" }
+  tags        = { Name = "${local.service_prefix}-worker" }
 }
 
 resource "aws_security_group" "lambda" {
   name        = "${local.service_prefix}-microservices-lambda"
   description = "Lambdas that need access to microservices security group"
   vpc_id      = local.vpc_id
-  tags        = { "Name" = "${local.service_prefix}-microservices-lambda" }
+  tags        = { Name = "${local.service_prefix}-microservices-lambda" }
 }
