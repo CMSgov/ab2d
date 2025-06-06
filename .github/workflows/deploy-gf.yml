@@ -56,7 +56,7 @@ jobs:
 
 
       - name: Tofu plan and apply -- WORKER
-        working-directory: ops/services/30-microservices/
+        working-directory: ops/services/30-worker/
         run: |
           tofu init -var=parent_env=dev -reconfigure
           tofu workspace select -var=parent_env=dev -or-create=true dev
@@ -65,7 +65,7 @@ jobs:
         
 
       - name: Tofu plan and apply -- API
-        working-directory: ops/services/30-microservices/
+        working-directory: ops/services/30-api/
         run: |
           tofu init -var=parent_env=dev -reconfigure
           tofu workspace select -var=parent_env=dev -or-create=true dev
