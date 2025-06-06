@@ -52,11 +52,11 @@ locals {
   vpc_id      = module.platform.vpc_id
 
   bfd_url = lookup({
-    dev     = "prod-sbx.fhir.bfd.cmscloud.local"
-    test    = "prod-sbx.fhir.bfd.cmscloud.local"
-    prod    = "prod.bfd.fhir.cmscloud.local"
-    sandbox = "prod-sbx.fhir.bfd.cmscloud.local"
-  }, local.env, "prod-sbx.fhir.bfd.cmscloud.local")
+    dev     = "https://prod-sbx.fhir.bfd.cmscloud.local"
+    test    = "https://prod-sbx.fhir.bfd.cmscloud.local"
+    prod    = "https://prod.bfd.fhir.cmscloud.local"
+    sandbox = "https://prod-sbx.fhir.bfd.cmscloud.local"
+  }, local.env, "https://prod-sbx.fhir.bfd.cmscloud.local")
 
   cpm_backup = "Daily Weekly Monthly" #FIXME
 
