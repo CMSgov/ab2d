@@ -217,9 +217,10 @@ resource "aws_launch_template" "this" {
     templatefile(
       "${path.module}/templates/userdata.tpl",
       {
+        aws_region   = local.region_name
         cluster_name = "${local.service_prefix}-worker"
         efs_id       = data.aws_efs_file_system.this.file_system_id,
-        aws_region   = local.region_name
+        env          = local.env
       }
     )
   )
