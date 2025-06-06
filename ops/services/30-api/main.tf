@@ -485,3 +485,8 @@ resource "aws_lb_listener" "ab2d_api" {
     type             = "forward"
   }
 }
+
+resource "aws_acm_certificate" "this" {
+  private_key      = module.platform.ssm.api.tls_private_key.value
+  certificate_body = module.platform.ssm.api.tls_public_cert.value
+}
