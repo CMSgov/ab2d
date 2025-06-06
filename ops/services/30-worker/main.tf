@@ -31,13 +31,6 @@ locals {
     accounts      = "/ab2d/mgmt/aws-account-numbers"
   }
 
-  bfd_keystore_file_name = lookup({
-    test    = "ab2d_impl_keystore"
-    dev     = "ab2d_dev_keystore"
-    sandbox = "ab2d_sbx_keystore"
-    prod    = "ab2d_prod_keystore"
-  }, local.parent_env, local.env)
-
   bfd_insights       = "none"
   private_subnet_ids = keys(module.platform.private_subnets)
 
@@ -78,7 +71,6 @@ locals {
   db_name                     = module.platform.ssm.core.database_name.value
   db_password                 = module.platform.ssm.core.database_password.value
   db_username                 = module.platform.ssm.core.database_user.value
-  main_bucket                 = module.platform.ssm.core.main-bucket-name.value
   microservices_url           = module.platform.ssm.microservices.url.value
   new_relic_app_name          = module.platform.ssm.common.new_relic_app_name.value
   new_relic_license_key       = module.platform.ssm.common.new_relic_license_key.value
@@ -225,9 +217,9 @@ resource "aws_launch_template" "this" {
     templatefile(
       "${path.module}/templates/userdata.tpl",
       {
-        cluster_name           = "${local.service_prefix}-worker"
-        efs_id                 = data.aws_efs_file_system.this.file_system_id,
-        aws_region             = local.region_name
+        cluster_name = "${local.service_prefix}-worker"
+        efs_id       = data.aws_efs_file_system.this.file_system_id,
+        aws_region   = local.region_name
       }
     )
   )
