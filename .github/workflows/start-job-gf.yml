@@ -41,7 +41,7 @@ on:
 
 jobs:
   start-job:
-    runs-on: self-hosted
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
 
     env:
       CONTRACT_NUMBER: ${{ inputs.contractNumber }}
