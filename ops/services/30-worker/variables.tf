@@ -4,7 +4,7 @@ variable "launch_template_block_device_mappings" {
     device_name           = "/dev/xvda"
     encrypted             = true
     iops                  = 3000
-    throughput            = 128
+    throughput            = 250
     volume_size           = 100
     volume_type           = "gp3"
   }
@@ -22,4 +22,10 @@ variable "worker_service_image_tag" {
   default     = null
   description = "Desired image tag for the worker service stored in ECR"
   type        = string
+}
+
+variable "force_worker_deployment" {
+  default     = false
+  description = "Override to force a worker deployment. Worker deployments are automatic when `var.worker_service_image_tag` is specified."
+  type        = bool
 }
