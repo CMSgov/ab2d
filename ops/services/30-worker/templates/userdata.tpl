@@ -19,12 +19,6 @@ echo $INSTANCE_ID
 aws ec2 modify-instance-metadata-options --instance-id $INSTANCE_ID --http-put-response-hop-limit 2
 
 #####
-# -----------
-# Without TLS
-# -----------
-# echo '${efs_id}:/ /mnt/efs efs _netdev 0 0' | sudo tee -a /etc/fstab
-# sudo mount -a
-#
 # --------
 # With TLS
 # --------
@@ -33,27 +27,8 @@ echo '${efs_id}:/ /mnt/efs efs _netdev,tls,iam 0 0' | sudo tee -a /etc/fstab
 sudo mount -a
 #####
 
-#
-# Download keystore from S3 to the EFS mount
-#
-
-# Create a "bfd-keystore" directory under EFS if it doesn't exist
-keystore_dir="/mnt/efs/bfd-keystore/${env}"
-echo -n "Creating keystore directory at $${keystore_dir}..."
-mkdir -p "$${keystore_dir}"
-echo "done."
-
-
-# Download keystore file from S3
-aws s3 cp "s3://${bucket_name}/${bfd_keystore_file_name}" "$${keystore_dir}/${bfd_keystore_file_name}"
-
-#
-# Setup ECS realted items
-#
-
 # ECS config file
 # https://github.com/aws/amazon-ecs-agent
-
 sudo mkdir -p /etc/ecs
 sudo sh -c 'echo "
 ECS_DATADIR=/data
@@ -72,7 +47,6 @@ ECS_CLUSTER="${cluster_name}"
 ECS_LOGLEVEL=info" > /etc/ecs/ecs.config'
 
 # Autostart the ecs client
-
 sudo docker run --name ecs-agent \
   --detach=true \
   --restart=on-failure:10 \
