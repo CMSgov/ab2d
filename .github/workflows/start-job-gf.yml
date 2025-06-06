@@ -81,6 +81,8 @@ jobs:
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.AB2D_ENV }}-github-actions
+          role-skip-session-tagging: true
+
 
       - name: Set env vars from AWS params in AB2D account
         uses: ./.github/workflows/actions/set-database-params
