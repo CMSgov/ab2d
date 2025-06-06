@@ -24,9 +24,10 @@ locals {
   service      = "api"
 
   ssm_root_map = {
-    common        = "/ab2d/${local.parent_env}/common"
-    core          = "/ab2d/${local.parent_env}/core"
-    microservices = "/ab2d/${local.parent_env}/microservices"
+    api           = "/ab2d/${local.env}/api"
+    common        = "/ab2d/${local.env}/common"
+    core          = "/ab2d/${local.env}/core"
+    microservices = "/ab2d/${local.env}/microservices"
     contracts     = "/ab2d/mgmt/pdps/nonsensitive/contracts-csv"
     cidrs         = "/ab2d/mgmt/pdps/sensitive/cidr-blocks-csv"
     accounts      = "/ab2d/mgmt/aws-account-numbers"
@@ -47,7 +48,7 @@ locals {
   ab2d_okta_jwt_issuer                  = module.platform.ssm.core.okta_jwt_issuer.value
   ab2d_v2_enabled                       = true
   alb_internal                          = false
-  alb_listener_certificate_arn          = module.platform.is_ephemeral_env ? null : data.aws_acm_certificate.issued[0].arn
+  alb_listener_certificate_arn          = module.platform.is_ephemeral_env ? null : aws_acm_certificate.this.arn
   alb_listener_port                     = module.platform.is_ephemeral_env ? 80 : 443
   alb_listener_protocol                 = module.platform.is_ephemeral_env ? "HTTP" : "HTTPS"
   ami_id                                = data.aws_ami.ab2d.id

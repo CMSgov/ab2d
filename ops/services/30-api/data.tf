@@ -16,14 +16,6 @@ data "aws_ami" "cms" {
   }
 }
 
-data "aws_acm_certificate" "issued" {
-  #TODO think harder about this withe ephemeral environments
-  count     = module.platform.is_ephemeral_env ? 0 : 1
-  domain    = "${local.env}.ab2d.cms.gov"
-  statuses  = ["ISSUED", "EXPIRED"]
-  key_types = ["RSA_2048", "RSA_4096"]
-}
-
 data "aws_sqs_queue" "events" {
   name = "${local.service_prefix}-events-sqs" #FIXME just use -events
 }
