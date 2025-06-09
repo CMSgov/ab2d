@@ -535,13 +535,12 @@ public class CoverageDriverImpl implements CoverageDriver {
 
         List<CoveragePeriod> periodsToReport = new ArrayList<>();
         while (startDateTime.isBefore(time)) {
-            CoveragePeriod periodToReport =
-                    coverageService.getCoveragePeriod(mapping.map(contract), startDateTime.getMonthValue(), startDateTime.getYear());
+            CoveragePeriod periodToReport = coverageService.getCoveragePeriod(mapping.map(contract), startDateTime.getMonthValue(), startDateTime.getYear());
             periodsToReport.add(periodToReport);
             startDateTime = startDateTime.plusMonths(1);
         }
 
-        log.debug("counting number of beneficiaries for {} coverage periods for job {}",
+        log.info("counting number of beneficiaries for {} coverage periods for job {}",
                 periodsToReport.size(), job.getJobUuid());
 
         return coverageService.countBeneficiariesByCoveragePeriod(periodsToReport);
