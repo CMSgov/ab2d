@@ -1,5 +1,5 @@
 name: end-to-end-gf tests
-run-name: end-to-end-gf tests
+run-name: end-to-end-gf tests ${{ inputs.environment }}
 
 on:
   workflow_call:
@@ -35,7 +35,6 @@ jobs:
       AWS_ACCOUNT: ${{ inputs.environment == 'sandbox' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
       AB2D_ENV: ${{ inputs.environment }}
 
-
     steps:
       - name: Assume AWS role
         uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
@@ -52,7 +51,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set env vars from AWS params in BCDA management account
+      - name: Set env vars from AWS params
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
@@ -61,25 +60,20 @@ jobs:
             ARTIFACTORY_URL=/artifactory/url
             ARTIFACTORY_USER=/artifactory/user
             ARTIFACTORY_PASSWORD=/artifactory/password
-
-      - name: Set env vars from AWS params in AB2D account
-        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
-        env:
-          AWS_REGION: ${{ vars.AWS_REGION }}
-        with:
-          params: |
-            AB2D_BFD_KEYSTORE_PASSWORD=/bfd/ab2d-keystore-password
-            OKTA_CLIENT_ID=/okta/test-pdp-100-id
-            OKTA_CLIENT_PASSWORD=/okta/test-pdp-100-secret
-            SECONDARY_USER_OKTA_CLIENT_ID=/okta/test-pdp-1000-id
-            SECONDARY_USER_OKTA_CLIENT_PASSWORD=/okta/test-pdp-1000-secret
+            AB2D_BFD_KEYSTORE_PASSWORD=/ab2d/dev/worker/sensitive/bfd_keystore_password
+            OKTA_CLIENT_ID=/ab2d/dev/okta/sensitive/test-pdp-100-id
+            OKTA_CLIENT_PASSWORD=/ab2d/dev/okta/sensitive/test-pdp-100-secret
+            SECONDARY_USER_OKTA_CLIENT_ID=/ab2d/dev/okta/sensitive/test-pdp-1000-id
+            SECONDARY_USER_OKTA_CLIENT_PASSWORD=/ab2d/dev/okta/sensitive/test-pdp-1000-secret
 
       - name: Create opt/ab2d directory and download keystore
+        env:
+          #ToDo: add buckets for sbx
+          BUCKET: ${{ inputs.environment == 'dev' && 'ab2d-dev-main20250514133221464300000001' || inputs.environment == 'test' && 'ab2d-test-main20250610164330992800000001' }}
         run: |
           mkdir -p opt/ab2d
-          KEYSTORE_FILE_NAME="ab2d_${AB2D_ENV}_keystore"    
-          KEYSTORE_PASSWORD=$(aws ssm get-parameter --name /bfd/ab2d-keystore-password --query Parameter.Value --output text)
-          aws s3 cp s3://ab2d-${AB2D_ENV}-main20250514133221464300000001/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
+          KEYSTORE_FILE_NAME="ab2d_${{ env.AB2D_ENV }}_keystore"
+          aws s3 cp s3://${{ env.BUCKET }}/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
           test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
 
       - name: Run e2e-bfd-test
