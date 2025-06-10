@@ -94,7 +94,6 @@ resource "aws_iam_role_policy_attachment" "api" {
     k = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
     l = data.aws_iam_policy.cms_cloud_ssm_iam.arn,
     m = aws_iam_policy.microservices.arn
-
   }
 
   role       = aws_iam_role.api.name

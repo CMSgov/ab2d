@@ -78,14 +78,14 @@ resource "aws_efs_file_system" "efs" {
   creation_token = "${local.service_prefix}-efs"
   encrypted      = "true"
   kms_key_id     = local.env_key_alias.target_key_arn
-  tags           = { "Name" = "${local.service_prefix}-efs" }
+  tags           = { Name = "${local.service_prefix}-efs" }
 }
 
 resource "aws_security_group" "efs" {
   name        = "${local.service_prefix}-efs-sg"
   description = "EFS"
   vpc_id      = module.platform.vpc_id
-  tags        = { "Name" = "${local.service_prefix}-efs-sg" }
+  tags        = { Name = "${local.service_prefix}-efs-sg" }
 }
 
 resource "aws_efs_mount_target" "this" {
