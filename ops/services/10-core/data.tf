@@ -1,6 +1,6 @@
 data "aws_security_group" "db" {
   tags = {
-    "Name" = "${local.service_prefix}-db"
+    Name = "${local.service_prefix}-db"
   }
   vpc_id = local.vpc_id
 }

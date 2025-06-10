@@ -25,7 +25,9 @@ Notably:
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.99.1 |<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.99.1 |
+
+<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
      Manually updating sections between TF_DOCS tags may be overwritten.
      See https://terraform-docs.io/user-guide/configuration/ for more information.
@@ -47,7 +49,10 @@ Notably:
 |------|-------------|------|---------|:--------:|
 | <a name="input_contracts_service_image_tag"></a> [contracts\_service\_image\_tag](#input\_contracts\_service\_image\_tag) | Desired image tag for the contracts service stored in ECR | `string` | `null` | no |
 | <a name="input_events_service_image_tag"></a> [events\_service\_image\_tag](#input\_events\_service\_image\_tag) | Desired image tag for the events service stored in ECR | `string` | `null` | no |
-| <a name="input_parent_env"></a> [parent\_env](#input\_parent\_env) | The parent environment of the current solution. Will correspond with `terraform.workspace`".<br>Necessary on `tofu init` and `tofu workspace select` \_only\_. In all other situations, parent env<br>will be divined from `terraform.workspace`. | `string` | `null` | no |
+| <a name="input_force_contracts_deployment"></a> [force\_contracts\_deployment](#input\_force\_contracts\_deployment) | Override to force a contracts deployment. Contracts deployments are automatic when `var.contracts_service_image_tag` is specified. | `bool` | `false` | no |
+| <a name="input_force_events_deployment"></a> [force\_events\_deployment](#input\_force\_events\_deployment) | Override to force a events deployment. Events deployments are automatic when `var.events_service_image_tag` is specified. | `bool` | `false` | no |
+| <a name="input_force_properties_deployment"></a> [force\_properties\_deployment](#input\_force\_properties\_deployment) | Override to force a properties deployment. Properties deployments are automatic when `var.properties_service_image_tag` is specified. | `bool` | `false` | no |
+| <a name="input_parent_env"></a> [parent\_env](#input\_parent\_env) | The parent environment of the current solution. Will correspond with `terraform.workspace`".<br/>Necessary on `tofu init` and `tofu workspace select` \_only\_. In all other situations, parent env<br/>will be divined from `terraform.workspace`. | `string` | `null` | no |
 | <a name="input_properties_service_image_tag"></a> [properties\_service\_image\_tag](#input\_properties\_service\_image\_tag) | Desired image tag for the properties service stored in ECR | `string` | `null` | no |
 | <a name="input_region"></a> [region](#input\_region) | n/a | `string` | `"us-east-1"` | no |
 | <a name="input_secondary_region"></a> [secondary\_region](#input\_secondary\_region) | n/a | `string` | `"us-west-2"` | no |
