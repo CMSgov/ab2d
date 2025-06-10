@@ -24,12 +24,14 @@ locals {
   service      = "api"
 
   ssm_root_map = {
-    common        = "/ab2d/${local.parent_env}/common"
-    core          = "/ab2d/${local.parent_env}/core"
-    microservices = "/ab2d/${local.parent_env}/microservices"
+    api           = "/ab2d/${local.env}/api"
+    common        = "/ab2d/${local.env}/common"
+    core          = "/ab2d/${local.env}/core"
+    microservices = "/ab2d/${local.env}/microservices"
     contracts     = "/ab2d/mgmt/pdps/nonsensitive/contracts-csv"
     cidrs         = "/ab2d/mgmt/pdps/sensitive/cidr-blocks-csv"
     accounts      = "/ab2d/mgmt/aws-account-numbers"
+    mgmt_ipv4     = "/cdap/mgmt/public_nat_ipv4"
   }
 
   #TODO in honor of Ben "Been Jammin'" Hesford
@@ -40,12 +42,13 @@ locals {
     sandbox = "ab2d-sbx-sandbox"
   }, local.parent_env, local.env)
 
+  aws_region                            = module.platform.primary_region.name
   ab2d_keystore_location                = "classpath:ab2d.p12"
   ab2d_keystore_password                = module.platform.ssm.core.keystore_password.value
   ab2d_okta_jwt_issuer                  = module.platform.ssm.core.okta_jwt_issuer.value
   ab2d_v2_enabled                       = true
   alb_internal                          = false
-  alb_listener_certificate_arn          = module.platform.is_ephemeral_env ? null : data.aws_acm_certificate.issued[0].arn
+  alb_listener_certificate_arn          = module.platform.is_ephemeral_env ? null : aws_acm_certificate.this.arn
   alb_listener_port                     = module.platform.is_ephemeral_env ? 80 : 443
   alb_listener_protocol                 = module.platform.is_ephemeral_env ? "HTTP" : "HTTPS"
   ami_id                                = data.aws_ami.ab2d.id
@@ -97,6 +100,11 @@ locals {
     gold_disk_name = local.gold_disk_name
     image_version  = local.image_version
   }
+
+  # Use the provided image tag or get the first, human-readable image tag, favoring a tag with 'latest' in its name if it should exist.
+  api_image_repo = split("@", data.aws_ecr_image.api.image_uri)[0]
+  api_image_tag  = coalesce(var.api_service_image_tag, flatten([[for t in data.aws_ecr_image.api.image_tags : t if strcontains(t, "latest")],  data.aws_ecr_image.api.image_tags])[0])
+  api_image_uri  = "${local.api_image_repo}:${local.api_image_tag}"
 }
 
 data "aws_default_tags" "this" {}
@@ -110,16 +118,6 @@ resource "aws_security_group" "pdp" {
   }
 }
 
-resource "aws_security_group_rule" "node_access" {
-  type                     = "ingress"
-  description              = "Node Access"
-  from_port                = "-1"
-  to_port                  = "-1"
-  protocol                 = "-1"
-  source_security_group_id = data.aws_security_group.api.id
-  security_group_id        = module.platform.security_groups["remote-management"].id
-}
-
 resource "aws_security_group_rule" "host_port" {
   type                     = "ingress"
   description              = "Host Port"
@@ -130,16 +128,6 @@ resource "aws_security_group_rule" "host_port" {
   security_group_id        = data.aws_security_group.api.id
 }
 
-resource "aws_security_group_rule" "egress_api" {
-  type              = "egress"
-  description       = "Allow all egress"
-  from_port         = "0"
-  to_port           = "0"
-  protocol          = "-1"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = data.aws_security_group.api.id
-}
-
 resource "aws_security_group" "load_balancer" {
   name        = "${local.service_prefix}-load-balancer-sg"
   description = "API load balancer security group"
@@ -147,6 +135,38 @@ resource "aws_security_group" "load_balancer" {
   tags = {
     Name = "${local.service_prefix}-load-balancer-sg"
   }
+}
+
+resource "aws_security_group_rule" "load_balancer_api" {
+  type                     = "ingress"
+  description              = "Allow loadbalancer access to api workload on ${local.alb_listener_port}"
+  from_port                = local.alb_listener_port
+  to_port                  = local.alb_listener_port
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.load_balancer.id
+  security_group_id        = data.aws_security_group.api.id
+}
+
+resource "aws_security_group_rule" "egress_lb" {
+  type              = "egress"
+  description       = "Allow all egress"
+  from_port         = "0"
+  to_port           = "0"
+  protocol          = "-1"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.load_balancer.id
+}
+
+resource "aws_security_group_rule" "load_balancer_access_mgmt" {
+  for_each = nonsensitive(module.platform.ssm.mgmt_ipv4)
+
+  type              = "ingress"
+  description       = "Access from ${each.key}"
+  from_port         = local.alb_listener_port
+  to_port           = local.alb_listener_port
+  protocol          = "tcp"
+  cidr_blocks       = ["${each.value.value}/32"]
+  security_group_id = aws_security_group.load_balancer.id
 }
 
 resource "aws_security_group_rule" "load_balancer_access_nat" {
@@ -207,53 +227,57 @@ resource "aws_security_group_rule" "efs_ingress" {
 
 resource "aws_ecs_cluster" "ab2d_api" {
   name = "${local.service_prefix}-api"
+
+  setting {
+    name  = "containerInsights"
+    value = module.platform.is_ephemeral_env ? "disabled" : "enabled"
+  }
 }
 
 resource "aws_ecs_task_definition" "api" {
   #ts:skip=AWS.EcsCluster.NetworkSecurity.High.0104 vpc is assigned via a security group on the aws_lb
-  family = "${local.service_prefix}-api"
+  family                   = "${local.service_prefix}-api"
+  network_mode             = "bridge"
+  execution_role_arn       = data.aws_iam_role.api.arn
+  requires_compatibilities = ["EC2"]
 
   volume {
     configure_at_launch = false
     name                = "efs"
     host_path           = "/mnt/efs"
   }
-  requires_compatibilities = ["EC2"]
-  network_mode             = "bridge"
-  execution_role_arn       = data.aws_iam_role.api.arn
 
-  container_definitions = templatefile("${path.module}/templates/api_definition.tpl",
-    {
-      ab2d_keystore_location          = local.ab2d_keystore_location
-      ab2d_keystore_password          = local.ab2d_keystore_password
-      ab2d_okta_jwt_issuer            = local.ab2d_okta_jwt_issuer
-      ab2d_v2_enabled                 = local.ab2d_v2_enabled
-      alb_listener_port               = local.alb_listener_port
-      bfd_insights                    = lower(local.bfd_insights) #FIXME?
-      container_port                  = local.container_port
-      db_host                         = data.aws_db_instance.this.address
-      db_name                         = local.db_name
-      db_password                     = local.db_password
-      db_port                         = local.db_port
-      db_username                     = local.db_username
-      api_image                       = data.aws_ecr_image.api.image_uri
-      ecs_task_def_cpu_api            = local.ecs_task_def_cpu_api
-      ecs_task_def_memory_api         = local.ecs_task_def_memory_api
-      env                             = lower(local.env)
-      execution_env                   = local.benv
-      hpms_api_params                 = local.hpms_api_params
-      hpms_auth_key_id                = local.hpms_auth_key_id
-      hpms_auth_key_secret            = local.hpms_auth_key_secret
-      hpms_url                        = local.hpms_url
-      new_relic_app_name              = local.new_relic_app_name
-      new_relic_license_key           = local.new_relic_license_key
-      slack_alert_webhooks            = local.slack_alert_webhooks
-      slack_trace_webhooks            = local.slack_trace_webhooks
-      sqs_url                         = data.aws_sqs_queue.events.url
-      sqs_feature_flag                = true
-      properties_service_url          = local.microservices_url
-      properties_service_feature_flag = true
-      contracts_service_feature_flag  = true
+  container_definitions = templatefile("${path.module}/templates/api_definition.tpl", {
+    ab2d_keystore_location          = local.ab2d_keystore_location
+    ab2d_keystore_password          = local.ab2d_keystore_password
+    ab2d_okta_jwt_issuer            = local.ab2d_okta_jwt_issuer
+    ab2d_v2_enabled                 = local.ab2d_v2_enabled
+    alb_listener_port               = local.alb_listener_port
+    bfd_insights                    = lower(local.bfd_insights)
+    container_port                  = local.container_port
+    db_host                         = data.aws_db_instance.this.address
+    db_name                         = local.db_name
+    db_password                     = local.db_password
+    db_port                         = local.db_port
+    db_username                     = local.db_username
+    api_image                       = local.api_image_uri
+    ecs_task_def_cpu_api            = local.ecs_task_def_cpu_api
+    ecs_task_def_memory_api         = local.ecs_task_def_memory_api
+    env                             = lower(local.env)
+    execution_env                   = local.benv
+    hpms_api_params                 = local.hpms_api_params
+    hpms_auth_key_id                = local.hpms_auth_key_id
+    hpms_auth_key_secret            = local.hpms_auth_key_secret
+    hpms_url                        = local.hpms_url
+    new_relic_app_name              = local.new_relic_app_name
+    new_relic_license_key           = local.new_relic_license_key
+    slack_alert_webhooks            = local.slack_alert_webhooks
+    slack_trace_webhooks            = local.slack_trace_webhooks
+    sqs_url                         = data.aws_sqs_queue.events.url
+    sqs_feature_flag                = true
+    properties_service_url          = local.microservices_url
+    properties_service_feature_flag = true
+    contracts_service_feature_flag  = true
   })
 }
 
@@ -263,7 +287,7 @@ resource "aws_ecs_service" "api" {
   task_definition                    = coalesce(var.override_task_definition_arn, aws_ecs_task_definition.api.arn)
   launch_type                        = "EC2"
   scheduling_strategy                = "DAEMON"
-  force_new_deployment               = true
+  force_new_deployment               = anytrue([var.force_api_deployment, var.api_service_image_tag != null])
   deployment_minimum_healthy_percent = 100
   health_check_grace_period_seconds  = 600
   load_balancer {
@@ -299,7 +323,7 @@ resource "aws_launch_template" "ab2d_api" {
         env          = lower(local.env),
         cluster_name = "${local.service_prefix}-api",
         efs_id       = data.aws_efs_file_system.this.file_system_id
-        aws_region   = module.platform.primary_region.name
+        aws_region   = local.aws_region
         bucket_name  = local.main_bucket
       }
     )
@@ -321,9 +345,6 @@ resource "aws_launch_template" "ab2d_api" {
       encrypted             = local.launch_template_block_device_mappings["encrypted"]
     }
   }
-}
-
-locals {
 }
 
 resource "aws_autoscaling_group" "asg" {
@@ -458,4 +479,9 @@ resource "aws_lb_listener" "ab2d_api" {
     target_group_arn = aws_lb_target_group.ab2d_api.arn
     type             = "forward"
   }
+}
+
+resource "aws_acm_certificate" "this" {
+  private_key      = module.platform.ssm.api.tls_private_key.value
+  certificate_body = module.platform.ssm.api.tls_public_cert.value
 }
