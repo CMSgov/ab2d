@@ -113,16 +113,6 @@ resource "aws_security_group" "pdp" {
   }
 }
 
-resource "aws_security_group_rule" "node_access" {
-  type                     = "ingress"
-  description              = "Node Access"
-  from_port                = "-1"
-  to_port                  = "-1"
-  protocol                 = "-1"
-  source_security_group_id = data.aws_security_group.api.id
-  security_group_id        = module.platform.security_groups["remote-management"].id
-}
-
 resource "aws_security_group_rule" "host_port" {
   type                     = "ingress"
   description              = "Host Port"

@@ -42,9 +42,9 @@ This module is responsible for deploying the EC2-backed ECS cluster that hosts t
 |------|-------------|------|---------|:--------:|
 | <a name="input_api_service_image_tag"></a> [api\_service\_image\_tag](#input\_api\_service\_image\_tag) | Desired image tag for the api service stored in ECR | `string` | `null` | no |
 | <a name="input_force_api_deployment"></a> [force\_api\_deployment](#input\_force\_api\_deployment) | Override to force a api deployment. Api deployments are automatic when `var.api_service_image_tag` is specified. | `bool` | `false` | no |
-| <a name="input_launch_template_block_device_mappings"></a> [launch\_template\_block\_device\_mappings](#input\_launch\_template\_block\_device\_mappings) | ECS Container Host block device map | `map(any)` | <pre>{<br>  "delete_on_termination": true,<br>  "device_name": "/dev/xvda",<br>  "encrypted": true,<br>  "iops": 3000,<br>  "throughput": 128,<br>  "volume_size": 100,<br>  "volume_type": "gp3"<br>}</pre> | no |
+| <a name="input_launch_template_block_device_mappings"></a> [launch\_template\_block\_device\_mappings](#input\_launch\_template\_block\_device\_mappings) | ECS Container Host block device map | `map(any)` | <pre>{<br/>  "delete_on_termination": true,<br/>  "device_name": "/dev/xvda",<br/>  "encrypted": true,<br/>  "iops": 3000,<br/>  "throughput": 250,<br/>  "volume_size": 100,<br/>  "volume_type": "gp3"<br/>}</pre> | no |
 | <a name="input_override_task_definition_arn"></a> [override\_task\_definition\_arn](#input\_override\_task\_definition\_arn) | Use to override the task definition managed by this solution | `string` | `null` | no |
-| <a name="input_parent_env"></a> [parent\_env](#input\_parent\_env) | The parent environment of the current solution. Will correspond with `terraform.workspace`".<br>Necessary on `tofu init` and `tofu workspace select` \_only\_. In all other situations, parent env<br>will be divined from `terraform.workspace`. | `string` | `null` | no |
+| <a name="input_parent_env"></a> [parent\_env](#input\_parent\_env) | The parent environment of the current solution. Will correspond with `terraform.workspace`".<br/>Necessary on `tofu init` and `tofu workspace select` \_only\_. In all other situations, parent env<br/>will be divined from `terraform.workspace`. | `string` | `null` | no |
 | <a name="input_region"></a> [region](#input\_region) | n/a | `string` | `"us-east-1"` | no |
 | <a name="input_secondary_region"></a> [secondary\_region](#input\_secondary\_region) | n/a | `string` | `"us-west-2"` | no |
 
@@ -68,6 +68,7 @@ This module is responsible for deploying the EC2-backed ECS cluster that hosts t
 
 | Name | Type |
 |------|------|
+| [aws_acm_certificate.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/acm_certificate) | resource |
 | [aws_autoscaling_group.asg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/autoscaling_group) | resource |
 | [aws_autoscaling_policy.api_target_tracking_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/autoscaling_policy) | resource |
 | [aws_cloudwatch_metric_alarm.app_cpu_alarm](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
@@ -89,15 +90,14 @@ This module is responsible for deploying the EC2-backed ECS cluster that hosts t
 | [aws_security_group.pdp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_security_group_rule.cdap_ingress](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.efs_ingress](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
-| [aws_security_group_rule.egress_api](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
+| [aws_security_group_rule.egress_lb](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.host_port](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.load_balancer_access_mgmt](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.load_balancer_access_nat](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
-| [aws_security_group_rule.node_access](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
+| [aws_security_group_rule.load_balancer_api](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.open_access_sandbox](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.pdp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_sns_topic.api](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic) | resource |
-| [aws_acm_certificate.issued](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/acm_certificate) | data source |
 | [aws_ami.ab2d](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
 | [aws_ami.cms](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
 | [aws_db_instance.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/db_instance) | data source |
