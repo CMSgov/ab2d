@@ -1,9 +1,7 @@
 name: end-to-end-gf tests
-run-name: end-to-end-gf tests
+run-name: end-to-end-gf tests ${{ inputs.environment }}
 
 on:
-  push:
-    branches: [ AB2D-6604/fix_e2e-gf ]
   workflow_call:
     inputs:
       environment:
@@ -34,11 +32,8 @@ jobs:
       AB2D_BFD_KEYSTORE_LOCATION: "${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
       AB2D_V2_ENABLED: 'true'
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-     # AWS_ACCOUNT: ${{ inputs.environment == 'sandbox' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
-      #AB2D_ENV: ${{ inputs.environment }}
-      AB2D_ENV: 'dev'
-      AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
-
+      AWS_ACCOUNT: ${{ inputs.environment == 'sandbox' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
+      AB2D_ENV: ${{ inputs.environment }}
 
     steps:
       - name: Assume AWS role
@@ -56,7 +51,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set env vars from AWS params in BCDA management account
+      - name: Set env vars from AWS params
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
@@ -65,13 +60,6 @@ jobs:
             ARTIFACTORY_URL=/artifactory/url
             ARTIFACTORY_USER=/artifactory/user
             ARTIFACTORY_PASSWORD=/artifactory/password
-
-      - name: Set env vars from AWS params in AB2D account
-        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
-        env:
-          AWS_REGION: ${{ vars.AWS_REGION }}
-        with:
-          params: |
             AB2D_BFD_KEYSTORE_PASSWORD=/ab2d/dev/worker/sensitive/bfd_keystore_password
             OKTA_CLIENT_ID=/ab2d/dev/okta/sensitive/test-pdp-100-id
             OKTA_CLIENT_PASSWORD=/ab2d/dev/okta/sensitive/test-pdp-100-secret
@@ -80,9 +68,8 @@ jobs:
 
       - name: Create opt/ab2d directory and download keystore
         env:
-          #ToDo: add buckets for sbx and prod
-         # BUCKET: ${{ inputs.environment == 'dev' && 'ab2d-dev-main20250514133221464300000001' || inputs.environment == 'test' && 'ab2d-test-main20250610164330992800000001' }}
-           BUCKET: 'ab2d-dev-main20250514133221464300000001'
+          #ToDo: add buckets for sbx
+          BUCKET: ${{ inputs.environment == 'dev' && 'ab2d-dev-main20250514133221464300000001' || inputs.environment == 'test' && 'ab2d-test-main20250610164330992800000001' }}
         run: |
           mkdir -p opt/ab2d
           KEYSTORE_FILE_NAME="ab2d_${{ env.AB2D_ENV }}_keystore"
@@ -95,7 +82,6 @@ jobs:
 
       - name: Run e2e-test
         env:
-          E2E_ENVIRONMENT: DEV
-       #   E2E_ENVIRONMENT: ${{ inputs.environment == 'dev' && 'DEV' || inputs.environment == 'test' && 'IMPL' || inputs.environment == 'sandbox' && 'SANDBOX' }}
+          E2E_ENVIRONMENT: ${{ inputs.environment == 'dev' && 'DEV' || inputs.environment == 'test' && 'IMPL' || inputs.environment == 'sandbox' && 'SANDBOX' }}
         run: |
           mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress
