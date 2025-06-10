@@ -81,7 +81,8 @@ jobs:
       - name: Create opt/ab2d directory and download keystore
         env:
           #ToDo: add buckets for sbx and prod
-          BUCKET: ${{ inputs.environment == 'dev' && 'ab2d-dev-main20250514133221464300000001' || inputs.environment == 'test' && 'ab2d-test-main20250610164330992800000001' }}
+         # BUCKET: ${{ inputs.environment == 'dev' && 'ab2d-dev-main20250514133221464300000001' || inputs.environment == 'test' && 'ab2d-test-main20250610164330992800000001' }}
+           BUCKET: 'ab2d-dev-main20250514133221464300000001'
         run: |
           mkdir -p opt/ab2d
           KEYSTORE_FILE_NAME="ab2d_${{ env.AB2D_ENV }}_keystore"
