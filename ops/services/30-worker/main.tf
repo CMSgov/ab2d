@@ -90,6 +90,11 @@ locals {
     image_version    = local.image_version
     AmazonECSManaged = true
   }
+
+  # Use the provided image tag or get the first, human-readable image tag, favoring a tag with 'latest' in its name if it should exist.
+  worker_image_repo = split("@", data.aws_ecr_image.worker.image_uri)[0]
+  worker_image_tag  = coalesce(var.worker_service_image_tag, flatten([[for t in data.aws_ecr_image.worker.image_tags : t if strcontains(t, "latest")],  data.aws_ecr_image.worker.image_tags])[0])
+  worker_image_uri  = "${local.worker_image_repo}:${local.worker_image_tag}"
 }
 
 resource "aws_security_group_rule" "egress_worker" {
@@ -165,7 +170,7 @@ resource "aws_ecs_task_definition" "worker" {
       ecs_task_def_cpu_worker         = local.ecs_task_def_cpu_worker
       ecs_task_def_memory_worker      = local.ecs_task_def_memory_worker
       execution_env                   = local.benv
-      image_version                   = data.aws_ecr_image.worker.image_tags[0]
+      image_version                   = local.worker_image_tag
       max_concurrent_eob_jobs         = local.max_concurrent_eob_jobs
       new_relic_app_name              = local.new_relic_app_name
       new_relic_license_key           = local.new_relic_license_key
@@ -176,7 +181,8 @@ resource "aws_ecs_task_definition" "worker" {
       properties_service_url          = local.microservices_url
       properties_service_feature_flag = true
       contracts_service_feature_flag  = true
-      worker_image                    = data.aws_ecr_image.worker.image_uri
+      worker_image                    = local.worker_image_uri
+
     }
   )
   requires_compatibilities = ["EC2"]

@@ -100,6 +100,11 @@ locals {
     gold_disk_name = local.gold_disk_name
     image_version  = local.image_version
   }
+
+  # Use the provided image tag or get the first, human-readable image tag, favoring a tag with 'latest' in its name if it should exist.
+  api_image_repo = split("@", data.aws_ecr_image.api.image_uri)[0]
+  api_image_tag  = coalesce(var.api_service_image_tag, flatten([[for t in data.aws_ecr_image.api.image_tags : t if strcontains(t, "latest")],  data.aws_ecr_image.api.image_tags])[0])
+  api_image_uri  = "${local.api_image_repo}:${local.api_image_tag}"
 }
 
 data "aws_default_tags" "this" {}
@@ -255,7 +260,7 @@ resource "aws_ecs_task_definition" "api" {
     db_password                     = local.db_password
     db_port                         = local.db_port
     db_username                     = local.db_username
-    api_image                       = data.aws_ecr_image.api.image_uri
+    api_image                       = local.api_image_uri
     ecs_task_def_cpu_api            = local.ecs_task_def_cpu_api
     ecs_task_def_memory_api         = local.ecs_task_def_memory_api
     env                             = lower(local.env)

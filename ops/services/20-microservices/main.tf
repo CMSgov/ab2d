@@ -44,9 +44,16 @@ locals {
   properties_service_url = "http://${aws_lb.internal_lb.dns_name}"
   vpc_id                 = module.platform.vpc_id
 
-  contracts_service_image  = data.aws_ecr_image.contracts.image_uri
-  events_service_image     = data.aws_ecr_image.events.image_uri
-  properties_service_image = data.aws_ecr_image.properties.image_uri
+  # Use the provided image tag or get the first, human-readable image tag, favoring a tag with 'latest' in its name if it should exist.
+  contracts_image_repo  = split("@", data.aws_ecr_image.contracts.image_uri)[0]
+  contracts_image_tag   = coalesce(var.contracts_service_image_tag, flatten([[for t in data.aws_ecr_image.contracts.image_tags : t if strcontains(t, "latest")], data.aws_ecr_image.contracts.image_tags])[0])
+  contracts_image_uri   = "${local.contracts_image_repo}:${local.contracts_image_tag}"
+  events_image_repo     = split("@", data.aws_ecr_image.events.image_uri)[0]
+  events_image_tag      = coalesce(var.events_service_image_tag, flatten([[for t in data.aws_ecr_image.events.image_tags : t if strcontains(t, "latest")], data.aws_ecr_image.events.image_tags])[0])
+  events_image_uri      = "${local.events_image_repo}:${local.events_image_tag}"
+  properties_image_repo = split("@", data.aws_ecr_image.properties.image_uri)[0]
+  properties_image_tag  = coalesce(var.properties_service_image_tag, flatten([[for t in data.aws_ecr_image.properties.image_tags : t if strcontains(t, "latest")], data.aws_ecr_image.properties.image_tags])[0])
+  properties_image_uri  = "${local.properties_image_repo}:${local.properties_image_tag}"
 
   ab2d_keystore_location_arn    = module.platform.ssm.core.keystore_location.arn
   ab2d_keystore_password_arn    = module.platform.ssm.core.keystore_password.arn
@@ -359,8 +366,8 @@ resource "aws_ecs_task_definition" "events" {
   memory                   = 1024
   container_definitions = templatefile("${path.module}/templates/config/task_definitions/events_task_def.json",
     {
-      events_image                 = local.events_service_image
-      events_service_image_version = reverse(split(":", local.events_service_image))[0]
+      events_image                 = local.events_image_uri
+      events_service_image_version = local.events_image_tag
       service_name                 = "ab2d_event"
 
       ab2d_environment   = local.service_prefix
@@ -419,9 +426,9 @@ resource "aws_ecs_task_definition" "properties" {
   memory                   = 2048
   container_definitions = templatefile("${path.module}/templates/config/task_definitions/properties_task_def.json",
     {
-      properties_image                 = local.properties_service_image
+      properties_image                 = local.properties_image_uri
       properties_service_url           = local.properties_service_url
-      properties_service_image_version = reverse(split(":", local.properties_service_image))[0]
+      properties_service_image_version = local.properties_image_tag
       service_name                     = "ab2d_properties"
 
       ab2d_db_host     = local.ab2d_db_host
@@ -473,8 +480,8 @@ resource "aws_ecs_task_definition" "contracts" {
   memory                   = 2048
   container_definitions = templatefile("${path.module}/templates/config/task_definitions/contracts_task_def.json",
     {
-      contracts_image                 = local.contracts_service_image
-      contracts_service_image_version = reverse(split(":", local.contracts_service_image))[0]
+      contracts_image                 = local.contracts_image_uri
+      contracts_service_image_version = local.contracts_image_tag
       service_name                    = "ab2d_contracts"
 
       ab2d_efs_mount         = "/mnt/efs"
