@@ -78,7 +78,7 @@ jobs:
           
           mkdir -p opt/ab2d
           
-          if [ "${{ inputs.environment }}" = "test" ]; then
+          if [ ${{ env.AB2D_ENV }} = 'test' ]; then
             KEYSTORE_FILE_NAME=ab2d_imp_keystore
           else
             KEYSTORE_FILE_NAME=ab2d_${{ env.AB2D_ENV }}_keystore
