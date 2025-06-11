@@ -69,12 +69,11 @@ jobs:
             OKTA_CLIENT_PASSWORD=/ab2d/dev/okta/sensitive/test-pdp-100-secret
             SECONDARY_USER_OKTA_CLIENT_ID=/ab2d/dev/okta/sensitive/test-pdp-1000-id
             SECONDARY_USER_OKTA_CLIENT_PASSWORD=/ab2d/dev/okta/sensitive/test-pdp-1000-secret
-            MAIN_BUCKET=$(aws ssm get-parameter --name "/ab2d/${{ env.AB2D_ENV }}/core/nonsensitive/main-bucket-name" --with-decryption --query 'Parameter.Value' --output text)
-
 
       - name: Create opt/ab2d directory and download keystore
 
         run: |
+          MAIN_BUCKET=$(aws ssm get-parameter --name "/ab2d/${{ env.AB2D_ENV }}/core/nonsensitive/main-bucket-name" --with-decryption --query 'Parameter.Value' --output text)
           echo $MAIN_BUCKET
           
           mkdir -p opt/ab2d
