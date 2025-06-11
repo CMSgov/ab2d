@@ -1,0 +1,86 @@
+name: build-gf
+run-name: build-gf ${{ inputs.module }} ${{ inputs.environment }}
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      module:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: AB2D environment used for ECR
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+      module:
+        description: AB2D module
+        required: true
+        type: choice
+        options:
+          - api
+          - worker
+
+jobs:
+  build:
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    env:
+      AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
+      AB2D_ENV: ${{ inputs.environment }}
+      MODULE: ${{ inputs.module }}
+
+    steps:
+      - name: Assume AWS role
+        uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.AB2D_ENV }}-github-actions
+
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set env vars from AWS params in BCDA management account
+        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        with:
+          params: |
+            ARTIFACTORY_URL=/artifactory/url
+            ARTIFACTORY_USER=/artifactory/user
+            ARTIFACTORY_PASSWORD=/artifactory/password
+
+      - name: Build package
+        run: mvn -U clean package -s settings.xml -DskipTests -Dusername="${ARTIFACTORY_USER}" -Dpassword="${ARTIFACTORY_PASSWORD}" -Drepository_url="${ARTIFACTORY_URL}"
+
+      - name: Build image and push to ECR
+        working-directory: ./${{ env.MODULE }}
+        run: |
+          ECR_REPO_DOMAIN="${AWS_ACCOUNT}.dkr.ecr.$AWS_REGION.amazonaws.com"
+          aws ecr get-login-password | docker login --username AWS --password-stdin "$ECR_REPO_DOMAIN"
+          ECR_REPO_URI="$ECR_REPO_DOMAIN/ab2d-${MODULE}"
+          SHA_SHORT=$(git rev-parse --short HEAD)
+          echo "Building image for commit sha $SHA_SHORT"
+          docker build \
+            -t "${ECR_REPO_URI}:ab2d-${AB2D_ENV}-$SHA_SHORT" \
+            -t "${ECR_REPO_URI}:ab2d-${AB2D_ENV}-latest" .
+
+          # Push to special tag for promotion if this is run on a push to main
+          if [ "$GITHUB_REF" == "refs/heads/main" ]; then
+            docker tag $ECR_REPO_URI:ab2d-$DEPLOYMENT_ENV-$SHA_SHORT $ECR_REPO_URI:main-$SHA_SHORT
+          fi
+
+          echo "Pushing image"
+          docker push "${ECR_REPO_URI}" --all-tags
