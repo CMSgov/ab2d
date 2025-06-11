@@ -12,14 +12,12 @@ locals {
   ab2d_slack_trace_webhooks_arn = module.platform.ssm.common.slack_trace_webhooks.arn
 }
 
-# Event Service SNS
 resource "aws_sns_topic_subscription" "events" {
   topic_arn = data.aws_sns_topic.events.arn
   protocol  = "sqs"
   endpoint  = data.aws_sqs_queue.events.arn
 }
 
-# Event Service Task Definition
 resource "aws_ecs_task_definition" "events" {
   family             = "${local.service_prefix}-events"
   network_mode       = "awsvpc"
