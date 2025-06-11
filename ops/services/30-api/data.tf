@@ -17,7 +17,7 @@ data "aws_ami" "cms" {
 }
 
 data "aws_sqs_queue" "events" {
-  name = "${local.service_prefix}-events-sqs" #FIXME just use -events
+  name = "${local.service_prefix}-events"
 }
 
 data "aws_security_group" "efs" {

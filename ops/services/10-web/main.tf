@@ -16,6 +16,9 @@ module "platform" {
   env         = local.env
   root_module = "https://github.com/CMSgov/ab2d/tree/main/ops/services/10-web"
   service     = local.service
+  ssm_root_map = {
+    web = "/ab2d/${local.env}/web"
+  }
 }
 
 locals {
@@ -27,6 +30,10 @@ locals {
     CachingDisabled  = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
     CachingOptimized = "658327ea-f89d-4fab-a63d-7e88639e58f6"
   }
+
+  tls_private_key = lookup(module.platform.ssm.web, "tls_private_key", { value : null }).value
+  tls_public_cert = lookup(module.platform.ssm.web, "tls_public_cert", { value : null }).value
+  aliases         = local.env == "prod" ? aws_acm_certificate.this[0].subject_alternative_names : []
 }
 
 resource "aws_cloudfront_origin_access_control" "oac" {
@@ -50,6 +57,9 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     origin_id                = "${local.service_prefix}-origin"
     origin_access_control_id = aws_cloudfront_origin_access_control.oac.id
   }
+
+  #FIXME
+  # aliases           = local.aliases
   enabled             = true
   comment             = "Distribution for ${local.service_prefix} website"
   default_root_object = "index.html"
@@ -65,11 +75,18 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   }
 
   viewer_certificate {
-    acm_certificate_arn            = local.env == "prod" ? data.aws_acm_certificate.cdn_ssl[0].arn : null #TODO need to determine where the certificate is actually created
+    acm_certificate_arn            = local.env == "prod" ? aws_acm_certificate.this[0].arn : null
     cloudfront_default_certificate = local.env == "prod" ? false : true
     minimum_protocol_version       = local.env == "prod" ? "TLSv1.2_2021" : null
     ssl_support_method             = local.env == "prod" ? "sni-only" : null
   }
+
+  # viewer_certificate {
+  #   acm_certificate_arn            = null
+  #   cloudfront_default_certificate = true
+  #   minimum_protocol_version       = null
+  #   ssl_support_method             = null
+  # }
 
   default_cache_behavior {
     cache_policy_id        = local.env == "prod" ? local.caching_policy["CachingOptimized"] : local.caching_policy["CachingDisabled"]
@@ -92,4 +109,3 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     response_page_path    = "/404.html"
   }
 }
-

@@ -145,7 +145,7 @@ resource "aws_ecs_cluster_capacity_providers" "this" {
 }
 
 data "aws_sqs_queue" "events" {
-  name = "${local.service_prefix}-events-sqs"
+  name = "${local.service_prefix}-events"
 }
 
 resource "aws_ecs_task_definition" "worker" {

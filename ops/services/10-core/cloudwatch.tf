@@ -9,7 +9,7 @@ resource "aws_cloudwatch_metric_alarm" "high_db_connections" {
   threshold           = "10000.0"
   alarm_actions       = [aws_sns_topic.alarms.arn]
   dimensions = {
-    DBInstanceIdentifier = data.aws_db_instance.this.id
+    DBInstanceIdentifier = module.db.instance.id
   }
 }
 
@@ -24,7 +24,7 @@ resource "aws_cloudwatch_metric_alarm" "db_high_queue_depth" {
   threshold           = "4.0"
   alarm_actions       = [aws_sns_topic.alarms.arn]
   dimensions = {
-    DBInstanceIdentifier = data.aws_db_instance.this.id
+    DBInstanceIdentifier = module.db.instance.id
   }
 }
 
@@ -39,7 +39,7 @@ resource "aws_cloudwatch_metric_alarm" "db_high_read_iops" {
   threshold           = "1700.0"
   alarm_actions       = [aws_sns_topic.alarms.arn]
   dimensions = {
-    DBInstanceIdentifier = data.aws_db_instance.this.id
+    DBInstanceIdentifier = module.db.instance.id
   }
 }
 
@@ -54,7 +54,7 @@ resource "aws_cloudwatch_metric_alarm" "db_high_read_latency" {
   threshold           = "0.006"
   alarm_actions       = [aws_sns_topic.alarms.arn]
   dimensions = {
-    DBInstanceIdentifier = data.aws_db_instance.this.id
+    DBInstanceIdentifier = module.db.instance.id
   }
 }
 
@@ -69,7 +69,7 @@ resource "aws_cloudwatch_metric_alarm" "db_high_read_throughput" {
   threshold           = "40000000.0"
   alarm_actions       = [aws_sns_topic.alarms.arn]
   dimensions = {
-    DBInstanceIdentifier = data.aws_db_instance.this.id
+    DBInstanceIdentifier = module.db.instance.id
   }
 }
 
@@ -84,7 +84,7 @@ resource "aws_cloudwatch_metric_alarm" "db_high_write_iops" {
   threshold           = "1700.0"
   alarm_actions       = [aws_sns_topic.alarms.arn]
   dimensions = {
-    DBInstanceIdentifier = data.aws_db_instance.this.id
+    DBInstanceIdentifier = module.db.instance.id
   }
 }
 
@@ -99,7 +99,7 @@ resource "aws_cloudwatch_metric_alarm" "db_very_high_write_iops" {
   threshold           = "4500.0"
   alarm_actions       = [aws_sns_topic.alarms.arn]
   dimensions = {
-    DBInstanceIdentifier = data.aws_db_instance.this.id
+    DBInstanceIdentifier = module.db.instance.id
   }
 }
 
@@ -114,7 +114,7 @@ resource "aws_cloudwatch_metric_alarm" "db_high_write_latency" {
   threshold           = "0.04"
   alarm_actions       = [aws_sns_topic.alarms.arn]
   dimensions = {
-    DBInstanceIdentifier = data.aws_db_instance.this.id
+    DBInstanceIdentifier = module.db.instance.id
   }
 }
 
@@ -129,7 +129,7 @@ resource "aws_cloudwatch_metric_alarm" "db_high_write_throughput" {
   threshold           = "41943040.0"
   alarm_actions       = [aws_sns_topic.alarms.arn]
   dimensions = {
-    DBInstanceIdentifier = data.aws_db_instance.this.id
+    DBInstanceIdentifier = module.db.instance.id
   }
 }
 
@@ -144,7 +144,7 @@ resource "aws_cloudwatch_metric_alarm" "postgres_transaction_logs_disk_usage" {
   threshold           = "4000000000.0"
   alarm_actions       = [aws_sns_topic.alarms.arn]
   dimensions = {
-    DBInstanceIdentifier = data.aws_db_instance.this.id
+    DBInstanceIdentifier = module.db.instance.id
   }
 }
 
@@ -159,7 +159,7 @@ resource "aws_cloudwatch_metric_alarm" "db_cpu_utilization" {
   threshold           = "90.0"
   alarm_actions       = [aws_sns_topic.alarms.arn]
   dimensions = {
-    DBInstanceIdentifier = data.aws_db_instance.this.id
+    DBInstanceIdentifier = module.db.instance.id
   }
 }
 
@@ -174,7 +174,7 @@ resource "aws_cloudwatch_metric_alarm" "db_free_storage_space" {
   threshold           = "100000000000.0"
   alarm_actions       = [aws_sns_topic.alarms.arn]
   dimensions = {
-    DBInstanceIdentifier = data.aws_db_instance.this.id
+    DBInstanceIdentifier = module.db.instance.id
   }
 }
 
@@ -189,6 +189,6 @@ resource "aws_cloudwatch_metric_alarm" "db_swap_usage" {
   threshold           = "1.0"
   alarm_actions       = [aws_sns_topic.alarms.arn]
   dimensions = {
-    DBInstanceIdentifier = data.aws_db_instance.this.id
+    DBInstanceIdentifier = module.db.instance.id
   }
 }

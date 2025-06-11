@@ -15,6 +15,9 @@ module "platform" {
   env         = local.env
   root_module = "https://github.com/CMSgov/ab2d/tree/main/ops/services/10-core"
   service     = local.service
+  ssm_root_map = {
+   core = "/ab2d/${local.env}/core/"
+  }
 }
 
 locals {
@@ -22,11 +25,22 @@ locals {
   env          = terraform.workspace
   service      = "core"
 
+  database_user = module.platform.ssm.core.database_user.value
+  database_password = module.platform.ssm.core.database_password.value
   aws_account_number = nonsensitive(module.platform.aws_caller_identity.account_id)
   env_key_alias      = module.platform.kms_alias_primary
   private_subnets    = nonsensitive(toset(keys(module.platform.private_subnets)))
   region_name        = module.platform.primary_region.name
   vpc_id             = module.platform.vpc_id
+}
+
+module "db" {
+  source    = "../../tf-modules/ds"
+
+  snapshot = var.snapshot
+  platform = module.platform
+  username = local.database_user
+  password = local.database_password
 }
 
 resource "aws_s3_bucket" "main_bucket" {
@@ -133,8 +147,8 @@ resource "aws_sns_topic" "this" {
 }
 
 resource "aws_sqs_queue" "this" {
-  #FIXME gov.cms.ab2d.eventclient.clients hard-codes suffix of "-events-sqs" 😕
-  name                      = "${local.service_prefix}-events-sqs"
+  #FIXME Make sure we re-apply this and re-deploy all of dev...
+  name                      = "${local.service_prefix}-events"
   delay_seconds             = 0
   max_message_size          = 262100
   message_retention_seconds = 86400
@@ -197,7 +211,7 @@ resource "aws_security_group_rule" "db_access_api" {
   to_port                  = "5432"
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.api.id
-  security_group_id        = data.aws_security_group.db.id
+  security_group_id        = module.db.sg.id
 }
 
 resource "aws_security_group" "worker" {
