@@ -171,12 +171,12 @@ resource "aws_ecs_task_definition" "worker" {
       { name : "AB2D_DB_DATABASE", valueFrom : local.db_name_arn },
       { name : "AB2D_DB_PASSWORD", valueFrom : local.db_password_arn },
       { name : "AB2D_DB_USER", valueFrom : local.db_username_arn },
-      { name : "AB2D_SLACK_ALERT_WEBHOOKS", valueFrom : local.slack_alert_webhooks_arn },
-      { name : "AB2D_SLACK_TRACE_WEBHOOKS", valueFrom : local.slack_trace_webhooks_arn },
-      { name : "NEW_RELIC_LICENSE_KEY", valueFrom : local.new_relic_license_key_arn }
+      { name : "AB2D_SLACK_ALERT_WEBHOOKS", valueFrom : local.slack_alert_webhooks_arn }, #FIXME: Is this even used?
+      { name : "AB2D_SLACK_TRACE_WEBHOOKS", valueFrom : local.slack_trace_webhooks_arn }, #FIXME: Is this even used?
+      { name : "NEW_RELIC_LICENSE_KEY", valueFrom : local.new_relic_license_key_arn } #FIXME: Is this even used?
     ]
     environment : [
-      { name : "AB2D_BFD_INSIGHTS", value : local.bfd_insights },
+      { name : "AB2D_BFD_INSIGHTS", value : local.bfd_insights }, #FIXME: Is this even used?
       { name : "AB2D_BFD_KEYSTORE_LOCATION", value : local.bfd_keystore_location },
       { name : "AB2D_BFD_URL", value : local.bfd_url },
       { name : "AB2D_DB_HOST", value : data.aws_db_instance.this.address },
@@ -186,12 +186,12 @@ resource "aws_ecs_task_definition" "worker" {
       { name : "AB2D_EXECUTION_ENV", value : local.benv },
       { name : "AB2D_JOB_POOL_CORE_SIZE", value : local.max_concurrent_eob_jobs },
       { name : "AB2D_JOB_POOL_MAX_SIZE", value : local.max_concurrent_eob_jobs },
-      { name : "AWS_SQS_FEATURE_FLAG", value : "true" },
+      { name : "AWS_SQS_FEATURE_FLAG", value : "true" }, #FIXME: Is this even used?
       { name : "AWS_SQS_URL", value : data.aws_sqs_queue.events.url },
-      { name : "CONTRACTS_SERVICE_FEATURE_FLAG", value : "true" },
+      { name : "CONTRACTS_SERVICE_FEATURE_FLAG", value : "true" }, #FIXME: Is this even used?
       { name : "IMAGE_VERSION", value : local.worker_image_tag },
       { name : "NEW_RELIC_APP_NAME", value : local.new_relic_app_name },
-      { name : "PROPERTIES_SERVICE_FEATURE_FLAG", value : "true" },
+      { name : "PROPERTIES_SERVICE_FEATURE_FLAG", value : "true" }, #FIXME: Is this even used?
       { name : "PROPERTIES_SERVICE_URL", value : local.microservices_url },
     ],
     logConfiguration : {

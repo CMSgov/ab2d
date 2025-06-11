@@ -269,30 +269,30 @@ resource "aws_ecs_task_definition" "api" {
       { name : "AB2D_DB_DATABASE", valueFrom : local.db_name_arn },
       { name : "AB2D_DB_PASSWORD", valueFrom : local.db_password_arn },
       { name : "AB2D_DB_USER", valueFrom : local.db_username_arn },
-      { name : "AB2D_HPMS_API_PARAMS", valueFrom : local.hpms_api_params_arn },
-      { name : "AB2D_HPMS_URL", valueFrom : local.hpms_url_arn },
+      { name : "AB2D_HPMS_API_PARAMS", valueFrom : local.hpms_api_params_arn }, #FIXME: Is this even used?
+      { name : "AB2D_HPMS_URL", valueFrom : local.hpms_url_arn },               #FIXME: Is this even used?
       { name : "AB2D_KEYSTORE_PASSWORD", valueFrom : local.ab2d_keystore_password_arn },
       { name : "AB2D_OKTA_JWT_ISSUER", valueFrom : local.ab2d_okta_jwt_issuer_arn },
-      { name : "AB2D_SLACK_ALERT_WEBHOOKS", valueFrom : local.slack_alert_webhooks_arn },
-      { name : "AB2D_SLACK_TRACE_WEBHOOKS", valueFrom : local.slack_trace_webhooks_arn },
-      { name : "HPMS_AUTH_KEY_ID", valueFrom : local.hpms_auth_key_id_arn },
-      { name : "HPMS_AUTH_KEY_SECRET", valueFrom : local.hpms_auth_key_secret_arn },
-      { name : "NEW_RELIC_LICENSE_KEY", valueFrom : local.new_relic_license_key_arn },
+      { name : "AB2D_SLACK_ALERT_WEBHOOKS", valueFrom : local.slack_alert_webhooks_arn }, #FIXME: Is this even used?
+      { name : "AB2D_SLACK_TRACE_WEBHOOKS", valueFrom : local.slack_trace_webhooks_arn }, #FIXME: Is this even used?
+      { name : "HPMS_AUTH_KEY_ID", valueFrom : local.hpms_auth_key_id_arn },              #FIXME: Is this even used?
+      { name : "HPMS_AUTH_KEY_SECRET", valueFrom : local.hpms_auth_key_secret_arn },      #FIXME: Is this even used?
+      { name : "NEW_RELIC_LICENSE_KEY", valueFrom : local.new_relic_license_key_arn },    #FIXME: Is this even used?
     ],
     environment : [
-      { name : "AB2D_BFD_INSIGHTS", value : local.bfd_insights },
+      { name : "AB2D_BFD_INSIGHTS", value : local.bfd_insights }, #FIXME: Is this even used?
       { name : "AB2D_DB_HOST", value : data.aws_db_instance.this.address },
       { name : "AB2D_DB_PORT", value : "5432" },
       { name : "AB2D_DB_SSL_MODE", value : "require" },
       { name : "AB2D_EFS_MOUNT", value : local.ab2d_efs_mount },
-      { name : "AB2D_EXECUTION_ENV", value : local.benv },
+      { name : "AB2D_EXECUTION_ENV", value : local.benv }, #FIXME: Is this even used?
       { name : "AB2D_KEYSTORE_LOCATION", value : local.ab2d_keystore_location },
       { name : "AB2D_V2_ENABLED", value : "true" },
       { name : "AWS_SQS_FEATURE_FLAG", value : "true" },
-      { name : "AWS_SQS_URL", value : data.aws_sqs_queue.events.url },
-      { name : "CONTRACTS_SERVICE_FEATURE_FLAG", value : "true" },
+      { name : "AWS_SQS_URL", value : data.aws_sqs_queue.events.url }, #FIXME: Is this even used?
+      { name : "CONTRACTS_SERVICE_FEATURE_FLAG", value : "true" },     #FIXME: Is this even used?
       { name : "NEW_RELIC_APP_NAME", value : local.new_relic_app_name },
-      { name : "PROPERTIES_SERVICE_FEATURE_FLAG", value : "true" },
+      { name : "PROPERTIES_SERVICE_FEATURE_FLAG", value : "true" }, #FIXME: Is this even used?
       { name : "PROPERTIES_SERVICE_URL", value : local.microservices_url },
     ],
     logConfiguration : {
