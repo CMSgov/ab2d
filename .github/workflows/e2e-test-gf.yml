@@ -2,8 +2,6 @@ name: end-to-end-gf tests
 run-name: end-to-end-gf tests ${{ inputs.environment }}
 
 on:
-  push:
-    branch: [ AB2D-6696/e2e-gf-test ]
   workflow_call:
     inputs:
       environment:
@@ -34,10 +32,8 @@ jobs:
       AB2D_BFD_KEYSTORE_LOCATION: "${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
       AB2D_V2_ENABLED: 'true'
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-#      AWS_ACCOUNT: ${{ inputs.environment == 'sandbox' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
-#      AB2D_ENV: ${{ inputs.environment }}
-      AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
-      AB2D_ENV: 'dev'
+      AWS_ACCOUNT: ${{ inputs.environment == 'sandbox' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
+      AB2D_ENV: ${{ inputs.environment }}
 
     steps:
       - name: Assume AWS role
@@ -79,14 +75,14 @@ jobs:
             --query 'Parameter.Value' \
             --output text)
           
-          echo "Main bucket: $MAIN_BUCKET"
-          
           mkdir -p opt/ab2d
           
-          if [ ${{ env.AB2D_ENV }} = 'test' ]; then
+          if [ ${{ env.AB2D_ENV }} == 'test' ]; then
             KEYSTORE_FILE_NAME="ab2d_imp_keystore"
+          elif [ ${{ env.AB2D_ENV }} == 'sandbox' ]; then
+            KEYSTORE_FILE_NAME="ab2d_sbx_keystore"
           else
-            KEYSTORE_FILE_NAME="ab2d_${{ env.AB2D_ENV }}_keystore"
+            KEYSTORE_FILE_NAME="ab2d_dev_keystore"
           fi
 
           aws s3 cp s3://$MAIN_BUCKET/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
@@ -98,7 +94,6 @@ jobs:
 
       - name: Run e2e-test
         env:
-          E2E_ENVIRONMENT: 'DEV'
-#          E2E_ENVIRONMENT: ${{ inputs.environment == 'dev' && 'DEV' || inputs.environment == 'test' && 'IMPL' || inputs.environment == 'sandbox' && 'SANDBOX' }}
+         E2E_ENVIRONMENT: ${{ inputs.environment == 'dev' && 'DEV' || inputs.environment == 'test' && 'IMPL' || inputs.environment == 'sandbox' && 'SANDBOX' }}
         run: |
           mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress
