@@ -60,9 +60,9 @@ jobs:
       - name: Tofu plan and apply -- WORKER
         working-directory: ops/services/30-worker/
         run: |
-          tofu init -var=parent_env=dev -reconfigure
-          tofu workspace select -var=parent_env=dev -or-create=true dev
-          tofu plan -var=worker_service_image_tag="ab2d-dev-latest" -out=tfplan
+          tofu init -var=parent_env=$AB2D_ENV -reconfigure
+          tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
+          tofu plan -var=worker_service_image_tag="ab2d-$AB2D_ENV-latest" -out=tfplan
           tofu apply -input=false tfplan 
         
 
