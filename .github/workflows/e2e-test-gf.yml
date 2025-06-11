@@ -69,13 +69,13 @@ jobs:
       - name: Create opt/ab2d directory and download keystore
 
         run: |
+          mkdir -p opt/ab2d
+          
           MAIN_BUCKET=$(aws ssm get-parameter \
             --name "/ab2d/${{ env.AB2D_ENV }}/core/nonsensitive/main-bucket-name" \
             --with-decryption \
             --query 'Parameter.Value' \
             --output text)
-          
-          mkdir -p opt/ab2d
           
           if [ ${{ env.AB2D_ENV }} == 'test' ]; then
             KEYSTORE_FILE_NAME="ab2d_imp_keystore"
