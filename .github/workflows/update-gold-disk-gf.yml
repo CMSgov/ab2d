@@ -12,7 +12,7 @@ on:
         type: choice
         options:
           - test
-          - prod
+          - PROD
         description: "Deployment environment (defaults to dev on pull request)"
 
 jobs:
