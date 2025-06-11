@@ -73,20 +73,24 @@ jobs:
       - name: Create opt/ab2d directory and download keystore
 
         run: |
-          MAIN_BUCKET=$(aws ssm get-parameter --name "/ab2d/${{ env.AB2D_ENV }}/core/nonsensitive/main-bucket-name" --with-decryption --query 'Parameter.Value' --output text)
-          echo $MAIN_BUCKET
+          MAIN_BUCKET=$(aws ssm get-parameter \
+            --name "/ab2d/${{ env.AB2D_ENV }}/core/nonsensitive/main-bucket-name" \
+            --with-decryption \
+            --query 'Parameter.Value' \
+            --output text)
+          
+          echo "Main bucket: $MAIN_BUCKET"
           
           mkdir -p opt/ab2d
           
           if [ ${{ env.AB2D_ENV }} = 'test' ]; then
-            KEYSTORE_FILE_NAME=ab2d_imp_keystore
+            KEYSTORE_FILE_NAME="ab2d_imp_keystore"
           else
-            KEYSTORE_FILE_NAME=ab2d_${{ env.AB2D_ENV }}_keystore
+            KEYSTORE_FILE_NAME="ab2d_${{ env.AB2D_ENV }}_keystore"
           fi
 
           aws s3 cp s3://$MAIN_BUCKET/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
           test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
-          aws cp  
 
       - name: Run e2e-bfd-test
         run: |
