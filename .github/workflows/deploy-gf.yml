@@ -57,7 +57,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Tofu plan and apply -- WORKER
+      - name: Tofu plan and apply - Worker
         working-directory: ops/services/30-worker/
         run: |
           tofu init -var=parent_env=$AB2D_ENV -reconfigure
@@ -66,13 +66,13 @@ jobs:
           tofu apply -input=false tfplan 
         
 
-#      - name: Tofu plan and apply -- API
-#        working-directory: ops/services/30-api/
-#        run: |
-#          tofu init -var=parent_env=dev -reconfigure
-#          tofu workspace select -var=parent_env=dev -or-create=true dev
-#          tofu plan -var=api_service_image_tag="ab2d-dev-latest"  -out=tfplan
-#          tofu apply -input=false tfplan
+      - name: Tofu plan and apply - API
+        working-directory: ops/services/30-api/
+        run: |
+          tofu init -var=parent_env=$AB2D_ENV -reconfigure
+          tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
+          tofu plan -var=api_service_image_tag="ab2d-$AB2D_ENV-latest" -out=tfplan
+          tofu apply -input=false tfplan
 
 
 #      - name: Deploy ECS service to run on latest image in ECR
