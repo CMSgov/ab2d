@@ -29,6 +29,7 @@ jobs:
       id-token: write
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     env:
+      AB2D_BFD_KEYSTORE_LOCATION: "${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
       AB2D_V2_ENABLED: 'true'
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
       AWS_ACCOUNT: ${{ inputs.environment == 'sandbox' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
@@ -50,7 +51,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set env vars from AWS params in BCDA management account
+      - name: Set env vars from AWS params
         uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
@@ -59,10 +60,25 @@ jobs:
             ARTIFACTORY_URL=/artifactory/url
             ARTIFACTORY_USER=/artifactory/user
             ARTIFACTORY_PASSWORD=/artifactory/password
-            OKTA_CLIENT_ID=/okta/test-pdp-100-id
-            OKTA_CLIENT_PASSWORD=/okta/test-pdp-100-secret
-            SECONDARY_USER_OKTA_CLIENT_ID=/okta/test-pdp-1000-id
-            SECONDARY_USER_OKTA_CLIENT_PASSWORD=/okta/test-pdp-1000-secret
+            AB2D_BFD_KEYSTORE_PASSWORD=/ab2d/dev/worker/sensitive/bfd_keystore_password
+            OKTA_CLIENT_ID=/ab2d/dev/okta/sensitive/test-pdp-100-id
+            OKTA_CLIENT_PASSWORD=/ab2d/dev/okta/sensitive/test-pdp-100-secret
+            SECONDARY_USER_OKTA_CLIENT_ID=/ab2d/dev/okta/sensitive/test-pdp-1000-id
+            SECONDARY_USER_OKTA_CLIENT_PASSWORD=/ab2d/dev/okta/sensitive/test-pdp-1000-secret
+
+      - name: Create opt/ab2d directory and download keystore
+        env:
+          #ToDo: add buckets for sbx
+          BUCKET: ${{ inputs.environment == 'dev' && 'ab2d-dev-main20250514133221464300000001' || inputs.environment == 'test' && 'ab2d-test-main20250610164330992800000001' }}
+        run: |
+          mkdir -p opt/ab2d
+          KEYSTORE_FILE_NAME="ab2d_${{ env.AB2D_ENV }}_keystore"
+          aws s3 cp s3://${{ env.BUCKET }}/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
+          test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
+
+      - name: Run e2e-bfd-test
+        run: |
+          mvn test -s settings.xml -pl e2e-bfd-test -am -Dtest=EndToEndBfdTests -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress
 
       - name: Run e2e-test
         env:

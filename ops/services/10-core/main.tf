@@ -78,14 +78,14 @@ resource "aws_efs_file_system" "efs" {
   creation_token = "${local.service_prefix}-efs"
   encrypted      = "true"
   kms_key_id     = local.env_key_alias.target_key_arn
-  tags           = { "Name" = "${local.service_prefix}-efs" }
+  tags           = { Name = "${local.service_prefix}-efs" }
 }
 
 resource "aws_security_group" "efs" {
   name        = "${local.service_prefix}-efs-sg"
   description = "EFS"
   vpc_id      = module.platform.vpc_id
-  tags        = { "Name" = "${local.service_prefix}-efs-sg" }
+  tags        = { Name = "${local.service_prefix}-efs-sg" }
 }
 
 resource "aws_efs_mount_target" "this" {
@@ -176,7 +176,7 @@ resource "aws_security_group" "api" {
   description = "API security group"
   vpc_id      = local.vpc_id
   tags = {
-    "Name" = "${local.service_prefix}-api"
+    Name = "${local.service_prefix}-api"
   }
 }
 
@@ -204,12 +204,12 @@ resource "aws_security_group" "worker" {
   name        = "${local.service_prefix}-worker"
   description = "Worker security group"
   vpc_id      = local.vpc_id
-  tags        = { "Name" = "${local.service_prefix}-worker" }
+  tags        = { Name = "${local.service_prefix}-worker" }
 }
 
 resource "aws_security_group" "lambda" {
   name        = "${local.service_prefix}-microservices-lambda"
   description = "Lambdas that need access to microservices security group"
   vpc_id      = local.vpc_id
-  tags        = { "Name" = "${local.service_prefix}-microservices-lambda" }
+  tags        = { Name = "${local.service_prefix}-microservices-lambda" }
 }
