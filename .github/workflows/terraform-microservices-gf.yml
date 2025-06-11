@@ -95,8 +95,8 @@ jobs:
       - name: Tofu init & plan
         working-directory: ops/services/20-microservices/
         run: |
-          tofu init -var=parent_env=dev -reconfigure
-          tofu workspace select -var=parent_env=dev -or-create=true dev
+          tofu init -var=parent_env=$AB2D_ENV -reconfigure
+          tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
           
           TOFU_VARS=""
           if [ "$CONTRACTS_IMAGE" != '' ]; then
