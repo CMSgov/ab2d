@@ -314,7 +314,7 @@ public class CoverageServiceRepository {
         //If OptOut is enabled, count beneficiaries who agreed to share their data
         String query = (propertiesService.isToggleOn("OptOutOn", false)) ? SELECT_DISTINCT_OPTOUT_COVERAGE_BY_PERIOD_COUNT : SELECT_DISTINCT_COVERAGE_BY_PERIOD_COUNT;
 
-        log.info("countBeneficiariesByPeriods query = {}", query);
+        //log.info("countBeneficiariesByPeriods query = {}", query);
 
         return template.queryForList(query, parameters, Integer.class)
                 .stream().findFirst().orElseThrow(() -> new RuntimeException("no coverage information found for any " +

@@ -88,11 +88,11 @@ public class CoverageServiceImpl implements CoverageService {
     public CoveragePeriod getCoveragePeriod(ContractForCoverageDTO contract, int month, int year) {
         checkMonthAndYear(month, year);
 
-        log.info("Contract={} month={} year={}", contract.getContractNumber(), month, year);
+        //log.info("Contract={} month={} year={}", contract.getContractNumber(), month, year);
         Optional<CoveragePeriod> period = coveragePeriodRepo.findByContractNumberAndMonthAndYear(contract.getContractNumber(), month, year);
-        if (period.isPresent()) {
-            log.info("Coverage period: {}", period.get());
-        }
+        //if (period.isPresent()) {
+        //    log.info("Coverage period: {}", period.get());
+        //}
         return period.orElseThrow(() ->
                 new EntityNotFoundException("could not find coverage period matching contract, month, and year"));
     }
@@ -137,7 +137,7 @@ public class CoverageServiceImpl implements CoverageService {
     @Override
     public int countBeneficiariesByCoveragePeriod(List<CoveragePeriod> coveragePeriods) {
         List<Integer> ids = coveragePeriods.stream().map(CoveragePeriod::getId).collect(toList());
-        log.info("Coverage period IDs: {}", coveragePeriods);
+        //log.info("Coverage period IDs: {}", coveragePeriods);
         return coverageServiceRepo.countBeneficiariesByPeriods(ids, coveragePeriods.get(0).getContractNumber());
     }
 
