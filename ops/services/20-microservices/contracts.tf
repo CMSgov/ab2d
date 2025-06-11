@@ -20,7 +20,7 @@ resource "aws_ecs_task_definition" "contracts" {
   cpu                      = 1024
   memory                   = 2048
   container_definitions = nonsensitive(jsonencode([{
-    name : "contracts-service-container",
+    name : "contracts-service-container", #TODO: Consider simplifying this name, just use "contracts"
     image : local.contracts_image_uri,
     essential : true,
     secrets : [
@@ -36,11 +36,11 @@ resource "aws_ecs_task_definition" "contracts" {
       { name : "AB2D_DB_HOST", value : local.ab2d_db_host },
       { name : "AB2D_DB_PORT", value : "5432" },
       { name : "AB2D_DB_SSL_MODE", value : "allow" },
-      { name : "AB2D_EFS_MOUNT", value : local.ab2d_efs_mount },
+      { name : "AB2D_EFS_MOUNT", value : local.ab2d_efs_mount }, #FIXME: Is this even used?
       { name : "AB2D_EXECUTION_ENV", value : local.benv },
       { name : "AWS_SQS_URL", value : local.events_sqs_url },
-      { name : "IMAGE_VERSION", value : local.contracts_image_tag },
-      { name : "PROPERTIES_SERVICE_FEATURE_FLAG", value : "true" },
+      { name : "IMAGE_VERSION", value : local.contracts_image_tag }, #FIXME: Is this even used?
+      { name : "PROPERTIES_SERVICE_FEATURE_FLAG", value : "true" },  #FIXME: Is this even used?
       { name : "PROPERTIES_SERVICE_URL", value : local.properties_service_url }
     ],
     portMappings : [

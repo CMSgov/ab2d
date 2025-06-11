@@ -28,16 +28,16 @@ resource "aws_ecs_task_definition" "events" {
   cpu                      = 512
   memory                   = 1024
   container_definitions = nonsensitive(jsonencode([{
-    name : "events-service-container",
+    name : "events-service-container", #TODO: Consider simplifying this name, just use "events"
     image : local.events_image_uri,
     essential : true,
     secrets : [
       { name : "AB2D_DB_DATABASE", valueFrom : local.db_database_arn },
       { name : "AB2D_DB_PASSWORD", valueFrom : local.db_password_arn },
       { name : "AB2D_DB_USER", valueFrom : local.db_user_arn },
-      { name : "AB2D_KEYSTORE_LOCATION", valueFrom : local.ab2d_keystore_location_arn },
-      { name : "AB2D_KEYSTORE_PASSWORD", valueFrom : local.ab2d_keystore_password_arn },
-      { name : "AB2D_OKTA_JWT_ISSUER", valueFrom : local.ab2d_okta_jwt_issuer_arn },
+      { name : "AB2D_KEYSTORE_LOCATION", valueFrom : local.ab2d_keystore_location_arn }, #FIXME: is this even used?
+      { name : "AB2D_KEYSTORE_PASSWORD", valueFrom : local.ab2d_keystore_password_arn }, #FIXME: is this even used?
+      { name : "AB2D_OKTA_JWT_ISSUER", valueFrom : local.ab2d_okta_jwt_issuer_arn },     #FIXME: is this even used?
       { name : "AB2D_SLACK_ALERT_WEBHOOKS", valueFrom : local.ab2d_slack_alert_webhooks_arn },
       { name : "AB2D_SLACK_TRACE_WEBHOOKS", valueFrom : local.ab2d_slack_trace_webhooks_arn }
     ],
@@ -46,13 +46,13 @@ resource "aws_ecs_task_definition" "events" {
       { name : "AB2D_DB_PORT", value : "5432" },
       { name : "AB2D_DB_SSL_MODE", value : "allow" },
       { name : "AB2D_EXECUTION_ENV", value : local.benv },
-      { name : "AWS_SQS_FEATURE_FLAG", value : "true" },
+      { name : "AWS_SQS_FEATURE_FLAG", value : "true" }, #FIXME: is this even used?
       { name : "AWS_SQS_URL", value : local.events_sqs_url },
-      { name : "IMAGE_VERSION", value : local.events_image_tag }
+      { name : "IMAGE_VERSION", value : local.events_image_tag } #FIXME: is this even used?
     ],
     portMappings : [
       {
-        containerPort : 8010
+        containerPort : 8010 #FIXME is this even necessary?
       }
     ],
     logConfiguration : {
