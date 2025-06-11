@@ -42,13 +42,13 @@ locals {
     sandbox = "ab2d-sbx-sandbox"
   }, local.parent_env, local.env)
 
+  ab2d_efs_mount                        = "/mnt/efs"
   aws_region                            = module.platform.primary_region.name
   ab2d_keystore_location                = "classpath:ab2d.p12"
-  ab2d_keystore_password                = module.platform.ssm.core.keystore_password.value
-  ab2d_okta_jwt_issuer                  = module.platform.ssm.core.okta_jwt_issuer.value
-  ab2d_v2_enabled                       = true
+  ab2d_keystore_password_arn            = module.platform.ssm.core.keystore_password.arn
+  ab2d_okta_jwt_issuer_arn              = module.platform.ssm.core.okta_jwt_issuer.arn
   alb_internal                          = false
-  alb_listener_certificate_arn          = module.platform.is_ephemeral_env ? null : aws_acm_certificate.this.arn
+  alb_listener_certificate_arn          = module.platform.is_ephemeral_env || local.tls_private_key == null ? null : aws_acm_certificate.this[0].arn
   alb_listener_port                     = module.platform.is_ephemeral_env ? 80 : 443
   alb_listener_protocol                 = module.platform.is_ephemeral_env ? "HTTP" : "HTTPS"
   ami_id                                = data.aws_ami.ab2d.id
@@ -58,30 +58,29 @@ locals {
   bfd_insights                          = "none" #FIXME?
   container_port                        = 8443
   cpm_backup                            = "Daily Weekly Monthly" #FIXME
-  db_name                               = module.platform.ssm.core.database_name.value
-  db_password                           = module.platform.ssm.core.database_password.value
-  db_port                               = 5432
-  db_username                           = module.platform.ssm.core.database_user.value
+  db_name_arn                           = module.platform.ssm.core.database_name.arn
+  db_password_arn                       = module.platform.ssm.core.database_password.arn
+  db_username_arn                       = module.platform.ssm.core.database_user.arn
   ec2_instance_type_api                 = "m6a.xlarge"
   ecs_task_def_cpu_api                  = 4096
   ecs_task_def_memory_api               = 14745
   gold_disk_name                        = data.aws_ami.cms.name
-  hpms_api_params                       = module.platform.ssm.core.hpms_api_params.value
-  hpms_auth_key_id                      = module.platform.ssm.core.hpms_auth_key_id.value
-  hpms_auth_key_secret                  = module.platform.ssm.core.hpms_auth_key_secret.value
-  hpms_url                              = module.platform.ssm.core.hpms_url.value
+  hpms_api_params_arn                   = module.platform.ssm.core.hpms_api_params.arn
+  hpms_auth_key_id_arn                  = module.platform.ssm.core.hpms_auth_key_id.arn
+  hpms_auth_key_secret_arn              = module.platform.ssm.core.hpms_auth_key_secret.arn
+  hpms_url_arn                          = module.platform.ssm.core.hpms_url.arn
   image_version                         = "" #FIXME aws_ami cms or ab2d?
   kms_master_key_id                     = nonsensitive(module.platform.kms_alias_primary.target_key_arn)
   launch_template_block_device_mappings = var.launch_template_block_device_mappings
   main_bucket                           = module.platform.ssm.core.main-bucket-name.value
-  microservices_url                     = module.platform.ssm.microservices.url.value
+  microservices_url                     = lookup(module.platform.ssm.microservices, "url", { value : "none" }).value
   network_access_logs_bucket            = module.platform.ssm.core.network-access-logs-bucket-name.value
   new_relic_app_name                    = module.platform.ssm.common.new_relic_app_name.value
-  new_relic_license_key                 = module.platform.ssm.common.new_relic_license_key.value
+  new_relic_license_key_arn             = module.platform.ssm.common.new_relic_license_key.arn
   private_subnet_ids                    = keys(module.platform.private_subnets)
   public_subnet_ids                     = keys(module.platform.public_subnets)
-  slack_alert_webhooks                  = module.platform.ssm.common.slack_alert_webhooks.value
-  slack_trace_webhooks                  = module.platform.ssm.common.slack_trace_webhooks.value
+  slack_alert_webhooks_arn              = module.platform.ssm.common.slack_alert_webhooks.arn
+  slack_trace_webhooks_arn              = module.platform.ssm.common.slack_trace_webhooks.arn
   ssh_key_name                          = "burldawg" #FIXME
   vpc_id                                = module.platform.vpc_id
   cloudwatch_sns_topic                  = data.aws_sns_topic.cloudwatch_alarms.arn
@@ -103,8 +102,11 @@ locals {
 
   # Use the provided image tag or get the first, human-readable image tag, favoring a tag with 'latest' in its name if it should exist.
   api_image_repo = split("@", data.aws_ecr_image.api.image_uri)[0]
-  api_image_tag  = coalesce(var.api_service_image_tag, flatten([[for t in data.aws_ecr_image.api.image_tags : t if strcontains(t, "latest")],  data.aws_ecr_image.api.image_tags])[0])
+  api_image_tag  = coalesce(var.api_service_image_tag, flatten([[for t in data.aws_ecr_image.api.image_tags : t if strcontains(t, "latest")], data.aws_ecr_image.api.image_tags])[0])
   api_image_uri  = "${local.api_image_repo}:${local.api_image_tag}"
+
+  tls_private_key = lookup(module.platform.ssm.api, "tls_private_key", { value : null }).value
+  tls_public_cert = lookup(module.platform.ssm.api, "tls_public_cert", { value : null }).value
 }
 
 data "aws_default_tags" "this" {}
@@ -194,7 +196,7 @@ resource "aws_security_group_rule" "pdp" {
 }
 
 resource "aws_security_group_rule" "open_access_sandbox" {
-  count             = local.env == "ab2d-sbx-sandbox" ? 1 : 0
+  count             = local.env == "sandbox" ? 1 : 0
   type              = "ingress"
   description       = "Rule to open SBX to public"
   from_port         = local.alb_listener_port
@@ -224,7 +226,6 @@ resource "aws_security_group_rule" "efs_ingress" {
   security_group_id        = data.aws_security_group.efs.id
 }
 
-
 resource "aws_ecs_cluster" "ab2d_api" {
   name = "${local.service_prefix}-api"
 
@@ -235,7 +236,6 @@ resource "aws_ecs_cluster" "ab2d_api" {
 }
 
 resource "aws_ecs_task_definition" "api" {
-  #ts:skip=AWS.EcsCluster.NetworkSecurity.High.0104 vpc is assigned via a security group on the aws_lb
   family                   = "${local.service_prefix}-api"
   network_mode             = "bridge"
   execution_role_arn       = data.aws_iam_role.api.arn
@@ -244,41 +244,62 @@ resource "aws_ecs_task_definition" "api" {
   volume {
     configure_at_launch = false
     name                = "efs"
-    host_path           = "/mnt/efs"
+    host_path           = local.ab2d_efs_mount
   }
 
-  container_definitions = templatefile("${path.module}/templates/api_definition.tpl", {
-    ab2d_keystore_location          = local.ab2d_keystore_location
-    ab2d_keystore_password          = local.ab2d_keystore_password
-    ab2d_okta_jwt_issuer            = local.ab2d_okta_jwt_issuer
-    ab2d_v2_enabled                 = local.ab2d_v2_enabled
-    alb_listener_port               = local.alb_listener_port
-    bfd_insights                    = lower(local.bfd_insights)
-    container_port                  = local.container_port
-    db_host                         = data.aws_db_instance.this.address
-    db_name                         = local.db_name
-    db_password                     = local.db_password
-    db_port                         = local.db_port
-    db_username                     = local.db_username
-    api_image                       = local.api_image_uri
-    ecs_task_def_cpu_api            = local.ecs_task_def_cpu_api
-    ecs_task_def_memory_api         = local.ecs_task_def_memory_api
-    env                             = lower(local.env)
-    execution_env                   = local.benv
-    hpms_api_params                 = local.hpms_api_params
-    hpms_auth_key_id                = local.hpms_auth_key_id
-    hpms_auth_key_secret            = local.hpms_auth_key_secret
-    hpms_url                        = local.hpms_url
-    new_relic_app_name              = local.new_relic_app_name
-    new_relic_license_key           = local.new_relic_license_key
-    slack_alert_webhooks            = local.slack_alert_webhooks
-    slack_trace_webhooks            = local.slack_trace_webhooks
-    sqs_url                         = data.aws_sqs_queue.events.url
-    sqs_feature_flag                = true
-    properties_service_url          = local.microservices_url
-    properties_service_feature_flag = true
-    contracts_service_feature_flag  = true
-  })
+  container_definitions = nonsensitive(jsonencode([{
+    name : local.service,
+    image : local.api_image_uri,
+    essential : true,
+    cpu : local.ecs_task_def_cpu_api,
+    memory : local.ecs_task_def_memory_api,
+    portMappings : [
+      {
+        containerPort : local.container_port,
+        hostPort : local.alb_listener_port
+      }
+    ],
+    mountPoints : [
+      {
+        containerPath : local.ab2d_efs_mount,
+        sourceVolume : "efs"
+      }
+    ],
+    secrets : [
+      { name : "AB2D_DB_DATABASE", valueFrom : local.db_name_arn },
+      { name : "AB2D_DB_PASSWORD", valueFrom : local.db_password_arn },
+      { name : "AB2D_DB_USER", valueFrom : local.db_username_arn },
+      { name : "AB2D_HPMS_API_PARAMS", valueFrom : local.hpms_api_params_arn }, #FIXME: Is this even used?
+      { name : "AB2D_HPMS_URL", valueFrom : local.hpms_url_arn },               #FIXME: Is this even used?
+      { name : "AB2D_KEYSTORE_PASSWORD", valueFrom : local.ab2d_keystore_password_arn },
+      { name : "AB2D_OKTA_JWT_ISSUER", valueFrom : local.ab2d_okta_jwt_issuer_arn },
+      { name : "AB2D_SLACK_ALERT_WEBHOOKS", valueFrom : local.slack_alert_webhooks_arn }, #FIXME: Is this even used?
+      { name : "AB2D_SLACK_TRACE_WEBHOOKS", valueFrom : local.slack_trace_webhooks_arn }, #FIXME: Is this even used?
+      { name : "HPMS_AUTH_KEY_ID", valueFrom : local.hpms_auth_key_id_arn },              #FIXME: Is this even used?
+      { name : "HPMS_AUTH_KEY_SECRET", valueFrom : local.hpms_auth_key_secret_arn },      #FIXME: Is this even used?
+      { name : "NEW_RELIC_LICENSE_KEY", valueFrom : local.new_relic_license_key_arn },    #FIXME: Is this even used?
+    ],
+    environment : [
+      { name : "AB2D_BFD_INSIGHTS", value : local.bfd_insights }, #FIXME: Is this even used?
+      { name : "AB2D_DB_HOST", value : data.aws_db_instance.this.address },
+      { name : "AB2D_DB_PORT", value : "5432" },
+      { name : "AB2D_DB_SSL_MODE", value : "require" },
+      { name : "AB2D_EFS_MOUNT", value : local.ab2d_efs_mount },
+      { name : "AB2D_EXECUTION_ENV", value : local.benv }, #FIXME: Is this even used?
+      { name : "AB2D_KEYSTORE_LOCATION", value : local.ab2d_keystore_location },
+      { name : "AB2D_V2_ENABLED", value : "true" },
+      { name : "AWS_SQS_FEATURE_FLAG", value : "true" },
+      { name : "AWS_SQS_URL", value : data.aws_sqs_queue.events.url }, #FIXME: Is this even used?
+      { name : "CONTRACTS_SERVICE_FEATURE_FLAG", value : "true" },     #FIXME: Is this even used?
+      { name : "NEW_RELIC_APP_NAME", value : local.new_relic_app_name },
+      { name : "PROPERTIES_SERVICE_FEATURE_FLAG", value : "true" }, #FIXME: Is this even used?
+      { name : "PROPERTIES_SERVICE_URL", value : local.microservices_url },
+    ],
+    logConfiguration : {
+      logDriver : "syslog"
+    },
+    healthCheck : null
+  }]))
 }
 
 resource "aws_ecs_service" "api" {
@@ -292,7 +313,7 @@ resource "aws_ecs_service" "api" {
   health_check_grace_period_seconds  = 600
   load_balancer {
     target_group_arn = aws_lb_target_group.ab2d_api.arn
-    container_name   = "ab2d-api"
+    container_name   = local.service
     container_port   = local.container_port
   }
 }
@@ -482,6 +503,7 @@ resource "aws_lb_listener" "ab2d_api" {
 }
 
 resource "aws_acm_certificate" "this" {
-  private_key      = module.platform.ssm.api.tls_private_key.value
-  certificate_body = module.platform.ssm.api.tls_public_cert.value
+  count            = local.tls_private_key != null ? 1 : 0
+  private_key      = local.tls_private_key
+  certificate_body = local.tls_public_cert
 }
