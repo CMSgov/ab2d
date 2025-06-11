@@ -2,6 +2,8 @@ name: end-to-end-gf tests
 run-name: end-to-end-gf tests ${{ inputs.environment }}
 
 on:
+  push:
+    branch: [ AB2D-6696/e2e-gf-test ]
   workflow_call:
     inputs:
       environment:
@@ -66,15 +68,15 @@ jobs:
             SECONDARY_USER_OKTA_CLIENT_ID=/ab2d/dev/okta/sensitive/test-pdp-1000-id
             SECONDARY_USER_OKTA_CLIENT_PASSWORD=/ab2d/dev/okta/sensitive/test-pdp-1000-secret
 
-      - name: Create opt/ab2d directory and download keystore
-        env:
-          #ToDo: add buckets for sbx
-          BUCKET: ${{ inputs.environment == 'dev' && 'ab2d-dev-main20250514133221464300000001' || inputs.environment == 'test' && 'ab2d-test-main20250610164330992800000001' }}
-        run: |
-          mkdir -p opt/ab2d
-          KEYSTORE_FILE_NAME="ab2d_${{ env.AB2D_ENV }}_keystore"
-          aws s3 cp s3://${{ env.BUCKET }}/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
-          test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
+#      - name: Create opt/ab2d directory and download keystore
+#        env:
+#          #ToDo: add buckets for sbx
+#          BUCKET: ${{ inputs.environment == 'dev' && 'ab2d-dev-main20250514133221464300000001' || inputs.environment == 'test' && 'ab2d-test-main20250610164330992800000001' }}
+#        run: |
+#          mkdir -p opt/ab2d
+#          KEYSTORE_FILE_NAME="ab2d_${{ env.AB2D_ENV }}_keystore"
+#          aws s3 cp s3://${{ env.BUCKET }}/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
+#          test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
 
       - name: Run e2e-bfd-test
         run: |
