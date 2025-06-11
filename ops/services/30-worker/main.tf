@@ -34,6 +34,7 @@ locals {
   bfd_insights       = "none"
   private_subnet_ids = keys(module.platform.private_subnets)
 
+  #TODO in honor of Ben "Been Jammin'" Hesford
   benv = lookup({
     "dev"     = "ab2d-dev"
     "test"    = "ab2d-east-impl"
@@ -45,37 +46,35 @@ locals {
   vpc_id      = module.platform.vpc_id
 
   bfd_url = lookup({
-    dev     = "https://prod-sbx.fhir.bfd.cmscloud.local"
-    test    = "https://prod-sbx.fhir.bfd.cmscloud.local"
-    prod    = "https://prod.bfd.fhir.cmscloud.local"
-    sandbox = "https://prod-sbx.fhir.bfd.cmscloud.local"
-  }, local.env, "https://prod-sbx.fhir.bfd.cmscloud.local")
+    prod = "https://prod.bfd.fhir.cmscloud.local"
+  }, local.parent_env, "https://prod-sbx.fhir.bfd.cmscloud.local")
 
   cpm_backup = "Daily Weekly Monthly" #FIXME
 
-  bfd_keystore_location = module.platform.ssm.worker.bfd_keystore_location.value
-  bfd_keystore_password = module.platform.ssm.worker.bfd_keystore_password.value
-  ami_id                = data.aws_ami.ab2d_ami.id
+  ab2d_efs_mount            = "/mnt/efs"
+  bfd_keystore_location     = module.platform.ssm.worker.bfd_keystore_location.value
+  bfd_keystore_password_arn = module.platform.ssm.worker.bfd_keystore_password.arn
+  ami_id                    = data.aws_ami.ab2d_ami.id
 
   ec2_instance_type_worker   = module.platform.parent_env == "prod" ? "c6a.12xlarge" : "m6a.xlarge"
   ecs_task_def_cpu_worker    = module.platform.parent_env == "prod" ? 49152 : 4096
   ecs_task_def_memory_worker = module.platform.parent_env == "prod" ? 88473 : 14745
   gold_disk_name             = data.aws_ami.cms_gold.name
   image_version              = "" #FIXME aws_ami cms or ab2d?
-  max_concurrent_eob_jobs    = 2
+  max_concurrent_eob_jobs    = "2"
   ssh_key_name               = "burldawg"
   worker_desired_instances   = module.platform.parent_env == "prod" ? 2 : 1
   worker_min_instances       = module.platform.parent_env == "prod" ? 2 : 1
   worker_max_instances       = module.platform.parent_env == "prod" ? 4 : 2
 
-  db_name                     = module.platform.ssm.core.database_name.value
-  db_password                 = module.platform.ssm.core.database_password.value
-  db_username                 = module.platform.ssm.core.database_user.value
+  db_name_arn                 = module.platform.ssm.core.database_name.arn
+  db_password_arn             = module.platform.ssm.core.database_password.arn
+  db_username_arn             = module.platform.ssm.core.database_user.arn
   microservices_url           = module.platform.ssm.microservices.url.value
   new_relic_app_name          = module.platform.ssm.common.new_relic_app_name.value
-  new_relic_license_key       = module.platform.ssm.common.new_relic_license_key.value
-  slack_alert_webhooks        = module.platform.ssm.common.slack_alert_webhooks.value
-  slack_trace_webhooks        = module.platform.ssm.common.slack_trace_webhooks.value
+  new_relic_license_key_arn   = module.platform.ssm.common.new_relic_license_key.arn
+  slack_alert_webhooks_arn    = module.platform.ssm.common.slack_alert_webhooks.arn
+  slack_trace_webhooks_arn    = module.platform.ssm.common.slack_trace_webhooks.arn
   aws_account_cms_gold_images = module.platform.ssm.accounts.cms-gold-images.value
 
   additional_asg_tags = {
@@ -93,7 +92,7 @@ locals {
 
   # Use the provided image tag or get the first, human-readable image tag, favoring a tag with 'latest' in its name if it should exist.
   worker_image_repo = split("@", data.aws_ecr_image.worker.image_uri)[0]
-  worker_image_tag  = coalesce(var.worker_service_image_tag, flatten([[for t in data.aws_ecr_image.worker.image_tags : t if strcontains(t, "latest")],  data.aws_ecr_image.worker.image_tags])[0])
+  worker_image_tag  = coalesce(var.worker_service_image_tag, flatten([[for t in data.aws_ecr_image.worker.image_tags : t if strcontains(t, "latest")], data.aws_ecr_image.worker.image_tags])[0])
   worker_image_uri  = "${local.worker_image_repo}:${local.worker_image_tag}"
 }
 
@@ -146,45 +145,61 @@ resource "aws_ecs_cluster_capacity_providers" "this" {
 }
 
 data "aws_sqs_queue" "events" {
-  name = "ab2d-${local.env}-events-sqs"
+  name = "${local.service_prefix}-events-sqs"
 }
 
 resource "aws_ecs_task_definition" "worker" {
-  #ts:skip=AWS.EcsCluster.NetworkSecurity.High.0104 assigned in the launch configuration for EC2 instances
   family = "${local.service_prefix}-worker"
   volume {
     name      = "efs"
-    host_path = "/mnt/efs"
+    host_path = local.ab2d_efs_mount
   }
-  container_definitions = templatefile("${path.module}/templates/worker_definition.tpl",
-    {
-      bfd_keystore_location           = local.bfd_keystore_location
-      bfd_keystore_password           = local.bfd_keystore_password
-      bfd_url                         = local.bfd_url
-      bfd_insights                    = lower(local.bfd_insights) #FIXME?
-      db_host                         = data.aws_db_instance.this.address
-      db_name                         = local.db_name
-      db_password                     = local.db_password
-      db_port                         = "5432"
-      db_username                     = local.db_username
-      ecs_task_def_cpu_worker         = local.ecs_task_def_cpu_worker
-      ecs_task_def_memory_worker      = local.ecs_task_def_memory_worker
-      execution_env                   = local.benv
-      image_version                   = local.worker_image_tag
-      max_concurrent_eob_jobs         = local.max_concurrent_eob_jobs
-      new_relic_app_name              = local.new_relic_app_name
-      new_relic_license_key           = local.new_relic_license_key
-      slack_alert_webhooks            = local.slack_alert_webhooks
-      slack_trace_webhooks            = local.slack_trace_webhooks
-      sqs_url                         = data.aws_sqs_queue.events.url
-      sqs_feature_flag                = true
-      properties_service_url          = local.microservices_url
-      properties_service_feature_flag = true
-      contracts_service_feature_flag  = true
-      worker_image                    = local.worker_image_uri
+  container_definitions = nonsensitive(jsonencode([{
+    name : local.service,
+    image : local.worker_image_uri,
+    essential : true,
+    cpu : local.ecs_task_def_cpu_worker,
+    memory : local.ecs_task_def_memory_worker,
+    mountPoints : [
+      {
+        containerPath : local.ab2d_efs_mount,
+        sourceVolume : "efs"
+      }
+    ],
+    secrets : [
+      { name : "AB2D_BFD_KEYSTORE_PASSWORD", valueFrom : local.bfd_keystore_password_arn },
+      { name : "AB2D_DB_DATABASE", valueFrom : local.db_name_arn },
+      { name : "AB2D_DB_PASSWORD", valueFrom : local.db_password_arn },
+      { name : "AB2D_DB_USER", valueFrom : local.db_username_arn },
+      { name : "AB2D_SLACK_ALERT_WEBHOOKS", valueFrom : local.slack_alert_webhooks_arn },
+      { name : "AB2D_SLACK_TRACE_WEBHOOKS", valueFrom : local.slack_trace_webhooks_arn },
+      { name : "NEW_RELIC_LICENSE_KEY", valueFrom : local.new_relic_license_key_arn }
+    ]
+    environment : [
+      { name : "AB2D_BFD_INSIGHTS", value : local.bfd_insights },
+      { name : "AB2D_BFD_KEYSTORE_LOCATION", value : local.bfd_keystore_location },
+      { name : "AB2D_BFD_URL", value : local.bfd_url },
+      { name : "AB2D_DB_HOST", value : data.aws_db_instance.this.address },
+      { name : "AB2D_DB_PORT", value : "5432" },
+      { name : "AB2D_DB_SSL_MODE", value : "require" },
+      { name : "AB2D_EFS_MOUNT", value : local.ab2d_efs_mount },
+      { name : "AB2D_EXECUTION_ENV", value : local.benv },
+      { name : "AB2D_JOB_POOL_CORE_SIZE", value : local.max_concurrent_eob_jobs },
+      { name : "AB2D_JOB_POOL_MAX_SIZE", value : local.max_concurrent_eob_jobs },
+      { name : "AWS_SQS_FEATURE_FLAG", value : "true" },
+      { name : "AWS_SQS_URL", value : data.aws_sqs_queue.events.url },
+      { name : "CONTRACTS_SERVICE_FEATURE_FLAG", value : "true" },
+      { name : "IMAGE_VERSION", value : local.worker_image_tag },
+      { name : "NEW_RELIC_APP_NAME", value : local.new_relic_app_name },
+      { name : "PROPERTIES_SERVICE_FEATURE_FLAG", value : "true" },
+      { name : "PROPERTIES_SERVICE_URL", value : local.microservices_url },
+    ],
+    logConfiguration : {
+      logDriver : "syslog"
+    },
+    healthCheck : null
+  }]))
 
-    }
-  )
   requires_compatibilities = ["EC2"]
   network_mode             = "bridge"
   execution_role_arn       = data.aws_iam_role.worker.arn
