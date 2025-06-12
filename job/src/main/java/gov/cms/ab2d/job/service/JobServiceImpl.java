@@ -12,7 +12,9 @@ import gov.cms.ab2d.job.model.JobOutput;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.job.repository.JobRepository;
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
@@ -153,6 +155,16 @@ public class JobServiceImpl implements JobService {
                 errorMsg = "The file is not present as it has expired. Please resubmit the job.";
             } else {
                 errorMsg = "The file is not present as there was an error. Please resubmit the job.";
+                try {
+                    log.info("fileDownloadPath={}", fileDownloadPath);
+                    log.info("job UUID={}", job.getJobUuid());
+                    log.info("filename={}", fileName);
+                    log.info("Resource path: {}", resource.getFile().getAbsolutePath());
+                    log.info("_file exists? {}", Files.exists(file));
+                    log.info("_file is readable? {}", Files.isReadable(file));
+                } catch (Exception e) {
+                  log.info("Unexpected error", e);
+                }
             }
             log.error(errorMsg);
             throw new JobOutputMissingException(errorMsg);
