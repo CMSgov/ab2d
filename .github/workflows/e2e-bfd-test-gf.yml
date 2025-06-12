@@ -1,4 +1,4 @@
-name: end-to-end-gf tests
+name: end-to-end-bfd-gf tests
 #run-name: end-to-end-gf tests ${{ inputs.environment }}
 run-name: end-to-end-bfd-gf test sandbox
 
@@ -69,7 +69,6 @@ jobs:
             MAIN_BUCKET=/ab2d/${{ env.AB2D_ENV }}/core/nonsensitive/main-bucket-name
 
       - name: Create opt/ab2d directory and download keystore
-
         run: |
           mkdir -p opt/ab2d
       
@@ -78,5 +77,7 @@ jobs:
           test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
 
       - name: Run e2e-bfd-test
+        env:
+          AB2D_BFD_URL: 'https://prod-sbx.fhir.bfd.cmscloud.local'
         run: |
           mvn test -s settings.xml -pl e2e-bfd-test -am -Dtest=EndToEndBfdTests -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress
