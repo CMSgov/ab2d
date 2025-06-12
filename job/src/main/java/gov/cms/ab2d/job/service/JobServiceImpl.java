@@ -156,10 +156,10 @@ public class JobServiceImpl implements JobService {
             } else {
                 errorMsg = "The file is not present as there was an error. Please resubmit the job.";
                 try {
+                    log.info("Resource absolute path: {}", resource.getFile().getAbsolutePath());
                     log.info("fileDownloadPath={}", fileDownloadPath);
                     log.info("job UUID={}", job.getJobUuid());
                     log.info("filename={}", fileName);
-                    log.info("Resource path: {}", resource.getFile().getAbsolutePath());
                     log.info("_file exists? {}", Files.exists(file));
                     log.info("_file is readable? {}", Files.isReadable(file));
                 } catch (Exception e) {
