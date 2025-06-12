@@ -12,7 +12,6 @@ import gov.cms.ab2d.job.model.JobOutput;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.job.repository.JobRepository;
 import java.io.File;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
