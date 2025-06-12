@@ -1,7 +1,10 @@
 name: end-to-end-gf tests
-run-name: end-to-end-gf tests ${{ inputs.environment }}
+#run-name: end-to-end-gf tests ${{ inputs.environment }}
+run-name: end-to-end-gf test sandbox
 
 on:
+  push:
+    branches: [AB2D-6696/e2e-gf-adjustment]
   workflow_call:
     inputs:
       environment:
@@ -32,8 +35,10 @@ jobs:
       AB2D_BFD_KEYSTORE_LOCATION: "${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
       AB2D_V2_ENABLED: 'true'
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-      AWS_ACCOUNT: ${{ inputs.environment == 'sandbox' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
-      AB2D_ENV: ${{ inputs.environment }}
+#      AWS_ACCOUNT: ${{ inputs.environment == 'sandbox' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
+#      AB2D_ENV: ${{ inputs.environment }}
+      AWS_ACCOUNT: ${{ secrets.PROD_ACCOUNT }}
+      AB2D_ENV: 'sandbox'
 
     steps:
       - name: Assume AWS role
@@ -82,6 +87,7 @@ jobs:
 
       - name: Run e2e-test
         env:
-         E2E_ENVIRONMENT: ${{ inputs.environment == 'dev' && 'DEV' || inputs.environment == 'test' && 'IMPL' || inputs.environment == 'sandbox' && 'SANDBOX' }}
+          E2E_ENVIRONMENT: 'SANDBOX'
+#         E2E_ENVIRONMENT: ${{ inputs.environment == 'dev' && 'DEV' || inputs.environment == 'test' && 'IMPL' || inputs.environment == 'sandbox' && 'SANDBOX' }}
         run: |
           mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress
