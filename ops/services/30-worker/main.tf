@@ -46,7 +46,7 @@ locals {
   vpc_id      = module.platform.vpc_id
 
   bfd_url = lookup({
-    prod = "https://prod.bfd.fhir.cmscloud.local"
+    prod = "https://prod.fhir.bfd.cmscloud.local"
   }, local.parent_env, "https://prod-sbx.fhir.bfd.cmscloud.local")
 
   ab2d_efs_mount            = "/mnt/efs"
