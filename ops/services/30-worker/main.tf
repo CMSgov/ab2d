@@ -49,8 +49,6 @@ locals {
     prod = "https://prod.bfd.fhir.cmscloud.local"
   }, local.parent_env, "https://prod-sbx.fhir.bfd.cmscloud.local")
 
-  cpm_backup = "Daily Weekly Monthly" #FIXME
-
   ab2d_efs_mount            = "/mnt/efs"
   bfd_keystore_location     = module.platform.ssm.worker.bfd_keystore_location.value
   bfd_keystore_password_arn = module.platform.ssm.worker.bfd_keystore_password.arn
@@ -82,8 +80,6 @@ locals {
     stack            = local.env
     purpose          = "ECS container instance"
     sensitivity      = "Public"
-    "cpm backup"     = local.cpm_backup #FIXME
-    purchase_type    = "On-Demand"      #FIXME
     os_license       = "Amazon Linux 2023"
     gold_disk_name   = local.gold_disk_name
     image_version    = local.image_version
@@ -109,8 +105,8 @@ resource "aws_security_group_rule" "egress_worker" {
 resource "aws_security_group_rule" "db_access_worker" {
   type                     = "ingress"
   description              = "${local.service_prefix} worker connections"
-  from_port                = "5432"
-  to_port                  = "5432"
+  from_port                = 5432
+  to_port                  = 5432
   protocol                 = "tcp"
   source_security_group_id = data.aws_security_group.worker.id
   security_group_id        = data.aws_security_group.db.id
@@ -119,8 +115,8 @@ resource "aws_security_group_rule" "db_access_worker" {
 resource "aws_security_group_rule" "efs_ingress" {
   type                     = "ingress"
   description              = "NFS"
-  from_port                = "2049"
-  to_port                  = "2049"
+  from_port                = 2049
+  to_port                  = 2049
   protocol                 = "tcp"
   source_security_group_id = data.aws_security_group.worker.id
   security_group_id        = data.aws_security_group.efs.id
@@ -173,7 +169,7 @@ resource "aws_ecs_task_definition" "worker" {
       { name : "AB2D_DB_USER", valueFrom : local.db_username_arn },
       { name : "AB2D_SLACK_ALERT_WEBHOOKS", valueFrom : local.slack_alert_webhooks_arn }, #FIXME: Is this even used?
       { name : "AB2D_SLACK_TRACE_WEBHOOKS", valueFrom : local.slack_trace_webhooks_arn }, #FIXME: Is this even used?
-      { name : "NEW_RELIC_LICENSE_KEY", valueFrom : local.new_relic_license_key_arn } #FIXME: Is this even used?
+      { name : "NEW_RELIC_LICENSE_KEY", valueFrom : local.new_relic_license_key_arn }     #FIXME: Is this even used?
     ]
     environment : [
       { name : "AB2D_BFD_INSIGHTS", value : local.bfd_insights }, #FIXME: Is this even used?
@@ -238,10 +234,14 @@ resource "aws_launch_template" "this" {
     templatefile(
       "${path.module}/templates/userdata.tpl",
       {
-        aws_region   = local.region_name
-        cluster_name = "${local.service_prefix}-worker"
-        efs_id       = data.aws_efs_file_system.this.file_system_id,
-        env          = local.env
+        aws_region             = local.region_name
+        cluster_name           = "${local.service_prefix}-worker"
+        efs_id                 = data.aws_efs_file_system.this.file_system_id
+        env                    = local.env
+        bucket_name            = module.platform.ssm.core.main-bucket-name.value
+        keystore_dir           = module.platform.ssm.worker.bfd_keystore_location.value
+        bfd_keystore_file_name = "ab2d_${local.env}_keystore"
+        accesspoint            = data.aws_efs_access_point.this.id
       }
     )
   )

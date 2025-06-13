@@ -73,15 +73,6 @@ provider "artifactory" {
   access_token = module.platform.ssm.artifactory.token.value
 }
 
-resource "aws_efs_access_point" "audit_efs" {
-  #TODO is this advisable?
-  posix_user {
-    gid = 0
-    uid = 0
-  }
-  file_system_id = data.aws_efs_file_system.efs.id
-}
-
 resource "aws_lambda_function" "slack_lambda" {
   filename      = "${path.root}/slack_lambda.zip"
   function_name = "${local.service_prefix}-slack-alerts"
@@ -130,7 +121,7 @@ resource "aws_lambda_function" "audit" {
     subnet_ids         = local.node_subnet_ids
   }
   file_system_config {
-    arn              = aws_efs_access_point.audit_efs.arn
+    arn              = data.aws_efs_access_point.this.arn
     local_mount_path = local.efs_mount
   }
   environment {
@@ -164,8 +155,8 @@ resource "aws_security_group_rule" "audit_efs_egress" {
 resource "aws_security_group_rule" "efs_ingress" {
   type                     = "ingress"
   description              = "NFS"
-  from_port                = "2049"
-  to_port                  = "2049"
+  from_port                = 2049
+  to_port                  = 2049
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.audit_lambda.id
   security_group_id        = local.efs_security_group_id
@@ -213,7 +204,6 @@ resource "aws_cloudwatch_log_subscription_filter" "audit_svc_monitoring" {
   name            = aws_lambda_function.audit_svc_monitoring.function_name
 }
 
-
 resource "aws_lambda_function" "audit_svc_monitoring" {
   filename      = "${path.root}/monitoring_audit_svc.zip"
   function_name = "${local.service_prefix}-audit-svc-monitoring"
@@ -228,8 +218,8 @@ resource "aws_lambda_function" "audit_svc_monitoring" {
 resource "aws_security_group_rule" "db_access_lambda_ingress" {
   type                     = "ingress"
   description              = "${local.env} lambda db connection ingress"
-  from_port                = "5432"
-  to_port                  = "5432"
+  from_port                = 5432
+  to_port                  = 5432
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.database_lambda.id
   security_group_id        = local.db_sg_id
