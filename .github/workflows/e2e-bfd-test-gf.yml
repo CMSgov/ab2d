@@ -1,8 +1,10 @@
 name: end-to-end-bfd-gf tests
-run-name: end-to-end-bfd-gf tests ${{ inputs.environment }}
-
+#run-name: end-to-end-bfd-gf tests ${{ inputs.environment }}
+run-name: end-to-end-bfd-gf tests prod
 
 on:
+  push:
+    branches: [AB2D-6696/e2e-bfd-prod]
   workflow_call:
     inputs:
       environment:
@@ -18,6 +20,7 @@ on:
           - dev
           - test
           - sandbox
+          - prod
         default: test
 
 concurrency:
@@ -33,8 +36,10 @@ jobs:
       AB2D_BFD_KEYSTORE_LOCATION: "${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
       AB2D_V2_ENABLED: 'true'
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-      AWS_ACCOUNT: ${{ inputs.environment == 'sandbox' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
-      AB2D_ENV: ${{ inputs.environment }}
+#      AWS_ACCOUNT: ${{ inputs.environment == 'sandbox' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
+#      AB2D_ENV: ${{ inputs.environment }}
+      AWS_ACCOUNT: ${{ secrets.PROD_ACCOUNT }}
+      AB2D_ENV: 'prod'
 
     steps:
       - name: Assume AWS role
@@ -49,7 +54,7 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
+          distribution: 'temurin
           java-version: '17'
 
       - name: Set env vars from AWS params
@@ -74,6 +79,6 @@ jobs:
 
       - name: Run e2e-bfd-test
         env:
-          AB2D_BFD_URL: 'https://prod-sbx.fhir.bfd.cmscloud.local'
+          AB2D_BFD_URL: ${{env.AB2D_ENV == 'prod' && 'https://prod.fhir.bfd.cmscloud.local' || 'https://prod-sbx.fhir.bfd.cmscloud.local'}}
         run: |
           mvn test -s settings.xml -pl e2e-bfd-test -am -Dtest=EndToEndBfdTests -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress
