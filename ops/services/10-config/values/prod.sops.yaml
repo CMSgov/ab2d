@@ -1,4 +1,4 @@
-/ab2d/${env}/worker/nonsensitive/bfd_keystore_location: /mnt/efs/bfd-keystore/ab2d-east-prod/ab2d_prod_keystore
+/ab2d/${env}/worker/nonsensitive/bfd_keystore_location: /mnt/efs/bfd-keystore/prod/ab2d_prod_keystore
 /ab2d/${env}/worker/sensitive/bfd_keystore_password: ENC[AES256_GCM,data:8gbFrRTnD+P9f7EOkatV6+gK4yaQQEbQqjfM2DRk6/8=,iv:D5At8bu3iKpLbqwSHyKXlzwhIbOLE/30gyt+NLZB4sk=,tag:OYNl+AdFZi5EbRwFUK9Daw==,type:str]
 /ab2d/${env}/core/nonsensitive/database_name: prod
 /ab2d/${env}/core/sensitive/database_user: ENC[AES256_GCM,data:NuxQdYeyLSI=,iv:JEmML6HH6UOxv20vYpjieuEJT+BcK80kVRxZn6jmIwQ=,tag:BT4LxFgvHEhxYGZfh6zPIw==,type:str]
