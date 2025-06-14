@@ -1,3 +1,4 @@
+#FIXME Most everything in the 10-web module could be wrapped in a well-defined CDAP-managed module.
 terraform {
   required_providers {
     aws = {
@@ -7,18 +8,15 @@ terraform {
   }
 }
 
-#FIXME Most everything in the 10-web module could be wrapped in a well-defined CDAP-managed module.
 module "platform" {
   source    = "git::https://github.com/CMSgov/ab2d-bcda-dpc-platform.git//terraform/modules/platform?ref=PLT-1099"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
-  app         = local.app
-  env         = local.env
-  root_module = "https://github.com/CMSgov/ab2d/tree/main/ops/services/10-web"
-  service     = local.service
-  ssm_root_map = {
-    web = "/ab2d/${local.env}/web"
-  }
+  app          = local.app
+  env          = local.env
+  root_module  = "https://github.com/CMSgov/ab2d/tree/main/ops/services/10-web"
+  service      = local.service
+  ssm_root_map = { web = "/ab2d/${local.env}/web" }
 }
 
 locals {
@@ -33,6 +31,7 @@ locals {
 
   tls_private_key = lookup(module.platform.ssm.web, "tls_private_key", { value : null }).value
   tls_public_cert = lookup(module.platform.ssm.web, "tls_public_cert", { value : null }).value
+  tls_chain       = lookup(module.platform.ssm.web, "tls_chain", { value : null }).value
   aliases         = local.env == "prod" ? aws_acm_certificate.this[0].subject_alternative_names : []
 }
 
@@ -58,8 +57,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     origin_access_control_id = aws_cloudfront_origin_access_control.oac.id
   }
 
-  #FIXME
-  # aliases           = local.aliases
+  # aliases             = local.aliases #FIXME uncomment once legacy cname is free'd
   enabled             = true
   comment             = "Distribution for ${local.service_prefix} website"
   default_root_object = "index.html"
@@ -81,13 +79,6 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     ssl_support_method             = local.env == "prod" ? "sni-only" : null
   }
 
-  # viewer_certificate {
-  #   acm_certificate_arn            = null
-  #   cloudfront_default_certificate = true
-  #   minimum_protocol_version       = null
-  #   ssl_support_method             = null
-  # }
-
   default_cache_behavior {
     cache_policy_id        = local.env == "prod" ? local.caching_policy["CachingOptimized"] : local.caching_policy["CachingDisabled"]
     allowed_methods        = ["GET", "HEAD"]
@@ -108,4 +99,11 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     response_code         = 404
     response_page_path    = "/404.html"
   }
+}
+
+resource "aws_acm_certificate" "this" {
+  count             = local.tls_private_key != null ? 1 : 0
+  private_key       = local.tls_private_key
+  certificate_body  = local.tls_public_cert
+  certificate_chain = local.tls_chain
 }
