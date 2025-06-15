@@ -27,7 +27,7 @@ data "aws_iam_policy_document" "this" {
     condition {
       test     = "StringEquals"
       variable = "AWS:SourceArn"
-      values   = [aws_cloudfront_distribution.s3_distribution.arn]
+      values   = [aws_cloudfront_distribution.this.arn]
     }
   }
 }

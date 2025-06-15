@@ -35,7 +35,7 @@ locals {
   aliases         = local.env == "prod" ? aws_acm_certificate.this[0].subject_alternative_names : []
 }
 
-resource "aws_cloudfront_origin_access_control" "oac" {
+resource "aws_cloudfront_origin_access_control" "this" {
   name                              = "${local.service_prefix}-origin-access-control"
   description                       = "${local.service_prefix} static website"
   origin_access_control_origin_type = "s3"
@@ -43,7 +43,7 @@ resource "aws_cloudfront_origin_access_control" "oac" {
   signing_protocol                  = "sigv4"
 }
 
-resource "aws_cloudfront_function" "redirects" {
+resource "aws_cloudfront_function" "this" {
   name    = "${local.service_prefix}-redesign-redirects"
   runtime = "cloudfront-js-2.0"
   comment = "Handle cool URIs and redirects for the redesign"
@@ -59,7 +59,7 @@ resource "aws_cloudfront_distribution" "this" {
   origin {
     domain_name              = aws_s3_bucket.this.bucket_regional_domain_name
     origin_id                = "${local.service_prefix}-origin"
-    origin_access_control_id = aws_cloudfront_origin_access_control.oac.id
+    origin_access_control_id = aws_cloudfront_origin_access_control.this.id
   }
 
   # aliases             = local.aliases #FIXME uncomment once legacy cname is free'd
@@ -94,7 +94,7 @@ resource "aws_cloudfront_distribution" "this" {
 
     function_association {
       event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.redirects.arn
+      function_arn = aws_cloudfront_function.this.arn
     }
   }
 
