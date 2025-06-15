@@ -1,27 +1,27 @@
 module "db" {
   source = "../../tf-modules/ds"
 
-  snapshot               = var.snapshot
-  platform               = module.platform
-  username               = local.database_user
-  password               = local.database_password
-  iops                   = local.parent_env == "prod" ? 20000 : 5000
-  instance_class         = local.parent_env == "prod" ? "db.m6g.2xlarge"  : "db.m6g.large"
-  storage_type           = "io1"
-  allocated_storage      = 500
-  multi_az               = local.parent_env == "prod" ? true : false
+  snapshot          = var.snapshot
+  platform          = module.platform
+  username          = local.database_user
+  password          = local.database_password
+  iops              = local.parent_env == "prod" ? 20000 : 5000                      #FIXME Challenge this assumption
+  instance_class    = local.parent_env == "prod" ? "db.m6g.2xlarge" : "db.m6g.large" #FIXME Challenge this assumption
+  storage_type      = "io1"                                                          #FIXME Challenge this assumption
+  allocated_storage = 500                                                            #FIXME Challenge this assumption
+  multi_az          = local.parent_env == "prod" ? true : false
   backup_window = lookup({
-    dev = "08:06-08:36"
-    test = "08:06-08:36"
+    dev     = "08:06-08:36"
+    test    = "08:06-08:36"
     sandbox = "08:06-08:36"
-    prod = "03:15-03:45"
-  }, local.parent_env)
+    prod    = "03:15-03:45"
+  }, local.parent_env, "00:00-00:30")
   maintenance_window = lookup({
-    dev = "sun:08:52-sun:09:22"
-    test = "sun:08:52-sun:09:22"
+    dev     = "sun:08:52-sun:09:22"
+    test    = "sun:08:52-sun:09:22"
     sandbox = "sun:08:52-sun:09:22"
-    prod = "tue:20:00-tue:20:30"
-  }, local.parent_env)
+    prod    = "tue:20:00-tue:20:30"
+  }, local.parent_env, "mon:00:00-mon:00:30")
 }
 
 resource "aws_security_group_rule" "db_access_api" {

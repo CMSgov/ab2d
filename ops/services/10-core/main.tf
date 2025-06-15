@@ -88,7 +88,7 @@ resource "aws_efs_file_system" "efs" {
 
 resource "aws_efs_access_point" "efs" {
   file_system_id = aws_efs_file_system.efs.id
-  tags           = { Name = "${local.service_prefix}" }
+  tags           = { Name = local.service_prefix }
 
   posix_user {
     gid = 0
