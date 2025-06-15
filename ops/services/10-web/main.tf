@@ -50,7 +50,12 @@ resource "aws_cloudfront_function" "redirects" {
   code    = file("${path.module}/redirects-function.js")
 }
 
-resource "aws_cloudfront_distribution" "s3_distribution" {
+data "aws_wafv2_web_acl" "this" {
+  scope = "CLOUDFRONT"
+  name  = "SamQuickACLEnforcingV2"
+}
+
+resource "aws_cloudfront_distribution" "this" {
   origin {
     domain_name              = aws_s3_bucket.this.bucket_regional_domain_name
     origin_id                = "${local.service_prefix}-origin"
@@ -64,7 +69,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   is_ipv6_enabled     = true
   price_class         = "PriceClass_100"
   http_version        = "http2and3"
-  web_acl_id          = data.aws_wafv2_web_acl.cms_waf_cdn.arn
+  web_acl_id          = data.aws_wafv2_web_acl.this.arn
   restrictions {
     geo_restriction {
       restriction_type = "whitelist"
