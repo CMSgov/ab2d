@@ -66,3 +66,9 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
     bucket_key_enabled = true
   }
 }
+
+resource "aws_ssm_parameter" "bucket" {
+  name  = "/ab2d/${local.env}/web/nonsensitive/s3-bucket"
+  value = aws_s3_bucket.this.id
+  type  = "String"
+}

@@ -112,3 +112,9 @@ resource "aws_acm_certificate" "this" {
   certificate_body  = local.tls_public_cert
   certificate_chain = local.tls_chain
 }
+
+resource "aws_ssm_parameter" "distribution" {
+  name  = "/ab2d/${local.env}/web/nonsensitive/distribution-id"
+  value = aws_cloudfront_distribution.this.id
+  type  = "String"
+}
