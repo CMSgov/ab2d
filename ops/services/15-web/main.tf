@@ -14,7 +14,7 @@ module "platform" {
 
   app          = local.app
   env          = local.env
-  root_module  = "https://github.com/CMSgov/ab2d/tree/main/ops/services/10-web"
+  root_module  = "https://github.com/CMSgov/ab2d/tree/main/ops/services/15-web"
   service      = local.service
   ssm_root_map = { web = "/ab2d/${local.env}/web" }
 }
