@@ -57,37 +57,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Tofu plan and apply - Worker
-        working-directory: ops/services/30-worker/
+      - name: Tofu plan and apply - ${{ env.AB2D_MODULE }}
+        working-directory: ops/services/30-${{ env.AB2D_MODULE }}/
         run: |
-          tofu init -var=parent_env=$AB2D_ENV -reconfigure
-          tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
-          tofu plan -var=worker_service_image_tag="ab2d-$AB2D_ENV-latest" -out=tfplan
-          tofu apply -input=false tfplan 
+          echo "test!"
+#          tofu init -var=parent_env=$AB2D_ENV -reconfigure
+#          tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
+#          tofu plan -var=worker_service_image_tag="ab2d-$AB2D_ENV-latest" -out=tfplan
+#          tofu apply -input=false tfplan
         
-
-      - name: Tofu plan and apply - API
-        working-directory: ops/services/30-api/
-        run: |
-          tofu init -var=parent_env=$AB2D_ENV -reconfigure
-          tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
-          tofu plan -var=api_service_image_tag="ab2d-$AB2D_ENV-latest" -out=tfplan
-          tofu apply -input=false tfplan
-
-
-#      - name: Deploy ECS service to run on latest image in ECR
-#        env:
-#          SERVICE_NAME: ab2d-${{ env.AB2D_ENV }}-${{ env.MODULE }} # TODO verify this
-#        run: |
-#          echo "Deploying service $SERVICE_NAME"
-#          aws ecs update-service --cluster "$SERVICE_NAME" --service "$SERVICE_NAME" --force-new-deployment > /dev/null
-#          echo "Waiting for ECS service to stabilize..."
-#          exit_status=1
-#          set +e
-#          while [ "$exit_status" != "0" ]; do
-#            aws ecs wait services-stable --cluster "$SERVICE_NAME" --services "$SERVICE_NAME"
-#            exit_status="$?"
-#            echo "Wait result: $exit_status"
-#          done
-#          set -e
-#          echo "✅ ECS service stabilized."
