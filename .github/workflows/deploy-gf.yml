@@ -1,5 +1,5 @@
 name: deploy-gf
-run-name: deploy-gf ${{ inputs.module }} ${{ inputs.environment }}
+run-name: deploy-gf worker + api ${{ inputs.environment }}
 
 on:
   workflow_call:
@@ -57,12 +57,21 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Tofu plan and apply - ${{ env.MODULE }}
-        working-directory: ops/services/30-${{ env.MODULE }}/
+      - name: Tofu plan and apply - Worker
+        working-directory: ops/services/30-worker/
+        if: ${{ inputs.module == 'worker' }}
         run: |
-          echo "test!"
           tofu init -var=parent_env=$AB2D_ENV -reconfigure
           tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
           tofu plan -var=worker_service_image_tag="ab2d-$AB2D_ENV-latest" -out=tfplan
-#          tofu apply -input=false tfplan
+          #tofu apply -input=false tfplan 
         
+
+      - name: Tofu plan and apply - API
+        working-directory: ops/services/30-api/
+        if: ${{ inputs.module == 'api' }}
+        run: |
+          tofu init -var=parent_env=$AB2D_ENV -reconfigure
+          tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
+          tofu plan -var=api_service_image_tag="ab2d-$AB2D_ENV-latest" -out=tfplan
+          #tofu apply -input=false tfplan
