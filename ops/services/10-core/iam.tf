@@ -430,3 +430,25 @@ resource "aws_iam_instance_profile" "ab2d_instance_profile" {
   path = "/delegatedadmin/developer/"
   role = aws_iam_role.ab2d_instance.name
 }
+
+
+data "aws_iam_policy_document" "kms_key_access" {
+  statement {
+    sid = "AllowEnvCMKAccess"
+    actions = [
+      "kms:Decrypt",
+      "kms:GenerateDataKey",
+      "kms:ReEncrypt",
+      "kms:DescribeKey",
+      "kms:Encrypt"
+    ]
+    resources = [local.env_key_alias.target_key_arn]
+  }
+}
+
+resource "aws_iam_policy" "kms_key_access" {
+  name = "${local.service_prefix}-${local.service}-kms-key-access"
+  path = "/delegatedadmin/developer/"
+  description = "Permissions to access environment ${local.env} KMS CMK"
+  policy = data.aws_iam_policy_document.kms_key_access.json
+}
