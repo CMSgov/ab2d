@@ -424,14 +424,6 @@ resource "aws_iam_role_policy_attachment" "instance_role_cms_ssm" {
   policy_arn = data.aws_iam_policy.cms_cloud_ssm_iam.arn
 }
 
-# Create instance profile
-resource "aws_iam_instance_profile" "ab2d_instance_profile" {
-  name = "${local.service_prefix}-instance-profile"
-  path = "/delegatedadmin/developer/"
-  role = aws_iam_role.ab2d_instance.name
-}
-
-
 data "aws_iam_policy_document" "kms_key_access" {
   statement {
     sid = "AllowEnvCMKAccess"
