@@ -4,9 +4,6 @@ inputs:
   aws_region:
     description: "AWS region to use"
     required: true
-#  secret_store_prefix:
-#    description: "Secret store prefix for constructing MODULE_DB_PREFIX"
-#    required: true
   environment:
     description: "AB2D environment"
     required: true

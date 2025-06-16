@@ -54,6 +54,7 @@ jobs:
         uses: ./.github/workflows/actions/set-database-params
         with:
           aws_region: ${{ vars.AWS_REGION }}
+          # TODO remove 'secret_store_prefix' and pass new variable 'environment'
           secret_store_prefix: ${{ env.SECRET_STORE_PREFIX }}
 
       - name: Install psql
