@@ -48,12 +48,17 @@ resource "aws_iam_role" "metrics_transform" {
   assume_role_policy   = data.aws_iam_policy_document.assume_lambda.json
 }
 
+data "aws_iam_policy" "kms_key_access" {
+  name = "${local.service_prefix}-core-kms-key-access"
+}
+
 resource "aws_iam_role_policy_attachment" "metrics_transform_attachment" {
   for_each = toset([
     "arn:aws:iam::aws:policy/AWSLambda_FullAccess",
     "arn:aws:iam::aws:policy/AmazonSQSFullAccess",
     "arn:aws:iam::aws:policy/AWSKeyManagementServicePowerUser",
-    "arn:aws:iam::aws:policy/AmazonElasticFileSystemFullAccess"
+    "arn:aws:iam::aws:policy/AmazonElasticFileSystemFullAccess",
+    data.aws_iam_policy.kms_key_access.arn
   ])
 
   role       = aws_iam_role.metrics_transform.id

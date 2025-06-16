@@ -220,6 +220,11 @@ resource "aws_lambda_function" "audit_svc_monitoring" {
   timeout       = 600
   description   = "Lambda function that monitors the Audit srvice lambda and sends alert to slack"
   tags          = { code = "https://github.com/CMSgov/ab2d/blob/main/ops/services/30-lambda/code/monitoring_audit_svc.py" }
+  environment {
+    variables = {
+      SLACK_WEBHOOK_URL = local.slack_webhook_ab2d_slack_alerts
+    }
+  }
 }
 
 resource "aws_security_group_rule" "db_access_lambda_ingress" {
