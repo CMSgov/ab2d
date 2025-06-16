@@ -213,8 +213,8 @@ data "aws_iam_policy_document" "kms_key_access" {
 }
 
 resource "aws_iam_policy" "kms_key_access" {
-  name = "${local.service_prefix}-${local.service}-kms-key-access"
-  path = "/delegatedadmin/developer/"
+  name        = "${local.service_prefix}-${local.service}-kms-key-access"
+  path        = "/delegatedadmin/developer/"
   description = "Permissions to access environment ${local.env} KMS CMK"
-  policy = data.aws_iam_policy_document.kms_key_access.json
+  policy      = data.aws_iam_policy_document.kms_key_access.json
 }

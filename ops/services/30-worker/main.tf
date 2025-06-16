@@ -57,14 +57,14 @@ locals {
   max_concurrent_eob_jobs    = "2"
   worker_desired_instances   = module.platform.parent_env == "prod" ? 2 : 1
 
-  db_name_arn                 = module.platform.ssm.core.database_name.arn
-  db_password_arn             = module.platform.ssm.core.database_password.arn
-  db_username_arn             = module.platform.ssm.core.database_user.arn
-  microservices_url           = module.platform.ssm.microservices.url.value
-  new_relic_app_name          = module.platform.ssm.common.new_relic_app_name.value
-  new_relic_license_key_arn   = module.platform.ssm.common.new_relic_license_key.arn
-  slack_alert_webhooks_arn    = module.platform.ssm.common.slack_alert_webhooks.arn
-  slack_trace_webhooks_arn    = module.platform.ssm.common.slack_trace_webhooks.arn
+  db_name_arn               = module.platform.ssm.core.database_name.arn
+  db_password_arn           = module.platform.ssm.core.database_password.arn
+  db_username_arn           = module.platform.ssm.core.database_user.arn
+  microservices_url         = module.platform.ssm.microservices.url.value
+  new_relic_app_name        = module.platform.ssm.common.new_relic_app_name.value
+  new_relic_license_key_arn = module.platform.ssm.common.new_relic_license_key.arn
+  slack_alert_webhooks_arn  = module.platform.ssm.common.slack_alert_webhooks.arn
+  slack_trace_webhooks_arn  = module.platform.ssm.common.slack_trace_webhooks.arn
 
   # Use the provided image tag or get the first, human-readable image tag, favoring a tag with 'latest' in its name if it should exist.
   worker_image_repo = split("@", data.aws_ecr_image.worker.image_uri)[0]
@@ -116,7 +116,7 @@ data "aws_sqs_queue" "events" {
 }
 
 resource "aws_ecs_task_definition" "worker" {
-  family = "${local.service_prefix}-${local.service}"
+  family                   = "${local.service_prefix}-${local.service}"
   network_mode             = "awsvpc"
   execution_role_arn       = data.aws_iam_role.worker.arn
   task_role_arn            = data.aws_iam_role.worker.arn
