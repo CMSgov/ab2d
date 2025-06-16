@@ -35,10 +35,18 @@ data "artifactory_file" "lambdas" {
   output_path = "${path.module}/${each.value}.zip"
 }
 
-data "aws_efs_file_system" "efs" {
+data "aws_efs_file_system" "this" {
   tags = {
     Name = "ab2d-${module.platform.parent_env}-efs"
   }
+}
+
+data "aws_efs_access_points" "this" {
+  file_system_id = data.aws_efs_file_system.this.id
+}
+
+data "aws_efs_access_point" "this" {
+  access_point_id = module.platform.ssm.core.efs_access_point_id.value
 }
 
 data "aws_security_group" "microservices_lambda" {
@@ -55,7 +63,7 @@ data "aws_security_group" "microservices_lb" {
 data "aws_security_group" "efs_sg" {
   filter {
     name   = "tag:Name"
-    values = ["ab2d-${module.platform.parent_env}-efs-sg"] #FIXME just use -efs
+    values = ["ab2d-${module.platform.parent_env}-efs"]
   }
 }
 

@@ -67,13 +67,25 @@ jobs:
             SECONDARY_USER_OKTA_CLIENT_PASSWORD=/ab2d/dev/okta/sensitive/test-pdp-1000-secret
 
       - name: Create opt/ab2d directory and download keystore
-        env:
-          #ToDo: add buckets for sbx
-          BUCKET: ${{ inputs.environment == 'dev' && 'ab2d-dev-main20250514133221464300000001' || inputs.environment == 'test' && 'ab2d-test-main20250610164330992800000001' }}
+
         run: |
           mkdir -p opt/ab2d
-          KEYSTORE_FILE_NAME="ab2d_${{ env.AB2D_ENV }}_keystore"
-          aws s3 cp s3://${{ env.BUCKET }}/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
+          
+          MAIN_BUCKET=$(aws ssm get-parameter \
+            --name "/ab2d/${{ env.AB2D_ENV }}/core/nonsensitive/main-bucket-name" \
+            --with-decryption \
+            --query 'Parameter.Value' \
+            --output text)
+          
+          if [ ${{ env.AB2D_ENV }} == 'test' ]; then
+            KEYSTORE_FILE_NAME="ab2d_imp_keystore"
+          elif [ ${{ env.AB2D_ENV }} == 'sandbox' ]; then
+            KEYSTORE_FILE_NAME="ab2d_sbx_keystore"
+          else
+            KEYSTORE_FILE_NAME="ab2d_dev_keystore"
+          fi
+
+          aws s3 cp s3://$MAIN_BUCKET/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
           test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
 
       - name: Run e2e-bfd-test
@@ -82,6 +94,6 @@ jobs:
 
       - name: Run e2e-test
         env:
-          E2E_ENVIRONMENT: ${{ inputs.environment == 'dev' && 'DEV' || inputs.environment == 'test' && 'IMPL' || inputs.environment == 'sandbox' && 'SANDBOX' }}
+         E2E_ENVIRONMENT: ${{ inputs.environment == 'dev' && 'DEV' || inputs.environment == 'test' && 'IMPL' || inputs.environment == 'sandbox' && 'SANDBOX' }}
         run: |
           mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress

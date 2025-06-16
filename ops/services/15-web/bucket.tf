@@ -27,7 +27,7 @@ data "aws_iam_policy_document" "this" {
     condition {
       test     = "StringEquals"
       variable = "AWS:SourceArn"
-      values   = [aws_cloudfront_distribution.s3_distribution.arn]
+      values   = [aws_cloudfront_distribution.this.arn]
     }
   }
 }
@@ -65,4 +65,10 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
     }
     bucket_key_enabled = true
   }
+}
+
+resource "aws_ssm_parameter" "bucket" {
+  name  = "/ab2d/${local.env}/web/nonsensitive/s3-bucket"
+  value = aws_s3_bucket.this.id
+  type  = "String"
 }

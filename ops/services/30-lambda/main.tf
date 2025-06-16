@@ -35,6 +35,13 @@ locals {
     webhooks      = "/ab2d/mgmt/slack-webhooks"
   }
 
+  benv = lookup({
+    "dev"     = "ab2d-dev"
+    "test"    = "ab2d-east-impl"
+    "prod"    = "ab2d-east-prod"
+    "sandbox" = "ab2d-sbx-sandbox"
+  }, local.parent_env, local.parent_env)
+
   db_host = data.aws_db_instance.this.address
 
   java_options          = "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
@@ -73,15 +80,6 @@ provider "artifactory" {
   access_token = module.platform.ssm.artifactory.token.value
 }
 
-resource "aws_efs_access_point" "audit_efs" {
-  #TODO is this advisable?
-  posix_user {
-    gid = 0
-    uid = 0
-  }
-  file_system_id = data.aws_efs_file_system.efs.id
-}
-
 resource "aws_lambda_function" "slack_lambda" {
   filename      = "${path.root}/slack_lambda.zip"
   function_name = "${local.service_prefix}-slack-alerts"
@@ -110,7 +108,7 @@ resource "aws_lambda_function" "metrics_transform" {
   timeout          = 600
   environment {
     variables = {
-      environment       = local.env
+      environment       = local.benv
       JAVA_TOOL_OPTIONS = local.java_options
     }
   }
@@ -130,12 +128,12 @@ resource "aws_lambda_function" "audit" {
     subnet_ids         = local.node_subnet_ids
   }
   file_system_config {
-    arn              = aws_efs_access_point.audit_efs.arn
+    arn              = data.aws_efs_access_point.this.arn
     local_mount_path = local.efs_mount
   }
   environment {
     variables = {
-      environment           = local.env
+      environment           = local.benv
       JAVA_TOOL_OPTIONS     = local.java_options
       AB2D_EFS_MOUNT        = local.efs_mount
       audit_files_ttl_hours = local.ndjson_ttl
@@ -164,8 +162,8 @@ resource "aws_security_group_rule" "audit_efs_egress" {
 resource "aws_security_group_rule" "efs_ingress" {
   type                     = "ingress"
   description              = "NFS"
-  from_port                = "2049"
-  to_port                  = "2049"
+  from_port                = 2049
+  to_port                  = 2049
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.audit_lambda.id
   security_group_id        = local.efs_security_group_id
@@ -213,7 +211,6 @@ resource "aws_cloudwatch_log_subscription_filter" "audit_svc_monitoring" {
   name            = aws_lambda_function.audit_svc_monitoring.function_name
 }
 
-
 resource "aws_lambda_function" "audit_svc_monitoring" {
   filename      = "${path.root}/monitoring_audit_svc.zip"
   function_name = "${local.service_prefix}-audit-svc-monitoring"
@@ -228,8 +225,8 @@ resource "aws_lambda_function" "audit_svc_monitoring" {
 resource "aws_security_group_rule" "db_access_lambda_ingress" {
   type                     = "ingress"
   description              = "${local.env} lambda db connection ingress"
-  from_port                = "5432"
-  to_port                  = "5432"
+  from_port                = 5432
+  to_port                  = 5432
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.database_lambda.id
   security_group_id        = local.db_sg_id
@@ -261,7 +258,7 @@ resource "aws_lambda_function" "coverage_count" {
   memory_size      = 1024
   environment {
     variables = {
-      environment       = local.env
+      environment       = local.benv
       JAVA_TOOL_OPTIONS = local.java_options
       DB_URL            = "jdbc:postgresql://${local.db_host}:${local.db_port}/${local.db_name}?sslmode=${local.ab2d_db_ssl_mode}&reWriteBatchedInserts=true"
       DB_USERNAME       = local.db_username
@@ -311,7 +308,7 @@ resource "aws_lambda_function" "database_management" {
   }
   environment {
     variables = {
-      environment                   = local.env
+      environment                   = local.benv
       JAVA_TOOL_OPTIONS             = local.java_options
       DB_URL                        = "jdbc:postgresql://${local.db_host}:${local.db_port}/${local.db_name}?sslmode=${local.ab2d_db_ssl_mode}&reWriteBatchedInserts=true"
       DB_USERNAME                   = local.db_username
@@ -341,7 +338,7 @@ resource "aws_lambda_function" "hpms_counts" {
   }
   environment {
     variables = {
-      environment          = local.env
+      environment          = local.benv
       JAVA_TOOL_OPTIONS    = local.java_options
       contract_service_url = local.contracts_service_url
       SLACK_WEBHOOK_URL    = local.slack_webhook_ab2d_slack_alerts

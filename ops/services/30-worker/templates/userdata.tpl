@@ -23,9 +23,22 @@ aws ec2 modify-instance-metadata-options --instance-id $INSTANCE_ID --http-put-r
 # With TLS
 # --------
 # Mount with IAM authorization to an Amazon EC2 instance that has an instance profile
-echo '${efs_id}:/ /mnt/efs efs _netdev,tls,iam 0 0' | sudo tee -a /etc/fstab
+echo '${efs_id}:/ /mnt/efs efs _netdev,tls,iam,accesspoint=${accesspoint} 0 0' | sudo tee -a /etc/fstab
 sudo mount -a
 #####
+
+#
+# Download keystore from S3 to the EFS mount
+#
+
+# Create a "bfd-keystore" directory under EFS if it doesn't exist
+keystore_dir="/mnt/efs/bfd-keystore/${env}"
+echo -n "Creating keystore directory at $${keystore_dir}..."
+mkdir -p "$${keystore_dir}"
+echo "done."
+
+# Download keystore file from S3
+aws s3 cp "s3://${bucket_name}/${bfd_keystore_file_name}" "$${keystore_dir}/${bfd_keystore_file_name}"
 
 # ECS config file
 # https://github.com/aws/amazon-ecs-agent

@@ -3,7 +3,7 @@ data "aws_sns_topic" "events" {
 }
 
 data "aws_sqs_queue" "events" {
-  name = "${local.service_prefix}-events-sqs" #FIXME just use -events
+  name = "${local.service_prefix}-events"
 }
 
 data "aws_security_group" "api" {
