@@ -23,9 +23,9 @@ runs:
         MODULE_DB_PREFIX: /ab2d/core/${{ inputs.environment }}
       with:
         params: |
-          DB_ENDPOINT=${{ env.MODULE_DB_PREFIX }}/core/nonsensitive/database_endpoint
-          PGUSER=${{ env.MODULE_DB_PREFIX }}/core/sensitive/database_user
-          PGPASSWORD=${{ env.MODULE_DB_PREFIX }}/core/sensitive/database_password
+          DB_ENDPOINT=${{ env.MODULE_DB_PREFIX }}/nonsensitive/database_endpoint
+          PGUSER=${{ env.MODULE_DB_PREFIX }}/sensitive/database_user
+          PGPASSWORD=${{ env.MODULE_DB_PREFIX }}/sensitive/database_password
 
     - name: Add PG environment variables
       shell: bash
