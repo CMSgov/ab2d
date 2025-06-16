@@ -1,5 +1,5 @@
 name: deploy-gf
-run-name: deploy-gf worker + api ${{ inputs.environment }}
+run-name: deploy-gf ${{ inputs.module }} ${{ inputs.environment }}
 
 on:
   workflow_call:
