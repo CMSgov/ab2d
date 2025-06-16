@@ -20,7 +20,7 @@ runs:
       uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
       env:
         AWS_REGION: ${{ inputs.aws_region }}
-        MODULE_DB_PREFIX: /ab2d/core/${{ inputs.environment }}
+        MODULE_DB_PREFIX: /ab2d/${{ inputs.environment }}/core
       with:
         params: |
           DB_ENDPOINT=${{ env.MODULE_DB_PREFIX }}/nonsensitive/database_endpoint
@@ -36,6 +36,4 @@ runs:
         echo "PGPORT=$PGPORT" >> $GITHUB_ENV
         echo "PGDATABASE=${{ inputs.environment }}" >> $GITHUB_ENV
         echo "DATABASE_SCHEMA_NAME=public" >> $GITHUB_ENV
-        
-
         
