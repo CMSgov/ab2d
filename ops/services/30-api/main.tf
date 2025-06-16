@@ -40,7 +40,7 @@ locals {
     test    = "ab2d-east-impl"
     prod    = "ab2d-east-prod"
     sandbox = "ab2d-sbx-sandbox"
-  }, local.parent_env, local.env)
+  }, local.parent_env, local.parent_env)
 
   ab2d_efs_mount               = "/mnt/efs"
   aws_region                   = module.platform.primary_region.name

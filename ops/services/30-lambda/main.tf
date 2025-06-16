@@ -35,6 +35,13 @@ locals {
     webhooks      = "/ab2d/mgmt/slack-webhooks"
   }
 
+  benv = lookup({
+    "dev"     = "ab2d-dev"
+    "test"    = "ab2d-east-impl"
+    "prod"    = "ab2d-east-prod"
+    "sandbox" = "ab2d-sbx-sandbox"
+  }, local.parent_env, local.parent_env)
+
   db_host = data.aws_db_instance.this.address
 
   java_options          = "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
@@ -101,7 +108,7 @@ resource "aws_lambda_function" "metrics_transform" {
   timeout          = 600
   environment {
     variables = {
-      environment       = local.env
+      environment       = local.benv
       JAVA_TOOL_OPTIONS = local.java_options
     }
   }
@@ -126,7 +133,7 @@ resource "aws_lambda_function" "audit" {
   }
   environment {
     variables = {
-      environment           = local.env
+      environment           = local.benv
       JAVA_TOOL_OPTIONS     = local.java_options
       AB2D_EFS_MOUNT        = local.efs_mount
       audit_files_ttl_hours = local.ndjson_ttl
@@ -251,7 +258,7 @@ resource "aws_lambda_function" "coverage_count" {
   memory_size      = 1024
   environment {
     variables = {
-      environment       = local.env
+      environment       = local.benv
       JAVA_TOOL_OPTIONS = local.java_options
       DB_URL            = "jdbc:postgresql://${local.db_host}:${local.db_port}/${local.db_name}?sslmode=${local.ab2d_db_ssl_mode}&reWriteBatchedInserts=true"
       DB_USERNAME       = local.db_username
@@ -301,7 +308,7 @@ resource "aws_lambda_function" "database_management" {
   }
   environment {
     variables = {
-      environment                   = local.env
+      environment                   = local.benv
       JAVA_TOOL_OPTIONS             = local.java_options
       DB_URL                        = "jdbc:postgresql://${local.db_host}:${local.db_port}/${local.db_name}?sslmode=${local.ab2d_db_ssl_mode}&reWriteBatchedInserts=true"
       DB_USERNAME                   = local.db_username
@@ -331,7 +338,7 @@ resource "aws_lambda_function" "hpms_counts" {
   }
   environment {
     variables = {
-      environment          = local.env
+      environment          = local.benv
       JAVA_TOOL_OPTIONS    = local.java_options
       contract_service_url = local.contracts_service_url
       SLACK_WEBHOOK_URL    = local.slack_webhook_ab2d_slack_alerts
