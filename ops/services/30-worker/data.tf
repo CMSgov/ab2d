@@ -6,6 +6,10 @@ data "aws_efs_file_system" "this" {
   }
 }
 
+data "aws_efs_access_point" "this" {
+  access_point_id = module.platform.ssm.core.efs_access_point_id.value
+}
+
 data "aws_db_instance" "this" {
   db_instance_identifier = local.service_prefix
 }
@@ -18,7 +22,7 @@ data "aws_security_group" "db" {
 }
 
 data "aws_security_group" "efs" {
-  name   = "${local.service_prefix}-efs-sg" #FIXME just use -efs
+  name   = "${local.service_prefix}-efs"
   vpc_id = local.vpc_id
 }
 
