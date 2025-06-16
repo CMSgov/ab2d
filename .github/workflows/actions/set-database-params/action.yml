@@ -28,6 +28,7 @@ runs:
           PGPASSWORD=${{ env.MODULE_DB_PREFIX }}/core/sensitive/database_password
 
     - name: Add PG environment variables
+      shell: bash
       run: |
         PGHOST=$(echo $DB_ENDPOINT | cut -d ":" -f1)
         PGPORT=$(echo $DB_ENDPOINT | cut -d ":" -f2)
