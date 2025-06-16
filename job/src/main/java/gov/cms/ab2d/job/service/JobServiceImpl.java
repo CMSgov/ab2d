@@ -154,16 +154,6 @@ public class JobServiceImpl implements JobService {
                 errorMsg = "The file is not present as it has expired. Please resubmit the job.";
             } else {
                 errorMsg = "The file is not present as there was an error. Please resubmit the job.";
-                try {
-                    log.info("Resource absolute path: {}", resource.getFile().getAbsolutePath());
-                    log.info("fileDownloadPath={}", fileDownloadPath);
-                    log.info("job UUID={}", job.getJobUuid());
-                    log.info("filename={}", fileName);
-                    log.info("_file exists? {}", Files.exists(file));
-                    log.info("_file is readable? {}", Files.isReadable(file));
-                } catch (Exception e) {
-                  log.info("Unexpected error", e);
-                }
             }
             log.error(errorMsg);
             throw new JobOutputMissingException(errorMsg);
