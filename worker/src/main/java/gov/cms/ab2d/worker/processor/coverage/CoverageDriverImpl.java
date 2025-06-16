@@ -540,7 +540,7 @@ public class CoverageDriverImpl implements CoverageDriver {
             startDateTime = startDateTime.plusMonths(1);
         }
 
-        log.info("counting number of beneficiaries for {} coverage periods for job {}",
+        log.debug("counting number of beneficiaries for {} coverage periods for job {}",
                 periodsToReport.size(), job.getJobUuid());
 
         return coverageService.countBeneficiariesByCoveragePeriod(periodsToReport);
