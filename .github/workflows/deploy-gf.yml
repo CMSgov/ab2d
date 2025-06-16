@@ -59,7 +59,7 @@ jobs:
 
       - name: Tofu plan and apply - Worker
         working-directory: ops/services/30-worker/
-        if: ${{ inputs.module == 'worker' }}
+        if: ${{ env.MODULE == 'worker' }}
         run: |
           tofu init -var=parent_env=$AB2D_ENV -reconfigure
           tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
@@ -68,7 +68,7 @@ jobs:
 
       - name: Tofu plan and apply - API
         working-directory: ops/services/30-api/
-        if: ${{ inputs.module == 'api' }}
+        if: ${{ env.MODULE == 'api' }}
         run: |
           tofu init -var=parent_env=$AB2D_ENV -reconfigure
           tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
