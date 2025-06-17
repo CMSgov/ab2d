@@ -203,7 +203,7 @@ resource "aws_security_group_rule" "efs_ingress" {
 }
 
 resource "aws_ecs_cluster" "ab2d_api" {
-  name = "${local.service_prefix}-api"
+  name = "${local.service_prefix}-${local.service}"
 
   setting {
     name  = "containerInsights"
@@ -212,7 +212,7 @@ resource "aws_ecs_cluster" "ab2d_api" {
 }
 
 resource "aws_ecs_task_definition" "api" {
-  family                   = "${local.service_prefix}-api"
+  family                   = "${local.service_prefix}-${local.service}"
   network_mode             = "awsvpc"
   execution_role_arn       = data.aws_iam_role.api.arn
   task_role_arn            = data.aws_iam_role.api.arn
@@ -282,7 +282,7 @@ resource "aws_ecs_task_definition" "api" {
     logConfiguration : {
       logDriver : "awslogs"
       options : {
-        awslogs-group : "/aws/ecs/fargate/${local.service_prefix}/api",
+        awslogs-group : "/aws/ecs/fargate/${local.service_prefix}/${local.service}",
         awslogs-create-group : "true",
         awslogs-region : local.aws_region,
         awslogs-stream-prefix : local.service_prefix
@@ -293,7 +293,7 @@ resource "aws_ecs_task_definition" "api" {
 }
 
 resource "aws_ecs_service" "api" {
-  name                               = "${local.service_prefix}-api"
+  name                               = "${local.service_prefix}-${local.service}"
   cluster                            = aws_ecs_cluster.ab2d_api.id
   task_definition                    = coalesce(var.override_task_definition_arn, aws_ecs_task_definition.api.arn)
   launch_type                        = "FARGATE"
