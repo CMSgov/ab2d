@@ -52,6 +52,8 @@ public class CapabilityStatementR4 {
         implementation.setUrl(server);
         cs.setImplementation(implementation);
 
+        cs.addInstantiates("http://hl7.org/fhir/uv/bulkdata/CapabilityStatement/bulk-data");
+
         CapabilityStatement.CapabilityStatementRestComponent rest = new CapabilityStatement.CapabilityStatementRestComponent();
         rest.setMode(CapabilityStatement.RestfulCapabilityMode.SERVER);
         CapabilityStatement.CapabilityStatementRestSecurityComponent security = new CapabilityStatement.CapabilityStatementRestSecurityComponent();
