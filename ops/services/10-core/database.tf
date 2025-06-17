@@ -10,18 +10,33 @@ module "db" {
   storage_type      = "io1"                                                          #FIXME Challenge this assumption
   allocated_storage = 500                                                            #FIXME Challenge this assumption
   multi_az          = local.parent_env == "prod" ? true : false
+
   backup_window = lookup({
     dev     = "08:06-08:36"
     test    = "08:06-08:36"
     sandbox = "08:06-08:36"
     prod    = "03:15-03:45"
   }, local.parent_env, "00:00-00:30")
+
   maintenance_window = lookup({
     dev     = "sun:08:52-sun:09:22"
     test    = "sun:08:52-sun:09:22"
     sandbox = "sun:08:52-sun:09:22"
     prod    = "tue:20:00-tue:20:30"
   }, local.parent_env, "mon:00:00-mon:00:30")
+
+  monitoring_interval = lookup({
+    prod = 60
+  }, local.parent_env, 0)
+
+  performance_insights_enabled = lookup({
+    prod = true
+  }, local.parent_env, false)
+
+  performance_insights_retention_period = lookup({
+    prod = 7
+  }, local.parent_env, 0)
+  deletion_protection = !module.platform.is_ephemeral_env
 }
 
 resource "aws_security_group_rule" "db_access_api" {
@@ -227,4 +242,10 @@ resource "aws_cloudwatch_metric_alarm" "db_swap_usage" {
   dimensions = {
     DBInstanceIdentifier = module.db.instance.identifier
   }
+}
+
+resource "aws_ssm_parameter" "db_endpoint" {
+  name  = "/ab2d/${local.env}/core/nonsensitive/database_endpoint"
+  value = module.db.instance.endpoint
+  type  = "String"
 }

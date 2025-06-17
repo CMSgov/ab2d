@@ -34,3 +34,19 @@ variable "multi_az" {
 
 variable "maintenance_window" {}
 variable "backup_window" {}
+
+variable "monitoring_interval" {
+  default = 0
+}
+
+variable "performance_insights_enabled" {
+  default = false
+}
+
+variable  "performance_insights_retention_period" {
+  default = 0
+}
+
+variable "deletion_protection" {
+  default = true
+}
