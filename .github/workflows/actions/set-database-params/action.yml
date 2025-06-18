@@ -4,9 +4,16 @@ inputs:
   aws_region:
     description: "AWS region to use"
     required: true
-  secret_store_prefix:
-    description: "Secret store prefix for constructing MODULE_DB_PREFIX"
+    default: 'us-east-1'
+  environment:
+    description: "AB2D environment"
     required: true
+    type: choice
+    options:
+      - dev
+      - test
+      - sandbox
+      - prod
 runs:
   using: "composite"
   steps:
@@ -14,13 +21,20 @@ runs:
       uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
       env:
         AWS_REGION: ${{ inputs.aws_region }}
-        MODULE_DB_PREFIX: /aws/reference/secretsmanager/${{ inputs.secret_store_prefix }}/module/db
-        MODULE_DB_SUFFIX: 2020-01-02-09-15-01
+        MODULE_DB_PREFIX: /ab2d/${{ inputs.environment }}/core
       with:
         params: |
-          PGHOST=${{ env.MODULE_DB_PREFIX }}/database_host/${{ env.MODULE_DB_SUFFIX }}
-          PGPORT=${{ env.MODULE_DB_PREFIX }}/database_port/${{ env.MODULE_DB_SUFFIX }}
-          PGUSER=${{ env.MODULE_DB_PREFIX }}/database_user/${{ env.MODULE_DB_SUFFIX }}
-          PGDATABASE=${{ env.MODULE_DB_PREFIX }}/database_name/${{ env.MODULE_DB_SUFFIX }}
-          PGPASSWORD=${{ env.MODULE_DB_PREFIX }}/database_password/${{ env.MODULE_DB_SUFFIX }}
-          DATABASE_SCHEMA_NAME=${{ env.MODULE_DB_PREFIX }}/schema_name/${{ env.MODULE_DB_SUFFIX }}
+          DB_ENDPOINT=${{ env.MODULE_DB_PREFIX }}/nonsensitive/database_endpoint
+          PGUSER=${{ env.MODULE_DB_PREFIX }}/sensitive/database_user
+          PGPASSWORD=${{ env.MODULE_DB_PREFIX }}/sensitive/database_password
+
+    - name: Add PG environment variables
+      shell: bash
+      run: |
+        PGHOST=$(echo $DB_ENDPOINT | cut -d ":" -f1)
+        PGPORT=$(echo $DB_ENDPOINT | cut -d ":" -f2)
+        echo "PGHOST=$PGHOST" >> $GITHUB_ENV
+        echo "PGPORT=$PGPORT" >> $GITHUB_ENV
+        echo "PGDATABASE=${{ inputs.environment }}" >> $GITHUB_ENV
+        echo "DATABASE_SCHEMA_NAME=public" >> $GITHUB_ENV
+        
