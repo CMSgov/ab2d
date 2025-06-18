@@ -174,194 +174,11 @@ resource "aws_iam_role_policy_attachment" "microservices" {
   policy_arn = each.value
 }
 
-# Create instance role
-data "aws_iam_policy_document" "instance_role_assume_role" {
-  statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type = "Service"
-      identifiers = [
-        "ec2.amazonaws.com",
-        "ecs-tasks.amazonaws.com",
-        "s3.amazonaws.com",
-        "vpc-flow-logs.amazonaws.com"
-      ]
-    }
-  }
-}
-
-resource "aws_iam_role" "ab2d_instance" {
-  name                 = "${local.service_prefix}-instance-role"
-  path                 = "/delegatedadmin/developer/"
-  assume_role_policy   = data.aws_iam_policy_document.instance_role_assume_role.json
-  permissions_boundary = "arn:aws:iam::${local.aws_account_number}:policy/cms-cloud-admin/developer-boundary-policy"
-}
-
-# Reference AmazonEC2ContainerServiceforEC2Role
-data "aws_iam_policy" "amazon_ec2_container_service_for_ec2" {
-  arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
-}
-
 # Create KMS policy
 resource "aws_iam_policy" "kms" {
   name   = "${local.service_prefix}-kms"
   path   = "/delegatedadmin/developer/"
   policy = data.aws_iam_policy_document.kms.json
-}
-
-# Create packer policy
-data "aws_iam_policy_document" "instance_role_packer" {
-  statement {
-    actions = [
-      "ec2:AttachVolume",
-      "ec2:AuthorizeSecurityGroupIngress",
-      "ec2:CopyImage",
-      "ec2:CreateImage",
-      "ec2:CreateKeypair",
-      "ec2:CreateSecurityGroup",
-      "ec2:CreateSnapshot",
-      "ec2:CreateTags",
-      "ec2:CreateVolume",
-      "ec2:DeleteKeypair",
-      "ec2:DeleteSecurityGroup",
-      "ec2:DeleteSnapshot",
-      "ec2:DeleteVolume",
-      "ec2:DeregisterImage",
-      "ec2:DescribeImageAttribute",
-      "ec2:DescribeImages",
-      "ec2:DescribeInstances",
-      "ec2:DescribeRegions",
-      "ec2:DescribeSecurityGroups",
-      "ec2:DescribeSnapshots",
-      "ec2:DescribeSubnets",
-      "ec2:DescribeTags",
-      "ec2:DescribeVolumes",
-      "ec2:DetachVolume",
-      "ec2:GetPasswordData",
-      "ec2:ModifyImageAttribute",
-      "ec2:ModifyInstanceAttribute",
-      "ec2:ModifySnapshotAttribute",
-      "ec2:RegisterImage",
-      "ec2:RunInstances",
-      "ec2:StopInstances",
-      "ec2:TerminateInstances"
-    ]
-
-    resources = [
-      "*"
-    ]
-  }
-}
-
-resource "aws_iam_policy" "packer" {
-  name   = "${local.service_prefix}-packer-policy"
-  path   = "/delegatedadmin/developer/"
-  policy = data.aws_iam_policy_document.instance_role_packer.json
-}
-
-#FIXME this policy is unfocused and likely over-privileged for greenfield. this needs to be addressed prior to a production/sensitive-environment deployment
-# Create S3 access policy
-data "aws_iam_policy_document" "instance_role_s3_access" {
-  statement {
-    actions = [
-      "s3:Get*",
-      "s3:List*"
-    ]
-
-    resources = [
-      "*"
-    ]
-  }
-
-  statement {
-    actions = [
-      "s3:*",
-    ]
-
-    resources = [
-      module.platform.logging_bucket.arn,
-      "${module.platform.logging_bucket.arn}/*"
-    ]
-  }
-
-  statement {
-    sid = "SQSAccess"
-    actions = [
-      "sqs:*"
-    ]
-
-    resources = [
-      aws_sqs_queue.this.arn
-    ]
-  }
-
-  statement {
-    sid = "SNSAccess"
-    actions = [
-      "SNS:CreateTopic",
-      "SNS:Subscribe",
-      "SNS:Unsubscribe",
-      "SNS:Publish"
-    ]
-    resources = [
-      "*"
-    ]
-  }
-
-  statement {
-    sid = "SecreteManagerPermissions"
-    actions = [
-      "secretsmanager:*"
-
-    ]
-    resources = [
-      "*"
-    ]
-  }
-}
-
-resource "aws_iam_policy" "s3_access" {
-  name   = "${local.service_prefix}-s3-access-policy"
-  path   = "/delegatedadmin/developer/"
-  policy = data.aws_iam_policy_document.instance_role_s3_access.json
-}
-
-# Create CloudWatch logs policy
-data "aws_iam_policy_document" "instance_role_cloud_watch_logs" {
-  statement {
-    actions = [
-      "logs:CreateLogGroup",
-      "logs:CreateLogStream",
-      "logs:PutLogEvents",
-      "logs:DescribeLogGroups",
-      "logs:DescribeLogStreams"
-    ]
-
-    resources = [
-      "arn:aws:logs:*:*:*"
-    ]
-  }
-}
-
-resource "aws_iam_policy" "cloud_watch_logs" {
-  name   = "${local.service_prefix}-cloudwatch-logs-policy"
-  path   = "/delegatedadmin/developer/"
-  policy = data.aws_iam_policy_document.instance_role_cloud_watch_logs.json
-}
-
-# Create Ab2dSsmPolicy
-data "aws_iam_policy_document" "instance_role_ssm" {
-
-  statement {
-    actions = [
-      "ssm:GetParameters"
-    ]
-
-    resources = [
-      "arn:aws:ssm:*:*:parameter/aws/service/ecs*"
-    ]
-  }
 }
 
 data "aws_iam_policy_document" "kms" {
@@ -381,57 +198,6 @@ data "aws_iam_policy_document" "kms" {
   }
 }
 
-resource "aws_iam_policy" "ssm" {
-  name   = "${local.service_prefix}-ssm"
-  path   = "/delegatedadmin/developer/"
-  policy = data.aws_iam_policy_document.instance_role_ssm.json
-}
-
-# Attach policies to Instance Role
-resource "aws_iam_role_policy_attachment" "instance_role_kms" {
-  role       = aws_iam_role.ab2d_instance.name
-  policy_arn = aws_iam_policy.kms.arn
-}
-
-resource "aws_iam_role_policy_attachment" "instance_role_packer" {
-  role       = aws_iam_role.ab2d_instance.name
-  policy_arn = aws_iam_policy.packer.arn
-}
-
-resource "aws_iam_role_policy_attachment" "instance_role_s3_access" {
-  role       = aws_iam_role.ab2d_instance.name
-  policy_arn = aws_iam_policy.s3_access.arn
-}
-
-resource "aws_iam_role_policy_attachment" "instance_role_cloud_watch_logs" {
-  role       = aws_iam_role.ab2d_instance.name
-  policy_arn = aws_iam_policy.cloud_watch_logs.arn
-}
-
-resource "aws_iam_role_policy_attachment" "instance_role_ssm" {
-  role       = aws_iam_role.ab2d_instance.name
-  policy_arn = aws_iam_policy.ssm.arn
-}
-
-resource "aws_iam_role_policy_attachment" "amazon_ec2_container_service_for_ec2" {
-  role       = aws_iam_role.ab2d_instance.name
-  policy_arn = data.aws_iam_policy.amazon_ec2_container_service_for_ec2.arn
-}
-
-#CLDSPT-10122
-resource "aws_iam_role_policy_attachment" "instance_role_cms_ssm" {
-  role       = aws_iam_role.ab2d_instance.name
-  policy_arn = data.aws_iam_policy.cms_cloud_ssm_iam.arn
-}
-
-# Create instance profile
-resource "aws_iam_instance_profile" "ab2d_instance_profile" {
-  name = "${local.service_prefix}-instance-profile"
-  path = "/delegatedadmin/developer/"
-  role = aws_iam_role.ab2d_instance.name
-}
-
-
 data "aws_iam_policy_document" "kms_key_access" {
   statement {
     sid = "AllowEnvCMKAccess"
@@ -447,8 +213,8 @@ data "aws_iam_policy_document" "kms_key_access" {
 }
 
 resource "aws_iam_policy" "kms_key_access" {
-  name = "${local.service_prefix}-${local.service}-kms-key-access"
-  path = "/delegatedadmin/developer/"
+  name        = "${local.service_prefix}-${local.service}-kms-key-access"
+  path        = "/delegatedadmin/developer/"
   description = "Permissions to access environment ${local.env} KMS CMK"
-  policy = data.aws_iam_policy_document.kms_key_access.json
+  policy      = data.aws_iam_policy_document.kms_key_access.json
 }
