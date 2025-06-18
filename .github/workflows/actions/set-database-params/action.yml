@@ -4,6 +4,7 @@ inputs:
   aws_region:
     description: "AWS region to use"
     required: true
+    default: 'us-east-1'
   environment:
     description: "AB2D environment"
     required: true
