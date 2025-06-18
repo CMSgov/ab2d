@@ -1,9 +1,11 @@
-data "aws_default_tags" "this" {}
-
 data "aws_efs_file_system" "this" {
   tags = {
     Name = "${local.service_prefix}-efs"
   }
+}
+
+data "aws_efs_access_point" "this" {
+  access_point_id = module.platform.ssm.core.efs_access_point_id.value
 }
 
 data "aws_db_instance" "this" {
@@ -18,30 +20,12 @@ data "aws_security_group" "db" {
 }
 
 data "aws_security_group" "efs" {
-  name   = "${local.service_prefix}-efs-sg" #FIXME just use -efs
+  name   = "${local.service_prefix}-efs"
   vpc_id = local.vpc_id
 }
 
 data "aws_security_group" "worker" {
   name = "${local.service_prefix}-worker"
-}
-
-data "aws_ami" "ab2d_ami" {
-  most_recent = true
-  owners      = ["self"]
-  filter {
-    name   = "tag:Name"
-    values = ["ab2d-*-ami"]
-  }
-}
-
-data "aws_ami" "cms_gold" {
-  most_recent = true
-  owners      = [local.aws_account_cms_gold_images]
-  filter {
-    name   = "name"
-    values = ["al2023-*"]
-  }
 }
 
 data "aws_ecr_image" "worker" {

@@ -33,7 +33,7 @@ locals {
     "test"    = "ab2d-east-impl"
     "prod"    = "ab2d-east-prod"
     "sandbox" = "ab2d-sbx-sandbox"
-  }, local.env, local.env)
+  }, local.parent_env, local.parent_env)
 
   ab2d_db_host               = data.aws_db_instance.this.address
   aws_account_number         = module.platform.account_id
