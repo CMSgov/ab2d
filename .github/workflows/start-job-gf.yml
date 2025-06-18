@@ -62,8 +62,6 @@ jobs:
 
       - name: Set environment-specific variables
         run: |
-          SECRET_STORE_PREFIX="ab2d/$AB2D_ENV"
-          
           if [ "$AB2D_ENV" == "dev" ]; then
             DEFAULT_API_URL_PREFIX="https://dev.ab2d.cms.gov"
           elif [ "$AB2D_ENV" == "test" ]; then
@@ -77,7 +75,6 @@ jobs:
             exit 1
           fi
           
-          echo "SECRET_STORE_PREFIX=${SECRET_STORE_PREFIX}" >> $GITHUB_ENV
           echo "DEFAULT_API_URL_PREFIX=${DEFAULT_API_URL_PREFIX}" >> $GITHUB_ENV
 
       - name: Assume AWS role
