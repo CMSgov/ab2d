@@ -80,7 +80,7 @@ jobs:
 
     steps:
       - name: Set environment variables
-        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        uses: cmsgov/cdap/actions/aws-params-env-action@main
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:
@@ -147,7 +147,7 @@ jobs:
           cd -
 
       - name: Install terraform
-        uses: cmsgov/ab2d-bcda-dpc-platform/actions/setup-tfenv-terraform@main
+        uses: cmsgov/cdap/actions/setup-tfenv-terraform@main
 
       - name: Terraform init and plan
         run: |
