@@ -118,3 +118,9 @@ resource "aws_ssm_parameter" "distribution" {
   value = aws_cloudfront_distribution.this.id
   type  = "String"
 }
+
+resource "aws_ssm_parameter" "domain_name" {
+  name  = "/ab2d/${local.env}/web/nonsensitive/domain-name"
+  value = aws_cloudfront_distribution.this.domain_name
+  type  = "String"
+}
