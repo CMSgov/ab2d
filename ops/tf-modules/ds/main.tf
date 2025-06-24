@@ -31,18 +31,19 @@ resource "aws_db_instance" "this" {
   storage_encrypted                     = true
   maintenance_window                    = var.maintenance_window
   max_allocated_storage                 = 0    #TODO
-  monitoring_interval                   = 0    #TODO
+  monitoring_interval                   = var.monitoring_interval   #TODO
   monitoring_role_arn                   = null #TODO
   multi_az                              = var.multi_az
   nchar_character_set_name              = null
   network_type                          = "IPV4"
   parameter_group_name                  = aws_db_parameter_group.this.name
-  performance_insights_enabled          = false #TODO
+  performance_insights_enabled          = true  #TODO
   performance_insights_kms_key_id       = null  #TODO
-  performance_insights_retention_period = 0     #TODO
+  performance_insights_retention_period = 7     #TODO
   port                                  = 5432  #TODO
   skip_final_snapshot                   = true  #TODO
   storage_type                          = var.storage_type
+  deletion_protection                   = var.deletion_protection
   tags = {
     AWS_Backup = "4hr7_w90"
   }
