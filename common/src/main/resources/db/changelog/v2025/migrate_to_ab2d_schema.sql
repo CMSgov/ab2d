@@ -1,5 +1,8 @@
+
 -- Create the new schema
 CREATE SCHEMA IF NOT EXISTS ab2d;
+
+
 
 -- Move tables
 DO $$
@@ -51,7 +54,7 @@ BEGIN
 END $$;
 
 -- Set search_path so ab2d is used before public
-ALTER ROLE cmsadmin SET search_path TO ab2d, public;
+ALTER ROLE postgres SET search_path TO ab2d, public;
 
 -- Revoke CREATE privileges
 REVOKE CREATE ON SCHEMA public FROM PUBLIC;
