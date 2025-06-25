@@ -46,8 +46,7 @@ BEGIN
         JOIN pg_namespace n ON p.pronamespace = n.oid
         WHERE n.nspname = 'public'
     LOOP
-		EXECUTE 'ALTER PROCEDURE public.' || quote_ident(r.proname) || ' SET SCHEMA ab2d;';
-
+		EXECUTE 'ALTER PROCEDURE public.' || quote_ident(r.proname) || '(' || r.args || ') SET SCHEMA ab2d;';
     END LOOP;
 END $$;
 
