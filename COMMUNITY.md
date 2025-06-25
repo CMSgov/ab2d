@@ -4,18 +4,11 @@ ab2d is supported by a dedicated team of individuals fulfilling various roles to
 
 ## Project Members
 
-<!-- TODO: Who are the points of contact in your project who are responsible/accountable for the project? This can often be an engineering or design manager or leader, who may or may not be the primary maintainers of the project.
-
-Roles to include, but not limited to: Project Owner, Technical Lead, Developers/Contributors, Community Manager, Security Team, Policy Advisor, Contracting Officer's Representative, Compliance Officer, Procurement Officer -->
-
-| Role   | Name    | Affiliation    |
+| Role | Github Handle | Affiliation |
 | :----- | :------ | :------------- |
-| {role} | {names} | {affiliations} |
-
-<!-- TODO: A CODEOWNERS.md file is available in .github to define individuals responsible for specific parts of the codebase. Provide a reference to this file if used:
-
-See [CODEOWNERS.md](.github/CODEOWNERS.md) for a list of those responsible for the code and documentation in this repository.
--->
+| Technical Lead | Sadibhatla | CMS/DASG/Contractor  |
+| Developers/Contributors | bennavapbc | CMS/DASG/Contractor  |
+| Developers/Contributors | smirnovaae | CMS/DASG/Contractor  |
 
 See [Community Guidelines](#AB2D-open-source-community-guidelines) on principles and guidelines for participating in this open source project.
 
