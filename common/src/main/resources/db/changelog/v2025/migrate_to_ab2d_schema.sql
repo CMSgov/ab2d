@@ -1,17 +1,16 @@
-
--- Create the new schema
 CREATE SCHEMA IF NOT EXISTS ab2d;
+ALTER ROLE cmsadmin SET search_path TO ab2d,public;
 
-
-
--- Move tables
+-- Move tables except databasechangelog and databasechangeloglock under 'public'
 DO $$
 DECLARE
     r RECORD;
 BEGIN
     FOR r IN SELECT tablename FROM pg_tables WHERE schemaname = 'public'
     LOOP
-        EXECUTE 'ALTER TABLE public.' || quote_ident(r.tablename) || ' SET SCHEMA ab2d;';
+        IF r.tablename not like '%databasechangelog%' THEN
+    	    EXECUTE 'ALTER TABLE public.' || quote_ident(r.tablename) || ' SET SCHEMA ab2d;';
+    	END IF;
     END LOOP;
 END $$;
 
@@ -52,9 +51,6 @@ BEGIN
 		EXECUTE 'ALTER PROCEDURE public.' || quote_ident(r.proname) || '(' || r.args || ') SET SCHEMA ab2d;';
     END LOOP;
 END $$;
-
--- Set search_path so ab2d is used before public
-ALTER ROLE postgres SET search_path TO ab2d, public;
 
 -- Revoke CREATE privileges
 REVOKE CREATE ON SCHEMA public FROM PUBLIC;

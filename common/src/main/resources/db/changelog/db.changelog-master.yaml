@@ -174,8 +174,8 @@ databaseChangeLog:
   - include:
       file: db/changelog/v2025/update_total_bene_served_procedure.sql
   - include:
-      file: db/changelog/v2025/create_ab2d_schema.sql
-#  - include:
-#      file: db/changelog/v2025/alter_databasechangelog_and_lock.sql
-#  - include:
-#      file: db/changelog/v2025/migrate_to_ab2d_schema.sql
+      file: db/changelog/v2025/migrate_to_ab2d_schema.sql
+  - include:
+      file: db/changelog/v2025/test_insert.sql
+  - include:
+      file: db/changelog/v2025/test_insert_2.sql
