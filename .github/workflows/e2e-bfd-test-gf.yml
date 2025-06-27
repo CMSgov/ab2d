@@ -20,9 +20,6 @@ on:
           - sandbox
         default: test
 
-concurrency:
-  group: ${{ inputs.environment }}-e2e-test
-
 jobs:
   test:
     permissions:
