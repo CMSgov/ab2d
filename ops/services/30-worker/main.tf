@@ -55,7 +55,7 @@ locals {
   ecs_task_def_cpu_worker    = module.platform.parent_env == "prod" ? 16384 : 4096
   ecs_task_def_memory_worker = module.platform.parent_env == "prod" ? 32768 : 8192
   max_concurrent_eob_jobs    = "2"
-  worker_desired_instances   = module.platform.parent_env == "prod" ? 2 : 1
+  worker_desired_instances   = 1
 
   db_name_arn               = module.platform.ssm.core.database_name.arn
   db_password_arn           = module.platform.ssm.core.database_password.arn
