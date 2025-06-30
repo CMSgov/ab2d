@@ -1,3 +1,9 @@
+# AB2D Bootstrap Root Module
+
+This root module is responsible for creating the account-level resources that all environments share and depend on.
+
+**NOTE** Only `test` and `prod` environment workspaces are honored by this module. Because these resources are not specific to any one environment, named resources either do not identify a specific environment, or identify as `mgmt`.
+
 <!-- BEGIN_TF_DOCS -->
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
