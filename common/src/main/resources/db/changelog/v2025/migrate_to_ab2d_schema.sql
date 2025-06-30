@@ -52,5 +52,22 @@ BEGIN
     END LOOP;
 END $$;
 
+--  Move functions
+DO $$
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN
+        SELECT p.oid, n.nspname, p.proname,
+               pg_get_function_identity_arguments(p.oid) AS args
+        FROM pg_proc p
+        JOIN pg_namespace n ON p.pronamespace = n.oid
+        WHERE n.nspname = 'public'
+    LOOP
+		EXECUTE 'ALTER PROCEDURE public.' || quote_ident(r.proname) || '(' || r.args || ') SET SCHEMA ab2d;';
+    END LOOP;
+END $$;
+
+
 -- Revoke CREATE privileges
 REVOKE CREATE ON SCHEMA public FROM PUBLIC;
