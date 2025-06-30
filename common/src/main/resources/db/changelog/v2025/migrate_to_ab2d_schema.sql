@@ -36,7 +36,7 @@ BEGIN
     END LOOP;
 END $$;
 
---  Move procedures
+--  Move procedures (where prokind='p')
 DO $$
 DECLARE
     r RECORD;
@@ -52,7 +52,7 @@ BEGIN
     END LOOP;
 END $$;
 
---  Move functions
+--  Move functions (where prokind='f')
 DO $$
 DECLARE
     r RECORD;
