@@ -42,11 +42,11 @@ DECLARE
     r RECORD;
 BEGIN
     FOR r IN
-        SELECT p.oid, n.nspname, p.proname,
+        SELECT p.oid, p.prokind, n.nspname, p.proname,
                pg_get_function_identity_arguments(p.oid) AS args
         FROM pg_proc p
         JOIN pg_namespace n ON p.pronamespace = n.oid
-        WHERE n.nspname = 'public'
+        WHERE n.nspname = 'public' and p.prokind = 'p'
     LOOP
 		EXECUTE 'ALTER PROCEDURE public.' || quote_ident(r.proname) || '(' || r.args || ') SET SCHEMA ab2d;';
     END LOOP;
@@ -58,13 +58,13 @@ DECLARE
     r RECORD;
 BEGIN
     FOR r IN
-        SELECT p.oid, n.nspname, p.proname,
+        SELECT p.oid, p.prokind, n.nspname, p.proname,
                pg_get_function_identity_arguments(p.oid) AS args
         FROM pg_proc p
         JOIN pg_namespace n ON p.pronamespace = n.oid
-        WHERE n.nspname = 'public'
+        WHERE n.nspname = 'public' and p.prokind = 'f'
     LOOP
-		EXECUTE 'ALTER PROCEDURE public.' || quote_ident(r.proname) || '(' || r.args || ') SET SCHEMA ab2d;';
+		EXECUTE 'ALTER FUNCTION public.' || quote_ident(r.proname) || '(' || r.args || ') SET SCHEMA ab2d;';
     END LOOP;
 END $$;
 
