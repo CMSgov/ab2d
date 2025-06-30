@@ -61,7 +61,7 @@ jobs:
         run: |
           tofu init -var=parent_env=$AB2D_ENV -reconfigure
           tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
-          tofu plan -var=worker_service_image_tag="ab2d-$AB2D_ENV-latest" -out=tfplan
+          tofu plan -var=worker_service_image_tag="ab2d-aurora-$AB2D_ENV-latest" -out=tfplan
           tofu apply -input=false tfplan 
 
       - name: Tofu plan and apply - API
@@ -70,5 +70,5 @@ jobs:
         run: |
           tofu init -var=parent_env=$AB2D_ENV -reconfigure
           tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
-          tofu plan -var=api_service_image_tag="ab2d-$AB2D_ENV-latest" -out=tfplan
+          tofu plan -var=api_service_image_tag="ab2d-aurora-$AB2D_ENV-latest" -out=tfplan
           tofu apply -input=false tfplan
