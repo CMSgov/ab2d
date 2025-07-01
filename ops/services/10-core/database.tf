@@ -244,6 +244,21 @@ resource "aws_cloudwatch_metric_alarm" "db_swap_usage" {
   }
 }
 
+resource "aws_cloudwatch_metric_alarm" "aurora_cpu_utilization" {
+  alarm_name          = "${local.service_prefix}-aurora-cpu-utilization"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = "10"
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/RDS"
+  period              = "300"
+  statistic           = "Average"
+  threshold           = "90.0"
+  alarm_actions       = [aws_sns_topic.alarms.arn]
+  dimensions = {
+    DBInstanceIdentifier = module.db.aurora_instance[0].identifier
+  }
+}
+
 resource "aws_ssm_parameter" "db_endpoint" {
   name  = "/ab2d/${local.env}/core/nonsensitive/database_endpoint"
   value = module.db.instance.endpoint
