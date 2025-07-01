@@ -176,7 +176,7 @@ ab2d will see regular updates and new releases. This section describes the gener
 
 <!-- ### Versioning
 
-ab2d uses [Semantic Versioning](https://semver.org/). Each release is associated with a [`git tag`](github.com/CMSGov/ab2d/tags) of the form `X.Y.Z`.
+ab2d uses [Semantic Versioning](https://semver.org/). Each release is associated with a [`git tag`](github.com/CMSgov/ab2d/tags) of the form `X.Y.Z`.
 
 Given a version number in the `MAJOR.MINOR.PATCH` (eg., `X.Y.Z`) format, here are the differences in these terms:
 
@@ -374,7 +374,7 @@ In rare cases, a hotfix for a prior release may be required out-of-phase with th
    This is a pre-release: DO NOT check
    ```
 
-[proj-releases-new]: https://github.com/CMSGov/ab2d/releases/new
+[proj-releases-new]: https://github.com/CMSgov/ab2d/releases/new
 -->
 
 ## Documentation
@@ -382,7 +382,7 @@ In rare cases, a hotfix for a prior release may be required out-of-phase with th
 <!-- TODO: Documentation Example
 
 We also welcome improvements to the project documentation or to the existing
-docs. Please file an [issue](https://github.com/CMSGov/ab2d/issues).
+docs. Please file an [issue](https://github.com/CMSgov/ab2d/issues).
 -->
 
 ## Policies
@@ -390,7 +390,7 @@ docs. Please file an [issue](https://github.com/CMSGov/ab2d/issues).
 ### Open Source Policy
 
 We adhere to the [CMS Open Source
-Policy](https://github.com/CMSGov/cms-open-source-policy). If you have any
+Policy](https://github.com/CMSgov/cms-open-source-policy). If you have any
 questions, just [shoot us an email](mailto:opensource@cms.hhs.gov).
 
 ### Security and Responsible Disclosure Policy
