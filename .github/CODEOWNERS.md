@@ -28,5 +28,6 @@ To set up GitHub teams:
 
 -->
 
-/docs/ {Git usernames of documentation owners}  
-/frontend/ {Git usernames of frontend owners}
+/docs/ @erichayward  
+/frontend/ @jhutchison-nava
+/backend/ @bennavapbc @smirnovaae
