@@ -110,3 +110,48 @@ resource "aws_vpc_security_group_egress_rule" "this" {
   ip_protocol       = "-1"
   security_group_id = aws_security_group.this.id
 }
+
+resource "aws_rds_cluster" "aurora" {
+  cluster_identifier      = "${local.service_prefix}-aurora"
+  engine                  = "aurora-postgresql"
+  engine_version          = "16.2"
+  master_username         = var.username
+  master_password         = var.password
+  db_subnet_group_name    = aws_db_subnet_group.this.name
+  vpc_security_group_ids  = flatten([
+    aws_security_group.this.id,
+    var.platform.security_groups["cmscloud-security-tools"].id,
+    var.platform.security_groups["remote-management"].id,
+    var.platform.security_groups["zscaler-private"].id,
+    var.vpc_security_group_ids
+  ])
+  storage_encrypted       = true
+  kms_key_id              = coalesce(var.kms_key_override, var.platform.kms_alias_primary.target_key_arn)
+  backup_retention_period = 7
+  preferred_backup_window = var.backup_window
+  apply_immediately       = true
+  skip_final_snapshot     = true
+  deletion_protection     = var.deletion_protection
+  tags = {
+    AWS_Backup = "4hr7_w90"
+  }
+}
+
+resource "aws_rds_cluster_instance" "aurora_instance" {
+  identifier              = "${local.service_prefix}-aurora-instance-1"
+  cluster_identifier      = aws_rds_cluster.aurora.id
+  instance_class          = var.instance_class
+  engine                  = aws_rds_cluster.aurora.engine
+  engine_version          = aws_rds_cluster.aurora.engine_version
+  db_subnet_group_name    = aws_db_subnet_group.this.name
+  publicly_accessible     = false
+  monitoring_interval     = var.monitoring_interval
+  apply_immediately       = true
+  auto_minor_version_upgrade = true
+  performance_insights_enabled = true
+  performance_insights_kms_key_id = null
+  monitoring_role_arn     = null
+  tags = {
+    Name = "${local.service_prefix}-aurora-instance"
+  }
+}
