@@ -117,6 +117,7 @@ resource "aws_rds_cluster" "this" {
   engine_version          = "16.8"
   master_username         = var.username
   master_password         = var.password
+  snapshot_identifier     = "ab2d-test-2025-07-02-08-20"
   db_subnet_group_name    = aws_db_subnet_group.this.name
   vpc_security_group_ids  = flatten([
     aws_security_group.this.id,
@@ -153,7 +154,7 @@ resource "aws_rds_cluster_instance" "this" {
   performance_insights_enabled = true
   performance_insights_kms_key_id = null
   monitoring_role_arn     = null
-  db_parameter_group_name = aws_db_parameter_group.this.name
+  db_parameter_group_name = aws_db_parameter_group.aurora.name
   tags = {
     Name = "${local.service_prefix}-aurora-instance"
   }
@@ -180,7 +181,7 @@ resource "aws_rds_cluster_parameter_group" "this" {
   }
 }
 
-resource "aws_db_parameter_group" "this" {
+resource "aws_db_parameter_group" "aurora" {
   name        = "${local.service_prefix}-aurora-instance-parameter-group"
   family      = "aurora-postgresql16"
   description = "Aurora DB instance parameter group for ${local.service_prefix}"
