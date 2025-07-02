@@ -17,10 +17,7 @@ on:
       ab2dEnv:
         description: "Override the AB2D environment targeting `test` or `prod` account. Default to `test`."
         default: test
-        type: choice
-        options:
-          - test
-          - prod
+        type: string
         required: true
       awsRegion:
         description: "Override the AWS Region destination for uploaded artifacts. Default to `us-east-1`."
