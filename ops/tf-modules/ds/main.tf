@@ -133,6 +133,7 @@ resource "aws_rds_cluster" "this" {
   apply_immediately       = true
   skip_final_snapshot     = true
   deletion_protection     = var.deletion_protection
+  db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.this.name
   tags = {
     AWS_Backup = "4hr7_w90"
   }
@@ -152,7 +153,47 @@ resource "aws_rds_cluster_instance" "this" {
   performance_insights_enabled = true
   performance_insights_kms_key_id = null
   monitoring_role_arn     = null
+  db_parameter_group_name = aws_db_parameter_group.this.name
   tags = {
     Name = "${local.service_prefix}-aurora-instance"
+  }
+}
+
+resource "aws_rds_cluster_parameter_group" "this" {
+  name        = "${local.service_prefix}-aurora-cluster-parameter-group"
+  family      = "aurora-postgresql16"
+  description = "Aurora cluster parameter group for ${local.service_prefix}"
+
+  parameter {
+    name  = "rds.logical_replication"
+    value = "0"
+  }
+
+  parameter {
+    name  = "max_connections"
+    value = "5000"
+  }
+
+  parameter {
+    name  = "log_min_duration_statement"
+    value = "500"
+  }
+}
+
+resource "aws_db_parameter_group" "this" {
+  name        = "${local.service_prefix}-aurora-instance-parameter-group"
+  family      = "aurora-postgresql16"
+  description = "Aurora DB instance parameter group for ${local.service_prefix}"
+
+  parameter {
+    name         = "shared_preload_libraries"
+    value        = "pg_stat_statements,pg_cron"
+    apply_method = "pending-reboot"
+  }
+
+  parameter {
+    name         = "statement_timeout"
+    value        = "1200000"
+    apply_method = "immediate"
   }
 }
