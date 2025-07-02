@@ -1,10 +1,6 @@
 ---
 name: "Build Container Images"
 on:
-  #FIXME remove push
-  push:
-    branches:
-      - burling/ab2d-6755
   # GHA does not support "shared_inputs" or some other form of workflow_call and workflow_dispatch
   # input consolidation; instead, we must duplicate the input definitions for each event
   # FUTURE: Consolidate the input definitions whenever possible
