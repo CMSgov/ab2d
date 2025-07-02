@@ -18,7 +18,9 @@ locals {
     "ab2d-worker",
     "ab2d-properties",
     "ab2d-contracts",
-    "ab2d-events"
+    "ab2d-events",
+    "ab2d-base-python",
+    "ab2d-mount-keystore"
   ])
 }
 
