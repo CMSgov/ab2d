@@ -4,7 +4,7 @@ RUN yum -y --security update && \
     yum -y clean all && \
     rm -rf /var/cache
 
-FROM base as uv
+FROM base AS uv
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
