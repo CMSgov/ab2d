@@ -84,6 +84,7 @@ permissions:
   contents: read # This is required for actions/checkout
 
 env:
+  AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
   AWS_REGION: ${{ inputs.awsRegion }}
   AB2D_ENV: ${{ inputs.ab2dEnv }}
 
@@ -168,13 +169,13 @@ jobs:
       - name: Assume AWS role
         uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
         with:
-          aws-region: ${{ vars.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.AB2D_ENV }}-github-actions
 
       - name: Login to ECR
         uses: aws-actions/amazon-ecr-login@v2
         with:
-          registries: ${{ secrets.NON_PROD_ACCOUNT }}
+          registries: ${{ env.AWS_ACCOUNT }}
 
       - name: Login to Amazon ECR Public
         id: login-ecr-public
