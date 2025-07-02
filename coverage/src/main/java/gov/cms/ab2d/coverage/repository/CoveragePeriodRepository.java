@@ -16,5 +16,8 @@ public interface CoveragePeriodRepository extends JpaRepository<CoveragePeriod, 
 
     Optional<CoveragePeriod> findByContractNumberAndMonthAndYear(String contractNumber, int month, int year);
 
+    // Temporary query for debugging -- TODO remove
+    List<CoveragePeriod> findAllByContractNumberAndMonthAndYear(String contractNumber, int month, int year);
+
     List<CoveragePeriod> findAllByMonthAndYear(int month, int year);
 }
