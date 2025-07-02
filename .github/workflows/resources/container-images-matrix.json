@@ -1,0 +1,14 @@
+[
+  {
+    "name": "ab2d-base-python",
+    "dockerfile": "ops/images/ab2d-base-python/Dockerfile",
+    "contextDir": "ops/images/ab2d-base-python",
+    "platform": "linux/amd64"
+  },
+  {
+    "name": "ab2d-mount-keystore",
+    "dockerfile": "ops/images/ab2d-mount-keystore/Dockerfile",
+    "contextDir": "ops/images/ab2d-mount-keystore",
+    "platform": "linux/amd64"
+  }
+]
