@@ -111,10 +111,10 @@ resource "aws_vpc_security_group_egress_rule" "this" {
   security_group_id = aws_security_group.this.id
 }
 
-resource "aws_rds_cluster" "aurora" {
+resource "aws_rds_cluster" "this" {
   cluster_identifier      = "${local.service_prefix}-aurora"
   engine                  = "aurora-postgresql"
-  engine_version          = "16.2"
+  engine_version          = "16.8"
   master_username         = var.username
   master_password         = var.password
   db_subnet_group_name    = aws_db_subnet_group.this.name
@@ -125,6 +125,7 @@ resource "aws_rds_cluster" "aurora" {
     var.platform.security_groups["zscaler-private"].id,
     var.vpc_security_group_ids
   ])
+  storage_type            = aurora-iopt1
   storage_encrypted       = true
   kms_key_id              = coalesce(var.kms_key_override, var.platform.kms_alias_primary.target_key_arn)
   backup_retention_period = 7
@@ -137,12 +138,12 @@ resource "aws_rds_cluster" "aurora" {
   }
 }
 
-resource "aws_rds_cluster_instance" "aurora_instance" {
-  identifier              = "${local.service_prefix}-aurora-instance-1"
-  cluster_identifier      = aws_rds_cluster.aurora.id
+resource "aws_rds_cluster_instance" "this" {
+  identifier              = "${local.service_prefix}-aurora-instance-0"
+  cluster_identifier      = aws_rds_cluster.this.id
   instance_class          = var.instance_class
-  engine                  = aws_rds_cluster.aurora.engine
-  engine_version          = aws_rds_cluster.aurora.engine_version
+  engine                  = aws_rds_cluster.this.engine
+  engine_version          = aws_rds_cluster.this.engine_version
   db_subnet_group_name    = aws_db_subnet_group.this.name
   publicly_accessible     = false
   monitoring_interval     = var.monitoring_interval
