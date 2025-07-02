@@ -26,6 +26,7 @@ on:
         options:
           - api
           - worker
+          - core
 
 env:
   TOFU_VERSION: 1.10.0-beta2
