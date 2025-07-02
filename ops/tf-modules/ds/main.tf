@@ -62,12 +62,12 @@ resource "aws_db_parameter_group" "this" {
   skip_destroy = false
 
   parameter {
-    apply_method = "immediate"
+    apply_method = "pending-reboot"
     name         = "backslash_quote"
     value        = "safe_encoding"
   }
   parameter {
-    apply_method = "immediate"
+    apply_method = "pending-reboot"
     name         = "statement_timeout"
     value        = "1200000"
   }
@@ -117,7 +117,7 @@ resource "aws_rds_cluster" "this" {
   engine_version          = "16.8"
   master_username         = var.username
   master_password         = var.password
-  snapshot_identifier     = "ab2d-test-2025-07-02-08-20"
+  snapshot_identifier     = var.aurora_snapshot
   db_subnet_group_name    = aws_db_subnet_group.this.name
   vpc_security_group_ids  = flatten([
     aws_security_group.this.id,
@@ -131,10 +131,14 @@ resource "aws_rds_cluster" "this" {
   kms_key_id              = coalesce(var.kms_key_override, var.platform.kms_alias_primary.target_key_arn)
   backup_retention_period = 7
   preferred_backup_window = var.backup_window
-  apply_immediately       = true
+  apply_immediately       = false
   skip_final_snapshot     = true
   deletion_protection     = var.deletion_protection
   db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.this.name
+  monitoring_role_arn     = var.monitoring_role_arn
+  performance_insights_enabled = true
+  performance_insights_kms_key_id = coalesce(var.kms_key_override, var.platform.kms_alias_primary.target_key_arn)
+  monitoring_interval     = 5
   tags = {
     AWS_Backup = "4hr7_w90"
   }
@@ -143,16 +147,16 @@ resource "aws_rds_cluster" "this" {
 resource "aws_rds_cluster_instance" "this" {
   identifier              = "${local.service_prefix}-aurora-instance-0"
   cluster_identifier      = aws_rds_cluster.this.id
-  instance_class          = var.instance_class
   engine                  = aws_rds_cluster.this.engine
   engine_version          = aws_rds_cluster.this.engine_version
   db_subnet_group_name    = aws_db_subnet_group.this.name
+  instance_class          = var.aurora_instance_class
   publicly_accessible     = false
   monitoring_interval     = var.monitoring_interval
   apply_immediately       = true
   auto_minor_version_upgrade = true
   performance_insights_enabled = true
-  performance_insights_kms_key_id = null
+  performance_insights_kms_key_id = coalesce(var.kms_key_override, var.platform.kms_alias_primary.target_key_arn)
   monitoring_role_arn     = null
   db_parameter_group_name = aws_db_parameter_group.aurora.name
   tags = {
@@ -164,37 +168,10 @@ resource "aws_rds_cluster_parameter_group" "this" {
   name        = "${local.service_prefix}-aurora-cluster-parameter-group"
   family      = "aurora-postgresql16"
   description = "Aurora cluster parameter group for ${local.service_prefix}"
-
-  parameter {
-    name  = "rds.logical_replication"
-    value = "0"
-  }
-
-  parameter {
-    name  = "max_connections"
-    value = "5000"
-  }
-
-  parameter {
-    name  = "log_min_duration_statement"
-    value = "500"
-  }
 }
 
 resource "aws_db_parameter_group" "aurora" {
   name        = "${local.service_prefix}-aurora-instance-parameter-group"
   family      = "aurora-postgresql16"
   description = "Aurora DB instance parameter group for ${local.service_prefix}"
-
-  parameter {
-    name         = "shared_preload_libraries"
-    value        = "pg_stat_statements,pg_cron"
-    apply_method = "pending-reboot"
-  }
-
-  parameter {
-    name         = "statement_timeout"
-    value        = "1200000"
-    apply_method = "immediate"
-  }
 }

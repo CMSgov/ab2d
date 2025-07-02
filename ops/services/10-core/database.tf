@@ -1,15 +1,20 @@
 module "db" {
   source = "../../tf-modules/ds"
 
-  snapshot          = var.snapshot
-  platform          = module.platform
-  username          = local.database_user
-  password          = local.database_password
-  iops              = local.parent_env == "prod" ? 20000 : 5000                      #FIXME Challenge this assumption
-  instance_class    = local.parent_env == "prod" ? "db.m6g.2xlarge" : "db.m6g.large" #FIXME Challenge this assumption
-  storage_type      = "io1"                                                          #FIXME Challenge this assumption
-  allocated_storage = 500                                                            #FIXME Challenge this assumption
-  multi_az          = local.parent_env == "prod" ? true : false
+  snapshot       = var.snapshot
+  platform       = module.platform
+  username       = local.database_user
+  password       = local.database_password
+  iops           = local.parent_env == "prod" ? 20000 : 5000                      #FIXME Challenge this assumption
+  instance_class = local.parent_env == "prod" ? "db.m6g.2xlarge" : "db.m6g.large" #FIXME Challenge this assumption
+  aurora_instance_class = lookup({
+    prod = "db.r8g.2xlarge"
+  }, local.parent_env, "db.r8g.large")
+  storage_type        = "io1" #FIXME Challenge this assumption
+  allocated_storage   = 500   #FIXME Challenge this assumption
+  multi_az            = local.parent_env == "prod" ? true : false
+  monitoring_role_arn = aws_iam_role.db_monitoring.arn
+  aurora_snapshot     = var.aurora_snapshot
 
   backup_window = lookup({
     dev     = "08:06-08:36"

@@ -21,6 +21,9 @@ variable "storage_type" {
 variable "instance_class" {
 }
 
+variable "aurora_instance_class" {
+}
+
 variable "allocated_storage" {
 }
 
@@ -50,3 +53,12 @@ variable  "performance_insights_retention_period" {
 variable "deletion_protection" {
   default = true
 }
+
+variable "aurora_snapshot" {
+  default = null
+}
+
+variable "monitoring_role_arn" {
+  default = null
+}
+
