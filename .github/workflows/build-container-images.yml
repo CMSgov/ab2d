@@ -18,6 +18,14 @@ on:
         description: "The string to be used for the container image tag."
         type: string
         required: true
+      ab2dEnv:
+        description: "Override the AB2D environment targeting `test` or `prod` account. Default to `test`."
+        default: test
+        type: choice
+        options:
+          - test
+          - prod
+        required: true
       awsRegion:
         description: "Override the AWS Region destination for uploaded artifacts. Default to `us-east-1`."
         default: us-east-1
@@ -46,6 +54,16 @@ on:
           versionTag: the string to be used for the container image tag.
         required: true
         default: X.Y.Z
+      ab2dEnv:
+        description: >-
+          ab2dEnv: Override the AB2D environment targeting `test` or `prod` account.
+          Default to `test`.
+        default: test
+        type: choice
+        options:
+          - test
+          - prod
+        required: true
       awsRegion:
         description: >-
           awsRegion: Override the AWS Region destination for uploaded artifacts.
@@ -74,6 +92,7 @@ permissions:
 
 env:
   AWS_REGION: ${{ inputs.awsRegion }}
+  AB2D_ENV: ${{ inputs.ab2dEnv }}
 
 defaults:
   run:
