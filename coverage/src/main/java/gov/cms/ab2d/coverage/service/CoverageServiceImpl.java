@@ -121,8 +121,8 @@ public class CoverageServiceImpl implements CoverageService {
                             period.getContractNumber(),
                             period.getMonth(),
                             period.getYear(),
-                            period.getStatus(),
-                            period.getLastSuccessfulJob().toString()
+                            Optional.ofNullable(String.valueOf(period.getStatus())).orElse(""),
+                            Optional.ofNullable(String.valueOf(period.getLastSuccessfulJob())).orElse("")
                     );
                 }
             } catch (Exception ignored) {
