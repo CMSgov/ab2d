@@ -105,8 +105,6 @@ public class CoverageServiceImpl implements CoverageService {
     public CoveragePeriod getCreateIfAbsentCoveragePeriod(ContractForCoverageDTO contract, int month, int year) {
         checkMonthAndYear(month, year);
 
-
-
         log.info("Invoking findByContractNumberAndMonthAndYear({},{},{})", contract.getContractNumber(), month, year);
         Optional<CoveragePeriod> existing = Optional.empty();
         try {
@@ -117,7 +115,15 @@ public class CoverageServiceImpl implements CoverageService {
                 List<CoveragePeriod> all = coveragePeriodRepo.findAllByContractNumberAndMonthAndYear(contract.getContractNumber(), month, year);
                 for (int i = 0; i < all.size(); i++) {
                     CoveragePeriod period = all.get(i);
-                    log.info("Coverage period {}: {}", (i+1), period.toString());
+                    log.info("Coverage period {} - id={}; contractNumber={}; month={}; year={}; status={}; lastSuccessfulJob={}",
+                            (i+1),
+                            period.getId(),
+                            period.getContractNumber(),
+                            period.getMonth(),
+                            period.getYear(),
+                            period.getStatus(),
+                            period.getLastSuccessfulJob().toString()
+                    );
                 }
             } catch (Exception ignored) {
                 // ignore
