@@ -72,3 +72,11 @@ jobs:
           tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
           tofu plan -var=api_service_image_tag="ab2d-$AB2D_ENV-latest" -out=tfplan
           tofu apply -input=false tfplan
+
+      - name: Tofu plan and apply - Core
+        working-directory: ops/services/10-core/
+        if: ${{ env.MODULE == 'core' }}
+        run: |
+          tofu init -var=parent_env=$AB2D_ENV -reconfigure
+          tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
+          tofu plan -out=tfplan
