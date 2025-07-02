@@ -125,7 +125,7 @@ resource "aws_rds_cluster" "this" {
     var.platform.security_groups["zscaler-private"].id,
     var.vpc_security_group_ids
   ])
-  storage_type            = aurora-iopt1
+  storage_type            = "aurora-iopt1"
   storage_encrypted       = true
   kms_key_id              = coalesce(var.kms_key_override, var.platform.kms_alias_primary.target_key_arn)
   backup_retention_period = 7
