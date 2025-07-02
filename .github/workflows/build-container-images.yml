@@ -94,7 +94,7 @@ defaults:
 
 jobs:
   compute-matrix-and-version:
-    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: ubuntu-24.04
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
       base-images-version: ${{ inputs.baseImagesVersion || steps.determine-latest-release.outputs.release }}
