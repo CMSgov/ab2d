@@ -3,9 +3,6 @@ name: start-job-gf
 run-name: start-job-gf ${{ inputs.environment }} ${{ inputs.contractNumber }}
 
 on:
-  push:
-    branches: ["fix_impl_db_name"]
-
   workflow_dispatch: # Allow manual trigger
     inputs:
       environment:
@@ -56,8 +53,7 @@ jobs:
       SINCE: ${{ inputs.since }}
       UNTIL: ${{ inputs.until }}
       API_URL_PREFIX: ${{ inputs.apiUrlPrefix }}
-#      AB2D_ENV: ${{ inputs.environment }}
-      AB2D_ENV: 'test'
+      AB2D_ENV: ${{ inputs.environment }}
       AWS_ACCOUNT: ${{contains(fromJSON('["dev", "test"]'), inputs.environment) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT}}
 
     steps:
