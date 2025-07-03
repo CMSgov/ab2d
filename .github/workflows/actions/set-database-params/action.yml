@@ -31,10 +31,17 @@ runs:
     - name: Add PG environment variables
       shell: bash
       run: |
+        if [ ${{ inputs.environment }} == "test" ]; then
+          PGDATABASE = 'impl'
+        elif [ ${{ inputs.environment }} == "sandbox" ]; then
+          PGDATABASE = 'sbx'
+        else 
+          PGDATABASE=${{ inputs.environment }}
+        
         PGHOST=$(echo $DB_ENDPOINT | cut -d ":" -f1)
         PGPORT=$(echo $DB_ENDPOINT | cut -d ":" -f2)
         echo "PGHOST=$PGHOST" >> $GITHUB_ENV
         echo "PGPORT=$PGPORT" >> $GITHUB_ENV
-        echo "PGDATABASE=${{ inputs.environment }}" >> $GITHUB_ENV
+        echo "PGDATABASE=$PGDATABASE" >> $GITHUB_ENV
         echo "DATABASE_SCHEMA_NAME=public" >> $GITHUB_ENV
         
