@@ -37,6 +37,7 @@ runs:
           PGDATABASE = 'sbx'
         else 
           PGDATABASE=${{ inputs.environment }}
+        fi
         
         PGHOST=$(echo $DB_ENDPOINT | cut -d ":" -f1)
         PGPORT=$(echo $DB_ENDPOINT | cut -d ":" -f2)
