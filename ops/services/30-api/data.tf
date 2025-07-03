@@ -25,6 +25,10 @@ data "aws_db_instance" "this" {
   db_instance_identifier = local.service_prefix
 }
 
+data "aws_rds_cluster" "this" {
+  cluster_identifier = "${local.service_prefix}-aurora"
+}
+
 data "aws_ecr_image" "api" {
   repository_name = "ab2d-api"
   image_tag       = var.api_service_image_tag

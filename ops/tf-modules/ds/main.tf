@@ -62,12 +62,12 @@ resource "aws_db_parameter_group" "this" {
   skip_destroy = false
 
   parameter {
-    apply_method = "immediate"
+    apply_method = "pending-reboot"
     name         = "backslash_quote"
     value        = "safe_encoding"
   }
   parameter {
-    apply_method = "immediate"
+    apply_method = "pending-reboot"
     name         = "statement_timeout"
     value        = "1200000"
   }
@@ -109,4 +109,69 @@ resource "aws_vpc_security_group_egress_rule" "this" {
   description       = "Allow all egress"
   ip_protocol       = "-1"
   security_group_id = aws_security_group.this.id
+}
+
+resource "aws_rds_cluster" "this" {
+  cluster_identifier      = "${local.service_prefix}-aurora"
+  engine                  = "aurora-postgresql"
+  engine_version          = "16.8"
+  master_username         = var.username
+  master_password         = var.password
+  snapshot_identifier     = var.aurora_snapshot
+  db_subnet_group_name    = aws_db_subnet_group.this.name
+  vpc_security_group_ids  = flatten([
+    aws_security_group.this.id,
+    var.platform.security_groups["cmscloud-security-tools"].id,
+    var.platform.security_groups["remote-management"].id,
+    var.platform.security_groups["zscaler-private"].id,
+    var.vpc_security_group_ids
+  ])
+  storage_type            = "aurora-iopt1"
+  storage_encrypted       = true
+  kms_key_id              = coalesce(var.kms_key_override, var.platform.kms_alias_primary.target_key_arn)
+  backup_retention_period = 7
+  preferred_backup_window = var.backup_window
+  apply_immediately       = false
+  skip_final_snapshot     = true
+  deletion_protection     = var.deletion_protection
+  db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.this.name
+  monitoring_role_arn     = var.monitoring_role_arn
+  performance_insights_enabled = true
+  performance_insights_kms_key_id = coalesce(var.kms_key_override, var.platform.kms_alias_primary.target_key_arn)
+  monitoring_interval     = 5
+  tags = {
+    AWS_Backup = "4hr7_w90"
+  }
+}
+
+resource "aws_rds_cluster_instance" "this" {
+  identifier              = "${local.service_prefix}-aurora-instance-0"
+  cluster_identifier      = aws_rds_cluster.this.id
+  engine                  = aws_rds_cluster.this.engine
+  engine_version          = aws_rds_cluster.this.engine_version
+  db_subnet_group_name    = aws_db_subnet_group.this.name
+  instance_class          = var.aurora_instance_class
+  publicly_accessible     = false
+  monitoring_interval     = var.monitoring_interval
+  apply_immediately       = true
+  auto_minor_version_upgrade = true
+  performance_insights_enabled = true
+  performance_insights_kms_key_id = coalesce(var.kms_key_override, var.platform.kms_alias_primary.target_key_arn)
+  monitoring_role_arn     = null
+  db_parameter_group_name = aws_db_parameter_group.aurora.name
+  tags = {
+    Name = "${local.service_prefix}-aurora-instance"
+  }
+}
+
+resource "aws_rds_cluster_parameter_group" "this" {
+  name        = "${local.service_prefix}-aurora-cluster-parameter-group"
+  family      = "aurora-postgresql16"
+  description = "Aurora cluster parameter group for ${local.service_prefix}"
+}
+
+resource "aws_db_parameter_group" "aurora" {
+  name        = "${local.service_prefix}-aurora-instance-parameter-group"
+  family      = "aurora-postgresql16"
+  description = "Aurora DB instance parameter group for ${local.service_prefix}"
 }

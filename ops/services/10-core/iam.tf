@@ -218,3 +218,38 @@ resource "aws_iam_policy" "kms_key_access" {
   description = "Permissions to access environment ${local.env} KMS CMK"
   policy      = data.aws_iam_policy_document.kms_key_access.json
 }
+
+
+data "aws_iam_policy" "rds_monitoring" {
+  name = "AmazonRDSEnhancedMonitoringRole"
+}
+
+data "aws_iam_policy_document" "rds_monitoring_assume" {
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["monitoring.rds.amazonaws.com"]
+    }
+  }
+}
+
+# Role allowing monitoring for RDS Clusters and instances
+resource "aws_iam_role" "db_monitoring" {
+  name                 = "${local.service_prefix}-rds-monitoring"
+  assume_role_policy   = data.aws_iam_policy_document.rds_monitoring_assume.json
+  path                 = "/delegatedadmin/developer/"
+  permissions_boundary = data.aws_iam_policy.developer_boundary_policy.arn
+
+}
+
+resource "aws_iam_role_policy_attachment" "db_monitoring" {
+  role       = aws_iam_role.db_monitoring.name
+  policy_arn = data.aws_iam_policy.rds_monitoring.arn
+}
+
+resource "aws_iam_role_policy_attachment" "db_monitoring_kms" {
+  role       = aws_iam_role.db_monitoring.name
+  policy_arn = aws_iam_policy.kms_key_access.arn
+}

@@ -35,6 +35,7 @@ locals {
     "sandbox" = "ab2d-sbx-sandbox"
   }, local.parent_env, local.parent_env)
 
+  ab2d_aurora_endpoint       = data.aws_rds_cluster.this.endpoint
   ab2d_db_host               = data.aws_db_instance.this.address
   aws_account_number         = module.platform.account_id
   aws_region                 = module.platform.primary_region.name
