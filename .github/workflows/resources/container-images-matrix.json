@@ -6,9 +6,9 @@
     "platform": "linux/amd64"
   },
   {
-    "name": "ab2d-mount-keystore",
-    "dockerfile": "ops/images/ab2d-mount-keystore/Dockerfile",
-    "contextDir": "ops/images/ab2d-mount-keystore",
+    "name": "ab2d-mount-keystores",
+    "dockerfile": "ops/images/ab2d-mount-keystores/Dockerfile",
+    "contextDir": "ops/images/ab2d-mount-keystores",
     "platform": "linux/amd64"
   }
 ]

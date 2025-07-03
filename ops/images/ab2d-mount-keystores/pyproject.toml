@@ -1,5 +1,5 @@
 [project]
-name = "ab2d-mount-keystore"
+name = "ab2d-mount-keystores"
 version = "1.0.0"
 readme = "README.md"
 requires-python = ">=3.13"

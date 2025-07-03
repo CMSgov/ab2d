@@ -20,7 +20,7 @@ locals {
     "ab2d-contracts",
     "ab2d-events",
     "ab2d-base-python",
-    "ab2d-mount-keystore"
+    "ab2d-mount-keystores"
   ])
 }
 

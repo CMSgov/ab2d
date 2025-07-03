@@ -1,6 +1,6 @@
 """Downloads certstores and healthcheck PEM and saves them locally to specified paths.
 
-Used as the entrypoint for the "ab2-mount-keystore" container image which is run as part of
+Used as the entrypoint for the "ab2-mount-keystores" container image which is run as part of
 the "worker" ECS Service. The keystore is downloaded to a shared bind mount
 from which the AB2D Worker reads them.
 """
@@ -51,13 +51,13 @@ def main(
     keystore_out: str,
     region: str,
 ) -> None:
-    """Download the certstores from the specified S3 bucket and the healthcheck PEM certificate."""
+    """Download the keystore(s) from the specified S3 bucket."""
     print(f"Bucket: {bucket}")
     print(f"Region: {region}")
     print(f"Keystore Key: {keystore_key}")
     print(f"Keystore Output Path: {keystore_out}")
 
-    print("Downloading certstores from S3...")
+    print("Downloading keystore(s) from S3...")
     s3 = boto3.client("s3")  # type: ignore
 
     s3.download_file(Bucket=bucket, Key=keystore_key, Filename=keystore_out)
