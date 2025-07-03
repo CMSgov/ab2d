@@ -32,11 +32,11 @@ runs:
       shell: bash
       run: |
         if [ ${{ inputs.environment }} == "test" ]; then
-          PGDATABASE = 'impl'
+          PGDATABASE='impl'
         elif [ ${{ inputs.environment }} == "sandbox" ]; then
-          PGDATABASE = 'sbx'
+          PGDATABASE='sbx'
         else 
-          PGDATABASE=${{ inputs.environment }}
+          PGDATABASE='${{ inputs.environment }}'
         fi
         
         PGHOST=$(echo $DB_ENDPOINT | cut -d ":" -f1)
