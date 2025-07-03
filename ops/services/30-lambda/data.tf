@@ -77,3 +77,7 @@ data "aws_security_group" "db" {
 data "aws_db_instance" "this" {
   db_instance_identifier = local.service_prefix
 }
+
+data "aws_rds_cluster" "this" {
+  cluster_identifier = "${local.service_prefix}-aurora"
+}

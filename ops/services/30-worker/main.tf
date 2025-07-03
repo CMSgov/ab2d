@@ -160,7 +160,7 @@ resource "aws_ecs_task_definition" "worker" {
       { name : "AB2D_BFD_INSIGHTS", value : local.bfd_insights }, #FIXME: Is this even used?
       { name : "AB2D_BFD_KEYSTORE_LOCATION", value : local.bfd_keystore_location },
       { name : "AB2D_BFD_URL", value : local.bfd_url },
-      { name : "AB2D_DB_HOST", value : data.aws_db_instance.this.address },
+      { name : "AB2D_DB_HOST", value : data.aws_rds_cluster.this.endpoint },
       { name : "AB2D_DB_PORT", value : "5432" },
       { name : "AB2D_DB_SSL_MODE", value : "require" },
       { name : "AB2D_EFS_MOUNT", value : local.ab2d_efs_mount },
