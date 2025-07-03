@@ -55,7 +55,7 @@ jobs:
       FHIR_VERSION: 'R4'
 #      FHIR_VERSION: ${{ inputs.fhirVersion }}
 #      SINCE: ${{ inputs.since }}
-      SINCE: '2020-02-13T00:00:00.000-05:00'
+      SINCE: '2022-01-01 05:00:00+00'
       UNTIL: ${{ inputs.until }}
       API_URL_PREFIX: ${{ inputs.apiUrlPrefix }}
 #      AB2D_ENV: ${{ inputs.environment }}
