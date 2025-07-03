@@ -3,6 +3,9 @@ name: start-job-gf
 run-name: start-job-gf ${{ inputs.environment }} ${{ inputs.contractNumber }}
 
 on:
+  push:
+    branches: ["fix_impl_db_name"]
+
   workflow_dispatch: # Allow manual trigger
     inputs:
       environment:
