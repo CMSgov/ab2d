@@ -1,7 +1,7 @@
 resource "aws_quicksight_data_set" "coverage_counts" {
-  data_set_id = "6b16bc34-2db7-4614-bd91-4d9a33d65f9f"
+  data_set_id = "${local.service_prefix}-coverage-counts"
   import_mode = "DIRECT_QUERY"
-  name        = "Coverage counts"
+  name        = "AB2D Coverage counts"
 
   data_set_usage_configuration {
     disable_use_as_direct_query_source = false

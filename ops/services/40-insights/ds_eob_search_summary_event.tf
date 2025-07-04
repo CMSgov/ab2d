@@ -1,7 +1,7 @@
 resource "aws_quicksight_data_set" "eob_search_summaries_event" {
-  data_set_id = "c9cc2ff5-8a0c-4204-b7c0-b30c7eaaa4fd"
+  data_set_id = "${local.service_prefix}-eob-search-summaries-event"
   import_mode = "DIRECT_QUERY"
-  name        = "Prod EOB Search Summary Event"
+  name        = "AB2D EOB Search Summaries Event"
 
   data_set_usage_configuration {
     disable_use_as_direct_query_source = false

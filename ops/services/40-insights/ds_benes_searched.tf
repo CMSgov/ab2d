@@ -1,8 +1,6 @@
 resource "aws_quicksight_data_set" "benes_searched" {
-  # data_set_id = "${local.app}-${local.env}-benes-searched"
-  # name        = "${local.app}-${local.env}-benes-searched"
-  data_set_id = "d156f7d7-cefb-4067-a54b-73d36c630d76"
-  name        = "Benes Searched In Time"
+  data_set_id = "${local.service_prefix}-benes-searched"
+  name        = "AB2D Benes Searched In Time"
   import_mode = "DIRECT_QUERY"
   data_set_usage_configuration {
     disable_use_as_direct_query_source = false

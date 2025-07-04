@@ -1,7 +1,7 @@
 resource "aws_quicksight_data_set" "eob_search_summaries_2" {
-  data_set_id = "f93031cf-f262-46ae-af0a-c5e092264ca1"
+  data_set_id = "${local.service_prefix}-eob-search-summaries-2"
   import_mode = "DIRECT_QUERY"
-  name        = "Prod EOB Search Summaries 2"
+  name        = "AB2D EOB Search Summaries 2"
 
   data_set_usage_configuration {
     disable_use_as_direct_query_source = false

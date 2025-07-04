@@ -1,8 +1,6 @@
 resource "aws_quicksight_data_set" "uptime" {
-  # data_set_id = "${local.app}-${local.env}-uptime"
-  # name        = "${local.app}-${local.env}-uptime"
-  data_set_id = "f7885859-f446-4dc4-8499-ec0a9cbc2473"
-  name        = "All services uptime"
+  data_set_id = "${local.service_prefix}-uptime-all"
+  name        = "AB2D All Services Uptime"
   import_mode = "DIRECT_QUERY"
 
   data_set_usage_configuration {
