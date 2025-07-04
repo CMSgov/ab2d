@@ -49,4 +49,55 @@ locals {
   data_admins        = toset(yamldecode(nonsensitive(module.platform.ssm.insights.administrators_yaml.value)))
 }
 
+resource "aws_quicksight_template" "a" {
+  template_id         = "${local.service_prefix}-dasg-metrics"
+  name                = "AB2D DASG Metrics"
+  version_description = "foo"
+  source_entity {
+    source_analysis {
+      arn = aws_quicksight_analysis.a.arn
+      dynamic "data_set_references" {
+        for_each = local.analysis_data_sets
+        content {
+          data_set_arn         = data_set_references.value.arn
+          data_set_placeholder = data_set_references.value.name
+        }
+      }
+    }
+  }
+}
 
+resource "aws_quicksight_dashboard" "a" {
+  dashboard_id        = "${local.service_prefix}-dasg-metrics"
+  name                = "AB2D DASG Metrics"
+  version_description = "Attempted update of calls made column in _until usage metric"
+  source_entity {
+    source_template {
+      arn = aws_quicksight_template.a.arn
+      dynamic "data_set_references" {
+        for_each = local.analysis_data_sets
+        content {
+          data_set_arn         = data_set_references.value.arn
+          data_set_placeholder = data_set_references.value.name
+        }
+      }
+    }
+  }
+
+  dynamic "permissions" {
+    for_each = local.data_admins
+    content {
+      actions = [
+        "quicksight:DeleteDashboard",
+        "quicksight:DescribeDashboard",
+        "quicksight:DescribeDashboardPermissions",
+        "quicksight:ListDashboardVersions",
+        "quicksight:QueryDashboard",
+        "quicksight:UpdateDashboard",
+        "quicksight:UpdateDashboardPermissions",
+        "quicksight:UpdateDashboardPublishedVersion",
+      ]
+      principal = "arn:aws:quicksight:us-east-1:${local.aws_account_id}:${permissions.value}"
+    }
+  }
+}
