@@ -1,7 +1,7 @@
 resource "aws_quicksight_data_set" "contracts_one_job_minimum" {
-  data_set_id = "f617dd41-b721-4efa-b506-b4cf113c0ec9"
+  data_set_id = "${local.service_prefix}-contracts-one-job-minimum"
   import_mode = "DIRECT_QUERY"
-  name        = "Contracts, at least 1 Job"
+  name        = "AB2D Contracts, at least 1 Job"
 
   data_set_usage_configuration {
     disable_use_as_direct_query_source = false

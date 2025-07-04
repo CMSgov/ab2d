@@ -1,5 +1,5 @@
 resource "aws_quicksight_data_set" "ab2d_statistics" {
-  data_set_id = "2f7ba168-6cbf-4e1b-b4b8-fdf88605bea9"
+  data_set_id = "${local.service_prefix}-summary-statistics"
   import_mode = "DIRECT_QUERY"
   name        = "AB2D Summary Statistics"
   data_set_usage_configuration {

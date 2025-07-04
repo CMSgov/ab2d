@@ -1,7 +1,7 @@
 resource "aws_quicksight_data_set" "job_view" {
-  data_set_id = "feaa877c-6aff-4170-b0b5-6e400f765973"
+  data_set_id = "${local.service_prefix}-job-view"
   import_mode = "DIRECT_QUERY"
-  name        = "job_view"
+  name        = "AB2D Job View"
 
   data_set_usage_configuration {
     disable_use_as_direct_query_source = false

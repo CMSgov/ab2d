@@ -1,7 +1,7 @@
 resource "aws_quicksight_data_set" "contracts" {
-  data_set_id = "cee1d4bc-743a-4d0d-90eb-74b39ec3ed6f"
+  data_set_id = "${local.service_prefix}-contracts-view"
   import_mode = "DIRECT_QUERY"
-  name        = "contract_view"
+  name        = "AB2D Contracts View"
 
   data_set_usage_configuration {
     disable_use_as_direct_query_source = false

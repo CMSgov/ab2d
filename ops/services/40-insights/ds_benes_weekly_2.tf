@@ -1,7 +1,7 @@
 resource "aws_quicksight_data_set" "total_benes_pulled_per_week_2_0" {
-  data_set_id = "640c4148-161b-42d5-bf23-c8d258933ea6"
+  data_set_id = "${local.service_prefix}-benes-weekly"
   import_mode = "DIRECT_QUERY"
-  name        = "Total Benes Pulled per Week 2.0"
+  name        = "AB2D Total Benes Pulled Weekly"
 
   data_set_usage_configuration {
     disable_use_as_direct_query_source = false

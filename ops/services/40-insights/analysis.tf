@@ -1,6 +1,6 @@
 resource "aws_quicksight_analysis" "a" {
-  analysis_id             = "1f3f1c78-010d-4117-9697-020bd0b05ce4"
-  name                    = "AB2D DASG Metrics Dashboard_Final"
+  analysis_id             = "${local.service_prefix}-dasg-metrics"
+  name                    = "AB2D DASG Metrics"
   recovery_window_in_days = 30
   theme_arn               = "arn:aws:quicksight::aws:theme/CLASSIC"
 
@@ -119,7 +119,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "SELECTED_VISUALS"
-            sheet_id = "6444c0c1-b6dc-44b2-ac30-68e9ae117b36"
+            sheet_id = "summary"
             visual_ids = [
               "5e5e4dbc-3d21-41de-85cc-730acea7cc9c",
             ]
@@ -155,7 +155,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "SELECTED_VISUALS"
-            sheet_id = "6444c0c1-b6dc-44b2-ac30-68e9ae117b36"
+            sheet_id = "summary"
             visual_ids = [
               "dfc1dd41-5c40-4d87-b4ff-4e90245c6ae5",
             ]
@@ -191,7 +191,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "SELECTED_VISUALS"
-            sheet_id = "6444c0c1-b6dc-44b2-ac30-68e9ae117b36"
+            sheet_id = "summary"
             visual_ids = [
               "c2100dc7-f52f-408d-b813-ede93ae79d91",
             ]
@@ -228,7 +228,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "SELECTED_VISUALS"
-            sheet_id = "6444c0c1-b6dc-44b2-ac30-68e9ae117b36"
+            sheet_id = "summary"
             visual_ids = [
               "26650e14-a568-4fd3-ba42-1335b54945ed",
             ]
@@ -265,7 +265,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "SELECTED_VISUALS"
-            sheet_id = "6444c0c1-b6dc-44b2-ac30-68e9ae117b36"
+            sheet_id = "summary"
             visual_ids = [
               "26650e14-a568-4fd3-ba42-1335b54945ed",
             ]
@@ -302,7 +302,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "SELECTED_VISUALS"
-            sheet_id = "6444c0c1-b6dc-44b2-ac30-68e9ae117b36"
+            sheet_id = "summary"
             visual_ids = [
               "29ffeab4-bc6c-4a0e-80c9-2122e14d2eda",
             ]
@@ -338,7 +338,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "SELECTED_VISUALS"
-            sheet_id = "efde38e9-6cca-4218-8030-fc4c524a880c"
+            sheet_id = "metrics"
             visual_ids = [
               "ded73292-adf4-41fc-8871-0e624951eaa6",
             ]
@@ -375,7 +375,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "SELECTED_VISUALS"
-            sheet_id = "efde38e9-6cca-4218-8030-fc4c524a880c"
+            sheet_id = "metrics"
             visual_ids = [
               "ded73292-adf4-41fc-8871-0e624951eaa6",
             ]
@@ -407,7 +407,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "SELECTED_VISUALS"
-            sheet_id = "efde38e9-6cca-4218-8030-fc4c524a880c"
+            sheet_id = "metrics"
             visual_ids = [
               "98070a89-8348-449e-bf86-7bf23e900c18",
             ]
@@ -441,7 +441,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "ALL_VISUALS"
-            sheet_id = "efde38e9-6cca-4218-8030-fc4c524a880c"
+            sheet_id = "metrics"
           }
         }
       }
@@ -473,7 +473,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "ALL_VISUALS"
-            sheet_id = "efde38e9-6cca-4218-8030-fc4c524a880c"
+            sheet_id = "metrics"
           }
         }
       }
@@ -506,7 +506,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "SELECTED_VISUALS"
-            sheet_id = "efde38e9-6cca-4218-8030-fc4c524a880c"
+            sheet_id = "metrics"
             visual_ids = [
               "51d1dbce-7a6f-4de4-8fe2-c16ae5e37635",
             ]
@@ -541,7 +541,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "ALL_VISUALS"
-            sheet_id = "efde38e9-6cca-4218-8030-fc4c524a880c"
+            sheet_id = "metrics"
           }
         }
       }
@@ -573,7 +573,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "ALL_VISUALS"
-            sheet_id = "efde38e9-6cca-4218-8030-fc4c524a880c"
+            sheet_id = "metrics"
           }
         }
       }
@@ -605,7 +605,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "ALL_VISUALS"
-            sheet_id = "efde38e9-6cca-4218-8030-fc4c524a880c"
+            sheet_id = "metrics"
           }
         }
       }
@@ -638,7 +638,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "SELECTED_VISUALS"
-            sheet_id = "099666e8-cb05-4929-aab6-f73887ab3d9f"
+            sheet_id = "attestation-records"
             visual_ids = [
               "10d42060-0022-4309-bc5f-ae0486d21f38",
             ]
@@ -675,7 +675,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "SELECTED_VISUALS"
-            sheet_id = "099666e8-cb05-4929-aab6-f73887ab3d9f"
+            sheet_id = "attestation-records"
             visual_ids = [
               "10d42060-0022-4309-bc5f-ae0486d21f38",
             ]
@@ -711,7 +711,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "SELECTED_VISUALS"
-            sheet_id = "099666e8-cb05-4929-aab6-f73887ab3d9f"
+            sheet_id = "attestation-records"
             visual_ids = [
               "1002e8d9-e20d-4892-8c9f-6cd51cb47908",
             ]
@@ -748,7 +748,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "SELECTED_VISUALS"
-            sheet_id = "099666e8-cb05-4929-aab6-f73887ab3d9f"
+            sheet_id = "attestation-records"
             visual_ids = [
               "1002e8d9-e20d-4892-8c9f-6cd51cb47908",
             ]
@@ -783,7 +783,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "ALL_VISUALS"
-            sheet_id = "099666e8-cb05-4929-aab6-f73887ab3d9f"
+            sheet_id = "attestation-records"
           }
         }
       }
@@ -816,7 +816,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "SELECTED_VISUALS"
-            sheet_id = "099666e8-cb05-4929-aab6-f73887ab3d9f"
+            sheet_id = "attestation-records"
             visual_ids = [
               "a4196bd0-bb81-485d-8046-6abcce9b13a0",
             ]
@@ -853,7 +853,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "SELECTED_VISUALS"
-            sheet_id = "099666e8-cb05-4929-aab6-f73887ab3d9f"
+            sheet_id = "attestation-records"
             visual_ids = [
               "a4196bd0-bb81-485d-8046-6abcce9b13a0",
             ]
@@ -888,7 +888,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "ALL_VISUALS"
-            sheet_id = "d02f3921-fad2-4cb0-9065-2b33bcefe220"
+            sheet_id = "job-history"
           }
         }
       }
@@ -921,7 +921,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "ALL_VISUALS"
-            sheet_id = "d02f3921-fad2-4cb0-9065-2b33bcefe220"
+            sheet_id = "job-history"
           }
         }
       }
@@ -954,7 +954,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "ALL_VISUALS"
-            sheet_id = "d02f3921-fad2-4cb0-9065-2b33bcefe220"
+            sheet_id = "job-history"
           }
         }
       }
@@ -986,7 +986,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "ALL_VISUALS"
-            sheet_id = "d02f3921-fad2-4cb0-9065-2b33bcefe220"
+            sheet_id = "job-history"
           }
         }
       }
@@ -1018,7 +1018,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "SELECTED_VISUALS"
-            sheet_id = "b7b2a8be-beff-405e-ab98-e56b0d0dd57c"
+            sheet_id = "avg-bene-eob-time"
             visual_ids = [
               "d26bd84e-0bc7-48d7-96f0-7172075eef9c",
               "dd13a388-dff4-44be-bba3-0de892971410",
@@ -1055,7 +1055,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "SELECTED_VISUALS"
-            sheet_id = "b7b2a8be-beff-405e-ab98-e56b0d0dd57c"
+            sheet_id = "avg-bene-eob-time"
             visual_ids = [
               "d26bd84e-0bc7-48d7-96f0-7172075eef9c",
               "dd13a388-dff4-44be-bba3-0de892971410",
@@ -1098,7 +1098,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "SELECTED_VISUALS"
-            sheet_id = "b7b2a8be-beff-405e-ab98-e56b0d0dd57c"
+            sheet_id = "avg-bene-eob-time"
             visual_ids = [
               "f7f17091-572a-49ff-beb6-5d037a0cfb00",
             ]
@@ -1135,7 +1135,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "SELECTED_VISUALS"
-            sheet_id = "b7b2a8be-beff-405e-ab98-e56b0d0dd57c"
+            sheet_id = "avg-bene-eob-time"
             visual_ids = [
               "d26bd84e-0bc7-48d7-96f0-7172075eef9c",
               "dd13a388-dff4-44be-bba3-0de892971410",
@@ -1173,7 +1173,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "SELECTED_VISUALS"
-            sheet_id = "d02f3921-fad2-4cb0-9065-2b33bcefe220"
+            sheet_id = "job-history"
             visual_ids = [
               "c77cd016-d4b9-47a4-8577-f2107e834d3b",
             ]
@@ -1205,7 +1205,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "SELECTED_VISUALS"
-            sheet_id = "d02f3921-fad2-4cb0-9065-2b33bcefe220"
+            sheet_id = "job-history"
             visual_ids = [
               "c77cd016-d4b9-47a4-8577-f2107e834d3b",
             ]
@@ -1240,7 +1240,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "SELECTED_VISUALS"
-            sheet_id = "d02f3921-fad2-4cb0-9065-2b33bcefe220"
+            sheet_id = "job-history"
             visual_ids = [
               "c77cd016-d4b9-47a4-8577-f2107e834d3b",
             ]
@@ -1275,7 +1275,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "SELECTED_VISUALS"
-            sheet_id = "076f6902-f251-498c-88be-25d0ae67532e"
+            sheet_id = "coverage-counts"
             visual_ids = [
               "d01b9194-fd61-4ba2-a8ef-957a0b49c62d",
             ]
@@ -1306,7 +1306,7 @@ resource "aws_quicksight_analysis" "a" {
         selected_sheets {
           sheet_visual_scoping_configurations {
             scope    = "SELECTED_VISUALS"
-            sheet_id = "076f6902-f251-498c-88be-25d0ae67532e"
+            sheet_id = "coverage-counts"
             visual_ids = [
               "d01b9194-fd61-4ba2-a8ef-957a0b49c62d",
             ]
@@ -1317,7 +1317,7 @@ resource "aws_quicksight_analysis" "a" {
     sheets {
       content_type = "INTERACTIVE"
       name         = "Summary"
-      sheet_id     = "6444c0c1-b6dc-44b2-ac30-68e9ae117b36"
+      sheet_id     = "summary"
 
       layouts {
         configuration {
@@ -1330,7 +1330,7 @@ resource "aws_quicksight_analysis" "a" {
             elements {
               column_index = "0"
               column_span  = 7
-              element_id   = "fed0fcb4-fefb-465f-9d0c-2ec2fe52cac2"
+              element_id   = "total-beneficiaries-served"
               element_type = "VISUAL"
               row_index    = "0"
               row_span     = 5
@@ -1459,7 +1459,7 @@ resource "aws_quicksight_analysis" "a" {
       }
       visuals {
         kpi_visual {
-          visual_id = "fed0fcb4-fefb-465f-9d0c-2ec2fe52cac2"
+          visual_id = "total-beneficiaries-served"
 
           chart_configuration {
             field_wells {
@@ -2166,7 +2166,7 @@ resource "aws_quicksight_analysis" "a" {
     sheets {
       content_type = "INTERACTIVE"
       name         = "Metrics"
-      sheet_id     = "efde38e9-6cca-4218-8030-fc4c524a880c"
+      sheet_id     = "metrics"
 
       filter_controls {
         dropdown {
@@ -2779,7 +2779,7 @@ resource "aws_quicksight_analysis" "a" {
                 visibility = "VISIBLE"
               }
               selected_field_options {
-                custom_label = "Number of calls"
+                custom_label = "Number of calls made"
                 field_id     = "ebb7c5fa-ecd5-4151-b14d-366454a15efd.until.2.1737996624893"
                 visibility   = "VISIBLE"
               }
@@ -2861,7 +2861,7 @@ resource "aws_quicksight_analysis" "a" {
     sheets {
       content_type = "INTERACTIVE"
       name         = "Attestation Records"
-      sheet_id     = "099666e8-cb05-4929-aab6-f73887ab3d9f"
+      sheet_id     = "attestation-records"
 
       filter_controls {
         dropdown {
@@ -3171,7 +3171,7 @@ resource "aws_quicksight_analysis" "a" {
     sheets {
       content_type = "INTERACTIVE"
       name         = "Job History"
-      sheet_id     = "d02f3921-fad2-4cb0-9065-2b33bcefe220"
+      sheet_id     = "job-history"
 
       filter_controls {
         date_time_picker {
@@ -3531,7 +3531,7 @@ resource "aws_quicksight_analysis" "a" {
     sheets {
       content_type = "INTERACTIVE"
       name         = "Avg. Bene/EoB Time"
-      sheet_id     = "b7b2a8be-beff-405e-ab98-e56b0d0dd57c"
+      sheet_id     = "avg-bene-eob-time"
 
       filter_controls {
         relative_date_time {
@@ -4083,7 +4083,7 @@ resource "aws_quicksight_analysis" "a" {
     sheets {
       content_type = "INTERACTIVE"
       name         = "Coverage Counts"
-      sheet_id     = "076f6902-f251-498c-88be-25d0ae67532e"
+      sheet_id     = "coverage-counts"
 
       layouts {
         configuration {
