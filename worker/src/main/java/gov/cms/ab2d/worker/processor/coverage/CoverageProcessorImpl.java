@@ -158,11 +158,10 @@ public class CoverageProcessorImpl implements CoverageProcessor {
             }
 
 
+            log.info("Search path = {}", ((CoverageServiceImpl)coverageService).getSearchPath());
+
             log.info("starting search for {} during {}-{}", mapping.getContractNumber(),
                     mapping.getPeriod().getMonth(), mapping.getPeriod().getYear());
-
-
-            log.info("Search path = {}", ((CoverageServiceImpl)coverageService).getSearchPath());
 
 
             // Currently, we are using the STU3 version to get patient mappings
