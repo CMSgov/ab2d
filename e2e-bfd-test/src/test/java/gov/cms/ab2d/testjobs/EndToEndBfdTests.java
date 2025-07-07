@@ -179,7 +179,9 @@ public class EndToEndBfdTests {
     private static final String CONTRACT_TO_USE_CLIENT_ID = "KtmekgkCTalQkGue2B-0Z0hGC1Dk7khtJ30XMI3J";
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
+
+        Thread.sleep(60*1000);
 
         /* These properties are set to improve performance of this test */
         propertiesService.updateProperty(PCP_CORE_POOL_SIZE, "20");
