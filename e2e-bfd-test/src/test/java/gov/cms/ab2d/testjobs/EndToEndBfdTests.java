@@ -480,6 +480,7 @@ public class EndToEndBfdTests {
 
     @ParameterizedTest
     @MethodSource("getVersion")
+    @Order(6)
     public void testPatientEndpoint(FhirVersion version, String contract, int month, int year) {
         BFDClient.BFD_BULK_JOB_ID.set("TEST");
 
