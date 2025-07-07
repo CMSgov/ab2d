@@ -199,8 +199,6 @@ public class EndToEndBfdTests {
 
     @BeforeEach
     void setUp() throws Exception {
-        postgreSQLContainer.stop();
-        postgreSQLContainer.start();
         debug();
 
         /* These properties are set to improve performance of this test */
