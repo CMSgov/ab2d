@@ -44,5 +44,5 @@ runs:
         echo "PGHOST=$PGHOST" >> $GITHUB_ENV
         echo "PGPORT=$PGPORT" >> $GITHUB_ENV
         echo "PGDATABASE=$PGDATABASE" >> $GITHUB_ENV
-        echo "DATABASE_SCHEMA_NAME=public" >> $GITHUB_ENV
+        echo "DATABASE_SCHEMA_NAME=ab2d" >> $GITHUB_ENV
         
