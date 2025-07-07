@@ -1,6 +1,5 @@
 CREATE SCHEMA IF NOT EXISTS ab2d;
 ALTER ROLE cmsadmin SET search_path TO ab2d,public;
-SET search_path TO ab2d,public;
 
 -- Move tables except databasechangelog and databasechangeloglock under 'public'
 DO $$
