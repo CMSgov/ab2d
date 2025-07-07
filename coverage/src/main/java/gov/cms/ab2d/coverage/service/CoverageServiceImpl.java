@@ -84,6 +84,10 @@ public class CoverageServiceImpl implements CoverageService {
 
     private static final String JOB_TRANSITION_ERROR_PRESTRING = "cannot change from ";
 
+    public String getSearchPath() {
+        return coveragePeriodRepo.getSearchPath();
+    }
+
     @Override
     public CoveragePeriod getCoveragePeriod(ContractForCoverageDTO contract, int month, int year) {
         checkMonthAndYear(month, year);

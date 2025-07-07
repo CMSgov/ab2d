@@ -5,6 +5,7 @@ import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
 import gov.cms.ab2d.coverage.service.CoverageService;
+import gov.cms.ab2d.coverage.service.CoverageServiceImpl;
 import gov.cms.ab2d.snsclient.messages.AB2DServices;
 import gov.cms.ab2d.worker.config.ContractToContractCoverageMapping;
 import gov.cms.ab2d.worker.service.ContractWorkerClient;
@@ -159,6 +160,9 @@ public class CoverageProcessorImpl implements CoverageProcessor {
 
             log.info("starting search for {} during {}-{}", mapping.getContractNumber(),
                     mapping.getPeriod().getMonth(), mapping.getPeriod().getYear());
+
+
+            log.info("Search path = {}", ((CoverageServiceImpl)coverageService).getSearchPath());
 
 
             // Currently, we are using the STU3 version to get patient mappings
