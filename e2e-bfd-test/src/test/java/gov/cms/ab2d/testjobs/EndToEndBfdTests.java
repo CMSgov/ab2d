@@ -40,6 +40,7 @@ import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IDomainResource;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -230,7 +231,7 @@ public class EndToEndBfdTests {
      * 3. Run the jobs
      * 4. Clean up files for the jobs if necessary
      */
-    @Test
+    @RepeatedTest(10)
     void runJobs() throws InterruptedException {
         PdpClient pdpClient = setupClient(getContract());
 
