@@ -65,6 +65,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.*;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -178,10 +179,26 @@ public class EndToEndBfdTests {
     private static final String CONTRACT_TO_USE = "Z1007";
     private static final String CONTRACT_TO_USE_CLIENT_ID = "KtmekgkCTalQkGue2B-0Z0hGC1Dk7khtJ30XMI3J";
 
+    public void debug() throws Exception {
+        String url = postgreSQLContainer.getJdbcUrl();
+        String username = postgreSQLContainer.getUsername();
+        String password = postgreSQLContainer.getPassword();
+
+        Connection connection = null;
+        try {
+            connection = DriverManager.getConnection(url, username, password);
+            log.info("Current schema = {}", connection.getSchema());
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery("show search_path;");
+            log.info("search_path = {}", resultSet.getString(0));
+        } catch (SQLException e) {
+            log.error("Oops", e);
+        }
+    }
+
     @BeforeEach
     void setUp() throws Exception {
-
-        Thread.sleep(60*1000);
+        debug();
 
         /* These properties are set to improve performance of this test */
         propertiesService.updateProperty(PCP_CORE_POOL_SIZE, "20");
