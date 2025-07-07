@@ -15,7 +15,6 @@ public class AB2DPostgresqlContainer extends PostgreSQLContainer<AB2DPostgresqlC
     @Override
     public void start() {
         super.withUsername("cmsadmin");
-        super.withInitScript("init.sql");
         super.withTmpFs(Collections.singletonMap("/var/lib/postgresql/data", "rw"));
         super.start();
         System.setProperty("DB_URL", this.getJdbcUrl());
