@@ -1,6 +1,7 @@
 package gov.cms.ab2d.testjobs;
 
 import gov.cms.ab2d.AB2DLocalstackContainer;
+import gov.cms.ab2d.AB2DPostgresqlContainer;
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.model.SinceSource;
@@ -9,7 +10,6 @@ import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.InvalidContractException;
 import gov.cms.ab2d.common.service.PdpClientService;
-import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
