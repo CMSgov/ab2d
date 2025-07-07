@@ -139,6 +139,9 @@ public class CoverageServiceImpl implements CoverageService {
         period.setMonth(month);
         period.setYear(year);
 
+        // NOTE - This inserts status=null and lastSuccessfulJob=null into bene_coverage_period - if process is terminated
+        // some bene_coverage_period entries will not be updated
+
         return coveragePeriodRepo.save(period);
     }
 
