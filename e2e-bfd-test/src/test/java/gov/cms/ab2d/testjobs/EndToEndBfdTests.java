@@ -226,6 +226,7 @@ public class EndToEndBfdTests {
         try {
             runJobs();
             runJobsSuccess=true;
+            log.info("Success runJobs1");
         } catch (Exception e) {
             return;
         }
@@ -240,6 +241,7 @@ public class EndToEndBfdTests {
         try {
             runJobs();
             runJobsSuccess=true;
+            log.info("Success runJobs2");
         } catch (Exception e) {
             return;
         }
@@ -254,6 +256,7 @@ public class EndToEndBfdTests {
         try {
             runJobs();
             runJobsSuccess=true;
+            log.info("Success runJobs3");
         } catch (Exception e) {
             return;
         }
@@ -268,6 +271,7 @@ public class EndToEndBfdTests {
         try {
             runJobs();
             runJobsSuccess=true;
+            log.info("Success runJobs4");
         } catch (Exception e) {
             return;
         }
@@ -282,6 +286,7 @@ public class EndToEndBfdTests {
         try {
             runJobs();
             runJobsSuccess=true;
+            log.info("Success runJobs5");
         } catch (Exception e) {
             throw e;
         }
