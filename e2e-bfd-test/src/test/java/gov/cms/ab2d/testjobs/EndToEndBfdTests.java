@@ -190,6 +190,7 @@ public class EndToEndBfdTests {
             log.info("Current schema = {}", connection.getSchema());
             Statement statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery("show search_path;");
+            resultSet.next();
             log.info("search_path = {}", resultSet.getString(0));
         } catch (SQLException e) {
             log.error("Oops", e);
