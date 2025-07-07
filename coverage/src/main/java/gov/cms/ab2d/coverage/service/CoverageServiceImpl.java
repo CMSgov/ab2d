@@ -29,7 +29,6 @@ import java.util.Set;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hl7.fhir.r4.model.Coverage;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -105,30 +104,7 @@ public class CoverageServiceImpl implements CoverageService {
     public CoveragePeriod getCreateIfAbsentCoveragePeriod(ContractForCoverageDTO contract, int month, int year) {
         checkMonthAndYear(month, year);
 
-        Optional<CoveragePeriod> existing = Optional.empty();
-        try {
-            existing = coveragePeriodRepo.findByContractNumberAndMonthAndYear(contract.getContractNumber(), month, year);
-        } catch (Exception e) {
-            log.info("Error calling findByContractNumberAndMonthAndYear({},{},{})", contract.getContractNumber(), month, year);
-            try {
-                List<CoveragePeriod> all = coveragePeriodRepo.findAllByContractNumberAndMonthAndYear(contract.getContractNumber(), month, year);
-                for (int i = 0; i < all.size(); i++) {
-                    CoveragePeriod period = all.get(i);
-                    log.info("Coverage period {} - id={}; contractNumber={}; month={}; year={}; status={}; lastSuccessfulJob={}",
-                            (i+1),
-                            period.getId(),
-                            period.getContractNumber(),
-                            period.getMonth(),
-                            period.getYear(),
-                            Optional.ofNullable(String.valueOf(period.getStatus())).orElse(""),
-                            Optional.ofNullable(String.valueOf(period.getLastSuccessfulJob())).orElse("")
-                    );
-                }
-            } catch (Exception ignored) {
-                // ignore
-            }
-
-        }
+        Optional<CoveragePeriod> existing = coveragePeriodRepo.findByContractNumberAndMonthAndYear(contract.getContractNumber(), month, year);
 
         if (existing.isPresent()) {
             return existing.get();
@@ -138,9 +114,6 @@ public class CoverageServiceImpl implements CoverageService {
         period.setContractNumber(contract.getContractNumber());
         period.setMonth(month);
         period.setYear(year);
-
-        // NOTE - This inserts status=null and lastSuccessfulJob=null into bene_coverage_period - if process is terminated
-        // some bene_coverage_period entries will not be updated
 
         return coveragePeriodRepo.save(period);
     }
