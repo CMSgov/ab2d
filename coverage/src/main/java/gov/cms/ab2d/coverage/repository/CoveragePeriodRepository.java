@@ -5,8 +5,6 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.NativeQuery;
-import org.springframework.data.jpa.repository.Query;
 
 public interface CoveragePeriodRepository extends JpaRepository<CoveragePeriod, Integer> {
 
@@ -19,7 +17,4 @@ public interface CoveragePeriodRepository extends JpaRepository<CoveragePeriod, 
     Optional<CoveragePeriod> findByContractNumberAndMonthAndYear(String contractNumber, int month, int year);
 
     List<CoveragePeriod> findAllByMonthAndYear(int month, int year);
-
-    @NativeQuery("show search_path")
-    String getSearchPath();
 }

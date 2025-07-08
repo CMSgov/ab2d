@@ -197,8 +197,6 @@ public class EndToEndBfdTests {
 
     @BeforeEach
     void setUp() throws Exception {
-        debug();
-
         /* These properties are set to improve performance of this test */
         propertiesService.updateProperty(PCP_CORE_POOL_SIZE, "20");
         propertiesService.updateProperty(PCP_MAX_POOL_SIZE, "30");
@@ -219,80 +217,6 @@ public class EndToEndBfdTests {
         // Set up the PDP client
     }
 
-    static boolean runJobsSuccess=false;
-    @Test
-    @Order(1)
-    void runJobs1() throws InterruptedException {
-        try {
-            runJobs();
-            runJobsSuccess=true;
-            log.info("Success runJobs1");
-        } catch (Exception e) {
-            return;
-        }
-    }
-
-    @Test
-    @Order(2)
-    void runJobs2() throws InterruptedException {
-        if (runJobsSuccess) {
-            return;
-        }
-        try {
-            runJobs();
-            runJobsSuccess=true;
-            log.info("Success runJobs2");
-        } catch (Exception e) {
-            return;
-        }
-    }
-
-    @Test
-    @Order(3)
-    void runJobs3() throws InterruptedException {
-        if (runJobsSuccess) {
-            return;
-        }
-        try {
-            runJobs();
-            runJobsSuccess=true;
-            log.info("Success runJobs3");
-        } catch (Exception e) {
-            return;
-        }
-    }
-
-    @Test
-    @Order(4)
-    void runJobs4() throws InterruptedException {
-        if (runJobsSuccess) {
-            return;
-        }
-        try {
-            runJobs();
-            runJobsSuccess=true;
-            log.info("Success runJobs4");
-        } catch (Exception e) {
-            return;
-        }
-    }
-
-    @Test
-    @Order(5)
-    void runJobs5() throws InterruptedException {
-        if (runJobsSuccess) {
-            return;
-        }
-        try {
-            runJobs();
-            runJobsSuccess=true;
-            log.info("Success runJobs5");
-        } catch (Exception e) {
-            throw e;
-        }
-    }
-
-
     /**
      * Run a bunch of jobs with different scenarios to test the default _since capabilities. To run the jobs,
      * we first need to do some setup:
@@ -302,6 +226,7 @@ public class EndToEndBfdTests {
      * 3. Run the jobs
      * 4. Clean up files for the jobs if necessary
      */
+    @Test
     void runJobs() throws InterruptedException {
         PdpClient pdpClient = setupClient(getContract());
 
@@ -485,7 +410,6 @@ public class EndToEndBfdTests {
 
     @ParameterizedTest
     @MethodSource("getVersion")
-    @Order(6)
     public void testPatientEndpoint(FhirVersion version, String contract, int month, int year) {
         BFDClient.BFD_BULK_JOB_ID.set("TEST");
 

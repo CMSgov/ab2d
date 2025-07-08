@@ -15,15 +15,12 @@ public class AB2DPostgresqlContainer extends PostgreSQLContainer<AB2DPostgresqlC
     @Override
     public void start() {
         super.withUsername("cmsadmin");
-//        super.withUrlParam("currentSchema", "public,ab2d");
         super.withTmpFs(Collections.singletonMap("/var/lib/postgresql/data", "rw"));
         super.start();
         System.setProperty("DB_URL", this.getJdbcUrl());
         System.setProperty("DB_USERNAME", this.getUsername());
         System.setProperty("DB_PASSWORD", this.getPassword());
     }
-
-
 
     @Override
     public void stop() {
