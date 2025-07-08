@@ -126,6 +126,8 @@ data "aws_iam_policy_document" "this" {
   }
 }
 
+data "aws_caller_identity" "current" {}
+
 resource "aws_lb" "internal_lb" {
   name               = "${local.service_prefix}-${local.service}"
   internal           = true
@@ -138,8 +140,7 @@ resource "aws_lb" "internal_lb" {
   drop_invalid_header_fields       = true
 
   access_logs {
-    bucket  = local.network_access_logs_bucket
-    prefix  = "${local.service_prefix}-${local.service}"
+    bucket  = "cms-cloud-${data.aws_caller_identity.current.account_id}-us-east-1"
     enabled = true
   }
 }
