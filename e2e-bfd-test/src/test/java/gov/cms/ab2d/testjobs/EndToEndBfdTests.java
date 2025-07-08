@@ -177,24 +177,6 @@ public class EndToEndBfdTests {
     private static final String CONTRACT_TO_USE = "Z1007";
     private static final String CONTRACT_TO_USE_CLIENT_ID = "KtmekgkCTalQkGue2B-0Z0hGC1Dk7khtJ30XMI3J";
 
-    public void debug() throws Exception {
-        String url = postgreSQLContainer.getJdbcUrl();
-        String username = postgreSQLContainer.getUsername();
-        String password = postgreSQLContainer.getPassword();
-
-        Connection connection = null;
-        try {
-            connection = DriverManager.getConnection(url, username, password);
-            log.info("Current schema = {}", connection.getSchema());
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery("show search_path;");
-            resultSet.next();
-            log.info("search_path = {}", resultSet.getString(1));
-        } catch (SQLException e) {
-            log.error("Oops", e);
-        }
-    }
-
     @BeforeEach
     void setUp() throws Exception {
         /* These properties are set to improve performance of this test */
