@@ -45,4 +45,4 @@ runs:
         echo "PGPORT=$PGPORT" >> $GITHUB_ENV
         echo "PGDATABASE=$PGDATABASE" >> $GITHUB_ENV
         echo "DATABASE_SCHEMA_NAME=ab2d" >> $GITHUB_ENV
-        echo "PGSSLMODE=verify-full" >> $GITHUB_ENV
+        echo "PGSSLMODE=require" >> $GITHUB_ENV
