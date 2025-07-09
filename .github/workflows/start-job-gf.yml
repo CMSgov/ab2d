@@ -52,7 +52,7 @@ jobs:
 
     env:
 #      CONTRACT_NUMBER: ${{ inputs.contractNumber }}
-      CONTRACT_NUMBER: 'Z0000'
+      CONTRACT_NUMBER: 'Z0001'
       FHIR_VERSION: 'R4'
 #      FHIR_VERSION: ${{ inputs.fhirVersion }}
 #      SINCE: ${{ inputs.since }}
