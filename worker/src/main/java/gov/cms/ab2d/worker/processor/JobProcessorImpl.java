@@ -97,6 +97,8 @@ public class JobProcessorImpl implements JobProcessor {
                 deleteExistingDirectory(outputDirPath, job);
             }
         } catch (Exception e) {
+            // TODO remove - temporary debugging code
+            log.error("JobProcessorImpl#process threw an exception for jobUuid={}", jobUuid, e);
 
             String contract = job.getContractNumber();
             String message;
