@@ -77,6 +77,9 @@ class TestRunner {
 
     static {
         HttpsURLConnection.setDefaultHostnameVerifier(SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+
+        Properties props = System.getProperties();
+        props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
     }
 
     private static final Logger apiLogger = LoggerFactory.getLogger("gov.cms.ab2d.api");
