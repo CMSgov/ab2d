@@ -84,7 +84,7 @@ jobs:
         run: |
           mkdir -p opt/ab2d
       
-          KEYSTORE_FILE_NAME="ab2d_${{ env.AB2D_ENV }}_keystore"
+          KEYSTORE_FILE_NAME="ab2d_${{ env.ROLE_TO_ASSUME }}_keystore"
           aws s3 cp s3://$MAIN_BUCKET/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
           test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
 
