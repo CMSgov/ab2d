@@ -7,13 +7,9 @@ inputs:
     default: 'us-east-1'
   environment:
     description: "AB2D environment"
+    type: string
     required: true
-    type: choice
-    options:
-      - dev
-      - test
-      - sandbox
-      - prod
+    default: 'test'
 runs:
   using: "composite"
   steps:
@@ -31,10 +27,14 @@ runs:
     - name: Add PG environment variables
       shell: bash
       run: |
-        if [ ${{ inputs.environment }} == "test" ]; then
+        if [ "${{ inputs.environment }}" == "6755-dev" ]; then
+          PGDATABASE='dev'
+        elif [ "${{ inputs.environment }}" == "test" ] || [ "${{ inputs.environment }}" == "6755-test" ]; then
           PGDATABASE='impl'
-        elif [ ${{ inputs.environment }} == "sandbox" ]; then
+        elif [ ${{ inputs.environment }} == "sandbox" ] || [ "${{ inputs.environment }}" == "6755-sandbox" ]; then
           PGDATABASE='sbx'
+        elif [ "${{ inputs.environment }}" == "6755-prod" ]; then
+          PGDATABASE='prod'
         else 
           PGDATABASE='${{ inputs.environment }}'
         fi

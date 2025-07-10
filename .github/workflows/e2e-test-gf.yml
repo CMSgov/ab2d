@@ -2,6 +2,9 @@ name: end-to-end-gf tests
 run-name: end-to-end-gf tests ${{ inputs.environment }}
 
 on:
+  push:
+    branches: [ "ephemeral-e2e" ]
+
   workflow_call:
     inputs:
       environment:
@@ -11,13 +14,9 @@ on:
     inputs:
       environment:
         description: AB2D environment
+        type: string
         required: true
-        type: choice
-        options:
-          - dev
-          - test
-          - sandbox
-        default: test
+        default: 'test'
 
 concurrency:
   group: ${{ inputs.environment }}-e2e-test
@@ -32,7 +31,8 @@ jobs:
       AB2D_V2_ENABLED: 'true'
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
       AWS_ACCOUNT: ${{ inputs.environment == 'sandbox' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
-      AB2D_ENV: ${{ inputs.environment }}
+#      AB2D_ENV: ${{ inputs.environment }}
+      AB2D_ENV: '6755-dev'
 
     steps:
       - name: Assume AWS role
@@ -67,6 +67,7 @@ jobs:
 
       - name: Run e2e-test
         env:
-         E2E_ENVIRONMENT: ${{ inputs.environment == 'dev' && 'DEV' || inputs.environment == 'test' && 'IMPL' || inputs.environment == 'sandbox' && 'SBX' }}
+          E2E_ENVIRONMENT: 'DEV'
+#         E2E_ENVIRONMENT: ${{ inputs.environment == 'dev' && 'DEV' || inputs.environment == '6755-dev' && 'DEV' || inputs.environment == 'test' && 'IMPL' || inputs.environment == '6755-test' && 'IMPL' || inputs.environment == 'sandbox' && 'SBX' || inputs.environment == '6755-sandbox' && 'SBX' }}
         run: |
           mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress
