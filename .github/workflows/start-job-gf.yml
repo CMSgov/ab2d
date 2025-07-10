@@ -67,13 +67,13 @@ jobs:
 
       - name: Set environment-specific variables
         run: |
-          if [ "$AB2D_ENV" == "dev" ]; then
+          if [ "$AB2D_ENV" == "dev" ] || [ "$AB2D_ENV" == "6755-dev" ]; then
             DEFAULT_API_URL_PREFIX="https://dev.ab2d.cms.gov"
-          elif [ "$AB2D_ENV" == "test" ]; then
+          elif [ "$AB2D_ENV" == "test" ] || [ "$AB2D_ENV" == "6755-test" ]; then
             DEFAULT_API_URL_PREFIX="https://impl.ab2d.cms.gov"
-          elif [ "$AB2D_ENV" == "sandbox" ]; then
+          elif [ "$AB2D_ENV" == "sandbox" ] || [ "$AB2D_ENV" == "6755-sandbox" ]; then
             DEFAULT_API_URL_PREFIX="https://sandbox.ab2d.cms.gov"
-          elif [ "$AB2D_ENV" == "prod" ]; then
+          elif [ "$AB2D_ENV" == "prod" ] || [ "$AB2D_ENV" == "6755-prod" ]; then
             DEFAULT_API_URL_PREFIX="https://api.ab2d.cms.gov" 
           else
             echo "Invalid environment: $ENVIRONMENT"

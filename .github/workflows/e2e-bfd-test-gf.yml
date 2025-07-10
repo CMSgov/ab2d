@@ -12,13 +12,9 @@ on:
     inputs:
       environment:
         description: AB2D environment
+        type: string
         required: true
-        type: choice
-        options:
-          - dev
-          - test
-          - sandbox
-        default: test
+        default: 'test'
 
 concurrency:
   group: ${{ inputs.environment }}-e2e-test
