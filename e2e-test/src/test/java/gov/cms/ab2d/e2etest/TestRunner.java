@@ -72,6 +72,10 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class TestRunner {
 
+    static {
+        javax.net.ssl.HttpsURLConnection.setDefaultHostnameVerifier((hostname, sslSession) -> true);
+    }
+
     private static final Logger apiLogger = LoggerFactory.getLogger("gov.cms.ab2d.api");
     private static final Logger workerLogger = LoggerFactory.getLogger("gov.cms.ab2d.worker");
 
