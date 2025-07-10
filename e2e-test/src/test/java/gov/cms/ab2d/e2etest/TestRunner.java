@@ -203,7 +203,9 @@ class TestRunner {
         InputStream inputStream = new FileInputStream("src/test/resources/" + environment.getConfigName());
         yamlMap = yaml.load(inputStream);
         String oktaUrl = yamlMap.get("okta-url");
-        baseUrl = yamlMap.get("base-url");
+
+        baseUrl = Optional.ofNullable(System.getenv("API_BASE_URL")).orElse(yamlMap.get("base-url"));
+        log.info("Configured API base URL: {}", baseUrl);
 
         // With a local url add the API port to the domain name (localhost)
         if (environment == Environment.CI || environment == Environment.LOCAL) {

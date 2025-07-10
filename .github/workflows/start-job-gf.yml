@@ -3,9 +3,6 @@ name: start-job-gf
 run-name: start-job-gf ${{ inputs.environment }} ${{ inputs.contractNumber }}
 
 on:
-  push:
-    branches: ["ephemeral-e2e"]
-
   workflow_dispatch: # Allow manual trigger
     inputs:
       environment:
@@ -47,19 +44,13 @@ jobs:
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
 
     env:
-#      CONTRACT_NUMBER: ${{ inputs.contractNumber }}
-      CONTRACT_NUMBER: 'Z0001'
-      FHIR_VERSION: 'R4'
-#      FHIR_VERSION: ${{ inputs.fhirVersion }}
-#      SINCE: ${{ inputs.since }}
-      SINCE: '2022-01-01 05:00:00+00'
-      UNTIL: '2025-07-07 05:00:00+00'
-#      UNTIL: ${{ inputs.until }}
+      CONTRACT_NUMBER: ${{ inputs.contractNumber }}
+      FHIR_VERSION: ${{ inputs.fhirVersion }}
+      SINCE: ${{ inputs.since }}
+      UNTIL: ${{ inputs.until }}
       API_URL_PREFIX: ${{ inputs.apiUrlPrefix }}
-#      AB2D_ENV: ${{ inputs.environment }}
-      AB2D_ENV: '6755-dev'
+      AB2D_ENV: ${{ inputs.environment }}
       AWS_ACCOUNT: ${{contains(fromJSON('["dev", "6755-dev", "test", "6755-test"]'), '6755-dev') && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT}}
-#      AWS_ACCOUNT: ${{contains(fromJSON('["dev", "test"]'), inputs.environment) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT}}
 
     steps:
       - name: Checkout Code
@@ -72,7 +63,7 @@ jobs:
             DEFAULT_API_URL_PREFIX="https://dev.ab2d.cms.gov"
           elif [ "$AB2D_ENV" == "test" ] || [ "$AB2D_ENV" == "6755-test" ]; then
             ROLE_TO_ASSUME="test";
-            DEFAULT_API_URL_PREFIX="https://impl.ab2d.cms.gov"
+            DEFAULT_API_URL_PREFIX="https://test.ab2d.cms.gov"
           elif [ "$AB2D_ENV" == "sandbox" ] || [ "$AB2D_ENV" == "6755-sandbox" ]; then
             ROLE_TO_ASSUME="sandbox";
             DEFAULT_API_URL_PREFIX="https://sandbox.ab2d.cms.gov"
