@@ -3,8 +3,6 @@ run-name: end-to-end-bfd-gf tests ${{ inputs.environment }}
 
 
 on:
-  push:
-    branches: [ "ephemeral-e2e" ]
   workflow_call:
     inputs:
       environment:
@@ -31,10 +29,8 @@ jobs:
       AB2D_BFD_KEYSTORE_LOCATION: "${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
       AB2D_V2_ENABLED: 'true'
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-      AWS_ACCOUNT:  ${{ secrets.NON_PROD_ACCOUNT }}
-    #      AWS_ACCOUNT: ${{ (inputs.environment == 'sandbox' || inputs.environment == '6675-sandbox') && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
-    #      AB2D_ENV: ${{ inputs.environment }}
-      AB2D_ENV: '6755-dev'
+      AWS_ACCOUNT: ${{ (inputs.environment == 'sandbox' || inputs.environment == '6675-sandbox') && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
+      AB2D_ENV: ${{ inputs.environment }}
 
     steps:
       - name: Set environment-specific variables
@@ -77,7 +73,7 @@ jobs:
             ARTIFACTORY_URL=/artifactory/url
             ARTIFACTORY_USER=/artifactory/user
             ARTIFACTORY_PASSWORD=/artifactory/password
-            AB2D_BFD_KEYSTORE_PASSWORD=/ab2d/${{ env.ROLE_TO_ASSUME }}/worker/sensitive/bfd_keystore_password
+            AB2D_BFD_KEYSTORE_PASSWORD=/ab2d/${{ env.AB2D_ENV }}/worker/sensitive/bfd_keystore_password
             MAIN_BUCKET=/ab2d/${{ env.ROLE_TO_ASSUME }}/core/nonsensitive/main-bucket-name
 
       - name: Create opt/ab2d directory and download keystore
