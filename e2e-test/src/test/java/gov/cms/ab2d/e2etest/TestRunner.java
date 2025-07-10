@@ -27,11 +27,14 @@ import java.util.*;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 import javax.crypto.SecretKey;
+import javax.net.ssl.HttpsURLConnection;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -73,7 +76,7 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 class TestRunner {
 
     static {
-        javax.net.ssl.HttpsURLConnection.setDefaultHostnameVerifier((hostname, sslSession) -> true);
+        HttpsURLConnection.setDefaultHostnameVerifier(SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
     }
 
     private static final Logger apiLogger = LoggerFactory.getLogger("gov.cms.ab2d.api");
