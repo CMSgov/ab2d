@@ -83,6 +83,22 @@ jobs:
             ARTIFACTORY_USER=/artifactory/user
             ARTIFACTORY_PASSWORD=/artifactory/password
 
+      - name: Set environment-specific variables
+        run: |
+          if [ "$AB2D_ENV" == "6755-dev" ]; then
+            ROLE_TO_ASSUME="dev";
+          elif [ "$AB2D_ENV" == "6755-test" ]; then
+            ROLE_TO_ASSUME="test";
+          elif [ "$AB2D_ENV" == "6755-sandbox" ]; then
+            ROLE_TO_ASSUME="sandbox";
+          elif [ "$AB2D_ENV" == "6755-prod" ]; then
+            ROLE_TO_ASSUME="prod";
+          else
+            ROLE_TO_ASSUME=$AB2D_ENV
+          fi
+          
+          echo "ROLE_TO_ASSUME=${ROLE_TO_ASSUME}" >> $GITHUB_ENV
+
       - name: Assume role in AB2D account for this environment
         uses: aws-actions/configure-aws-credentials@v3
         with:

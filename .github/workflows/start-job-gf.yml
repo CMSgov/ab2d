@@ -85,6 +85,7 @@ jobs:
           fi
           
           echo "DEFAULT_API_URL_PREFIX=${DEFAULT_API_URL_PREFIX}" >> $GITHUB_ENV
+          echo "ROLE_TO_ASSUME=${ROLE_TO_ASSUME}" >> $GITHUB_ENV
 
       - name: Assume AWS role
         uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
