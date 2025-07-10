@@ -2,9 +2,6 @@ name: end-to-end-gf tests
 run-name: end-to-end-gf tests ${{ inputs.environment }}
 
 on:
-  push:
-    branches: [ "ephemeral-e2e" ]
-
   workflow_call:
     inputs:
       environment:
@@ -34,10 +31,9 @@ jobs:
     env:
       AB2D_V2_ENABLED: 'true'
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-      AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
-#      AWS_ACCOUNT: ${{ (inputs.environment == 'sandbox' || inputs.environment == '6675-sandbox') && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
-      #      AB2D_ENV: ${{ inputs.environment }}
-      AB2D_ENV: '6755-dev'
+      AWS_ACCOUNT: ${{ (inputs.environment == 'sandbox' || inputs.environment == '6675-sandbox') && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
+      AB2D_ENV: ${{ inputs.environment }}
+
 
     steps:
       - name: Set environment-specific variables
@@ -88,9 +84,7 @@ jobs:
 
       - name: Run e2e-test
         env:
-          E2E_ENVIRONMENT: 'DEV'
-#         E2E_ENVIRONMENT: ${{ inputs.environment == 'dev' && 'DEV' || inputs.environment == '6755-dev' && 'DEV' || inputs.environment == 'test' && 'IMPL' || inputs.environment == '6755-test' && 'IMPL' || inputs.environment == 'sandbox' && 'SBX' || inputs.environment == '6755-sandbox' && 'SBX' }}
-#          API_BASE_URL: ${{ inputs.api_base_url }}
-          API_BASE_URL: 'https://ab2d-6755-dev-api-372095153.us-east-1.elb.amazonaws.com'
+          E2E_ENVIRONMENT: ${{ inputs.environment == 'dev' && 'DEV' || inputs.environment == '6755-dev' && 'DEV' || inputs.environment == 'test' && 'IMPL' || inputs.environment == '6755-test' && 'IMPL' || inputs.environment == 'sandbox' && 'SBX' || inputs.environment == '6755-sandbox' && 'SBX' }}
+          API_BASE_URL: ${{ inputs.api_base_url }}
         run: |
           mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress
