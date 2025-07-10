@@ -30,7 +30,7 @@ jobs:
     env:
       AB2D_V2_ENABLED: 'true'
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-      AWS_ACCOUNT: secrets.NON_PROD_ACCOUNT
+      AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
 #      AWS_ACCOUNT: ${{ (inputs.environment == 'sandbox' || inputs.environment == '6675-sandbox') && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
       #      AB2D_ENV: ${{ inputs.environment }}
       AB2D_ENV: '6755-dev'
