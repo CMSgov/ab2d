@@ -42,7 +42,7 @@ resource "aws_ecs_task_definition" "events" {
       { name : "AB2D_SLACK_TRACE_WEBHOOKS", valueFrom : local.ab2d_slack_trace_webhooks_arn }
     ],
     environment : [
-      { name : "AB2D_DB_HOST", value : local.ab2d_aurora_endpoint },
+      { name : "AB2D_DB_HOST", value : local.ab2d_db_host },
       { name : "AB2D_DB_PORT", value : "5432" },
       { name : "AB2D_DB_SSL_MODE", value : "allow" },
       { name : "AB2D_EXECUTION_ENV", value : local.benv },

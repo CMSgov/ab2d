@@ -9,11 +9,13 @@ data "aws_efs_access_point" "this" {
 }
 
 data "aws_db_instance" "this" {
+  count                  = contains(["sandbox", "prod"], local.parent_env) ? 1 : 0
   db_instance_identifier = local.service_prefix
 }
 
 data "aws_rds_cluster" "this" {
-  cluster_identifier = "${local.service_prefix}-aurora"
+  count              = contains(["dev", "test"], local.parent_env) ? 1 : 0
+  cluster_identifier = local.service_prefix
 }
 
 data "aws_security_group" "db" {

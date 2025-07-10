@@ -35,15 +35,15 @@ data "artifactory_file" "lambdas" {
   output_path = "${path.module}/${each.value}.zip"
 }
 
-data "aws_efs_file_system" "this" {
-  tags = {
-    Name = "ab2d-${module.platform.parent_env}-efs"
-  }
-}
+# data "aws_efs_file_system" "this" {
+#   tags = {
+#     Name = "ab2d-${module.platform.parent_env}-efs"
+#   }
+# }
 
-data "aws_efs_access_points" "this" {
-  file_system_id = data.aws_efs_file_system.this.id
-}
+# data "aws_efs_access_points" "this" {
+#   file_system_id = data.aws_efs_file_system.this.id
+# }
 
 data "aws_efs_access_point" "this" {
   access_point_id = module.platform.ssm.core.efs_access_point_id.value
@@ -75,9 +75,11 @@ data "aws_security_group" "db" {
 }
 
 data "aws_db_instance" "this" {
+  count                  = contains(["sandbox", "prod"], local.parent_env) ? 1 : 0
   db_instance_identifier = local.service_prefix
 }
 
 data "aws_rds_cluster" "this" {
-  cluster_identifier = "${local.service_prefix}-aurora"
+  count              = contains(["dev", "test"], local.parent_env) ? 1 : 0
+  cluster_identifier = local.service_prefix
 }

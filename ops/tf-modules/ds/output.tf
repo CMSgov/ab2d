@@ -1,19 +1,16 @@
 output "instance" {
-  value = aws_db_instance.this
+  deprecated = "This will no longer be supported once APIs have migrated to aurora."
+  value      = var.create_rds_db_instance ? aws_db_instance.this[0] : null
 }
 
-output "sg" {
+output "security_group" {
   value = aws_security_group.this
 }
 
 output "aurora_cluster" {
-  value = aws_rds_cluster.this
+  value = var.create_aurora_cluster ? aws_rds_cluster.this[0] : null
 }
 
 output "aurora_instance" {
-  value = aws_rds_cluster_instance.this
-}
-
-output "aurora_endpoint" {
-  value = aws_rds_cluster.this.endpoint
+  value = var.create_aurora_cluster ? aws_rds_cluster_instance.this[0] : null
 }
