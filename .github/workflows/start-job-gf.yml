@@ -58,24 +58,21 @@ jobs:
 
       - name: Set environment-specific variables
         run: |
-          if [ "$AB2D_ENV" == "dev" ] || [ "$AB2D_ENV" == "6755-dev" ]; then
-            ROLE_TO_ASSUME="dev";
+          if [ "$AB2D_ENV" == "dev" ]; then
             DEFAULT_API_URL_PREFIX="https://dev.ab2d.cms.gov"
-          elif [ "$AB2D_ENV" == "test" ] || [ "$AB2D_ENV" == "6755-test" ]; then
-            ROLE_TO_ASSUME="test";
+          elif [ "$AB2D_ENV" == "test" ]; then
             DEFAULT_API_URL_PREFIX="https://test.ab2d.cms.gov"
-          elif [ "$AB2D_ENV" == "sandbox" ] || [ "$AB2D_ENV" == "6755-sandbox" ]; then
-            ROLE_TO_ASSUME="sandbox";
+          elif [ "$AB2D_ENV" == "sandbox" ]; then
             DEFAULT_API_URL_PREFIX="https://sandbox.ab2d.cms.gov"
-          elif [ "$AB2D_ENV" == "prod" ] || [ "$AB2D_ENV" == "6755-prod" ]; then
-            ROLE_TO_ASSUME="prod";
+          elif [ "$AB2D_ENV" == "prod" ]; then
             DEFAULT_API_URL_PREFIX="https://api.ab2d.cms.gov" 
           else
             echo "Invalid environment: $ENVIRONMENT"
             exit 1
           fi
-          
+   
           echo "DEFAULT_API_URL_PREFIX=${DEFAULT_API_URL_PREFIX}" >> $GITHUB_ENV
+          ROLE_TO_ASSUME=${AB2D_ENV#6755-}
           echo "ROLE_TO_ASSUME=${ROLE_TO_ASSUME}" >> $GITHUB_ENV
 
       - name: Assume AWS role
