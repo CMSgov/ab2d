@@ -23,6 +23,7 @@ locals {
   env          = terraform.workspace
   service      = "api"
 
+
   ssm_root_map = {
     api           = "/ab2d/${local.env}/api"
     common        = "/ab2d/${local.env}/common"
@@ -42,6 +43,7 @@ locals {
     sandbox = "ab2d-sbx-sandbox"
   }, local.parent_env, local.parent_env)
 
+  ab2d_db_host                 = contains(["dev", "test"], local.parent_env) ? data.aws_rds_cluster.this[0].endpoint : data.aws_db_instance.this[0].endpoint
   ab2d_efs_mount               = "/mnt/efs"
   aws_region                   = module.platform.primary_region.name
   ab2d_keystore_location       = module.platform.ssm.core.keystore_location.value
@@ -265,7 +267,7 @@ resource "aws_ecs_task_definition" "api" {
     ],
     environment : [
       { name : "AB2D_BFD_INSIGHTS", value : local.bfd_insights }, #FIXME: Is this even used?
-      { name : "AB2D_DB_HOST", value : data.aws_db_instance.this.address },
+      { name : "AB2D_DB_HOST", value : local.ab2d_db_host },
       { name : "AB2D_DB_PORT", value : "5432" },
       { name : "AB2D_DB_SSL_MODE", value : "require" },
       { name : "AB2D_EFS_MOUNT", value : local.ab2d_efs_mount },
@@ -339,6 +341,8 @@ resource "aws_cloudwatch_metric_alarm" "health" {
   }
 }
 
+data "aws_caller_identity" "current" {}
+
 resource "aws_lb" "ab2d_api" {
   #TODO Consider using name_prefix for ephemeral environments... thhey may only be up to 6-characters
   name               = "${local.service_prefix}-api"
@@ -360,8 +364,7 @@ resource "aws_lb" "ab2d_api" {
   drop_invalid_header_fields       = true
 
   access_logs {
-    bucket  = local.network_access_logs_bucket
-    prefix  = "${local.service_prefix}-${local.service}"
+    bucket  = "cms-cloud-${data.aws_caller_identity.current.account_id}-us-east-1"
     enabled = true
   }
 }

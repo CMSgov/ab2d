@@ -35,7 +35,7 @@ locals {
     "sandbox" = "ab2d-sbx-sandbox"
   }, local.parent_env, local.parent_env)
 
-  ab2d_db_host               = data.aws_db_instance.this.address
+  ab2d_db_host               = contains(["dev", "test"], local.parent_env) ? data.aws_rds_cluster.this[0].endpoint : data.aws_db_instance.this[0].endpoint
   aws_account_number         = module.platform.account_id
   aws_region                 = module.platform.primary_region.name
   db_database_arn            = module.platform.ssm.core.database_name.arn
@@ -126,6 +126,8 @@ data "aws_iam_policy_document" "this" {
   }
 }
 
+data "aws_caller_identity" "current" {}
+
 resource "aws_lb" "internal_lb" {
   name               = "${local.service_prefix}-${local.service}"
   internal           = true
@@ -138,8 +140,7 @@ resource "aws_lb" "internal_lb" {
   drop_invalid_header_fields       = true
 
   access_logs {
-    bucket  = local.network_access_logs_bucket
-    prefix  = "${local.service_prefix}-${local.service}"
+    bucket  = "cms-cloud-${data.aws_caller_identity.current.account_id}-us-east-1"
     enabled = true
   }
 }
