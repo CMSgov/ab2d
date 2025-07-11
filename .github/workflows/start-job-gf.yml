@@ -70,7 +70,7 @@ jobs:
           ENV=$(echo "$AB2D_ENV" | sed 's/^[0-9]\+-//')
           echo "ENV=${{env.ENV}}" >> $GITHUB_ENV
           
-          AWS_ACCOUNT: ${{contains(fromJSON('["dev", "test"]'), env.ENV) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT}}
+          AWS_ACCOUNT=${{contains(fromJSON('["dev", "test"]'), env.ENV) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT}}
           echo ${{env.AWS_ACCOUNT}}
           
           if [ "$ENV" == "dev" ]; then
