@@ -3,9 +3,6 @@ name: start-job-gf
 run-name: start-job-gf ${{ inputs.environment }} ${{ inputs.contractNumber }}
 
 on:
-  push:
-    branches: ["ephemeral-e2e"]
-
   workflow_dispatch: # Allow manual trigger
     inputs:
       environment:
@@ -47,17 +44,12 @@ jobs:
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
 
     env:
-#      CONTRACT_NUMBER: ${{ inputs.contractNumber }}
-      CONTRACT_NUMBER: 'Z0001'
-      FHIR_VERSION: 'R4'
-#      FHIR_VERSION: ${{ inputs.fhirVersion }}
-#      SINCE: ${{ inputs.since }}
-      SINCE: '2022-01-01 05:00:00+00'
-      UNTIL: '2025-07-07 05:00:00+00'
-#      UNTIL: ${{ inputs.until }}
+      CONTRACT_NUMBER: ${{ inputs.contractNumber }}
+      FHIR_VERSION: ${{ inputs.fhirVersion }}
+      SINCE: ${{ inputs.since }}
+      UNTIL: ${{ inputs.until }}
       API_URL_PREFIX: ${{ inputs.apiUrlPrefix }}
-#      AB2D_ENV: ${{ inputs.environment }}
-      AB2D_ENV: '6755-dev'
+      AB2D_ENV: ${{ inputs.environment }}
 
     steps:
       - name: Checkout Code

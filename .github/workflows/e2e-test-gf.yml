@@ -2,9 +2,6 @@ name: end-to-end-gf tests
 run-name: end-to-end-gf tests ${{ inputs.environment }}
 
 on:
-  push:
-    branches: [ "ephemeral-e2e" ]
-
   workflow_call:
     inputs:
       environment:
@@ -34,8 +31,7 @@ jobs:
     env:
       AB2D_V2_ENABLED: 'true'
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-#      AB2D_ENV: ${{ inputs.environment }}
-      AB2D_ENV: '6755-dev'
+      AB2D_ENV: ${{ inputs.environment }}
 
     steps:
       - name: Set environment-specific variables
@@ -84,7 +80,6 @@ jobs:
       - name: Run e2e-test
         env:
           E2E_ENVIRONMENT: ${{ env.ENV == 'dev' && 'DEV' || env.ENV == 'test' && 'IMPL' || env.ENV == 'sandbox' && 'SBX' }}
-#          API_BASE_URL: ${{ inputs.api_base_url }}
-          API_BASE_URL: 'https://ab2d-6755-dev-api-372095153.us-east-1.elb.amazonaws.com'
+          API_BASE_URL: ${{ inputs.api_base_url }}
         run: |
           mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress
