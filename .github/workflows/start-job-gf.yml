@@ -71,7 +71,7 @@ jobs:
           echo "ENV=$ENV" >> $GITHUB_ENV
           
           AWS_ACCOUNT=${{contains(fromJSON('["dev", "test"]'), env.ENV) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT}}
-          echo ${{env.AWS_ACCOUNT}}
+          echo "AWS_ACCOUNT=$AWS_ACCOUNT" 
           
           if [ "$ENV" == "dev" ]; then
             DEFAULT_API_URL_PREFIX="https://dev.ab2d.cms.gov"
