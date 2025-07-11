@@ -18,6 +18,7 @@ runs:
       env:
         AWS_REGION: ${{ inputs.aws_region }}
         MODULE_DB_PREFIX: /ab2d/${{ inputs.environment }}/core
+        AB2D_ENV: ${{ inputs.environment }}
       with:
         params: |
           DB_ENDPOINT=${{ env.MODULE_DB_PREFIX }}/nonsensitive/writer_endpoint
@@ -27,16 +28,14 @@ runs:
     - name: Add PG environment variables
       shell: bash
       run: |
-        if [ "${{ inputs.environment }}" == "6755-dev" ]; then
-          PGDATABASE='dev'
-        elif [ "${{ inputs.environment }}" == "test" ] || [ "${{ inputs.environment }}" == "6755-test" ]; then
+        ENV=$(echo "$AB2D_ENV" | sed 's/^[0-9]\+-//')
+        echo $ENV
+        if [ "$ENV" == "test" ]; then
           PGDATABASE='impl'
-        elif [ ${{ inputs.environment }} == "sandbox" ] || [ "${{ inputs.environment }}" == "6755-sandbox" ]; then
+        elif [ "$ENV" == "sandbox" ]; then
           PGDATABASE='sbx'
-        elif [ "${{ inputs.environment }}" == "6755-prod" ]; then
-          PGDATABASE='prod'
         else 
-          PGDATABASE='${{ inputs.environment }}'
+          PGDATABASE=$ENV
         fi
         
         PGHOST=$(echo $DB_ENDPOINT | cut -d ":" -f1)

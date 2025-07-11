@@ -3,6 +3,9 @@ name: start-job-gf
 run-name: start-job-gf ${{ inputs.environment }} ${{ inputs.contractNumber }}
 
 on:
+  push:
+    branches: ["ephemeral-e2e"]
+
   workflow_dispatch: # Allow manual trigger
     inputs:
       environment:
@@ -44,13 +47,19 @@ jobs:
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
 
     env:
-      CONTRACT_NUMBER: ${{ inputs.contractNumber }}
-      FHIR_VERSION: ${{ inputs.fhirVersion }}
-      SINCE: ${{ inputs.since }}
-      UNTIL: ${{ inputs.until }}
+#      CONTRACT_NUMBER: ${{ inputs.contractNumber }}
+      CONTRACT_NUMBER: 'Z0001'
+      FHIR_VERSION: 'R4'
+#      FHIR_VERSION: ${{ inputs.fhirVersion }}
+#      SINCE: ${{ inputs.since }}
+      SINCE: '2022-01-01 05:00:00+00'
+      UNTIL: '2025-07-07 05:00:00+00'
+#      UNTIL: ${{ inputs.until }}
       API_URL_PREFIX: ${{ inputs.apiUrlPrefix }}
-      AB2D_ENV: ${{ inputs.environment }}
-      AWS_ACCOUNT: ${{contains(fromJSON('["dev", "6755-dev", "test", "6755-test"]'), inputs.environment) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT}}
+#      AB2D_ENV: ${{ inputs.environment }}
+      AB2D_ENV: '6755-dev'
+
+#      AWS_ACCOUNT: ${{contains(fromJSON('["dev", "test"]'), inputs.environment) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT}}
 
     steps:
       - name: Checkout Code
@@ -58,13 +67,19 @@ jobs:
 
       - name: Set environment-specific variables
         run: |
-          if [ "$AB2D_ENV" == "dev" ]; then
+          ENV=$(echo "$AB2D_ENV" | sed 's/^[0-9]\+-//')
+          echo "ENV=${{env.ENV}}" >> $GITHUB_ENV
+          
+          AWS_ACCOUNT: ${{contains(fromJSON('["dev", "test"]'), env.ENV) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT}}
+          echo ${{env.AWS_ACCOUNT}}
+          
+          if [ "$ENV" == "dev" ]; then
             DEFAULT_API_URL_PREFIX="https://dev.ab2d.cms.gov"
-          elif [ "$AB2D_ENV" == "test" ]; then
+          elif [ "$ENV" == "test" ]; then
             DEFAULT_API_URL_PREFIX="https://test.ab2d.cms.gov"
-          elif [ "$AB2D_ENV" == "sandbox" ]; then
+          elif [ "$ENV" == "sandbox" ]; then
             DEFAULT_API_URL_PREFIX="https://sandbox.ab2d.cms.gov"
-          elif [ "$AB2D_ENV" == "prod" ]; then
+          elif [ "$ENV" == "prod" ]; then
             DEFAULT_API_URL_PREFIX="https://api.ab2d.cms.gov" 
           else
             echo "Invalid environment: $ENVIRONMENT"
@@ -72,14 +87,12 @@ jobs:
           fi
    
           echo "DEFAULT_API_URL_PREFIX=${DEFAULT_API_URL_PREFIX}" >> $GITHUB_ENV
-          ROLE_TO_ASSUME=${AB2D_ENV#6755-}
-          echo "ROLE_TO_ASSUME=${ROLE_TO_ASSUME}" >> $GITHUB_ENV
 
       - name: Assume AWS role
         uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.ROLE_TO_ASSUME }}-github-actions
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.ENV }}-github-actions
 
       - name: Set env vars from AWS params in AB2D account
         uses: ./.github/workflows/actions/set-database-params
