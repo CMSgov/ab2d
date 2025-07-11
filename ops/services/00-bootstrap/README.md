@@ -50,7 +50,7 @@ This root module is responsible for creating the account-level resources that al
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_platform"></a> [platform](#module\_platform) | git::https://github.com/CMSgov/cdap.git//terraform/modules/platform | PLT-1099 |
-| <a name="module_sops"></a> [sops](#module\_sops) | git::https://github.com/CMSgov/cdapgit//terraform/modules/sops | PLT-1099 |
+| <a name="module_sops"></a> [sops](#module\_sops) | git::https://github.com/CMSgov/cdap.git//terraform/modules/sops | PLT-1099 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
