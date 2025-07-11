@@ -101,7 +101,7 @@ jobs:
         uses: ./.github/workflows/actions/set-database-params
         with:
           aws_region: ${{ vars.AWS_REGION }}
-          environment: ${{ env.ENV }}
+          environment: ${{ env.AB2D_ENV }}
 
       - name: Install psql
         run: |
