@@ -42,7 +42,7 @@ jobs:
     steps:
       - name: Set environment-specific variables
         run: |
-          ROLE_TO_ASSUME=${{ replace(AB2D_ENV, '6755-', '') }} 
+          ROLE_TO_ASSUME=${{ replace(env.AB2D_ENV, '6755-', '') }} 
           echo "ROLE_TO_ASSUME=${ROLE_TO_ASSUME}" >> $GITHUB_ENV
 
       - name: Assume AWS role
