@@ -341,6 +341,8 @@ resource "aws_cloudwatch_metric_alarm" "health" {
   }
 }
 
+data "aws_caller_identity" "current" {}
+
 resource "aws_lb" "ab2d_api" {
   #TODO Consider using name_prefix for ephemeral environments... thhey may only be up to 6-characters
   name               = "${local.service_prefix}-api"
@@ -362,8 +364,7 @@ resource "aws_lb" "ab2d_api" {
   drop_invalid_header_fields       = true
 
   access_logs {
-    bucket  = local.network_access_logs_bucket
-    prefix  = "${local.service_prefix}-${local.service}"
+    bucket  = "cms-cloud-${data.aws_caller_identity.current.account_id}-us-east-1"
     enabled = true
   }
 }
