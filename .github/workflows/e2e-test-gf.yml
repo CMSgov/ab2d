@@ -84,6 +84,7 @@ jobs:
       - name: Run e2e-test
         env:
           E2E_ENVIRONMENT: ${{ env.ENV == 'dev' && 'DEV' || env.ENV == 'test' && 'IMPL' || env.ENV == 'sandbox' && 'SBX' }}
-          API_BASE_URL: ${{ inputs.api_base_url }}
+#          API_BASE_URL: ${{ inputs.api_base_url }}
+          API_BASE_URL: 'https://ab2d-6755-dev-api-372095153.us-east-1.elb.amazonaws.com'
         run: |
           mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress

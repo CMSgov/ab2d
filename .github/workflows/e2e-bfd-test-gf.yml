@@ -4,7 +4,7 @@ run-name: end-to-end-bfd-gf tests ${{ inputs.environment }}
 
 on:
   push:
-    branches: [ "ephemeral-e2e"
+    branches: [ "ephemeral-e2e" ]
 
   workflow_call:
     inputs:

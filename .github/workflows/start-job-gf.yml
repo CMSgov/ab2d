@@ -57,7 +57,7 @@ jobs:
 #      UNTIL: ${{ inputs.until }}
       API_URL_PREFIX: ${{ inputs.apiUrlPrefix }}
 #      AB2D_ENV: ${{ inputs.environment }}
-      AB2D_ENV: '6675-dev'
+      AB2D_ENV: '6755-dev'
 
     steps:
       - name: Checkout Code
