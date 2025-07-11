@@ -2,6 +2,9 @@ name: end-to-end-gf tests
 run-name: end-to-end-gf tests ${{ inputs.environment }}
 
 on:
+  push:
+    branches: [ "ephemeral-e2e" ]
+
   workflow_call:
     inputs:
       environment:
@@ -31,21 +34,28 @@ jobs:
     env:
       AB2D_V2_ENABLED: 'true'
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-      AWS_ACCOUNT: ${{ (inputs.environment == 'sandbox' || inputs.environment == '6675-sandbox') && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
-      AB2D_ENV: ${{ inputs.environment }}
-
+#      AB2D_ENV: ${{ inputs.environment }}
+      AB2D_ENV: '6675-dev'
 
     steps:
       - name: Set environment-specific variables
         run: |
-          ROLE_TO_ASSUME=${AB2D_ENV#6755-}
-          echo "ROLE_TO_ASSUME=${ROLE_TO_ASSUME}" >> $GITHUB_ENV
+          ENV=$(echo "$AB2D_ENV" | sed 's/^[0-9]\+-//')
+          echo "ENV=${ENV}" >> $GITHUB_ENV
+        
+          if [ "$ENV" = "sandbox" ]; then
+             AWS_ACCOUNT="${{ secrets.PROD_ACCOUNT }}"
+          else
+             AWS_ACCOUNT="${{ secrets.NON_PROD_ACCOUNT }}"
+          fi
+        
+          echo "AWS_ACCOUNT=${AWS_ACCOUNT}" >> $GITHUB_ENV
 
       - name: Assume AWS role
         uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.ROLE_TO_ASSUME }}-github-actions
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.ENV }}-github-actions
 
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -73,7 +83,7 @@ jobs:
 
       - name: Run e2e-test
         env:
-          E2E_ENVIRONMENT: ${{ env.ROLE_TO_ASSUME == 'dev' && 'DEV' || env.ROLE_TO_ASSUME == 'test' && 'IMPL' || env.ROLE_TO_ASSUME == 'sandbox' && 'SBX' }}
+          E2E_ENVIRONMENT: ${{ env.ENV == 'dev' && 'DEV' || env.ENV == 'test' && 'IMPL' || env.ENV == 'sandbox' && 'SBX' }}
           API_BASE_URL: ${{ inputs.api_base_url }}
         run: |
           mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress
