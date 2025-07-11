@@ -70,7 +70,12 @@ jobs:
           ENV=$(echo "$AB2D_ENV" | sed 's/^[0-9]\+-//')
           echo "ENV=${ENV}" >> $GITHUB_ENV
           
-          AWS_ACCOUNT=${{contains(fromJSON('["dev", "test"]'), env.ENV) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT}}
+          if [ "$ENV" = "sandbox" ]; then
+             AWS_ACCOUNT="${{ secrets.PROD_ACCOUNT }}"
+          else
+             AWS_ACCOUNT="${{ secrets.NON_PROD_ACCOUNT }}"
+          fi
+          
           echo "AWS_ACCOUNT=${AWS_ACCOUNT}" >> $GITHUB_ENV
           
           if [ "$ENV" == "dev" ]; then
@@ -98,7 +103,7 @@ jobs:
         uses: ./.github/workflows/actions/set-database-params
         with:
           aws_region: ${{ vars.AWS_REGION }}
-          environment: ${{ env.AB2D_ENV }}
+          environment: ${{ env.ENV }}
 
       - name: Install psql
         run: |

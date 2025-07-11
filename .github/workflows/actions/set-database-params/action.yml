@@ -7,9 +7,13 @@ inputs:
     default: 'us-east-1'
   environment:
     description: "AB2D environment"
-    type: string
     required: true
-    default: 'test'
+    type: choice
+    options:
+      - dev
+      - test
+      - sandbox
+      - prod
 runs:
   using: "composite"
   steps:
@@ -18,7 +22,6 @@ runs:
       env:
         AWS_REGION: ${{ inputs.aws_region }}
         MODULE_DB_PREFIX: /ab2d/${{ inputs.environment }}/core
-        AB2D_ENV: ${{ inputs.environment }}
       with:
         params: |
           DB_ENDPOINT=${{ env.MODULE_DB_PREFIX }}/nonsensitive/writer_endpoint
@@ -28,14 +31,12 @@ runs:
     - name: Add PG environment variables
       shell: bash
       run: |
-        ENV=$(echo "$AB2D_ENV" | sed 's/^[0-9]\+-//')
-        echo $ENV
-        if [ "$ENV" == "test" ]; then
+        if [ ${{ inputs.environment }} == "test" ]; then
           PGDATABASE='impl'
-        elif [ "$ENV" == "sandbox" ]; then
+        elif [ ${{ inputs.environment }} == "sandbox" ]; then
           PGDATABASE='sbx'
         else 
-          PGDATABASE=$ENV
+          PGDATABASE='${{ inputs.environment }}'
         fi
         
         PGHOST=$(echo $DB_ENDPOINT | cut -d ":" -f1)
