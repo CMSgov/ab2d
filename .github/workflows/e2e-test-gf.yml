@@ -37,7 +37,7 @@ jobs:
       AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
 #      AWS_ACCOUNT: ${{ (inputs.environment == 'sandbox' || inputs.environment == '6675-sandbox') && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
       #      AB2D_ENV: ${{ inputs.environment }}
-      AB2D_ENV: '6755-dev'
+      AB2D_ENV: 'dev'
 
     steps:
       - name: Set environment-specific variables
