@@ -60,7 +60,7 @@ jobs:
 
     steps:
       - name: Get AWS params
-        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        uses: cmsgov/cdap/actions/aws-params-env-action@main
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:
@@ -81,7 +81,7 @@ jobs:
           role-to-assume: arn:aws:iam::${{contains(fromJSON('["dev", "test"]'), inputs.environment) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT}}:role/delegatedadmin/developer/ab2d-${{ inputs.environment }}-github-actions
 
       - name: Install terraform
-        uses: cmsgov/ab2d-bcda-dpc-platform/actions/setup-tfenv-terraform@main
+        uses: cmsgov/cdap/actions/setup-tfenv-terraform@main
 
       - name: Terraform Init & Plan
         working-directory: terraform/services/${{ inputs.service }}/

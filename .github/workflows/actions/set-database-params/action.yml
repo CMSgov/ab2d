@@ -18,7 +18,7 @@ runs:
   using: "composite"
   steps:
     - name: Set env vars from AWS params in AB2D account
-      uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+      uses: cmsgov/cdap/actions/aws-params-env-action@main
       env:
         AWS_REGION: ${{ inputs.aws_region }}
         MODULE_DB_PREFIX: /ab2d/${{ inputs.environment }}/core

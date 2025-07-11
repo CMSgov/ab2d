@@ -6,7 +6,7 @@ This module is responsible for creating the EC2-backed ECS Cluster and related r
 - [ab2d ecr terraservice](https://github.com/CMSgov/ab2d-ops/tree/main/terraform/services/ecr) (greenfield only)
 - [worker container workload](https://github.com/CMSgov/ab2d/tree/main/worker)
 - [ab2d "app" AMI](https://github.com/CMSgov/ab2d-ops/blob/main/automation/packer/app/app.json)
-- [cdap api-rds terraservice](https://github.com/CMSgov/ab2d-bcda-dpc-platform/tree/main/terraform/services/api-rds)
+- [cdap api-rds terraservice](https://github.com/CMSgov/cdap/tree/main/terraform/services/api-rds)
 - [ab2d core](https://github.com/CMSgov/ab2d-ops/tree/main/terraform/modules/core)
 - [ab2d microservices](https://github.com/CMSgov/ab2d-ops/tree/main/terraform/modules/microservices)
 
@@ -58,7 +58,7 @@ This module is responsible for creating the EC2-backed ECS Cluster and related r
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_platform"></a> [platform](#module\_platform) | git::https://github.com/CMSgov/ab2d-bcda-dpc-platform.git//terraform/modules/platform | PLT-1099 |
+| <a name="module_platform"></a> [platform](#module\_platform) | git::https://github.com/CMSgov/cdap.git//terraform/modules/platform | PLT-1099 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
