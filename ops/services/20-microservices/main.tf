@@ -35,7 +35,7 @@ locals {
     "sandbox" = "ab2d-sbx-sandbox"
   }, local.parent_env, local.parent_env)
 
-  ab2d_db_host               = data.aws_db_instance.this.address
+  ab2d_db_host               = contains(["dev", "test"], local.parent_env) ? data.aws_rds_cluster.this[0].endpoint : data.aws_db_instance.this[0].endpoint
   aws_account_number         = module.platform.account_id
   aws_region                 = module.platform.primary_region.name
   db_database_arn            = module.platform.ssm.core.database_name.arn
