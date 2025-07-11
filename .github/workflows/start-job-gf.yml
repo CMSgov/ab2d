@@ -60,7 +60,7 @@ jobs:
           ENV=$(echo "$AB2D_ENV" | sed 's/^[0-9]\+-//')
           echo "ENV=${ENV}" >> $GITHUB_ENV
           
-          if [ "$ENV" = "sandbox" ]; then
+          if [ "$ENV" = "sandbox" ] || [ "$ENV" = "prod" ]; then
              AWS_ACCOUNT="${{ secrets.PROD_ACCOUNT }}"
           else
              AWS_ACCOUNT="${{ secrets.NON_PROD_ACCOUNT }}"
