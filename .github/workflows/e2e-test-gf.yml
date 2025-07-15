@@ -2,6 +2,8 @@ name: end-to-end-gf tests
 run-name: end-to-end-gf tests ${{ inputs.environment }}
 
 on:
+  push:
+    branches [ "ephemeral-e2e" ]
   workflow_call:
     inputs:
       environment:
