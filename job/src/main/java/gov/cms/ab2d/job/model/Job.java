@@ -30,7 +30,7 @@ public class Job {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "job_seq")
-    @SequenceGenerator(name = "job_seq", sequenceName = "public.job_seq", allocationSize = 1)
+    @SequenceGenerator(name = "job_seq", sequenceName = "job_seq", allocationSize = 1)
     @EqualsAndHashCode.Include
     private Long id;
 

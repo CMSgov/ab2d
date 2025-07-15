@@ -28,7 +28,7 @@ public class PdpClient extends TimestampBase implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_account_seq")
-    @SequenceGenerator(name = "user_account_seq", sequenceName = "public.user_account_seq", allocationSize = 1)
+    @SequenceGenerator(name = "user_account_seq", sequenceName = "user_account_seq", allocationSize = 1)
     @EqualsAndHashCode.Include
     private Long id;
 
