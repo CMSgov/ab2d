@@ -2,8 +2,6 @@ name: end-to-end-gf tests
 run-name: end-to-end-gf tests ${{ inputs.environment }}
 
 on:
-  push:
-    branches: [ "ephemeral-e2e" ]
   workflow_call:
     inputs:
       environment:
@@ -33,8 +31,7 @@ jobs:
     env:
       AB2D_V2_ENABLED: 'true'
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-#      AB2D_ENV: ${{ inputs.environment }}
-      AB2D_ENV: '6755-prod'
+      AB2D_ENV: ${{ inputs.environment }}
 
     steps:
       - name: Set environment-specific variables
@@ -42,7 +39,7 @@ jobs:
           ENV=$(echo "$AB2D_ENV" | sed 's/^[0-9]\+-//')
           echo "ENV=${ENV}" >> $GITHUB_ENV
         
-          if [ "$ENV" = "sandbox" ] || ["$ENV" = "prod"]; then
+          if [ "$ENV" = "sandbox" ]; then
              AWS_ACCOUNT="${{ secrets.PROD_ACCOUNT }}"
           else
              AWS_ACCOUNT="${{ secrets.NON_PROD_ACCOUNT }}"
@@ -83,7 +80,6 @@ jobs:
       - name: Run e2e-test
         env:
           E2E_ENVIRONMENT: ${{ env.ENV == 'dev' && 'DEV' || env.ENV == 'test' && 'IMPL' || env.ENV == 'sandbox' && 'SBX' }}
-#          API_BASE_URL: ${{ inputs.api_base_url }}
-          API_BASE_URL: 'ab2d-6755-prod-api-138251243.us-east-1.elb.amazonaws.com'
+          API_BASE_URL: ${{ inputs.api_base_url }}
         run: |
           mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress
