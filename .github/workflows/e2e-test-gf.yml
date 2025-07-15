@@ -31,7 +31,8 @@ jobs:
     env:
       AB2D_V2_ENABLED: 'true'
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-      AB2D_ENV: ${{ inputs.environment }}
+#      AB2D_ENV: ${{ inputs.environment }}
+      AB2D_ENV: '6755-prod'
 
     steps:
       - name: Set environment-specific variables
@@ -63,7 +64,7 @@ jobs:
           java-version: '17'
 
       - name: Set env vars from AWS params
-        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        uses: cmsgov/cdap/actions/aws-params-env-action@main
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:
@@ -80,6 +81,7 @@ jobs:
       - name: Run e2e-test
         env:
           E2E_ENVIRONMENT: ${{ env.ENV == 'dev' && 'DEV' || env.ENV == 'test' && 'IMPL' || env.ENV == 'sandbox' && 'SBX' }}
-          API_BASE_URL: ${{ inputs.api_base_url }}
+#          API_BASE_URL: ${{ inputs.api_base_url }}
+          API_BASE_URL: 'ab2d-6755-prod-api-138251243.us-east-1.elb.amazonaws.com'
         run: |
           mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress
