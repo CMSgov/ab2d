@@ -97,7 +97,7 @@ public class CoverageServiceRepository {
 
     /**
      * Return a count of all beneficiaries who aggred to share their data associated with an {@link CoveragePeriod}
-     * from any event. For those beneficiaries out_out_flag equals false in the coverage table.
+     * from any event. For those beneficiaries opt_out_flag equals false in the coverage table.
      */
 
     private static final String SELECT_DISTINCT_OPTOUT_COVERAGE_BY_PERIOD_COUNT = "SELECT COUNT(DISTINCT beneficiary_id) FROM coverage c " +
