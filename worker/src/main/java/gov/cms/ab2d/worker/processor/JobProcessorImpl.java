@@ -97,7 +97,6 @@ public class JobProcessorImpl implements JobProcessor {
                 deleteExistingDirectory(outputDirPath, job);
             }
         } catch (Exception e) {
-
             String contract = job.getContractNumber();
             String message;
             // Says this is always false but that isn't true

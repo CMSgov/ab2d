@@ -16,7 +16,7 @@ public class JobOutput {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "job_output_seq")
-    @SequenceGenerator(name = "job_output_seq", sequenceName = "public.job_output_seq", allocationSize = 1)
+    @SequenceGenerator(name = "job_output_seq", sequenceName = "job_output_seq", allocationSize = 1)
     @EqualsAndHashCode.Include
     private Long id;
 
