@@ -6,7 +6,7 @@ This module is responsible for creating the EC2-backed ECS Cluster and related r
 - [ab2d ecr terraservice](https://github.com/CMSgov/ab2d-ops/tree/main/terraform/services/ecr) (greenfield only)
 - [worker container workload](https://github.com/CMSgov/ab2d/tree/main/worker)
 - [ab2d "app" AMI](https://github.com/CMSgov/ab2d-ops/blob/main/automation/packer/app/app.json)
-- [cdap api-rds terraservice](https://github.com/CMSgov/ab2d-bcda-dpc-platform/tree/main/terraform/services/api-rds)
+- [cdap api-rds terraservice](https://github.com/CMSgov/cdap/tree/main/terraform/services/api-rds)
 - [ab2d core](https://github.com/CMSgov/ab2d-ops/tree/main/terraform/modules/core)
 - [ab2d microservices](https://github.com/CMSgov/ab2d-ops/tree/main/terraform/modules/microservices)
 
@@ -20,7 +20,7 @@ This module is responsible for creating the EC2-backed ECS Cluster and related r
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.99.1 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.100.0 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -58,7 +58,7 @@ This module is responsible for creating the EC2-backed ECS Cluster and related r
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_platform"></a> [platform](#module\_platform) | git::https://github.com/CMSgov/ab2d-bcda-dpc-platform.git//terraform/modules/platform | PLT-1099 |
+| <a name="module_platform"></a> [platform](#module\_platform) | git::https://github.com/CMSgov/cdap.git//terraform/modules/platform | PLT-1099 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -80,6 +80,7 @@ This module is responsible for creating the EC2-backed ECS Cluster and related r
 | [aws_efs_access_point.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/efs_access_point) | data source |
 | [aws_efs_file_system.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/efs_file_system) | data source |
 | [aws_iam_role.worker](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_role) | data source |
+| [aws_rds_cluster.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/rds_cluster) | data source |
 | [aws_security_group.db](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group) | data source |
 | [aws_security_group.efs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group) | data source |
 | [aws_security_group.worker](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group) | data source |

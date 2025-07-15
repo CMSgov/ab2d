@@ -8,7 +8,7 @@ terraform {
 }
 
 module "platform" {
-  source    = "git::https://github.com/CMSgov/ab2d-bcda-dpc-platform.git//terraform/modules/platform?ref=PLT-1099"
+  source    = "git::https://github.com/CMSgov/cdap.git//terraform/modules/platform?ref=PLT-1099"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app          = local.app
@@ -57,6 +57,7 @@ locals {
   max_concurrent_eob_jobs    = "2"
   worker_desired_instances   = 1
 
+  ab2d_db_host              = contains(["dev", "test"], local.parent_env) ? data.aws_rds_cluster.this[0].endpoint : data.aws_db_instance.this[0].endpoint
   db_name_arn               = module.platform.ssm.core.database_name.arn
   db_password_arn           = module.platform.ssm.core.database_password.arn
   db_username_arn           = module.platform.ssm.core.database_user.arn
@@ -160,7 +161,7 @@ resource "aws_ecs_task_definition" "worker" {
       { name : "AB2D_BFD_INSIGHTS", value : local.bfd_insights }, #FIXME: Is this even used?
       { name : "AB2D_BFD_KEYSTORE_LOCATION", value : local.bfd_keystore_location },
       { name : "AB2D_BFD_URL", value : local.bfd_url },
-      { name : "AB2D_DB_HOST", value : data.aws_db_instance.this.address },
+      { name : "AB2D_DB_HOST", value : local.ab2d_db_host },
       { name : "AB2D_DB_PORT", value : "5432" },
       { name : "AB2D_DB_SSL_MODE", value : "require" },
       { name : "AB2D_EFS_MOUNT", value : local.ab2d_efs_mount },

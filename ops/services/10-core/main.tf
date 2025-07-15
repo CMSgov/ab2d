@@ -8,7 +8,7 @@ terraform {
 }
 
 module "platform" {
-  source    = "git::https://github.com/CMSgov/ab2d-bcda-dpc-platform.git//terraform/modules/platform?ref=PLT-1099"
+  source    = "git::https://github.com/CMSgov/cdap.git//terraform/modules/platform?ref=PLT-1099"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app         = local.app
@@ -24,6 +24,11 @@ locals {
   default_tags = module.platform.default_tags
   env          = terraform.workspace
   service      = "core"
+
+  benv = lookup({
+    "test"    = "impl"
+    "sandbox" = "sbx"
+  }, local.parent_env, local.parent_env)
 
   database_user      = module.platform.ssm.core.database_user.value
   database_password  = module.platform.ssm.core.database_password.value

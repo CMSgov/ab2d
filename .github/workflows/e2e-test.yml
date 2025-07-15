@@ -74,7 +74,7 @@ jobs:
           sudo mv "$tmpdir/apache-maven-3.6.3" /opt/maven
 
       - name: Set env vars from AWS params in BCDA management account
-        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        uses: cmsgov/cdap/actions/aws-params-env-action@main
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:
@@ -90,7 +90,7 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', inputs.environment)] }}:role/delegatedadmin/developer/ab2d-${{ inputs.environment }}-github-actions
 
       - name: Set env vars from AWS params in AB2D account
-        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        uses: cmsgov/cdap/actions/aws-params-env-action@main
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:

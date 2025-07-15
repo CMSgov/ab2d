@@ -51,7 +51,7 @@ jobs:
           gradle-version: '8.10'
 
       - name: Set env vars from AWS params in BCDA management account
-        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        uses: cmsgov/cdap/actions/aws-params-env-action@main
         with:
           params: |
             ARTIFACTORY_URL=/artifactory/url

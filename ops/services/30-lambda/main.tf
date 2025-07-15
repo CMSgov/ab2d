@@ -12,7 +12,7 @@ terraform {
 }
 
 module "platform" {
-  source    = "git::https://github.com/CMSgov/ab2d-bcda-dpc-platform.git//terraform/modules/platform?ref=PLT-1099"
+  source    = "git::https://github.com/CMSgov/cdap.git//terraform/modules/platform?ref=PLT-1099"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app          = local.app
@@ -42,8 +42,7 @@ locals {
     "sandbox" = "ab2d-sbx-sandbox"
   }, local.parent_env, local.parent_env)
 
-  db_host = data.aws_db_instance.this.address
-
+  ab2d_db_host          = contains(["dev", "test"], local.parent_env) ? data.aws_rds_cluster.this[0].endpoint : data.aws_db_instance.this[0].endpoint
   java_options          = "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
   efs_mount             = "/mnt/efs"
   audit_schedule        = "2 hours"
@@ -53,7 +52,7 @@ locals {
   node_subnet_ids       = keys(module.platform.private_subnets)
   db_sg_id              = data.aws_security_group.db.id
   db_port               = 5432
-  ab2d_db_ssl_mode      = "allow"
+  ab2d_db_ssl_mode      = "require"
 
   db_name                         = module.platform.ssm.core.database_name.value
   db_password                     = module.platform.ssm.core.database_password.value
@@ -81,7 +80,7 @@ provider "artifactory" {
 }
 
 resource "aws_lambda_function" "slack_lambda" {
-  filename      = "${path.root}/slack_lambda.zip"
+  filename      = data.archive_file.python_lambda_package.output_path
   function_name = "${local.service_prefix}-slack-alerts"
   role          = aws_iam_role.slack_lambda.arn
   handler       = "data_load_lambda.load_data"
@@ -212,7 +211,7 @@ resource "aws_cloudwatch_log_subscription_filter" "audit_svc_monitoring" {
 }
 
 resource "aws_lambda_function" "audit_svc_monitoring" {
-  filename      = "${path.root}/monitoring_audit_svc.zip"
+  filename      = data.archive_file.monitoring_audit.output_path
   function_name = "${local.service_prefix}-audit-svc-monitoring"
   handler       = "monitoring_audit_svc.lambda_handler"
   role          = aws_iam_role.microservices_lambda.arn
@@ -265,7 +264,7 @@ resource "aws_lambda_function" "coverage_count" {
     variables = {
       environment       = local.benv
       JAVA_TOOL_OPTIONS = local.java_options
-      DB_URL            = "jdbc:postgresql://${local.db_host}:${local.db_port}/${local.db_name}?sslmode=${local.ab2d_db_ssl_mode}&reWriteBatchedInserts=true"
+      DB_URL            = "jdbc:postgresql://${local.ab2d_db_host}:${local.db_port}/${local.db_name}?sslmode=${local.ab2d_db_ssl_mode}&reWriteBatchedInserts=true&ApplicationName=${local.service_prefix}-coverage-counts-handler"
       DB_USERNAME       = local.db_username
       DB_PASSWORD       = local.db_password
     }
@@ -315,7 +314,7 @@ resource "aws_lambda_function" "database_management" {
     variables = {
       environment                   = local.benv
       JAVA_TOOL_OPTIONS             = local.java_options
-      DB_URL                        = "jdbc:postgresql://${local.db_host}:${local.db_port}/${local.db_name}?sslmode=${local.ab2d_db_ssl_mode}&reWriteBatchedInserts=true"
+      DB_URL                        = "jdbc:postgresql://${local.ab2d_db_host}:${local.db_port}/${local.db_name}?sslmode=${local.ab2d_db_ssl_mode}&reWriteBatchedInserts=true&ApplicationName=${local.service_prefix}-database-management-handler"
       DB_USERNAME                   = local.db_username
       DB_PASSWORD                   = local.db_password
       LIQUIBASE_DUPLICATE_FILE_MODE = "WARN"

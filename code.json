@@ -1,0 +1,72 @@
+{
+  "name": "AB2D",
+  "description": "Claims Data to Part D Sponsors API",
+  "longDescription": "API for Prescription Drug Plan sponsors. Offered by the CMS, AB2D provides Parts A and B claims data for a holistic view into patients health.",
+  "status": "production",
+  "permissions": {
+    "licenses": [
+      {
+        "URL": "LICENSE",
+        "name": "CC0-1.0"
+      }
+    ],
+    "usageType": "openSource"
+  },
+  "organization": "Centers for Medicare & Medicaid Services",
+  "repositoryURL": "https://github.com/CMSgov/ab2d",
+  "repositoryHost": "github.com/CMSgov",
+  "repositoryVisibility": "public",
+  "vcs": "git",
+  "laborHours": null,
+  "reuseFrequency": {
+    "forks": 2
+  },
+  "platforms": [
+    "web"
+  ],
+  "categories": [
+    "healthcare"
+  ],
+  "softwareType": "standalone/web",
+  "languages": [
+    "Java",
+    "SQL"
+  ],
+  "maintenance": "contract",
+  "contractNumber": "0",
+  "date": {
+    "created": "2019-09-27T16:13:36-04:00",
+    "lastModified": "2025-06-24T18:31:44+0000",
+    "metadataLastUpdated": "2025-06-24T18:31:44+0000"
+  },
+  "tags": [
+    "dsacms-tier3"
+  ],
+  "contact": {
+    "email": "AB2D@cms.hhs.gov",
+    "name": "CMS Open Source Program Office"
+  },
+  "feedbackMechanisms": [
+    "https://github.com/CMSgov/ab2d/issues"
+  ],
+  "localisation": "false",
+  "repositoryType": "APIs",
+  "userInput": "No",
+  "fismaLevel": "Low",
+  "group": "CMS",
+  "projects": [],
+  "systems": [],
+  "upstream": [
+    "https://github.com/CMSgov/ab2d/network/dependencies"
+  ],
+  "subsetInHealthcare": [
+    "Policy",
+    "Operational",
+    "Medicare",
+    "Medicaid"
+  ],
+  "userType": [
+    "Providers"
+  ],
+  "maturityModelTier": 3
+}

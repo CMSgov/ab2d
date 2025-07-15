@@ -1,18 +1,8 @@
-# AB2D Web Root Module
+# AB2D Bootstrap Root Module
 
-This module is responsible for creating the AWS S3-back Cloudfront Distribution and related resources supporting the static website content managed in [ab2d-website](https://github.com/CMSgov/ab2d-website).
+This root module is responsible for creating the account-level resources that all environments share and depend on.
 
-## Dependencies and Dependents
-
-### Dependencies
-- CMS Hybrid Cloud Platform Resources
-- CDAP-Provied Resources
-- `config`
-
-While this module has few dependencies beyond the platform itself, production deployments depend on TLS key material defined in `config`.
-
-### Dependents
-None.
+**NOTE** Only `test` and `prod` environment workspaces are honored by this module. Because these resources are not specific to any one environment, named resources either do not identify a specific environment, or identify as `mgmt`.
 
 <!-- BEGIN_TF_DOCS -->
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
@@ -60,6 +50,7 @@ None.
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_platform"></a> [platform](#module\_platform) | git::https://github.com/CMSgov/cdap.git//terraform/modules/platform | PLT-1099 |
+| <a name="module_sops"></a> [sops](#module\_sops) | git::https://github.com/CMSgov/cdap.git//terraform/modules/sops | PLT-1099 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -70,20 +61,7 @@ None.
 
 | Name | Type |
 |------|------|
-| [aws_acm_certificate.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/acm_certificate) | resource |
-| [aws_cloudfront_distribution.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_distribution) | resource |
-| [aws_cloudfront_function.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_function) | resource |
-| [aws_cloudfront_origin_access_control.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_origin_access_control) | resource |
-| [aws_s3_bucket.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket) | resource |
-| [aws_s3_bucket_logging.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_logging) | resource |
-| [aws_s3_bucket_policy.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy) | resource |
-| [aws_s3_bucket_public_access_block.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block) | resource |
-| [aws_s3_bucket_server_side_encryption_configuration.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_server_side_encryption_configuration) | resource |
-| [aws_ssm_parameter.bucket](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
-| [aws_ssm_parameter.distribution](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
-| [aws_ssm_parameter.domain_name](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ssm_parameter) | resource |
-| [aws_iam_policy_document.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [aws_wafv2_web_acl.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/wafv2_web_acl) | data source |
+| [aws_ecr_repository.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecr_repository) | resource |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -92,9 +70,5 @@ None.
 -->
 ## Outputs
 
-| Name | Description |
-|------|-------------|
-| <a name="output_bucket_id"></a> [bucket\_id](#output\_bucket\_id) | Default Domain Name for CloudFront Distribution |
-| <a name="output_distribution_id"></a> [distribution\_id](#output\_distribution\_id) | Default Domain Name for CloudFront Distribution |
-| <a name="output_domain_name"></a> [domain\_name](#output\_domain\_name) | Default Domain Name for CloudFront Distribution |
+No outputs.
 <!-- END_TF_DOCS -->
