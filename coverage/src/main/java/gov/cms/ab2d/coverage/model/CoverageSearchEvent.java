@@ -22,7 +22,7 @@ public class CoverageSearchEvent extends TimestampBase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "event_bene_coverage_search_status_change_seq")
-    @SequenceGenerator(name = "event_bene_coverage_search_status_change_seq", sequenceName = "public.event_bene_coverage_search_status_change_seq", allocationSize = 1)
+    @SequenceGenerator(name = "event_bene_coverage_search_status_change_seq", sequenceName = "event_bene_coverage_search_status_change_seq", allocationSize = 1)
     @EqualsAndHashCode.Include
     private Long id;
 
