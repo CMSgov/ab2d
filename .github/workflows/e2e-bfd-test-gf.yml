@@ -12,9 +12,13 @@ on:
     inputs:
       environment:
         description: AB2D environment
-        type: string
         required: true
-        default: 'test'
+        type: choice
+        options:
+          - dev
+          - test
+          - sandbox
+        default: test
 
 concurrency:
   group: ${{ inputs.environment }}-e2e-test
@@ -29,22 +33,10 @@ jobs:
       AB2D_BFD_KEYSTORE_LOCATION: "${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
       AB2D_V2_ENABLED: 'true'
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+      AWS_ACCOUNT: ${{ inputs.environment == 'sandbox' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
       AB2D_ENV: ${{ inputs.environment }}
 
     steps:
-      - name: Set environment-specific variables
-        run: |
-          ENV=$(echo "$AB2D_ENV" | sed 's/^[0-9]\+-//')
-          echo "ENV=${ENV}" >> $GITHUB_ENV
-          
-          if [ "$ENV" = "sandbox" ]; then
-             AWS_ACCOUNT="${{ secrets.PROD_ACCOUNT }}"
-          else
-             AWS_ACCOUNT="${{ secrets.NON_PROD_ACCOUNT }}"
-          fi
-          
-          echo "AWS_ACCOUNT=${AWS_ACCOUNT}" >> $GITHUB_ENV
-
       - name: Assume AWS role
         uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
         with:
@@ -61,7 +53,7 @@ jobs:
           java-version: '17'
 
       - name: Set env vars from AWS params
-        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        uses: cmsgov/cdap/actions/aws-params-env-action@main
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:
@@ -70,13 +62,13 @@ jobs:
             ARTIFACTORY_USER=/artifactory/user
             ARTIFACTORY_PASSWORD=/artifactory/password
             AB2D_BFD_KEYSTORE_PASSWORD=/ab2d/${{ env.AB2D_ENV }}/worker/sensitive/bfd_keystore_password
-            MAIN_BUCKET=/ab2d/${{ env.ENV }}/core/nonsensitive/main-bucket-name
+            MAIN_BUCKET=/ab2d/${{ env.AB2D_ENV }}/core/nonsensitive/main-bucket-name
 
       - name: Create opt/ab2d directory and download keystore
         run: |
           mkdir -p opt/ab2d
       
-          KEYSTORE_FILE_NAME="ab2d_${{ env.ENV }}_keystore"
+          KEYSTORE_FILE_NAME="ab2d_${{ env.AB2D_ENV }}_keystore"
           aws s3 cp s3://$MAIN_BUCKET/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
           test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
 

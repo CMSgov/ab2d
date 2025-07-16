@@ -3,6 +3,8 @@ name: start-job-gf
 run-name: start-job-gf ${{ inputs.environment }} ${{ inputs.contractNumber }}
 
 on:
+  push:
+    branches: [ "ephemeral-e2e" ]
   workflow_dispatch: # Allow manual trigger
     inputs:
       environment:
@@ -44,12 +46,19 @@ jobs:
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
 
     env:
-      CONTRACT_NUMBER: ${{ inputs.contractNumber }}
-      FHIR_VERSION: ${{ inputs.fhirVersion }}
-      SINCE: ${{ inputs.since }}
-      UNTIL: ${{ inputs.until }}
-      API_URL_PREFIX: ${{ inputs.apiUrlPrefix }}
-      AB2D_ENV: ${{ inputs.environment }}
+#      CONTRACT_NUMBER: ${{ inputs.contractNumber }}
+#      FHIR_VERSION: ${{ inputs.fhirVersion }}
+#      SINCE: ${{ inputs.since }}
+#      UNTIL: ${{ inputs.until }}
+#      API_URL_PREFIX: ${{ inputs.apiUrlPrefix }}
+#      AB2D_ENV: ${{ inputs.environment }}
+       CONTRACT_NUMBER: 'S9701'
+       FHIR_VERSION: 'R4'
+       SINCE: '2025-05-30T00:00:00.000-05:00'
+       UNTIL: '2025-06-10T00:00:00.000-05:00'
+       API_URL_PREFIX: ${{ inputs.apiUrlPrefix }}
+       AB2D_ENV: '6755-prod'
+
 
     steps:
       - name: Checkout Code
@@ -57,10 +66,10 @@ jobs:
 
       - name: Set environment-specific variables
         run: |
-          ENV=$(echo "$AB2D_ENV" | sed 's/^[0-9]\+-//')
-          echo "ENV=${ENV}" >> $GITHUB_ENV
+          PARENT_ENV="${AB2D_ENV##*-}"
+          echo "PARENT_ENV=${PARENT_ENV}" >> $GITHUB_ENV
           
-          if [ "$ENV" = "sandbox" ] || [ "$ENV" = "prod" ]; then
+          if [ "$PARENT_ENV" = "sandbox" ] || [ "$PARENT_ENV" = "prod" ]; then
              AWS_ACCOUNT="${{ secrets.PROD_ACCOUNT }}"
           else
              AWS_ACCOUNT="${{ secrets.NON_PROD_ACCOUNT }}"
@@ -68,16 +77,16 @@ jobs:
           
           echo "AWS_ACCOUNT=${AWS_ACCOUNT}" >> $GITHUB_ENV
           
-          if [ "$ENV" == "dev" ]; then
+          if [ "$PARENT_ENV" == "dev" ]; then
             DEFAULT_API_URL_PREFIX="https://dev.ab2d.cms.gov"
-          elif [ "$ENV" == "test" ]; then
+          elif [ "$PARENT_ENV" == "test" ]; then
             DEFAULT_API_URL_PREFIX="https://test.ab2d.cms.gov"
-          elif [ "$ENV" == "sandbox" ]; then
+          elif [ "$PARENT_ENV" == "sandbox" ]; then
             DEFAULT_API_URL_PREFIX="https://sandbox.ab2d.cms.gov"
-          elif [ "$ENV" == "prod" ]; then
+          elif [ "$PARENT_ENV" == "prod" ]; then
             DEFAULT_API_URL_PREFIX="https://api.ab2d.cms.gov" 
           else
-            echo "Invalid environment: $ENVIRONMENT"
+            echo "Invalid environment: $PARENT_ENV"
             exit 1
           fi
    

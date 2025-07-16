@@ -14,7 +14,7 @@ runs:
   using: "composite"
   steps:
     - name: Set env vars from AWS params in AB2D account
-      uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+      uses: cmsgov/cdap/actions/aws-params-env-action@main
       env:
         AWS_REGION: ${{ inputs.aws_region }}
         MODULE_DB_PREFIX: /ab2d/${{ inputs.environment }}/core
@@ -28,14 +28,15 @@ runs:
     - name: Add PG environment variables
       shell: bash
       run: |
-        ENV=$(echo "$AB2D_ENV" | sed 's/^[0-9]\+-//')
-        echo "ENV=${ENV}"
-        if [ "$ENV" == "test" ]; then
+        PARENT_ENV="${AB2D_ENV##*-}"
+        echo "PARENT_ENV=${PARENT_ENV}"
+        
+        if [ "$PARENT_ENV" == "test" ]; then
           PGDATABASE='impl'
-        elif [ "$ENV" == "sandbox" ]; then
+        elif [ "$PARENT_ENV" == "sandbox" ]; then
           PGDATABASE='sbx'
         else 
-          PGDATABASE=$ENV
+          PGDATABASE=$PARENT_ENV
         fi
         
         PGHOST=$(echo $DB_ENDPOINT | cut -d ":" -f1)
