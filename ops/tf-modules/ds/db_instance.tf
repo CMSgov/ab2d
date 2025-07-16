@@ -30,7 +30,7 @@ resource "aws_db_instance" "this" {
   maintenance_window                    = var.maintenance_window
   max_allocated_storage                 = 0
   monitoring_interval                   = var.monitoring_interval
-  monitoring_role_arn                   = null
+  monitoring_role_arn                   = var.monitoring_role_arn
   multi_az                              = var.multi_az
   nchar_character_set_name              = null
   network_type                          = "IPV4"
@@ -39,7 +39,8 @@ resource "aws_db_instance" "this" {
   performance_insights_kms_key_id       = null
   performance_insights_retention_period = 7
   port                                  = 5432
-  skip_final_snapshot                   = true
+  skip_final_snapshot                   = false
+  final_snapshot_identifier             = "${local.service_prefix}-final-snapshot"
   storage_type                          = var.storage_type
   deletion_protection                   = var.deletion_protection
   tags = {
@@ -55,6 +56,7 @@ resource "aws_db_instance" "this" {
 
   lifecycle {
     ignore_changes = [
+      monitoring_role_arn,
       monitoring_interval,
       performance_insights_enabled,
       performance_insights_kms_key_id,
