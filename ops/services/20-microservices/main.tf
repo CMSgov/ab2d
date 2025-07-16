@@ -24,8 +24,8 @@ locals {
   service      = "microservices"
 
   ssm_root_map = {
-    common = "/ab2d/${local.parent_env}/common"
-    core   = "/ab2d/${local.parent_env}/core"
+    common = "/ab2d/${local.env}/common"
+    core   = "/ab2d/${local.env}/core"
   }
 
   benv = lookup({
@@ -35,7 +35,7 @@ locals {
     "sandbox" = "ab2d-sbx-sandbox"
   }, local.parent_env, local.parent_env)
 
-  ab2d_db_host               = contains(["dev", "test"], local.parent_env) ? data.aws_rds_cluster.this[0].endpoint : data.aws_db_instance.this[0].endpoint
+  ab2d_db_host               = contains(["dev", "test", "sandbox"], local.parent_env) ? data.aws_rds_cluster.this[0].endpoint : data.aws_db_instance.this[0].address
   aws_account_number         = module.platform.account_id
   aws_region                 = module.platform.primary_region.name
   db_database_arn            = module.platform.ssm.core.database_name.arn
@@ -133,7 +133,7 @@ resource "aws_lb" "internal_lb" {
   security_groups    = [aws_security_group.internal_lb.id]
   subnets            = keys(module.platform.private_subnets)
 
-  enable_deletion_protection       = true
+  enable_deletion_protection       = !module.platform.is_ephemeral_env
   enable_cross_zone_load_balancing = true
   drop_invalid_header_fields       = true
 

@@ -25,7 +25,7 @@ resource "aws_ecs_task_definition" "properties" {
     environment : [
       { name : "AB2D_DB_HOST", value : local.ab2d_db_host },
       { name : "AB2D_DB_PORT", value : "5432" },
-      { name : "AB2D_DB_SSL_MODE", value : "allow" },
+      { name : "AB2D_DB_SSL_MODE", value : "require" },
       { name : "AB2D_EXECUTION_ENV", value : local.benv },                      #FIXME: Is this even used?
       { name : "IMAGE_VERSION", value : local.properties_image_tag },           #FIXME: Is this even used?
       { name : "PROPERTIES_SERVICE_FEATURE_FLAG", value : "true" },             #FIXME: Is this even used?
@@ -39,8 +39,8 @@ resource "aws_ecs_task_definition" "properties" {
     logConfiguration : {
       logDriver : "awslogs",
       options : {
-        awslogs-group : "/aws/ecs/fargate/${local.service_prefix}/ab2d_properties",
-        awslogs-create-group : "true",
+        # awslogs-group : aws_cloudwatch_log_group.properties.id,
+        awslogs-group = "/aws/ecs/fargate/${local.service_prefix}/ab2d_properties",
         awslogs-region : local.aws_region,
         awslogs-stream-prefix : local.service_prefix
       }
@@ -129,3 +129,8 @@ resource "aws_lb_listener_rule" "properties" {
     }
   }
 }
+
+# resource "aws_cloudwatch_log_group" "properties" {
+#   name = "/aws/ecs/fargate/${local.service_prefix}/ab2d_properties"
+#   # kms_key_id = local.kms_master_key_id #FIXME
+# }

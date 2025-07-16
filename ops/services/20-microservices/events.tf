@@ -44,7 +44,7 @@ resource "aws_ecs_task_definition" "events" {
     environment : [
       { name : "AB2D_DB_HOST", value : local.ab2d_db_host },
       { name : "AB2D_DB_PORT", value : "5432" },
-      { name : "AB2D_DB_SSL_MODE", value : "allow" },
+      { name : "AB2D_DB_SSL_MODE", value : "require" },
       { name : "AB2D_EXECUTION_ENV", value : local.benv },
       { name : "AWS_SQS_FEATURE_FLAG", value : "true" }, #FIXME: is this even used?
       { name : "AWS_SQS_URL", value : local.events_sqs_url },
@@ -58,8 +58,7 @@ resource "aws_ecs_task_definition" "events" {
     logConfiguration : {
       logDriver : "awslogs",
       options : {
-        awslogs-group : "/aws/ecs/fargate/${local.service_prefix}/ab2d_events",
-        awslogs-create-group : "true",
+        awslogs-group = "/aws/ecs/fargate/${local.service_prefix}/ab2d_events",
         awslogs-region : local.aws_region,
         awslogs-stream-prefix : local.service_prefix
       }
