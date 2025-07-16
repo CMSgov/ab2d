@@ -71,6 +71,7 @@ jobs:
 
       - name: Create opt/ab2d directory and download keystore
         run: |
+          
           mkdir -p opt/ab2d
       
           KEYSTORE_FILE_NAME="ab2d_${{ env.AB2D_ENV }}_keystore"
