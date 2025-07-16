@@ -59,6 +59,7 @@ resource "aws_ecs_task_definition" "events" {
       logDriver : "awslogs",
       options : {
         awslogs-group = "/aws/ecs/fargate/${local.service_prefix}/ab2d_events",
+        awslogs-create-group : "true",
         awslogs-region : local.aws_region,
         awslogs-stream-prefix : local.service_prefix
       }
