@@ -6,6 +6,6 @@ variable "snapshot" {
 
 variable "aurora_snapshot" {
   default     = null
-  description = "Desired aurora snapshot from which the aurora cluser is created. Setting this is only meaningful on instantiation and is otherwise ignored."
+  description = "Desired aurora snapshot on which the aurora cluser is based. Setting this is only meaningful on instantiation and is otherwise ignored."
   type        = string
 }

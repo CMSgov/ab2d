@@ -42,7 +42,7 @@ locals {
     "sandbox" = "ab2d-sbx-sandbox"
   }, local.parent_env, local.parent_env)
 
-  ab2d_db_host          = contains(["dev", "test"], local.parent_env) ? data.aws_rds_cluster.this[0].endpoint : data.aws_db_instance.this[0].endpoint
+  ab2d_db_host          = contains(["dev", "test", "sandbox"], local.parent_env) ? data.aws_rds_cluster.this[0].endpoint : data.aws_db_instance.this[0].endpoint
   java_options          = "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
   efs_mount             = "/mnt/efs"
   audit_schedule        = "2 hours"
@@ -53,6 +53,7 @@ locals {
   db_sg_id              = data.aws_security_group.db.id
   db_port               = 5432
   ab2d_db_ssl_mode      = "require"
+  env_key_alias         = module.platform.kms_alias_primary
 
   db_name                         = module.platform.ssm.core.database_name.value
   db_password                     = module.platform.ssm.core.database_password.value
@@ -64,7 +65,7 @@ locals {
   cloudfront_id    = data.aws_ec2_managed_prefix_list.cloudfront.id
 
   hpms_counts_schedule = "7 days" # I don't see a "1 week" option
-  release_version      = "1.1.0"
+  release_version      = var.release_version
   lambdas = toset([
     "metrics-lambda",
     "audit",

@@ -43,16 +43,16 @@ locals {
     sandbox = "ab2d-sbx-sandbox"
   }, local.parent_env, local.parent_env)
 
-  ab2d_db_host                 = contains(["dev", "test"], local.parent_env) ? data.aws_rds_cluster.this[0].endpoint : data.aws_db_instance.this[0].endpoint
+  ab2d_db_host                 = contains(["dev", "test", "sandbox"], local.parent_env) ? data.aws_rds_cluster.this[0].endpoint : data.aws_db_instance.this[0].address
   ab2d_efs_mount               = "/mnt/efs"
   aws_region                   = module.platform.primary_region.name
   ab2d_keystore_location       = module.platform.ssm.core.keystore_location.value
   ab2d_keystore_password_arn   = module.platform.ssm.core.keystore_password.arn
   ab2d_okta_jwt_issuer_arn     = module.platform.ssm.core.okta_jwt_issuer.arn
   alb_internal                 = false
-  alb_listener_certificate_arn = module.platform.is_ephemeral_env || local.tls_private_key == null ? null : aws_acm_certificate.this[0].arn
-  alb_listener_port            = module.platform.is_ephemeral_env ? 80 : 443
-  alb_listener_protocol        = module.platform.is_ephemeral_env ? "HTTP" : "HTTPS"
+  alb_listener_certificate_arn = module.platform.is_ephemeral_env ? data.aws_acm_certificate.this[0].arn : aws_acm_certificate.this[0].arn
+  alb_listener_port            = 443
+  alb_listener_protocol        = "HTTPS"
   api_desired_instances        = module.platform.parent_env == "prod" ? 2 : 1
   bfd_insights                 = "none" #FIXME?
   container_port               = 8443
@@ -67,7 +67,7 @@ locals {
   hpms_url_arn                 = module.platform.ssm.core.hpms_url.arn
   kms_master_key_id            = nonsensitive(module.platform.kms_alias_primary.target_key_arn)
   microservices_url            = lookup(module.platform.ssm.microservices, "url", { value : "none" }).value
-  network_access_logs_bucket   = module.platform.ssm.core.network-access-logs-bucket-name.value
+  network_access_logs_bucket   = module.platform.network_access_logs_bucket
   new_relic_app_name           = module.platform.ssm.common.new_relic_app_name.value
   new_relic_license_key_arn    = module.platform.ssm.common.new_relic_license_key.arn
   private_subnet_ids           = keys(module.platform.private_subnets)
@@ -341,8 +341,6 @@ resource "aws_cloudwatch_metric_alarm" "health" {
   }
 }
 
-data "aws_caller_identity" "current" {}
-
 resource "aws_lb" "ab2d_api" {
   #TODO Consider using name_prefix for ephemeral environments... thhey may only be up to 6-characters
   name               = "${local.service_prefix}-api"
@@ -364,7 +362,7 @@ resource "aws_lb" "ab2d_api" {
   drop_invalid_header_fields       = true
 
   access_logs {
-    bucket  = "cms-cloud-${data.aws_caller_identity.current.account_id}-us-east-1"
+    bucket  = local.network_access_logs_bucket
     enabled = true
   }
 }
@@ -399,8 +397,15 @@ resource "aws_lb_listener" "ab2d_api" {
 }
 
 resource "aws_acm_certificate" "this" {
-  count             = local.tls_private_key != null ? 1 : 0
+  count = !module.platform.is_ephemeral_env ? 1 : 0
+
   private_key       = local.tls_private_key
   certificate_body  = local.tls_public_cert
   certificate_chain = local.tls_chain
+}
+
+data "aws_acm_certificate" "this" {
+  count = module.platform.is_ephemeral_env ? 1 : 0
+
+  domain = local.parent_env == "prod" ? "api.ab2d.cms.gov" : "${local.parent_env}.ab2d.cms.gov"
 }

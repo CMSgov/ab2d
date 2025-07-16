@@ -147,10 +147,17 @@ variable "backup_retention_period" {
 }
 
 variable "aurora_storage_type" {
-  default = "aurora-iopt1"
-  type    = string
+  default     = ""
+  description = "Aurora cluster [storage_type](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/rds_cluster#storage_type-1)"
+  type        = string
   validation {
     condition     = contains(["aurora-iopt1", ""], var.aurora_storage_type)
     error_message = "Aurora storage type only accepts 'aurora-iopt1' or an empty string ''."
   }
+}
+
+variable "cluster_identifier" {
+  default     = null
+  description = "Override for the aurora cluster identifier"
+  type        = string
 }
