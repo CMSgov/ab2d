@@ -67,7 +67,7 @@ locals {
   hpms_url_arn                 = module.platform.ssm.core.hpms_url.arn
   kms_master_key_id            = nonsensitive(module.platform.kms_alias_primary.target_key_arn)
   microservices_url            = lookup(module.platform.ssm.microservices, "url", { value : "none" }).value
-  network_access_logs_bucket   = module.platform.ssm.core.network-access-logs-bucket-name.value
+  network_access_logs_bucket   = module.platform.network_access_logs_bucket
   new_relic_app_name           = module.platform.ssm.common.new_relic_app_name.value
   new_relic_license_key_arn    = module.platform.ssm.common.new_relic_license_key.arn
   private_subnet_ids           = keys(module.platform.private_subnets)
@@ -341,8 +341,6 @@ resource "aws_cloudwatch_metric_alarm" "health" {
   }
 }
 
-data "aws_caller_identity" "current" {}
-
 resource "aws_lb" "ab2d_api" {
   #TODO Consider using name_prefix for ephemeral environments... thhey may only be up to 6-characters
   name               = "${local.service_prefix}-api"
@@ -364,7 +362,7 @@ resource "aws_lb" "ab2d_api" {
   drop_invalid_header_fields       = true
 
   access_logs {
-    bucket  = "cms-cloud-${data.aws_caller_identity.current.account_id}-us-east-1"
+    bucket  = local.network_access_logs_bucket
     enabled = true
   }
 }

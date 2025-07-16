@@ -43,7 +43,7 @@ locals {
   db_user_arn                = module.platform.ssm.core.database_user.arn
   events_sqs_url             = data.aws_sqs_queue.events.url
   kms_master_key_id          = nonsensitive(module.platform.kms_alias_primary.target_key_arn)
-  network_access_logs_bucket = module.platform.ssm.core.network-access-logs-bucket-name.value
+  network_access_logs_bucket = module.platform.network_access_logs_bucket
   properties_service_url     = "http://${aws_lb.internal_lb.dns_name}"
   vpc_id                     = module.platform.vpc_id
 }
@@ -126,8 +126,6 @@ data "aws_iam_policy_document" "this" {
   }
 }
 
-data "aws_caller_identity" "current" {}
-
 resource "aws_lb" "internal_lb" {
   name               = "${local.service_prefix}-${local.service}"
   internal           = true
@@ -140,7 +138,7 @@ resource "aws_lb" "internal_lb" {
   drop_invalid_header_fields       = true
 
   access_logs {
-    bucket  = "cms-cloud-${data.aws_caller_identity.current.account_id}-us-east-1"
+    bucket  = local.network_access_logs_bucket
     enabled = true
   }
 }
