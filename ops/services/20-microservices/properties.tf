@@ -39,7 +39,6 @@ resource "aws_ecs_task_definition" "properties" {
     logConfiguration : {
       logDriver : "awslogs",
       options : {
-        # awslogs-group : aws_cloudwatch_log_group.properties.id,
         awslogs-group = "/aws/ecs/fargate/${local.service_prefix}/ab2d_properties",
         awslogs-region : local.aws_region,
         awslogs-stream-prefix : local.service_prefix
@@ -129,8 +128,3 @@ resource "aws_lb_listener_rule" "properties" {
     }
   }
 }
-
-# resource "aws_cloudwatch_log_group" "properties" {
-#   name = "/aws/ecs/fargate/${local.service_prefix}/ab2d_properties"
-#   # kms_key_id = local.kms_master_key_id #FIXME
-# }
