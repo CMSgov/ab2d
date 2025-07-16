@@ -43,16 +43,16 @@ locals {
     sandbox = "ab2d-sbx-sandbox"
   }, local.parent_env, local.parent_env)
 
-  ab2d_db_host                 = contains(["dev", "test"], local.parent_env) ? data.aws_rds_cluster.this[0].endpoint : data.aws_db_instance.this[0].endpoint
+  ab2d_db_host                 = contains(["dev", "test", "sandbox"], local.parent_env) ? data.aws_rds_cluster.this[0].endpoint : data.aws_db_instance.this[0].address
   ab2d_efs_mount               = "/mnt/efs"
   aws_region                   = module.platform.primary_region.name
   ab2d_keystore_location       = module.platform.ssm.core.keystore_location.value
   ab2d_keystore_password_arn   = module.platform.ssm.core.keystore_password.arn
   ab2d_okta_jwt_issuer_arn     = module.platform.ssm.core.okta_jwt_issuer.arn
   alb_internal                 = false
-  alb_listener_certificate_arn = module.platform.is_ephemeral_env || local.tls_private_key == null ? null : aws_acm_certificate.this[0].arn
-  alb_listener_port            = module.platform.is_ephemeral_env ? 80 : 443
-  alb_listener_protocol        = module.platform.is_ephemeral_env ? "HTTP" : "HTTPS"
+  alb_listener_certificate_arn = module.platform.is_ephemeral_env ? data.aws_acm_certificate.this[0].arn : aws_acm_certificate.this[0].arn
+  alb_listener_port            = 443
+  alb_listener_protocol        = "HTTPS"
   api_desired_instances        = module.platform.parent_env == "prod" ? 2 : 1
   bfd_insights                 = "none" #FIXME?
   container_port               = 8443
@@ -397,8 +397,15 @@ resource "aws_lb_listener" "ab2d_api" {
 }
 
 resource "aws_acm_certificate" "this" {
-  count             = local.tls_private_key != null ? 1 : 0
+  count = !module.platform.is_ephemeral_env ? 1 : 0
+
   private_key       = local.tls_private_key
   certificate_body  = local.tls_public_cert
   certificate_chain = local.tls_chain
+}
+
+data "aws_acm_certificate" "this" {
+  count = module.platform.is_ephemeral_env ? 1 : 0
+
+  domain = local.parent_env == "prod" ? "api.ab2d.cms.gov" : "${local.parent_env}.ab2d.cms.gov"
 }
