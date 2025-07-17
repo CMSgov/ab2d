@@ -1,7 +1,7 @@
 resource "aws_rds_cluster" "this" {
   count = var.create_aurora_cluster ? 1 : 0
 
-  cluster_identifier              = local.service_prefix
+  cluster_identifier              = coalesce(var.cluster_identifier, local.service_prefix)
   engine                          = local.aurora_engine
   engine_version                  = var.engine_version
   master_username                 = var.username
@@ -15,7 +15,7 @@ resource "aws_rds_cluster" "this" {
   preferred_backup_window         = var.backup_window
   preferred_maintenance_window    = var.maintenance_window
   apply_immediately               = false
-  skip_final_snapshot             = true
+  skip_final_snapshot             = var.platform.is_ephemeral_env ? true : false
   deletion_protection             = var.deletion_protection
   db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.this[0].name
   vpc_security_group_ids = flatten([
@@ -61,7 +61,7 @@ resource "aws_rds_cluster" "this" {
 resource "aws_rds_cluster_instance" "this" {
   count = var.create_aurora_cluster ? 1 : 0
 
-  identifier                 = "${local.service_prefix}-0"
+  identifier                 = "${coalesce(var.cluster_identifier, local.service_prefix)}-0"
   cluster_identifier         = aws_rds_cluster.this[0].id
   engine                     = aws_rds_cluster.this[0].engine
   engine_version             = aws_rds_cluster.this[0].engine_version

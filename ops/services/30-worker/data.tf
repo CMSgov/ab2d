@@ -1,7 +1,5 @@
 data "aws_efs_file_system" "this" {
-  tags = {
-    Name = "${local.service_prefix}-efs"
-  }
+  file_system_id = module.platform.ssm.core.efs_file_system_id.value
 }
 
 data "aws_efs_access_point" "this" {
@@ -9,12 +7,12 @@ data "aws_efs_access_point" "this" {
 }
 
 data "aws_db_instance" "this" {
-  count                  = contains(["sandbox", "prod"], local.parent_env) ? 1 : 0
+  count                  = contains(["prod"], local.parent_env) ? 1 : 0
   db_instance_identifier = local.service_prefix
 }
 
 data "aws_rds_cluster" "this" {
-  count              = contains(["dev", "test"], local.parent_env) ? 1 : 0
+  count              = contains(["dev", "test", "sandbox"], local.parent_env) ? 1 : 0
   cluster_identifier = local.service_prefix
 }
 
@@ -26,7 +24,7 @@ data "aws_security_group" "db" {
 }
 
 data "aws_security_group" "efs" {
-  name   = "${local.service_prefix}-efs"
+  name   = "ab2d-${local.parent_env}-efs"
   vpc_id = local.vpc_id
 }
 

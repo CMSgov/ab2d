@@ -22,12 +22,12 @@ data "aws_security_group" "lambda" {
 }
 
 data "aws_db_instance" "this" {
-  count                  = contains(["sandbox", "prod"], local.parent_env) ? 1 : 0
+  count                  = contains(["prod"], local.parent_env) ? 1 : 0
   db_instance_identifier = local.service_prefix
 }
 
 data "aws_rds_cluster" "this" {
-  count              = contains(["dev", "test"], local.parent_env) ? 1 : 0
+  count              = contains(["dev", "test", "sandbox"], local.parent_env) ? 1 : 0
   cluster_identifier = local.service_prefix
 }
 

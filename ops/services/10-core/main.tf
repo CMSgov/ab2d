@@ -41,9 +41,6 @@ locals {
 
 resource "aws_s3_bucket" "main_bucket" {
   bucket_prefix = "${local.service_prefix}-main"
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "main_bucket" {
@@ -84,7 +81,21 @@ resource "aws_s3_bucket_public_access_block" "main_bucket" {
   restrict_public_buckets = true
 }
 
+
+data "aws_efs_file_system" "efs" {
+  count = module.platform.is_ephemeral_env ? 1 : 0
+
+  creation_token = "ab2d-${local.parent_env}-efs"
+}
+
+data "aws_efs_access_points" "efs" {
+  count = module.platform.is_ephemeral_env ? 1 : 0
+
+  file_system_id = data.aws_efs_file_system.efs[0].file_system_id
+}
+
 resource "aws_efs_file_system" "efs" {
+  count          = module.platform.is_ephemeral_env ? 0 : 1
   creation_token = "${local.service_prefix}-efs"
   encrypted      = "true"
   kms_key_id     = local.env_key_alias.target_key_arn
@@ -92,7 +103,8 @@ resource "aws_efs_file_system" "efs" {
 }
 
 resource "aws_efs_access_point" "efs" {
-  file_system_id = aws_efs_file_system.efs.id
+  count          = module.platform.is_ephemeral_env ? 0 : 1
+  file_system_id = aws_efs_file_system.efs[0].id
   tags           = { Name = local.service_prefix }
 
   posix_user {
@@ -112,17 +124,19 @@ resource "aws_efs_access_point" "efs" {
 
 resource "aws_ssm_parameter" "efs_file_system" {
   name  = "/ab2d/${local.env}/core/nonsensitive/efs_file_system_id"
-  value = aws_efs_file_system.efs.id
+  value = module.platform.is_ephemeral_env ? data.aws_efs_file_system.efs[0].id : aws_efs_file_system.efs[0].id
   type  = "String"
 }
 
 resource "aws_ssm_parameter" "efs_access_point" {
   name  = "/ab2d/${local.env}/core/nonsensitive/efs_access_point_id"
-  value = aws_efs_access_point.efs.id
+  value = module.platform.is_ephemeral_env ? one(data.aws_efs_access_points.efs[0].ids) : aws_efs_access_point.efs[0].id
   type  = "String"
 }
 
 resource "aws_security_group" "efs" {
+  count = module.platform.is_ephemeral_env ? 0 : 1
+
   name        = "${local.service_prefix}-efs"
   description = "EFS"
   vpc_id      = module.platform.vpc_id
@@ -130,18 +144,23 @@ resource "aws_security_group" "efs" {
 }
 
 resource "aws_efs_mount_target" "this" {
-  for_each        = local.private_subnets
-  file_system_id  = aws_efs_file_system.efs.id
+  for_each = module.platform.is_ephemeral_env ? [] : local.private_subnets
+
+  file_system_id  = aws_efs_file_system.efs[0].id
   subnet_id       = each.value
-  security_groups = [aws_security_group.efs.id]
+  security_groups = [aws_security_group.efs[0].id]
 }
 
 resource "aws_sns_topic" "efs" {
+  count = module.platform.is_ephemeral_env ? 0 : 1
+
   name              = "${local.service_prefix}-efs-connections"
   kms_master_key_id = local.env_key_alias.target_key_id
 }
 
 resource "aws_cloudwatch_metric_alarm" "efs_health" {
+  count = module.platform.is_ephemeral_env ? 0 : 1
+
   alarm_name          = "${local.service_prefix}-efs-connections"
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = "1"
@@ -152,11 +171,11 @@ resource "aws_cloudwatch_metric_alarm" "efs_health" {
   threshold           = "1"
   alarm_description   = "EFS connection count"
   treat_missing_data  = "ignore"
-  alarm_actions       = [aws_sns_topic.efs.arn]
-  ok_actions          = [aws_sns_topic.efs.arn]
+  alarm_actions       = [aws_sns_topic.efs[0].arn]
+  ok_actions          = [aws_sns_topic.efs[0].arn]
 
   dimensions = {
-    FileSystemId = aws_efs_file_system.efs.id
+    FileSystemId = aws_efs_file_system.efs[0].id
   }
 }
 
