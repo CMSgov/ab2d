@@ -144,7 +144,7 @@ resource "aws_lambda_function" "import" {
   }
 
   ephemeral_storage {
-    size = 512
+    size = local.env == "prod" ? 10240 : 512
   }
 
   logging_config {

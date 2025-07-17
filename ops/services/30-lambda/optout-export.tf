@@ -9,8 +9,6 @@ locals {
     prod = "ab2d-prod-opt-out-export-function-20250616154436478600000001"
     test = "ab2d-test-opt-out-export-function-20250529140617557400000001"
   }
-
-
 }
 
 data "aws_s3_object" "export" {
@@ -152,7 +150,7 @@ resource "aws_lambda_function" "export" {
   }
 
   ephemeral_storage {
-    size = 512
+    size = local.env == "prod" ? 10240 : 512
   }
 
   logging_config {
