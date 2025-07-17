@@ -1,3 +1,17 @@
+locals {
+  import_bucket = {
+    prod = "ab2d-prod-opt-out-import-function-20250616155408985300000001"
+    test = "ab2d-test-opt-out-import-function-20250529140353146500000001"
+  }
+}
+
+data "aws_s3_object" "import" {
+  count = contains(["prod", "test"], local.env) ? 1 : 0
+
+  bucket = local.import_bucket[local.env]
+  key    = "function.zip"
+}
+
 resource "aws_iam_role" "import" {
   count = contains(["prod", "test"], local.env) ? 1 : 0
   assume_role_policy = jsonencode(
@@ -98,7 +112,10 @@ resource "aws_iam_role" "import" {
 resource "aws_lambda_function" "import" {
   count = contains(["prod", "test"], local.env) ? 1 : 0
 
-  filename = "${path.root}/optout.zip"
+
+  s3_bucket         = data.aws_s3_object.import[0].bucket
+  s3_key            = data.aws_s3_object.import[0].key
+  s3_object_version = data.aws_s3_object.import[0].version_id
   architectures = [
     "x86_64",
   ]
@@ -121,7 +138,7 @@ resource "aws_lambda_function" "import" {
   environment {
     variables = {
       APP_NAME = "${local.service_prefix}-opt-out-import"
-      DB_HOST  = "jdbc:postgresql://${local.ab2d_db_host}:${local.db_port}/${local.db_name}?sslmode=${local.ab2d_db_ssl_mode}%ApplicationName=${local.service_prefix}-opt-out-import"
+      DB_HOST  = "jdbc:postgresql://${local.ab2d_db_host}:${local.db_port}/${local.db_name}?sslmode=${local.ab2d_db_ssl_mode}&ApplicationName=${local.service_prefix}-opt-out-import"
       ENV      = local.env
     }
   }

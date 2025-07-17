@@ -4,7 +4,22 @@ locals {
       prod = "cron(0 1 ? * WED *)"
       test = "cron(0 13 ? * * *)"
   }, local.env, "")
+
+  export_bucket = {
+    prod = "ab2d-prod-opt-out-export-function-20250616154436478600000001"
+    test = "ab2d-test-opt-out-export-function-20250529140617557400000001"
+  }
+
+
 }
+
+data "aws_s3_object" "export" {
+  count = contains(["prod", "test"], local.env) ? 1 : 0
+
+  bucket = local.export_bucket[local.env]
+  key    = "function.zip"
+}
+
 
 resource "aws_iam_role" "export" {
   count = contains(["prod", "test"], local.env) ? 1 : 0
@@ -108,7 +123,9 @@ resource "aws_iam_role" "export" {
 resource "aws_lambda_function" "export" {
   count = contains(["prod", "test"], local.env) ? 1 : 0
 
-  filename                       = "${path.root}/optout.zip"
+  s3_bucket                      = data.aws_s3_object.export[0].bucket
+  s3_key                         = data.aws_s3_object.export[0].key
+  s3_object_version              = data.aws_s3_object.export[0].version_id
   description                    = "Exports data files to a BFD bucket for opt-out"
   function_name                  = "${local.service_prefix}-opt-out-export"
   handler                        = "gov.cms.ab2d.attributiondatashare.AttributionDataShareHandler"
@@ -127,7 +144,7 @@ resource "aws_lambda_function" "export" {
   environment {
     variables = {
       APP_NAME         = "${local.service_prefix}-opt-out-export"
-      DB_HOST          = "jdbc:postgresql://${local.ab2d_db_host}:${local.db_port}/${local.db_name}?sslmode=${local.ab2d_db_ssl_mode}%ApplicationName=${local.service_prefix}-opt-out-export"
+      DB_HOST          = "jdbc:postgresql://${local.ab2d_db_host}:${local.db_port}/${local.db_name}?sslmode=${local.ab2d_db_ssl_mode}&ApplicationName=${local.service_prefix}-opt-out-export"
       ENV              = local.env
       S3_UPLOAD_BUCKET = "bfd-${local.env}-eft"
       S3_UPLOAD_PATH   = "bfdeft01/ab2d/out"
