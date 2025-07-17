@@ -41,6 +41,7 @@ variable "storage_type" {
 }
 
 variable "instance_class" {
+  default    = null
   deprecated = "This will no longer be supported once APIs have migrated to aurora. Use `aurora_instance_class` for aurora cluster data stores."
   type       = string
 }
@@ -51,6 +52,7 @@ variable "aurora_instance_class" {
 }
 
 variable "allocated_storage" {
+  default    = null
   deprecated = "This will no longer be supported once APIs have migrated to aurora."
   type       = number
 }
