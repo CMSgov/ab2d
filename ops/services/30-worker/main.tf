@@ -56,7 +56,7 @@ locals {
   max_concurrent_eob_jobs    = "2"
   worker_desired_instances   = 1
 
-  ab2d_db_host              = contains(["dev", "test", "sandbox"], local.parent_env) ? data.aws_rds_cluster.this[0].endpoint : data.aws_db_instance.this[0].address
+  ab2d_db_host              = data.aws_rds_cluster.this.endpoint
   db_name_arn               = module.platform.ssm.core.database_name.arn
   db_password_arn           = module.platform.ssm.core.database_password.arn
   db_username_arn           = module.platform.ssm.core.database_user.arn
