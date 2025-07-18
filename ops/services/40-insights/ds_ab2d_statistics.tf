@@ -56,9 +56,9 @@ resource "aws_quicksight_data_set" "ab2d_statistics" {
     physical_table_map_id = "1edadf7f-7bd5-447a-8526-785c0544f66f"
 
     relational_table {
-      data_source_arn = aws_quicksight_data_source.rds.arn
+      data_source_arn = aws_quicksight_data_source.aurora.arn
       name            = "ab2d_statistics"
-      schema          = "public"
+      schema          = "ab2d"
 
       input_columns {
         name = "statistic_name"

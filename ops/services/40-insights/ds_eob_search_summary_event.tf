@@ -64,12 +64,12 @@ resource "aws_quicksight_data_set" "eob_search_summaries_event" {
     physical_table_map_id = "7684a8cb-e21a-468b-b1d4-594df9d08353"
 
     custom_sql {
-      data_source_arn = aws_quicksight_data_source.rds.arn
+      data_source_arn = aws_quicksight_data_source.aurora.arn
       name            = "New custom SQL"
       sql_query       = <<-EOT
                 SELECT jv.week_start, jv.week_end, jv.contract_number, jv.job_uuid, jv.created_at, jv.completed_at, jv.since, bs.benes_searched,
                 to_char(jv.completed_at - jv.created_at,'HH24:MI:SS') time_to_complete
-                FROM public.job_view as jv
+                FROM ab2d.job_view as jv
                 LEFT JOIN event.event_bene_search as bs on bs.job_id = jv.job_uuid
                 ORDER BY week_start desc
             EOT

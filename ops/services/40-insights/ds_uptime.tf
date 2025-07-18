@@ -58,7 +58,8 @@ resource "aws_quicksight_data_set" "uptime" {
     physical_table_map_id = "${local.app}-${local.env}-uptime-physical"
 
     custom_sql {
-      data_source_arn = aws_quicksight_data_source.rds.arn
+      # data_source_arn = aws_quicksight_data_source.aurora.arn
+      data_source_arn = "arn:aws:quicksight:us-east-1:202533514245:datasource/ab2d-prod-aurora"
       name            = "${local.app}-${local.env}-uptime"
       sql_query       = <<-EOT
                 with ranked AS (SELECT service,

@@ -74,9 +74,9 @@ resource "aws_quicksight_data_set" "job_view" {
     physical_table_map_id = "ebb7c5fa-ecd5-4151-b14d-366454a15efd"
 
     relational_table {
-      data_source_arn = aws_quicksight_data_source.rds.arn
+      data_source_arn = aws_quicksight_data_source.aurora.arn
       name            = "job_view"
-      schema          = "public"
+      schema          = "ab2d"
 
       input_columns {
         name = "id"

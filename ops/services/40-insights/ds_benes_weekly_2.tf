@@ -58,7 +58,7 @@ resource "aws_quicksight_data_set" "total_benes_pulled_per_week_2_0" {
     physical_table_map_id = "1f75452c-8997-4f34-b7f0-51b5832866f9"
 
     custom_sql {
-      data_source_arn = aws_quicksight_data_source.rds.arn
+      data_source_arn = aws_quicksight_data_source.aurora.arn
       name            = "New custom SQL"
       sql_query       = <<-EOT
                 select  week_start,
@@ -68,7 +68,7 @@ resource "aws_quicksight_data_set" "total_benes_pulled_per_week_2_0" {
                              DATE_TRUNC('day', jv.week_start) as week_start,
                              DATE_TRUNC('day', jv.week_end)   as week_end,
                              max(bs.benes_searched)           as total_benes
-                      FROM public.job_view as jv
+                      FROM ab2d.job_view as jv
                                LEFT JOIN event.event_bene_search as bs on bs.job_id = jv.job_uuid
                       where jv.status = 'SUCCESSFUL'
                       group by jv.contract_number, jv.week_start, jv.week_end) t

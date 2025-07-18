@@ -81,7 +81,7 @@ resource "aws_quicksight_data_set" "eob_search_summaries_2" {
     physical_table_map_id = "b740b36f-bfe8-45dc-b87a-82d53a44799e"
 
     custom_sql {
-      data_source_arn = aws_quicksight_data_source.rds.arn
+      data_source_arn = aws_quicksight_data_source.aurora.arn
       name            = "Prod EOB Search Summaries 2"
       sql_query       = <<-EOT
                 -- Job View related fields

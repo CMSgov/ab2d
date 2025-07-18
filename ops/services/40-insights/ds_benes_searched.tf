@@ -137,7 +137,7 @@ resource "aws_quicksight_data_set" "benes_searched" {
     physical_table_map_id = "${local.app}-${local.env}-benes-searched-physical"
 
     custom_sql {
-      data_source_arn = aws_quicksight_data_source.rds.arn
+      data_source_arn = aws_quicksight_data_source.aurora.arn
       name            = "${local.app}-${local.env}-benes-searched"
       sql_query       = <<-EOT
                 select *, contract_number as "Contract Number",

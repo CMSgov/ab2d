@@ -152,9 +152,9 @@ resource "aws_quicksight_data_set" "eob_search_summaries_1" {
     physical_table_map_id = "0ac4aa46-df61-3c20-86b2-c2f18098c298"
 
     relational_table {
-      data_source_arn = aws_quicksight_data_source.rds.arn
+      data_source_arn = aws_quicksight_data_source.aurora.arn
       name            = "event_bene_search"
-      schema          = "public"
+      schema          = "ab2d"
 
       input_columns {
         name = "num_opted_out"
@@ -227,9 +227,9 @@ resource "aws_quicksight_data_set" "eob_search_summaries_1" {
     physical_table_map_id = "ab9b0ece-b9bd-3e04-9453-8dcb91c7feff"
 
     relational_table {
-      data_source_arn = aws_quicksight_data_source.rds.arn
+      data_source_arn = aws_quicksight_data_source.aurora.arn
       name            = "job_view"
-      schema          = "public"
+      schema          = "ab2d"
 
       input_columns {
         name = "job_uuid"

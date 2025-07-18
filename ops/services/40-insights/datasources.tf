@@ -1,11 +1,11 @@
-data "aws_db_instance" "this" {
-  db_instance_identifier = local.service_prefix
+data "aws_rds_cluster" "this" {
+  cluster_identifier = local.service_prefix
 }
 
-resource "aws_quicksight_data_source" "rds" {
-  data_source_id = "${local.app}-${local.env}-rds"
-  name           = "${local.app}-${local.env}-rds"
-  type           = "POSTGRESQL"
+resource "aws_quicksight_data_source" "aurora" {
+  data_source_id = "${local.app}-${local.env}-aurora"
+  name           = "${local.app}-${local.env}-aurora"
+  type           = "AURORA_POSTGRESQL"
 
   credentials {
     credential_pair {
@@ -15,9 +15,10 @@ resource "aws_quicksight_data_source" "rds" {
   }
 
   parameters {
-    rds {
-      database    = local.db_name
-      instance_id = data.aws_db_instance.this.id
+    aurora_postgresql {
+      database = local.db_name
+      host     = data.aws_rds_cluster.this.reader_endpoint
+      port     = data.aws_rds_cluster.this.port
     }
   }
 

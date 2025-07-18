@@ -56,12 +56,12 @@ resource "aws_quicksight_data_set" "contracts_one_job_minimum" {
     physical_table_map_id = "960101d0-1c87-4a1e-8a9a-728850400b7c"
 
     custom_sql {
-      data_source_arn = aws_quicksight_data_source.rds.arn
+      data_source_arn = aws_quicksight_data_source.aurora.arn
       name            = "New custom SQL"
       sql_query       = <<-EOT
                 SELECT count(distinct c.contract_number) as "Contracts, at least 1 Job"
-                from public.contract_view c
-                inner join public.job_view j on j.contract_number = c.contract_number
+                from ab2d.contract_view c
+                inner join ab2d.job_view j on j.contract_number = c.contract_number
                 where c.contract_number not like 'Z%'
             EOT
 

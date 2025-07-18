@@ -65,9 +65,9 @@ resource "aws_quicksight_data_set" "contracts" {
     physical_table_map_id = "2496f8bb-4d1b-4cf4-8812-5bc18a2922ca"
 
     relational_table {
-      data_source_arn = aws_quicksight_data_source.rds.arn
+      data_source_arn = aws_quicksight_data_source.aurora.arn
       name            = "contract_view"
-      schema          = "public"
+      schema          = "ab2d"
 
       input_columns {
         name = "contract_number"

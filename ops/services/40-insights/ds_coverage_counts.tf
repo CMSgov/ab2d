@@ -61,7 +61,7 @@ resource "aws_quicksight_data_set" "coverage_counts" {
     physical_table_map_id = "a341feff-c3fe-4740-989f-e27c8f77ada0"
 
     custom_sql {
-      data_source_arn = aws_quicksight_data_source.rds.arn
+      data_source_arn = aws_quicksight_data_source.aurora.arn
       name            = "Coverage counts"
       sql_query       = <<-EOT
                 select
