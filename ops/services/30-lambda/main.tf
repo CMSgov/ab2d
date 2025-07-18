@@ -28,11 +28,12 @@ locals {
   service      = "lambda"
 
   ssm_root_map = {
-    artifactory   = "/ab2d/mgmt/artifactory"
-    microservices = "/ab2d/${local.env}/microservices"
+    artifactory   = "/ab2d/mgmt/artifactory" #FIXME: Standardize this
     common        = "/ab2d/${local.env}/common"
     core          = "/ab2d/${local.env}/core"
-    webhooks      = "/ab2d/mgmt/slack-webhooks"
+    eft           = "/opt-out-import/ab2d/${local.env}" #FIXME: Better manage this
+    microservices = "/ab2d/${local.env}/microservices"
+    webhooks      = "/ab2d/mgmt/slack-webhooks" #FIXME: Standardize this
   }
 
   benv = lookup({
