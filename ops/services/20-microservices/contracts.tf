@@ -21,6 +21,8 @@ resource "aws_ecs_task_definition" "contracts" {
   container_definitions = nonsensitive(jsonencode([{
     name : "contracts-service-container", #TODO: Consider simplifying this name, just use "contracts"
     image : local.contracts_image_uri,
+    # Enable read-only root filesystem AB2D-6797
+    readonlyRootFilesystem = true
     essential : true,
     secrets : [
       { name : "AB2D_DB_DATABASE", valueFrom : local.db_database_arn },
