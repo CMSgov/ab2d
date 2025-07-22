@@ -1,20 +1,19 @@
 module "db" {
-  source = "../../tf-modules/ds"
+  source = "github.com/CMSgov/cdap//terraform/modules/aurora?ref=burling/plt-1208"
 
-  aurora_snapshot         = var.aurora_snapshot
+  snapshot_identifier     = var.aurora_snapshot
   backup_retention_period = module.platform.is_ephemeral_env ? 1 : 7
-  create_aurora_cluster   = true
   deletion_protection     = !module.platform.is_ephemeral_env
   monitoring_role_arn     = aws_iam_role.db_monitoring.arn
   password                = local.database_password
   platform                = module.platform
   username                = local.database_user
 
-  aurora_instance_class = lookup({
+  instance_class = lookup({
     prod = "db.r8g.2xlarge"
   }, local.parent_env, "db.r8g.large")
 
-  aurora_storage_type = lookup({
+  storage_type = lookup({
     prod = "aurora-iopt1"
     dev  = "aurora-iopt1" #TODO: Remove NLT 2025-08-15
     test = "aurora-iopt1" #TODO: Remove NLT 2025-08-15
@@ -38,7 +37,7 @@ module "db" {
     prod = 15
   }, local.parent_env, 60)
 
-  aurora_cluster_parameters = [
+  cluster_parameters = [
     {
       apply_method = "immediate"
       name         = "rds.force_ssl"
@@ -50,7 +49,7 @@ module "db" {
       value        = "safe_encoding"
     },
   ]
-  aurora_cluster_instance_parameters = [
+  cluster_instance_parameters = [
     {
       apply_method = "immediate"
       name         = "random_page_cost"
