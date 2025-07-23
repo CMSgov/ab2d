@@ -29,6 +29,8 @@ jobs:
     env:
       AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
       MODULE: ${{ inputs.module }}
+      ECR_REPO: ab2d-${{ inputs.module }}
+      TAG_PREFIX: ab2d-${{ inputs.module }}
     steps:
       - name: Assume AWS role
         uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
@@ -61,7 +63,6 @@ jobs:
         run: |
           ECR_DOMAIN="$AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com"
           SHA_SHORT=$(git rev-parse --short HEAD)
-          TAG_PREFIX="ab2d-${MODULE}"
           aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_DOMAIN
           ECR_URI="$ECR_DOMAIN/$ECR_REPO"
           TAG_SHORT="$TAG_PREFIX-$GITHUB_REF_NAME-$SHA_SHORT"
