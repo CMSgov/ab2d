@@ -59,11 +59,12 @@ jobs:
       - name: Build image and push to ECR
         working-directory: ./${{ env.MODULE }}
         run: |
-          ECR_REPO_DOMAIN="${AWS_ACCOUNT}.dkr.ecr.$AWS_REGION.amazonaws.com"
-          aws ecr get-login-password | docker login --username AWS --password-stdin "$ECR_REPO_DOMAIN"
-          ECR_REPO_URI="$ECR_REPO_DOMAIN/ab2d-${MODULE}"
+          ECR_DOMAIN="$AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com"
           SHA_SHORT=$(git rev-parse --short HEAD)
-          echo "Building image for commit sha $SHA_SHORT"
-          docker build -t "${ECR_REPO_URI}:ab2d-${MODULE}-$SHA_SHORT" 
-          echo "Pushing image"
-          docker push "${ECR_REPO_URI}" --all-tags
+          TAG_PREFIX="ab2d-${MODULE}"
+          aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_DOMAIN
+          ECR_URI="$ECR_DOMAIN/$ECR_REPO"
+          TAG_SHORT="$TAG_PREFIX-$GITHUB_REF_NAME-$SHA_SHORT"
+          docker build -t "$ECR_URI:$TAG_SHORT" .
+          docker push "$ECR_URI" --all-tags
+          echo "Published **$ECR_URI:$TAG_SHORT**" >> $GITHUB_STEP_SUMMARY
