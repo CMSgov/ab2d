@@ -75,9 +75,7 @@ jobs:
           ECR_REPO_URI="$ECR_REPO_DOMAIN/ab2d-${MODULE}"
           SHA_SHORT=$(git rev-parse --short HEAD)
           echo "Building image for commit sha $SHA_SHORT"
-          docker build \
-            -t "${ECR_REPO_URI}:ab2d-aurora-${AB2D_ENV}-$SHA_SHORT" \
-            -t "${ECR_REPO_URI}:ab2d-aurora-${AB2D_ENV}-latest" .
+          docker build -t "${ECR_REPO_URI}:ab2d-${AB2D_ENV}-$SHA_SHORT" 
 
           # Push to special tag for promotion if this is run on a push to main
           if [ "$GITHUB_REF" == "refs/heads/main" ]; then
