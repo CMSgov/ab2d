@@ -1,5 +1,5 @@
 name: build-gf-prod # Note: This workflow is temporary until the promote workflow is created
-run-name: build-gf-prod ${{ inputs.module }}
+run-name: build-gf prod ${{ inputs.module }}
 
 on:
   workflow_call:
