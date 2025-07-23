@@ -4,9 +4,6 @@ run-name: build-gf non-prod ${{ inputs.module }}
 on:
   workflow_call:
     inputs:
-      environment:
-        required: true
-        type: string
       module:
         required: true
         type: string
