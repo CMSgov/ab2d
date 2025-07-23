@@ -1,0 +1,57 @@
+name: opt-out-import test integration
+
+on:
+  push:
+    paths:
+      - .github/workflows/opt-out-import-test-integration.yml
+      - optout/**
+  workflow_dispatch:
+
+# Ensure we have only one integration test running at a time
+concurrency:
+  group: opt-out-import-test-integration
+
+jobs:
+  # Deploy first if triggered by push
+  deploy:
+    if: ${{ github.event_name == 'push' }}
+    uses: ./.github/workflows/opt-out-import-test-deploy.yml
+    secrets: inherit
+
+  trigger:
+    if: ${{ always() }}
+    needs: deploy
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    env:
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+    defaults:
+      run:
+        working-directory: ./optout
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          # Note that we assume the lambda role
+          role-to-assume: arn:aws:iam::${{ secrets.TEST_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-test-opt-out-import-function
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          # Now assume the BFD bucket role
+          role-to-assume: arn:aws:iam::${{ secrets.BFD_ACCOUNT_ID }}:role/bfd-test-eft-ab2d-bucket-role
+          role-chaining: true
+          role-skip-session-tagging: true
+      - name: Upload test file to the BFD bucket to trigger lambda function via SNS message
+        run: |
+          aws s3 cp --no-progress src/test/resources/optOutDummy.txt \
+            s3://bfd-test-eft/bfdeft01/ab2d/in/test-${{ github.run_id }}.txt
+      - name: Check bucket for response file
+        run: |
+          sleep 20 # Allow for function to run
+          aws s3 ls s3://bfd-test-eft/bfdeft01/ab2d/out/
+          bash src/test/resources/check-latest-out.sh
+
+  # TODO Run another job to check database for update

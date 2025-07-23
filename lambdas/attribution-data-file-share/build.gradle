@@ -1,0 +1,58 @@
+plugins {
+    id 'java'
+}
+
+version "$attributionDataShareVersion"
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+
+dependencies {
+    implementation 'com.amazonaws:aws-lambda-java-core:1.2.2'
+    implementation 'com.amazonaws:aws-java-sdk-s3:1.12.529'
+    implementation 'software.amazon.awssdk:s3-transfer-manager:2.25.7'
+    implementation 'software.amazon.awssdk.crt:aws-crt:0.29.11'
+    implementation 'org.postgresql:postgresql:42.7.2'
+    implementation 'software.amazon.awssdk:sts:2.25.6'
+    implementation project(path: ':lambda-lib')
+    testImplementation 'org.mockito:mockito-core:4.8.0'
+    testImplementation 'com.mockrunner:mockrunner-jdbc:2.0.7'
+    testImplementation 'org.testcontainers:junit-jupiter:1.17.6'
+    testImplementation "org.testcontainers:postgresql:1.17.6"
+    testImplementation project(':lambda-test-utils')
+    testImplementation 'io.findify:s3mock_2.13:0.2.6'
+}
+
+task buildZip(type: Zip) {
+
+    from compileJava
+    from processResources
+    into('lib') {
+        from configurations.runtimeClasspath
+    }
+    archiveFileName = 'attributionDataShare.zip'
+}
+
+ext.set("zipName", 'attributionDataShare')
+
+test {
+    useJUnitPlatform()
+    environment "S3_UPLOAD_BUCKET", "bfd-test-eft"
+    environment "S3_UPLOAD_PATH", "bfdeft01/test/out"
+}
+
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '7.5'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+build.dependsOn buildZip
+

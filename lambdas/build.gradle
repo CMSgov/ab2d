@@ -1,0 +1,208 @@
+plugins {
+    id 'java'
+    id 'com.jfrog.artifactory' version '4.29.0' apply false
+    id "org.sonarqube" version "3.5.0.2730"
+    id 'org.cyclonedx.bom' version '1.7.3' apply true
+}
+version = "1.1.0"
+group = "gov.cms.ab2d"
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.1'
+    testImplementation 'org.junit.platform:junit-platform-commons:1.9.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.1'
+}
+
+ext {
+    sourcesRepo = 'ab2d-main'
+    artifactoryLoc = project.hasProperty('artifactory_contextUrl') ? project.artifactory_contextUrl
+            : System.getenv()['ARTIFACTORY_URL']
+
+    // Override user and password
+    artifactory_user = project.hasProperty('artifactory_user') ? project.artifactory_user
+            : System.getenv()['ARTIFACTORY_USER']
+    artifactory_password = project.hasProperty('artifactory_password') ? project.artifactory_password
+            : System.getenv()['ARTIFACTORY_PASSWORD']
+
+    //use the same version for all projects for now to make deploy easier
+    metricsVersion = project.version
+    fetcherVersion = project.version
+    auditVersion = project.version
+    coverageVersion = project.version
+    databaseVersion = project.version
+    lambdalibsVersion = project.version
+    testutilsVersion = project.version
+    retrieveVersion = project.version
+    optoutVersion = project.version
+    attributionDataShareVersion = project.version
+
+
+    sourcesRepo = 'ab2d-maven-repo'
+    deployerRepo = 'ab2d-main'
+    resolverRepo = 'ab2d-main'
+}
+
+configurations {
+    all.collect { configuration ->
+        configuration.exclude group: 'com.amazonaws:aws-java-sdk-core'
+        configuration.exclude group: 'com.fasterxml.jackson.core:jackson-annotations'
+        configuration.exclude group: 'com.fasterxml.jackson.core:jackson-databind'
+    }
+
+}
+
+
+repositories {
+    mavenCentral()
+    maven {
+        url = "${artifactoryLoc}/${sourcesRepo}"
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'com.jfrog.artifactory'
+    apply plugin: 'maven-publish'
+    apply plugin: 'checkstyle'
+    apply plugin: 'jacoco'
+    apply plugin: "org.cyclonedx.bom"
+
+    ext {
+        //override this in subprojects using ext.set("zipName", '{new value}')
+        zipName = project.name
+    }
+
+    afterEvaluate {
+
+        publishing {
+            publications {
+                mavenJava(MavenPublication) {
+                    artifact file("${project.name}/build/distributions/${zipName}.zip")
+                }
+            }
+        }
+    }
+
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+
+    group 'gov.cms.ab2d'
+
+
+    artifactory {
+        contextUrl = project.artifactoryLoc
+
+        publish {
+            repository {
+                repoKey = "${deployerRepo}"
+                username = project.artifactory_user
+                password = project.artifactory_password
+                maven = true
+            }
+            defaults {
+                publications('mavenJava')
+                publishArtifacts = true
+                publishBuildInfo = false
+            }
+        }
+        resolve {
+            repository {
+                repoKey = "${resolverRepo}"
+                username = project.artifactory_user
+                password = project.artifactory_password
+                maven = true
+            }
+        }
+    }
+
+    jacocoTestReport {
+        reports {
+            xml.enabled true
+        }
+    }
+
+    test {
+        useJUnitPlatform()
+        finalizedBy jacocoTestReport // report is always generated after tests run
+    }
+
+    jacoco {
+        toolVersion = "0.8.7"
+        reportsDirectory = layout.buildDirectory.dir("$buildDir/reports/jacoco")
+    }
+
+    checkstyle {
+        configFile file("$rootDir/config/checkstyle.xml")
+    }
+}
+
+dependencies {
+    implementation "org.cyclonedx:cyclonedx-gradle-plugin:1.4.0"
+    implementation "org.cyclonedx:cyclonedx-core-java:5.0.4"
+}
+
+allprojects {
+    cyclonedxBom {
+        // includeConfigs is the list of configuration names to include when generating the BOM (leave empty to include every configuration)
+        includeConfigs = ["runtimeClasspath"]
+        // skipConfigs is a list of configuration names to exclude when generating the BOM
+        skipConfigs = ["compileClasspath", "testCompileClasspath"]
+        // Specified the type of project being built. Defaults to 'library'
+        projectType = "library"
+        // Specified the version of the CycloneDX specification to use. Defaults to 1.4.
+        schemaVersion = "1.4"
+        // Boms destination directory (defaults to build/reports)
+        destination = file("build/reports")
+        // The file name for the generated BOMs (before the file format suffix). Defaults to 'bom'
+        outputName = "bom"
+        // The file format generated, can be xml, json or all for generating both
+        outputFormat = "all"
+        // Exclude BOM Serial Number
+        includeBomSerialNumber = false
+        // Override component version
+        componentVersion = "2.0.0"
+    }
+
+    tasks.register('lookForArtifacts') {
+        doLast {
+            // Until we figure out how to pass the versions downstream always deploy
+            if (project.name != 'ab2d-lambdas' && project.name != 'lambda-test-utils' && project.name != 'lambda-lib')
+                System.out.print("'''" + project.name + ":" + false)
+        }
+    }
+
+    repositories {
+        maven {
+            url = "${artifactoryLoc}/${sourcesRepo}"
+            credentials {
+                username = project.artifactory_user
+                password = project.artifactory_password
+            }
+        }
+        mavenCentral()
+    }
+
+
+}
+
+sonarqube {
+    properties {
+        property "sonar.projectKey", "ab2d-lambdas"
+    }
+}
+
+tasks.register('buildZip', Zip) {
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+build.dependsOn buildZip
+
+
