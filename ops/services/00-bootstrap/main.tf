@@ -46,7 +46,7 @@ resource "aws_ecr_repository" "this" {
   # ECR Repository-Level Scanning is Deprecated
   # Leave this `false` until it is fully removed from the API, provider
   image_scanning_configuration {
-    scan_on_push = false
+    scan_on_push = true # configure repository scanning
   }
 }
 
