@@ -239,6 +239,8 @@ resource "aws_ecs_task_definition" "api" {
   container_definitions = nonsensitive(jsonencode([{
     name : local.service,
     image : local.api_image_uri,
+    # Enable read-only root filesystem AB2D-6797
+    readonlyRootFilesystem = true
     essential : true,
     portMappings : [
       {
