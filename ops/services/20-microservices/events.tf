@@ -18,6 +18,13 @@ resource "aws_sns_topic_subscription" "events" {
   endpoint  = data.aws_sqs_queue.events.arn
 }
 
+resource "aws_sns_topic_subscription" "splunk_oncall_email_events" {
+  count     = length(data.aws_ssm_parameter.splunk_oncall_email)
+  topic_arn = data.aws_sns_topic.events.arn
+  protocol  = "email"
+  endpoint  = data.aws_ssm_parameter.splunk_oncall_email[0].value
+}
+
 resource "aws_ecs_task_definition" "events" {
   family             = "${local.service_prefix}-events"
   network_mode       = "awsvpc"
