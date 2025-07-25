@@ -61,7 +61,8 @@ resource "aws_cloudwatch_metric_alarm" "http_code_elb_5xx_count" {
 }
 
 resource "aws_sns_topic_subscription" "splunk_oncall_email_elb" {
+  count     = length(data.aws_ssm_parameter.splunk_oncall_email)
   topic_arn = local.cloudwatch_sns_topic
   protocol  = "email"
-  endpoint  = data.aws_ssm_parameter.splunk_oncall_email.value
+  endpoint  = data.aws_ssm_parameter.splunk_oncall_email[0].value
 }

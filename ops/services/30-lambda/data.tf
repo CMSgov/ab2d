@@ -75,5 +75,6 @@ data "aws_rds_cluster" "this" {
 }
 
 data "aws_ssm_parameter" "splunk_oncall_email" {
-  name = "/ab2d/splunk_oncall/alerting/email"
+  count = var.parent_env == "prod" || var.parent_env == "sandbox" ? 1 : 0
+  name  = "/ab2d/splunk_oncall/alerting/email"
 }

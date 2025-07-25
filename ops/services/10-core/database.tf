@@ -320,11 +320,13 @@ resource "aws_ssm_parameter" "writer_endpoint" {
 }
 
 data "aws_ssm_parameter" "splunk_oncall_email" {
-  name = "/ab2d/splunk_oncall/alerting/email"
+  count = var.parent_env == "prod" || var.parent_env == "sandbox" ? 1 : 0
+  name  = "/ab2d/splunk_oncall/alerting/email"
 }
 
 resource "aws_sns_topic_subscription" "splunk_oncall_email" {
+  count     = length(data.aws_ssm_parameter.splunk_oncall_email)
   topic_arn = aws_sns_topic.alarms.arn
   protocol  = "email"
-  endpoint  = data.aws_ssm_parameter.splunk_oncall_email.value
+  endpoint  = data.aws_ssm_parameter.splunk_oncall_email[0].value
 }

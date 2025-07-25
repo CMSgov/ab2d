@@ -300,9 +300,10 @@ resource "aws_sns_topic_subscription" "coverage_count_lambda_target" {
 }
 
 resource "aws_sns_topic_subscription" "splunk_oncall_email_coverage_count" {
+  count     = length(data.aws_ssm_parameter.splunk_oncall_email)
   topic_arn = aws_sns_topic.coverage_count_sns.arn
   protocol  = "email"
-  endpoint  = data.aws_ssm_parameter.splunk_oncall_email.value
+  endpoint  = data.aws_ssm_parameter.splunk_oncall_email[0].value
 }
 
 resource "aws_lambda_function" "database_management" {
