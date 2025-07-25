@@ -31,18 +31,20 @@ runs:
         PARENT_ENV="${AB2D_ENV##*-}"
         echo "PARENT_ENV=${PARENT_ENV}"
         
-        if [ "$PARENT_ENV" == "test" ]; then
-          PGDATABASE='impl'
-        elif [ "$PARENT_ENV" == "sandbox" ]; then
-          PGDATABASE='sbx'
-        else 
-          PGDATABASE=$PARENT_ENV
-        fi
+#        if [ "$PARENT_ENV" == "test" ]; then
+#          PGDATABASE='impl'
+#        elif [ "$PARENT_ENV" == "sandbox" ]; then
+#          PGDATABASE='sbx'
+#        else
+#          PGDATABASE=$PARENT_ENV
+#        fi
+
         
         PGHOST=$(echo $DB_ENDPOINT | cut -d ":" -f1)
         PGPORT=$(echo $DB_ENDPOINT | cut -d ":" -f2)
         echo "PGHOST=$PGHOST" >> $GITHUB_ENV
         echo "PGPORT=$PGPORT" >> $GITHUB_ENV
-        echo "PGDATABASE=$PGDATABASE" >> $GITHUB_ENV
+#        echo "PGDATABASE=$PGDATABASE" >> $GITHUB_ENV
+        echo "PGDATABASE=main" >> $GITHUB_ENV     
         echo "DATABASE_SCHEMA_NAME=ab2d" >> $GITHUB_ENV
         echo "PGSSLMODE=require" >> $GITHUB_ENV
