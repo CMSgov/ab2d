@@ -30,6 +30,8 @@ resource "aws_ecs_task_definition" "events" {
   container_definitions = nonsensitive(jsonencode([{
     name : "events-service-container", #TODO: Consider simplifying this name, just use "events"
     image : local.events_image_uri,
+    # Enable read-only root filesystem AB2D-6797
+    readonlyRootFilesystem = true
     essential : true,
     secrets : [
       { name : "AB2D_DB_DATABASE", valueFrom : local.db_database_arn },
