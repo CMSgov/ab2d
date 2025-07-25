@@ -299,6 +299,12 @@ resource "aws_sns_topic_subscription" "coverage_count_lambda_target" {
   endpoint  = aws_lambda_function.coverage_count.arn
 }
 
+resource "aws_sns_topic_subscription" "splunk_oncall_email_coverage_count" {
+  topic_arn = aws_sns_topic.coverage_count_sns.arn
+  protocol  = "email"
+  endpoint  = data.aws_ssm_parameter.splunk_oncall_email.value
+}
+
 resource "aws_lambda_function" "database_management" {
   filename         = "${path.root}/database-management.zip"
   function_name    = "${local.service_prefix}-database-management-handler"

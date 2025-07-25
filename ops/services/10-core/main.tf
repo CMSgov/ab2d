@@ -179,6 +179,12 @@ resource "aws_cloudwatch_metric_alarm" "efs_health" {
   }
 }
 
+resource "aws_sns_topic_subscription" "splunk_oncall_email_efs" {
+  topic_arn = aws_sns_topic.efs[0].arn
+  protocol  = "email"
+  endpoint  = data.aws_ssm_parameter.splunk_oncall_email.value
+}
+
 resource "aws_sns_topic" "alarms" {
   name = "${local.service_prefix}-cloudwatch-alarms"
 

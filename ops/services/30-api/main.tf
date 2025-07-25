@@ -341,6 +341,12 @@ resource "aws_cloudwatch_metric_alarm" "health" {
   }
 }
 
+resource "aws_sns_topic_subscription" "splunk_oncall_email_api" {
+  topic_arn = aws_sns_topic.api.arn
+  protocol  = "email"
+  endpoint  = data.aws_ssm_parameter.splunk_oncall_email.value
+}
+
 resource "aws_lb" "ab2d_api" {
   #TODO Consider using name_prefix for ephemeral environments... thhey may only be up to 6-characters
   name               = "${local.service_prefix}-api"

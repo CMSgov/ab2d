@@ -53,3 +53,7 @@ data "aws_ecr_image" "properties" {
   image_tag       = var.properties_service_image_tag
   most_recent     = var.properties_service_image_tag == null ? true : null
 }
+
+data "aws_ssm_parameter" "splunk_oncall_email" {
+  name = "/ab2d/splunk_oncall/alerting/email"
+}

@@ -38,3 +38,7 @@ data "aws_ecr_image" "api" {
 data "aws_sns_topic" "cloudwatch_alarms" {
   name = "${local.service_prefix}-cloudwatch-alarms"
 }
+
+data "aws_ssm_parameter" "splunk_oncall_email" {
+  name = "/ab2d/splunk_oncall/alerting/email"
+}

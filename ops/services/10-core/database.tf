@@ -318,3 +318,13 @@ resource "aws_ssm_parameter" "writer_endpoint" {
   value = "${module.db.aurora_cluster.endpoint}:${module.db.aurora_cluster.port}"
   type  = "String"
 }
+
+data "aws_ssm_parameter" "splunk_oncall_email" {
+  name = "/ab2d/splunk_oncall/alerting/email"
+}
+
+resource "aws_sns_topic_subscription" "splunk_oncall_email" {
+  topic_arn = aws_sns_topic.alarms.arn
+  protocol  = "email"
+  endpoint  = data.aws_ssm_parameter.splunk_oncall_email.value
+}

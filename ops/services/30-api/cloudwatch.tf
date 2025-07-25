@@ -59,3 +59,9 @@ resource "aws_cloudwatch_metric_alarm" "http_code_elb_5xx_count" {
     LoadBalancer = aws_lb.ab2d_api.arn_suffix
   }
 }
+
+resource "aws_sns_topic_subscription" "splunk_oncall_email_elb" {
+  topic_arn = local.cloudwatch_sns_topic
+  protocol  = "email"
+  endpoint  = data.aws_ssm_parameter.splunk_oncall_email.value
+}
