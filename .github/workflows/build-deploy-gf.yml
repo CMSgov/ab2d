@@ -7,23 +7,11 @@ on:
       - ab2d-6750
   workflow_call:
     inputs:
-      module:
-        required: true
-        type: string
-      environment:
-        required: false
-        type: string
-      image_tag:
-        description: ECR image tag for selected module (skip build if provided)
-        type: string
-      skip_build:
-        description: Skip build step and only deploy
-        type: boolean
-        default: false
-      skip_deploy:
-        description: Skip deploy step and only build
-        type: boolean
-        default: false
+      module: { required: true, type: string }
+      environment: { required: false, type: string }
+      image_tag: { type: string, description: ECR image tag (skips build if provided) }
+      skip_build: { type: boolean, default: false, description: Only deploy }
+      skip_deploy: { type: boolean, default: false, description: Only build }
   workflow_dispatch:
     inputs:
       module:
@@ -40,14 +28,8 @@ on:
         description: ECR image tag for selected module (ab2d-<module>-<SHA>) - skip build if provided
         required: false
         type: string
-      skip_build:
-        description: Skip build step and only deploy
-        type: boolean
-        default: false
-      skip_deploy:
-        description: Skip deploy step and only build
-        type: boolean
-        default: false
+      skip_build: { type: boolean, default: false, description: Skip build step }
+      skip_deploy: { type: boolean, default: false, description: Skip deploy step }
 
 env:
   TOFU_VERSION: 1.10.0-beta2
@@ -148,8 +130,7 @@ jobs:
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     needs: [setup, build]
     if: |
-      always() && 
-      needs.setup.outputs.should_deploy == 'true' && 
+      always() && needs.setup.outputs.should_deploy == 'true' && 
       (needs.setup.outputs.should_build == 'false' || needs.build.result == 'success')
     permissions:
       contents: read
