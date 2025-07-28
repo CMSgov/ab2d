@@ -321,8 +321,7 @@ resource "aws_ssm_parameter" "writer_endpoint" {
 
 data "aws_ssm_parameter" "splunk_oncall_email" {
   count = var.parent_env == "prod" || var.parent_env == "sandbox" ? 1 : 0
-
-  name = var.parent_env == "prod" ? "/ab2d/prod/common/splunk/sensitive/alert_email" : "/ab2d/sandbox/common/splunk/sensitive/alert_email"
+  name  = "/ab2d/${var.parent_env}/common/splunk/sensitive/alert_email"
 }
 
 

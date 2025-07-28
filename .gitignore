@@ -107,8 +107,8 @@ Deploy/website-temp
 ### Snyk CLI
 .dccache
 # Ignore the unencrypted secret
-secrets/splunk_oncall_email_prod.yml
+secrets/splunk_oncall_email_prod.sops.yml
 
 # Allow encrypted files to be tracked
-!secrets/*.enc.yml
+!secrets/*.enc.sops.yml
 
