@@ -42,7 +42,7 @@ on:
           - dev
           - test
       image_tag:
-        description: ECR image tag for selected module (ab2d-<module>-<branch>-<SHA>) - skip build if provided
+        description: ECR image tag for selected module (ab2d-<module>-<SHA>) - skip build if provided
         required: false
         type: string
       skip_build:
@@ -79,8 +79,7 @@ jobs:
             echo "should_build=true" >> $GITHUB_OUTPUT
             # Generate image tag for build
             SHA_SHORT=$(echo "${{ github.sha }}" | cut -c1-7)
-            BRANCH_NAME_FORMATTED=$(echo "${{ github.ref_name }}" | sed 's/\//-/g')
-            TAG="ab2d-${{ inputs.module }}-$BRANCH_NAME_FORMATTED-$SHA_SHORT"
+            TAG="ab2d-${{ inputs.module }}-$SHA_SHORT"
             echo "image_tag=$TAG" >> $GITHUB_OUTPUT
           fi
           
@@ -145,7 +144,8 @@ jobs:
           ECR_URI="$ECR_DOMAIN/$ECR_REPO"
           docker build -t "$ECR_URI:$IMAGE_TAG" .
           docker push "$ECR_URI:$IMAGE_TAG"
-          echo "Published **$ECR_URI:$IMAGE_TAG**" >> $GITHUB_STEP_SUMMARY
+          docker push "$ECR_URI:ab2d-${{ inputs.module }}-latest"
+          echo "Published **$ECR_URI:$IMAGE_TAG**, $ECR_URI:ab2d-${{ inputs.module }}-latest" >> $GITHUB_STEP_SUMMARY
 
   # Deploy job - only runs when needed
   deploy:
