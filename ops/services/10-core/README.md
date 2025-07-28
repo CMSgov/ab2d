@@ -48,7 +48,7 @@ This root module is responsible for creating essential resources that the majori
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_db"></a> [db](#module\_db) | github.com/CMSgov/cdap//terraform/modules/aurora | burling/plt-1208 |
+| <a name="module_db"></a> [db](#module\_db) | github.com/CMSgov/cdap//terraform/modules/aurora | f91210d2640845f1b6f0edb7087b6cbf02acbdec |
 | <a name="module_platform"></a> [platform](#module\_platform) | git::https://github.com/CMSgov/cdap.git//terraform/modules/platform | PLT-1099 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
