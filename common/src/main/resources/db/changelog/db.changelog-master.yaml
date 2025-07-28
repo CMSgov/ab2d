@@ -176,4 +176,4 @@ databaseChangeLog:
   - include:
       file: db/changelog/v2025/migrate_to_ab2d_schema.sql
   - include:
-      file: db/changelog/v2025/rename_database.sql
+      file: db/changelog/v2025/add_cron_schedule.sql
