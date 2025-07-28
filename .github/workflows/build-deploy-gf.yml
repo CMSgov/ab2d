@@ -66,7 +66,6 @@ jobs:
       should_build: ${{ steps.logic.outputs.should_build }}
       should_deploy: ${{ steps.logic.outputs.should_deploy }}
       image_tag: ${{ steps.logic.outputs.image_tag }}
-      aws_account: ${{ steps.logic.outputs.aws_account }}
       environment: ${{ steps.logic.outputs.environment }}
     steps:
       - name: Determine workflow logic
@@ -89,16 +88,9 @@ jobs:
           if [[ "${{ inputs.skip_deploy }}" == "true" || -z "${{ inputs.environment }}" ]]; then
             echo "should_deploy=false" >> $GITHUB_OUTPUT
             echo "environment=" >> $GITHUB_OUTPUT
-            echo "aws_account=" >> $GITHUB_OUTPUT
           else
             echo "should_deploy=true" >> $GITHUB_OUTPUT
             echo "environment=${{ inputs.environment }}" >> $GITHUB_OUTPUT
-            # Determine AWS account based on environment
-            if [[ "${{ inputs.environment }}" == "dev" || "${{ inputs.environment }}" == "test" ]]; then
-              echo "aws_account=${{ secrets.NON_PROD_ACCOUNT }}" >> $GITHUB_OUTPUT
-            else
-              echo "aws_account=${{ secrets.PROD_ACCOUNT }}" >> $GITHUB_OUTPUT
-            fi
           fi
 
   # Build job - only runs when needed
@@ -167,16 +159,25 @@ jobs:
       contents: read
       id-token: write
     env:
-      AWS_ACCOUNT: ${{ needs.setup.outputs.aws_account }}
       AB2D_ENV: ${{ needs.setup.outputs.environment }}
       MODULE: ${{ inputs.module }}
       IMAGE_TAG: ${{ needs.setup.outputs.should_build == 'true' && needs.build.outputs.image_tag || needs.setup.outputs.image_tag }}
     steps:
+      - name: Set AWS account based on environment
+        id: aws_config
+        run: |
+          if [[ "${{ env.AB2D_ENV }}" == "dev" || "${{ env.AB2D_ENV }}" == "test" ]]; then
+            echo "aws_account=${{ secrets.NON_PROD_ACCOUNT }}" >> $GITHUB_OUTPUT
+          else
+            echo "aws_account=${{ secrets.PROD_ACCOUNT }}" >> $GITHUB_OUTPUT
+          fi
+          echo "AWS Account for ${{ env.AB2D_ENV }}: $(echo '${{ secrets.NON_PROD_ACCOUNT }}' | head -c 4)****"
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
         with:
           aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.AB2D_ENV }}-github-actions
+          role-to-assume: arn:aws:iam::${{ steps.aws_config.outputs.aws_account }}:role/delegatedadmin/developer/ab2d-${{ env.AB2D_ENV }}-github-actions
 
       - name: Checkout Code
         uses: actions/checkout@v4
