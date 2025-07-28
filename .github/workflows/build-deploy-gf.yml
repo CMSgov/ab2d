@@ -143,6 +143,7 @@ jobs:
           aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_DOMAIN
           ECR_URI="$ECR_DOMAIN/$ECR_REPO"
           docker build -t "$ECR_URI:$IMAGE_TAG" .
+          docker build -t "$ECR_URI:ab2d-${{ inputs.module }}-latest" .
           docker push "$ECR_URI:$IMAGE_TAG"
           docker push "$ECR_URI:ab2d-${{ inputs.module }}-latest"
           echo "Published **$ECR_URI:$IMAGE_TAG**, $ECR_URI:ab2d-${{ inputs.module }}-latest" >> $GITHUB_STEP_SUMMARY
