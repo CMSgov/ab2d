@@ -1,18 +1,7 @@
 name: promote-gf
-run-name: promote-gf ${{ inputs.module }} ${{ inputs.environment }}
+run-name: promote-gf ${{ inputs.module }} ${{ inputs.environment }} ${{ inputs.image_tag }}
 
 on:
-  push:
-    branches:
-      - ab2d-6750
-  workflow_call:
-    inputs:
-      environment:
-        required: true
-        type: string
-      module:
-        required: true
-        type: string
   workflow_dispatch:
     inputs:
       environment:
@@ -29,6 +18,10 @@ on:
         options:
           - api
           - worker
+      image_tag:
+        description: Image tag to promote (e.g., ab2d-api-xxxxxxxx)
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -41,35 +34,36 @@ jobs:
       AWS_ACCOUNT: ${{ secrets.PROD_ACCOUNT }}
       AB2D_ENV: ${{ inputs.environment }}
       MODULE: ${{ inputs.module }}
+      IMAGE_TAG: ${{ inputs.image_tag }}
     steps:
       - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
-      - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.AB2D_ENV }}-github-actions
 
-      - name: Set environment variables
-        run: |
-          echo "TAG_PREFIX=ab2d-${AB2D_MODULE}" >> $GITHUB_ENV
-      - name: Retag images in ECR
+      - name: Retag ECR Image
         env:
           ECR_REPO_DOMAIN: ${{ env.AWS_ACCOUNT }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com
           ECR_REPO: ab2d-${{ env.MODULE }}
+          CONTENT_TYPE: application/vnd.docker.distribution.manifest.v2+json
         run: |
-          SHA_SHORT="$(git rev-parse --short HEAD)"
-          TOKEN="$(aws ecr get-authorization-token --output text --query 'authorizationData[].authorizationToken')"
-          CONTENT_TYPE="application/vnd.docker.distribution.manifest.v2+json"
-          echo "Getting the manifest of the image tagged main-$SHA_SHORT"
-          MANIFEST="$(curl -sS -H "Authorization: Basic $TOKEN" -H "Accept: $CONTENT_TYPE" "https://$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/ab2d-${{ inputs.module }}-$SHA_SHORT"
-          echo "MANIFEST=$MANIFEST"
-    
-         echo "Getting the manifest of the image tagged main-$SHA_SHORT"
-         MANIFEST="$(curl -sS -H "Authorization: Basic $TOKEN" -H "Accept: $CONTENT_TYPE" "https://$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/ab2d-${{ inputs.module }}-$SHA_SHORT"
+          TOKEN=$(aws ecr get-authorization-token --output text --query 'authorizationData[].authorizationToken')
+          AUTH_HEADER="Authorization: Basic $TOKEN"
+          
+          echo "Fetching manifest for image: $IMAGE_TAG"
+          MANIFEST=$(curl -sSL -H "$AUTH_HEADER" -H "Accept: $CONTENT_TYPE" \
+            https://$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/$IMAGE_TAG)
 
-         SHA_TAG="ab2d-$AB2D_ENV-$SHA_SHORT"
-         echo "Adding the $SHA_TAG tag to main-$SHA_SHORT image"
-         curl -sS -X PUT -H "Authorization: Basic $TOKEN" -H "Content-Type: $CONTENT_TYPE" -d "$MANIFEST" "https://$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/$SHA_TAG"
+          if [ -z "$MANIFEST" ]; then
+            echo "Error: Unable to fetch manifest for image tag $IMAGE_TAG"
+            exit 1
+          fi
 
-         LATEST_TAG="ab2d-$AB2D_ENV-latest"
-         echo "Adding the $LATEST_TAG tag to main-$SHA_SHORT image"
-         curl -sS -X PUT -H "Authorization: Basic $TOKEN" -H "Content-Type: $CONTENT_TYPE" -d "$MANIFEST" "https://$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/$LATEST_TAG"
+          LATEST_TAG="ab2d-${AB2D_ENV}-latest"
+          echo "Promoting $IMAGE_TAG to $LATEST_TAG"
+
+          curl -sSL -X PUT -H "$AUTH_HEADER" -H "Content-Type: $CONTENT_TYPE" \
+            -d "$MANIFEST" \
+            https://$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/$LATEST_TAG
+
+          echo "Successfully tagged $LATEST_TAG"

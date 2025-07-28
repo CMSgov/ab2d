@@ -30,17 +30,12 @@ on:
         description: AB2D module
         required: true
         type: choice
-        options:
-          - api
-          - worker
-          - core
+        options: [api, worker, core]
       environment:
         description: AB2D environment for deployment (leave empty for build-only)
         required: false
         type: choice
-        options:
-          - dev
-          - test
+        options: [dev, test]
       image_tag:
         description: ECR image tag for selected module (ab2d-<module>-<SHA>) - skip build if provided
         required: false
@@ -59,7 +54,7 @@ env:
   AWS_REGION: ${{ vars.AWS_REGION }}
 
 jobs:
-  # Determine what actions to take
+  # Determine actions to take
   setup:
     runs-on: ubuntu-latest
     outputs:
@@ -146,7 +141,7 @@ jobs:
           docker build -t "$ECR_URI:ab2d-${{ inputs.module }}-latest" .
           docker push "$ECR_URI:$IMAGE_TAG"
           docker push "$ECR_URI:ab2d-${{ inputs.module }}-latest"
-          echo "Published **$ECR_URI:$IMAGE_TAG**, $ECR_URI:ab2d-${{ inputs.module }}-latest" >> $GITHUB_STEP_SUMMARY
+          echo "Published $ECR_URI:$IMAGE_TAG, $ECR_URI:ab2d-${{ inputs.module }}-latest" >> $GITHUB_STEP_SUMMARY
 
   # Deploy job - only runs when needed
   deploy:
@@ -172,7 +167,7 @@ jobs:
           else
             echo "aws_account=${{ secrets.PROD_ACCOUNT }}" >> $GITHUB_OUTPUT
           fi
-          echo "AWS Account for ${{ env.AB2D_ENV }}: $(echo '${{ secrets.NON_PROD_ACCOUNT }}' | head -c 4)****"
+          echo "AWS Account for ${{ env.AB2D_ENV }}: $(echo '${{ secrets.NON_PROD_ACCOUNT }}' | head -c 4)"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
@@ -210,29 +205,16 @@ jobs:
               ;;
           esac
 
-      - name: Tofu plan and apply
-        working-directory: ${{ steps.module_vars.outputs.working_dir }}
+      - name: Terraform Plan & Apply
+        working-directory: ${{ steps.module_info.outputs.working_dir }}
         run: |
-          # Initialize Tofu
           tofu init -var=parent_env=$AB2D_ENV -reconfigure
-          
-          # Select or create workspace
           tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
-          
-          # Plan with module-specific variables
-          tofu plan ${{ steps.module_vars.outputs.plan_vars }} -out=tfplan
-          
-          # Apply the plan
+          tofu plan ${{ steps.module_info.outputs.plan_vars }} -out=tfplan
           tofu apply -input=false tfplan
-          
-          # Add to step summary
-          if [[ "${{ env.MODULE }}" == "core" ]]; then
-            echo "Deployed **${{ env.MODULE }}** to **$AB2D_ENV**" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "Deployed **${{ env.MODULE }}** with image tag **$IMAGE_TAG** to **$AB2D_ENV**" >> $GITHUB_STEP_SUMMARY
-          fi
+          echo "Deployed $MODULE to $AB2D_ENV with tag $IMAGE_TAG" >> $GITHUB_STEP_SUMMARY
 
-  # Summary job to provide overall status
+  # Provide overall status
   summary:
     runs-on: ubuntu-latest
     needs: [setup, build, deploy]
@@ -240,9 +222,9 @@ jobs:
     steps:
       - name: Workflow Summary
         run: |
-          echo "## Workflow Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- **Module**: ${{ inputs.module }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Build**: ${{ needs.setup.outputs.should_build == 'true' && (needs.build.result || 'skipped') || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Deploy**: ${{ needs.setup.outputs.should_deploy == 'true' && (needs.deploy.result || 'skipped') || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Environment**: ${{ needs.setup.outputs.environment || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Image Tag**: ${{ needs.setup.outputs.image_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "Workflow Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- Module: ${{ inputs.module }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Build: ${{ needs.setup.outputs.should_build == 'true' && (needs.build.result || 'skipped') || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Deploy : ${{ needs.setup.outputs.should_deploy == 'true' && (needs.deploy.result || 'skipped') || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Environment : ${{ needs.setup.outputs.environment || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Image Tag : ${{ needs.setup.outputs.image_tag }}" >> $GITHUB_STEP_SUMMARY
