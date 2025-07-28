@@ -1,0 +1,246 @@
+name: build-deploy-gf
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('build-deploy-gf {0} {1} {2}', inputs.module, inputs.environment || 'build-only', inputs.skip_build && 'deploy-only' || 'build-and-deploy') || format('build-deploy-gf {0} auto', inputs.module) }}
+
+on:
+  push:
+    branches:
+      -ab2d-6750
+  workflow_call:
+    inputs:
+      module:
+        required: true
+        type: string
+      environment:
+        required: false
+        type: string
+      image_tag:
+        description: ECR image tag for selected module (skip build if provided)
+        type: string
+      skip_build:
+        description: Skip build step and only deploy
+        type: boolean
+        default: false
+      skip_deploy:
+        description: Skip deploy step and only build
+        type: boolean
+        default: false
+  workflow_dispatch:
+    inputs:
+      module:
+        description: AB2D module
+        required: true
+        type: choice
+        options:
+          - api
+          - worker
+          - core
+      environment:
+        description: AB2D environment for deployment (leave empty for build-only)
+        required: false
+        type: choice
+        options:
+          - dev
+          - test
+      image_tag:
+        description: ECR image tag for selected module (ab2d-<module>-<branch>-<SHA>) - skip build if provided
+        required: false
+        type: string
+      skip_build:
+        description: Skip build step and only deploy
+        type: boolean
+        default: false
+      skip_deploy:
+        description: Skip deploy step and only build
+        type: boolean
+        default: false
+
+env:
+  TOFU_VERSION: 1.10.0-beta2
+  AWS_REGION: ${{ vars.AWS_REGION }}
+
+jobs:
+  # Determine what actions to take
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      should_build: ${{ steps.logic.outputs.should_build }}
+      should_deploy: ${{ steps.logic.outputs.should_deploy }}
+      image_tag: ${{ steps.logic.outputs.image_tag }}
+      aws_account: ${{ steps.logic.outputs.aws_account }}
+      environment: ${{ steps.logic.outputs.environment }}
+    steps:
+      - name: Determine workflow logic
+        id: logic
+        run: |
+          # Determine if we should build
+          if [[ "${{ inputs.skip_build }}" == "true" || -n "${{ inputs.image_tag }}" ]]; then
+            echo "should_build=false" >> $GITHUB_OUTPUT
+            echo "image_tag=${{ inputs.image_tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "should_build=true" >> $GITHUB_OUTPUT
+            # Generate image tag for build
+            SHA_SHORT=$(echo "${{ github.sha }}" | cut -c1-7)
+            BRANCH_NAME_FORMATTED=$(echo "${{ github.ref_name }}" | sed 's/\//-/g')
+            TAG="ab2d-${{ inputs.module }}-$BRANCH_NAME_FORMATTED-$SHA_SHORT"
+            echo "image_tag=$TAG" >> $GITHUB_OUTPUT
+          fi
+          
+          # Determine if we should deploy
+          if [[ "${{ inputs.skip_deploy }}" == "true" || -z "${{ inputs.environment }}" ]]; then
+            echo "should_deploy=false" >> $GITHUB_OUTPUT
+            echo "environment=" >> $GITHUB_OUTPUT
+            echo "aws_account=" >> $GITHUB_OUTPUT
+          else
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+            echo "environment=${{ inputs.environment }}" >> $GITHUB_OUTPUT
+            # Determine AWS account based on environment
+            if [[ "${{ inputs.environment }}" == "dev" || "${{ inputs.environment }}" == "test" ]]; then
+              echo "aws_account=${{ secrets.NON_PROD_ACCOUNT }}" >> $GITHUB_OUTPUT
+            else
+              echo "aws_account=${{ secrets.PROD_ACCOUNT }}" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+  # Build job - only runs when needed
+  build:
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    needs: setup
+    if: needs.setup.outputs.should_build == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
+      MODULE: ${{ inputs.module }}
+      ECR_REPO: ab2d-${{ inputs.module }}
+      TAG_PREFIX: ab2d-${{ inputs.module }}
+      IMAGE_TAG: ${{ needs.setup.outputs.image_tag }}
+    outputs:
+      image_tag: ${{ needs.setup.outputs.image_tag }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-test-github-actions
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: maven
+
+      - name: Set env vars from AWS params in BCDA management account
+        uses: cmsgov/cdap/actions/aws-params-env-action@main
+        with:
+          params: |
+            ARTIFACTORY_URL=/artifactory/url
+            ARTIFACTORY_USER=/artifactory/user
+            ARTIFACTORY_PASSWORD=/artifactory/password
+
+      - name: Build package
+        run: mvn -U clean package -s settings.xml -Dcheckstyle.skip -DskipTests -Dusername="${ARTIFACTORY_USER}" -Dpassword="${ARTIFACTORY_PASSWORD}" -Drepository_url="${ARTIFACTORY_URL}"
+
+      - name: Build image and push to ECR
+        working-directory: ./${{ env.MODULE }}
+        run: |
+          ECR_DOMAIN="$AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com"
+          aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_DOMAIN
+          ECR_URI="$ECR_DOMAIN/$ECR_REPO"
+          docker build -t "$ECR_URI:$IMAGE_TAG" .
+          docker push "$ECR_URI:$IMAGE_TAG"
+          echo "Published **$ECR_URI:$IMAGE_TAG**" >> $GITHUB_STEP_SUMMARY
+
+  # Deploy job - only runs when needed
+  deploy:
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    needs: [setup, build]
+    if: |
+      always() && 
+      needs.setup.outputs.should_deploy == 'true' && 
+      (needs.setup.outputs.should_build == 'false' || needs.build.result == 'success')
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_ACCOUNT: ${{ needs.setup.outputs.aws_account }}
+      AB2D_ENV: ${{ needs.setup.outputs.environment }}
+      MODULE: ${{ inputs.module }}
+      IMAGE_TAG: ${{ needs.setup.outputs.should_build == 'true' && needs.build.outputs.image_tag || needs.setup.outputs.image_tag }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.AB2D_ENV }}-github-actions
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install tofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: ${{ env.TOFU_VERSION }}
+
+      - name: Set module-specific variables
+        id: module_vars
+        run: |
+          case "${{ env.MODULE }}" in
+            worker)
+              echo "working_dir=ops/services/30-worker/" >> $GITHUB_OUTPUT
+              echo "plan_vars=-var=worker_service_image_tag=\"$IMAGE_TAG\"" >> $GITHUB_OUTPUT
+              ;;
+            api)
+              echo "working_dir=ops/services/30-api/" >> $GITHUB_OUTPUT
+              echo "plan_vars=-var=api_service_image_tag=\"$IMAGE_TAG\"" >> $GITHUB_OUTPUT
+              ;;
+            core)
+              echo "working_dir=ops/services/10-core/" >> $GITHUB_OUTPUT
+              echo "plan_vars=" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "Error: Unknown module ${{ env.MODULE }}"
+              exit 1
+              ;;
+          esac
+
+      - name: Tofu plan and apply
+        working-directory: ${{ steps.module_vars.outputs.working_dir }}
+        run: |
+          # Initialize Tofu
+          tofu init -var=parent_env=$AB2D_ENV -reconfigure
+          
+          # Select or create workspace
+          tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
+          
+          # Plan with module-specific variables
+          tofu plan ${{ steps.module_vars.outputs.plan_vars }} -out=tfplan
+          
+          # Apply the plan
+          tofu apply -input=false tfplan
+          
+          # Add to step summary
+          if [[ "${{ env.MODULE }}" == "core" ]]; then
+            echo "Deployed **${{ env.MODULE }}** to **$AB2D_ENV**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Deployed **${{ env.MODULE }}** with image tag **$IMAGE_TAG** to **$AB2D_ENV**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # Summary job to provide overall status
+  summary:
+    runs-on: ubuntu-latest
+    needs: [setup, build, deploy]
+    if: always()
+    steps:
+      - name: Workflow Summary
+        run: |
+          echo "## Workflow Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Module**: ${{ inputs.module }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build**: ${{ needs.setup.outputs.should_build == 'true' && (needs.build.result || 'skipped') || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deploy**: ${{ needs.setup.outputs.should_deploy == 'true' && (needs.deploy.result || 'skipped') || 'skipped' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: ${{ needs.setup.outputs.environment || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image Tag**: ${{ needs.setup.outputs.image_tag }}" >> $GITHUB_STEP_SUMMARY
