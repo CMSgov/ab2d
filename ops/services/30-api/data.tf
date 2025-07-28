@@ -41,5 +41,6 @@ data "aws_sns_topic" "cloudwatch_alarms" {
 
 data "aws_ssm_parameter" "splunk_oncall_email" {
   count = var.parent_env == "prod" || var.parent_env == "sandbox" ? 1 : 0
-  name  = "/ab2d/splunk_oncall/alerting/email"
+
+  name = var.parent_env == "prod" ? "/ab2d/prod/common/splunk/sensitive/alert_email" : "/ab2d/sandbox/common/splunk/sensitive/alert_email"
 }
