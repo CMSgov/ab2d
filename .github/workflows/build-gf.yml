@@ -62,6 +62,8 @@ jobs:
           SHA_SHORT=$(git rev-parse --short HEAD)
           aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_DOMAIN
           ECR_URI="$ECR_DOMAIN/$ECR_REPO"
-          TAG_SHORT="$TAG_PREFIX-${GITHUB_REF_NAME//\//-}-$SHA_SHORT"
+          BRANCH_NAME_FORMATTED=${GITHUB_REF_NAME//\//-}
+          echo "$BRANCH_NAME_FORMATTED"
+          TAG_SHORT="$TAG_PREFIX-$BRANCH_NAME_FORMATTED-$SHA_SHORT"
           docker push "$ECR_URI" --all-tags
           echo "Published **$ECR_URI:$TAG_SHORT**" >> $GITHUB_STEP_SUMMARY
