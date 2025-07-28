@@ -106,3 +106,9 @@ properties/jacoco/**
 Deploy/website-temp
 ### Snyk CLI
 .dccache
+# Ignore the unencrypted secret
+secrets/splunk_oncall_email_prod.yml
+
+# Allow encrypted files to be tracked
+!secrets/*.enc.yml
+
