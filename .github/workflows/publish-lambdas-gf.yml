@@ -77,7 +77,7 @@ jobs:
 
       - name: SonarQube Analysis
         run: |
-         ./gradlew sonarqube -Dsonar.projectKey=ab2d-lambdas -Dsonar.host.url=https://sonarqube.cloud.cms.gov
+         ./gradlew sonarqube -Dsonar.ci.autoconfig.disabled=true -Dsonar.projectKey=ab2d-lambdas -Dsonar.host.url=https://sonarqube.cloud.cms.gov 
 
       - name: Quality Gate
         run: |
