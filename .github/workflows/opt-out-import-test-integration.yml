@@ -15,9 +15,9 @@ concurrency:
 jobs:
   # Deploy first if triggered by push
   deploy:
-    permissions:
-      contents: read
-      id-token: write
+#    permissions:
+#      contents: read
+#      id-token: write
     if: ${{ github.event_name == 'push' }}
     uses: ./.github/workflows/opt-out-import-deploy-gf.yml
     secrets: inherit
