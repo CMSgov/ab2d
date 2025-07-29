@@ -2,6 +2,9 @@
 name: publish-lambdas-gf
 
 on:
+  push:
+    branches:
+      - move-lambdas
   workflow_call:
     outputs:
       build_version:
