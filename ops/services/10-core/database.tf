@@ -9,6 +9,10 @@ module "db" {
   platform                = module.platform
   username                = local.database_user
 
+  instance_count = lookup({
+    prod = "2"
+  }, local.parent_env, "1")
+
   instance_class = lookup({
     prod = "db.r8g.2xlarge"
   }, local.parent_env, "db.r8g.large")
