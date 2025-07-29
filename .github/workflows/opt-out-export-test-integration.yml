@@ -1,11 +1,11 @@
-# TODO this workflow is incomplete -- need to add events.json
+# TODO this workflow is incomplete -- need to add events.json then uncomment 'on push' logic below
 name: opt-out-export integration tests
 
 on:
-  push:
-    paths:
-      - .github/workflows/opt-out-export-test-integration.yml
-      - lambdas/attribution-data-file-share/**
+#  push:
+#    paths:
+#      - .github/workflows/opt-out-export-test-integration.yml
+#      - lambdas/attribution-data-file-share/**
   workflow_dispatch:
 
 # Ensure we only have one integration test running at a time
