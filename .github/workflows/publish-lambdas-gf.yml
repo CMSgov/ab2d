@@ -89,7 +89,6 @@ jobs:
 
       - name: Publish Lambdas
         id: publish_lambdas
-        working-directory: ./lambdas/
         run: |
           echo "Checking for unpublished artifacts..."
           DEPLOY_SCRIPT=""
