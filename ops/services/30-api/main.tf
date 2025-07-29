@@ -251,7 +251,17 @@ resource "aws_ecs_task_definition" "api" {
       {
         containerPath : local.ab2d_efs_mount,
         sourceVolume : "efs"
-      }
+      },
+      {
+        "containerPath": "/tmp",
+        "sourceVolume": "tmp",
+        "readOnly": false
+      },
+      {
+        "containerPath": "/newrelic/logs",
+        "sourceVolume": "newrelic_logs",
+        "readOnly": false
+      }      
     ],
     secrets : [
       { name : "AB2D_DB_DATABASE", valueFrom : local.db_name_arn },

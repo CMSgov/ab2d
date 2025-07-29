@@ -58,7 +58,26 @@ resource "aws_ecs_task_definition" "contracts" {
       }
     },
     healthCheck : null
+    mountPoints = [
+    {
+      "containerPath": "/tmp",
+      "sourceVolume": "tmp",
+      "readOnly": false
+    },
+    {
+      "containerPath": "/newrelic/logs",
+      "sourceVolume": "newrelic_logs",
+      "readOnly": false
+    }
+      ]
   }]))
+   # The NewRelic agent needs to these
+  volume {
+    name = "tmp"
+  }
+  volume {
+    name = "newrelic_logs"
+  }
 }
 
 resource "aws_ecs_service" "contracts" {
