@@ -1,5 +1,4 @@
-# TODO validate in greenfield
-# TODO revert on push paths
+# TODO
 name: opt-out-export integration tests
 
 on:
@@ -25,6 +24,7 @@ jobs:
       environment: test
     secrets: inherit
 
+
   trigger:
     if: ${{ always() }}
     needs: deploy
@@ -38,6 +38,9 @@ jobs:
       run:
         working-directory: ./lambdas/attribution-data-file-share
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
       - uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-region: ${{ vars.AWS_REGION }}
