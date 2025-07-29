@@ -304,6 +304,12 @@ resource "aws_ecs_task_definition" "api" {
     },
     healthCheck : null
   }]))
+  volume {
+    name = "tmp"
+  }
+  volume {
+    name = "newrelic_logs"
+  }
 }
 
 resource "aws_ecs_service" "api" {
