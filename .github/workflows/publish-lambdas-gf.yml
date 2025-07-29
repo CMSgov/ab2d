@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 env:
-  JDK_JAVA_OPTIONS: --add-opens java.base/java.util=ALL-UNNAMED
+  JDK_JAVA_OPTIONS: "--add-opens java.base/java.util=ALL-UNNAMED"
 
 jobs:
   publish:
