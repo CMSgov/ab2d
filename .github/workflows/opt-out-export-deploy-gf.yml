@@ -15,9 +15,7 @@ on:
         required: true
         type: choice
         options:
-          - dev
           - test
-          - sandbox
           - prod
         default: test
 
