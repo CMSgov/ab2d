@@ -2,6 +2,7 @@
 name: opt-out-import test integration
 
 on:
+  push:
     paths:
       - .github/workflows/opt-out-import-test-integration.yml
       - optout/**
