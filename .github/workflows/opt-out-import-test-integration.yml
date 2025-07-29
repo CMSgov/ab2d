@@ -1,4 +1,4 @@
-# TODO update for greenfield
+# TODO validate in greenfield
 name: opt-out-import test integration
 
 on:
@@ -16,8 +16,10 @@ jobs:
   # Deploy first if triggered by push
   deploy:
     if: ${{ github.event_name == 'push' }}
-    uses: ./.github/workflows/opt-out-import-test-deploy.yml
+    uses: ./.github/workflows/opt-out-import-deploy-gf.yml
     secrets: inherit
+    with:
+      environment: test
 
   trigger:
     if: ${{ always() }}

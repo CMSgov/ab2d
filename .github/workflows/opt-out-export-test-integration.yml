@@ -1,4 +1,4 @@
-# TODO update for greenfield
+# TODO validate in greenfield
 name: opt-out-export integration tests
 
 on:
@@ -16,7 +16,9 @@ jobs:
   # Deploy first if triggered by push
   deploy:
     if: ${{ github.event_name == 'push' }}
-    uses: ./.github/workflows/opt-out-export-test-deploy.yml
+    uses: ./.github/workflows/opt-out-export-deploy-gf.yml
+    with:
+      environment: test
     secrets: inherit
 
   trigger:
@@ -25,17 +27,17 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    runs-on: ubuntu-latest
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     env: 
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
     defaults:
       run:
-        working-directory: ./attribution-data-file-share
+        working-directory: ./lambdas/attribution-data-file-share
     steps:
       - uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ secrets.TEST_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-test-github-actions
+          role-to-assume: arn:aws:iam::${{ secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-test-github-actions
       - name: Send event to trigger export lambda function
         run: |
           aws events put-events --entries file://test/events.json # TODO Add events.json matching rule for lambda trigger
