@@ -24,7 +24,6 @@ jobs:
       environment: test
     secrets: inherit
 
-
   trigger:
     if: ${{ always() }}
     needs: deploy
