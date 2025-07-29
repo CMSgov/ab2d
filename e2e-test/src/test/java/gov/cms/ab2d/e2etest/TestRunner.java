@@ -27,11 +27,14 @@ import java.util.*;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 import javax.crypto.SecretKey;
+import javax.net.ssl.HttpsURLConnection;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -71,6 +74,13 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 @Slf4j
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class TestRunner {
+
+    static {
+        HttpsURLConnection.setDefaultHostnameVerifier(SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+
+        Properties props = System.getProperties();
+        props.setProperty("jdk.internal.httpclient.disableHostnameVerification", Boolean.TRUE.toString());
+    }
 
     private static final Logger apiLogger = LoggerFactory.getLogger("gov.cms.ab2d.api");
     private static final Logger workerLogger = LoggerFactory.getLogger("gov.cms.ab2d.worker");
@@ -203,7 +213,12 @@ class TestRunner {
         InputStream inputStream = new FileInputStream("src/test/resources/" + environment.getConfigName());
         yamlMap = yaml.load(inputStream);
         String oktaUrl = yamlMap.get("okta-url");
-        baseUrl = yamlMap.get("base-url");
+
+        baseUrl = System.getenv("API_BASE_URL");
+        if (baseUrl == null || baseUrl.isBlank()) {
+            baseUrl = yamlMap.get("base-url");
+        }
+        log.info("Configured API base URL: {}", baseUrl);
 
         // With a local url add the API port to the domain name (localhost)
         if (environment == Environment.CI || environment == Environment.LOCAL) {

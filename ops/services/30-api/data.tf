@@ -1,28 +1,9 @@
-data "aws_ami" "ab2d" {
-  most_recent = true
-  owners      = ["self"]
-  filter {
-    name   = "tag:Name"
-    values = ["ab2d-*-ami"]
-  }
-}
-
-data "aws_ami" "cms" {
-  most_recent = true
-  owners      = [local.aws_account_cms_gold_images]
-  filter {
-    name   = "name"
-    values = ["al2023-*"]
-  }
-}
-
 data "aws_sqs_queue" "events" {
-  name = "${local.service_prefix}-events-sqs" #FIXME just use -events
+  name = "${local.service_prefix}-events"
 }
 
 data "aws_security_group" "efs" {
-  #TODO Expand the filtering criteria to support ephemeral environments in the future
-  name   = "${local.service_prefix}-efs-sg" #FIXME just use -efs
+  name   = "ab2d-${local.parent_env}-efs"
   vpc_id = local.vpc_id
 }
 
@@ -31,13 +12,21 @@ data "aws_security_group" "api" {
 }
 
 data "aws_efs_file_system" "this" {
-  tags = {
-    Name = "${local.service_prefix}-efs"
-  }
+  file_system_id = module.platform.ssm.core.efs_file_system_id.value
+}
+
+data "aws_efs_access_point" "this" {
+  access_point_id = module.platform.ssm.core.efs_access_point_id.value
 }
 
 data "aws_db_instance" "this" {
+  count                  = contains(["prod"], local.parent_env) ? 1 : 0
   db_instance_identifier = local.service_prefix
+}
+
+data "aws_rds_cluster" "this" {
+  count              = contains(["dev", "test", "sandbox"], local.parent_env) ? 1 : 0
+  cluster_identifier = local.service_prefix
 }
 
 data "aws_ecr_image" "api" {

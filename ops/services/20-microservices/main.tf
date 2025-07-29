@@ -8,7 +8,7 @@ terraform {
 }
 
 module "platform" {
-  source    = "git::https://github.com/CMSgov/ab2d-bcda-dpc-platform.git//terraform/modules/platform?ref=PLT-1099"
+  source    = "git::https://github.com/CMSgov/cdap.git//terraform/modules/platform?ref=PLT-1099"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app          = local.app
@@ -24,8 +24,8 @@ locals {
   service      = "microservices"
 
   ssm_root_map = {
-    common = "/ab2d/${local.parent_env}/common"
-    core   = "/ab2d/${local.parent_env}/core"
+    common = "/ab2d/${local.env}/common"
+    core   = "/ab2d/${local.env}/core"
   }
 
   benv = lookup({
@@ -33,9 +33,9 @@ locals {
     "test"    = "ab2d-east-impl"
     "prod"    = "ab2d-east-prod"
     "sandbox" = "ab2d-sbx-sandbox"
-  }, local.env, local.env)
+  }, local.parent_env, local.parent_env)
 
-  ab2d_db_host               = data.aws_db_instance.this.address
+  ab2d_db_host               = contains(["dev", "test", "sandbox"], local.parent_env) ? data.aws_rds_cluster.this[0].endpoint : data.aws_db_instance.this[0].address
   aws_account_number         = module.platform.account_id
   aws_region                 = module.platform.primary_region.name
   db_database_arn            = module.platform.ssm.core.database_name.arn
@@ -43,7 +43,7 @@ locals {
   db_user_arn                = module.platform.ssm.core.database_user.arn
   events_sqs_url             = data.aws_sqs_queue.events.url
   kms_master_key_id          = nonsensitive(module.platform.kms_alias_primary.target_key_arn)
-  network_access_logs_bucket = module.platform.ssm.core.network-access-logs-bucket-name.value
+  network_access_logs_bucket = module.platform.network_access_logs_bucket
   properties_service_url     = "http://${aws_lb.internal_lb.dns_name}"
   vpc_id                     = module.platform.vpc_id
 }
@@ -133,13 +133,12 @@ resource "aws_lb" "internal_lb" {
   security_groups    = [aws_security_group.internal_lb.id]
   subnets            = keys(module.platform.private_subnets)
 
-  enable_deletion_protection       = true
+  enable_deletion_protection       = !module.platform.is_ephemeral_env
   enable_cross_zone_load_balancing = true
   drop_invalid_header_fields       = true
 
   access_logs {
     bucket  = local.network_access_logs_bucket
-    prefix  = "${local.service_prefix}-${local.service}"
     enabled = true
   }
 }

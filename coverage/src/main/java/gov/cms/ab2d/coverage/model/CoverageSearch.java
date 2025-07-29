@@ -14,7 +14,7 @@ public class CoverageSearch {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "coverage_search_seq")
-    @SequenceGenerator(name = "coverage_search_seq", sequenceName = "public.coverage_search_seq", allocationSize = 1)
+    @SequenceGenerator(name = "coverage_search_seq", sequenceName = "coverage_search_seq", allocationSize = 1)
     @EqualsAndHashCode.Include
     private Long id;
 

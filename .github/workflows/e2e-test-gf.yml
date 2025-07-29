@@ -18,6 +18,10 @@ on:
           - test
           - sandbox
         default: test
+      api_base_url:
+        description: Overrides the 'base-url' property for testing in ephemeral environments
+        required: false
+        type: string
 
 concurrency:
   group: ${{ inputs.environment }}-e2e-test
@@ -29,7 +33,6 @@ jobs:
       id-token: write
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     env:
-      AB2D_BFD_KEYSTORE_LOCATION: "${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
       AB2D_V2_ENABLED: 'true'
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
       AWS_ACCOUNT: ${{ inputs.environment == 'sandbox' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
@@ -52,7 +55,7 @@ jobs:
           java-version: '17'
 
       - name: Set env vars from AWS params
-        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+        uses: cmsgov/cdap/actions/aws-params-env-action@main
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:
@@ -61,39 +64,14 @@ jobs:
             ARTIFACTORY_USER=/artifactory/user
             ARTIFACTORY_PASSWORD=/artifactory/password
             AB2D_BFD_KEYSTORE_PASSWORD=/ab2d/${{ env.AB2D_ENV }}/worker/sensitive/bfd_keystore_password
-            OKTA_CLIENT_ID=/ab2d/${{ env.AB2D_ENV }}/okta/sensitive/test-pdp-100-id
-            OKTA_CLIENT_PASSWORD=/ab2d/${{ env.AB2D_ENV }}/okta/sensitive/test-pdp-100-secret
-            SECONDARY_USER_OKTA_CLIENT_ID=/ab2d/${{ env.AB2D_ENV }}/okta/sensitive/test-pdp-1000-id
-            SECONDARY_USER_OKTA_CLIENT_PASSWORD=/ab2d/${{ env.AB2D_ENV }}/okta/sensitive/test-pdp-1000-secret
-
-      - name: Create opt/ab2d directory and download keystore
-
-        run: |
-          mkdir -p opt/ab2d
-          
-          MAIN_BUCKET=$(aws ssm get-parameter \
-            --name "/ab2d/${{ env.AB2D_ENV }}/core/nonsensitive/main-bucket-name" \
-            --with-decryption \
-            --query 'Parameter.Value' \
-            --output text)
-          
-          if [ ${{ env.AB2D_ENV }} == 'test' ]; then
-            KEYSTORE_FILE_NAME="ab2d_imp_keystore"
-          elif [ ${{ env.AB2D_ENV }} == 'sandbox' ]; then
-            KEYSTORE_FILE_NAME="ab2d_sbx_keystore"
-          else
-            KEYSTORE_FILE_NAME="ab2d_dev_keystore"
-          fi
-
-          aws s3 cp s3://$MAIN_BUCKET/$KEYSTORE_FILE_NAME $AB2D_BFD_KEYSTORE_LOCATION
-          test -f $AB2D_BFD_KEYSTORE_LOCATION && echo "created keystore file"
-
-      - name: Run e2e-bfd-test
-        run: |
-          mvn test -s settings.xml -pl e2e-bfd-test -am -Dtest=EndToEndBfdTests -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress
+            OKTA_CLIENT_ID=/ab2d/mgmt/okta/sensitive/test-pdp-100-id
+            OKTA_CLIENT_PASSWORD=/ab2d/mgmt/okta/sensitive/test-pdp-100-secret
+            SECONDARY_USER_OKTA_CLIENT_ID=/ab2d/mgmt/okta/sensitive/test-pdp-1000-id
+            SECONDARY_USER_OKTA_CLIENT_PASSWORD=/ab2d/mgmt/okta/sensitive/test-pdp-1000-secret
 
       - name: Run e2e-test
         env:
-         E2E_ENVIRONMENT: ${{ inputs.environment == 'dev' && 'DEV' || inputs.environment == 'test' && 'IMPL' || inputs.environment == 'sandbox' && 'SANDBOX' }}
+         E2E_ENVIRONMENT: ${{ inputs.environment == 'dev' && 'DEV' || inputs.environment == 'test' && 'IMPL' || inputs.environment == 'sandbox' && 'SBX' }}
+         API_BASE_URL: ${{ inputs.api_base_url }}
         run: |
           mvn test -s settings.xml -pl e2e-test -am -Dtest=TestRunner -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress

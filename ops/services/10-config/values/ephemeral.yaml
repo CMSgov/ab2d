@@ -1,0 +1,21 @@
+copy:
+  - /ab2d/${env}/common/sensitive/new_relic_license_key
+  - /ab2d/${env}/common/sensitive/slack_alert_webhooks
+  - /ab2d/${env}/common/sensitive/slack_trace_webhooks
+  - /ab2d/${env}/core/nonsensitive/database_name
+  - /ab2d/${env}/core/nonsensitive/keystore_location
+  - /ab2d/${env}/core/sensitive/database_password
+  - /ab2d/${env}/core/sensitive/database_user
+  - /ab2d/${env}/core/sensitive/hicn_hash_iter
+  - /ab2d/${env}/core/sensitive/hpms_api_params
+  - /ab2d/${env}/core/sensitive/hpms_auth_key_id
+  - /ab2d/${env}/core/sensitive/hpms_auth_key_secret
+  - /ab2d/${env}/core/sensitive/hpms_url
+  - /ab2d/${env}/core/sensitive/keystore_password
+  - /ab2d/${env}/core/sensitive/okta_jwt_issuer
+  - /ab2d/${env}/worker/nonsensitive/bfd_keystore_location
+  - /ab2d/${env}/worker/sensitive/bfd_keystore_password
+  - /ab2d/${env}/api/sensitive/tls_private_key
+  - /ab2d/${env}/api/nonsensitive/tls_public_cert
+values:
+  /ab2d/${env}/common/nonsensitive/new_relic_app_name: "AB2D_${env}"

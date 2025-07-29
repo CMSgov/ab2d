@@ -42,7 +42,6 @@ This module is responsible for deploying the EC2-backed ECS cluster that hosts t
 |------|-------------|------|---------|:--------:|
 | <a name="input_api_service_image_tag"></a> [api\_service\_image\_tag](#input\_api\_service\_image\_tag) | Desired image tag for the api service stored in ECR | `string` | `null` | no |
 | <a name="input_force_api_deployment"></a> [force\_api\_deployment](#input\_force\_api\_deployment) | Override to force a api deployment. Api deployments are automatic when `var.api_service_image_tag` is specified. | `bool` | `false` | no |
-| <a name="input_launch_template_block_device_mappings"></a> [launch\_template\_block\_device\_mappings](#input\_launch\_template\_block\_device\_mappings) | ECS Container Host block device map | `map(any)` | <pre>{<br/>  "delete_on_termination": true,<br/>  "device_name": "/dev/xvda",<br/>  "encrypted": true,<br/>  "iops": 3000,<br/>  "throughput": 250,<br/>  "volume_size": 100,<br/>  "volume_type": "gp3"<br/>}</pre> | no |
 | <a name="input_override_task_definition_arn"></a> [override\_task\_definition\_arn](#input\_override\_task\_definition\_arn) | Use to override the task definition managed by this solution | `string` | `null` | no |
 | <a name="input_parent_env"></a> [parent\_env](#input\_parent\_env) | The parent environment of the current solution. Will correspond with `terraform.workspace`".<br/>Necessary on `tofu init` and `tofu workspace select` \_only\_. In all other situations, parent env<br/>will be divined from `terraform.workspace`. | `string` | `null` | no |
 | <a name="input_region"></a> [region](#input\_region) | n/a | `string` | `"us-east-1"` | no |
@@ -57,7 +56,7 @@ This module is responsible for deploying the EC2-backed ECS cluster that hosts t
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_platform"></a> [platform](#module\_platform) | git::https://github.com/CMSgov/ab2d-bcda-dpc-platform.git//terraform/modules/platform | PLT-1099 |
+| <a name="module_platform"></a> [platform](#module\_platform) | git::https://github.com/CMSgov/cdap.git//terraform/modules/platform | PLT-1099 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
@@ -69,11 +68,7 @@ This module is responsible for deploying the EC2-backed ECS cluster that hosts t
 | Name | Type |
 |------|------|
 | [aws_acm_certificate.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/acm_certificate) | resource |
-| [aws_autoscaling_group.asg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/autoscaling_group) | resource |
-| [aws_autoscaling_policy.api_target_tracking_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/autoscaling_policy) | resource |
-| [aws_cloudwatch_metric_alarm.app_cpu_alarm](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
 | [aws_cloudwatch_metric_alarm.app_elb_http_code_elb_4xx_count](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
-| [aws_cloudwatch_metric_alarm.app_status_check_alarm](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
 | [aws_cloudwatch_metric_alarm.health](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
 | [aws_cloudwatch_metric_alarm.healthy_host_count](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
 | [aws_cloudwatch_metric_alarm.http_code_elb_5xx_count](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
@@ -81,8 +76,6 @@ This module is responsible for deploying the EC2-backed ECS cluster that hosts t
 | [aws_ecs_cluster.ab2d_api](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_cluster) | resource |
 | [aws_ecs_service.api](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service) | resource |
 | [aws_ecs_task_definition.api](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_task_definition) | resource |
-| [aws_iam_instance_profile.api_profile](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_instance_profile) | resource |
-| [aws_launch_template.ab2d_api](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/launch_template) | resource |
 | [aws_lb.ab2d_api](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb) | resource |
 | [aws_lb_listener.ab2d_api](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_listener) | resource |
 | [aws_lb_target_group.ab2d_api](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb_target_group) | resource |
@@ -98,13 +91,13 @@ This module is responsible for deploying the EC2-backed ECS cluster that hosts t
 | [aws_security_group_rule.open_access_sandbox](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.pdp](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_sns_topic.api](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic) | resource |
-| [aws_ami.ab2d](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
-| [aws_ami.cms](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
+| [aws_acm_certificate.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/acm_certificate) | data source |
 | [aws_db_instance.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/db_instance) | data source |
-| [aws_default_tags.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/default_tags) | data source |
 | [aws_ecr_image.api](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ecr_image) | data source |
+| [aws_efs_access_point.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/efs_access_point) | data source |
 | [aws_efs_file_system.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/efs_file_system) | data source |
 | [aws_iam_role.api](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_role) | data source |
+| [aws_rds_cluster.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/rds_cluster) | data source |
 | [aws_security_group.api](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group) | data source |
 | [aws_security_group.efs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group) | data source |
 | [aws_sns_topic.cloudwatch_alarms](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/sns_topic) | data source |

@@ -4,7 +4,6 @@ locals {
   contracts_image_tag  = coalesce(var.contracts_service_image_tag, flatten([[for t in data.aws_ecr_image.contracts.image_tags : t if strcontains(t, "latest")], data.aws_ecr_image.contracts.image_tags])[0])
   contracts_image_uri  = "${local.contracts_image_repo}:${local.contracts_image_tag}"
 
-  ab2d_efs_mount           = "/mnt/efs"
   hpms_api_params_arn      = module.platform.ssm.core.hpms_api_params.arn
   hpms_auth_key_id_arn     = module.platform.ssm.core.hpms_auth_key_id.arn
   hpms_auth_key_secret_arn = module.platform.ssm.core.hpms_auth_key_secret.arn
@@ -35,8 +34,7 @@ resource "aws_ecs_task_definition" "contracts" {
     environment : [
       { name : "AB2D_DB_HOST", value : local.ab2d_db_host },
       { name : "AB2D_DB_PORT", value : "5432" },
-      { name : "AB2D_DB_SSL_MODE", value : "allow" },
-      { name : "AB2D_EFS_MOUNT", value : local.ab2d_efs_mount }, #FIXME: Is this even used?
+      { name : "AB2D_DB_SSL_MODE", value : "require" },
       { name : "AB2D_EXECUTION_ENV", value : local.benv },
       { name : "AWS_SQS_URL", value : local.events_sqs_url },
       { name : "IMAGE_VERSION", value : local.contracts_image_tag }, #FIXME: Is this even used?
@@ -51,7 +49,7 @@ resource "aws_ecs_task_definition" "contracts" {
     logConfiguration : {
       logDriver : "awslogs",
       options : {
-        awslogs-group : "/aws/ecs/fargate/${local.service_prefix}/ab2d_contracts",
+        awslogs-group = "/aws/ecs/fargate/${local.service_prefix}/ab2d_contracts",
         awslogs-create-group : "true",
         awslogs-region : local.aws_region,
         awslogs-stream-prefix : local.service_prefix

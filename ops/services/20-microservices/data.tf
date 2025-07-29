@@ -3,7 +3,7 @@ data "aws_sns_topic" "events" {
 }
 
 data "aws_sqs_queue" "events" {
-  name = "${local.service_prefix}-events-sqs" #FIXME just use -events
+  name = "${local.service_prefix}-events"
 }
 
 data "aws_security_group" "api" {
@@ -22,8 +22,15 @@ data "aws_security_group" "lambda" {
 }
 
 data "aws_db_instance" "this" {
+  count                  = contains(["prod"], local.parent_env) ? 1 : 0
   db_instance_identifier = local.service_prefix
 }
+
+data "aws_rds_cluster" "this" {
+  count              = contains(["dev", "test", "sandbox"], local.parent_env) ? 1 : 0
+  cluster_identifier = local.service_prefix
+}
+
 
 data "aws_iam_role" "task_execution_role" {
   name = "${local.service_prefix}-microservices"

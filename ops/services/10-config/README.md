@@ -13,7 +13,9 @@ The _parent environment_ specific configuration values are located in the `value
 -->
 ## Providers
 
-No providers.<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
+No providers.
+
+<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
      Manually updating sections between TF_DOCS tags may be overwritten.
      See https://terraform-docs.io/user-guide/configuration/ for more information.
@@ -33,7 +35,7 @@ No providers.<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_parent_env"></a> [parent\_env](#input\_parent\_env) | The parent environment of the current solution. Will correspond with `terraform.workspace`".<br>Necessary on `tofu init` and `tofu workspace select` \_only\_. In all other situations, parent env<br>will be divined from `terraform.workspace`. | `string` | `null` | no |
+| <a name="input_parent_env"></a> [parent\_env](#input\_parent\_env) | The parent environment of the current solution. Will correspond with `terraform.workspace`".<br/>Necessary on `tofu init` and `tofu workspace select` \_only\_. In all other situations, parent env<br/>will be divined from `terraform.workspace`. | `string` | `null` | no |
 | <a name="input_region"></a> [region](#input\_region) | n/a | `string` | `"us-east-1"` | no |
 | <a name="input_secondary_region"></a> [secondary\_region](#input\_secondary\_region) | n/a | `string` | `"us-west-2"` | no |
 
@@ -46,8 +48,8 @@ No providers.<!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_platform"></a> [platform](#module\_platform) | git::https://github.com/CMSgov/ab2d-bcda-dpc-platform.git//terraform/modules/platform | PLT-1099 |
-| <a name="module_sops"></a> [sops](#module\_sops) | git::https://github.com/CMSgov/ab2d-bcda-dpc-platform.git//terraform/modules/sops | PLT-1099 |
+| <a name="module_platform"></a> [platform](#module\_platform) | git::https://github.com/CMSgov/cdap.git//terraform/modules/platform | PLT-1099 |
+| <a name="module_sops"></a> [sops](#module\_sops) | git::https://github.com/CMSgov/cdap.git//terraform/modules/sops | PLT-1099 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'

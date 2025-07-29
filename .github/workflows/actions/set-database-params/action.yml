@@ -4,23 +4,45 @@ inputs:
   aws_region:
     description: "AWS region to use"
     required: true
-  secret_store_prefix:
-    description: "Secret store prefix for constructing MODULE_DB_PREFIX"
+    default: 'us-east-1'
+  environment:
+    description: "AB2D environment"
+    type: string
     required: true
+    default: 'test'
 runs:
   using: "composite"
   steps:
     - name: Set env vars from AWS params in AB2D account
-      uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+      uses: cmsgov/cdap/actions/aws-params-env-action@main
       env:
         AWS_REGION: ${{ inputs.aws_region }}
-        MODULE_DB_PREFIX: /aws/reference/secretsmanager/${{ inputs.secret_store_prefix }}/module/db
-        MODULE_DB_SUFFIX: 2020-01-02-09-15-01
+        MODULE_DB_PREFIX: /ab2d/${{ inputs.environment }}/core
+        AB2D_ENV: ${{ inputs.environment }}
       with:
         params: |
-          PGHOST=${{ env.MODULE_DB_PREFIX }}/database_host/${{ env.MODULE_DB_SUFFIX }}
-          PGPORT=${{ env.MODULE_DB_PREFIX }}/database_port/${{ env.MODULE_DB_SUFFIX }}
-          PGUSER=${{ env.MODULE_DB_PREFIX }}/database_user/${{ env.MODULE_DB_SUFFIX }}
-          PGDATABASE=${{ env.MODULE_DB_PREFIX }}/database_name/${{ env.MODULE_DB_SUFFIX }}
-          PGPASSWORD=${{ env.MODULE_DB_PREFIX }}/database_password/${{ env.MODULE_DB_SUFFIX }}
-          DATABASE_SCHEMA_NAME=${{ env.MODULE_DB_PREFIX }}/schema_name/${{ env.MODULE_DB_SUFFIX }}
+          DB_ENDPOINT=${{ env.MODULE_DB_PREFIX }}/nonsensitive/writer_endpoint
+          PGUSER=${{ env.MODULE_DB_PREFIX }}/sensitive/database_user
+          PGPASSWORD=${{ env.MODULE_DB_PREFIX }}/sensitive/database_password
+
+    - name: Add PG environment variables
+      shell: bash
+      run: |
+        PARENT_ENV="${AB2D_ENV##*-}"
+        echo "PARENT_ENV=${PARENT_ENV}"
+        
+        if [ "$PARENT_ENV" == "test" ]; then
+          PGDATABASE='impl'
+        elif [ "$PARENT_ENV" == "sandbox" ]; then
+          PGDATABASE='sbx'
+        else 
+          PGDATABASE=$PARENT_ENV
+        fi
+        
+        PGHOST=$(echo $DB_ENDPOINT | cut -d ":" -f1)
+        PGPORT=$(echo $DB_ENDPOINT | cut -d ":" -f2)
+        echo "PGHOST=$PGHOST" >> $GITHUB_ENV
+        echo "PGPORT=$PGPORT" >> $GITHUB_ENV
+        echo "PGDATABASE=$PGDATABASE" >> $GITHUB_ENV
+        echo "DATABASE_SCHEMA_NAME=ab2d" >> $GITHUB_ENV
+        echo "PGSSLMODE=require" >> $GITHUB_ENV

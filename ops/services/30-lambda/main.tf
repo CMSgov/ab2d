@@ -12,7 +12,7 @@ terraform {
 }
 
 module "platform" {
-  source    = "git::https://github.com/CMSgov/ab2d-bcda-dpc-platform.git//terraform/modules/platform?ref=PLT-1099"
+  source    = "git::https://github.com/CMSgov/cdap.git//terraform/modules/platform?ref=PLT-1099"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app          = local.app
@@ -28,15 +28,22 @@ locals {
   service      = "lambda"
 
   ssm_root_map = {
-    artifactory   = "/ab2d/mgmt/artifactory"
-    microservices = "/ab2d/${local.env}/microservices"
+    artifactory   = "/ab2d/mgmt/artifactory" #FIXME: Standardize this
     common        = "/ab2d/${local.env}/common"
     core          = "/ab2d/${local.env}/core"
-    webhooks      = "/ab2d/mgmt/slack-webhooks"
+    eft           = "/opt-out-import/ab2d/${local.env}" #FIXME: Better manage this
+    microservices = "/ab2d/${local.env}/microservices"
+    webhooks      = "/ab2d/mgmt/slack-webhooks" #FIXME: Standardize this
   }
 
-  db_host = data.aws_db_instance.this.address
+  benv = lookup({
+    "dev"     = "ab2d-dev"
+    "test"    = "ab2d-east-impl"
+    "prod"    = "ab2d-east-prod"
+    "sandbox" = "ab2d-sbx-sandbox"
+  }, local.parent_env, local.parent_env)
 
+  ab2d_db_host          = contains(["dev", "test", "sandbox"], local.parent_env) ? data.aws_rds_cluster.this[0].endpoint : data.aws_db_instance.this[0].endpoint
   java_options          = "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
   efs_mount             = "/mnt/efs"
   audit_schedule        = "2 hours"
@@ -46,7 +53,8 @@ locals {
   node_subnet_ids       = keys(module.platform.private_subnets)
   db_sg_id              = data.aws_security_group.db.id
   db_port               = 5432
-  ab2d_db_ssl_mode      = "allow"
+  ab2d_db_ssl_mode      = "require"
+  env_key_alias         = module.platform.kms_alias_primary
 
   db_name                         = module.platform.ssm.core.database_name.value
   db_password                     = module.platform.ssm.core.database_password.value
@@ -58,7 +66,7 @@ locals {
   cloudfront_id    = data.aws_ec2_managed_prefix_list.cloudfront.id
 
   hpms_counts_schedule = "7 days" # I don't see a "1 week" option
-  release_version      = "1.1.0"
+  release_version      = var.release_version
   lambdas = toset([
     "metrics-lambda",
     "audit",
@@ -73,17 +81,8 @@ provider "artifactory" {
   access_token = module.platform.ssm.artifactory.token.value
 }
 
-resource "aws_efs_access_point" "audit_efs" {
-  #TODO is this advisable?
-  posix_user {
-    gid = 0
-    uid = 0
-  }
-  file_system_id = data.aws_efs_file_system.efs.id
-}
-
 resource "aws_lambda_function" "slack_lambda" {
-  filename      = "${path.root}/slack_lambda.zip"
+  filename      = data.archive_file.python_lambda_package.output_path
   function_name = "${local.service_prefix}-slack-alerts"
   role          = aws_iam_role.slack_lambda.arn
   handler       = "data_load_lambda.load_data"
@@ -110,7 +109,7 @@ resource "aws_lambda_function" "metrics_transform" {
   timeout          = 600
   environment {
     variables = {
-      environment       = local.env
+      environment       = local.benv
       JAVA_TOOL_OPTIONS = local.java_options
     }
   }
@@ -130,12 +129,12 @@ resource "aws_lambda_function" "audit" {
     subnet_ids         = local.node_subnet_ids
   }
   file_system_config {
-    arn              = aws_efs_access_point.audit_efs.arn
+    arn              = data.aws_efs_access_point.this.arn
     local_mount_path = local.efs_mount
   }
   environment {
     variables = {
-      environment           = local.env
+      environment           = local.benv
       JAVA_TOOL_OPTIONS     = local.java_options
       AB2D_EFS_MOUNT        = local.efs_mount
       audit_files_ttl_hours = local.ndjson_ttl
@@ -164,8 +163,8 @@ resource "aws_security_group_rule" "audit_efs_egress" {
 resource "aws_security_group_rule" "efs_ingress" {
   type                     = "ingress"
   description              = "NFS"
-  from_port                = "2049"
-  to_port                  = "2049"
+  from_port                = 2049
+  to_port                  = 2049
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.audit_lambda.id
   security_group_id        = local.efs_security_group_id
@@ -213,9 +212,8 @@ resource "aws_cloudwatch_log_subscription_filter" "audit_svc_monitoring" {
   name            = aws_lambda_function.audit_svc_monitoring.function_name
 }
 
-
 resource "aws_lambda_function" "audit_svc_monitoring" {
-  filename      = "${path.root}/monitoring_audit_svc.zip"
+  filename      = data.archive_file.monitoring_audit.output_path
   function_name = "${local.service_prefix}-audit-svc-monitoring"
   handler       = "monitoring_audit_svc.lambda_handler"
   role          = aws_iam_role.microservices_lambda.arn
@@ -223,13 +221,18 @@ resource "aws_lambda_function" "audit_svc_monitoring" {
   timeout       = 600
   description   = "Lambda function that monitors the Audit srvice lambda and sends alert to slack"
   tags          = { code = "https://github.com/CMSgov/ab2d/blob/main/ops/services/30-lambda/code/monitoring_audit_svc.py" }
+  environment {
+    variables = {
+      SLACK_WEBHOOK_URL = local.slack_webhook_ab2d_slack_alerts
+    }
+  }
 }
 
 resource "aws_security_group_rule" "db_access_lambda_ingress" {
   type                     = "ingress"
   description              = "${local.env} lambda db connection ingress"
-  from_port                = "5432"
-  to_port                  = "5432"
+  from_port                = 5432
+  to_port                  = 5432
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.database_lambda.id
   security_group_id        = local.db_sg_id
@@ -261,9 +264,9 @@ resource "aws_lambda_function" "coverage_count" {
   memory_size      = 1024
   environment {
     variables = {
-      environment       = local.env
+      environment       = local.benv
       JAVA_TOOL_OPTIONS = local.java_options
-      DB_URL            = "jdbc:postgresql://${local.db_host}:${local.db_port}/${local.db_name}?sslmode=${local.ab2d_db_ssl_mode}&reWriteBatchedInserts=true"
+      DB_URL            = "jdbc:postgresql://${local.ab2d_db_host}:${local.db_port}/${local.db_name}?sslmode=${local.ab2d_db_ssl_mode}&reWriteBatchedInserts=true&ApplicationName=${local.service_prefix}-coverage-counts-handler"
       DB_USERNAME       = local.db_username
       DB_PASSWORD       = local.db_password
     }
@@ -311,9 +314,9 @@ resource "aws_lambda_function" "database_management" {
   }
   environment {
     variables = {
-      environment                   = local.env
+      environment                   = local.benv
       JAVA_TOOL_OPTIONS             = local.java_options
-      DB_URL                        = "jdbc:postgresql://${local.db_host}:${local.db_port}/${local.db_name}?sslmode=${local.ab2d_db_ssl_mode}&reWriteBatchedInserts=true"
+      DB_URL                        = "jdbc:postgresql://${local.ab2d_db_host}:${local.db_port}/${local.db_name}?sslmode=${local.ab2d_db_ssl_mode}&reWriteBatchedInserts=true&ApplicationName=${local.service_prefix}-database-management-handler"
       DB_USERNAME                   = local.db_username
       DB_PASSWORD                   = local.db_password
       LIQUIBASE_DUPLICATE_FILE_MODE = "WARN"
@@ -341,7 +344,7 @@ resource "aws_lambda_function" "hpms_counts" {
   }
   environment {
     variables = {
-      environment          = local.env
+      environment          = local.benv
       JAVA_TOOL_OPTIONS    = local.java_options
       contract_service_url = local.contracts_service_url
       SLACK_WEBHOOK_URL    = local.slack_webhook_ab2d_slack_alerts
