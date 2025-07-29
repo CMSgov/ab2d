@@ -31,6 +31,7 @@
 /ab2d/mgmt/okta/sensitive/test-pdp-1000-secret: ENC[AES256_GCM,data:Q8MsB1OUvMph5E0VpIc/BKrZ7NMrP9XpWAyDcVJMRfFs5AI1mx7aqQ==,iv:vdHqH3efCduf1cNUkzQ+Xa0eIRclv8QRrNQG5gvTbqg=,tag:hRRiHFpvIg3/G3ByEEO1nw==,type:str]
 /ab2d/mgmt/okta/sensitive/test-pdp-100-id: ENC[AES256_GCM,data:HgbdzulT7rINHJXuzi+CZy/xYoU=,iv:4bB6Kgq544NxaB7dzWWJQ9+ngwmH63U76Z71rbcf6jo=,tag:LPuZGQ9wuGgTp8d00pFBLw==,type:str]
 /ab2d/mgmt/okta/sensitive/test-pdp-100-secret: ENC[AES256_GCM,data:7yTny1G/owPKO1ENKfrq7x+KCv9M2AKDLcfxkxF6jswj9CxaYJKvCw==,iv:oWrz/USSCr7C/dsbanP8tdlZZdrAHJHOPn5vx5P2qhE=,tag:7QZbrdYEDoqmgERImjXMnQ==,type:str]
+/ab2d/mgmt/core/nonsensitive/database_name: main
 sops:
   kms:
     - arn: arn:aws:kms:us-east-1:${ACCOUNT_ID}:alias/ab2d-test

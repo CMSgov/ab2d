@@ -72,7 +72,7 @@ module "db" {
     {
       apply_method = "pending-reboot"
       name         = "cron.database_name"
-      value        = local.benv
+      value        = "main"
     },
     {
       apply_method = "pending-reboot"
