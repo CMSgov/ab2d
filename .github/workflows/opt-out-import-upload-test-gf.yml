@@ -2,9 +2,6 @@ name: opt-out-import test-gf
 run-name: opt-out-import test-gf ${{ inputs.environment }}
 
 on:
-  push:
-    branches:
-      - move-lambdas
   workflow_call:
   workflow_dispatch:
 
