@@ -1,5 +1,5 @@
 name: opt-out-import test-gf
-run-name: opt-out-import test-gf ${{ inputs.environment }}
+run-name: opt-out-import test-gf
 
 on:
   workflow_call:
