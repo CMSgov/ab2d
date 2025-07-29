@@ -1,7 +1,11 @@
-name: opt-out-import deploy-gf
-run-name: opt-out-import deploy-gf ${{ inputs.environment }}
+# TODO add sandbox + prod S3 buckets below
+name: opt-out-export deploy-gf
+run-name: opt-out-export deploy-gf ${{ inputs.environment }}
 
 on:
+  push:
+    branches:
+      - move-lambdas
   workflow_call:
     inputs:
       environment:
@@ -17,6 +21,7 @@ on:
           - dev
           - test
           - sandbox
+          - prod
         default: test
 
 jobs:
@@ -24,14 +29,14 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    runs-on: codebuild-ab2d-lambdas-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     env:
-      AWS_ACCOUNT: ${{ inputs.environment == 'sandbox' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
+      AWS_ACCOUNT: ${{contains(fromJSON('["dev", "test"]'), inputs.environment) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT}}
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
       AB2D_ENV: ${{ inputs.environment }}
     defaults:
       run:
-        working-directory: ./optout
+        working-directory: ./lambdas/attribution-data-file-share
     steps:
       - name: Assume AWS role
         uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
@@ -58,14 +63,14 @@ jobs:
             ARTIFACTORY_USER=/artifactory/user
             ARTIFACTORY_PASSWORD=/artifactory/password
 
-      - name: Build opt-out-import zip file
+      - name: Build opt-out-export zip file
         run: ../gradlew buildZip
 
       - name: Upload and reload
         env:
           #ToDo: add buckets for sbx and prod
-          BUCKET: ${{ inputs.environment == 'dev' && 'ab2d-dev-opt-out-import-function-20250528140631782700000001' || inputs.environment == 'test' && 'ab2d-test-opt-out-import-function-20250529140353146500000001' }}
+          BUCKET: ${{ inputs.environment == 'dev' && 'ab2d-dev-opt-out-export-function-20250528140638171100000001' || inputs.environment == 'test' && 'ab2d-test-opt-out-export-function-20250529140617557400000001' }}
         run: |
-          aws s3 cp --no-progress build/distributions/optout.zip s3://${{ env.BUCKET }}/function.zip
-          aws lambda update-function-code --function-name ab2d-${{ env.AB2D_ENV }}-opt-out-import \
+          aws s3 cp --no-progress build/distributions/attributionDataShare.zip s3://${{ env.BUCKET }}/function.zip
+          aws lambda update-function-code --function-name ab2d-${{ env.AB2D_ENV }}-opt-out-export \
             --s3-bucket ${{ env.BUCKET }} --s3-key function.zip

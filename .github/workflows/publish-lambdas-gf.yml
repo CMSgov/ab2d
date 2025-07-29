@@ -1,12 +1,8 @@
+# TODO fix sonarqube / quality gate / SBOM issues
 name: publish-lambdas-gf
 
 on:
   workflow_call:
-    inputs:
-      ref:
-        required: false
-        type: string
-        description: 'Branch name - used when called by cmsgov/ab2d/deploy-lambda.yml'
     outputs:
       build_version:
         description: "The lambdas build version"
@@ -19,7 +15,7 @@ jobs:
       contents: read
       id-token: write
     runs-on:
-      - codebuild-ab2d-lambdas-${{ github.run_id }}-${{ github.run_attempt }}
+      - codebuild-ab2d-${{ github.run_id }}-${{ github.run_attempt }}
     outputs:
       build_version: ${{ steps.publish_lambdas.outputs.build_version }}
     env:
@@ -94,6 +90,7 @@ jobs:
 
       - name: Publish Lambdas
         id: publish_lambdas
+        working-directory: ./lambdas/
         run: |
           echo "Checking for unpublished artifacts..."
           DEPLOY_SCRIPT=""

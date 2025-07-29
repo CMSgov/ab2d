@@ -1,10 +1,14 @@
+# TODO update for greenfield
 name: opt-out-export integration tests
 
 on:
+
   push:
+    branches:
+      - move-lambdas
     paths:
       - .github/workflows/opt-out-export-test-integration.yml
-      - attribution-data-file-share/**
+      - lambdas/attribution-data-file-share/**
   workflow_dispatch:
 
 # Ensure we only have one integration test running at a time

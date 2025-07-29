@@ -1,7 +1,10 @@
+# TODO update for greenfield
 name: opt-out-import test integration
 
 on:
   push:
+    branches:
+      - move-lambdas
     paths:
       - .github/workflows/opt-out-import-test-integration.yml
       - optout/**

@@ -1,18 +1,18 @@
-name: opt-out-export test (impl) deploy
+# TODO delete?
+name: opt-out-export dev deploy
 
 on:
-  workflow_call: # Allow for call from integration test
   workflow_dispatch:
 
 jobs:
   deploy:
-    env:
-      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
     runs-on: self-hosted
-    environment: test
+    environment: dev
     defaults:
       run:
         working-directory: ./attribution-data-file-share
+    env:
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true 
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-java@v3
@@ -32,10 +32,10 @@ jobs:
       - uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ secrets.ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-test-github-actions
+          role-to-assume: arn:aws:iam::${{ secrets.ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-dev-github-actions
       - name: Upload and reload
         run: |
           aws s3 cp --no-progress build/distributions/attributionDataShare.zip \
-            s3://ab2d-test-opt-out-export-function/function-${{ github.sha }}.zip
-          aws lambda update-function-code --function-name ab2d-test-opt-out-export \
-            --s3-bucket ab2d-test-opt-out-export-function --s3-key function-${{ github.sha }}.zip
+            s3://ab2d-dev-opt-out-export-function/function-${{ github.sha }}.zip
+          aws lambda update-function-code --function-name ab2d-dev-opt-out-export \
+            --s3-bucket ab2d-dev-opt-out-export-function --s3-key function-${{ github.sha }}.zip

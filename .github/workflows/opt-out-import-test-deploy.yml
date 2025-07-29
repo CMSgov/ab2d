@@ -1,14 +1,16 @@
-name: opt-out-import dev deploy
+# TODO delete? depended on by opt-out-import-test-integration.yml
+name: opt-out-import test (impl) deploy
 
 on:
+  workflow_call: # Allow for call from integration test
   workflow_dispatch:
 
 jobs:
   deploy:
-    runs-on: self-hosted
     env:
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-    environment: dev
+    runs-on: self-hosted
+    environment: test
     defaults:
       run:
         working-directory: ./optout
@@ -31,10 +33,10 @@ jobs:
       - uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ secrets.ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-dev-github-actions
+          role-to-assume: arn:aws:iam::${{ secrets.ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-test-github-actions
       - name: Upload and reload
         run: |
           aws s3 cp --no-progress build/distributions/optout.zip \
-            s3://ab2d-dev-opt-out-import-function/function-${{ github.sha }}.zip
-          aws lambda update-function-code --function-name ab2d-dev-opt-out-import \
-            --s3-bucket ab2d-dev-opt-out-import-function --s3-key function-${{ github.sha }}.zip
+            s3://ab2d-test-opt-out-import-function/function-${{ github.sha }}.zip
+          aws lambda update-function-code --function-name ab2d-test-opt-out-import \
+            --s3-bucket ab2d-test-opt-out-import-function --s3-key function-${{ github.sha }}.zip

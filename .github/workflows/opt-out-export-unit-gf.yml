@@ -1,27 +1,38 @@
-name: opt-out-export unit tests
+name: opt-out-export-gf unit tests
 
 on:
+  push:
+    branches:
+      - move-lambdas
   pull_request:
     paths:
       - .github/workflows/opt-out-export-unit.yml
-      - attribution-data-file-share/**
+      - lambdas/attribution-data-file-share/**
   workflow_dispatch:
 
 jobs:
   test:
-    runs-on: self-hosted
-    env: 
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    env:
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
     defaults:
       run:
-        working-directory: ./attribution-data-file-share
+        working-directory: ./lambdas/attribution-data-file-share
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-java@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
-      - uses: cmsgov/cdap/actions/aws-params-env-action@main
+
+      - name: Set env vars from AWS params in BCDA management account
+        uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:
@@ -31,5 +42,6 @@ jobs:
             ARTIFACTORY_PASSWORD=/artifactory/password
             SONAR_HOST_URL=/sonarqube/url
             SONAR_TOKEN=/sonarqube/token
+
       - name: Run unit tests for opt-out-export lambda
         run: ../gradlew test
