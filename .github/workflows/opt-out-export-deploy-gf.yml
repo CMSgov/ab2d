@@ -3,9 +3,6 @@ name: opt-out-export deploy-gf
 run-name: opt-out-export deploy-gf ${{ inputs.environment }}
 
 on:
-  push:
-    branches:
-      - move-lambdas
   workflow_call:
     inputs:
       environment:

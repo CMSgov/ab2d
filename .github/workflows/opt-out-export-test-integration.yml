@@ -2,10 +2,7 @@
 name: opt-out-export integration tests
 
 on:
-
   push:
-    branches:
-      - move-lambdas
     paths:
       - .github/workflows/opt-out-export-test-integration.yml
       - lambdas/attribution-data-file-share/**
