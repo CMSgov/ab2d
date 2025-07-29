@@ -3,7 +3,7 @@ name: opt-out-export-gf unit tests
 on:
   pull_request:
     paths:
-      - .github/workflows/opt-out-export-unit.yml
+      - .github/workflows/opt-out-export-unit-gf.yml
       - lambdas/attribution-data-file-share/**
   workflow_dispatch:
 
