@@ -1,4 +1,4 @@
-# TODO
+# TODO this workflow is incomplete -- need to add events.json
 name: opt-out-export integration tests
 
 on:
