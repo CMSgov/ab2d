@@ -21,16 +21,9 @@ data "aws_security_group" "lambda" {
   vpc_id = local.vpc_id
 }
 
-data "aws_db_instance" "this" {
-  count                  = contains(["prod"], local.parent_env) ? 1 : 0
-  db_instance_identifier = local.service_prefix
-}
-
 data "aws_rds_cluster" "this" {
-  count              = contains(["dev", "test", "sandbox"], local.parent_env) ? 1 : 0
   cluster_identifier = local.service_prefix
 }
-
 
 data "aws_iam_role" "task_execution_role" {
   name = "${local.service_prefix}-microservices"

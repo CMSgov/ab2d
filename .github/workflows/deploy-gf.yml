@@ -31,7 +31,7 @@ on:
           - worker
           - core
       image_tag:
-        description: ECR image tag for selected module (e.g. ab2d-dev-<SHA>)
+        description: ECR image tag for selected module (ab2d-<module>-<branch>-<SHA>)
         required: true
         type: string
 

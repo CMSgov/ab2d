@@ -12,7 +12,7 @@ on:
         type: choice
         options:
           - test
-          - PROD
+          - prod
         description: "Deployment environment (defaults to dev on pull request)"
 
 jobs:
@@ -51,7 +51,7 @@ jobs:
           aws sts get-caller-identity
           case "${{ env.ENVIRONMENT }}" in
             test) echo "PARENT_ENV=ab2d-east-test" >> $GITHUB_ENV ;;
-            PROD) echo "PARENT_ENV=ab2d-east-prod" >> $GITHUB_ENV ;;
+            prod) echo "PARENT_ENV=ab2d-east-prod" >> $GITHUB_ENV ;;
             *) echo "Invalid environment: $ENVIRONMENT" && exit 1 ;;
           esac
 
