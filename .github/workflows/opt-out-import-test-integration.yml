@@ -15,6 +15,9 @@ concurrency:
 jobs:
   # Deploy first if triggered by push
   deploy:
+    permissions:
+      contents: read
+      id-token: write
     if: ${{ github.event_name == 'push' }}
     uses: ./.github/workflows/opt-out-import-deploy-gf.yml
     secrets: inherit
@@ -39,7 +42,7 @@ jobs:
         with:
           aws-region: ${{ vars.AWS_REGION }}
           # Note that we assume the lambda role
-          role-to-assume: arn:aws:iam::${{ secrets.TEST_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-test-opt-out-import-function
+          role-to-assume: arn:aws:iam::${{ secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-test-opt-out-import-function
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ vars.AWS_REGION }}
