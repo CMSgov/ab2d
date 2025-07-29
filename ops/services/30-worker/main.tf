@@ -205,6 +205,12 @@ resource "aws_ecs_task_definition" "worker" {
     },
     healthCheck : null
   }]))
+  volume {
+    name = "tmp"
+  }
+  volume {
+    name = "newrelic_logs"
+  }
 }
 
 resource "aws_ecs_service" "worker" {
