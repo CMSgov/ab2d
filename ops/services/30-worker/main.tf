@@ -154,7 +154,7 @@ resource "aws_ecs_task_definition" "worker" {
       {
         containerPath : local.ab2d_efs_mount,
         sourceVolume : "efs"
-      }
+      },
       {
         "containerPath": "/tmp",
         "sourceVolume": "tmp",
