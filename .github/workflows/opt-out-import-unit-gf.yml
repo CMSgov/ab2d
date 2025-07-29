@@ -1,9 +1,6 @@
 name: opt-out-import-gf unit tests
 
 on:
-  push:
-    branches:
-      - move-lambdas
   pull_request:
     paths:
       - .github/workflows/opt-out-import-unit.yml
