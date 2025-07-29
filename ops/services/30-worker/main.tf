@@ -7,6 +7,12 @@ terraform {
   }
 }
 
+module "data_db_writer_instance" {
+  source = "github.com/CMSgov/beneficiary-fhir-data//ops/terraform-modules/general/data-db-writer-instance?ref=2.211.0"
+
+  cluster_identifier = data.aws_rds_cluster.this.cluster_identifier
+}
+
 module "platform" {
   source    = "git::https://github.com/CMSgov/cdap.git//terraform/modules/platform?ref=PLT-1099"
   providers = { aws = aws, aws.secondary = aws.secondary }
@@ -30,8 +36,7 @@ locals {
     worker        = "/ab2d/${local.env}/worker"
   }
 
-  bfd_insights       = "none"
-  private_subnet_ids = keys(module.platform.private_subnets)
+  bfd_insights = "none"
 
   #TODO in honor of Ben "Been Jammin'" Hesford
   benv = lookup({
@@ -50,13 +55,15 @@ locals {
   bfd_keystore_location     = module.platform.ssm.worker.bfd_keystore_location.value
   bfd_keystore_password_arn = module.platform.ssm.worker.bfd_keystore_password.arn
   vpc_id                    = module.platform.vpc_id
+  rds_writer_az             = module.data_db_writer_instance.writer.availability_zone
+  writer_adjacent_subnets   = [for subnet in module.platform.private_subnets : subnet.id if subnet.availability_zone == local.rds_writer_az]
 
   ecs_task_def_cpu_worker    = module.platform.parent_env == "prod" ? 16384 : 4096
   ecs_task_def_memory_worker = module.platform.parent_env == "prod" ? 32768 : 8192
   max_concurrent_eob_jobs    = "2"
   worker_desired_instances   = 1
 
-  ab2d_db_host              = contains(["dev", "test", "sandbox"], local.parent_env) ? data.aws_rds_cluster.this[0].endpoint : data.aws_db_instance.this[0].address
+  ab2d_db_host              = data.aws_rds_cluster.this.endpoint
   db_name_arn               = module.platform.ssm.core.database_name.arn
   db_password_arn           = module.platform.ssm.core.database_password.arn
   db_username_arn           = module.platform.ssm.core.database_user.arn
@@ -210,7 +217,7 @@ resource "aws_ecs_service" "worker" {
   deployment_minimum_healthy_percent = 100
 
   network_configuration {
-    subnets          = local.private_subnet_ids
+    subnets          = local.writer_adjacent_subnets
     assign_public_ip = false
     security_groups  = [data.aws_security_group.worker.id]
   }

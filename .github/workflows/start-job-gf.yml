@@ -7,13 +7,9 @@ on:
     inputs:
       environment:
         description: 'AB2D environment'
-        type: choice
-        options:
-          - dev
-          - test
-          - sandbox
-          - prod
-        default: test
+        type: string
+        required: true
+        default: 'test'
       contractNumber:
         description: 'Contract to start a job for'
         type: string
@@ -54,7 +50,6 @@ jobs:
       UNTIL: ${{ inputs.until }}
       API_URL_PREFIX: ${{ inputs.apiUrlPrefix }}
       AB2D_ENV: ${{ inputs.environment }}
-      AWS_ACCOUNT: ${{contains(fromJSON('["dev", "test"]'), inputs.environment) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT}}
 
     steps:
       - name: Checkout Code
@@ -62,26 +57,37 @@ jobs:
 
       - name: Set environment-specific variables
         run: |
-          if [ "$AB2D_ENV" == "dev" ]; then
-            DEFAULT_API_URL_PREFIX="https://dev.ab2d.cms.gov"
-          elif [ "$AB2D_ENV" == "test" ]; then
-            DEFAULT_API_URL_PREFIX="https://impl.ab2d.cms.gov"
-          elif [ "$AB2D_ENV" == "sandbox" ]; then
-            DEFAULT_API_URL_PREFIX="https://sandbox.ab2d.cms.gov"
-          elif [ "$AB2D_ENV" == "prod" ]; then
-            DEFAULT_API_URL_PREFIX="https://api.ab2d.cms.gov" 
+          PARENT_ENV="${AB2D_ENV##*-}"
+          echo "PARENT_ENV=${PARENT_ENV}" >> $GITHUB_ENV
+          
+          if [ "$PARENT_ENV" = "sandbox" ] || [ "$PARENT_ENV" = "prod" ]; then
+             AWS_ACCOUNT="${{ secrets.PROD_ACCOUNT }}"
           else
-            echo "Invalid environment: $ENVIRONMENT"
-            exit 1
+             AWS_ACCOUNT="${{ secrets.NON_PROD_ACCOUNT }}"
           fi
           
+          echo "AWS_ACCOUNT=${AWS_ACCOUNT}" >> $GITHUB_ENV
+          
+          if [ "$PARENT_ENV" == "dev" ]; then
+            DEFAULT_API_URL_PREFIX="https://dev.ab2d.cms.gov"
+          elif [ "$PARENT_ENV" == "test" ]; then
+            DEFAULT_API_URL_PREFIX="https://test.ab2d.cms.gov"
+          elif [ "$PARENT_ENV" == "sandbox" ]; then
+            DEFAULT_API_URL_PREFIX="https://sandbox.ab2d.cms.gov"
+          elif [ "$PARENT_ENV" == "prod" ]; then
+            DEFAULT_API_URL_PREFIX="https://api.ab2d.cms.gov" 
+          else
+            echo "Invalid environment: $PARENT_ENV"
+            exit 1
+          fi
+   
           echo "DEFAULT_API_URL_PREFIX=${DEFAULT_API_URL_PREFIX}" >> $GITHUB_ENV
 
       - name: Assume AWS role
         uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.AB2D_ENV }}-github-actions
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.PARENT_ENV }}-github-actions
 
       - name: Set env vars from AWS params in AB2D account
         uses: ./.github/workflows/actions/set-database-params

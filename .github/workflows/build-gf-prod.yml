@@ -1,9 +1,12 @@
-name: build-gf
-run-name: build-gf non-prod ${{ inputs.module }}
+name: build-gf-prod # Note: This workflow is temporary until the promote workflow is created
+run-name: build-gf prod ${{ inputs.module }}
 
 on:
   workflow_call:
     inputs:
+      environment:
+        required: true
+        type: string
       module:
         required: true
         type: string
@@ -24,16 +27,14 @@ jobs:
       id-token: write
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     env:
-      AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
+      AWS_ACCOUNT: ${{ secrets.PROD_ACCOUNT }}
       MODULE: ${{ inputs.module }}
-      ECR_REPO: ab2d-${{ inputs.module }}
-      TAG_PREFIX: ab2d-${{ inputs.module }}
     steps:
       - name: Assume AWS role
         uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-test-github-actions
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-prod-github-actions
 
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -58,12 +59,11 @@ jobs:
       - name: Build image and push to ECR
         working-directory: ./${{ env.MODULE }}
         run: |
-          ECR_DOMAIN="$AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com"
+          ECR_REPO_DOMAIN="${AWS_ACCOUNT}.dkr.ecr.$AWS_REGION.amazonaws.com"
+          aws ecr get-login-password | docker login --username AWS --password-stdin "$ECR_REPO_DOMAIN"
+          ECR_REPO_URI="$ECR_REPO_DOMAIN/ab2d-${MODULE}"
           SHA_SHORT=$(git rev-parse --short HEAD)
-          aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_DOMAIN
-          ECR_URI="$ECR_DOMAIN/$ECR_REPO"
-          BRANCH_NAME_FORMATTED=${GITHUB_REF_NAME//\//-}
-          TAG_SHORT="$TAG_PREFIX-$BRANCH_NAME_FORMATTED-$SHA_SHORT"
-          docker build -t "$ECR_URI:$TAG_SHORT" .
-          docker push "$ECR_URI" --all-tags
-          echo "Published **$ECR_URI:$TAG_SHORT**" >> $GITHUB_STEP_SUMMARY
+          echo "Building image for commit sha $SHA_SHORT"
+          docker build -t "${ECR_REPO_URI}:ab2d-${MODULE}-$SHA_SHORT" 
+          echo "Pushing image"
+          docker push "${ECR_REPO_URI}" --all-tags
