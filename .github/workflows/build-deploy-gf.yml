@@ -182,11 +182,11 @@ jobs:
           esac
 
       - name: Terraform Plan & Apply
-        working-directory: ${{ steps.module_info.outputs.working_dir }}
+        working-directory: ${{ steps.module_vars.outputs.working_dir }}
         run: |
           tofu init -var=parent_env=$AB2D_ENV -reconfigure
           tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
-          tofu plan ${{ steps.module_info.outputs.plan_vars }} -out=tfplan
+          tofu plan ${{ steps.module_vars.outputs.plan_vars }} -out=tfplan
           tofu apply -input=false tfplan
           echo "Deployed $MODULE to $AB2D_ENV with tag $IMAGE_TAG" >> $GITHUB_STEP_SUMMARY
 
