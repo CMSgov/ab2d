@@ -6,9 +6,9 @@ locals {
 }
 
 data "aws_s3_object" "import" {
-  count = contains(["prod", "test"], local.env) ? 1 : 0
+  for_each = toset([for env in ["prod", "test"] : env if env == local.env])
 
-  bucket = local.import_bucket[local.env]
+  bucket = local.import_bucket[each.key]
   key    = "function.zip"
 }
 
@@ -113,9 +113,9 @@ resource "aws_lambda_function" "import" {
   count = contains(["prod", "test"], local.env) ? 1 : 0
 
 
-  s3_bucket         = data.aws_s3_object.import[0].bucket
-  s3_key            = data.aws_s3_object.import[0].key
-  s3_object_version = data.aws_s3_object.import[0].version_id
+  s3_bucket         = data.aws_s3_object.import[local.env].bucket
+  s3_key            = data.aws_s3_object.import[local.env].key
+  s3_object_version = data.aws_s3_object.import[local.env].version_id
   architectures = [
     "x86_64",
   ]

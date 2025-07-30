@@ -6,13 +6,7 @@ data "aws_efs_access_point" "this" {
   access_point_id = module.platform.ssm.core.efs_access_point_id.value
 }
 
-data "aws_db_instance" "this" {
-  count                  = contains(["prod"], local.parent_env) ? 1 : 0
-  db_instance_identifier = local.service_prefix
-}
-
 data "aws_rds_cluster" "this" {
-  count              = contains(["dev", "test", "sandbox"], local.parent_env) ? 1 : 0
   cluster_identifier = local.service_prefix
 }
 
