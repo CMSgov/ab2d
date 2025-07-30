@@ -189,11 +189,8 @@ resource "aws_sns_topic_subscription" "splunk_efs" {
 }
 
 resource "aws_sns_topic" "alarms" {
-  name = "${local.service_prefix}-cloudwatch-alarms"
-
-  #FIXME this requires adjustments to the local.kms_master_key key policy
-  # kms_master_key_id = local.kms_master_key_id
-  kms_master_key_id = "alias/aws/sns"
+  name              = "${local.service_prefix}-cloudwatch-alarms"
+  kms_master_key_id = local.env_key_alias.target_key_id
 }
 
 resource "aws_sns_topic" "this" {
