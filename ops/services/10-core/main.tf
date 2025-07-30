@@ -16,7 +16,7 @@ module "platform" {
   root_module = "https://github.com/CMSgov/ab2d/tree/main/ops/services/10-core"
   service     = local.service
   ssm_root_map = {
-    core = "/ab2d/${local.env}/core/"
+    core   = "/ab2d/${local.env}/core/"
     splunk = "/ab2d/mgmt/splunk/"
   }
 }
