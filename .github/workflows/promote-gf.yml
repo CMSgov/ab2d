@@ -1,12 +1,16 @@
 name: promote-gf
-run-name: promote-gf ${{ inputs.tag_name }}
+#run-name: promote-gf ${{ inputs.tag_name }}
 
 on:
   workflow_call:
     inputs:
-      tag_name:
-        required: true
-        type: string
+      tag_name: Image tag name
+      required: true
+      type: string
+    module:
+      description: AB2D module
+      required: true
+      type: string
 
   workflow_dispatch:
     inputs:
@@ -14,6 +18,11 @@ on:
         description: Full Docker tag name to promote (e.g., ab2d-api-featureX-sha)
         required: true
         type: string
+      module:
+        description: AB2D module
+        required: true
+        type: choice
+        options: [ api, worker ]
 
 permissions:
   contents: read
@@ -46,9 +55,9 @@ jobs:
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           SRC_ECR="$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
           docker login --username AWS --password-stdin $SRC_ECR <<< $(aws ecr get-login-password)
-          echo "Pulling $SRC_ECR/$SOURCE_REPO:$TAG_NAME"
-          docker pull "$SRC_ECR/$SOURCE_REPO:$TAG_NAME"
-          echo "IMAGE=$SRC_ECR/$SOURCE_REPO:$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "Pulling $SRC_ECR/$SOURCE_REPO-${{ inputs.module }}:$TAG_NAME"
+          docker pull "$SRC_ECR/$SOURCE_REPO-${{ inputs.module }}:$TAG_NAME"
+          echo "IMAGE=$SRC_ECR/$SOURCE_REPO-${{ inputs.module }}:$TAG_NAME" >> $GITHUB_OUTPUT
 
       - name: Authenticate to destination account (push)
         uses: aws-actions/configure-aws-credentials@v4.0.2
@@ -65,6 +74,6 @@ jobs:
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
           DEST_ECR="$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
           docker login --username AWS --password-stdin $DEST_ECR <<< $(aws ecr get-login-password)
-          echo "Tagging and pushing image to $DEST_ECR/$DEST_REPO:$TAG_NAME"
-          docker tag "$IMAGE" "$DEST_ECR/$DEST_REPO:$TAG_NAME"
-          docker push "$DEST_ECR/$DEST_REPO:$TAG_NAME"
+          echo "Tagging and pushing image to $DEST_ECR/$DEST_REPO-${{ inputs.module }}:$TAG_NAME"
+          docker tag "$IMAGE" "$DEST_ECR/$DEST_REPO-${{ inputs.module }}:$TAG_NAME"
+          docker push "$DEST_ECR/$DEST_REPO-${{ inputs.module }}:$TAG_NAME"
