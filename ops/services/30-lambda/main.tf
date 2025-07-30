@@ -44,7 +44,7 @@ locals {
     "sandbox" = "ab2d-sbx-sandbox"
   }, local.parent_env, local.parent_env)
 
-  ab2d_db_host          = contains(["dev", "test", "sandbox"], local.parent_env) ? data.aws_rds_cluster.this[0].endpoint : data.aws_db_instance.this[0].endpoint
+  ab2d_db_host          = data.aws_rds_cluster.this.endpoint
   java_options          = "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
   efs_mount             = "/mnt/efs"
   audit_schedule        = "2 hours"
