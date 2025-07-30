@@ -7,14 +7,14 @@ on:
       - ab2d-6750
   workflow_call:
     inputs:
-      tag_name: Image tag name
-      required: true
-      type: string
-    module:
-      description: AB2D module
-      required: true
-      type: string
-
+      tag_name:
+        description: Image tag name
+        required: true
+        type: string
+      module:
+        description: AB2D module
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       tag_name:
