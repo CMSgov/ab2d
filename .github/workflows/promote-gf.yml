@@ -2,6 +2,9 @@ name: promote-gf
 #run-name: promote-gf ${{ inputs.tag_name }}
 
 on:
+  push:
+    branches:
+      - ab2d-6750
   workflow_call:
     inputs:
       tag_name: Image tag name
