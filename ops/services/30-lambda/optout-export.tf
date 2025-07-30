@@ -12,9 +12,9 @@ locals {
 }
 
 data "aws_s3_object" "export" {
-  count = contains(["prod", "test"], local.env) ? 1 : 0
+  for_each = toset([for env in ["prod", "test"] : env if env == local.env])
 
-  bucket = local.export_bucket[local.env]
+  bucket = local.export_bucket[each.key]
   key    = "function.zip"
 }
 
@@ -121,9 +121,9 @@ resource "aws_iam_role" "export" {
 resource "aws_lambda_function" "export" {
   count = contains(["prod", "test"], local.env) ? 1 : 0
 
-  s3_bucket                      = data.aws_s3_object.export[0].bucket
-  s3_key                         = data.aws_s3_object.export[0].key
-  s3_object_version              = data.aws_s3_object.export[0].version_id
+  s3_bucket                      = data.aws_s3_object.export[local.env].bucket
+  s3_key                         = data.aws_s3_object.export[local.env].key
+  s3_object_version              = data.aws_s3_object.export[local.env].version_id
   description                    = "Exports data files to a BFD bucket for opt-out"
   function_name                  = "${local.service_prefix}-opt-out-export"
   handler                        = "gov.cms.ab2d.attributiondatashare.AttributionDataShareHandler"
