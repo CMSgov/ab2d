@@ -2,9 +2,6 @@ name: build-deploy-gf
 run-name: ${{ github.event_name == 'workflow_dispatch' && format('build-deploy-gf {0} {1} {2}', inputs.module, inputs.environment || 'build-only', inputs.skip_build && 'deploy-only' || 'build-and-deploy') || format('build-deploy-gf {0} auto', inputs.module) }}
 
 on:
-  push:
-    branches:
-      - ab2d-6750
   workflow_call:
     inputs:
       module: { required: true, type: string }
