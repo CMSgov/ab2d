@@ -53,8 +53,3 @@ data "aws_ecr_image" "properties" {
   image_tag       = var.properties_service_image_tag
   most_recent     = var.properties_service_image_tag == null ? true : null
 }
-
-data "aws_ssm_parameter" "splunk_oncall_email" {
-  count = var.parent_env == "prod" || var.parent_env == "sandbox" ? 1 : 0
-  name  = var.parent_env == "prod" ? "/ab2d/mgmt/splunk_prod/sensitive/alert_email" : "/ab2d/mgmt/splunk_sandbox/sensitive/alert_email"
-}

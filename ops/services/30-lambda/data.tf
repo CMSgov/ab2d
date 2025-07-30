@@ -73,8 +73,3 @@ data "aws_rds_cluster" "this" {
   count              = contains(["dev", "test", "sandbox"], local.parent_env) ? 1 : 0
   cluster_identifier = local.service_prefix
 }
-
-data "aws_ssm_parameter" "splunk_oncall_email" {
-  count = var.parent_env == "prod" || var.parent_env == "sandbox" ? 1 : 0
-  name  = var.parent_env == "prod" ? "/ab2d/mgmt/splunk_prod/sensitive/alert_email" : "/ab2d/mgmt/splunk_sandbox/sensitive/alert_email"
-}

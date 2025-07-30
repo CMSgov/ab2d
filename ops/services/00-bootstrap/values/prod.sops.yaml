@@ -30,8 +30,7 @@
 /ab2d/mgmt/okta/sensitive/test-pdp-1000-secret: ENC[AES256_GCM,data:i0VlfH2mr11I+6Dxu9OmC+ejbPLAhLCh6SLdP6wSDI2RFrlv75YSxA==,iv:p7qAIl0BoVb3PSiUjF204Jzpaf6xC1iUUyA9+yf+NsI=,tag:vczXBSIEdIUVZs9BaMCjgA==,type:str]
 /ab2d/mgmt/okta/sensitive/test-pdp-100-id: ENC[AES256_GCM,data:EtdmWLJ4bsRQ3Ng04GCeRnMdB/o=,iv:OkKEv20WhW9oQiB/jG6WK/Kppyl2b2srLuJ42Gd0794=,tag:KMejN0ew/S4i7ghlTPqZiw==,type:str]
 /ab2d/mgmt/okta/sensitive/test-pdp-100-secret: ENC[AES256_GCM,data:tUS1YB7YoTagFTvsZd4193FCLAr9eyCa0b+BIvUAFu4bJidacxROKw==,iv:n1PqC7bEB59Ogxzhn2Mmp9ia1EPY2yXTh5K5Mv8et9g=,tag:xfv/x7sxrOOaFoYiflze7Q==,type:str]
-/ab2d/mgmt/splunk_prod/sensitive/alert_email: ENC[AES256_GCM,data:m0TibOg/4SHq0k0ps60lle/fgbzwa1yF3Tc4DrZLmGcRGlB5HLoV6Q1OotgVTVvmeLCfgR4z1wfojqTWNg==,iv:AAYwGpiYFPQne4otA+L35qQVbkdkRd79jZmyONeIgbk=,tag:TL3oH+JJNgkOxF8/EWbE2Q==,type:str]
-/ab2d/mgmt/splunk_sandbox/sensitive/alert_email: ENC[AES256_GCM,data:BdZU6WMrsXONdKGPIfo6BmkLp7Ig+hoQeVEOR9Z4/lUlb4pQIU0Y30iVZYfkGbWcoXUHbrpGRaU0EuB38A==,iv:hqcumyNoUh1zFcL4owL0ScnSoN3GEIgi6VDftAaXPNE=,tag:GI7TUW4h/+8TtGEN9r/V1w==,type:str]
+/ab2d/mgmt/splunk/sensitive/alert_email: ENC[AES256_GCM,data:Ivjn9fI00KWeMm/BO4jvKmziFHxZ6khGkvHw2WiiegOJ/h9OLntq/3Hs4hjCSZWdy6gMnMw9DczvcpvMSg==,iv:qc1GKbl5j6d3N9t1KZ3wD0hGHJoceUUSb6CYZp96R7s=,tag:YJmS6Sdlr7sj5oMGhisKKA==,type:str]
 sops:
   kms:
     - arn: arn:aws:kms:us-east-1:${ACCOUNT_ID}:alias/ab2d-prod

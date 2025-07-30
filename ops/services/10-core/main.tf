@@ -17,6 +17,7 @@ module "platform" {
   service     = local.service
   ssm_root_map = {
     core = "/ab2d/${local.env}/core/"
+    splunk = "/ab2d/mgmt/splunk/"
   }
 }
 
@@ -37,6 +38,7 @@ locals {
   private_subnets    = nonsensitive(toset(keys(module.platform.private_subnets)))
   region_name        = module.platform.primary_region.name
   vpc_id             = module.platform.vpc_id
+  splunk_alert_email = lookup(module.platform.ssm.splunk, "alert-email", { value : null }).value
 }
 
 resource "aws_s3_bucket" "main_bucket" {
@@ -179,12 +181,13 @@ resource "aws_cloudwatch_metric_alarm" "efs_health" {
   }
 }
 
-resource "aws_sns_topic_subscription" "splunk_oncall_email_efs" {
-  count     = length(data.aws_ssm_parameter.splunk_oncall_email)
+resource "aws_sns_topic_subscription" "splunk_efs" {
+  count     = local.splunk_alert_email != null ? 1 : 0
   topic_arn = aws_sns_topic.efs[0].arn
   protocol  = "email"
-  endpoint  = data.aws_ssm_parameter.splunk_oncall_email[0].value
+  endpoint  = local.splunk_alert_email
 }
+
 resource "aws_sns_topic" "alarms" {
   name = "${local.service_prefix}-cloudwatch-alarms"
 

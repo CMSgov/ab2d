@@ -319,14 +319,9 @@ resource "aws_ssm_parameter" "writer_endpoint" {
   type  = "String"
 }
 
-data "aws_ssm_parameter" "splunk_oncall_email" {
-  count = var.parent_env == "prod" || var.parent_env == "sandbox" ? 1 : 0
-  name  = var.parent_env == "prod" ? "/ab2d/mgmt/splunk_prod/sensitive/alert_email" : "/ab2d/mgmt/splunk_sandbox/sensitive/alert_email"
-}
-
-resource "aws_sns_topic_subscription" "splunk_oncall_email" {
-  count     = length(data.aws_ssm_parameter.splunk_oncall_email)
+resource "aws_sns_topic_subscription" "splunk" {
+  count     = local.splunk_alert_email != null ? 1 : 0
   topic_arn = aws_sns_topic.alarms.arn
   protocol  = "email"
-  endpoint  = data.aws_ssm_parameter.splunk_oncall_email[0].value
+  endpoint  = local.splunk_alert_email
 }
