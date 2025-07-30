@@ -30,7 +30,7 @@
 /ab2d/mgmt/okta/sensitive/test-pdp-1000-secret: ENC[AES256_GCM,data:i0VlfH2mr11I+6Dxu9OmC+ejbPLAhLCh6SLdP6wSDI2RFrlv75YSxA==,iv:p7qAIl0BoVb3PSiUjF204Jzpaf6xC1iUUyA9+yf+NsI=,tag:vczXBSIEdIUVZs9BaMCjgA==,type:str]
 /ab2d/mgmt/okta/sensitive/test-pdp-100-id: ENC[AES256_GCM,data:EtdmWLJ4bsRQ3Ng04GCeRnMdB/o=,iv:OkKEv20WhW9oQiB/jG6WK/Kppyl2b2srLuJ42Gd0794=,tag:KMejN0ew/S4i7ghlTPqZiw==,type:str]
 /ab2d/mgmt/okta/sensitive/test-pdp-100-secret: ENC[AES256_GCM,data:tUS1YB7YoTagFTvsZd4193FCLAr9eyCa0b+BIvUAFu4bJidacxROKw==,iv:n1PqC7bEB59Ogxzhn2Mmp9ia1EPY2yXTh5K5Mv8et9g=,tag:xfv/x7sxrOOaFoYiflze7Q==,type:str]
-/ab2d/mgmt/splunk/sensitive/alert_email: ENC[AES256_GCM,data:Ivjn9fI00KWeMm/BO4jvKmziFHxZ6khGkvHw2WiiegOJ/h9OLntq/3Hs4hjCSZWdy6gMnMw9DczvcpvMSg==,iv:qc1GKbl5j6d3N9t1KZ3wD0hGHJoceUUSb6CYZp96R7s=,tag:YJmS6Sdlr7sj5oMGhisKKA==,type:str]
+/ab2d/mgmt/splunk/sensitive/alert-email: ENC[AES256_GCM,data:5UorPXfP5FQYStdTLpGVeUyFNgapkWT/YyepyZlHfTfEc8hzjT/zq0L9JhYVZ2+I689HKuR4R6sdDm/qsA==,iv:EnCAqo9vMEOws9gZARj9KID+YYwnVlysIJrpW/GuQks=,tag:RKk3veVvGN5w30//WuJQwA==,type:str]
 sops:
   kms:
     - arn: arn:aws:kms:us-east-1:${ACCOUNT_ID}:alias/ab2d-prod
