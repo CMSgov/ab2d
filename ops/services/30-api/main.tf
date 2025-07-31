@@ -33,6 +33,7 @@ locals {
     cidrs         = "/ab2d/mgmt/pdps/sensitive/cidr-blocks-csv"
     accounts      = "/ab2d/mgmt/aws-account-numbers"
     mgmt_ipv4     = "/cdap/mgmt/public_nat_ipv4"
+    splunk        = "/ab2d/mgmt/splunk"
   }
 
   #TODO in honor of Ben "Been Jammin'" Hesford
@@ -76,6 +77,7 @@ locals {
   slack_trace_webhooks_arn     = module.platform.ssm.common.slack_trace_webhooks.arn
   vpc_id                       = module.platform.vpc_id
   cloudwatch_sns_topic         = data.aws_sns_topic.cloudwatch_alarms.arn
+  splunk_alert_email           = lookup(module.platform.ssm.splunk, "alert-email", { value : null }).value
 
   pdp_map = { for k in keys(module.platform.ssm.cidrs) : k => { "cidrs" = nonsensitive(module.platform.ssm.cidrs[k].value), "contracts" = nonsensitive(module.platform.ssm.contracts[k].value) } }
 
@@ -339,6 +341,13 @@ resource "aws_cloudwatch_metric_alarm" "health" {
     LoadBalancer = aws_lb.ab2d_api.arn_suffix
     TargetGroup  = aws_lb_target_group.ab2d_api.arn_suffix
   }
+}
+
+resource "aws_sns_topic_subscription" "splunk_api" {
+  count     = local.splunk_alert_email != null ? 1 : 0
+  topic_arn = aws_sns_topic.api.arn
+  protocol  = "email"
+  endpoint  = local.splunk_alert_email
 }
 
 resource "aws_lb" "ab2d_api" {
