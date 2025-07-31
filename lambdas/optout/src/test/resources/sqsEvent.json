@@ -1,0 +1,12 @@
+{
+  "Type" : "Notification",
+  "MessageId" : "5da6e965-ca05-5123-8347-b72ad7893428",
+  "TopicArn" : "arn:aws:sns:test",
+  "Subject" : "Amazon S3 Notification",
+  "Message" : "{\"Records\":[{\"eventVersion\":\"2.1\",\"eventSource\":\"aws:s3\",\"awsRegion\":\"us-east-1\",\"eventTime\":\"2024-02-20T21:36:11.419Z\",\"eventName\":\"ObjectCreated:Put\",\"s3\":{\"s3SchemaVersion\":\"1.0\",\"configurationId\":\"bfd-test-eft-inbound-received-s3-dpc\",\"bucket\":{\"name\":\"bfd-test-eft\",\"arn\":\"arn:aws:s3:::bfd-test-eft\"},\"object\":{\"key\":\"bfdeft01/ab2d/in/optOutDummy.txt\",\"size\":12}}}]}",
+  "Timestamp" : "2024-02-20T21:36:12.405Z",
+  "SignatureVersion" : "1",
+  "Signature" : "TestSignature",
+  "SigningCertURL" : "TestSigningCertURL",
+  "UnsubscribeURL" : "TestUnsubscribeURL"
+}

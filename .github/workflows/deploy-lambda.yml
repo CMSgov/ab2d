@@ -1,3 +1,4 @@
+# TODO delete / replace with greenfield workflow
 name: deploy-lambdas
 
 on:
