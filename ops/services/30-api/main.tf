@@ -261,7 +261,12 @@ resource "aws_ecs_task_definition" "api" {
         "containerPath": "/newrelic/logs",
         "sourceVolume": "newrelic_logs",
         "readOnly": false
-      }      
+      },
+      {
+        "containerPath": "/var/log",
+        "sourceVolume": "var_log",
+        "readOnly": false
+      } 
     ],
     secrets : [
       { name : "AB2D_DB_DATABASE", valueFrom : local.db_name_arn },
@@ -309,6 +314,9 @@ resource "aws_ecs_task_definition" "api" {
   }
   volume {
     name = "newrelic_logs"
+  }
+  volume {
+    name = "var_logs"
   }
 }
 
