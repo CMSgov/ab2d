@@ -43,7 +43,7 @@ locals {
     sandbox = "ab2d-sbx-sandbox"
   }, local.parent_env, local.parent_env)
 
-  ab2d_db_host                 = contains(["dev", "test", "sandbox"], local.parent_env) ? data.aws_rds_cluster.this[0].endpoint : data.aws_db_instance.this[0].address
+  ab2d_db_host                 = data.aws_rds_cluster.this.endpoint
   ab2d_efs_mount               = "/mnt/efs"
   aws_region                   = module.platform.primary_region.name
   ab2d_keystore_location       = module.platform.ssm.core.keystore_location.value

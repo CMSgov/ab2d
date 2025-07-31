@@ -43,7 +43,7 @@ locals {
     "sandbox" = "ab2d-sbx-sandbox"
   }, local.parent_env, local.parent_env)
 
-  ab2d_db_host          = contains(["dev", "test", "sandbox"], local.parent_env) ? data.aws_rds_cluster.this[0].endpoint : data.aws_db_instance.this[0].endpoint
+  ab2d_db_host          = data.aws_rds_cluster.this.endpoint
   java_options          = "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
   efs_mount             = "/mnt/efs"
   audit_schedule        = "2 hours"
@@ -113,7 +113,7 @@ resource "aws_lambda_function" "metrics_transform" {
       JAVA_TOOL_OPTIONS = local.java_options
     }
   }
-  tags = { code = "https://github.com/CMSgov/ab2d-lambdas/tree/main/metrics-lambda" }
+  tags = { code = "https://github.com/CMSgov/ab2d/tree/main/lambdas/metrics-lambda" }
 }
 
 resource "aws_lambda_function" "audit" {
@@ -140,7 +140,7 @@ resource "aws_lambda_function" "audit" {
       audit_files_ttl_hours = local.ndjson_ttl
     }
   }
-  tags = { code = "https://github.com/CMSgov/ab2d-lambdas/tree/main/audit" }
+  tags = { code = "https://github.com/CMSgov/ab2d/tree/main/lambdas/audit" }
 }
 
 resource "aws_security_group" "audit_lambda" {
@@ -272,7 +272,7 @@ resource "aws_lambda_function" "coverage_count" {
     }
   }
   tags = {
-    code = "https://github.com/CMSgov/ab2d-lambdas/tree/main/coverage-counts"
+    code = "https://github.com/CMSgov/ab2d/tree/main/lambdas/coverage-counts"
   }
   description = "Lambda function to record coverage counts from ab2d, bfd, and hpms"
 }
@@ -324,7 +324,7 @@ resource "aws_lambda_function" "database_management" {
     }
   }
   tags = {
-    code = "https://github.com/CMSgov/ab2d-lambdas/tree/main/database-management"
+    code = "https://github.com/CMSgov/ab2d/tree/main/lambdas/database-management"
   }
   description = "Lambda function that calls liquibase to manage our db tables"
 }
@@ -351,7 +351,7 @@ resource "aws_lambda_function" "hpms_counts" {
     }
   }
   tags = {
-    code = "https://github.com/CMSgov/ab2d-lambdas/tree/main/retrieve-hpms-counts"
+    code = "https://github.com/CMSgov/ab2d/tree/main/lambdas/retrieve-hpms-counts"
   }
   description = "Lambda function that calls hpms then forwards counts to coverage counts lambda"
 }
