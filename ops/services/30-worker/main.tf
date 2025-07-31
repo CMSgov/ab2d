@@ -164,7 +164,12 @@ resource "aws_ecs_task_definition" "worker" {
         "containerPath": "/newrelic/logs",
         "sourceVolume": "newrelic_logs",
         "readOnly": false
-      }      
+      },
+      {
+        "containerPath": "/var/log/ecs",
+        "sourceVolume": "var_logs",
+        "readOnly": false
+      },
     ],
     secrets : [
       { name : "AB2D_BFD_KEYSTORE_PASSWORD", valueFrom : local.bfd_keystore_password_arn },
@@ -210,6 +215,9 @@ resource "aws_ecs_task_definition" "worker" {
   }
   volume {
     name = "newrelic_logs"
+  }
+  volume {
+    name = "var_logs"
   }
 }
 
