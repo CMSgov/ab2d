@@ -106,3 +106,5 @@ properties/jacoco/**
 Deploy/website-temp
 ### Snyk CLI
 .dccache
+.gradle
+lambdas/.gradle

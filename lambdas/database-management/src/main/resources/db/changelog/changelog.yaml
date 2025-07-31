@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/2023/coverage_counts.sql
+  - include:
+      file: db/changelog/2023/create-ab2d-analyst.sql
+  - include:
+      file: db/changelog/2023/grant_quicksight_select_coverage_count.sql
+
+
+

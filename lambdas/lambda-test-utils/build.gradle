@@ -1,0 +1,42 @@
+plugins {
+    id 'java'
+}
+
+version "$testutilsVersion"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.amazonaws:aws-lambda-java-core:1.2.2'
+    implementation 'org.postgresql:postgresql:42.5.1'
+    implementation 'org.testcontainers:junit-jupiter:1.17.6'
+    implementation "org.testcontainers:postgresql:1.17.6"
+    implementation 'org.liquibase:liquibase-core:4.18.0'
+    implementation 'org.liquibase:liquibase-core:4.18.0'
+    implementation 'org.mockito:mockito-core:4.11.0'
+    implementation 'org.junit.jupiter:junit-jupiter-api:5.9.1'
+    implementation 'org.junit.platform:junit-platform-commons:1.9.2'
+    implementation 'org.junit.jupiter:junit-jupiter-engine:5.9.1'
+    implementation 'org.mockito:mockito-core:5.3.1'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+    compileOnly 'org.projectlombok:lombok:1.18.24'
+    implementation 'org.projectlombok:lombok:1.18.24'
+    implementation 'org.slf4j:slf4j-api:2.0.4'
+    implementation 'org.slf4j:slf4j-reload4j:2.0.4'
+    implementation 'org.testcontainers:localstack:1.17.6'
+
+
+    //test
+    testImplementation 'org.slf4j:slf4j-api:2.0.6'
+    testImplementation 'org.slf4j:slf4j-reload4j:2.0.6'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
+    testImplementation 'org.junit.platform:junit-platform-commons:1.9.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
+
+}
+
+test {
+    useJUnitPlatform()
+}
