@@ -316,7 +316,7 @@ resource "aws_ecs_task_definition" "api" {
     name = "newrelic_logs"
   }
   volume {
-    name = "var_logs"
+    name = "var_log"
   }
 }
 
