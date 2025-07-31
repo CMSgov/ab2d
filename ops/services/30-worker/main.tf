@@ -166,7 +166,7 @@ resource "aws_ecs_task_definition" "worker" {
         "readOnly": false
       },
       {
-        "containerPath": "/var/log/ecs",
+        "containerPath": "/var/log",
         "sourceVolume": "var_logs",
         "readOnly": false
       },
