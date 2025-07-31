@@ -65,6 +65,8 @@ locals {
   microservices_lb = data.aws_security_group.microservices_lb.id
   cloudfront_id    = data.aws_ec2_managed_prefix_list.cloudfront.id
 
+
+
   hpms_counts_schedule = "7 days" # I don't see a "1 week" option
   release_version      = var.release_version
   lambdas = toset([
@@ -278,11 +280,8 @@ resource "aws_lambda_function" "coverage_count" {
 }
 
 resource "aws_sns_topic" "coverage_count_sns" {
-  name = "${local.env}-coverage-count"
-  #FIXME
-  lifecycle {
-    ignore_changes = [kms_master_key_id]
-  }
+  name              = "${local.env}-coverage-count"
+  kms_master_key_id = local.env_key_alias.target_key_id
 }
 
 resource "aws_lambda_permission" "coverage_count_sns_permission" {
