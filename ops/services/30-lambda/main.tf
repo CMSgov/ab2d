@@ -34,7 +34,6 @@ locals {
     eft           = "/opt-out-import/ab2d/${local.env}" #FIXME: Better manage this
     microservices = "/ab2d/${local.env}/microservices"
     webhooks      = "/ab2d/mgmt/slack-webhooks" #FIXME: Standardize this
-    splunk        = "/ab2d/mgmt/splunk"
   }
 
   benv = lookup({
@@ -66,7 +65,6 @@ locals {
   microservices_lb = data.aws_security_group.microservices_lb.id
   cloudfront_id    = data.aws_ec2_managed_prefix_list.cloudfront.id
 
-  splunk_alert_email = lookup(module.platform.ssm.splunk, "alert-email", { value : null }).value
 
 
   hpms_counts_schedule = "7 days" # I don't see a "1 week" option
@@ -298,13 +296,6 @@ resource "aws_sns_topic_subscription" "coverage_count_lambda_target" {
   topic_arn = aws_sns_topic.coverage_count_sns.arn
   protocol  = "lambda"
   endpoint  = aws_lambda_function.coverage_count.arn
-}
-
-resource "aws_sns_topic_subscription" "splunk_coverage_count" {
-  count     = local.splunk_alert_email != null ? 1 : 0
-  topic_arn = aws_sns_topic.coverage_count_sns.arn
-  protocol  = "email"
-  endpoint  = local.splunk_alert_email
 }
 
 resource "aws_lambda_function" "database_management" {

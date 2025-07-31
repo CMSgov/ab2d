@@ -10,20 +10,12 @@ locals {
   ab2d_okta_jwt_issuer_arn      = module.platform.ssm.core.okta_jwt_issuer.arn
   ab2d_slack_alert_webhooks_arn = module.platform.ssm.common.slack_alert_webhooks.arn
   ab2d_slack_trace_webhooks_arn = module.platform.ssm.common.slack_trace_webhooks.arn
-  splunk_alert_email            = lookup(module.platform.ssm.splunk, "alert-email", { value : null }).value
 }
 
 resource "aws_sns_topic_subscription" "events" {
   topic_arn = data.aws_sns_topic.events.arn
   protocol  = "sqs"
   endpoint  = data.aws_sqs_queue.events.arn
-}
-
-resource "aws_sns_topic_subscription" "splunk_events" {
-  count     = local.splunk_alert_email != null ? 1 : 0
-  topic_arn = data.aws_sns_topic.events.arn
-  protocol  = "email"
-  endpoint  = local.splunk_alert_email
 }
 
 resource "aws_ecs_task_definition" "events" {

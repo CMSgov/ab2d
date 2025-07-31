@@ -97,10 +97,3 @@ resource "aws_ssm_parameter" "writer_endpoint" {
   value = "${module.db.aurora_cluster.endpoint}:${module.db.aurora_cluster.port}"
   type  = "String"
 }
-
-resource "aws_sns_topic_subscription" "splunk" {
-  count     = local.splunk_alert_email != null ? 1 : 0
-  topic_arn = aws_sns_topic.alarms.arn
-  protocol  = "email"
-  endpoint  = local.splunk_alert_email
-}

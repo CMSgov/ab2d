@@ -26,7 +26,6 @@ locals {
   ssm_root_map = {
     common = "/ab2d/${local.env}/common"
     core   = "/ab2d/${local.env}/core"
-    splunk = "/ab2d/mgmt/splunk"
   }
 
   benv = lookup({

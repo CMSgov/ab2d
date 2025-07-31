@@ -181,9 +181,9 @@ resource "aws_cloudwatch_metric_alarm" "efs_health" {
   }
 }
 
-resource "aws_sns_topic_subscription" "splunk_efs" {
+resource "aws_sns_topic_subscription" "splunk" {
   count     = local.splunk_alert_email != null ? 1 : 0
-  topic_arn = aws_sns_topic.efs[0].arn
+  topic_arn = aws_sns_topic.alarms.arn
   protocol  = "email"
   endpoint  = local.splunk_alert_email
 }
