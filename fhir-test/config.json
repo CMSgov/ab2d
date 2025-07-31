@@ -1,0 +1,16 @@
+{
+  "required_tests": [
+    "bulk_data_v200-bulk_data_export_tests_v200-bulk_data_server_tests_stu2-bulk_data_server_tls_version_stu2",
+    "bulk_data_v200-bulk_data_export_tests_v200-bulk_data_patient_export_v200-bulk_data_patient_export_group_stu2-bulk_data_patient_export_operation_support",
+    "bulk_data_v200-bulk_data_export_tests_v200-bulk_data_patient_export_v200-bulk_data_patient_export_group_stu2-bulk_data_patient_no_auth_reject",
+    "bulk_data_v200-bulk_data_export_tests_v200-bulk_data_patient_export_v200-bulk_data_patient_export_group_stu2-bulk_data_patient_kick_off",
+    "bulk_data_v200-bulk_data_export_tests_v200-bulk_data_patient_export_v200-bulk_data_patient_export_group_stu2-bulk_data_patient_status_check",
+    "bulk_data_v200-bulk_data_export_tests_v200-bulk_data_patient_export_v200-bulk_data_patient_export_group_stu2-bulk_data_patient_output_check",
+    "bulk_data_v200-bulk_data_export_tests_v200-bulk_data_patient_export_v200-bulk_data_patient_export_validation_stu2-bulk_file_server_tls_version",
+    "bulk_data_v200-bulk_data_export_tests_v200-bulk_data_patient_export_v200-bulk_data_patient_export_validation_stu2-bulk_data_patient_ndjson_download",
+    "bulk_data_v200-bulk_data_export_tests_v200-bulk_data_patient_export_v200-bulk_data_patient_export_cancel_group_stu2-bulk_data_patient_export_cancel",
+    "bulk_data_v200-bulk_data_export_tests_v200-bulk_data_patient_export_v200-bulk_data_patient_export_cancel_group_stu2-bulk_data_patient_export_cancel_stu2",
+    "bulk_data_v200-bulk_data_export_tests_v200-bulk_data_patient_export_v200-bulk_data_patient_export_parameters_group-output_format_in_patient_export_response",
+    "bulk_data_v200-bulk_data_export_tests_v200-bulk_data_patient_export_v200-bulk_data_patient_export_parameters_group-since_in_patient_export_response"
+  ]
+}
