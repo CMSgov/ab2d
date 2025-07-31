@@ -58,7 +58,12 @@ resource "aws_ecs_task_definition" "properties" {
       "containerPath": "/newrelic/logs",
       "sourceVolume": "newrelic_logs",
       "readOnly": false
-    }
+    },
+    {
+      "containerPath": "/var/log",
+      "sourceVolume": "var_log",
+      "readOnly": false
+    }   
       ]
   }]))
    # The NewRelic agent needs to these
@@ -68,6 +73,9 @@ resource "aws_ecs_task_definition" "properties" {
   volume {
     name = "newrelic_logs"
   }
+  volume {
+    name = "var_log"
+  }  
 }
 
 resource "aws_ecs_service" "properties" {
