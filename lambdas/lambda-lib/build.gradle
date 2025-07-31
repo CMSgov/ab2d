@@ -1,0 +1,33 @@
+plugins {
+    id 'java'
+}
+
+version "$lambdalibsVersion"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.slf4j:slf4j-api:2.0.5'
+    implementation 'org.slf4j:slf4j-reload4j:2.0.5'
+
+    //test
+    testImplementation 'org.slf4j:slf4j-api:2.0.6'
+    testImplementation 'org.slf4j:slf4j-reload4j:2.0.6'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.1'
+    testImplementation 'org.junit.platform:junit-platform-commons:1.9.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.1'
+    implementation 'software.amazon.awssdk:ssm:2.25.7'
+
+}
+
+test {
+    useJUnitPlatform()
+}
+
+sonarqube {
+    properties {
+        property 'sonar.coverage.exclusions', "**/ParameterStoreUtil.java"
+    }
+}

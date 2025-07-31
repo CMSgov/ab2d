@@ -34,7 +34,7 @@ resource "aws_iam_role" "import" {
               "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
             }
             StringLike = {
-              "token.actions.githubusercontent.com:sub" = "repo:CMSgov/ab2d-lambdas:*"
+              "token.actions.githubusercontent.com:sub" = "repo:CMSgov/ab2d:*"
             }
           }
           Effect = "Allow"

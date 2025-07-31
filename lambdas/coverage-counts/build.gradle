@@ -1,0 +1,101 @@
+plugins {
+    id 'java'
+    id 'java-library'
+}
+
+version "$coverageVersion"
+
+
+configurations {
+    all.collect { configuration ->
+        configuration.exclude group: 'com.amazonaws.aws-java-sdk-core'
+        configuration.exclude group: 'com.fasterxml.jackson.core:jackson-annotations'
+        configuration.exclude group: 'com.fasterxml.jackson.core:jackson-databind'
+        configuration.exclude group: 'org.mock-server'
+        configuration.exclude group: 'software.amazon.awssdk:netty-nio-client'
+        configuration.exclude group: 'io.netty'
+    }
+
+}
+
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+
+
+    implementation 'com.amazonaws:aws-lambda-java-core:1.2.2'
+    implementation 'com.amazonaws:aws-lambda-java-events:3.11.0'
+    implementation 'com.amazonaws:aws-java-sdk-sqs:1.12.382'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-joda:2.14.0'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.14.0'
+    implementation 'com.fasterxml.jackson.module:jackson-module-parameter-names:2.14.1'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-joda:2.14.1'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+    compileOnly 'org.projectlombok:lombok:1.18.24'
+    implementation 'org.slf4j:slf4j-api:2.0.5'
+    implementation project(':database-management')
+    implementation 'org.liquibase:liquibase-core:4.18.0'
+    implementation 'org.liquibase:liquibase-core:4.18.0'
+    implementation 'org.postgresql:postgresql:42.5.1'
+    implementation('gov.cms.ab2d:ab2d-sns-client:0.0.1'){
+        // Gradle is including these transient dependencies in the zip making it huge
+        exclude group: 'org.springframework'
+        exclude group: 'org.springframework.boot'
+        exclude group: 'com.slack.api'
+        exclude group: 'org.jetbrains.kotlin'
+        exclude group: 'org.postgresql'
+        exclude group: 'com.squareup.okhttp3'
+        exclude group: 'commons-codec'
+        exclude group: 'com.squareup.okio'
+        exclude group: 'org.springframework.cloud'
+        exclude group: 'org.testcontainers:testcontainers'
+        // Lombok is amazing but its jar is 2 MBs which is 20% of the total fat jar.
+        // Even when set as compile and annotationProcessor only gradle still adds it to the fat jar
+        exclude group: 'org.projectlombok'
+    }
+
+    testImplementation 'org.mockito:mockito-core:4.11.0'
+    testImplementation project(':lambda-lib')
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
+    testImplementation 'org.junit.platform:junit-platform-commons:1.9.2'
+    testImplementation 'org.testcontainers:junit-jupiter:1.17.6'
+    testImplementation "org.testcontainers:postgresql:1.17.6"
+    testImplementation 'org.liquibase:liquibase-core:4.18.0'
+    testImplementation 'org.liquibase:liquibase-core:4.18.0'
+    testImplementation 'org.postgresql:postgresql:42.5.1'
+    testImplementation project(':database-management')
+    testImplementation project(':lambda-test-utils')
+
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
+
+
+}
+
+test {
+    useJUnitPlatform()
+}
+task buildZip(type: Zip) {
+
+    from compileJava
+    from processResources
+    into('lib') {
+        from configurations.runtimeClasspath
+    }
+    archiveFileName =  'coverage-counts.zip'
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '7.5'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+build.dependsOn buildZip
+
