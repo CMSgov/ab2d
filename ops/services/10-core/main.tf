@@ -16,7 +16,8 @@ module "platform" {
   root_module = "https://github.com/CMSgov/ab2d/tree/main/ops/services/10-core"
   service     = local.service
   ssm_root_map = {
-    core = "/ab2d/${local.env}/core/"
+    core   = "/ab2d/${local.env}/core/"
+    splunk = "/ab2d/mgmt/splunk/"
   }
 }
 
@@ -37,6 +38,7 @@ locals {
   private_subnets    = nonsensitive(toset(keys(module.platform.private_subnets)))
   region_name        = module.platform.primary_region.name
   vpc_id             = module.platform.vpc_id
+  splunk_alert_email = lookup(module.platform.ssm.splunk, "alert-email", { value : null }).value
 }
 
 resource "aws_s3_bucket" "main_bucket" {
@@ -179,12 +181,16 @@ resource "aws_cloudwatch_metric_alarm" "efs_health" {
   }
 }
 
-resource "aws_sns_topic" "alarms" {
-  name = "${local.service_prefix}-cloudwatch-alarms"
+resource "aws_sns_topic_subscription" "splunk" {
+  count     = local.splunk_alert_email != null ? 1 : 0
+  topic_arn = aws_sns_topic.alarms.arn
+  protocol  = "email"
+  endpoint  = local.splunk_alert_email
+}
 
-  #FIXME this requires adjustments to the local.kms_master_key key policy
-  # kms_master_key_id = local.kms_master_key_id
-  kms_master_key_id = "alias/aws/sns"
+resource "aws_sns_topic" "alarms" {
+  name              = "${local.service_prefix}-cloudwatch-alarms"
+  kms_master_key_id = local.env_key_alias.target_key_id
 }
 
 resource "aws_sns_topic" "this" {

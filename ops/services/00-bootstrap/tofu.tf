@@ -17,8 +17,8 @@ locals {
   )
 
   state_buckets = {
-    test    = "ab2d-test-tfstate-20250410134820763500000001"
-    prod    = "ab2d-prod-tfstate-20250411202936776600000001"
+    test = "ab2d-test-tfstate-20250410134820763500000001"
+    prod = "ab2d-prod-tfstate-20250411202936776600000001"
   }
 }
 

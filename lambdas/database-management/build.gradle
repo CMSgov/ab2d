@@ -1,0 +1,58 @@
+plugins {
+    id 'java'
+    id 'java-library'
+}
+
+version "$databaseVersion"
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    implementation 'org.liquibase:liquibase-core:4.18.0'
+    implementation 'org.liquibase:liquibase-core:4.18.0'
+    implementation 'org.postgresql:postgresql:42.5.1'
+    implementation 'com.amazonaws:aws-lambda-java-core:1.2.2'
+    implementation 'com.amazonaws:aws-lambda-java-events:3.11.0'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+    compileOnly 'org.projectlombok:lombok:1.18.24'
+    testImplementation 'org.liquibase:liquibase-core:4.18.0'
+    testImplementation 'org.liquibase:liquibase-core:4.18.0'
+    testImplementation 'org.postgresql:postgresql:42.5.1'
+    testImplementation project(':lambda-test-utils')
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
+    testImplementation 'org.junit.platform:junit-platform-commons:1.9.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
+    testImplementation 'org.testcontainers:junit-jupiter:1.17.6'
+    testImplementation "org.testcontainers:postgresql:1.17.6"
+
+
+    implementation project(':lambda-lib')
+}
+
+test {
+    useJUnitPlatform()
+}
+task buildZip(type: Zip) {
+
+    from compileJava
+    from processResources
+    into('lib') {
+        from configurations.runtimeClasspath
+    }
+    archiveFileName = 'database-management.zip'
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '7.5'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+build.dependsOn buildZip
+
