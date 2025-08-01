@@ -4,6 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.test.annotation.DirtiesContext;
 
 @SpringBootApplication(scanBasePackages = {
         "gov.cms.ab2d.common",
@@ -12,6 +13,7 @@ import org.springframework.context.annotation.PropertySource;
 })
 @PropertySource("classpath:application.coverage.properties")
 @EntityScan(basePackages = {"gov.cms.ab2d.contracts"})
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class SpringBootCoverageTestApp {
 
     public static void main(String [] args) {
