@@ -136,7 +136,7 @@ resource "aws_lambda_function" "export" {
   runtime                        = "java17"
   skip_destroy                   = false
   tags = {
-    code = "https://github.com/CMSgov/ab2d/tree/main/lambdas/optout"
+    code = "https://github.com/CMSgov/ab2d-lambdas/tree/main/optout"
   }
 
   environment {
