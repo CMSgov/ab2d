@@ -76,8 +76,7 @@ jobs:
 
       - name: Run unit and integration tests
         run: |
-#            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
-            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl coverage
+            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl coverage 
 
       - name: SonarQube analysis
         run: |
