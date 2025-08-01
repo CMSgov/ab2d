@@ -5,8 +5,7 @@
         </encoder>
     </appender>
     <logger name="com.github.dockerjava.core.command" level="WARN"/>
-    <!-- TODO revert back to WARN  -->
-    <logger name="liquibase" level="INFO"/>
+    <logger name="liquibase" level="WARN"/>
     <root level="WARN">
         <appender-ref ref="STDOUT" />
     </root>

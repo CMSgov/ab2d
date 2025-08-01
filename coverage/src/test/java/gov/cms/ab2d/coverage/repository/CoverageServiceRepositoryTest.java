@@ -49,7 +49,7 @@ import static org.mockito.Mockito.when;
 @Testcontainers
 @TestPropertySource(locations = "/application.coverage.properties")
 @EnableFeignClients(clients = {ContractFeignClient.class})
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@DirtiesContext(methodMode =  DirtiesContext.MethodMode.BEFORE_METHOD, classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class CoverageServiceRepositoryTest {
 
     @Container
