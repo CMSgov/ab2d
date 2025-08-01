@@ -1,6 +1,8 @@
 name: Run unit and integration tests
 
 on:
+  push:
+    branches: ['AB2D-6822/integration_tests_workflow']
   workflow_call:
   workflow_dispatch: # Allow manual trigger
 
@@ -30,7 +32,7 @@ jobs:
   test:
     runs-on: self-hosted
     needs: workflow
-    if: needs.workflow.outputs.files
+    if: needs.workflow.outputs.files || github.ref_name == 'main'
     env:
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
