@@ -44,6 +44,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -72,6 +73,7 @@ import static org.mockito.Mockito.when;
 @SpringBootTest(properties = "coverage.update.initial.delay=1000000")
 @Testcontainers
 @Import({AB2DSQSMockConfig.class, ContractServiceTestConfig.class})
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class CoverageUpdateAndProcessorTest {
 
     private static final int PAST_MONTHS = 3;
