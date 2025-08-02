@@ -241,6 +241,8 @@ resource "aws_ecs_task_definition" "api" {
   container_definitions = nonsensitive(jsonencode([{
     name : local.service,
     image : local.api_image_uri,
+    # Enable read-only root filesystem AB2D-6797
+    readonlyRootFilesystem = true
     essential : true,
     portMappings : [
       {
@@ -251,7 +253,22 @@ resource "aws_ecs_task_definition" "api" {
       {
         containerPath : local.ab2d_efs_mount,
         sourceVolume : "efs"
-      }
+      },
+      {
+        "containerPath": "/tmp",
+        "sourceVolume": "tmp",
+        "readOnly": false
+      },
+      {
+        "containerPath": "/newrelic/logs",
+        "sourceVolume": "newrelic_logs",
+        "readOnly": false
+      },
+      {
+        "containerPath": "/var/log",
+        "sourceVolume": "var_log",
+        "readOnly": false
+      } 
     ],
     secrets : [
       { name : "AB2D_DB_DATABASE", valueFrom : local.db_name_arn },
@@ -294,6 +311,15 @@ resource "aws_ecs_task_definition" "api" {
     },
     healthCheck : null
   }]))
+  volume {
+    name = "tmp"
+  }
+  volume {
+    name = "newrelic_logs"
+  }
+  volume {
+    name = "var_log"
+  }
 }
 
 resource "aws_ecs_service" "api" {
