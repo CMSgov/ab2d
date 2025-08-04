@@ -41,28 +41,29 @@ jobs:
             grep -P "${workflow_files_re}" \
           && echo "files=true" >> $GITHUB_OUTPUT || echo "files=" >> $GITHUB_OUTPUT
   test:
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     needs: workflow
     if: needs.workflow.outputs.files
-    runs-on: self-hosted
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Assume role in AB2D account for this environment
-        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
-        env:
-          ACCOUNT: ${{ inputs.environment == '' && 'test' || inputs.environment }}
+      - name: Assume AWS role
+        uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.AB2D_ENV }}-github-actions
           
       - name: Set environment-specific variables
         run: |
           ENVIRONMENT="${{ inputs.environment || 'test' }}"
           if [ "$ENVIRONMENT" == "test" ]; then
             echo "SECRET_ID=ab2d/ab2d-east-impl/jenkins-verify-api" >> $GITHUB_ENV
-            echo "BASE_URL=https://impl.ab2d.cms.gov" >> $GITHUB_ENV
-            echo "EXPORT_URL=https://impl.ab2d.cms.gov/api/v2/fhir/Patient/?_type=ExplanationOfBenefit&_since=2020-02-13T00:00:00.000-05:00&_outputFormat=application%2Ffhir%2Bndjson" >> $GITHUB_ENV
+            echo "BASE_URL=https://test.ab2d.cms.gov" >> $GITHUB_ENV
+            echo "EXPORT_URL=https://test.ab2d.cms.gov/api/v2/fhir/Patient/?_type=ExplanationOfBenefit&_since=2020-02-13T00:00:00.000-05:00&_outputFormat=application%2Ffhir%2Bndjson" >> $GITHUB_ENV
           elif [ "$ENVIRONMENT" == "dev" ]; then
             echo "SECRET_ID=ab2d/ab2d-dev/jenkins-verify-basic-auth" >> $GITHUB_ENV
             echo "BASE_URL=https://dev.ab2d.cms.gov" >> $GITHUB_ENV

@@ -59,7 +59,7 @@ TOKEN=$(curl -s --location --request POST 'https://cms-test.okta.com/oauth2/aus2
 
 
 echo "Starting PDP-100 job..."
-JOB=$(curl -k -s --head --location --request GET 'https://impl.ab2d.cms.gov/api/v2/fhir/Patient/$export?_type=ExplanationOfBenefit&_since=2020-02-13T00:00:00.000-05:00&_outputFormat=application%2Ffhir%2Bndjson' \
+JOB=$(curl -k -s --head --location --request GET 'https://test.ab2d.cms.gov/api/v2/fhir/Patient/$export?_type=ExplanationOfBenefit&_since=2020-02-13T00:00:00.000-05:00&_outputFormat=application%2Ffhir%2Bndjson' \
 --header "Prefer: respond-async" \
 --header "Authorization: Bearer $TOKEN" \
 | awk -v FS=": " "/^content-location/{print \$2}" | sed 's/content-location: //' | tr -d '\r')
