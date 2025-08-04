@@ -42,6 +42,7 @@ import static java.util.stream.Collectors.groupingBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.annotation.DirtiesContext.MethodMode.BEFORE_METHOD;
 
 ;
 
@@ -289,6 +290,7 @@ public class CoverageCheckPredicatesIntegrationTest {
 
     @DisplayName("Coverage changes are limited to 10% between months passes when true")
     @Test
+    @DirtiesContext(methodMode = BEFORE_METHOD)
     void whenCoverageSmallPercentage_passCoverageStableCheck() {
 
         //Won't work in March due to dec attestation.
