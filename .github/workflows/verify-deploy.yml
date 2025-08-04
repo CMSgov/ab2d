@@ -49,7 +49,7 @@ jobs:
     env:
        AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
        AB2D_ENV: 'test'
-    if: needs.workflow.outputs.files
+    if: needs.workflow.outputs.files || github.event_name == 'push'
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
