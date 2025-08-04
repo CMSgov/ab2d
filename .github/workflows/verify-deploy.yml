@@ -47,10 +47,8 @@ jobs:
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     needs: workflow
     env:
-#      AWS_ACCOUNT: ${{ inputs.environment == 'sandbox' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
-#      AB2D_ENV: ${{ inputs.environment }}
-    AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
-    AB2D_ENV: 'test'
+       AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
+       AB2D_ENV: 'test'
     if: needs.workflow.outputs.files
     steps:
       - name: Checkout Code
