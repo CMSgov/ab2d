@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker.processor.coverage.check;
+package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
@@ -15,14 +15,17 @@ import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
+import gov.cms.ab2d.worker.processor.coverage.check.*;
 import gov.cms.ab2d.worker.util.WorkerDataSetup;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -44,8 +47,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.annotation.DirtiesContext.MethodMode.BEFORE_METHOD;
 
-;
 
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(properties = "coverage.update.initial.delay=1000000")
 @Testcontainers
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
@@ -290,7 +293,6 @@ public class CoverageCheckPredicatesIntegrationTest {
 
     @DisplayName("Coverage changes are limited to 10% between months passes when true")
     @Test
-    @DirtiesContext(methodMode = BEFORE_METHOD)
     void whenCoverageSmallPercentage_passCoverageStableCheck() {
 
         //Won't work in March due to dec attestation.

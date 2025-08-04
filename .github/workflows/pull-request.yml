@@ -8,9 +8,9 @@ permissions:
   id-token: write
   contents: read
 jobs:
-#  unit-integration-test:
-#    uses: ./.github/workflows/unit-integration-test.yml
-#    secrets: inherit
+  unit-integration-test:
+    uses: ./.github/workflows/unit-integration-test.yml
+    secrets: inherit
 #  build-deploy-api:
 #    uses: ./.github/workflows/build-deploy-gf.yml
 #    with:
