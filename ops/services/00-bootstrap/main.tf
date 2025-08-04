@@ -1,5 +1,5 @@
 module "platform" {
-  source    = "git::https://github.com/CMSgov/cdap.git//terraform/modules/platform?ref=PLT-1099"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app         = "ab2d"
@@ -23,7 +23,7 @@ locals {
 }
 
 module "sops" {
-  source = "git::https://github.com/CMSgov/cdap.git//terraform/modules/sops?ref=PLT-1099"
+  source = "github.com/CMSgov/cdap//terraform/modules/sops?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
 
   platform = module.platform
 }
