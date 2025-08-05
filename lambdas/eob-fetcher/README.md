@@ -4,8 +4,3 @@ Moving to lambdas
 - saves money
 - potentially improves reliability
 - Allows for easier scalability
- 
-
-## Build/Deploy/etc
-
-Please see the [README.md](../README.md) in the root directory of this project.
