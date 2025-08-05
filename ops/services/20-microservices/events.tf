@@ -85,7 +85,7 @@ resource "aws_ecs_task_definition" "events" {
     }    
       ]
   }]))
-   # The NewRelic agent needs to these
+  # The NewRelic agent needs to these
   volume {
     name = "tmp"
   }
