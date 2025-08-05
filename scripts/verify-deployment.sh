@@ -16,10 +16,11 @@ fi
 # Wait for dependencies to initialize
 sleep 30
 
-## Fetch the secret for basic authentication
+# Fetch the secret for basic authentication
 #BASIC_AUTH=$(aws secretsmanager get-secret-value --secret-id "$SECRET_ID" --query SecretString --output text) || {
 #    echo "Failed to retrieve secret"; exit 3;
 #}
+BASIC_AUTH=$SECRET_ID
 
 # Check API status
 echo "Checking API status..."

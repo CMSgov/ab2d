@@ -64,25 +64,33 @@ jobs:
         run: |
           ENVIRONMENT="${{ inputs.environment || 'test' }}"
           if [ "$ENVIRONMENT" == "test" ]; then
-            echo "SECRET_ID=ab2d/ab2d-east-impl/jenkins-verify-api" >> $GITHUB_ENV
+#            echo "SECRET_ID=ab2d/ab2d-east-impl/jenkins-verify-api" >> $GITHUB_ENV
             echo "BASE_URL=https://test.ab2d.cms.gov" >> $GITHUB_ENV
             echo "EXPORT_URL=https://test.ab2d.cms.gov/api/v2/fhir/Patient/?_type=ExplanationOfBenefit&_since=2020-02-13T00:00:00.000-05:00&_outputFormat=application%2Ffhir%2Bndjson" >> $GITHUB_ENV
           elif [ "$ENVIRONMENT" == "dev" ]; then
-            echo "SECRET_ID=ab2d/ab2d-dev/jenkins-verify-basic-auth" >> $GITHUB_ENV
+#            echo "SECRET_ID=ab2d/ab2d-dev/jenkins-verify-basic-auth" >> $GITHUB_ENV
             echo "BASE_URL=https://dev.ab2d.cms.gov" >> $GITHUB_ENV
             echo "EXPORT_URL=https://dev.ab2d.cms.gov/api/v2/fhir/Patient/?_type=ExplanationOfBenefit&_since=2020-02-13T00:00:00.000-05:00&_outputFormat=application%2Ffhir%2Bndjson" >> $GITHUB_ENV
           elif [ "$ENVIRONMENT" == "sbx" ]; then
-            echo "SECRET_ID=ab2d/ab2d-sbx-sandbox/jenkins-verify-basic-auth" >> $GITHUB_ENV
+#            echo "SECRET_ID=ab2d/ab2d-sbx-sandbox/jenkins-verify-basic-auth" >> $GITHUB_ENV
             echo "BASE_URL=https://sbx.ab2d.cms.gov" >> $GITHUB_ENV
             echo "EXPORT_URL=https://sbx.ab2d.cms.gov/api/v2/fhir/Patient/?_type=ExplanationOfBenefit&_since=2020-02-13T00:00:00.000-05:00&_outputFormat=application%2Ffhir%2Bndjson" >> $GITHUB_ENV
           elif [ "$ENVIRONMENT" == "prod" ]; then
-            echo "SECRET_ID=ab2d/ab2d-east-prod/jenkins-verify-basic-auth" >> $GITHUB_ENV
+#            echo "SECRET_ID=ab2d/ab2d-east-prod/jenkins-verify-basic-auth" >> $GITHUB_ENV
             echo "BASE_URL=https://api.ab2d.cms.gov" >> $GITHUB_ENV
             echo "EXPORT_URL=https://api.ab2d.cms.gov/api/v2/fhir/Patient/?_type=ExplanationOfBenefit&_since=2020-02-13T00:00:00.000-05:00&_outputFormat=application%2Ffhir%2Bndjson" >> $GITHUB_ENV
           else
             echo "Invalid environment: $ENVIRONMENT"
             exit 1
           fi
+
+      - name: Set env vars from AWS params
+        uses: cmsgov/cdap/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |        
+            SECRET_ID=/ab2d/mgmt/okta/sensitive/test-pdp-100-secret
 
       - name: Set script file based on environment
         run: echo "script=./scripts/verify-deployment.sh" >> $GITHUB_ENV
