@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker.processor.coverage;
+package gov.cms.ab2d.worker.processor.coverage.check;
 
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
@@ -15,7 +15,6 @@ import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
-import gov.cms.ab2d.worker.processor.coverage.check.*;
 import gov.cms.ab2d.worker.util.WorkerDataSetup;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
