@@ -147,12 +147,28 @@ resource "aws_ecs_task_definition" "worker" {
   container_definitions = nonsensitive(jsonencode([{
     name : local.service,
     image : local.worker_image_uri,
+    readonlyRootFilesystem = true
     essential : true,
     mountPoints : [
       {
         containerPath : local.ab2d_efs_mount,
         sourceVolume : "efs"
-      }
+      },
+      {
+        "containerPath" : "/tmp",
+        "sourceVolume" : "tmp",
+        "readOnly" : false
+      },
+      {
+        "containerPath" : "/newrelic/logs",
+        "sourceVolume" : "newrelic_logs",
+        "readOnly" : false
+      },
+      {
+        "containerPath" : "/var/log",
+        "sourceVolume" : "var_logs",
+        "readOnly" : false
+      },
     ],
     secrets : [
       { name : "AB2D_BFD_KEYSTORE_PASSWORD", valueFrom : local.bfd_keystore_password_arn },
@@ -193,6 +209,15 @@ resource "aws_ecs_task_definition" "worker" {
     },
     healthCheck : null
   }]))
+  volume {
+    name = "tmp"
+  }
+  volume {
+    name = "newrelic_logs"
+  }
+  volume {
+    name = "var_logs"
+  }
 }
 
 resource "aws_ecs_service" "worker" {
