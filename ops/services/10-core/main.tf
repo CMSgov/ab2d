@@ -43,6 +43,28 @@ locals {
 
 resource "aws_s3_bucket" "main_bucket" {
   bucket_prefix = "${local.service_prefix}-main"
+  policy = data.aws_iam_policy_document.main_bucket_policy.json
+}
+
+data "aws_iam_policy_document" "main_bucket_policy" {
+  statement {
+    sid    = "AllowSSLRequestsOnly"
+    effect = "Deny"
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+    actions = ["s3:*"]
+    resources = [
+      aws_s3_bucket.main_bucket.arn,
+      "${aws_s3_bucket.main_bucket.arn}/*"
+    ]
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
+  }
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "main_bucket" {
