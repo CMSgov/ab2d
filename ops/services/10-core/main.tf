@@ -43,10 +43,10 @@ locals {
 
 resource "aws_s3_bucket" "main_bucket" {
   bucket_prefix = "${local.service_prefix}-main"
-  policy = data.aws_iam_policy_document.main_bucket_policy.json
 }
 
-data "aws_iam_policy_document" "main_bucket_policy" {
+data "aws_iam_policy_document" "main_bucket" {
+  depends_on = [aws_s3_bucket.main_bucket]
   statement {
     sid    = "AllowSSLRequestsOnly"
     effect = "Deny"
@@ -56,8 +56,8 @@ data "aws_iam_policy_document" "main_bucket_policy" {
     }
     actions = ["s3:*"]
     resources = [
-      aws_s3_bucket.main_bucket.arn,
-      "${aws_s3_bucket.main_bucket.arn}/*"
+      "arn:aws:s3:::${aws_s3_bucket.main_bucket.bucket}",
+      "arn:aws:s3:::${aws_s3_bucket.main_bucket.bucket}/*"
     ]
     condition {
       test     = "Bool"
@@ -65,6 +65,11 @@ data "aws_iam_policy_document" "main_bucket_policy" {
       values   = ["false"]
     }
   }
+}
+
+resource "aws_s3_bucket_policy" "main_bucket" {
+  bucket = aws_s3_bucket.main_bucket.id
+  policy = data.aws_iam_policy_document.main_bucket.json
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "main_bucket" {
