@@ -1,6 +1,8 @@
 name: pull request jobs
 
 on:
+  push:
+    branches: ["AB2D-6840/fix_ci"]
   pull_request:
 permissions:
   id-token: write
