@@ -44,6 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest(properties = "coverage.update.initial.delay=1000000")
 @Testcontainers
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+// Will be enabled in AB2D-6848 Fix Integration tests for worker
 @Disabled
 public class CoverageCheckPredicatesIntegrationTest {
 

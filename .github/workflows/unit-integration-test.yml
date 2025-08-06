@@ -1,8 +1,6 @@
 name: Run unit and integration tests
 
 on:
-  push:
-    branches: ['AB2D-6822/integration_tests_workflow']
   workflow_call:
   workflow_dispatch: # Allow manual trigger
 
@@ -70,13 +68,13 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: ${{ vars.AB2D_DEV_ROLE }}
 
-#      - name: Clean maven
-#        run: |
-#          mvn -ntp -U clean
-#
-#      - name: Run unit and integration tests
-#        run: |
-#            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
+      - name: Clean maven
+        run: |
+          mvn -ntp -U clean
+
+      - name: Run unit and integration tests
+        run: |
+            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
 
       - name: SonarQube analysis
         run: |
