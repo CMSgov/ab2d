@@ -155,19 +155,19 @@ resource "aws_ecs_task_definition" "worker" {
         sourceVolume : "efs"
       },
       {
-        "containerPath": "/tmp",
-        "sourceVolume": "tmp",
-        "readOnly": false
+        "containerPath" : "/tmp",
+        "sourceVolume" : "tmp",
+        "readOnly" : false
       },
       {
-        "containerPath": "/newrelic/logs",
-        "sourceVolume": "newrelic_logs",
-        "readOnly": false
+        "containerPath" : "/newrelic/logs",
+        "sourceVolume" : "newrelic_logs",
+        "readOnly" : false
       },
       {
-        "containerPath": "/var/log",
-        "sourceVolume": "var_logs",
-        "readOnly": false
+        "containerPath" : "/var/log",
+        "sourceVolume" : "var_logs",
+        "readOnly" : false
       },
     ],
     secrets : [

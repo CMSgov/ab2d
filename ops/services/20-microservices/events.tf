@@ -68,22 +68,22 @@ resource "aws_ecs_task_definition" "events" {
     },
     healthCheck : null
     mountPoints = [
-    {
-      "containerPath": "/tmp",
-      "sourceVolume": "tmp",
-      "readOnly": false
-    },
-    {
-      "containerPath": "/newrelic/logs",
-      "sourceVolume": "newrelic_logs",
-      "readOnly": false
-    },
-    {
-      "containerPath": "/var/log",
-      "sourceVolume": "var_log",
-      "readOnly": false
-    }    
-      ]
+      {
+        "containerPath" : "/tmp",
+        "sourceVolume" : "tmp",
+        "readOnly" : false
+      },
+      {
+        "containerPath" : "/newrelic/logs",
+        "sourceVolume" : "newrelic_logs",
+        "readOnly" : false
+      },
+      {
+        "containerPath" : "/var/log",
+        "sourceVolume" : "var_log",
+        "readOnly" : false
+      }
+    ]
   }]))
   # The NewRelic agent needs to these
   volume {
@@ -94,7 +94,7 @@ resource "aws_ecs_task_definition" "events" {
   }
   volume {
     name = "var_log"
-  }  
+  }
 }
 
 resource "aws_ecs_service" "events" {

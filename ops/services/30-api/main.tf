@@ -254,20 +254,20 @@ resource "aws_ecs_task_definition" "api" {
         sourceVolume : "efs"
       },
       {
-        "containerPath": "/tmp",
-        "sourceVolume": "tmp",
-        "readOnly": false
+        "containerPath" : "/tmp",
+        "sourceVolume" : "tmp",
+        "readOnly" : false
       },
       {
-        "containerPath": "/newrelic/logs",
-        "sourceVolume": "newrelic_logs",
-        "readOnly": false
+        "containerPath" : "/newrelic/logs",
+        "sourceVolume" : "newrelic_logs",
+        "readOnly" : false
       },
       {
-        "containerPath": "/var/log",
-        "sourceVolume": "var_log",
-        "readOnly": false
-      } 
+        "containerPath" : "/var/log",
+        "sourceVolume" : "var_log",
+        "readOnly" : false
+      }
     ],
     secrets : [
       { name : "AB2D_DB_DATABASE", valueFrom : local.db_name_arn },
