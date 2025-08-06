@@ -25,7 +25,10 @@ TRL_BENECONFIRM${today}0000000007
 EOF
 
 err "Testing confirmation file..."
-
+err "Contents of conf_file:"
+cat "$conf_file"
+err "Contents of expected:"
+cat "$expected"
 # Hide output to avoid revealing sensitive info
 if ! diff -u "$conf_file" "$expected" > /dev/null; then
   err "Confirmation file differs from expected"
