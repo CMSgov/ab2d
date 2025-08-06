@@ -65,7 +65,7 @@ resource "aws_ecs_task_definition" "properties" {
       }
     ]
   }]))
-  # The NewRelic agent needs to these
+  # The NewRelic agent needs access to these
   volume {
     name = "tmp"
   }
