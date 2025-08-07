@@ -163,10 +163,6 @@ public class EndToEndBfdTests {
     private CoverageSnapshotService snapshotService;
 
     @Autowired
-    private SpringLiquibase liquibase;
-
-
-    @Autowired
     @Qualifier(value = "patientCoverageThreadPool")
     private ThreadPoolTaskExecutor taskExecutor;
 
@@ -182,7 +178,7 @@ public class EndToEndBfdTests {
     private static final String CONTRACT_TO_USE_CLIENT_ID = "KtmekgkCTalQkGue2B-0Z0hGC1Dk7khtJ30XMI3J";
 
     @BeforeEach
-    void setUp() throws LiquibaseException {
+    void setUp() {
         /* These properties are set to improve performance of this test */
         propertiesService.updateProperty(PCP_CORE_POOL_SIZE, "20");
         propertiesService.updateProperty(PCP_MAX_POOL_SIZE, "30");
