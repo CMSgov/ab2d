@@ -163,7 +163,7 @@ resource "aws_security_group_rule" "load_balancer_access_nat" {
   security_group_id = aws_security_group.load_balancer.id
 }
 
-resource "aws_security_group_rule" "pdp" {
+resource "aws_security_group_rule" "pdp" { #TODO: Consider updating this to formally yield to the web acls informed by the ip sets below
   for_each = nonsensitive(local.pdp_map)
 
   type              = "ingress"
@@ -173,6 +173,16 @@ resource "aws_security_group_rule" "pdp" {
   protocol          = "tcp"
   cidr_blocks       = split(", ", each.value["cidrs"])
   security_group_id = aws_security_group.pdp.id
+}
+
+resource "aws_wafv2_ip_set" "pdp" {
+  count = local.env == "prod" ? 1 : 0
+
+  name               = "${local.app}-${local.env}-${local.service}-customers"
+  description        = "AB2D PDP Customer List"
+  scope              = "REGIONAL"
+  ip_address_version = "IPV4"
+  addresses          = flatten([for i in nonsensitive(local.pdp_map) : [for k in split(",", i.cidrs) : trim(k, " ")]])
 }
 
 resource "aws_security_group_rule" "open_access_sandbox" {
