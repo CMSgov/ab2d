@@ -6,47 +6,27 @@ on:
       - main
 
 jobs:
-  build-api:
-    uses: ./.github/workflows/build.yml
+  build-deploy-api:
+    uses: ./.github/workflows/build-deploy-gf.yml
     with:
       environment: test
       module: api
     secrets: inherit
-  build-worker:
-    uses: ./.github/workflows/build.yml
+  build-deploy-worker:
+    uses: ./.github/workflows/build-deploy-gf.yml
     with:
       environment: test
       module: worker
     secrets: inherit
-  deploy-api:
-    needs: build-api
-    permissions:
-      contents: read
-      id-token: write
-    uses: ./.github/workflows/deploy.yml
+  e2e-bfd-test:
+    needs: [ build-deploy-api, build-deploy-worker ]
+    uses: ./.github/workflows/e2e-bfd-test-gf.yml
     with:
       environment: test
-      module: api
-    secrets: inherit
-  deploy-worker:
-    needs: build-worker
-    permissions:
-      contents: read
-      id-token: write
-    uses: ./.github/workflows/deploy.yml
-    with:
-      environment: test
-      module: worker
     secrets: inherit
   e2e-test:
-    needs: [deploy-api, deploy-worker]
-    uses: ./.github/workflows/e2e-test.yml
+    needs: [build-deploy-api, build-deploy-worker]
+    uses: ./.github/workflows/e2e-test-gf.yml
     with:
       environment: test
     secrets: inherit
-  verify-deployment:
-    needs: [e2e-test]
-    uses: ./.github/workflows/verify-deploy.yml
-    with:
-      environment: test
-    secrets: inherit        
