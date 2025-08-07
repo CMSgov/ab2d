@@ -10,26 +10,27 @@ permissions:
   contents: read
 
 jobs:
-#  build-deploy-api:
-#    uses: ./.github/workflows/build-deploy-gf.yml
-#    with:
-#      environment: test
-#      module: api
-#    secrets: inherit
-#  build-deploy-worker:
-#    uses: ./.github/workflows/build-deploy-gf.yml
-#    with:
-#      environment: test
-#      module: worker
-#    secrets: inherit
-  e2e-bfd-test:
-#    needs: [ build-deploy-api, build-deploy-worker ]
-    uses: ./.github/workflows/e2e-bfd-test-gf.yml
+  build-deploy-api:
+    uses: ./.github/workflows/build-deploy-gf.yml
     with:
       environment: test
+      module: api
     secrets: inherit
+  build-deploy-worker:
+    uses: ./.github/workflows/build-deploy-gf.yml
+    with:
+      environment: test
+      module: worker
+    secrets: inherit
+# Should be fixed in AB2D-6853 Fix e2e-bfd tests
+#  e2e-bfd-test:
+#    needs: [ build-deploy-api, build-deploy-worker ]
+#    uses: ./.github/workflows/e2e-bfd-test-gf.yml
+#    with:
+#      environment: test
+#    secrets: inherit
   e2e-test:
-    needs: [ e2e-bfd-test ]
+    needs: [ build-deploy-api, build-deploy-worker ]
     uses: ./.github/workflows/e2e-test-gf.yml
     with:
       environment: test
