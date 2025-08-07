@@ -35,6 +35,8 @@ import gov.cms.ab2d.worker.service.ContractWorkerClient;
 import gov.cms.ab2d.worker.service.FileServiceImpl;
 import gov.cms.ab2d.worker.service.JobChannelService;
 import gov.cms.ab2d.worker.service.coveragesnapshot.CoverageSnapshotService;
+import liquibase.exception.LiquibaseException;
+import liquibase.integration.spring.SpringLiquibase;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IDomainResource;
@@ -110,7 +112,6 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 @Slf4j
 @ExtendWith(MockitoExtension.class)
 @Profile("jenkins")
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class EndToEndBfdTests {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
@@ -163,6 +164,10 @@ public class EndToEndBfdTests {
     private CoverageSnapshotService snapshotService;
 
     @Autowired
+    private SpringLiquibase liquibase;
+
+
+    @Autowired
     @Qualifier(value = "patientCoverageThreadPool")
     private ThreadPoolTaskExecutor taskExecutor;
 
@@ -178,7 +183,8 @@ public class EndToEndBfdTests {
     private static final String CONTRACT_TO_USE_CLIENT_ID = "KtmekgkCTalQkGue2B-0Z0hGC1Dk7khtJ30XMI3J";
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws LiquibaseException {
+        liquibase.afterPropertiesSet();
         /* These properties are set to improve performance of this test */
         propertiesService.updateProperty(PCP_CORE_POOL_SIZE, "20");
         propertiesService.updateProperty(PCP_MAX_POOL_SIZE, "30");

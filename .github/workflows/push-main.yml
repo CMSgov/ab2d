@@ -4,25 +4,26 @@ on:
   push:
     branches:
       - main
+      - AB2D-6840/fix_ci_3
 permissions:
   id-token: write
   contents: read
 
 jobs:
-  build-deploy-api:
-    uses: ./.github/workflows/build-deploy-gf.yml
-    with:
-      environment: test
-      module: api
-    secrets: inherit
-  build-deploy-worker:
-    uses: ./.github/workflows/build-deploy-gf.yml
-    with:
-      environment: test
-      module: worker
-    secrets: inherit
+#  build-deploy-api:
+#    uses: ./.github/workflows/build-deploy-gf.yml
+#    with:
+#      environment: test
+#      module: api
+#    secrets: inherit
+#  build-deploy-worker:
+#    uses: ./.github/workflows/build-deploy-gf.yml
+#    with:
+#      environment: test
+#      module: worker
+#    secrets: inherit
   e2e-bfd-test:
-    needs: [ build-deploy-api, build-deploy-worker ]
+#    needs: [ build-deploy-api, build-deploy-worker ]
     uses: ./.github/workflows/e2e-bfd-test-gf.yml
     with:
       environment: test
