@@ -1,6 +1,5 @@
 name: publish-lambdas-gf
-
-on:
+'on':
   workflow_call:
     inputs:
       run_sonar:
@@ -8,18 +7,16 @@ on:
         default: true
     outputs:
       build_version:
-        description: "The lambdas build version"
-        value: ${{ jobs.publish.outputs.build_version }}
+        description: The lambdas build version
+        value: '${{ jobs.publish.outputs.build_version }}'
   workflow_dispatch:
     inputs:
       run_sonar:
         description: Run SonarQube
         type: boolean
         default: true
-
 env:
-  JDK_JAVA_OPTIONS: "--add-opens java.base/java.util=ALL-UNNAMED"
-
+  JDK_JAVA_OPTIONS: '--add-opens java.base/java.util=ALL-UNNAMED'
 jobs:
   publish:
     permissions:
@@ -29,31 +26,29 @@ jobs:
       run:
         working-directory: ./lambdas
     runs-on:
-      - codebuild-ab2d-${{ github.run_id }}-${{ github.run_attempt }}
+      - 'codebuild-ab2d-${{ github.run_id }}-${{ github.run_attempt }}'
     outputs:
-      build_version: ${{ steps.publish_lambdas.outputs.build_version }}
+      build_version: '${{ steps.publish_lambdas.outputs.build_version }}'
     env:
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-      AWS_REGION: ${{ vars.AWS_REGION }}
-      AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
-
+      AWS_REGION: '${{ vars.AWS_REGION }}'
+      AWS_ACCOUNT: '${{ secrets.NON_PROD_ACCOUNT }}'
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
       - uses: actions/setup-java@v4
         with:
           distribution: adopt
           java-version: '17'
-
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-test-github-actions
-
+          aws-region: '${{ vars.AWS_REGION }}'
+          role-to-assume: >-
+            arn:aws:iam::${{ env.AWS_ACCOUNT
+            }}:role/delegatedadmin/developer/ab2d-test-github-actions
       - uses: cmsgov/cdap/actions/aws-params-env-action@main
         env:
-          AWS_REGION: ${{ vars.AWS_REGION }}
+          AWS_REGION: '${{ vars.AWS_REGION }}'
         with:
           params: |
             ARTIFACTORY_URL=/artifactory/url
@@ -61,45 +56,42 @@ jobs:
             ARTIFACTORY_PASSWORD=/artifactory/password
             SONAR_HOST_URL=/sonarqube/url
             SONAR_TOKEN=/sonarqube/token
-
       - name: Verify Required Libraries
         run: |
           echo "Checking for required system libraries..."
           ldd --version || echo "ldd (glibc) is not installed!"
           ldconfig -p | grep "libstdc++" || echo "libstdc++ is missing!"
           ldconfig -p | grep "zlib" || echo "zlib is missing!"
-
       - name: Build Lambdas
         run: ./gradlew -b build.gradle
-
       - name: Test Lambdas
         run: ./gradlew clean test --info -b build.gradle
-
       - name: Build Jars
         run: ./gradlew buildZip --info -b build.gradle
-
       - name: SonarQube Analysis
-        if: ${{ inputs.run_sonar == true }}
+        if: '${{ inputs.run_sonar == true }}'
         run: |
           ./gradlew sonar \
             -Dsonar.ci.autoconfig.disabled=true \
             -Dsonar.projectKey=ab2d-lambdas \
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.token=$SONAR_TOKEN
-        
       - name: Quality Gate
-        if: ${{ inputs.run_sonar == true }}
+        if: '${{ inputs.run_sonar == true }}'
         uses: sonarsource/sonarqube-quality-gate-action@master
         with:
           scanMetadataReportFile: build/sonar/report-task.txt
         timeout-minutes: 10
-
       - name: Publish Lambdas
         id: publish_lambdas
-        run: |
+        run: >
           echo "Checking for unpublished artifacts..."
+
           DEPLOY_SCRIPT=""
-          VERSION_PUBLISHED_LIST=$(./gradlew -q lookForArtifacts |  tr "'''" "\n")
+
+          VERSION_PUBLISHED_LIST=$(./gradlew -q lookForArtifacts |  tr "'''"
+          "\n")
+
           while IFS= read -r line; do
             ARTIFACTORY_INFO=($(echo $line | tr ":" "\n"))
             if [[ "${ARTIFACTORY_INFO[1]}" == "false" ]]; then
@@ -107,6 +99,7 @@ jobs:
               DEPLOY_SCRIPT+="${ARTIFACTORY_INFO[0]}:artifactoryPublish "
             fi
           done <<< "$VERSION_PUBLISHED_LIST"
+
           if [[ -n "$DEPLOY_SCRIPT" ]]; then
             echo "Publishing: $DEPLOY_SCRIPT"
             ./gradlew $DEPLOY_SCRIPT -b build.gradle \
@@ -116,10 +109,13 @@ jobs:
           else
             echo "No new artifacts to publish."
           fi
-          BUILD_VERSION=$(./gradlew properties -q | grep "version:" | awk '{print $2}')
-          echo "Build version: $BUILD_VERSION"
-          echo "build_version=$BUILD_VERSION" >> "$GITHUB_OUTPUT"
 
+          BUILD_VERSION=$(./gradlew properties -q | grep "version:" | awk
+          '{print $2}')
+
+          echo "Build version: $BUILD_VERSION"
+
+          echo "build_version=$BUILD_VERSION" >> "$GITHUB_OUTPUT"
       - name: SBOM
         run: |
           ./gradlew cyclonedxBom --info -b build.gradle
