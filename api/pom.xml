@@ -13,7 +13,7 @@
     <properties>
         <project.root>${basedir}/..</project.root>
         <springfox.version>3.0.0</springfox.version>
-        <okta-jwt.version>0.5.11</okta-jwt.version>
+        <okta-jwt.version>0.5.12</okta-jwt.version>
         <sonar.coverage.exclusions>**/JobClient.java</sonar.coverage.exclusions>
         <!-- 
             - AB2D-6099 -
@@ -106,7 +106,7 @@
         <dependency>
             <groupId>org.apache.httpcomponents.client5</groupId>
             <artifactId>httpclient5</artifactId>
-            <version>5.4.2</version>
+            <version>5.5</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents.core5</groupId>
@@ -116,7 +116,7 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.8.6</version>
+            <version>2.8.9</version>
         </dependency>
         <dependency>
             <groupId>gov.cms.ab2d</groupId>

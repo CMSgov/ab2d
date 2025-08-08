@@ -30,6 +30,7 @@ resource "aws_ecs_task_definition" "events" {
   container_definitions = nonsensitive(jsonencode([{
     name : "events-service-container", #TODO: Consider simplifying this name, just use "events"
     image : local.events_image_uri,
+    readonlyRootFilesystem = true
     essential : true,
     secrets : [
       { name : "AB2D_DB_DATABASE", valueFrom : local.db_database_arn },
@@ -65,7 +66,34 @@ resource "aws_ecs_task_definition" "events" {
       }
     },
     healthCheck : null
+    mountPoints = [
+      {
+        "containerPath" : "/tmp",
+        "sourceVolume" : "tmp",
+        "readOnly" : false
+      },
+      {
+        "containerPath" : "/newrelic/logs",
+        "sourceVolume" : "newrelic_logs",
+        "readOnly" : false
+      },
+      {
+        "containerPath" : "/var/log",
+        "sourceVolume" : "var_log",
+        "readOnly" : false
+      }
+    ]
   }]))
+  # The NewRelic agent needs access to these
+  volume {
+    name = "tmp"
+  }
+  volume {
+    name = "newrelic_logs"
+  }
+  volume {
+    name = "var_log"
+  }
 }
 
 resource "aws_ecs_service" "events" {

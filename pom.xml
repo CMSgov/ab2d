@@ -34,7 +34,7 @@
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
         <logback-encoder.version>7.3</logback-encoder.version>
         <testcontainers.version>1.20.6</testcontainers.version>
-        <newrelic.version>8.15.0</newrelic.version>
+        <newrelic.version>8.22.0</newrelic.version>
         <spring-cloud-aws.version>3.3.0</spring-cloud-aws.version>
         <postgresql.version>42.7.4</postgresql.version>
 
@@ -55,8 +55,8 @@
         <sns-client.version>1.1.2</sns-client.version>
 
         <!-- Dependency versions -->
-        <commons-compress.version>1.27.1</commons-compress.version>
-        <commons-io.version>2.18.0</commons-io.version>
+        <commons-compress.version>1.28.0</commons-compress.version>
+        <commons-io.version>2.19.0</commons-io.version>
         <commons-lang3.version>3.16.0</commons-lang3.version>
     </properties>
 
