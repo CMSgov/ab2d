@@ -76,13 +76,14 @@ jobs:
 
       - name: SonarQube Analysis
         run: |
-         ./gradlew sonar \
-           -Dsonar.ci.autoconfig.disabled=true \
-           -Dsonar.projectKey=ab2d-lambdas \ 
-           -Dsonar.host.url=$SONAR_HOST_URL \
-           -Dsonar.token=$SONAR_TOKEN
-
-      - name: Quality Gate
+          ./gradlew sonar \
+            -Dsonar.ci.autoconfig.disabled=true \
+            -Dsonar.projectKey=ab2d-lambdas \
+            -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.token=$SONAR_TOKEN
+        
+        
+         - name: Quality Gate
         run: |
          echo "Waiting for SonarQube Quality Gate..."
          sleep 600  # Simulate a 10-minute wait (adjust based on actual implementation)
