@@ -13,6 +13,7 @@ public class AB2DCoveragePostgressqlContainer extends PostgreSQLContainer<AB2DCo
 
     @Override
     public void start() {
+        super.withUsername("cmsadmin");
         super.withTmpFs(Collections.singletonMap("/var/lib/postgresql/data", "rw"));
         super.start();
         System.setProperty("DB_URL", this.getJdbcUrl());

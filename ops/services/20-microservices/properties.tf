@@ -16,6 +16,7 @@ resource "aws_ecs_task_definition" "properties" {
   container_definitions = nonsensitive(jsonencode([{
     name : "properties-service-container", #TODO: Consider simplifying this name, just use "properties"
     image : local.properties_image_uri
+    readonlyRootFilesystem = true
     essential : true,
     secrets : [
       { name : "AB2D_DB_DATABASE", valueFrom : local.db_database_arn },
@@ -46,7 +47,34 @@ resource "aws_ecs_task_definition" "properties" {
       }
     },
     healthCheck : null
+    mountPoints = [
+      {
+        "containerPath" : "/tmp",
+        "sourceVolume" : "tmp",
+        "readOnly" : false
+      },
+      {
+        "containerPath" : "/newrelic/logs",
+        "sourceVolume" : "newrelic_logs",
+        "readOnly" : false
+      },
+      {
+        "containerPath" : "/var/log",
+        "sourceVolume" : "var_log",
+        "readOnly" : false
+      }
+    ]
   }]))
+  # The NewRelic agent needs access to these
+  volume {
+    name = "tmp"
+  }
+  volume {
+    name = "newrelic_logs"
+  }
+  volume {
+    name = "var_log"
+  }
 }
 
 resource "aws_ecs_service" "properties" {

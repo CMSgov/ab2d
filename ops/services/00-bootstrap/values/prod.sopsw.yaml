@@ -7,6 +7,7 @@
 /ab2d/mgmt/pdps/nonsensitive/contracts-csv/humana: S5884,S5552
 /ab2d/mgmt/pdps/nonsensitive/contracts-csv/mutual-of-omaha: S7126
 /ab2d/mgmt/pdps/nonsensitive/contracts-csv/navitus-health: No contract listed
+/ab2d/mgmt/pdps/nonsensitive/contracts-csv/paramount-insurance: S5588
 /ab2d/mgmt/pdps/nonsensitive/contracts-csv/regence-oregon: No contract listed
 /ab2d/mgmt/pdps/nonsensitive/contracts-csv/silverscript: S5601
 /ab2d/mgmt/pdps/nonsensitive/contracts-csv/united-health: S5805,S5921,S5820
@@ -19,6 +20,7 @@
 /ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/humana: ENC[AES256_GCM,data:Q0s5dJ3CluWHbF153dfCU2U=,iv:EaV8CYtUqqOvef4xKDAqLOZxIk1JheZfHNb1LjxnfBk=,tag:eL5ch8b05IRmyAbSRFp/Tg==,type:str]
 /ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/mutual-of-omaha: ENC[AES256_GCM,data:LQqJsqct44A4fxRb2fsbIenmP/vZiyiwhE1ZQ9SSaSb25k1IYndiq5OugRLp+QNkdBAEout4aS5lYL00+VDiRglu+w5pG1X2XCB0kmR4oZytJQJ9iEhd1mPJ1Ya/+LvZhfke2zYDjxWZ2376sWi1TttsRwkDcN6n,iv:kkwuAmVCWz1xYQjD6sk5hb14eGhRwBgh2z2EwD014JI=,tag:e7Pvws9HkPdPB62rLQA/Mg==,type:str]
 /ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/navitus-health: ENC[AES256_GCM,data:Kl7EeiWMMlOglq6ze+Z/,iv:a+pZ2jc7mQckX6QML0qDWnkU84ZbWQBJtyN6rKRqLio=,tag:KbZ1TRKvPf3XrfReubjc1Q==,type:str]
+/ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/paramount-insurance: ENC[AES256_GCM,data:i1ET6vEVXDHc9LHAMtU=,iv:tmY7GhxV0A93iMmGrirsKcQow8qVVyNJYUmYzEp7PZc=,tag:h0viPjo3j8NzJUILb7aMRQ==,type:str]
 /ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/regence-oregon: ENC[AES256_GCM,data:kT0yl0uk0kI/H2WdMaWdTQ==,iv:hUYmx6ZkDUnUpvzLkHsulGtxuemVIYnlWTMImeAxfK0=,tag:Ufy687xbNTe3yzBIILA5zw==,type:str]
 /ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/silverscript: ENC[AES256_GCM,data:8EpalRwzzOF9O7eNAH+AShV+yZl+iAAtrNLcJ4TsPkRYyNPSfI8xz7thw/SM5j62AdKOQQ/3s00A1w+g0ieM2S9EHD8iFz26Q+G66R8a6p4SEwi95qSGfUXRGdHPwMNvrHGjZwcmiL5pjejHSlK/YNDD,iv:27m73uhcLRmsJXXSXIFjzPgvqxStkEbgSoqDBqJAxzw=,tag:CtbyDfStb32Vl1B1ALvkqg==,type:str]
 /ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/united-health: ENC[AES256_GCM,data:cEFl9jbxoL0lQ3gSqJehA158,iv:jP+4ymDT7z4aDKvKgcX/JolR2XwrYzIzc0if3ho1YWs=,tag:cV4F2Ss5eSoe5J0J1W32TQ==,type:str]

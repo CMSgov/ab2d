@@ -59,7 +59,7 @@ This module is responsible for creating the EC2-backed ECS Cluster and related r
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_data_db_writer_instance"></a> [data\_db\_writer\_instance](#module\_data\_db\_writer\_instance) | github.com/CMSgov/beneficiary-fhir-data//ops/terraform-modules/general/data-db-writer-instance | 2.211.0 |
-| <a name="module_platform"></a> [platform](#module\_platform) | git::https://github.com/CMSgov/cdap.git//terraform/modules/platform | PLT-1099 |
+| <a name="module_platform"></a> [platform](#module\_platform) | github.com/CMSgov/cdap//terraform/modules/platform | ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
      'terraform-docs --config "$(git rev-parse --show-toplevel)/.terraform-docs.yml" .'
