@@ -70,16 +70,13 @@ jobs:
           ldconfig -p | grep "zlib" || echo "zlib is missing!"
 
       - name: Build Lambdas
-        run: |
-          ./gradlew -b build.gradle
+        run: ./gradlew -b build.gradle
 
       - name: Test Lambdas
-        run: |
-           ./gradlew clean test --info -b build.gradle
+        run: ./gradlew clean test --info -b build.gradle
 
       - name: Build Jars
-        run: |
-          ./gradlew buildZip --info -b build.gradle
+        run: ./gradlew buildZip --info -b build.gradle
 
       - name: SonarQube Analysis
         if: ${{ inputs.run_sonar == true }}
