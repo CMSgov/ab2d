@@ -1,4 +1,4 @@
-name: deploy-lambdas-gf
+name: deploy-lambdas-gf ${{ inputs.environment }}
 
 on:
   workflow_call:
