@@ -3,7 +3,7 @@
 /ab2d/${env}/common/sensitive/slack_trace_webhooks: ENC[AES256_GCM,data:Kbdem4waIs74WkB1afbxdJb8hosJkecSbGL2x2LD2smyhRgbnNx5smyFx/qpdXsuE0aULwt/D6xf9lT5N5bH2hiGWU3kOjNZKyt+WGsKMg==,iv:80zMLm7wN8rt+S/71TqLXxvUF12OCsgzJgm8LNF6U7c=,tag:0Pc7fUkqsNgjK1BXVEG3Zg==,type:str]
 /ab2d/${env}/common/sensitive/slack_alert_webhooks: ENC[AES256_GCM,data:ajmQYl1BkNssOTru4SdGgTZBTa1j1o0695olbobHeqaNaZQbr+Oq5yc5ZGix7oWHJZ/Fy4rwOlsiKyjHD1JbcnDqGAyMgFx1CGJJPzLy2A==,iv:Nb5hHkum4ctlWQhqQcAGh0EqQxQhkneni2Vhk77wzOw=,tag:l5eOmpiw3j+gIu2AQdBrzA==,type:str]
 /ab2d/${env}/core/nonsensitive/keystore_location: classpath:ab2d.p12
-/ab2d/${env}/core/nonsensitive/database_name: sbx
+/ab2d/${env}/core/nonsensitive/database_name: main
 /ab2d/${env}/core/sensitive/database_password: ENC[AES256_GCM,data:8avqYkbrjpWuCzruHx2bzDsXN6k/J85pfOXTxdYI/ts=,iv:iQP4bdTOKOwWN6c+FKcKgw9KjEf41zdjKuYBtKM+dYM=,tag:kDZRWxBpo3forijQRkymmg==,type:str]
 /ab2d/${env}/core/sensitive/keystore_password: ENC[AES256_GCM,data:ymWE5UH02A==,iv:4ZWu2qQuGwzoJbp/6M6FwJ7y1rg7BhunVcxbeCuEYYY=,tag:z9W3cjT8BTDTQvKQRzrz8Q==,type:str]
 /ab2d/${env}/core/sensitive/database_user: ENC[AES256_GCM,data:U+3s8zElxow=,iv:gge5jrImaJO8uxltyIJnOVmau8SVEabpSKWW2nBuju8=,tag:xnKgOmydgpGjv6uyTFV4Tw==,type:str]
