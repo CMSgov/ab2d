@@ -2,11 +2,20 @@ name: publish-lambdas-gf
 
 on:
   workflow_call:
+    inputs:
+      run_sonar:
+        type: boolean
+        default: true
     outputs:
       build_version:
         description: "The lambdas build version"
         value: ${{ jobs.publish.outputs.build_version }}
   workflow_dispatch:
+    inputs:
+      run_sonar:
+        description: Run SonarQube
+        type: boolean
+        default: true
 
 env:
   JDK_JAVA_OPTIONS: "--add-opens java.base/java.util=ALL-UNNAMED"
@@ -37,10 +46,6 @@ jobs:
           distribution: adopt
           java-version: '17'
 
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-         gradle-version: 7.2
-
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ vars.AWS_REGION }}
@@ -56,12 +61,14 @@ jobs:
             ARTIFACTORY_PASSWORD=/artifactory/password
             SONAR_HOST_URL=/sonarqube/url
             SONAR_TOKEN=/sonarqube/token
+
       - name: Verify Required Libraries
         run: |
           echo "Checking for required system libraries..."
           ldd --version || echo "ldd (glibc) is not installed!"
           ldconfig -p | grep "libstdc++" || echo "libstdc++ is missing!"
           ldconfig -p | grep "zlib" || echo "zlib is missing!"
+
       - name: Build Lambdas
         run: |
           ./gradlew -b build.gradle
@@ -75,6 +82,7 @@ jobs:
           ./gradlew buildZip --info -b build.gradle
 
       - name: SonarQube Analysis
+        if: ${{ inputs.run_sonar == true }}
         run: |
           ./gradlew sonar \
             -Dsonar.ci.autoconfig.disabled=true \
@@ -82,15 +90,12 @@ jobs:
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.token=$SONAR_TOKEN
         
-        
-         - name: Quality Gate
-        run: |
-         echo "Waiting for SonarQube Quality Gate..."
-         sleep 600  # Simulate a 10-minute wait (adjust based on actual implementation)
-
-      - name: SBOM
-        run: |
-         ./gradlew cyclonedxBom --info -b build.gradle
+      - name: Quality Gate
+        if: ${{ inputs.run_sonar == true }}
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        with:
+          scanMetadataReportFile: build/sonar/report-task.txt
+        timeout-minutes: 10
 
       - name: Publish Lambdas
         id: publish_lambdas
@@ -117,3 +122,7 @@ jobs:
           BUILD_VERSION=$(./gradlew properties -q | grep "version:" | awk '{print $2}')
           echo "Build version: $BUILD_VERSION"
           echo "build_version=$BUILD_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: SBOM
+        run: |
+          ./gradlew cyclonedxBom --info -b build.gradle
