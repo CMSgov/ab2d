@@ -14,7 +14,7 @@ module "data_db_writer_instance" {
 }
 
 module "platform" {
-  source    = "git::https://github.com/CMSgov/cdap.git//terraform/modules/platform?ref=PLT-1099"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app          = local.app
@@ -147,12 +147,28 @@ resource "aws_ecs_task_definition" "worker" {
   container_definitions = nonsensitive(jsonencode([{
     name : local.service,
     image : local.worker_image_uri,
+    readonlyRootFilesystem = true
     essential : true,
     mountPoints : [
       {
         containerPath : local.ab2d_efs_mount,
         sourceVolume : "efs"
-      }
+      },
+      {
+        "containerPath" : "/tmp",
+        "sourceVolume" : "tmp",
+        "readOnly" : false
+      },
+      {
+        "containerPath" : "/newrelic/logs",
+        "sourceVolume" : "newrelic_logs",
+        "readOnly" : false
+      },
+      {
+        "containerPath" : "/var/log",
+        "sourceVolume" : "var_logs",
+        "readOnly" : false
+      },
     ],
     secrets : [
       { name : "AB2D_BFD_KEYSTORE_PASSWORD", valueFrom : local.bfd_keystore_password_arn },
@@ -193,6 +209,15 @@ resource "aws_ecs_task_definition" "worker" {
     },
     healthCheck : null
   }]))
+  volume {
+    name = "tmp"
+  }
+  volume {
+    name = "newrelic_logs"
+  }
+  volume {
+    name = "var_logs"
+  }
 }
 
 resource "aws_ecs_service" "worker" {
