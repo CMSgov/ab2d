@@ -1,4 +1,4 @@
-TRUNCATE TABLE cron.job;
+TRUNCATE TABLE IF EXISTS cron.job;
 
 SELECT cron.schedule('0 7 * * *', 'CALL proc_insert_mbi_to_table(0,40);');
 SELECT cron.schedule('20 7 * * *', 'CALL proc_insert_mbi_to_table(41,20);');
