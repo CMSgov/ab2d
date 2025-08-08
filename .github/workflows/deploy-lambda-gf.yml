@@ -1,16 +1,12 @@
 name: deploy-lambdas-gf
 
 on:
-  push:
-    branches:
-      - AB2D-6824-misc-updates
   workflow_call:
     inputs:
       environment:
         required: true
         type: string
         default: false
-
   workflow_dispatch:
     inputs:
       environment:
@@ -35,16 +31,6 @@ jobs:
       AWS_REGION: ${{ vars.AWS_REGION }}
 
     steps:
-      - name: Set environment variables
-        uses: cmsgov/cdap/actions/aws-params-env-action@main
-        env:
-          AWS_REGION: ${{ vars.AWS_REGION }}
-        with:
-          params: |
-            ARTIFACTORY_URL=/artifactory/url
-            ARTIFACTORY_USER=/artifactory/user
-            ARTIFACTORY_PASSWORD=/artifactory/password
-
       - name: Checkout Code
         uses: actions/checkout@v4
 
