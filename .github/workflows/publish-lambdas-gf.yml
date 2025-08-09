@@ -85,7 +85,7 @@ jobs:
         if: ${{ inputs.run_sonar == true }}
         uses: sonarsource/sonarqube-quality-gate-action@master
         with:
-          scanMetadataReportFile: build/sonar/report-task.txt
+          scanMetadataReportFile: lambdas/build/sonar/report-task.txt
         timeout-minutes: 10
       - name: Publish Lambdas
         id: publish_lambdas
