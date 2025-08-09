@@ -1,5 +1,5 @@
 name: publish-lambdas-gf
-'on':
+on:
   workflow_call:
     inputs:
       run_sonar:
@@ -8,7 +8,7 @@ name: publish-lambdas-gf
     outputs:
       build_version:
         description: The lambdas build version
-        value: '${{ jobs.publish.outputs.build_version }}'
+        value: ${{ jobs.publish.outputs.build_version }}
   workflow_dispatch:
     inputs:
       run_sonar:
@@ -25,14 +25,12 @@ jobs:
     defaults:
       run:
         working-directory: ./lambdas
-    runs-on:
-      - 'codebuild-ab2d-${{ github.run_id }}-${{ github.run_attempt }}'
+    runs-on: codebuild-ab2d-${{ github.run_id }}-${{ github.run_attempt }}
     outputs:
-      build_version: '${{ steps.publish_lambdas.outputs.build_version }}'
+      build_version: ${{ steps.publish_lambdas.outputs.build_version }}
     env:
-      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-      AWS_REGION: '${{ vars.AWS_REGION }}'
-      AWS_ACCOUNT: '${{ secrets.NON_PROD_ACCOUNT }}'
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -42,13 +40,14 @@ jobs:
           java-version: '17'
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-region: '${{ vars.AWS_REGION }}'
+          aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: >-
             arn:aws:iam::${{ env.AWS_ACCOUNT
             }}:role/delegatedadmin/developer/ab2d-test-github-actions
+
       - uses: cmsgov/cdap/actions/aws-params-env-action@main
         env:
-          AWS_REGION: '${{ vars.AWS_REGION }}'
+          AWS_REGION: ${{ vars.AWS_REGION }}
         with:
           params: |
             ARTIFACTORY_URL=/artifactory/url
@@ -56,28 +55,34 @@ jobs:
             ARTIFACTORY_PASSWORD=/artifactory/password
             SONAR_HOST_URL=/sonarqube/url
             SONAR_TOKEN=/sonarqube/token
+
       - name: Verify Required Libraries
         run: |
           echo "Checking for required system libraries..."
           ldd --version || echo "ldd (glibc) is not installed!"
           ldconfig -p | grep "libstdc++" || echo "libstdc++ is missing!"
           ldconfig -p | grep "zlib" || echo "zlib is missing!"
+
       - name: Build Lambdas
         run: ./gradlew -b build.gradle
+
       - name: Test Lambdas
         run: ./gradlew clean test --info -b build.gradle
+
       - name: Build Jars
         run: ./gradlew buildZip --info -b build.gradle
+
       - name: SonarQube Analysis
-        if: '${{ inputs.run_sonar == true }}'
+        if: ${{ inputs.run_sonar == true }}
         run: |
           ./gradlew sonar \
             -Dsonar.ci.autoconfig.disabled=true \
             -Dsonar.projectKey=ab2d-lambdas \
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.token=$SONAR_TOKEN
+
       - name: Quality Gate
-        if: '${{ inputs.run_sonar == true }}'
+        if: ${{ inputs.run_sonar == true }}
         uses: sonarsource/sonarqube-quality-gate-action@master
         with:
           scanMetadataReportFile: build/sonar/report-task.txt
@@ -116,6 +121,7 @@ jobs:
           echo "Build version: $BUILD_VERSION"
 
           echo "build_version=$BUILD_VERSION" >> "$GITHUB_OUTPUT"
+
       - name: SBOM
         run: |
           ./gradlew cyclonedxBom --info -b build.gradle
