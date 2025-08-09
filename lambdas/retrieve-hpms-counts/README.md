@@ -11,7 +11,3 @@ Make a GET request to contract service's /contracts endpoint. Loop through the r
 Since HPMS only provides the current month's counts find the systems current month and year.
 Load all contract/count/year/month into a list of new CoverageCountDTO and send them to the coverage-counts lambda for storage. 
 
-
-## Build/Deploy/etc
-
-Please see the [README.md](../README.md) in the root directory of this project.

@@ -13,8 +13,3 @@ Before initiating the pull, workers will send current counts for all contracts t
 After each contract/year/month task is completed the counts will be sent to coverage-counts lambda.
 
 HPMS counts will flow from the contract service. A separate lambda will be scheduled to request the counts from contract service then forward them to this lambda.  
-
-
-## Build/Deploy/etc
-
-Please see the [README.md](../README.md) in the root directory of this project.

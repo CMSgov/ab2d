@@ -8,7 +8,4 @@ On a configurable interval, cloudwatch triggers this lambda. As of writing that 
   - Delete any files older than ttl
 - Delete empty folders
 
-## Build/Deploy/etc
-
-Please see the [README.md](../README.md) in the root directory of this project.
 
