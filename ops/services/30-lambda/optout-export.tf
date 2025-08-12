@@ -90,6 +90,7 @@ resource "aws_iam_role" "export" {
     name = "default-function"
     policy = jsonencode(
       {
+        Version = "2012-10-17"
         Statement = [
           {
             Action = [
@@ -101,18 +102,23 @@ resource "aws_iam_role" "export" {
               "logs:PutLogEvents",
               "logs:CreateLogStream",
               "logs:CreateLogGroup",
-              "kms:Encrypt",
-              "kms:Decrypt",
               "ec2:DescribeNetworkInterfaces",
               "ec2:DescribeAccountAttributes",
               "ec2:DeleteNetworkInterface",
-              "ec2:CreateNetworkInterface",
+              "ec2:CreateNetworkInterface"
             ]
             Effect   = "Allow"
             Resource = "*"
           },
+          {
+            Action = [
+              "kms:Encrypt",
+              "kms:Decrypt"
+            ]
+            Effect   = "Allow"
+            Resource = [local.env_key_alias.target_key_arn]
+          }
         ]
-        Version = "2012-10-17"
       }
     )
   }
