@@ -77,7 +77,7 @@ public class CapabilityStatementR4 {
         restComponents.add(createOperation("capability", server + "/metadata"));
         rest.setOperation(restComponents);
         rest.setInteraction(List.of(new CapabilityStatement.SystemInteractionComponent().setCode(CapabilityStatement.SystemRestfulInteraction.BATCH)));
-        
+
         CapabilityStatement.CapabilityStatementRestResourceComponent restResource = new CapabilityStatement.CapabilityStatementRestResourceComponent();
         restResource.setType("Patient");
         restResource.addOperation(createOperation("export", "http://hl7.org/fhir/uv/bulkdata/OperationDefinition/patient-export"));
