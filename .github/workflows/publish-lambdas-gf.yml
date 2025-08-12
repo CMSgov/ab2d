@@ -90,8 +90,37 @@ jobs:
       - name: Publish Lambdas
         id: publish_lambdas
         run: >
+          echo "Checking for unpublished artifacts..."
 
-          echo "build_version=1.2.3" >> "$GITHUB_OUTPUT"
+          DEPLOY_SCRIPT=""
+
+          VERSION_PUBLISHED_LIST=$(./gradlew -q lookForArtifacts |  tr "'''"
+          "\n")
+
+          while IFS= read -r line; do
+            ARTIFACTORY_INFO=($(echo $line | tr ":" "\n"))
+            if [[ "${ARTIFACTORY_INFO[1]}" == "false" ]]; then
+              echo "Deploying ${ARTIFACTORY_INFO[0]}"
+              DEPLOY_SCRIPT+="${ARTIFACTORY_INFO[0]}:artifactoryPublish "
+            fi
+          done <<< "$VERSION_PUBLISHED_LIST"
+
+          if [[ -n "$DEPLOY_SCRIPT" ]]; then
+            echo "Publishing: $DEPLOY_SCRIPT"
+            ./gradlew $DEPLOY_SCRIPT -b build.gradle \
+              -Dusername="${ARTIFACTORY_USER}" \
+              -Dpassword="${ARTIFACTORY_PASSWORD}" \
+              -Drepository_url="${ARTIFACTORY_URL}"
+          else
+            echo "No new artifacts to publish."
+          fi
+
+          BUILD_VERSION=$(./gradlew properties -q | grep "version:" | awk
+          '{print $2}')
+
+          echo "Build version: $BUILD_VERSION"
+
+          echo "build_version=$BUILD_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: SBOM
         run: |
