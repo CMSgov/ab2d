@@ -2,7 +2,7 @@
 /ab2d/${env}/common/sensitive/new_relic_license_key: ENC[AES256_GCM,data:qzRQe/s+9PEJyn43Fm14pdrssaNEXat5qnhK0bKEUUBPJbnTPxlw1w==,iv:3yH9aqGCrcUIwPFUMIgRjYhIZiwOhw4bjofzTXOyR+g=,tag:Rdp+c/FzXWYT3cVJouMS0Q==,type:str]
 /ab2d/${env}/common/sensitive/slack_alert_webhooks: ENC[AES256_GCM,data:BP/IhhCnD31CEqxsMVEyCQWIvj0zSkhZvpQhhZWmedgXxYmpN+cnFInbf4yTsHyn9nMgzT9G7hpD/iaG9EQ6+OcsHF9xOkpyCq/RCLQfsg==,iv:y4SAeno70CNbZVcOBHoudrqV8gIPfk1kZ1h6AmO7WYY=,tag:odnRkQBXZJW1R3zm40LcCA==,type:str]
 /ab2d/${env}/common/sensitive/slack_trace_webhooks: ENC[AES256_GCM,data:VOBBuGVBXFh5+2vlIFSmSZW7SIHPI6YscvKY0FQoHsjYSBOT+ZajiGyZRHPponhcnmdUJCuXme3n94Gz7k4YvY7zT9AxZ65Web6zpD908w==,iv:wEescNfaWJF28rIy4CMeacyWdauduUnk3PsRMi/ui4g=,tag:C2VS0Cpy0RiMjMg4Olk+mA==,type:str]
-/ab2d/${env}/core/nonsensitive/database_name: impl
+/ab2d/${env}/core/nonsensitive/database_name: main
 /ab2d/${env}/core/nonsensitive/keystore_location: classpath:ab2d.p12
 /ab2d/${env}/core/sensitive/database_password: ENC[AES256_GCM,data:rxINXJwOOmUmRsBEJ6Akqo3BGeK4nzTuUKLjlkE7OjQ=,iv:lhm19+y2RZGiSnhLYvkbtfadmG6HBgzFyA2CZ0nNHb8=,tag:G38Bsp/7imfMRUOYHSUE/A==,type:str]
 /ab2d/${env}/core/sensitive/database_user: ENC[AES256_GCM,data:33Teno9HIzI=,iv:T9j3h2k41hJ469rO31575xFOQAWaROQEErDTmxJwGZU=,tag:I0HUv1xkc1m2K55hRog+jQ==,type:str]
