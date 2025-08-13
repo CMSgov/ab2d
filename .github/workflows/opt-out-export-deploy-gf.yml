@@ -62,7 +62,7 @@ jobs:
 
       - name: Upload and reload
         env:
-          BUCKET: ${{ inputs.environment == 'prod' && 'ab2d-prod-opt-out-export-function-20250616154436478600000001 ' || 'ab2d-test-opt-out-export-function-20250529140617557400000001' }}
+          BUCKET: ${{ inputs.environment == 'prod' && 'ab2d-prod-opt-out-export-function-20250616154436478600000001' || 'ab2d-test-opt-out-export-function-20250529140617557400000001' }}
         run: |
           aws s3 cp --no-progress build/distributions/attributionDataShare.zip s3://${{ env.BUCKET }}/function.zip
           aws lambda update-function-code --function-name ab2d-${{ env.AB2D_ENV }}-opt-out-export \
