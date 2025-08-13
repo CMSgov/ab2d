@@ -24,7 +24,7 @@ WHERE
                 AND contract_number LIKE 'Z%'
             OR (contract_type = 'NORMAL'
             AND attested_on IS NOT NULL
-            AND enabled = TRUE
+            AND enabled = TRUE)
                         )
             ORDER BY contract_number
 OFFSET var_offset
