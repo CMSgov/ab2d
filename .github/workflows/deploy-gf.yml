@@ -19,9 +19,11 @@ on:
         description: AB2D environment used for ECR
         required: true
         type: choice
-        options:
+         options:
           - dev
           - test
+          - sandbox
+          - prod
       module:
         description: AB2D module
         required: true
