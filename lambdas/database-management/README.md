@@ -11,7 +11,3 @@ To use in another lambda project add this to that projects build.gradle
 Request a connection to the database
 `Connection connection = DatabaseUtil.getConnection();`
 Once a connection is created use Java's built in PreparedStatement to interact with database objects.  
-
-## Build/Deploy/etc
-
-Please see the [README.md](../README.md) in the root directory of this project.

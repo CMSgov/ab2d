@@ -26,11 +26,6 @@ locals {
   env          = terraform.workspace
   service      = "core"
 
-  benv = lookup({
-    "test"    = "impl"
-    "sandbox" = "sbx"
-  }, local.parent_env, local.parent_env)
-
   database_user      = module.platform.ssm.core.database_user.value
   database_password  = module.platform.ssm.core.database_password.value
   aws_account_number = nonsensitive(module.platform.aws_caller_identity.account_id)
