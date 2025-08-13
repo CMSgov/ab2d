@@ -22,6 +22,8 @@ on:
         options:
           - dev
           - test
+          - sandbox
+          - prod
       module:
         description: AB2D module
         required: true
