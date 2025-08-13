@@ -21,42 +21,69 @@ ALTER TABLE current_mbi ALTER COLUMN effective_date TYPE DATE;
 
 -- view below due to time out issues and to address AB2D-6051
 
-CREATE OR REPLACE Procedure proc_insert_mbi_to_table(
-var_offset int,
-var_limit int default 0)
-AS
-$$
+-- DROP PROCEDURE ab2d.proc_insert_mbi_to_table(int, int);
+
+CREATE OR REPLACE PROCEDURE ab2d.proc_insert_mbi_to_table(
+    IN var_offset integer,
+    IN var_limit integer DEFAULT 0
+)
+LANGUAGE plpgsql
+AS $procedure$
 DECLARE
 v_cnt int;
+    contract_record RECORD;
+
     contract_cursor CURSOR FOR
-Select distinct contract_number from contract_view where contract_number not like '%Z%' and contract_number not like '%E%'order by contract_number OFFSET(var_offset) limit(var_limit) ;
-contract_record RECORD;
+SELECT contract_number
+FROM contract_view
+WHERE
+    (
+                EXTRACT(DAY FROM CURRENT_DATE) NOT IN (1, 15)  -- Any day except 1st or 15th
+            AND contract_type = 'NORMAL'
+            AND attested_on IS NOT NULL
+            AND enabled = TRUE
+        )
+   OR
+    (
+                EXTRACT(DAY FROM CURRENT_DATE) IN (1, 15)  -- Only on 1st or 15th
+            AND contract_number LIKE 'Z%'
+            OR (contract_type = 'NORMAL'
+            AND attested_on IS NOT NULL
+            AND enabled = TRUE)
+        )
+ORDER BY contract_number
+OFFSET var_offset
+    LIMIT var_limit;
 BEGIN
--- Open cursor
-SET statement_timeout = 0;
+    -- Disable statement timeout
+    SET statement_timeout = 0;
+
 OPEN contract_cursor;
 RAISE NOTICE 'Start';
---Fetch rows and return
-LOOP
-FETCH NEXT FROM contract_cursor INTO contract_record;
+
+    LOOP
+FETCH contract_cursor INTO contract_record;
         EXIT WHEN NOT FOUND;
 
--- INSERT Contract and get count from INSERT
-INSERT into public.current_mbi(mbi) SELECT distinct current_mbi
-FROM coverage_view_with_mbi WHERE contract  in (contract_record.contract_number)
-                              and current_mbi is not null  order by current_mbi on conflict do nothing;
+        -- Insert distinct current_mbi for contract
+INSERT INTO current_mbi(mbi)
+SELECT DISTINCT current_mbi
+FROM coverage_view_with_mbi
+WHERE contract = contract_record.contract_number
+  AND current_mbi IS NOT NULL
+    ON CONFLICT DO NOTHING;
 
-get diagnostics v_cnt = row_count; -- get count
-RAISE NOTICE 'Contract: % Value: %' , contract_record.contract_number, v_cnt;
+GET DIAGNOSTICS v_cnt = ROW_COUNT; -- get count of inserted rows
+RAISE NOTICE 'Contract: % Value: %', contract_record.contract_number, v_cnt;
 END LOOP;
-RAISE NOTICE 'All Done!';
--- Close cursor
+
+    RAISE NOTICE 'All Done!';
 
 CLOSE contract_cursor;
+
 COMMIT;
 END;
-$$
-LANGUAGE PLPGSQL;
+$procedure$;
 
 
 
