@@ -92,34 +92,37 @@ resource "aws_iam_role_policy" "export_default_function" {
   name  = "default-function"
   role  = aws_iam_role.export[0].id
   policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = [
-          "ssm:GetParameters",
-          "ssm:GetParameter",
-          "sqs:ReceiveMessage",
-          "sqs:GetQueueAttributes",
-          "sqs:DeleteMessage",
-          "logs:PutLogEvents",
-          "logs:CreateLogStream",
-          "logs:CreateLogGroup",
-          "ec2:DescribeNetworkInterfaces",
-          "ec2:DescribeAccountAttributes",
-          "ec2:DeleteNetworkInterface",
-          "ec2:CreateNetworkInterface"
+        Version = "2012-10-17"
+        Statement = [
+          {
+            Action = [
+              "ssm:GetParameters",
+              "ssm:GetParameter",
+              "sqs:ReceiveMessage",
+              "sqs:GetQueueAttributes",
+              "sqs:DeleteMessage",
+              "logs:PutLogEvents",
+              "logs:CreateLogStream",
+              "logs:CreateLogGroup",
+              "ec2:DescribeNetworkInterfaces",
+              "ec2:DescribeAccountAttributes",
+              "ec2:DeleteNetworkInterface",
+              "ec2:CreateNetworkInterface"
+            ]
+            Effect   = "Allow"
+            Resource = "*"
+          },
+          {
+            Action = [
+              "kms:Encrypt",
+              "kms:Decrypt"
+            ]
+            Effect   = "Allow"
+            Resource = [local.env_key_alias.target_key_arn]
+         }
         ]
-        Effect   = "Allow"
-        Resource = "*"
-      },
-      {
-        Action   = ["kms:Encrypt", "kms:Decrypt"]
-        Effect   = "Allow"
-        Resource = [local.env_key_alias.target_key_arn]
-      }
-    ]
-  })
-}
+      })
+     }
 
 resource "aws_lambda_function" "export" {
   count = contains(["prod", "test"], local.env) ? 1 : 0

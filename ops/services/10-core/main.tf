@@ -26,11 +26,6 @@ locals {
   env          = terraform.workspace
   service      = "core"
 
-  benv = lookup({
-    "test"    = "impl"
-    "sandbox" = "sbx"
-  }, local.parent_env, local.parent_env)
-
   database_user      = module.platform.ssm.core.database_user.value
   database_password  = module.platform.ssm.core.database_password.value
   aws_account_number = nonsensitive(module.platform.aws_caller_identity.account_id)
@@ -83,6 +78,31 @@ resource "aws_s3_bucket_public_access_block" "main_bucket" {
   restrict_public_buckets = true
 }
 
+data "aws_iam_policy_document" "main_bucket" {
+  statement {
+    sid    = "AllowSSLRequestsOnly"
+    effect = "Deny"
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+    actions = ["s3:*"]
+    resources = [
+      aws_s3_bucket.main_bucket.arn,
+      "${aws_s3_bucket.main_bucket.arn}/*"
+    ]
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "main_bucket" {
+  bucket = aws_s3_bucket.main_bucket.id
+  policy = data.aws_iam_policy_document.main_bucket.json
+}
 
 data "aws_efs_file_system" "efs" {
   count = module.platform.is_ephemeral_env ? 1 : 0

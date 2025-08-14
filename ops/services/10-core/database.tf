@@ -1,5 +1,5 @@
 module "db" {
-  source = "github.com/CMSgov/cdap//terraform/modules/aurora?ref=f91210d2640845f1b6f0edb7087b6cbf02acbdec"
+  source = "github.com/CMSgov/cdap//terraform/modules/aurora?ref=58952d6b964a5215e38c38d49518148584e73d01"
 
   snapshot_identifier     = var.aurora_snapshot
   backup_retention_period = module.platform.is_ephemeral_env ? 1 : 7
@@ -72,7 +72,7 @@ module "db" {
     {
       apply_method = "pending-reboot"
       name         = "cron.database_name"
-      value        = local.benv
+      value        = "main"
     },
     {
       apply_method = "pending-reboot"
