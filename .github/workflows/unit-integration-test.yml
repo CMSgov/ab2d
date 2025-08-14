@@ -78,7 +78,7 @@ jobs:
 
       - name: SonarQube analysis
         run: |
-          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} package sonar:sonar 
+          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} clean verify sonar:sonar 
           -Dsonar.projectKey=ab2d-project 
           -Dsonar.qualitygate.wait=true 
           -DskipTests -Dusername=${ARTIFACTORY_USER} 
