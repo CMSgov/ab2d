@@ -168,7 +168,7 @@ public class CoverageCheckPredicatesUnitTest {
         assertTrue(issues.isEmpty());
     }
 
-    @DisplayName("Coverage periods are earlier than attestation date")
+    @DisplayName("Some coverage periods are earlier than attestation date")
     @Test
     void whenCoveragePeriodsAreEarlierThanAttestationDate_passCoveragePresentCheck() {
 
