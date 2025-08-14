@@ -10,7 +10,6 @@ import jakarta.validation.constraints.NotNull;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 
 import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getAttestationTime;
