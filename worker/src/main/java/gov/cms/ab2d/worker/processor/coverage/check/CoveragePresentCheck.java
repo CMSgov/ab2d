@@ -57,7 +57,11 @@ public class CoveragePresentCheck extends CoverageCheckPredicate {
             int year = attestationTime.getYear();
             int month = attestationTime.getMonthValue();
 
-            if (!hasEnrollment(coverageCounts, year, month)) {
+            final boolean hasEnrollment = coverageCounts.stream().anyMatch(coverageCount -> {
+                return coverageCount.getYear() == year && coverageCount.getMonth() == month;
+            });
+
+            if (!hasEnrollment) {
                 logIssue(contract, year, month, noEnrollment);
             }
 
@@ -81,11 +85,5 @@ public class CoveragePresentCheck extends CoverageCheckPredicate {
      * */
     private boolean ignoreMissing(@NotNull String contractNumber, int year, int month) {
         return contractNumber.equals("S3147") && year == 2021 && month == 12;
-    }
-
-    protected boolean hasEnrollment(List<CoverageCount> coverageCounts, int year, int month) {
-        return coverageCounts.stream().anyMatch(coverageCount -> {
-            return coverageCount.getYear() == year && coverageCount.getMonth() == month;
-        });
     }
 }
