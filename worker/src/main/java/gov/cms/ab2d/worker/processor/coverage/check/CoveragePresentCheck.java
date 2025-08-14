@@ -53,21 +53,12 @@ public class CoveragePresentCheck extends CoverageCheckPredicate {
         ZonedDateTime now = getEndDateTime().minusMonths(1);
         ZonedDateTime attestationTime = getAttestationTime(new ContractToContractCoverageMapping().map(contract));
 
-        ListIterator<CoverageCount> countIterator = coverageCounts.listIterator();
         while (attestationTime.isBefore(now)) {
             int year = attestationTime.getYear();
             int month = attestationTime.getMonthValue();
 
-            // If nothing in the iterator
-            if (!countIterator.hasNext()) {
+            if (!hasEnrollment(coverageCounts, year, month)) {
                 logIssue(contract, year, month, noEnrollment);
-            // If something in iterator make sure it matches expected
-            } else {
-                CoverageCount coverageCount = countIterator.next();
-                if (year != coverageCount.getYear() || month != coverageCount.getMonth()) {
-                    countIterator.previous();
-                    logIssue(contract, year, month, noEnrollment);
-                }
             }
 
             attestationTime = attestationTime.plusMonths(1);
@@ -90,5 +81,11 @@ public class CoveragePresentCheck extends CoverageCheckPredicate {
      * */
     private boolean ignoreMissing(@NotNull String contractNumber, int year, int month) {
         return contractNumber.equals("S3147") && year == 2021 && month == 12;
+    }
+
+    protected boolean hasEnrollment(List<CoverageCount> coverageCounts, int year, int month) {
+        return coverageCounts.stream().anyMatch(coverageCount -> {
+            return coverageCount.getYear() == year && coverageCount.getMonth() == month;
+        });
     }
 }
