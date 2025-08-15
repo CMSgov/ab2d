@@ -84,13 +84,13 @@ public class CoverageCheckPredicatesIntegrationTest {
     private CoveragePeriod attestationMonthPlus2;
     private CoveragePeriod attestationMonthPlus3;
 
-    @BeforeAll
-    static void logSchema(@Autowired DataSource ds) throws Exception {
-        try (var c = ds.getConnection(); var s = c.createStatement(); var rs = s.executeQuery("select current_schema")) {
-            rs.next();
-            System.out.println("current_schema = " + rs.getString(1)); // should print "ab2d"
-        }
-    }
+//    @BeforeAll
+//    static void logSchema(@Autowired DataSource ds) throws Exception {
+//        try (var c = ds.getConnection(); var s = c.createStatement(); var rs = s.executeQuery("select current_schema")) {
+//            rs.next();
+//            System.out.println("current_schema = " + rs.getString(1)); // should print "ab2d"
+//        }
+//    }
 
     @BeforeEach
     void setUp() {
