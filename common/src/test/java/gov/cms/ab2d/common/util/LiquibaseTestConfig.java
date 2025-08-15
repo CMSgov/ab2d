@@ -1,4 +1,4 @@
-package gov.cms.ab2d.worker.util;
+package gov.cms.ab2d.common.util;
 
 import com.zaxxer.hikari.HikariDataSource;
 import liquibase.integration.spring.SpringLiquibase;

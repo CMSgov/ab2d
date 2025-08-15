@@ -15,7 +15,7 @@ import gov.cms.ab2d.coverage.repository.CoverageSearchEventRepository;
 import gov.cms.ab2d.coverage.repository.CoverageSearchRepository;
 import gov.cms.ab2d.coverage.service.CoverageService;
 import gov.cms.ab2d.coverage.util.CoverageDataSetup;
-import gov.cms.ab2d.worker.util.LiquibaseTestConfig;
+import gov.cms.ab2d.common.util.LiquibaseTestConfig;
 import gov.cms.ab2d.worker.util.WorkerDataSetup;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +25,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import javax.sql.DataSource;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -45,9 +44,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Import(LiquibaseTestConfig.class)
 @SpringBootTest(properties = "coverage.update.initial.delay=1000000")
 @Testcontainers
-//@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-//// Will be enabled in AB2D-6848 Fix Integration tests for worker
-//@Disabled
 public class CoverageCheckPredicatesIntegrationTest {
 
     @Container
@@ -83,14 +79,6 @@ public class CoverageCheckPredicatesIntegrationTest {
     private CoveragePeriod attestationMonthPlus1;
     private CoveragePeriod attestationMonthPlus2;
     private CoveragePeriod attestationMonthPlus3;
-
-//    @BeforeAll
-//    static void logSchema(@Autowired DataSource ds) throws Exception {
-//        try (var c = ds.getConnection(); var s = c.createStatement(); var rs = s.executeQuery("select current_schema")) {
-//            rs.next();
-//            System.out.println("current_schema = " + rs.getString(1)); // should print "ab2d"
-//        }
-//    }
 
     @BeforeEach
     void setUp() {
