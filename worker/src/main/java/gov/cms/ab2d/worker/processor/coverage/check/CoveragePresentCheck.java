@@ -56,10 +56,8 @@ public class CoveragePresentCheck extends CoverageCheckPredicate {
             int year = attestationTime.getYear();
             int month = attestationTime.getMonthValue();
 
-            final boolean hasEnrollment = coverageCounts.stream().anyMatch(
-                    coverageCount -> coverageCount.getYear() == year &&
-                            coverageCount.getMonth() == month
-            );
+            final boolean hasEnrollment = coverageCounts.stream()
+                    .anyMatch(coverageCount -> coverageCount.getYear() == year && coverageCount.getMonth() == month);
 
             if (!hasEnrollment) {
                 logIssue(contract, year, month, noEnrollment);
