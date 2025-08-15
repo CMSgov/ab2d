@@ -11,6 +11,7 @@ import gov.cms.ab2d.common.service.ContractServiceStub;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.DataSetup;
+import gov.cms.ab2d.common.util.LiquibaseTestConfig;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.eventclient.clients.SQSConfig;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
@@ -27,8 +28,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -56,10 +57,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Import(LiquibaseTestConfig.class)
 @SpringBootTest(classes = SpringBootApp.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = "spring.profiles.active:test-beans")
 @AutoConfigureMockMvc
 @Testcontainers
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 public class BulkDataAccessAPIUnusualDataTests {
 
     @Autowired

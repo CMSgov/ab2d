@@ -2,20 +2,17 @@ package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.service.ContractServiceStub;
+import gov.cms.ab2d.common.util.*;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.common.dto.PdpClientDTO;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
-import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.job.model.Job;
 import gov.cms.ab2d.job.model.JobStatus;
 import gov.cms.ab2d.job.repository.JobRepository;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.service.FeatureEngagement;
 import gov.cms.ab2d.common.service.PdpClientService;
-import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
-import gov.cms.ab2d.common.util.DataSetup;
-import gov.cms.ab2d.common.util.DateUtil;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageJobStatus;
 import gov.cms.ab2d.coverage.model.CoveragePeriod;
@@ -53,7 +50,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.springframework.test.annotation.DirtiesContext;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -84,8 +80,7 @@ import static org.mockito.Mockito.when;
 // Never run internal coverage processor so this coverage processor runs unimpeded
 @SpringBootTest(properties = "coverage.update.initial.delay=1000000")
 @Testcontainers
-@Import(AB2DSQSMockConfig.class)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@Import({AB2DSQSMockConfig.class, LiquibaseTestConfig.class})
 class CoverageDriverTest extends JobCleanup {
 
     private static final int PAST_MONTHS = 3;
