@@ -10,7 +10,6 @@ import jakarta.validation.constraints.NotNull;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 
 import static gov.cms.ab2d.worker.processor.coverage.CoverageUtils.getAttestationTime;
@@ -53,21 +52,15 @@ public class CoveragePresentCheck extends CoverageCheckPredicate {
         ZonedDateTime now = getEndDateTime().minusMonths(1);
         ZonedDateTime attestationTime = getAttestationTime(new ContractToContractCoverageMapping().map(contract));
 
-        ListIterator<CoverageCount> countIterator = coverageCounts.listIterator();
         while (attestationTime.isBefore(now)) {
             int year = attestationTime.getYear();
             int month = attestationTime.getMonthValue();
 
-            // If nothing in the iterator
-            if (!countIterator.hasNext()) {
+            final boolean hasEnrollment = coverageCounts.stream()
+                    .anyMatch(coverageCount -> coverageCount.getYear() == year && coverageCount.getMonth() == month);
+
+            if (!hasEnrollment) {
                 logIssue(contract, year, month, noEnrollment);
-            // If something in iterator make sure it matches expected
-            } else {
-                CoverageCount coverageCount = countIterator.next();
-                if (year != coverageCount.getYear() || month != coverageCount.getMonth()) {
-                    countIterator.previous();
-                    logIssue(contract, year, month, noEnrollment);
-                }
             }
 
             attestationTime = attestationTime.plusMonths(1);
