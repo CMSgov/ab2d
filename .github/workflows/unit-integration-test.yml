@@ -76,14 +76,15 @@ jobs:
 #        run: |
 #            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
 
-      - name: SonarQube analysis
+      - name: SonarQube analysis (with coverage)
         run: |
           mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} clean verify \
-          org.sonarsource.scanner.maven:sonar-maven-plugin:5.1.0.4751:sonar \ 
-          -Dsonar.projectKey=ab2d-project 
-          -Dsonar.qualitygate.wait=true 
-          -DskipTests -Dusername=${ARTIFACTORY_USER} 
-          -Dpassword=${ARTIFACTORY_PASSWORD} 
-          -Drepository_url=${ARTIFACTORY_URL} 
-          -Dsonar.ci.autoconfig.disabled=true
-          -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+            org.sonarsource.scanner.maven:sonar-maven-plugin:3.10.0.2594:sonar \
+            -Dsonar.projectKey=ab2d-project \
+            -Dsonar.qualitygate.wait=true \
+            -Dusername="${ARTIFACTORY_USER}" \
+            -Dpassword="${ARTIFACTORY_PASSWORD}" \
+            -Drepository_url="${ARTIFACTORY_URL}" \
+            -Dsonar.ci.autoconfig.disabled=true \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+  
