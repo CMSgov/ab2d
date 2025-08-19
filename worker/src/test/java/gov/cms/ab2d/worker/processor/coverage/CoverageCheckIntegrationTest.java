@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.common.service.ContractServiceStub;
+import gov.cms.ab2d.common.util.LiquibaseTestConfig;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.service.ContractService;
@@ -30,7 +31,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.context.annotation.Import;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -42,9 +43,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
+@Import(LiquibaseTestConfig.class)
 @SpringBootTest(properties = "coverage.update.initial.delay=1000000")
 @Testcontainers
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class CoverageCheckIntegrationTest {
 
     @Container
