@@ -19,15 +19,14 @@ public class LiquibaseTestConfig {
             @Value("${spring.datasource.password}") String pass
     ) {
         HikariDataSource ds = new HikariDataSource();
-        ds.setJdbcUrl(url);                     // e.g., jdbc:postgresql://.../db?currentSchema=ab2d
+        ds.setJdbcUrl(url);
         ds.setUsername(user);
         ds.setPassword(pass);
         ds.setMaximumPoolSize(1);
         SpringLiquibase lb = new SpringLiquibase();
-        lb.setDataSource(ds);             // use direct URL instead of DataSource
+        lb.setDataSource(ds);
         lb.setChangeLog("classpath:/db/changelog/db.changelog-master.yaml");
         lb.setShouldRun(true);
-        // lb.setContexts("test"); // if you use contexts
         return lb;
     }
 
