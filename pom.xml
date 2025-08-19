@@ -133,16 +133,18 @@
                     </execution>
                     <!-- attached to Maven test phase -->
                     <execution>
-                        <id>report</id>
+                        <id>report-test</id>
                         <phase>test</phase>
                         <goals>
                             <goal>report</goal>
                         </goals>
                     </execution>
                     <execution>
-                        <id>report</id>
+                        <id>report-verify</id>
                         <phase>verify</phase>
-                        <goals><goal>report</goal></goals>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
                     </execution>
                     <execution>
                         <id>jacoco-check</id>
