@@ -67,6 +67,8 @@ public class HPMSCountsHandler implements RequestStreamHandler {
 
     private final CloseableHttpClient httpClient;
     private final AmazonSNSClient snsClient;
+    private final String snsTopicPrefix = System.getenv("AWS_SNS_TOPIC_PREFIX");
+
 
     public HPMSCountsHandler() {
         httpClient = HttpClients.createDefault();
@@ -98,9 +100,7 @@ public class HPMSCountsHandler implements RequestStreamHandler {
         HttpGet request = new HttpGet(url + "/contracts");
         HttpClientResponseHandler<String> handler = new BasicHttpClientResponseHandler();
         String response = httpClient.execute(request, handler);
-        //SNSConfig snsConfig = new SNSConfig();
-        //SNSClient client = snsConfig.snsClient(snsClient, Ab2dEnvironment.fromName(envi));
-        SNSClient client = new AB2DSNSClientOverride(snsClient, Ab2dEnvironment.fromName(envi));
+        SNSClient client = new AB2DSNSClientOverride(snsClient, Ab2dEnvironment.fromName(envi), snsTopicPrefix);
         DateTime dateTime = DateTime.now();
         Timestamp version = Timestamp.from(Instant.now());
         int year = dateTime.getYear();
@@ -123,14 +123,17 @@ public class HPMSCountsHandler implements RequestStreamHandler {
         private final AmazonSNSClient amazonSNSClient;
         private final ObjectMapper mapper;
         private final Ab2dEnvironment ab2dEnvironment;
+        private final String snsTopicPrefix;
 
-        public AB2DSNSClientOverride(AmazonSNSClient amazonSNSClient, Ab2dEnvironment ab2dEnvironment) {
+        public AB2DSNSClientOverride(AmazonSNSClient amazonSNSClient, Ab2dEnvironment ab2dEnvironment, String snsTopicPrefix) {
+            if (snsTopicPrefix == null || snsTopicPrefix.isBlank()) {
+                throw new AB2DSNSClientOverrideException("SNS topic prefix is required");
+            }
             this.mapper = ((JsonMapper.Builder)JsonMapper.builder().configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)).build();
             this.amazonSNSClient = amazonSNSClient;
             this.ab2dEnvironment = ab2dEnvironment;
+            this.snsTopicPrefix = snsTopicPrefix;
         }
-
-        private final String snsTopicPrefix = Optional.ofNullable(System.getenv("AWS_SNS_TOPIC_PREFIX")).orElseThrow();
 
         @Override
         public void sendMessage(String topicName, Object message) throws JsonProcessingException {
