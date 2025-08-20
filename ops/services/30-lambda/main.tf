@@ -113,7 +113,7 @@ resource "aws_lambda_function" "metrics_transform" {
     variables = {
       environment        = local.benv
       JAVA_TOOL_OPTIONS  = local.java_options
-      AWS_SQS_EVENTS_URL = "BEN-TODO"
+      AWS_SQS_EVENTS_URL = "BEN-TODO" # Example: https://sqs.us-east-1.amazonaws.com/123456789/ab2d-dev-events
     }
   }
   tags = { code = "https://github.com/CMSgov/ab2d/tree/main/lambdas/metrics-lambda" }
@@ -348,7 +348,7 @@ resource "aws_lambda_function" "hpms_counts" {
       JAVA_TOOL_OPTIONS    = local.java_options
       contract_service_url = local.contracts_service_url
       SLACK_WEBHOOK_URL    = local.slack_webhook_ab2d_slack_alerts
-      AWS_SNS_TOPIC_PREFIX = "BEN-TODO"
+      AWS_SNS_TOPIC_PREFIX = "BEN-TODO" # Example: ab2d-dev or ab2d-6755-prod
     }
   }
   tags = {
