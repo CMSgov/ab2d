@@ -61,22 +61,19 @@ public class CloudwatchEventHandler implements RequestHandler<SNSEvent, String> 
     }
 
     public static String deriveSqsQueueName(String url) {
-        final String sqsQueueName;
         if (url == null || url.isBlank()) {
-            sqsQueueName = "ab2d-local-events";
+            return "ab2d-local-events";
         }
         else {
             try {
                 String[] tokens = url.split("/");
-                sqsQueueName = tokens[tokens.length-1];
+                return tokens[tokens.length-1];
             }
             catch (Exception e) {
                 throw new MetricsLambdaException("Unable to derive SQS queue name from URL: " + url);
             }
         }
-        return sqsQueueName;
     }
-
 
     private static AmazonSQS setup() {
         if (!StringUtils.isNullOrEmpty(System.getenv("IS_LOCALSTACK"))) {
