@@ -19,6 +19,8 @@ import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import gov.cms.ab2d.eventclient.events.MetricsEvent;
 import gov.cms.ab2d.eventclient.messages.GeneralSQSMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -33,14 +35,16 @@ import static gov.cms.ab2d.eventclient.events.MetricsEvent.State.START;
 
 // Catches cloudwatch alerts, extracts what we care about, then send an event to the ab2d-event sqs queue
 public class CloudwatchEventHandler implements RequestHandler<SNSEvent, String> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(CloudwatchEventHandler.class);
+
     private static AmazonSQS amazonSQS;
 
     private final String environment = Optional.ofNullable(System.getenv("environment"))
             .orElse("local") + "-";
 
-    private final String sqsQueueUrl = System.getenv("AWS_SQS_EVENTS_URL");
-
-    private final String queueName = deriveSqsQueueName(sqsQueueUrl);
+    private final static String sqsQueueUrl = System.getenv("AWS_SQS_EVENTS_URL");
+    private final static String queueName = deriveSqsQueueName(sqsQueueUrl);
 
     // AWS sends an object that's not wrapped with type info. The event service expects the wrapper.
     // Since there's not an easy way to enable/disable type wrapper just have 2 mappers.
@@ -59,16 +63,21 @@ public class CloudwatchEventHandler implements RequestHandler<SNSEvent, String> 
     }
 
     public static String deriveSqsQueueName(String url) {
+        final String sqsQueueName;
         if (url == null || url.isBlank()) {
-            return "ab2d-local-events";
+            sqsQueueName = "ab2d-local-events";
         }
-        try {
-            String[] tokens = url.split("/");
-            return tokens[tokens.length-1];
+        else {
+            try {
+                String[] tokens = url.split("/");
+                sqsQueueName = tokens[tokens.length-1];
+            }
+            catch (Exception e) {
+                throw new MetricsLambdaException("Unable to derive SQS queue name from URL: " + url);
+            }
         }
-        catch (Exception e) {
-            throw new MetricsLambdaException("Unable to derive SQS queue name from URL: " + url);
-        }
+        LOG.info("Setting SQS queue name: '{}'", sqsQueueName);
+        return sqsQueueName;
     }
 
 
