@@ -36,8 +36,6 @@ import static gov.cms.ab2d.eventclient.events.MetricsEvent.State.START;
 // Catches cloudwatch alerts, extracts what we care about, then send an event to the ab2d-event sqs queue
 public class CloudwatchEventHandler implements RequestHandler<SNSEvent, String> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CloudwatchEventHandler.class);
-
     private static AmazonSQS amazonSQS;
 
     private final String environment = Optional.ofNullable(System.getenv("environment"))
@@ -76,7 +74,6 @@ public class CloudwatchEventHandler implements RequestHandler<SNSEvent, String> 
                 throw new MetricsLambdaException("Unable to derive SQS queue name from URL: " + url);
             }
         }
-        LOG.info("Derived SQS queue name: '{}'", sqsQueueName);
         return sqsQueueName;
     }
 

@@ -147,6 +147,7 @@ public class HPMSCountsHandler implements RequestStreamHandler {
             AmazonSNSClient client = this.amazonSNSClient;
             request.setTopicArn(client.createTopic(snsTopicPrefix + "-" + topicName).getTopicArn());
             request.setMessage(this.mapper.writeValueAsString(message));
+            log.info("Sending message to '{}'", request.getTopicArn());
             this.amazonSNSClient.publish(request);
         }
 
