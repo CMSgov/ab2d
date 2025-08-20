@@ -72,13 +72,13 @@ jobs:
         run: |
           mvn -ntp -U clean
 
-#      - name: Run unit and integration tests
-#        run: |
-#            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
+      - name: Run unit and integration tests
+        run: |
+            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
 
       - name: SonarQube analysis (with coverage)
         run: |
-          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} clean verify \
+          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} \
             org.sonarsource.scanner.maven:sonar-maven-plugin:3.10.0.2594:sonar \
             -Dsonar.projectKey=ab2d-project \
             -Dsonar.qualitygate.wait=true \
