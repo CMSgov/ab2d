@@ -38,9 +38,7 @@ public class CloudwatchEventHandler implements RequestHandler<SNSEvent, String> 
     private final String environment = Optional.ofNullable(System.getenv("environment"))
             .orElse("local") + "-";
 
-    private final String sqsQueueUrl = Optional.ofNullable(System.getenv("AWS_SQS_EVENTS_URL"))
-            .orElse("local") + "-";
-
+    private final String sqsQueueUrl = System.getenv("AWS_SQS_EVENTS_URL");
 
     private final String queueName = deriveSqsQueueName(sqsQueueUrl);
 
@@ -61,6 +59,9 @@ public class CloudwatchEventHandler implements RequestHandler<SNSEvent, String> 
     }
 
     public static String deriveSqsQueueName(String url) {
+        if (url == null || url.isBlank()) {
+            return "ab2d-local-events";
+        }
         try {
             String[] tokens = url.split("/");
             return tokens[tokens.length-1];
