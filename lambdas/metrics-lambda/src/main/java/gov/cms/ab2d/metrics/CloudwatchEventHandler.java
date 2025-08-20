@@ -76,7 +76,7 @@ public class CloudwatchEventHandler implements RequestHandler<SNSEvent, String> 
                 throw new MetricsLambdaException("Unable to derive SQS queue name from URL: " + url);
             }
         }
-        LOG.info("Setting SQS queue name: '{}'", sqsQueueName);
+        LOG.info("Derived SQS queue name: '{}'", sqsQueueName);
         return sqsQueueName;
     }
 
