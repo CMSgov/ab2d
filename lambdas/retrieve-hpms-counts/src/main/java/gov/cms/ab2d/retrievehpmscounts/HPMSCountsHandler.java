@@ -23,8 +23,6 @@ import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
 import gov.cms.ab2d.lambdalibs.lib.PropertiesUtil;
 import gov.cms.ab2d.snsclient.clients.SNSClient;
-import gov.cms.ab2d.snsclient.clients.SNSClientImpl;
-import gov.cms.ab2d.snsclient.clients.SNSConfig;
 import gov.cms.ab2d.snsclient.messages.CoverageCountDTO;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.BasicHttpClientResponseHandler;
@@ -132,31 +130,16 @@ public class HPMSCountsHandler implements RequestStreamHandler {
             this.ab2dEnvironment = ab2dEnvironment;
         }
 
+        private final String snsTopicPrefix = Optional.ofNullable(System.getenv("AWS_SNS_TOPIC_PREFIX")).orElseThrow();
+
         @Override
         public void sendMessage(String topicName, Object message) throws JsonProcessingException {
             PublishRequest request = new PublishRequest();
             AmazonSNSClient client = this.amazonSNSClient;
             // Greenfield SNS topics are different from legacy and must be overridden here
-            String topicPrefix = getTopicPrefix(ab2dEnvironment);
-            request.setTopicArn(client.createTopic(topicPrefix + "-" + topicName).getTopicArn());
+            request.setTopicArn(client.createTopic(snsTopicPrefix + "-" + topicName).getTopicArn());
             request.setMessage(this.mapper.writeValueAsString(message));
             this.amazonSNSClient.publish(request);
-        }
-
-        String getTopicPrefix(Ab2dEnvironment environment) {
-            final String env;
-            if (environment.getName().contains("dev")) {
-                env="dev";
-            } else if (environment.getName().contains("impl")) {
-                env="test";
-            } else if (environment.getName().contains("sandbox")) {
-                env="sandbox";
-            } else if (environment.getName().contains("prod")) {
-                env="prod";
-            } else {
-                env=environment.getName();
-            }
-            return "ab2d-" + env;
         }
 
     }

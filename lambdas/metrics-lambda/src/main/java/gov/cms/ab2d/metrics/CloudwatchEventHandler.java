@@ -38,7 +38,11 @@ public class CloudwatchEventHandler implements RequestHandler<SNSEvent, String> 
     private final String environment = Optional.ofNullable(System.getenv("environment"))
             .orElse("local") + "-";
 
-    private final String queueName = getQueueName(environment);
+    private final String sqsQueueUrl = Optional.ofNullable(System.getenv("AWS_SQS_EVENTS_URL"))
+            .orElse("local") + "-";
+
+
+    private final String queueName = deriveSqsQueueName(sqsQueueUrl);
 
     // AWS sends an object that's not wrapped with type info. The event service expects the wrapper.
     // Since there's not an easy way to enable/disable type wrapper just have 2 mappers.
@@ -56,22 +60,16 @@ public class CloudwatchEventHandler implements RequestHandler<SNSEvent, String> 
         amazonSQS = setup();
     }
 
-    // determine SQS queue name -- needed for greenfield deployments
-    static String getQueueName(String environment) {
-        final String env;
-        if (environment.contains("dev")) {
-            env="dev";
-        } else if (environment.contains("impl")) {
-            env="test";
-        } else if (environment.contains("sandbox")) {
-            env="sandbox";
-        } else if (environment.contains("prod")) {
-            env="prod";
-        } else {
-            env=environment;
+    public static String deriveSqsQueueName(String url) {
+        try {
+            String[] tokens = url.split("/");
+            return tokens[tokens.length-1];
         }
-        return String.format("ab2d-%s-events", env);
+        catch (Exception e) {
+            throw new MetricsLambdaException("Unable to derive SQS queue name from URL: " + url);
+        }
     }
+
 
     private static AmazonSQS setup() {
         if (!StringUtils.isNullOrEmpty(System.getenv("IS_LOCALSTACK"))) {
