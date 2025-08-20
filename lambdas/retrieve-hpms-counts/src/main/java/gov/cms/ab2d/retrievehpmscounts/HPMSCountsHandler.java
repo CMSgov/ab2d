@@ -134,6 +134,7 @@ public class HPMSCountsHandler implements RequestStreamHandler {
             if (snsTopicPrefix == null || snsTopicPrefix.isBlank()) {
                 throw new AB2DSNSClientOverrideException("SNS topic prefix is required");
             }
+            log.info("SNS topic prefix: '{}'", snsTopicPrefix);
             this.mapper = ((JsonMapper.Builder)JsonMapper.builder().configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)).build();
             this.amazonSNSClient = amazonSNSClient;
             this.ab2dEnvironment = ab2dEnvironment;
