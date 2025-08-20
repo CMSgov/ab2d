@@ -136,7 +136,6 @@ public class HPMSCountsHandler implements RequestStreamHandler {
         public void sendMessage(String topicName, Object message) throws JsonProcessingException {
             PublishRequest request = new PublishRequest();
             AmazonSNSClient client = this.amazonSNSClient;
-            // Greenfield SNS topics are different from legacy and must be overridden here
             request.setTopicArn(client.createTopic(snsTopicPrefix + "-" + topicName).getTopicArn());
             request.setMessage(this.mapper.writeValueAsString(message));
             this.amazonSNSClient.publish(request);
