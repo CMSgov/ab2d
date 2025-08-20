@@ -67,11 +67,15 @@ public class HPMSCountsHandler implements RequestStreamHandler {
 
     private final CloseableHttpClient httpClient;
     private final AmazonSNSClient snsClient;
-    private final String snsTopicPrefix = System.getenv("AWS_SNS_TOPIC_PREFIX");
-
+    private final String snsTopicPrefix;
 
     public HPMSCountsHandler() {
-        httpClient = HttpClients.createDefault();
+        this(System.getenv("AWS_SNS_TOPIC_PREFIX"));
+    }
+
+    public HPMSCountsHandler(String snsTopicPrefix) {
+        this.snsTopicPrefix = snsTopicPrefix;
+        this.httpClient = HttpClients.createDefault();
         if (!StringUtils.isNullOrEmpty(System.getenv("IS_LOCALSTACK"))) {
             System.setProperty(SDKGlobalConfiguration.DISABLE_CERT_CHECKING_SYSTEM_PROPERTY, "true");
             this.snsClient = (AmazonSNSClient) AmazonSNSClientBuilder.standard()
@@ -87,9 +91,10 @@ public class HPMSCountsHandler implements RequestStreamHandler {
 
     /*
      * Test constructor to inject clients*/
-    public HPMSCountsHandler(CloseableHttpClient httpClient, AmazonSNSClient snsClient) {
+    public HPMSCountsHandler(CloseableHttpClient httpClient, AmazonSNSClient snsClient, String snsTopicPrefix) {
         this.httpClient = httpClient;
         this.snsClient = snsClient;
+        this.snsTopicPrefix = snsTopicPrefix;
     }
 
     @Override
