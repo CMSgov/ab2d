@@ -61,7 +61,6 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import javax.sql.DataSource;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -180,15 +179,13 @@ public class EndToEndBfdTests {
     private static final String CONTRACT_TO_USE = "Z1007";
     private static final String CONTRACT_TO_USE_CLIENT_ID = "KtmekgkCTalQkGue2B-0Z0hGC1Dk7khtJ30XMI3J";
 
-    @BeforeAll
-    static void assertSchema(@Autowired DataSource ds) throws Exception {
-        try (var c = ds.getConnection();
-             var s = c.createStatement();
-             var rs = s.executeQuery("show search_path")) {
-            rs.next();
-            System.out.println("search_path = " + rs.getString(1)); // should include ab2d
-        }
-    }
+//    @BeforeAll
+//    static void logSchema(@Autowired DataSource ds) throws Exception {
+//        try (var c = ds.getConnection(); var s = c.createStatement(); var rs = s.executeQuery("select current_schema")) {
+//            rs.next();
+//            System.out.println("current_schema = " + rs.getString(1)); // should print "ab2d"
+//        }
+//    }
 
     @BeforeEach
     void setUp() {
