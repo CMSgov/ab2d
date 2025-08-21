@@ -39,11 +39,6 @@ public class LiquibaseTestConfig {
                 beanFactory.getBeanDefinition("entityManagerFactory")
                         .setDependsOn("testLiquibase");
             }
-            if (beanFactory.containsBeanDefinition("coverageLockWrapper")) {
-                beanFactory.getBeanDefinition("coverageLockWrapper")
-                        .setDependsOn("testLiquibase");
-            }
-
         };
     }
 }
