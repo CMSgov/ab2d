@@ -62,4 +62,14 @@
             <version>${hapi.version}</version>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.liquibase</groupId>
+                <artifactId>liquibase-maven-plugin</artifactId>
+                <version>4.31.1</version>
+            </plugin>
+        </plugins>
+    </build>
 </project>
