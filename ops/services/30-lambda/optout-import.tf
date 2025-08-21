@@ -61,30 +61,32 @@ resource "aws_iam_role" "import" {
   name                  = "${local.service_prefix}-opt-out-import-function"
   path                  = "/delegatedadmin/developer/"
   permissions_boundary  = "arn:aws:iam::${module.platform.aws_caller_identity.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
+}
 
-  inline_policy {
-    name = "assume-bucket-role"
-    policy = jsonencode(
+resource "aws_iam_role_policy" "import_assume_bucket_role" {
+  count = contains(["prod", "test"], local.env) ? 1 : 0
+  name  = "assume-bucket-role"
+  role  = aws_iam_role.import[0].id
+  policy = jsonencode({
+    Statement = [
       {
-        Statement = [
-          {
-            Action   = "sts:AssumeRole"
-            Effect   = "Allow"
-            Resource = module.platform.ssm.eft.bfd-bucket-role-arn.value
-          },
-        ]
-        Version = "2012-10-17"
+        Action   = "sts:AssumeRole"
+        Effect   = "Allow"
+        Resource = module.platform.ssm.eft.bfd-bucket-role-arn.value
       }
-    )
-  }
+    ]
+    Version = "2012-10-17"
+  })
+}
 
-  inline_policy {
-    name = "default-function"
-    policy = jsonencode(
+resource "aws_iam_role_policy" "import_default_function" {
+  count = contains(["prod", "test"], local.env) ? 1 : 0
+  name  = "default-function"
+  role  = aws_iam_role.import[0].id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
       {
-        Version = "2012-10-17"
-        Statement = [
-          {
             Action = [
               "ssm:GetParameters",
               "ssm:GetParameter",
@@ -111,10 +113,8 @@ resource "aws_iam_role" "import" {
             Resource = [local.env_key_alias.target_key_arn]
           }
         ]
-      }
-    )
-  }
-}
+      })
+     }
 
 resource "aws_lambda_function" "import" {
   count = contains(["prod", "test"], local.env) ? 1 : 0

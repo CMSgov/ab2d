@@ -143,7 +143,7 @@ public class CoverageCheckPredicatesUnitTest {
         issues.forEach(issue -> assertTrue(issue.contains("no enrollment found")));
     }
 
-    @DisplayName("Coverage periods have no coverage present")
+    @DisplayName("Coverage periods are present")
     @Test
     void whenCoveragePeriodsPresent_passCoveragePresentCheck() {
 
@@ -167,6 +167,43 @@ public class CoverageCheckPredicatesUnitTest {
         assertTrue(presentCheck.test(contract));
         assertTrue(issues.isEmpty());
     }
+
+    @DisplayName("Some coverage periods are earlier than attestation date")
+    @Test
+    void whenCoveragePeriodsAreEarlierThanAttestationDate_passCoveragePresentCheck() {
+
+        ATTESTATION_TIME = CURRENT_TIME.minusMonths(3);
+
+        Map<String, List<CoverageCount>> coverageCounts = new HashMap<>();
+        List<String> issues = new ArrayList<>();
+        CoveragePresentCheck presentCheck =
+                new CoveragePresentCheck(coverageService, coverageCounts, issues);
+
+        ContractDTO contract = getContractDTO();
+
+        List<CoverageCount> fakeCounts = List.of(
+                // add coverage dates that are earlier than attestation date
+                new CoverageCount("TEST", ATTESTATION_TIME.minusMonths(3).getYear(),
+                        ATTESTATION_TIME.minusMonths(3).getMonthValue(), 1, 1, 1),
+                new CoverageCount("TEST", ATTESTATION_TIME.minusMonths(2).getYear(),
+                        ATTESTATION_TIME.minusMonths(2).getMonthValue(), 1, 1, 1),
+                new CoverageCount("TEST", ATTESTATION_TIME.minusMonths(1).getYear(),
+                        ATTESTATION_TIME.minusMonths(1).getMonthValue(), 1, 1, 1),
+                // add coverage dates for attestation month and later
+                new CoverageCount("TEST", ATTESTATION_TIME.plusMonths(0).getYear(),
+                        ATTESTATION_TIME.plusMonths(0).getMonthValue(), 1, 1, 1),
+                new CoverageCount("TEST", ATTESTATION_TIME.plusMonths(1).getYear(),
+                        ATTESTATION_TIME.plusMonths(1).getMonthValue(), 1, 1, 1),
+                new CoverageCount("TEST", ATTESTATION_TIME.plusMonths(2).getYear(),
+                        ATTESTATION_TIME.plusMonths(2).getMonthValue(), 1, 1, 1)
+
+        );
+        coverageCounts.put("TEST", fakeCounts);
+
+        assertTrue(presentCheck.test(contract));
+        assertTrue(issues.isEmpty());
+    }
+
 
     @DisplayName("Coverage changes are limited to 10% between months fails when changes are large")
     @Test
