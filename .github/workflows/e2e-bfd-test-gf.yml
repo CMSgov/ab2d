@@ -81,5 +81,4 @@ jobs:
         env:
           AB2D_BFD_URL: 'https://prod-sbx.fhir.bfd.cmscloud.local'
         run: |
-          mvn liquibase:update
           mvn test -s settings.xml -pl e2e-bfd-test -am -Dtest=EndToEndBfdTests -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dusername=$ARTIFACTORY_USER -Dpassword=$ARTIFACTORY_PASSWORD -Drepository_url=$ARTIFACTORY_URL --no-transfer-progress
