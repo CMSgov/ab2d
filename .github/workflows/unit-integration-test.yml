@@ -79,7 +79,7 @@ jobs:
       - name: SonarQube analysis (with coverage)
         run: |
           mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} \
-            org.sonarsource.scanner.maven:sonar-maven-plugin:3.10.0.2594:sonar \
+            sonar:sonar \
             -Dsonar.projectKey=ab2d-project \
             -Dsonar.qualitygate.wait=true \
             -Dusername="${ARTIFACTORY_USER}" \
