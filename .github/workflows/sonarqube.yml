@@ -8,6 +8,9 @@ permissions:
   contents: read
   id-token: write
 
+env:
+  SONAR_PROJECT_KEY: ab2d-project
+
 jobs:
   sonarqube:
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
@@ -15,8 +18,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -29,7 +30,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.AB2D_ENV }}-github-actions
+          role-to-assume: arn:aws:iam::${{ secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-test-github-actions
 
       - name: Set env vars from AWS params
         uses: cmsgov/cdap/actions/aws-params-env-action@main
@@ -47,7 +48,7 @@ jobs:
         run: |
             mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} \
              sonar:sonar \
-             -Dsonar.projectKey=ab2d-project \
+             -Dsonar.projectKey=$SONAR_PROJECT_KEY \
              -Dsonar.qualitygate.wait=true \
              -Dusername="${ARTIFACTORY_USER}" \
              -Dpassword="${ARTIFACTORY_PASSWORD}" \
