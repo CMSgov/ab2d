@@ -1,0 +1,71 @@
+name: FHIR Conformance Tests
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/fhirscan.yml
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: AB2D environment
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+          - sandbox
+        default: test
+      api_base_url:
+        description: Overrides the 'base-url' property for testing in ephemeral environments
+        required: false
+        type: string
+
+jobs:
+  fhirscan:
+    permissions:
+      contents: read
+      id-token: write
+    name: run fhir scan
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    steps:
+      - name: Assume AWS role
+        uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.AB2D_ENV }}-github-actions
+
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set env vars from AWS params
+        uses: cmsgov/cdap/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |
+            OKTA_CLIENT_ID=/ab2d/mgmt/okta/sensitive/test-pdp-100-id
+            OKTA_CLIENT_PASSWORD=/ab2d/mgmt/okta/sensitive/test-pdp-100-secret
+
+      - name: Run Inferno
+        id: run
+        env:
+          ENV: ${{ inputs.environment }}
+          BASE_URL: ${{ inputs.api_base_url }}
+        run: |
+          cd ${GITHUB_WORKSPACE} 
+          
+          docker build -t inferno:1 https://github.com/inferno-framework/bulk-data-test-kit.git
+          docker compose -f fhir_testing/docker-compose.inferno.yml run inferno bundle exec inferno migrate
+          docker compose -f fhir_testing/docker-compose.inferno.yml up -d
+          sleep 20
+          docker stop fhir_testing-hl7_validator_service-1
+
+          TOKEN_URL='https://test.idp.idm.cms.gov/oauth2/aus2r7y3gdaFMKBol297/v1/token'
+          if [ $BASE_URL ]; then
+            BULK_URL="${BASE_URL}/api/v2/fhir/"
+          else
+            BULK_URL="https://${ENV}.ab2d.cms.gov/api/v2/fhir/"
+          fi
+
+          docker build --no-cache -t fhir_testing -f ../ab2d/fhir-test/Dockerfile.fhir-test .
+          docker run --add-host=host.docker.internal:host-gateway --rm -e BULK_URL="$BULK_URL" -e CLIENT_ID="$OKTA_CLIENT_ID" -e CLIENT_SECRET="$OKTA_CLIENT_PASSWORD" -e TOKEN_URL="$TOKEN_URL" fhir_testing
