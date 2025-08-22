@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - AB2D-6853/fix_e2e_bfd
 permissions:
   id-token: write
   contents: read
@@ -21,16 +22,18 @@ jobs:
       environment: test
       module: worker
     secrets: inherit
-# Should be fixed in AB2D-6853 Fix e2e-bfd tests
-#  e2e-bfd-test:
-#    needs: [ build-deploy-api, build-deploy-worker ]
-#    uses: ./.github/workflows/e2e-bfd-test-gf.yml
-#    with:
-#      environment: test
-#    secrets: inherit
+  e2e-bfd-test:
+    needs: [ build-deploy-api, build-deploy-worker ]
+    uses: ./.github/workflows/e2e-bfd-test-gf.yml
+    with:
+      environment: test
+    secrets: inherit
   e2e-test:
     needs: [ build-deploy-api, build-deploy-worker ]
     uses: ./.github/workflows/e2e-test-gf.yml
     with:
       environment: test
+    secrets: inherit
+  sonarqube:
+    uses: ./.github/workflows/sonarqube.yml
     secrets: inherit

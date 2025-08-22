@@ -1,0 +1,56 @@
+name: SonarQube
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  sonarqube:
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+
+   steps:
+     - name: Checkout Code
+       uses: actions/checkout@v3
+       with:
+         fetch-depth: 0  # Get entire history for SonarQube
+
+     - name: Setup Java
+       uses: actions/setup-java@v3
+       with:
+         java-version: '17'
+         distribution: temurin
+         cache: maven
+
+     - name: Assume AWS role
+       uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
+       with:
+        aws-region: ${{ vars.AWS_REGION }}
+        role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.AB2D_ENV }}-github-actions
+
+     - uses: cmsgov/cdap/actions/aws-params-env-action@main
+       env:
+         AWS_REGION: ${{ vars.AWS_REGION }}
+       with:
+          params: |
+            ARTIFACTORY_URL=/artifactory/url
+            ARTIFACTORY_USER=/artifactory/user
+            ARTIFACTORY_PASSWORD=/artifactory/password
+            SONAR_HOST_URL=/sonarqube/url
+            SONAR_TOKEN=/sonarqube/token
+
+     - name: SonarQube analysis (with coverage)
+       run: |
+         mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} \
+          sonar:sonar \
+           -Dsonar.projectKey=ab2d-project \
+          -Dsonar.qualitygate.wait=true \
+          -Dusername="${ARTIFACTORY_USER}" \
+           -Dpassword="${ARTIFACTORY_PASSWORD}" \
+           -Drepository_url="${ARTIFACTORY_URL}" \
+           -Dsonar.ci.autoconfig.disabled=true \
+          -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+  

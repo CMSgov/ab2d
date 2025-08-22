@@ -1,6 +1,9 @@
 name: Run unit and integration tests
 
 on:
+  push:
+    branches:
+      - AB2D-6853/fix_e2e_bfd
   workflow_call:
   workflow_dispatch: # Allow manual trigger
 
@@ -59,8 +62,6 @@ jobs:
             ARTIFACTORY_URL=/artifactory/url
             ARTIFACTORY_USER=/artifactory/user
             ARTIFACTORY_PASSWORD=/artifactory/password
-            SONAR_HOST_URL=/sonarqube/url
-            SONAR_TOKEN=/sonarqube/token
 
       - name: Assume role in AB2D dev account
         uses: aws-actions/configure-aws-credentials@v3
@@ -76,6 +77,8 @@ jobs:
         run: |
             mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
 
-      - name: SonarQube analysis
-        run: |
-          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} package sonar:sonar -Dsonar.projectKey=ab2d-project -Dsonar.qualitygate.wait=true -DskipTests -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} -Dsonar.ci.autoconfig.disabled=true
+
+  sonarqube:
+    uses: ./.github/workflows/sonarqube.yml
+    secrets: inherit
+

@@ -181,14 +181,6 @@ public class EndToEndBfdTests {
     private static final String CONTRACT_TO_USE = "Z1007";
     private static final String CONTRACT_TO_USE_CLIENT_ID = "KtmekgkCTalQkGue2B-0Z0hGC1Dk7khtJ30XMI3J";
 
-//    @BeforeAll
-//    static void logSchema(@Autowired DataSource ds) throws Exception {
-//        try (var c = ds.getConnection(); var s = c.createStatement(); var rs = s.executeQuery("select current_schema")) {
-//            rs.next();
-//            System.out.println("current_schema = " + rs.getString(1)); // should print "ab2d"
-//        }
-//    }
-
     @BeforeEach
     void setUp() {
         /* These properties are set to improve performance of this test */

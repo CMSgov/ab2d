@@ -3,9 +3,6 @@ run-name: end-to-end-bfd-gf tests ${{ inputs.environment }}
 
 
 on:
-  push:
-    branches:
-      - AB2D-6853/fix_e2e_bfd
   workflow_call:
     inputs:
       environment:
