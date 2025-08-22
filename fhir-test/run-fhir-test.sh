@@ -36,8 +36,9 @@ fi
 # Get the Token
 AUTH_RESP=$(curl -d "" -X POST "$TOKEN_URL" \
 	--user "$CLIENT_ID:$CLIENT_SECRET" \
-	-H "accept: application/json")
-
+	-H "accept: application/json" \
+  -d "grant_type=client_credentials" \
+  -d "scope=clientCreds")
 
 TOKEN=$(echo $AUTH_RESP | jq -r ".access_token")
 
