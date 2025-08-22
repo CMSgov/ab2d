@@ -10,6 +10,7 @@ import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.InvalidContractException;
 import gov.cms.ab2d.common.service.PdpClientService;
+import gov.cms.ab2d.common.util.LiquibaseTestConfig;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.coverage.model.CoverageMapping;
 import gov.cms.ab2d.coverage.model.CoverageSearch;
@@ -52,6 +53,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -104,7 +106,6 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
         "gov.cms.ab2d.coverage.repository",
         "gov.cms.ab2d.coverage.service",
         "gov.cms.ab2d.job.service",
-        "gov.cms.ab2d.job.repository",
         "gov.cms.ab2d.worker.config",
         "gov.cms.ab2d.worker.processor",
         "gov.cms.ab2d.worker.service"})
@@ -112,7 +113,8 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 @Slf4j
 @ExtendWith(MockitoExtension.class)
 @Profile("jenkins")
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@Import(LiquibaseTestConfig.class)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 public class EndToEndBfdTests {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
