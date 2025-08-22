@@ -32,7 +32,7 @@ jobs:
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     env:
       AWS_ACCOUNT: ${{ inputs.environment == 'sandbox' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
-      ENV: ${{ inputs.environment }}
+      AB2D_ENV: ${{ inputs.environment || 'dev' }}
 
     name: run fhir scan
     steps:
@@ -40,7 +40,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${ENV:-"dev"}-github-actions
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.AB2D_ENV }}-github-actions
 
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -57,7 +57,7 @@ jobs:
       - name: Run Inferno
         id: run
         env:
-          ENV: ${{ inputs.environment }}
+          ENV: ${{ inputs.environment || 'dev' }}
           BASE_URL: ${{ inputs.api_base_url }}
         run: |
           cd ${GITHUB_WORKSPACE} 
@@ -72,7 +72,7 @@ jobs:
           if [ $BASE_URL ]; then
             BULK_URL="${BASE_URL}/api/v2/fhir/"
           else
-            BULK_URL="https://${ENV:-"dev"}.ab2d.cms.gov/api/v2/fhir/"
+            BULK_URL="https://${ENV}.ab2d.cms.gov/api/v2/fhir/"
           fi
 
           docker build --no-cache -t fhir_testing -f ../ab2d/fhir-test/Dockerfile.fhir-test .
