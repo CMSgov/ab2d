@@ -21,7 +21,7 @@ on:
         default: test
 
 concurrency:
-  group: ${{ inputs.environment }}-e2e-test
+  group: ${{ inputs.environment }}-e2e-bfd-test
 
 jobs:
   test:

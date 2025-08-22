@@ -1,15 +1,8 @@
 name: Run unit and integration tests
 
 on:
-  push:
-    branches:
-      - AB2D-6853/fix_e2e_bfd
   workflow_call:
   workflow_dispatch: # Allow manual trigger
-
-permissions:
-  contents: read
-  id-token: write
 
 env:
   # NOTE: Required checks set in repository branch protection rules/rulesets cannot be skipped
@@ -35,6 +28,9 @@ jobs:
             grep -P "${workflow_files_re}" \
           && echo "files=true" >> $GITHUB_OUTPUT || echo "files=" >> $GITHUB_OUTPUT
   test:
+    permissions:
+      contents: read
+      id-token: write
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     needs: workflow
     if: needs.workflow.outputs.files || github.event_name == 'push'
@@ -63,6 +59,8 @@ jobs:
             ARTIFACTORY_URL=/artifactory/url
             ARTIFACTORY_USER=/artifactory/user
             ARTIFACTORY_PASSWORD=/artifactory/password
+            SONAR_HOST_URL=/sonarqube/url
+            SONAR_TOKEN=/sonarqube/token
 
       - name: Assume role in AB2D dev account
         uses: aws-actions/configure-aws-credentials@v3
@@ -78,8 +76,15 @@ jobs:
         run: |
             mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
 
-
-  sonarqube:
-    uses: ./.github/workflows/sonarqube.yml
-    secrets: inherit
-
+      - name: SonarQube analysis (with coverage)
+        run: |
+          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} \
+            sonar:sonar \
+            -Dsonar.projectKey=ab2d-project \
+            -Dsonar.qualitygate.wait=true \
+            -Dusername="${ARTIFACTORY_USER}" \
+            -Dpassword="${ARTIFACTORY_PASSWORD}" \
+            -Drepository_url="${ARTIFACTORY_URL}" \
+            -Dsonar.ci.autoconfig.disabled=true \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+  
