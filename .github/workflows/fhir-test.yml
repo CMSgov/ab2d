@@ -6,14 +6,8 @@ on:
       - .github/workflows/fhir-test.yml
     inputs:
       environment:
-        description: AB2D environment
-        required: true
-        type: choice
-        options:
-          - dev
-          - test
-          - sandbox
-        default: test
+        type: string
+        default: dev
   workflow_dispatch:
     inputs:
       environment:
@@ -35,6 +29,11 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    env:
+      AWS_ACCOUNT: ${{ inputs.environment == 'sandbox' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
+      AB2D_ENV: ${{ inputs.environment }}
+
     name: run fhir scan
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     steps:
