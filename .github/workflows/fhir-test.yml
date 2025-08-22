@@ -63,10 +63,10 @@ jobs:
           cd ${GITHUB_WORKSPACE} 
           
           docker build -t inferno:1 https://github.com/inferno-framework/bulk-data-test-kit.git
-          docker compose -f fhir_testing/docker-compose.inferno.yml run inferno bundle exec inferno migrate
-          docker compose -f fhir_testing/docker-compose.inferno.yml up -d
+          docker compose -f fhir-test/docker-compose.inferno.yml run inferno bundle exec inferno migrate
+          docker compose -f shir-test/docker-compose.inferno.yml up -d
           sleep 20
-          docker stop fhir_testing-hl7_validator_service-1
+          docker stop fhir-test-hl7_validator_service-1
 
           TOKEN_URL='https://test.idp.idm.cms.gov/oauth2/aus2r7y3gdaFMKBol297/v1/token'
           if [ $BASE_URL ]; then
@@ -75,5 +75,5 @@ jobs:
             BULK_URL="https://${ENV}.ab2d.cms.gov/api/v2/fhir/"
           fi
 
-          docker build --no-cache -t fhir_testing -f ../ab2d/fhir-test/Dockerfile.fhir-test .
-          docker run --add-host=host.docker.internal:host-gateway --rm -e BULK_URL="$BULK_URL" -e CLIENT_ID="$OKTA_CLIENT_ID" -e CLIENT_SECRET="$OKTA_CLIENT_PASSWORD" -e TOKEN_URL="$TOKEN_URL" fhir_testing
+          docker build --no-cache -t fhir-test -f ../ab2d/fhir-test/Dockerfile.fhir-test .
+          docker run --add-host=host.docker.internal:host-gateway --rm -e BULK_URL="$BULK_URL" -e CLIENT_ID="$OKTA_CLIENT_ID" -e CLIENT_SECRET="$OKTA_CLIENT_PASSWORD" -e TOKEN_URL="$TOKEN_URL" fhir-test
