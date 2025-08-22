@@ -3,7 +3,7 @@ name: FHIR Conformance Tests
 on:
   pull_request:
     paths:
-      - .github/workflows/fhirscan.yml
+      - .github/workflows/fhir-test.yml
   workflow_dispatch:
     inputs:
       environment:
