@@ -32,7 +32,7 @@ jobs:
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     env:
       AWS_ACCOUNT: ${{ inputs.environment == 'sandbox' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
-      AB2D_ENV: ${{ inputs.environment }}
+      ENV: ${{ inputs.environment }}
 
     name: run fhir scan
     steps:
@@ -40,7 +40,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.AB2D_ENV }}-github-actions
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${ENV:-"dev"}-github-actions
 
       - name: Checkout Code
         uses: actions/checkout@v3
