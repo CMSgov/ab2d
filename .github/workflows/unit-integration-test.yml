@@ -7,6 +7,10 @@ on:
   workflow_call:
   workflow_dispatch: # Allow manual trigger
 
+permissions:
+  contents: read
+  id-token: write
+
 env:
   # NOTE: Required checks set in repository branch protection rules/rulesets cannot be skipped
   # with the native path filtering. This regex and the 'workflow' job below is a hack to only
@@ -31,9 +35,6 @@ jobs:
             grep -P "${workflow_files_re}" \
           && echo "files=true" >> $GITHUB_OUTPUT || echo "files=" >> $GITHUB_OUTPUT
   test:
-    permissions:
-      contents: read
-      id-token: write
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     needs: workflow
     if: needs.workflow.outputs.files || github.event_name == 'push'
