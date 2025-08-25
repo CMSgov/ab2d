@@ -7,7 +7,7 @@ on:
     inputs:
       environment:
         type: string
-        default: dev
+        default: test
   workflow_dispatch:
     inputs:
       environment:
@@ -57,7 +57,7 @@ jobs:
       - name: Run Inferno
         id: run
         env:
-          ENV: ${{ inputs.environment || 'dev' }}
+          ENV: ${{ inputs.environment || 'test' }}
           BASE_URL: ${{ inputs.api_base_url }}
         run: |
           cd ${GITHUB_WORKSPACE} 
