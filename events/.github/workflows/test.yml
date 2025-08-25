@@ -1,0 +1,51 @@
+name: Unit tests and static analysis
+
+on:
+  workflow_call:
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  test:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - uses: actions/setup-java@8df1039502a15bceb9433410b1a100fbe190c53b # v4.5.0
+        with:
+          distribution: 'adopt'
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@0bdd871935719febd78681f197cd39af5b6e16a6 # v4.2.2
+        with:
+          gradle-version: 8.4
+
+      - uses: cmsgov/cdap/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |
+            ARTIFACTORY_URL=/artifactory/url
+            ARTIFACTORY_USER=/artifactory/user
+            ARTIFACTORY_PASSWORD=/artifactory/password
+            SONAR_HOST_URL=/sonarqube/url
+            SONAR_TOKEN=/sonarqube/token
+
+      - name: Clean project
+        run: gradle clean
+
+      - name: Run unit tests
+        run: gradle test ${RUNNER_DEBUG:+"--debug"}
+
+      - name: SonarQube analysis
+        run: |
+          gradle sonar \
+            -Dsonar.projectKey=ab2d-events \
+            -Dsonar.host.url=https://sonarqube.cloud.cms.gov \
+            -Dsonar.login=$SONAR_TOKEN
+
+      - name: SonarQube Quality Gate check
+        id: sonarqube-quality-gate-check
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        with:
+          scanMetadataReportFile: build/sonar/report-task.txt
+        timeout-minutes: 5

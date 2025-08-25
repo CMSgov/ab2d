@@ -1,0 +1,71 @@
+{
+  "name": "ab2d-contracts",
+  "description": "Service gets data from hpms and shares contract information with other services.",
+  "longDescription": "Service gets data from hpms and shares contract information with other services.",
+  "status": "production",
+  "permissions": {
+    "licenses": [
+      {
+        "URL": "LICENSE",
+        "name": "CC0-1.0"
+      }
+    ],
+    "usageType": "openSource"
+  },
+  "organization": "Centers for Medicare & Medicaid Services",
+  "repositoryURL": "https://github.com/CMSgov/ab2d-contracts",
+  "repositoryHost": "github.com/CMSgov",
+  "repositoryVisibility": "public",
+  "vcs": "git",
+  "laborHours": null,
+  "reuseFrequency": {
+    "forks": 1
+  },
+  "platforms": [
+    "other"
+  ],
+  "categories": [
+    "healthcare"
+  ],
+  "softwareType": "standalone/backend",
+  "languages": [
+    "Java"
+  ],
+  "maintenance": "contract",
+  "contractNumber": "3",
+  "date": {
+    "created": "2022-11-18T07:43:48-08:00",
+    "lastModified": "2025-06-25T20:08:39+0000",
+    "metadataLastUpdated": "2025-06-25T20:08:39+0000"
+  },
+  "tags": [
+    "dsacms-tier3"
+  ],
+  "contact": {
+    "email": "ab2d@cms.hhs.gov",
+    "name": "CMS Open Source Program Office"
+  },
+  "feedbackMechanisms": [
+    "https://github.com/CMSgov/ab2d-contracts/issues"
+  ],
+  "localisation": "false",
+  "repositoryType": "Apps",
+  "userInput": "No",
+  "fismaLevel": "Low",
+  "group": "CMS",
+  "projects": [],
+  "systems": [],
+  "upstream": [],
+  "subsetInHealthcare": [
+    "Policy",
+    "Operational",
+    "Medicare",
+    "Medicaid"
+  ],
+  "userType": [
+    "Providers",
+    "Patients",
+    "Government"
+  ],
+  "maturityModelTier": 3
+}

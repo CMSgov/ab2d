@@ -1,0 +1,79 @@
+name: promote-events
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      environment:
+        required: true
+        type: choice
+        options:
+          - sbx
+          - prod_test
+          - prod
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  promote:
+    runs-on: self-hosted
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      TAG_NAME: event-service
+      SOURCE_REPO: ab2d-impl-services
+    steps:
+      - name: Define destination repo
+        id: repos
+        run: |
+          case "${{ inputs.environment }}" in
+            sbx)
+              echo "DEST_REPO=ab2d-sbx-services" >> $GITHUB_OUTPUT
+              ;;
+            prod_test)
+              echo "DEST_REPO=ab2d-prod-test-services" >> $GITHUB_OUTPUT
+              ;;
+            prod)
+              echo "DEST_REPO=ab2d-prod-services" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+      - name: Authenticate to source account (pull from test)
+        uses: aws-actions/configure-aws-credentials@v4.0.2
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets.test_ACCOUNT }}:role/delegatedadmin/developer/ab2d-test-github-actions
+
+      - name: Pull image from test ECR
+        id: pull-image
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          SRC_ECR="$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+          docker login --username AWS --password-stdin $SRC_ECR <<< $(aws ecr get-login-password)
+          echo "Pulling $SRC_ECR/$SOURCE_REPO:$TAG_NAME"
+          docker pull "$SRC_ECR/$SOURCE_REPO:$TAG_NAME"
+          echo "IMAGE=$SRC_ECR/$SOURCE_REPO:$TAG_NAME" >> $GITHUB_OUTPUT
+
+      - name: Authenticate to destination account (push)
+        uses: aws-actions/configure-aws-credentials@v4.0.2
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: |
+            arn:aws:iam::${{ secrets[inputs.environment == 'prod_test' && 'prod_ACCOUNT' || format('{0}_ACCOUNT', inputs.environment)] }}:role/delegatedadmin/developer/ab2d-${{ inputs.environment == 'prod_test' && 'prod' || inputs.environment }}-github-actions
+
+      - name: Tag and push image to destination ECR
+        env:
+          DEST_REPO: ${{ steps.repos.outputs.DEST_REPO }}
+          IMAGE: ${{ steps.pull-image.outputs.IMAGE }}
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          DEST_ECR="$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+          docker login --username AWS --password-stdin $DEST_ECR <<< $(aws ecr get-login-password)
+          echo "Tagging and pushing image to $DEST_ECR/$DEST_REPO:$TAG_NAME"
+          docker tag "$IMAGE" "$DEST_ECR/$DEST_REPO:$TAG_NAME"
+          docker push "$DEST_ECR/$DEST_REPO:$TAG_NAME"

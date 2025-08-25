@@ -1,0 +1,81 @@
+
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.2.8'
+    id 'com.jfrog.artifactory' version '4.32.0' apply false
+    id "org.sonarqube" version "4.1.0.3113"
+    id "gov.cms.ab2d.plugin" version "1.0.2"
+    id 'maven-publish'
+    id 'org.cyclonedx.bom' version '1.7.4' apply true
+}
+
+version="2.0.0"
+group = "gov.cms.ab2d"
+
+ext {
+    springBootVersion= '3.4.4'
+    springCloudAwsVersion = '3.3.0'
+    liquibaseVersion='4.31.1'
+    jacksonVersion='2.18.3'
+    testContainerVersion='1.20.6'
+}
+
+allprojects {
+    apply plugin: 'gov.cms.ab2d.plugin'
+    apply plugin: "org.cyclonedx.bom"
+    apply plugin: 'org.springframework.boot'
+    dependencies {
+        implementation "com.squareup.okhttp3:okhttp:4.12.0"
+        implementation "org.springframework.boot:spring-boot-starter:${springBootVersion}"
+        implementation "org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}"
+        implementation "org.springframework.boot:spring-boot-starter-jdbc:${springBootVersion}"
+        implementation "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
+        implementation "io.awspring.cloud:spring-cloud-aws:${springCloudAwsVersion}"
+        implementation "io.awspring.cloud:spring-cloud-aws-dependencies:${springCloudAwsVersion}"
+        implementation "io.awspring.cloud:spring-cloud-aws-starter-sqs:${springCloudAwsVersion}"
+        implementation "io.awspring.cloud:spring-cloud-aws-starter:${springCloudAwsVersion}"
+        implementation "commons-codec:commons-codec:1.18.0"
+        implementation "org.liquibase:liquibase-core:${liquibaseVersion}"
+        implementation "com.amazonaws:amazon-kinesis-client:1.14.10"
+        implementation "com.fasterxml.jackson.module:jackson-module-parameter-names:${jacksonVersion}"
+        implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${jacksonVersion}"
+        implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
+        implementation "gov.cms.ab2d:ab2d-events-client:3.3.6"
+        implementation 'com.slack.api:slack-api-client:1.29.2'
+        runtimeOnly "javax.xml.bind:jaxb-api:2.4.0-b180830.0359"
+        runtimeOnly 'org.postgresql:postgresql:42.7.3'
+        testImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
+        testImplementation "commons-io:commons-io:2.18.0"
+        testImplementation "org.springframework.data:spring-data-jpa:${springBootVersion}"
+        testImplementation "org.liquibase:liquibase-core:${liquibaseVersion}"
+        testImplementation "org.testcontainers:localstack:${testContainerVersion}"
+        compileOnly "org.cyclonedx:cyclonedx-gradle-plugin:1.4.0"
+        compileOnly 'org.cyclonedx:cyclonedx-core-java:10.2.1'
+    }
+
+    cyclonedxBom {
+        // includeConfigs is the list of configuration names to include when generating the BOM (leave empty to include every configuration)
+        includeConfigs = ["runtimeClasspath"]
+        // skipConfigs is a list of configuration names to exclude when generating the BOM
+        skipConfigs = ["compileClasspath", "testCompileClasspath"]
+        // Specified the type of project being built. Defaults to 'library'
+        projectType = "library"
+        // Specified the version of the CycloneDX specification to use. Defaults to 1.4.
+        schemaVersion = "1.4"
+        // Boms destination directory (defaults to build/reports)
+        destination = file("build/reports")
+        // The file name for the generated BOMs (before the file format suffix). Defaults to 'bom'
+        outputName = "bom"
+        // The file format generated, can be xml, json or all for generating both
+        outputFormat = "all"
+        // Exclude BOM Serial Number
+        includeBomSerialNumber = false
+        // Override component version
+        componentVersion = "2.0.0"
+    }
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}

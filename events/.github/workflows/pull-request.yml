@@ -1,0 +1,15 @@
+name: pull request jobs
+
+on:
+  pull_request:
+
+jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+    secrets: inherit
+  build:
+    needs: test
+    uses: ./.github/workflows/build.yml
+    with:
+      environment: test
+    secrets: inherit
