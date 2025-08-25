@@ -12,7 +12,7 @@ fhir_testing:
 	# Get config
 	$(eval CLIENT_ID := $(shell aws ssm get-parameter --name '/ab2d/mgmt/okta/sensitive/test-pdp-100-id' --with-decryption --query 'Parameter.Value' --output text))
 	$(eval CLIENT_SECRET := $(shell aws ssm get-parameter --name '/ab2d/mgmt/okta/sensitive/test-pdp-100-secret' --with-decryption --query 'Parameter.Value' --output text))
-	$(eval BULK_URL = 'http://host.docker.internal:8443/api/v2/fhir/')
+	$(eval BULK_URL = 'https://host.docker.internal:${API_PORT}/api/v2/fhir/')
 	$(eval TOKEN_URL = 'https://test.idp.idm.cms.gov/oauth2/aus2r7y3gdaFMKBol297/v1/token')
 
 	# Run the tests
