@@ -27,7 +27,7 @@ jobs:
         with:
           gradle-version: 8.4
 
-      - uses: cmsgov/ab2d-bcda-dpc-platform/actions/aws-params-env-action@main
+      - uses: cmsgov/cdap/actions/aws-params-env-action@main
         with:
           params: |
             ARTIFACTORY_URL=/artifactory/url
