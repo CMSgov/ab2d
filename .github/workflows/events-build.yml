@@ -28,6 +28,9 @@ on:
 permissions:
   contents: read
   id-token: write
+defaults:
+  run:
+    working-directory: ./events
 
 env:
   ECR_REPO: ab2d-events

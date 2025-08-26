@@ -29,6 +29,9 @@ on:
 permissions:
   contents: read
   id-token: write
+defaults:
+  run:
+    working-directory: ./contracts
 
 jobs:
   apply_tofu:

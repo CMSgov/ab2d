@@ -34,9 +34,12 @@ on:
 permissions:
   contents: read
   id-token: write
+defaults:
+  run:
+    working-directory: ./events
 
 concurrency:
-  group: build-deploy-${{ inputs.environment }}
+  group: contracts-build-deploy-${{ inputs.environment }}
 
 jobs:
   build:
