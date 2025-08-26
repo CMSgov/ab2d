@@ -3,7 +3,7 @@ name: Contracts pull request
 on:
   pull_request:
     paths:
-      - contracts/**
+      - 'contracts/**'
     types: [opened, reopened, synchronize, ready_for_review]
     branches:
       - main

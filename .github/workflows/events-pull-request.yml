@@ -3,7 +3,7 @@ name: Events pull request
 on:
   pull_request:
     paths:
-      - events/**
+      - 'events/**'
     types: [opened, reopened, synchronize, ready_for_review]
     branches:
       - main
