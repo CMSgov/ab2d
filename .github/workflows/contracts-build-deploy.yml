@@ -38,7 +38,7 @@ defaults:
   run:
     working-directory: ./contracts
 concurrency:
-  group: contracts-build-deploy-${{ inputs.environment }}
+  group: microservices-build-deploy-${{ inputs.environment }}
 
 jobs:
   build:
