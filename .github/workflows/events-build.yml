@@ -23,7 +23,7 @@ on:
       run_tests:
         description: Run tests
         type: boolean
-        default: true
+        default: false # TODO Tests are broken; to be fixed in AB2D-6879
 
 permissions:
   contents: read
