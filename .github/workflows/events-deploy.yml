@@ -2,6 +2,9 @@ name: Events deploy
 run-name: events-deploy ${{ inputs.environment }} ${{ inputs.image_tag }}
 
 on:
+  push:
+    branches:
+      - move-microservices
   workflow_call:
     inputs:
       environment:

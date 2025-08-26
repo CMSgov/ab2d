@@ -2,6 +2,9 @@ name: Contracts build
 run-name: contracts-build
 
 on:
+  push:
+    branches:
+      - move-microservices
   workflow_call:
     inputs:
       push_image:

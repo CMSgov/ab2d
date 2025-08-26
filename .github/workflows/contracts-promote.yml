@@ -2,6 +2,9 @@ name: Contracts promote
 run-name: contracts-promote ${{ inputs.image_tag }}
 
 on:
+  push:
+    branches:
+      - move-microservices
   workflow_call:
     inputs:
       image_tag:

@@ -2,6 +2,9 @@ name: Events build
 run-name: events-build
 
 on:
+  push:
+    branches:
+      - move-microservices
   workflow_call:
     inputs:
       push_image:
