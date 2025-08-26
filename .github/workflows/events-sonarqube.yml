@@ -9,11 +9,11 @@ permissions:
   id-token: write
 
 env:
-  SONAR_PROJECT_KEY: ab2d-contracts
+  SONAR_PROJECT_KEY: ab2d-events
 
 jobs:
   sonarqube:
-    runs-on: codebuild-ab2d-contracts-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
 
     steps:
       - name: Checkout code
@@ -27,7 +27,7 @@ jobs:
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ secrets.GF_NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-test-github-actions
+          role-to-assume: arn:aws:iam::${{ secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-test-github-actions
 
       - uses: cmsgov/cdap/actions/aws-params-env-action@main
         env:

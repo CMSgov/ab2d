@@ -1,45 +1,43 @@
-name: promote-gf
-run-name: promote-gf ${{ inputs.image_tax_prefix }}
+name: Contracts promote
+run-name: contracts-promote ${{ inputs.image_tag }}
 
 on:
   workflow_call:
     inputs:
-      image_tag_suffix:
+      image_tag:
         required: true
         type: string
   workflow_dispatch:
     inputs:
-      image_tag_suffix:
-        description: Docker tag suffix
-        required: false
+      image_tag:
+        description: ECR image tag for selected module (contracts-service-<branch>-<SHA>)
+        required: true
         type: string
 
 permissions:
   contents: read
   id-token: write
 
+env:
+  TAG_NAME: ${{ inputs.image_tag }}
+  SOURCE_REPO: ab2d-contracts
+  DEST_REPO: ab2d-contracts
+
 jobs:
   promote:
     permissions:
       contents: read
       id-token: write
-    runs-on: codebuild-ab2d-events-${{github.run_id}}-${{github.run_attempt}}
-    env:
-      TAG_NAME: event-service-${{ inputs.image_tag_suffix || github.ref }} # Note: `event-service instead of `events-service`
-      SOURCE_REPO: ab2d-events
-    steps:
-      - name: Define destination repo
-        id: repos
-        run: |
-          echo "DEST_REPO=ab2d-events" >> $GITHUB_OUTPUT 
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
 
-      - name: Authenticate to source account (pull from test)
-        uses: aws-actions/configure-aws-credentials@v4.0.2
+    steps:
+      - name: Authenticate to non-prod AWS account
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ secrets.GF_NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-dev-github-actions
+          role-to-assume: arn:aws:iam::${{ secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-dev-github-actions
 
-      - name: Pull image from test ECR
+      - name: Pull image from non-prod ECR
         id: pull-image
         run: |
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
@@ -49,16 +47,14 @@ jobs:
           docker pull "$SRC_ECR/$SOURCE_REPO:$TAG_NAME"
           echo "IMAGE=$SRC_ECR/$SOURCE_REPO:$TAG_NAME" >> $GITHUB_OUTPUT
 
-      - name: Authenticate to destination account (push)
-        uses: aws-actions/configure-aws-credentials@v4.0.2
+      - name: Authenticate to prod AWS account
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: |
-            arn:aws:iam::${{ secrets.GF_PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-sandbox-github-actions
+          role-to-assume: arn:aws:iam::${{ secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-sandbox-github-actions
 
-      - name: Tag and push image to destination ECR
+      - name: Tag and push image to prod ECR
         env:
-          DEST_REPO: ${{ steps.repos.outputs.DEST_REPO }}
           IMAGE: ${{ steps.pull-image.outputs.IMAGE }}
         run: |
           ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)

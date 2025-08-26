@@ -1,5 +1,5 @@
-name: Build contracts
-run-name: build
+name: Contracts build
+run-name: contracts-build
 
 on:
   workflow_call:
@@ -35,9 +35,9 @@ env:
 
 jobs:
   build:
-    runs-on: codebuild-ab2d-contracts-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     env:
-      AWS_ACCOUNT: ${{ secrets.GF_NON_PROD_ACCOUNT }}
+      AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
     outputs:
       image_tag: ${{ steps.build_image.outputs.image_tag }}
 

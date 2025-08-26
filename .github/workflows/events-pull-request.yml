@@ -1,0 +1,28 @@
+name: Events pull request
+
+on:
+  pull_request:
+    paths:
+      - events/**
+    types: [opened, reopened, synchronize, ready_for_review]
+    branches:
+      - main
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    if: github.event.pull_request.draft == false
+    secrets: inherit
+    uses: ./.github/workflows/events-build.yml
+    with:
+      run_tests: true
+      push_image: false
+
+  sonarqube:
+    if: github.event.pull_request.draft == false
+    uses: ./.github/workflows/events-sonarqube.yml
+    secrets: inherit
+

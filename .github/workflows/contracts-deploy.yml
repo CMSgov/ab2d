@@ -1,5 +1,5 @@
-name: Deploy contracts
-run-name: deploy ${{ inputs.environment }} ${{ inputs.image_tag }}
+name: Contracts deploy
+run-name: contracts-deploy ${{ inputs.environment }} ${{ inputs.image_tag }}
 
 on:
   workflow_call:
@@ -38,6 +38,6 @@ jobs:
       contracts_service_image: ${{ inputs.image_tag }}
       apply: true
       ref: main
-      runner: codebuild-ab2d-contracts-${{github.run_id}}-${{github.run_attempt}}
+      runner: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     secrets:
-      aws_account: ${{contains(fromJSON('["dev", "test"]'), inputs.environment) && secrets.GF_NON_PROD_ACCOUNT || secrets.GF_PROD_ACCOUNT}}
+      aws_account: ${{contains(fromJSON('["dev", "test"]'), inputs.environment) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT}}

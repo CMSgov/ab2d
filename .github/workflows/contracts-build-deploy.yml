@@ -1,5 +1,5 @@
-name: Build & deploy contracts
-run-name: build-deploy ${{ inputs.environment }}
+name: Contracts build deploy
+run-name: contracts-build-deploy ${{ inputs.environment }}
 
 on:
   workflow_call:
@@ -41,7 +41,7 @@ concurrency:
 jobs:
   build:
     secrets: inherit
-    uses: ./.github/workflows/build.yml
+    uses: ./.github/workflows/contracts-build.yml
     with:
       run_tests: ${{ inputs.run_tests }}
       push_image: true
@@ -49,7 +49,7 @@ jobs:
   deploy:
     secrets: inherit
     needs: [build]
-    uses: ./.github/workflows/deploy.yml
+    uses: ./.github/workflows/contracts-deploy.yml
     with:
       environment: ${{ inputs.environment }}
       image_tag: ${{ needs.build.outputs.image_tag }}
@@ -57,4 +57,4 @@ jobs:
   sonarqube:
     secrets: inherit
     if: ${{ inputs.run_sonar == true }}
-    uses: ./.github/workflows/sonarqube.yml
+    uses: ./.github/workflows/contracts-sonarqube.yml

@@ -1,5 +1,5 @@
-name: Promote contracts
-run-name: promote ${{ inputs.image_tag }}
+name: Events promote
+run-name: events-promote ${{ inputs.image_tag }}
 
 on:
   workflow_call:
@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       image_tag:
-        description: ECR image tag for selected module (contracts-service-<branch>-<SHA>)
+        description: ECR image tag for selected module (events-service-<branch>-<SHA>)
         required: true
         type: string
 
@@ -20,22 +20,22 @@ permissions:
 
 env:
   TAG_NAME: ${{ inputs.image_tag }}
-  SOURCE_REPO: ab2d-contracts
-  DEST_REPO: ab2d-contracts
+  SOURCE_REPO: ab2d-events
+  DEST_REPO: ab2d-events
 
 jobs:
   promote:
     permissions:
       contents: read
       id-token: write
-    runs-on: codebuild-ab2d-contracts-${{github.run_id}}-${{github.run_attempt}}
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
 
     steps:
       - name: Authenticate to non-prod AWS account
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ secrets.GF_NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-dev-github-actions
+          role-to-assume: arn:aws:iam::${{ secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-dev-github-actions
 
       - name: Pull image from non-prod ECR
         id: pull-image
@@ -51,7 +51,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ secrets.GF_PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-sandbox-github-actions
+          role-to-assume: arn:aws:iam::${{ secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-sandbox-github-actions
 
       - name: Tag and push image to prod ECR
         env:
