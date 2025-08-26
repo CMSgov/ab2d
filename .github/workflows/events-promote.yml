@@ -2,9 +2,6 @@ name: Events promote
 run-name: events-promote ${{ inputs.image_tag }}
 
 on:
-  push:
-    branches:
-      - move-microservices
   workflow_call:
     inputs:
       image_tag:

@@ -1,9 +1,6 @@
 name: SonarQube
 
 on:
-  push:
-    branches:
-      - move-microservices
   workflow_call:
   workflow_dispatch:
 

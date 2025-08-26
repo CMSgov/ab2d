@@ -2,9 +2,6 @@ name: Events build deploy
 run-name: events-build-deploy ${{ inputs.environment }}
 
 on:
-  push:
-    branches:
-      - move-microservices
   workflow_call:
     inputs:
       environment:
