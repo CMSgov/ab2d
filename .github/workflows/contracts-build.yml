@@ -75,7 +75,6 @@ jobs:
       - name: Build and push Docker image
         if: ${{ inputs.push_image == true }}
         id: build_image
-        working-directory: ./contracts
         run: |
           ./gradlew -b build.gradle bootJar -Dset.root.project.build.filename=true
           ECR_DOMAIN="$AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com"

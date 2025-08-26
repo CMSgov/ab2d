@@ -56,5 +56,5 @@ jobs:
       - name: Quality Gate
         uses: sonarsource/sonarqube-quality-gate-action@master
         with:
-          scanMetadataReportFile: build/sonar/report-task.txt
+          scanMetadataReportFile: contracts/build/sonar/report-task.txt
         timeout-minutes: 10
