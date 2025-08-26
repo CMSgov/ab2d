@@ -124,6 +124,14 @@ resource "aws_efs_file_system" "efs" {
   tags           = { Name = "${local.service_prefix}-efs" }
 }
 
+resource "aws_efs_backup_policy" "policy" {
+  file_system_id = aws_efs_file_system.efs.id
+
+  backup_policy {
+    status = "ENABLED"
+  }
+}
+
 resource "aws_efs_access_point" "efs" {
   count          = module.platform.is_ephemeral_env ? 0 : 1
   file_system_id = aws_efs_file_system.efs[0].id
