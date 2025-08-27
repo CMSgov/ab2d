@@ -1,9 +1,6 @@
 name: Run unit and integration tests
 
 on:
-  push:
-    branches:
-      - AB2D-6853/fix_e2e_bfd
   workflow_call:
   workflow_dispatch: # Allow manual trigger
 

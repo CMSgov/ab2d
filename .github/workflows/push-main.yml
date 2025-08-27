@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - AB2D-6853/fix_e2e_bfd
+
 permissions:
   id-token: write
   contents: read
