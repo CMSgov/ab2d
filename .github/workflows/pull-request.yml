@@ -27,7 +27,7 @@ jobs:
     secrets: inherit
   e2e-test:
     needs: [build-deploy-api, build-deploy-worker]
-    uses: ./.github/workflows/e2e-test-gf.yml
+    uses: ./.github/workflows/e2e-test.yml
     with:
       environment: test
     secrets: inherit
