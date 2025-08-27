@@ -2,6 +2,10 @@ name: pull request jobs
 
 on:
   pull_request:
+    paths-ignore:
+      - lambdas/**
+      - contracts/**
+      - events/**
 permissions:
   id-token: write
   contents: read

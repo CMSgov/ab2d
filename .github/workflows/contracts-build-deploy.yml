@@ -1,0 +1,62 @@
+name: Contracts build deploy
+run-name: contracts-build-deploy ${{ inputs.environment }}
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      run_tests:
+        type: boolean
+        default: true
+      run_sonar:
+        type: boolean
+        default: true
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: AB2D environment
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+      run_tests:
+        description: Run tests
+        type: boolean
+        default: true
+      run_sonar:
+        description: Run SonarQube
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  id-token: write
+defaults:
+  run:
+    working-directory: ./contracts
+concurrency:
+  group: microservices-build-deploy-${{ inputs.environment }}
+
+jobs:
+  build:
+    secrets: inherit
+    uses: ./.github/workflows/contracts-build.yml
+    with:
+      run_tests: ${{ inputs.run_tests }}
+      push_image: true
+
+  deploy:
+    secrets: inherit
+    needs: [build]
+    uses: ./.github/workflows/contracts-deploy.yml
+    with:
+      environment: ${{ inputs.environment }}
+      image_tag: ${{ needs.build.outputs.image_tag }}
+
+  sonarqube:
+    secrets: inherit
+    if: ${{ inputs.run_sonar == true }}
+    uses: ./.github/workflows/contracts-sonarqube.yml

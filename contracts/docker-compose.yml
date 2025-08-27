@@ -1,0 +1,49 @@
+version: '3'
+
+services:
+  db:
+    image: postgres:11
+    command: postgres -c 'max_connections=1000'
+    environment:
+      - POSTGRES_DB=ab2d
+      - POSTGRES_USER=ab2d
+      - POSTGRES_PASSWORD=ab2d
+    # Docker exposes these ports to all containers in the compose by default
+    # but if you are debugging on a local machine uncomment to test connectivity or open a connection
+    # to the Postgres database
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  build:
+    image: maven:3-openjdk-17
+    working_dir: /usr/src/mymaven
+    # Not necessary to run mvn package since we anticipate that project
+    # has already built so we don't need to run this command
+    command: ls /usr/src/mymaven/*/target && ls /root/.m2/repository
+    volumes:
+      - "${PWD}:/usr/src/mymaven"
+      - "${HOME}/.m2:/root/.m2"
+# Uncomment this when running locally to start up localstack
+# When we update docker-compose to a version that supports profiles commenting this out will no longer be needed
+  localstack:
+    image: localstack/localstack:latest
+    profiles:
+      - "local"
+    environment:
+        - AWS_DEFAULT_REGION=us-east-1
+        - EDGE_PORT=4566
+        - SERVICES=sqs
+    ports:
+        - '4566:4566'
+# This needs a shared volume so that both the API and worker module can access the ndjson files being generated
+volumes:
+  tmp-volume:
+    driver: local
+    driver_opts:
+      type: none
+      device: /opt/ab2d
+      o: bind

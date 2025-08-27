@@ -1,0 +1,91 @@
+name: Events build
+run-name: events-build
+
+on:
+  workflow_call:
+    inputs:
+      push_image:
+        type: boolean
+        default: true
+      run_tests:
+        type: boolean
+        default: false # TODO Tests are broken; to be fixed in AB2D-6879
+    outputs:
+      image_tag:
+        description: Image tag pushed to non-prod ECR
+        value: ${{ jobs.build.outputs.image_tag }}
+  workflow_dispatch:
+    inputs:
+      push_image:
+        description: Build and push Docker image to ECR
+        type: boolean
+        default: true
+      run_tests:
+        description: Run tests
+        type: boolean
+        default: false # TODO Tests are broken; to be fixed in AB2D-6879
+
+permissions:
+  contents: read
+  id-token: write
+defaults:
+  run:
+    working-directory: ./events
+
+env:
+  ECR_REPO: ab2d-events
+  TAG_PREFIX: event-service
+
+jobs:
+  build:
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    env:
+      AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
+    outputs:
+      image_tag: ${{ steps.build_image.outputs.image_tag }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'adopt'
+          java-version: '17'
+
+      - name: Assume role in target account
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-dev-github-actions
+
+      - uses: cmsgov/cdap/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |
+            ARTIFACTORY_URL=/artifactory/url
+            ARTIFACTORY_USER=/artifactory/user
+            ARTIFACTORY_PASSWORD=/artifactory/password
+            HPMS_AUTH_KEY_ID=/ab2d/dev/core/sensitive/hpms_auth_key_id
+            HPMS_AUTH_KEY_SECRET=/ab2d/dev/core/sensitive/hpms_auth_key_secret
+
+      - name: Run tests
+        if: ${{ inputs.run_tests == true }}
+        run: ./gradlew clean test --info
+
+      - name: Build and push Docker image
+        if: ${{ inputs.push_image == true }}
+        id: build_image
+        run: |
+          ./gradlew -b build.gradle bootJar -Dset.root.project.build.filename=true
+          ECR_DOMAIN="$AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com"
+          SHA_SHORT=$(git rev-parse --short HEAD)
+          ECR_URI="$ECR_DOMAIN/$ECR_REPO"
+          BRANCH_NAME_FORMATTED=${GITHUB_REF_NAME//\//-}
+          TAG_SHORT="$TAG_PREFIX-$BRANCH_NAME_FORMATTED-$SHA_SHORT"
+          aws ecr get-login-password | docker login --username AWS --password-stdin $ECR_DOMAIN
+          docker build -t "$ECR_URI:$TAG_SHORT" .
+          docker push "$ECR_URI" --all-tags
+          echo "Published **$ECR_URI:$TAG_SHORT**" >> $GITHUB_STEP_SUMMARY
+          echo "image_tag=$TAG_SHORT" >> $GITHUB_OUTPUT
+
