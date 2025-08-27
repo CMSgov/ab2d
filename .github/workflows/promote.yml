@@ -1,5 +1,5 @@
-name: promote-gf
-#run-name: promote-gf ${{ inputs.tag_name }}
+name: API/Worker promote
+run-name: promote ${{ inputs.tag_name }}
 
 on:
   workflow_call:

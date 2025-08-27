@@ -1,5 +1,5 @@
-name: end-to-end-gf tests
-run-name: end-to-end-gf tests ${{ inputs.environment }}
+name: end-to-end tests
+run-name: end-to-end tests ${{ inputs.environment }}
 
 on:
   workflow_call:
