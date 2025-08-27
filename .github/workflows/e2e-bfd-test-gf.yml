@@ -21,7 +21,7 @@ on:
         default: test
 
 concurrency:
-  group: ${{ inputs.environment }}-e2e-bfd-test
+  group: ${{ inputs.environment }}-e2e-test
 
 jobs:
   test:
@@ -33,10 +33,8 @@ jobs:
       AB2D_BFD_KEYSTORE_LOCATION: "${{ github.workspace }}/opt/ab2d/ab2d_bfd_keystore"
       AB2D_V2_ENABLED: 'true'
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-      AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
-      AB2D_ENV: 'test'
-#      AWS_ACCOUNT: ${{ inputs.environment == 'sandbox' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
-#      AB2D_ENV: ${{ inputs.environment }}
+      AWS_ACCOUNT: ${{ inputs.environment == 'sandbox' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
+      AB2D_ENV: ${{ inputs.environment }}
 
     steps:
       - name: Assume AWS role

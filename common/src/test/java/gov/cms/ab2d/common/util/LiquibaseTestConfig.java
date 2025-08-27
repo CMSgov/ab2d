@@ -8,8 +8,6 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.DependsOn;
 
-import java.sql.SQLException;
-
 
 @TestConfiguration
 public class LiquibaseTestConfig {
@@ -19,7 +17,7 @@ public class LiquibaseTestConfig {
             @Value("${spring.datasource.url}") String url,
             @Value("${spring.datasource.username}") String user,
             @Value("${spring.datasource.password}") String pass
-    ) throws SQLException {
+    ) {
         HikariDataSource ds = new HikariDataSource();
         ds.setJdbcUrl(url);
         ds.setUsername(user);
@@ -29,14 +27,10 @@ public class LiquibaseTestConfig {
         lb.setDataSource(ds);
         lb.setChangeLog("classpath:/db/changelog/db.changelog-master.yaml");
         lb.setShouldRun(true);
-        try (var c = ds.getConnection(); var s = c.createStatement(); var rs = s.executeQuery("select current_schema")) {
-            rs.next();
-            System.out.println("current_schema = " + rs.getString(1)); // should print "ab2d"
-        }
         return lb;
     }
 
-        // Ensure EntityManagerFactory waits for Liquibase
+    // Ensure EntityManagerFactory waits for Liquibase
     @Bean
     @DependsOn("testLiquibase")
     public BeanFactoryPostProcessor jpaAfterLiquibase() {
