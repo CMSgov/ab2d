@@ -70,7 +70,7 @@ jobs:
 
       - name: SonarQube analysis (with coverage)
         run: |
-          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} \
+          mvn -ntp -s settings.xml install ${RUNNER_DEBUG:+"--debug"} \
             sonar:sonar \
             -Dsonar.projectKey=$SONAR_PROJECT_KEY \
             -Dsonar.qualitygate.wait=true \
