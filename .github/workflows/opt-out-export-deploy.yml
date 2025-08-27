@@ -1,5 +1,5 @@
-name: opt-out-export deploy-gf
-run-name: opt-out-export deploy-gf ${{ inputs.environment }}
+name: opt-out-export deploy
+run-name: opt-out-export deploy ${{ inputs.environment }}
 
 on:
   workflow_call:

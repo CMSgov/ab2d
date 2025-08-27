@@ -1,5 +1,5 @@
-name: build-gf
-run-name: build-gf non-prod ${{ inputs.module }}
+name: API/Worker build
+run-name: build non-prod ${{ inputs.module }}
 
 on:
   workflow_call:

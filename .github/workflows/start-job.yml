@@ -1,6 +1,5 @@
-
-name: start-job-gf
-run-name: start-job-gf ${{ inputs.environment }} ${{ inputs.contractNumber }}
+name: Start job
+run-name: start-job ${{ inputs.environment }} ${{ inputs.contractNumber }}
 
 on:
   workflow_dispatch: # Allow manual trigger
