@@ -14,13 +14,13 @@ jobs:
     uses: ./.github/workflows/unit-integration-test.yml
     secrets: inherit
   build-deploy-api:
-    uses: ./.github/workflows/build-deploy-gf.yml
+    uses: ./.github/workflows/build-deploy.yml
     with:
       environment: test
       module: api
     secrets: inherit
   build-deploy-worker:
-    uses: ./.github/workflows/build-deploy-gf.yml
+    uses: ./.github/workflows/build-deploy.yml
     with:
       environment: test
       module: worker
