@@ -1,5 +1,5 @@
-name: deploy-lambdas-gf
-run-name: deploy-lambdas-gf ${{ inputs.environment }}
+name: Lambdas deploy
+run-name: deploy-lambdas ${{ inputs.environment }}
 
 on:
   workflow_call:

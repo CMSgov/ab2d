@@ -1,5 +1,5 @@
-name: build-deploy-gf
-run-name: ${{ github.event_name == 'workflow_dispatch' && format('build-deploy-gf {0} {1} {2}', inputs.module, inputs.environment || 'build-only', inputs.skip_build && 'deploy-only' || 'build-and-deploy') || format('build-deploy-gf {0} auto', inputs.module) }}
+name: API/Worker build deploy
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('build-deploy {0} {1} {2}', inputs.module, inputs.environment || 'build-only', inputs.skip_build && 'deploy-only' || 'build-and-deploy') || format('build-deploy {0} auto', inputs.module) }}
 
 on:
   workflow_call:

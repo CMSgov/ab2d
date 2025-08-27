@@ -1,6 +1,5 @@
-name: end-to-end-bfd-gf tests
-run-name: end-to-end-bfd-gf tests ${{ inputs.environment }}
-
+name: end-to-end-bfd tests
+run-name: end-to-end-bfd tests ${{ inputs.environment }}
 
 on:
   workflow_call:

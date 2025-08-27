@@ -1,4 +1,5 @@
-name: publish-lambdas-gf
+name: Lambdas publish
+run-name: publish-lambdas
 on:
   workflow_call:
     inputs:

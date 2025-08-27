@@ -1,10 +1,10 @@
-name: opt-out-export-gf unit tests
+name: opt-out-import unit tests
 
 on:
   pull_request:
     paths:
-      - .github/workflows/opt-out-export-unit-gf.yml
-      - lambdas/attribution-data-file-share/**
+      - .github/workflows/opt-out-import-unit.yml
+      - lambdas/optout/**
   workflow_dispatch:
 
 jobs:
@@ -17,7 +17,8 @@ jobs:
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
     defaults:
       run:
-        working-directory: ./lambdas/attribution-data-file-share
+        working-directory: ./lambdas/optout
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -39,6 +40,5 @@ jobs:
             ARTIFACTORY_PASSWORD=/artifactory/password
             SONAR_HOST_URL=/sonarqube/url
             SONAR_TOKEN=/sonarqube/token
-
-      - name: Run unit tests for opt-out-export lambda
+      - name: Run unit tests for opt-out-import lambda
         run: ../gradlew test
