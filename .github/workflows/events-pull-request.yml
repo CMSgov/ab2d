@@ -1,0 +1,31 @@
+name: Events pull request
+
+on:
+  pull_request:
+    paths:
+      - 'events/**'
+    types: [opened, reopened, synchronize, ready_for_review]
+    branches:
+      - main
+
+permissions:
+  contents: read
+  id-token: write
+defaults:
+  run:
+    working-directory: ./events
+
+jobs:
+  build:
+    if: github.event.pull_request.draft == false
+    secrets: inherit
+    uses: ./.github/workflows/events-build.yml
+    with:
+      run_tests: false # TODO Tests are broken; to be fixed in AB2D-6879
+      push_image: false
+
+  sonarqube:
+    if: github.event.pull_request.draft == false
+    uses: ./.github/workflows/events-sonarqube.yml
+    secrets: inherit
+

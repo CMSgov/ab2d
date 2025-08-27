@@ -1,0 +1,43 @@
+name: Contracts deploy
+run-name: contracts-deploy ${{ inputs.environment }} ${{ inputs.image_tag }}
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      image_tag:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: AB2D environment
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+          - sandbox
+          - prod
+      image_tag:
+        description: ECR image tag (contracts-service-<branch>-<SHA>)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+defaults:
+  run:
+    working-directory: ./contracts
+
+jobs:
+  apply_tofu:
+    uses: ./.github/workflows/microservices-deploy.yml
+    secrets: inherit
+    with:
+      environment: ${{ inputs.environment }}
+      contracts_service_image: ${{ inputs.image_tag }}
+      apply: true

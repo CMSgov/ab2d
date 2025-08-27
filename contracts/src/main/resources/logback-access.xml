@@ -1,0 +1,19 @@
+<configuration>
+    <statusListener class="ch.qos.logback.core.status.OnConsoleStatusListener"/>
+
+    <appender name="logstash-access" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder">
+            <fieldNames>
+                <requestHeaders>request_headers</requestHeaders>
+                <responseHeaders>response_headers</responseHeaders>
+                <requestedUrl>requested_url</requestedUrl>
+                <statusCode>status_code</statusCode>
+            </fieldNames>
+            <requestHeaderFilter class="gov.cms.ab2d.api.log.LogstashHeaderFilter">
+                <exclude>Authorization</exclude>
+            </requestHeaderFilter>
+        </encoder>
+    </appender>
+
+    <appender-ref ref="logstash-access"/>
+</configuration>
