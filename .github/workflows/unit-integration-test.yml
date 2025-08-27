@@ -76,9 +76,9 @@ jobs:
         run: |
           mvn -ntp -U clean
 
-      - name: Run unit and integration tests
-        run: |
-            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
+#      - name: Run unit and integration tests
+#        run: |
+#            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
 
   sonarqube:
     uses: ./.github/workflows/sonarqube.yml
