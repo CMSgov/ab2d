@@ -36,8 +36,9 @@ fi
 # Get the Token
 AUTH_RESP=$(curl -d "" -X POST "$TOKEN_URL" \
 	--user "$CLIENT_ID:$CLIENT_SECRET" \
-	-H "accept: application/json")
-
+	-H "accept: application/json" \
+  -d "grant_type=client_credentials" \
+  -d "scope=clientCreds")
 
 TOKEN=$(echo $AUTH_RESP | jq -r ".access_token")
 
@@ -47,6 +48,13 @@ SESSION_RESP=$(curl -d "" -X POST "http://host.docker.internal/api/test_sessions
 
 tmp=${SESSION_RESP#*'"id":"'}
 SESSION_ID=${tmp%'","suite_options":'*}
+
+if [[ "$SESSION_ID" == *"502 Bad Gateway"* ]]; then
+  echo "
+  Inferno Server not running. exiting...
+  "
+  exit 1
+fi
 
 echo "
 ###
