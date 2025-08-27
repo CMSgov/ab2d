@@ -1,5 +1,5 @@
 name: API/Worker build
-run-name: build non-prod ${{ inputs.module }}
+run-name: build ${{ inputs.module }}
 
 on:
   workflow_call:
