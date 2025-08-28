@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - AB2D-6853/update_sonarqube_for_main
 
 permissions:
   id-token: write

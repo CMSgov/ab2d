@@ -38,11 +38,7 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -73,6 +69,7 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 @ExtendWith(TestRunnerParameterResolver.class)
 @Slf4j
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@Tag("e2e-test")
 class TestRunner {
 
     static {

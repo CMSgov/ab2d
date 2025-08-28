@@ -5,6 +5,7 @@ import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.fhir.FhirVersion;
 import org.hl7.fhir.instance.model.api.IBaseConformance;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -21,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 @ComponentScan(basePackages = {"gov.cms.ab2d.bfd.client"})
 @Testcontainers
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
+@Tag("e2e-bfd-test")
 public class CapabilityTest {
     @Autowired
     private BFDClient bfdClient;
