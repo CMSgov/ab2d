@@ -71,7 +71,7 @@ jobs:
       - name: SonarQube analysis (with coverage)
         run: |
             mvn -ntp -s settings.xml install \
-            ${{ github.ref != 'refs/heads/main' && '-DskipTests' || '' }} \
+#            ${{ github.ref != 'refs/heads/main' && '-DskipTests' || '' }} \
             ${RUNNER_DEBUG:+"--debug"} \
             sonar:sonar \
             -Dsonar.projectKey=$SONAR_PROJECT_KEY \
