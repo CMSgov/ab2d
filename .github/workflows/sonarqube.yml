@@ -38,12 +38,7 @@ jobs:
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
     steps:
-      - name: Checkout Code (main branch)
-        if: github.ref == 'refs/heads/main' # for sonarqube
-        uses: actions/checkout@v3
-
-      - name: Checkout Code (other branches)
-        if: github.ref != 'refs/heads/main'
+      - name: Checkout Code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -75,7 +70,9 @@ jobs:
 
       - name: SonarQube analysis (with coverage)
         run: |
-          mvn -ntp -s settings.xml install -DskipTests ${RUNNER_DEBUG:+"--debug"} \
+            mvn -ntp -s settings.xml install \
+            ${{ github.ref != 'refs/heads/main' && '-DskipTests' || '' }} \
+            ${RUNNER_DEBUG:+"--debug"} \
             sonar:sonar \
             -Dsonar.projectKey=$SONAR_PROJECT_KEY \
             -Dsonar.qualitygate.wait=true \
