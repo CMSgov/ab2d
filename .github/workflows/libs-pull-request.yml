@@ -1,0 +1,9 @@
+name: Pull request jobs
+
+on:
+  pull_request:
+
+jobs:
+  build:
+    uses: ./.github/workflows/libs-build.yml
+    secrets: inherit

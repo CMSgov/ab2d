@@ -3,6 +3,7 @@ name: pull request jobs
 on:
   pull_request:
     paths-ignore:
+      - libs/**
       - lambdas/**
       - contracts/**
       - events/**

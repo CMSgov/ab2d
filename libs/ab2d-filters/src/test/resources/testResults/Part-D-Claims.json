@@ -1,0 +1,116 @@
+{
+  "resourceType": "ExplanationOfBenefit",
+  "id": "pde-89",
+  "identifier": [
+    {
+      "system": "https://bluebutton.cms.gov/resources/variables/pde_id",
+      "value": "89"
+    },
+    {
+      "system": "https://bluebutton.cms.gov/resources/identifier/claim-group",
+      "value": "900"
+    },
+    {
+      "system": "https://bluebutton.cms.gov/resources/variables/rx_srvc_rfrnc_num",
+      "value": "799999"
+    }
+  ],
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "https://bluebutton.cms.gov/resources/codesystem/eob-type",
+        "code": "PDE"
+      },
+      {
+        "system": "http://hl7.org/fhir/ex-claimtype",
+        "code": "pharmacy",
+        "display": "Pharmacy"
+      }
+    ]
+  },
+  "patient": {
+    "reference": "Patient/-199900000022040"
+  },
+  "organization": {
+    "identifier": {
+      "system": "http://hl7.org/fhir/sid/us-npi",
+      "value": "1023011079"
+    },
+    "display": "ADVANTAGE HOME HEALTH CARE, INC."
+  },
+  "facility": {
+    "extension": [
+      {
+        "url": "https://bluebutton.cms.gov/resources/variables/phrmcy_srvc_type_cd",
+        "valueCoding": {
+          "system": "https://bluebutton.cms.gov/resources/variables/phrmcy_srvc_type_cd",
+          "code": "01",
+          "display": "Community/retail pharmacy"
+        }
+      }
+    ],
+    "identifier": {
+      "system": "http://hl7.org/fhir/sid/us-npi",
+      "value": "1023011079"
+    },
+    "display": "ADVANTAGE HOME HEALTH CARE, INC."
+  },
+  "careTeam": [
+    {
+      "sequence": 2,
+      "provider": {
+        "identifier": {
+          "system": "http://hl7.org/fhir/sid/us-npi",
+          "value": "1750384806"
+        },
+        "display": "DR. ROBERT BISBEE MD"
+      },
+      "role": {
+        "coding": [
+          {
+            "system": "http://hl7.org/fhir/claimcareteamrole",
+            "code": "primary",
+            "display": "Primary provider"
+          }
+        ]
+      }
+    }
+  ],
+  "precedence": 0,
+  "item": [
+    {
+      "sequence": 1,
+      "careTeamLinkId": [
+        2
+      ],
+      "service": {
+        "coding": [
+          {
+            "system": "http://hl7.org/fhir/sid/ndc",
+            "code": "51270012299",
+            "display": "HASOL Anagen Hair Tonic - DEXPANTHENOL; MENTHOL; SALICYLIC ACID"
+          }
+        ]
+      },
+      "servicedDate": "2015-05-12",
+      "quantity": {
+        "extension": [
+          {
+            "url": "https://bluebutton.cms.gov/resources/variables/fill_num",
+            "valueQuantity": {
+              "value": 3
+            }
+          },
+          {
+            "url": "https://bluebutton.cms.gov/resources/variables/days_suply_num",
+            "valueQuantity": {
+              "value": 30
+            }
+          }
+        ],
+        "value": 60
+      }
+    }
+  ]
+}

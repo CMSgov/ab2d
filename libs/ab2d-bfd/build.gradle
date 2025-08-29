@@ -1,0 +1,28 @@
+version = "$bfdVersion"
+
+dependencies {
+    implementation project(':ab2d-fhir')
+    implementation "gov.cms.ab2d:ab2d-fhir:$fhirVersion"
+    implementation "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
+    implementation "org.springframework.boot:spring-boot-starter-validation:${springBootVersion}"
+    implementation "org.apache.httpcomponents:httpclient:4.5.14"
+    implementation "ca.uhn.hapi.fhir:hapi-fhir-client:${hapiVersion}"
+    implementation "ca.uhn.hapi.fhir:hapi-fhir-structures-dstu3:${hapiVersion}"
+    implementation "ca.uhn.hapi.fhir:hapi-fhir-structures-r4:${hapiVersion}"
+    implementation "org.springframework.retry:spring-retry:2.0.8"
+    implementation "com.newrelic.agent.java:newrelic-api:${newRelicVersion}"
+    testImplementation "org.testcontainers:testcontainers:${testContainerVersion}"
+    testImplementation "org.testcontainers:postgresql:${testContainerVersion}"
+    testImplementation "org.testcontainers:junit-jupiter:${testContainerVersion}"
+    testImplementation "org.mock-server:mockserver-netty:${mockServerVersion}"
+    testImplementation "org.mock-server:mockserver-client-java:${mockServerVersion}"
+    testImplementation "org.testcontainers:testcontainers:${testContainerVersion}"
+    testImplementation "org.testcontainers:postgresql:${testContainerVersion}"
+    implementation "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor  "org.projectlombok:lombok:${lombokVersion}"
+
+    testImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
+    testImplementation "org.junit.jupiter:junit-jupiter:${jupiterVersion}"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${jupiterVersion}"
+}
+

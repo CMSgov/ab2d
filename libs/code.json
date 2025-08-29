@@ -1,0 +1,71 @@
+{
+  "name": "AB2D-Libs",
+  "description": "This repository stores all dependencies for AB2D",
+  "longDescription": "AB2D-Libs is a java repository that stores all dependesies for AB2D and clients such as events-client, properties-client, bfd-client, sns-client, contracts-client",
+  "status": "production",
+  "permissions": {
+    "licenses": [
+      {
+        "URL": "LICENSE",
+        "name": "CC0-1.0"
+      }
+    ],
+    "usageType": "openSource"
+  },
+  "organization": "Centers for Medicare & Medicaid Services",
+  "repositoryURL": "https://github.com/CMSgov/AB2D-Libs",
+  "repositoryHost": "github.com/CMSgov",
+  "repositoryVisibility": "public",
+  "vcs": "git",
+  "laborHours": null,
+  "reuseFrequency": {
+    "forks": 0
+  },
+  "platforms": [
+    "other"
+  ],
+  "categories": [
+    "healthcare"
+  ],
+  "softwareType": "standalone/backend",
+  "languages": [
+    "Java"
+  ],
+  "maintenance": "contract",
+  "contractNumber": "3",
+  "date": {
+    "created": "2021-08-11T12:07:40-10:00",
+    "lastModified": "2025-06-25T01:27:41+0000",
+    "metadataLastUpdated": "2025-06-25T01:27:41+0000"
+  },
+  "tags": [
+    "dsacms-tier3"
+  ],
+  "contact": {
+    "email": "ab2d@cms.hhs.gov",
+    "name": "CMS Open Source Program Office"
+  },
+  "feedbackMechanisms": [
+    "https://github.com/CMSgov/AB2D-Libs/issues"
+  ],
+  "localisation": "false",
+  "repositoryType": "Package",
+  "userInput": "No",
+  "fismaLevel": "Low",
+  "group": "CMS",
+  "projects": [],
+  "systems": [],
+  "upstream": [
+    "https://github.com/CMSgov/AB2D-Libs/network/dependencies"
+  ],
+  "subsetInHealthcare": [
+    "Policy",
+    "Operational",
+    "Medicare",
+    "Medicaid"
+  ],
+  "userType": [
+    "Providers"
+  ],
+  "maturityModelTier": 3
+}

@@ -1,0 +1,13 @@
+name: Push to main
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    uses: libs-publish.yml
+    with:
+      forcePublish: true
+    secrets: inherit
