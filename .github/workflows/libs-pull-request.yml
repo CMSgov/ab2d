@@ -1,4 +1,5 @@
-name: Pull request jobs
+name: Libs pull request jobs
+run-name: Libs-pull-request
 
 on:
   pull_request:
