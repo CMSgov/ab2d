@@ -68,5 +68,5 @@ jobs:
         id: sonarqube-quality-gate-check
         uses: sonarsource/sonarqube-quality-gate-action@master
         with:
-          scanMetadataReportFile: build/sonar/report-task.txt
+          scanMetadataReportFile: libs/build/sonar/report-task.txt
         timeout-minutes: 10
