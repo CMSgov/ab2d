@@ -1,4 +1,4 @@
-name: Push to main
+name: Libs push to main
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    uses: libs-publish.yml
+    uses: ./.github/workflows/libs-publish.yml
     with:
       forcePublish: true
     secrets: inherit
