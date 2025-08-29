@@ -8,14 +8,13 @@ on:
 permissions:
   contents: read
   id-token: write
-
 defaults:
   run:
     working-directory: ./libs
 
 jobs:
   build:
-    runs-on: codebuild-ab2d-${{ github.run_id }}-${{ github.run_attempt }}
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     env:
       AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
       AWS_REGION: ${{ vars.AWS_REGION }}
@@ -29,6 +28,12 @@ jobs:
         with:
           java-version: '17'
           distribution: 'corretto'
+
+      - name: Assume role in target account
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-dev-github-actions
 
       - name: Set env vars from AWS params
         uses: cmsgov/cdap/actions/aws-params-env-action@main
