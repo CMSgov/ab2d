@@ -2,9 +2,6 @@ name: Libs build
 run-name: Build-libraries
 
 on:
-  push:
-    branches:
-      - AB2D-6875/move_ab2d_libs_to_ab2d
   workflow_dispatch:
   workflow_call:
 
