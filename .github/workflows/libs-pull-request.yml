@@ -3,7 +3,9 @@ run-name: Libs-pull-request
 
 on:
   pull_request:
-
+  push:
+    branches:
+      - AB2D-6875/move_ab2d_libs_to_ab2d
 jobs:
   build:
     uses: ./.github/workflows/libs-build.yml
