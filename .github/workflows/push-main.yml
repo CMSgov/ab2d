@@ -34,6 +34,12 @@ jobs:
     with:
       environment: test
     secrets: inherit
+  fhir-test:
+    needs: [ build-deploy-api, build-deploy-worker ]
+    uses: ./.github/workflows/fhir-test.yml
+    with:
+      environment: test
+    secrets: inherit
   sonarqube:
     uses: ./.github/workflows/sonarqube.yml
     secrets: inherit
