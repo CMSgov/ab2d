@@ -6,6 +6,14 @@ on:
   push:
     branches:
       - AB2D-6875/move_ab2d_libs_to_ab2d
+
+permissions:
+  contents: read
+  id-token: write
+defaults:
+  run:
+    working-directory: ./libs
+
 jobs:
   build:
     uses: ./.github/workflows/libs-build.yml
