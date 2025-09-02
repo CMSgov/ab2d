@@ -1,4 +1,4 @@
-name: Build libraries
+name: Libs build
 run-name: Build-libraries
 
 on:

@@ -1,6 +1,10 @@
-name: Publish libraries
+name: Libs publish
+run-name: Publish-libraries
 
 on:
+  push:
+    branches:
+      - AB2D-6875/move_ab2d_libs_to_ab2d
   workflow_call:
     inputs:
       forcePublish:
