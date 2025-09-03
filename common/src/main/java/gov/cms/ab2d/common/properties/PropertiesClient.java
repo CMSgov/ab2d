@@ -1,8 +1,6 @@
 package gov.cms.ab2d.common.properties;
 
-import gov.cms.ab2d.properties.client.Property;
-
-import java.util.List;
+import gov.cms.ab2d.common.model.Property;
 
 public interface PropertiesClient {
     Property getProperty(String key);
