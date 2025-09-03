@@ -1,0 +1,31 @@
+version "$eventClientVersion"
+dependencies {
+    implementation(platform(annotationProcessor("com.slack.api:slack-api-client:$slackAPIVersion")))
+    implementation "commons-codec:commons-codec:1.9"
+    implementation "org.springframework.boot:spring-boot-starter:${springBootVersion}"
+    implementation "org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}"
+    implementation "org.springframework.boot:spring-boot-starter-jdbc:${springBootVersion}"
+    implementation "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
+    implementation "io.awspring.cloud:spring-cloud-aws-dependencies:${springCloudAwsVersion}"
+    implementation "io.awspring.cloud:spring-cloud-aws-starter-sqs:${springCloudAwsVersion}"
+    implementation "io.awspring.cloud:spring-cloud-aws-starter:${springCloudAwsVersion}"
+    implementation "com.fasterxml.jackson.module:jackson-module-parameter-names:${jacksonVersion}"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${jacksonVersion}"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
+    implementation "com.slack.api:slack-api-client:${slackAPIVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    runtimeOnly 'org.postgresql:postgresql:42.7.3'
+
+    testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
+    testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    testImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
+    testImplementation "org.springframework.data:spring-data-jpa:${springBootVersion}"
+    testImplementation "org.liquibase:liquibase-core:${liquibaseVersion}"
+    testImplementation "org.testcontainers:localstack:${testContainerVersion}"
+    testImplementation "org.testcontainers:junit-jupiter:${testContainerVersion}"
+}
+
+test {
+    useJUnitPlatform()
+}

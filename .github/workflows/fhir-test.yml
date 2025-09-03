@@ -8,6 +8,15 @@ on:
       environment:
         type: string
         default: test
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      api_base_url:
+        description: Overrides the 'base-url' property for testing in ephemeral environments
+        required: false
+        type: string
   workflow_dispatch:
     inputs:
       environment:

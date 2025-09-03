@@ -1,0 +1,89 @@
+name: Libs publish
+run-name: Publish-libraries
+
+on:
+  workflow_call:
+    inputs:
+      forcePublish:
+        type: boolean
+        default: false
+        required: true
+  workflow_dispatch:
+    inputs:
+      forcePublish:
+        description: 'Force publish libraries to Artifactory - Use with caution as this may overwrite artifacts'
+        type: boolean
+        default: false
+        required: false
+
+env:
+  ARTIFACTORY_URL: ${{ secrets.ARTIFACTORY_URL }}
+
+permissions:
+  contents: read
+  id-token: write
+defaults:
+  run:
+    working-directory: ./libs
+
+jobs:
+  build:
+    uses: ./.github/workflows/libs-build.yml
+    secrets: inherit
+  publish:
+    runs-on: codebuild-ab2d-${{ github.run_id }}-${{ github.run_attempt }}
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      FORCE_PUBLISH: ${{ inputs.forcePublish }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'corretto'
+
+      - name: Set env vars from AWS params
+        uses: cmsgov/cdap/actions/aws-params-env-action@main
+        with:
+          params: |
+            ARTIFACTORY_URL=/artifactory/url
+            ARTIFACTORY_USER=/artifactory/user
+            ARTIFACTORY_PASSWORD=/artifactory/password
+
+      - name: Generate SBOM
+        run: ./gradlew cyclonedxBom
+
+      - name: Publish to artifactory
+        if: ${{ env.FORCE_PUBLISH != 'true' }}
+        run: |
+          # Check for artifacts to deploy
+          versionPublishedList=$(SUPPRESS_LOGGING_BRANCH_CLASSIFIER=true ./gradlew -q lookForArtifacts)
+
+          deployScript=""
+          for entry in $(echo "$versionPublishedList" | tr "'''" "\n"); do
+            buildName=$(echo "$entry" | cut -d":" -f1)
+            isPublished=$(echo "$entry" | cut -d":" -f2)
+
+            if [ "$isPublished" == "false" ]; then
+              echo "Deploying $buildName"
+              deployScript+="$buildName:artifactoryPublish "
+            fi
+          done
+
+          if [ "$deployScript" != "" ]; then
+            echo "Publishing artifacts: $deployScript, avoiding overwriting existing ones"
+            ./gradlew ${deployScript} -b build.gradle
+          else
+            echo "No artifacts to publish."
+          fi
+
+      - name: Force publish to Artifactory
+        if: ${{ env.FORCE_PUBLISH == 'true' }}
+        run: |
+            echo "Force publishing (overwriting) all artifacts to Artifactory"
+            ./gradlew artifactoryPublish -b build.gradle
+
+
