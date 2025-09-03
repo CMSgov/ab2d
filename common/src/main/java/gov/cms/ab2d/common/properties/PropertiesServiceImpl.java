@@ -21,7 +21,7 @@ public class PropertiesServiceImpl implements PropertiesService {
 
     @Override
     public String getProperty(String key, String defaultValue) {
-        val property = _getProperty(key);
+        val property = getProperty(key);
         if (property.isPresent()) {
             return property.get().getValue();
         } else {
@@ -32,7 +32,7 @@ public class PropertiesServiceImpl implements PropertiesService {
 
     @Override
     public boolean updateProperty(String key, String value) {
-        val property = _getProperty(key);
+        val property = getProperty(key);
         if (property.isEmpty()) {
             log.error("Unable to update '{}' - property not found", key);
             return false;
@@ -58,7 +58,7 @@ public class PropertiesServiceImpl implements PropertiesService {
     }
 
 
-    protected Optional<Property> _getProperty(String property) {
+    protected Optional<Property> getProperty(String property) {
         try {
             return propertiesRepository.findByKey(property);
         } catch (Exception e) {
