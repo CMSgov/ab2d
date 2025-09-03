@@ -1,0 +1,304 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+
+plugins {
+    id 'java-library'
+    id 'com.jfrog.artifactory' version '4.33.1' apply false
+    id "org.sonarqube" version "4.2.1.3168"
+    id 'org.cyclonedx.bom' version '1.7.4'
+}
+
+version = "1.0"
+group = "gov.cms.abd"
+
+ext {
+    artifactoryLoc = project.hasProperty('artifactory_contextUrl') ? project.artifactory_contextUrl
+            : System.getenv()['ARTIFACTORY_URL']
+
+    // Override user and password
+    artifactory_user = project.hasProperty('artifactory_user') ? project.artifactory_user
+            : System.getenv()['ARTIFACTORY_USER']
+    artifactory_password = project.hasProperty('artifactory_password') ? project.artifactory_password
+            : System.getenv()['ARTIFACTORY_PASSWORD']
+
+    // AB2D libraries
+    fhirVersion='2.4.0'
+    bfdVersion='4.2.1'
+    aggregatorVersion='2.1.1'
+    filtersVersion='2.3.0'
+    eventClientVersion='3.3.6'
+    propertiesClientVersion='2.1.0'
+    contractClientVersion='2.1.1'
+    snsClientVersion='1.1.2'
+
+    sourcesRepo = 'ab2d-maven-repo'
+    deployerRepo = 'ab2d-main'
+    resolverRepo = 'ab2d-main'
+
+    commonsLangVersion='3.12.0'
+    lombokVersion = '1.18.38'
+    springBootVersion='3.4.4'
+    springCloudAwsVersion='3.3.0'
+    hapiVersion = '8.0.0'
+    newRelicVersion='8.4.0'
+    testContainerVersion='1.20.6'
+    mockServerVersion='5.15.0'
+    liquibaseVersion="4.31.1"
+    jacksonVersion = "2.18.3"
+    slackAPIVersion='1.30.0'
+    jupiterVersion='5.9.3'
+    hl7Version = '6.5.13'
+
+    failedTests = []
+    skippedTests = []
+    testSuites = []
+}
+
+allprojects {
+
+    tasks.withType(Test) { testTask ->
+
+        testTask.testLogging { logging ->
+            events TestLogEvent.FAILED,
+                    TestLogEvent.SKIPPED,
+                    TestLogEvent.STANDARD_OUT,
+                    TestLogEvent.STANDARD_ERROR
+            exceptionFormat TestExceptionFormat.FULL
+            showExceptions true
+            showCauses true
+            showStackTraces true
+        }
+
+        afterTest { desc, result ->
+            if (result.resultType == TestResult.ResultType.FAILURE) {
+                rootProject.ext.failedTests.add(desc)
+            }
+
+            if (result.resultType == TestResult.ResultType.SKIPPED) {
+                rootProject.ext.skippedTests.add(desc)
+            }
+        }
+
+        afterSuite { desc, result ->
+            if (desc.parent) return // Only summarize results for whole modules
+
+            String summary = "${testTask.project.name}:${testTask.name} results: ${result.resultType} " +
+                    "(" +
+                    "Tests run ${result.testCount}, " +
+                    "succeeded ${result.successfulTestCount}, " +
+                    "failed ${result.failedTestCount}, " +
+                    "skipped ${result.skippedTestCount}" +
+                    ") "
+            rootProject.ext.testSuites += summary
+        }
+    }
+
+    // In each Project run to check if the version exists in the repository
+    task lookForArtifacts {
+        doLast {
+            //This is the parent build where nothing gets published. Skip it.
+            if(project.name != 'ab2d-libs')
+                //Set path to repository that might exist if previous published on this version.
+                //Sets project name and if it exists in repository. Print out so jenkins can take it.
+                System.out.print("'''"+project.name + ":" + urlExists("${artifactoryLoc}/${deployerRepo}/gov/cms/ab2d/${project.name}/${project.version}/${project.name}-${project.version}.jar"))
+        }
+    }
+
+    repositories {
+        maven {
+            url = "${artifactoryLoc}/${sourcesRepo}"
+            credentials {
+                username = project.artifactory_user
+                password = project.artifactory_password
+            }
+//            authentication {
+//                basic(BasicAuthentication)
+//            }
+        }
+    }
+}
+
+subprojects {
+    apply plugin: 'com.jfrog.artifactory'
+    apply plugin: 'java-library'
+    apply plugin: 'maven-publish'
+    apply plugin: 'checkstyle'
+    apply plugin: 'jacoco'
+    apply plugin: 'org.cyclonedx.bom'
+
+    if (artifactory_user == null || artifactory_user.isEmpty()) {
+        println("Artifactory user not set")
+    }
+    if (artifactory_password == null || artifactory_password.isEmpty()) {
+        println("Artifactory password not set")
+    }
+
+    sourceCompatibility = 17
+    targetCompatibility = 17
+
+    group 'gov.cms.ab2d'
+
+    dependencies {
+        //set dependencies and versions for child projects to use (maven dependency management equivalent)
+        implementation(platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion"))
+        implementation(platform("io.awspring.cloud:spring-cloud-aws-dependencies:$springCloudAwsVersion"))
+        implementation(platform("io.awspring.cloud:spring-cloud-aws-core:${springCloudAwsVersion}"))
+        implementation(platform("io.awspring.cloud:spring-cloud-aws-autoconfigure:${springCloudAwsVersion}"))
+        implementation(platform("org.liquibase:liquibase-core:$liquibaseVersion"))
+        implementation(platform("com.newrelic.agent.java:newrelic-api:$newRelicVersion"))
+        implementation(platform("org.testcontainers:testcontainers:$testContainerVersion"))
+        implementation(platform("org.testcontainers:postgresql:$testContainerVersion"))
+        implementation(platform("org.testcontainers:junit-jupiter:$testContainerVersion"))
+        implementation(platform("org.testcontainers:localstack:$testContainerVersion"))
+        implementation(platform(annotationProcessor("org.projectlombok:lombok:$lombokVersion")))
+        implementation(platform("org.cyclonedx:cyclonedx-gradle-plugin:1.4.0"))
+    }
+
+    jar {
+        processResources.exclude('checkstyle.xml')
+        //classifier "main".equalsIgnoreCase(gitBranch()) || "main".equalsIgnoreCase(System.getenv('BRANCH_NAME')) ? "" : "SNAPSHOT"
+        // suppress the '*** building branch' logs
+        if (!'true'.equals(System.getenv("SUPPRESS_LOGGING_BRANCH_CLASSIFIER"))) {
+       //     out.println("**** building branch - " + gitBranch() + ", classifier - " + classifier + " - CI branch - " + System.getenv('BRANCH_NAME'))
+        }
+    }
+
+    test {
+        useJUnitPlatform()
+        finalizedBy jacocoTestReport // report is always generated after tests run
+    }
+
+    sonarqube {
+        properties {
+            property 'sonar.coverage.exclusions', "**/SQSConfig.java, **/SNSConfig.java, **/BFDSearchImpl.java, **/BFDClientImpl.java"
+        }
+    }
+
+    jacocoTestReport {
+        reports {
+ //           xml.enabled true
+        }
+    }
+
+    jacoco {
+        toolVersion = "0.8.12"
+        reportsDirectory = layout.buildDirectory.dir("$buildDir/reports/jacoco")
+    }
+
+    checkstyle {
+        configFile file("$rootDir/config/checkstyle.xml")
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+            }
+        }
+    }
+
+    artifactory {
+        contextUrl = project.artifactoryLoc
+
+        publish {
+            repository {
+                repoKey = "${deployerRepo}"
+                username = project.artifactory_user
+                password = project.artifactory_password
+                maven = true
+            }
+            defaults {
+                publications('mavenJava')
+                publishArtifacts = true
+                publishBuildInfo = false
+            }
+        }
+        resolve {
+            repository {
+                repoKey = "${resolverRepo}"
+                username = project.artifactory_user
+                password = project.artifactory_password
+                maven = true
+            }
+        }
+    }
+
+    cyclonedxBom {
+        // includeConfigs is the list of configuration names to include when generating the BOM (leave empty to include every configuration)
+        includeConfigs = ["runtimeClasspath"]
+        // skipConfigs is a list of configuration names to exclude when generating the BOM
+        skipConfigs = ["compileClasspath", "testCompileClasspath"]
+        // Specified the type of project being built. Defaults to 'library'
+        projectType = "library"
+        // Specified the version of the CycloneDX specification to use. Defaults to 1.4.
+        schemaVersion = "1.4"
+        // Boms destination directory (defaults to build/reports)
+        // The file name for the generated BOMs (before the file format suffix). Defaults to 'bom'
+        outputName = "bom"
+        // The file format generated, can be xml, json or all for generating both
+        outputFormat = "all"
+        // Exclude BOM Serial Number
+        includeBomSerialNumber = false
+        // Override component version
+        componentVersion = "2.0.0"
+    }
+}
+
+gradle.buildFinished {
+    if (!rootProject.ext.skippedTests.isEmpty()) {
+        println "Skipped Tests: "
+        for (String skippedTestDesc : rootProject.ext.skippedTests) {
+            println "\t" + skippedTestDesc
+        }
+    }
+
+    if (!rootProject.ext.failedTests.isEmpty()) {
+        println "Failing Tests: "
+        for (String failedTestDesc : rootProject.ext.failedTests) {
+            println "\t" + failedTestDesc
+        }
+    }
+
+    if (!rootProject.ext.testSuites.isEmpty()) {
+        println "Test Suite Summary: "
+        println rootProject.ext.testSuites
+    }
+}
+
+def gitBranch() {
+    def branch = ""
+    def proc = "git rev-parse --abbrev-ref HEAD".execute()
+    proc.in.eachLine { line -> branch = line }
+    proc.err.eachLine { line -> println line }
+    proc.waitFor()
+    branch
+}
+
+def getBase64EncodedCredentials() {
+    def s = "$artifactory_user" + ":" + "$artifactory_password"
+    return s.bytes.encodeBase64().toString()
+}
+
+//Check if url exist in the repository
+def urlExists(repositoryUrl) {
+    try {
+        def connection = (HttpURLConnection) new URL(repositoryUrl).openConnection()
+
+        connection.setRequestProperty("Authorization", "Basic " + getBase64EncodedCredentials())
+        connection.setConnectTimeout(10000)
+        connection.setReadTimeout(10000)
+        connection.setRequestMethod("HEAD")
+
+        def responseCode = connection.getResponseCode()
+
+        if (responseCode == 401) {
+            throw new RuntimeException("Unauthorized MavenUser user. Please provide valid username and password.")
+        }
+
+        return (200 == responseCode)
+
+    } catch (IOException ignored) {
+        println(ignored)
+        return false
+    }
+}

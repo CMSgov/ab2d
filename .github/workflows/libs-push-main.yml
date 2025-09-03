@@ -1,0 +1,21 @@
+name: Libs push to main
+run-name: Libs-push-to-main
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  id-token: write
+defaults:
+  run:
+    working-directory: ./libs
+
+jobs:
+  build:
+    uses: ./.github/workflows/libs-publish.yml
+    with:
+      forcePublish: true
+    secrets: inherit

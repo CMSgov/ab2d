@@ -1,0 +1,22 @@
+version "$snsClientVersion"
+dependencies {
+    implementation "org.springframework.boot:spring-boot-starter:${springBootVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    implementation "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
+    implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
+    implementation "io.awspring.cloud:spring-cloud-aws-starter-sns:${springCloudAwsVersion}"
+    implementation(project(":ab2d-events-client"))
+
+    testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
+    testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    testImplementation "org.testcontainers:localstack:${testContainerVersion}"
+    testImplementation "org.testcontainers:junit-jupiter:${testContainerVersion}"
+    testImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
+    testImplementation 'org.mockito:mockito-inline:5.2.0'
+
+}
+
+test {
+    useJUnitPlatform()
+}

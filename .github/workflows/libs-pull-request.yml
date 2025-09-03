@@ -1,0 +1,17 @@
+name: Libs pull request jobs
+run-name: Libs-pull-request
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  id-token: write
+defaults:
+  run:
+    working-directory: ./libs
+
+jobs:
+  build:
+    uses: ./.github/workflows/libs-build.yml
+    secrets: inherit
