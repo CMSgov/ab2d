@@ -40,7 +40,7 @@ public class PropertiesServiceImpl implements PropertiesService {
         try {
             val entity = property.get();
             entity.setValue(value);
-            propertiesRepository.save(entity);
+            propertiesRepository.saveAndFlush(entity);
             return true;
         } catch (Exception e) {
             log.error("Error updating property '{}'", key, e);

@@ -1,18 +1,19 @@
 package gov.cms.ab2d.worker.config;
 
+import gov.cms.ab2d.common.model.Property;
 import gov.cms.ab2d.common.properties.PropertiesService;
+import gov.cms.ab2d.common.properties.PropertiesServiceImpl;
+import gov.cms.ab2d.common.repository.PropertiesRepository;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.coverage.util.AB2DCoveragePostgressqlContainer;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Future;
 
 import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -33,8 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 // Set property.change.detection to false, otherwise the values from the database will override the values that are being hardcoded here.
 @SpringBootTest(properties = {"pcp.core.pool.size=3", "pcp.max.pool.size=20", "pcp.scaleToMax.time=20", "property.change.detection=false"})
@@ -58,7 +58,10 @@ public class AutoScalingServiceTest {
     @Autowired
     private RoundRobinBlockingQueue eobClaimRequestsQueue;
 
-    private PropertyServiceStub propertiesService = new PropertyServiceStub();
+    @Autowired
+    private PropertiesRepository propertiesRepository;
+
+    private PropertiesService propertiesService;
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DCoveragePostgressqlContainer();
@@ -67,6 +70,12 @@ public class AutoScalingServiceTest {
 
     @BeforeEach
     public void init() {
+        propertiesService = new PropertiesServiceImpl(propertiesRepository);
+        updateOrCreateProperty(MAINTENANCE_MODE, "false");
+        updateOrCreateProperty(PCP_MAX_POOL_SIZE, "" + originalMaxPoolSize);
+        updateOrCreateProperty(PCP_SCALE_TO_MAX_TIME, "20");
+        updateOrCreateProperty(PCP_CORE_POOL_SIZE, "3");
+
         patientProcessorThreadPool.getThreadPoolExecutor().getQueue().clear();
         autoScalingService = new AutoScalingServiceImpl(patientProcessorThreadPool,
                 eobClaimRequestsQueue, propertiesService, 3, 20, 20);
@@ -74,18 +83,14 @@ public class AutoScalingServiceTest {
         patientProcessorThreadPool.setMaxPoolSize(originalMaxPoolSize);
         AutoScalingService asservice = context.getBean(AutoScalingServiceImpl.class);
         ReflectionTestUtils.setField(asservice, "propertiesService", propertiesService);
-        propertiesService.createProperty(MAINTENANCE_MODE, "false");
-        propertiesService.createProperty(PCP_MAX_POOL_SIZE, "" + originalMaxPoolSize);
-        propertiesService.createProperty(PCP_SCALE_TO_MAX_TIME, "20");
-        propertiesService.createProperty(PCP_CORE_POOL_SIZE, "3");
+
     }
 
     @AfterEach
     public void cleanup() {
         patientProcessorThreadPool.getThreadPoolExecutor().getQueue().clear();
-        ((PropertyServiceStub) propertiesService).reset();
-        propertiesService.updateProperty(MAINTENANCE_MODE, "false");
-        propertiesService.updateProperty(PCP_MAX_POOL_SIZE, "" + originalMaxPoolSize);
+        updateOrCreateProperty(MAINTENANCE_MODE, "false");
+        updateOrCreateProperty(PCP_MAX_POOL_SIZE, "" + originalMaxPoolSize);
     }
 
     @Test
@@ -105,11 +110,11 @@ public class AutoScalingServiceTest {
         assertEquals(20, patientProcessorThreadPool.getMaxPoolSize());
         assertEquals(3, patientProcessorThreadPool.getCorePoolSize());
 
-        propertiesService.updateProperty(PCP_MAX_POOL_SIZE, "4");
+        updateOrCreateProperty(PCP_MAX_POOL_SIZE, "4");
 
         Thread.sleep(10000);
 
-        propertiesService.updateProperty(MAINTENANCE_MODE, "true");
+        updateOrCreateProperty(MAINTENANCE_MODE, "true");
 
         Thread.sleep(6000);
 
@@ -232,4 +237,21 @@ public class AutoScalingServiceTest {
             }
         };
     }
+
+    private void updateOrCreateProperty(String key, Object value) {
+        val entity = propertiesRepository.findByKey(key);
+        if (entity.isEmpty()) {
+            val property = new Property();
+            property.setKey(key);
+            property.setValue(String.valueOf(value));
+            propertiesRepository.saveAndFlush(property);
+        }
+        else {
+            val property = entity.get();
+            property.setValue(String.valueOf(value));
+            propertiesRepository.saveAndFlush(property);
+        }
+    }
+
+
 }

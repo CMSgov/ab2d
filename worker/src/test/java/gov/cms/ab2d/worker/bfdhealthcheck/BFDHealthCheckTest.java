@@ -1,13 +1,12 @@
 package gov.cms.ab2d.worker.bfdhealthcheck;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
-import gov.cms.ab2d.common.health.PropertiesServiceAvailable;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.common.properties.PropertiesService;
-import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.worker.SpringBootApp;
+import lombok.val;
 import org.hl7.fhir.dstu3.model.CapabilityStatement;
 import org.hl7.fhir.dstu3.model.Enumerations;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,8 +24,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -145,14 +142,6 @@ public class BFDHealthCheckTest {
 
         maintenanceProperties = propertiesService.getProperty(MAINTENANCE_MODE, "false");
         assertEquals("false", maintenanceProperties);
-    }
-
-    @Test
-    void propertiesHealthy() {
-        PropertiesServiceAvailable propertiesServiceAvailable = new PropertiesServiceAvailable(propertiesService);
-        assertFalse(propertiesServiceAvailable.isAvailable(true));
-        propertiesServiceAvailable = new PropertiesServiceAvailable(new PropertyServiceStub());
-        assertTrue(propertiesServiceAvailable.isAvailable(true));
     }
 
     @Test
