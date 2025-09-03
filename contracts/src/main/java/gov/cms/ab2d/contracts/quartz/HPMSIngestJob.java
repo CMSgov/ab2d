@@ -26,12 +26,11 @@ public class HPMSIngestJob extends QuartzJobBean {
     protected void executeInternal(JobExecutionContext context) {
         // todo additionally filter hpms engagement by tracking the environment ab2d is running in.
         //      if the environment is not sandbox or prod do not poll hpms
-        val engagement = getEngagement();
-        if (FeatureEngagement.IN_GEAR == engagement) {
+        if (FeatureEngagement.IN_GEAR == getEngagement()) {
             attestationUpdaterService.pollOrganizations();
         }
         else {
-            log.info("Property '{}'='{}' not enabled - skipping HPMS sync", HPMS_INGESTION_ENGAGEMENT, engagement);
+            log.info("Skipping HPMS sync");
         }
     }
 
