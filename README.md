@@ -1,3 +1,7 @@
+# THIS PROJECT HAS BEEN ARCHIVED
+As part of AB2D's _2025 Greenfield Migration_, this repository was targeted for migration/consolidation into the primary AB2D repository.
+Please find the source code that supports AB2D's events microservice in their new home under https://github.com/CMSgov/ab2d/tree/main/libs.
+
 # AB2D
 
 [![Maintainability](https://api.codeclimate.com/v1/badges/322dab715b4324c33fee/maintainability)](https://codeclimate.com/github/CMSgov/ab2d/maintainability)
