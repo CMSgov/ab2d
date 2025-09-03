@@ -11,11 +11,11 @@ import java.util.Optional;
 
 @Service
 @Slf4j
-public class PropertiesServiceV2Impl implements PropertiesService {
+public class PropertiesServiceImpl implements PropertiesService {
 
     private final PropertiesRepository propertiesRepository;
 
-    public PropertiesServiceV2Impl(PropertiesRepository propertiesRepository) {
+    public PropertiesServiceImpl(PropertiesRepository propertiesRepository) {
         this.propertiesRepository = propertiesRepository;
     }
 
