@@ -29,6 +29,9 @@ public class HPMSIngestJob extends QuartzJobBean {
         if (FeatureEngagement.IN_GEAR == getEngagement()) {
             attestationUpdaterService.pollOrganizations();
         }
+        else {
+            log.info("Feature '{}' not enabled - skipping HPMS sync", HPMS_INGESTION_ENGAGEMENT);
+        }
     }
 
     public FeatureEngagement getEngagement() {
