@@ -31,7 +31,7 @@ public class HPMSIngestJob extends QuartzJobBean {
             attestationUpdaterService.pollOrganizations();
         }
         else {
-            log.info("Property '{}={}' not enabled - skipping HPMS sync", HPMS_INGESTION_ENGAGEMENT, engagement);
+            log.info("Property '{}'='{}' not enabled - skipping HPMS sync", HPMS_INGESTION_ENGAGEMENT, engagement);
         }
     }
 
