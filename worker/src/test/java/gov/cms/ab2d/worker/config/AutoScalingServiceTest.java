@@ -58,7 +58,7 @@ public class AutoScalingServiceTest {
     @Autowired
     private RoundRobinBlockingQueue eobClaimRequestsQueue;
 
-    private PropertiesService propertiesService = new PropertyServiceStub();
+    private PropertyServiceStub propertiesService = new PropertyServiceStub();
 
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DCoveragePostgressqlContainer();

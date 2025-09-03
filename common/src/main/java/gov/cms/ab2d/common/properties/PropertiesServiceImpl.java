@@ -48,12 +48,6 @@ public class PropertiesServiceImpl implements PropertiesService {
         }
     }
 
-//    @Override
-//    public List<PropertiesDTO> getAllProperties() {
-//        log.error("getAllProperties() not supported - returning empty list");
-//        return new ArrayList<>(0);
-//    }
-
     @Override
     public boolean isToggleOn(final String toggleName, boolean defaultValue) {
         if (StringUtils.isEmpty(toggleName)) {
@@ -63,17 +57,6 @@ public class PropertiesServiceImpl implements PropertiesService {
         return Boolean.valueOf(val.trim());
     }
 
-//    @Override
-//    public boolean createProperty(String key, String value) {
-//        log.error("createProperty() not supported - returning false");
-//        return false;
-//    }
-//
-//    @Override
-//    public boolean deleteProperty(String key) {
-//        log.error("deleteProperty() not supported - returning false");
-//        return false;
-//    }
 
     protected Optional<Property> _getProperty(String property) {
         try {

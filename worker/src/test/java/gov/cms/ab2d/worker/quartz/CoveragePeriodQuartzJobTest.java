@@ -34,7 +34,7 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class CoveragePeriodQuartzJobTest {
 
-    private PropertiesService propertiesService = new PropertyServiceStub();
+    private PropertyServiceStub propertiesService = new PropertyServiceStub();
 
     @Mock
     private CoverageDriver coverageDriverMock;
@@ -75,7 +75,7 @@ class CoveragePeriodQuartzJobTest {
     @Test
     void engageSearchWorks() {
 
-        PropertiesService propertiesService = new PropertyServiceStub();
+        PropertyServiceStub propertiesService = new PropertyServiceStub();
 
         propertiesService.updateProperty(COVERAGE_SEARCH_DISCOVERY, "engaged");
         propertiesService.updateProperty(COVERAGE_SEARCH_QUEUEING, "engaged");
@@ -99,7 +99,7 @@ class CoveragePeriodQuartzJobTest {
     @Test
     void engagedSearchNotTuesdayAtMidnightDoesNotFire() {
 
-        PropertiesService propertiesService = new PropertyServiceStub();
+        PropertyServiceStub propertiesService = new PropertyServiceStub();
 
         propertiesService.updateProperty(COVERAGE_SEARCH_DISCOVERY, "engaged");
         propertiesService.updateProperty(COVERAGE_SEARCH_QUEUEING, "engaged");
@@ -131,7 +131,7 @@ class CoveragePeriodQuartzJobTest {
     @Test
     void failingSearchesTriggerAlerts() {
 
-        PropertiesService propertiesService = new PropertyServiceStub();
+        PropertyServiceStub propertiesService = new PropertyServiceStub();
 
         propertiesService.updateProperty(COVERAGE_SEARCH_DISCOVERY, "engaged");
         propertiesService.updateProperty(COVERAGE_SEARCH_OVERRIDE, "true");

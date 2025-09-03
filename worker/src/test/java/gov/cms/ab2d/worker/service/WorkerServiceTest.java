@@ -49,7 +49,7 @@ class WorkerServiceTest extends JobCleanup {
     @Autowired private JobRepository jobRepository;
     @Autowired private PdpClientRepository pdpClientRepository;
     @Autowired private JobService jobService;
-    private PropertiesService propertiesService = new PropertyServiceStub();
+    private PropertyServiceStub propertiesService = new PropertyServiceStub();
     @Autowired private WorkerServiceImpl workerServiceImpl;
     @Autowired private JobHandler jobHandler;
 
