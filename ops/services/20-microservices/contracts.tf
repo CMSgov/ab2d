@@ -38,9 +38,7 @@ resource "aws_ecs_task_definition" "contracts" {
       { name : "AB2D_DB_SSL_MODE", value : "require" },
       { name : "AB2D_EXECUTION_ENV", value : local.benv },
       { name : "AWS_SQS_URL", value : local.events_sqs_url },
-      { name : "IMAGE_VERSION", value : local.contracts_image_tag }, #FIXME: Is this even used?
-      { name : "PROPERTIES_SERVICE_FEATURE_FLAG", value : "true" },  #FIXME: Is this even used?
-      { name : "PROPERTIES_SERVICE_URL", value : local.properties_service_url }
+      { name : "IMAGE_VERSION", value : local.contracts_image_tag } #FIXME: Is this even used?
     ],
     portMappings : [
       {
