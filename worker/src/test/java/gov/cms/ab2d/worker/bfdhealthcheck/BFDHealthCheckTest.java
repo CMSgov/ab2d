@@ -6,7 +6,6 @@ import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.worker.SpringBootApp;
-import lombok.val;
 import org.hl7.fhir.dstu3.model.CapabilityStatement;
 import org.hl7.fhir.dstu3.model.Enumerations;
 import org.junit.jupiter.api.BeforeEach;
