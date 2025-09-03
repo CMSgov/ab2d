@@ -28,14 +28,6 @@ public class PropertiesServiceAvailable {
         return true;
     }
 
-    boolean createValue(String key, String value) {
-        if (!propertiesService.createProperty(key, value)) {
-            log.error("Unable to create a new property");
-            return false;
-        }
-        return checkValue(key, value);
-    }
-
     public boolean validBoolean(String val) {
         if (StringUtils.isEmpty(val)) {
             return false;
@@ -51,42 +43,5 @@ public class PropertiesServiceAvailable {
         }
     }
 
-    public boolean checkValue(String key, String value) {
-        String gottenValue = getValue(key, "!!!");
-        if (value == null && gottenValue == null) {
-            return true;
-        }
-        if (value == null || gottenValue == null) {
-            return false;
-        }
-        return value.equalsIgnoreCase(gottenValue);
-    }
 
-    public boolean deleteValue(String key) {
-        boolean canDelete = propertiesService.deleteProperty(key);
-        if (!canDelete) {
-            log.error("Unable to get delete new property");
-            return false;
-        }
-        try {
-            String newProp2 = propertiesService.getProperty(key, null);
-            if (newProp2 != null) {
-                log.error("Unable to get delete new property");
-                return false;
-            }
-        } catch (Exception ex) {
-            return true;
-        }
-        return true;
-    }
-
-    boolean updateValue(String key, String value) {
-        // Update fake value
-        boolean canUpdate = propertiesService.updateProperty(key, value);
-        if (!canUpdate) {
-            log.error("Unable to get update new property");
-            return false;
-        }
-        return checkValue(key, value);
-    }
 }
