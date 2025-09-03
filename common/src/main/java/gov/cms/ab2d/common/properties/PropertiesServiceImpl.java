@@ -3,6 +3,7 @@ package gov.cms.ab2d.common.properties;
 import gov.cms.ab2d.properties.client.PropertiesClient;
 import gov.cms.ab2d.properties.client.PropertiesClientImpl;
 import gov.cms.ab2d.properties.client.Property;
+import gov.cms.ab2d.properties.client.PropertyNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +26,9 @@ public class PropertiesServiceImpl implements PropertiesService {
     public String getProperty(String property, String defaultValue) {
         try {
             return propertiesClient.getProperty(property).getValue();
+        } catch (PropertyNotFoundException ex) {
+            log.error("Property '{}' not found; using default", property, ex);
+            return defaultValue;
         } catch (Exception ex) {
             log.error(ERROR_MESSAGE, ex);
             return defaultValue;
