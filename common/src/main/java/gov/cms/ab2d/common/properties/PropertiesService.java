@@ -26,7 +26,7 @@ public interface PropertiesService {
      *
      * @return the list of properties
      */
-    List<PropertiesDTO> getAllProperties();
+//    List<PropertiesDTO> getAllProperties();
 
     /**
      * Determine if the value of the property is true
@@ -44,7 +44,7 @@ public interface PropertiesService {
      * @param value - the value
      * @return true if the creation was successful
      */
-    boolean createProperty(String key, String value);
+//    boolean createProperty(String key, String value);
 
     /**
      * Delete a property and its value
@@ -52,5 +52,5 @@ public interface PropertiesService {
      * @param key - the property key
      * @return true if the deletion was successful
      */
-    boolean deleteProperty(String key);
+//    boolean deleteProperty(String key);
 }
