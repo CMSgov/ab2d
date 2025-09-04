@@ -20,9 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Primary;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -68,12 +66,7 @@ public class AutoScalingServiceTest {
     private int originalMaxPoolSize;
 
     @BeforeEach
-    public void init() {
-        ((PropertyServiceStub)propertiesService).createProperty(MAINTENANCE_MODE, "false");
-        ((PropertyServiceStub)propertiesService).createProperty(PCP_MAX_POOL_SIZE, "" + originalMaxPoolSize);
-        ((PropertyServiceStub)propertiesService).createProperty(PCP_SCALE_TO_MAX_TIME, "20");
-        ((PropertyServiceStub)propertiesService).createProperty(PCP_CORE_POOL_SIZE, "3");
-
+    public void init() throws Exception {
         patientProcessorThreadPool.getThreadPoolExecutor().getQueue().clear();
         autoScalingService = new AutoScalingServiceImpl(patientProcessorThreadPool,
                 eobClaimRequestsQueue, propertiesService, 3, 20, 20);
@@ -81,6 +74,11 @@ public class AutoScalingServiceTest {
         patientProcessorThreadPool.setMaxPoolSize(originalMaxPoolSize);
         AutoScalingService asservice = context.getBean(AutoScalingServiceImpl.class);
         ReflectionTestUtils.setField(asservice, "propertiesService", propertiesService);
+        ((PropertyServiceStub)propertiesService).createProperty(MAINTENANCE_MODE, "false");
+        ((PropertyServiceStub)propertiesService).createProperty(PCP_MAX_POOL_SIZE, "" + originalMaxPoolSize);
+        ((PropertyServiceStub)propertiesService).createProperty(PCP_SCALE_TO_MAX_TIME, "20");
+        ((PropertyServiceStub)propertiesService).createProperty(PCP_CORE_POOL_SIZE, "3");
+        Thread.sleep(5000);
     }
 
     @AfterEach
