@@ -83,7 +83,6 @@ public class AutoScalingServiceTest {
         ReflectionTestUtils.setField(asservice, "propertiesService", propertiesService);
     }
 
-
     @AfterEach
     public void cleanup() {
         patientProcessorThreadPool.getThreadPoolExecutor().getQueue().clear();
