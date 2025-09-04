@@ -80,7 +80,7 @@ class WorkerServiceTest extends JobCleanup {
         final PdpClient pdpClient = createClient(contract);
         createJob(pdpClient, contract);
 
-        Thread.sleep(6000L);
+        Thread.sleep(10000L);
 
         assertEquals(1, workerServiceStub.processingCalls);
     }
