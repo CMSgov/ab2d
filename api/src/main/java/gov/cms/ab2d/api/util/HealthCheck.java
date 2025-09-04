@@ -1,15 +1,12 @@
 package gov.cms.ab2d.api.util;
 
 import gov.cms.ab2d.common.health.*;
-import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
 import java.util.List;
-
-import static gov.cms.ab2d.eventclient.config.Ab2dEnvironment.PUBLIC_LIST;
 
 @Component
 @Slf4j
