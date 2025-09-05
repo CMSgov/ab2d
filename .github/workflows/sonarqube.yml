@@ -70,7 +70,7 @@ jobs:
 
       - name: SonarQube analysis (with coverage)
         run: |
-            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} clean install -pl common,job,coverage,api,worker \
+            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} clean install -pl "!e2e-bfd-test,!e2e-test"  \
             ${RUNNER_DEBUG:+"--debug"} \
             sonar:sonar \
             -Dsonar.projectKey=$SONAR_PROJECT_KEY \
