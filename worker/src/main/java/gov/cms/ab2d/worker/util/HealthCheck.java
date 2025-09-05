@@ -27,6 +27,6 @@ public class HealthCheck {
     }
 
     public boolean healthy() {
-        return HealthCheckUtil.healthy(dataSource, efsMount, memory, urls);
+        return HealthCheckUtil.healthy(dataSource, efsMount, memory, urls, log);
     }
 }

@@ -7,10 +7,6 @@ public final class LoggingAvailable {
 
     private LoggingAvailable() { }
 
-    public static boolean canLog() {
-        return canLog(log);
-    }
-
     public static boolean canLog(org.slf4j.Logger logger) {
         try {
             if (!logger.isErrorEnabled()) {
