@@ -14,8 +14,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class FileSystemCheckTest {
 
-    public static String WRITEABLE_DIRECTORY = System.getProperty("java.io.tmpdir");
-    public static String UNWRITEABLE_DIRECTORY = null;
+    public static final String WRITEABLE_DIRECTORY = System.getProperty("java.io.tmpdir");
+    public static final String UNWRITEABLE_DIRECTORY = null;
 
     @Test
     void canWriteFile() throws IOException {
