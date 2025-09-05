@@ -78,8 +78,8 @@ public class AutoScalingServiceTest {
         ((PropertyServiceStub)propertiesService).createProperty(PCP_MAX_POOL_SIZE, "" + originalMaxPoolSize);
         ((PropertyServiceStub)propertiesService).createProperty(PCP_SCALE_TO_MAX_TIME, "20");
         ((PropertyServiceStub)propertiesService).createProperty(PCP_CORE_POOL_SIZE, "3");
-        // Sleep due to race condition ?
-        Thread.sleep(5000);
+        // Sleep due to race condition / flakiness
+        Thread.sleep(5000); //NOSONAR
     }
 
     @AfterEach

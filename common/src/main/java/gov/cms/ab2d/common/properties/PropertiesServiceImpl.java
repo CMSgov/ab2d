@@ -54,9 +54,8 @@ public class PropertiesServiceImpl implements PropertiesService {
             return false;
         }
         String val = getProperty(toggleName, "" + defaultValue);
-        return Boolean.valueOf(val.trim());
+        return Boolean.parseBoolean(val.trim());
     }
-
 
     protected Optional<Property> getProperty(String property) {
         try {
