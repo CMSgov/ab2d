@@ -1,55 +1,50 @@
 package gov.cms.ab2d.common.properties;
 
-import gov.cms.ab2d.properties.client.PropertiesClient;
-import gov.cms.ab2d.properties.client.PropertiesClientImpl;
-import gov.cms.ab2d.properties.client.Property;
+import gov.cms.ab2d.common.repository.PropertiesRepository;
+import gov.cms.ab2d.common.model.Property;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
 public class PropertiesServiceImpl implements PropertiesService {
-    private PropertiesClient propertiesClient;
-    private static final String ERROR_MESSAGE = "Cannot access properties service, using default database value";
 
-    public PropertiesServiceImpl(@Value("${property.service.url}") String propertyServiceUrl) {
-        this.propertiesClient = new PropertiesClientImpl(propertyServiceUrl);
+    private final PropertiesRepository propertiesRepository;
+
+    public PropertiesServiceImpl(PropertiesRepository propertiesRepository) {
+        this.propertiesRepository = propertiesRepository;
     }
 
     @Override
-    public String getProperty(String property, String defaultValue) {
-        try {
-            return propertiesClient.getProperty(property).getValue();
-        } catch (Exception ex) {
-            log.error(ERROR_MESSAGE, ex);
+    public String getProperty(String key, String defaultValue) {
+        val property = getProperty(key);
+        if (property.isPresent()) {
+            return property.get().getValue();
+        } else {
+            log.warn("Property '{}' not found; using default", key);
             return defaultValue;
         }
     }
 
     @Override
-    public boolean updateProperty(String property, String value) {
-        try {
-            Property prop = propertiesClient.setProperty(property, value);
-            return prop != null;
-        } catch (Exception ex) {
-            log.error(ERROR_MESSAGE, ex);
+    public boolean updateProperty(String key, String value) {
+        val property = getProperty(key);
+        if (property.isEmpty()) {
+            log.error("Unable to update '{}' - property not found", key);
             return false;
         }
-    }
-
-    @Override
-    public List<PropertiesDTO> getAllProperties() {
-        List<Property> properties = propertiesClient.getAllProperties();
-        if (properties != null && !properties.isEmpty()) {
-            return properties.stream().map(p -> new PropertiesDTO(p.getKey(), p.getValue())).toList();
-        } else {
-            log.error(ERROR_MESSAGE);
-            return new ArrayList<>();
+        try {
+            val entity = property.get();
+            entity.setValue(value);
+            propertiesRepository.saveAndFlush(entity);
+            return true;
+        } catch (Exception e) {
+            log.error("Error updating property '{}'", key, e);
+            return false;
         }
     }
 
@@ -59,39 +54,15 @@ public class PropertiesServiceImpl implements PropertiesService {
             return false;
         }
         String val = getProperty(toggleName, "" + defaultValue);
-        return Boolean.valueOf(val.trim());
+        return Boolean.parseBoolean(val.trim());
     }
 
-    @Override
-    public boolean createProperty(String key, String value) {
-        if (StringUtils.isEmpty(key) || StringUtils.isEmpty(value)) {
-            return false;
-        }
+    protected Optional<Property> getProperty(String property) {
         try {
-            Property prop = propertiesClient.setProperty(key, value);
-            if (prop != null) {
-                return true;
-            } else {
-                log.error(ERROR_MESSAGE);
-                return false;
-            }
-        } catch (Exception ex) {
-            log.error(ERROR_MESSAGE, ex);
-            return false;
-        }
-    }
-
-    @Override
-    public boolean deleteProperty(String key) {
-        if (StringUtils.isEmpty(key)) {
-            return false;
-        }
-        try {
-            propertiesClient.deleteProperty(key);
-            return true;
-        } catch (Exception ex) {
-            log.error(ERROR_MESSAGE, ex);
-            return false;
+            return propertiesRepository.findByKey(property);
+        } catch (Exception e) {
+            log.error("Error retrieving property '{}'", property, e);
+            return Optional.empty();
         }
     }
 }

@@ -48,7 +48,7 @@ class WorkerServiceDisengagementTest extends JobCleanup {
     @Autowired private DataSetup dataSetup;
     @Autowired private JobRepository jobRepository;
     @Autowired private PdpClientRepository pdpClientRepository;
-    private PropertiesService propertiesService = new PropertyServiceStub();
+    private PropertyServiceStub propertiesService = new PropertyServiceStub();
     @Autowired private JobService jobService;
 
     @Autowired private WorkerServiceImpl workerServiceImpl;

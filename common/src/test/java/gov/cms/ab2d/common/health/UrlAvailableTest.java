@@ -6,11 +6,14 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class UrlAvailableTest {
+public class UrlAvailableTest {
+    public static final String EXAMPLE_AVAILABLE_URL = "http://www.google.com";
+    public static final String EXAMPLE_UNAVAILABLE_URL = "http://www.glajlasjdflkajsdfkljaskdfjlasjdfloogle.com";
+
     @Test
     void testAvailable() {
         assertFalse(UrlAvailable.available("www.google.com"));
-        assertTrue(UrlAvailable.available("http://www.google.com"));
+        assertTrue(UrlAvailable.available(EXAMPLE_AVAILABLE_URL));
         assertTrue(UrlAvailable.available("http://www.google.com:80"));
         assertFalse(UrlAvailable.available("http://www.bogusurllaila1234.com"));
     }
@@ -18,7 +21,7 @@ class UrlAvailableTest {
     @Test
     void testAnyAvailable() {
         List<String> l1 = List.of("http://www.google.com", "http://www.facebook.com");
-        List<String> l2 = List.of("http://www.glajlasjdflkajsdfkljaskdfjlasjdfloogle.com", "http://www.google.com");
+        List<String> l2 = List.of(EXAMPLE_UNAVAILABLE_URL, "http://www.google.com");
         List<String> l3 = List.of("http://www.google.com", "http://www.lkjasdkfljal;kdsjf;lakjsdflkjsdafacebook.com");
         List<String> l4 = List.of("http://www.goljaskdfj;ladjsfl;saogle.com", "http://www.fadsljflakjsdf;lasdfacebook.com");
         assertTrue(UrlAvailable.isAnyAvailable(l1));

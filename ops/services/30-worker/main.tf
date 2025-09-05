@@ -192,11 +192,9 @@ resource "aws_ecs_task_definition" "worker" {
       { name : "AB2D_JOB_POOL_MAX_SIZE", value : local.max_concurrent_eob_jobs },
       { name : "AWS_SQS_FEATURE_FLAG", value : "true" }, #FIXME: Is this even used?
       { name : "AWS_SQS_URL", value : data.aws_sqs_queue.events.url },
-      { name : "CONTRACTS_SERVICE_FEATURE_FLAG", value : "true" }, #FIXME: Is this even used?
       { name : "IMAGE_VERSION", value : local.worker_image_tag },
       { name : "NEW_RELIC_APP_NAME", value : local.new_relic_app_name },
-      { name : "PROPERTIES_SERVICE_FEATURE_FLAG", value : "true" }, #FIXME: Is this even used?
-      { name : "PROPERTIES_SERVICE_URL", value : local.microservices_url },
+      { name : "MICROSERVICES_URL", value : local.microservices_url },
     ],
     logConfiguration : {
       logDriver : "awslogs"

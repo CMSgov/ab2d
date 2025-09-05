@@ -74,7 +74,7 @@ public class AdminAPIMaintenanceModeTests {
     @Autowired
     private ApplicationContext context;
 
-    private final PropertiesService propertiesService = new PropertyServiceStub();
+    private final PropertyServiceStub propertiesService = new PropertyServiceStub();
 
     @Captor
     private ArgumentCaptor<LoggableEvent> captor;

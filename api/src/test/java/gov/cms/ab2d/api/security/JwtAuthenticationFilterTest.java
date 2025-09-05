@@ -90,7 +90,7 @@ class JwtAuthenticationFilterTest {
     @Autowired
     private ApplicationContext context;
 
-    private final PropertiesService propertiesService = new PropertyServiceStub();
+    private final PropertyServiceStub propertiesService = new PropertyServiceStub();
 
     @BeforeEach
     public void setup() throws JwtVerificationException {

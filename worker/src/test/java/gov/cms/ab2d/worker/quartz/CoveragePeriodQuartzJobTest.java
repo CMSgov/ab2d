@@ -34,7 +34,7 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class CoveragePeriodQuartzJobTest {
 
-    private PropertiesService propertiesService = new PropertyServiceStub();
+    private PropertyServiceStub propertiesService = new PropertyServiceStub();
 
     @Mock
     private CoverageDriver coverageDriverMock;
@@ -75,14 +75,14 @@ class CoveragePeriodQuartzJobTest {
     @Test
     void engageSearchWorks() {
 
-        PropertiesService propertiesService = new PropertyServiceStub();
+        PropertyServiceStub propertiesServiceLocal = new PropertyServiceStub();
 
-        propertiesService.updateProperty(COVERAGE_SEARCH_DISCOVERY, "engaged");
-        propertiesService.updateProperty(COVERAGE_SEARCH_QUEUEING, "engaged");
-        propertiesService.updateProperty(COVERAGE_SEARCH_OVERRIDE, "true");
+        propertiesServiceLocal.updateProperty(COVERAGE_SEARCH_DISCOVERY, "engaged");
+        propertiesServiceLocal.updateProperty(COVERAGE_SEARCH_QUEUEING, "engaged");
+        propertiesServiceLocal.updateProperty(COVERAGE_SEARCH_OVERRIDE, "true");
 
         CoverageDriverStub coverageDriverStub = new CoverageDriverStub();
-        CoveragePeriodQuartzJob quartzJob = new CoveragePeriodQuartzJob(coverageDriverStub, propertiesService, logManager);
+        CoveragePeriodQuartzJob quartzJob = new CoveragePeriodQuartzJob(coverageDriverStub, propertiesServiceLocal, logManager);
 
         try {
             quartzJob.executeInternal(null);
@@ -99,14 +99,14 @@ class CoveragePeriodQuartzJobTest {
     @Test
     void engagedSearchNotTuesdayAtMidnightDoesNotFire() {
 
-        PropertiesService propertiesService = new PropertyServiceStub();
+        PropertyServiceStub propertiesServiceLocal = new PropertyServiceStub();
 
-        propertiesService.updateProperty(COVERAGE_SEARCH_DISCOVERY, "engaged");
-        propertiesService.updateProperty(COVERAGE_SEARCH_QUEUEING, "engaged");
-        propertiesService.updateProperty(COVERAGE_SEARCH_OVERRIDE, "false");
+        propertiesServiceLocal.updateProperty(COVERAGE_SEARCH_DISCOVERY, "engaged");
+        propertiesServiceLocal.updateProperty(COVERAGE_SEARCH_QUEUEING, "engaged");
+        propertiesServiceLocal.updateProperty(COVERAGE_SEARCH_OVERRIDE, "false");
 
         CoverageDriverStub coverageDriverStub = new CoverageDriverStub();
-        CoveragePeriodQuartzJob quartzJob = new CoveragePeriodQuartzJob(coverageDriverStub, propertiesService, logManager);
+        CoveragePeriodQuartzJob quartzJob = new CoveragePeriodQuartzJob(coverageDriverStub, propertiesServiceLocal, logManager);
 
         try {
             quartzJob.executeInternal(null);
@@ -131,14 +131,14 @@ class CoveragePeriodQuartzJobTest {
     @Test
     void failingSearchesTriggerAlerts() {
 
-        PropertiesService propertiesService = new PropertyServiceStub();
+        PropertyServiceStub propertiesServiceLocal = new PropertyServiceStub();
 
-        propertiesService.updateProperty(COVERAGE_SEARCH_DISCOVERY, "engaged");
-        propertiesService.updateProperty(COVERAGE_SEARCH_OVERRIDE, "true");
+        propertiesServiceLocal.updateProperty(COVERAGE_SEARCH_DISCOVERY, "engaged");
+        propertiesServiceLocal.updateProperty(COVERAGE_SEARCH_OVERRIDE, "true");
 
         try {
             doThrow(new RuntimeException("testing123")).when(coverageDriverMock).discoverCoveragePeriods();
-            CoveragePeriodQuartzJob quartzJob = new CoveragePeriodQuartzJob(coverageDriverMock, propertiesService, logManager);
+            CoveragePeriodQuartzJob quartzJob = new CoveragePeriodQuartzJob(coverageDriverMock, propertiesServiceLocal, logManager);
 
             JobExecutionException exception =
                     assertThrows(JobExecutionException.class, () -> quartzJob.executeInternal(null));

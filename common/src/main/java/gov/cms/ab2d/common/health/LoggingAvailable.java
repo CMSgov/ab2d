@@ -7,12 +7,12 @@ public final class LoggingAvailable {
 
     private LoggingAvailable() { }
 
-    public static boolean canLog() {
+    public static boolean canLog(org.slf4j.Logger logger) {
         try {
-            if (!log.isErrorEnabled()) {
+            if (!logger.isErrorEnabled()) {
                 return false;
             }
-            log.info("Logging Health Check");
+            logger.info("Logging Health Check");
             return true;
         } catch (Exception ex) {
             System.out.println("Logging failed health check");

@@ -103,7 +103,7 @@ class CoverageUpdateAndProcessorTest {
     @Autowired
     private CoverageService coverageService;
 
-    private PropertiesService propertiesService = new PropertyServiceStub();
+    private PropertyServiceStub propertiesService = new PropertyServiceStub();
 
     @Autowired
     private WorkerDataSetup dataSetup;

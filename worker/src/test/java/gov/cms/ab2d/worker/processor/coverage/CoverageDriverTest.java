@@ -115,7 +115,7 @@ class CoverageDriverTest extends JobCleanup {
     @Autowired
     private PdpClientService pdpClientService;
 
-    private PropertiesService propertiesService = new PropertyServiceStub();
+    private PropertyServiceStub propertiesService = new PropertyServiceStub();
 
     @Autowired
     private DataSetup dataSetup;

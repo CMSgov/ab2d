@@ -45,7 +45,6 @@ public class PropertyServiceStub implements PropertiesService {
         return true;
     }
 
-    @Override
     public List<PropertiesDTO> getAllProperties() {
         return propertiesMap.entrySet().stream().map(e -> new PropertiesDTO(e.getKey(), e.getValue())).toList();
     }
@@ -55,13 +54,11 @@ public class PropertyServiceStub implements PropertiesService {
         return "true".equalsIgnoreCase(getProperty(toggleName, "" + defaultValue));
     }
 
-    @Override
     public boolean createProperty(String key, String value) {
         propertiesMap.put(key, value);
         return true;
     }
 
-    @Override
     public boolean deleteProperty(String key) {
         propertiesMap.remove(key);
         return true;

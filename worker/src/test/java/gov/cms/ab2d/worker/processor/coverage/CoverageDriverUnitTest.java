@@ -75,7 +75,7 @@ class CoverageDriverUnitTest {
     @Mock
     private CoverageProcessor coverageProcessor;
 
-    private PropertiesService propertiesService = new PropertyServiceStub();
+    private PropertyServiceStub propertiesService = new PropertyServiceStub();
 
     @Autowired
     private CoverageSnapshotService snapshotService;

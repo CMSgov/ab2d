@@ -24,7 +24,6 @@ allprojects {
     dependencies {
         implementation 'gov.cms.ab2d:ab2d-events-client:3.3.6'
         implementation 'gov.cms.ab2d:ab2d-contracts-client:2.1.1'
-        implementation 'gov.cms.ab2d:ab2d-properties-client:2.1.0'
         implementation "io.awspring.cloud:spring-cloud-aws:${springCloudAwsVersion}"
         implementation "io.awspring.cloud:spring-cloud-aws-dependencies:${springCloudAwsVersion}"
         implementation "io.awspring.cloud:spring-cloud-aws-starter:${springCloudAwsVersion}"

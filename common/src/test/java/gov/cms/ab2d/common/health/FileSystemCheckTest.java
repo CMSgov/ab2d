@@ -12,14 +12,18 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class FileSystemCheckTest {
+public class FileSystemCheckTest {
+
+    public static final String WRITABLE_DIRECTORY = System.getProperty("java.io.tmpdir");
+    public static final String UNWRITABLE_DIRECTORY = null;
 
     @Test
     void canWriteFile() throws IOException {
         assertFalse(FileSystemCheck.canWriteFile(null, false));
-        assertTrue(FileSystemCheck.canWriteFile(System.getProperty("java.io.tmpdir"), false));
+        assertTrue(FileSystemCheck.canWriteFile(WRITABLE_DIRECTORY, false));
         assertTrue(FileSystemCheck.canWriteFile(".", false));
         assertFalse(FileSystemCheck.canWriteFile("/notarealdir", false));
+        assertFalse(FileSystemCheck.canWriteFile(UNWRITABLE_DIRECTORY, true));
         String newTestDir = "/tmp/healthTestDir";
         assertTrue(FileSystemCheck.canWriteFile(newTestDir, true));
         Files.deleteIfExists(Path.of(newTestDir));
