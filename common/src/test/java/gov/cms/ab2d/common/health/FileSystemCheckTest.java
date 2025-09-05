@@ -15,14 +15,15 @@ import static org.junit.jupiter.api.Assertions.*;
 public class FileSystemCheckTest {
 
     public static String WRITEABLE_DIRECTORY = System.getProperty("java.io.tmpdir");
-    public static String UNWRITEABLE_DIRECTORY = "/notarealdir";
+    public static String UNWRITEABLE_DIRECTORY = null;
 
     @Test
     void canWriteFile() throws IOException {
         assertFalse(FileSystemCheck.canWriteFile(null, false));
         assertTrue(FileSystemCheck.canWriteFile(WRITEABLE_DIRECTORY, false));
         assertTrue(FileSystemCheck.canWriteFile(".", false));
-        assertFalse(FileSystemCheck.canWriteFile(UNWRITEABLE_DIRECTORY, false));
+        assertFalse(FileSystemCheck.canWriteFile("/notarealdir", false));
+        assertFalse(FileSystemCheck.canWriteFile(UNWRITEABLE_DIRECTORY, true));
         String newTestDir = "/tmp/healthTestDir";
         assertTrue(FileSystemCheck.canWriteFile(newTestDir, true));
         Files.deleteIfExists(Path.of(newTestDir));

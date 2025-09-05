@@ -67,7 +67,7 @@ class HealthCheckUtilTest {
 
         assertFalse(HealthCheckUtil.healthy(
                 healthyDataSource,
-                UNWRITEABLE_DIRECTORY,
+                null,
                 ALLOCATABLE_MEMORY_MB,
                 singletonList(EXAMPLE_AVAILABLE_URL),
                 healthyLogger
