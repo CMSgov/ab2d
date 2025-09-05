@@ -50,7 +50,6 @@ class PropertiesServiceImplTest {
         assertTrue(out.getOut().contains("Property 'test' not found; using default"));
     }
 
-
     @Test
     void updateProperty() {
         when(propertiesRepository.findByKey("test")).thenReturn(Optional.of(property("test", "1234")));
@@ -85,6 +84,12 @@ class PropertiesServiceImplTest {
         when(propertiesRepository.findByKey("test")).thenReturn(Optional.of(property("test", "false")));
         assertFalse(propertiesService.isToggleOn("test", true));
     }
+
+    @Test
+    void toggleUseDefaultValueIfEmpty() {
+        assertFalse(propertiesService.isToggleOn("", false));
+    }
+
 
     Property property(String key, String value) {
         val property = new Property();
