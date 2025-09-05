@@ -19,7 +19,7 @@ import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.lenient;
 
-@ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
+@ExtendWith(MockitoExtension.class)
 
 class HealthCheckUtilTest {
 
@@ -47,7 +47,7 @@ class HealthCheckUtilTest {
     void testAllHealthy()  {
         assertTrue(HealthCheckUtil.healthy(
             healthyDataSource,
-                WRITABLE_DIRECTORY,
+            WRITABLE_DIRECTORY,
             ALLOCATABLE_MEMORY_MB,
             singletonList(EXAMPLE_AVAILABLE_URL),
             healthyLogger
@@ -73,7 +73,7 @@ class HealthCheckUtilTest {
         ));
 
         assertFalse(HealthCheckUtil.healthy(
-                unhealthyDataSource,
+                healthyDataSource,
                 WRITABLE_DIRECTORY,
                 UNALLOCATABLE_MEMORY_MB,
                 singletonList(EXAMPLE_AVAILABLE_URL),
@@ -81,7 +81,7 @@ class HealthCheckUtilTest {
         ));
 
         assertFalse(HealthCheckUtil.healthy(
-                unhealthyDataSource,
+                healthyDataSource,
                 WRITABLE_DIRECTORY,
                 ALLOCATABLE_MEMORY_MB,
                 singletonList(EXAMPLE_UNAVAILABLE_URL),
@@ -89,7 +89,7 @@ class HealthCheckUtilTest {
         ));
 
         assertFalse(HealthCheckUtil.healthy(
-                unhealthyDataSource,
+                healthyDataSource,
                 WRITABLE_DIRECTORY,
                 ALLOCATABLE_MEMORY_MB,
                 singletonList(EXAMPLE_AVAILABLE_URL),
