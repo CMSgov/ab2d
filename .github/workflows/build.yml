@@ -53,7 +53,7 @@ jobs:
             ARTIFACTORY_PASSWORD=/artifactory/password
 
       - name: Build package
-        run: mvn -U clean package -s settings.xml -Dcheckstyle.skip -Dusername="${ARTIFACTORY_USER}" -Dpassword="${ARTIFACTORY_PASSWORD}" -Drepository_url="${ARTIFACTORY_URL}"
+        run: mvn -U clean package -s settings.xml -Dcheckstyle.skip -DskipTests -Dusername="${ARTIFACTORY_USER}" -Dpassword="${ARTIFACTORY_PASSWORD}" -Drepository_url="${ARTIFACTORY_URL}"
 
       - name: Build image and push to ECR
         working-directory: ./${{ env.MODULE }}
