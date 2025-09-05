@@ -47,7 +47,7 @@ class HealthCheckUtilTest {
     void testAllHealthy()  {
         assertTrue(HealthCheckUtil.healthy(
             healthyDataSource,
-            WRITEABLE_DIRECTORY,
+                WRITABLE_DIRECTORY,
             ALLOCATABLE_MEMORY_MB,
             singletonList(EXAMPLE_AVAILABLE_URL),
             healthyLogger
@@ -58,7 +58,7 @@ class HealthCheckUtilTest {
     void testUnhealthyVariations() {
         assertFalse(HealthCheckUtil.healthy(
                 unhealthyDataSource,
-                WRITEABLE_DIRECTORY,
+                WRITABLE_DIRECTORY,
                 ALLOCATABLE_MEMORY_MB,
                 singletonList(EXAMPLE_AVAILABLE_URL),
                 healthyLogger
@@ -74,7 +74,7 @@ class HealthCheckUtilTest {
 
         assertFalse(HealthCheckUtil.healthy(
                 unhealthyDataSource,
-                WRITEABLE_DIRECTORY,
+                WRITABLE_DIRECTORY,
                 UNALLOCATABLE_MEMORY_MB,
                 singletonList(EXAMPLE_AVAILABLE_URL),
                 healthyLogger
@@ -82,7 +82,7 @@ class HealthCheckUtilTest {
 
         assertFalse(HealthCheckUtil.healthy(
                 unhealthyDataSource,
-                WRITEABLE_DIRECTORY,
+                WRITABLE_DIRECTORY,
                 ALLOCATABLE_MEMORY_MB,
                 singletonList(EXAMPLE_UNAVAILABLE_URL),
                 healthyLogger
@@ -90,7 +90,7 @@ class HealthCheckUtilTest {
 
         assertFalse(HealthCheckUtil.healthy(
                 unhealthyDataSource,
-                WRITEABLE_DIRECTORY,
+                WRITABLE_DIRECTORY,
                 ALLOCATABLE_MEMORY_MB,
                 singletonList(EXAMPLE_AVAILABLE_URL),
                 unhealthyLogger
