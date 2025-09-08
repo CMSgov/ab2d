@@ -104,6 +104,11 @@ resource "aws_ecs_service" "events" {
   launch_type          = "FARGATE"
   platform_version     = "1.4.0"
   force_new_deployment = anytrue([var.force_events_deployment, var.events_service_image_tag != null])
+  propagate_tags       = "SERVICE"
+
+  tags = {
+    service = "events"
+  }
 
   network_configuration {
     subnets          = keys(module.platform.private_subnets)
