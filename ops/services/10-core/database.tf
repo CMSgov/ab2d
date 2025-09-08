@@ -19,8 +19,6 @@ module "db" {
 
   storage_type = lookup({
     prod = "aurora-iopt1"
-    dev  = "aurora-iopt1" #TODO: Remove NLT 2025-08-15
-    test = "aurora-iopt1" #TODO: Remove NLT 2025-08-15
   }, local.env, "")
 
   backup_window = lookup({
