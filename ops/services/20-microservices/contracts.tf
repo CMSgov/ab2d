@@ -95,6 +95,11 @@ resource "aws_ecs_service" "contracts" {
   launch_type          = "FARGATE"
   platform_version     = "1.4.0"
   force_new_deployment = anytrue([var.force_contracts_deployment, var.contracts_service_image_tag != null])
+  propagate_tags       = "SERVICE"
+
+  tags = {
+    service = "contracts"
+  }
 
   network_configuration {
     subnets          = keys(module.platform.private_subnets)

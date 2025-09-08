@@ -85,6 +85,11 @@ resource "aws_ecs_service" "properties" {
   launch_type          = "FARGATE"
   platform_version     = "1.4.0"
   force_new_deployment = anytrue([var.force_properties_deployment, var.properties_service_image_tag != null])
+  propagate_tags       = "SERVICE"
+
+  tags = {
+    service = "properties"
+  }
 
   network_configuration {
     subnets          = keys(module.platform.private_subnets)

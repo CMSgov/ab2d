@@ -228,6 +228,7 @@ resource "aws_ecs_service" "worker" {
   desired_count                      = local.worker_desired_instances
   force_new_deployment               = anytrue([var.force_worker_deployment, var.worker_service_image_tag != null])
   deployment_minimum_healthy_percent = 100
+  propagate_tags                     = "SERVICE"
 
   network_configuration {
     subnets          = local.writer_adjacent_subnets

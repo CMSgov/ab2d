@@ -340,6 +340,7 @@ resource "aws_ecs_service" "api" {
   force_new_deployment               = anytrue([var.force_api_deployment, var.api_service_image_tag != null])
   deployment_minimum_healthy_percent = 100
   health_check_grace_period_seconds  = 180
+  propagate_tags                     = "SERVICE"
 
   network_configuration {
     subnets          = local.private_subnet_ids
