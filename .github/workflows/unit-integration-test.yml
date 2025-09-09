@@ -83,7 +83,7 @@ jobs:
 
       - name: Run unit and integration tests
         env:
-          SKIP_INTEGRATION_TESTS=${{ inputs.skip_integration_tests }}
+          SKIP_INTEGRATION_TESTS: ${{ inputs.skip_integration_tests }}
         run: |
             mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker -skipITs=${SKIP_INTEGRATION_TESTS}
 
