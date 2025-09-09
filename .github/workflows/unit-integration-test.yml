@@ -81,7 +81,7 @@ jobs:
         run: |
           mvn -ntp -U clean
 
-      - name: Run unit and integration tests
+      - name: Run unit tests and conditionally integration tests
         env:
           SKIP_INTEGRATION_TESTS: ${{ inputs.skip_integration_tests }}
         run: |
@@ -89,6 +89,7 @@ jobs:
 
   sonarqube:
     uses: ./.github/workflows/sonarqube.yml
+    if: ${{ inputs.skip_integration_tests == true }}
     secrets: inherit
 
   
