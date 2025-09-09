@@ -4,11 +4,14 @@ on:
   workflow_call:
     inputs:
       skip_integration_tests:
-        description: "Skip integration tests (test classes ending in *IT.java)"
         type: boolean
         default: false
   workflow_dispatch: # Allow manual trigger
-
+    inputs:
+      skip_integration_tests:
+        description: "Skip integration tests (test classes ending in *IT.java)"
+        type: boolean
+        default: false
 permissions:
   contents: read
   id-token: write
