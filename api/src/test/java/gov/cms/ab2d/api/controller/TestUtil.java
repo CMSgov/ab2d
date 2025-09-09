@@ -44,7 +44,7 @@ public class TestUtil {
     private DataSetup dataSetup;
 
     @Getter
-    private PropertiesService propertiesService = new PropertyServiceStub();
+    private PropertyServiceStub propertiesService = new PropertyServiceStub();
 
     @MockBean
     AccessTokenVerifier mockAccessTokenVerifier;

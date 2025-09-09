@@ -142,7 +142,7 @@ resource "aws_lb_target_group" "properties" {
   target_type = "ip"
 
   health_check {
-    path = "/properties"
+    path = "/properties/health"
     port = 8060
   }
 }

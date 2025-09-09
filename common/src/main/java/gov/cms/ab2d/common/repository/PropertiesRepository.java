@@ -1,11 +1,10 @@
-package gov.cms.ab2d.contracts.repository;
+package gov.cms.ab2d.common.repository;
 
-import gov.cms.ab2d.contracts.model.Property;
-import java.util.Optional;
+import gov.cms.ab2d.common.model.Property;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
-@Repository
+import java.util.Optional;
+
 public interface PropertiesRepository extends JpaRepository<Property, Long> {
     Optional<Property> findByKey(String key);
 }

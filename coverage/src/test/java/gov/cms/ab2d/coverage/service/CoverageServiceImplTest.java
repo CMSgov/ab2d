@@ -136,7 +136,7 @@ class CoverageServiceImplTest {
     @Autowired
     DataSource dataSource;
 
-    private final PropertiesService propertiesService = new PropertyServiceStub();
+    private final PropertyServiceStub propertiesService = new PropertyServiceStub();
 
     private CoverageServiceRepository  coverageServiceRepo;
 
