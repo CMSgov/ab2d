@@ -83,7 +83,7 @@ jobs:
 
       - name: Run unit tests and conditionally integration tests
         env:
-          SKIP_ITS_MVN_ARGS: ${{ inputs.skip_integration_tests && '-skipITs' || '' }}
+          SKIP_ITS_MVN_ARGS: ${{ inputs.skip_integration_tests == true && '-skipITs' || '' }}
         run: |
             echo "SKIP_ITS_MVN_ARGS=$SKIP_ITS_MVN_ARGS"
             mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker ${SKIP_ITS_MVN_ARGS}
