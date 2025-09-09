@@ -89,7 +89,7 @@ jobs:
 
   sonarqube:
     uses: ./.github/workflows/sonarqube.yml
-    if: ${{ inputs.skip_integration_tests == true }}
+    if: ${{ inputs.skip_integration_tests == false }}
     secrets: inherit
 
   
