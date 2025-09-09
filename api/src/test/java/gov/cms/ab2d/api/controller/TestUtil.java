@@ -5,7 +5,6 @@ import com.okta.jwt.Jwt;
 import com.okta.jwt.JwtVerificationException;
 import com.okta.jwt.impl.DefaultJwt;
 import gov.cms.ab2d.common.properties.PropertyServiceStub;
-import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.util.DataSetup;
 import gov.cms.ab2d.job.model.JobOutput;
 import io.jsonwebtoken.Jwts;
@@ -14,8 +13,8 @@ import lombok.Getter;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.stereotype.Component;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import javax.crypto.SecretKey;
 import java.io.File;
@@ -46,7 +45,7 @@ public class TestUtil {
     @Getter
     private PropertyServiceStub propertiesService = new PropertyServiceStub();
 
-    @MockBean
+    @MockitoBean
     AccessTokenVerifier mockAccessTokenVerifier;
 
     @Value("${api.okta-jwt-audience}")
