@@ -81,11 +81,15 @@ jobs:
         run: |
           mvn -ntp -U clean
 
-      - name: Run unit tests and conditionally integration tests
-        env:
-          SKIP_ITS: ${{ inputs.skip_integration_tests }}
+      - name: Run unit tests
         run: |
-            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker -skip.it=${SKIP_ITS}
+            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker 
+
+      - name: Run integration tests
+        if: ${{ inputs.skip_integration_tests == false }}
+        run: |
+          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} integration-test -pl common,job,coverage,api,worker 
+
 
   sonarqube:
     uses: ./.github/workflows/sonarqube.yml
