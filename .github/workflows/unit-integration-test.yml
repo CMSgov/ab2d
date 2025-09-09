@@ -85,11 +85,7 @@ jobs:
         env:
           SKIP_INTEGRATION_TESTS: ${{ inputs.skip_integration_tests }}
         run: |
-            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} \ 
-              -Dusername=${ARTIFACTORY_USER} \
-              -Dpassword=${ARTIFACTORY_PASSWORD} \
-              -Drepository_url=${ARTIFACTORY_URL} \
-              test -pl common,job,coverage,api,worker -skipITs=false
+            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker -skipITs=false
 
   sonarqube:
     uses: ./.github/workflows/sonarqube.yml
