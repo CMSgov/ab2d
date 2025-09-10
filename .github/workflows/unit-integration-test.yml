@@ -81,41 +81,52 @@ jobs:
         run: |
           mvn -ntp -U clean
 
-      - name: Tests - common
+      - name: Tests
+        env:
+          SKIP_ITS: ${{ inputs.skip_integration_tests }}
         run: |
-            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} install -pl common -Dsurefire.includes=**/*Test.java -Dsurefire.includes=**/*IT.java
+#            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} install -pl common -Dsurefire.includes=**/*Test.java -Dsurefire.includes=**/*IT.java
+            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} integration-test -pl common,job,coverage,api,worker
 
-      - name: Tests - job
-        run: |
-          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} install -pl job -Dsurefire.includes=**/*Test.java -Dsurefire.includes=**/*IT.java
+#      - name: Tests - job
+#        env:
+#          SKIP_ITS: ${{ inputs.skip_integration_tests }}
+#        run: |
+#          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} install -pl job
+#
+#      - name: Tests - coverage
+#        env:
+#          SKIP_ITS: ${{ inputs.skip_integration_tests }}
+#        run: |
+#          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test integration-test install -pl coverage -DskipITs=${SKIP_ITS}
+#
+#      - name: Tests - api
+#        env:
+#          SKIP_ITS: ${{ inputs.skip_integration_tests }}
+#        run: |
+#          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test integration-test install -pl api -DskipITs=${SKIP_ITS}
+#
+#      - name: Tests - worker
+#        env:
+#          SKIP_ITS: ${{ inputs.skip_integration_tests }}
+#        run: |
+#          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test integration-test install -pl worker -DskipITs=${SKIP_ITS}
+#
 
-      - name: Tests - coverage
-        run: |
-          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} install -pl coverage -Dsurefire.includes=**/*Test.java -Dsurefire.includes=**/*IT.java
-
-      - name: Tests - api
-        run: |
-          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} install -pl api -Dsurefire.includes=**/*Test.java -Dsurefire.includes=**/*IT.java
-
-      - name: Tests - worker
-        run: |
-          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} install -pl worker -Dsurefire.includes=**/*Test.java -Dsurefire.includes=**/*IT.java
-
-
-      - name: SonarQube analysis (with coverage)
-        if: ${{ inputs.skip_integration_tests == false }}
-        run: |
-          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} clean install -pl "!e2e-bfd-test,!e2e-test"  \
-          ${RUNNER_DEBUG:+"--debug"} \
-          sonar:sonar \
-          -Dsonar.projectKey=$SONAR_PROJECT_KEY \
-          -Dsonar.qualitygate.wait=true \
-          -Dusername="${ARTIFACTORY_USER}" \
-          -Dpassword="${ARTIFACTORY_PASSWORD}" \
-          -Drepository_url="${ARTIFACTORY_URL}" \
-          -Dsonar.ci.autoconfig.disabled=true \
-          -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
-          -Dsonar.java.binaries=target/classes
+  #      - name: SonarQube analysis (with coverage)
+#        if: ${{ inputs.skip_integration_tests == false }}
+#        run: |
+#          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} clean install -pl "!e2e-bfd-test,!e2e-test"  \
+#          ${RUNNER_DEBUG:+"--debug"} \
+#          sonar:sonar \
+#          -Dsonar.projectKey=$SONAR_PROJECT_KEY \
+#          -Dsonar.qualitygate.wait=true \
+#          -Dusername="${ARTIFACTORY_USER}" \
+#          -Dpassword="${ARTIFACTORY_PASSWORD}" \
+#          -Drepository_url="${ARTIFACTORY_URL}" \
+#          -Dsonar.ci.autoconfig.disabled=true \
+#          -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+#          -Dsonar.java.binaries=target/classes
 
 
   
