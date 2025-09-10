@@ -1,4 +1,4 @@
-name: Run unit and integration tests
+name: API/Worker Unit and integration tests +, SonarQube
 
 on:
   workflow_call:
@@ -6,10 +6,17 @@ on:
       skip_integration_tests:
         type: boolean
         default: false
+      skip_sonarqube:
+        type: boolean
+        default: false
   workflow_dispatch: # Allow manual trigger
     inputs:
       skip_integration_tests:
         description: "Skip integration tests (test classes ending in *IT.java)"
+        type: boolean
+        default: false
+      skip_sonarqube:
+        description: "Skip SonarQube"
         type: boolean
         default: false
 permissions:
@@ -87,9 +94,8 @@ jobs:
         run: |
           mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} ${MVN_GOALS} -pl common,job,coverage,api,worker
 
-
       - name: SonarQube analysis (with coverage)
-        if: ${{ inputs.skip_integration_tests == false }}
+        if: ${{ inputs.skip_integration_tests == false && inputs.skip_sonarqube == false }}
         run: |
           mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} clean install -pl "!e2e-bfd-test,!e2e-test"  \
           ${RUNNER_DEBUG:+"--debug"} \
