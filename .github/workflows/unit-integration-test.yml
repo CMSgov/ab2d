@@ -98,7 +98,7 @@ jobs:
       - name: SonarQube analysis (with coverage)
         if: ${{ inputs.skip_integration_tests == false && inputs.skip_sonarqube == false }}
         run: |
-          mvn sonar:sonar \
+          mvn -ntp -s settings.xml sonar:sonar \
           -Dsonar.projectKey=ab2d-project \
           -Dsonar.qualitygate.wait=true \
           -Dusername="${ARTIFACTORY_USER}" \
@@ -107,5 +107,5 @@ jobs:
           -Dsonar.ci.autoconfig.disabled=true \
           -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
           -Dsonar.java.binaries=target/classes
-          
+            
           
