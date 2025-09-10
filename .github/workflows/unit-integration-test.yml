@@ -85,7 +85,7 @@ jobs:
         env:
           SKIP_ITS: ${{ inputs.skip_integration_tests }}
         run: |
-            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test integration-test  -pl common,job,coverage,api,worker -Dsurefire.includes=**/*Test.java,**/*IT.java
+            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test integration-test  -pl common,job,coverage,api,worker -Dsurefire.includes=**/*Test.java -Dsurefire.includes=**/*IT.java
 #
 #      - name: Tests - job
 #        env:
