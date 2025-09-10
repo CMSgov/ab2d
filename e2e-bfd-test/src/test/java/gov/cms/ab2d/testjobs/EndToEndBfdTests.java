@@ -111,7 +111,7 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 @Profile("jenkins")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @Tag("e2e-bfd-test")
-public class EndToEndBfdIT {
+public class EndToEndBfdTests {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();
 
@@ -339,12 +339,12 @@ public class EndToEndBfdIT {
     }
 
     private Contract getContract() {
-        return contractServiceStub.getContractByContractNumber(EndToEndBfdIT.CONTRACT_TO_USE).orElse(null);
+        return contractServiceStub.getContractByContractNumber(EndToEndBfdTests.CONTRACT_TO_USE).orElse(null);
     }
 
     private PdpClient setupClient(Contract contract) {
         PdpClient pdpClient = new PdpClient();
-        pdpClient.setClientId(EndToEndBfdIT.CONTRACT_TO_USE_CLIENT_ID);
+        pdpClient.setClientId(EndToEndBfdTests.CONTRACT_TO_USE_CLIENT_ID);
         pdpClient.setOrganization("Synthea Data");
         pdpClient.setEnabled(true);
         pdpClient.setContractId(contract.getId());
