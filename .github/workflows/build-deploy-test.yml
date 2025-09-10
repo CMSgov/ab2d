@@ -51,5 +51,4 @@ jobs:
     uses: ./.github/workflows/unit-integration-test.yml
     with:
       skip_integration_tests: false
-      skip_sonarqube: false
     secrets: inherit
