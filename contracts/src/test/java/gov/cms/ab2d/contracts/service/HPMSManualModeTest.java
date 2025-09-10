@@ -1,5 +1,6 @@
 package gov.cms.ab2d.contracts.service;
 
+import gov.cms.ab2d.contracts.SpringBootApp;
 import gov.cms.ab2d.contracts.repository.ContractRepository;
 import gov.cms.ab2d.contracts.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.contracts.model.Contract;
@@ -24,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest
 @TestPropertySource(locations = "/application.properties")
 @Testcontainers
-class HPMSManualModeIT {
+class HPMSManualModeTest {
 
     public static final String TEST_CONTRACT_NUMBER = "X1234";
     @Autowired

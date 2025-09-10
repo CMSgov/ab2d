@@ -29,7 +29,7 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @Testcontainers
-class LogManagerIT {
+class LogManagerTest {
     @Container
     private static final PostgreSQLContainer POSTGRE_SQL_CONTAINER = new AB2DPostgresqlContainer();
 

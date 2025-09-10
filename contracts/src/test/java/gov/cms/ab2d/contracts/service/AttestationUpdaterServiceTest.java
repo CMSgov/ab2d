@@ -1,11 +1,12 @@
 package gov.cms.ab2d.contracts.service;
 
+import gov.cms.ab2d.contracts.SpringBootApp;
 import gov.cms.ab2d.contracts.repository.ContractRepository;
 import gov.cms.ab2d.contracts.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.contracts.hmsapi.HPMSOrganizationInfo;
-
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest
 @TestPropertySource(locations = "/application.properties")
 @Testcontainers
-public class AttestationUpdaterServiceIT {
+public class AttestationUpdaterServiceTest {
 
     @Autowired
     private ContractRepository contractRepository;

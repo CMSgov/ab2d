@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @Testcontainers
-class LoggerEventSummaryIT {
+class LoggerEventSummaryTest {
     public static final int ONE_MILL_SEC_IN_NANO = 1000000;
 
     @Autowired

@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest
 @Testcontainers
-class ContractServiceIT {
+class ContractServiceTest {
     @Autowired
     private ContractRepository contractRepository;
 

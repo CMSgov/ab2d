@@ -34,7 +34,7 @@ import static org.springframework.http.HttpStatus.REQUEST_TIMEOUT;
 @SpringBootTest
 @TestPropertySource(locations = "/application.properties")
 @Testcontainers
-class HPMSMockedAuthIT {
+class HPMSMockedAuthTest {
     private final MockWebClient client = new MockWebClient();
 
     @SuppressWarnings({"rawtypes", "unused"})

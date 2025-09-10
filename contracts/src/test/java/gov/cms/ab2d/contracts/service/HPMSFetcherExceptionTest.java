@@ -22,7 +22,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
         "hpms.base.path=invalid",
         "hpms.base.url=localhost"
 })
-class HPMSFetcherExceptionIT {
+class HPMSFetcherExceptionTest {
 
     @Autowired
     private HPMSFetcher fetcher;

@@ -48,7 +48,7 @@ import static org.mockito.Mockito.verify;
 @SpringBootTest
 @Testcontainers
 @EnableAutoConfiguration()
-public class SendAndReceiveSqsEventIT {
+public class SendAndReceiveSqsEventTest {
 
     static {
         System.setProperty("spring.liquibase.enabled", "false");

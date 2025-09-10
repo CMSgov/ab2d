@@ -51,7 +51,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @Testcontainers
-public class AllMapperEventIT {
+public class AllMapperEventTest {
     public static final int ONE_MILL_SEC_IN_NANO = 1000000;
 
     @Container

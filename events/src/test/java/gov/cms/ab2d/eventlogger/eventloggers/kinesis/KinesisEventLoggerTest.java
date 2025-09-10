@@ -52,7 +52,7 @@ import static org.mockito.Mockito.doReturn;
 
 @SpringBootTest(classes = SpringBootApp.class)
 @Testcontainers
-class KinesisEventLoggerIT {
+class KinesisEventLoggerTest {
     @Container
     private static final PostgreSQLContainer POSTGRE_SQL_CONTAINER = new AB2DPostgresqlContainer();
 

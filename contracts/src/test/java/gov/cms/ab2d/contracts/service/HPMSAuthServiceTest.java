@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Testcontainers
 // HPMSAuthServiceImpl holds some state that's useful normally but can break tests. Reset the bean after each test.
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-class HPMSAuthServiceIT {
+class HPMSAuthServiceTest {
 
     @Autowired
     HPMSAuthServiceImpl authService;
