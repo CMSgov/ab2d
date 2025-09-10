@@ -85,32 +85,32 @@ jobs:
         env:
           SKIP_ITS: ${{ inputs.skip_integration_tests }}
         run: |
-            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test integration-test install -pl common -DskipITs=${SKIP_ITS}
-
-      - name: Tests - job
-        env:
-          SKIP_ITS: ${{ inputs.skip_integration_tests }}
-        run: |
-          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test integration-test install -pl job -DskipITs=${SKIP_ITS}
-
-      - name: Tests - coverage
-        env:
-          SKIP_ITS: ${{ inputs.skip_integration_tests }}
-        run: |
-          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test integration-test install -pl coverage -DskipITs=${SKIP_ITS}
-
-      - name: Tests - api
-        env:
-          SKIP_ITS: ${{ inputs.skip_integration_tests }}
-        run: |
-          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test integration-test install -pl api -DskipITs=${SKIP_ITS}
-
-      - name: Tests - worker
-        env:
-          SKIP_ITS: ${{ inputs.skip_integration_tests }}
-        run: |
-          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test integration-test install -pl worker -DskipITs=${SKIP_ITS}
-  
+            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test integration-test  -pl common,job,coverage,api,worker -DskipITs=${SKIP_ITS}
+#
+#      - name: Tests - job
+#        env:
+#          SKIP_ITS: ${{ inputs.skip_integration_tests }}
+#        run: |
+#          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test integration-test install -pl job -DskipITs=${SKIP_ITS}
+#
+#      - name: Tests - coverage
+#        env:
+#          SKIP_ITS: ${{ inputs.skip_integration_tests }}
+#        run: |
+#          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test integration-test install -pl coverage -DskipITs=${SKIP_ITS}
+#
+#      - name: Tests - api
+#        env:
+#          SKIP_ITS: ${{ inputs.skip_integration_tests }}
+#        run: |
+#          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test integration-test install -pl api -DskipITs=${SKIP_ITS}
+#
+#      - name: Tests - worker
+#        env:
+#          SKIP_ITS: ${{ inputs.skip_integration_tests }}
+#        run: |
+#          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test integration-test install -pl worker -DskipITs=${SKIP_ITS}
+#
 
   #      - name: SonarQube analysis (with coverage)
 #        if: ${{ inputs.skip_integration_tests == false }}
