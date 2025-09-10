@@ -105,4 +105,9 @@ jobs:
           -Dpassword="${ARTIFACTORY_PASSWORD}" \
           -Drepository_url="${ARTIFACTORY_URL}" \
           -Dsonar.ci.autoconfig.disabled=true \
-  
+
+      - name: Quality Gate
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        with:
+          scanMetadataReportFile: build/sonar/report-task.txt
+        timeout-minutes: 10
