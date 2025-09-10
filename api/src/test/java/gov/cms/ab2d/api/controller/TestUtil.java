@@ -14,7 +14,7 @@ import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 import javax.crypto.SecretKey;
 import java.io.File;
@@ -45,7 +45,7 @@ public class TestUtil {
     @Getter
     private PropertyServiceStub propertiesService = new PropertyServiceStub();
 
-    @MockitoBean
+    @MockBean
     AccessTokenVerifier mockAccessTokenVerifier;
 
     @Value("${api.okta-jwt-audience}")
