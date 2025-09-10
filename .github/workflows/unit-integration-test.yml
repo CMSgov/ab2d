@@ -98,7 +98,7 @@ jobs:
       - name: SonarQube analysis (with coverage)
         if: ${{ inputs.skip_integration_tests == false && inputs.skip_sonarqube == false }}
         run: |
-          sonar:sonar \
+          mvn sonar:sonar \
           -Dsonar.projectKey=ab2d-project \
           -Dsonar.qualitygate.wait=true \
           -Dusername="${ARTIFACTORY_USER}" \
