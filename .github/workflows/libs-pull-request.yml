@@ -3,6 +3,8 @@ run-name: Libs-pull-request
 
 on:
   pull_request:
+    paths:
+      - libs
 
 permissions:
   contents: read
