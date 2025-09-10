@@ -50,7 +50,7 @@ class HPMSMockedAuthIT {
     @Autowired
     private SQSEventClient eventLogger;
 
-    @MockBean
+    @MockBean //NOSONAR
     private WebClient mockedWebClient;
 
     @Test

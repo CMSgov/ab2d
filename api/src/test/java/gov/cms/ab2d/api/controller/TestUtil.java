@@ -45,7 +45,7 @@ public class TestUtil {
     @Getter
     private PropertyServiceStub propertiesService = new PropertyServiceStub();
 
-    @MockBean
+    @MockBean //NOSONAR
     AccessTokenVerifier mockAccessTokenVerifier;
 
     @Value("${api.okta-jwt-audience}")

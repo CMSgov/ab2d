@@ -66,7 +66,7 @@ public class SendAndReceiveSqsEventIT {
     @Autowired
     private SqsAsyncClient amazonSQS;
 
-    @MockBean
+    @MockBean //NOSONAR
     private LogManager logManager;
 
     @Autowired

@@ -29,7 +29,7 @@ public class HealthcheckControllerIT {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockBean //NOSONAR
     private JdbcTemplate jdbcTemplate;
 
     @Container

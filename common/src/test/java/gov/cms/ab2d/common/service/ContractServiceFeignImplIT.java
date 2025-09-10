@@ -32,7 +32,7 @@ class ContractServiceFeignImplIT {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer= new AB2DPostgresqlContainer();
 
-    @MockBean
+    @MockBean //NOSONAR
     private ContractFeignClient contractFeignClient;
 
     @Autowired

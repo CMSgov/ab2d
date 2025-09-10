@@ -48,7 +48,7 @@ import static org.mockito.Mockito.when;
 @Testcontainers
 class PdpClientServiceIT {
 
-    @MockBean
+    @MockBean //NOSONAR
     ContractFeignClient contractFeignClient;
 
     @Autowired
