@@ -101,7 +101,6 @@ jobs:
           ${RUNNER_DEBUG:+"--debug"} \
           sonar:sonar \
           -Dsonar.projectKey=ab2d-project \
-          -Dsonar.qualitygate.wait=true \
           -Dusername="${ARTIFACTORY_USER}" \
           -Dpassword="${ARTIFACTORY_PASSWORD}" \
           -Drepository_url="${ARTIFACTORY_URL}" \
@@ -109,5 +108,9 @@ jobs:
           -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
           -Dsonar.java.binaries=target/classes
 
-
+      - name: Quality Gate
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        with:
+          scanMetadataReportFile: build/sonar/report-task.txt
+        timeout-minutes: 10
   
