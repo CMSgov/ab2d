@@ -1,9 +1,24 @@
-name: Run unit and integration tests
+name: API/Worker tests + SonarQube
 
 on:
   workflow_call:
+    inputs:
+      skip_integration_tests:
+        type: boolean
+        default: false
+      skip_sonarqube:
+        type: boolean
+        default: false
   workflow_dispatch: # Allow manual trigger
-
+    inputs:
+      skip_integration_tests:
+        description: "Skip integration tests (test classes ending in *IT.java)"
+        type: boolean
+        default: false
+      skip_sonarqube:
+        description: "Skip SonarQube"
+        type: boolean
+        default: false
 permissions:
   contents: read
   id-token: write
@@ -34,7 +49,7 @@ jobs:
   test:
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     needs: workflow
-    if: needs.workflow.outputs.files || github.event_name == 'push'
+    if: needs.workflow.outputs.files || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     env:
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
@@ -73,14 +88,24 @@ jobs:
         run: |
           mvn -ntp -U clean
 
-      - name: Run unit and integration tests
+      - name: Tests
         env:
+          MVN_GOALS: ${{ inputs.skip_integration_tests == true && 'test' || 'install failsafe:integration-test' }}
           MAVEN_OPTS: "-Xmx1G -Xms1G"
         run: |
-            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
+          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} ${MVN_GOALS} -pl common,job,coverage,api,worker
 
-  sonarqube:
-    uses: ./.github/workflows/sonarqube.yml
-    secrets: inherit
-
-  
+      - name: SonarQube analysis (with coverage)
+        if: ${{ inputs.skip_integration_tests == false && inputs.skip_sonarqube == false }}
+        run: |
+          mvn -ntp -s settings.xml install -pl "!e2e-bfd-test,!e2e-test" sonar:sonar \
+          -Dsonar.projectKey=ab2d-project \
+          -Dsonar.qualitygate.wait=true \
+          -Dusername="${ARTIFACTORY_USER}" \
+          -Dpassword="${ARTIFACTORY_PASSWORD}" \
+          -Drepository_url="${ARTIFACTORY_URL}" \
+          -Dsonar.ci.autoconfig.disabled=true \
+          -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+          -Dsonar.java.binaries=target/classes
+            
+          

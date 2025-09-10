@@ -1,0 +1,55 @@
+name: API/Worker build deploy test
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      skip_build_deploy:
+        type: boolean
+        default: false
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: AB2D environment used for ECR
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+      skip_build_deploy:
+        description: Skip build and deploy of API/worker
+        type: boolean
+        default: false
+
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  build-deploy-api:
+    uses: ./.github/workflows/build-deploy.yml
+    if: ${{ inputs.skip_build_deploy == false }}
+    with:
+      environment: ${{ inputs.environment }}
+      module: api
+    secrets: inherit
+  build-deploy-worker:
+    uses: ./.github/workflows/build-deploy.yml
+    if: ${{ inputs.skip_build_deploy == false }}
+    with:
+      environment: ${{ inputs.environment }}
+      module: worker
+    secrets: inherit
+  e2e-test:
+    needs: [build-deploy-api, build-deploy-worker]
+    uses: ./.github/workflows/e2e-test.yml
+    with:
+      environment: ${{ inputs.environment }}
+    secrets: inherit
+  unit-integration-test:
+    uses: ./.github/workflows/unit-integration-test.yml
+    with:
+      skip_integration_tests: false
+      skip_sonarqube: false
+    secrets: inherit

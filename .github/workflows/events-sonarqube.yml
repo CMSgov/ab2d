@@ -1,4 +1,4 @@
-name: SonarQube
+name: Events SonarQube
 
 on:
   workflow_call:

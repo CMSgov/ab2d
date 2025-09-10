@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - libs/**
+      - lambdas/**
+      - contracts/**
+      - events/**
 
 permissions:
   id-token: write
@@ -40,6 +45,9 @@ jobs:
     with:
       environment: test
     secrets: inherit
-  sonarqube:
-    uses: ./.github/workflows/sonarqube.yml
+  unit_integration_tests:
+    uses: ./.github/workflows/unit-integration-test.yml
+    with:
+      skip_sonarqube: false
+      skip_integration_tests: false
     secrets: inherit

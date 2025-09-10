@@ -21,10 +21,10 @@ public class AB2DSQSMockConfig {
     System.setProperty("feature.sqs.enabled", "false");
   }
 
-  @MockBean
+  @MockBean //NOSONAR
   SqsAsyncClient amazonSQSAsync;
 
-  @MockBean
+  @MockBean //NOSONAR
   SQSEventClient sQSEventClient;
 
    @Bean("mockAmazonSQS")

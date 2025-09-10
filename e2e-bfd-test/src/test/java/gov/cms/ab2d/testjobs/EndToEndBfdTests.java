@@ -63,7 +63,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.*;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;

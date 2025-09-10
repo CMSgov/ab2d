@@ -1,4 +1,4 @@
-name: SonarQube
+name: Contracts SonarQube
 
 on:
   workflow_call:
