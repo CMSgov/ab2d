@@ -22,12 +22,6 @@ permissions:
   id-token: write
   contents: read
 jobs:
-  unit-integration-test:
-    uses: ./.github/workflows/unit-integration-test.yml
-    with:
-      skip_integration_tests: false
-      skip_sonarqube: false
-    secrets: inherit
   build-deploy-api:
     uses: ./.github/workflows/build-deploy.yml
     with:
@@ -45,4 +39,10 @@ jobs:
     uses: ./.github/workflows/e2e-test.yml
     with:
       environment: ${{ inputs.environment }}
+    secrets: inherit
+  unit-integration-test:
+    uses: ./.github/workflows/unit-integration-test.yml
+    with:
+      skip_integration_tests: false
+      skip_sonarqube: false
     secrets: inherit
