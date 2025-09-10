@@ -87,10 +87,20 @@ jobs:
         run: |
             mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} install -pl common,job,coverage,api,worker -DskipITs=${SKIP_ITS}
 
+      - name: SonarQube analysis (with coverage)
+        if: ${{ inputs.skip_integration_tests == false }}
+        run: |
+          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} clean install -pl "!e2e-bfd-test,!e2e-test"  \
+          ${RUNNER_DEBUG:+"--debug"} \
+          sonar:sonar \
+          -Dsonar.projectKey=$SONAR_PROJECT_KEY \
+          -Dsonar.qualitygate.wait=true \
+          -Dusername="${ARTIFACTORY_USER}" \
+          -Dpassword="${ARTIFACTORY_PASSWORD}" \
+          -Drepository_url="${ARTIFACTORY_URL}" \
+          -Dsonar.ci.autoconfig.disabled=true \
+          -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+          -Dsonar.java.binaries=target/classes
 
-  sonarqube:
-    uses: ./.github/workflows/sonarqube.yml
-    if: ${{ inputs.skip_integration_tests == false }}
-    secrets: inherit
 
   
