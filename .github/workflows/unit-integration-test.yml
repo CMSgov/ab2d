@@ -82,20 +82,22 @@ jobs:
           mvn -ntp -U clean
 
       - name: Unit tests only
+        if: ${{ inputs.skip_integration_tests == true }}
         env:
           MAVEN_OPTS: "-Xmx1G -Xms1G"
         run: |
-          mvn test -pl "!e2e-bfd-test,!e2e-test" -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} 
+          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl "!e2e-bfd-test,!e2e-test"
 
       - name: Unit and integration tests with SonarQube
         if: ${{ inputs.skip_integration_tests == false }}
         env:
           MAVEN_OPTS: "-Xmx1G -Xms1G"
         run: |
-          mvn install failsafe:integration-test -pl "!e2e-bfd-test,!e2e-test" -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} \ 
+          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"}  \ 
           -Dusername=${ARTIFACTORY_USER} \
           -Dpassword=${ARTIFACTORY_PASSWORD} \
           -Drepository_url=${ARTIFACTORY_URL}  \
+          install failsafe:integration-test -pl "!e2e-bfd-test,!e2e-test" \
           ${RUNNER_DEBUG:+"--debug"} \
           sonar:sonar \
           -Dsonar.projectKey=$SONAR_PROJECT_KEY \
