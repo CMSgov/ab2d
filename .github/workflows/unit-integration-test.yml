@@ -93,7 +93,7 @@ jobs:
         env:
           MAVEN_OPTS: "-Xmx1G -Xms1G"
         run: |
-          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} clean install failsafe:integration-test -pl "!e2e-bfd-test,!e2e-test"  \
+          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} install failsafe:integration-test -pl "!e2e-bfd-test,!e2e-test"  \
           ${RUNNER_DEBUG:+"--debug"} \
           sonar:sonar \
           -Dsonar.projectKey=ab2d-project \
