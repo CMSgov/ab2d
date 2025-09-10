@@ -97,17 +97,12 @@ jobs:
       - name: SonarQube analysis (with coverage)
         if: ${{ inputs.skip_integration_tests == false && inputs.skip_sonarqube == false }}
         run: |
-          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} clean install -pl "!e2e-bfd-test,!e2e-test"  \
-          ${RUNNER_DEBUG:+"--debug"} \
           sonar:sonar \
           -Dsonar.projectKey=ab2d-project \
+          -Dsonar.qualitygate.wait=true \
           -Dusername="${ARTIFACTORY_USER}" \
           -Dpassword="${ARTIFACTORY_PASSWORD}" \
           -Drepository_url="${ARTIFACTORY_URL}" \
-          -Dsonar.ci.autoconfig.disabled=true \
-
-      - name: Quality Gate
-        uses: sonarsource/sonarqube-quality-gate-action@master
-        with:
-          scanMetadataReportFile: build/sonar/report-task.txt
-        timeout-minutes: 10
+          -Dsonar.ci.autoconfig.disabled=true 
+          
+          
