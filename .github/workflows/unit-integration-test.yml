@@ -74,6 +74,8 @@ jobs:
           mvn -ntp -U clean
 
       - name: Run unit and integration tests
+        env:
+          MAVEN_OPTS: "-Xmx1G -Xms1G"
         run: |
             mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
 

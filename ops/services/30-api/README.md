@@ -56,6 +56,7 @@ This module is responsible for deploying the EC2-backed ECS cluster that hosts t
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_cluster"></a> [cluster](#module\_cluster) | github.com/CMSgov/cdap//terraform/modules/cluster | e06f4acfea302df22c210549effa2e91bc3eff0d |
 | <a name="module_platform"></a> [platform](#module\_platform) | github.com/CMSgov/cdap//terraform/modules/platform | ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
@@ -73,7 +74,6 @@ This module is responsible for deploying the EC2-backed ECS cluster that hosts t
 | [aws_cloudwatch_metric_alarm.healthy_host_count](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
 | [aws_cloudwatch_metric_alarm.http_code_elb_5xx_count](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
 | [aws_cloudwatch_metric_alarm.target_response_time](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm) | resource |
-| [aws_ecs_cluster.ab2d_api](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_cluster) | resource |
 | [aws_ecs_service.api](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service) | resource |
 | [aws_ecs_task_definition.api](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_task_definition) | resource |
 | [aws_lb.ab2d_api](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb) | resource |

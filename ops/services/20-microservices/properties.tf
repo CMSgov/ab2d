@@ -79,7 +79,7 @@ resource "aws_ecs_task_definition" "properties" {
 
 resource "aws_ecs_service" "properties" {
   name                 = "${local.service_prefix}-properties"
-  cluster              = aws_ecs_cluster.this.id
+  cluster              = module.cluster.this.id
   task_definition      = aws_ecs_task_definition.properties.arn
   desired_count        = 1
   launch_type          = "FARGATE"
