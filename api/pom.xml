@@ -138,8 +138,6 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <executions>
                     <execution>
-                        <!-- repackage will break the integration-test class-path, so schedule after -->
-                        <phase>post-integration-test</phase>
                         <goals>
                             <goal>repackage</goal>
                         </goals>
@@ -197,10 +195,6 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
             </plugin>
         </plugins>
     </build>
