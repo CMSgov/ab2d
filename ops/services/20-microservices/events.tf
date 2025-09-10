@@ -98,7 +98,7 @@ resource "aws_ecs_task_definition" "events" {
 
 resource "aws_ecs_service" "events" {
   name                 = "${local.service_prefix}-events"
-  cluster              = aws_ecs_cluster.this.id
+  cluster              = module.cluster.this.id
   task_definition      = aws_ecs_task_definition.events.arn
   desired_count        = 1
   launch_type          = "FARGATE"

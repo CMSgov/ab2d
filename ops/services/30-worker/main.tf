@@ -109,13 +109,10 @@ resource "aws_security_group_rule" "efs_ingress" {
   security_group_id        = data.aws_security_group.efs.id
 }
 
-resource "aws_ecs_cluster" "this" {
-  name = "${local.service_prefix}-${local.service}"
 
-  setting {
-    name  = "containerInsights"
-    value = module.platform.is_ephemeral_env ? "disabled" : "enabled"
-  }
+module "cluster" {
+  source   = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=e06f4acfea302df22c210549effa2e91bc3eff0d"
+  platform = module.platform
 }
 
 data "aws_sqs_queue" "events" {
@@ -220,7 +217,7 @@ resource "aws_ecs_task_definition" "worker" {
 
 resource "aws_ecs_service" "worker" {
   name                               = "${local.service_prefix}-${local.service}"
-  cluster                            = aws_ecs_cluster.this.id
+  cluster                            = module.cluster.this.id
   task_definition                    = coalesce(var.override_task_definition_arn, aws_ecs_task_definition.worker.arn)
   launch_type                        = "FARGATE"
   desired_count                      = local.worker_desired_instances

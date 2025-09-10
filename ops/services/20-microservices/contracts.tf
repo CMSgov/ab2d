@@ -86,7 +86,7 @@ resource "aws_ecs_task_definition" "contracts" {
 
 resource "aws_ecs_service" "contracts" {
   name                 = "${local.service_prefix}-contracts"
-  cluster              = aws_ecs_cluster.this.id
+  cluster              = module.cluster.this.id
   task_definition      = aws_ecs_task_definition.contracts.arn
   desired_count        = 1
   launch_type          = "FARGATE"
