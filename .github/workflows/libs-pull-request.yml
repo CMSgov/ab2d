@@ -5,6 +5,7 @@ on:
   pull_request:
     paths:
       - 'libs/**'
+      - '.github/workflows/libs-pull-request.yml'
 
 permissions:
   contents: read
