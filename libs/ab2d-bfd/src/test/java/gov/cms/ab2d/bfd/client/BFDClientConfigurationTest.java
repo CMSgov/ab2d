@@ -34,7 +34,7 @@ import static org.springframework.test.context.support.TestPropertySourceUtils.a
 
 @SpringBootTest(classes = SpringBootApp.class)
 @ContextConfiguration(initializers = {BFDClientConfigurationTest.PropertyOverrider.class})
-class BFDClientConfigurationIT {
+class BFDClientConfigurationTest {
 
     // Leave so code coverage works
     @Autowired

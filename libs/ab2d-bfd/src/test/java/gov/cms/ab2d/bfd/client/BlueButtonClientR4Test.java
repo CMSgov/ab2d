@@ -29,7 +29,7 @@ import static org.springframework.test.context.support.TestPropertySourceUtils.a
  */
 @SpringBootTest(classes = SpringBootApp.class)
 @ContextConfiguration(initializers = {BlueButtonClientR4Test.PropertyOverrider.class})
-public class BlueButtonClientR4IT {
+public class BlueButtonClientR4Test {
     // A random example patient (Jane Doe)
     private static final Long TEST_PATIENT_ID = -20140000010000L;
     // A patient that only has a single EOB record in bluebutton

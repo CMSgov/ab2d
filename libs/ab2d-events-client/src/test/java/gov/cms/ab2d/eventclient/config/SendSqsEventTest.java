@@ -38,7 +38,7 @@ import static org.mockito.Mockito.*;
 @SpringBootTest(properties = {"spring.liquibase.enabled=false"})
 @ExtendWith(OutputCaptureExtension.class)
 @Testcontainers
-public class SendSqsEventIT {
+public class SendSqsEventTest {
 
     @Container
     private static final AB2DLocalstackContainer LOCALSTACK_CONTAINER = new AB2DLocalstackContainer();
