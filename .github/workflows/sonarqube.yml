@@ -1,4 +1,4 @@
-name: SonarQube
+name: API/Worker SonarQube
 
 on:
   workflow_call:
