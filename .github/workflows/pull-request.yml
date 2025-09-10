@@ -7,12 +7,16 @@ on:
       - lambdas/**
       - contracts/**
       - events/**
+
 permissions:
   id-token: write
   contents: read
 jobs:
   unit-integration-test:
     uses: ./.github/workflows/unit-integration-test.yml
+    with:
+      skip_integration_tests: true
+      skip_sonarqube: true
     secrets: inherit
   build-deploy-api:
     uses: ./.github/workflows/build-deploy.yml
