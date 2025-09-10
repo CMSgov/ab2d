@@ -1,9 +1,6 @@
 name: API/Worker build deploy test
 
 on:
-  push:
-    branches:
-      - workflow-updates
   workflow_call:
     inputs:
       environment:
