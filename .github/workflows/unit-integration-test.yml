@@ -105,8 +105,6 @@ jobs:
           -Dpassword="${ARTIFACTORY_PASSWORD}" \
           -Drepository_url="${ARTIFACTORY_URL}" \
           -Dsonar.ci.autoconfig.disabled=true \
-          -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
-          -Dsonar.java.binaries=target/classes
 
       - name: Quality Gate
         uses: sonarsource/sonarqube-quality-gate-action@master
