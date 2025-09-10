@@ -81,14 +81,28 @@ jobs:
         run: |
           mvn -ntp -U clean
 
-      - name: Tests
+#      - name: Tests
+#        env:
+#          MVN_GOALS: ${{ inputs.skip_integration_tests == true && 'test' || 'install failsafe:integration-test' }}
+#        run: |
+#          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} ${MVN_GOALS} -pl common,job,coverage,api,worker
+
+      - name: Tests - temp
         env:
           MVN_GOALS: ${{ inputs.skip_integration_tests == true && 'test' || 'install failsafe:integration-test' }}
         run: |
-          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} ${MVN_GOALS} -pl common,job,coverage,api,worker
+          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} install -pl common,job,coverage,api,worker
 
+      - name: Tests - temp worker
+        env:
+          MVN_GOALS: ${{ inputs.skip_integration_tests == true && 'test' || 'install failsafe:integration-test' }}
+        run: |
+          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} failsafe:integration-test -pl worker
+  
+  
+  
 
-#      - name: SonarQube analysis (with coverage)
+  #      - name: SonarQube analysis (with coverage)
 #        if: ${{ inputs.skip_integration_tests == false }}
 #        run: |
 #          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} clean install -pl "!e2e-bfd-test,!e2e-test"  \
