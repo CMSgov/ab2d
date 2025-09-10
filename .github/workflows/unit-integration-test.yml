@@ -91,6 +91,7 @@ jobs:
       - name: Tests
         env:
           MVN_GOALS: ${{ inputs.skip_integration_tests == true && 'test' || 'install failsafe:integration-test' }}
+          MAVEN_OPTS: "-Xmx1G -Xms1G"
         run: |
           mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} ${MVN_GOALS} -pl common,job,coverage,api,worker
 

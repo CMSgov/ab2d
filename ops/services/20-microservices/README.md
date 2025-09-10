@@ -66,6 +66,7 @@ Notably:
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_cluster"></a> [cluster](#module\_cluster) | github.com/CMSgov/cdap//terraform/modules/cluster | e06f4acfea302df22c210549effa2e91bc3eff0d |
 | <a name="module_platform"></a> [platform](#module\_platform) | github.com/CMSgov/cdap//terraform/modules/platform | ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66 |
 
 <!--WARNING: GENERATED CONTENT with terraform-docs, e.g.
@@ -79,7 +80,6 @@ Notably:
 |------|------|
 | [aws_cloudwatch_event_rule.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_rule) | resource |
 | [aws_cloudwatch_event_target.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_event_target) | resource |
-| [aws_ecs_cluster.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_cluster) | resource |
 | [aws_ecs_service.contracts](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service) | resource |
 | [aws_ecs_service.events](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service) | resource |
 | [aws_ecs_service.properties](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecs_service) | resource |
