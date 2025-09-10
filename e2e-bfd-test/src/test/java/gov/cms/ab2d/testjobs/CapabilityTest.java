@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 @Testcontainers
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @Tag("e2e-bfd-test")
-public class CapabilityTest {
+class CapabilityTest {
     @Autowired
     private BFDClient bfdClient;
 
