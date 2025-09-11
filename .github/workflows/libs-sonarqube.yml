@@ -45,7 +45,7 @@ jobs:
 
       - name: SonarQube Analysis
         run: |
-          ./gradlew sonar \
+          ./gradlew clean test jacocoTestReport sonar \
             -Dsonar.ci.autoconfig.disabled=true \
             -Dsonar.projectKey=$SONAR_PROJECT_KEY \
             -Dsonar.host.url=$SONAR_HOST_URL \
