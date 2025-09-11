@@ -5,48 +5,41 @@ on:
     branches:
       - main
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
-  build-api:
-    uses: ./.github/workflows/build.yml
+  build-deploy-api:
+    uses: ./.github/workflows/build-deploy.yml
     with:
       environment: test
       module: api
     secrets: inherit
-  build-worker:
-    uses: ./.github/workflows/build.yml
-    with:
-      environment: test
-      module: worker
-    secrets: inherit
-  deploy-api:
-    needs: build-api
-    permissions:
-      contents: read
-      id-token: write
-    uses: ./.github/workflows/deploy.yml
-    with:
-      environment: test
-      module: api
-    secrets: inherit
-  deploy-worker:
-    needs: build-worker
-    permissions:
-      contents: read
-      id-token: write
-    uses: ./.github/workflows/deploy.yml
+  build-deploy-worker:
+    uses: ./.github/workflows/build-deploy.yml
     with:
       environment: test
       module: worker
     secrets: inherit
   e2e-test:
-    needs: [deploy-api, deploy-worker]
+    needs: [ build-deploy-api, build-deploy-worker ]
     uses: ./.github/workflows/e2e-test.yml
     with:
       environment: test
     secrets: inherit
-  verify-deployment:
-    needs: [e2e-test]
-    uses: ./.github/workflows/verify-deploy.yml
+  e2e-bfd-test:
+    needs: [ e2e-test ]
+    uses: ./.github/workflows/e2e-bfd-test.yml
     with:
       environment: test
-    secrets: inherit        
+    secrets: inherit
+  fhir-test:
+    needs: [ build-deploy-api, build-deploy-worker ]
+    uses: ./.github/workflows/fhir-test.yml
+    with:
+      environment: test
+    secrets: inherit
+  sonarqube:
+    uses: ./.github/workflows/sonarqube.yml
+    secrets: inherit

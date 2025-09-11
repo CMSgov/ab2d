@@ -12,7 +12,3 @@ HPMS and BFD issues are captured by the AB2D applications.
 All issues are sent to the event service which stores them in a metrics table. 
 
 There are multiple quicksight dashboards to visualize the data. 
-
-## Build/Deploy/etc
-
-Please see the [README.md](../README.md) in the root directory of this project.

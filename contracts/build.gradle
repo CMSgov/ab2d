@@ -1,0 +1,90 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.4.4'
+    id 'com.jfrog.artifactory' version '4.33.1' apply false
+    id "org.sonarqube" version "4.1.0.3113"
+    id "gov.cms.ab2d.plugin" version "1.0.2"
+    id 'maven-publish'
+    id 'org.cyclonedx.bom' version '1.7.4' apply true
+}
+
+version="2.0.0"
+group = "gov.cms.ab2d"
+
+ext {
+    lombokVersion = '1.18.38'
+    springCloudAwsVersion = '3.3.0'
+    springBootVersion='3.4.4'
+    testContainerVersion='1.20.6'
+    liquibaseVersion = '4.31.1'
+}
+
+allprojects {
+    apply plugin: "org.cyclonedx.bom"
+    dependencies {
+        implementation 'gov.cms.ab2d:ab2d-events-client:3.3.6'
+        implementation 'gov.cms.ab2d:ab2d-contracts-client:2.1.1'
+        implementation "io.awspring.cloud:spring-cloud-aws:${springCloudAwsVersion}"
+        implementation "io.awspring.cloud:spring-cloud-aws-dependencies:${springCloudAwsVersion}"
+        implementation "io.awspring.cloud:spring-cloud-aws-starter:${springCloudAwsVersion}"
+        implementation "io.awspring.cloud:spring-cloud-aws-starter-sqs:${springCloudAwsVersion}"
+        implementation 'net.logstash.logback:logstash-logback-encoder:7.3'
+        implementation "org.liquibase:liquibase-core:${liquibaseVersion}"
+        implementation 'org.postgresql:postgresql:42.7.3'
+        implementation "org.springframework.boot:spring-boot-starter-quartz:${springBootVersion}"
+        implementation "org.springframework.boot:spring-boot-starter-webflux:${springBootVersion}"
+        implementation "org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}"
+        implementation "org.springframework.boot:spring-boot-starter-validation:${springBootVersion}"
+        implementation "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
+        implementation 'org.springframework:spring-context:6.2.5'
+        implementation 'org.springdoc:springdoc-openapi-ui:1.8.0'
+        testImplementation 'org.mockito:mockito-core:5.16.1'
+        testImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
+        testImplementation "org.testcontainers:localstack:${testContainerVersion}"
+        testImplementation "org.testcontainers:postgresql:${testContainerVersion}"
+        testImplementation "org.testcontainers:junit-jupiter:${testContainerVersion}"
+        testImplementation "org.projectlombok:lombok:${lombokVersion}"
+        compileOnly "org.projectlombok:lombok:${lombokVersion}"
+        implementation(platform(annotationProcessor("org.projectlombok:lombok:${lombokVersion}")))
+        annotationProcessor("org.projectlombok:lombok:${lombokVersion}")
+    }
+
+    cyclonedxBom {
+        // includeConfigs is the list of configuration names to include when generating the BOM (leave empty to include every configuration)
+        includeConfigs = ["runtimeClasspath"]
+        // skipConfigs is a list of configuration names to exclude when generating the BOM
+        skipConfigs = ["compileClasspath", "testCompileClasspath"]
+        // Specified the type of project being built. Defaults to 'library'
+        projectType = "library"
+        // Specified the version of the CycloneDX specification to use. Defaults to 1.4.
+        schemaVersion = "1.4"
+        // Boms destination directory (defaults to build/reports)
+        destination = file("build/reports")
+        // The file name for the generated BOMs (before the file format suffix). Defaults to 'bom'
+        outputName = "bom"
+        // The file format generated, can be xml, json or all for generating both
+        outputFormat = "all"
+        // Exclude BOM Serial Number
+        includeBomSerialNumber = false
+        // Override component version
+        componentVersion = "2.0.0"
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+    maven {
+        def artifactoryUrl = System.getenv("ARTIFACTORY_URL") ?: System.getProperty("artifactory_contextUrl")
+        println("Using Artifactory URL in build.gradle: ${artifactoryUrl}/ab2d-main")
+        url = "${artifactoryUrl}/ab2d-main"
+        credentials {
+            username = System.getenv("ARTIFACTORY_USER") ?: System.getProperty("username")
+            password = System.getenv("ARTIFACTORY_PASSWORD") ?: System.getProperty("password")
+        }
+    }
+}

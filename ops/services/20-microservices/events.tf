@@ -30,6 +30,7 @@ resource "aws_ecs_task_definition" "events" {
   container_definitions = nonsensitive(jsonencode([{
     name : "events-service-container", #TODO: Consider simplifying this name, just use "events"
     image : local.events_image_uri,
+    readonlyRootFilesystem = true
     essential : true,
     secrets : [
       { name : "AB2D_DB_DATABASE", valueFrom : local.db_database_arn },
@@ -65,17 +66,49 @@ resource "aws_ecs_task_definition" "events" {
       }
     },
     healthCheck : null
+    mountPoints = [
+      {
+        "containerPath" : "/tmp",
+        "sourceVolume" : "tmp",
+        "readOnly" : false
+      },
+      {
+        "containerPath" : "/newrelic/logs",
+        "sourceVolume" : "newrelic_logs",
+        "readOnly" : false
+      },
+      {
+        "containerPath" : "/var/log",
+        "sourceVolume" : "var_log",
+        "readOnly" : false
+      }
+    ]
   }]))
+  # The NewRelic agent needs access to these
+  volume {
+    name = "tmp"
+  }
+  volume {
+    name = "newrelic_logs"
+  }
+  volume {
+    name = "var_log"
+  }
 }
 
 resource "aws_ecs_service" "events" {
   name                 = "${local.service_prefix}-events"
-  cluster              = aws_ecs_cluster.this.id
+  cluster              = module.cluster.this.id
   task_definition      = aws_ecs_task_definition.events.arn
   desired_count        = 1
   launch_type          = "FARGATE"
   platform_version     = "1.4.0"
   force_new_deployment = anytrue([var.force_events_deployment, var.events_service_image_tag != null])
+  propagate_tags       = "SERVICE"
+
+  tags = {
+    service = "events"
+  }
 
   network_configuration {
     subnets          = keys(module.platform.private_subnets)

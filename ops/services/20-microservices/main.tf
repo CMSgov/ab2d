@@ -8,7 +8,7 @@ terraform {
 }
 
 module "platform" {
-  source    = "git::https://github.com/CMSgov/cdap.git//terraform/modules/platform?ref=PLT-1099"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app          = local.app
@@ -48,23 +48,9 @@ locals {
   vpc_id                     = module.platform.vpc_id
 }
 
-# ECS Cluster
-####################################
-resource "aws_ecs_cluster" "this" {
-  name = "${local.service_prefix}-${local.service}"
-
-  setting {
-    name  = "containerInsights"
-    value = module.platform.is_ephemeral_env ? "disabled" : "enabled"
-  }
-
-  # FIXME Enable the below, along with enabling the cluster acess to the CMK
-  # configuration {
-  #   managed_storage_configuration {
-  #     fargate_ephemeral_storage_kms_key_id = local.kms_master_key_id
-  #     kms_key_id                           = local.kms_master_key_id
-  #   }
-  # }
+module "cluster" {
+  source   = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=e06f4acfea302df22c210549effa2e91bc3eff0d"
+  platform = module.platform
 }
 
 # Chatbot Guardrail Policy
@@ -89,7 +75,7 @@ resource "aws_cloudwatch_event_rule" "this" {
   "source": ["aws.ecs"],
   "detail-type": ["ECS Task State Change"],
   "detail": {
-    "clusterArn": ["${aws_ecs_cluster.this.arn}"],
+    "clusterArn": ["${module.cluster.this.arn}"],
     "lastStatus": ["RUNNING"]
   }
 }

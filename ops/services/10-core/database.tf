@@ -1,5 +1,5 @@
 module "db" {
-  source = "github.com/CMSgov/cdap//terraform/modules/aurora?ref=f91210d2640845f1b6f0edb7087b6cbf02acbdec"
+  source = "github.com/CMSgov/cdap//terraform/modules/aurora?ref=f333c0a8367889a46aa00eeb95fd67cbd838b909"
 
   snapshot_identifier     = var.aurora_snapshot
   backup_retention_period = module.platform.is_ephemeral_env ? 1 : 7
@@ -19,8 +19,6 @@ module "db" {
 
   storage_type = lookup({
     prod = "aurora-iopt1"
-    dev  = "aurora-iopt1" #TODO: Remove NLT 2025-08-15
-    test = "aurora-iopt1" #TODO: Remove NLT 2025-08-15
   }, local.env, "")
 
   backup_window = lookup({
@@ -72,7 +70,7 @@ module "db" {
     {
       apply_method = "pending-reboot"
       name         = "cron.database_name"
-      value        = local.benv
+      value        = "main"
     },
     {
       apply_method = "pending-reboot"

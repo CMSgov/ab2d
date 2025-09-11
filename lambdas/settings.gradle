@@ -1,5 +1,5 @@
 rootProject.name = 'ab2d-lambdas'
-include 'eob-fetcher', 'metrics-lambda', 'audit', 'coverage-counts', 'database-management', 'lambda-lib', 'lambda-test-utils'
+include 'metrics-lambda', 'audit', 'coverage-counts', 'database-management', 'lambda-lib', 'lambda-test-utils'
 include 'lambda-test-utils'
 include 'retrieve-hpms-counts'
 include 'optout'

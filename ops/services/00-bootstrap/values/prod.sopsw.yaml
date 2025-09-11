@@ -1,0 +1,49 @@
+/ab2d/mgmt/pdps/nonsensitive/contracts-csv/avalon-insurance: S8067
+/ab2d/mgmt/pdps/nonsensitive/contracts-csv/banner-health: S3147
+/ab2d/mgmt/pdps/nonsensitive/contracts-csv/cambia-health: No contract listed
+/ab2d/mgmt/pdps/nonsensitive/contracts-csv/centene-wellcare: S5810,S5768,S4802
+/ab2d/mgmt/pdps/nonsensitive/contracts-csv/cigna-health: S5617
+/ab2d/mgmt/pdps/nonsensitive/contracts-csv/clear-spring: S6946
+/ab2d/mgmt/pdps/nonsensitive/contracts-csv/humana: S5884,S5552
+/ab2d/mgmt/pdps/nonsensitive/contracts-csv/mutual-of-omaha: S7126
+/ab2d/mgmt/pdps/nonsensitive/contracts-csv/navitus-health: No contract listed
+/ab2d/mgmt/pdps/nonsensitive/contracts-csv/paramount-insurance: S5588
+/ab2d/mgmt/pdps/nonsensitive/contracts-csv/regence-oregon: No contract listed
+/ab2d/mgmt/pdps/nonsensitive/contracts-csv/silverscript: S5601
+/ab2d/mgmt/pdps/nonsensitive/contracts-csv/united-health: S5805,S5921,S5820
+/ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/avalon-insurance: ENC[AES256_GCM,data:gwg+QYmSsLghrDK9tEhy+0g=,iv:RKebenkajLlRBQjOtAoeHt66MrR385q+fji1H8KfTHU=,tag:MAUd9sLup9PTe7jjurHhJg==,type:str]
+/ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/banner-health: ENC[AES256_GCM,data:NvZoTH6QqFfXI3/oMO7selKqvMRfQJshuyLfjEGCu+PfDwtWNvVDFLXAwYl+PHd3Frxr9KCEew==,iv:cGN88c4sAyDlTViLKoccMROsIua5ujqp/onhkrt2atI=,tag:3Kik5s4J5qHZetXt4TMgBA==,type:str]
+/ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/cambia-health: ENC[AES256_GCM,data:GuhvhQ+Nifr7oD5WGvSOcBY=,iv:Yyji3CIzQgVEmSXUFJkTefhqBUEZr4/1wrYVQvfDA3I=,tag:wX9fejAN94AoWmeCI0cgvQ==,type:str]
+/ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/centene-wellcare: ENC[AES256_GCM,data:SEoblPqEA107h2F9IdS81i3rjzwJ3yKuUDKqx1cJTPVi072vFRtfZH4zP0wc4OVdKPrcyR3si42wU8dXcMJq1N7fcFacv+XMPycey8SexCSQ+ZtWPSgJip9SU9NmsOU6domBAyNresT6aXoUrzEz3YTkr+632t91NUfr62FQlzSeaxi7oOSjqOnbUmO+3rXOsrZyobjj1MamJmZh7TOuSs2kYqp+2C9emQaBe+YGQipD9unKk7tbXNlYsPm+Sx9wpVGFmTOgY65eUEz3DMBJ+Cd6Vj+WufS18fZexl9d+Co4ySGEuSKWXMrtKc9pjp5iPApinTDGT4w=,iv:OtJtVFFOKw49F8hjyvvROeZwzhvNBSjHYzzQbdt/gTE=,tag:iRyaNPKoNKvwnG7bI3MZqw==,type:str]
+/ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/cigna-health: ENC[AES256_GCM,data:O92pamKzWYc5xnKv/mw=,iv:fNXRONBE8SfWlhaIfTTlUtJWbfg1nPJ50YzlbXlaZSA=,tag:3yaTh0LJiOlIRR7BoUKxdQ==,type:str]
+/ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/clear-spring: ENC[AES256_GCM,data:/2mFubwlkBM8Tl4soNz2AzRkG5gCnrwNB/XAbqKxCJWepA==,iv:vcsCgIQ+MGBLWSzIBQTL7zgK7Mvi7k0SVZQPe397BI4=,tag:1P0xanISD3Xo6/gDFp4hhw==,type:str]
+/ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/humana: ENC[AES256_GCM,data:Q0s5dJ3CluWHbF153dfCU2U=,iv:EaV8CYtUqqOvef4xKDAqLOZxIk1JheZfHNb1LjxnfBk=,tag:eL5ch8b05IRmyAbSRFp/Tg==,type:str]
+/ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/mutual-of-omaha: ENC[AES256_GCM,data:LQqJsqct44A4fxRb2fsbIenmP/vZiyiwhE1ZQ9SSaSb25k1IYndiq5OugRLp+QNkdBAEout4aS5lYL00+VDiRglu+w5pG1X2XCB0kmR4oZytJQJ9iEhd1mPJ1Ya/+LvZhfke2zYDjxWZ2376sWi1TttsRwkDcN6n,iv:kkwuAmVCWz1xYQjD6sk5hb14eGhRwBgh2z2EwD014JI=,tag:e7Pvws9HkPdPB62rLQA/Mg==,type:str]
+/ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/navitus-health: ENC[AES256_GCM,data:Kl7EeiWMMlOglq6ze+Z/,iv:a+pZ2jc7mQckX6QML0qDWnkU84ZbWQBJtyN6rKRqLio=,tag:KbZ1TRKvPf3XrfReubjc1Q==,type:str]
+/ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/paramount-insurance: ENC[AES256_GCM,data:i1ET6vEVXDHc9LHAMtU=,iv:tmY7GhxV0A93iMmGrirsKcQow8qVVyNJYUmYzEp7PZc=,tag:h0viPjo3j8NzJUILb7aMRQ==,type:str]
+/ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/regence-oregon: ENC[AES256_GCM,data:kT0yl0uk0kI/H2WdMaWdTQ==,iv:hUYmx6ZkDUnUpvzLkHsulGtxuemVIYnlWTMImeAxfK0=,tag:Ufy687xbNTe3yzBIILA5zw==,type:str]
+/ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/silverscript: ENC[AES256_GCM,data:8EpalRwzzOF9O7eNAH+AShV+yZl+iAAtrNLcJ4TsPkRYyNPSfI8xz7thw/SM5j62AdKOQQ/3s00A1w+g0ieM2S9EHD8iFz26Q+G66R8a6p4SEwi95qSGfUXRGdHPwMNvrHGjZwcmiL5pjejHSlK/YNDD,iv:27m73uhcLRmsJXXSXIFjzPgvqxStkEbgSoqDBqJAxzw=,tag:CtbyDfStb32Vl1B1ALvkqg==,type:str]
+/ab2d/mgmt/pdps/sensitive/cidr-blocks-csv/united-health: ENC[AES256_GCM,data:cEFl9jbxoL0lQ3gSqJehA158,iv:jP+4ymDT7z4aDKvKgcX/JolR2XwrYzIzc0if3ho1YWs=,tag:cV4F2Ss5eSoe5J0J1W32TQ==,type:str]
+/ab2d/mgmt/artifactory/sensitive/token: ENC[AES256_GCM,data:Zs4JrgK+AZ1wz52GuB3OZpMjublg4w2/+KVIAuqhjTxNeakt9tbpvsTf4iami46fNscNYaU9EKHLI0ilzeDR9e+H8CSVk6dGHBhSYnnJzUK490ADNSt7BVTl7LNnqDqriuHBAGz/Akce4BeSkEfFlpxOdXZTNHzCxmD+PR3r15U19Ewq6yZmcfZx2RviCQCehsyIuzVDrKVVBeFc8jn5RHXOlNnfEtGN0nFKQ19F0YnQDM99rGI1LgouETjI4zIY2x/nLEIkDNHBH1jxIyz+34QkQaa4hTKTvA3N8rWXkoRaV+l3KWdo3cmxTWg/0qro8b3rcvYkQ0rYIU+BVMsEYx7kVpgCMW1VzcyNRmeTW46+WYG0tHryENDeWvkCpxM0/DaSVxL596rCq7C7wFuLTbUvlMz+lmc5wn9PeHgkqCICxXNxxCud4368GnMUJj2ZAMcNzH/ah1ZjHC2DRUNFVx5D8R44llcmgc7i+NXgR+yE9Je93CRj+YKjKFRgyv61b7DlfAszl/Nuvzi80Ibq3Thl/7AGNJtkG19yf7ctnWs83pSp6Fzzi/eetpWt/wB0/7IluFiyjnUnlyxyLz2tUFEfGLxgnF9HTGfsjeRCcosr2qefa/QL09+BoqgwvXTHJndR9KZ2UH1zgK9gF+qoEfoPetfHHFW951P2/VEFrVB1+iaGgx8mlyPKNdSl6mHDrYyK4FGxvzKyba9zrys75ntS7P24hBVAUBKWhdtRz864uRYJ2/aoDW35Dcudez9C9a2F33A6tF2qWIgAwgPNjglcmnQHsTy9GRE90yZNNGng2P+L8NVm3ATSHgEKVdXroDN4BzBxs13ux1fBRyiLMkFSyMPneqUJhkdB7hzussE204hKSzKPJ1A2lqB7y8OVox1IxjhBtjC/5bWSWibh9NDpm3+co5PuIeIAmCeG1OEqcHCJOZ1Z6EKL06uUnVhWX4bW9zgoiA21v3yiClWklYyQMB4xPma6VL9uBGRJ6OuyxDGbtLTNja2GMXCLyspSXyY77DIrtZ9l+8ve2Cy6,iv:PPMx7c21hjfs48+ts0qSpBr3F0/wFw9szugRt9B9k2I=,tag:oLSeNFfdM6rNIkwgHpE/4Q==,type:str]
+/ab2d/mgmt/artifactory/nonsensitive/url: https://artifactory.cloud.cms.gov/artifactory
+/ab2d/mgmt/slack-webhooks/sensitive/ab2d-slack-alerts: ENC[AES256_GCM,data:waCpQX/XxXYYTKMMlSjI+JANTXaOhrpbOOKDjfvAGbEfYo/YyVDEfIal/nrmAtsSlCX4un5wzsahhNy1tZm37Z97pKP23m7v1dWRiq3hLA==,iv:l0EWqKWapuxOSB+qjesk+oaLH9bn22clno+KgPVa6cc=,tag:TaSEyt6EJQisGAp6JIFsWw==,type:str]
+/ab2d/mgmt/slack-webhooks/sensitive/ab2d-security: ENC[AES256_GCM,data:vcCWMy+1z78xRSfms72opb246OlHvdt/ytPfwaWjgx8XuSeAdl3Dbctm99vi/siHxT2X5t7Y+Z7MqcsJ8F6kArv1zmdPkbF5TjIaWexEmw==,iv:tR8iIvIol5BkRYY4VQBStM8gDY3XXjtgUof6vM4uQ5g=,tag:e6NgmJcZJVEzDe84tib2Rg==,type:str]
+/ab2d/mgmt/okta/sensitive/test-pdp-1000-id: ENC[AES256_GCM,data:GHjlAuKnUb39EJ0upP72KzDAca8=,iv:xrT1Tnvxa1ZMy5GW1zm5deoKmBFsNdkBFfTVFpRs57s=,tag:lwF6PCvNUE+mRDG9h2KSVw==,type:str]
+/ab2d/mgmt/okta/sensitive/test-pdp-1000-secret: ENC[AES256_GCM,data:i0VlfH2mr11I+6Dxu9OmC+ejbPLAhLCh6SLdP6wSDI2RFrlv75YSxA==,iv:p7qAIl0BoVb3PSiUjF204Jzpaf6xC1iUUyA9+yf+NsI=,tag:vczXBSIEdIUVZs9BaMCjgA==,type:str]
+/ab2d/mgmt/okta/sensitive/test-pdp-100-id: ENC[AES256_GCM,data:EtdmWLJ4bsRQ3Ng04GCeRnMdB/o=,iv:OkKEv20WhW9oQiB/jG6WK/Kppyl2b2srLuJ42Gd0794=,tag:KMejN0ew/S4i7ghlTPqZiw==,type:str]
+/ab2d/mgmt/okta/sensitive/test-pdp-100-secret: ENC[AES256_GCM,data:tUS1YB7YoTagFTvsZd4193FCLAr9eyCa0b+BIvUAFu4bJidacxROKw==,iv:n1PqC7bEB59Ogxzhn2Mmp9ia1EPY2yXTh5K5Mv8et9g=,tag:xfv/x7sxrOOaFoYiflze7Q==,type:str]
+/ab2d/mgmt/splunk/sensitive/alert-email: ENC[AES256_GCM,data:5UorPXfP5FQYStdTLpGVeUyFNgapkWT/YyepyZlHfTfEc8hzjT/zq0L9JhYVZ2+I689HKuR4R6sdDm/qsA==,iv:EnCAqo9vMEOws9gZARj9KID+YYwnVlysIJrpW/GuQks=,tag:RKk3veVvGN5w30//WuJQwA==,type:str]
+/ab2d/mgmt/core/nonsensitive/database_name: main
+sops:
+  kms:
+    - arn: arn:aws:kms:us-east-1:${ACCOUNT_ID}:alias/ab2d-prod
+      created_at: "2025-06-30T19:15:02Z"
+      enc: AQICAHiiBcH1zXWffn77hoG6y6pEPZ+4jjugLfsVfebBM+L/LgHlCl+ZPjCo8JOcN+bft1xHAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMgPYKsm4D+zfL36ByAgEQgDtAhv+GhjCNaxDzir/C4y7RDWMunWNoBhCrfkEUYO/LGI7e/Y3NtNwzLgSR87sI+GXER0s9NJ6vtW9+Cg==
+      aws_profile: ""
+    - arn: arn:aws:kms:us-west-2:${ACCOUNT_ID}:alias/ab2d-prod
+      created_at: "2025-06-30T19:15:02Z"
+      enc: AQICAHhQOCwYYioO/Y8DTCCF3UDslbqq7E89gMxakADNsQ0frwHZhUFhT3cxecuIluMEm26wAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMn3o8iTDE/yxepTTnAgEQgDsZ1rfL+6FMEpIK10eiNjmMM8E2jNVeGGQbAZSvpnWYdxBUet6iCZtDaHs7Od70oegQvAJjpTbA12+ecQ==
+      aws_profile: ""
+  unencrypted_regex: /nonsensitive/
+  mac_only_encrypted: true
+  version: 3.10.2

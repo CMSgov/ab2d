@@ -1,4 +1,5 @@
-name: deploy
+name: API/Worker deploy
+run-name: deploy ${{ inputs.module }} ${{ inputs.environment }} ${{ inputs.image_tag }}
 
 on:
   workflow_call:
@@ -9,75 +10,84 @@ on:
       module:
         required: true
         type: string
+      image_tag:
+        description: ECR image tag for selected module
+        type: string
   workflow_dispatch:
     inputs:
       environment:
+        description: AB2D environment used for ECR
         required: true
         type: choice
         options:
           - dev
           - test
-          - sbx
+          - sandbox
           - prod
-          - prod_test
       module:
+        description: AB2D module
         required: true
         type: choice
         options:
           - api
           - worker
+          - core
+      image_tag:
+        description: ECR image tag for selected module (ab2d-<module>-<branch>-<SHA>)
+        required: true
+        type: string
 
 env:
-  # NOTE: Required checks set in repository branch protection rules/rulesets cannot be skipped
-  # with the native path filtering. This regex and the 'workflow' job below is a hack to only
-  # run the lengthier/costlier workflows when there are relevant files changed.
-  # See https://github.com/orgs/community/discussions/44490 for a discussion.
-  workflow_files_re: '^(api|common|coverage|e2e-bfd-test|e2e-test|job|src|worker)/.+$|^(pom.xml|settings.xml)$|^.github/workflows/(build|deploy|e2e-test|unit-integration-test|verify-deploy).yml$'
+  TOFU_VERSION: 1.10.0-beta2
+
 jobs:
-  workflow:
-    name: Checking workflow
-    runs-on: ubuntu-24.04
-    outputs:
-      files: ${{ steps.workflow_files.outputs.files }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
-      - id: workflow_files
-        name: Set output
-        run: |-
-          git diff --name-only --diff-filter=ACMRTD HEAD^ HEAD |\
-            grep -P "${workflow_files_re}" \
-          && echo "files=true" >> $GITHUB_OUTPUT || echo "files=" >> $GITHUB_OUTPUT
   deploy:
-    needs: workflow
-    if: needs.workflow.outputs.files
-    runs-on: ubuntu-latest
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     permissions:
       contents: read
       id-token: write
+    env:
+      AWS_ACCOUNT: ${{contains(fromJSON('["dev", "test"]'), inputs.environment) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT}}
+      AB2D_ENV: ${{ inputs.environment }}
+      MODULE: ${{ inputs.module }}
+      IMAGE_TAG: ${{ inputs.image_tag }}
+
     steps:
       - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
-        env:
-          ACCOUNT: ${{ inputs.environment == 'prod_test' && 'prod' || inputs.environment }}
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ secrets[format('{0}_ACCOUNT_ID', env.ACCOUNT)] }}:role/delegatedadmin/developer/ab2d-${{ env.ACCOUNT }}-github-actions
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.AB2D_ENV }}-github-actions
 
-      - name: Deploy ECS service to run on latest image in ECR
-        env:
-          SERVICE_NAME: ab2d-${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}-${{ inputs.module }}
+      - name: Install tofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: ${{ env.TOFU_VERSION }}
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Tofu plan and apply - Worker
+        working-directory: ops/services/30-worker/
+        if: ${{ env.MODULE == 'worker' }}
         run: |
-          echo "Deploying service $SERVICE_NAME"
-          aws ecs update-service --cluster "$SERVICE_NAME" --service "$SERVICE_NAME" --force-new-deployment > /dev/null
-          echo "Waiting for ECS service to stabilize..."
-          exit_status=1
-          set +e
-          while [ "$exit_status" != "0" ]; do
-            aws ecs wait services-stable --cluster "$SERVICE_NAME" --services "$SERVICE_NAME"
-            exit_status="$?"
-            echo "Wait result: $exit_status"
-          done
-          set -e
-          echo "✅ ECS service stabilized."
+          tofu init -var=parent_env=$AB2D_ENV -reconfigure
+          tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
+          tofu plan -var=worker_service_image_tag="$IMAGE_TAG" -out=tfplan
+          tofu apply -input=false tfplan 
+
+      - name: Tofu plan and apply - API
+        working-directory: ops/services/30-api/
+        if: ${{ env.MODULE == 'api' }}
+        run: |
+          tofu init -var=parent_env=$AB2D_ENV -reconfigure
+          tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
+          tofu plan -var=api_service_image_tag="$IMAGE_TAG" -out=tfplan
+          tofu apply -input=false tfplan
+
+      - name: Tofu plan and apply - Core
+        working-directory: ops/services/10-core/
+        if: ${{ env.MODULE == 'core' }}
+        run: |
+          tofu init -var=parent_env=$AB2D_ENV -reconfigure
+          tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
+          tofu plan -out=tfplan

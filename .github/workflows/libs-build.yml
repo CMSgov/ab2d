@@ -1,0 +1,69 @@
+name: Libs build
+run-name: Build-libraries
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+  id-token: write
+defaults:
+  run:
+    working-directory: ./libs
+
+jobs:
+  build:
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    env:
+      AWS_ACCOUNT: ${{ secrets.NON_PROD_ACCOUNT }}
+      AWS_REGION: ${{ vars.AWS_REGION }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'corretto'
+
+      - name: Assume role in target account
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-dev-github-actions
+
+      - name: Set env vars from AWS params
+        uses: cmsgov/cdap/actions/aws-params-env-action@main
+        with:
+          params: |
+            ARTIFACTORY_URL=/artifactory/url
+            ARTIFACTORY_USER=/artifactory/user
+            ARTIFACTORY_PASSWORD=/artifactory/password
+            SONAR_HOST_URL=/sonarqube/url
+            SONAR_TOKEN=/sonarqube/token
+
+      - name: Build and test libraries
+        run: ./gradlew clean test --info -b build.gradle
+
+      - name: Build JARs
+        run: ./gradlew jar --info -b build.gradle
+
+      - name: SonarQube Analysis
+        run: |          
+          unset CODEBUILD_BUILD_ID CODEBUILD_START_TIME CODEBUILD_BUILD_ARN
+          
+          ./gradlew sonar \
+            -Dsonar.projectKey=ab2d-lib-project \
+            -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.login=$SONAR_TOKEN \
+            -Dsonar.ci.autoconfig.disabled=true
+
+      - name: Quality Gate
+        id: sonarqube-quality-gate-check
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        with:
+          scanMetadataReportFile: libs/build/sonar/report-task.txt
+        timeout-minutes: 10

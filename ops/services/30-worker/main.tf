@@ -14,7 +14,7 @@ module "data_db_writer_instance" {
 }
 
 module "platform" {
-  source    = "git::https://github.com/CMSgov/cdap.git//terraform/modules/platform?ref=PLT-1099"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app          = local.app
@@ -109,13 +109,10 @@ resource "aws_security_group_rule" "efs_ingress" {
   security_group_id        = data.aws_security_group.efs.id
 }
 
-resource "aws_ecs_cluster" "this" {
-  name = "${local.service_prefix}-${local.service}"
 
-  setting {
-    name  = "containerInsights"
-    value = module.platform.is_ephemeral_env ? "disabled" : "enabled"
-  }
+module "cluster" {
+  source   = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=e06f4acfea302df22c210549effa2e91bc3eff0d"
+  platform = module.platform
 }
 
 data "aws_sqs_queue" "events" {
@@ -147,12 +144,28 @@ resource "aws_ecs_task_definition" "worker" {
   container_definitions = nonsensitive(jsonencode([{
     name : local.service,
     image : local.worker_image_uri,
+    readonlyRootFilesystem = true
     essential : true,
     mountPoints : [
       {
         containerPath : local.ab2d_efs_mount,
         sourceVolume : "efs"
-      }
+      },
+      {
+        "containerPath" : "/tmp",
+        "sourceVolume" : "tmp",
+        "readOnly" : false
+      },
+      {
+        "containerPath" : "/newrelic/logs",
+        "sourceVolume" : "newrelic_logs",
+        "readOnly" : false
+      },
+      {
+        "containerPath" : "/var/log",
+        "sourceVolume" : "var_logs",
+        "readOnly" : false
+      },
     ],
     secrets : [
       { name : "AB2D_BFD_KEYSTORE_PASSWORD", valueFrom : local.bfd_keystore_password_arn },
@@ -176,11 +189,9 @@ resource "aws_ecs_task_definition" "worker" {
       { name : "AB2D_JOB_POOL_MAX_SIZE", value : local.max_concurrent_eob_jobs },
       { name : "AWS_SQS_FEATURE_FLAG", value : "true" }, #FIXME: Is this even used?
       { name : "AWS_SQS_URL", value : data.aws_sqs_queue.events.url },
-      { name : "CONTRACTS_SERVICE_FEATURE_FLAG", value : "true" }, #FIXME: Is this even used?
       { name : "IMAGE_VERSION", value : local.worker_image_tag },
       { name : "NEW_RELIC_APP_NAME", value : local.new_relic_app_name },
-      { name : "PROPERTIES_SERVICE_FEATURE_FLAG", value : "true" }, #FIXME: Is this even used?
-      { name : "PROPERTIES_SERVICE_URL", value : local.microservices_url },
+      { name : "MICROSERVICES_URL", value : local.microservices_url },
     ],
     logConfiguration : {
       logDriver : "awslogs"
@@ -193,16 +204,26 @@ resource "aws_ecs_task_definition" "worker" {
     },
     healthCheck : null
   }]))
+  volume {
+    name = "tmp"
+  }
+  volume {
+    name = "newrelic_logs"
+  }
+  volume {
+    name = "var_logs"
+  }
 }
 
 resource "aws_ecs_service" "worker" {
   name                               = "${local.service_prefix}-${local.service}"
-  cluster                            = aws_ecs_cluster.this.id
+  cluster                            = module.cluster.this.id
   task_definition                    = coalesce(var.override_task_definition_arn, aws_ecs_task_definition.worker.arn)
   launch_type                        = "FARGATE"
   desired_count                      = local.worker_desired_instances
   force_new_deployment               = anytrue([var.force_worker_deployment, var.worker_service_image_tag != null])
   deployment_minimum_healthy_percent = 100
+  propagate_tags                     = "SERVICE"
 
   network_configuration {
     subnets          = local.writer_adjacent_subnets

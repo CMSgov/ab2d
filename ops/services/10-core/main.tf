@@ -8,7 +8,7 @@ terraform {
 }
 
 module "platform" {
-  source    = "git::https://github.com/CMSgov/cdap.git//terraform/modules/platform?ref=PLT-1099"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app         = local.app
@@ -25,11 +25,6 @@ locals {
   default_tags = module.platform.default_tags
   env          = terraform.workspace
   service      = "core"
-
-  benv = lookup({
-    "test"    = "impl"
-    "sandbox" = "sbx"
-  }, local.parent_env, local.parent_env)
 
   database_user      = module.platform.ssm.core.database_user.value
   database_password  = module.platform.ssm.core.database_password.value
@@ -83,6 +78,31 @@ resource "aws_s3_bucket_public_access_block" "main_bucket" {
   restrict_public_buckets = true
 }
 
+data "aws_iam_policy_document" "main_bucket" {
+  statement {
+    sid    = "AllowSSLRequestsOnly"
+    effect = "Deny"
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+    actions = ["s3:*"]
+    resources = [
+      aws_s3_bucket.main_bucket.arn,
+      "${aws_s3_bucket.main_bucket.arn}/*"
+    ]
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "main_bucket" {
+  bucket = aws_s3_bucket.main_bucket.id
+  policy = data.aws_iam_policy_document.main_bucket.json
+}
 
 data "aws_efs_file_system" "efs" {
   count = module.platform.is_ephemeral_env ? 1 : 0

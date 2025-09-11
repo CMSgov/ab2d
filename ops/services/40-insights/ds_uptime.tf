@@ -62,20 +62,25 @@ resource "aws_quicksight_data_set" "uptime" {
       data_source_arn = "arn:aws:quicksight:us-east-1:202533514245:datasource/ab2d-prod-aurora"
       name            = "${local.app}-${local.env}-uptime"
       sql_query       = <<-EOT
-                with ranked AS (SELECT service,
-                                       state_type,
-                                       event_description,
-                                       time_of_event,
-                                       CASE
-                                           WHEN EXTRACT(epoch FROM (time_of_event - prevDate)) < 600
-                                               THEN currval('metrics_sequence')
-                                           ELSE nextval('metrics_sequence') END AS Rnk
-                                FROM (SELECT service,
-                                             state_type,
-                                             event_description,
-                                             time_of_event,
-                                             LAG(time_of_event) OVER (ORDER BY time_of_event) AS prevDate
-                                      FROM event.event_metrics) q1),
+                WITH ranked AS (
+                    SELECT service,
+                           state_type,
+                           event_description,
+                           time_of_event,
+                           SUM(CASE
+                                   WHEN prevDate IS NULL THEN 1
+                                   WHEN EXTRACT(epoch FROM (time_of_event - prevDate)) >= 600 THEN 1
+                                   ELSE 0
+                               END
+                           ) OVER (ORDER BY time_of_event) AS Rnk
+                    FROM (
+                        SELECT service,
+                               state_type,
+                               event_description,
+                               time_of_event,
+                               LAG(time_of_event) OVER (ORDER BY time_of_event) AS prevDate
+                        FROM event.event_metrics
+                    ) q1),
                      rankings AS (SELECT service
                                        , time_of_event
                                        , state_type

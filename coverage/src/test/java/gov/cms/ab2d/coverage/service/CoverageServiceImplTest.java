@@ -3,6 +3,7 @@ package gov.cms.ab2d.coverage.service;
 import gov.cms.ab2d.common.feign.ContractFeignClient;
 import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.properties.PropertyServiceStub;
+import gov.cms.ab2d.common.util.LiquibaseTestConfig;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
 import gov.cms.ab2d.coverage.model.CoverageDelta;
@@ -48,6 +49,7 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
@@ -78,6 +80,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Testcontainers
 @TestPropertySource(locations = "/application.coverage.properties")
 @EnableFeignClients(clients = {ContractFeignClient.class})
+@Import(LiquibaseTestConfig.class)
 class CoverageServiceImplTest {
     private static final int YEAR = 2020;
     private static final int JANUARY = 1;
@@ -133,7 +136,7 @@ class CoverageServiceImplTest {
     @Autowired
     DataSource dataSource;
 
-    private final PropertiesService propertiesService = new PropertyServiceStub();
+    private final PropertyServiceStub propertiesService = new PropertyServiceStub();
 
     private CoverageServiceRepository  coverageServiceRepo;
 

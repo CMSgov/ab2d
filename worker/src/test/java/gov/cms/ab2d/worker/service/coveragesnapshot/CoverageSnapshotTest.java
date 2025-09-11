@@ -6,6 +6,7 @@ import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
+import gov.cms.ab2d.common.util.LiquibaseTestConfig;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageCount;
@@ -44,7 +45,7 @@ import static org.mockito.ArgumentMatchers.any;
 
 @SpringBootTest
 @Testcontainers
-@Import(AB2DSQSMockConfig.class)
+@Import({AB2DSQSMockConfig.class, LiquibaseTestConfig.class})
 class CoverageSnapshotTest {
 
     @SuppressWarnings("rawtypes")

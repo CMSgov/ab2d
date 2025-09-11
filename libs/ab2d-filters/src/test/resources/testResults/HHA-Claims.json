@@ -1,0 +1,194 @@
+{
+  "resourceType": "ExplanationOfBenefit",
+  "id": "hha-2925555555",
+  "extension": [ {
+    "url": "https://bluebutton.cms.gov/resources/variables/clm_mdcr_non_pmt_rsn_cd",
+    "valueCoding": {
+      "system": "https://bluebutton.cms.gov/resources/variables/clm_mdcr_non_pmt_rsn_cd",
+      "code": "P",
+      "display": "Payment requested"
+    }
+  }, {
+    "url": "https://bluebutton.cms.gov/resources/variables/prpayamt",
+    "valueMoney": {
+      "value": 11.0,
+      "system": "urn:iso:std:iso:4217",
+      "code": "USD"
+    }
+  }, {
+    "url": "https://bluebutton.cms.gov/resources/variables/fi_num",
+    "valueIdentifier": {
+      "system": "https://bluebutton.cms.gov/resources/variables/fi_num",
+      "value": "15999"
+    }
+  } ],
+  "identifier": [ {
+    "system": "https://bluebutton.cms.gov/resources/variables/clm_id",
+    "value": "2925555555"
+  }, {
+    "system": "https://bluebutton.cms.gov/resources/identifier/claim-group",
+    "value": "900"
+  } ],
+  "status": "active",
+  "type": {
+    "coding": [ {
+      "system": "https://bluebutton.cms.gov/resources/variables/nch_clm_type_cd",
+      "code": "10",
+      "display": "Home Health Agency (HHA) claim"
+    }, {
+      "system": "https://bluebutton.cms.gov/resources/codesystem/eob-type",
+      "code": "HHA"
+    }, {
+      "system": "https://bluebutton.cms.gov/resources/variables/nch_near_line_rec_ident_cd",
+      "code": "W",
+      "display": "Part B institutional claim record (outpatient [HOP], HHA)"
+    }, {
+      "system": "https://bluebutton.cms.gov/resources/variables/clm_srvc_clsfctn_type_cd",
+      "code": "2"
+    } ]
+  },
+  "patient": {
+    "reference": "Patient/-199900000022040"
+  },
+  "billablePeriod": {
+    "start": "2015-06-23",
+    "end": "2015-06-23"
+  },
+  "provider": {
+    "identifier": {
+      "system": "https://bluebutton.cms.gov/resources/variables/prvdr_num",
+      "value": "45645"
+    }
+  },
+  "organization": {
+    "identifier": {
+      "system": "http://hl7.org/fhir/sid/us-npi",
+      "value": "1811111111"
+    }
+  },
+  "facility": {
+    "extension": [ {
+      "url": "https://bluebutton.cms.gov/resources/variables/clm_fac_type_cd",
+      "valueCoding": {
+        "system": "https://bluebutton.cms.gov/resources/variables/clm_fac_type_cd",
+        "code": "3",
+        "display": "Home Health Agency (HHA)"
+      }
+    } ],
+    "identifier": {
+      "system": "http://hl7.org/fhir/sid/us-npi",
+      "value": "1811111111"
+    }
+  },
+  "careTeam": [ {
+    "sequence": 2,
+    "provider": {
+      "identifier": {
+        "system": "http://hl7.org/fhir/sid/us-npi",
+        "value": "2222222222"
+      }
+    },
+    "role": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/claimcareteamrole",
+        "code": "primary",
+        "display": "Primary provider"
+      } ]
+    }
+  }, {
+    "sequence": 3,
+    "provider": {
+      "identifier": {
+        "system": "http://hl7.org/fhir/sid/us-npi",
+        "value": "345345345"
+      }
+    },
+    "role": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/claimcareteamrole",
+        "code": "primary",
+        "display": "Primary provider"
+      } ]
+    }
+  } ],
+  "diagnosis": [ {
+    "sequence": 1,
+    "diagnosisCodeableConcept": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/sid/icd-9-cm",
+        "code": "H5555"
+      } ]
+    },
+    "type": [ {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/resources/codesystem/diagnosis-type",
+        "code": "principal",
+        "display": "The single medical diagnosis that is most relevant to the patient's chief complaint or need for treatment."
+      } ]
+    } ]
+  }, {
+    "sequence": 2,
+    "diagnosisCodeableConcept": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/sid/icd-10",
+        "code": "H8888"
+      } ]
+    }
+  }, {
+    "sequence": 3,
+    "diagnosisCodeableConcept": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/sid/icd-10",
+        "code": "R2222"
+      } ]
+    },
+    "type": [ {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/resources/codesystem/diagnosis-type",
+        "code": "external-first",
+        "display": "The code used to identify the 1st external cause of injury, poisoning, or other adverse effect."
+      } ]
+    } ]
+  }, {
+    "sequence": 4,
+    "diagnosisCodeableConcept": {
+      "coding": [ {
+        "system": "http://hl7.org/fhir/sid/icd-10",
+        "code": "R3333"
+      } ]
+    },
+    "type": [ {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/resources/codesystem/diagnosis-type",
+        "code": "external",
+        "display": "A code used to identify an external cause of injury, poisoning, or other adverse effect."
+      } ]
+    } ]
+  } ],
+  "precedence": 0,
+  "item": [ {
+    "extension": [ {
+      "url": "https://bluebutton.cms.gov/resources/variables/rev_cntr_ndc_qty",
+      "valueQuantity": {
+        "value": 666,
+        "system": "https://bluebutton.cms.gov/resources/variables/rev_cntr_ndc_qty_qlfr_cd",
+        "code": "DD"
+      }
+    } ],
+    "sequence": 1,
+    "careTeamLinkId": [ 3 ],
+    "service": {
+      "coding": [ {
+        "system": "https://bluebutton.cms.gov/resources/codesystem/hcpcs",
+        "code": "2GGGG"
+      } ]
+    },
+    "servicedDate": "2015-06-23",
+    "locationAddress": {
+      "state": "UT"
+    },
+    "quantity": {
+      "value": 1
+    }
+  } ]
+}

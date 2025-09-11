@@ -8,7 +8,7 @@ terraform {
 }
 
 module "platform" {
-  source    = "git::https://github.com/CMSgov/cdap.git//terraform/modules/platform?ref=PLT-1099"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app          = local.app
@@ -163,7 +163,7 @@ resource "aws_security_group_rule" "load_balancer_access_nat" {
   security_group_id = aws_security_group.load_balancer.id
 }
 
-resource "aws_security_group_rule" "pdp" {
+resource "aws_security_group_rule" "pdp" { #TODO: Consider updating this to formally yield to the web acls informed by the ip sets below
   for_each = nonsensitive(local.pdp_map)
 
   type              = "ingress"
@@ -173,6 +173,16 @@ resource "aws_security_group_rule" "pdp" {
   protocol          = "tcp"
   cidr_blocks       = split(", ", each.value["cidrs"])
   security_group_id = aws_security_group.pdp.id
+}
+
+resource "aws_wafv2_ip_set" "pdp" {
+  count = local.env == "prod" ? 1 : 0
+
+  name               = "${local.app}-${local.env}-${local.service}-customers"
+  description        = "AB2D PDP Customer List"
+  scope              = "REGIONAL"
+  ip_address_version = "IPV4"
+  addresses          = flatten([for i in nonsensitive(local.pdp_map) : [for k in split(",", i.cidrs) : trim(k, " ")]])
 }
 
 resource "aws_security_group_rule" "open_access_sandbox" {
@@ -206,13 +216,9 @@ resource "aws_security_group_rule" "efs_ingress" {
   security_group_id        = data.aws_security_group.efs.id
 }
 
-resource "aws_ecs_cluster" "ab2d_api" {
-  name = "${local.service_prefix}-${local.service}"
-
-  setting {
-    name  = "containerInsights"
-    value = module.platform.is_ephemeral_env ? "disabled" : "enabled"
-  }
+module "cluster" {
+  source   = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=e06f4acfea302df22c210549effa2e91bc3eff0d"
+  platform = module.platform
 }
 
 resource "aws_ecs_task_definition" "api" {
@@ -241,6 +247,7 @@ resource "aws_ecs_task_definition" "api" {
   container_definitions = nonsensitive(jsonencode([{
     name : local.service,
     image : local.api_image_uri,
+    readonlyRootFilesystem = true
     essential : true,
     portMappings : [
       {
@@ -251,6 +258,21 @@ resource "aws_ecs_task_definition" "api" {
       {
         containerPath : local.ab2d_efs_mount,
         sourceVolume : "efs"
+      },
+      {
+        "containerPath" : "/tmp",
+        "sourceVolume" : "tmp",
+        "readOnly" : false
+      },
+      {
+        "containerPath" : "/newrelic/logs",
+        "sourceVolume" : "newrelic_logs",
+        "readOnly" : false
+      },
+      {
+        "containerPath" : "/var/log",
+        "sourceVolume" : "var_log",
+        "readOnly" : false
       }
     ],
     secrets : [
@@ -278,10 +300,8 @@ resource "aws_ecs_task_definition" "api" {
       { name : "AB2D_V2_ENABLED", value : "true" },
       { name : "AWS_SQS_FEATURE_FLAG", value : "true" },
       { name : "AWS_SQS_URL", value : data.aws_sqs_queue.events.url }, #FIXME: Is this even used?
-      { name : "CONTRACTS_SERVICE_FEATURE_FLAG", value : "true" },     #FIXME: Is this even used?
       { name : "NEW_RELIC_APP_NAME", value : local.new_relic_app_name },
-      { name : "PROPERTIES_SERVICE_FEATURE_FLAG", value : "true" }, #FIXME: Is this even used?
-      { name : "PROPERTIES_SERVICE_URL", value : local.microservices_url },
+      { name : "MICROSERVICES_URL", value : local.microservices_url }
     ],
     logConfiguration : {
       logDriver : "awslogs"
@@ -294,17 +314,27 @@ resource "aws_ecs_task_definition" "api" {
     },
     healthCheck : null
   }]))
+  volume {
+    name = "tmp"
+  }
+  volume {
+    name = "newrelic_logs"
+  }
+  volume {
+    name = "var_log"
+  }
 }
 
 resource "aws_ecs_service" "api" {
   name                               = "${local.service_prefix}-${local.service}"
-  cluster                            = aws_ecs_cluster.ab2d_api.id
+  cluster                            = module.cluster.this.id
   task_definition                    = coalesce(var.override_task_definition_arn, aws_ecs_task_definition.api.arn)
   launch_type                        = "FARGATE"
   desired_count                      = local.api_desired_instances
   force_new_deployment               = anytrue([var.force_api_deployment, var.api_service_image_tag != null])
   deployment_minimum_healthy_percent = 100
   health_check_grace_period_seconds  = 180
+  propagate_tags                     = "SERVICE"
 
   network_configuration {
     subnets          = local.private_subnet_ids

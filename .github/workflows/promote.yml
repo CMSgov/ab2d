@@ -1,29 +1,28 @@
-name: promote
+name: API/Worker promote
+run-name: promote ${{ inputs.tag_name }}
 
 on:
   workflow_call:
     inputs:
-      environment:
+      tag_name:
+        description: Image tag name
         required: true
         type: string
       module:
+        description: AB2D module
         required: true
         type: string
   workflow_dispatch:
     inputs:
-      environment:
+      tag_name:
+        description: Full Docker tag name to promote (e.g., ab2d-api-featureX-sha)
         required: true
-        type: choice
-        options:
-          - sbx
-          - prod
-          - prod_test
+        type: string
       module:
+        description: AB2D module
         required: true
         type: choice
-        options:
-          - api
-          - worker
+        options: [ api, worker ]
 
 permissions:
   contents: read
@@ -31,40 +30,50 @@ permissions:
 
 jobs:
   promote:
-    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: codebuild-ab2d-${{ github.run_id }}-${{ github.run_attempt }}
+    env:
+      TAG_NAME: ${{ inputs.tag_name }}
+      SOURCE_REPO: ab2d
     steps:
-      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
-      - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+      - name: Define destination repo
+        id: repos
+        run: |
+          echo "DEST_REPO=ab2d" >> $GITHUB_OUTPUT
+
+      - name: Authenticate to source account (pull from test)
+        uses: aws-actions/configure-aws-credentials@v4.0.2
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ secrets.MGMT_ACCOUNT_ID }}:role/delegatedadmin/developer/ab2d-mgmt-github-actions
+          role-to-assume: arn:aws:iam::${{ secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-test-github-actions
 
-      - name: Set environment variables
-        env:
-          DEPLOYMENT_ENV: ${{ vars[format('{0}_DEPLOYMENT_ENV', inputs.environment)] }}
+      - name: Pull image from test ECR
+        id: pull-image
         run: |
-          if [ "${{ inputs.environment }}" == "prod_test" ]; then
-            echo "TAG_PREFIX=ab2d-prod-test" >> $GITHUB_ENV
-          else
-            echo "TAG_PREFIX=ab2d-$DEPLOYMENT_ENV" >> $GITHUB_ENV
-          fi
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          SRC_ECR="$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+          docker login --username AWS --password-stdin $SRC_ECR <<< $(aws ecr get-login-password)
+          echo "Pulling $SRC_ECR/$SOURCE_REPO-${{ inputs.module }}:$TAG_NAME"
+          docker pull "$SRC_ECR/$SOURCE_REPO-${{ inputs.module }}:$TAG_NAME"
+          echo "IMAGE=$SRC_ECR/$SOURCE_REPO-${{ inputs.module }}:$TAG_NAME" >> $GITHUB_OUTPUT
 
-      - name: Retag images in ECR
+      - name: Authenticate to destination account (push)
+        uses: aws-actions/configure-aws-credentials@v4.0.2
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets.PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-prod-github-actions
+
+      - name: Tag and push image to destination ECR
         env:
-          ECR_REPO_DOMAIN: ${{ secrets.MGMT_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com
-          ECR_REPO: ab2d_${{ inputs.module }}
+          DEST_REPO: ${{ steps.repos.outputs.DEST_REPO }}
+          IMAGE: ${{ steps.pull-image.outputs.IMAGE }}
+          TAG_NAME: ${{ inputs.tag_name }}
         run: |
-          SHA_SHORT="$(git rev-parse --short HEAD)"
-          TOKEN="$(aws ecr get-authorization-token --output text --query 'authorizationData[].authorizationToken')"
-          CONTENT_TYPE="application/vnd.docker.distribution.manifest.v2+json"
-
-          echo "Getting the manifest of the image tagged main-$SHA_SHORT"
-          MANIFEST="$(curl -sS -H "Authorization: Basic $TOKEN" -H "Accept: $CONTENT_TYPE" "https://$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/main-$SHA_SHORT")"
-
-          SHA_TAG="$TAG_PREFIX-$SHA_SHORT"
-          echo "Adding the $SHA_TAG tag to main-$SHA_SHORT image"
-          curl -sS -X PUT -H "Authorization: Basic $TOKEN" -H "Content-Type: $CONTENT_TYPE" -d "$MANIFEST" "https://$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/$SHA_TAG"
-
-          LATEST_TAG="$TAG_PREFIX-latest"
-          echo "Adding the $LATEST_TAG tag to main-$SHA_SHORT image"
-          curl -sS -X PUT -H "Authorization: Basic $TOKEN" -H "Content-Type: $CONTENT_TYPE" -d "$MANIFEST" "https://$ECR_REPO_DOMAIN/v2/$ECR_REPO/manifests/$LATEST_TAG"
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          DEST_ECR="$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+          docker login --username AWS --password-stdin $DEST_ECR <<< $(aws ecr get-login-password)
+          echo "Tagging and pushing image to $DEST_ECR/$DEST_REPO-${{ inputs.module }}:$TAG_NAME"
+          docker tag "$IMAGE" "$DEST_ECR/$DEST_REPO-${{ inputs.module }}:$TAG_NAME"
+          docker push "$DEST_ECR/$DEST_REPO-${{ inputs.module }}:$TAG_NAME"

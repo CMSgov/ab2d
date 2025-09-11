@@ -1,0 +1,46 @@
+name: Contracts push to main
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - contracts/**
+
+permissions:
+  contents: read
+  id-token: write
+defaults:
+  run:
+    working-directory: ./contracts
+
+jobs:
+  build:
+    secrets: inherit
+    uses: ./.github/workflows/contracts-build.yml
+    with:
+      run_tests: true
+      push_image: true
+
+  deploy-dev:
+    secrets: inherit
+    needs: [build]
+    uses: ./.github/workflows/contracts-deploy.yml
+    with:
+      environment: dev
+      image_tag: ${{ needs.build.outputs.image_tag }}
+
+  deploy-test:
+    secrets: inherit
+    needs: [build]
+    uses: ./.github/workflows/contracts-deploy.yml
+    with:
+      environment: test
+      image_tag: ${{ needs.build.outputs.image_tag }}
+
+  sonarqube:
+    secrets: inherit
+    uses: ./.github/workflows/contracts-sonarqube.yml
+
+
+
