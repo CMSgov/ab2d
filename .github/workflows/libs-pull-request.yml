@@ -2,6 +2,9 @@ name: Libs pull request jobs
 run-name: Libs-pull-request
 
 on:
+  push:
+    branches:
+      - AB2D-6901/libs-coverage
   pull_request:
 
 permissions:
@@ -13,5 +16,11 @@ defaults:
 
 jobs:
   build:
+    if: github.event.pull_request.draft == false
     uses: ./.github/workflows/libs-build.yml
+    secrets: inherit
+
+  sonarqube:
+    if: github.event.pull_request.draft == false
+    uses: ./.github/workflows/libs-sonarqube.yml
     secrets: inherit
