@@ -16,11 +16,7 @@ variable "force_api_deployment" {
   type        = bool
 }
 
-variable "worker_service_image_tag" {
-  description = "The image tag to deploy for the worker service"
-  type        = string
-}
-
+# temporary env variable
 variable "env" {
   description = "The environment being deployed (dev, test, sandbox, prod)"
   type        = string
