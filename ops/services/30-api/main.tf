@@ -54,6 +54,7 @@ locals {
   alb_listener_certificate_arn = module.platform.is_ephemeral_env ? data.aws_acm_certificate.this[0].arn : aws_acm_certificate.this[0].arn
   alb_listener_port            = 443
   alb_listener_protocol        = "HTTPS"
+  alb_ssl_policy               = "ELBSecurityPolicy-TLS13-1-2-Res-2021-06"
   api_desired_instances        = module.platform.parent_env == "prod" ? 2 : 1
   bfd_insights                 = "none" #FIXME?
   container_port               = 8443
@@ -428,6 +429,7 @@ resource "aws_lb_listener" "ab2d_api" {
   port              = local.alb_listener_port
   protocol          = local.alb_listener_protocol
   certificate_arn   = local.alb_listener_certificate_arn
+  ssl_policy        = local.alb_ssl_policy
 
   default_action {
     target_group_arn = aws_lb_target_group.ab2d_api.arn
