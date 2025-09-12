@@ -15,3 +15,13 @@ variable "force_api_deployment" {
   description = "Override to force a api deployment. Api deployments are automatic when `var.api_service_image_tag` is specified."
   type        = bool
 }
+
+variable "worker_service_image_tag" {
+  description = "The image tag to deploy for the worker service"
+  type        = string
+}
+
+variable "env" {
+  description = "The environment being deployed (dev, test, sandbox, prod)"
+  type        = string
+}

@@ -54,7 +54,7 @@ locals {
   alb_listener_certificate_arn = module.platform.is_ephemeral_env ? data.aws_acm_certificate.this[0].arn : aws_acm_certificate.this[0].arn
   alb_listener_port            = 443
   alb_listener_protocol        = "HTTPS"
-  alb_ssl_policy               = "ELBSecurityPolicy-TLS13-1-2-Res-2021-06"
+  alb_ssl_policy               = contains(["test", "dev", "sandbox"], var.env) ? "ELBSecurityPolicy-TLS13-1-2-Res-2021-06" : null
   api_desired_instances        = module.platform.parent_env == "prod" ? 2 : 1
   bfd_insights                 = "none" #FIXME?
   container_port               = 8443
