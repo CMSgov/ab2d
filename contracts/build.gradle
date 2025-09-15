@@ -22,7 +22,7 @@ ext {
 allprojects {
     apply plugin: "org.cyclonedx.bom"
     dependencies {
-        implementation 'gov.cms.ab2d:ab2d-events-client:3.3.7'
+        implementation 'gov.cms.ab2d:ab2d-events-client:3.3.6'
         implementation 'gov.cms.ab2d:ab2d-contracts-client:2.1.1'
         implementation "io.awspring.cloud:spring-cloud-aws:${springCloudAwsVersion}"
         implementation "io.awspring.cloud:spring-cloud-aws-dependencies:${springCloudAwsVersion}"
