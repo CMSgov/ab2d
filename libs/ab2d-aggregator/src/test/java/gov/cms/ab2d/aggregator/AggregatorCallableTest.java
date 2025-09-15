@@ -81,8 +81,7 @@ class AggregatorCallableTest {
         assertEquals(13, future.get());
     }
 
-    // Disabled because it takes a long time but keeping as it is useful when you are doing performance tests
-    @Disabled
+    @Disabled("Disabled because it takes a long time but keeping as it is useful when you are doing performance tests")
     @Test
     void combineBigFiles(@TempDir File tmpDirFolder) throws IOException {
         String jobDir = tmpDirFolder.getAbsolutePath() + File.separator + JOB_ID;
@@ -116,5 +115,7 @@ class AggregatorCallableTest {
                 jobDir + "/outfile.txt");
         long t2 = System.currentTimeMillis();
         System.out.println("Combining files to (" + (t2 - t1) + ")");
+        assertEquals(10L * 100 * ONE_MEGA_BYTE, Files.size(Path.of(jobDir, "outfile.txt")));
+
     }
 }
