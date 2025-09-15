@@ -12,7 +12,7 @@ defaults:
     working-directory: ./libs
 
 env:
-  SONAR_PROJECT_KEY: ab2d-libs
+  SONAR_PROJECT_KEY: ab2d-lib-project
 
 jobs:
   sonarqube:
@@ -50,7 +50,7 @@ jobs:
             -Dsonar.projectKey=$SONAR_PROJECT_KEY \
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.token=$SONAR_TOKEN \
-            -Dsonar.ci.autoconfig.disabled=true
+#            -Dsonar.ci.autoconfig.disabled=true
 
       - name: Quality Gate
         uses: sonarsource/sonarqube-quality-gate-action@master
