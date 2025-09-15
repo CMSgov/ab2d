@@ -49,8 +49,7 @@ jobs:
             -Dsonar.ci.autoconfig.disabled=true \
             -Dsonar.projectKey=$SONAR_PROJECT_KEY \
             -Dsonar.host.url=$SONAR_HOST_URL \
-            -Dsonar.token=$SONAR_TOKEN \
-#            -Dsonar.ci.autoconfig.disabled=true
+            -Dsonar.token=$SONAR_TOKEN
 
       - name: Quality Gate
         uses: sonarsource/sonarqube-quality-gate-action@master

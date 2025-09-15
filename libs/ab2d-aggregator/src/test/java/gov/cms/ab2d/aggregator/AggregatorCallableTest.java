@@ -33,7 +33,7 @@ class AggregatorCallableTest {
     private static final int MIB = 1048576;
 
     @Test
-    void testDoItAllWithDataFile(@TempDir File tmpDirFolder) throws IOException, InterruptedException {
+    void testDoItAllWithDataFile(@TempDir File tmpDirFolder) throws IOException, InterruptedException, ExecutionException {
         long t1 = System.currentTimeMillis();
         AggregatorCallable callable = new AggregatorCallable(tmpDirFolder.getAbsolutePath(), JOB_ID, "contract",
                 MAX_MEG, STREAM_DIR, FINISH_DIR, MULTIPLIER);
@@ -53,9 +53,7 @@ class AggregatorCallableTest {
             }
         }
         JobHelper.workerFinishJob(tmpDirFolder.getAbsolutePath() + File.separator + JOB_ID + File.separator + STREAM_DIR);
-        while (!future.isDone()) {
-            Thread.sleep(1000);
-        }
+        future.get();
         long t2 = System.currentTimeMillis();
         System.out.println("Time is: " + (t2 - t1) / 1000);
     }
