@@ -2,9 +2,6 @@ name: Libs pull request jobs
 run-name: Libs-pull-request
 
 on:
-  push:
-    branches:
-      - AB2D-6901/libs-coverage
   pull_request:
 
 permissions:
