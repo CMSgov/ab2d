@@ -1,6 +1,9 @@
 name: pull request jobs
 
 on:
+  push:
+    branches:
+      - AB2D-6887/sonarqube_ab2d
   pull_request:
     paths-ignore:
       - libs/**
