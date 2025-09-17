@@ -37,10 +37,7 @@ resource "aws_ecs_task_definition" "contracts" {
       { name : "AB2D_DB_PORT", value : "5432" },
       { name : "AB2D_DB_SSL_MODE", value : "require" },
       { name : "AB2D_EXECUTION_ENV", value : local.benv },
-      { name : "AWS_SQS_URL", value : local.events_sqs_url },
-      { name : "IMAGE_VERSION", value : local.contracts_image_tag }, #FIXME: Is this even used?
-      { name : "PROPERTIES_SERVICE_FEATURE_FLAG", value : "true" },  #FIXME: Is this even used?
-      { name : "PROPERTIES_SERVICE_URL", value : local.properties_service_url }
+      { name : "AWS_SQS_URL", value : local.events_sqs_url }
     ],
     portMappings : [
       {
@@ -89,12 +86,17 @@ resource "aws_ecs_task_definition" "contracts" {
 
 resource "aws_ecs_service" "contracts" {
   name                 = "${local.service_prefix}-contracts"
-  cluster              = aws_ecs_cluster.this.id
+  cluster              = module.cluster.this.id
   task_definition      = aws_ecs_task_definition.contracts.arn
   desired_count        = 1
   launch_type          = "FARGATE"
   platform_version     = "1.4.0"
   force_new_deployment = anytrue([var.force_contracts_deployment, var.contracts_service_image_tag != null])
+  propagate_tags       = "SERVICE"
+
+  tags = {
+    service = "contracts"
+  }
 
   network_configuration {
     subnets          = keys(module.platform.private_subnets)

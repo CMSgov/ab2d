@@ -1,0 +1,455 @@
+{
+  "identifier": [
+    {
+      "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/clm_id",
+      "value": "-10190711514"
+    },
+    {
+      "system": "https:\/\/bluebutton.cms.gov\/resources\/identifier\/claim-group",
+      "value": "-99999997914"
+    }
+  ],
+  "extension": [
+    {
+      "valueMoney": {
+        "system": "urn:iso:std:iso:4217",
+        "code": "USD",
+        "value": 0
+      },
+      "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/prpayamt"
+    },
+    {
+      "valueIdentifier": {
+        "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/carr_num",
+        "value": "99999"
+      },
+      "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/carr_num"
+    },
+    {
+      "valueIdentifier": {
+        "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/carr_clm_cntl_num",
+        "value": "00000000000000000000000"
+      },
+      "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/carr_clm_cntl_num"
+    },
+    {
+      "valueCoding": {
+        "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/carr_clm_pmt_dnl_cd",
+        "code": "1",
+        "display": "Physician\/supplier"
+      },
+      "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/carr_clm_pmt_dnl_cd"
+    },
+    {
+      "valueCoding": {
+        "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/asgmntcd",
+        "code": "A",
+        "display": "Assigned claim"
+      },
+      "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/asgmntcd"
+    },
+    {
+      "valueMoney": {
+        "system": "urn:iso:std:iso:4217",
+        "code": "USD",
+        "value": 0
+      },
+      "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/carr_clm_cash_ddctbl_apld_amt"
+    },
+    {
+      "valueMoney": {
+        "system": "urn:iso:std:iso:4217",
+        "code": "USD",
+        "value": 30
+      },
+      "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/nch_clm_prvdr_pmt_amt"
+    },
+    {
+      "valueMoney": {
+        "system": "urn:iso:std:iso:4217",
+        "code": "USD",
+        "value": 0
+      },
+      "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/nch_clm_bene_pmt_amt"
+    },
+    {
+      "valueMoney": {
+        "system": "urn:iso:std:iso:4217",
+        "code": "USD",
+        "value": 150
+      },
+      "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/nch_carr_clm_sbmtd_chrg_amt"
+    },
+    {
+      "valueMoney": {
+        "system": "urn:iso:std:iso:4217",
+        "code": "USD",
+        "value": 30
+      },
+      "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/nch_carr_clm_alowd_amt"
+    },
+    {
+      "valueIdentifier": {
+        "extension": [
+          {
+            "valueCoding": {
+              "code": "current"
+            },
+            "url": "https:\/\/bluebutton.cms.gov\/resources\/codesystem\/identifier-currency"
+          }
+        ],
+        "system": "http:\/\/hl7.org\/fhir\/sid\/us-mbi",
+        "value": "1SC0A00AA00"
+      },
+      "url": "http:\/\/hl7.org\/fhir\/StructureDefinition\/elementdefinition-identifier"
+    }
+  ],
+  "item": [
+    {
+      "sequence": 1,
+      "extension": [
+        {
+          "valueCoding": {
+            "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/carr_line_mtus_cd",
+            "code": "3",
+            "display": "Services"
+          },
+          "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/carr_line_mtus_cd"
+        },
+        {
+          "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/carr_line_mtus_cnt",
+          "valueQuantity": {
+            "value": 1
+          }
+        },
+        {
+          "valueCoding": {
+            "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/betos_cd",
+            "code": "T2A",
+            "display": "Other tests - electrocardiograms"
+          },
+          "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/betos_cd"
+        },
+        {
+          "valueCoding": {
+            "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/line_service_deductible",
+            "code": "0",
+            "display": "Service Subject to Deductible"
+          },
+          "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/line_service_deductible"
+        }
+      ],
+      "locationCodeableConcept": {
+        "coding": [
+          {
+            "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/line_place_of_srvc_cd",
+            "code": "99",
+            "display": "Other Place of Service. Other place of service not identified above."
+          }
+        ],
+        "extension": [
+          {
+            "valueCoding": {
+              "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/prvdr_state_cd",
+              "code": "99",
+              "display": "With 000 county code is American Samoa; otherwise unknown"
+            },
+            "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/prvdr_state_cd"
+          },
+          {
+            "valueCoding": {
+              "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/prvdr_zip",
+              "code": "999999999"
+            },
+            "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/prvdr_zip"
+          },
+          {
+            "valueCoding": {
+              "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/carr_line_prcng_lclty_cd",
+              "code": "99"
+            },
+            "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/carr_line_prcng_lclty_cd"
+          }
+        ]
+      },
+      "quantity": {
+        "value": 1
+      },
+      "service": {
+        "coding": [
+          {
+            "system": "https:\/\/bluebutton.cms.gov\/resources\/codesystem\/hcpcs",
+            "code": "93000",
+            "version": "0"
+          }
+        ]
+      },
+      "diagnosisLinkId": [
+        3
+      ],
+      "servicedPeriod": {
+        "start": "2000-03-01",
+        "end": "2000-03-01"
+      }
+    },
+    {
+      "sequence": 2,
+      "extension": [
+        {
+          "valueCoding": {
+            "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/carr_line_mtus_cd",
+            "code": "3",
+            "display": "Services"
+          },
+          "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/carr_line_mtus_cd"
+        },
+        {
+          "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/carr_line_mtus_cnt",
+          "valueQuantity": {
+            "value": 1
+          }
+        },
+        {
+          "valueCoding": {
+            "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/betos_cd",
+            "code": "T1H",
+            "display": "Lab tests - other (non-Medicare fee schedule)"
+          },
+          "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/betos_cd"
+        },
+        {
+          "valueCoding": {
+            "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/line_service_deductible",
+            "code": "1",
+            "display": "Service Not Subject to Deductible"
+          },
+          "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/line_service_deductible"
+        }
+      ],
+      "locationCodeableConcept": {
+        "coding": [
+          {
+            "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/line_place_of_srvc_cd",
+            "code": "99",
+            "display": "Other Place of Service. Other place of service not identified above."
+          }
+        ],
+        "extension": [
+          {
+            "valueCoding": {
+              "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/prvdr_state_cd",
+              "code": "99",
+              "display": "With 000 county code is American Samoa; otherwise unknown"
+            },
+            "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/prvdr_state_cd"
+          },
+          {
+            "valueCoding": {
+              "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/prvdr_zip",
+              "code": "999999999"
+            },
+            "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/prvdr_zip"
+          },
+          {
+            "valueCoding": {
+              "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/carr_line_prcng_lclty_cd",
+              "code": "99"
+            },
+            "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/carr_line_prcng_lclty_cd"
+          }
+        ]
+      },
+      "quantity": {
+        "value": 1
+      },
+      "service": {
+        "coding": [
+          {
+            "system": "https:\/\/bluebutton.cms.gov\/resources\/codesystem\/hcpcs",
+            "code": "82270",
+            "version": "0"
+          }
+        ]
+      },
+      "diagnosisLinkId": [
+        3
+      ],
+      "servicedPeriod": {
+        "start": "2000-03-01",
+        "end": "2000-03-01"
+      }
+    },
+    {
+      "sequence": 3,
+      "extension": [
+        {
+          "valueCoding": {
+            "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/carr_line_mtus_cd",
+            "code": "3",
+            "display": "Services"
+          },
+          "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/carr_line_mtus_cd"
+        },
+        {
+          "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/carr_line_mtus_cnt",
+          "valueQuantity": {
+            "value": 1
+          }
+        },
+        {
+          "valueCoding": {
+            "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/betos_cd",
+            "code": "I1A",
+            "display": "Standard imaging - chest"
+          },
+          "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/betos_cd"
+        },
+        {
+          "valueCoding": {
+            "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/line_service_deductible",
+            "code": "0",
+            "display": "Service Subject to Deductible"
+          },
+          "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/line_service_deductible"
+        }
+      ],
+      "locationCodeableConcept": {
+        "coding": [
+          {
+            "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/line_place_of_srvc_cd",
+            "code": "99",
+            "display": "Other Place of Service. Other place of service not identified above."
+          }
+        ],
+        "extension": [
+          {
+            "valueCoding": {
+              "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/prvdr_state_cd",
+              "code": "99",
+              "display": "With 000 county code is American Samoa; otherwise unknown"
+            },
+            "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/prvdr_state_cd"
+          },
+          {
+            "valueCoding": {
+              "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/prvdr_zip",
+              "code": "999999999"
+            },
+            "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/prvdr_zip"
+          },
+          {
+            "valueCoding": {
+              "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/carr_line_prcng_lclty_cd",
+              "code": "99"
+            },
+            "url": "https:\/\/bluebutton.cms.gov\/resources\/variables\/carr_line_prcng_lclty_cd"
+          }
+        ]
+      },
+      "quantity": {
+        "value": 1
+      },
+      "service": {
+        "coding": [
+          {
+            "system": "https:\/\/bluebutton.cms.gov\/resources\/codesystem\/hcpcs",
+            "code": "71020",
+            "version": "0"
+          }
+        ]
+      },
+      "diagnosisLinkId": [
+        3
+      ],
+      "servicedPeriod": {
+        "start": "2000-03-01",
+        "end": "2000-03-01"
+      }
+    }
+  ],
+  "meta": {
+    "lastUpdated": "2021-06-07T21:51:38.709-04:00"
+  },
+  "patient": {
+    "reference": "Patient\/-19990000000100"
+  },
+  "billablePeriod": {
+    "start": "2000-03-01",
+    "end": "2000-03-01"
+  },
+  "diagnosis": [
+    {
+      "sequence": 1,
+      "type": [
+        {
+          "coding": [
+            {
+              "system": "https:\/\/bluebutton.cms.gov\/resources\/codesystem\/diagnosis-type",
+              "code": "principal",
+              "display": "The single medical diagnosis that is most relevant to the patient's chief complaint or need for treatment."
+            }
+          ]
+        }
+      ],
+      "diagnosisCodeableConcept": {
+        "coding": [
+          {
+            "system": "http:\/\/hl7.org\/fhir\/sid\/icd-9-cm",
+            "code": "78079",
+            "display": "MALAISE AND FATIGUE NEC"
+          }
+        ]
+      }
+    },
+    {
+      "sequence": 2,
+      "diagnosisCodeableConcept": {
+        "coding": [
+          {
+            "system": "http:\/\/hl7.org\/fhir\/sid\/icd-9-cm",
+            "code": "5640",
+            "display": "CONSTIPATION"
+          }
+        ]
+      }
+    },
+    {
+      "sequence": 3,
+      "diagnosisCodeableConcept": {
+        "coding": [
+          {
+            "system": "http:\/\/hl7.org\/fhir\/sid\/icd-9-cm",
+            "code": "9999999"
+          }
+        ]
+      }
+    }
+  ],
+  "id": "carrier--10190711514",
+  "type": {
+    "coding": [
+      {
+        "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/nch_clm_type_cd",
+        "code": "71",
+        "display": "Local carrier non-durable medical equipment, prosthetics, orthotics, and supplies (DMEPOS) claim"
+      },
+      {
+        "system": "https:\/\/bluebutton.cms.gov\/resources\/codesystem\/eob-type",
+        "code": "CARRIER"
+      },
+      {
+        "system": "http:\/\/hl7.org\/fhir\/ex-claimtype",
+        "code": "professional",
+        "display": "Professional"
+      },
+      {
+        "system": "https:\/\/bluebutton.cms.gov\/resources\/variables\/nch_near_line_rec_ident_cd",
+        "code": "O",
+        "display": "Part B physician\/supplier claim record (processed by local carriers; can include DMEPOS services)"
+      }
+    ]
+  },
+  "precedence": 0,
+  "resourceType": "ExplanationOfBenefit",
+  "status": "active"
+}

@@ -98,12 +98,17 @@ resource "aws_ecs_task_definition" "events" {
 
 resource "aws_ecs_service" "events" {
   name                 = "${local.service_prefix}-events"
-  cluster              = aws_ecs_cluster.this.id
+  cluster              = module.cluster.this.id
   task_definition      = aws_ecs_task_definition.events.arn
   desired_count        = 1
   launch_type          = "FARGATE"
   platform_version     = "1.4.0"
   force_new_deployment = anytrue([var.force_events_deployment, var.events_service_image_tag != null])
+  propagate_tags       = "SERVICE"
+
+  tags = {
+    service = "events"
+  }
 
   network_configuration {
     subnets          = keys(module.platform.private_subnets)

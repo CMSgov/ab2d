@@ -1,0 +1,22 @@
+
+pluginManagement {
+    repositories {
+        maven {
+            url = "${System.getenv().get("ARTIFACTORY_URL") ?: (System.getProperty('artifactory_contextUrl'))}" +"/ab2d-main"
+            credentials {
+                username = "${System.getenv().get("ARTIFACTORY_USER") ?: (System.getProperty('artifactory_user'))}"
+                password = "${System.getenv().get("ARTIFACTORY_PASSWORD") ?: (System.getProperty('artifactory_password'))}"
+            }
+        }
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = 'ab2d-contracts'
+
+// buildFileName needs to be set for aws deploys but can completely breaks intellij
+if (System.getProperty("set.root.project.build.filename")!=null) {
+    rootProject.buildFileName = 'ab2d-contracts'
+}
+
+

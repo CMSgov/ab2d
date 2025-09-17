@@ -111,6 +111,7 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 @ExtendWith(MockitoExtension.class)
 @Profile("jenkins")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@Tag("e2e-bfd-test")
 public class EndToEndBfdTests {
     @Container
     private static final PostgreSQLContainer postgreSQLContainer = new AB2DPostgresqlContainer();

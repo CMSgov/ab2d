@@ -109,13 +109,10 @@ resource "aws_security_group_rule" "efs_ingress" {
   security_group_id        = data.aws_security_group.efs.id
 }
 
-resource "aws_ecs_cluster" "this" {
-  name = "${local.service_prefix}-${local.service}"
 
-  setting {
-    name  = "containerInsights"
-    value = module.platform.is_ephemeral_env ? "disabled" : "enabled"
-  }
+module "cluster" {
+  source   = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=e06f4acfea302df22c210549effa2e91bc3eff0d"
+  platform = module.platform
 }
 
 data "aws_sqs_queue" "events" {
@@ -193,11 +190,9 @@ resource "aws_ecs_task_definition" "worker" {
       { name : "AWS_SQS_FEATURE_FLAG", value : "true" }, #FIXME: Is this even used?
       { name : "AWS_SQS_URL", value : data.aws_sqs_queue.events.url },
       { name : "AWS_SNS_TOPIC_PREFIX", value : "ab2d-${local.parent_env}" },
-      { name : "CONTRACTS_SERVICE_FEATURE_FLAG", value : "true" }, #FIXME: Is this even used?
       { name : "IMAGE_VERSION", value : local.worker_image_tag },
       { name : "NEW_RELIC_APP_NAME", value : local.new_relic_app_name },
-      { name : "PROPERTIES_SERVICE_FEATURE_FLAG", value : "true" }, #FIXME: Is this even used?
-      { name : "PROPERTIES_SERVICE_URL", value : local.microservices_url },
+      { name : "MICROSERVICES_URL", value : local.microservices_url },
     ],
     logConfiguration : {
       logDriver : "awslogs"
@@ -223,12 +218,13 @@ resource "aws_ecs_task_definition" "worker" {
 
 resource "aws_ecs_service" "worker" {
   name                               = "${local.service_prefix}-${local.service}"
-  cluster                            = aws_ecs_cluster.this.id
+  cluster                            = module.cluster.this.id
   task_definition                    = coalesce(var.override_task_definition_arn, aws_ecs_task_definition.worker.arn)
   launch_type                        = "FARGATE"
   desired_count                      = local.worker_desired_instances
   force_new_deployment               = anytrue([var.force_worker_deployment, var.worker_service_image_tag != null])
   deployment_minimum_healthy_percent = 100
+  propagate_tags                     = "SERVICE"
 
   network_configuration {
     subnets          = local.writer_adjacent_subnets

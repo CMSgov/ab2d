@@ -1,0 +1,1 @@
+ALTER TABLE contract.contract ALTER COLUMN id SET DEFAULT nextval('contract.contract_seq');

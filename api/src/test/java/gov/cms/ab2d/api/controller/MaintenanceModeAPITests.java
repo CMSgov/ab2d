@@ -42,7 +42,7 @@ public class MaintenanceModeAPITests {
     @Autowired
     private ApplicationContext context;
 
-    private PropertiesService propertiesService = new PropertyServiceStub();
+    private PropertyServiceStub propertiesService = new PropertyServiceStub();
 
     @BeforeEach
     public void setup() {

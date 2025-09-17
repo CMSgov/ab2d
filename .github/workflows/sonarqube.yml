@@ -1,0 +1,84 @@
+name: SonarQube
+
+on:
+  workflow_call:
+  workflow_dispatch: # Allow manual trigger
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  SONAR_PROJECT_KEY: ab2d-project
+jobs:
+  workflow:
+    name: Checking workflow
+    runs-on: ubuntu-24.04
+    outputs:
+      files: ${{ steps.workflow_files.outputs.files }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - id: workflow_files
+        name: Set output
+        run: |-
+          git diff --name-only --diff-filter=ACMRTD HEAD^ HEAD |\
+            grep -P "${workflow_files_re}" \
+          && echo "files=true" >> $GITHUB_OUTPUT || echo "files=" >> $GITHUB_OUTPUT
+  test:
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    needs: workflow
+    if: needs.workflow.outputs.files || github.event_name == 'push'
+    env:
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: temurin
+          cache: maven
+
+      - name: Set env vars from AWS params
+        uses: cmsgov/cdap/actions/aws-params-env-action@main
+        env:
+          AWS_REGION: ${{ vars.AWS_REGION }}
+        with:
+          params: |
+            ARTIFACTORY_URL=/artifactory/url
+            ARTIFACTORY_USER=/artifactory/user
+            ARTIFACTORY_PASSWORD=/artifactory/password
+            SONAR_HOST_URL=/sonarqube/url
+            SONAR_TOKEN=/sonarqube/token
+
+      - name: Assume role in AB2D dev account
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ vars.AB2D_DEV_ROLE }}
+
+      - name: SonarQube analysis (with coverage)
+        run: |
+            mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} clean install -pl "!e2e-bfd-test,!e2e-test"  \
+            ${RUNNER_DEBUG:+"--debug"} \
+            sonar:sonar \
+            -Dsonar.projectKey=$SONAR_PROJECT_KEY \
+            -Dsonar.qualitygate.wait=true \
+            -Dusername="${ARTIFACTORY_USER}" \
+            -Dpassword="${ARTIFACTORY_PASSWORD}" \
+            -Drepository_url="${ARTIFACTORY_URL}" \
+            -Dsonar.ci.autoconfig.disabled=true \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+            -Dsonar.java.binaries=target/classes
+  

@@ -79,12 +79,17 @@ resource "aws_ecs_task_definition" "properties" {
 
 resource "aws_ecs_service" "properties" {
   name                 = "${local.service_prefix}-properties"
-  cluster              = aws_ecs_cluster.this.id
+  cluster              = module.cluster.this.id
   task_definition      = aws_ecs_task_definition.properties.arn
   desired_count        = 1
   launch_type          = "FARGATE"
   platform_version     = "1.4.0"
   force_new_deployment = anytrue([var.force_properties_deployment, var.properties_service_image_tag != null])
+  propagate_tags       = "SERVICE"
+
+  tags = {
+    service = "properties"
+  }
 
   network_configuration {
     subnets          = keys(module.platform.private_subnets)
@@ -137,7 +142,7 @@ resource "aws_lb_target_group" "properties" {
   target_type = "ip"
 
   health_check {
-    path = "/properties"
+    path = "/properties/health"
     port = 8060
   }
 }

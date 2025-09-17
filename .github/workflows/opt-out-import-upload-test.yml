@@ -1,0 +1,60 @@
+name: opt-out-import test
+run-name: opt-out-import test ${{ inputs.environment }}
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: AB2D environment
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+          - sandbox
+        default: test
+
+# Ensure we have only one integration test running at a time
+concurrency:
+  group: opt-out-import-test-integration
+
+jobs:
+  test:
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
+    env:
+      AWS_ACCOUNT: ${{ inputs.environment == 'sandbox' && secrets.PROD_ACCOUNT || secrets.NON_PROD_ACCOUNT }}
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+      AB2D_ENV: ${{ inputs.environment }}
+    defaults:
+      run:
+        working-directory: ./lambdas/optout
+    steps:
+      - name: Assume AWS role
+        uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.AB2D_ENV }}-opt-out-import-function
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          # Now assume the BFD bucket role
+          role-to-assume: arn:aws:iam::${{ secrets.BFD_ACCOUNT_ID }}:role/delegatedadmin/developer/bfd-test-eft-ab2d-ct-bucket-role
+          role-chaining: true
+          role-skip-session-tagging: true
+      - name: Upload test file to the BFD bucket to trigger lambda function via SNS message
+        run: |
+          aws s3 cp --no-progress src/test/resources/optOutDummy.txt \
+            s3://bfd-test-eft/bfdeft01/ab2d/in/test-${{ github.run_id }}.txt
+

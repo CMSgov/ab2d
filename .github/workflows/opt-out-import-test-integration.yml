@@ -19,7 +19,7 @@ jobs:
       contents: read
       id-token: write
     if: ${{ github.event_name == 'push' }}
-    uses: ./.github/workflows/opt-out-import-deploy-gf.yml
+    uses: ./.github/workflows/opt-out-import-deploy.yml
     secrets: inherit
     with:
       environment: test

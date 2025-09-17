@@ -4,6 +4,10 @@ on:
   workflow_call:
   workflow_dispatch: # Allow manual trigger
 
+permissions:
+  contents: read
+  id-token: write
+
 env:
   # NOTE: Required checks set in repository branch protection rules/rulesets cannot be skipped
   # with the native path filtering. This regex and the 'workflow' job below is a hack to only
@@ -28,9 +32,6 @@ jobs:
             grep -P "${workflow_files_re}" \
           && echo "files=true" >> $GITHUB_OUTPUT || echo "files=" >> $GITHUB_OUTPUT
   test:
-    permissions:
-      contents: read
-      id-token: write
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     needs: workflow
     if: needs.workflow.outputs.files || github.event_name == 'push'
@@ -73,9 +74,13 @@ jobs:
           mvn -ntp -U clean
 
       - name: Run unit and integration tests
+        env:
+          MAVEN_OPTS: "-Xmx1G -Xms1G"
         run: |
             mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} test -pl common,job,coverage,api,worker
 
-      - name: SonarQube analysis
-        run: |
-          mvn -ntp -s settings.xml ${RUNNER_DEBUG:+"--debug"} package sonar:sonar -Dsonar.projectKey=ab2d-project -Dsonar.qualitygate.wait=true -DskipTests -Dusername=${ARTIFACTORY_USER} -Dpassword=${ARTIFACTORY_PASSWORD} -Drepository_url=${ARTIFACTORY_URL} -Dsonar.ci.autoconfig.disabled=true
+  sonarqube:
+    uses: ./.github/workflows/sonarqube.yml
+    secrets: inherit
+
+  

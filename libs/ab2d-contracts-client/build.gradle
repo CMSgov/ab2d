@@ -1,0 +1,18 @@
+repositories {
+    mavenCentral()
+}
+version "$contractClientVersion"
+dependencies {
+    implementation "org.projectlombok:lombok:${lombokVersion}"
+    implementation "org.springframework.boot:spring-boot-starter-data-jpa:$springBootVersion"
+    implementation "org.springframework.boot:spring-boot-starter-validation:$springBootVersion"
+    implementation "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    testImplementation "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:${jupiterVersion}"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${jupiterVersion}"
+}
+
+test {
+    useJUnitPlatform()
+}

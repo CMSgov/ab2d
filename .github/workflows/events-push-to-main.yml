@@ -1,0 +1,46 @@
+name: Events push to main
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - events/**
+
+permissions:
+  contents: read
+  id-token: write
+defaults:
+  run:
+    working-directory: ./events
+
+jobs:
+  build:
+    secrets: inherit
+    uses: ./.github/workflows/events-build.yml
+    with:
+      run_tests: false # TODO Tests are broken; to be fixed in AB2D-6879
+      push_image: true
+
+  deploy-dev:
+    secrets: inherit
+    needs: [build]
+    uses: ./.github/workflows/events-deploy.yml
+    with:
+      environment: dev
+      image_tag: ${{ needs.build.outputs.image_tag }}
+
+  deploy-test:
+    secrets: inherit
+    needs: [build]
+    uses: ./.github/workflows/events-deploy.yml
+    with:
+      environment: test
+      image_tag: ${{ needs.build.outputs.image_tag }}
+
+  sonarqube:
+    secrets: inherit
+    uses: ./.github/workflows/events-sonarqube.yml
+
+
+
