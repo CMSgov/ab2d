@@ -41,8 +41,12 @@ public final class FileUtils {
                 Path inFile = Paths.get(file.getAbsolutePath());
                 try (FileChannel in = FileChannel.open(inFile, READ)) {
                     // For the length of the file, transfer into the output file
-                    for (long p = 0, l = in.size(); p < l;)
-                        p += in.transferTo(p, l - p, out);
+                    long size = in.size();
+                    long pos  = 0;
+                    while (pos < size) {
+                        long n = in.transferTo(pos, size - pos, out);
+                        pos += n;
+                    }
                 }
             }
         }

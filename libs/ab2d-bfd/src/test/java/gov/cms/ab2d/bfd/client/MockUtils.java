@@ -13,8 +13,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static org.mockserver.model.ParameterBody.params;
-
 public class MockUtils {
 
     static String getRawJson(String path) throws IOException {
