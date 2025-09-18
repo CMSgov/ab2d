@@ -55,6 +55,7 @@ locals {
   alb_listener_port            = 443
   alb_listener_protocol        = "HTTPS"
   alb_ssl_policy               = "ELBSecurityPolicy-TLS13-1-2-Res-2021-06"
+  api_desired_instances        = module.platform.parent_env == "prod" ? 2 : 1
   bfd_insights                 = "none" #FIXME?
   container_port               = 8443
   db_name_arn                  = module.platform.ssm.core.database_name.arn
