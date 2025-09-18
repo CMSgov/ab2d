@@ -1,5 +1,5 @@
 name: Lambdas deploy
-run-name: deploy-lambdas ${{ inputs.environment }}
+run-name: deploy-lambda ${{ inputs.environment }} ${{ inputs.release_version }}
 
 on:
   workflow_call:
