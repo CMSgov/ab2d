@@ -15,12 +15,3 @@ variable "force_api_deployment" {
   description = "Override to force a api deployment. Api deployments are automatic when `var.api_service_image_tag` is specified."
   type        = bool
 }
-
-# Temporary environment variable used to control deployment behavior.
-# For now, we only want to deploy to dev, test, and sandbox environments. 
-# Prod deployments are excluded until customer communications are complete. 
-# This variable is currently used in a conditional statement to prevent deploying to prod on PR merge.
-variable "env" {
-  description = "The environment being deployed (dev, test, sandbox, prod)"
-  type        = string
-}
