@@ -136,13 +136,13 @@ public class JwtTokenAuthenticationFilter extends OncePerRequestFilter {
             pdpClient = pdpClientService.getClientById(client);
         } catch (ResourceNotFoundException exception) {
             logApiRequestEvent(request, token, null, jobId);
-            throw new UsernameNotFoundException("Client was not found"); //NOSONAR
+            throw new UsernameNotFoundException("Client was not found");
         }
 
         // If client is null then continue throwing username not found
         if (pdpClient == null) {
             logApiRequestEvent(request, token, null, jobId);
-            throw new UsernameNotFoundException("Client was not found"); //NOSONAR
+            throw new UsernameNotFoundException("Client was not found");
         }
 
         // Save organization
