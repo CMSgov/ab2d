@@ -156,7 +156,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install tofu
-        uses: opentofu/setup-opentofu@v1
+        uses: cmsgov/cdap/actions/setup-tenv@8343fb96563ce4b74c4dececee9b268f42bd4a40
         with:
           tofu_version: ${{ env.TOFU_VERSION }}
 
