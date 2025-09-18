@@ -1,12 +1,12 @@
 package gov.cms.ab2d.common.health;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.RandomStringUtils;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.SecureRandom;
 import java.util.List;
 
 @Slf4j
@@ -76,7 +76,14 @@ public final class FileSystemCheck {
         if (length == 0) {
             return "." + ext;
         }
-        return RandomStringUtils.randomAlphabetic(1) +
-                RandomStringUtils.randomAlphanumeric(length - 1) + "." + ext;
+        SecureRandom random = new SecureRandom();
+        String alphanum = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        StringBuilder sb = new StringBuilder();
+        sb.append(alphanum.charAt(random.nextInt(alphanum.length())));
+        alphanum += "0123456789";
+        for (int i = 1; i < length; i++) {
+            sb.append(alphanum.charAt(random.nextInt(alphanum.length())));
+        }
+        return sb.append(".").append(ext).toString();
     }
 }

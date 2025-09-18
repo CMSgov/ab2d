@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 /**
  * Periodically verify that all business requirements related to the coverage/enrollment cached in the database
@@ -20,8 +21,8 @@ public class CoverageCheckQuartzConfig {
         this.schedule = schedule;
     }
 
-    @Qualifier("coverage_check")
-    @Bean
+    @Bean(name = "coverage_check")
+    @Primary
     JobDetail coverageCheckJobDetail() {
         return JobBuilder.newJob(CoverageCheckQuartzJob.class)
                 .withIdentity("coverage_check")
@@ -30,7 +31,7 @@ public class CoverageCheckQuartzConfig {
     }
 
     @Bean
-    Trigger coverageCheckPeriodicJobTrigger(@Qualifier("coverage_check") JobDetail coverageCheckJobDetail) {
+    Trigger coverageCheckPeriodicJobTrigger(JobDetail coverageCheckJobDetail) {
         return TriggerBuilder.newTrigger()
                 .forJob(coverageCheckJobDetail)
                 .withIdentity("coverage_check_trigger_periodic")
