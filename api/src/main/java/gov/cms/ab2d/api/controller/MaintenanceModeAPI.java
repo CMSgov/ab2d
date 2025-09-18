@@ -20,7 +20,8 @@ public class MaintenanceModeAPI {
     private final PropertiesService propertiesService;
 
     // This API endpoint does not have authentication, an exception was made in SecurityConfig.java and JWTAuthenticationFilter.java
-    @CrossOrigin // test server for the sandbox runs from port 4000
+    // test server for the sandbox runs from port 4000
+    @CrossOrigin //NOSONAR
     @ResponseStatus(value = HttpStatus.ACCEPTED)
     @GetMapping(STATUS_ENDPOINT)
     public ResponseEntity<MaintenanceModeResponse> getMaintenanceMode() {
