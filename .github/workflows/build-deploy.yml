@@ -29,7 +29,7 @@ on:
       skip_deploy: { type: boolean, default: false, description: Skip deploy step }
 
 env:
-  TOFU_VERSION: 1.10.0-beta2
+  TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   AWS_REGION: ${{ vars.AWS_REGION }}
 
 jobs:
@@ -157,8 +157,6 @@ jobs:
 
       - name: Install tofu
         uses: cmsgov/cdap/actions/setup-tenv@8343fb96563ce4b74c4dececee9b268f42bd4a40
-        with:
-          tofu_version: ${{ env.TOFU_VERSION }}
 
       - name: Set module-specific variables
         id: module_vars
