@@ -1,6 +1,5 @@
 package gov.cms.ab2d.worker.processor.coverage;
 
-import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
@@ -187,7 +186,7 @@ class CoverageDriverUnitTest {
     @Test
     void pageRequestWhenSinceDateAfterNow() {
 
-        when(coverageService.getCoveragePeriod(any(ContractForCoverageDTO.class), anyInt(), anyInt())).thenAnswer((invocationOnMock) -> {
+        when(coverageService.getCoveragePeriod(any(ContractForCoverageDTO.class), anyInt(), anyInt())).thenAnswer(invocationOnMock -> {
             CoveragePeriod period = new CoveragePeriod();
             period.setContractNumber(invocationOnMock.getArgument(0).toString());
             period.setMonth(invocationOnMock.getArgument(1));
@@ -235,7 +234,7 @@ class CoverageDriverUnitTest {
     @DisplayName("Paging coverage fails when all coverage periods are present but CoverageService#pageCoverage throws exception")
     @Test
     void failPagingWhenCoveragePeriodsPresentButUnderlyingMethodThrowsException(CapturedOutput output) {
-        when(coverageService.getCoveragePeriod(any(ContractForCoverageDTO.class), anyInt(), anyInt())).thenAnswer((invocationOnMock) -> {
+        when(coverageService.getCoveragePeriod(any(ContractForCoverageDTO.class), anyInt(), anyInt())).thenAnswer(invocationOnMock -> {
             CoveragePeriod period = new CoveragePeriod();
             period.setContractNumber((invocationOnMock.getArgument(0).toString()));
             period.setMonth(invocationOnMock.getArgument(1));
@@ -271,7 +270,7 @@ class CoverageDriverUnitTest {
     @Test
     void beginPagingWhenCoveragePeriodsPresent() {
 
-        when(coverageService.getCoveragePeriod(any(ContractForCoverageDTO.class), anyInt(), anyInt())).thenAnswer((invocationOnMock) -> {
+        when(coverageService.getCoveragePeriod(any(ContractForCoverageDTO.class), anyInt(), anyInt())).thenAnswer(invocationOnMock -> {
             CoveragePeriod period = new CoveragePeriod();
             period.setContractNumber((invocationOnMock.getArgument(0).toString()));
             period.setMonth(invocationOnMock.getArgument(1));

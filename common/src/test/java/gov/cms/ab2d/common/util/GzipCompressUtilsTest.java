@@ -29,7 +29,7 @@ class GzipCompressUtilsTest {
         Path outputCompressed = newTestFile(".ndjson.gz");
         GzipCompressUtils.compress(UNCOMPRESSED_FILE, outputCompressed);
 
-        /**
+        /*
          Note that the following is not a valid assertion because the 'gzip' command line utility can produce
          output that differs from {@link GzipCompressUtils#compress}, however both outputs are valid.
 
@@ -112,7 +112,7 @@ class GzipCompressUtilsTest {
     }
 
     @Test
-    void testCompressFile_fileNotFound(@TempDir File tempDir) {
+    void testCompressFile_fileNotFound() {
         assertNull(GzipCompressUtils.compressFile(new File("not-a-real-file"), true));
     }
 

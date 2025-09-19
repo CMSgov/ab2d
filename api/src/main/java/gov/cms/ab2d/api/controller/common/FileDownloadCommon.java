@@ -84,7 +84,7 @@ public class FileDownloadCommon {
         }
     }
 
-    Resource getDownloadResource(String jobUuid, String filename) throws IOException {
+    Resource getDownloadResource(String jobUuid, String filename) {
         val organization = pdpClientService.getCurrentClient().getOrganization();
         try {
             // look for compressed file
