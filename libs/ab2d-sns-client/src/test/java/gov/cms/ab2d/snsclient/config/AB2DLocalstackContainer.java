@@ -23,5 +23,6 @@ public class AB2DLocalstackContainer extends LocalStackContainer {
         System.setProperty("AWS_URL",
                 "http://localhost:" + this.getMappedPort(EnabledService.named("SQS")
                         .getPort()));
+        System.setProperty("AWS_SNS_TOPIC_PREFIX", "ab2d-local");
     }
 }

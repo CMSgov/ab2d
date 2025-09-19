@@ -67,3 +67,7 @@ data "aws_security_group" "db" {
 data "aws_rds_cluster" "this" {
   cluster_identifier = local.service_prefix
 }
+
+data "aws_sqs_queue" "events" {
+  name = "${local.service_prefix}-events"
+}

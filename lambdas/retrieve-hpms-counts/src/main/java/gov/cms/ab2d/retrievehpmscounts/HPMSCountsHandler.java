@@ -23,8 +23,6 @@ import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
 import gov.cms.ab2d.lambdalibs.lib.PropertiesUtil;
 import gov.cms.ab2d.snsclient.clients.SNSClient;
-import gov.cms.ab2d.snsclient.clients.SNSClientImpl;
-import gov.cms.ab2d.snsclient.clients.SNSConfig;
 import gov.cms.ab2d.snsclient.messages.CoverageCountDTO;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.impl.classic.BasicHttpClientResponseHandler;
@@ -69,9 +67,15 @@ public class HPMSCountsHandler implements RequestStreamHandler {
 
     private final CloseableHttpClient httpClient;
     private final AmazonSNSClient snsClient;
+    private final String snsTopicPrefix;
 
     public HPMSCountsHandler() {
-        httpClient = HttpClients.createDefault();
+        this(System.getenv("AWS_SNS_TOPIC_PREFIX"));
+    }
+
+    public HPMSCountsHandler(String snsTopicPrefix) {
+        this.snsTopicPrefix = snsTopicPrefix;
+        this.httpClient = HttpClients.createDefault();
         if (!StringUtils.isNullOrEmpty(System.getenv("IS_LOCALSTACK"))) {
             System.setProperty(SDKGlobalConfiguration.DISABLE_CERT_CHECKING_SYSTEM_PROPERTY, "true");
             this.snsClient = (AmazonSNSClient) AmazonSNSClientBuilder.standard()
@@ -87,9 +91,10 @@ public class HPMSCountsHandler implements RequestStreamHandler {
 
     /*
      * Test constructor to inject clients*/
-    public HPMSCountsHandler(CloseableHttpClient httpClient, AmazonSNSClient snsClient) {
+    public HPMSCountsHandler(CloseableHttpClient httpClient, AmazonSNSClient snsClient, String snsTopicPrefix) {
         this.httpClient = httpClient;
         this.snsClient = snsClient;
+        this.snsTopicPrefix = snsTopicPrefix;
     }
 
     @Override
@@ -100,9 +105,7 @@ public class HPMSCountsHandler implements RequestStreamHandler {
         HttpGet request = new HttpGet(url + "/contracts");
         HttpClientResponseHandler<String> handler = new BasicHttpClientResponseHandler();
         String response = httpClient.execute(request, handler);
-        //SNSConfig snsConfig = new SNSConfig();
-        //SNSClient client = snsConfig.snsClient(snsClient, Ab2dEnvironment.fromName(envi));
-        SNSClient client = new AB2DSNSClientOverride(snsClient, Ab2dEnvironment.fromName(envi));
+        SNSClient client = new AB2DSNSClientOverride(snsClient, Ab2dEnvironment.fromName(envi), snsTopicPrefix);
         DateTime dateTime = DateTime.now();
         Timestamp version = Timestamp.from(Instant.now());
         int year = dateTime.getYear();
@@ -125,38 +128,27 @@ public class HPMSCountsHandler implements RequestStreamHandler {
         private final AmazonSNSClient amazonSNSClient;
         private final ObjectMapper mapper;
         private final Ab2dEnvironment ab2dEnvironment;
+        private final String snsTopicPrefix;
 
-        public AB2DSNSClientOverride(AmazonSNSClient amazonSNSClient, Ab2dEnvironment ab2dEnvironment) {
+        public AB2DSNSClientOverride(AmazonSNSClient amazonSNSClient, Ab2dEnvironment ab2dEnvironment, String snsTopicPrefix) {
+            if (snsTopicPrefix == null || snsTopicPrefix.isBlank()) {
+                throw new AB2DSNSClientOverrideException("SNS topic prefix is required");
+            }
+            log.info("SNS topic prefix: '{}'", snsTopicPrefix);
             this.mapper = ((JsonMapper.Builder)JsonMapper.builder().configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)).build();
             this.amazonSNSClient = amazonSNSClient;
             this.ab2dEnvironment = ab2dEnvironment;
+            this.snsTopicPrefix = snsTopicPrefix;
         }
 
         @Override
         public void sendMessage(String topicName, Object message) throws JsonProcessingException {
             PublishRequest request = new PublishRequest();
             AmazonSNSClient client = this.amazonSNSClient;
-            // Greenfield SNS topics are different from legacy and must be overridden here
-            String topicPrefix = getTopicPrefix(ab2dEnvironment);
-            request.setTopicArn(client.createTopic(topicPrefix + "-" + topicName).getTopicArn());
+            request.setTopicArn(client.createTopic(snsTopicPrefix + "-" + topicName).getTopicArn());
             request.setMessage(this.mapper.writeValueAsString(message));
+            log.info("Sending message to '{}'", request.getTopicArn());
             this.amazonSNSClient.publish(request);
-        }
-
-        String getTopicPrefix(Ab2dEnvironment environment) {
-            final String env;
-            if (environment.getName().contains("dev")) {
-                env="dev";
-            } else if (environment.getName().contains("impl")) {
-                env="test";
-            } else if (environment.getName().contains("sandbox")) {
-                env="sandbox";
-            } else if (environment.getName().contains("prod")) {
-                env="prod";
-            } else {
-                env=environment.getName();
-            }
-            return "ab2d-" + env;
         }
 
     }
