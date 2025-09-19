@@ -7,7 +7,6 @@ import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.controller.MaintenanceModeAPI;
 import gov.cms.ab2d.api.controller.TestUtil;
-import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.common.service.PdpClientService;
 import gov.cms.ab2d.common.util.AB2DLocalstackContainer;
