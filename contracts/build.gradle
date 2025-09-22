@@ -17,13 +17,15 @@ ext {
     springBootVersion='3.5.4'
     testContainerVersion='1.20.6'
     liquibaseVersion = '4.31.1'
+    eventClientVersion='3.3.7'
+    contractClientVersion='2.1.2'
 }
 
 allprojects {
     apply plugin: "org.cyclonedx.bom"
     dependencies {
-        implementation 'gov.cms.ab2d:ab2d-events-client:3.3.6'
-        implementation 'gov.cms.ab2d:ab2d-contracts-client:2.1.1'
+        implementation "gov.cms.ab2d:ab2d-events-client:${eventClientVersion}"
+        implementation "gov.cms.ab2d:ab2d-contracts-client:${contractClientVersion}"
         implementation "io.awspring.cloud:spring-cloud-aws:${springCloudAwsVersion}"
         implementation "io.awspring.cloud:spring-cloud-aws-dependencies:${springCloudAwsVersion}"
         implementation "io.awspring.cloud:spring-cloud-aws-starter:${springCloudAwsVersion}"
