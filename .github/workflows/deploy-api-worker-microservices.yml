@@ -1,4 +1,5 @@
-name: push to main
+name: deploy [api,worker,contracts,events]
+run-name: deploy [api,worker,contracts,events] to ${{ inputs.environment}}
 
 on:
   workflow_call:
