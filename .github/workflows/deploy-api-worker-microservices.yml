@@ -1,10 +1,6 @@
 name: push to main
 
 on:
-  push:
-    branches:
-      - update-dependencies
-
   workflow_call:
     inputs:
       environment:
@@ -42,14 +38,12 @@ jobs:
     uses: ./.github/workflows/contracts-build-deploy.yml
     with:
       environment: dev
-      module: worker
     secrets: inherit
   build-deploy-events:
     needs: [build-deploy-contracts]
     uses: ./.github/workflows/events-build-deploy.yml
     with:
       environment: dev
-      module: worker
     secrets: inherit
   e2e-test:
     needs: [ build-deploy-api, build-deploy-worker, build-deploy-events, build-deploy-contracts ]
