@@ -1,10 +1,10 @@
 version "$fhirVersion"
 
+ext {
+    jupiterVersion=
+}
+
 dependencies {
-    // Move these dependencies to the individual libraries that need them if adding
-    // other modules to this project
-    implementation "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
-    implementation "org.springframework.boot:spring-boot-starter-validation:${springBootVersion}"
     implementation "ca.uhn.hapi.fhir:hapi-fhir-base:${hapiVersion}"
     implementation "ca.uhn.hapi.fhir:hapi-fhir-client:${hapiVersion}"
     implementation "ca.uhn.hapi.fhir:org.hl7.fhir.r4:${hl7Version}"
@@ -17,7 +17,9 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter:${jupiterVersion}"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${jupiterVersion}"
 
-    testImplementation("org.springframework.boot:spring-boot-starter-test:${springBootVersion}"){
-        exclude group: 'org.junit.vintage'
-    }
+    testImplementation("org.springframework.boot:spring-boot-starter-test:${springBootVersion}")
+}
+
+test {
+    useJUnitPlatform()
 }

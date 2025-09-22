@@ -141,10 +141,10 @@ subprojects {
 
     dependencies {
         //set dependencies and versions for child projects to use (maven dependency management equivalent)
-        implementation(platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion"))
-        implementation(platform("io.awspring.cloud:spring-cloud-aws-dependencies:$springCloudAwsVersion"))
-        implementation(platform("io.awspring.cloud:spring-cloud-aws-core:${springCloudAwsVersion}"))
-        implementation(platform("io.awspring.cloud:spring-cloud-aws-autoconfigure:${springCloudAwsVersion}"))
+//        implementation(platform("org.springframework.boot:spring-boot-dependencies:$springBootVersion"))
+//        implementation(platform("io.awspring.cloud:spring-cloud-aws-dependencies:$springCloudAwsVersion"))
+//        implementation(platform("io.awspring.cloud:spring-cloud-aws-core:${springCloudAwsVersion}"))
+//        implementation(platform("io.awspring.cloud:spring-cloud-aws-autoconfigure:${springCloudAwsVersion}"))
         implementation(platform("org.liquibase:liquibase-core:$liquibaseVersion"))
         implementation(platform("com.newrelic.agent.java:newrelic-api:$newRelicVersion"))
         implementation(platform("org.testcontainers:testcontainers:$testContainerVersion"))
