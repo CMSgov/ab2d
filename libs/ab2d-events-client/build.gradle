@@ -20,6 +20,7 @@ dependencies {
     testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
     testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
     testImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testImplementation "org.springframework.data:spring-data-jpa:${springBootVersion}"
     testImplementation "org.liquibase:liquibase-core:${liquibaseVersion}"
     testImplementation "org.testcontainers:localstack:${testContainerVersion}"
