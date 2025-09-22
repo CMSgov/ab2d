@@ -1,0 +1,74 @@
+name: push to main
+
+on:
+  push:
+    branches:
+      - update-dependencies
+
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: AB2D environment
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-deploy-worker:
+    uses: ./.github/workflows/build-deploy.yml
+    with:
+      environment: ${{ inputs.environment }}
+      module: worker
+    secrets: inherit
+  build-deploy-api:
+    needs: [build-deploy-worker]
+    uses: ./.github/workflows/build-deploy.yml
+    with:
+      environment: ${{ inputs.environment }}
+      module: api
+    secrets: inherit
+  build-deploy-contracts:
+    uses: ./.github/workflows/contracts-build-deploy.yml
+    with:
+      environment: dev
+      module: worker
+    secrets: inherit
+  build-deploy-events:
+    needs: [build-deploy-contracts]
+    uses: ./.github/workflows/events-build-deploy.yml
+    with:
+      environment: dev
+      module: worker
+    secrets: inherit
+  e2e-test:
+    needs: [ build-deploy-api, build-deploy-worker, build-deploy-events, build-deploy-contracts ]
+    uses: ./.github/workflows/e2e-test.yml
+    with:
+      environment: ${{ inputs.environment }}
+    secrets: inherit
+  e2e-bfd-test:
+    needs: [ e2e-test ]
+    uses: ./.github/workflows/e2e-bfd-test.yml
+    with:
+      environment: ${{ inputs.environment }}
+    secrets: inherit
+  fhir-test:
+    needs: [ build-deploy-api, build-deploy-worker ]
+    uses: ./.github/workflows/fhir-test.yml
+    with:
+      environment: ${{ inputs.environment }}
+    secrets: inherit
+  sonarqube:
+    uses: ./.github/workflows/sonarqube.yml
+    secrets: inherit
