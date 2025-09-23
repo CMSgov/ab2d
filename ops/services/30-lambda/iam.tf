@@ -122,3 +122,107 @@ resource "aws_iam_role_policy_attachment" "lambda_sns_attachment" {
   role       = aws_iam_role.lambda_sns_role.id
   policy_arn = each.value
 }
+
+resource "aws_iam_role" "opt_out" {
+  count = contains(["prod", "test"], local.env) ? 1 : 0
+  assume_role_policy = jsonencode(
+    {
+      Statement = [
+        {
+          Action = "sts:AssumeRole"
+          Effect = "Allow"
+          Principal = {
+            Service = "lambda.amazonaws.com"
+          }
+        },
+        {
+          Action = [
+            "sts:TagSession",
+            "sts:AssumeRoleWithWebIdentity",
+          ]
+          Condition = {
+            StringEquals = {
+              "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
+            }
+            StringLike = {
+              "token.actions.githubusercontent.com:sub" = "repo:CMSgov/ab2d:*"
+            }
+          }
+          Effect = "Allow"
+          Principal = {
+            Federated = "arn:aws:iam::${module.platform.aws_caller_identity.account_id}:oidc-provider/token.actions.githubusercontent.com"
+          }
+        },
+        {
+          Action = [
+            "sts:TagSession",
+            "sts:AssumeRole",
+          ]
+          Effect = "Allow"
+          Principal = {
+            AWS = [for role in module.platform.kion_roles : role.arn]
+          }
+        },
+      ]
+      Version = "2012-10-17"
+    }
+  )
+  force_detach_policies = false
+  max_session_duration  = 3600
+  name                  = "${local.service_prefix}-opt-out-function"
+  path                  = "/delegatedadmin/developer/"
+  permissions_boundary  = "arn:aws:iam::${module.platform.aws_caller_identity.account_id}:policy/cms-cloud-admin/developer-boundary-policy"
+}
+
+resource "aws_iam_role_policy" "opt_out_assume_bucket_role" {
+  count = contains(["prod", "test"], local.env) ? 1 : 0
+  name  = "assume-bucket-role"
+  role  = aws_iam_role.opt_out[0].id
+  policy = jsonencode({
+    Statement = [
+      {
+        Action   = "sts:AssumeRole"
+        Effect   = "Allow"
+        Resource = module.platform.ssm.eft.bfd-bucket-role-arn.value
+      }
+    ]
+    Version = "2012-10-17"
+  })
+}
+
+resource "aws_iam_role_policy" "import_default_function" {
+  count = contains(["prod", "test"], local.env) ? 1 : 0
+  name  = "default-function"
+  role  = aws_iam_role.opt_out[0].id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "ssm:GetParameters",
+          "ssm:GetParameter",
+          "sqs:ReceiveMessage",
+          "sqs:GetQueueAttributes",
+          "sqs:DeleteMessage",
+          "logs:PutLogEvents",
+          "logs:CreateLogStream",
+          "logs:CreateLogGroup",
+          "ec2:DescribeNetworkInterfaces",
+          "ec2:DescribeAccountAttributes",
+          "ec2:DeleteNetworkInterface",
+          "ec2:CreateNetworkInterface"
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      },
+      {
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt"
+        ]
+        Effect   = "Allow"
+        Resource = [local.env_key_alias.target_key_arn]
+      }
+    ]
+  })
+}
