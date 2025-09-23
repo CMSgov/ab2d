@@ -47,7 +47,7 @@ allprojects {
         runtimeOnly 'org.postgresql:postgresql:42.7.3'
         testImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
         testImplementation "commons-io:commons-io:2.18.0"
-        testImplementation "org.springframework.data:spring-data-jpa:${springBootVersion}"
+        testImplementation "org.springframework.data:spring-data-jpa"
         testImplementation "org.liquibase:liquibase-core:${liquibaseVersion}"
         testImplementation "org.testcontainers:localstack:${testContainerVersion}"
         compileOnly "org.cyclonedx:cyclonedx-gradle-plugin:1.4.0"
