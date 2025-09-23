@@ -17,19 +17,6 @@ jobs:
       module: api
     secrets: inherit
   build-deploy-worker:
-    needs: [build-deploy-api]
-    uses: ./.github/workflows/build-deploy.yml
-    with:
-      environment: test
-      module: worker
-    secrets: inherit
-  build-deploy-contracts:
-    uses: ./.github/workflows/build-deploy.yml
-    with:
-      environment: test
-      module: worker
-    secrets: inherit
-  build-deploy-events:
     uses: ./.github/workflows/build-deploy.yml
     with:
       environment: test
