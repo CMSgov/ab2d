@@ -15,7 +15,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.4</version>
+        <version>3.5.6</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>gov.cms.ab2d</groupId>
@@ -35,8 +35,8 @@
         <logback-encoder.version>7.3</logback-encoder.version>
         <testcontainers.version>1.20.6</testcontainers.version>
         <newrelic.version>8.22.0</newrelic.version>
-        <spring-cloud-aws.version>3.3.0</spring-cloud-aws.version>
-        <postgresql.version>42.7.4</postgresql.version>
+        <spring-cloud-aws.version>3.4.0</spring-cloud-aws.version>
+        <postgresql.version>42.7.7</postgresql.version>
 
 
         <!-- Maven plugin versions -->
@@ -56,7 +56,6 @@
         <!-- Dependency versions -->
         <commons-compress.version>1.28.0</commons-compress.version>
         <commons-io.version>2.19.0</commons-io.version>
-        <commons-lang3.version>3.16.0</commons-lang3.version>
     </properties>
 
     <dependencies>

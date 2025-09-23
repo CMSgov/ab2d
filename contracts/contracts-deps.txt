@@ -1145,7 +1145,7 @@ productionRuntimeClasspath
 |    +--- org.testcontainers:junit-jupiter:1.20.6
 |    +--- org.testcontainers:localstack:1.20.6
 |    +--- org.projectlombok:lombok:1.18.38
-|    +--- org.cyclonedx:cyclonedx-gradle-plugin:1.4.0
+|    +--- org.cyclonedx:cyclonedx-gradle-plugin:1.`4.0
 |    +--- com.slack.api:slack-api-client:1.30.0
 |    |    +--- com.slack.api:slack-api-model:1.30.0
 |    |    |    \--- com.google.code.gson:gson:2.10.1 -> 2.11.0
