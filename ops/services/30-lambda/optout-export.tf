@@ -18,6 +18,22 @@ data "aws_s3_object" "export" {
   key    = "function.zip"
 }
 
+resource "aws_iam_role_policy" "export_assume_bucket_role" {
+  count = contains(["prod", "test"], local.env) ? 1 : 0
+  name  = "assume-bucket-role"
+  role  = aws_iam_role.opt_out[0].id
+  policy = jsonencode({
+    Statement = [
+      {
+        Action   = "sts:AssumeRole"
+        Effect   = "Allow"
+        Resource = module.platform.ssm.eft.bfd-bucket-role-arn.value
+      }
+    ]
+    Version = "2012-10-17"
+  })
+}
+
 resource "aws_lambda_function" "export" {
   count = contains(["prod", "test"], local.env) ? 1 : 0
 
