@@ -38,13 +38,13 @@ jobs:
   build-deploy-contracts:
     uses: ./.github/workflows/contracts-build-deploy.yml
     with:
-      environment: dev
+      environment: ${{ inputs.environment}}
     secrets: inherit
   build-deploy-events:
     needs: [build-deploy-contracts]
     uses: ./.github/workflows/events-build-deploy.yml
     with:
-      environment: dev
+      environment: ${{ inputs.environment}}
     secrets: inherit
   e2e-test:
     needs: [ build-deploy-api, build-deploy-worker, build-deploy-events, build-deploy-contracts ]
