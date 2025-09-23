@@ -1,0 +1,265 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------------------< gov.cms.ab2d:api >--------------------------
+[INFO] Building api 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[WARNING] The POM for gov.cms.ab2d:common:jar:0.0.1-SNAPSHOT is missing, no dependency information available
+[WARNING] The POM for gov.cms.ab2d:job:jar:0.0.1-SNAPSHOT is missing, no dependency information available
+Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/bouncycastle/bcutil-jdk18on/maven-metadata.xml
+Downloading from sonatype-nexus-snapshots: https://oss.sonatype.org/content/repositories/snapshots/org/bouncycastle/bcutil-jdk18on/maven-metadata.xml
+Downloading from snapshots: https://artifactory.cloud.cms.gov/artifactory/ab2d-main/org/bouncycastle/bcutil-jdk18on/maven-metadata.xml
+Progress (1): 728 B                   Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/bouncycastle/bcutil-jdk18on/maven-metadata.xml (728 B at 1.3 kB/s)
+Downloading from sonatype-nexus-snapshots: https://oss.sonatype.org/content/repositories/snapshots/org/bouncycastle/bcprov-jdk18on/maven-metadata.xml
+Downloading from snapshots: https://artifactory.cloud.cms.gov/artifactory/ab2d-main/org/bouncycastle/bcprov-jdk18on/maven-metadata.xml
+Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/bouncycastle/bcprov-jdk18on/maven-metadata.xml
+Progress (1): 728 B                   Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/bouncycastle/bcprov-jdk18on/maven-metadata.xml (728 B at 3.5 kB/s)
+[WARNING] The POM for gov.cms.ab2d:common:jar:tests:0.0.1-SNAPSHOT is missing, no dependency information available
+Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/gov/cms/ab2d/ab2d-events-client/3.3.7/ab2d-events-client-3.3.7.pom
+Downloading from snapshots: https://artifactory.cloud.cms.gov/artifactory/ab2d-main/gov/cms/ab2d/ab2d-events-client/3.3.7/ab2d-events-client-3.3.7.pom
+Progress (1): 3.3/6.4 kBProgress (1): 6.4 kB                        Downloaded from snapshots: https://artifactory.cloud.cms.gov/artifactory/ab2d-main/gov/cms/ab2d/ab2d-events-client/3.3.7/ab2d-events-client-3.3.7.pom (6.4 kB at 24 kB/s)
+Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/boot/spring-boot-starter-data-jpa/3.5.4/spring-boot-starter-data-jpa-3.5.4.pom
+Progress (1): 2.9 kB                    Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/boot/spring-boot-starter-data-jpa/3.5.4/spring-boot-starter-data-jpa-3.5.4.pom (2.9 kB at 13 kB/s)
+Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/boot/spring-boot-starter-jdbc/3.5.4/spring-boot-starter-jdbc-3.5.4.pom
+Progress (1): 2.5 kB                    Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/boot/spring-boot-starter-jdbc/3.5.4/spring-boot-starter-jdbc-3.5.4.pom (2.5 kB at 11 kB/s)
+Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/zaxxer/HikariCP/6.3.1/HikariCP-6.3.1.pom
+Progress (1): 3.2/28 kBProgress (1): 16/28 kB Progress (1): 28 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/zaxxer/HikariCP/6.3.1/HikariCP-6.3.1.pom (28 kB at 97 kB/s)
+Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/hibernate/orm/hibernate-core/6.6.22.Final/hibernate-core-6.6.22.Final.pom
+Progress (1): 3.1/5.8 kBProgress (1): 5.8 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/hibernate/orm/hibernate-core/6.6.22.Final/hibernate-core-6.6.22.Final.pom (5.8 kB at 21 kB/s)
+Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/data/spring-data-jpa/3.5.2/spring-data-jpa-3.5.2.pom
+Progress (1): 3.2/12 kBProgress (1): 12 kB                       Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/data/spring-data-jpa/3.5.2/spring-data-jpa-3.5.2.pom (12 kB at 52 kB/s)
+Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/data/spring-data-jpa-parent/3.5.2/spring-data-jpa-parent-3.5.2.pom
+Progress (1): 3.1/5.2 kBProgress (1): 5.2 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/data/spring-data-jpa-parent/3.5.2/spring-data-jpa-parent-3.5.2.pom (5.2 kB at 20 kB/s)
+Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/data/build/spring-data-parent/3.5.2/spring-data-parent-3.5.2.pom
+Progress (1): 7.2/43 kBProgress (1): 7.2/43 kBProgress (1): 15/43 kB Progress (1): 24/43 kBProgress (1): 32/43 kBProgress (1): 40/43 kBProgress (1): 43 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/data/build/spring-data-parent/3.5.2/spring-data-parent-3.5.2.pom (43 kB at 207 kB/s)
+Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/data/build/spring-data-build/3.5.2/spring-data-build-3.5.2.pom
+Progress (1): 3.2/7.1 kBProgress (1): 7.1 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/data/build/spring-data-build/3.5.2/spring-data-build-3.5.2.pom (7.1 kB at 37 kB/s)
+Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/data/spring-data-commons/3.5.2/spring-data-commons-3.5.2.pom
+Progress (1): 7.2/9.9 kBProgress (1): 9.9 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/data/spring-data-commons/3.5.2/spring-data-commons-3.5.2.pom (9.9 kB at 35 kB/s)
+Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/spring-orm/6.2.9/spring-orm-6.2.9.pom
+Progress (1): 2.6 kB                    Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/spring-orm/6.2.9/spring-orm-6.2.9.pom (2.6 kB at 12 kB/s)
+Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/spring-aspects/6.2.9/spring-aspects-6.2.9.pom
+Progress (1): 2.0 kB                    Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/spring-aspects/6.2.9/spring-aspects-6.2.9.pom (2.0 kB at 8.4 kB/s)
+Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/google/code/gson/gson/2.13.1/gson-2.13.1.pom
+Progress (1): 3.2/13 kBProgress (1): 13 kB                       Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/google/code/gson/gson/2.13.1/gson-2.13.1.pom (13 kB at 15 kB/s)
+Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/google/errorprone/error_prone_parent/2.38.0/error_prone_parent-2.38.0.pom
+Progress (1): 3.2/16 kBProgress (1): 16 kB                       Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/google/errorprone/error_prone_parent/2.38.0/error_prone_parent-2.38.0.pom (16 kB at 61 kB/s)
+[INFO] 
+[INFO] --- dependency:3.6.0:tree (default-cli) @ api ---
+[INFO] gov.cms.ab2d:api:jar:0.0.1-SNAPSHOT
+[INFO] +- gov.cms.ab2d:common:jar:0.0.1-SNAPSHOT:compile
+[INFO] +- gov.cms.ab2d:job:jar:0.0.1-SNAPSHOT:compile
+[INFO] +- org.springframework.boot:spring-boot-starter-validation:jar:3.5.4:compile
+[INFO] |  +- org.springframework.boot:spring-boot-starter:jar:3.5.4:compile
+[INFO] |  |  +- org.springframework.boot:spring-boot:jar:3.5.4:compile
+[INFO] |  |  |  \- org.springframework:spring-context:jar:6.2.9:compile
+[INFO] |  |  +- org.springframework.boot:spring-boot-autoconfigure:jar:3.5.4:compile
+[INFO] |  |  +- org.springframework.boot:spring-boot-starter-logging:jar:3.5.4:compile
+[INFO] |  |  |  +- org.apache.logging.log4j:log4j-to-slf4j:jar:2.24.3:compile
+[INFO] |  |  |  |  \- org.apache.logging.log4j:log4j-api:jar:2.24.3:compile
+[INFO] |  |  |  \- org.slf4j:jul-to-slf4j:jar:2.0.17:compile
+[INFO] |  |  +- jakarta.annotation:jakarta.annotation-api:jar:2.1.1:compile
+[INFO] |  |  \- org.yaml:snakeyaml:jar:2.4:compile
+[INFO] |  \- org.hibernate.validator:hibernate-validator:jar:8.0.2.Final:compile
+[INFO] |     +- jakarta.validation:jakarta.validation-api:jar:3.0.2:compile
+[INFO] |     +- org.jboss.logging:jboss-logging:jar:3.6.1.Final:compile
+[INFO] |     \- com.fasterxml:classmate:jar:1.7.0:compile
+[INFO] +- com.okta.jwt:okta-jwt-verifier:jar:0.5.12:compile
+[INFO] |  +- io.github.hakky54:sslcontext-kickstart:jar:9.1.0:compile
+[INFO] |  \- io.github.hakky54:sslcontext-kickstart-for-pem:jar:9.1.0:compile
+[INFO] |     \- org.bouncycastle:bcpkix-jdk18on:jar:1.80:compile
+[INFO] |        \- org.bouncycastle:bcutil-jdk18on:jar:1.80:compile
+[INFO] |           \- org.bouncycastle:bcprov-jdk18on:jar:1.80:compile
+[INFO] +- com.okta.jwt:okta-jwt-verifier-impl:jar:0.5.12:runtime
+[INFO] |  +- com.okta.commons:okta-config-check:jar:2.0.1:runtime
+[INFO] |  +- com.okta.commons:okta-commons-lang:jar:2.0.1:runtime
+[INFO] |  +- com.okta.commons:okta-http-api:jar:2.0.1:runtime
+[INFO] |  +- com.okta.commons:okta-http-okhttp:jar:2.0.1:runtime
+[INFO] |  |  +- com.squareup.okhttp3:logging-interceptor:jar:4.12.0:runtime
+[INFO] |  |  \- org.slf4j:jcl-over-slf4j:jar:2.0.17:runtime
+[INFO] |  +- org.slf4j:slf4j-api:jar:2.0.17:compile
+[INFO] |  +- io.jsonwebtoken:jjwt-api:jar:0.12.6:runtime
+[INFO] |  +- io.jsonwebtoken:jjwt-impl:jar:0.12.6:runtime
+[INFO] |  +- io.jsonwebtoken:jjwt-jackson:jar:0.12.6:runtime
+[INFO] |  +- com.fasterxml.jackson.core:jackson-annotations:jar:2.19.2:compile
+[INFO] |  +- com.fasterxml.jackson.core:jackson-databind:jar:2.19.2:compile
+[INFO] |  \- com.squareup.okhttp3:okhttp:jar:4.12.0:runtime
+[INFO] |     \- com.squareup.okio:okio:jar:3.6.0:runtime
+[INFO] |        \- com.squareup.okio:okio-jvm:jar:3.6.0:runtime
+[INFO] |           \- org.jetbrains.kotlin:kotlin-stdlib-common:jar:1.9.25:runtime
+[INFO] +- org.springframework.boot:spring-boot-starter-test:jar:3.5.4:test
+[INFO] |  +- org.springframework.boot:spring-boot-test:jar:3.5.4:test
+[INFO] |  +- org.springframework.boot:spring-boot-test-autoconfigure:jar:3.5.4:test
+[INFO] |  +- com.jayway.jsonpath:json-path:jar:2.9.0:test
+[INFO] |  +- jakarta.xml.bind:jakarta.xml.bind-api:jar:4.0.2:compile
+[INFO] |  +- net.minidev:json-smart:jar:2.5.2:test
+[INFO] |  |  \- net.minidev:accessors-smart:jar:2.5.2:test
+[INFO] |  |     \- org.ow2.asm:asm:jar:9.7.1:test
+[INFO] |  +- org.assertj:assertj-core:jar:3.27.3:test
+[INFO] |  |  \- net.bytebuddy:byte-buddy:jar:1.17.6:runtime
+[INFO] |  +- org.awaitility:awaitility:jar:4.2.2:test
+[INFO] |  +- org.hamcrest:hamcrest:jar:3.0:test
+[INFO] |  +- org.junit.jupiter:junit-jupiter:jar:5.12.2:test
+[INFO] |  |  +- org.junit.jupiter:junit-jupiter-api:jar:5.12.2:test
+[INFO] |  |  |  +- org.opentest4j:opentest4j:jar:1.3.0:test
+[INFO] |  |  |  +- org.junit.platform:junit-platform-commons:jar:1.12.2:test
+[INFO] |  |  |  \- org.apiguardian:apiguardian-api:jar:1.1.2:test
+[INFO] |  |  +- org.junit.jupiter:junit-jupiter-params:jar:5.12.2:test
+[INFO] |  |  \- org.junit.jupiter:junit-jupiter-engine:jar:5.12.2:test
+[INFO] |  |     \- org.junit.platform:junit-platform-engine:jar:1.12.2:test
+[INFO] |  +- org.mockito:mockito-core:jar:5.17.0:test
+[INFO] |  |  +- net.bytebuddy:byte-buddy-agent:jar:1.17.6:test
+[INFO] |  |  \- org.objenesis:objenesis:jar:3.3:test
+[INFO] |  +- org.mockito:mockito-junit-jupiter:jar:5.17.0:test
+[INFO] |  +- org.skyscreamer:jsonassert:jar:1.5.3:test
+[INFO] |  |  \- com.vaadin.external.google:android-json:jar:0.0.20131108.vaadin1:test
+[INFO] |  +- org.springframework:spring-core:jar:6.2.9:compile
+[INFO] |  |  \- org.springframework:spring-jcl:jar:6.2.9:compile
+[INFO] |  +- org.springframework:spring-test:jar:6.2.9:test
+[INFO] |  \- org.xmlunit:xmlunit-core:jar:2.10.3:test
+[INFO] +- gov.cms.ab2d:common:test-jar:tests:0.0.1-SNAPSHOT:test
+[INFO] +- net.logstash.logback:logstash-logback-encoder:jar:7.3:compile
+[INFO] +- ch.qos.logback:logback-classic:jar:1.5.18:compile
+[INFO] |  \- ch.qos.logback:logback-core:jar:1.5.18:compile
+[INFO] +- dev.akkinoc.spring.boot:logback-access-spring-boot-starter:jar:3.4.3:compile
+[INFO] |  +- org.jetbrains.kotlin:kotlin-stdlib-jdk8:jar:1.9.25:compile
+[INFO] |  |  +- org.jetbrains.kotlin:kotlin-stdlib:jar:1.9.25:compile
+[INFO] |  |  \- org.jetbrains.kotlin:kotlin-stdlib-jdk7:jar:1.9.25:compile
+[INFO] |  +- org.jetbrains.kotlin:kotlin-reflect:jar:1.9.25:compile
+[INFO] |  \- ch.qos.logback:logback-access:jar:1.2.11:compile
+[INFO] +- com.fasterxml.jackson.module:jackson-module-jaxb-annotations:jar:2.19.2:compile
+[INFO] |  +- com.fasterxml.jackson.core:jackson-core:jar:2.19.2:compile
+[INFO] |  +- javax.xml.bind:jaxb-api:jar:2.2.12:compile
+[INFO] |  \- jakarta.activation:jakarta.activation-api:jar:2.1.3:compile
+[INFO] +- com.newrelic.agent.java:newrelic-java:zip:8.22.0:provided
+[INFO] +- org.apache.httpcomponents.client5:httpclient5:jar:5.5:compile
+[INFO] |  \- org.apache.httpcomponents.core5:httpcore5-h2:jar:5.3.4:compile
+[INFO] +- org.apache.httpcomponents.core5:httpcore5:jar:5.3.4:compile
+[INFO] +- org.springdoc:springdoc-openapi-starter-webmvc-ui:jar:2.8.9:compile
+[INFO] |  +- org.springdoc:springdoc-openapi-starter-webmvc-api:jar:2.8.9:compile
+[INFO] |  |  +- org.springdoc:springdoc-openapi-starter-common:jar:2.8.9:compile
+[INFO] |  |  |  \- io.swagger.core.v3:swagger-core-jakarta:jar:2.2.30:compile
+[INFO] |  |  |     +- org.apache.commons:commons-lang3:jar:3.16.0:compile
+[INFO] |  |  |     +- io.swagger.core.v3:swagger-annotations-jakarta:jar:2.2.30:compile
+[INFO] |  |  |     +- io.swagger.core.v3:swagger-models-jakarta:jar:2.2.30:compile
+[INFO] |  |  |     \- com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:2.19.2:compile
+[INFO] |  |  \- org.springframework:spring-webmvc:jar:6.2.9:compile
+[INFO] |  |     +- org.springframework:spring-aop:jar:6.2.9:compile
+[INFO] |  |     +- org.springframework:spring-beans:jar:6.2.9:compile
+[INFO] |  |     \- org.springframework:spring-expression:jar:6.2.9:compile
+[INFO] |  +- org.webjars:swagger-ui:jar:5.21.0:compile
+[INFO] |  \- org.webjars:webjars-locator-lite:jar:1.1.0:compile
+[INFO] |     \- org.jspecify:jspecify:jar:1.0.0:compile
+[INFO] +- gov.cms.ab2d:ab2d-events-client:jar:3.3.7:compile
+[INFO] |  +- commons-codec:commons-codec:jar:1.18.0:runtime
+[INFO] |  +- org.springframework.boot:spring-boot-starter-data-jpa:jar:3.5.4:runtime
+[INFO] |  |  +- org.hibernate.orm:hibernate-core:jar:6.6.22.Final:runtime
+[INFO] |  |  |  +- jakarta.persistence:jakarta.persistence-api:jar:3.1.0:runtime
+[INFO] |  |  |  +- jakarta.transaction:jakarta.transaction-api:jar:2.0.1:runtime
+[INFO] |  |  |  +- org.hibernate.common:hibernate-commons-annotations:jar:7.0.3.Final:runtime
+[INFO] |  |  |  +- io.smallrye:jandex:jar:3.2.0:runtime
+[INFO] |  |  |  +- org.glassfish.jaxb:jaxb-runtime:jar:4.0.5:runtime
+[INFO] |  |  |  |  \- org.glassfish.jaxb:jaxb-core:jar:4.0.5:runtime
+[INFO] |  |  |  |     +- org.eclipse.angus:angus-activation:jar:2.0.2:runtime
+[INFO] |  |  |  |     +- org.glassfish.jaxb:txw2:jar:4.0.5:runtime
+[INFO] |  |  |  |     \- com.sun.istack:istack-commons-runtime:jar:4.1.2:runtime
+[INFO] |  |  |  +- jakarta.inject:jakarta.inject-api:jar:2.0.1:runtime
+[INFO] |  |  |  \- org.antlr:antlr4-runtime:jar:4.13.0:runtime
+[INFO] |  |  +- org.springframework.data:spring-data-jpa:jar:3.5.2:runtime
+[INFO] |  |  |  +- org.springframework.data:spring-data-commons:jar:3.5.2:runtime
+[INFO] |  |  |  +- org.springframework:spring-orm:jar:6.2.9:runtime
+[INFO] |  |  |  \- org.springframework:spring-tx:jar:6.2.9:runtime
+[INFO] |  |  \- org.springframework:spring-aspects:jar:6.2.9:runtime
+[INFO] |  |     \- org.aspectj:aspectjweaver:jar:1.9.24:runtime
+[INFO] |  +- org.springframework.boot:spring-boot-starter-jdbc:jar:3.5.4:runtime
+[INFO] |  |  +- com.zaxxer:HikariCP:jar:6.3.1:runtime
+[INFO] |  |  \- org.springframework:spring-jdbc:jar:6.2.9:runtime
+[INFO] |  +- org.springframework.boot:spring-boot-starter-web:jar:3.5.4:runtime
+[INFO] |  |  +- org.springframework.boot:spring-boot-starter-json:jar:3.5.4:runtime
+[INFO] |  |  +- org.springframework.boot:spring-boot-starter-tomcat:jar:3.5.4:runtime
+[INFO] |  |  |  +- org.apache.tomcat.embed:tomcat-embed-core:jar:10.1.43:runtime
+[INFO] |  |  |  +- org.apache.tomcat.embed:tomcat-embed-el:jar:10.1.43:runtime
+[INFO] |  |  |  \- org.apache.tomcat.embed:tomcat-embed-websocket:jar:10.1.43:runtime
+[INFO] |  |  \- org.springframework:spring-web:jar:6.2.9:compile
+[INFO] |  |     \- io.micrometer:micrometer-observation:jar:1.15.2:compile
+[INFO] |  |        \- io.micrometer:micrometer-commons:jar:1.15.2:compile
+[INFO] |  +- io.awspring.cloud:spring-cloud-aws-starter-sqs:jar:3.3.0:runtime
+[INFO] |  |  \- io.awspring.cloud:spring-cloud-aws-sqs:jar:3.3.0:runtime
+[INFO] |  |     +- software.amazon.awssdk:sqs:jar:2.29.52:runtime
+[INFO] |  |     |  +- software.amazon.awssdk:aws-json-protocol:jar:2.29.52:runtime
+[INFO] |  |     |  |  \- software.amazon.awssdk:third-party-jackson-core:jar:2.29.52:runtime
+[INFO] |  |     |  +- software.amazon.awssdk:protocol-core:jar:2.29.52:runtime
+[INFO] |  |     |  +- software.amazon.awssdk:http-auth-aws:jar:2.29.52:runtime
+[INFO] |  |     |  |  +- software.amazon.awssdk:checksums-spi:jar:2.29.52:runtime
+[INFO] |  |     |  |  \- software.amazon.awssdk:checksums:jar:2.29.52:runtime
+[INFO] |  |     |  +- software.amazon.awssdk:sdk-core:jar:2.29.52:runtime
+[INFO] |  |     |  |  \- org.reactivestreams:reactive-streams:jar:1.0.4:runtime
+[INFO] |  |     |  +- software.amazon.awssdk:http-auth-spi:jar:2.29.52:runtime
+[INFO] |  |     |  +- software.amazon.awssdk:http-auth:jar:2.29.52:runtime
+[INFO] |  |     |  +- software.amazon.awssdk:identity-spi:jar:2.29.52:runtime
+[INFO] |  |     |  +- software.amazon.awssdk:http-client-spi:jar:2.29.52:runtime
+[INFO] |  |     |  +- software.amazon.awssdk:annotations:jar:2.29.52:runtime
+[INFO] |  |     |  +- software.amazon.awssdk:utils:jar:2.29.52:runtime
+[INFO] |  |     |  +- software.amazon.awssdk:metrics-spi:jar:2.29.52:runtime
+[INFO] |  |     |  +- software.amazon.awssdk:json-utils:jar:2.29.52:runtime
+[INFO] |  |     |  +- software.amazon.awssdk:endpoints-spi:jar:2.29.52:runtime
+[INFO] |  |     |  +- software.amazon.awssdk:retries-spi:jar:2.29.52:runtime
+[INFO] |  |     |  +- software.amazon.awssdk:apache-client:jar:2.29.52:runtime
+[INFO] |  |     |  |  +- org.apache.httpcomponents:httpclient:jar:4.5.13:runtime
+[INFO] |  |     |  |  |  \- commons-logging:commons-logging:jar:1.2:runtime
+[INFO] |  |     |  |  \- org.apache.httpcomponents:httpcore:jar:4.4.16:runtime
+[INFO] |  |     |  \- software.amazon.awssdk:netty-nio-client:jar:2.29.52:runtime
+[INFO] |  |     |     +- io.netty:netty-codec-http:jar:4.1.123.Final:runtime
+[INFO] |  |     |     +- io.netty:netty-codec-http2:jar:4.1.123.Final:runtime
+[INFO] |  |     |     +- io.netty:netty-codec:jar:4.1.123.Final:runtime
+[INFO] |  |     |     +- io.netty:netty-transport:jar:4.1.123.Final:runtime
+[INFO] |  |     |     +- io.netty:netty-common:jar:4.1.123.Final:runtime
+[INFO] |  |     |     +- io.netty:netty-buffer:jar:4.1.123.Final:runtime
+[INFO] |  |     |     +- io.netty:netty-handler:jar:4.1.123.Final:runtime
+[INFO] |  |     |     |  \- io.netty:netty-transport-native-unix-common:jar:4.1.123.Final:runtime
+[INFO] |  |     |     +- io.netty:netty-transport-classes-epoll:jar:4.1.123.Final:runtime
+[INFO] |  |     |     \- io.netty:netty-resolver:jar:4.1.123.Final:runtime
+[INFO] |  |     +- software.amazon.awssdk:arns:jar:2.29.52:runtime
+[INFO] |  |     +- org.springframework:spring-messaging:jar:6.2.9:runtime
+[INFO] |  |     \- org.springframework.retry:spring-retry:jar:2.0.12:runtime
+[INFO] |  +- io.awspring.cloud:spring-cloud-aws-starter:jar:3.3.0:runtime
+[INFO] |  |  +- io.awspring.cloud:spring-cloud-aws-autoconfigure:jar:3.3.0:runtime
+[INFO] |  |  |  \- software.amazon.awssdk:aws-core:jar:2.29.52:runtime
+[INFO] |  |  |     +- software.amazon.awssdk:profiles:jar:2.29.52:runtime
+[INFO] |  |  |     +- software.amazon.awssdk:retries:jar:2.29.52:runtime
+[INFO] |  |  |     \- software.amazon.eventstream:eventstream:jar:1.0.1:runtime
+[INFO] |  |  \- io.awspring.cloud:spring-cloud-aws-core:jar:3.3.0:runtime
+[INFO] |  |     +- software.amazon.awssdk:regions:jar:2.29.52:runtime
+[INFO] |  |     \- software.amazon.awssdk:auth:jar:2.29.52:runtime
+[INFO] |  |        \- software.amazon.awssdk:http-auth-aws-eventstream:jar:2.29.52:runtime
+[INFO] |  +- com.fasterxml.jackson.module:jackson-module-parameter-names:jar:2.19.2:runtime
+[INFO] |  +- com.fasterxml.jackson.datatype:jackson-datatype-jdk8:jar:2.19.2:runtime
+[INFO] |  +- com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.19.2:compile
+[INFO] |  +- com.slack.api:slack-api-client:jar:1.30.0:runtime
+[INFO] |  |  +- com.slack.api:slack-api-model:jar:1.30.0:runtime
+[INFO] |  |  \- com.google.code.gson:gson:jar:2.13.1:runtime
+[INFO] |  |     \- com.google.errorprone:error_prone_annotations:jar:2.38.0:runtime
+[INFO] |  \- org.postgresql:postgresql:jar:42.7.4:runtime
+[INFO] |     \- org.checkerframework:checker-qual:jar:3.42.0:runtime
+[INFO] +- org.projectlombok:lombok:jar:1.18.38:provided
+[INFO] +- org.testcontainers:testcontainers:jar:1.20.6:test
+[INFO] |  +- junit:junit:jar:4.13.2:test
+[INFO] |  |  \- org.hamcrest:hamcrest-core:jar:3.0:test
+[INFO] |  +- org.apache.commons:commons-compress:jar:1.24.0:test
+[INFO] |  +- org.rnorth.duct-tape:duct-tape:jar:1.0.8:test
+[INFO] |  |  \- org.jetbrains:annotations:jar:17.0.0:compile
+[INFO] |  +- com.github.docker-java:docker-java-api:jar:3.4.1:test
+[INFO] |  \- com.github.docker-java:docker-java-transport-zerodep:jar:3.4.1:test
+[INFO] |     +- com.github.docker-java:docker-java-transport:jar:3.4.1:test
+[INFO] |     \- net.java.dev.jna:jna:jar:5.13.0:test
+[INFO] +- org.testcontainers:postgresql:jar:1.20.6:test
+[INFO] |  \- org.testcontainers:jdbc:jar:1.20.6:test
+[INFO] |     \- org.testcontainers:database-commons:jar:1.20.6:test
+[INFO] +- org.testcontainers:junit-jupiter:jar:1.20.6:test
+[INFO] \- org.testcontainers:localstack:jar:1.20.6:test
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  6.102 s
+[INFO] Finished at: 2025-09-23T12:11:18-07:00
+[INFO] ------------------------------------------------------------------------
