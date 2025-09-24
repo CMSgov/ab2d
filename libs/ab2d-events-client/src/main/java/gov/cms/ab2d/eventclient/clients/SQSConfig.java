@@ -59,9 +59,8 @@ public class SQSConfig {
     public static String deriveSqsQueueName(String url) {
         try {
             String[] tokens = url.split("/");
-            return tokens[tokens.length-1];
-        }
-        catch (Exception e) {
+            return tokens[tokens.length - 1];
+        } catch (Exception e) {
             throw new EventClientException("Unable to derive SQS queue name from URL: " + url);
         }
     }

@@ -4,13 +4,16 @@ import gov.cms.ab2d.eventclient.config.Ab2dEnvironment;
 import gov.cms.ab2d.snsclient.clients.SNSClient;
 import gov.cms.ab2d.snsclient.clients.SNSClientImpl;
 import gov.cms.ab2d.snsclient.clients.SNSConfig;
+import gov.cms.ab2d.snsclient.exception.SNSClientException;
 import gov.cms.ab2d.snsclient.messages.Topics;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import software.amazon.awssdk.services.sns.SnsClient;
 
+import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @SpringBootTest
@@ -34,14 +37,32 @@ class SendSnsTest {
     }
 
     @Test
-    void testNoUrl() {
+    void testNoUrl() throws Exception {
         System.clearProperty("cloud.aws.end-point.uri");
+        SNSConfig snsConfig = new SNSConfig();
+        SnsClient amazonSns = snsConfig.amazonSNS();
+        SNSClientImpl client = new SNSClientImpl(amazonSns, environment, "my-test-prefix");
         assertDoesNotThrow(() -> {
-            SNSConfig snsConfig = new SNSConfig();
-            SNSClientImpl client = new SNSClientImpl(snsConfig.amazonSNS(), environment, "my-topic-prefix");
             client.sendMessage(Topics.COVERAGE_COUNTS.getValue(), "test");
         });
     }
 
+    @Test
+    void testNoPrefix() throws Exception {
+        SNSConfig snsConfig = new SNSConfig();
+        SnsClient amazonSns = snsConfig.amazonSNS();
+        assertThrows(SNSClientException.class, () -> {
+            new SNSClientImpl(amazonSns, environment);
+        });
+    }
+
+    @Test
+    void testEmptyPrefix() throws Exception {
+        SNSConfig snsConfig = new SNSConfig();
+        SnsClient amazonSns = snsConfig.amazonSNS();
+        assertThrows(SNSClientException.class, () -> {
+            new SNSClientImpl(amazonSns, environment, "");
+        });
+    }
 
 }
