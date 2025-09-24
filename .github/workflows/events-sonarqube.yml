@@ -48,7 +48,7 @@ jobs:
 #      - name: Run tests
 #        run: ./gradlew clean test --info
 
-      - name: SonarQube Analysis # TODO Uncomment previous step to run tests which are currently broken to populate code coverage
+      - name: SonarQube Analysis # TODO Uncomment previous step to run tests (currently broken) in order to populate code coverage
         run: |
           ./gradlew sonar \
             -Dsonar.ci.autoconfig.disabled=true \
