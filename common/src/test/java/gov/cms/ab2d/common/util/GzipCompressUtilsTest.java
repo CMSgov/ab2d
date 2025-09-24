@@ -28,19 +28,11 @@ class GzipCompressUtilsTest {
     void testCompressFile() throws Exception {
         Path outputCompressed = newTestFile(".ndjson.gz");
         GzipCompressUtils.compress(UNCOMPRESSED_FILE, outputCompressed);
-
         /*
          Note that the following is not a valid assertion because the 'gzip' command line utility can produce
          output that differs from {@link GzipCompressUtils#compress}, however both outputs are valid.
-
-         assertTrue(
-             FileUtils.contentEquals(output.toFile(),
-             COMPRESSED_FILE.toFile())
-         );
-
          Instead, decompress the `outputCompressed` file and assert it matches {@link UNCOMPRESSED_FILE}
          */
-
         Path outputDecompressed = newTestFile(".ndjson");
         GzipCompressUtils.decompress(outputCompressed, outputDecompressed);
 
