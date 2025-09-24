@@ -50,6 +50,7 @@ allprojects {
         testImplementation "org.springframework.data:spring-data-jpa"
         testImplementation "org.liquibase:liquibase-core:${liquibaseVersion}"
         testImplementation "org.testcontainers:localstack:${testContainerVersion}"
+        testRuntimeOnly "org.junit.platform:junit-platform-launcher"
         compileOnly "org.cyclonedx:cyclonedx-gradle-plugin:1.4.0"
         compileOnly 'org.cyclonedx:cyclonedx-core-java:10.2.1'
     }
