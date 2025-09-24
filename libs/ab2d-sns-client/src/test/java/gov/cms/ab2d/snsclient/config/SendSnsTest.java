@@ -36,27 +36,27 @@ class SendSnsTest {
     }
 
     @Test
-    void testNoUrl() {
+    void testNoUrl() throws Exception {
         System.clearProperty("cloud.aws.end-point.uri");
+        SNSConfig snsConfig = new SNSConfig();
+        SNSClientImpl client = new SNSClientImpl(snsConfig.amazonSNS(), environment, "my-test-prefix");
         assertDoesNotThrow(() -> {
-            SNSConfig snsConfig = new SNSConfig();
-            SNSClientImpl client = new SNSClientImpl(snsConfig.amazonSNS(), environment, "my-test-prefix");
             client.sendMessage(Topics.COVERAGE_COUNTS.getValue(), "test");
         });
     }
 
     @Test
     void testNoPrefix() {
+        SNSConfig snsConfig = new SNSConfig();
         assertThrows(SNSClientException.class, () -> {
-            SNSConfig snsConfig = new SNSConfig();
             new SNSClientImpl(snsConfig.amazonSNS(), environment);
         });
     }
 
     @Test
     void testEmptyPrefix() {
+        SNSConfig snsConfig = new SNSConfig();
         assertThrows(SNSClientException.class, () -> {
-            SNSConfig snsConfig = new SNSConfig();
             new SNSClientImpl(snsConfig.amazonSNS(), environment, "");
         });
     }
