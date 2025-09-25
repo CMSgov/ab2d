@@ -46,6 +46,7 @@ allprojects {
         runtimeOnly "javax.xml.bind:jaxb-api:2.4.0-b180830.0359"
         runtimeOnly 'org.postgresql:postgresql:42.7.3'
         testImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
+        testRuntimeOnly "org.junit.platform:junit-platform-launcher"
         testImplementation "commons-io:commons-io:2.18.0"
         testImplementation "org.springframework.data:spring-data-jpa"
         testImplementation "org.liquibase:liquibase-core:${liquibaseVersion}"
