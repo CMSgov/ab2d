@@ -45,9 +45,6 @@ resource "aws_ecr_repository" "this" {
   name                 = each.value
   image_tag_mutability = "MUTABLE"
 
-  # TEMP for KMS migration: allow Terraform to delete non-empty repos
-  force_delete         = true
-
   encryption_configuration {
     encryption_type = "KMS"
     kms_key = aws_kms_key.this.arn
