@@ -268,7 +268,7 @@ def push_images(session, account: str, region: str, verbose: bool):
     docker_login_to_ecr(dkr, ecr, account, region)
 
     registry = ecr_registry_domain(account, region)
-    api = docker.APIClient(base_url=dkr.api.base_url)
+    api = dkr.api
 
     # Push each saved tag
     for repo, tags in repos.items():
