@@ -1,5 +1,5 @@
 module "db" {
-  source = "github.com/CMSgov/cdap//terraform/modules/aurora?ref=f333c0a8367889a46aa00eeb95fd67cbd838b909"
+  source = "github.com/CMSgov/cdap//terraform/modules/aurora?ref=1e2bf27937d23bcfff33661e8e12a87fceb4b6f5"
 
   snapshot_identifier     = var.aurora_snapshot
   backup_retention_period = module.platform.is_ephemeral_env ? 1 : 7
