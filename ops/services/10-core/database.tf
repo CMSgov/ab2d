@@ -42,11 +42,6 @@ module "db" {
   cluster_parameters = [
     {
       apply_method = "immediate"
-      name         = "rds.force_ssl"
-      value        = 1
-    },
-    {
-      apply_method = "immediate"
       name         = "backslash_quote"
       value        = "safe_encoding"
     },
