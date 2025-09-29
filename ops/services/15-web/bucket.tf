@@ -67,6 +67,22 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
   }
 }
 
+resource "aws_s3_bucket_lifecycle_configuration" "this" {
+  bucket = aws_s3_bucket.this.bucket
+
+  rule {
+    id     = "noncurrent-ia"
+    status = "Enabled"
+
+    filter {}
+
+    noncurrent_version_transition {
+      noncurrent_days = 30
+      storage_class   = "STANDARD_IA"
+    }
+  }
+}
+
 resource "aws_ssm_parameter" "bucket" {
   name  = "/ab2d/${local.env}/web/nonsensitive/s3-bucket"
   value = aws_s3_bucket.this.id
