@@ -311,6 +311,7 @@ module "service" {
   ]
 }
 
+# TODO Remove these two moved blocks after service module changes have been deployed
 moved {
   from = aws_ecs_service.api
   to   = module.service.aws_ecs_service.this
