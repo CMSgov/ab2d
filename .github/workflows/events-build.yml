@@ -75,7 +75,7 @@ jobs:
             HPMS_AUTH_KEY_SECRET=/ab2d/dev/core/sensitive/hpms_auth_key_secret
 
       - name: Run tests
-        if: ${{ inputs.run_tests == true }}
+#        if: ${{ inputs.run_tests == true }}
         run: ./gradlew clean test --debug
 
       - name: Build and push Docker image
