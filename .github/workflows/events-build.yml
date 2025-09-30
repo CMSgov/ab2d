@@ -2,10 +2,6 @@ name: Events build
 run-name: events-build
 
 on:
-  push:
-    branches:
-      - '6879/fix_events_tests'
-
   workflow_call:
     inputs:
       push_image:

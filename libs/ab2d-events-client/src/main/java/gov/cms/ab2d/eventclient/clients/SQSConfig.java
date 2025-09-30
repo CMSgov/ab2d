@@ -45,7 +45,7 @@ public class SQSConfig {
                      Ab2dEnvironment ab2dEnvironment) {
         this.region = region;
         this.url = url;
-
+        log.info("ab2dEnvironment: '{}'", ab2dEnvironment);
         this.sqsQueueName = (ab2dEnvironment == Ab2dEnvironment.LOCAL)
                 ? "local-events-sqs"
                 : deriveSqsQueueName(url);
@@ -57,8 +57,8 @@ public class SQSConfig {
     }
 
     public static String deriveSqsQueueName(String url) {
+        log.error("deriving SQS queue name: '{}'", url);
         try {
-            log.error("deriving SQS queue name: '{}'", url);
             String[] tokens = url.split("/");
             return tokens[tokens.length - 1];
         } catch (Exception e) {
