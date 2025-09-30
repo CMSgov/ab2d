@@ -2,6 +2,10 @@ name: Events build
 run-name: events-build
 
 on:
+  push:
+    branches:
+      - '6879/fix_events_tests'
+
   workflow_call:
     inputs:
       push_image:
@@ -23,7 +27,8 @@ on:
       run_tests:
         description: Run tests
         type: boolean
-        default: false # TODO Tests are broken; to be fixed in AB2D-6879
+        default: true
+#        default: false # TODO Tests are broken; to be fixed in AB2D-6879
 
 permissions:
   contents: read
@@ -71,7 +76,7 @@ jobs:
 
       - name: Run tests
         if: ${{ inputs.run_tests == true }}
-        run: ./gradlew clean test --info
+        run: ./gradlew clean test --debug
 
       - name: Build and push Docker image
         if: ${{ inputs.push_image == true }}
