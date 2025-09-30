@@ -45,10 +45,11 @@ public class SQSConfig {
                      Ab2dEnvironment ab2dEnvironment) {
         this.region = region;
         this.url = url;
-        log.info("ab2dEnvironment: '{}'", ab2dEnvironment);
-        this.sqsQueueName = (ab2dEnvironment == Ab2dEnvironment.LOCAL)
-                ? "local-events-sqs"
-                : deriveSqsQueueName(url);
+        log.error("ab2dEnvironment: " + ab2dEnvironment);
+//        this.sqsQueueName = (ab2dEnvironment == Ab2dEnvironment.LOCAL)
+//                ? "local-events-sqs"
+//                : deriveSqsQueueName(url);
+        this.sqsQueueName = "local-events-sqs";
 
         // This is needed so the sqsListener can get the queue name.
         // It only accepts constance and this is a way to get around that while dynamically setting a sqs name
