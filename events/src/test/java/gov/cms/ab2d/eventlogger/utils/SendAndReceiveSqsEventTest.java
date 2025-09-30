@@ -74,7 +74,9 @@ public class SendAndReceiveSqsEventTest {
 
     @Test
     void testQueueUrl() {
-         String sqs = "ab2d-dev-events-sqs";
+        String expectedEnv = System.getProperty("AB2D_EXECUTION_ENV",
+                System.getenv().getOrDefault("AB2D_EXECUTION_ENV", "local"));
+        String sqs = expectedEnv + "-events-sqs";
         String url = amazonSQS.getQueueUrl(GetQueueUrlRequest.builder().queueName(sqs).build()).join().queueUrl();
         Assertions.assertTrue(url.contains(sqs));
     }
