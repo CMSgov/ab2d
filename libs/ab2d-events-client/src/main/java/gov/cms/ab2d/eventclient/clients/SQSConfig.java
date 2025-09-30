@@ -58,6 +58,7 @@ public class SQSConfig {
 
     public static String deriveSqsQueueName(String url) {
         try {
+            log.error("deriving SQS queue name: '{}'", url);
             String[] tokens = url.split("/");
             return tokens[tokens.length - 1];
         } catch (Exception e) {
