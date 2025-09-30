@@ -230,7 +230,7 @@ module "service" {
   cpu             = local.ecs_task_def_cpu_api
   memory          = local.ecs_task_def_memory_api
   desired_count   = local.api_desired_instances
-  port_mappings   = [{ containerPort : local.container_port }]
+  port_mappings   = [{ containerPort = local.container_port }]
   security_groups = [data.aws_security_group.api.id, aws_security_group.load_balancer.id] #FIXME
   task_role_arn   = data.aws_iam_role.api.arn
 
