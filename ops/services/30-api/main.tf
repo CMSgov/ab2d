@@ -302,7 +302,8 @@ resource "aws_ecs_task_definition" "api" {
       { name : "AWS_SQS_FEATURE_FLAG", value : "true" },
       { name : "AWS_SQS_URL", value : data.aws_sqs_queue.events.url }, #FIXME: Is this even used?
       { name : "NEW_RELIC_APP_NAME", value : local.new_relic_app_name },
-      { name : "MICROSERVICES_URL", value : local.microservices_url }
+      { name : "MICROSERVICES_URL", value : local.microservices_url },
+      { name : "PROPERTIES_SERVICE_URL", value : local.microservices_url } #TODO: Remove this after AB2D-6912 is completed
     ],
     logConfiguration : {
       logDriver : "awslogs"
