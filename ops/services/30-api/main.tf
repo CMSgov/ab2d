@@ -311,6 +311,16 @@ module "service" {
   ]
 }
 
+moved {
+  from = aws_ecs_service.api
+  to   = module.service.aws_ecs_service.this
+}
+
+moved {
+  from = aws_ecs_task_definition.api
+  to   = module.service.aws_ecs_task_definition.this
+}
+
 resource "aws_sns_topic" "api" {
   name              = "${local.service_prefix}-api-healthy-host"
   kms_master_key_id = local.kms_master_key_id
