@@ -126,6 +126,7 @@ public class SQSConfig {
 
     public SqsAsyncClient createQueue(SqsAsyncClient sqsClient) {
         try {
+            log.error("Creating SQS queue " + sqsQueueName);
             CreateQueueRequest createQueueRequest = CreateQueueRequest.builder()
                     .queueName(sqsQueueName)
                     .build();

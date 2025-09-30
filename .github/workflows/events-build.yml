@@ -4,8 +4,7 @@ run-name: events-build
 on:
   push:
     branches:
-      - main
-      - 'AB2D-6879/fix_events_tests'
+      - '6879/fix_events_tests'
 
   workflow_call:
     inputs:
