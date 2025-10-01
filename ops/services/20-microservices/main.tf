@@ -49,7 +49,7 @@ locals {
 }
 
 module "cluster" {
-  source   = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=e06f4acfea302df22c210549effa2e91bc3eff0d"
+  source   = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=plt-1299_cluster_fixes"
   platform = module.platform
 }
 
