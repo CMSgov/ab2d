@@ -9,6 +9,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
 
+@SuppressWarnings("java:S2187") // Not a test class; entrypoint only
 @SpringBootApplication(scanBasePackages = {"gov.cms.ab2d.common", "gov.cms.ab2d.eventclient.clients", "gov.cms.ab2d.contracts"})
 @PropertySource("classpath:application.common.properties")
 @Import(AB2DSQSMockConfig.class)

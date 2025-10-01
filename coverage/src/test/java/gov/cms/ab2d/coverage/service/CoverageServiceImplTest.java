@@ -1,7 +1,6 @@
 package gov.cms.ab2d.coverage.service;
 
 import gov.cms.ab2d.common.feign.ContractFeignClient;
-import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.common.util.LiquibaseTestConfig;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;

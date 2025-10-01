@@ -19,3 +19,7 @@ jobs:
     with:
       forcePublish: true
     secrets: inherit
+
+  sonarqube:
+    secrets: inherit
+    uses: ./.github/workflows/libs-sonarqube.yml

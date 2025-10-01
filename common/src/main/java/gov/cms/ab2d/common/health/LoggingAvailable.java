@@ -16,7 +16,6 @@ public final class LoggingAvailable {
             return true;
         } catch (Exception ex) {
             System.out.println("Logging failed health check");
-            ex.printStackTrace();
             return false;
         }
     }

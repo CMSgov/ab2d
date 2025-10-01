@@ -54,6 +54,7 @@ locals {
   alb_listener_certificate_arn = module.platform.is_ephemeral_env ? data.aws_acm_certificate.this[0].arn : aws_acm_certificate.this[0].arn
   alb_listener_port            = 443
   alb_listener_protocol        = "HTTPS"
+  alb_ssl_policy               = "ELBSecurityPolicy-TLS13-1-2-Res-2021-06"
   api_desired_instances        = module.platform.parent_env == "prod" ? 2 : 1
   bfd_insights                 = "none" #FIXME?
   container_port               = 8443
@@ -301,7 +302,8 @@ resource "aws_ecs_task_definition" "api" {
       { name : "AWS_SQS_FEATURE_FLAG", value : "true" },
       { name : "AWS_SQS_URL", value : data.aws_sqs_queue.events.url }, #FIXME: Is this even used?
       { name : "NEW_RELIC_APP_NAME", value : local.new_relic_app_name },
-      { name : "MICROSERVICES_URL", value : local.microservices_url }
+      { name : "MICROSERVICES_URL", value : local.microservices_url },
+      { name : "PROPERTIES_SERVICE_URL", value : local.microservices_url } #TODO: Remove this after AB2D-6912 is completed
     ],
     logConfiguration : {
       logDriver : "awslogs"
@@ -428,6 +430,7 @@ resource "aws_lb_listener" "ab2d_api" {
   port              = local.alb_listener_port
   protocol          = local.alb_listener_protocol
   certificate_arn   = local.alb_listener_certificate_arn
+  ssl_policy        = local.alb_ssl_policy
 
   default_action {
     target_group_arn = aws_lb_target_group.ab2d_api.arn

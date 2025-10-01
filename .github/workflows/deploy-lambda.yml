@@ -1,5 +1,5 @@
 name: Lambdas deploy
-run-name: deploy-lambdas ${{ inputs.environment }}
+run-name: deploy-lambda ${{ inputs.environment }} ${{ inputs.release_version }}
 
 on:
   workflow_call:
@@ -7,7 +7,9 @@ on:
       environment:
         required: true
         type: string
-        default: false
+      release_version:
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       environment:
@@ -19,6 +21,10 @@ on:
           - test
           - sandbox
           - prod
+      release_version:
+        required: true
+        type: string
+        description: Lambda version to deploy
 
 permissions:
   contents: read
@@ -27,7 +33,8 @@ permissions:
 env:
   AWS_ACCOUNT: ${{contains(fromJSON('["dev", "test"]'), inputs.environment) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT}}
   AB2D_ENV: ${{ inputs.environment }}
-  TOFU_VERSION: 1.10.0-beta2
+  TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  RELEASE_VERSION: ${{ inputs.release_version }}
 
 jobs:
   deploy:
@@ -45,15 +52,16 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.AB2D_ENV }}-github-actions
 
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159  # v3.9.2
+  
       - name: Install tofu
-        uses: opentofu/setup-opentofu@v1
-        with:
-          tofu_version: ${{ env.TOFU_VERSION }}
+        uses: cmsgov/cdap/actions/setup-tenv@8343fb96563ce4b74c4dececee9b268f42bd4a40
 
       - name: Tofu plan and apply
         working-directory: ops/services/30-lambda/
         run: |
-          tofu init -var=parent_env=$AB2D_ENV -reconfigure
+          tofu init -var=parent_env=$AB2D_ENV  -reconfigure
           tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
-          tofu plan -out=tfplan
+          tofu plan -var=release_version=$RELEASE_VERSION -out=tfplan
           tofu apply -input=false tfplan 

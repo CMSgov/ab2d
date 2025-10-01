@@ -238,7 +238,7 @@ class PatientIdentifierUtilsTest {
     @Test
     void testGetCurrencyFromTypeCodingExtensionReturnsUnknownWhenCodingSystemInvalid() {
         Coding coding = setupCodingForTestingCurrencyTypeCode("invalid_system", "MB");
-        
+
         Coding extCoding = setupCodingForTestingCurrencyTypeCode(CURRENCY_IDENTIFIER, CURRENT_MBI);
         Extension extension = setupExtensionForTestingCurrencyTypeCode(CURRENCY_IDENTIFIER, extCoding);
 
@@ -252,7 +252,7 @@ class PatientIdentifierUtilsTest {
     @Test
     void testGetCurrencyFromTypeCodingExtensionReturnsUnknownWhenCodingCodeInvalid() {
         Coding coding = setupCodingForTestingCurrencyTypeCode(MBI_ID_R4, "invalid_code");
-        
+
         Coding extCoding = setupCodingForTestingCurrencyTypeCode(CURRENCY_IDENTIFIER, CURRENT_MBI);
         Extension extension = setupExtensionForTestingCurrencyTypeCode(CURRENCY_IDENTIFIER, extCoding);
 
@@ -266,7 +266,7 @@ class PatientIdentifierUtilsTest {
     @Test
     void testGetCurrencyFromTypeCodingExtensionReturnsUnknownWhenUrlNull() {
         Coding coding = setupCodingForTestingCurrencyTypeCode(MBI_ID_R4, "MB");
-        
+
         Coding extCoding = setupCodingForTestingCurrencyTypeCode(CURRENCY_IDENTIFIER, CURRENT_MBI);
         Extension extension = setupExtensionForTestingCurrencyTypeCode(null, extCoding);
 
@@ -279,7 +279,7 @@ class PatientIdentifierUtilsTest {
     @Test
     void testGetCurrencyFromTypeCodingExtensionReturnsUnknownWhenUrlInvalid() {
         Coding coding = setupCodingForTestingCurrencyTypeCode(MBI_ID_R4, "MB");
-        
+
         Coding extCoding = setupCodingForTestingCurrencyTypeCode(CURRENCY_IDENTIFIER, CURRENT_MBI);
         Extension extension = setupExtensionForTestingCurrencyTypeCode("invalid_url", extCoding);
 
