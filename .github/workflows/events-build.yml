@@ -2,10 +2,6 @@ name: Events build
 run-name: events-build
 
 on:
-  push:
-    branches:
-      - '6879/fix_events_tests'
-
   workflow_call:
     inputs:
       push_image:
@@ -13,7 +9,7 @@ on:
         default: true
       run_tests:
         type: boolean
-        default: false # TODO Tests are broken; to be fixed in AB2D-6879
+        default: true
     outputs:
       image_tag:
         description: Image tag pushed to non-prod ECR
@@ -28,7 +24,6 @@ on:
         description: Run tests
         type: boolean
         default: true
-#        default: false # TODO Tests are broken; to be fixed in AB2D-6879
 
 permissions:
   contents: read
@@ -75,7 +70,7 @@ jobs:
             HPMS_AUTH_KEY_SECRET=/ab2d/dev/core/sensitive/hpms_auth_key_secret
 
       - name: Run tests
-#        if: ${{ inputs.run_tests == true }}
+        if: ${{ inputs.run_tests == true }}
         run: ./gradlew clean test --info
 
       - name: Build and push Docker image
