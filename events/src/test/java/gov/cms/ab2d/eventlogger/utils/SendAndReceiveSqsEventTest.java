@@ -74,7 +74,7 @@ public class SendAndReceiveSqsEventTest {
 
     @Test
     void testQueueUrl() {
-         String sqs = "ab2d-dev-events-sqs";
+        String sqs = "local-events-sqs";
         String url = amazonSQS.getQueueUrl(GetQueueUrlRequest.builder().queueName(sqs).build()).join().queueUrl();
         Assertions.assertTrue(url.contains(sqs));
     }
