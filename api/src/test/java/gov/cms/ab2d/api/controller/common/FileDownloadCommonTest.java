@@ -36,13 +36,13 @@ class FileDownloadCommonTest {
     @Test
     void test_encoding_by_file_extension() throws IOException {
         when(downloadResource.getFile()).thenReturn(new File("/mnt/efs/xyz/test_1.ndjson"));
-        assertEquals(FileDownloadCommon.getFileEncoding(downloadResource), UNCOMPRESSED);
+        assertEquals(UNCOMPRESSED, FileDownloadCommon.getFileEncoding(downloadResource));
 
         when(downloadResource.getFile()).thenReturn(new File("/mnt/efs/xyz/test_1.txt"));
-        assertEquals(FileDownloadCommon.getFileEncoding(downloadResource), UNCOMPRESSED);
+        assertEquals(UNCOMPRESSED, FileDownloadCommon.getFileEncoding(downloadResource));
 
         when(downloadResource.getFile()).thenReturn(new File("/mnt/efs/xyz/test_1.ndjson.gz"));
-        assertEquals(FileDownloadCommon.getFileEncoding(downloadResource), GZIP_COMPRESSED);
+        assertEquals(GZIP_COMPRESSED, FileDownloadCommon.getFileEncoding(downloadResource));
     }
 
     @Test

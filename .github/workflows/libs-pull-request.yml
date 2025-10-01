@@ -13,5 +13,11 @@ defaults:
 
 jobs:
   build:
+    if: github.event.pull_request.draft == false
     uses: ./.github/workflows/libs-build.yml
+    secrets: inherit
+
+  sonarqube:
+    if: github.event.pull_request.draft == false
+    uses: ./.github/workflows/libs-sonarqube.yml
     secrets: inherit

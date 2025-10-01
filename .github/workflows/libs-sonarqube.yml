@@ -1,4 +1,4 @@
-name: Contracts SonarQube
+name: Libs SonarQube
 
 on:
   workflow_call:
@@ -9,10 +9,10 @@ permissions:
   id-token: write
 defaults:
   run:
-    working-directory: ./contracts
+    working-directory: ./libs
 
 env:
-  SONAR_PROJECT_KEY: ab2d-contracts
+  SONAR_PROJECT_KEY: ab2d-lib-project
 
 jobs:
   sonarqube:
@@ -42,15 +42,10 @@ jobs:
             ARTIFACTORY_PASSWORD=/artifactory/password
             SONAR_HOST_URL=/sonarqube/url
             SONAR_TOKEN=/sonarqube/token
-            HPMS_AUTH_KEY_ID=/ab2d/dev/core/sensitive/hpms_auth_key_id
-            HPMS_AUTH_KEY_SECRET=/ab2d/dev/core/sensitive/hpms_auth_key_secret
-
-      - name: Run tests
-        run: ./gradlew clean test --info
 
       - name: SonarQube Analysis
         run: |
-          ./gradlew sonar \
+          ./gradlew clean test jacocoTestReport sonar \
             -Dsonar.ci.autoconfig.disabled=true \
             -Dsonar.projectKey=$SONAR_PROJECT_KEY \
             -Dsonar.host.url=$SONAR_HOST_URL \
@@ -59,5 +54,5 @@ jobs:
       - name: Quality Gate
         uses: sonarsource/sonarqube-quality-gate-action@master
         with:
-          scanMetadataReportFile: contracts/build/sonar/report-task.txt
+          scanMetadataReportFile: libs/build/sonar/report-task.txt
         timeout-minutes: 10

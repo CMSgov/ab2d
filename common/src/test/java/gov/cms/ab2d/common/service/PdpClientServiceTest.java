@@ -146,9 +146,6 @@ class PdpClientServiceTest {
         var exceptionThrown = Assertions.assertThrows(DataIntegrityViolationException.class, () -> {
             pdpClientService.createClient(client);
         });
-//        assertEquals("could not execute statement; SQL [n/a]; constraint [uc_user_account_username]; " +
-//                        "nested exception is org.hibernate.exception.ConstraintViolationException: could not execute statement",
-//                exceptionThrown.getMessage());
         assertTrue(exceptionThrown.getMessage().contains("ERROR: duplicate key value violates unique constraint"));
     }
 
