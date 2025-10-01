@@ -45,11 +45,10 @@ public class SQSConfig {
                      Ab2dEnvironment ab2dEnvironment) {
         this.region = region;
         this.url = url;
-        log.error("ab2dEnvironment: " + ab2dEnvironment);
-//        this.sqsQueueName = (ab2dEnvironment == Ab2dEnvironment.LOCAL)
-//                ? "local-events-sqs"
-//                : deriveSqsQueueName(url);
-        this.sqsQueueName = "local-events-sqs";
+
+        this.sqsQueueName = (ab2dEnvironment == Ab2dEnvironment.LOCAL)
+                ? "local-events-sqs"
+                : deriveSqsQueueName(url);
 
         // This is needed so the sqsListener can get the queue name.
         // It only accepts constance and this is a way to get around that while dynamically setting a sqs name
@@ -58,7 +57,6 @@ public class SQSConfig {
     }
 
     public static String deriveSqsQueueName(String url) {
-        log.error("deriving SQS queue name: '{}'", url);
         try {
             String[] tokens = url.split("/");
             return tokens[tokens.length - 1];
@@ -128,7 +126,6 @@ public class SQSConfig {
 
     public SqsAsyncClient createQueue(SqsAsyncClient sqsClient) {
         try {
-            log.error("Creating SQS queue " + sqsQueueName);
             CreateQueueRequest createQueueRequest = CreateQueueRequest.builder()
                     .queueName(sqsQueueName)
                     .build();
