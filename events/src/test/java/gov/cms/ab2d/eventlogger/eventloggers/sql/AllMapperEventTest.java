@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,6 +51,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Slf4j
 @SpringBootTest(classes = SpringBootApp.class)
 @Testcontainers
 public class AllMapperEventTest {
@@ -82,8 +85,12 @@ public class AllMapperEventTest {
         loggerEventRepository.delete();
     }
 
-    private final String expectedEnv = System.getProperty("AB2D_EXECUTION_ENV",
+    String expectedEnvironment() {
+        log.error("System.getenv().get()" + System.getenv().get("AB2D_EXECUTION_ENV"));
+        return System.getProperty("AB2D_EXECUTION_ENV",
             System.getenv().getOrDefault("AB2D_EXECUTION_ENV", "local"));
+    }
+    private final String expectedEnv = expectedEnvironment();
 
     @Test
     void exceptionApiRequestTests() {
