@@ -1,6 +1,7 @@
 
 plugins {
     id 'java'
+    id 'jacoco'
     id 'org.springframework.boot' version '3.2.8'
     id 'com.jfrog.artifactory' version '4.32.0' apply false
     id "org.sonarqube" version "4.1.0.3113"
@@ -19,6 +20,7 @@ ext {
     jacksonVersion='2.18.3'
     testContainerVersion='1.20.6'
     eventClientVersion='3.3.7'
+    lombokVersion = '1.18.38'
 }
 
 allprojects {
@@ -53,6 +55,10 @@ allprojects {
         testImplementation "org.testcontainers:localstack:${testContainerVersion}"
         compileOnly "org.cyclonedx:cyclonedx-gradle-plugin:1.4.0"
         compileOnly 'org.cyclonedx:cyclonedx-core-java:10.2.1'
+        testImplementation "org.projectlombok:lombok:${lombokVersion}"
+        compileOnly "org.projectlombok:lombok:${lombokVersion}"
+        implementation(platform(annotationProcessor("org.projectlombok:lombok:${lombokVersion}")))
+        annotationProcessor("org.projectlombok:lombok:${lombokVersion}")
     }
 
     cyclonedxBom {
@@ -74,6 +80,29 @@ allprojects {
         includeBomSerialNumber = false
         // Override component version
         componentVersion = "2.0.0"
+    }
+}
+
+jacocoTestReport {
+    reports {
+        xml.required.set(true)
+    }
+}
+
+
+test {
+    useJUnitPlatform()
+    finalizedBy jacocoTestReport
+}
+
+jacoco {
+    toolVersion = "0.8.13"
+    reportsDirectory = layout.buildDirectory.dir("$buildDir/reports/jacoco")
+}
+
+sonarqube {
+    properties {
+        property "sonar.java.binaries", "$buildDir/classes"
     }
 }
 

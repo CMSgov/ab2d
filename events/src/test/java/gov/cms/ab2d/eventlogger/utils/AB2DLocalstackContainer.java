@@ -12,7 +12,7 @@ public class AB2DLocalstackContainer extends LocalStackContainer {
 
     public AB2DLocalstackContainer() {
         super(IMAGE_VERSION);
-        super.withEnv("SQS_ENDPOINT_STRATEGY", "dynamic");        
+        super.withEnv("SQS_ENDPOINT_STRATEGY", "dynamic");
     }
 
     @Override
@@ -23,6 +23,8 @@ public class AB2DLocalstackContainer extends LocalStackContainer {
         super.withServices(Service.SQS);
         super.start();
         System.setProperty("AWS_SQS_URL",
-                "http://localhost:" + this.getMappedPort(EnabledService.named("SQS").getPort()));
+                "http://localhost:"
+                        + this.getMappedPort(EnabledService.named("SQS").getPort())
+                        + "/local-events-sqs");
     }
 }
