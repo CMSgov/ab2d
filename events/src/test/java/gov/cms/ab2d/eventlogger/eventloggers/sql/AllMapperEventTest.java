@@ -86,7 +86,7 @@ public class AllMapperEventTest {
     }
 
     String expectedEnvironment() {
-        log.error("System.getenv().get()" + System.getenv().get("AB2D_EXECUTION_ENV"));
+        System.out.println("AB2D_EXECUTION_ENV=" + System.getenv("AB2D_EXECUTION_ENV"));
         return System.getProperty("AB2D_EXECUTION_ENV",
             System.getenv().getOrDefault("AB2D_EXECUTION_ENV", "local"));
     }
