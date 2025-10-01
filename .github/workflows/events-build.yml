@@ -76,7 +76,7 @@ jobs:
 
       - name: Run tests
 #        if: ${{ inputs.run_tests == true }}
-        run: ./gradlew clean test --debug
+        run: ./gradlew clean test --info
 
       - name: Build and push Docker image
         if: ${{ inputs.push_image == true }}
