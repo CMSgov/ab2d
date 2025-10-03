@@ -223,9 +223,7 @@ module "cluster" {
 }
 
 module "service" {
-  # TODO Update commit hash after https://github.com/CMSgov/cdap/pull/305 has been merged and
-  # before merging this to main
-  source          = "github.com/CMSgov/cdap//terraform/modules/service?ref=3e1728c427e3607e45b59d5171adbf94fb14f5c5"
+  source          = "github.com/CMSgov/cdap//terraform/modules/service?ref=86e705b7a0d81ee1f481948678092ed47ba32741"
   platform        = module.platform
   cluster_arn     = module.cluster.this.arn
   image           = local.api_image_uri
