@@ -2,9 +2,6 @@ name: sops-config
 run-name: sops-config ${{ inputs.apply && 'apply' || 'plan' }}  ${{ inputs.environment }}
 
 on:
-  push:
-    branches:
-      - tofu-workflow
   workflow_call:
     inputs:
       apply:
