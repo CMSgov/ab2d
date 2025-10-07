@@ -1,5 +1,5 @@
-name: sops-config
-run-name: sops-config ${{ inputs.apply && 'apply' || 'plan' }}  ${{ inputs.environment }}
+name: SOPS-config
+run-name: SOPS-config ${{ inputs.apply && 'apply' || 'plan' }}  ${{ inputs.environment }}
 
 on:
   workflow_call:
