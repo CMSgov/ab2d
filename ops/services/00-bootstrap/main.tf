@@ -28,6 +28,17 @@ module "sops" {
   platform = module.platform
 }
 
+resource "aws_kms_key" "this" {
+  description             = "ab2d-ecr"
+  deletion_window_in_days = 10
+  enable_key_rotation     = true
+}
+
+resource "aws_kms_alias" "this" {
+  name          = "alias/ab2d-ecr"
+  target_key_id = aws_kms_key.this.key_id
+}
+
 resource "aws_ecr_repository" "this" {
   for_each = local.ecr_container_repositories
 
@@ -36,6 +47,7 @@ resource "aws_ecr_repository" "this" {
 
   encryption_configuration {
     encryption_type = "KMS"
+    kms_key = aws_kms_key.this.arn
   }
 
   tags = {
