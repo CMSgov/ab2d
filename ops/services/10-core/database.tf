@@ -14,7 +14,7 @@ module "db" {
   }, local.parent_env, "1")
 
   instance_class = lookup({
-    prod = "db.r8g.2xlarge" #TODO: Confirm whether production cluster requires the 2xlarge instance class or if an xlarge will suffice
+    prod = "db.r8g.xlarge"
   }, local.parent_env, "db.r8g.large")
 
   storage_type = lookup({
