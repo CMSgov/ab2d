@@ -65,6 +65,7 @@ jobs:
       - name: Tofu init & plan
         working-directory: ops/services/10-config
         run: |
+          export TF_LOG=TRACE
           tofu init -var=parent_env=$AB2D_ENV -reconfigure
           tofu workspace select -var=parent_env=$AB2D_ENV  -or-create=true $AB2D_ENV 
           tofu plan -out=tfplan
