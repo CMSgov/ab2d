@@ -77,9 +77,7 @@ public class SecurityConfig {
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(customUserDetailsService);
-        return authProvider;
+        return new DaoAuthenticationProvider(customUserDetailsService);
     }
 
     private void logSecurityException(HttpServletRequest request, Exception securityException, int status) {

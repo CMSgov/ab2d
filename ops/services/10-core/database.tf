@@ -1,5 +1,5 @@
 module "db" {
-  source = "github.com/CMSgov/cdap//terraform/modules/aurora?ref=f333c0a8367889a46aa00eeb95fd67cbd838b909"
+  source = "github.com/CMSgov/cdap//terraform/modules/aurora?ref=bee1120c5847b617b7b9dca4cfeaaf47aa08c156"
 
   snapshot_identifier     = var.aurora_snapshot
   backup_retention_period = module.platform.is_ephemeral_env ? 1 : 7
@@ -14,7 +14,7 @@ module "db" {
   }, local.parent_env, "1")
 
   instance_class = lookup({
-    prod = "db.r8g.2xlarge" #TODO: Confirm whether production cluster requires the 2xlarge instance class or if an xlarge will suffice
+    prod = "db.r8g.xlarge"
   }, local.parent_env, "db.r8g.large")
 
   storage_type = lookup({
@@ -40,11 +40,6 @@ module "db" {
   }, local.parent_env, 60)
 
   cluster_parameters = [
-    {
-      apply_method = "immediate"
-      name         = "rds.force_ssl"
-      value        = 1
-    },
     {
       apply_method = "immediate"
       name         = "backslash_quote"

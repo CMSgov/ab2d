@@ -9,7 +9,7 @@ on:
         default: true
       run_tests:
         type: boolean
-        default: false # TODO Tests are broken; to be fixed in AB2D-6879
+        default: true
     outputs:
       image_tag:
         description: Image tag pushed to non-prod ECR
@@ -23,7 +23,7 @@ on:
       run_tests:
         description: Run tests
         type: boolean
-        default: false # TODO Tests are broken; to be fixed in AB2D-6879
+        default: true
 
 permissions:
   contents: read

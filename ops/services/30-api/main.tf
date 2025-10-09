@@ -222,132 +222,105 @@ module "cluster" {
   platform = module.platform
 }
 
-resource "aws_ecs_task_definition" "api" {
-  family                   = "${local.service_prefix}-${local.service}"
-  network_mode             = "awsvpc"
-  execution_role_arn       = data.aws_iam_role.api.arn
-  task_role_arn            = data.aws_iam_role.api.arn
-  requires_compatibilities = ["FARGATE"]
-  track_latest             = false
-  cpu                      = local.ecs_task_def_cpu_api
-  memory                   = local.ecs_task_def_memory_api
+module "service" {
+  source          = "github.com/CMSgov/cdap//terraform/modules/service?ref=86e705b7a0d81ee1f481948678092ed47ba32741"
+  platform        = module.platform
+  cluster_arn     = module.cluster.this.arn
+  image           = local.api_image_uri
+  cpu             = local.ecs_task_def_cpu_api
+  memory          = local.ecs_task_def_memory_api
+  desired_count   = local.api_desired_instances
+  port_mappings   = [{ containerPort = local.container_port }]
+  security_groups = [data.aws_security_group.api.id, aws_security_group.load_balancer.id] #FIXME
+  task_role_arn   = data.aws_iam_role.api.arn
 
-  volume {
-    name = "efs"
+  force_new_deployment = anytrue([var.force_api_deployment, var.api_service_image_tag != null])
 
-    efs_volume_configuration {
-      file_system_id     = data.aws_efs_file_system.this.id
-      root_directory     = "/"
-      transit_encryption = "ENABLED"
-      authorization_config {
-        access_point_id = data.aws_efs_access_point.this.id
-      }
-    }
-  }
-
-  container_definitions = nonsensitive(jsonencode([{
-    name : local.service,
-    image : local.api_image_uri,
-    readonlyRootFilesystem = true
-    essential : true,
-    portMappings : [
-      {
-        containerPort : local.container_port,
-      }
-    ],
-    mountPoints : [
-      {
-        containerPath : local.ab2d_efs_mount,
-        sourceVolume : "efs"
-      },
-      {
-        "containerPath" : "/tmp",
-        "sourceVolume" : "tmp",
-        "readOnly" : false
-      },
-      {
-        "containerPath" : "/newrelic/logs",
-        "sourceVolume" : "newrelic_logs",
-        "readOnly" : false
-      },
-      {
-        "containerPath" : "/var/log",
-        "sourceVolume" : "var_log",
-        "readOnly" : false
-      }
-    ],
-    secrets : [
-      { name : "AB2D_DB_DATABASE", valueFrom : local.db_name_arn },
-      { name : "AB2D_DB_PASSWORD", valueFrom : local.db_password_arn },
-      { name : "AB2D_DB_USER", valueFrom : local.db_username_arn },
-      { name : "AB2D_HPMS_API_PARAMS", valueFrom : local.hpms_api_params_arn }, #FIXME: Is this even used?
-      { name : "AB2D_HPMS_URL", valueFrom : local.hpms_url_arn },               #FIXME: Is this even used?
-      { name : "AB2D_KEYSTORE_PASSWORD", valueFrom : local.ab2d_keystore_password_arn },
-      { name : "AB2D_OKTA_JWT_ISSUER", valueFrom : local.ab2d_okta_jwt_issuer_arn },
-      { name : "AB2D_SLACK_ALERT_WEBHOOKS", valueFrom : local.slack_alert_webhooks_arn }, #FIXME: Is this even used?
-      { name : "AB2D_SLACK_TRACE_WEBHOOKS", valueFrom : local.slack_trace_webhooks_arn }, #FIXME: Is this even used?
-      { name : "HPMS_AUTH_KEY_ID", valueFrom : local.hpms_auth_key_id_arn },              #FIXME: Is this even used?
-      { name : "HPMS_AUTH_KEY_SECRET", valueFrom : local.hpms_auth_key_secret_arn },      #FIXME: Is this even used?
-      { name : "NEW_RELIC_LICENSE_KEY", valueFrom : local.new_relic_license_key_arn },    #FIXME: Is this even used?
-    ],
-    environment : [
-      { name : "AB2D_BFD_INSIGHTS", value : local.bfd_insights }, #FIXME: Is this even used?
-      { name : "AB2D_DB_HOST", value : local.ab2d_db_host },
-      { name : "AB2D_DB_PORT", value : "5432" },
-      { name : "AB2D_DB_SSL_MODE", value : "require" },
-      { name : "AB2D_EFS_MOUNT", value : local.ab2d_efs_mount },
-      { name : "AB2D_EXECUTION_ENV", value : local.benv }, #FIXME: Is this even used?
-      { name : "AB2D_KEYSTORE_LOCATION", value : local.ab2d_keystore_location },
-      { name : "AB2D_V2_ENABLED", value : "true" },
-      { name : "AWS_SQS_FEATURE_FLAG", value : "true" },
-      { name : "AWS_SQS_URL", value : data.aws_sqs_queue.events.url }, #FIXME: Is this even used?
-      { name : "NEW_RELIC_APP_NAME", value : local.new_relic_app_name },
-      { name : "MICROSERVICES_URL", value : local.microservices_url }
-    ],
-    logConfiguration : {
-      logDriver : "awslogs"
-      options : {
-        awslogs-group : "/aws/ecs/fargate/${local.service_prefix}/${local.service}",
-        awslogs-create-group : "true",
-        awslogs-region : local.aws_region,
-        awslogs-stream-prefix : local.service_prefix
-      }
-    },
-    healthCheck : null
-  }]))
-  volume {
-    name = "tmp"
-  }
-  volume {
-    name = "newrelic_logs"
-  }
-  volume {
-    name = "var_log"
-  }
-}
-
-resource "aws_ecs_service" "api" {
-  name                               = "${local.service_prefix}-${local.service}"
-  cluster                            = module.cluster.this.id
-  task_definition                    = coalesce(var.override_task_definition_arn, aws_ecs_task_definition.api.arn)
-  launch_type                        = "FARGATE"
-  desired_count                      = local.api_desired_instances
-  force_new_deployment               = anytrue([var.force_api_deployment, var.api_service_image_tag != null])
-  deployment_minimum_healthy_percent = 100
-  health_check_grace_period_seconds  = 180
-  propagate_tags                     = "SERVICE"
-
-  network_configuration {
-    subnets          = local.private_subnet_ids
-    assign_public_ip = false
-    security_groups  = [data.aws_security_group.api.id, aws_security_group.load_balancer.id] #FIXME
-  }
-
-  load_balancer {
+  container_environment = [
+    { name = "AB2D_BFD_INSIGHTS", value = local.bfd_insights }, #FIXME: Is this even used?
+    { name = "AB2D_DB_HOST", value = local.ab2d_db_host },
+    { name = "AB2D_DB_PORT", value = "5432" },
+    { name = "AB2D_DB_SSL_MODE", value = "require" },
+    { name = "AB2D_EFS_MOUNT", value = local.ab2d_efs_mount },
+    { name = "AB2D_EXECUTION_ENV", value = local.benv }, #FIXME: Is this even used?
+    { name = "AB2D_KEYSTORE_LOCATION", value = local.ab2d_keystore_location },
+    { name = "AB2D_V2_ENABLED", value = "true" },
+    { name = "AWS_SQS_FEATURE_FLAG", value = "true" },
+    { name = "AWS_SQS_URL", value = data.aws_sqs_queue.events.url }, #FIXME: Is this even used?
+    { name = "NEW_RELIC_APP_NAME", value = local.new_relic_app_name },
+    { name = "MICROSERVICES_URL", value = local.microservices_url },
+    { name = "PROPERTIES_SERVICE_URL", value = local.microservices_url },
+  ]
+  container_secrets = [
+    { name = "AB2D_DB_DATABASE", valueFrom = local.db_name_arn },
+    { name = "AB2D_DB_PASSWORD", valueFrom = local.db_password_arn },
+    { name = "AB2D_DB_USER", valueFrom = local.db_username_arn },
+    { name = "AB2D_HPMS_API_PARAMS", valueFrom = local.hpms_api_params_arn }, #FIXME: Is this even used?
+    { name = "AB2D_HPMS_URL", valueFrom = local.hpms_url_arn },               #FIXME: Is this even used?
+    { name = "AB2D_KEYSTORE_PASSWORD", valueFrom = local.ab2d_keystore_password_arn },
+    { name = "AB2D_OKTA_JWT_ISSUER", valueFrom = local.ab2d_okta_jwt_issuer_arn },
+    { name = "AB2D_SLACK_ALERT_WEBHOOKS", valueFrom = local.slack_alert_webhooks_arn }, #FIXME: Is this even used?
+    { name = "AB2D_SLACK_TRACE_WEBHOOKS", valueFrom = local.slack_trace_webhooks_arn }, #FIXME: Is this even used?
+    { name = "HPMS_AUTH_KEY_ID", valueFrom = local.hpms_auth_key_id_arn },              #FIXME: Is this even used?
+    { name = "HPMS_AUTH_KEY_SECRET", valueFrom = local.hpms_auth_key_secret_arn },      #FIXME: Is this even used?
+    { name = "NEW_RELIC_LICENSE_KEY", valueFrom = local.new_relic_license_key_arn },    #FIXME: Is this even used?
+  ]
+  load_balancers = [{
     target_group_arn = aws_lb_target_group.ab2d_api.arn
     container_name   = local.service
     container_port   = local.container_port
-  }
+  }]
+  mount_points = [
+    {
+      containerPath = local.ab2d_efs_mount,
+      sourceVolume  = "efs",
+    },
+    {
+      "containerPath" = "/tmp",
+      "sourceVolume"  = "tmp",
+    },
+    {
+      "containerPath" = "/newrelic/logs",
+      "sourceVolume"  = "newrelic_logs",
+    },
+    {
+      "containerPath" = "/var/log",
+      "sourceVolume"  = "var_log",
+    },
+  ]
+  volumes = [
+    {
+      name = "efs"
+      efs_volume_configuration = {
+        file_system_id     = data.aws_efs_file_system.this.id
+        root_directory     = "/"
+        transit_encryption = "ENABLED"
+        authorization_config = {
+          access_point_id = data.aws_efs_access_point.this.id
+        }
+      }
+    },
+    {
+      name = "tmp"
+    },
+    {
+      name = "newrelic_logs"
+    },
+    {
+      name = "var_log"
+    },
+  ]
+}
+
+# TODO Remove these two moved blocks after service module changes have been deployed
+moved {
+  from = aws_ecs_service.api
+  to   = module.service.aws_ecs_service.this
+}
+
+moved {
+  from = aws_ecs_task_definition.api
+  to   = module.service.aws_ecs_task_definition.this
 }
 
 resource "aws_sns_topic" "api" {
