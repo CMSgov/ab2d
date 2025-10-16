@@ -2,9 +2,6 @@ name: Libs build
 run-name: Build-libraries
 
 on:
-  push:
-    branches:
-      - AB2D-6930/reduce_logging_libs_build
   workflow_dispatch:
   workflow_call:
 
