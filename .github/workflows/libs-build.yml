@@ -2,6 +2,9 @@ name: Libs build
 run-name: Build-libraries
 
 on:
+  push:
+    branches:
+      - AB2D-6930/reduce_logging_libs_build
   workflow_dispatch:
   workflow_call:
 
@@ -46,7 +49,7 @@ jobs:
             SONAR_TOKEN=/sonarqube/token
 
       - name: Build and test libraries
-        run: ./gradlew clean test --info -b build.gradle
+        run: ./gradlew clean test --warn --console=plain -b build.gradle
 
       - name: Build JARs
-        run: ./gradlew jar --info -b build.gradle
+        run: ./gradlew jar --warn -b build.gradle
