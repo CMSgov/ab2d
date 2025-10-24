@@ -3,7 +3,7 @@ docker-build:
 
 fhir_testing:
 	# Set up inferno server
-	docker build -t inferno:1 https://github.com/inferno-framework/bulk-data-test-kit.git
+	docker build -t inferno:1 https://github.com/inferno-framework/bulk-data-test-kit.git#5bd61db090c5911792f33e12dca6981d7e22f9a0
 	docker compose -f ../ab2d/fhir-test/docker-compose.inferno.yml run inferno bundle exec inferno migrate
 	docker compose -f ../ab2d/fhir-test/docker-compose.inferno.yml up -d
 	sleep 10
