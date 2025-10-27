@@ -67,7 +67,6 @@ resource "aws_cloudfront_distribution" "this" {
   comment             = "Distribution for ${local.service_prefix} website"
   default_root_object = "index.html"
   is_ipv6_enabled     = true
-  price_class         = "PriceClass_100"
   http_version        = "http2and3"
   web_acl_id          = data.aws_wafv2_web_acl.this.arn
   restrictions {
