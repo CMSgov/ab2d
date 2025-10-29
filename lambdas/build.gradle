@@ -142,7 +142,7 @@ subprojects {
 
 dependencies {
     implementation "org.cyclonedx:cyclonedx-gradle-plugin:1.4.0"
-    implementation "org.cyclonedx:cyclonedx-core-java:5.0.4"
+    implementation "org.cyclonedx:cyclonedx-core-java:5.0.5"
 }
 
 allprojects {
@@ -204,5 +204,3 @@ java {
 }
 
 build.dependsOn buildZip
-
-
