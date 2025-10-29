@@ -16,11 +16,12 @@ group = "gov.cms.ab2d"
 ext {
     springBootVersion= '3.5.6'
     springCloudAwsVersion = '3.4.0'
-    liquibaseVersion='4.31.1'
-    jacksonVersion='2.18.3'
+    liquibaseVersion='5.0.0'
+    jacksonVersion='2.20.0'
     testContainerVersion='1.20.6'
     eventClientVersion='3.3.7'
     lombokVersion = '1.18.38'
+    commonsLangVersion='3.18.0' // TODO; delete this next time Spring Boot is upgraded
 }
 
 allprojects {
@@ -37,9 +38,11 @@ allprojects {
         implementation "io.awspring.cloud:spring-cloud-aws-dependencies:${springCloudAwsVersion}"
         implementation "io.awspring.cloud:spring-cloud-aws-starter-sqs:${springCloudAwsVersion}"
         implementation "io.awspring.cloud:spring-cloud-aws-starter:${springCloudAwsVersion}"
+        implementation "org.apache.commons:commons-lang3:${commonsLangVersion}"
+
         implementation "commons-codec:commons-codec:1.18.0"
         implementation "org.liquibase:liquibase-core:${liquibaseVersion}"
-        implementation "com.amazonaws:amazon-kinesis-client:1.14.10"
+        implementation "com.amazonaws:amazon-kinesis-client:1.15.3"
         implementation "com.fasterxml.jackson.module:jackson-module-parameter-names:${jacksonVersion}"
         implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${jacksonVersion}"
         implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
@@ -54,7 +57,7 @@ allprojects {
         testImplementation "org.liquibase:liquibase-core:${liquibaseVersion}"
         testImplementation "org.testcontainers:localstack:${testContainerVersion}"
         compileOnly "org.cyclonedx:cyclonedx-gradle-plugin:1.4.0"
-        compileOnly 'org.cyclonedx:cyclonedx-core-java:10.2.1'
+        compileOnly 'org.cyclonedx:cyclonedx-core-java:11.0.0'
         testImplementation "org.projectlombok:lombok:${lombokVersion}"
         compileOnly "org.projectlombok:lombok:${lombokVersion}"
         implementation(platform(annotationProcessor("org.projectlombok:lombok:${lombokVersion}")))

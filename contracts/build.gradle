@@ -16,9 +16,10 @@ ext {
     springCloudAwsVersion = '3.4.0'
     springBootVersion='3.5.6'
     testContainerVersion='1.20.6'
-    liquibaseVersion = '4.31.1'
+    liquibaseVersion = '5.0.0'
     eventClientVersion='3.3.7'
     contractClientVersion='2.1.2'
+    commonsLangVersion='3.18.0' // TODO; delete this next time Spring Boot is upgraded
 }
 
 allprojects {
@@ -38,7 +39,7 @@ allprojects {
         implementation "org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}"
         implementation "org.springframework.boot:spring-boot-starter-validation:${springBootVersion}"
         implementation "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
-        implementation 'org.springframework:spring-context:6.2.5'
+        implementation "org.apache.commons:commons-lang3:${commonsLangVersion}"
         implementation 'org.springdoc:springdoc-openapi-ui:1.8.0'
         testImplementation 'org.mockito:mockito-core:5.16.1'
         testImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"

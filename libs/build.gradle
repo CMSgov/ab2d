@@ -43,8 +43,8 @@ ext {
     newRelicVersion='8.4.0'
     testContainerVersion='1.20.6'
     mockServerVersion='5.15.0'
-    liquibaseVersion="4.31.1"
-    jacksonVersion = "2.18.3"
+    liquibaseVersion="5.0.0"
+    jacksonVersion = "2.20.0"
     slackAPIVersion='1.30.0'
     hl7Version = '6.5.13'
 

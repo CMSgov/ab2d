@@ -73,6 +73,7 @@ public class FileDownloadAPIV2 {
             @PathVariable @NotBlank String jobUuid,
             @PathVariable @NotBlank String filename) throws IOException {
         try {
+            // TODO sanitize inputs; from Snyk: Unsanitized input from the request URL flows into java.io.FileInputStream, where it is used as a path
             return fileDownloadCommon.downloadFile(jobUuid, filename, request, response);
         } catch (Exception e) {
             errorHandler.generateFHIRError(e, request, response);

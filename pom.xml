@@ -28,7 +28,7 @@
     <properties>
         <project.root>${basedir}</project.root>
         <java.version>17</java.version>
-        <hapi.version>8.0.0</hapi.version>
+        <hapi.version>8.4.0</hapi.version>
         <mockito.core.version>5.16.1</mockito.core.version>
         <okhttp3.version>4.10.0</okhttp3.version>
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
@@ -56,6 +56,9 @@
         <!-- Dependency versions -->
         <commons-compress.version>1.28.0</commons-compress.version>
         <commons-io.version>2.19.0</commons-io.version>
+
+        <!-- Spring Boot is on 3.17.0; force version upgrade; TODO: Remove this property next time Spring Boot is updated -->
+        <commons-lang3.version>3.18.0</commons-lang3.version>
     </properties>
 
     <dependencies>

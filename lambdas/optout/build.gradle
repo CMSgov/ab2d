@@ -26,7 +26,7 @@ dependencies {
     testImplementation 'org.testcontainers:junit-jupiter:1.19.7'
     testImplementation 'org.testcontainers:postgresql:1.19.1'
     testImplementation project(':lambda-test-utils')
-    testImplementation 'org.liquibase:liquibase-core:4.23.0'
+    testImplementation 'org.liquibase:liquibase-core:5.0.0'
     testImplementation 'io.findify:s3mock_2.13:0.2.6'
 }
 
