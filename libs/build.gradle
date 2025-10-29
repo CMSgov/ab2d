@@ -145,7 +145,7 @@ subprojects {
         implementation(platform("org.testcontainers:junit-jupiter:$testContainerVersion"))
         implementation(platform("org.testcontainers:localstack:$testContainerVersion"))
         implementation(platform(annotationProcessor("org.projectlombok:lombok:$lombokVersion")))
-        implementation(platform("org.cyclonedx:cyclonedx-gradle-plugin:1.4.0"))
+        compileOnly(platform("org.cyclonedx:cyclonedx-gradle-plugin:1.4.0"))
     }
 
     jar {
