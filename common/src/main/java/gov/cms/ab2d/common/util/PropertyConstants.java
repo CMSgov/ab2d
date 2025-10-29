@@ -36,4 +36,6 @@ public final class PropertyConstants {
 
     public static final String OPT_OUT_ON = "OptOutOn";
 
+    public static final String V3_ON = "v3.on";
+
 }
