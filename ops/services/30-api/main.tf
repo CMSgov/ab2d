@@ -223,7 +223,7 @@ module "cluster" {
 }
 
 module "service" {
-  source          = "github.com/CMSgov/cdap//terraform/modules/service?ref=86e705b7a0d81ee1f481948678092ed47ba32741"
+  source          = "github.com/CMSgov/cdap//terraform/modules/service?ref=5f8a3f518faa00de1231c52c433c0867388e5b4e"
   platform        = module.platform
   cluster_arn     = module.cluster.this.arn
   image           = local.api_image_uri
