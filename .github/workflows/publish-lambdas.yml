@@ -6,6 +6,9 @@ on:
       run_sonar:
         type: boolean
         default: true
+      skip_publish:
+        type: boolean
+        default: false
     outputs:
       build_version:
         description: The lambdas build version
@@ -16,6 +19,10 @@ on:
         description: Run SonarQube
         type: boolean
         default: true
+      skip_publish:
+        description: Skip publishing lambdas to Artifactory
+        type: boolean
+        default: false
 env:
   JDK_JAVA_OPTIONS: '--add-opens java.base/java.util=ALL-UNNAMED'
 jobs:
@@ -90,6 +97,7 @@ jobs:
         timeout-minutes: 10
       - name: Publish Lambdas
         id: publish_lambdas
+        if: ${{ inputs.skip_publish == false }}
         run: >
           echo "Checking for unpublished artifacts..."
 
