@@ -2,6 +2,7 @@ package gov.cms.ab2d.common.health;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.SystemUtils;
+import org.apache.commons.text.RandomStringGenerator;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -32,13 +33,15 @@ public class FileSystemCheckTest {
     @Test
     @Disabled("Assertion for 'FileSystemCheck.canWriteFile' fails in GitHub test runner (but not locally)")
     void unableToWriteToDir() {
-        String randomDirName = RandomStringUtils.randomAlphabetic(20);
+        RandomStringGenerator generator = new RandomStringGenerator.Builder()
+                .withinRange('a', 'z')
+                .get();
+        String randomDirName = generator.generate(20);
         File newDir = new File("." + File.separator + randomDirName);
         assertTrue(newDir.mkdir());
         // Windows does not support the ability to turn off creating files in a directory
         if (!SystemUtils.IS_OS_WINDOWS) {
             assertTrue(newDir.setReadOnly());
-            // TODO investigate why this fails in the GitHub runner
             assertFalse(FileSystemCheck.canWriteFile(randomDirName, false));
         }
         assertTrue(newDir.delete());

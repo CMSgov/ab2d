@@ -7,6 +7,10 @@ task wrapper(type: Wrapper){
     gradleVersion = '8.10'
 }
 
+ext {
+    jupiterVersion='5.9.3'
+}
+
 task prepareKotlinBuildScriptModel {
 }
 

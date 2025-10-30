@@ -62,12 +62,11 @@ resource "aws_cloudfront_distribution" "this" {
     origin_access_control_id = aws_cloudfront_origin_access_control.this.id
   }
 
-  # aliases             = local.aliases #FIXME uncomment once legacy cname is free'd
+  aliases             = local.aliases
   enabled             = true
   comment             = "Distribution for ${local.service_prefix} website"
   default_root_object = "index.html"
   is_ipv6_enabled     = true
-  price_class         = "PriceClass_100"
   http_version        = "http2and3"
   web_acl_id          = data.aws_wafv2_web_acl.this.arn
   restrictions {

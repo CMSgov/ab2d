@@ -4,7 +4,6 @@ import com.okta.jwt.JwtVerificationException;
 import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.api.remote.JobClientMock;
-import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.service.ContractServiceStub;

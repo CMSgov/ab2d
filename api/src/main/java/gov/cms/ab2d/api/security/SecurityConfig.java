@@ -44,9 +44,10 @@ public class SecurityConfig {
             AKAMAI_TEST_OBJECT, "/favicon.ico", "/error", HEALTH_ENDPOINT, STATUS_ENDPOINT,
             "/**/metadata"};
 
+    @SuppressWarnings("java:S4502")
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity security) throws Exception {
-        security.csrf(AbstractHttpConfigurer::disable)
+        security.csrf(AbstractHttpConfigurer::disable) // NOSONAR java:S4502 - stateless JWT API, no cookies/sessions
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(authExceptions).permitAll()
@@ -76,9 +77,7 @@ public class SecurityConfig {
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(customUserDetailsService);
-        return authProvider;
+        return new DaoAuthenticationProvider(customUserDetailsService);
     }
 
     private void logSecurityException(HttpServletRequest request, Exception securityException, int status) {

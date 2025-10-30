@@ -1,0 +1,4 @@
+{
+  "test": "trigger",
+  "note": "Lambda pulls /contracts from contract_service_url."
+}
