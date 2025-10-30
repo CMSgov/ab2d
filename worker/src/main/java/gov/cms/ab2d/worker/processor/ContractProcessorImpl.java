@@ -482,11 +482,7 @@ public class ContractProcessorImpl implements ContractProcessor {
         jobOutput.setFhirResourceType(EOB);
         jobOutput.setChecksum(streamOutput.getChecksum());
         jobOutput.setFileLength(streamOutput.getFileLength());
-        if (streamOutput.getType() == ERROR || streamOutput.getType() == ERROR_COMPRESSED) {
-            jobOutput.setError(true);
-        } else {
-            jobOutput.setError(false);
-        }
+        jobOutput.setError(streamOutput.getType() == ERROR || streamOutput.getType() == ERROR_COMPRESSED);
 
         return jobOutput;
     }

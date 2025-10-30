@@ -1,0 +1,12 @@
+{
+  "Records": [
+    {
+      "Sns": {
+        "SignatureVersion": "1",
+        "Timestamp": "2025-08-20T12:34:56.000Z",
+        "MessageId": null,
+        "Message": "{\"AlarmName\":\"ab2d-dev-test-alarm\",\"AlarmDescription\":\"test\",\"AWSAccountId\":\"1234\",\"AlarmConfigurationUpdatedTimestamp\":null,\"NewStateValue\":\"OK\",\"NewStateReason\":null,\"StateChangeTime\":\"2025-06-16T07:00:00.000+0100\",\"Region\":null,\"AlarmArn\":null,\"OldStateValue\":null,\"OKActions\":null,\"AlarmActions\":null,\"InsufficientDataActions\":null,\"Trigger\":{\"Dimensions\":null,\"MetricName\":null,\"Namespace\":\"test\",\"StatisticType\":null,\"Statistic\":null,\"Unit\":null,\"Period\":0,\"EvaluationPeriods\":null,\"ComparisonOperator\":null,\"Threshold\":0,\"TreatMissingData\":null,\"EvaluateLowSampleCountPercentile\":null}}"
+      }
+    }
+  ]
+}

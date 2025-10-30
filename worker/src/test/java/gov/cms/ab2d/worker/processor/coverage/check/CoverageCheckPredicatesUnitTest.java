@@ -424,7 +424,7 @@ public class CoverageCheckPredicatesUnitTest {
            //override LocalDate.now() to avoid the test pass/failing depending on current date
            try (MockedStatic<LocalDate> topDateTimeUtilMock = Mockito.mockStatic(LocalDate.class, Mockito.CALLS_REAL_METHODS)) {
                topDateTimeUtilMock.when(LocalDate::now).thenReturn(currentLocalDate);
-          //     LocalDate date = LocalDate.now();
+
                ContractDTO contract = getContractDTO();
                List<CoverageCount> fakeCounts = List.of(
                        new CoverageCount("TEST", currentLocalDate.getYear(),

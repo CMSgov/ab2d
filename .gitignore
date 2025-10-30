@@ -8,6 +8,7 @@
 secrets.tf
 terraform.tfstate
 terraform.tfstate.backup
+tfplan
 sopsw
 .sops.yaml
 .aws/

@@ -8,6 +8,10 @@ repositories {
     mavenCentral()
 }
 
+ext {
+    jupiterVersion='5.9.3'
+}
+
 dependencies {
     implementation "org.apache.commons:commons-lang3:$commonsLangVersion"
     implementation "org.slf4j:slf4j-api:2.0.7"

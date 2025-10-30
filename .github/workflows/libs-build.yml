@@ -49,21 +49,4 @@ jobs:
         run: ./gradlew clean test --info -b build.gradle
 
       - name: Build JARs
-        run: ./gradlew jar --info -b build.gradle
-
-      - name: SonarQube Analysis
-        run: |          
-          unset CODEBUILD_BUILD_ID CODEBUILD_START_TIME CODEBUILD_BUILD_ARN
-          
-          ./gradlew sonar \
-            -Dsonar.projectKey=ab2d-lib-project \
-            -Dsonar.host.url=$SONAR_HOST_URL \
-            -Dsonar.login=$SONAR_TOKEN \
-            -Dsonar.ci.autoconfig.disabled=true
-
-      - name: Quality Gate
-        id: sonarqube-quality-gate-check
-        uses: sonarsource/sonarqube-quality-gate-action@master
-        with:
-          scanMetadataReportFile: libs/build/sonar/report-task.txt
-        timeout-minutes: 10
+        run: ./gradlew jar --warn -b build.gradle

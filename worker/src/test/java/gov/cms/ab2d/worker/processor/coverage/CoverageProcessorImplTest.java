@@ -2,7 +2,6 @@ package gov.cms.ab2d.worker.processor.coverage;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
 import gov.cms.ab2d.common.dto.PdpClientDTO;
-import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.common.service.ContractServiceStub;
 import gov.cms.ab2d.common.service.PdpClientService;

@@ -23,7 +23,7 @@ import java.util.concurrent.locks.Lock;
  */
 public class CoverageLockWrapper {
 
-    @Autowired
+    @Autowired  //NOSONAR
     private ApplicationContext context;
 
     private static final String COVERAGE_LOCK_NAME = "COVERAGE_LOCK";

@@ -9,7 +9,6 @@ import gov.cms.ab2d.api.controller.v1.CapabilityStatementSTU3;
 import gov.cms.ab2d.api.controller.v2.CapabilityStatementR4;
 import gov.cms.ab2d.api.remote.JobClientMock;
 import gov.cms.ab2d.common.model.PdpClient;
-import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.common.repository.PdpClientRepository;
 import gov.cms.ab2d.common.service.ContractServiceStub;

@@ -10,8 +10,13 @@ import java.time.LocalDate;
  * 1K to 1 million then there may be problem.
  */
 @Slf4j
-public class CoverageStableCheckHelper {
+public final class CoverageStableCheckHelper {
     private static final int CHANGE_THRESHOLD = 1000;
+
+    // Prevent instantiation
+    private CoverageStableCheckHelper() {
+        throw new AssertionError("Utility class; do not instantiate.");
+    }
 
     //Moved the skip check conditions to a method to make sonar happy
     public static boolean skipCheck(CoverageCount previousMonth, CoverageCount nextMonth, int change) {

@@ -1,4 +1,5 @@
 version "$eventClientVersion"
+
 dependencies {
     implementation(platform(annotationProcessor("com.slack.api:slack-api-client:$slackAPIVersion")))
     implementation "commons-codec:commons-codec:1.9"
@@ -20,7 +21,8 @@ dependencies {
     testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
     testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
     testImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
-    testImplementation "org.springframework.data:spring-data-jpa:${springBootVersion}"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
+    testImplementation "org.springframework.data:spring-data-jpa"
     testImplementation "org.liquibase:liquibase-core:${liquibaseVersion}"
     testImplementation "org.testcontainers:localstack:${testContainerVersion}"
     testImplementation "org.testcontainers:junit-jupiter:${testContainerVersion}"

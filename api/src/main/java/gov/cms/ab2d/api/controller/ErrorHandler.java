@@ -117,7 +117,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
         return generateFHIRError(e, request);
     }
 
-    private void handleJobOutputMissing(Exception e, HttpServletRequest request) throws IOException {
+    private void handleJobOutputMissing(Exception e, HttpServletRequest request) {
         eventLogger.sendLogs(new ErrorEvent(MDC.get(ORGANIZATION), UtilMethods.parseJobId(request.getRequestURI()),
                 ErrorEvent.ErrorType.FILE_ALREADY_DELETED, getRootCause(e)));
     }

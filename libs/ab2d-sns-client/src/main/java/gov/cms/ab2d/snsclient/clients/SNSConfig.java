@@ -21,6 +21,8 @@ public class SNSConfig {
     @Value("${cloud.aws.end-point.uri}")
     private String url;
 
+    @Value("${ab2d.sns.topic-prefix}")
+    private String snsTopicPrefix;
 
     @Bean
     public SnsClient amazonSNS() throws URISyntaxException {
@@ -37,7 +39,7 @@ public class SNSConfig {
 
     @Bean
     public SNSClient snsClient(SnsClient amazonSNS, Ab2dEnvironment environment) {
-        return new SNSClientImpl(amazonSNS, environment);
+        return new SNSClientImpl(amazonSNS, environment, snsTopicPrefix);
     }
 
 }
