@@ -1,5 +1,9 @@
 version "$eventClientVersion"
 
+ext {
+    liquibaseVersion="5.0.0"
+}
+
 dependencies {
     implementation(platform(annotationProcessor("com.slack.api:slack-api-client:$slackAPIVersion")))
     implementation "commons-codec:commons-codec:1.9"
