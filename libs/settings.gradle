@@ -1,2 +1,2 @@
 rootProject.name = 'ab2d-libs'
-include 'ab2d-filters', 'ab2d-fhir', 'ab2d-aggregator', 'ab2d-bfd', 'ab2d-events-client', 'ab2d-properties-client', 'ab2d-contracts-client', 'ab2d-sns-client'
+include 'ab2d-filters', 'ab2d-fhir', 'ab2d-aggregator', 'ab2d-bfd', 'ab2d-events-client', 'ab2d-contracts-client', 'ab2d-sns-client'
