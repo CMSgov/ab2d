@@ -50,6 +50,14 @@ locals {
     prod = "https://prod.fhir.bfd.cmscloud.local"
   }, local.parent_env, "https://prod-sbx.fhir.bfd.cmscloud.local")
 
+  bfd_url_v3 = lookup({
+    dev     = "https://test.fhirv3.bfd.cmscloud.local"
+    test    = "https://test.fhirv3.bfd.cmscloud.local"
+    sandbox = "https://sandbox.fhirv3.bfd.cmscloud.local"
+    prod    = "https://prod.fhirv3.bfd.cmscloud.local"
+  }, local.parent_env)
+
+
   ab2d_efs_mount            = "/mnt/efs"
   aws_region                = module.platform.primary_region.name
   bfd_keystore_location     = module.platform.ssm.worker.bfd_keystore_location.value
@@ -180,6 +188,7 @@ resource "aws_ecs_task_definition" "worker" {
       { name : "AB2D_BFD_INSIGHTS", value : local.bfd_insights }, #FIXME: Is this even used?
       { name : "AB2D_BFD_KEYSTORE_LOCATION", value : local.bfd_keystore_location },
       { name : "AB2D_BFD_URL", value : local.bfd_url },
+      { name : "AB2D_BFD_URL_V3", value : local.bfd_url_v3 },
       { name : "AB2D_DB_HOST", value : local.ab2d_db_host },
       { name : "AB2D_DB_PORT", value : "5432" },
       { name : "AB2D_DB_SSL_MODE", value : "require" },
