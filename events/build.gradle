@@ -19,7 +19,7 @@ ext {
     liquibaseVersion='5.0.0'
     jacksonVersion='2.20.0'
     testContainerVersion='1.20.6'
-    eventClientVersion='3.3.7'
+    eventClientVersion='3.3.8'
     lombokVersion = '1.18.38'
     commonsLangVersion='3.18.0' // TODO; delete this next time Spring Boot is upgraded
 }
