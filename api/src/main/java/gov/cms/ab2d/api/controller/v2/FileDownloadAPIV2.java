@@ -34,6 +34,8 @@ import static gov.cms.ab2d.api.controller.common.ApiText.DOWNLOAD_DESC;
 import static gov.cms.ab2d.api.controller.common.ApiText.FILE_NAME;
 import static gov.cms.ab2d.api.controller.common.ApiText.JOB_ID;
 import static gov.cms.ab2d.api.controller.common.ApiText.NOT_FOUND;
+import static gov.cms.ab2d.api.controller.common.FileDownloadCommon.sanitizeFilename;
+import static gov.cms.ab2d.api.controller.common.FileDownloadCommon.sanitizeJobUuid;
 import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
 import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
 import static gov.cms.ab2d.common.util.Constants.FHIR_JSON_CONTENT_TYPE;
@@ -73,7 +75,7 @@ public class FileDownloadAPIV2 {
             @PathVariable @NotBlank String jobUuid,
             @PathVariable @NotBlank String filename) throws IOException {
         try {
-            return fileDownloadCommon.downloadFile(jobUuid, filename, request, response);
+            return fileDownloadCommon.downloadFile(sanitizeJobUuid(jobUuid), sanitizeFilename(filename), request, response);
         } catch (Exception e) {
             errorHandler.generateFHIRError(e, request, response);
             return null;
