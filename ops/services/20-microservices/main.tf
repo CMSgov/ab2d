@@ -153,6 +153,7 @@ resource "aws_lb_listener" "internal_lb" {
     target_group_arn = aws_lb_target_group.properties.id
     type             = "forward"
   }
+  certificate_arn = data.aws_acm_certificate.this.arn
 }
 
 resource "aws_security_group" "internal_lb" {
@@ -190,4 +191,8 @@ resource "aws_security_group_rule" "worker_sg_ingress_access" {
   description              = "inbound access for microservices"
   source_security_group_id = data.aws_security_group.worker.id
   security_group_id        = aws_security_group.internal_lb.id
+}
+
+data "aws_acm_certificate" "this" {
+  domain = local.parent_env == "prod" ? "api.ab2d.cms.gov" : "${local.parent_env}.ab2d.cms.gov"
 }
