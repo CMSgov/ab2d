@@ -3,6 +3,7 @@ locals {
   properties_image_repo = split("@", data.aws_ecr_image.properties.image_uri)[0]
   properties_image_tag  = coalesce(var.properties_service_image_tag, flatten([[for t in data.aws_ecr_image.properties.image_tags : t if strcontains(t, "latest")], data.aws_ecr_image.properties.image_tags])[0])
   properties_image_uri  = "${local.properties_image_repo}:${local.properties_image_tag}"
+  properties_lb_target_port = 8060
 }
 
 resource "aws_ecs_task_definition" "properties" {
@@ -34,7 +35,7 @@ resource "aws_ecs_task_definition" "properties" {
     ],
     portMappings : [
       {
-        containerPort : 8060
+        containerPort : local.properties_lb_target_port
       }
     ],
     logConfiguration : {
@@ -100,14 +101,14 @@ resource "aws_ecs_service" "properties" {
   load_balancer {
     target_group_arn = aws_lb_target_group.properties.arn
     container_name   = "properties-service-container"
-    container_port   = 8060
+    container_port   = local.properties_lb_target_port
   }
 }
 
 resource "aws_security_group_rule" "properties_to_worker_egress_access" {
   type                     = "egress"
-  from_port                = 8060
-  to_port                  = 8060
+  from_port                = local.properties_lb_target_port
+  to_port                  = local.properties_lb_target_port
   protocol                 = "tcp"
   description              = "properties svc to worker sg"
   source_security_group_id = data.aws_security_group.worker.id
@@ -116,8 +117,8 @@ resource "aws_security_group_rule" "properties_to_worker_egress_access" {
 
 resource "aws_security_group_rule" "properties_to_api_egress_access" {
   type                     = "egress"
-  from_port                = 8060
-  to_port                  = 8060
+  from_port                = local.properties_lb_target_port
+  to_port                  = local.properties_lb_target_port
   protocol                 = "tcp"
   description              = "properties svc to api sg"
   source_security_group_id = data.aws_security_group.api.id # Api
@@ -126,8 +127,8 @@ resource "aws_security_group_rule" "properties_to_api_egress_access" {
 
 resource "aws_security_group_rule" "access_to_properties_svc" {
   type                     = "ingress"
-  from_port                = 8060
-  to_port                  = 8060
+  from_port                = local.properties_lb_target_port
+  to_port                  = local.properties_lb_target_port
   protocol                 = "tcp"
   description              = "for access to properties svc in api sg"
   source_security_group_id = aws_security_group.internal_lb.id
@@ -136,14 +137,17 @@ resource "aws_security_group_rule" "access_to_properties_svc" {
 
 resource "aws_lb_target_group" "properties" {
   name        = "${local.service_prefix}-properties"
-  port        = 8060
-  protocol    = "HTTP"
+  port        = local.properties_lb_target_port
+  protocol    = "HTTPS"
   vpc_id      = module.platform.vpc_id
   target_type = "ip"
 
   health_check {
+    enabled  = true
     path = "/properties/health"
-    port = 8060
+    port = local.properties_lb_target_port
+    protocol            = "HTTPS"
+    matcher             = "200-299"
   }
 }
 

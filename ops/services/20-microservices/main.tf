@@ -7,6 +7,14 @@ terraform {
   }
 }
 
+module "standards" {
+  source      = "github.com/CMSgov/cdap//terraform/modules/standards?ref=0bd3eeae6b03cc8883b7dbdee5f04deb33468260"
+  app         = local.app
+  env         = local.env
+  root_module = "https://github.com/CMSgov/ab2d/tree/main/ops/services/20-microservices"
+  service     = "20-microservices"
+}
+
 module "platform" {
   source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
   providers = { aws = aws, aws.secondary = aws.secondary }
@@ -138,7 +146,8 @@ resource "aws_ssm_parameter" "internal_lb" {
 resource "aws_lb_listener" "internal_lb" {
   load_balancer_arn = aws_lb.internal_lb.arn
   port              = 80
-  protocol          = "HTTP"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-Res-2021-06"
 
   default_action {
     target_group_arn = aws_lb_target_group.properties.id
