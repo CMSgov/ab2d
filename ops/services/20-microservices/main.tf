@@ -193,6 +193,36 @@ resource "aws_security_group_rule" "worker_sg_ingress_access" {
   security_group_id        = aws_security_group.internal_lb.id
 }
 
+resource "aws_security_group_rule" "lambda_sg_ingress_access_enc" {
+  type                     = "ingress"
+  from_port                = 443
+  to_port                  = 443
+  protocol                 = "tcp"
+  description              = "inbound enc access for lambda to microservices"
+  source_security_group_id = data.aws_security_group.lambda.id
+  security_group_id        = aws_security_group.internal_lb.id
+}
+
+resource "aws_security_group_rule" "api_sg_ingress_access_enc" {
+  type                     = "ingress"
+  from_port                = 443
+  to_port                  = 443
+  protocol                 = "tcp"
+  description              = "inbound enc access for microservices"
+  source_security_group_id = data.aws_security_group.api.id
+  security_group_id        = aws_security_group.internal_lb.id
+}
+
+resource "aws_security_group_rule" "worker_sg_ingress_access_enc" {
+  type                     = "ingress"
+  from_port                = 443
+  to_port                  = 443
+  protocol                 = "tcp"
+  description              = "inbound enc access for microservices"
+  source_security_group_id = data.aws_security_group.worker.id
+  security_group_id        = aws_security_group.internal_lb.id
+}
+
 data "aws_acm_certificate" "this" {
   domain = local.parent_env == "prod" ? "api.ab2d.cms.gov" : "${local.parent_env}.ab2d.cms.gov"
 }
