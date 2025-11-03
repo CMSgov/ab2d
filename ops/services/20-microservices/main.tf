@@ -145,7 +145,7 @@ resource "aws_ssm_parameter" "internal_lb" {
 
 resource "aws_lb_listener" "internal_lb" {
   load_balancer_arn = aws_lb.internal_lb.arn
-  port              = 443
+  port              = 80
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-Res-2021-06"
 
