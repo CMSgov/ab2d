@@ -145,7 +145,7 @@ resource "aws_ssm_parameter" "internal_lb" {
 
 resource "aws_lb_listener" "internal_lb" {
   load_balancer_arn = aws_lb.internal_lb.arn
-  port              = 80
+  port              = 443
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-Res-2021-06"
 
@@ -161,36 +161,6 @@ resource "aws_security_group" "internal_lb" {
   vpc_id = module.platform.vpc_id
 
   tags = { Name = "${local.service_prefix}-${local.service}-lb" }
-}
-
-resource "aws_security_group_rule" "lambda_sg_ingress_access" {
-  type                     = "ingress"
-  from_port                = 80
-  to_port                  = 443
-  protocol                 = "tcp"
-  description              = "inbound access for lambda to microservices"
-  source_security_group_id = data.aws_security_group.lambda.id
-  security_group_id        = aws_security_group.internal_lb.id
-}
-
-resource "aws_security_group_rule" "api_sg_ingress_access" {
-  type                     = "ingress"
-  from_port                = 80
-  to_port                  = 443
-  protocol                 = "tcp"
-  description              = "inbound access for microservices"
-  source_security_group_id = data.aws_security_group.api.id
-  security_group_id        = aws_security_group.internal_lb.id
-}
-
-resource "aws_security_group_rule" "worker_sg_ingress_access" {
-  type                     = "ingress"
-  from_port                = 80
-  to_port                  = 443
-  protocol                 = "tcp"
-  description              = "inbound access for microservices"
-  source_security_group_id = data.aws_security_group.worker.id
-  security_group_id        = aws_security_group.internal_lb.id
 }
 
 resource "aws_security_group_rule" "lambda_sg_ingress_access_enc" {
