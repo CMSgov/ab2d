@@ -37,7 +37,7 @@ public class BFDSearchImpl implements BFDSearch {
      * AB2D does not report SAMHSA claims (https://www.samhsa.gov/).
      *      - excludeSAMHSA must be set to true to maintain this exclusion
      *
-     * @param patientId internal beneficiary id
+     * @param patientId internal beneficiary id (patient id in v3)
      * @param since the minimum lastUpdated date which may be null
      * @param pageSize maximum number of records that can be returned
      * @param bulkJobId header to uniquely identify what job this is coming from within BFD logs
@@ -48,6 +48,10 @@ public class BFDSearchImpl implements BFDSearch {
     @Trace
     @Override
     public IBaseBundle searchEOB(long patientId, OffsetDateTime since, OffsetDateTime until, int pageSize, String bulkJobId, FhirVersion version, String contractNum) throws IOException {
+        return searchEOB(String.valueOf(patientId),  since, until, pageSize, bulkJobId, version, contractNum);
+    }
+
+    public IBaseBundle searchEOB(String patientId, OffsetDateTime since, OffsetDateTime until, int pageSize, String bulkJobId, FhirVersion version, String contractNum) throws IOException {
         String urlLocation = bfdClientVersions.getUrl(version);
         StringBuilder url = new StringBuilder(urlLocation + "ExplanationOfBenefit?patient=" + patientId + "&excludeSAMHSA=true");
 
@@ -88,7 +92,7 @@ public class BFDSearchImpl implements BFDSearch {
      * Method exists to track connection to BFD for New Relic
      */
     @Trace
-    private byte[] getEOBSFromBFD(long patientId, HttpGet request) throws IOException {
+    private byte[] getEOBSFromBFD(String patientId, HttpGet request) throws IOException {
         byte[] responseBytes;
         try (CloseableHttpResponse response = (CloseableHttpResponse) httpClient.execute(request)) {
             int status = response.getStatusLine().getStatusCode();
