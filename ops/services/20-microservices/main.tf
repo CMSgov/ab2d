@@ -166,7 +166,7 @@ resource "aws_security_group" "internal_lb" {
 resource "aws_security_group_rule" "lambda_sg_ingress_access" {
   type                     = "ingress"
   from_port                = 80
-  to_port                  = 80
+  to_port                  = 443
   protocol                 = "tcp"
   description              = "inbound access for lambda to microservices"
   source_security_group_id = data.aws_security_group.lambda.id
@@ -176,7 +176,7 @@ resource "aws_security_group_rule" "lambda_sg_ingress_access" {
 resource "aws_security_group_rule" "api_sg_ingress_access" {
   type                     = "ingress"
   from_port                = 80
-  to_port                  = 80
+  to_port                  = 443
   protocol                 = "tcp"
   description              = "inbound access for microservices"
   source_security_group_id = data.aws_security_group.api.id
@@ -186,7 +186,7 @@ resource "aws_security_group_rule" "api_sg_ingress_access" {
 resource "aws_security_group_rule" "worker_sg_ingress_access" {
   type                     = "ingress"
   from_port                = 80
-  to_port                  = 80
+  to_port                  = 443
   protocol                 = "tcp"
   description              = "inbound access for microservices"
   source_security_group_id = data.aws_security_group.worker.id
