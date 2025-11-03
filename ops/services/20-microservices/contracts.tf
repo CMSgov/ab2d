@@ -1,8 +1,9 @@
 locals {
   # Use the provided image tag or get the first, human-readable image tag, favoring a tag with 'latest' in its name if it should exist.
-  contracts_image_repo = split("@", data.aws_ecr_image.contracts.image_uri)[0]
-  contracts_image_tag  = coalesce(var.contracts_service_image_tag, flatten([[for t in data.aws_ecr_image.contracts.image_tags : t if strcontains(t, "latest")], data.aws_ecr_image.contracts.image_tags])[0])
-  contracts_image_uri  = "${local.contracts_image_repo}:${local.contracts_image_tag}"
+  contracts_image_repo     = split("@", data.aws_ecr_image.contracts.image_uri)[0]
+  contracts_image_tag      = coalesce(var.contracts_service_image_tag, flatten([[for t in data.aws_ecr_image.contracts.image_tags : t if strcontains(t, "latest")], data.aws_ecr_image.contracts.image_tags])[0])
+  contracts_image_uri      = "${local.contracts_image_repo}:${local.contracts_image_tag}"
+  contracts_lb_target_port = 8070
 
   hpms_api_params_arn      = module.platform.ssm.core.hpms_api_params.arn
   hpms_auth_key_id_arn     = module.platform.ssm.core.hpms_auth_key_id.arn
@@ -41,7 +42,7 @@ resource "aws_ecs_task_definition" "contracts" {
     ],
     portMappings : [
       {
-        containerPort : 8070
+        containerPort : local.contracts_lb_target_port
       }
     ],
     logConfiguration : {
@@ -106,14 +107,14 @@ resource "aws_ecs_service" "contracts" {
   load_balancer {
     target_group_arn = aws_lb_target_group.contracts.arn
     container_name   = "contracts-service-container"
-    container_port   = 8070
+    container_port   = local.contracts_lb_target_port
   }
 }
 
 resource "aws_security_group_rule" "contracts_to_worker_egress_access" {
   type                     = "egress"
-  from_port                = 8070
-  to_port                  = 8070
+  from_port                = local.contracts_lb_target_port
+  to_port                  = local.contracts_lb_target_port
   protocol                 = "tcp"
   description              = "contracts svc to worker sg"
   source_security_group_id = data.aws_security_group.worker.id
@@ -122,8 +123,8 @@ resource "aws_security_group_rule" "contracts_to_worker_egress_access" {
 
 resource "aws_security_group_rule" "contracts_to_api_egress_access" {
   type                     = "egress"
-  from_port                = 8070
-  to_port                  = 8070
+  from_port                = local.contracts_lb_target_port
+  to_port                  = local.contracts_lb_target_port
   protocol                 = "tcp"
   description              = "contracts svc to api sg"
   source_security_group_id = data.aws_security_group.api.id # Api
@@ -132,8 +133,8 @@ resource "aws_security_group_rule" "contracts_to_api_egress_access" {
 
 resource "aws_security_group_rule" "access_to_contract_svc" {
   type                     = "ingress"
-  from_port                = 8070
-  to_port                  = 8070
+  from_port                = local.contracts_lb_target_port
+  to_port                  = local.contracts_lb_target_port
   protocol                 = "tcp"
   description              = "for access to contract svc in api sg"
   source_security_group_id = aws_security_group.internal_lb.id
@@ -142,25 +143,31 @@ resource "aws_security_group_rule" "access_to_contract_svc" {
 
 resource "aws_lb_target_group" "contracts" {
   name        = "${local.service_prefix}-contracts"
-  port        = 8070
-  protocol    = "HTTP"
+  port        = local.contracts_lb_target_port
+  protocol    = "HTTPS"
   vpc_id      = module.platform.vpc_id
   target_type = "ip"
 
   health_check {
-    path = "/health"
-    port = 8070
+    enabled  = true
+    path     = "/health"
+    port     = local.contracts_lb_target_port
+    protocol = "HTTPS"
+    matcher  = "200-299"
   }
+
+  tags = module.standards.default_tags
 }
 
 resource "aws_security_group_rule" "contracts_to_lambda_egress_access" {
   type                     = "egress"
-  from_port                = 8070
-  to_port                  = 8070
+  from_port                = local.contracts_lb_target_port
+  to_port                  = local.contracts_lb_target_port
   protocol                 = "tcp"
   description              = "contracts svc to lambda"
   source_security_group_id = data.aws_security_group.lambda.id
   security_group_id        = aws_security_group.internal_lb.id
+
 }
 
 resource "aws_lb_listener_rule" "contracts" {
