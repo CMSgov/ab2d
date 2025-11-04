@@ -178,7 +178,7 @@ resource "aws_security_group" "internal_lb" {
   tags = { Name = "${local.service_prefix}-${local.service}-lb" }
 }
 
-resource "aws_security_group_rule" "lambda_sg_ingress_access_enc" {
+resource "aws_security_group_rule" "lambda_sg_ingress_access" {
   type                     = "ingress"
   from_port                = 443
   to_port                  = 443
@@ -188,7 +188,7 @@ resource "aws_security_group_rule" "lambda_sg_ingress_access_enc" {
   security_group_id        = aws_security_group.internal_lb.id
 }
 
-resource "aws_security_group_rule" "api_sg_ingress_access_enc" {
+resource "aws_security_group_rule" "api_sg_ingress_access" {
   type                     = "ingress"
   from_port                = 443
   to_port                  = 443
@@ -198,7 +198,7 @@ resource "aws_security_group_rule" "api_sg_ingress_access_enc" {
   security_group_id        = aws_security_group.internal_lb.id
 }
 
-resource "aws_security_group_rule" "worker_sg_ingress_access_enc" {
+resource "aws_security_group_rule" "worker_sg_ingress_access" {
   type                     = "ingress"
   from_port                = 443
   to_port                  = 443
