@@ -12,6 +12,7 @@ public interface BFDClient {
 
     IBaseBundle requestEOBFromServer(FhirVersion version, long patientID, String contractNum);
     IBaseBundle requestEOBFromServer(FhirVersion version, long patientID, OffsetDateTime sinceTime, OffsetDateTime untilTime, String contractNum);
+    IBaseBundle requestEOBFromServer(FhirVersion version, String patientID, OffsetDateTime sinceTime, OffsetDateTime untilTime, String contractNum);
     IBaseBundle requestNextBundleFromServer(FhirVersion version, IBaseBundle bundle, String contractNum);
 
     /**
