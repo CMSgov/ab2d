@@ -3,14 +3,13 @@ package gov.cms.ab2d.worker.processor;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.coverage.model.Identifiers;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
 public class SyntheticPatientIdCoverageSummary {
 
-    static List<String> SyntheticParientIds = Arrays.asList("1S00E00AA59",
+    private static final List<String> SYNTHETIC_PATIENT_IDS = Arrays.asList("1S00E00AA59",
             "1S00E00AA28",
             "1S00E00AA91",
             "1S00E00AA69",
@@ -23,7 +22,7 @@ public class SyntheticPatientIdCoverageSummary {
 
     public static CoverageSummary getSyntheticCoverageSummary(CoverageSummary originalCoverageSummary) {
         Random random = new Random();
-        String id = SyntheticParientIds.get(random.nextInt(SyntheticParientIds.size()));
+        String id = SYNTHETIC_PATIENT_IDS.get(random.nextInt(SYNTHETIC_PATIENT_IDS.size()));
 
         Identifiers originalIdentifiers = originalCoverageSummary.getIdentifiers();
         Identifiers identifiers = new Identifiers(originalIdentifiers.getBeneficiaryId(),

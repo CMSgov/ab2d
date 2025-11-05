@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.common.util.GzipCompressUtils;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
@@ -42,6 +43,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.util.ReflectionTestUtils;
 
 
+import static gov.cms.ab2d.common.util.PropertyConstants.V3_ON;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
 import static java.util.Collections.singletonList;
@@ -76,6 +78,8 @@ class ContractProcessorInvalidPatientTest {
     @Mock
     private RoundRobinBlockingQueue<PatientClaimsRequest> requestQueue;
 
+    private final PropertyServiceStub propertyServiceStub = new PropertyServiceStub();
+
     @TempDir
     File tmpDirFolder;
 
@@ -89,6 +93,7 @@ class ContractProcessorInvalidPatientTest {
 
     @BeforeEach
     void setup() {
+        propertyServiceStub.createProperty(V3_ON, "false");
         contractWorkerClient = new ContractWorkerClientMock();
         contract = new ContractDTO(null, contractId, contractId, OffsetDateTime.now().minusYears(50), null, 0, 0);
 
@@ -99,7 +104,7 @@ class ContractProcessorInvalidPatientTest {
         job.setContractNumber(contract.getContractNumber());
         JobRepository jobRepository = new StubJobRepository(job);
 
-        patientClaimsProcessor = new PatientClaimsProcessorImpl(bfdClient, eventLogger, searchConfig);
+        patientClaimsProcessor = new PatientClaimsProcessorImpl(bfdClient, eventLogger, searchConfig, propertyServiceStub);
         JobProgressServiceImpl jobProgressUpdateService = new JobProgressServiceImpl(jobRepository);
         jobProgressUpdateService.initJob(jobId);
         JobChannelService jobChannelService = new JobChannelStubServiceImpl(jobProgressUpdateService);

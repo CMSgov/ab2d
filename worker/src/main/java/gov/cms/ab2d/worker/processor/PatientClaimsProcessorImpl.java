@@ -49,7 +49,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     private final SQSEventClient logManager;
     private final SearchConfig searchConfig;
     private final PropertiesService propertiesService;
-    private final boolean isV3On = propertiesService.isToggleOn("OptOutOn", false);
+
 
     @Value("${bfd.earliest.data.date:01/01/2020}")
     private String earliestDataDate;
@@ -83,6 +83,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     String writeOutData(PatientClaimsRequest request, FhirVersion fhirVersion, ProgressTrackerUpdate update) throws IOException {
         File file = null;
         String anyErrors = null;
+        boolean isV3On = propertiesService.isToggleOn("OptOutOn", false);
         try (ClaimsStream stream = new ClaimsStream(request.getJob(), request.getEfsMount(), DATA,
                 searchConfig.getStreamingDir(), searchConfig.getFinishedDir(), searchConfig.getBufferSize())) {
             file = stream.getFile();
@@ -92,7 +93,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
             for (CoverageSummary patient : request.getCoverageSummary()) {
 
-                if (isV3On){
+                if (isV3On) {
                     //TEMPORARY! Replace the IDs in the request with synthetic ones
                     patient = SyntheticPatientIdCoverageSummary.getSyntheticCoverageSummary(patient);
                 }
@@ -172,7 +173,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
      */
     @Trace(metricName = "EOBRequest", dispatcher = true)
     private List<IBaseResource> getEobBundleResources(PatientClaimsRequest request, CoverageSummary patient) {
-
+        boolean isV3On = propertiesService.isToggleOn("OptOutOn", false);
         OffsetDateTime requestStartTime = OffsetDateTime.now();
 
         Date earliestDate = getEarliestDataDate();
@@ -193,10 +194,10 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             // Set header for requests so BFD knows where this request originated from
             BFDClient.BFD_BULK_JOB_ID.set(request.getJob());
 
-            if (isV3On){
+            if (isV3On) {
                 // ToDo: replace FhirVersion to request.getVersion() in AB2D-6943
                 eobBundle = bfdClient.requestEOBFromServer(FhirVersion.R4v3, patient.getIdentifiers().getPatientIdV3(), sinceTime, untilTime, request.getContractNum());
-            }else {
+            } else {
                 // Make first request and begin looping over remaining pages
                 eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patient.getIdentifiers().getBeneficiaryId(), sinceTime, untilTime, request.getContractNum());
             }

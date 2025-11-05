@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.processor;
 import com.newrelic.api.agent.NewRelic;
 import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.common.util.AB2DPostgresqlContainer;
 import gov.cms.ab2d.common.util.AB2DSQSMockConfig;
@@ -39,6 +40,8 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 
+import static gov.cms.ab2d.common.util.PropertyConstants.MAINTENANCE_MODE;
+import static gov.cms.ab2d.common.util.PropertyConstants.V3_ON;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -65,15 +68,18 @@ class AggregatorJobTest {
     @Mock
     private SQSEventClient logManager;
 
+    private final PropertyServiceStub propertyServiceStub = new PropertyServiceStub();
+
     private static final String STREAMING = "streaming";
     private static final String FINISHED = "finished";
 
     @BeforeEach
     void setUp() {
+        propertyServiceStub.createProperty(V3_ON, "false");
         SearchConfig searchConfig = new SearchConfig(tempDir.getAbsolutePath(), STREAMING,
                 FINISHED, 0, 0, 1, 2);
 
-        processor = new PatientClaimsProcessorImpl(bfdClient, logManager, searchConfig);
+        processor = new PatientClaimsProcessorImpl(bfdClient, logManager, searchConfig, propertyServiceStub);
     }
 
     @Test
