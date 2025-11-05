@@ -56,8 +56,8 @@ allprojects {
         testImplementation "org.springframework.data:spring-data-jpa"
         testImplementation "org.liquibase:liquibase-core:${liquibaseVersion}"
         testImplementation "org.testcontainers:localstack:${testContainerVersion}"
-        compileOnly "org.cyclonedx:cyclonedx-gradle-plugin:1.4.0"
-        compileOnly 'org.cyclonedx:cyclonedx-core-java:11.0.0'
+//        compileOnly "org.cyclonedx:cyclonedx-gradle-plugin:1.4.0"
+//        compileOnly 'org.cyclonedx:cyclonedx-core-java:11.0.0'
         testImplementation "org.projectlombok:lombok:${lombokVersion}"
         compileOnly "org.projectlombok:lombok:${lombokVersion}"
         implementation(platform(annotationProcessor("org.projectlombok:lombok:${lombokVersion}")))
