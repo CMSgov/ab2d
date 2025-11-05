@@ -5,7 +5,7 @@ plugins {
     id 'java-library'
     id 'com.jfrog.artifactory' version '4.33.1' apply false
     id "org.sonarqube" version "4.2.1.3168"
-    id 'org.cyclonedx.bom' version '1.7.4'
+    id 'org.cyclonedx.bom' version '3.0.0'
 }
 
 version = "1.0"
