@@ -3,6 +3,7 @@ package gov.cms.ab2d.worker.processor;
 import com.newrelic.api.agent.Token;
 import gov.cms.ab2d.aggregator.FileOutputType;
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.coverage.model.ContractForCoverageDTO;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
@@ -28,6 +29,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import static gov.cms.ab2d.common.util.PropertyConstants.V3_ON;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.processor.BundleUtils.createIdentifierWithoutMbi;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -64,6 +66,8 @@ class PatientClaimsProcessorUnitTest {
     private CoverageSummary coverageSummary;
     private ProgressTrackerUpdate update = new ProgressTrackerUpdate();
 
+    private final PropertyServiceStub propertyServiceStub = new PropertyServiceStub();
+
     private final Token noOpToken = new Token() {
         @Override
         public boolean link() {
@@ -90,6 +94,7 @@ class PatientClaimsProcessorUnitTest {
 
     @BeforeEach
     void setUp() throws Exception {
+        propertyServiceStub.createProperty(V3_ON, "false");
         searchConfig = new SearchConfig(tmpEfsMountDir.getAbsolutePath(), "streamingDir",
                 "finishedDir",
                 0, 0, 1, 2);
@@ -97,7 +102,8 @@ class PatientClaimsProcessorUnitTest {
         cut = new PatientClaimsProcessorImpl(
                 mockBfdClient,
                 eventLogger,
-                searchConfig
+                searchConfig,
+                propertyServiceStub
         );
 
         ReflectionTestUtils.setField(cut, "earliestDataDate", "01/01/1900");
