@@ -143,8 +143,6 @@ subprojects {
 }
 
 dependencies {
-//    compileOnly "org.cyclonedx:cyclonedx-gradle-plugin:1.4.0"
-//    compileOnly "org.cyclonedx:cyclonedx-core-java:11.0.0"
 }
 
 allprojects {

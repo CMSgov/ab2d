@@ -1,577 +1,0 @@
-[INFO] Scanning for projects...
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/codehaus/mojo/build-helper-maven-plugin/3.6.1/build-helper-maven-plugin-3.6.1.pom
-Progress (1): 7.2/8.1 kBProgress (1): 8.1 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/codehaus/mojo/build-helper-maven-plugin/3.6.1/build-helper-maven-plugin-3.6.1.pom (8.1 kB at 12 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/codehaus/mojo/mojo-parent/91/mojo-parent-91.pom
-Progress (1): 3.2/38 kBProgress (1): 16/38 kB Progress (1): 32/38 kBProgress (1): 38 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/codehaus/mojo/mojo-parent/91/mojo-parent-91.pom (38 kB at 97 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/junit/junit-bom/5.13.0/junit-bom-5.13.0.pom
-Progress (1): 3.2/5.6 kBProgress (1): 5.6 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/junit/junit-bom/5.13.0/junit-bom-5.13.0.pom (5.6 kB at 22 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/codehaus/mojo/build-helper-maven-plugin/3.6.1/build-helper-maven-plugin-3.6.1.jar
-Progress (1): 3.1/72 kBProgress (1): 20/72 kB Progress (1): 36/72 kBProgress (1): 52/72 kBProgress (1): 69/72 kBProgress (1): 72 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/codehaus/mojo/build-helper-maven-plugin/3.6.1/build-helper-maven-plugin-3.6.1.jar (72 kB at 305 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/cyclonedx/cyclonedx-maven-plugin/2.9.1/cyclonedx-maven-plugin-2.9.1.pom
-Progress (1): 3.3/19 kBProgress (1): 7.4/19 kBProgress (1): 19 kB                       Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/cyclonedx/cyclonedx-maven-plugin/2.9.1/cyclonedx-maven-plugin-2.9.1.pom (19 kB at 99 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/cyclonedx/cyclonedx-maven-plugin/2.9.1/cyclonedx-maven-plugin-2.9.1.jar
-Progress (1): 3.3/52 kBProgress (1): 20/52 kB Progress (1): 32/52 kBProgress (1): 40/52 kBProgress (1): 48/52 kBProgress (1): 52 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/cyclonedx/cyclonedx-maven-plugin/2.9.1/cyclonedx-maven-plugin-2.9.1.jar (52 kB at 269 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/flywaydb/flyway-maven-plugin/11.7.2/flyway-maven-plugin-11.7.2.pom
-Progress (1): 3.2/3.8 kBProgress (1): 3.8 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/flywaydb/flyway-maven-plugin/11.7.2/flyway-maven-plugin-11.7.2.pom (3.8 kB at 13 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/flywaydb/flyway-parent/11.7.2/flyway-parent-11.7.2.pom
-Progress (1): 3.2/36 kBProgress (1): 20/36 kB Progress (1): 24/36 kBProgress (1): 36 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/flywaydb/flyway-parent/11.7.2/flyway-parent-11.7.2.pom (36 kB at 108 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/flywaydb/flyway-maven-plugin/11.7.2/flyway-maven-plugin-11.7.2.jar
-Progress (1): 3.2/110 kBProgress (1): 20/110 kB Progress (1): 36/110 kBProgress (1): 52/110 kBProgress (1): 57/110 kBProgress (1): 74/110 kBProgress (1): 75/110 kBProgress (1): 84/110 kBProgress (1): 100/110 kBProgress (1): 110 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/flywaydb/flyway-maven-plugin/11.7.2/flyway-maven-plugin-11.7.2.jar (110 kB at 416 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/io/github/git-commit-id/git-commit-id-maven-plugin/9.0.2/git-commit-id-maven-plugin-9.0.2.pom
-Progress (1): 3.1/28 kBProgress (1): 20/28 kB Progress (1): 28 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/io/github/git-commit-id/git-commit-id-maven-plugin/9.0.2/git-commit-id-maven-plugin-9.0.2.pom (28 kB at 90 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/io/github/git-commit-id/git-commit-id-maven-plugin/9.0.2/git-commit-id-maven-plugin-9.0.2.jar
-Progress (1): 3.1/55 kBProgress (1): 15/55 kB Progress (1): 32/55 kBProgress (1): 33/55 kBProgress (1): 50/55 kBProgress (1): 55 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/io/github/git-commit-id/git-commit-id-maven-plugin/9.0.2/git-commit-id-maven-plugin-9.0.2.jar (55 kB at 299 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/jooq/jooq-codegen-maven/3.19.27/jooq-codegen-maven-3.19.27.pom
-Progress (1): 3.2/3.8 kBProgress (1): 3.8 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/jooq/jooq-codegen-maven/3.19.27/jooq-codegen-maven-3.19.27.pom (3.8 kB at 12 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/jooq/jooq-parent/3.19.27/jooq-parent-3.19.27.pom
-Progress (1): 3.2/41 kBProgress (1): 20/41 kB Progress (1): 24/41 kBProgress (1): 41 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/jooq/jooq-parent/3.19.27/jooq-parent-3.19.27.pom (41 kB at 108 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/jooq/jooq-codegen-maven/3.19.27/jooq-codegen-maven-3.19.27.jar
-Progress (1): 3.2/18 kBProgress (1): 15/18 kB Progress (1): 18 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/jooq/jooq-codegen-maven/3.19.27/jooq-codegen-maven-3.19.27.jar (18 kB at 92 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/jetbrains/kotlin/kotlin-maven-plugin/1.9.25/kotlin-maven-plugin-1.9.25.pom
-Progress (1): 3.3/6.7 kBProgress (1): 6.7 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/jetbrains/kotlin/kotlin-maven-plugin/1.9.25/kotlin-maven-plugin-1.9.25.pom (6.7 kB at 32 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/jetbrains/kotlin/kotlin-project/1.9.25/kotlin-project-1.9.25.pom
-Progress (1): 3.3/16 kBProgress (1): 16/16 kB Progress (1): 16 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/jetbrains/kotlin/kotlin-project/1.9.25/kotlin-project-1.9.25.pom (16 kB at 65 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/jetbrains/kotlin/kotlin-maven-plugin/1.9.25/kotlin-maven-plugin-1.9.25.jar
-Progress (1): 3.3/82 kBProgress (1): 16/82 kB Progress (1): 24/82 kBProgress (1): 32/82 kBProgress (1): 40/82 kBProgress (1): 48/82 kBProgress (1): 57/82 kBProgress (1): 65/82 kBProgress (1): 74/82 kBProgress (1): 82 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/jetbrains/kotlin/kotlin-maven-plugin/1.9.25/kotlin-maven-plugin-1.9.25.jar (82 kB at 240 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/liquibase/liquibase-maven-plugin/4.31.1/liquibase-maven-plugin-4.31.1.pom
-Progress (1): 2.0 kB                    Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/liquibase/liquibase-maven-plugin/4.31.1/liquibase-maven-plugin-4.31.1.pom (2.0 kB at 6.1 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/liquibase/liquibase-maven-plugin/4.31.1/liquibase-maven-plugin-4.31.1.jar
-Progress (1): 3.1/352 kBProgress (1): 20/352 kB Progress (1): 36/352 kBProgress (1): 52/352 kBProgress (1): 56/352 kBProgress (1): 73/352 kBProgress (1): 89/352 kBProgress (1): 97/352 kBProgress (1): 106/352 kBProgress (1): 114/352 kBProgress (1): 131/352 kBProgress (1): 147/352 kBProgress (1): 155/352 kBProgress (1): 163/352 kBProgress (1): 171/352 kBProgress (1): 187/352 kBProgress (1): 204/352 kBProgress (1): 220/352 kBProgress (1): 228/352 kBProgress (1): 237/352 kBProgress (1): 253/352 kBProgress (1): 269/352 kBProgress (1): 286/352 kBProgress (1): 294/352 kBProgress (1): 310/352 kBProgress (1): 319/352 kBProgress (1): 327/352 kBProgress (1): 336/352 kBProgress (1): 343/352 kBProgress (1): 352 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/liquibase/liquibase-maven-plugin/4.31.1/liquibase-maven-plugin-4.31.1.jar (352 kB at 734 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/plugins/maven-assembly-plugin/3.7.1/maven-assembly-plugin-3.7.1.pom
-Progress (1): 3.3/15 kBProgress (1): 15 kB                       Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/plugins/maven-assembly-plugin/3.7.1/maven-assembly-plugin-3.7.1.pom (15 kB at 53 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/plugins/maven-assembly-plugin/3.7.1/maven-assembly-plugin-3.7.1.jar
-Progress (1): 3.3/240 kBProgress (1): 7.4/240 kBProgress (1): 24/240 kB Progress (1): 32/240 kBProgress (1): 40/240 kBProgress (1): 48/240 kBProgress (1): 57/240 kBProgress (1): 65/240 kBProgress (1): 73/240 kBProgress (1): 89/240 kBProgress (1): 91/240 kBProgress (1): 106/240 kBProgress (1): 114/240 kBProgress (1): 122/240 kBProgress (1): 130/240 kBProgress (1): 138/240 kBProgress (1): 147/240 kBProgress (1): 155/240 kBProgress (1): 163/240 kBProgress (1): 171/240 kBProgress (1): 179/240 kBProgress (1): 188/240 kBProgress (1): 196/240 kBProgress (1): 204/240 kBProgress (1): 212/240 kBProgress (1): 220/240 kBProgress (1): 229/240 kBProgress (1): 237/240 kBProgress (1): 240 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/plugins/maven-assembly-plugin/3.7.1/maven-assembly-plugin-3.7.1.jar (240 kB at 689 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/plugins/maven-dependency-plugin/3.8.1/maven-dependency-plugin-3.8.1.pom
-Progress (1): 3.3/18 kBProgress (1): 7.4/18 kBProgress (1): 18 kB                       Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/plugins/maven-dependency-plugin/3.8.1/maven-dependency-plugin-3.8.1.pom (18 kB at 89 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/plugins/maven-dependency-plugin/3.8.1/maven-dependency-plugin-3.8.1.jar
-Progress (1): 3.3/208 kBProgress (1): 7.4/208 kBProgress (1): 24/208 kB Progress (1): 40/208 kBProgress (1): 57/208 kBProgress (1): 65/208 kBProgress (1): 73/208 kBProgress (1): 82/208 kBProgress (1): 98/208 kBProgress (1): 106/208 kBProgress (1): 114/208 kBProgress (1): 130/208 kBProgress (1): 147/208 kBProgress (1): 155/208 kBProgress (1): 163/208 kBProgress (1): 171/208 kBProgress (1): 179/208 kBProgress (1): 188/208 kBProgress (1): 196/208 kBProgress (1): 208 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/plugins/maven-dependency-plugin/3.8.1/maven-dependency-plugin-3.8.1.jar (208 kB at 612 kB/s)
-[INFO] 
-[INFO] ------------------------< gov.cms.ab2d:common >-------------------------
-[INFO] Building common 0.0.1-SNAPSHOT
-[INFO]   from pom.xml
-[INFO] --------------------------------[ jar ]---------------------------------
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/boot/spring-boot-starter-security/3.5.7/spring-boot-starter-security-3.5.7.pom
-Progress (1): 2.7 kB                    Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/boot/spring-boot-starter-security/3.5.7/spring-boot-starter-security-3.5.7.pom (2.7 kB at 9.0 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/security/spring-security-config/6.5.6/spring-security-config-6.5.6.pom
-Progress (1): 2.8 kB                    Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/security/spring-security-config/6.5.6/spring-security-config-6.5.6.pom (2.8 kB at 6.9 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/security/spring-security-core/6.5.6/spring-security-core-6.5.6.pom
-Progress (1): 3.1/3.2 kBProgress (1): 3.2 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/security/spring-security-core/6.5.6/spring-security-core-6.5.6.pom (3.2 kB at 9.8 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/security/spring-security-crypto/6.5.6/spring-security-crypto-6.5.6.pom
-Progress (1): 1.9 kB                    Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/security/spring-security-crypto/6.5.6/spring-security-crypto-6.5.6.pom (1.9 kB at 6.4 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/security/spring-security-web/6.5.6/spring-security-web-6.5.6.pom
-Progress (1): 3.1/3.2 kBProgress (1): 3.2 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/security/spring-security-web/6.5.6/spring-security-web-6.5.6.pom (3.2 kB at 8.3 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/ca/uhn/hapi/fhir/hapi-fhir-structures-dstu3/8.4.0/hapi-fhir-structures-dstu3-8.4.0.pom
-Progress (1): 3.1/8.1 kBProgress (1): 8.1 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/ca/uhn/hapi/fhir/hapi-fhir-structures-dstu3/8.4.0/hapi-fhir-structures-dstu3-8.4.0.pom (8.1 kB at 19 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/ca/uhn/hapi/fhir/org.hl7.fhir.utilities/6.5.27/org.hl7.fhir.utilities-6.5.27.pom
-Progress (1): 3.1/9.3 kBProgress (1): 9.3 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/ca/uhn/hapi/fhir/org.hl7.fhir.utilities/6.5.27/org.hl7.fhir.utilities-6.5.27.pom (9.3 kB at 22 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/ca/uhn/hapi/fhir/org.hl7.fhir.core/6.5.27/org.hl7.fhir.core-6.5.27.pom
-Progress (1): 3.2/39 kBProgress (1): 15/39 kB Progress (1): 32/39 kBProgress (1): 39 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/ca/uhn/hapi/fhir/org.hl7.fhir.core/6.5.27/org.hl7.fhir.core-6.5.27.pom (39 kB at 67 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/net/sf/saxon/Saxon-HE/11.6/Saxon-HE-11.6.pom
-Progress (1): 3.2/4.2 kBProgress (1): 4.2 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/net/sf/saxon/Saxon-HE/11.6/Saxon-HE-11.6.pom (4.2 kB at 17 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/xmlresolver/xmlresolver/5.2.1/xmlresolver-5.2.1.pom
-Progress (1): 2.6 kB                    Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/xmlresolver/xmlresolver/5.2.1/xmlresolver-5.2.1.pom (2.6 kB at 9.8 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/httpcomponents/client5/httpclient5/5.5.1/httpclient5-5.5.1.pom
-Progress (1): 3.2/6.1 kBProgress (1): 6.1 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/httpcomponents/client5/httpclient5/5.5.1/httpclient5-5.5.1.pom (6.1 kB at 18 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/httpcomponents/client5/httpclient5-parent/5.5.1/httpclient5-parent-5.5.1.pom
-Progress (1): 3.1/17 kBProgress (1): 17 kB                       Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/httpcomponents/client5/httpclient5-parent/5.5.1/httpclient5-parent-5.5.1.pom (17 kB at 41 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/httpcomponents/core5/httpcore5/5.3.6/httpcore5-5.3.6.pom
-Progress (1): 3.2/3.9 kBProgress (1): 3.9 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/httpcomponents/core5/httpcore5/5.3.6/httpcore5-5.3.6.pom (3.9 kB at 13 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/httpcomponents/core5/httpcore5-parent/5.3.6/httpcore5-parent-5.3.6.pom
-Progress (1): 3.2/14 kBProgress (1): 14 kB                       Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/httpcomponents/core5/httpcore5-parent/5.3.6/httpcore5-parent-5.3.6.pom (14 kB at 35 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/httpcomponents/core5/httpcore5-h2/5.3.6/httpcore5-h2-5.3.6.pom
-Progress (1): 3.2/3.6 kBProgress (1): 3.6 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/httpcomponents/core5/httpcore5-h2/5.3.6/httpcore5-h2-5.3.6.pom (3.6 kB at 8.8 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/ca/uhn/hapi/fhir/org.hl7.fhir.dstu3/6.5.27/org.hl7.fhir.dstu3-6.5.27.pom
-Progress (1): 3.2/4.8 kBProgress (1): 4.8 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/ca/uhn/hapi/fhir/org.hl7.fhir.dstu3/6.5.27/org.hl7.fhir.dstu3-6.5.27.pom (4.8 kB at 12 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/ca/uhn/hapi/fhir/hapi-fhir-caching-api/8.4.0/hapi-fhir-caching-api-8.4.0.pom
-Progress (1): 846 B                   Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/ca/uhn/hapi/fhir/hapi-fhir-caching-api/8.4.0/hapi-fhir-caching-api-8.4.0.pom (846 B at 1.4 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/ca/uhn/hapi/fhir/hapi-fhir-serviceloaders/8.4.0/hapi-fhir-serviceloaders-8.4.0.pom
-Progress (1): 775 B                   Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/ca/uhn/hapi/fhir/hapi-fhir-serviceloaders/8.4.0/hapi-fhir-serviceloaders-8.4.0.pom (775 B at 1.9 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/ca/uhn/hapi/fhir/hapi-fhir-structures-r4/8.4.0/hapi-fhir-structures-r4-8.4.0.pom
-Progress (1): 3.1/9.6 kBProgress (1): 9.6 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/ca/uhn/hapi/fhir/hapi-fhir-structures-r4/8.4.0/hapi-fhir-structures-r4-8.4.0.pom (9.6 kB at 21 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/ca/uhn/hapi/fhir/org.hl7.fhir.r4/6.5.27/org.hl7.fhir.r4-6.5.27.pom
-Progress (1): 3.2/4.2 kBProgress (1): 4.2 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/ca/uhn/hapi/fhir/org.hl7.fhir.r4/6.5.27/org.hl7.fhir.r4-6.5.27.pom (4.2 kB at 11 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/jena/jena-shex/5.5.0/jena-shex-5.5.0.pom
-Progress (1): 3.2/3.6 kBProgress (1): 3.6 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/jena/jena-shex/5.5.0/jena-shex-5.5.0.pom (3.6 kB at 10 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/jena/jena/5.5.0/jena-5.5.0.pom
-Progress (1): 3.2/37 kBProgress (1): 20/37 kB Progress (1): 24/37 kBProgress (1): 37 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/jena/jena/5.5.0/jena-5.5.0.pom (37 kB at 85 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/junit/junit-bom/5.13.3/junit-bom-5.13.3.pom
-Progress (1): 3.2/5.7 kBProgress (1): 5.7 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/junit/junit-bom/5.13.3/junit-bom-5.13.3.pom (5.7 kB at 15 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/shiro/shiro-bom/2.0.5/shiro-bom-2.0.5.pom
-Progress (1): 3.2/3.6 kBProgress (1): 3.6 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/shiro/shiro-bom/2.0.5/shiro-bom-2.0.5.pom (3.6 kB at 7.4 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/shiro/shiro-root/2.0.5/shiro-root-2.0.5.pom
-Progress (1): 3.2/61 kBProgress (1): 12/61 kB Progress (1): 24/61 kBProgress (1): 40/61 kBProgress (1): 56/61 kBProgress (1): 61 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/shiro/shiro-root/2.0.5/shiro-root-2.0.5.pom (61 kB at 129 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/logging/log4j/log4j-bom/2.25.1/log4j-bom-2.25.1.pom
-Progress (1): 3.2/12 kBProgress (1): 7.3/12 kBProgress (1): 12 kB                       Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/logging/log4j/log4j-bom/2.25.1/log4j-bom-2.25.1.pom (12 kB at 25 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/jena/jena-arq/5.5.0/jena-arq-5.5.0.pom
-Progress (1): 3.2/7.1 kBProgress (1): 7.1 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/jena/jena-arq/5.5.0/jena-arq-5.5.0.pom (7.1 kB at 14 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/jena/jena-core/5.5.0/jena-core-5.5.0.pom
-Progress (1): 3.2/8.0 kBProgress (1): 8.0 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/jena/jena-core/5.5.0/jena-core-5.5.0.pom (8.0 kB at 25 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/jena/jena-base/5.5.0/jena-base-5.5.0.pom
-Progress (1): 3.2/5.2 kBProgress (1): 5.2 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/jena/jena-base/5.5.0/jena-base-5.5.0.pom (5.2 kB at 11 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/commons/commons-csv/1.14.0/commons-csv-1.14.0.pom
-Progress (1): 3.2/22 kBProgress (1): 20/22 kB Progress (1): 22 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/commons/commons-csv/1.14.0/commons-csv-1.14.0.pom (22 kB at 51 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/github/ben-manes/caffeine/caffeine/3.2.2/caffeine-3.2.2.pom
-Progress (1): 2.1 kB                    Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/github/ben-manes/caffeine/caffeine/3.2.2/caffeine-3.2.2.pom (2.1 kB at 5.8 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/github/andrewoma/dexx/collection/0.7/collection-0.7.pom
-Progress (1): 2.1 kB                    Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/github/andrewoma/dexx/collection/0.7/collection-0.7.pom (2.1 kB at 6.2 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/jena/jena-iri3986/5.5.0/jena-iri3986-5.5.0.pom
-Progress (1): 3.1 kB                    Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/jena/jena-iri3986/5.5.0/jena-iri3986-5.5.0.pom (3.1 kB at 11 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/jena/jena-iri/5.5.0/jena-iri-5.5.0.pom
-Progress (1): 3.1 kB                    Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/jena/jena-iri/5.5.0/jena-iri-5.5.0.pom (3.1 kB at 7.5 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/jena/jena-langtag/5.5.0/jena-langtag-5.5.0.pom
-Progress (1): 2.5 kB                    Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/jena/jena-langtag/5.5.0/jena-langtag-5.5.0.pom (2.5 kB at 6.8 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/roaringbitmap/RoaringBitmap/1.3.0/RoaringBitmap-1.3.0.pom
-Progress (1): 2.1 kB                    Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/roaringbitmap/RoaringBitmap/1.3.0/RoaringBitmap-1.3.0.pom (2.1 kB at 6.5 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/apicatalog/titanium-json-ld/1.6.0/titanium-json-ld-1.6.0.pom
-Progress (1): 2.0 kB                    Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/apicatalog/titanium-json-ld/1.6.0/titanium-json-ld-1.6.0.pom (2.0 kB at 4.5 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/apicatalog/titanium-jcs/1.0.0/titanium-jcs-1.0.0.pom
-Progress (1): 3.2/7.5 kBProgress (1): 7.5 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/apicatalog/titanium-jcs/1.0.0/titanium-jcs-1.0.0.pom (7.5 kB at 25 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/apicatalog/titanium-rdf-api/1.0.0/titanium-rdf-api-1.0.0.pom
-Progress (1): 3.2/7.3 kBProgress (1): 7.3 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/apicatalog/titanium-rdf-api/1.0.0/titanium-rdf-api-1.0.0.pom (7.3 kB at 22 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/apicatalog/titanium-rdf-n-quads/1.0.0/titanium-rdf-n-quads-1.0.0.pom
-Progress (1): 3.2/7.7 kBProgress (1): 7.7 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/apicatalog/titanium-rdf-n-quads/1.0.0/titanium-rdf-n-quads-1.0.0.pom (7.7 kB at 21 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/glassfish/jakarta.json/2.0.1/jakarta.json-2.0.1.pom
-Progress (1): 3.2/12 kBProgress (1): 12 kB                       Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/glassfish/jakarta.json/2.0.1/jakarta.json-2.0.1.pom (12 kB at 22 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/glassfish/json/2.0.1/json-2.0.1.pom
-Progress (1): 3.2/19 kBProgress (1): 16/19 kB Progress (1): 19 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/glassfish/json/2.0.1/json-2.0.1.pom (19 kB at 49 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/google/protobuf/protobuf-java/4.31.1/protobuf-java-4.31.1.pom
-Progress (1): 1.6 kB                    Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/google/protobuf/protobuf-java/4.31.1/protobuf-java-4.31.1.pom (1.6 kB at 4.9 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/google/protobuf/protobuf-parent/4.31.1/protobuf-parent-4.31.1.pom
-Progress (1): 3.2/9.3 kBProgress (1): 9.3 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/google/protobuf/protobuf-parent/4.31.1/protobuf-parent-4.31.1.pom (9.3 kB at 20 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/google/protobuf/protobuf-bom/4.31.1/protobuf-bom-4.31.1.pom
-Progress (1): 3.2/3.7 kBProgress (1): 3.7 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/google/protobuf/protobuf-bom/4.31.1/protobuf-bom-4.31.1.pom (3.7 kB at 13 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/thrift/libthrift/0.22.0/libthrift-0.22.0.pom
-Progress (1): 2.7 kB                    Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/thrift/libthrift/0.22.0/libthrift-0.22.0.pom (2.7 kB at 8.3 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/cloud/spring-cloud-starter-openfeign/4.3.0/spring-cloud-starter-openfeign-4.3.0.pom
-Progress (1): 3.1/5.1 kBProgress (1): 5.1 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/cloud/spring-cloud-starter-openfeign/4.3.0/spring-cloud-starter-openfeign-4.3.0.pom (5.1 kB at 14 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/cloud/spring-cloud-openfeign/4.3.0/spring-cloud-openfeign-4.3.0.pom
-Progress (1): 3.1/4.6 kBProgress (1): 4.6 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/cloud/spring-cloud-openfeign/4.3.0/spring-cloud-openfeign-4.3.0.pom (4.6 kB at 13 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/cloud/spring-cloud-starter/4.3.0/spring-cloud-starter-4.3.0.pom
-Progress (1): 3.1/4.4 kBProgress (1): 4.4 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/cloud/spring-cloud-starter/4.3.0/spring-cloud-starter-4.3.0.pom (4.4 kB at 10 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/cloud/spring-cloud-commons-parent/4.3.0/spring-cloud-commons-parent-4.3.0.pom
-Progress (1): 3.1/4.5 kBProgress (1): 4.5 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/cloud/spring-cloud-commons-parent/4.3.0/spring-cloud-commons-parent-4.3.0.pom (4.5 kB at 13 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/cloud/spring-cloud-context/4.3.0/spring-cloud-context-4.3.0.pom
-Progress (1): 3.1/5.9 kBProgress (1): 5.9 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/cloud/spring-cloud-context/4.3.0/spring-cloud-context-4.3.0.pom (5.9 kB at 16 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/cloud/spring-cloud-commons/4.3.0/spring-cloud-commons-4.3.0.pom
-Progress (1): 3.1/7.2 kBProgress (1): 7.2 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/cloud/spring-cloud-commons/4.3.0/spring-cloud-commons-4.3.0.pom (7.2 kB at 20 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/cloud/spring-cloud-openfeign-core/4.3.0/spring-cloud-openfeign-core-4.3.0.pom
-Progress (1): 3.1/9.7 kBProgress (1): 9.7 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/springframework/cloud/spring-cloud-openfeign-core/4.3.0/spring-cloud-openfeign-core-4.3.0.pom (9.7 kB at 22 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/io/github/openfeign/feign-form-spring/13.6/feign-form-spring-13.6.pom
-Progress (1): 3.2/4.4 kBProgress (1): 4.4 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/io/github/openfeign/feign-form-spring/13.6/feign-form-spring-13.6.pom (4.4 kB at 11 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/io/github/openfeign/parent/13.6/parent-13.6.pom
-Progress (1): 3.2/38 kBProgress (1): 16/38 kB Progress (1): 32/38 kBProgress (1): 38 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/io/github/openfeign/parent/13.6/parent-13.6.pom (38 kB at 70 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/io/github/openfeign/feign-form/13.6/feign-form-13.6.pom
-Progress (1): 3.2/3.8 kBProgress (1): 3.8 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/io/github/openfeign/feign-form/13.6/feign-form-13.6.pom (3.8 kB at 12 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/io/github/openfeign/feign-core/13.6/feign-core-13.6.pom
-Progress (1): 3.2/3.9 kBProgress (1): 3.9 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/io/github/openfeign/feign-core/13.6/feign-core-13.6.pom (3.9 kB at 12 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/io/github/openfeign/feign-slf4j/13.6/feign-slf4j-13.6.pom
-Progress (1): 1.8 kB                    Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/io/github/openfeign/feign-slf4j/13.6/feign-slf4j-13.6.pom (1.8 kB at 6.0 kB/s)
-[INFO] 
-[INFO] --- dependency:3.8.1:tree (default-cli) @ common ---
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-sink-api/2.0.0/doxia-sink-api-2.0.0.pom
-Progress (1): 1.4 kB                    Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-sink-api/2.0.0/doxia-sink-api-2.0.0.pom (1.4 kB at 4.9 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia/2.0.0/doxia-2.0.0.pom
-Progress (1): 3.3/17 kBProgress (1): 7.4/17 kBProgress (1): 17 kB                       Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia/2.0.0/doxia-2.0.0.pom (17 kB at 60 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/junit/junit-bom/5.11.1/junit-bom-5.11.1.pom
-Progress (1): 3.3/5.6 kBProgress (1): 5.6 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/junit/junit-bom/5.11.1/junit-bom-5.11.1.pom (5.6 kB at 25 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/reporting/maven-reporting-api/4.0.0/maven-reporting-api-4.0.0.pom
-Progress (1): 2.8 kB                    Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/reporting/maven-reporting-api/4.0.0/maven-reporting-api-4.0.0.pom (2.8 kB at 14 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/shared/maven-shared-components/43/maven-shared-components-43.pom
-Progress (1): 3.3/3.8 kBProgress (1): 3.8 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/shared/maven-shared-components/43/maven-shared-components-43.pom (3.8 kB at 18 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/reporting/maven-reporting-impl/4.0.0/maven-reporting-impl-4.0.0.pom
-Progress (1): 3.3/8.8 kBProgress (1): 8.8 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/reporting/maven-reporting-impl/4.0.0/maven-reporting-impl-4.0.0.pom (8.8 kB at 36 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-site-model/2.0.0/doxia-site-model-2.0.0.pom
-Progress (1): 3.3/5.8 kBProgress (1): 5.8 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-site-model/2.0.0/doxia-site-model-2.0.0.pom (5.8 kB at 26 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-sitetools/2.0.0/doxia-sitetools-2.0.0.pom
-Progress (1): 3.3/12 kBProgress (1): 12 kB                       Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-sitetools/2.0.0/doxia-sitetools-2.0.0.pom (12 kB at 64 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/eclipse/sisu/org.eclipse.sisu.plexus/0.9.0.M3/org.eclipse.sisu.plexus-0.9.0.M3.pom
-Progress (1): 3.3/17 kBProgress (1): 7.4/17 kBProgress (1): 17 kB                       Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/eclipse/sisu/org.eclipse.sisu.plexus/0.9.0.M3/org.eclipse.sisu.plexus-0.9.0.M3.pom (17 kB at 74 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/eclipse/sisu/sisu-inject/0.9.0.M3/sisu-inject-0.9.0.M3.pom
-Progress (1): 3.3/24 kBProgress (1): 7.4/24 kBProgress (1): 24 kB                       Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/eclipse/sisu/sisu-inject/0.9.0.M3/sisu-inject-0.9.0.M3.pom (24 kB at 92 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/eclipse/sisu/org.eclipse.sisu.inject/0.9.0.M3/org.eclipse.sisu.inject-0.9.0.M3.pom
-Progress (1): 3.3/20 kBProgress (1): 7.4/20 kBProgress (1): 20 kB                       Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/eclipse/sisu/org.eclipse.sisu.inject/0.9.0.M3/org.eclipse.sisu.inject-0.9.0.M3.pom (20 kB at 90 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-core/2.0.0/doxia-core-2.0.0.pom
-Progress (1): 3.3/3.9 kBProgress (1): 3.9 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-core/2.0.0/doxia-core-2.0.0.pom (3.9 kB at 17 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-integration-tools/2.0.0/doxia-integration-tools-2.0.0.pom
-Progress (1): 3.3/7.8 kBProgress (1): 7.8 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-integration-tools/2.0.0/doxia-integration-tools-2.0.0.pom (7.8 kB at 35 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-site-renderer/2.0.0/doxia-site-renderer-2.0.0.pom
-Progress (1): 3.3/7.4 kBProgress (1): 7.4 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-site-renderer/2.0.0/doxia-site-renderer-2.0.0.pom (7.4 kB at 34 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-skin-model/2.0.0/doxia-skin-model-2.0.0.pom
-Progress (1): 3.0 kB                    Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-skin-model/2.0.0/doxia-skin-model-2.0.0.pom (3.0 kB at 15 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-module-xhtml5/2.0.0/doxia-module-xhtml5-2.0.0.pom
-Progress (1): 2.9 kB                    Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-module-xhtml5/2.0.0/doxia-module-xhtml5-2.0.0.pom (2.9 kB at 15 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-modules/2.0.0/doxia-modules-2.0.0.pom
-Progress (1): 2.5 kB                    Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-modules/2.0.0/doxia-modules-2.0.0.pom (2.5 kB at 11 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/codehaus/plexus/plexus-velocity/2.2.0/plexus-velocity-2.2.0.pom
-Progress (1): 3.3/4.1 kBProgress (1): 4.1 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/codehaus/plexus/plexus-velocity/2.2.0/plexus-velocity-2.2.0.pom (4.1 kB at 19 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/codehaus/plexus/plexus/19/plexus-19.pom
-Progress (1): 3.3/25 kBProgress (1): 16/25 kB Progress (1): 25 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/codehaus/plexus/plexus/19/plexus-19.pom (25 kB at 80 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/velocity/velocity-engine-core/2.4/velocity-engine-core-2.4.pom
-Progress (1): 3.3/12 kBProgress (1): 7.4/12 kBProgress (1): 12 kB                       Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/velocity/velocity-engine-core/2.4/velocity-engine-core-2.4.pom (12 kB at 56 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/velocity/velocity-engine-parent/2.4/velocity-engine-parent-2.4.pom
-Progress (1): 7.4/9.5 kBProgress (1): 9.5 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/velocity/velocity-engine-parent/2.4/velocity-engine-parent-2.4.pom (9.5 kB at 30 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/velocity/velocity-master/7/velocity-master-7.pom
-Progress (1): 3.3/7.9 kBProgress (1): 7.9 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/velocity/velocity-master/7/velocity-master-7.pom (7.9 kB at 35 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/velocity/tools/velocity-tools-generic/3.1/velocity-tools-generic-3.1.pom
-Progress (1): 2.6 kB                    Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/velocity/tools/velocity-tools-generic/3.1/velocity-tools-generic-3.1.pom (2.6 kB at 13 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/velocity/tools/velocity-tools-parent/3.1/velocity-tools-parent-3.1.pom
-Progress (1): 7.4/8.0 kBProgress (1): 8.0 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/velocity/tools/velocity-tools-parent/3.1/velocity-tools-parent-3.1.pom (8.0 kB at 42 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/velocity/velocity-master/4/velocity-master-4.pom
-Progress (1): 3.3/7.8 kBProgress (1): 7.8 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/velocity/velocity-master/4/velocity-master-4.pom (7.8 kB at 57 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/velocity/velocity-engine-core/2.3/velocity-engine-core-2.3.pom
-Progress (1): 3.3/10 kBProgress (1): 10 kB                       Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/velocity/velocity-engine-core/2.3/velocity-engine-core-2.3.pom (10 kB at 74 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/velocity/velocity-engine-parent/2.3/velocity-engine-parent-2.3.pom
-Progress (1): 3.3/14 kBProgress (1): 14 kB                       Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/velocity/velocity-engine-parent/2.3/velocity-engine-parent-2.3.pom (14 kB at 70 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/commons/commons-lang3/3.11/commons-lang3-3.11.pom
-Progress (1): 3.3/30 kBProgress (1): 7.4/30 kBProgress (1): 16/30 kB Progress (1): 30 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/commons/commons-lang3/3.11/commons-lang3-3.11.pom (30 kB at 107 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/commons/commons-parent/51/commons-parent-51.pom
-Progress (1): 3.3/78 kBProgress (1): 7.4/78 kBProgress (1): 16/78 kB Progress (1): 33/78 kBProgress (1): 49/78 kBProgress (1): 66/78 kBProgress (1): 73/78 kBProgress (1): 78 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/commons/commons-parent/51/commons-parent-51.pom (78 kB at 386 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/slf4j/slf4j-api/1.7.30/slf4j-api-1.7.30.pom
-Progress (1): 3.3/3.8 kBProgress (1): 3.8 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/slf4j/slf4j-api/1.7.30/slf4j-api-1.7.30.pom (3.8 kB at 24 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/slf4j/slf4j-parent/1.7.30/slf4j-parent-1.7.30.pom
-Progress (1): 3.3/14 kBProgress (1): 14 kB                       Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/slf4j/slf4j-parent/1.7.30/slf4j-parent-1.7.30.pom (14 kB at 69 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/commons/commons-digester3/3.2/commons-digester3-3.2.pom
-Progress (1): 3.3/18 kBProgress (1): 7.4/18 kBProgress (1): 18 kB                       Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/commons/commons-digester3/3.2/commons-digester3-3.2.pom (18 kB at 77 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/commons-beanutils/commons-beanutils/1.8.3/commons-beanutils-1.8.3.pom
-Progress (1): 3.3/11 kBProgress (1): 11 kB                       Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/commons-beanutils/commons-beanutils/1.8.3/commons-beanutils-1.8.3.pom (11 kB at 46 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/commons/commons-parent/14/commons-parent-14.pom
-Progress (1): 3.3/31 kBProgress (1): 7.4/31 kBProgress (1): 16/31 kB Progress (1): 31 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/commons/commons-parent/14/commons-parent-14.pom (31 kB at 127 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/commons/commons-lang3/3.10/commons-lang3-3.10.pom
-Progress (1): 7.4/31 kBProgress (1): 7.4/31 kBProgress (1): 16/31 kB Progress (1): 25/31 kBProgress (1): 31 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/commons/commons-lang3/3.10/commons-lang3-3.10.pom (31 kB at 129 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/commons/commons-parent/50/commons-parent-50.pom
-Progress (1): 3.3/76 kBProgress (1): 7.4/76 kBProgress (1): 24/76 kB Progress (1): 32/76 kBProgress (1): 40/76 kBProgress (1): 48/76 kBProgress (1): 57/76 kBProgress (1): 65/76 kBProgress (1): 76 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/commons/commons-parent/50/commons-parent-50.pom (76 kB at 314 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/github/cliftonlabs/json-simple/3.0.2/json-simple-3.0.2.pom
-Progress (1): 7.4/7.5 kBProgress (1): 7.5 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/github/cliftonlabs/json-simple/3.0.2/json-simple-3.0.2.pom (7.5 kB at 27 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-module-apt/2.0.0/doxia-module-apt-2.0.0.pom
-Progress (1): 2.9 kB                    Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-module-apt/2.0.0/doxia-module-apt-2.0.0.pom (2.9 kB at 11 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-module-xdoc/2.0.0/doxia-module-xdoc-2.0.0.pom
-Progress (1): 3.3/5.4 kBProgress (1): 5.4 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-module-xdoc/2.0.0/doxia-module-xdoc-2.0.0.pom (5.4 kB at 21 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/commons-io/commons-io/2.15.1/commons-io-2.15.1.pom
-Progress (1): 3.3/20 kBProgress (1): 7.4/20 kBProgress (1): 20 kB                       Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/commons-io/commons-io/2.15.1/commons-io-2.15.1.pom (20 kB at 70 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/commons/commons-parent/65/commons-parent-65.pom
-Progress (1): 3.3/78 kBProgress (1): 7.4/78 kBProgress (1): 24/78 kB Progress (1): 32/78 kBProgress (1): 40/78 kBProgress (1): 48/78 kBProgress (1): 57/78 kBProgress (1): 65/78 kBProgress (1): 78 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/commons/commons-parent/65/commons-parent-65.pom (78 kB at 286 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/codehaus/plexus/plexus-archiver/4.10.0/plexus-archiver-4.10.0.pom
-Progress (1): 3.3/5.8 kBProgress (1): 5.8 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/codehaus/plexus/plexus-archiver/4.10.0/plexus-archiver-4.10.0.pom (5.8 kB at 39 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/codehaus/plexus/plexus-io/3.5.0/plexus-io-3.5.0.pom
-Progress (1): 3.3/4.3 kBProgress (1): 4.3 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/codehaus/plexus/plexus-io/3.5.0/plexus-io-3.5.0.pom (4.3 kB at 28 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/io/airlift/aircompressor/0.27/aircompressor-0.27.pom
-Progress (1): 3.3/5.8 kBProgress (1): 5.8 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/io/airlift/aircompressor/0.27/aircompressor-0.27.pom (5.8 kB at 37 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/io/airlift/airbase/112/airbase-112.pom
-Progress (1): 3.3/69 kBProgress (1): 16/69 kB Progress (1): 25/69 kBProgress (1): 41/69 kBProgress (1): 48/69 kBProgress (1): 65/69 kBProgress (1): 69 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/io/airlift/airbase/112/airbase-112.pom (69 kB at 425 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/junit/junit-bom/5.8.0-M1/junit-bom-5.8.0-M1.pom
-Progress (1): 3.3/5.7 kBProgress (1): 5.7 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/junit/junit-bom/5.8.0-M1/junit-bom-5.8.0-M1.pom (5.7 kB at 28 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/github/luben/zstd-jni/1.5.6-3/zstd-jni-1.5.6-3.pom
-Progress (1): 2.0 kB                    Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/github/luben/zstd-jni/1.5.6-3/zstd-jni-1.5.6-3.pom (2.0 kB at 14 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/codehaus/plexus/plexus-io/3.5.1/plexus-io-3.5.1.pom
-Progress (1): 3.3/4.3 kBProgress (1): 4.3 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/codehaus/plexus/plexus-io/3.5.1/plexus-io-3.5.1.pom (4.3 kB at 20 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/shared/maven-dependency-analyzer/1.15.0/maven-dependency-analyzer-1.15.0.pom
-Progress (1): 3.3/32 kBProgress (1): 7.4/32 kBProgress (1): 16/32 kB Progress (1): 32/32 kBProgress (1): 32 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/shared/maven-dependency-analyzer/1.15.0/maven-dependency-analyzer-1.15.0.pom (32 kB at 93 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/shared/maven-dependency-tree/3.3.0/maven-dependency-tree-3.3.0.pom
-Progress (1): 3.3/7.0 kBProgress (1): 7.0 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/shared/maven-dependency-tree/3.3.0/maven-dependency-tree-3.3.0.pom (7.0 kB at 37 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-sink-api/2.0.0/doxia-sink-api-2.0.0.jar
-Progress (1): 3.3/11 kBProgress (1): 11 kB                       Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-sink-api/2.0.0/doxia-sink-api-2.0.0.jar (11 kB at 53 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/reporting/maven-reporting-api/4.0.0/maven-reporting-api-4.0.0.jar
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/reporting/maven-reporting-impl/4.0.0/maven-reporting-impl-4.0.0.jar
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-site-model/2.0.0/doxia-site-model-2.0.0.jar
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-core/2.0.0/doxia-core-2.0.0.jar
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-integration-tools/2.0.0/doxia-integration-tools-2.0.0.jar
-Progress (1): 3.3/21 kBProgress (1): 7.4/21 kBProgress (1): 21 kB                       Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/reporting/maven-reporting-impl/4.0.0/maven-reporting-impl-4.0.0.jar (21 kB at 105 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/codehaus/plexus/plexus-interpolation/1.27/plexus-interpolation-1.27.jar
-Progress (1): 3.3/50 kBProgress (1): 7.4/50 kBProgress (2): 7.4/50 kB | 7.4/86 kBProgress (2): 7.4/50 kB | 7.4/86 kBProgress (2): 7.4/50 kB | 16/86 kB Progress (2): 7.4/50 kB | 24/86 kBProgress (2): 7.4/50 kB | 32/86 kBProgress (2): 7.4/50 kB | 40/86 kBProgress (2): 7.4/50 kB | 48/86 kBProgress (2): 7.4/50 kB | 57/86 kBProgress (2): 7.4/50 kB | 65/86 kBProgress (2): 7.4/50 kB | 73/86 kBProgress (2): 7.4/50 kB | 86 kB                                  Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/codehaus/plexus/plexus-interpolation/1.27/plexus-interpolation-1.27.jar (86 kB at 185 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-site-renderer/2.0.0/doxia-site-renderer-2.0.0.jar
-Progress (1): 24/50 kBProgress (1): 32/50 kBProgress (2): 32/50 kB | 3.3/9.8 kBProgress (2): 32/50 kB | 9.8 kB                                   Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/reporting/maven-reporting-api/4.0.0/maven-reporting-api-4.0.0.jar (9.8 kB at 17 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-skin-model/2.0.0/doxia-skin-model-2.0.0.jar
-Progress (1): 40/50 kBProgress (1): 50 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-integration-tools/2.0.0/doxia-integration-tools-2.0.0.jar (50 kB at 87 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-module-xhtml5/2.0.0/doxia-module-xhtml5-2.0.0.jar
-Progress (1): 3.3/168 kBProgress (1): 7.4/168 kBProgress (1): 24/168 kB Progress (2): 24/168 kB | 3.3/44 kBProgress (2): 24/168 kB | 7.4/44 kBProgress (2): 24/168 kB | 24/44 kB Progress (2): 24/168 kB | 32/44 kBProgress (2): 24/168 kB | 44 kB   Progress (2): 32/168 kB | 44 kB                               Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-site-renderer/2.0.0/doxia-site-renderer-2.0.0.jar (44 kB at 63 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/codehaus/plexus/plexus-velocity/2.2.0/plexus-velocity-2.2.0.jar
-Progress (1): 40/168 kBProgress (1): 48/168 kBProgress (1): 57/168 kBProgress (1): 65/168 kBProgress (1): 73/168 kBProgress (2): 73/168 kB | 3.3/17 kBProgress (2): 73/168 kB | 7.4/17 kBProgress (2): 73/168 kB | 17 kB                                   Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-module-xhtml5/2.0.0/doxia-module-xhtml5-2.0.0.jar (17 kB at 21 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/velocity/velocity-engine-core/2.4/velocity-engine-core-2.4.jar
-Progress (2): 73/168 kB | 3.3/16 kBProgress (2): 73/168 kB | 7.4/16 kBProgress (2): 73/168 kB | 16 kB                                   Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-skin-model/2.0.0/doxia-skin-model-2.0.0.jar (16 kB at 20 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/velocity/tools/velocity-tools-generic/3.1/velocity-tools-generic-3.1.jar
-Progress (1): 82/168 kBProgress (1): 89/168 kBProgress (1): 98/168 kBProgress (1): 106/168 kBProgress (1): 114/168 kBProgress (1): 122/168 kBProgress (1): 130/168 kBProgress (1): 138/168 kBProgress (1): 147/168 kBProgress (1): 155/168 kBProgress (2): 155/168 kB | 3.3/86 kBProgress (2): 155/168 kB | 7.4/86 kBProgress (2): 168 kB | 7.4/86 kB    Progress (2): 168 kB | 24/86 kB                                Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-core/2.0.0/doxia-core-2.0.0.jar (168 kB at 188 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/commons/commons-digester3/3.2/commons-digester3-3.2.jar
-Progress (2): 24/86 kB | 3.3/5.7 kBProgress (2): 24/86 kB | 5.7 kB    Progress (3): 24/86 kB | 5.7 kB | 3.3/510 kBProgress (3): 24/86 kB | 5.7 kB | 16/510 kB Progress (3): 24/86 kB | 5.7 kB | 25/510 kB                                           Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/codehaus/plexus/plexus-velocity/2.2.0/plexus-velocity-2.2.0.jar (5.7 kB at 6.1 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/github/cliftonlabs/json-simple/3.0.2/json-simple-3.0.2.jar
-Progress (2): 24/86 kB | 41/510 kBProgress (2): 24/86 kB | 42/510 kBProgress (2): 24/86 kB | 59/510 kBProgress (2): 32/86 kB | 59/510 kBProgress (2): 40/86 kB | 59/510 kBProgress (2): 40/86 kB | 75/510 kBProgress (2): 40/86 kB | 84/510 kBProgress (2): 40/86 kB | 93/510 kBProgress (2): 40/86 kB | 102/510 kBProgress (2): 40/86 kB | 111/510 kBProgress (2): 40/86 kB | 120/510 kBProgress (2): 40/86 kB | 136/510 kBProgress (2): 40/86 kB | 147/510 kBProgress (2): 40/86 kB | 163/510 kBProgress (2): 40/86 kB | 165/510 kBProgress (2): 40/86 kB | 174/510 kBProgress (2): 40/86 kB | 190/510 kBProgress (2): 40/86 kB | 192/510 kBProgress (2): 40/86 kB | 208/510 kBProgress (2): 48/86 kB | 208/510 kBProgress (2): 48/86 kB | 224/510 kBProgress (3): 48/86 kB | 224/510 kB | 3.3/217 kBProgress (3): 48/86 kB | 224/510 kB | 7.4/217 kBProgress (3): 48/86 kB | 241/510 kB | 7.4/217 kBProgress (3): 48/86 kB | 254/510 kB | 7.4/217 kBProgress (3): 48/86 kB | 263/510 kB | 7.4/217 kBProgress (3): 48/86 kB | 272/510 kB | 7.4/217 kBProgress (3): 48/86 kB | 288/510 kB | 7.4/217 kBProgress (3): 48/86 kB | 299/510 kB | 7.4/217 kBProgress (3): 48/86 kB | 308/510 kB | 7.4/217 kBProgress (3): 48/86 kB | 317/510 kB | 7.4/217 kBProgress (3): 48/86 kB | 326/510 kB | 7.4/217 kBProgress (3): 48/86 kB | 342/510 kB | 7.4/217 kBProgress (3): 48/86 kB | 344/510 kB | 7.4/217 kBProgress (3): 48/86 kB | 360/510 kB | 7.4/217 kBProgress (3): 48/86 kB | 362/510 kB | 7.4/217 kBProgress (3): 48/86 kB | 376/510 kB | 7.4/217 kBProgress (3): 48/86 kB | 393/510 kB | 7.4/217 kBProgress (3): 48/86 kB | 403/510 kB | 7.4/217 kBProgress (3): 48/86 kB | 420/510 kB | 7.4/217 kBProgress (3): 48/86 kB | 436/510 kB | 7.4/217 kBProgress (3): 48/86 kB | 452/510 kB | 7.4/217 kBProgress (3): 48/86 kB | 469/510 kB | 7.4/217 kBProgress (3): 48/86 kB | 485/510 kB | 7.4/217 kBProgress (3): 48/86 kB | 502/510 kB | 7.4/217 kBProgress (3): 48/86 kB | 510 kB | 7.4/217 kB                                                Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/velocity/velocity-engine-core/2.4/velocity-engine-core-2.4.jar (510 kB at 472 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-module-apt/2.0.0/doxia-module-apt-2.0.0.jar
-Progress (2): 65/86 kB | 7.4/217 kBProgress (2): 73/86 kB | 7.4/217 kBProgress (2): 73/86 kB | 24/217 kB Progress (2): 73/86 kB | 32/217 kBProgress (2): 73/86 kB | 40/217 kBProgress (2): 73/86 kB | 48/217 kBProgress (2): 73/86 kB | 57/217 kBProgress (2): 73/86 kB | 65/217 kBProgress (2): 73/86 kB | 73/217 kBProgress (2): 73/86 kB | 81/217 kBProgress (2): 73/86 kB | 89/217 kBProgress (3): 73/86 kB | 89/217 kB | 3.3/35 kBProgress (3): 73/86 kB | 89/217 kB | 16/35 kB Progress (3): 73/86 kB | 89/217 kB | 24/35 kBProgress (3): 73/86 kB | 89/217 kB | 35 kB                                             Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/github/cliftonlabs/json-simple/3.0.2/json-simple-3.0.2.jar (35 kB at 31 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-module-xdoc/2.0.0/doxia-module-xdoc-2.0.0.jar
-Progress (2): 86 kB | 89/217 kB                               Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-site-model/2.0.0/doxia-site-model-2.0.0.jar (86 kB at 75 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/maven-archiver/3.6.2/maven-archiver-3.6.2.jar
-Progress (2): 89/217 kB | 3.3/242 kBProgress (2): 89/217 kB | 7.4/242 kBProgress (2): 89/217 kB | 16/242 kB Progress (2): 89/217 kB | 24/242 kBProgress (2): 89/217 kB | 32/242 kBProgress (2): 89/217 kB | 40/242 kBProgress (2): 89/217 kB | 48/242 kBProgress (2): 89/217 kB | 57/242 kBProgress (2): 89/217 kB | 65/242 kBProgress (2): 89/217 kB | 73/242 kBProgress (2): 89/217 kB | 81/242 kBProgress (2): 89/217 kB | 89/242 kBProgress (2): 89/217 kB | 98/242 kBProgress (2): 89/217 kB | 106/242 kBProgress (2): 89/217 kB | 114/242 kBProgress (2): 89/217 kB | 122/242 kBProgress (2): 89/217 kB | 130/242 kBProgress (2): 89/217 kB | 138/242 kBProgress (2): 89/217 kB | 147/242 kBProgress (2): 89/217 kB | 155/242 kBProgress (2): 89/217 kB | 163/242 kBProgress (2): 89/217 kB | 171/242 kBProgress (2): 98/217 kB | 171/242 kBProgress (2): 106/217 kB | 171/242 kBProgress (2): 114/217 kB | 171/242 kBProgress (2): 122/217 kB | 171/242 kBProgress (2): 130/217 kB | 171/242 kBProgress (2): 138/217 kB | 171/242 kBProgress (2): 147/217 kB | 171/242 kBProgress (2): 155/217 kB | 171/242 kBProgress (2): 163/217 kB | 171/242 kBProgress (2): 171/217 kB | 171/242 kBProgress (2): 179/217 kB | 171/242 kBProgress (2): 188/217 kB | 171/242 kBProgress (2): 196/217 kB | 171/242 kBProgress (2): 204/217 kB | 171/242 kBProgress (2): 217 kB | 171/242 kB                                     Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/velocity/tools/velocity-tools-generic/3.1/velocity-tools-generic-3.1.jar (217 kB at 182 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/eclipse/sisu/org.eclipse.sisu.plexus/0.9.0.M3/org.eclipse.sisu.plexus-0.9.0.M3.jar
-Progress (1): 179/242 kBProgress (1): 188/242 kBProgress (1): 196/242 kBProgress (1): 204/242 kBProgress (1): 212/242 kBProgress (1): 220/242 kBProgress (1): 229/242 kBProgress (1): 242 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/commons/commons-digester3/3.2/commons-digester3-3.2.jar (242 kB at 194 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/eclipse/sisu/org.eclipse.sisu.inject/0.9.0.M3/org.eclipse.sisu.inject-0.9.0.M3.jar
-Progress (1): 3.3/54 kBProgress (1): 16/54 kB Progress (1): 32/54 kBProgress (1): 40/54 kBProgress (1): 54 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-module-apt/2.0.0/doxia-module-apt-2.0.0.jar (54 kB at 42 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/codehaus/plexus/plexus-classworlds/2.6.0/plexus-classworlds-2.6.0.jar
-Progress (1): 3.3/35 kBProgress (1): 20/35 kB Progress (1): 24/35 kBProgress (1): 35 kB                      Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/doxia/doxia-module-xdoc/2.0.0/doxia-module-xdoc-2.0.0.jar (35 kB at 26 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/codehaus/plexus/plexus-archiver/4.10.0/plexus-archiver-4.10.0.jar
-Progress (1): 3.3/216 kBProgress (1): 7.4/216 kBProgress (1): 24/216 kB Progress (1): 32/216 kBProgress (1): 40/216 kBProgress (1): 48/216 kBProgress (1): 65/216 kBProgress (1): 73/216 kBProgress (1): 82/216 kBProgress (1): 97/216 kBProgress (1): 106/216 kBProgress (1): 114/216 kBProgress (1): 122/216 kBProgress (1): 130/216 kBProgress (1): 147/216 kBProgress (1): 163/216 kBProgress (1): 171/216 kBProgress (1): 179/216 kBProgress (1): 188/216 kBProgress (1): 196/216 kBProgress (1): 204/216 kBProgress (1): 216 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/eclipse/sisu/org.eclipse.sisu.plexus/0.9.0.M3/org.eclipse.sisu.plexus-0.9.0.M3.jar (216 kB at 148 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/commons/commons-compress/1.26.2/commons-compress-1.26.2.jar
-Progress (1): 3.3/53 kBProgress (1): 7.4/53 kBProgress (1): 24/53 kB Progress (1): 32/53 kBProgress (1): 40/53 kBProgress (1): 53 kB   Progress (2): 53 kB | 3.3/434 kBProgress (2): 53 kB | 7.4/434 kBProgress (2): 53 kB | 16/434 kB Progress (2): 53 kB | 24/434 kB                               Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/codehaus/plexus/plexus-classworlds/2.6.0/plexus-classworlds-2.6.0.jar (53 kB at 36 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/commons-codec/commons-codec/1.17.0/commons-codec-1.17.0.jar
-Progress (1): 32/434 kBProgress (1): 40/434 kBProgress (1): 48/434 kBProgress (1): 57/434 kBProgress (1): 73/434 kBProgress (1): 82/434 kBProgress (1): 91/434 kBProgress (1): 100/434 kBProgress (1): 109/434 kBProgress (1): 122/434 kBProgress (1): 131/434 kBProgress (1): 147/434 kBProgress (1): 155/434 kBProgress (1): 163/434 kBProgress (1): 171/434 kBProgress (1): 179/434 kBProgress (1): 188/434 kBProgress (1): 196/434 kBProgress (1): 204/434 kBProgress (1): 212/434 kBProgress (1): 220/434 kBProgress (1): 229/434 kBProgress (1): 237/434 kBProgress (1): 245/434 kBProgress (1): 253/434 kBProgress (1): 261/434 kBProgress (1): 278/434 kBProgress (1): 287/434 kBProgress (1): 294/434 kBProgress (2): 294/434 kB | 7.4/27 kBProgress (2): 294/434 kB | 7.4/27 kBProgress (2): 294/434 kB | 16/27 kB Progress (2): 294/434 kB | 24/27 kBProgress (2): 294/434 kB | 27 kB                                   Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/maven-archiver/3.6.2/maven-archiver-3.6.2.jar (27 kB at 17 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/io/airlift/aircompressor/0.27/aircompressor-0.27.jar
-Progress (1): 302/434 kBProgress (1): 310/434 kBProgress (1): 327/434 kBProgress (1): 343/434 kBProgress (1): 360/434 kBProgress (1): 376/434 kBProgress (1): 392/434 kBProgress (1): 409/434 kBProgress (1): 425/434 kBProgress (1): 434 kB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/eclipse/sisu/org.eclipse.sisu.inject/0.9.0.M3/org.eclipse.sisu.inject-0.9.0.M3.jar (434 kB at 276 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/github/luben/zstd-jni/1.5.6-3/zstd-jni-1.5.6-3.jar
-Progress (1): 3.3/225 kBProgress (1): 16/225 kB Progress (1): 24/225 kBProgress (1): 40/225 kBProgress (1): 57/225 kBProgress (1): 65/225 kBProgress (1): 73/225 kBProgress (1): 81/225 kBProgress (1): 89/225 kBProgress (1): 98/225 kBProgress (1): 106/225 kBProgress (1): 114/225 kBProgress (1): 122/225 kBProgress (1): 138/225 kBProgress (1): 147/225 kBProgress (1): 155/225 kBProgress (1): 163/225 kBProgress (1): 171/225 kBProgress (1): 180/225 kBProgress (1): 196/225 kBProgress (1): 204/225 kBProgress (1): 212/225 kBProgress (1): 225 kB    Progress (2): 225 kB | 0/1.1 MBProgress (2): 225 kB | 0/1.1 MBProgress (2): 225 kB | 0/1.1 MBProgress (2): 225 kB | 0/1.1 MB                               Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/codehaus/plexus/plexus-archiver/4.10.0/plexus-archiver-4.10.0.jar (225 kB at 140 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/codehaus/plexus/plexus-io/3.5.1/plexus-io-3.5.1.jar
-Progress (1): 0/1.1 MBProgress (1): 0.1/1.1 MBProgress (1): 0.1/1.1 MBProgress (1): 0.1/1.1 MBProgress (1): 0.1/1.1 MBProgress (1): 0.1/1.1 MBProgress (1): 0.1/1.1 MBProgress (1): 0.1/1.1 MBProgress (1): 0.1/1.1 MBProgress (1): 0.1/1.1 MBProgress (1): 0.1/1.1 MBProgress (1): 0.2/1.1 MBProgress (1): 0.2/1.1 MBProgress (1): 0.2/1.1 MBProgress (1): 0.2/1.1 MBProgress (1): 0.2/1.1 MBProgress (1): 0.2/1.1 MBProgress (1): 0.2/1.1 MBProgress (1): 0.3/1.1 MBProgress (1): 0.3/1.1 MBProgress (1): 0.3/1.1 MBProgress (1): 0.3/1.1 MBProgress (1): 0.3/1.1 MBProgress (1): 0.3/1.1 MBProgress (1): 0.3/1.1 MBProgress (1): 0.3/1.1 MBProgress (1): 0.3/1.1 MBProgress (1): 0.4/1.1 MBProgress (1): 0.4/1.1 MBProgress (1): 0.4/1.1 MBProgress (1): 0.4/1.1 MBProgress (1): 0.4/1.1 MBProgress (2): 0.4/1.1 MB | 3.3/373 kBProgress (2): 0.4/1.1 MB | 12/373 kB Progress (2): 0.4/1.1 MB | 12/373 kBProgress (2): 0.4/1.1 MB | 21/373 kBProgress (2): 0.4/1.1 MB | 21/373 kBProgress (2): 0.4/1.1 MB | 33/373 kBProgress (2): 0.4/1.1 MB | 49/373 kBProgress (2): 0.4/1.1 MB | 51/373 kBProgress (2): 0.4/1.1 MB | 66/373 kBProgress (2): 0.4/1.1 MB | 74/373 kBProgress (2): 0.4/1.1 MB | 83/373 kBProgress (2): 0.4/1.1 MB | 92/373 kBProgress (2): 0.4/1.1 MB | 109/373 kBProgress (2): 0.4/1.1 MB | 119/373 kBProgress (2): 0.4/1.1 MB | 128/373 kBProgress (2): 0.4/1.1 MB | 137/373 kBProgress (2): 0.4/1.1 MB | 146/373 kBProgress (2): 0.4/1.1 MB | 155/373 kBProgress (2): 0.4/1.1 MB | 164/373 kBProgress (2): 0.4/1.1 MB | 173/373 kBProgress (2): 0.4/1.1 MB | 182/373 kBProgress (2): 0.4/1.1 MB | 191/373 kBProgress (2): 0.4/1.1 MB | 207/373 kBProgress (2): 0.4/1.1 MB | 224/373 kBProgress (2): 0.4/1.1 MB | 240/373 kBProgress (2): 0.4/1.1 MB | 253/373 kBProgress (2): 0.4/1.1 MB | 270/373 kBProgress (2): 0.4/1.1 MB | 271/373 kBProgress (2): 0.4/1.1 MB | 280/373 kBProgress (2): 0.5/1.1 MB | 280/373 kBProgress (3): 0.5/1.1 MB | 280/373 kB | 7.4/255 kBProgress (3): 0.5/1.1 MB | 280/373 kB | 16/255 kB Progress (3): 0.5/1.1 MB | 297/373 kB | 16/255 kBProgress (3): 0.5/1.1 MB | 298/373 kB | 16/255 kBProgress (3): 0.5/1.1 MB | 298/373 kB | 16/255 kBProgress (3): 0.5/1.1 MB | 298/373 kB | 32/255 kBProgress (3): 0.5/1.1 MB | 298/373 kB | 32/255 kBProgress (3): 0.5/1.1 MB | 298/373 kB | 32/255 kBProgress (3): 0.5/1.1 MB | 298/373 kB | 32/255 kBProgress (3): 0.5/1.1 MB | 315/373 kB | 32/255 kBProgress (3): 0.5/1.1 MB | 315/373 kB | 48/255 kBProgress (3): 0.5/1.1 MB | 325/373 kB | 48/255 kBProgress (3): 0.5/1.1 MB | 325/373 kB | 48/255 kBProgress (3): 0.5/1.1 MB | 325/373 kB | 48/255 kBProgress (3): 0.5/1.1 MB | 325/373 kB | 65/255 kBProgress (3): 0.5/1.1 MB | 325/373 kB | 65/255 kBProgress (3): 0.5/1.1 MB | 341/373 kB | 65/255 kBProgress (3): 0.5/1.1 MB | 343/373 kB | 65/255 kBProgress (3): 0.5/1.1 MB | 343/373 kB | 65/255 kBProgress (3): 0.5/1.1 MB | 352/373 kB | 65/255 kBProgress (3): 0.5/1.1 MB | 352/373 kB | 81/255 kBProgress (3): 0.5/1.1 MB | 352/373 kB | 82/255 kBProgress (3): 0.5/1.1 MB | 352/373 kB | 82/255 kBProgress (3): 0.5/1.1 MB | 368/373 kB | 82/255 kBProgress (3): 0.5/1.1 MB | 373 kB | 82/255 kB    Progress (3): 0.5/1.1 MB | 373 kB | 82/255 kBProgress (3): 0.6/1.1 MB | 373 kB | 82/255 kBProgress (3): 0.6/1.1 MB | 373 kB | 82/255 kB                                             Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/commons-codec/commons-codec/1.17.0/commons-codec-1.17.0.jar (373 kB at 208 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/shared/maven-dependency-analyzer/1.15.0/maven-dependency-analyzer-1.15.0.jar
-Progress (2): 0.6/1.1 MB | 82/255 kBProgress (2): 0.6/1.1 MB | 82/255 kBProgress (2): 0.6/1.1 MB | 82/255 kBProgress (2): 0.6/1.1 MB | 82/255 kBProgress (2): 0.6/1.1 MB | 82/255 kBProgress (2): 0.7/1.1 MB | 82/255 kBProgress (2): 0.7/1.1 MB | 82/255 kBProgress (2): 0.7/1.1 MB | 82/255 kBProgress (2): 0.7/1.1 MB | 82/255 kBProgress (2): 0.7/1.1 MB | 82/255 kBProgress (2): 0.7/1.1 MB | 82/255 kBProgress (2): 0.8/1.1 MB | 82/255 kBProgress (2): 0.8/1.1 MB | 82/255 kBProgress (2): 0.8/1.1 MB | 82/255 kBProgress (2): 0.8/1.1 MB | 82/255 kBProgress (2): 0.8/1.1 MB | 82/255 kBProgress (2): 0.8/1.1 MB | 82/255 kBProgress (2): 0.9/1.1 MB | 82/255 kBProgress (2): 0.9/1.1 MB | 82/255 kBProgress (2): 0.9/1.1 MB | 82/255 kBProgress (2): 0.9/1.1 MB | 82/255 kBProgress (2): 0.9/1.1 MB | 82/255 kBProgress (2): 0.9/1.1 MB | 82/255 kBProgress (2): 1.0/1.1 MB | 82/255 kBProgress (2): 1.0/1.1 MB | 82/255 kBProgress (2): 1.0/1.1 MB | 82/255 kBProgress (3): 1.0/1.1 MB | 82/255 kB | 0/6.7 MBProgress (3): 1.0/1.1 MB | 82/255 kB | 0/6.7 MBProgress (3): 1.0/1.1 MB | 82/255 kB | 0/6.7 MBProgress (3): 1.0/1.1 MB | 82/255 kB | 0/6.7 MBProgress (3): 1.0/1.1 MB | 82/255 kB | 0/6.7 MBProgress (3): 1.0/1.1 MB | 82/255 kB | 0/6.7 MBProgress (3): 1.0/1.1 MB | 82/255 kB | 0/6.7 MBProgress (3): 1.0/1.1 MB | 82/255 kB | 0.1/6.7 MBProgress (3): 1.0/1.1 MB | 82/255 kB | 0.1/6.7 MBProgress (3): 1.0/1.1 MB | 82/255 kB | 0.1/6.7 MBProgress (3): 1.1/1.1 MB | 82/255 kB | 0.1/6.7 MBProgress (3): 1.1/1.1 MB | 82/255 kB | 0.1/6.7 MBProgress (3): 1.1/1.1 MB | 82/255 kB | 0.1/6.7 MBProgress (3): 1.1/1.1 MB | 82/255 kB | 0.1/6.7 MBProgress (3): 1.1/1.1 MB | 82/255 kB | 0.1/6.7 MBProgress (3): 1.1 MB | 82/255 kB | 0.1/6.7 MB    Progress (3): 1.1 MB | 82/255 kB | 0.1/6.7 MBProgress (3): 1.1 MB | 82/255 kB | 0.1/6.7 MBProgress (3): 1.1 MB | 82/255 kB | 0.1/6.7 MBProgress (3): 1.1 MB | 82/255 kB | 0.1/6.7 MBProgress (3): 1.1 MB | 82/255 kB | 0.1/6.7 MBProgress (3): 1.1 MB | 82/255 kB | 0.2/6.7 MB                                             Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/commons/commons-compress/1.26.2/commons-compress-1.26.2.jar (1.1 MB at 589 kB/s)
-Downloading from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/shared/maven-dependency-tree/3.3.0/maven-dependency-tree-3.3.0.jar
-Progress (2): 82/255 kB | 0.2/6.7 MBProgress (2): 82/255 kB | 0.2/6.7 MBProgress (2): 82/255 kB | 0.2/6.7 MBProgress (2): 82/255 kB | 0.2/6.7 MBProgress (2): 82/255 kB | 0.2/6.7 MBProgress (2): 82/255 kB | 0.2/6.7 MBProgress (2): 82/255 kB | 0.2/6.7 MBProgress (2): 82/255 kB | 0.2/6.7 MBProgress (2): 82/255 kB | 0.3/6.7 MBProgress (2): 82/255 kB | 0.3/6.7 MBProgress (2): 82/255 kB | 0.3/6.7 MBProgress (2): 82/255 kB | 0.3/6.7 MBProgress (2): 82/255 kB | 0.3/6.7 MBProgress (2): 82/255 kB | 0.3/6.7 MBProgress (2): 82/255 kB | 0.3/6.7 MBProgress (2): 82/255 kB | 0.3/6.7 MBProgress (2): 82/255 kB | 0.3/6.7 MBProgress (2): 82/255 kB | 0.3/6.7 MBProgress (2): 82/255 kB | 0.4/6.7 MBProgress (2): 82/255 kB | 0.4/6.7 MBProgress (2): 82/255 kB | 0.4/6.7 MBProgress (2): 82/255 kB | 0.4/6.7 MBProgress (2): 82/255 kB | 0.4/6.7 MBProgress (2): 82/255 kB | 0.4/6.7 MBProgress (2): 82/255 kB | 0.4/6.7 MBProgress (2): 82/255 kB | 0.4/6.7 MBProgress (2): 91/255 kB | 0.4/6.7 MBProgress (2): 100/255 kB | 0.4/6.7 MBProgress (2): 100/255 kB | 0.5/6.7 MBProgress (2): 100/255 kB | 0.5/6.7 MBProgress (2): 116/255 kB | 0.5/6.7 MBProgress (2): 118/255 kB | 0.5/6.7 MBProgress (2): 127/255 kB | 0.5/6.7 MBProgress (2): 127/255 kB | 0.5/6.7 MBProgress (2): 127/255 kB | 0.5/6.7 MBProgress (2): 143/255 kB | 0.5/6.7 MBProgress (2): 143/255 kB | 0.5/6.7 MBProgress (2): 159/255 kB | 0.5/6.7 MBProgress (2): 162/255 kB | 0.5/6.7 MBProgress (2): 162/255 kB | 0.5/6.7 MBProgress (2): 171/255 kB | 0.5/6.7 MBProgress (2): 171/255 kB | 0.5/6.7 MBProgress (2): 171/255 kB | 0.5/6.7 MBProgress (2): 188/255 kB | 0.5/6.7 MBProgress (2): 188/255 kB | 0.6/6.7 MBProgress (2): 188/255 kB | 0.6/6.7 MBProgress (2): 204/255 kB | 0.6/6.7 MBProgress (2): 204/255 kB | 0.6/6.7 MBProgress (2): 216/255 kB | 0.6/6.7 MBProgress (2): 216/255 kB | 0.6/6.7 MBProgress (2): 233/255 kB | 0.6/6.7 MBProgress (2): 233/255 kB | 0.6/6.7 MBProgress (2): 233/255 kB | 0.6/6.7 MBProgress (2): 233/255 kB | 0.6/6.7 MBProgress (2): 249/255 kB | 0.6/6.7 MBProgress (2): 249/255 kB | 0.6/6.7 MBProgress (2): 249/255 kB | 0.6/6.7 MBProgress (2): 249/255 kB | 0.6/6.7 MBProgress (2): 249/255 kB | 0.6/6.7 MBProgress (2): 249/255 kB | 0.7/6.7 MBProgress (2): 249/255 kB | 0.7/6.7 MBProgress (2): 249/255 kB | 0.7/6.7 MBProgress (2): 249/255 kB | 0.7/6.7 MBProgress (2): 249/255 kB | 0.7/6.7 MBProgress (2): 249/255 kB | 0.7/6.7 MBProgress (2): 249/255 kB | 0.7/6.7 MBProgress (2): 249/255 kB | 0.8/6.7 MBProgress (2): 249/255 kB | 0.8/6.7 MBProgress (2): 249/255 kB | 0.8/6.7 MBProgress (2): 249/255 kB | 0.8/6.7 MBProgress (2): 249/255 kB | 0.8/6.7 MBProgress (2): 249/255 kB | 0.8/6.7 MBProgress (2): 249/255 kB | 0.8/6.7 MBProgress (2): 249/255 kB | 0.8/6.7 MBProgress (2): 249/255 kB | 0.9/6.7 MBProgress (2): 249/255 kB | 0.9/6.7 MBProgress (2): 249/255 kB | 0.9/6.7 MBProgress (2): 249/255 kB | 0.9/6.7 MBProgress (2): 249/255 kB | 0.9/6.7 MBProgress (2): 249/255 kB | 0.9/6.7 MBProgress (2): 249/255 kB | 0.9/6.7 MBProgress (2): 249/255 kB | 0.9/6.7 MBProgress (2): 249/255 kB | 0.9/6.7 MBProgress (2): 249/255 kB | 0.9/6.7 MBProgress (2): 249/255 kB | 0.9/6.7 MBProgress (2): 249/255 kB | 1.0/6.7 MBProgress (2): 249/255 kB | 1.0/6.7 MBProgress (2): 249/255 kB | 1.0/6.7 MBProgress (2): 249/255 kB | 1.0/6.7 MBProgress (2): 249/255 kB | 1.0/6.7 MBProgress (2): 249/255 kB | 1.0/6.7 MBProgress (2): 249/255 kB | 1.0/6.7 MBProgress (2): 249/255 kB | 1.0/6.7 MBProgress (2): 249/255 kB | 1.0/6.7 MBProgress (2): 249/255 kB | 1.0/6.7 MBProgress (2): 249/255 kB | 1.0/6.7 MBProgress (2): 249/255 kB | 1.1/6.7 MBProgress (2): 249/255 kB | 1.1/6.7 MBProgress (2): 249/255 kB | 1.1/6.7 MBProgress (2): 249/255 kB | 1.1/6.7 MBProgress (2): 249/255 kB | 1.1/6.7 MBProgress (2): 249/255 kB | 1.1/6.7 MBProgress (2): 249/255 kB | 1.1/6.7 MBProgress (2): 249/255 kB | 1.1/6.7 MBProgress (2): 249/255 kB | 1.1/6.7 MBProgress (2): 249/255 kB | 1.2/6.7 MBProgress (2): 249/255 kB | 1.2/6.7 MBProgress (2): 249/255 kB | 1.2/6.7 MBProgress (2): 249/255 kB | 1.2/6.7 MBProgress (2): 249/255 kB | 1.2/6.7 MBProgress (2): 249/255 kB | 1.2/6.7 MBProgress (2): 249/255 kB | 1.2/6.7 MBProgress (2): 249/255 kB | 1.2/6.7 MBProgress (2): 249/255 kB | 1.3/6.7 MBProgress (2): 249/255 kB | 1.3/6.7 MBProgress (2): 249/255 kB | 1.3/6.7 MBProgress (2): 249/255 kB | 1.3/6.7 MBProgress (2): 249/255 kB | 1.3/6.7 MBProgress (2): 249/255 kB | 1.3/6.7 MBProgress (2): 249/255 kB | 1.3/6.7 MBProgress (2): 249/255 kB | 1.3/6.7 MBProgress (2): 249/255 kB | 1.3/6.7 MBProgress (2): 249/255 kB | 1.3/6.7 MBProgress (2): 249/255 kB | 1.4/6.7 MBProgress (2): 249/255 kB | 1.4/6.7 MBProgress (2): 249/255 kB | 1.4/6.7 MBProgress (2): 249/255 kB | 1.4/6.7 MBProgress (2): 249/255 kB | 1.4/6.7 MBProgress (2): 249/255 kB | 1.4/6.7 MBProgress (2): 249/255 kB | 1.4/6.7 MBProgress (2): 249/255 kB | 1.4/6.7 MBProgress (2): 249/255 kB | 1.4/6.7 MBProgress (2): 249/255 kB | 1.4/6.7 MBProgress (2): 249/255 kB | 1.5/6.7 MBProgress (2): 249/255 kB | 1.5/6.7 MBProgress (2): 249/255 kB | 1.5/6.7 MBProgress (2): 249/255 kB | 1.5/6.7 MBProgress (2): 249/255 kB | 1.5/6.7 MBProgress (2): 249/255 kB | 1.5/6.7 MBProgress (2): 249/255 kB | 1.5/6.7 MBProgress (2): 249/255 kB | 1.5/6.7 MBProgress (2): 249/255 kB | 1.5/6.7 MBProgress (2): 249/255 kB | 1.6/6.7 MBProgress (2): 255 kB | 1.6/6.7 MB    Progress (2): 255 kB | 1.6/6.7 MBProgress (2): 255 kB | 1.6/6.7 MBProgress (2): 255 kB | 1.6/6.7 MBProgress (2): 255 kB | 1.6/6.7 MBProgress (2): 255 kB | 1.6/6.7 MBProgress (2): 255 kB | 1.6/6.7 MBProgress (2): 255 kB | 1.7/6.7 MBProgress (2): 255 kB | 1.7/6.7 MBProgress (2): 255 kB | 1.7/6.7 MBProgress (2): 255 kB | 1.7/6.7 MBProgress (2): 255 kB | 1.7/6.7 MBProgress (2): 255 kB | 1.7/6.7 MBProgress (2): 255 kB | 1.7/6.7 MBProgress (2): 255 kB | 1.7/6.7 MBProgress (2): 255 kB | 1.7/6.7 MB                                 Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/io/airlift/aircompressor/0.27/aircompressor-0.27.jar (255 kB at 126 kB/s)
-Progress (1): 1.8/6.7 MBProgress (1): 1.8/6.7 MBProgress (1): 1.8/6.7 MBProgress (1): 1.8/6.7 MBProgress (1): 1.8/6.7 MBProgress (1): 1.8/6.7 MBProgress (1): 1.9/6.7 MBProgress (1): 1.9/6.7 MBProgress (1): 1.9/6.7 MBProgress (1): 1.9/6.7 MBProgress (1): 1.9/6.7 MBProgress (1): 1.9/6.7 MBProgress (1): 1.9/6.7 MBProgress (1): 2.0/6.7 MBProgress (1): 2.0/6.7 MBProgress (1): 2.0/6.7 MBProgress (1): 2.0/6.7 MBProgress (1): 2.0/6.7 MBProgress (1): 2.0/6.7 MBProgress (1): 2.1/6.7 MBProgress (1): 2.1/6.7 MBProgress (1): 2.1/6.7 MBProgress (1): 2.1/6.7 MBProgress (1): 2.1/6.7 MBProgress (1): 2.1/6.7 MBProgress (1): 2.2/6.7 MBProgress (1): 2.2/6.7 MBProgress (1): 2.2/6.7 MBProgress (1): 2.2/6.7 MBProgress (1): 2.2/6.7 MBProgress (1): 2.2/6.7 MBProgress (1): 2.3/6.7 MBProgress (1): 2.3/6.7 MBProgress (1): 2.3/6.7 MBProgress (1): 2.3/6.7 MBProgress (1): 2.3/6.7 MBProgress (1): 2.3/6.7 MBProgress (1): 2.4/6.7 MBProgress (1): 2.4/6.7 MBProgress (1): 2.4/6.7 MBProgress (1): 2.4/6.7 MBProgress (1): 2.4/6.7 MBProgress (1): 2.4/6.7 MBProgress (1): 2.5/6.7 MBProgress (1): 2.5/6.7 MBProgress (1): 2.5/6.7 MBProgress (1): 2.5/6.7 MBProgress (1): 2.5/6.7 MBProgress (2): 2.5/6.7 MB | 3.3/80 kBProgress (2): 2.5/6.7 MB | 7.4/80 kBProgress (2): 2.5/6.7 MB | 16/80 kB Progress (2): 2.5/6.7 MB | 24/80 kBProgress (2): 2.5/6.7 MB | 24/80 kBProgress (2): 2.5/6.7 MB | 32/80 kBProgress (2): 2.5/6.7 MB | 40/80 kBProgress (2): 2.5/6.7 MB | 48/80 kBProgress (2): 2.6/6.7 MB | 48/80 kBProgress (2): 2.6/6.7 MB | 57/80 kBProgress (2): 2.6/6.7 MB | 57/80 kBProgress (2): 2.6/6.7 MB | 65/80 kBProgress (2): 2.6/6.7 MB | 65/80 kBProgress (2): 2.6/6.7 MB | 80 kB   Progress (2): 2.6/6.7 MB | 80 kBProgress (2): 2.6/6.7 MB | 80 kBProgress (2): 2.6/6.7 MB | 80 kBProgress (2): 2.6/6.7 MB | 80 kB                                Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/codehaus/plexus/plexus-io/3.5.1/plexus-io-3.5.1.jar (80 kB at 39 kB/s)
-Progress (1): 2.6/6.7 MBProgress (1): 2.7/6.7 MBProgress (1): 2.7/6.7 MBProgress (1): 2.7/6.7 MBProgress (1): 2.7/6.7 MBProgress (1): 2.7/6.7 MBProgress (1): 2.7/6.7 MBProgress (1): 2.8/6.7 MBProgress (1): 2.8/6.7 MBProgress (1): 2.8/6.7 MBProgress (1): 2.8/6.7 MBProgress (1): 2.8/6.7 MBProgress (1): 2.8/6.7 MBProgress (1): 2.8/6.7 MBProgress (1): 2.9/6.7 MBProgress (1): 2.9/6.7 MBProgress (1): 2.9/6.7 MBProgress (1): 2.9/6.7 MBProgress (1): 2.9/6.7 MBProgress (1): 2.9/6.7 MBProgress (1): 3.0/6.7 MBProgress (1): 3.0/6.7 MBProgress (1): 3.0/6.7 MBProgress (1): 3.0/6.7 MBProgress (1): 3.0/6.7 MBProgress (1): 3.0/6.7 MBProgress (1): 3.1/6.7 MBProgress (1): 3.1/6.7 MBProgress (1): 3.1/6.7 MBProgress (1): 3.1/6.7 MBProgress (1): 3.1/6.7 MBProgress (1): 3.1/6.7 MBProgress (1): 3.1/6.7 MBProgress (1): 3.1/6.7 MBProgress (1): 3.2/6.7 MBProgress (1): 3.2/6.7 MBProgress (1): 3.2/6.7 MBProgress (1): 3.2/6.7 MBProgress (1): 3.2/6.7 MBProgress (1): 3.2/6.7 MBProgress (1): 3.2/6.7 MBProgress (1): 3.2/6.7 MBProgress (1): 3.2/6.7 MBProgress (1): 3.3/6.7 MBProgress (1): 3.3/6.7 MBProgress (1): 3.3/6.7 MBProgress (1): 3.3/6.7 MBProgress (1): 3.3/6.7 MBProgress (1): 3.3/6.7 MBProgress (1): 3.3/6.7 MBProgress (1): 3.4/6.7 MBProgress (1): 3.4/6.7 MBProgress (1): 3.4/6.7 MBProgress (1): 3.4/6.7 MBProgress (1): 3.4/6.7 MBProgress (1): 3.4/6.7 MBProgress (1): 3.5/6.7 MBProgress (1): 3.5/6.7 MBProgress (1): 3.5/6.7 MBProgress (1): 3.5/6.7 MBProgress (1): 3.5/6.7 MBProgress (1): 3.5/6.7 MBProgress (1): 3.5/6.7 MBProgress (1): 3.5/6.7 MBProgress (1): 3.5/6.7 MBProgress (1): 3.5/6.7 MBProgress (1): 3.6/6.7 MBProgress (1): 3.6/6.7 MBProgress (1): 3.6/6.7 MBProgress (1): 3.6/6.7 MBProgress (1): 3.6/6.7 MBProgress (1): 3.6/6.7 MBProgress (1): 3.6/6.7 MBProgress (1): 3.6/6.7 MBProgress (1): 3.6/6.7 MBProgress (1): 3.6/6.7 MBProgress (1): 3.6/6.7 MBProgress (1): 3.7/6.7 MBProgress (1): 3.7/6.7 MBProgress (1): 3.7/6.7 MBProgress (1): 3.7/6.7 MBProgress (1): 3.7/6.7 MBProgress (1): 3.7/6.7 MBProgress (1): 3.7/6.7 MBProgress (1): 3.7/6.7 MBProgress (1): 3.7/6.7 MBProgress (1): 3.7/6.7 MBProgress (1): 3.8/6.7 MBProgress (1): 3.8/6.7 MBProgress (1): 3.8/6.7 MBProgress (1): 3.8/6.7 MBProgress (1): 3.8/6.7 MBProgress (1): 3.8/6.7 MBProgress (1): 3.8/6.7 MBProgress (1): 3.8/6.7 MBProgress (1): 3.8/6.7 MBProgress (1): 3.9/6.7 MBProgress (1): 3.9/6.7 MBProgress (1): 3.9/6.7 MBProgress (1): 3.9/6.7 MBProgress (1): 3.9/6.7 MBProgress (1): 3.9/6.7 MBProgress (1): 4.0/6.7 MBProgress (1): 4.0/6.7 MBProgress (1): 4.0/6.7 MBProgress (1): 4.0/6.7 MBProgress (1): 4.0/6.7 MBProgress (1): 4.0/6.7 MBProgress (1): 4.0/6.7 MBProgress (1): 4.0/6.7 MBProgress (1): 4.0/6.7 MBProgress (1): 4.0/6.7 MBProgress (1): 4.0/6.7 MBProgress (1): 4.1/6.7 MBProgress (1): 4.1/6.7 MBProgress (1): 4.1/6.7 MBProgress (1): 4.1/6.7 MBProgress (2): 4.1/6.7 MB | 3.3/45 kBProgress (2): 4.1/6.7 MB | 20/45 kB Progress (2): 4.1/6.7 MB | 24/45 kBProgress (2): 4.1/6.7 MB | 32/45 kBProgress (2): 4.1/6.7 MB | 32/45 kBProgress (2): 4.1/6.7 MB | 45 kB   Progress (2): 4.1/6.7 MB | 45 kB                                Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/shared/maven-dependency-analyzer/1.15.0/maven-dependency-analyzer-1.15.0.jar (45 kB at 21 kB/s)
-Progress (1): 4.1/6.7 MBProgress (1): 4.1/6.7 MBProgress (1): 4.2/6.7 MBProgress (1): 4.2/6.7 MBProgress (1): 4.2/6.7 MBProgress (1): 4.2/6.7 MBProgress (1): 4.2/6.7 MBProgress (1): 4.2/6.7 MBProgress (1): 4.2/6.7 MBProgress (1): 4.2/6.7 MBProgress (1): 4.2/6.7 MBProgress (1): 4.2/6.7 MBProgress (1): 4.3/6.7 MBProgress (1): 4.3/6.7 MBProgress (1): 4.3/6.7 MBProgress (1): 4.3/6.7 MBProgress (1): 4.3/6.7 MBProgress (1): 4.3/6.7 MBProgress (1): 4.3/6.7 MBProgress (1): 4.3/6.7 MBProgress (1): 4.3/6.7 MBProgress (1): 4.3/6.7 MBProgress (1): 4.3/6.7 MBProgress (1): 4.4/6.7 MBProgress (1): 4.4/6.7 MBProgress (1): 4.4/6.7 MBProgress (1): 4.4/6.7 MBProgress (1): 4.4/6.7 MBProgress (1): 4.4/6.7 MBProgress (1): 4.4/6.7 MBProgress (1): 4.4/6.7 MBProgress (1): 4.5/6.7 MBProgress (1): 4.5/6.7 MBProgress (1): 4.5/6.7 MBProgress (1): 4.5/6.7 MBProgress (1): 4.5/6.7 MBProgress (1): 4.5/6.7 MBProgress (1): 4.5/6.7 MBProgress (1): 4.5/6.7 MBProgress (1): 4.6/6.7 MBProgress (1): 4.6/6.7 MBProgress (1): 4.6/6.7 MBProgress (1): 4.6/6.7 MBProgress (1): 4.6/6.7 MBProgress (1): 4.6/6.7 MBProgress (1): 4.7/6.7 MBProgress (1): 4.7/6.7 MBProgress (1): 4.7/6.7 MBProgress (1): 4.7/6.7 MBProgress (1): 4.7/6.7 MBProgress (1): 4.7/6.7 MBProgress (1): 4.7/6.7 MBProgress (1): 4.8/6.7 MBProgress (1): 4.8/6.7 MBProgress (1): 4.8/6.7 MBProgress (1): 4.8/6.7 MBProgress (1): 4.8/6.7 MBProgress (1): 4.8/6.7 MBProgress (1): 4.9/6.7 MBProgress (1): 4.9/6.7 MBProgress (1): 4.9/6.7 MBProgress (1): 4.9/6.7 MBProgress (1): 4.9/6.7 MBProgress (1): 4.9/6.7 MBProgress (1): 5.0/6.7 MBProgress (1): 5.0/6.7 MBProgress (1): 5.0/6.7 MBProgress (1): 5.0/6.7 MBProgress (1): 5.0/6.7 MBProgress (1): 5.0/6.7 MBProgress (1): 5.1/6.7 MBProgress (1): 5.1/6.7 MBProgress (1): 5.1/6.7 MBProgress (1): 5.1/6.7 MBProgress (1): 5.1/6.7 MBProgress (1): 5.1/6.7 MBProgress (1): 5.2/6.7 MBProgress (1): 5.2/6.7 MBProgress (1): 5.2/6.7 MBProgress (1): 5.2/6.7 MBProgress (1): 5.2/6.7 MBProgress (1): 5.2/6.7 MBProgress (2): 5.2/6.7 MB | 3.3/43 kBProgress (2): 5.2/6.7 MB | 7.4/43 kBProgress (2): 5.3/6.7 MB | 7.4/43 kBProgress (2): 5.3/6.7 MB | 7.4/43 kBProgress (2): 5.3/6.7 MB | 7.4/43 kBProgress (2): 5.3/6.7 MB | 16/43 kB Progress (2): 5.3/6.7 MB | 16/43 kBProgress (2): 5.3/6.7 MB | 24/43 kBProgress (2): 5.3/6.7 MB | 24/43 kBProgress (2): 5.3/6.7 MB | 32/43 kBProgress (2): 5.3/6.7 MB | 32/43 kBProgress (2): 5.4/6.7 MB | 32/43 kBProgress (2): 5.4/6.7 MB | 32/43 kBProgress (2): 5.4/6.7 MB | 43 kB   Progress (2): 5.4/6.7 MB | 43 kBProgress (2): 5.4/6.7 MB | 43 kBProgress (2): 5.4/6.7 MB | 43 kBProgress (2): 5.4/6.7 MB | 43 kBProgress (2): 5.5/6.7 MB | 43 kBProgress (2): 5.5/6.7 MB | 43 kB                                Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/org/apache/maven/shared/maven-dependency-tree/3.3.0/maven-dependency-tree-3.3.0.jar (43 kB at 19 kB/s)
-Progress (1): 5.5/6.7 MBProgress (1): 5.5/6.7 MBProgress (1): 5.5/6.7 MBProgress (1): 5.5/6.7 MBProgress (1): 5.6/6.7 MBProgress (1): 5.6/6.7 MBProgress (1): 5.6/6.7 MBProgress (1): 5.6/6.7 MBProgress (1): 5.6/6.7 MBProgress (1): 5.6/6.7 MBProgress (1): 5.6/6.7 MBProgress (1): 5.6/6.7 MBProgress (1): 5.7/6.7 MBProgress (1): 5.7/6.7 MBProgress (1): 5.7/6.7 MBProgress (1): 5.7/6.7 MBProgress (1): 5.7/6.7 MBProgress (1): 5.7/6.7 MBProgress (1): 5.7/6.7 MBProgress (1): 5.8/6.7 MBProgress (1): 5.8/6.7 MBProgress (1): 5.8/6.7 MBProgress (1): 5.8/6.7 MBProgress (1): 5.8/6.7 MBProgress (1): 5.8/6.7 MBProgress (1): 5.8/6.7 MBProgress (1): 5.9/6.7 MBProgress (1): 5.9/6.7 MBProgress (1): 5.9/6.7 MBProgress (1): 5.9/6.7 MBProgress (1): 5.9/6.7 MBProgress (1): 5.9/6.7 MBProgress (1): 5.9/6.7 MBProgress (1): 5.9/6.7 MBProgress (1): 6.0/6.7 MBProgress (1): 6.0/6.7 MBProgress (1): 6.0/6.7 MBProgress (1): 6.0/6.7 MBProgress (1): 6.0/6.7 MBProgress (1): 6.0/6.7 MBProgress (1): 6.1/6.7 MBProgress (1): 6.1/6.7 MBProgress (1): 6.1/6.7 MBProgress (1): 6.1/6.7 MBProgress (1): 6.1/6.7 MBProgress (1): 6.1/6.7 MBProgress (1): 6.1/6.7 MBProgress (1): 6.1/6.7 MBProgress (1): 6.2/6.7 MBProgress (1): 6.2/6.7 MBProgress (1): 6.2/6.7 MBProgress (1): 6.2/6.7 MBProgress (1): 6.2/6.7 MBProgress (1): 6.2/6.7 MBProgress (1): 6.2/6.7 MBProgress (1): 6.3/6.7 MBProgress (1): 6.3/6.7 MBProgress (1): 6.3/6.7 MBProgress (1): 6.3/6.7 MBProgress (1): 6.3/6.7 MBProgress (1): 6.3/6.7 MBProgress (1): 6.3/6.7 MBProgress (1): 6.3/6.7 MBProgress (1): 6.3/6.7 MBProgress (1): 6.3/6.7 MBProgress (1): 6.4/6.7 MBProgress (1): 6.4/6.7 MBProgress (1): 6.4/6.7 MBProgress (1): 6.4/6.7 MBProgress (1): 6.4/6.7 MBProgress (1): 6.4/6.7 MBProgress (1): 6.4/6.7 MBProgress (1): 6.4/6.7 MBProgress (1): 6.4/6.7 MBProgress (1): 6.5/6.7 MBProgress (1): 6.5/6.7 MBProgress (1): 6.5/6.7 MBProgress (1): 6.5/6.7 MBProgress (1): 6.5/6.7 MBProgress (1): 6.5/6.7 MBProgress (1): 6.5/6.7 MBProgress (1): 6.6/6.7 MBProgress (1): 6.6/6.7 MBProgress (1): 6.6/6.7 MBProgress (1): 6.6/6.7 MBProgress (1): 6.6/6.7 MBProgress (1): 6.6/6.7 MBProgress (1): 6.6/6.7 MBProgress (1): 6.6/6.7 MBProgress (1): 6.6/6.7 MBProgress (1): 6.6/6.7 MBProgress (1): 6.7 MB                        Downloaded from central: https://artifactory.cloud.cms.gov/artifactory/ab2d-maven-repo/com/github/luben/zstd-jni/1.5.6-3/zstd-jni-1.5.6-3.jar (6.7 MB at 2.8 MB/s)
-[INFO] gov.cms.ab2d:common:jar:0.0.1-SNAPSHOT
-[INFO] +- org.springframework.boot:spring-boot-starter:jar:3.5.7:compile
-[INFO] |  +- org.springframework.boot:spring-boot:jar:3.5.7:compile
-[INFO] |  |  \- org.springframework:spring-context:jar:6.2.12:compile
-[INFO] |  +- org.springframework.boot:spring-boot-autoconfigure:jar:3.5.7:compile
-[INFO] |  +- org.springframework.boot:spring-boot-starter-logging:jar:3.5.7:compile
-[INFO] |  |  +- ch.qos.logback:logback-classic:jar:1.5.20:compile
-[INFO] |  |  |  \- ch.qos.logback:logback-core:jar:1.5.20:compile
-[INFO] |  |  +- org.apache.logging.log4j:log4j-to-slf4j:jar:2.24.3:compile
-[INFO] |  |  |  \- org.apache.logging.log4j:log4j-api:jar:2.24.3:compile
-[INFO] |  |  \- org.slf4j:jul-to-slf4j:jar:2.0.17:compile
-[INFO] |  +- jakarta.annotation:jakarta.annotation-api:jar:2.1.1:compile
-[INFO] |  +- org.springframework:spring-core:jar:6.2.12:compile
-[INFO] |  |  \- org.springframework:spring-jcl:jar:6.2.12:compile
-[INFO] |  \- org.yaml:snakeyaml:jar:2.4:compile
-[INFO] +- org.springframework.boot:spring-boot-starter-data-jpa:jar:3.5.7:compile
-[INFO] |  +- org.springframework.boot:spring-boot-starter-jdbc:jar:3.5.7:compile
-[INFO] |  |  +- com.zaxxer:HikariCP:jar:6.3.3:compile
-[INFO] |  |  \- org.springframework:spring-jdbc:jar:6.2.12:compile
-[INFO] |  +- org.hibernate.orm:hibernate-core:jar:6.6.33.Final:compile
-[INFO] |  |  +- jakarta.persistence:jakarta.persistence-api:jar:3.1.0:compile
-[INFO] |  |  +- jakarta.transaction:jakarta.transaction-api:jar:2.0.1:compile
-[INFO] |  |  +- org.jboss.logging:jboss-logging:jar:3.6.1.Final:compile
-[INFO] |  |  +- org.hibernate.common:hibernate-commons-annotations:jar:7.0.3.Final:runtime
-[INFO] |  |  +- io.smallrye:jandex:jar:3.2.0:runtime
-[INFO] |  |  +- com.fasterxml:classmate:jar:1.7.1:compile
-[INFO] |  |  +- net.bytebuddy:byte-buddy:jar:1.17.8:runtime
-[INFO] |  |  +- org.glassfish.jaxb:jaxb-runtime:jar:4.0.6:runtime
-[INFO] |  |  |  \- org.glassfish.jaxb:jaxb-core:jar:4.0.6:runtime
-[INFO] |  |  |     +- org.eclipse.angus:angus-activation:jar:2.0.3:runtime
-[INFO] |  |  |     +- org.glassfish.jaxb:txw2:jar:4.0.6:runtime
-[INFO] |  |  |     \- com.sun.istack:istack-commons-runtime:jar:4.1.2:runtime
-[INFO] |  |  +- jakarta.inject:jakarta.inject-api:jar:2.0.1:runtime
-[INFO] |  |  \- org.antlr:antlr4-runtime:jar:4.13.0:compile
-[INFO] |  +- org.springframework.data:spring-data-jpa:jar:3.5.5:compile
-[INFO] |  |  +- org.springframework.data:spring-data-commons:jar:3.5.5:compile
-[INFO] |  |  +- org.springframework:spring-orm:jar:6.2.12:compile
-[INFO] |  |  +- org.springframework:spring-tx:jar:6.2.12:compile
-[INFO] |  |  \- org.springframework:spring-beans:jar:6.2.12:compile
-[INFO] |  \- org.springframework:spring-aspects:jar:6.2.12:compile
-[INFO] |     \- org.aspectj:aspectjweaver:jar:1.9.24:compile
-[INFO] +- org.springframework.boot:spring-boot-starter-security:jar:3.5.7:compile
-[INFO] |  +- org.springframework:spring-aop:jar:6.2.12:compile
-[INFO] |  +- org.springframework.security:spring-security-config:jar:6.5.6:compile
-[INFO] |  |  \- org.springframework.security:spring-security-core:jar:6.5.6:compile
-[INFO] |  \- org.springframework.security:spring-security-web:jar:6.5.6:compile
-[INFO] |     \- org.springframework:spring-expression:jar:6.2.12:compile
-[INFO] +- org.springframework.boot:spring-boot-starter-test:jar:3.5.7:test
-[INFO] |  +- org.springframework.boot:spring-boot-test:jar:3.5.7:test
-[INFO] |  +- org.springframework.boot:spring-boot-test-autoconfigure:jar:3.5.7:test
-[INFO] |  +- com.jayway.jsonpath:json-path:jar:2.9.0:test
-[INFO] |  +- jakarta.xml.bind:jakarta.xml.bind-api:jar:4.0.4:runtime
-[INFO] |  |  \- jakarta.activation:jakarta.activation-api:jar:2.1.4:runtime
-[INFO] |  +- net.minidev:json-smart:jar:2.5.2:test
-[INFO] |  |  \- net.minidev:accessors-smart:jar:2.5.2:test
-[INFO] |  |     \- org.ow2.asm:asm:jar:9.7.1:test
-[INFO] |  +- org.assertj:assertj-core:jar:3.27.6:test
-[INFO] |  +- org.awaitility:awaitility:jar:4.2.2:test
-[INFO] |  +- org.hamcrest:hamcrest:jar:3.0:test
-[INFO] |  +- org.junit.jupiter:junit-jupiter:jar:5.12.2:test
-[INFO] |  |  +- org.junit.jupiter:junit-jupiter-api:jar:5.12.2:test
-[INFO] |  |  |  +- org.opentest4j:opentest4j:jar:1.3.0:test
-[INFO] |  |  |  +- org.junit.platform:junit-platform-commons:jar:1.12.2:test
-[INFO] |  |  |  \- org.apiguardian:apiguardian-api:jar:1.1.2:test
-[INFO] |  |  +- org.junit.jupiter:junit-jupiter-params:jar:5.12.2:test
-[INFO] |  |  \- org.junit.jupiter:junit-jupiter-engine:jar:5.12.2:test
-[INFO] |  |     \- org.junit.platform:junit-platform-engine:jar:1.12.2:test
-[INFO] |  +- org.mockito:mockito-core:jar:5.17.0:test
-[INFO] |  |  +- net.bytebuddy:byte-buddy-agent:jar:1.17.8:test
-[INFO] |  |  \- org.objenesis:objenesis:jar:3.3:test
-[INFO] |  +- org.mockito:mockito-junit-jupiter:jar:5.17.0:test
-[INFO] |  +- org.skyscreamer:jsonassert:jar:1.5.3:test
-[INFO] |  |  \- com.vaadin.external.google:android-json:jar:0.0.20131108.vaadin1:test
-[INFO] |  +- org.springframework:spring-test:jar:6.2.12:test
-[INFO] |  \- org.xmlunit:xmlunit-core:jar:2.10.4:test
-[INFO] +- org.springframework.boot:spring-boot-starter-web:jar:3.5.7:compile
-[INFO] |  +- org.springframework.boot:spring-boot-starter-json:jar:3.5.7:compile
-[INFO] |  |  \- com.fasterxml.jackson.core:jackson-databind:jar:2.19.2:compile
-[INFO] |  +- org.springframework.boot:spring-boot-starter-tomcat:jar:3.5.7:compile
-[INFO] |  |  +- org.apache.tomcat.embed:tomcat-embed-core:jar:10.1.48:compile
-[INFO] |  |  \- org.apache.tomcat.embed:tomcat-embed-websocket:jar:10.1.48:compile
-[INFO] |  +- org.springframework:spring-web:jar:6.2.12:compile
-[INFO] |  |  \- io.micrometer:micrometer-observation:jar:1.15.5:compile
-[INFO] |  |     \- io.micrometer:micrometer-commons:jar:1.15.5:compile
-[INFO] |  \- org.springframework:spring-webmvc:jar:6.2.12:compile
-[INFO] +- org.springframework.boot:spring-boot-starter-validation:jar:3.5.7:compile
-[INFO] |  +- org.apache.tomcat.embed:tomcat-embed-el:jar:10.1.48:compile
-[INFO] |  \- org.hibernate.validator:hibernate-validator:jar:8.0.3.Final:compile
-[INFO] |     \- jakarta.validation:jakarta.validation-api:jar:3.0.2:compile
-[INFO] +- org.apache.commons:commons-lang3:jar:3.18.0:compile
-[INFO] +- org.postgresql:postgresql:jar:42.7.7:compile
-[INFO] |  \- org.checkerframework:checker-qual:jar:3.49.3:compile
-[INFO] +- org.liquibase:liquibase-core:jar:4.33.0:compile
-[INFO] |  +- com.opencsv:opencsv:jar:5.11.2:compile
-[INFO] |  +- javax.xml.bind:jaxb-api:jar:2.3.1:compile
-[INFO] |  +- org.apache.commons:commons-collections4:jar:4.5.0:compile
-[INFO] |  \- org.apache.commons:commons-text:jar:1.13.1:compile
-[INFO] +- ca.uhn.hapi.fhir:hapi-fhir-structures-dstu3:jar:8.4.0:compile
-[INFO] |  +- ca.uhn.hapi.fhir:hapi-fhir-base:jar:8.4.0:compile
-[INFO] |  |  +- com.google.guava:guava:jar:33.2.1-jre:compile
-[INFO] |  |  |  +- com.google.guava:failureaccess:jar:1.0.2:compile
-[INFO] |  |  |  +- com.google.guava:listenablefuture:jar:9999.0-empty-to-avoid-conflict-with-guava:compile
-[INFO] |  |  |  +- com.google.errorprone:error_prone_annotations:jar:2.26.1:compile
-[INFO] |  |  |  \- com.google.j2objc:j2objc-annotations:jar:3.0.0:compile
-[INFO] |  |  +- org.slf4j:jcl-over-slf4j:jar:2.0.17:compile
-[INFO] |  |  +- com.google.code.findbugs:jsr305:jar:3.0.2:compile
-[INFO] |  |  \- io.opentelemetry:opentelemetry-api:jar:1.49.0:compile
-[INFO] |  |     \- io.opentelemetry:opentelemetry-context:jar:1.49.0:compile
-[INFO] |  +- ca.uhn.hapi.fhir:org.hl7.fhir.utilities:jar:6.5.27:compile
-[INFO] |  |  +- com.ibm.icu:icu4j:jar:72.1:compile
-[INFO] |  |  \- net.sf.saxon:Saxon-HE:jar:11.6:compile
-[INFO] |  |     +- org.xmlresolver:xmlresolver:jar:5.2.1:compile
-[INFO] |  |     |  \- org.apache.httpcomponents.client5:httpclient5:jar:5.5.1:runtime
-[INFO] |  |     |     \- org.apache.httpcomponents.core5:httpcore5-h2:jar:5.3.6:runtime
-[INFO] |  |     \- org.xmlresolver:xmlresolver:jar:data:5.2.1:compile
-[INFO] |  +- ca.uhn.hapi.fhir:org.hl7.fhir.dstu3:jar:6.5.27:compile
-[INFO] |  +- ca.uhn.hapi.fhir:hapi-fhir-caching-api:jar:8.4.0:compile
-[INFO] |  \- io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:jar:2.10.0:compile
-[INFO] +- ca.uhn.hapi.fhir:hapi-fhir-structures-r4:jar:8.4.0:compile
-[INFO] |  +- ca.uhn.hapi.fhir:org.hl7.fhir.r4:jar:6.5.27:compile
-[INFO] |  \- org.apache.jena:jena-shex:jar:5.5.0:compile
-[INFO] |     \- org.apache.jena:jena-arq:jar:5.5.0:compile
-[INFO] |        +- org.apache.jena:jena-core:jar:5.5.0:compile
-[INFO] |        |  +- org.apache.jena:jena-base:jar:5.5.0:compile
-[INFO] |        |  |  +- org.apache.commons:commons-csv:jar:1.14.0:compile
-[INFO] |        |  |  +- com.github.ben-manes.caffeine:caffeine:jar:3.2.2:compile
-[INFO] |        |  |  |  \- org.jspecify:jspecify:jar:1.0.0:compile
-[INFO] |        |  |  \- com.github.andrewoma.dexx:collection:jar:0.7:compile
-[INFO] |        |  +- org.apache.jena:jena-iri3986:jar:5.5.0:compile
-[INFO] |        |  +- org.apache.jena:jena-iri:jar:5.5.0:compile
-[INFO] |        |  +- org.apache.jena:jena-langtag:jar:5.5.0:compile
-[INFO] |        |  \- org.roaringbitmap:RoaringBitmap:jar:1.3.0:compile
-[INFO] |        +- com.apicatalog:titanium-json-ld:jar:1.6.0:compile
-[INFO] |        |  +- com.apicatalog:titanium-jcs:jar:1.0.0:compile
-[INFO] |        |  +- com.apicatalog:titanium-rdf-api:jar:1.0.0:compile
-[INFO] |        |  \- com.apicatalog:titanium-rdf-n-quads:jar:1.0.0:compile
-[INFO] |        +- org.glassfish:jakarta.json:jar:2.0.1:compile
-[INFO] |        +- com.google.protobuf:protobuf-java:jar:4.31.1:compile
-[INFO] |        \- org.apache.thrift:libthrift:jar:0.22.0:compile
-[INFO] +- org.modelmapper:modelmapper:jar:3.2.4:compile
-[INFO] +- org.apache.httpcomponents.core5:httpcore5:jar:5.3.4:test
-[INFO] +- gov.cms.ab2d:ab2d-fhir:jar:2.4.1:compile
-[INFO] |  \- ca.uhn.hapi.fhir:hapi-fhir-client:jar:8.0.0:runtime
-[INFO] |     +- org.apache.httpcomponents:httpclient:jar:4.5.14:runtime
-[INFO] |     \- org.apache.httpcomponents:httpcore:jar:4.4.16:runtime
-[INFO] +- com.newrelic.agent.java:newrelic-java:zip:8.22.0:provided
-[INFO] +- com.newrelic.agent.java:newrelic-api:jar:8.22.0:compile
-[INFO] +- gov.cms.ab2d:ab2d-events-client:jar:3.3.8:compile
-[INFO] |  +- commons-codec:commons-codec:jar:1.18.0:compile
-[INFO] |  +- io.awspring.cloud:spring-cloud-aws-starter:jar:3.4.0:compile
-[INFO] |  |  +- io.awspring.cloud:spring-cloud-aws-autoconfigure:jar:3.4.0:compile
-[INFO] |  |  |  \- software.amazon.awssdk:aws-core:jar:2.31.54:compile
-[INFO] |  |  |     +- software.amazon.awssdk:profiles:jar:2.31.54:compile
-[INFO] |  |  |     +- software.amazon.awssdk:retries:jar:2.31.54:compile
-[INFO] |  |  |     \- software.amazon.eventstream:eventstream:jar:1.0.1:compile
-[INFO] |  |  \- io.awspring.cloud:spring-cloud-aws-core:jar:3.4.0:compile
-[INFO] |  |     +- software.amazon.awssdk:regions:jar:2.31.54:compile
-[INFO] |  |     \- software.amazon.awssdk:auth:jar:2.31.54:compile
-[INFO] |  |        \- software.amazon.awssdk:http-auth-aws-eventstream:jar:2.31.54:compile
-[INFO] |  +- com.fasterxml.jackson.module:jackson-module-parameter-names:jar:2.19.2:compile
-[INFO] |  |  \- com.fasterxml.jackson.core:jackson-core:jar:2.19.2:compile
-[INFO] |  +- com.fasterxml.jackson.datatype:jackson-datatype-jdk8:jar:2.19.2:compile
-[INFO] |  +- com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.19.2:compile
-[INFO] |  |  \- com.fasterxml.jackson.core:jackson-annotations:jar:2.19.2:compile
-[INFO] |  \- com.slack.api:slack-api-client:jar:1.30.0:runtime
-[INFO] |     +- com.slack.api:slack-api-model:jar:1.30.0:runtime
-[INFO] |     +- com.squareup.okhttp3:okhttp:jar:4.11.0:runtime
-[INFO] |     |  +- com.squareup.okio:okio:jar:3.2.0:runtime
-[INFO] |     |  |  \- com.squareup.okio:okio-jvm:jar:3.2.0:runtime
-[INFO] |     |  |     \- org.jetbrains.kotlin:kotlin-stdlib-common:jar:1.9.25:runtime
-[INFO] |     |  +- org.jetbrains.kotlin:kotlin-stdlib:jar:1.9.25:runtime
-[INFO] |     |  \- org.jetbrains.kotlin:kotlin-stdlib-jdk8:jar:1.9.25:runtime
-[INFO] |     |     \- org.jetbrains.kotlin:kotlin-stdlib-jdk7:jar:1.9.25:runtime
-[INFO] |     \- com.google.code.gson:gson:jar:2.13.2:compile
-[INFO] +- io.awspring.cloud:spring-cloud-aws-dependencies:pom:3.4.0:compile
-[INFO] +- io.awspring.cloud:spring-cloud-aws-starter-sqs:jar:3.4.0:compile
-[INFO] |  +- io.awspring.cloud:spring-cloud-aws-sqs:jar:3.4.0:compile
-[INFO] |  |  +- software.amazon.awssdk:sqs:jar:2.31.54:compile
-[INFO] |  |  |  +- software.amazon.awssdk:aws-json-protocol:jar:2.31.54:compile
-[INFO] |  |  |  |  \- software.amazon.awssdk:third-party-jackson-core:jar:2.31.54:compile
-[INFO] |  |  |  +- software.amazon.awssdk:protocol-core:jar:2.31.54:compile
-[INFO] |  |  |  +- software.amazon.awssdk:http-auth-aws:jar:2.31.54:compile
-[INFO] |  |  |  |  +- software.amazon.awssdk:checksums-spi:jar:2.31.54:compile
-[INFO] |  |  |  |  \- software.amazon.awssdk:checksums:jar:2.31.54:compile
-[INFO] |  |  |  +- software.amazon.awssdk:sdk-core:jar:2.31.54:compile
-[INFO] |  |  |  |  \- org.reactivestreams:reactive-streams:jar:1.0.4:compile
-[INFO] |  |  |  +- software.amazon.awssdk:http-auth-spi:jar:2.31.54:compile
-[INFO] |  |  |  +- software.amazon.awssdk:http-auth:jar:2.31.54:compile
-[INFO] |  |  |  +- software.amazon.awssdk:identity-spi:jar:2.31.54:compile
-[INFO] |  |  |  +- software.amazon.awssdk:http-client-spi:jar:2.31.54:compile
-[INFO] |  |  |  +- software.amazon.awssdk:annotations:jar:2.31.54:compile
-[INFO] |  |  |  +- software.amazon.awssdk:utils:jar:2.31.54:compile
-[INFO] |  |  |  +- software.amazon.awssdk:metrics-spi:jar:2.31.54:compile
-[INFO] |  |  |  +- software.amazon.awssdk:json-utils:jar:2.31.54:compile
-[INFO] |  |  |  +- software.amazon.awssdk:endpoints-spi:jar:2.31.54:compile
-[INFO] |  |  |  +- software.amazon.awssdk:retries-spi:jar:2.31.54:compile
-[INFO] |  |  |  +- software.amazon.awssdk:apache-client:jar:2.31.54:runtime
-[INFO] |  |  |  \- software.amazon.awssdk:netty-nio-client:jar:2.31.54:runtime
-[INFO] |  |  |     +- io.netty:netty-codec-http:jar:4.1.128.Final:runtime
-[INFO] |  |  |     +- io.netty:netty-codec-http2:jar:4.1.128.Final:runtime
-[INFO] |  |  |     +- io.netty:netty-codec:jar:4.1.128.Final:runtime
-[INFO] |  |  |     +- io.netty:netty-transport:jar:4.1.128.Final:runtime
-[INFO] |  |  |     +- io.netty:netty-common:jar:4.1.128.Final:runtime
-[INFO] |  |  |     +- io.netty:netty-buffer:jar:4.1.128.Final:runtime
-[INFO] |  |  |     +- io.netty:netty-handler:jar:4.1.128.Final:runtime
-[INFO] |  |  |     |  \- io.netty:netty-transport-native-unix-common:jar:4.1.128.Final:runtime
-[INFO] |  |  |     +- io.netty:netty-transport-classes-epoll:jar:4.1.128.Final:runtime
-[INFO] |  |  |     \- io.netty:netty-resolver:jar:4.1.128.Final:runtime
-[INFO] |  |  +- software.amazon.awssdk:arns:jar:2.31.54:compile
-[INFO] |  |  +- org.springframework:spring-messaging:jar:6.2.12:compile
-[INFO] |  |  +- org.springframework.retry:spring-retry:jar:2.0.12:compile
-[INFO] |  |  \- io.micrometer:context-propagation:jar:1.1.3:compile
-[INFO] |  \- org.slf4j:slf4j-api:jar:2.0.17:compile
-[INFO] +- org.springframework.cloud:spring-cloud-starter-openfeign:jar:4.3.0:compile
-[INFO] |  +- org.springframework.cloud:spring-cloud-starter:jar:4.3.0:compile
-[INFO] |  |  +- org.springframework.cloud:spring-cloud-context:jar:4.3.0:compile
-[INFO] |  |  \- org.bouncycastle:bcprov-jdk18on:jar:1.80:compile
-[INFO] |  +- org.springframework.cloud:spring-cloud-openfeign-core:jar:4.3.0:compile
-[INFO] |  |  \- io.github.openfeign:feign-form-spring:jar:13.6:compile
-[INFO] |  |     +- io.github.openfeign:feign-form:jar:13.6:compile
-[INFO] |  |     \- commons-fileupload:commons-fileupload:jar:1.5:compile
-[INFO] |  +- org.springframework.cloud:spring-cloud-commons:jar:4.3.0:compile
-[INFO] |  |  \- org.springframework.security:spring-security-crypto:jar:6.5.6:compile
-[INFO] |  +- io.github.openfeign:feign-core:jar:13.6:compile
-[INFO] |  \- io.github.openfeign:feign-slf4j:jar:13.6:compile
-[INFO] +- gov.cms.ab2d:ab2d-contracts-client:jar:2.1.2:compile
-[INFO] +- org.apache.commons:commons-compress:jar:1.28.0:compile
-[INFO] +- commons-io:commons-io:jar:2.19.0:compile
-[INFO] +- org.projectlombok:lombok:jar:1.18.42:provided
-[INFO] +- org.testcontainers:testcontainers:jar:1.20.6:test
-[INFO] |  +- junit:junit:jar:4.13.2:test
-[INFO] |  |  \- org.hamcrest:hamcrest-core:jar:3.0:test
-[INFO] |  +- org.rnorth.duct-tape:duct-tape:jar:1.0.8:test
-[INFO] |  |  \- org.jetbrains:annotations:jar:17.0.0:runtime
-[INFO] |  +- com.github.docker-java:docker-java-api:jar:3.4.1:test
-[INFO] |  \- com.github.docker-java:docker-java-transport-zerodep:jar:3.4.1:test
-[INFO] |     +- com.github.docker-java:docker-java-transport:jar:3.4.1:test
-[INFO] |     \- net.java.dev.jna:jna:jar:5.13.0:test
-[INFO] +- org.testcontainers:postgresql:jar:1.20.6:test
-[INFO] |  \- org.testcontainers:jdbc:jar:1.20.6:test
-[INFO] |     \- org.testcontainers:database-commons:jar:1.20.6:test
-[INFO] +- org.testcontainers:junit-jupiter:jar:1.20.6:test
-[INFO] \- org.testcontainers:localstack:jar:1.20.6:test
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD SUCCESS
-[INFO] ------------------------------------------------------------------------
-[INFO] Total time:  44.949 s
-[INFO] Finished at: 2025-11-05T15:36:47-07:00
-[INFO] ------------------------------------------------------------------------
