@@ -19,7 +19,7 @@ ext {
     liquibaseVersion = '5.0.0'
     eventClientVersion='3.3.8'
     contractClientVersion='2.1.2'
-    commonsLangVersion='3.18.0' // Spring Boot is on 3.17.0; force version upgrade; TODO: Remove this property next time Spring Boot is updated
+    commonsLangVersion='3.18.0' // Spring Boot is on 3.17.0; force version upgrade; Remove this property next time Spring Boot is updated
 }
 
 allprojects {
