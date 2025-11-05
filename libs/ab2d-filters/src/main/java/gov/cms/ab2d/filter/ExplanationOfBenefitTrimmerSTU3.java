@@ -129,11 +129,17 @@ public class ExplanationOfBenefitTrimmerSTU3 {
         component.setFactor(null);
         component.setNet(null);
         clearOutList(component.getUdi());
-        clearOutList(component.getUdiTarget());
+
+        //deprecated and later removed
+        //clearOutList(component.getUdiTarget());
+
         component.setBodySite(null);
         clearOutList(component.getSubSite());
         clearOutList(component.getEncounter());
-        clearOutList(component.getEncounterTarget());
+
+        // deprecated and later removed
+        //clearOutList(component.getEncounterTarget());
+
         clearOutList(component.getNoteNumber());
         clearOutList(component.getAdjudication());
         clearOutList(component.getDetail());
