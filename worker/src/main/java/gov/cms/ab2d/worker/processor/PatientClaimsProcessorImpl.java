@@ -89,8 +89,6 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             file = stream.getFile();
             logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), stream.getFile(), FileEvent.FileStatus.OPEN));
 
-
-
             for (CoverageSummary patient : request.getCoverageSummary()) {
 
                 if (isV3On) {
@@ -196,8 +194,10 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
             if (isV3On) {
                 // ToDo: replace FhirVersion to request.getVersion() in AB2D-6943
+                log.error("V3 is on");
                 eobBundle = bfdClient.requestEOBFromServer(FhirVersion.R4v3, patient.getIdentifiers().getPatientIdV3(), sinceTime, untilTime, request.getContractNum());
             } else {
+                log.error("V3 is off");
                 // Make first request and begin looping over remaining pages
                 eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patient.getIdentifiers().getBeneficiaryId(), sinceTime, untilTime, request.getContractNum());
             }
