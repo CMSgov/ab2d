@@ -110,3 +110,74 @@ data "aws_iam_policy_document" "this" {
     resources = [aws_sns_topic.this.arn]
   }
 }
+
+resource "aws_lb" "internal_lb" {
+  name               = "${local.service_prefix}-${local.service}"
+  internal           = true
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.internal_lb.id]
+  subnets            = keys(module.platform.private_subnets)
+
+  enable_deletion_protection       = !module.platform.is_ephemeral_env
+  enable_cross_zone_load_balancing = true
+  drop_invalid_header_fields       = true
+
+  access_logs {
+    bucket  = local.network_access_logs_bucket
+    enabled = true
+  }
+}
+
+resource "aws_ssm_parameter" "internal_lb" {
+  name  = "/ab2d/${local.env}/${local.service}/nonsensitive/url"
+  value = "http://${aws_lb.internal_lb.dns_name}"
+  type  = "String"
+}
+
+resource "aws_lb_listener" "internal_lb" {
+  load_balancer_arn = aws_lb.internal_lb.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    target_group_arn = aws_lb_target_group.contracts.id
+    type             = "forward"
+  }
+}
+
+resource "aws_security_group" "internal_lb" {
+  name   = "${local.service_prefix}-${local.service}-lb"
+  vpc_id = module.platform.vpc_id
+
+  tags = { Name = "${local.service_prefix}-${local.service}-lb" }
+}
+
+resource "aws_security_group_rule" "lambda_sg_ingress_access" {
+  type                     = "ingress"
+  from_port                = 80
+  to_port                  = 80
+  protocol                 = "tcp"
+  description              = "inbound access for lambda to microservices"
+  source_security_group_id = data.aws_security_group.lambda.id
+  security_group_id        = aws_security_group.internal_lb.id
+}
+
+resource "aws_security_group_rule" "api_sg_ingress_access" {
+  type                     = "ingress"
+  from_port                = 80
+  to_port                  = 80
+  protocol                 = "tcp"
+  description              = "inbound access for microservices"
+  source_security_group_id = data.aws_security_group.api.id
+  security_group_id        = aws_security_group.internal_lb.id
+}
+
+resource "aws_security_group_rule" "worker_sg_ingress_access" {
+  type                     = "ingress"
+  from_port                = 80
+  to_port                  = 80
+  protocol                 = "tcp"
+  description              = "inbound access for microservices"
+  source_security_group_id = data.aws_security_group.worker.id
+  security_group_id        = aws_security_group.internal_lb.id
+}
