@@ -140,7 +140,7 @@ resource "aws_lb_listener" "internal_lb" {
   protocol          = "HTTP"
 
   default_action {
-    target_group_arn = aws_lb_target_group.contracts.id
+    target_group_arn = aws_lb_target_group.contracts.arn
     type             = "forward"
   }
 }
