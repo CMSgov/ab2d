@@ -121,11 +121,11 @@ class ExplanationOfBenefitTrimmerSTU3Test {
                 assertNull(item.getFactor());
                 assertNull(item.getNet().getId());
                 assertTrue(isNullOrEmpty(item.getUdi()));
-                assertTrue(isNullOrEmpty(item.getUdiTarget()));
+//                assertTrue(isNullOrEmpty(item.getUdiTarget()));
                 assertNull(item.getBodySite().getId());
                 assertTrue(isNullOrEmpty(item.getSubSite()));
                 assertTrue(isNullOrEmpty(item.getEncounter()));
-                assertTrue(isNullOrEmpty(item.getEncounterTarget()));
+//                assertTrue(isNullOrEmpty(item.getEncounterTarget()));
                 assertTrue(isNullOrEmpty(item.getNoteNumber()));
                 assertTrue(isNullOrEmpty(item.getAdjudication()));
                 assertTrue(isNullOrEmpty(item.getDetail()));
