@@ -112,11 +112,9 @@ import java.util.stream.Collectors;
  *     . factor
  *     . net
  *     . udi
- *     . udiTarget
  *     . bodySite
  *     . subSite
  *     . encounter
- *     . encounterTarget
  *     . noteNumber
  *     . adjudication
  *     . detail
@@ -281,11 +279,9 @@ public class ExplanationOfBenefitTrimmerR4 {
         component.setFactor(null);
         component.setNet(null);
         clearOutList(component.getUdi());
-//        clearOutList(component.getUdiTarget());
         component.setBodySite(null);
         clearOutList(component.getSubSite());
         clearOutList(component.getEncounter());
-//        clearOutList(component.getEncounterTarget());
         clearOutList(component.getNoteNumber());
         clearOutList(component.getAdjudication());
         clearOutList(component.getDetail());
