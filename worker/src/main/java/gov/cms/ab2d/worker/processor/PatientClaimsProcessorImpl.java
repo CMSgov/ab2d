@@ -39,6 +39,7 @@ import java.util.concurrent.Future;
 import static gov.cms.ab2d.aggregator.FileOutputType.DATA;
 import static gov.cms.ab2d.aggregator.FileOutputType.ERROR;
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE_TIME;
+import static gov.cms.ab2d.common.util.PropertyConstants.V3_ON;
 
 @Slf4j
 @Component
@@ -83,7 +84,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     String writeOutData(PatientClaimsRequest request, FhirVersion fhirVersion, ProgressTrackerUpdate update) throws IOException {
         File file = null;
         String anyErrors = null;
-        boolean isV3On = propertiesService.isToggleOn("OptOutOn", false);
+        boolean isV3On = propertiesService.isToggleOn(V3_ON, false);
         try (ClaimsStream stream = new ClaimsStream(request.getJob(), request.getEfsMount(), DATA,
                 searchConfig.getStreamingDir(), searchConfig.getFinishedDir(), searchConfig.getBufferSize())) {
             file = stream.getFile();
@@ -171,7 +172,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
      */
     @Trace(metricName = "EOBRequest", dispatcher = true)
     private List<IBaseResource> getEobBundleResources(PatientClaimsRequest request, CoverageSummary patient) {
-        boolean isV3On = propertiesService.isToggleOn("OptOutOn", false);
+        boolean isV3On = propertiesService.isToggleOn(V3_ON, false);
         OffsetDateTime requestStartTime = OffsetDateTime.now();
 
         Date earliestDate = getEarliestDataDate();
