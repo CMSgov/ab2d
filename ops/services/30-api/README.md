@@ -3,7 +3,6 @@ This module is responsible for deploying the EC2-backed ECS cluster that hosts t
 
 ## Dependencies
 - core
-- microservices (properties)
 - cdap/cms hybrid cloud security groups
 - ec2 amis prepared within the AWS account
 - api container image in local ecr repository
