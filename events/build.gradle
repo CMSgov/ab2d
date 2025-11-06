@@ -21,7 +21,7 @@ ext {
     testContainerVersion='1.20.6'
     eventClientVersion='3.3.8'
     lombokVersion = '1.18.38'
-    commonsLangVersion='3.18.0' // Spring Boot is on 3.17.0; force version upgrade; Remove this property next time Spring Boot is updated
+    commonsLangVersion='3.18.0' // // Spring Boot's commons-lang3 version is on 3.17.0; force version upgrade; Remove this property next time Spring Boot is updated
 }
 
 allprojects {

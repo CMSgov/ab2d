@@ -57,7 +57,7 @@
         <commons-compress.version>1.28.0</commons-compress.version>
         <commons-io.version>2.19.0</commons-io.version>
 
-        <!-- Spring Boot is on 3.17.0; force version upgrade; Remove this property next time Spring Boot is updated -->
+        <!-- // Spring Boot's commons-lang3 version is on 3.17.0; force version upgrade; Remove this property next time Spring Boot is updated -->
         <commons-lang3.version>3.18.0</commons-lang3.version>
     </properties>
 
