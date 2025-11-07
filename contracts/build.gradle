@@ -1,11 +1,11 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.5.6'
+    id 'org.springframework.boot' version '3.5.7'
     id 'com.jfrog.artifactory' version '4.33.1' apply false
     id "org.sonarqube" version "4.1.0.3113"
     id "gov.cms.ab2d.plugin" version "1.0.2"
     id 'maven-publish'
-    id 'org.cyclonedx.bom' version '1.7.4' apply true
+    id 'org.cyclonedx.bom' version '2.0.0' apply true
 }
 
 version="2.0.0"
@@ -14,12 +14,12 @@ group = "gov.cms.ab2d"
 ext {
     lombokVersion = '1.18.38'
     springCloudAwsVersion = '3.4.0'
-    springBootVersion='3.5.6'
+    springBootVersion='3.5.7'
     testContainerVersion='1.20.6'
     liquibaseVersion = '5.0.0'
     eventClientVersion='3.3.8'
     contractClientVersion='2.1.2'
-    commonsLangVersion='3.18.0' // Spring Boot is on 3.17.0; force version upgrade; TODO: Remove this property next time Spring Boot is updated
+    commonsLangVersion='3.18.0' // Spring Boot's commons-lang3 version is on 3.17.0; force version upgrade; Remove this property next time Spring Boot is updated
 }
 
 allprojects {
