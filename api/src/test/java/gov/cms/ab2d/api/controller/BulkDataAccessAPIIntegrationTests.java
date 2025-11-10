@@ -594,7 +594,7 @@ class BulkDataAccessAPIIntegrationTests {
                 CapabilityStatementR4.populateCS("https://localhost:8443" + API_PREFIX_V2 + FHIR_PREFIX)));
     }
 
-  //  @Test
+    @Test
     void testCapabilityStatementR4V3() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
                 get("https://localhost:8443/" + API_PREFIX_V3 + FHIR_PREFIX + "/metadata").contentType(MediaType.APPLICATION_JSON)
