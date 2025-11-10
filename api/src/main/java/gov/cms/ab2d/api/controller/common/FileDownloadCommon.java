@@ -2,13 +2,17 @@ package gov.cms.ab2d.api.controller.common;
 
 import gov.cms.ab2d.api.remote.JobClient;
 import gov.cms.ab2d.common.service.PdpClientService;
+import gov.cms.ab2d.common.service.ResourceNotFoundException;
 import gov.cms.ab2d.common.util.Constants;
 import gov.cms.ab2d.common.util.GzipCompressUtils;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
 import gov.cms.ab2d.eventclient.events.ApiResponseEvent;
+
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.UUID;
 
 import gov.cms.ab2d.job.service.JobOutputMissingException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -128,4 +132,31 @@ public class FileDownloadCommon {
 
         return UNCOMPRESSED;
     }
+
+    // Sanitize and validate input to prevent path traversal (CWE-23)
+    public static String sanitizeJobUuid(String jobUuid) {
+        if (jobUuid != null) {
+            try {
+                return UUID.fromString(jobUuid.trim()).toString();
+            } catch (IllegalArgumentException e) {
+                // ignore
+            }
+        }
+        log.error("Invalid job UUID provided: '{}'", jobUuid);
+        throw new ResourceNotFoundException(String.format("Invalid job UUID provided: '%s'", jobUuid));
+    }
+
+    // Sanitize and validate input to prevent path traversal (CWE-23)
+    public static String sanitizeFilename(String filename) {
+        if (filename != null) {
+            String trimmed = filename.trim();
+            String sanitized = new File(trimmed).getName().trim();
+            if (sanitized.equals(trimmed)) {
+                return sanitized;
+            }
+        }
+        log.error("Invalid filename provided: '{}'", filename);
+        throw new ResourceNotFoundException(String.format("Invalid filename provided: '%s'", filename));
+    }
+
 }
