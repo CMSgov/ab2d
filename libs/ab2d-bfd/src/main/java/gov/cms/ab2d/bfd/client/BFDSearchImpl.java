@@ -72,8 +72,7 @@ public class BFDSearchImpl implements BFDSearch {
         }
 
         HttpGet request = new HttpGet(url.toString());
-        log.error("searchEOB  urlLocation:" + urlLocation);
-        log.error("searchEOB  url:" + url);
+
         // No active profiles means use JSON
         if (environment.getActiveProfiles().length == 0) {
             request.addHeader("Accept", "application/fhir+json;q=1.0, application/json+fhir;q=0.9");
