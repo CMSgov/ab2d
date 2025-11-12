@@ -156,7 +156,7 @@ resource "aws_lb_target_group" "contracts" {
     matcher  = "200-299"
   }
 
-  tags = module.standards.default_tags
+  tags = module.platform.default_tags
 }
 
 resource "aws_security_group_rule" "contracts_to_lambda_egress_access" {
