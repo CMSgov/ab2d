@@ -175,7 +175,7 @@ resource "aws_security_group_rule" "lambda_sg_ingress_access" {
   from_port                = 443
   to_port                  = 443
   protocol                 = "tcp"
-  description              = "inbound enc access for lambda to microservices"
+  description              = "inbound access for lambda to microservices"
   source_security_group_id = data.aws_security_group.lambda.id
   security_group_id        = aws_security_group.internal_lb.id
 }
@@ -185,7 +185,7 @@ resource "aws_security_group_rule" "api_sg_ingress_access" {
   from_port                = 443
   to_port                  = 443
   protocol                 = "tcp"
-  description              = "inbound enc access for microservices"
+  description              = "inbound access for microservices"
   source_security_group_id = data.aws_security_group.api.id
   security_group_id        = aws_security_group.internal_lb.id
 }
@@ -195,7 +195,7 @@ resource "aws_security_group_rule" "worker_sg_ingress_access" {
   from_port                = 443
   to_port                  = 443
   protocol                 = "tcp"
-  description              = "inbound enc access for microservices"
+  description              = "inbound access for microservices"
   source_security_group_id = data.aws_security_group.worker.id
   security_group_id        = aws_security_group.internal_lb.id
 }
