@@ -40,6 +40,9 @@ on:
 env:
   TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+concurrency:
+  group: api-worker-build-deploy-${{ inputs.environment }}
+
 jobs:
   deploy:
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
