@@ -7,24 +7,16 @@ terraform {
   }
 }
 
-module "standards" {
-  source      = "github.com/CMSgov/cdap//terraform/modules/standards?ref=0bd3eeae6b03cc8883b7dbdee5f04deb33468260"
-  app         = local.app
-  env         = local.env
-  root_module = "https://github.com/CMSgov/ab2d/tree/main/ops/services/20-microservices"
-  service     = "20-microservices"
-}
-
 module "platform" {
-  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=plt-1358_sops"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
-  app          = local.app
-  env          = local.env
-  root_module  = "https://github.com/CMSgov/ab2d/tree/main/ops/services/20-microservices"
-  service      = local.service
-  ssm_root_map = local.ssm_root_map
+  app         = local.app
+  env         = local.env
+  root_module = "https://github.com/CMSgov/cdap/tree/terraform/services/cost-anomaly"
+  service     = local.service
 }
+
 
 locals {
   default_tags = module.platform.default_tags
