@@ -45,10 +45,10 @@ jobs:
             HPMS_AUTH_KEY_ID=/ab2d/dev/core/sensitive/hpms_auth_key_id
             HPMS_AUTH_KEY_SECRET=/ab2d/dev/core/sensitive/hpms_auth_key_secret
 
-#      - name: Run tests
-#        run: ./gradlew clean test --info
+      - name: Run tests
+        run: ./gradlew clean test --info
 
-      - name: SonarQube Analysis # TODO Uncomment previous step to run tests (currently broken) in order to populate code coverage
+      - name: SonarQube Analysis
         run: |
           ./gradlew sonar \
             -Dsonar.ci.autoconfig.disabled=true \

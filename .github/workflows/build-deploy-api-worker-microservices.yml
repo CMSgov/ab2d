@@ -1,5 +1,5 @@
-name: deploy [api,worker,contracts,events]
-run-name: deploy [api,worker,contracts,events] to ${{ inputs.environment}}
+name: build-deploy [api,worker,contracts,events]
+run-name: build-deploy [api,worker,contracts,events] to ${{ inputs.environment}}
 
 on:
   workflow_call:
@@ -39,12 +39,14 @@ jobs:
     uses: ./.github/workflows/contracts-build-deploy.yml
     with:
       environment: ${{ inputs.environment}}
+      run_sonar: false
     secrets: inherit
   build-deploy-events:
     needs: [build-deploy-contracts]
     uses: ./.github/workflows/events-build-deploy.yml
     with:
       environment: ${{ inputs.environment}}
+      run_sonar: false
     secrets: inherit
   e2e-test:
     needs: [ build-deploy-api, build-deploy-worker, build-deploy-events, build-deploy-contracts ]
