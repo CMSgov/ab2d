@@ -16,9 +16,6 @@ on:
       events_service_image:
         type: string
         required: false
-      properties_service_image:
-        type: string
-        required: false
 
   workflow_dispatch:  # Manual trigger with dropdowns
     inputs:
@@ -44,10 +41,6 @@ on:
         description: "ab2d-events image"
         type: string
         required: false
-      properties_service_image:
-        description: "ab2d-properties image"
-        type: string
-        required: false
 
 env:
   TENV_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -63,7 +56,6 @@ jobs:
       AB2D_ENV: ${{ inputs.environment }}
       CONTRACTS_IMAGE: ${{ inputs.contracts_service_image }}
       EVENTS_IMAGE: ${{ inputs.events_service_image }}
-      PROPERTIES_IMAGE: ${{ inputs.properties_service_image }}
 
     steps:
       - name: Checkout Code
@@ -96,10 +88,6 @@ jobs:
             TOFU_VARS="$TOFU_VARS -var=events_service_image_tag=$EVENTS_IMAGE"
             echo "**events_service_image_tag -> $EVENTS_IMAGE**" >> $GITHUB_STEP_SUMMARY
           fi
-          if [ "$PROPERTIES_IMAGE" != '' ]; then
-            TOFU_VARS="$TOFU_VARS -var=properties_service_image_tag=$PROPERTIES_IMAGE"
-            echo "**properties_service_image_tag -> $PROPERTIES_IMAGE**" >> $GITHUB_STEP_SUMMARY
-          fi
           
           tofu plan $TOFU_VARS -out=tfplan
 
@@ -108,4 +96,3 @@ jobs:
         working-directory: ops/services/20-microservices/
         run: |
           tofu apply -input=false tfplan 
-        
