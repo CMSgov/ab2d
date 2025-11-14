@@ -28,6 +28,7 @@ dependencies {
     testImplementation project(':lambda-test-utils')
     testImplementation 'org.liquibase:liquibase-core:4.18.0'
     testImplementation 'io.findify:s3mock_2.13:0.2.6'
+    testImplementation "uk.org.webcompere:system-stubs-jupiter:2.1.3"
 }
 
 task buildZip(type: Zip) {
