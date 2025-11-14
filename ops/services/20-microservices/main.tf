@@ -8,15 +8,15 @@ terraform {
 }
 
 module "platform" {
-  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=ff2ef539fb06f2c98f0e3ce0c8f922bdacb96d66"
+  source    = "github.com/CMSgov/cdap//terraform/modules/platform?ref=plt-1358_sops"
   providers = { aws = aws, aws.secondary = aws.secondary }
 
-  app          = local.app
-  env          = local.env
-  root_module  = "https://github.com/CMSgov/ab2d/tree/main/ops/services/20-microservices"
-  service      = local.service
-  ssm_root_map = local.ssm_root_map
+  app         = local.app
+  env         = local.env
+  root_module = "https://github.com/CMSgov/cdap/tree/terraform/services/cost-anomaly"
+  service     = local.service
 }
+
 
 locals {
   default_tags = module.platform.default_tags
@@ -137,13 +137,15 @@ resource "aws_ssm_parameter" "internal_lb" {
 
 resource "aws_lb_listener" "internal_lb" {
   load_balancer_arn = aws_lb.internal_lb.arn
-  port              = 80
-  protocol          = "HTTP"
+  port              = 443
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-Res-2021-06"
 
   default_action {
     target_group_arn = aws_lb_target_group.properties.id
     type             = "forward"
   }
+  certificate_arn = data.aws_acm_certificate.this.arn
 }
 
 resource "aws_security_group" "internal_lb" {
@@ -155,8 +157,8 @@ resource "aws_security_group" "internal_lb" {
 
 resource "aws_security_group_rule" "lambda_sg_ingress_access" {
   type                     = "ingress"
-  from_port                = 80
-  to_port                  = 80
+  from_port                = 443
+  to_port                  = 443
   protocol                 = "tcp"
   description              = "inbound access for lambda to microservices"
   source_security_group_id = data.aws_security_group.lambda.id
@@ -165,8 +167,8 @@ resource "aws_security_group_rule" "lambda_sg_ingress_access" {
 
 resource "aws_security_group_rule" "api_sg_ingress_access" {
   type                     = "ingress"
-  from_port                = 80
-  to_port                  = 80
+  from_port                = 443
+  to_port                  = 443
   protocol                 = "tcp"
   description              = "inbound access for microservices"
   source_security_group_id = data.aws_security_group.api.id
@@ -175,10 +177,14 @@ resource "aws_security_group_rule" "api_sg_ingress_access" {
 
 resource "aws_security_group_rule" "worker_sg_ingress_access" {
   type                     = "ingress"
-  from_port                = 80
-  to_port                  = 80
+  from_port                = 443
+  to_port                  = 443
   protocol                 = "tcp"
   description              = "inbound access for microservices"
   source_security_group_id = data.aws_security_group.worker.id
   security_group_id        = aws_security_group.internal_lb.id
+}
+
+data "aws_acm_certificate" "this" {
+  domain = local.parent_env == "prod" ? "api.ab2d.cms.gov" : "${local.parent_env}.ab2d.cms.gov"
 }
