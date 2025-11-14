@@ -248,7 +248,7 @@ module "service" {
     { name = "AWS_SQS_FEATURE_FLAG", value = "true" },
     { name = "AWS_SQS_URL", value = data.aws_sqs_queue.events.url }, #FIXME: Is this even used?
     { name = "NEW_RELIC_APP_NAME", value = local.new_relic_app_name },
-    { name = "MICROSERVICES_URL", value = local.microservices_url }
+    { name = "MICROSERVICES_URL", value = local.microservices_url },
   ]
   container_secrets = [
     { name = "AB2D_DB_DATABASE", valueFrom = local.db_name_arn },
