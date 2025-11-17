@@ -133,7 +133,7 @@ subprojects {
     }
 
     jacoco {
-        toolVersion = "0.8.7"
+        toolVersion = "0.8.12"
         reportsDirectory = layout.buildDirectory.dir("$buildDir/reports/jacoco")
     }
 

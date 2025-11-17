@@ -44,7 +44,6 @@ locals {
   events_sqs_url             = data.aws_sqs_queue.events.url
   kms_master_key_id          = nonsensitive(module.platform.kms_alias_primary.target_key_arn)
   network_access_logs_bucket = module.platform.network_access_logs_bucket
-  properties_service_url     = "http://${aws_lb.internal_lb.dns_name}"
   vpc_id                     = module.platform.vpc_id
 }
 
@@ -141,7 +140,7 @@ resource "aws_lb_listener" "internal_lb" {
   protocol          = "HTTP"
 
   default_action {
-    target_group_arn = aws_lb_target_group.properties.id
+    target_group_arn = aws_lb_target_group.contracts.arn
     type             = "forward"
   }
 }
