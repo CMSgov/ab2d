@@ -28,6 +28,7 @@ public class OptOutProcessor {
     public List<OptOutInformation> optOutInformationList;
     public boolean isRejected;
     private final String dbHost;
+    private final String environment;
 
     ParameterStoreUtil parameterStore;
 
@@ -35,7 +36,7 @@ public class OptOutProcessor {
         this.logger = logger;
         this.optOutInformationList = new ArrayList<>();
         this.dbHost = System.getenv("DB_HOST");
-        var environment = System.getenv("ENV");
+        this.environment = System.getenv("ENV");
         var bfdRole = "/opt-out-import/ab2d/" + environment + "/bfd-bucket-role-arn";
         var dbUser = "/ab2d/" + environment + "/core/sensitive/database_user";
         var dbPassword = "/ab2d/" + environment + "/core/sensitive/database_password";
@@ -99,8 +100,10 @@ public class OptOutProcessor {
         List<String> mbis = parseMbis(information);
         boolean optOutFlag = extractOptOutFlag(information, mbis.size() > 1);
 
-        mbis.forEach(mbi ->
-                optOutInformationList.add(new OptOutInformation(mbi.trim(), optOutFlag))
+        mbis.forEach(mbi -> {
+                    checkMbisInTest(mbi);
+                    optOutInformationList.add(new OptOutInformation(mbi.trim(), optOutFlag));
+                }
         );
     }
 
@@ -113,6 +116,12 @@ public class OptOutProcessor {
         } else {
             String mbi = information.substring(MBI_INDEX_START, MBI_INDEX_LENGTH);
             return List.of(mbi);
+        }
+    }
+
+    private void checkMbisInTest(String mbi) {
+        if (!environment.equals("prod") && MBI_PATTERN.matcher(mbi).matches()) {
+            throw new OptOutException("Valid MBI in non-production environment: " + environment);
         }
     }
 
