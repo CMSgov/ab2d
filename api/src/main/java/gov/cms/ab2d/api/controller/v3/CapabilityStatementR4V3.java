@@ -66,7 +66,6 @@ public class CapabilityStatementR4V3 {
         rest.setSecurity(security);
         List<CapabilityStatement.CapabilityStatementRestResourceOperationComponent> restComponents = new ArrayList<>();
         restComponents.add(createOperation("export", server + "/Patient/$export"));
-        restComponents.add(createOperation("export by contract", server + "/Group/{contractNumber}/$export"));
         restComponents.add(createOperation("cancel", server + "/Job/{jobUuid}/$status"));
         restComponents.add(createOperation("status", server + "/Job/{jobUuid}/$status"));
         restComponents.add(createOperation("download", server + "/Job/{jobUuid}/file/{filename}"));

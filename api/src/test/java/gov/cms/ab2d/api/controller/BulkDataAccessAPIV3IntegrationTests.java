@@ -116,27 +116,4 @@ public class BulkDataAccessAPIV3IntegrationTests {
         assertEquals(EOB, startJobDTO.getResourceTypes());
         assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), startJobDTO.getOrganization());
     }
-
-    @Test
-    void testBasicPatientExportWithContractWithHttps() throws Exception {
-        Optional<Contract> contractOptional = contractRepository.getContractByContractNumber(VALID_CONTRACT_NUMBER);
-        Contract contract = contractOptional.get();
-        ResultActions resultActions = this.mockMvc.perform(
-                get(API_PREFIX_V3 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export").contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token)
-                        .header("X-Forwarded-Proto", "https"));
-
-        String jobUuid = jobClientMock.pickAJob();
-        StartJobDTO startJobDTO = jobClientMock.lookupJob(jobUuid);
-        String statusUrl =
-                "https://localhost" + API_PREFIX_V3 + FHIR_PREFIX + "/Job/" + jobUuid + "/$status";
-        assertNotNull(statusUrl);
-
-        resultActions.andExpect(status().isAccepted())
-                .andExpect(header().string(CONTENT_LOCATION, statusUrl));
-
-        assertEquals("https://localhost" + API_PREFIX_V3 + FHIR_PREFIX + "/Group/" + contract.getContractNumber() + "/$export", startJobDTO.getUrl());
-        assertNull(startJobDTO.getResourceTypes());
-        assertEquals(pdpClientRepository.findByClientId(TEST_PDP_CLIENT).getOrganization(), startJobDTO.getOrganization());
-    }
 }
