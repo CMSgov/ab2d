@@ -9,8 +9,7 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.Map;
 
-import static gov.cms.ab2d.fhir.FhirVersion.R4;
-import static gov.cms.ab2d.fhir.FhirVersion.STU3;
+import static gov.cms.ab2d.fhir.FhirVersion.*;
 
 /**
  *  Holds configuration items for the different versions of the BFD versions as well as caching different servers
@@ -27,10 +26,10 @@ public class BfdClientVersions {
      * @param bfdUrl - base FHIR url
      * @param httpClient the http client
      */
-    public BfdClientVersions(@Value("${bfd.url}") String bfdUrl, HttpClient httpClient) {
+    public BfdClientVersions(@Value("${bfd.url}") String bfdUrl, @Value("${bfd.url.v3}") String bfdUrlV3, HttpClient httpClient) {
         clientUrls.put(STU3, bfdUrl + STU3.getBfdVersionString() + "fhir/");
         clientUrls.put(R4, bfdUrl + R4.getBfdVersionString() + "fhir/");
-
+        clientUrls.put(R4v3, bfdUrlV3 + R4v3.getBfdVersionString() + "fhir/");
         this.httpClient = httpClient;
     }
 

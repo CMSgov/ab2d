@@ -8,4 +8,6 @@ import java.time.OffsetDateTime;
 
 public interface BFDSearch {
     IBaseBundle searchEOB(long patientId, OffsetDateTime since, OffsetDateTime until, int pageSize, String bulkJobId, FhirVersion version, String contractNum) throws IOException;
+
+    IBaseBundle searchEOB(String patientId, OffsetDateTime since, OffsetDateTime until, int pageSize, String bulkJobId, FhirVersion version, String contractNum) throws IOException;
 }
