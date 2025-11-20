@@ -594,6 +594,19 @@ class BulkDataAccessAPIIntegrationTests {
                 CapabilityStatementR4.populateCS("https://localhost:8443" + API_PREFIX_V2 + FHIR_PREFIX)));
     }
 
+  //  @Test
+    void testCapabilityStatementR4V3() throws Exception {
+        MvcResult mvcResult = this.mockMvc.perform(
+                get("https://localhost:8443/" + API_PREFIX_V3 + FHIR_PREFIX + "/metadata").contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token)).andReturn();
+
+        String body = mvcResult.getResponse().getContentAsString();
+
+        assertEquals(body, R4.getJsonParser().encodeResourceToString(
+                CapabilityStatementR4.populateCS("https://localhost:8443" + API_PREFIX_V3 + FHIR_PREFIX)));
+    }
+
+
     @Test
     void tlsTest() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
