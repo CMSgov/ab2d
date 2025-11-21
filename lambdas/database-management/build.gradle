@@ -17,7 +17,7 @@ dependencies {
     implementation 'com.amazonaws:aws-lambda-java-events:3.11.0'
     annotationProcessor 'org.projectlombok:lombok:1.18.24'
     compileOnly 'org.projectlombok:lombok:1.18.24'
-    testImplementation 'org.liquibase:liquibase-core:5.0.0'
+    testImplementation 'org.liquibase:liquibase-core:4.33.0'
     testImplementation 'org.postgresql:postgresql:42.7.2'
     testImplementation project(':lambda-test-utils')
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
