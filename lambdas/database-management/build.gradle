@@ -11,7 +11,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.liquibase:liquibase-core:5.0.0'
+    implementation 'org.liquibase:liquibase-core:4.33.0'
     implementation 'org.postgresql:postgresql:42.7.2'
     implementation 'com.amazonaws:aws-lambda-java-core:1.2.2'
     implementation 'com.amazonaws:aws-lambda-java-events:3.11.0'
