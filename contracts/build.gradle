@@ -17,7 +17,7 @@ ext {
     springBootVersion='3.5.7'
     testContainerVersion='1.20.6'
     liquibaseVersion = '5.0.0'
-    eventClientVersion='3.3.8'
+    eventClientVersion='3.3.9'
     contractClientVersion='2.1.2'
     commonsLangVersion='3.18.0' // Spring Boot's commons-lang3 version is on 3.17.0; force version upgrade; Remove this property next time Spring Boot is updated
 }
@@ -31,7 +31,7 @@ allprojects {
         implementation "io.awspring.cloud:spring-cloud-aws-dependencies:${springCloudAwsVersion}"
         implementation "io.awspring.cloud:spring-cloud-aws-starter:${springCloudAwsVersion}"
         implementation "io.awspring.cloud:spring-cloud-aws-starter-sqs:${springCloudAwsVersion}"
-        implementation 'net.logstash.logback:logstash-logback-encoder:7.3'
+        implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
         implementation "org.liquibase:liquibase-core:${liquibaseVersion}"
         implementation 'org.postgresql:postgresql:42.7.3'
         implementation "org.springframework.boot:spring-boot-starter-quartz:${springBootVersion}"
