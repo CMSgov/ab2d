@@ -324,7 +324,7 @@ resource "aws_security_group" "idr_endpoint" {
 resource "aws_vpc_security_group_ingress_rule" "idr_endpoint_http" {
   count = module.platform.parent_env == "prod" ? 1 : 0
 
-  security_group_id = aws_security_group.idr_endpoint.id
+  security_group_id = aws_security_group.idr_endpoint[0].id
 
   referenced_security_group_id = aws_security_group.attribution.id
   from_port                    = 80
@@ -335,7 +335,7 @@ resource "aws_vpc_security_group_ingress_rule" "idr_endpoint_http" {
 resource "aws_vpc_security_group_ingress_rule" "idr_endpoint_https" {
   count = module.platform.parent_env == "prod" ? 1 : 0
 
-  security_group_id = aws_security_group.idr_endpoint.id
+  security_group_id = aws_security_group.idr_endpoint[0].id
 
   referenced_security_group_id = aws_security_group.attribution.id
   from_port                    = 443
