@@ -304,3 +304,41 @@ resource "aws_security_group" "lambda" {
   vpc_id      = local.vpc_id
   tags        = { Name = "${local.service_prefix}-microservices-lambda" }
 }
+
+resource "aws_security_group" "attribution" {
+  name        = "${local.service_prefix}-attribution"
+  description = "Attribution security group"
+  vpc_id      = local.vpc_id
+  tags        = { Name = "${local.service_prefix}-attribution" }
+}
+
+resource "aws_security_group" "idr_endpoint" {
+  count = module.platform.parent_env == "prod" ? 1 : 0
+
+  name        = "${local.service_prefix}-idr-endpoint"
+  description = "For the PrivateLink endpoint for IDR Snowflake"
+  vpc_id      = local.vpc_id
+  tags        = { Name = "${local.service_prefix}-idr-endpoint" }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "idr_endpoint_http" {
+  count = module.platform.parent_env == "prod" ? 1 : 0
+
+  security_group_id = aws_security_group.idr_endpoint[0].id
+
+  referenced_security_group_id = aws_security_group.attribution.id
+  from_port                    = 80
+  to_port                      = 80
+  ip_protocol                  = "tcp"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "idr_endpoint_https" {
+  count = module.platform.parent_env == "prod" ? 1 : 0
+
+  security_group_id = aws_security_group.idr_endpoint[0].id
+
+  referenced_security_group_id = aws_security_group.attribution.id
+  from_port                    = 443
+  to_port                      = 443
+  ip_protocol                  = "tcp"
+}
