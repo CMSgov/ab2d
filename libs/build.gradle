@@ -26,10 +26,10 @@ ext {
     bfdVersion='4.2.3'
     aggregatorVersion='2.1.3'
     filtersVersion='2.3.2'
-    eventClientVersion='3.3.8'
+    eventClientVersion='3.3.9'
     propertiesClientVersion='2.1.0'
     contractClientVersion='2.1.2'
-    snsClientVersion='1.1.5'
+    snsClientVersion='1.1.6'
 
     sourcesRepo = 'ab2d-maven-repo'
     deployerRepo = 'ab2d-main'
@@ -45,7 +45,7 @@ ext {
     mockServerVersion='5.15.0'
     liquibaseVersion="5.0.0"
     jacksonVersion = "2.20.0"
-    slackAPIVersion='1.30.0'
+    slackAPIVersion='1.35.0'
     hl7Version = '6.5.13'
 
     failedTests = []
