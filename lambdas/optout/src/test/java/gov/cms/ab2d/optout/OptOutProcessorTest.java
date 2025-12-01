@@ -6,6 +6,8 @@ import gov.cms.ab2d.lambdalibs.lib.ParameterStoreUtil;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.MockedStatic;
+import uk.org.webcompere.systemstubs.environment.EnvironmentVariables;
+import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -21,7 +23,7 @@ import static gov.cms.ab2d.optout.OptOutConstantsTest.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-@ExtendWith({S3MockAPIExtension.class})
+@ExtendWith({S3MockAPIExtension.class, SystemStubsExtension.class})
 class OptOutProcessorTest {
     private static final ResultSet resultSet = mock(ResultSet.class);
     private static final PreparedStatement preparedStatement = mock(PreparedStatement.class);
@@ -51,7 +53,8 @@ class OptOutProcessorTest {
     }
 
     @BeforeEach
-    void beforeEach() throws IOException {
+    void beforeEach(EnvironmentVariables env) throws IOException {
+        env.set("ENV", "test");
         S3MockAPIExtension.createFile(Files.readString(Paths.get("src/test/resources/" + TEST_FILE_NAME), StandardCharsets.UTF_8), TEST_FILE_NAME);
         parameterStore.
                 when(() -> ParameterStoreUtil.getParameterStore(any(), any(), any()))
@@ -205,6 +208,11 @@ class OptOutProcessorTest {
         assertEquals(1, results.getOptOutToday());
         assertEquals(optInTotalCount, results.getOptInTotal());
         assertEquals(optOutTotalCount, results.getOptOutTotal());
+    }
+
+    @Test
+    void testDummyMbiNonProd() {
+        assertDoesNotThrow(() -> optOutProcessing.process(TEST_FILE_NAME, TEST_BFD_BUCKET_NAME, TEST_ENDPOINT));
     }
 
 }
