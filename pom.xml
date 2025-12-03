@@ -32,7 +32,7 @@
         <mockito.core.version>5.16.1</mockito.core.version>
         <okhttp3.version>5.0.0</okhttp3.version>
         <checkstyle.config>${project.root}/src/main/resources/checkstyle.xml</checkstyle.config>
-        <logback-encoder.version>7.4</logback-encoder.version>
+        <logback-encoder.version>9.0</logback-encoder.version>
         <testcontainers.version>1.20.6</testcontainers.version>
         <newrelic.version>8.22.0</newrelic.version>
         <spring-cloud-aws.version>3.4.0</spring-cloud-aws.version>
