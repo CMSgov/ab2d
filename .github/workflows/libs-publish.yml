@@ -50,9 +50,9 @@ jobs:
         uses: cmsgov/cdap/actions/aws-params-env-action@main
         with:
           params: |
-            ARTIFACTORY_URL=/artifactory/url
-            ARTIFACTORY_USER=/artifactory/user
-            ARTIFACTORY_PASSWORD=/artifactory/password
+            ARTIFACTORY_URL=/cdap/nonsensitive/artifactory/url
+            ARTIFACTORY_USER=/cdap/nonsensitive/artifactory/user
+            ARTIFACTORY_PASSWORD=/cdap/sensitive/artifactory/password
 
       - name: Generate SBOM
         run: ./gradlew cyclonedxBom

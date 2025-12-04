@@ -35,10 +35,10 @@ jobs:
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:
           params: |
-            ARTIFACTORY_URL=/artifactory/url
-            ARTIFACTORY_USER=/artifactory/user
-            ARTIFACTORY_PASSWORD=/artifactory/password
-            SONAR_HOST_URL=/sonarqube/url
-            SONAR_TOKEN=/sonarqube/token
+            ARTIFACTORY_URL=/cdap/nonsensitive/artifactory/url
+            ARTIFACTORY_USER=/cdap/nonsensitive/artifactory/user
+            ARTIFACTORY_PASSWORD=/cdap/sensitive/artifactory/password
+            SONAR_HOST_URL=/cdap/nonsensitive/sonarqube/url
+            SONAR_TOKEN=/cdap/sensitive/sonarqube/token
       - name: Run unit tests for opt-out-import lambda
         run: ../gradlew test
