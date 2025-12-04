@@ -16,7 +16,6 @@ locals {
   ecr_container_repositories = toset([
     "ab2d-api",
     "ab2d-worker",
-    "ab2d-properties",
     "ab2d-contracts",
     "ab2d-events"
   ])
@@ -61,4 +60,3 @@ resource "aws_ecr_repository" "this" {
     scan_on_push = false
   }
 }
-
