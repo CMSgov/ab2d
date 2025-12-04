@@ -127,7 +127,7 @@ public class JobPreProcessorImpl implements JobPreProcessor {
         }
 
         try {
-            if (!coverageDriver.isCoverageAvailable(job, contract)) {
+            if (!isCoverageAvailable(job, contract)) {
                 log.info("coverage metadata is not up to date so job will not be started");
                 return job;
             }
@@ -152,6 +152,14 @@ public class JobPreProcessorImpl implements JobPreProcessor {
         }
 
         return job;
+    }
+
+    private boolean isCoverageAvailable(Job job, ContractDTO contract) throws InterruptedException {
+        if (job.isV3Job()) {
+            // TODO Update
+            return false;
+        }
+        return coverageDriver.isCoverageAvailable(job, contract);
     }
 
     String getStatusString(Job job) {

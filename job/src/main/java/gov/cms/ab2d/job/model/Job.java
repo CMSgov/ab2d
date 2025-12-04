@@ -126,4 +126,8 @@ public class Job {
     public FileEvent buildFileEvent(File file, FileEvent.FileStatus status) {
         return new FileEvent(organization, jobUuid, file, status);
     }
+
+    public boolean isV3Job() {
+        return (requestUrl != null && requestUrl.contains("/v3")) || jobUuid.startsWith("33333333");
+    }
 }

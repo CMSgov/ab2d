@@ -146,6 +146,7 @@ public class ContractProcessorImpl implements ContractProcessor {
             // Create the aggregator thread
             Future<Integer> aggregatorFuture = aggregatorThreadPool.submit(aggregator);
 
+            /*** V3 CONDITIONAL LOGIC START **/
             ContractData contractData = new ContractData(contract, job);
 
             contractData.addAggregatorHandle(aggregatorFuture);
@@ -155,6 +156,8 @@ public class ContractProcessorImpl implements ContractProcessor {
             // Wait for remaining work to finish before cleaning up after the job
             // This should be at most eobJobPatientQueueMaxSize requests
             processRemainingRequests(contractData);
+
+            /*** V3 CONDITIONAL LOGIC END **/
 
             log.info("Finished writing {} EOBs for contract {}",
                     jobProgressService.getStatus(job.getJobUuid()).getEobsProcessedCount(), contractNumber);
