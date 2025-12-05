@@ -25,6 +25,7 @@ class FhirVersionTest {
   void testSupportDefaultSince() {
     assertFalse(FhirVersion.STU3.supportDefaultSince());
     assertTrue(FhirVersion.R4.supportDefaultSince());
+    assertTrue(FhirVersion.R4v3.supportDefaultSince());
   }
 
   @Test
@@ -63,8 +64,10 @@ class FhirVersionTest {
     String url1 = "http://localhost:8080/v1/fhir/$export";
     String url2 = "http://localhost:8080/v2/fhir/$export";
     String url3 = "http://localhost:8080/fhir/$export";
+    String url4 = "http://localhost:8080/v3/fhir/$export";
     assertEquals(FhirVersion.STU3, FhirVersion.fromAB2DUrl(url1));
     assertEquals(FhirVersion.R4, FhirVersion.fromAB2DUrl(url2));
+    assertEquals(FhirVersion.R4v3, FhirVersion.fromAB2DUrl(url4));
     assertNull(FhirVersion.fromAB2DUrl(url3));
   }
 
@@ -78,6 +81,10 @@ class FhirVersionTest {
       "/v2/",
       FhirVersion.R4.getBfdVersionString()
     );
+    assertEquals(
+            "/v3/",
+            FhirVersion.R4v3.getBfdVersionString()
+    );
   }
 
   @Test
@@ -89,6 +96,10 @@ class FhirVersionTest {
     assertEquals(
       "org.hl7.fhir.r4.model.Patient",
       FhirVersion.R4.getClassName("Patient")
+    );
+    assertEquals(
+            "org.hl7.fhir.r4.model.Patient",
+            FhirVersion.R4v3.getClassName("Patient")
     );
 
     // Set classLocation to null to test the null handling code path
@@ -108,6 +119,10 @@ class FhirVersionTest {
       org.hl7.fhir.r4.model.Patient.class,
       FhirVersion.R4.getClassFromName("Patient")
     );
+    assertEquals(
+            org.hl7.fhir.r4.model.Patient.class,
+            FhirVersion.R4v3.getClassFromName("Patient")
+    );
 
     assertDoesNotThrow(() -> {
       FhirVersion.R4.getClassFromName("doesNotExist");
@@ -123,6 +138,7 @@ class FhirVersionTest {
   void testGetBundleClass() {
     assertEquals(org.hl7.fhir.dstu3.model.Bundle.class, FhirVersion.STU3.getBundleClass());
     assertEquals(org.hl7.fhir.r4.model.Bundle.class, FhirVersion.R4.getBundleClass());
+    assertEquals(org.hl7.fhir.r4.model.Bundle.class, FhirVersion.R4v3.getBundleClass());
 
     // Set classLocation to null to test the null handling code path
     String classLocation = (String) ReflectionTestUtils.getField(FhirVersion.R4, "classLocation");
@@ -197,5 +213,6 @@ class FhirVersionTest {
   void testGetPatientEnum() {
     assertEquals(org.hl7.fhir.dstu3.model.ResourceType.Patient, FhirVersion.STU3.getPatientEnum());
     assertEquals(org.hl7.fhir.r4.model.ResourceType.Patient, FhirVersion.R4.getPatientEnum());
+    assertEquals(org.hl7.fhir.r4.model.ResourceType.Patient, FhirVersion.R4v3.getPatientEnum());
   }
 }
