@@ -40,9 +40,3 @@ data "aws_ecr_image" "events" {
   image_tag       = var.events_service_image_tag
   most_recent     = var.events_service_image_tag == null ? true : null
 }
-
-data "aws_ecr_image" "properties" {
-  repository_name = "ab2d-properties"
-  image_tag       = var.properties_service_image_tag
-  most_recent     = var.properties_service_image_tag == null ? true : null
-}
