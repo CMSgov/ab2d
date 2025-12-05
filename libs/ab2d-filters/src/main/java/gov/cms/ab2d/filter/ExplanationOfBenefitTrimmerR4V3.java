@@ -5,6 +5,7 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -195,7 +196,17 @@ public class ExplanationOfBenefitTrimmerR4V3 {
         copy.setFacility(benefit.getFacility().copy());
 
         List<ExplanationOfBenefit.CareTeamComponent> newCars = new ArrayList<>();
-        benefit.getCareTeam().forEach(c -> newCars.add(c.copy()));
+
+        newCars.addAll(getCareTeamIdentifier(benefit, Optional.of(NPI_SYSTEM), Optional.empty(), "attending"));
+        newCars.addAll(getCareTeamIdentifier(benefit, Optional.of(NPI_SYSTEM), Optional.empty(), "referring"));
+        newCars.addAll(getCareTeamIdentifier(benefit, Optional.of(NPI_SYSTEM), Optional.empty(),"operating"));
+        newCars.addAll(getCareTeamIdentifier(benefit, Optional.of(NPI_SYSTEM), Optional.empty(),"otheroperating"));
+        newCars.addAll(getCareTeamIdentifier(benefit, Optional.of(NPI_SYSTEM), Optional.empty(),"rendering"));
+        newCars.addAll(getCareTeamIdentifier(benefit, Optional.empty(), Optional.of(EXT_RENDERING_PARTICIPATING_URL), "rendering"));
+        newCars.addAll(getCareTeamIdentifier(benefit, Optional.empty(), Optional.of(EXT_PROVIDER_TYPE_URL), "rendering"));
+
+
+        //   benefit.getCareTeam().forEach(c -> newCars.add(c.copy()));
         copy.setCareTeam(newCars);
 
         List<ExplanationOfBenefit.DiagnosisComponent> newDiagnosis = new ArrayList<>();
@@ -304,233 +315,92 @@ public class ExplanationOfBenefitTrimmerR4V3 {
         return result;
     }
 
-    /**
-     * Build a new careTeam list for v3 using contained Practitioner resources:
-     * <p>
-     * - referring:  contained(id = careTeam.referring.provider ref).identifier[us-npi].value
-     * - operating:  same as referring (NPI)
-     * - otheroperating: same as referring (NPI)
-     * - rendering:
-     * * identifier[us-npi].value
-     * * extension[CLM-PRVDR-TYPE-CD].coding.code
-     * * extension[CLM-RNDRG-PRVDR-PRTCPTG-CD].coding.code
-     */
-    static List<ExplanationOfBenefit.CareTeamComponent> buildNewCareTeams(ExplanationOfBenefit eob) {
+    public static List<ExplanationOfBenefit.CareTeamComponent> getCareTeamIdentifier(
+            ExplanationOfBenefit eob,
+            Optional<String> system,
+            Optional<String> url,
+            String roleCode
+    ) {
         List<ExplanationOfBenefit.CareTeamComponent> result = new ArrayList<>();
 
-        List<ExplanationOfBenefit.CareTeamComponent> srcCareTeam = eob.getCareTeam();
-        int size = srcCareTeam != null ? srcCareTeam.size() : 0;
+        for (ExplanationOfBenefit.CareTeamComponent ct : eob.getCareTeam()) {
+            // Filter by role code ("attending", etc.)
+            boolean matchesRole = ct.getRole() != null &&
+                    ct.getRole().getCoding().stream()
+                            .anyMatch(c -> roleCode.equalsIgnoreCase(c.getCode()));
 
-        for (int i = 0; i < size; i++) {
-            ExplanationOfBenefit.CareTeamComponent src = srcCareTeam.get(i);
-
-            String roleCode = getRoleCode(src.getRole());
-            String practitionerId = getPractitionerIdFromProviderRef(src.getProvider());
-            Practitioner practitioner = findContainedPractitioner(eob, practitionerId);
-
-            Identifier npiIdentifier = findNpiIdentifier(practitioner);
-            String providerTypeCode = findExtensionCode(practitioner, EXT_PROVIDER_TYPE_URL);
-            String renderingParticipatingCode = findExtensionCode(practitioner, EXT_RENDERING_PARTICIPATING_URL);
-
-            boolean shouldAdd = false;
-            ExplanationOfBenefit.CareTeamComponent newComponent = null;
-
-            // referring
-            if ("referring".equals(roleCode)) {
-                if (npiIdentifier != null) {
-                    newComponent = makeBaseCareTeamComponent(src, npiIdentifier);
-                    shouldAdd = true;
-                }
+            if (!matchesRole || !ct.hasProvider() || !ct.getProvider().hasReference()) {
+                continue;
             }
 
-            // operating / otheroperating
-            if (!shouldAdd && "operating".equals(roleCode)) {
-                if (npiIdentifier != null) {
-                    newComponent = makeBaseCareTeamComponent(src, npiIdentifier);
-                    shouldAdd = true;
-                }
+            // provider reference like "#pract-abc" → remove '#'
+            String ref = ct.getProvider().getReference();
+            String containedId = ref.startsWith("#") ? ref.substring(1) : ref;
+
+            // Find contained resource with that id
+            Optional<Resource> containedOpt = eob.getContained().stream()
+                    .filter(r -> containedId.equals(r.getIdPart()))
+                    .findFirst();
+
+            if (containedOpt.isEmpty()) {
+                continue;
             }
 
-            if (!shouldAdd && "otheroperating".equals(roleCode)) {
-                if (npiIdentifier != null) {
-                    newComponent = makeBaseCareTeamComponent(src, npiIdentifier);
-                    shouldAdd = true;
-                }
-            }
+            Resource contained = containedOpt.get();
 
-            // rendering
-            if (!shouldAdd && "rendering".equals(roleCode)) {
-                boolean hasAnyRenderingData =
-                        npiIdentifier != null ||
-                                providerTypeCode != null ||
-                                renderingParticipatingCode != null;
+            // Extract identifiers from contained Practitioner/Organization
+            List<Identifier> identifiers = extractIdentifiers(contained);
 
-                if (hasAnyRenderingData) {
-                    newComponent = makeBaseCareTeamComponent(src, npiIdentifier);
+            // Check identifier system (if system filter is present)
+            boolean matchesSystem = system.map(s ->
+                    identifiers.stream().anyMatch(id -> s.equals(id.getSystem()))
+            ).orElse(false);
 
-                    // Map provider type code as an extension on the careTeam (you can move it elsewhere if needed)
-                    if (providerTypeCode != null) {
-                        Extension providerTypeExt = new Extension(
-                                EXT_PROVIDER_TYPE_URL,
-                                new CodeType(providerTypeCode)
-                        );
-                        newComponent.addExtension(providerTypeExt);
-                    }
+            // Check extensions by URL (if url filter is present)
+            boolean matchesExtensionUrl = url
+                    .map(u -> {
+                        if (!(contained instanceof DomainResource dr)) {
+                            return false;
+                        }
+                        return dr.getExtension().stream()
+                                .anyMatch(ext -> u.equals(ext.getUrl()) && extensionHasCodingCode(ext));
+                    })
+                    .orElse(false);
 
-                    // Map rendering participating code as extension
-                    if (renderingParticipatingCode != null) {
-                        Extension renderingPartExt = new Extension(
-                                EXT_RENDERING_PARTICIPATING_URL,
-                                new CodeType(renderingParticipatingCode)
-                        );
-                        newComponent.addExtension(renderingPartExt);
-                    }
-
-                    shouldAdd = true;
-                }
-            }
-
-            if (shouldAdd && newComponent != null) {
-                result.add(newComponent);
-            }
-        }
-
-        return result;
-    }
-
-    /**
-     * Extract role code from careTeam.role where system = C4BBClaimCareTeamRole.
-     */
-    private static String getRoleCode(CodeableConcept role) {
-        if (role == null) {
-            return null;
-        }
-        List<Coding> codings = role.getCoding();
-        int size = codings != null ? codings.size() : 0;
-
-        String code = null;
-        for (int i = 0; i < size; i++) {
-            Coding c = codings.get(i);
-            boolean correctSystem = CARETEAM_ROLE_SYSTEM.equals(c.getSystem());
-            if (correctSystem && c.getCode() != null) {
-                code = c.getCode();
-                i = size; // stop loop without continue
-            }
-        }
-        return code;
-    }
-
-    /**
-     * From provider.reference like "#careteam-provider-3" → "careteam-provider-3".
-     */
-    private static String getPractitionerIdFromProviderRef(Reference providerRef) {
-        if (providerRef == null) {
-            return null;
-        }
-        String ref = providerRef.getReference();
-        if (ref == null) {
-            return null;
-        }
-        String id = null;
-        if (ref.startsWith("#") && ref.length() > 1) {
-            id = ref.substring(1);
-        }
-        return id;
-    }
-
-    /**
-     * Find contained Practitioner with matching id.
-     */
-    private static Practitioner findContainedPractitioner(ExplanationOfBenefit eob, String id) {
-        if (id == null) {
-            return null;
-        }
-        List<Resource> contained = eob.getContained();
-        if (contained == null) {
-            return null;
-        }
-
-        Practitioner result = null;
-        int size = contained.size();
-        for (int i = 0; i < size; i++) {
-            Resource r = contained.get(i);
-            if (r instanceof Practitioner && id.equals(r.getId())) {
-                result = (Practitioner) r;
-                i = size; // stop
+            // Add careTeam if it matches either identifier system or extension url
+            if (matchesSystem || matchesExtensionUrl) {
+                result.add(ct);
             }
         }
         return result;
     }
 
-    /**
-     * Practitioner.identifier.where(system = us-npi).first()
-     */
-    private static Identifier findNpiIdentifier(Practitioner practitioner) {
-        if (practitioner == null) {
-            return null;
-        }
-        List<Identifier> identifiers = practitioner.getIdentifier();
-        if (identifiers == null) {
-            return null;
-        }
 
-        Identifier result = null;
-        int size = identifiers.size();
-        for (int i = 0; i < size; i++) {
-            Identifier id = identifiers.get(i);
-            if (NPI_SYSTEM.equals(id.getSystem())) {
-                result = id;
-                i = size; // stop
-            }
+    private static List<Identifier> extractIdentifiers(Resource resource) {
+        if (resource instanceof Practitioner p) {
+            return p.getIdentifier();
         }
-        return result;
+        if (resource instanceof Organization o) {
+            return o.getIdentifier();
+        }
+        return Collections.emptyList();
     }
 
     /**
-     * Practitioner.extension.where(url=...).coding.code
-     * (takes the first Coding.code on the value if it's a Coding)
+     * True if extension.value is a CodeableConcept with at least one Coding.code.
+     * This corresponds to the tail of the FHIRPath:
+     * ...extension.where(url='...').coding.code
      */
-    private static String findExtensionCode(Practitioner practitioner, String url) {
-        if (practitioner == null || url == null) {
-            return null;
+    private static boolean extensionHasCodingCode(Extension ext) {
+        if (!(ext.getValue() instanceof CodeableConcept cc)) {
+            return false;
         }
-        List<Extension> extensions = practitioner.getExtension();
-        if (extensions == null) {
-            return null;
-        }
-
-        String result = null;
-        int size = extensions.size();
-        for (int i = 0; i < size; i++) {
-            Extension ext = extensions.get(i);
-            boolean urlMatches = url.equals(ext.getUrl());
-            if (urlMatches && ext.getValue() instanceof Coding) {
-                Coding coding = (Coding) ext.getValue();
-                result = coding.getCode();
-                i = size; // stop
+        for (Coding coding : cc.getCoding()) {
+            if (coding.hasCode()) {
+                return true;
             }
         }
-        return result;
-    }
-
-    private static ExplanationOfBenefit.CareTeamComponent makeBaseCareTeamComponent(
-            ExplanationOfBenefit.CareTeamComponent source,
-            Identifier npiIdentifier
-    ) {
-        ExplanationOfBenefit.CareTeamComponent target = source.copy();
-
-        if (npiIdentifier != null) {
-            Reference providerRef = target.getProvider();
-            if (providerRef == null) {
-                providerRef = new Reference();
-                target.setProvider(providerRef);
-            }
-
-            // copy the whole Identifier (type, period, assigner, etc.)
-            providerRef.setIdentifier(npiIdentifier.copy());
-        }
-
-        return target;
+        return false;
     }
 
 
