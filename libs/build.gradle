@@ -22,8 +22,8 @@ ext {
             : System.getenv()['ARTIFACTORY_PASSWORD']
 
     // AB2D libraries
-    fhirVersion='2.4.2'
-    bfdVersion='4.2.3'
+    fhirVersion='2.5.2'
+    bfdVersion='4.3.3'
     aggregatorVersion='2.1.3'
     filtersVersion='2.3.2'
     eventClientVersion='3.3.9'
