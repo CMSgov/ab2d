@@ -32,7 +32,7 @@ locals {
     contracts     = "/ab2d/mgmt/pdps/nonsensitive/contracts-csv"
     cidrs         = "/ab2d/mgmt/pdps/sensitive/cidr-blocks-csv"
     accounts      = "/ab2d/mgmt/aws-account-numbers"
-    mgmt_ipv4     = "/cdap/mgmt/public_nat_ipv4"
+    mgmt_ipv4     = "/cdap/sensitive/mgmt/public_nat_ipv4"
     splunk        = "/ab2d/mgmt/splunk"
   }
 

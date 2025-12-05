@@ -9,8 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 
-import static gov.cms.ab2d.fhir.FhirVersion.R4;
-import static gov.cms.ab2d.fhir.FhirVersion.STU3;
+import static gov.cms.ab2d.fhir.FhirVersion.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class VersionsTest {
@@ -57,14 +56,18 @@ class VersionsTest {
 
     @Test
     void executeInstantiateEnum() {
-        Object obj = Versions.instantiateEnum(R4, "OperationOutcome", "IssueSeverity", "ERROR");
-        assertEquals(org.hl7.fhir.r4.model.OperationOutcome.IssueSeverity.ERROR, obj);
+        Object obj1 = Versions.instantiateEnum(R4, "OperationOutcome", "IssueSeverity", "ERROR");
+        assertEquals(org.hl7.fhir.r4.model.OperationOutcome.IssueSeverity.ERROR, obj1);
+        Object obj2 = Versions.instantiateEnum(R4v3, "OperationOutcome", "IssueSeverity", "ERROR");
+        assertEquals(org.hl7.fhir.r4.model.OperationOutcome.IssueSeverity.ERROR, obj2);
     }
 
     @Test
     void executeSubObject() {
-        Object obj = Versions.instantiateClass(R4, "OperationOutcome", "OperationOutcomeIssueComponent");
-        assertEquals(org.hl7.fhir.r4.model.OperationOutcome.OperationOutcomeIssueComponent.class, obj.getClass());
+        Object obj1 = Versions.instantiateClass(R4, "OperationOutcome", "OperationOutcomeIssueComponent");
+        assertEquals(org.hl7.fhir.r4.model.OperationOutcome.OperationOutcomeIssueComponent.class, obj1.getClass());
+        Object obj2 = Versions.instantiateClass(R4v3, "OperationOutcome", "OperationOutcomeIssueComponent");
+        assertEquals(org.hl7.fhir.r4.model.OperationOutcome.OperationOutcomeIssueComponent.class, obj2.getClass());
     }
 
     @Test
