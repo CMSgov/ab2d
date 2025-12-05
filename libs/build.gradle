@@ -5,7 +5,7 @@ plugins {
     id 'java-library'
     id 'com.jfrog.artifactory' version '4.33.1' apply false
     id "org.sonarqube" version "4.2.1.3168"
-    id 'org.cyclonedx.bom' version '1.7.4'
+    id 'org.cyclonedx.bom' version '2.0.0'
 }
 
 version = "1.0"
@@ -22,14 +22,14 @@ ext {
             : System.getenv()['ARTIFACTORY_PASSWORD']
 
     // AB2D libraries
-    fhirVersion='2.4.1'
-    bfdVersion='4.2.2'
+    fhirVersion='2.5.2'
+    bfdVersion='4.3.3'
     aggregatorVersion='2.1.3'
-    filtersVersion='2.3.1'
-    eventClientVersion='3.3.7'
+    filtersVersion='2.3.2'
+    eventClientVersion='3.3.9'
     propertiesClientVersion='2.1.0'
     contractClientVersion='2.1.2'
-    snsClientVersion='1.1.4'
+    snsClientVersion='1.1.6'
 
     sourcesRepo = 'ab2d-maven-repo'
     deployerRepo = 'ab2d-main'
@@ -37,15 +37,15 @@ ext {
 
     commonsLangVersion='3.18.0'
     lombokVersion = '1.18.38'
-    springBootVersion='3.5.6'
+    springBootVersion='3.5.7'
     springCloudAwsVersion='3.4.0'
-    hapiVersion = '8.0.0'
+    hapiVersion = '8.4.0'
     newRelicVersion='8.4.0'
     testContainerVersion='1.20.6'
     mockServerVersion='5.15.0'
-    liquibaseVersion="4.31.1"
-    jacksonVersion = "2.18.3"
-    slackAPIVersion='1.30.0'
+    liquibaseVersion="5.0.0"
+    jacksonVersion = "2.20.0"
+    slackAPIVersion='1.35.0'
     hl7Version = '6.5.13'
 
     failedTests = []
@@ -132,8 +132,11 @@ subprojects {
         println("Artifactory password not set")
     }
 
-    sourceCompatibility = 17
-    targetCompatibility = 17
+    java {
+        sourceCompatibility = 17
+        targetCompatibility = 17
+    }
+
 
     group 'gov.cms.ab2d'
 
@@ -145,7 +148,6 @@ subprojects {
         implementation(platform("org.testcontainers:junit-jupiter:$testContainerVersion"))
         implementation(platform("org.testcontainers:localstack:$testContainerVersion"))
         implementation(platform(annotationProcessor("org.projectlombok:lombok:$lombokVersion")))
-        implementation(platform("org.cyclonedx:cyclonedx-gradle-plugin:1.4.0"))
     }
 
     jar {

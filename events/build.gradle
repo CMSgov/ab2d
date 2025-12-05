@@ -7,20 +7,21 @@ plugins {
     id "org.sonarqube" version "4.1.0.3113"
     id "gov.cms.ab2d.plugin" version "1.0.2"
     id 'maven-publish'
-    id 'org.cyclonedx.bom' version '1.7.4' apply true
+    id 'org.cyclonedx.bom' version '2.0.0' apply true
 }
 
 version="2.0.0"
 group = "gov.cms.ab2d"
 
 ext {
-    springBootVersion= '3.5.6'
+    springBootVersion= '3.5.7'
     springCloudAwsVersion = '3.4.0'
-    liquibaseVersion='4.31.1'
-    jacksonVersion='2.18.3'
+    liquibaseVersion='5.0.0'
+    jacksonVersion='2.20.0'
     testContainerVersion='1.20.6'
-    eventClientVersion='3.3.7'
+    eventClientVersion='3.3.9'
     lombokVersion = '1.18.38'
+    commonsLangVersion='3.18.0' // // Spring Boot's commons-lang3 version is on 3.17.0; force version upgrade; Remove this property next time Spring Boot is updated
 }
 
 allprojects {
@@ -28,7 +29,7 @@ allprojects {
     apply plugin: "org.cyclonedx.bom"
     apply plugin: 'org.springframework.boot'
     dependencies {
-        implementation "com.squareup.okhttp3:okhttp:4.12.0"
+        implementation "com.squareup.okhttp3:okhttp:5.0.0"
         implementation "org.springframework.boot:spring-boot-starter:${springBootVersion}"
         implementation "org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}"
         implementation "org.springframework.boot:spring-boot-starter-jdbc:${springBootVersion}"
@@ -37,9 +38,11 @@ allprojects {
         implementation "io.awspring.cloud:spring-cloud-aws-dependencies:${springCloudAwsVersion}"
         implementation "io.awspring.cloud:spring-cloud-aws-starter-sqs:${springCloudAwsVersion}"
         implementation "io.awspring.cloud:spring-cloud-aws-starter:${springCloudAwsVersion}"
+        implementation "org.apache.commons:commons-lang3:${commonsLangVersion}"
+
         implementation "commons-codec:commons-codec:1.18.0"
         implementation "org.liquibase:liquibase-core:${liquibaseVersion}"
-        implementation "com.amazonaws:amazon-kinesis-client:1.14.10"
+        implementation "com.amazonaws:amazon-kinesis-client:1.15.3"
         implementation "com.fasterxml.jackson.module:jackson-module-parameter-names:${jacksonVersion}"
         implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${jacksonVersion}"
         implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
@@ -53,8 +56,6 @@ allprojects {
         testImplementation "org.springframework.data:spring-data-jpa"
         testImplementation "org.liquibase:liquibase-core:${liquibaseVersion}"
         testImplementation "org.testcontainers:localstack:${testContainerVersion}"
-        compileOnly "org.cyclonedx:cyclonedx-gradle-plugin:1.4.0"
-        compileOnly 'org.cyclonedx:cyclonedx-core-java:10.2.1'
         testImplementation "org.projectlombok:lombok:${lombokVersion}"
         compileOnly "org.projectlombok:lombok:${lombokVersion}"
         implementation(platform(annotationProcessor("org.projectlombok:lombok:${lombokVersion}")))

@@ -2,6 +2,8 @@ package gov.cms.ab2d.optout;
 
 import software.amazon.awssdk.regions.Region;
 
+import java.util.regex.Pattern;
+
 public class OptOutConstants {
 
     public static final String ENDPOINT = "https://s3.amazonaws.com";
@@ -27,6 +29,24 @@ public class OptOutConstants {
         "COUNT(CASE WHEN share_data = 'true' THEN 1 END) AS optin, \n"+
         "COUNT(CASE WHEN share_data = 'false' THEN 1 END) AS optout \n"+
         "FROM current_mbi WHERE share_data IS NOT NULL";
+
+    public static final String LETTER_PATTERN = "[AC-HJKMNPQRT-Y]";
+    public static final String LETTER_OR_DIGIT_PATTERN = "[AC-HJKMNPQRT-Y0-9]";
+
+    // The full regex (case-insensitive) for MBI
+    public static final Pattern MBI_PATTERN = Pattern.compile(
+            "(?i)" +
+                    "[1-9]" +                 // 1st char
+                    LETTER_PATTERN +          // 2nd char
+                    LETTER_OR_DIGIT_PATTERN +
+                    "\\d" +
+                    LETTER_PATTERN +
+                    LETTER_OR_DIGIT_PATTERN +
+                    "\\d" +
+                    LETTER_PATTERN +
+                    LETTER_PATTERN +
+                    "\\d{2}"
+    );
 
     private OptOutConstants() {}
 }

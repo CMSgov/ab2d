@@ -15,6 +15,11 @@ class FhirBfdServerTest {
   }
 
   @Test
+  void testGetVersionV3() {
+    assertEquals(FhirVersion.R4v3, new FhirBfdServer(FhirVersion.R4v3).getVersion());
+  }
+
+  @Test
   void testGetGenericClient() {
     FhirBfdServer fhirBfdServer = new FhirBfdServer(FhirVersion.R4);
 
