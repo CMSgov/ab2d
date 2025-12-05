@@ -1,6 +1,7 @@
 package gov.cms.ab2d.worker.processor;
 
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.properties.PropertyServiceStub;
 import gov.cms.ab2d.common.service.ContractServiceStub;
 import gov.cms.ab2d.contracts.model.ContractDTO;
 import gov.cms.ab2d.contracts.model.Contract;
@@ -60,6 +61,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 
 import static gov.cms.ab2d.common.util.Constants.FHIR_NDJSON_CONTENT_TYPE;
+import static gov.cms.ab2d.common.util.PropertyConstants.V3_ON;
 import static gov.cms.ab2d.eventclient.events.ErrorEvent.ErrorType.TOO_MANY_SEARCH_ERRORS;
 import static gov.cms.ab2d.fhir.FhirVersion.STU3;
 import static gov.cms.ab2d.worker.TestUtil.getOpenRange;
@@ -161,12 +163,15 @@ class JobProcessorIntegrationTest extends JobCleanup {
     private static final AB2DLocalstackContainer localstackContainer = new AB2DLocalstackContainer();
     private static final ExplanationOfBenefit EOB = (ExplanationOfBenefit) EobTestDataUtil.createEOB();
 
+    private final PropertyServiceStub propertyServiceStub = new PropertyServiceStub();
+
     private Contract contract;
     private ContractForCoverageDTO contractForCoverageDTO;
     private RuntimeException fail;
 
     @BeforeEach
     void setUp() {
+        propertyServiceStub.createProperty(V3_ON, "false");
         MockitoAnnotations.openMocks(this);
         PdpClient pdpClient = createClient();
 
@@ -198,7 +203,7 @@ class JobProcessorIntegrationTest extends JobCleanup {
         SearchConfig searchConfig = new SearchConfig(tmpEfsMountDir.getAbsolutePath(),
                 STREAMING_DIR, FINISHED_DIR, 0, 0, MULTIPLIER, NUMBER_PATIENT_REQUESTS_PER_THREAD);
 
-        PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, sqsEventClient, searchConfig);
+        PatientClaimsProcessor patientClaimsProcessor = new PatientClaimsProcessorImpl(mockBfdClient, sqsEventClient, searchConfig, propertyServiceStub);
         ReflectionTestUtils.setField(patientClaimsProcessor, "earliestDataDate", "01/01/1900");
 
         ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();

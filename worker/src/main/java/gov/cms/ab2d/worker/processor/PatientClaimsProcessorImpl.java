@@ -5,6 +5,7 @@ import com.newrelic.api.agent.Token;
 import com.newrelic.api.agent.Trace;
 import gov.cms.ab2d.aggregator.ClaimsStream;
 import gov.cms.ab2d.bfd.client.BFDClient;
+import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.coverage.model.CoverageSummary;
 import gov.cms.ab2d.eventclient.clients.EventClient;
 import gov.cms.ab2d.eventclient.clients.SQSEventClient;
@@ -38,6 +39,7 @@ import java.util.concurrent.Future;
 import static gov.cms.ab2d.aggregator.FileOutputType.DATA;
 import static gov.cms.ab2d.aggregator.FileOutputType.ERROR;
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE_TIME;
+import static gov.cms.ab2d.common.util.PropertyConstants.V3_ON;
 
 @Slf4j
 @Component
@@ -47,6 +49,8 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     private final BFDClient bfdClient;
     private final SQSEventClient logManager;
     private final SearchConfig searchConfig;
+    private final PropertiesService propertiesService;
+
 
     @Value("${bfd.earliest.data.date:01/01/2020}")
     private String earliestDataDate;
@@ -80,11 +84,19 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
     String writeOutData(PatientClaimsRequest request, FhirVersion fhirVersion, ProgressTrackerUpdate update) throws IOException {
         File file = null;
         String anyErrors = null;
+        boolean isV3On = propertiesService.isToggleOn(V3_ON, false);
         try (ClaimsStream stream = new ClaimsStream(request.getJob(), request.getEfsMount(), DATA,
                 searchConfig.getStreamingDir(), searchConfig.getFinishedDir(), searchConfig.getBufferSize())) {
             file = stream.getFile();
             logManager.sendLogs(new FileEvent(request.getOrganization(), request.getJob(), stream.getFile(), FileEvent.FileStatus.OPEN));
+
             for (CoverageSummary patient : request.getCoverageSummary()) {
+
+                if (isV3On) {
+                    //TEMPORARY! Replace the IDs in the request with synthetic ones
+                    patient = SyntheticPatientIdCoverageSummary.getSyntheticCoverageSummary(patient);
+                }
+
                 List<IBaseResource> eobs = getEobBundleResources(request, patient);
                 anyErrors = writeOutResource(fhirVersion, update, eobs, stream);
                 update.incPatientProcessCount();
@@ -160,7 +172,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
      */
     @Trace(metricName = "EOBRequest", dispatcher = true)
     private List<IBaseResource> getEobBundleResources(PatientClaimsRequest request, CoverageSummary patient) {
-
+        boolean isV3On = propertiesService.isToggleOn(V3_ON, false);
         OffsetDateTime requestStartTime = OffsetDateTime.now();
 
         Date earliestDate = getEarliestDataDate();
@@ -181,8 +193,15 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
             // Set header for requests so BFD knows where this request originated from
             BFDClient.BFD_BULK_JOB_ID.set(request.getJob());
 
-            // Make first request and begin looping over remaining pages
-            eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patient.getIdentifiers().getBeneficiaryId(), sinceTime, untilTime, request.getContractNum());
+            if (isV3On) {
+                // ToDo: replace FhirVersion to request.getVersion() in AB2D-6943
+                log.error("V3 is on");
+                eobBundle = bfdClient.requestEOBFromServer(FhirVersion.R4v3, patient.getIdentifiers().getPatientIdV3(), sinceTime, untilTime, request.getContractNum());
+            } else {
+                log.error("V3 is off");
+                // Make first request and begin looping over remaining pages
+                eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patient.getIdentifiers().getBeneficiaryId(), sinceTime, untilTime, request.getContractNum());
+            }
             collector.filterAndAddEntries(eobBundle, patient);
 
             while (BundleUtils.getNextLink(eobBundle) != null) {

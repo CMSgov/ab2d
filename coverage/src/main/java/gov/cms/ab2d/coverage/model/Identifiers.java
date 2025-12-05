@@ -16,7 +16,14 @@ public class Identifiers {
 
     private final String currentMbi;
 
+    private final String patientIdV3;
+
     // LinkedHashSet maintains order of mbis as they are added
     // we always add the current mbi first
     private final LinkedHashSet<String> historicMbis;
+
+    public Identifiers(long beneficiaryId, String currentMbi, LinkedHashSet<String> historicMbis) {
+        this(beneficiaryId, currentMbi, null, historicMbis);
+    }
+
 }
