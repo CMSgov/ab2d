@@ -105,20 +105,8 @@ public class BFDClientImpl implements BFDClient {
             exclude = { ResourceNotFoundException.class }
     )
     public IBaseBundle requestEOBFromServer(FhirVersion version, long patientID, OffsetDateTime sinceTime, OffsetDateTime untilTime, String contractNum) {
-        return requestEOBFromServer(version, String.valueOf(patientID), sinceTime, untilTime, contractNum);
-    }
-
-    @Trace
-    @SneakyThrows
-    @Override
-    @Retryable(
-            maxAttemptsExpression = "${bfd.retry.maxAttempts:3}",
-            backoff = @Backoff(delayExpression = "${bfd.retry.backoffDelay:250}", multiplier = 2),
-            exclude = { ResourceNotFoundException.class }
-    )
-    public IBaseBundle requestEOBFromServer(FhirVersion version, String patientID, OffsetDateTime sinceTime, OffsetDateTime untilTime, String contractNum) {
-        final Segment bfdSegment = NewRelic.getAgent().getTransaction().startSegment("BFD Call for patient with patient ID " + patientID +
-                " using since " + sinceTime + " and until " + untilTime);
+            final Segment bfdSegment = NewRelic.getAgent().getTransaction().startSegment("BFD Call for patient with patient ID " + patientID +
+                    " using since " + sinceTime + " and until " + untilTime);
         bfdSegment.setMetricName("RequestEOB");
 
         IBaseBundle result = bfdSearch.searchEOB(patientID, sinceTime, untilTime, pageSize, getJobId(), version, contractNum);

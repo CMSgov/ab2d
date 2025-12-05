@@ -48,10 +48,6 @@ public class BFDSearchImpl implements BFDSearch {
     @Trace
     @Override
     public IBaseBundle searchEOB(long patientId, OffsetDateTime since, OffsetDateTime until, int pageSize, String bulkJobId, FhirVersion version, String contractNum) throws IOException {
-        return searchEOB(String.valueOf(patientId),  since, until, pageSize, bulkJobId, version, contractNum);
-    }
-
-    public IBaseBundle searchEOB(String patientId, OffsetDateTime since, OffsetDateTime until, int pageSize, String bulkJobId, FhirVersion version, String contractNum) throws IOException {
         String urlLocation = bfdClientVersions.getUrl(version);
         StringBuilder url = new StringBuilder(urlLocation + "ExplanationOfBenefit?patient=" + patientId + "&excludeSAMHSA=true");
 
@@ -92,7 +88,7 @@ public class BFDSearchImpl implements BFDSearch {
      * Method exists to track connection to BFD for New Relic
      */
     @Trace
-    private byte[] getEOBSFromBFD(String patientId, HttpGet request) throws IOException {
+    private byte[] getEOBSFromBFD(long patientId, HttpGet request) throws IOException {
         byte[] responseBytes;
         try (CloseableHttpResponse response = (CloseableHttpResponse) httpClient.execute(request)) {
             int status = response.getStatusLine().getStatusCode();
