@@ -32,7 +32,7 @@ locals {
     contracts     = "/ab2d/mgmt/pdps/nonsensitive/contracts-csv"
     cidrs         = "/ab2d/mgmt/pdps/sensitive/cidr-blocks-csv"
     accounts      = "/ab2d/mgmt/aws-account-numbers"
-    mgmt_ipv4     = "/cdap/mgmt/public_nat_ipv4"
+    mgmt_ipv4     = "/cdap/sensitive/mgmt/public_nat_ipv4"
     splunk        = "/ab2d/mgmt/splunk"
   }
 
@@ -223,7 +223,7 @@ module "cluster" {
 }
 
 module "service" {
-  source          = "github.com/CMSgov/cdap//terraform/modules/service?ref=86e705b7a0d81ee1f481948678092ed47ba32741"
+  source          = "github.com/CMSgov/cdap//terraform/modules/service?ref=5f8a3f518faa00de1231c52c433c0867388e5b4e"
   platform        = module.platform
   cluster_arn     = module.cluster.this.arn
   image           = local.api_image_uri
@@ -249,7 +249,6 @@ module "service" {
     { name = "AWS_SQS_URL", value = data.aws_sqs_queue.events.url }, #FIXME: Is this even used?
     { name = "NEW_RELIC_APP_NAME", value = local.new_relic_app_name },
     { name = "MICROSERVICES_URL", value = local.microservices_url },
-    { name = "PROPERTIES_SERVICE_URL", value = local.microservices_url },
   ]
   container_secrets = [
     { name = "AB2D_DB_DATABASE", valueFrom = local.db_name_arn },
