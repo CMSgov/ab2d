@@ -135,9 +135,10 @@ public class ExplanationOfBenefitTrimmerR4V3 {
     public static final String C4BB_SUPPORTING_INFO_TYPE_SYSTEM = "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBSupportingInfoType";
     public static final String MS_DRG_SYSTEM = "https://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/AcuteInpatientPPS/MS-DRG-Classifications-and-Software";
 
-    private static final String CARETEAM_ROLE_SYSTEM = "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimCareTeamRole";
+// 7    private static final String CARETEAM_ROLE_SYSTEM = "http://hl7.org/fhir/us/carin-bb/CodeSystem/C4BBClaimCareTeamRole";
 
     private static final String NPI_SYSTEM = "http://hl7.org/fhir/sid/us-npi";
+    private static final List<String> roleCodes = List.of("attending", "referring", "operating", "otheroperating", "rendering");
 
     private static final String EXT_PROVIDER_TYPE_URL = "https://bluebutton.cms.gov/fhir/StructureDefinition/CLM-PRVDR-TYPE-CD";
 
@@ -187,26 +188,19 @@ public class ExplanationOfBenefitTrimmerR4V3 {
 
 //40        List<Extension> extensions = new ArrayList<>(benefit.getExtensionsByUrl(NL_RECORD_IDENTIFICATION));
 //        copy.setExtension(extensions);
-        copy.setSupportingInfo(getSupportingInfo(benefit.getSupportingInfo(), NL_RECORD_IDENTIFICATION));
-        //13       copy.setSupportingInfo(getSupportingInfo(benefit.getSupportingInfo(), RELATED_DIAGNOSIS_GROUP));
-        copy.setSupportingInfo(getSupportingInfo(benefit.getSupportingInfo(), C4BB_SUPPORTING_INFO_TYPE_SYSTEM, MS_DRG_SYSTEM, "drg"));
 
+        List<ExplanationOfBenefit.SupportingInformationComponent> supportingInfo = new ArrayList<>();
+        supportingInfo.addAll(getSupportingInfo(benefit.getSupportingInfo(), NL_RECORD_IDENTIFICATION));
+        supportingInfo.addAll(getSupportingInfo(benefit.getSupportingInfo(), C4BB_SUPPORTING_INFO_TYPE_SYSTEM, MS_DRG_SYSTEM, "drg"));
+        copy.setSupportingInfo(supportingInfo);
         // Called out data
         copy.setPatient(benefit.getPatient().copy());
         copy.setFacility(benefit.getFacility().copy());
 
         List<ExplanationOfBenefit.CareTeamComponent> newCars = new ArrayList<>();
-
-        newCars.addAll(getCareTeamIdentifier(benefit, Optional.of(NPI_SYSTEM), Optional.empty(), "attending"));
-        newCars.addAll(getCareTeamIdentifier(benefit, Optional.of(NPI_SYSTEM), Optional.empty(), "referring"));
-        newCars.addAll(getCareTeamIdentifier(benefit, Optional.of(NPI_SYSTEM), Optional.empty(),"operating"));
-        newCars.addAll(getCareTeamIdentifier(benefit, Optional.of(NPI_SYSTEM), Optional.empty(),"otheroperating"));
-        newCars.addAll(getCareTeamIdentifier(benefit, Optional.of(NPI_SYSTEM), Optional.empty(),"rendering"));
-        newCars.addAll(getCareTeamIdentifier(benefit, Optional.empty(), Optional.of(EXT_RENDERING_PARTICIPATING_URL), "rendering"));
-        newCars.addAll(getCareTeamIdentifier(benefit, Optional.empty(), Optional.of(EXT_PROVIDER_TYPE_URL), "rendering"));
-
-
-        //   benefit.getCareTeam().forEach(c -> newCars.add(c.copy()));
+        newCars.addAll(getCareTeamIdentifier(benefit, roleCodes, NPI_SYSTEM));
+//        newCars.addAll(getCareTeamIdentifier(benefit, Optional.empty(), Optional.of(EXT_RENDERING_PARTICIPATING_URL), "rendering"));
+//        newCars.addAll(getCareTeamIdentifier(benefit, Optional.empty(), Optional.of(EXT_PROVIDER_TYPE_URL), "rendering"));
         copy.setCareTeam(newCars);
 
         List<ExplanationOfBenefit.DiagnosisComponent> newDiagnosis = new ArrayList<>();
@@ -315,27 +309,40 @@ public class ExplanationOfBenefitTrimmerR4V3 {
         return result;
     }
 
-    public static List<ExplanationOfBenefit.CareTeamComponent> getCareTeamIdentifier(
-            ExplanationOfBenefit eob,
-            Optional<String> system,
-            Optional<String> url,
-            String roleCode
-    ) {
+    public static List<ExplanationOfBenefit.CareTeamComponent> getCareTeamIdentifier(ExplanationOfBenefit eob,
+                                                         List<String> roleCodes, String identifierSystem) {
         List<ExplanationOfBenefit.CareTeamComponent> result = new ArrayList<>();
 
         for (ExplanationOfBenefit.CareTeamComponent ct : eob.getCareTeam()) {
-            // Filter by role code ("attending", etc.)
-            boolean matchesRole = ct.getRole() != null &&
-                    ct.getRole().getCoding().stream()
-                            .anyMatch(c -> roleCode.equalsIgnoreCase(c.getCode()));
-
-            if (!matchesRole || !ct.hasProvider() || !ct.getProvider().hasReference()) {
+            if (ct == null || ct.getRole() == null || !ct.hasProvider() || !ct.getProvider().hasReference()) {
                 continue;
             }
 
-            // provider reference like "#pract-abc" → remove '#'
-            String ref = ct.getProvider().getReference();
-            String containedId = ref.startsWith("#") ? ref.substring(1) : ref;
+            // role.coding where system & code match
+//            boolean matchesRole = ct.getRole().getCoding().stream()
+//                    .anyMatch(c -> roleCode.equals(c.getCode())  //only roleCode = attending
+//                       //     roleSystem.equals(c.getSystem())
+//                       //             && roleCode.equals(c.getCode())
+//                    );
+
+            boolean matchesRole = ct.getRole().getCoding().stream()
+                    .anyMatch(c ->
+                            c.hasCode() &&
+                                    roleCodes.contains(c.getCode())
+                    );
+
+            if (!matchesRole) {
+                continue;
+            }
+
+            // "#careteam-provider-3" -> "careteam-provider-3"
+            Reference providerRef = ct.getProvider();
+            String ref = providerRef.getReference();
+            String containedId = ref != null && ref.startsWith("#") ? ref.substring(1) : ref;
+
+            if (containedId == null) {
+                continue;
+            }
 
             // Find contained resource with that id
             Optional<Resource> containedOpt = eob.getContained().stream()
@@ -348,32 +355,78 @@ public class ExplanationOfBenefitTrimmerR4V3 {
 
             Resource contained = containedOpt.get();
 
-            // Extract identifiers from contained Practitioner/Organization
             List<Identifier> identifiers = extractIdentifiers(contained);
 
-            // Check identifier system (if system filter is present)
-            boolean matchesSystem = system.map(s ->
-                    identifiers.stream().anyMatch(id -> s.equals(id.getSystem()))
-            ).orElse(false);
+            // Filter by NPI system and add full Identifier objects
+            boolean hasNpi = identifiers.stream()
+                    .anyMatch(id -> identifierSystem.equals(id.getSystem()));
 
-            // Check extensions by URL (if url filter is present)
-            boolean matchesExtensionUrl = url
-                    .map(u -> {
-                        if (!(contained instanceof DomainResource dr)) {
-                            return false;
-                        }
-                        return dr.getExtension().stream()
-                                .anyMatch(ext -> u.equals(ext.getUrl()) && extensionHasCodingCode(ext));
-                    })
-                    .orElse(false);
-
-            // Add careTeam if it matches either identifier system or extension url
-            if (matchesSystem || matchesExtensionUrl) {
+            if (hasNpi) {
                 result.add(ct);
             }
         }
         return result;
     }
+
+//    public static List<ExplanationOfBenefit.CareTeamComponent> getCareTeamIdentifier(
+//            ExplanationOfBenefit eob,
+//            Optional<String> system,
+//            Optional<String> url,
+//            String roleCode
+//    ) {
+//        List<ExplanationOfBenefit.CareTeamComponent> result = new ArrayList<>();
+//
+//        for (ExplanationOfBenefit.CareTeamComponent ct : eob.getCareTeam()) {
+//            // Filter by role code ("attending", etc.)
+//            boolean matchesRole = ct.getRole() != null &&
+//                    ct.getRole().getCoding().stream()
+//                            .anyMatch(c -> roleCode.equalsIgnoreCase(c.getCode()));
+//
+//            if (!matchesRole || !ct.hasProvider() || !ct.getProvider().hasReference()) {
+//                continue;
+//            }
+//
+//            // provider reference like "#pract-abc" → remove '#'
+//            String ref = ct.getProvider().getReference();
+//            String containedId = ref.startsWith("#") ? ref.substring(1) : ref;
+//
+//            // Find contained resource with that id
+//            Optional<Resource> containedOpt = eob.getContained().stream()
+//                    .filter(r -> containedId.equals(r.getIdPart()))
+//                    .findFirst();
+//
+//            if (containedOpt.isEmpty()) {
+//                continue;
+//            }
+//
+//            Resource contained = containedOpt.get();
+//
+//            // Extract identifiers from contained Practitioner/Organization
+//            List<Identifier> identifiers = extractIdentifiers(contained);
+//
+//            // Check identifier system (if system filter is present)
+//            boolean matchesSystem = system.map(s ->
+//                    identifiers.stream().anyMatch(id -> s.equals(id.getSystem()))
+//            ).orElse(false);
+//
+//            // Check extensions by URL (if url filter is present)
+//            boolean matchesExtensionUrl = url
+//                    .map(u -> {
+//                        if (!(contained instanceof DomainResource dr)) {
+//                            return false;
+//                        }
+//                        return dr.getExtension().stream()
+//                                .anyMatch(ext -> u.equals(ext.getUrl()) && extensionHasCodingCode(ext));
+//                    })
+//                    .orElse(false);
+//
+//            // Add careTeam if it matches either identifier system or extension url
+//            if (matchesSystem || matchesExtensionUrl) {
+//                result.add(ct);
+//            }
+//        }
+//        return result;
+//    }
 
 
     private static List<Identifier> extractIdentifiers(Resource resource) {
