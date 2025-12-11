@@ -7,6 +7,7 @@ import gov.cms.ab2d.api.SpringBootApp;
 import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.api.controller.v1.CapabilityStatementSTU3;
 import gov.cms.ab2d.api.controller.v2.CapabilityStatementR4;
+import gov.cms.ab2d.api.controller.v3.CapabilityStatementR4V3;
 import gov.cms.ab2d.api.remote.JobClientMock;
 import gov.cms.ab2d.common.model.PdpClient;
 import gov.cms.ab2d.common.properties.PropertyServiceStub;
@@ -594,7 +595,7 @@ class BulkDataAccessAPIIntegrationTests {
                 CapabilityStatementR4.populateCS("https://localhost:8443" + API_PREFIX_V2 + FHIR_PREFIX)));
     }
 
-  //  @Test
+    @Test
     void testCapabilityStatementR4V3() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(
                 get("https://localhost:8443/" + API_PREFIX_V3 + FHIR_PREFIX + "/metadata").contentType(MediaType.APPLICATION_JSON)
@@ -603,7 +604,7 @@ class BulkDataAccessAPIIntegrationTests {
         String body = mvcResult.getResponse().getContentAsString();
 
         assertEquals(body, R4.getJsonParser().encodeResourceToString(
-                CapabilityStatementR4.populateCS("https://localhost:8443" + API_PREFIX_V3 + FHIR_PREFIX)));
+                CapabilityStatementR4V3.populateCS("https://localhost:8443" + API_PREFIX_V3 + FHIR_PREFIX)));
     }
 
 
