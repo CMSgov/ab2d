@@ -30,7 +30,7 @@ locals {
 
   benv = lookup({
     "dev"     = "ab2d-dev"
-    "test"    = "ab2d-east-impl"
+    "test"    = "ab2d-east-test"
     "prod"    = "ab2d-east-prod"
     "sandbox" = "ab2d-sbx-sandbox"
   }, local.parent_env, local.parent_env)
