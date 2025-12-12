@@ -4,8 +4,6 @@ import gov.cms.ab2d.fhir.FhirVersion;
 import lombok.experimental.UtilityClass;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 
-import java.util.Optional;
-
 @UtilityClass
 public class ExplanationOfBenefitTrimmer {
     /**
@@ -20,7 +18,7 @@ public class ExplanationOfBenefitTrimmer {
         }
 
         if (fhirVersion == FhirVersion.R4v3) {
-            return ExplanationOfBenefitTrimmerR4V3.getBenefit(resource);
+            return ExplanationOfBenefitTrimmerR4v3.getBenefit(resource);
         }
 
         return switch (resource.getStructureFhirVersionEnum()) {

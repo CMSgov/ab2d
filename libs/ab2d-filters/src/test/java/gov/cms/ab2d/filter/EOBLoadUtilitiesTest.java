@@ -245,14 +245,15 @@ class EOBLoadUtilitiesTest {
     @Test
     void testGetR4v3EOB() throws IOException {
 //        List<String> eobs = extractEobsFromFile(Path.of("/Users/annasmirnova/ab2d-workplace/ab2d/libs/ab2d-filters/src/test/resources/eobdata/fullBundle.json"));
-        List<String> eobs = extractEobsFromFile(Path.of("/Users/annasmirnova/ab2d-workplace/ab2d/libs/ab2d-filters/src/test/resources/eobdata/EOB-for-Inpatient-R4V3.json"));
+   //     List<String> eobs = extractEobsFromFile(Path.of("/Users/annasmirnova/ab2d-workplace/ab2d/libs/ab2d-filters/src/test/resources/eobdata/EOB-for-Inpatient-R4V3.json"));
+ //       List<String> eobs = extractEobsFromFile(Path.of("/Users/annasmirnova/ab2d-workplace/ab2d/libs/ab2d-filters/src/test/resources/eobdata/EOB-for-Carrier-R4v3.json"));
         // null tests
         assertNull(EOBLoadUtilities.getR4EOBFromFileInClassPath(""));
         assertNull(EOBLoadUtilities.getR4EOBFromFileInClassPath("does-not-exist.json"));
 
         // not null tests
         var jsonParser = FhirContext.forR4().newJsonParser();
-        org.hl7.fhir.r4.model.ExplanationOfBenefit eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-1-R4v3.json");
+        org.hl7.fhir.r4.model.ExplanationOfBenefit eob = EOBLoadUtilities.getR4EOBFromFileInClassPath("eobdata/EOB-for-HHA-R4v3.json");
         org.hl7.fhir.r4.model.ExplanationOfBenefit eobNew = (org.hl7.fhir.r4.model.ExplanationOfBenefit) ExplanationOfBenefitTrimmer.getBenefit(eob, FhirVersion.R4v3);
         String payload = jsonParser.encodeResourceToString(eobNew) + System.lineSeparator();
         assertNotNull(payload);
