@@ -91,6 +91,7 @@ public class OpenAPIConfig {
 
     /**
      * Limit to R4 aspects of the API V3
+     * NOTE: V3 is enabled in Swagger if v3.on=true on app startup
      */
     @Bean
     public Optional<GroupedOpenApi> apiV3(PropertiesService propertiesService) {
