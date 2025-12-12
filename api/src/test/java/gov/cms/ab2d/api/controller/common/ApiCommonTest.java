@@ -1,7 +1,6 @@
 package gov.cms.ab2d.api.controller.common;
 
 import gov.cms.ab2d.common.model.PdpClient;
-import gov.cms.ab2d.common.properties.PropertiesService;
 import gov.cms.ab2d.common.service.ContractService;
 import gov.cms.ab2d.common.service.InvalidClientInputException;
 import gov.cms.ab2d.common.service.InvalidContractException;
@@ -10,12 +9,7 @@ import gov.cms.ab2d.contracts.model.Contract;
 import gov.cms.ab2d.fhir.FhirVersion;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-
-import org.junit.Before;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.OffsetDateTime;
 import static gov.cms.ab2d.common.util.Constants.SINCE_EARLIEST_DATE_TIME;
@@ -24,34 +18,27 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
 class ApiCommonTest {
 
     private static final String CONTRACT_NUMBER = "X1234";
     private static final Long CONTRACT_ID = 100L;
 
-    @Mock
-    PropertiesService propertiesService;
+    final PdpClient pdpClient;
 
-    @Mock
-    ContractService contractService;
+    final ApiCommon apiCommon;
 
-    PdpClient pdpClient;
-
-    ApiCommon apiCommon;
-
-    @Before
-    public void setup() {
+    ApiCommonTest() {
         Contract contract = new Contract();
         contract.setContractNumber(CONTRACT_NUMBER);
         contract.setId(CONTRACT_ID);
         PdpClient pdpClientTmp = new PdpClient();
         pdpClientTmp.setContractId(contract.getId());
         pdpClient = pdpClientTmp;
+        ContractService contractService = mock(ContractService.class);
+        when(contractService.getContractByContractId(anyLong())).thenReturn(contract);
 
         apiCommon = buildApiCommon(contractService);
     }
-
 
     @Test
     void unattestedCheck() {
@@ -113,10 +100,10 @@ class ApiCommonTest {
         });
     }
 
-//    @Test
-//    void testV3() {
-//        apiCommon.checkValidCreateJobV3();
-//    }
+    @Test
+    void testV3() {
+        // TODO
+    }
 
     private ApiCommon buildApiCommon(ContractService contractService) {
         return new ApiCommon(null, null, null, buildPdpClientService(), contractService);
