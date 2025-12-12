@@ -16,6 +16,7 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springdoc.core.customizers.OpenApiCustomizer;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -91,6 +92,7 @@ public class OpenAPIConfig {
      * Limit to R4 aspects of the API V3
      */
     @Bean
+    @ConditionalOnProperty(name = "v3.controller.enabled", havingValue = "true")
     public GroupedOpenApi apiV3() {
         return GroupedOpenApi.builder()
                 .group("V3 - FHIR R4")
