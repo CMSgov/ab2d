@@ -42,11 +42,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 
 import static gov.cms.ab2d.api.controller.common.ApiText.APPLICATION_JSON;
-import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V1;
-import static gov.cms.ab2d.common.util.Constants.API_PREFIX_V2;
-import static gov.cms.ab2d.common.util.Constants.FHIR_PREFIX;
-import static gov.cms.ab2d.common.util.Constants.ORGANIZATION;
-import static gov.cms.ab2d.common.util.Constants.REQUEST_ID;
+import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.eventclient.events.SlackEvents.API_INVALID_CONTRACT;
 import static org.springframework.http.HttpHeaders.*;
 
@@ -192,12 +188,15 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     private void generateContentLocation(TooManyRequestsException e, HttpServletRequest request, HttpHeaders httpHeaders) {
         String contentLocationHeader = e.getJobIds().stream().map(jobId -> {
             StringBuilder uri = new StringBuilder();
-            if (request.getRequestURI().contains("/api/v2/")) {
-                uri.append(API_PREFIX_V2).append(FHIR_PREFIX).append("/Job/").append(jobId).append("/$status");
-
+            if (request.getRequestURI().contains("/api/v1/")) {
+                uri.append(API_PREFIX_V1);
+            } else if (request.getRequestURI().contains("/api/v2/")) {
+                uri.append(API_PREFIX_V2);
             } else {
-                uri.append(API_PREFIX_V1).append(FHIR_PREFIX).append("/Job/").append(jobId).append("/$status");
+                uri.append(API_PREFIX_V3);
             }
+            uri.append(FHIR_PREFIX).append("/Job/").append(jobId).append("/$status");
+
 
             return apiCommon.getUrl(uri.toString(), request);
         }).collect(Collectors.joining(", "));
