@@ -63,7 +63,6 @@ public interface CoverageDriver {
         return -1;
     }
 
-
     /**
      * Get first page worth of beneficiaries to run EOB searches on
      * @param job eob job to find first page for

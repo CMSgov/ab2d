@@ -506,6 +506,12 @@ public class CoverageDriverImpl implements CoverageDriver {
         }
     }
 
+    @Override
+    public int numberOfBeneficiariesToProcessV3(Job job, ContractDTO contractDTO) {
+        // TODO
+        return 0;
+    }
+
     /**
      * Determine number of beneficiaries enrolled in the contract which should be pulled from the database
      * and queried from BFD.
