@@ -9,12 +9,14 @@ import java.util.List;
 import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 
 /**
  * Request to BFD for a single patient's claims matching the provided parameters and requirements.
  */
 @Getter
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class PatientClaimsRequest {
 
     /**
@@ -76,4 +78,9 @@ public class PatientClaimsRequest {
      * The starting point for all job files
      */
     private final String efsMount;
+
+    @Setter
+    @Getter
+    private boolean isV3Job = false;
+
 }

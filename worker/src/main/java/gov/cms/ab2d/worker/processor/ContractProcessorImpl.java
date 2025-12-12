@@ -131,7 +131,9 @@ public class ContractProcessorImpl implements ContractProcessor {
         log.info("Beginning to process contract {}", keyValue(CONTRACT_LOG, contractNumber));
 
         ContractDTO contract = contractWorkerClient.getContractByContractNumber(contractNumber);
-        int numBenes = coverageDriver.numberOfBeneficiariesToProcess(job, contract);
+        int numBenes = job.isV3Job()
+                ? coverageDriver.numberOfBeneficiariesToProcessV3(job, contract)
+                : coverageDriver.numberOfBeneficiariesToProcess(job, contract);
         jobChannelService.sendUpdate(job.getJobUuid(), JobMeasure.PATIENTS_EXPECTED, numBenes);
         log.info("Contract [{}] has [{}] Patients", contractNumber, numBenes);
 
@@ -179,6 +181,11 @@ public class ContractProcessorImpl implements ContractProcessor {
         return jobOutputs;
     }
 
+    int numberOfBeneficiariesToProcessV3(Job job, ContractDTO contract) {
+        // TODO
+        return -1;
+    }
+
     /**
      * Look through and compress the job output files and create JobOutput objects with them
      *
@@ -214,12 +221,27 @@ public class ContractProcessorImpl implements ContractProcessor {
      * @throws InterruptedException if job is shut down during a busy wait for space in the queue
      */
     private void loadEobRequests(ContractData contractData) throws InterruptedException {
+        final boolean isV3Job = contractData.getJob().isV3Job();
         String jobUuid = contractData.getJob().getJobUuid();
         ContractDTO contract = contractData.getContract();
 
         // Handle first page of beneficiaries and then enter loop
-        CoveragePagingResult current = coverageDriver.pageCoverage(new CoveragePagingRequest(eobJobPatientQueuePageSize,
-                null, mapping.map(contract), contractData.getJob().getCreatedAt()));
+        CoveragePagingResult current;
+        if (isV3Job) {
+            current = new CoveragePagingResult(
+                new ArrayList<>(),
+                new CoveragePagingRequest(
+                        eobJobPatientQueuePageSize,
+                        null,
+                        mapping.map(contract),
+                        contractData.getJob().getCreatedAt()
+                )
+        );
+        }
+        else {
+            current = coverageDriver.pageCoverage(new CoveragePagingRequest(eobJobPatientQueuePageSize,
+                    null, mapping.map(contract), contractData.getJob().getCreatedAt()));
+        }
         loadRequestBatch(contractData, current, searchConfig.getNumberBenesPerBatch());
         jobChannelService.sendUpdate(jobUuid, JobMeasure.PATIENT_REQUEST_QUEUED, current.size());
 
@@ -346,6 +368,9 @@ public class ContractProcessorImpl implements ContractProcessor {
                     token,
                     job.getFhirVersion(),
                     searchConfig.getEfsMount());
+            if (job.isV3Job()) {
+                patientClaimsRequest.setV3Job(true);
+            }
             return patientClaimsProcessor.process(patientClaimsRequest);
 
         } finally {
