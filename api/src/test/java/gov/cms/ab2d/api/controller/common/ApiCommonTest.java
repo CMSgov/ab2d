@@ -100,6 +100,11 @@ class ApiCommonTest {
         });
     }
 
+    @Test
+    void testV3() {
+
+    }
+
     private ApiCommon buildApiCommon(ContractService contractService) {
         return new ApiCommon(null, null, null, buildPdpClientService(), contractService);
     }

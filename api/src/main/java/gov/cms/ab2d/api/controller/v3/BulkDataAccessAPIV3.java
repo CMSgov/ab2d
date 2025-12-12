@@ -2,6 +2,7 @@ package gov.cms.ab2d.api.controller.v3;
 
 import gov.cms.ab2d.api.controller.common.ApiCommon;
 import gov.cms.ab2d.api.remote.JobClient;
+import gov.cms.ab2d.api.security.EndpointNotAvailableException;
 import gov.cms.ab2d.api.util.SwaggerConstants;
 import gov.cms.ab2d.job.dto.StartJobDTO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,6 +30,7 @@ import static gov.cms.ab2d.api.util.SwaggerConstants.*;
 import static gov.cms.ab2d.common.util.Constants.*;
 import static gov.cms.ab2d.fhir.BundleUtils.EOB;
 import static gov.cms.ab2d.fhir.FhirVersion.R4;
+import static gov.cms.ab2d.fhir.FhirVersion.R4v3;
 import static org.springframework.http.HttpHeaders.CONTENT_LOCATION;
 
 /**
@@ -89,9 +91,9 @@ public class BulkDataAccessAPIV3 {
 
         StartJobDTO startJobDTO = apiCommon.checkValidCreateJob(request, null, since, until, resourceTypes,
                 outputFormat, R4);
+        apiCommon.checkValidCreateJobV3(startJobDTO.getContractNumber());
         String jobGuid = jobClient.createJob(startJobDTO);
         apiCommon.logSuccessfulJobCreation(jobGuid);
         return apiCommon.returnStatusForJobCreation(jobGuid, API_PREFIX_V3, (String) request.getAttribute(REQUEST_ID), request);
     }
 }
-
