@@ -168,7 +168,7 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
         // Aggregate claims into a single list
         PatientClaimsCollector collector = new PatientClaimsCollector(request, earliestDate);
 
-        long patientIdentifier = request.isV3Job()
+        final long patientIdentifier = request.isV3Job()
                 ? patient.getIdentifiers().getPatientIdV3()
                 : patient.getIdentifiers().getBeneficiaryId();
 
@@ -185,10 +185,10 @@ public class PatientClaimsProcessorImpl implements PatientClaimsProcessor {
 
             // Make first request and begin looping over remaining pages
             if (request.isV3Job()) {
-                eobBundle = bfdClient.requestEOBFromServer(FhirVersion.R4v3, patient.getIdentifiers().getPatientIdV3(), sinceTime, untilTime, request.getContractNum());
+                eobBundle = bfdClient.requestEOBFromServer(FhirVersion.R4v3, patientIdentifier, sinceTime, untilTime, request.getContractNum());
             }
             else {
-                eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patient.getIdentifiers().getBeneficiaryId(), sinceTime, untilTime, request.getContractNum());
+                eobBundle = bfdClient.requestEOBFromServer(request.getVersion(), patientIdentifier, sinceTime, untilTime, request.getContractNum());
 
             }
             collector.filterAndAddEntries(eobBundle, patient);
