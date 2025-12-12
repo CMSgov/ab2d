@@ -2,7 +2,6 @@ package gov.cms.ab2d.api.config;
 
 import com.fasterxml.jackson.annotation.*;
 import gov.cms.ab2d.api.controller.JobCompletedResponse;
-import gov.cms.ab2d.common.properties.PropertiesService;
 import io.swagger.v3.core.converter.ModelConverters;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -25,7 +24,6 @@ import java.util.*;
 import static gov.cms.ab2d.api.util.Constants.GENERIC_FHIR_ERR_MSG;
 import static gov.cms.ab2d.api.util.SwaggerConstants.MAIN;
 import static gov.cms.ab2d.common.util.Constants.*;
-import static gov.cms.ab2d.common.util.PropertyConstants.V3_ON;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
@@ -60,7 +58,7 @@ public class OpenAPIConfig {
     }
 
     /**
-     * Limit to STU3 aspects of the API
+     * Limit to STU3 aspects of the API V1
      */
     @Bean
     public GroupedOpenApi apiV1() {
@@ -75,7 +73,7 @@ public class OpenAPIConfig {
     }
 
     /**
-     * Limit to R4 aspects of the API
+     * Limit to R4 aspects of the API V2
      */
     @Bean
     public GroupedOpenApi apiV2() {
@@ -90,23 +88,18 @@ public class OpenAPIConfig {
     }
 
     /**
-     * Limit to R4 aspects of the API - AB2D V3
+     * Limit to R4 aspects of the API V3
      */
     @Bean
-    public Optional<GroupedOpenApi> apiV3(PropertiesService propertiesService) {
-        if ("true".equalsIgnoreCase(propertiesService.getProperty(V3_ON, "false"))) {
-
-            return Optional.of(GroupedOpenApi.builder()
-                    .group("V3 - FHIR R4")
-                    .packagesToScan("gov.cms.ab2d.api.controller")
-                    // Only match /v2/fhir calls
-                    .pathsToMatch(API_PREFIX_V3 + FHIR_PREFIX + "/**")
-                    // Customize the page with default error responses to authentication and internal errors
-                    .addOpenApiCustomizer(defaultResponseMessages())
-                    .build());
-        }
-
-        return Optional.empty();
+    public GroupedOpenApi apiV3() {
+        return GroupedOpenApi.builder()
+                .group("V3 - FHIR R4")
+                .packagesToScan("gov.cms.ab2d.api.controller")
+                // Only match /v3/fhir calls
+                .pathsToMatch(API_PREFIX_V3 + FHIR_PREFIX + "/**")
+                // Customize the page with default error responses to authentication and internal errors
+                .addOpenApiCustomizer(defaultResponseMessages())
+                .build();
     }
 
     public OpenApiCustomizer defaultResponseMessages() {
