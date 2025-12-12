@@ -506,10 +506,11 @@ public class CoverageDriverImpl implements CoverageDriver {
         }
     }
 
+    @Trace(metricName = "EnrollmentCountV3", dispatcher = true)
     @Override
     public int numberOfBeneficiariesToProcessV3(Job job, ContractDTO contractDTO) {
         // TODO
-        return 0;
+        return -1;
     }
 
     /**

@@ -167,6 +167,7 @@ public class ApiCommon {
                 getCurrentUrl(request), outputFormat, since, until, version);
     }
 
+
     protected String checkIfContractAttested(Contract contract, String contractNumber) {
         if (contractNumber == null) {
             contractNumber = contract.getContractNumber();
