@@ -60,7 +60,7 @@ public class OpenAPIConfig {
     }
 
     /**
-     * Limit to STU3 aspects of the API V1
+     * Limit to STU3 aspects of the API
      */
     @Bean
     public GroupedOpenApi apiV1() {
@@ -75,7 +75,7 @@ public class OpenAPIConfig {
     }
 
     /**
-     * Limit to R4 aspects of the API V2
+     * Limit to R4 aspects of the API
      */
     @Bean
     public GroupedOpenApi apiV2() {
@@ -90,18 +90,16 @@ public class OpenAPIConfig {
     }
 
     /**
-     * Limit to R4 aspects of the API V3
-     * NOTE: V3 is enabled in Swagger if v3.on=true on app startup
+     * Limit to R4 aspects of the API - AB2D V3
      */
     @Bean
     public Optional<GroupedOpenApi> apiV3(PropertiesService propertiesService) {
-        boolean v3Enabled = "true".equalsIgnoreCase(propertiesService.getProperty(V3_ON, "false"));
+        if ("true".equalsIgnoreCase(propertiesService.getProperty(V3_ON, "false"))) {
 
-        if (v3Enabled) {
             return Optional.of(GroupedOpenApi.builder()
                     .group("V3 - FHIR R4")
                     .packagesToScan("gov.cms.ab2d.api.controller")
-                    // Only match /v3/fhir calls
+                    // Only match /v2/fhir calls
                     .pathsToMatch(API_PREFIX_V3 + FHIR_PREFIX + "/**")
                     // Customize the page with default error responses to authentication and internal errors
                     .addOpenApiCustomizer(defaultResponseMessages())
