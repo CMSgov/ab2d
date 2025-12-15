@@ -40,12 +40,11 @@ variable "parent_env" {
   EOF
   type        = string
   nullable    = true
-  # default     = null
-  default     = "test"
-  # validation {
-  #   condition     = var.parent_env == null || one([for x in local.established_envs : x if var.parent_env == x && endswith(terraform.workspace, x)]) != null
-  #   error_message = "Invalid parent environment name."
-  # }
+  default     = null
+  validation {
+    condition     = var.parent_env == null || one([for x in local.established_envs : x if var.parent_env == x && endswith(terraform.workspace, x)]) != null
+    error_message = "Invalid parent environment name."
+  }
 }
 
 provider "aws" {
