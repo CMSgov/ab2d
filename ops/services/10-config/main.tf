@@ -19,8 +19,7 @@ module "platform" {
 
 locals {
   default_tags = module.platform.default_tags
-  # env          = terraform.workspace
-  env          = "test"
+  env          = terraform.workspace
   service      = "config"
 }
 

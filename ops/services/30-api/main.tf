@@ -12,8 +12,7 @@ module "platform" {
   providers = { aws = aws, aws.secondary = aws.secondary }
 
   app          = local.app
-  # env          = local.env
-  env          = "test"
+  env          = local.env
   root_module  = "https://github.com/CMSgov/ab2d/tree/main/ops/services/30-api"
   service      = local.service
   ssm_root_map = local.ssm_root_map
@@ -52,7 +51,7 @@ locals {
   ab2d_keystore_password_arn   = module.platform.ssm.core.keystore_password.arn
   ab2d_okta_jwt_issuer_arn     = module.platform.ssm.core.okta_jwt_issuer.arn
   alb_internal                 = false
-  alb_listener_certificate_arn = "arn:aws:acm:us-east-1:539247469933:certificate/202a4950-d20d-414e-8166-7fa7cd14c827"
+  alb_listener_certificate_arn = module.platform.is_ephemeral_env ? data.aws_acm_certificate.this[0].arn : aws_acm_certificate.this[0].arn
   alb_listener_port            = 443
   alb_listener_protocol        = "HTTPS"
   alb_ssl_policy               = "ELBSecurityPolicy-TLS13-1-2-Res-2021-06"
@@ -422,6 +421,5 @@ resource "aws_acm_certificate" "this" {
 data "aws_acm_certificate" "this" {
   count = module.platform.is_ephemeral_env ? 1 : 0
 
-  # domain = local.parent_env == "prod" ? "api.ab2d.cms.gov" : "${local.parent_env}.ab2d.cms.gov"
-  domain = "test.ab2d.cms.gov"
+  domain = local.parent_env == "prod" ? "api.ab2d.cms.gov" : "${local.parent_env}.ab2d.cms.gov"
 }
