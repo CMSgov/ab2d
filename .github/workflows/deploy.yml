@@ -79,6 +79,15 @@ jobs:
           tofu plan -var=worker_service_image_tag="$IMAGE_TAG" -out=tfplan
           tofu apply -input=false tfplan 
 
+      - name: Tofu refresh for cert - API
+        working-directory: ops/services/30-api/
+        if: ${{ env.MODULE == 'api' }}
+        run: |
+          tofu init -var=parent_env=$AB2D_ENV -reconfigure
+          tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
+          tofu plan -var=api_service_image_tag="$IMAGE_TAG" -out=tfplan
+          tofu apply -refresh-only
+
       - name: Tofu plan and apply - API
         working-directory: ops/services/30-api/
         if: ${{ env.MODULE == 'api' }}
