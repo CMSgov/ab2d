@@ -53,7 +53,6 @@ jobs:
       AWS_ACCOUNT: ${{contains(fromJSON('["dev", "test"]'), inputs.environment) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT}}
       AB2D_ENV: ${{ inputs.environment }}
       MODULE: ${{ inputs.module }}
-      IMAGE_TAG: ${{ inputs.image_tag }}
 
     steps:
       - uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
@@ -70,37 +69,10 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Tofu plan and apply - Worker
-        working-directory: ops/services/30-worker/
-        if: ${{ env.MODULE == 'worker' }}
-        run: |
-          tofu init -var=parent_env=$AB2D_ENV -reconfigure
-          tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
-          tofu plan -var=worker_service_image_tag="$IMAGE_TAG" -out=tfplan
-          tofu apply -input=false tfplan 
-
       - name: Tofu refresh for cert - API
         working-directory: ops/services/30-api/
         if: ${{ env.MODULE == 'api' }}
         run: |
           tofu init -var=parent_env=$AB2D_ENV -reconfigure
           tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
-          tofu plan -var=api_service_image_tag="$IMAGE_TAG" -out=tfplan
           tofu apply -refresh-only
-
-      - name: Tofu plan and apply - API
-        working-directory: ops/services/30-api/
-        if: ${{ env.MODULE == 'api' }}
-        run: |
-          tofu init -var=parent_env=$AB2D_ENV -reconfigure
-          tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
-          tofu plan -var=api_service_image_tag="$IMAGE_TAG" -out=tfplan
-          tofu apply -input=false tfplan
-
-      - name: Tofu plan and apply - Core
-        working-directory: ops/services/10-core/
-        if: ${{ env.MODULE == 'core' }}
-        run: |
-          tofu init -var=parent_env=$AB2D_ENV -reconfigure
-          tofu workspace select -var=parent_env=$AB2D_ENV -or-create=true $AB2D_ENV
-          tofu plan -out=tfplan
