@@ -119,37 +119,82 @@ resource "aws_security_group_rule" "efs_ingress" {
   security_group_id        = data.aws_security_group.efs.id
 }
 
+data "aws_sqs_queue" "events" {
+  name = "${local.service_prefix}-events"
+}
 
 module "cluster" {
   source   = "github.com/CMSgov/cdap//terraform/modules/cluster?ref=e06f4acfea302df22c210549effa2e91bc3eff0d"
   platform = module.platform
 }
 
-data "aws_sqs_queue" "events" {
-  name = "${local.service_prefix}-events"
-}
+module "service" {
+  source = "github.com/CMSgov/cdap//terraform/modules/service?ref=jscott/PLT-1445"
 
-resource "aws_ecs_task_definition" "worker" {
-  family                   = "${local.service_prefix}-${local.service}"
-  network_mode             = "awsvpc"
-  execution_role_arn       = data.aws_iam_role.worker.arn
-  task_role_arn            = data.aws_iam_role.worker.arn
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = local.ecs_task_def_cpu_worker
-  memory                   = local.ecs_task_def_memory_worker
+  cluster_arn                       = module.cluster.this.arn
+  cpu                               = local.ecs_task_def_cpu_worker
+  desired_count                     = local.worker_desired_instances
+  execution_role_arn                = data.aws_iam_role.worker.arn
+  force_new_deployment              = anytrue([var.force_worker_deployment, var.worker_service_image_tag != null])
+  health_check_grace_period_seconds = null
+  image                             = local.worker_image_uri
+  memory                            = local.ecs_task_def_memory_worker
+  platform                          = module.platform
+  platform_version                  = "LATEST"
+  security_groups                   = [data.aws_security_group.worker.id]
+  task_role_arn                     = data.aws_iam_role.worker.arn
 
-  volume {
-    name = "efs"
+  container_environment = [
+    { name = "AB2D_BFD_INSIGHTS", value = local.bfd_insights }, #FIXME: Is this even used?
+    { name = "AB2D_BFD_KEYSTORE_LOCATION", value = local.bfd_keystore_location },
+    { name = "AB2D_BFD_URL", value = local.bfd_url },
+    { name = "AB2D_BFD_URL_V3", value = local.bfd_url_v3 },
+    { name = "AB2D_DB_HOST", value = local.ab2d_db_host },
+    { name = "AB2D_DB_PORT", value = "5432" },
+    { name = "AB2D_DB_SSL_MODE", value = "require" },
+    { name = "AB2D_EFS_MOUNT", value = local.ab2d_efs_mount },
+    { name = "AB2D_EXECUTION_ENV", value = local.benv },
+    { name = "AB2D_JOB_POOL_CORE_SIZE", value = local.max_concurrent_eob_jobs },
+    { name = "AB2D_JOB_POOL_MAX_SIZE", value = local.max_concurrent_eob_jobs },
+    { name = "AWS_SQS_FEATURE_FLAG", value = "true" }, #FIXME: Is this even used?
+    { name = "AWS_SQS_URL", value = data.aws_sqs_queue.events.url },
+    { name = "AWS_SNS_TOPIC_PREFIX", value = "ab2d-${local.parent_env}" },
+    { name = "IMAGE_VERSION", value = local.worker_image_tag },
+    { name = "NEW_RELIC_APP_NAME", value = local.new_relic_app_name },
+    { name = "MICROSERVICES_URL", value = local.microservices_url }
+  ]
 
-    efs_volume_configuration {
-      file_system_id     = data.aws_efs_file_system.this.id
-      root_directory     = "/"
-      transit_encryption = "ENABLED"
-      authorization_config {
-        access_point_id = data.aws_efs_access_point.this.id
-      }
+  container_secrets = [
+    { name = "AB2D_BFD_KEYSTORE_PASSWORD", valueFrom = local.bfd_keystore_password_arn },
+    { name = "AB2D_DB_DATABASE", valueFrom = local.db_name_arn },
+    { name = "AB2D_DB_PASSWORD", valueFrom = local.db_password_arn },
+    { name = "AB2D_DB_USER", valueFrom = local.db_username_arn },
+    { name = "AB2D_SLACK_ALERT_WEBHOOKS", valueFrom = local.slack_alert_webhooks_arn }, #FIXME: Is this even used?
+    { name = "AB2D_SLACK_TRACE_WEBHOOKS", valueFrom = local.slack_trace_webhooks_arn }, #FIXME: Is this even used?
+    { name = "NEW_RELIC_LICENSE_KEY", valueFrom = local.new_relic_license_key_arn }     #FIXME: Is this even used?
+  ]
+
+  mount_points = [
+    {
+      containerPath = local.ab2d_efs_mount,
+      sourceVolume  = "efs"
+    },
+    {
+      "containerPath" = "/tmp",
+      "sourceVolume"  = "tmp",
+      "readOnly"      = false
+    },
+    {
+      "containerPath" = "/newrelic/logs",
+      "sourceVolume"  = "newrelic_logs",
+      "readOnly"      = false
+    },
+    {
+      "containerPath" = "/var/log",
+      "sourceVolume"  = "var_logs",
+      "readOnly"      = false
     }
-  }
+  ]
 
   container_definitions = nonsensitive(jsonencode([{
     name : local.service,
@@ -214,34 +259,26 @@ resource "aws_ecs_task_definition" "worker" {
         awslogs-create-group : "true",
         awslogs-region : local.aws_region,
         awslogs-stream-prefix : local.service_prefix
+  volumes = [
+    {
+      name = "efs"
+      efs_volume_configuration = {
+        file_system_id     = data.aws_efs_file_system.this.id
+        root_directory     = "/"
+        transit_encryption = "ENABLED"
+        authorization_config = {
+          access_point_id = data.aws_efs_access_point.this.id
+        }
       }
     },
-    healthCheck : null
-  }]))
-  volume {
-    name = "tmp"
-  }
-  volume {
-    name = "newrelic_logs"
-  }
-  volume {
-    name = "var_logs"
-  }
-}
-
-resource "aws_ecs_service" "worker" {
-  name                               = "${local.service_prefix}-${local.service}"
-  cluster                            = module.cluster.this.id
-  task_definition                    = coalesce(var.override_task_definition_arn, aws_ecs_task_definition.worker.arn)
-  launch_type                        = "FARGATE"
-  desired_count                      = local.worker_desired_instances
-  force_new_deployment               = anytrue([var.force_worker_deployment, var.worker_service_image_tag != null])
-  deployment_minimum_healthy_percent = 100
-  propagate_tags                     = "SERVICE"
-
-  network_configuration {
-    subnets          = local.writer_adjacent_subnets
-    assign_public_ip = false
-    security_groups  = [data.aws_security_group.worker.id]
-  }
+    {
+      name = "tmp"
+    },
+    {
+      name = "newrelic_logs"
+    },
+    {
+      name = "var_logs"
+    }
+  ]
 }
