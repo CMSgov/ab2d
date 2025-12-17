@@ -29,6 +29,8 @@ public final class Constants {
 
     public static final String API_PREFIX_V2 = "/api/v2";
 
+    public static final String API_PREFIX_V3 = "/api/v3";
+
     public static final String FHIR_PREFIX = "/fhir";
 
     public static final String ADMIN_PREFIX = "/admin";

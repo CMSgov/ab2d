@@ -34,6 +34,7 @@ locals {
   region_name        = module.platform.primary_region.name
   vpc_id             = module.platform.vpc_id
   splunk_alert_email = lookup(module.platform.ssm.splunk, "alert-email", { value : null }).value
+  slack_queue_env    = local.env == "test" || local.env == "dev" ? "test" : "prod"
 }
 
 resource "aws_s3_bucket" "main_bucket" {
@@ -224,6 +225,17 @@ resource "aws_sns_topic_subscription" "splunk" {
   endpoint  = local.splunk_alert_email
 }
 
+# CDAP-managed alarm-to-slack service queue
+data "aws_sqs_queue" "alarm_to_slack" {
+  name = "bcda-${local.slack_queue_env}-alarm-to-slack"
+}
+
+resource "aws_sns_topic_subscription" "slack" {
+  topic_arn = aws_sns_topic.alarms.arn
+  protocol  = "sqs"
+  endpoint  = data.aws_sqs_queue.alarm_to_slack.arn
+}
+
 resource "aws_sns_topic" "alarms" {
   name              = "${local.service_prefix}-cloudwatch-alarms"
   kms_master_key_id = local.env_key_alias.target_key_id
@@ -303,4 +315,42 @@ resource "aws_security_group" "lambda" {
   description = "Lambdas that need access to microservices security group"
   vpc_id      = local.vpc_id
   tags        = { Name = "${local.service_prefix}-microservices-lambda" }
+}
+
+resource "aws_security_group" "attribution" {
+  name        = "${local.service_prefix}-attribution"
+  description = "Attribution security group"
+  vpc_id      = local.vpc_id
+  tags        = { Name = "${local.service_prefix}-attribution" }
+}
+
+resource "aws_security_group" "idr_endpoint" {
+  count = module.platform.parent_env == "prod" ? 1 : 0
+
+  name        = "${local.service_prefix}-idr-endpoint"
+  description = "For the PrivateLink endpoint for IDR Snowflake"
+  vpc_id      = local.vpc_id
+  tags        = { Name = "${local.service_prefix}-idr-endpoint" }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "idr_endpoint_http" {
+  count = module.platform.parent_env == "prod" ? 1 : 0
+
+  security_group_id = aws_security_group.idr_endpoint[0].id
+
+  referenced_security_group_id = aws_security_group.attribution.id
+  from_port                    = 80
+  to_port                      = 80
+  ip_protocol                  = "tcp"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "idr_endpoint_https" {
+  count = module.platform.parent_env == "prod" ? 1 : 0
+
+  security_group_id = aws_security_group.idr_endpoint[0].id
+
+  referenced_security_group_id = aws_security_group.attribution.id
+  from_port                    = 443
+  to_port                      = 443
+  ip_protocol                  = "tcp"
 }
