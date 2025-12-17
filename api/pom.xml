@@ -22,7 +22,7 @@
             use a wrapper and generics to solve this issue, but it is a significant amount of
             work beyond the scope of this ticket.
         -->
-        <sonar.cpd.exclusions>**/CapabilityStatementSTU3.java</sonar.cpd.exclusions>
+        <sonar.cpd.exclusions>**/CapabilityStatementSTU3.java, **/CapabilityStatementR4V3.java, **/BulkDataAccessAPIV3.java, **/FileDownloadAPIV3.java, **/CapabilityAPIV3.java</sonar.cpd.exclusions>
     </properties>
 
     <dependencies>
@@ -88,7 +88,12 @@
         <dependency>
             <groupId>dev.akkinoc.spring.boot</groupId>
             <artifactId>logback-access-spring-boot-starter</artifactId>
-            <version>3.4.3</version>
+            <version>4.7.0</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback.access</groupId>
+            <artifactId>logback-access-tomcat</artifactId>
+            <version>2.0.7</version>
         </dependency>
 
         <dependency>

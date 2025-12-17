@@ -1,13 +1,12 @@
 module "db" {
   source = "github.com/CMSgov/cdap//terraform/modules/aurora?ref=231b7d4f1e607b61b58ec497120b6188a998ef1f"
 
-  snapshot_identifier     = var.aurora_snapshot
-  backup_retention_period = module.platform.is_ephemeral_env ? 1 : 7
-  deletion_protection     = !module.platform.is_ephemeral_env
-  monitoring_role_arn     = aws_iam_role.db_monitoring.arn
-  password                = local.database_password
-  platform                = module.platform
-  username                = local.database_user
+  snapshot_identifier = var.aurora_snapshot
+  deletion_protection = !module.platform.is_ephemeral_env
+  monitoring_role_arn = aws_iam_role.db_monitoring.arn
+  password            = local.database_password
+  platform            = module.platform
+  username            = local.database_user
 
   instance_count = lookup({
     prod = "2"

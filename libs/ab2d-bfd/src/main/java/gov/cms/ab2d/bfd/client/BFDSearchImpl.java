@@ -37,7 +37,7 @@ public class BFDSearchImpl implements BFDSearch {
      * AB2D does not report SAMHSA claims (https://www.samhsa.gov/).
      *      - excludeSAMHSA must be set to true to maintain this exclusion
      *
-     * @param patientId internal beneficiary id
+     * @param patientId internal beneficiary id (patient id in v3)
      * @param since the minimum lastUpdated date which may be null
      * @param pageSize maximum number of records that can be returned
      * @param bulkJobId header to uniquely identify what job this is coming from within BFD logs
@@ -50,6 +50,10 @@ public class BFDSearchImpl implements BFDSearch {
     public IBaseBundle searchEOB(long patientId, OffsetDateTime since, OffsetDateTime until, int pageSize, String bulkJobId, FhirVersion version, String contractNum) throws IOException {
         String urlLocation = bfdClientVersions.getUrl(version);
         StringBuilder url = new StringBuilder(urlLocation + "ExplanationOfBenefit?patient=" + patientId + "&excludeSAMHSA=true");
+
+        if (version == FhirVersion.R4v3) {
+            url.append("&_tag=Adjudicated");
+        }
 
         if (since != null) {
             url.append("&_lastUpdated=ge").append(since);
