@@ -13,7 +13,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
 class ErrorHandlerTest {
@@ -22,12 +22,42 @@ class ErrorHandlerTest {
     MockHttpServletRequest request;
     MockHttpServletResponse response;
 
+    String expected_no_job = """
+            {
+              "resourceType": "OperationOutcome",
+              "issue": [
+                {
+                  "severity": "error",
+                  "code": "invalid",
+                  "details": {
+                    "text": "No job with jobUuid 1234 was found"
+                  }
+                }
+              ]
+            }
+            """;
+
+    String expected_invalid = """
+                {
+                  "resourceType": "OperationOutcome",
+                  "issue": [
+                    {
+                      "severity": "error",
+                      "code": "invalid",
+                      "details": {
+                        "text": "The file is not present as it has expired. Please resubmit the job"
+                      }
+                    }
+                  ]
+                }
+                """;
+
     @BeforeEach
     void setup() {
         handler = new ErrorHandler(
-            mock(SQSEventClient.class),
-            -1,
-            mock(ApiCommon.class)
+                mock(SQSEventClient.class),
+                -1,
+                mock(ApiCommon.class)
         );
         request = new MockHttpServletRequest();
         response = new MockHttpServletResponse();
@@ -40,22 +70,22 @@ class ErrorHandlerTest {
 
         assertEquals(404, response.getStatus());
         assertJsonEquals(
-        """
-        {
-          "resourceType": "OperationOutcome",
-          "issue": [
-            {
-              "severity": "error",
-              "code": "invalid",
-              "details": {
-                "text": "No job with jobUuid 1234 was found"
-              }
-            }
-          ]
-        }
-        """,
-        response.getContentAsString());
+                expected_no_job,
+                response.getContentAsString());
     }
+
+  //  @Test
+    void test_download_job_not_found_v3() throws Exception {
+        request.setRequestURI("https://ab2d.cms.gov/api/v3/fhir/Job/1234/file/Z0001.json");
+        handler.generateFHIRError(new ResourceNotFoundException("No job with jobUuid 1234 was found"), request, response);
+
+        assertEquals(404, response.getStatus());
+
+        assertJsonEquals(
+                expected_no_job,
+                response.getContentAsString());
+    }
+
 
     @Test
     void test_download_file_expired() throws Exception {
@@ -63,22 +93,22 @@ class ErrorHandlerTest {
         handler.generateFHIRError(new JobOutputMissingException("The file is not present as it has expired. Please resubmit the job"), request, response);
 
         assertEquals(500, response.getStatus());
+
         assertJsonEquals(
-        """
-        {
-          "resourceType": "OperationOutcome",
-          "issue": [
-            {
-              "severity": "error",
-              "code": "invalid",
-              "details": {
-                "text": "The file is not present as it has expired. Please resubmit the job"
-              }
-            }
-          ]
-        }
-        """,
-        response.getContentAsString());
+                expected_invalid,
+                response.getContentAsString());
+    }
+
+ //   @Test
+    void test_download_file_expired_v3() throws Exception {
+        request.setRequestURI("https://ab2d.cms.gov/api/v3/fhir/Job/1234/file/Z0001.json");
+        handler.generateFHIRError(new JobOutputMissingException("The file is not present as it has expired. Please resubmit the job"), request, response);
+
+        assertEquals(500, response.getStatus());
+
+        assertJsonEquals(
+                expected_invalid,
+                response.getContentAsString());
     }
 
     /**
@@ -92,21 +122,21 @@ class ErrorHandlerTest {
 
         assertEquals(500, response.getStatus());
         assertJsonEquals(
-        """
-        {
-          "resourceType": "OperationOutcome",
-          "issue": [
-            {
-              "severity": "error",
-              "code": "invalid",
-              "details": {
-                "text": "An internal error occurred"
-              }
-            }
-          ]
-        }
-        """,
-        response.getContentAsString());
+                """
+                        {
+                          "resourceType": "OperationOutcome",
+                          "issue": [
+                            {
+                              "severity": "error",
+                              "code": "invalid",
+                              "details": {
+                                "text": "An internal error occurred"
+                              }
+                            }
+                          ]
+                        }
+                        """,
+                response.getContentAsString());
     }
 
     private void assertJsonEquals(String expected, String actual) throws Exception {
