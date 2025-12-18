@@ -56,37 +56,6 @@ public class BFDClientConfiguration {
     @Value("${bfd.http.connTTL}")
     private int connectionTTL;
 
-
-    /**
-     * Get http client alloweed to connect to BFD domain only. The domain is limited by Mutual TLS cert verification.
-     * @return the HTTP client
-     */
-    @Bean
-    public HttpClient bfdHttpClient() {
-
-        try {
-            ssmClient = getSSMClient();
-
-            File keyStoreFile = new File(keystorePath);
-            if (!keyStoreFile.exists()) {
-                URL resource = BFDClientConfiguration.class.getResource(keystorePath);
-                if (resource != null) {
-                    keyStoreFile = new File(resource.toURI());
-                }
-            }
-
-            if (!keyStoreFile.exists()) {
-                throw new BeanInstantiationException(HttpClient.class, "Keystore file does not exist");
-            }
-
-            return buildMutualTlsClient(keyStoreFile, keystorePassword.toCharArray());
-
-        } catch (URISyntaxException fnf) {
-            throw new BeanInstantiationException(HttpClient.class, "Keystore file does not exist");
-        }
-    }
-
-
     private static SsmClient getSSMClient() {
         return  SsmClient.builder()
                 .region(Region.US_EAST_1)
@@ -102,7 +71,6 @@ public class BFDClientConfiguration {
         var parameterResponse = ssmClient.getParameter(parameterRequest);
         return parameterResponse.parameter().value();
     }
-
 
     /**
      * Get http client alloweed to connect to BFD domain only. The domain is limited by Mutual TLS cert verification.
@@ -126,7 +94,10 @@ public class BFDClientConfiguration {
     }
 
     private static KeyManagerFactory getKeyManagerFactory() {
+        // Get environment
+        // Get ssm params by env
         // Build SSL Context
+        // TODO populate from SSM params by enviroment
         String privateKeyPath = "/etc/crts/client.key.pkcs8";
         String publicKeyPath = "/etc/crts/client.crt";
 
@@ -141,6 +112,8 @@ public class BFDClientConfiguration {
         byte[] encoded = Base64.getDecoder().decode(privateString);
 
         final CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
+
+        //Get certificate from ssm parameter
         final Collection<? extends Certificate> chain = certificateFactory.generateCertificates(new ByteArrayInputStream(publicData));
 
         Key key = KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(encoded));
