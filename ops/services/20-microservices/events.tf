@@ -18,101 +18,83 @@ resource "aws_sns_topic_subscription" "events" {
   endpoint  = data.aws_sqs_queue.events.arn
 }
 
-resource "aws_ecs_task_definition" "events" {
-  family             = "${local.service_prefix}-events"
-  network_mode       = "awsvpc"
-  execution_role_arn = data.aws_iam_role.task_execution_role.arn
-  task_role_arn      = data.aws_iam_role.task_execution_role.arn
+module "events_service" {
+  source = "github.com/CMSgov/cdap//terraform/modules/service?ref=jscott/PLT-1445"
 
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = 512
-  memory                   = 1024
-  container_definitions = nonsensitive(jsonencode([{
-    name : "events-service-container", #TODO: Consider simplifying this name, just use "events"
-    image : local.events_image_uri,
-    readonlyRootFilesystem = true
-    essential : true,
-    secrets : [
-      { name : "AB2D_DB_DATABASE", valueFrom : local.db_database_arn },
-      { name : "AB2D_DB_PASSWORD", valueFrom : local.db_password_arn },
-      { name : "AB2D_DB_USER", valueFrom : local.db_user_arn },
-      { name : "AB2D_KEYSTORE_LOCATION", valueFrom : local.ab2d_keystore_location_arn }, #FIXME: is this even used?
-      { name : "AB2D_KEYSTORE_PASSWORD", valueFrom : local.ab2d_keystore_password_arn }, #FIXME: is this even used?
-      { name : "AB2D_OKTA_JWT_ISSUER", valueFrom : local.ab2d_okta_jwt_issuer_arn },     #FIXME: is this even used?
-      { name : "AB2D_SLACK_ALERT_WEBHOOKS", valueFrom : local.ab2d_slack_alert_webhooks_arn },
-      { name : "AB2D_SLACK_TRACE_WEBHOOKS", valueFrom : local.ab2d_slack_trace_webhooks_arn }
-    ],
-    environment : [
-      { name : "AB2D_DB_HOST", value : local.ab2d_db_host },
-      { name : "AB2D_DB_PORT", value : "5432" },
-      { name : "AB2D_DB_SSL_MODE", value : "require" },
-      { name : "AB2D_EXECUTION_ENV", value : local.benv },
-      { name : "AWS_SQS_FEATURE_FLAG", value : "true" }, #FIXME: is this even used?
-      { name : "AWS_SQS_URL", value : local.events_sqs_url },
-      { name : "IMAGE_VERSION", value : local.events_image_tag } #FIXME: is this even used?
-    ],
-    portMappings : [
-      {
-        containerPort : 8010 #FIXME is this even necessary?
-      }
-    ],
-    logConfiguration : {
-      logDriver : "awslogs",
-      options : {
-        awslogs-group = "/aws/ecs/fargate/${local.service_prefix}/ab2d_events",
-        awslogs-create-group : "true",
-        awslogs-region : local.aws_region,
-        awslogs-stream-prefix : local.service_prefix
-      }
+  awslogs_group_override            = "ab2d_events"
+  cluster_arn                       = module.cluster.this.id
+  container_name_override           = "events-service-container"
+  cpu                               = 512
+  desired_count                     = 1
+  execution_role_arn                = data.aws_iam_role.task_execution_role.arn
+  force_new_deployment              = anytrue([var.force_events_deployment, var.events_service_image_tag != null])
+  health_check_grace_period_seconds = null
+  image                             = local.events_image_uri
+  memory                            = 1024
+  platform                          = module.platform
+  platform_version                  = "1.4.0"
+  security_groups                   = [data.aws_security_group.api.id]
+  service_name_override             = "events"
+  task_role_arn                     = data.aws_iam_role.task_execution_role.arn
+
+  container_environment = [
+    { name = "AB2D_DB_HOST", value = local.ab2d_db_host },
+    { name = "AB2D_DB_PORT", value = "5432" },
+    { name = "AB2D_DB_SSL_MODE", value = "require" },
+    { name = "AB2D_EXECUTION_ENV", value = local.benv },
+    { name = "AWS_SQS_FEATURE_FLAG", value = "true" }, #FIXME: is this even used?
+    { name = "AWS_SQS_URL", value = local.events_sqs_url },
+    { name = "IMAGE_VERSION", value = local.events_image_tag } #FIXME: is this even used?
+  ]
+
+  container_secrets = [
+    { name = "AB2D_DB_DATABASE", valueFrom = local.db_database_arn },
+    { name = "AB2D_DB_PASSWORD", valueFrom = local.db_password_arn },
+    { name = "AB2D_DB_USER", valueFrom = local.db_user_arn },
+    { name = "AB2D_KEYSTORE_LOCATION", valueFrom = local.ab2d_keystore_location_arn }, #FIXME: is this even used?
+    { name = "AB2D_KEYSTORE_PASSWORD", valueFrom = local.ab2d_keystore_password_arn }, #FIXME: is this even used?
+    { name = "AB2D_OKTA_JWT_ISSUER", valueFrom = local.ab2d_okta_jwt_issuer_arn },     #FIXME: is this even used?
+    { name = "AB2D_SLACK_ALERT_WEBHOOKS", valueFrom = local.ab2d_slack_alert_webhooks_arn },
+    { name = "AB2D_SLACK_TRACE_WEBHOOKS", valueFrom = local.ab2d_slack_trace_webhooks_arn }
+  ]
+
+  mount_points = [
+    {
+      "containerPath" = "/tmp",
+      "sourceVolume"  = "tmp",
+      "readOnly"      = false
     },
-    healthCheck : null
-    mountPoints = [
-      {
-        "containerPath" : "/tmp",
-        "sourceVolume" : "tmp",
-        "readOnly" : false
-      },
-      {
-        "containerPath" : "/newrelic/logs",
-        "sourceVolume" : "newrelic_logs",
-        "readOnly" : false
-      },
-      {
-        "containerPath" : "/var/log",
-        "sourceVolume" : "var_log",
-        "readOnly" : false
-      }
-    ]
-  }]))
-  # The NewRelic agent needs access to these
-  volume {
-    name = "tmp"
-  }
-  volume {
-    name = "newrelic_logs"
-  }
-  volume {
-    name = "var_log"
-  }
-}
+    {
+      "containerPath" = "/newrelic/logs",
+      "sourceVolume"  = "newrelic_logs",
+      "readOnly"      = false
+    },
+    {
+      "containerPath" = "/var/log",
+      "sourceVolume"  = "var_log",
+      "readOnly"      = false
+    }
+  ]
 
-resource "aws_ecs_service" "events" {
-  name                 = "${local.service_prefix}-events"
-  cluster              = module.cluster.this.id
-  task_definition      = aws_ecs_task_definition.events.arn
-  desired_count        = 1
-  launch_type          = "FARGATE"
-  platform_version     = "1.4.0"
-  force_new_deployment = anytrue([var.force_events_deployment, var.events_service_image_tag != null])
-  propagate_tags       = "SERVICE"
+  port_mappings = [
+    {
+      containerPort = 8010 #FIXME is this even necessary?
+    }
+  ]
 
-  tags = {
-    service = "events"
-  }
+  volumes = [
+    {
+      configure_at_launch = false
+      name                = "tmp"
+    },
+    {
+      configure_at_launch = false
+      name                = "newrelic_logs"
+    },
+    {
+      configure_at_launch = false
+      name                = "var_log"
+    }
 
-  network_configuration {
-    subnets          = keys(module.platform.private_subnets)
-    assign_public_ip = false
-    security_groups  = [data.aws_security_group.api.id]
-  }
+  ]
 }

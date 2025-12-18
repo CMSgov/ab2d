@@ -79,7 +79,7 @@ resource "aws_lb_listener_rule" "contracts" {
   }
 }
 
-module "service" {
+module "contracts_service" {
   source = "github.com/CMSgov/cdap//terraform/modules/service?ref=jscott/PLT-1445"
 
   awslogs_group_override            = "ab2d_contracts"
