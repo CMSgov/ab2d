@@ -189,7 +189,8 @@ resource "aws_ecs_task_definition" "worker" {
     environment : [
       { name : "AB2D_BFD_INSIGHTS", value : local.bfd_insights }, #FIXME: Is this even used?
       { name : "AB2D_BFD_KEYSTORE_LOCATION", value : local.bfd_keystore_location },
-      { name : "AB2D_SSM_BFD_KEYSTORE_PRIVATE_KEY", value : local.bfd_keystore_location },
+      { name : "AB2D_SSM_BFD_KEYSTORE_PRIVATE_KEY", value : "/ab2d/${local.env}/api/sensitive/tls_private_key" },
+      { name : "AB2D_SSM_BFD_KEYSTORE_CERTIFICATE", value : "/ab2d/${local.env}/api/nonsensitive/tls_public_cert" },
       { name : "AB2D_BFD_URL", value : local.bfd_url },
       { name : "AB2D_BFD_URL_V3", value : local.bfd_url_v3 },
       { name : "AB2D_DB_HOST", value : local.ab2d_db_host },
