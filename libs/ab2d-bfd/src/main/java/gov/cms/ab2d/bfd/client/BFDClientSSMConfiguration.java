@@ -180,7 +180,7 @@ public class BFDClientConfiguration {
 
         @Bean
         public HttpClient bfdHttpClient() {
-
+            // TODO get ssm parameter names by environment
             try {
                 KeyStore keyStore = createKeyStoreFromSsm(
                         "/app/private-key",
