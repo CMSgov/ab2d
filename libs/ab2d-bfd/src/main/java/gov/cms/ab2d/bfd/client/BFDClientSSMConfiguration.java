@@ -14,15 +14,24 @@ import org.springframework.context.annotation.PropertySource;
 import javax.net.ssl.SSLContext;
 import java.io.File;
 import java.io.IOException;
+import java.io.ByteArrayInputStream;
+import java.io.FileOutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.security.*;
+import java.security.KeyFactory;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.cert.CertificateException;
+import java.util.Base64;
 import java.util.concurrent.TimeUnit;
 
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.awssdk.services.ssm.model.GetParameterRequest;
+import software.amazon.awssdk.services.ssm.model.GetParameterResponse;
 
 /**
  * Credits: most of the code in this class has been copied over from https://github.com/CMSgov/dpc-app
@@ -62,124 +71,170 @@ public class BFDClientConfiguration {
                 .build();
     }
 
-    private static String getValueFromParameterStore(String key, SsmClient ssmClient) {
-        var parameterRequest = GetParameterRequest.builder()
-                .name(key)
-                .withDecryption(true)
-                .build();
+        /**
+         * Creates a KeyStore from private key and certificate stored in SSM Parameter Store.
+         *
+         * @param privateKeyParam SSM parameter name containing the private key
+         * @param certificateParam SSM parameter name containing the certificate
+         * @param keystorePassword Password to protect the keystore
+         * @param keyAlias Alias for the key entry in the keystore
+         * @return Configured KeyStore object
+         * @throws Exception if keystore creation fails
+         */
+        public static KeyStore createKeyStoreFromSsm(
+                String privateKeyParam,
+                String certificateParam,
+                String keystorePassword,
+                String keyAlias) throws Exception {
 
-        var parameterResponse = ssmClient.getParameter(parameterRequest);
-        return parameterResponse.parameter().value();
-    }
+            try (SsmClient ssmClient = getSSMClient()) {
 
-    /**
-     * Get http client alloweed to connect to BFD domain only. The domain is limited by Mutual TLS cert verification.
-     * Fetch mTLS material from ssm.
-     * @return the HTTP client
-     */
-    @Bean
-    public HttpClient bfdHttpClient() {
+                // Retrieve private key from SSM
+                String privateKeyData = getParameterValue(ssmClient, privateKeyParam, true);
+                PrivateKey privateKey = parsePrivateKey(privateKeyData);
 
-        KeyManagerFactory keyManagerFactory = getKeyManagerFactory();
+                // Retrieve certificate from SSM
+                String certificateData = getParameterValue(ssmClient, certificateParam, true);
+                Certificate certificate = parseCertificate(certificateData);
 
-        TrustManager[] acceptAllTrustManager = getTrustManager();
+                // Create KeyStore
+                KeyStore keyStore = KeyStore.getInstance("PKCS12");
+                keyStore.load(null, null); // Initialize empty keystore
 
-        try {
+                // Add private key and certificate chain to keystore
+                Certificate[] certChain = new Certificate[]{certificate};
+                keyStore.setKeyEntry(
+                        keyAlias,
+                        privateKey,
+                        keystorePassword.toCharArray(),
+                        certChain
+                );
 
-            return buildMutualTlsClient(keyManagerFactory, acceptAllTrustManager);
-
-        } catch (URISyntaxException fnf) {
-            throw new BeanInstantiationException(HttpClient.class, "Keystore does not exist");
-        }
-    }
-
-    private static KeyManagerFactory getKeyManagerFactory() {
-        // Get environment
-        // Get ssm params by env
-        // Build SSL Context
-        // TODO populate from SSM params by enviroment
-        String privateKeyPath = "/etc/crts/client.key.pkcs8";
-        String publicKeyPath = "/etc/crts/client.crt";
-
-        final byte[] publicData = Files.readAllBytes(Path.of(publicKeyPath));
-        final byte[] privateData = Files.readAllBytes(Path.of(privateKeyPath));
-
-        String privateString = new String(privateData, Charset.defaultCharset())
-                .replace("-----BEGIN PRIVATE KEY-----", "")
-                .replaceAll(System.lineSeparator(), "")
-                .replace("-----END PRIVATE KEY-----", "");
-
-        byte[] encoded = Base64.getDecoder().decode(privateString);
-
-        final CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
-
-        //Get certificate from ssm parameter
-        final Collection<? extends Certificate> chain = certificateFactory.generateCertificates(new ByteArrayInputStream(publicData));
-
-        Key key = KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(encoded));
-
-        KeyStore clientKeyStore = KeyStore.getInstance("jks");
-        final char[] pwdChars = "test".toCharArray();
-        clientKeyStore.load(null, null);
-        clientKeyStore.setKeyEntry("test", key, pwdChars, chain.toArray(new Certificate[0]));
-
-        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
-        keyManagerFactory.init(clientKeyStore, pwdChars);
-        return keyManagerFactory;
-    }
-
-    private static TrustManager[] getTrustManagers() {
-        TrustManager[] acceptAllTrustManager = { new X509TrustManager() {
-            public X509Certificate[] getAcceptedIssuers() {
-                return new X509Certificate[0];
+                return keyStore;
             }
-
-            public void checkClientTrusted(
-                    X509Certificate[] certs, String authType) {
-            }
-
-            public void checkServerTrusted(
-                    X509Certificate[] certs, String authType) {
-            }
-        }};
-        return acceptAllTrustManager;
-    }
-
-    /**
-     * Helper function to build a special {@link HttpClient} capable of authenticating with the
-     * Blue Button server using a client TLS certificate
-     *
-     * @param KeyManagerFactory Manaages key material based on a KeyStore.
-     * @param TrustManager[] TrustManager will accept self-signed certificates.
-     * @return {@link HttpClient} compatible with HAPI FHIR TLS client
-     */
-    private HttpClient buildMutualTlsClient(KeyManagerFactory keyManagerFactory, TrustManager[] acceptAllTrustManager) {
-        final SSLContext sslContext;
-
-        try {
-
-            SSLContext sslContext = SSLContext.getInstance("TLS");
-            sslContext.init(keyManagerFactory.getKeyManagers(), acceptAllTrustManager, new java.security.SecureRandom());
-
-        } catch (IOException | CertificateException | KeyManagementException | NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException ex) {
-            log.error(ex.getMessage());
-            throw new BeanInstantiationException(KeyStore.class, ex.getMessage());
         }
 
-        // Configure the socket timeout for the connection, incl. ssl tunneling
-        RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectTimeout(connectionTimeout)
-                .setConnectionRequestTimeout(requestTimeout)
-                .setSocketTimeout(socketTimeout)
-                .build();
+        /**
+         * Retrieves a parameter value from SSM.
+         */
+        private static String getParameterValue(SsmClient ssmClient, String parameterName, boolean withDecryption) {
+            GetParameterRequest request = GetParameterRequest.builder()
+                    .name(parameterName)
+                    .withDecryption(withDecryption)
+                    .build();
 
-        return HttpClients.custom()
-                .setMaxConnPerRoute(maxConnPerRoute)
-                .setMaxConnTotal(maxConnTotal)
-                .setConnectionTimeToLive(connectionTTL, TimeUnit.MILLISECONDS)
-                .setDefaultRequestConfig(requestConfig)
-                .setSSLContext(sslContext)
-                .build();
+            GetParameterResponse response = ssmClient.getParameter(request);
+            return response.parameter().value();
+        }
+
+        /**
+         * Parses a private key from PEM or PKCS8 format.
+         * Supports RSA, EC, and other key types.
+         */
+        private static PrivateKey parsePrivateKey(String keyData) throws Exception {
+            // Remove PEM headers and whitespace
+            String cleanedData = keyData
+                    .replaceAll("-----BEGIN PRIVATE KEY-----", "")
+                    .replaceAll("-----END PRIVATE KEY-----", "")
+                    .replaceAll("-----BEGIN RSA PRIVATE KEY-----", "")
+                    .replaceAll("-----END RSA PRIVATE KEY-----", "")
+                    .replaceAll("-----BEGIN EC PRIVATE KEY-----", "")
+                    .replaceAll("-----END EC PRIVATE KEY-----", "")
+                    .replaceAll("\\s", "");
+
+            byte[] keyBytes = Base64.getDecoder().decode(cleanedData);
+            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(keyBytes);
+
+            // Try different key algorithms
+            String[] algorithms = {"RSA", "EC", "DSA"};
+            Exception lastException = null;
+
+            for (String algorithm : algorithms) {
+                try {
+                    KeyFactory keyFactory = KeyFactory.getInstance(algorithm);
+                    return keyFactory.generatePrivate(keySpec);
+                } catch (Exception e) {
+                    lastException = e;
+                }
+            }
+
+            throw new Exception("Unable to parse private key with any supported algorithm", lastException);
+        }
+
+        /**
+         * Parses a certificate from PEM format.
+         */
+        private static Certificate parseCertificate(String certificateData) throws Exception {
+            String cleanedData = certificateData
+                    .replaceAll("-----BEGIN CERTIFICATE-----", "")
+                    .replaceAll("-----END CERTIFICATE-----", "")
+                    .replaceAll("\\s", "");
+
+            byte[] certBytes = Base64.getDecoder().decode(cleanedData);
+
+            CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(certBytes);
+
+            return certFactory.generateCertificate(inputStream);
+        }
+
+        @Bean
+        public HttpClient bfdHttpClient() {
+
+            try {
+                KeyStore keyStore = createKeyStoreFromSsm(
+                        "/app/private-key",
+                        "/app/certificate",
+                        "password123",
+                        "mykey"
+                );
+
+                if (keyStore) {
+                    throw new BeanInstantiationException(HttpClient.class, "Keystore does not exist");
+                }
+
+                return buildMutualTlsClient(keyStore, keystorePassword.toCharArray());
+            } catch (URISyntaxException fnf) {
+                throw new BeanInstantiationException(HttpClient.class, "Keystore does not exist");
+            }
+        }
+
+        /**
+         * Helper function to build a special {@link HttpClient} capable of authenticating with the
+         * Blue Button server using a client TLS certificate
+         *
+         * @param keystoreFile file containing key and trust material
+         * @param keyStorePass password for keystore (default: "changeit")
+         * @return {@link HttpClient} compatible with HAPI FHIR TLS client
+         */
+        private HttpClient buildMutualTlsClient(KeyStore keyStore, char[] keyStorePass) {
+            final SSLContext sslContext;
+
+            try {
+                // BlueButton FHIR servers have a self-signed cert and require a client cert
+                SSLContext sslContext = SSLContext.getInstance("TLS");
+                KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+                kmf.init(keyStore, keyStorePass);
+                sslContext.init(kmf.getKeyManagers(), null, null);
+            } catch (IOException | CertificateException | KeyManagementException | NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException ex) {
+                log.error(ex.getMessage());
+                throw new BeanInstantiationException(KeyStore.class, ex.getMessage());
+            }
+
+            // Configure the socket timeout for the connection, incl. ssl tunneling
+            RequestConfig requestConfig = RequestConfig.custom()
+                    .setConnectTimeout(connectionTimeout)
+                    .setConnectionRequestTimeout(requestTimeout)
+                    .setSocketTimeout(socketTimeout)
+                    .build();
+
+            return HttpClients.custom()
+                    .setMaxConnPerRoute(maxConnPerRoute)
+                    .setMaxConnTotal(maxConnTotal)
+                    .setConnectionTimeToLive(connectionTTL, TimeUnit.MILLISECONDS)
+                    .setDefaultRequestConfig(requestConfig)
+                    .setSSLContext(sslContext)
+                    .build();
+        }
+
     }
-
-}
