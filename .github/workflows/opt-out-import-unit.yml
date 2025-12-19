@@ -6,6 +6,11 @@ on:
       - .github/workflows/opt-out-import-unit.yml
       - lambdas/optout/**
   workflow_dispatch:
+    inputs:
+      environment:
+        required: true
+        default: "test"
+        type: string
 
 jobs:
   test:
@@ -15,9 +20,11 @@ jobs:
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     env:
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+      AB2D_ENV: ${{ inputs.environment }}
     defaults:
       run:
         working-directory: ./lambdas/optout
+
 
     steps:
       - name: Checkout Code
@@ -29,11 +36,11 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Assume role in target account
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Assume role in AB2D account for this environment
+        uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-test-github-actions
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.AB2D_ENV }}-github-actions
 
       - name: Set env vars from AWS params in BCDA management account
         uses: cmsgov/cdap/actions/aws-params-env-action@main
