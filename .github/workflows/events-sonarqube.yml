@@ -27,7 +27,8 @@ jobs:
           distribution: 'adopt'
           java-version: '17'
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - name: Assume role in target account
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-test-github-actions

@@ -47,6 +47,12 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Assume role in target account
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-dev-github-actions
+
       - name: Set env vars from AWS params in BCDA management account
         uses: cmsgov/cdap/actions/aws-params-env-action@main
         env:
