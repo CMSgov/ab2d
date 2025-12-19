@@ -44,8 +44,16 @@ public class BFDClientConfiguration {
     @Value("${bfd.keystore.location}")
     private String keystorePath;
 
+    @Value("${bfd.ssm.keystore.private_key}")
+    private String ssm_private_key;
+
+    @Value("${bfd.ssm.keystore.certificate}")
+    private String ssm_certificate;
+
     @Value("${bfd.keystore.password}")
     private String keystorePassword;
+
+    private String keystoreAlias = "AB2D_BFD_KEYSTORE";
 
     @Value("${bfd.connectionTimeout}")
     private int connectionTimeout;
@@ -183,10 +191,10 @@ public class BFDClientConfiguration {
             // TODO get ssm parameter names by environment
             try {
                 KeyStore keyStore = createKeyStoreFromSsm(
-                        "/app/private-key",
-                        "/app/certificate",
-                        "password123",
-                        "mykey"
+                        this.ssm_private_key,
+                        this.ssm_certificate,
+                        this.keystorePassword,
+                        this.keystoreAlias
                 );
 
                 if (keyStore) {
