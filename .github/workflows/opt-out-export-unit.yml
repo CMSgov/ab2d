@@ -6,6 +6,15 @@ on:
       - .github/workflows/opt-out-export-unit.yml
       - lambdas/attribution-data-file-share/**
   workflow_dispatch:
+    inputs:
+      environment:
+        description: AB2D environment
+        required: true
+        type: choice
+        options:
+          - test
+          - prod
+        default: test
 
 jobs:
   test:
@@ -15,6 +24,8 @@ jobs:
     runs-on: codebuild-ab2d-${{github.run_id}}-${{github.run_attempt}}
     env:
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+      AWS_ACCOUNT: ${{contains(fromJSON('["dev", "test"]'), inputs.environment) && secrets.NON_PROD_ACCOUNT || secrets.PROD_ACCOUNT}}
+      AB2D_ENV: ${{ inputs.environment }}
     defaults:
       run:
         working-directory: ./lambdas/attribution-data-file-share
@@ -28,11 +39,11 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Assume role in target account
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Assume AWS role
+        uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
         with:
           aws-region: ${{ vars.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-test-github-actions
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.AB2D_ENV }}-github-actions
 
       - name: Set env vars from AWS params in BCDA management account
         uses: cmsgov/cdap/actions/aws-params-env-action@main
