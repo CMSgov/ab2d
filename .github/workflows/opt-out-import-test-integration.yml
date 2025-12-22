@@ -43,6 +43,7 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
           # Note that we assume the lambda role
           role-to-assume: arn:aws:iam::${{ secrets.NON_PROD_ACCOUNT }}:role/delegatedadmin/developer/ab2d-test-opt-out-import-function
+
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ vars.AWS_REGION }}
