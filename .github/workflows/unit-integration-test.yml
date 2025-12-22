@@ -2,7 +2,21 @@ name: Run unit and integration tests
 
 on:
   workflow_call:
-  workflow_dispatch: # Allow manual trigger
+    inputs:
+      environment:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: AB2D environment
+        required: true
+        type: choice
+        options:
+          - test
+          - prod
+        default: test
+
 
 permissions:
   contents: read
@@ -14,6 +28,7 @@ env:
   # run the lengthier/costlier workflows when there are relevant files changed.
   # See https://github.com/orgs/community/discussions/44490 for a discussion.
   workflow_files_re: '^(api|common|coverage|e2e-bfd-test|e2e-test|job|src|worker)/.+$|^(pom.xml|settings.xml)$|^.github/workflows/(build|deploy|e2e-test|unit-integration-test|verify-deploy).yml$'
+  AB2D_ENV: ${{ inputs.environment }}
 jobs:
   workflow:
     name: Checking workflow
@@ -37,6 +52,7 @@ jobs:
     if: needs.workflow.outputs.files || github.event_name == 'push'
     env:
       ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+      AWS_REGION: "us-east-1"
 
     steps:
       - name: Checkout Code
@@ -55,7 +71,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
         with:
           aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-test-github-actions
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.AB2D_ENV }}-github-actions
 
       - name: Set env vars from AWS params
         uses: cmsgov/cdap/actions/aws-params-env-action@main
