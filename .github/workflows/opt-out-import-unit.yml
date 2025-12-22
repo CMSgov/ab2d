@@ -8,7 +8,8 @@ on:
     inputs:
       environment:
         type: string
-        default: test
+        default: "test"
+        description: "Dev,test,sandbox, or prod"
 
   workflow_dispatch:
     inputs:
@@ -45,7 +46,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
         with:
           aws-region: "us-east-1"
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-${{ env.AB2D_ENV }}-github-actions
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/delegatedadmin/developer/ab2d-test-github-actions
 
       - name: Set env vars from AWS params in BCDA management account
         uses: cmsgov/cdap/actions/aws-params-env-action@main
