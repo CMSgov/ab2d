@@ -5,12 +5,18 @@ on:
     paths:
       - .github/workflows/opt-out-import-unit.yml
       - lambdas/optout/**
+    inputs:
+      environment:
+        type: string
+        default: test
+
   workflow_dispatch:
     inputs:
       environment:
         required: true
         default: "test"
         type: string
+        description: "Dev,test,sandbox, or prod"
 
 jobs:
   test:
