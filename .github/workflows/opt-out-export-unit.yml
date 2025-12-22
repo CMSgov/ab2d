@@ -51,7 +51,7 @@ jobs:
           AWS_REGION: ${{ vars.AWS_REGION }}
         with:
           params: |
-            ARTIFACTORY_URL=/artifactory/url
+            ARTIFACTORY_URL=/artifactory/url  
             ARTIFACTORY_USER=/artifactory/user
             ARTIFACTORY_PASSWORD=/artifactory/password
             SONAR_HOST_URL=/sonarqube/url
