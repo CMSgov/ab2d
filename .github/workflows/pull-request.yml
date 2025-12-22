@@ -13,6 +13,8 @@ permissions:
 jobs:
   unit-integration-test:
     uses: ./.github/workflows/unit-integration-test.yml
+    with:
+      environment: test
     secrets: inherit
   build-deploy-api:
     uses: ./.github/workflows/build-deploy.yml
