@@ -10,9 +10,9 @@ import java.util.Optional;
 
 public interface CoverageV3Repository extends JpaRepository<CoverageV3, Void> {
 
-    List<CoverageV3> findAllByContractNumber(String contractNumber);
+    List<CoverageV3> findAllByContract(String contract);
 
-    Optional<CoverageV3> findByContractNumberAndMonthAndYear(String contractNumber, int month, int year);
+    Optional<CoverageV3> findByContractAndMonthAndYear(String contract, int month, int year);
 
     List<CoverageV3> findAllByMonthAndYear(int month, int year);
 }
