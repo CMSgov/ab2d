@@ -3,6 +3,7 @@ package gov.cms.ab2d.coverage.model;
 import gov.cms.ab2d.common.model.TimestampBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
@@ -20,6 +21,7 @@ public class CoverageV3Historical extends TimestampBase {
 
     @NotNull
     @EqualsAndHashCode.Include
+    @Id
     private long patientId;
 
     @NotNull

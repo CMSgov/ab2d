@@ -20,6 +20,7 @@ public class CoverageV3 extends TimestampBase {
 
     @NotNull
     @EqualsAndHashCode.Include
+    @Id
     private long patientId;
 
     @NotNull
