@@ -190,7 +190,6 @@ public class ApiCommon {
             log.info("Contract {} is not whitelisted", contract);
             throw new EndpointNotAvailableException("Service unavailable");
         }
-
     }
 
     protected String checkIfContractAttested(Contract contract, String contractNumber) {
