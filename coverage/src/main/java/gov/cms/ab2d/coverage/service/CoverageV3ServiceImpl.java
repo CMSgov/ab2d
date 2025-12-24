@@ -29,6 +29,7 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         }
         catch (Exception e) {
             log.error("Error", e);
+            throw e;
         }
         return -1;
     }
