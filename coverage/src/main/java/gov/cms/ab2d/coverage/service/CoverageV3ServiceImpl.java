@@ -23,8 +23,13 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
     }
 
     public int countBeneficiariesByCoveragePeriod(List<YearMonthRecord> yearMonthRecords, final String contract) {
-        log.info("Count #1: {}", coverageV3Repository.getCountByContractAndYearMonthRecords(contract, yearMonthRecords));
-        log.info("Count #2: {}", coverageV3HistoricalRepository.getCountByContractAndYearMonthRecords(contract, yearMonthRecords));
+        try {
+            log.info("Count #1: {}", coverageV3Repository.getCountByContractAndYearMonthRecords(contract, yearMonthRecords));
+            log.info("Count #2: {}", coverageV3HistoricalRepository.getCountByContractAndYearMonthRecords(contract, yearMonthRecords));
+        }
+        catch (Exception e) {
+            log.error("Error", e);
+        }
         return -1;
     }
     
