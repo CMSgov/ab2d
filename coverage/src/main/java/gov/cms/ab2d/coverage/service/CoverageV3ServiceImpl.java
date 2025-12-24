@@ -30,13 +30,14 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
             yearMonthRecordsAsObjects.add(o);
         }
 
+
+
         try {
             log.info("Count #1: {}", coverageV3Repository.getCountByContractAndYearMonthRecords(contract, yearMonthRecordsAsObjects));
             log.info("Count #2: {}", coverageV3HistoricalRepository.getCountByContractAndYearMonthRecords(contract, yearMonthRecordsAsObjects));
         }
         catch (Exception e) {
             log.error("Error with JPA queries", e);
-            throw e;
         }
 
         try {
@@ -45,7 +46,6 @@ public class CoverageV3ServiceImpl implements CoverageV3Service {
         }
         catch (Exception e) {
             log.error("Error with native queries", e);
-            throw e;
         }
 
         return -1;
